@@ -184,9 +184,9 @@ body {
 .sky-tip[hidden] { display: none; }
 
 /* ---------- mood: an emoji in a round frame at the top-left of the sky bar;
-   to its right the latest diary line (white box) on top and Buddy's own
-   thought / words below it (light-wood bubble with a tail pointing at her
-   face). Bubbles pop in and fade out; they never cover the house. */
+   to its right Buddy's own thoughts / words in a light-wood bubble with a
+   tail pointing at her face, running to the house's right edge. It pops in
+   and fades out; it never covers the house. */
 .moodrow {
   position: relative; z-index: 3; width: var(--studio-w, 684px); margin-left: calc(-1 * var(--studio-dx, 0px));
   display: flex; align-items: center; gap: calc(var(--sky-b, 3px) * 4);
@@ -197,12 +197,13 @@ body {
 .mood-face:focus-visible::after { content: ""; position: absolute; inset: -4px; border: 2px dashed var(--focus); }
 .mood-talk {
   flex: 1 1 auto; min-width: 0; height: 100%;
-  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 5px;
+  display: flex; flex-direction: column; justify-content: center; align-items: stretch; gap: 5px;
+  padding-right: 2px;   /* the bubble's 2px outline ends exactly at the house's right edge */
 }
 .pop {
   --pe: var(--edge);
   position: relative; max-width: 100%; display: flex; align-items: baseline; gap: 8px;
-  font-size: 13px; line-height: 1.35; padding: 3px 10px; color: var(--ink);
+  font-size: 16px; line-height: 1.4; padding: 5px 12px; color: var(--ink);
   box-shadow: 0 -2px 0 0 var(--pe), 0 2px 0 0 var(--pe), -2px 0 0 0 var(--pe), 2px 0 0 0 var(--pe), 3px 3px 0 0 var(--shadow);
   transform-origin: left center;
   animation: popin .42s cubic-bezier(.3, 1.6, .5, 1) both;
@@ -211,16 +212,13 @@ body {
 .pop span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pop.out { opacity: 0; transform: translateY(-3px); }
 .pop[hidden] { display: none; }
-.pop.diary { background: #ffffff; }
-.pop.diary time { flex: none; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
-.pop.diary::before { content: "日记"; flex: none; font-size: 11px; font-weight: 700; color: #f7f6fb; background: #8a6446; padding: 0 5px; align-self: center; }
 .pop.say { --pe: #8a6446; background: #ecd5ad; color: #3d2a1e; margin-left: 8px; }
 .pop.say::before, .pop.say::after {           /* pixel tail pointing left at the face */
   content: ""; position: absolute; top: 50%; transform: translateY(-50%);
   clip-path: polygon(100% 0, 100% 100%, 0 50%);
 }
-.pop.say::before { left: -12px; width: 12px; height: 14px; background: #8a6446; }
-.pop.say::after { left: -8px; width: 9px; height: 9px; background: #ecd5ad; }
+.pop.say::before { left: -14px; width: 14px; height: 18px; background: #8a6446; }
+.pop.say::after { left: -10px; width: 11px; height: 12px; background: #ecd5ad; }
 @keyframes popin { from { opacity: 0; transform: scale(.5) translateX(-10px); } to { opacity: 1; transform: none; } }
 .mood-tip {
   position: absolute; left: 0; top: calc(100% + 6px); z-index: 6; min-width: 230px; max-width: 320px;
@@ -399,7 +397,6 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
           <div class="mood-tip" id="moodTip" hidden></div>
         </div>
         <div class="mood-talk" aria-live="polite">
-          <div class="pop diary" id="popDiary" hidden><time></time><span></span></div>
           <div class="pop say" id="popSay" hidden><span></span></div>
         </div>
       </div>
@@ -1071,7 +1068,6 @@ const sim = {
 };
 sim.s = sOf(1, D.spots.bed[1]);
 let speed = 3;
-let moodReady = false;   // diary bubbles start once the page is up
 
 const hour = () => (sim.t % 1440) / 60;
 const clamp = v => Math.max(0, Math.min(100, v));
@@ -1079,7 +1075,6 @@ const fmt = t => { const m = Math.floor(t % 1440); return String(Math.floor(m / 
 
 const logEl = document.getElementById("log");
 function log(text, cls) {
-  if (!cls && typeof showDiary === "function" && moodReady) showDiary(text);
   const li = document.createElement("li");
   if (cls) { li.className = cls; li.textContent = text; }
   else li.innerHTML = `<time>${fmt(sim.t)}</time><span></span>`, li.querySelector("span").textContent = text;
@@ -1896,7 +1891,7 @@ function drawFace(key, scale, bob) {
   const img = reduceMotionUI ? fr[0] : fr[Math.floor(realClock * 2.2) % fr.length];
   const frameSize = Math.round(24 * b * scale), faceSize = Math.round(16 * b * scale);
   const c = MOOD_D * b / 2;
-  mctx.drawImage(moodFrame(MOOD[key].color), b, b, 24, 24, Math.round(c - frameSize / 2), Math.round(c - frameSize / 2), frameSize, frameSize);
+  mctx.drawImage(moodFrame(MOOD[key].color), 1, 1, 24, 24, Math.round(c - frameSize / 2), Math.round(c - frameSize / 2), frameSize, frameSize);
   mctx.drawImage(img, Math.round(c - faceSize / 2), Math.round(c - faceSize / 2 + bob), faceSize, faceSize);
 }
 function renderMood() {
@@ -1969,20 +1964,14 @@ moodFace.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === "
 const moodPickEl = document.getElementById("moodPick");
 for (const [k, name] of D.moods) moodPickEl.insertAdjacentHTML("beforeend", `<option value="${k}">${name}</option>`);
 
-// ---------- bubbles: diary on top, her own words below
-const popDiary = document.getElementById("popDiary"), popSay = document.getElementById("popSay");
+// ---------- her own words, in a bubble that runs to the house's right edge
+const popSay = document.getElementById("popSay");
 function popBubble(el, ms) {
   clearTimeout(el._t); clearTimeout(el._t2);
   el.hidden = false;
   el.classList.remove("out");
   el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";   // replay the pop
   el._t = setTimeout(() => { el.classList.add("out"); el._t2 = setTimeout(() => { el.hidden = true; }, 380); }, ms);
-}
-function showDiary(text) {
-  popDiary.querySelector("time").textContent = fmt(sim.t);
-  popDiary.querySelector("span").textContent = text;
-  popDiary.title = text;
-  popBubble(popDiary, 7000);
 }
 let nextSay = 6, lastSaid = "";
 function say(text) {
@@ -2185,7 +2174,6 @@ function frame(now) {
   await loadWeatherMasks();
   weather.kind = weatherAt(sim.t);
   log("—— 第 1 天 · 春 ——", "day");
-  moodReady = true;
   log("还在被窝里睡觉。");
   updateMood();
   syncUI();
