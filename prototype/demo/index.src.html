@@ -639,7 +639,8 @@ function fit() {
   widget.style.setProperty("--bh", bh + "px");
   widget.style.setProperty("--g", g + "px");
   widget.style.setProperty("--bar-w", barW + "px");
-  const icon = 12 * Math.max(1, Math.floor((bh - 2 * u) / 12));      // whole-pixel icon scale
+  // 10x10 chibi icons at one icon pixel per house pixel (smaller if the bar is thin)
+  const icon = 10 * Math.max(1, Math.min(u, Math.floor((bh - 4 * u) / 10)));
   widget.style.setProperty("--icon", icon + "px");
   widget.style.setProperty("--slot", icon + 2 * u + "px");           // icon + a pixel of air each side
   widget.style.setProperty("--clip-track", pillClip(n, u));

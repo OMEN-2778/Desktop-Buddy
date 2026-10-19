@@ -135,7 +135,8 @@ Reference: `prototype/creator/index.src.html`.
   Zz, soap + bubbles, smiley) sit in a slot at the bar's LEFT end, the fill
   starts right of it (so the maximum is never covered); they live in
   `art/src/concept/need_icons.py`; keep
-  icons over words, and scale them by whole pixels only.
+  icons over words, chibi style (10x10, round, chunky, blush), shown at one
+  icon pixel per house pixel.
 
 ## Pitfalls seen so far
 
