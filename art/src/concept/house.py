@@ -404,22 +404,17 @@ ooooo
 
 
 SLEEP_HEAD = (3, -7)      # the head turned on its side (rotated 90 deg), from the bed's top-left
-SLEEP_COVER = (18, -12)   # duvet offset from the bed's top-left
+SLEEP_COVER = (18, -12)   # duvet offset from the bed's top-left (top row is the outline)
 
 # Duvet over a body lying on its side, chin at bed x 17: ONE soft, round
-# mound (user: no camel humps), peaking above the head on the pillow (head
-# top is about bed y -6) a little toward the hips, easing down to the foot.
-# The mattress top is y 10.
-SLEEP_PEAK_X, SLEEP_PEAK_Y, SLEEP_BASE_Y = 28, -9, 7
-
-
-def _mound_top(x: int) -> int:
-    half = 11.5 if x < SLEEP_PEAK_X else 14.5          # steeper by the chin, long slope to the feet
-    t = min(1.0, abs(x - SLEEP_PEAK_X) / half)
-    return int(round(SLEEP_BASE_Y - (SLEEP_BASE_Y - SLEEP_PEAK_Y) * (1 - t * t) ** 0.75))
-
-
-SLEEP_PROFILE = {x: _mound_top(x) for x in range(18, 42)}
+# mound (user: no camel humps). Its left side, right beside the head, is
+# already taller than the head on the pillow (head top is about bed y -4,
+# the bow -6): a rounded shoulder corner by the chin, a gentle crown, then a
+# long easy slope down to the feet. The mattress top is y 10.
+SLEEP_PROFILE = {18: -5, 19: -7, 20: -8, 21: -9, 22: -9, 23: -10, 24: -10, 25: -10, 26: -10, 27: -10,
+                 28: -9, 29: -9, 30: -8, 31: -8, 32: -7, 33: -6, 34: -5, 35: -4, 36: -3, 37: -2, 38: -1,
+                 39: 0, 40: 2, 41: 4}
+SLEEP_PEAK_X, SLEEP_PEAK_Y = 25, -10
 
 
 def sleep_cover():
