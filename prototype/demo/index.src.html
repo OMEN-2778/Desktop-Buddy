@@ -2,11 +2,11 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
 <style>
-/* Layout: one wide game window holding the cross-section house (the "desktop
-   widget"), with three small windows under it — status, suggestions, diary.
-   Pixel chrome from the creator: notched outlines, hard shadows, bevelled buttons. */
+/* Layout: the page is just the house, centred like a widget on a desktop.
+   Everything else hides until asked for: the needs are four dots beside the
+   house that stretch into bars when the pointer comes near. */
 :root {
   --bg: #e6e3ee;
   --dither: #dcd8e6;
@@ -22,30 +22,33 @@
   --accent-hi: #6c90c8;
   --accent-lo: #2f3c6d;
   --accent-ink: #f7f6fb;
-  --title: #33253b;
-  --title-ink: #f7f6fb;
   --focus: #d29b30;
-  --good: #83957a;
-  --mid: #d29b30;
-  --low: #b0674f;
-  --b: 3px;
+  /* needs: track ring + three states (from the sketch) */
+  --ring: #ffffff;
+  --need-ok: #b2d683;
+  --need-warn: #f5b675;
+  --need-low: #e87272;
+  --need-label: rgba(34, 24, 42, 0.62);
+  --u: 3px;              /* one UI pixel */
+  --dot: calc(var(--u) * 8);   /* 8x8 UI pixels: reads as a circle */
   --font: "Source Han Sans SC", "Noto Sans SC", "思源黑体", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #17131f; --dither: #1d1828; --panel: #2b2538; --panel-2: #332c42; --ink: #f7f6fb; --muted: #bab7c9;
     --edge: #0d0a12; --bevel-hi: #433a54; --bevel-lo: #1f1a2a; --shadow: #0d0a12;
-    --accent: #6c90c8; --accent-hi: #a6c5e7; --accent-lo: #2f3c6d; --accent-ink: #141228;
-    --title: #0d0a12; --title-ink: #f7f6fb; --focus: #efc452; color-scheme: dark;
+    --accent: #6c90c8; --accent-hi: #a6c5e7; --accent-lo: #2f3c6d; --accent-ink: #141228; --focus: #efc452;
+    --ring: #f4f1f8; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #17131f; --dither: #1d1828; --panel: #2b2538; --panel-2: #332c42; --ink: #f7f6fb; --muted: #bab7c9;
   --edge: #0d0a12; --bevel-hi: #433a54; --bevel-lo: #1f1a2a; --shadow: #0d0a12;
-  --accent: #6c90c8; --accent-hi: #a6c5e7; --accent-lo: #2f3c6d; --accent-ink: #141228;
-  --title: #0d0a12; --title-ink: #f7f6fb; --focus: #efc452; color-scheme: dark;
+  --accent: #6c90c8; --accent-hi: #a6c5e7; --accent-lo: #2f3c6d; --accent-ink: #141228; --focus: #efc452;
+  --ring: #f4f1f8; color-scheme: dark;
 }
 * { box-sizing: border-box; border-radius: 0; }
+html, body { height: 100%; }
 body {
   background-color: var(--bg);
   background-image: repeating-conic-gradient(var(--dither) 0 25%, transparent 0 50%);
@@ -54,134 +57,172 @@ body {
   font-family: var(--font);
   font-size: 14px;
   line-height: 1.55;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  grid-template-columns: minmax(0, 1fr);
 }
-.wrap {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding-block: 24px 48px;
+.desk {
+  display: grid;
+  place-items: center;
+  padding-block: 32px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: grid;
-  gap: 24px;
+  min-width: 0;
 }
-header { display: grid; gap: 6px; }
-h1 { font-weight: 900; font-size: clamp(26px, 4vw, 34px); line-height: 1.15; margin: 0; letter-spacing: .04em; text-shadow: 3px 3px 0 var(--accent-hi); }
-header p { margin: 0; color: var(--muted); max-width: 64ch; }
-.px {
-  box-shadow:
-    0 calc(-1 * var(--b)) 0 0 var(--edge), 0 var(--b) 0 0 var(--edge),
-    calc(-1 * var(--b)) 0 0 0 var(--edge), var(--b) 0 0 0 var(--edge),
-    calc(var(--b) * 2) calc(var(--b) * 2) 0 0 var(--shadow);
-}
-.window { background: var(--panel); margin: var(--b); min-width: 0; }
-.titlebar {
-  background: var(--title); color: var(--title-ink);
-  font-weight: 700; font-size: 13px; letter-spacing: .1em;
-  padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
-}
-.titlebar .dots { display: flex; gap: 4px; }
-.titlebar .dots i { width: 6px; height: 6px; background: var(--title-ink); opacity: .55; display: block; }
-.titlebar .dots i:first-child { background: var(--focus); opacity: 1; }
-.clock { font-variant-numeric: tabular-nums; letter-spacing: .06em; }
-
-.stage { padding: 14px; display: grid; gap: 12px; }
-.screen { background: var(--edge); padding: var(--b); overflow-x: auto; justify-self: center; max-width: 100%; }
+.widget { position: relative; }
 #view { display: block; image-rendering: pixelated; image-rendering: crisp-edges; cursor: pointer; }
-.toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
-.doing { font-weight: 700; }
-.doing small { font-weight: 400; color: var(--muted); margin-left: 6px; }
-.row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
 
+/* ---------- needs: dots that stretch into bars ---------- */
+.needs {
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;           /* bars grow to the left, away from the house */
+  gap: calc(var(--u) * 4);
+  padding: 16px 10px 16px 16px;    /* generous hover zone around the dots */
+  outline: none;
+}
+.widget.overlay .needs { right: auto; left: 0; align-items: flex-start; padding: 12px; }
+.need {
+  --w: var(--dot);
+  position: relative;
+  width: var(--w);
+  height: var(--dot);
+  background: var(--ring);
+  transition: width .28s steps(8, end);
+  /* pixel pill: two-step corners (a pixel circle when it is only 8u wide) */
+  clip-path: polygon(
+    calc(var(--u) * 2) 0, calc(100% - var(--u) * 2) 0, calc(100% - var(--u) * 2) var(--u),
+    calc(100% - var(--u)) var(--u), calc(100% - var(--u)) calc(var(--u) * 2), 100% calc(var(--u) * 2),
+    100% calc(100% - var(--u) * 2), calc(100% - var(--u)) calc(100% - var(--u) * 2),
+    calc(100% - var(--u)) calc(100% - var(--u)), calc(100% - var(--u) * 2) calc(100% - var(--u)),
+    calc(100% - var(--u) * 2) 100%, calc(var(--u) * 2) 100%, calc(var(--u) * 2) calc(100% - var(--u)),
+    var(--u) calc(100% - var(--u)), var(--u) calc(100% - var(--u) * 2), 0 calc(100% - var(--u) * 2),
+    0 calc(var(--u) * 2), var(--u) calc(var(--u) * 2), var(--u) var(--u), calc(var(--u) * 2) var(--u));
+}
+.need .fill {
+  position: absolute;
+  top: var(--u); bottom: var(--u); left: var(--u);
+  width: calc(100% - var(--u) * 2);
+  background: var(--c, var(--need-ok));
+  transition: width .28s steps(8, end), background-color .2s;
+  clip-path: polygon(var(--u) 0, calc(100% - var(--u)) 0, calc(100% - var(--u)) var(--u), 100% var(--u),
+    100% calc(100% - var(--u)), calc(100% - var(--u)) calc(100% - var(--u)), calc(100% - var(--u)) 100%,
+    var(--u) 100%, var(--u) calc(100% - var(--u)), 0 calc(100% - var(--u)), 0 var(--u), var(--u) var(--u));
+}
+.need .name {
+  position: absolute;
+  right: calc(var(--u) * 3);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .08em;
+  color: var(--need-label);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.needs.open .need { --w: var(--bar-w, 220px); }
+.needs.open .need .fill {
+  /* never thinner than a dot's centre, so an empty need still shows red */
+  width: calc(var(--u) * 4 + (100% - var(--u) * 6) * var(--v, 1));
+}
+.needs.open .need .name { opacity: 1; transition-delay: .2s; }
+.needs:focus-visible .need { outline: none; }
+.needs:focus-visible::after {
+  content: ""; position: absolute; inset: 6px; border: 2px dashed var(--focus); pointer-events: none;
+}
+
+/* ---------- temporary console (time, suggestions, look, diary) ---------- */
+.console {
+  justify-self: center;
+  width: min(100%, 980px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.console summary { cursor: pointer; letter-spacing: .04em; }
+.console[open] summary { margin-bottom: 12px; }
+.console .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; color: var(--ink); }
+@media (max-width: 760px) { .console .grid { grid-template-columns: minmax(0, 1fr); } }
+.console .box { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.label { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--muted); }
+.clock { font-variant-numeric: tabular-nums; font-weight: 700; }
+.row { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
 button {
-  font: inherit; font-weight: 500; color: var(--ink); background: var(--panel-2);
-  border: 0; padding: 5px 11px; margin: var(--b); cursor: pointer;
+  font: inherit; font-size: 13px; color: var(--ink); background: var(--panel-2);
+  border: 0; padding: 4px 10px; margin: var(--u); cursor: pointer;
   box-shadow:
-    inset 0 calc(-1 * var(--b)) 0 0 var(--bevel-lo), inset 0 var(--b) 0 0 var(--bevel-hi),
-    0 calc(-1 * var(--b)) 0 0 var(--edge), 0 var(--b) 0 0 var(--edge),
-    calc(-1 * var(--b)) 0 0 0 var(--edge), var(--b) 0 0 0 var(--edge),
-    0 calc(var(--b) * 2) 0 0 var(--shadow);
+    inset 0 calc(-1 * var(--u)) 0 0 var(--bevel-lo), inset 0 var(--u) 0 0 var(--bevel-hi),
+    0 calc(-1 * var(--u)) 0 0 var(--edge), 0 var(--u) 0 0 var(--edge),
+    calc(-1 * var(--u)) 0 0 0 var(--edge), var(--u) 0 0 0 var(--edge);
 }
 button:hover { background: var(--panel); }
-button:active { transform: translateY(var(--b)); }
-button[aria-pressed="true"] {
-  background: var(--accent); color: var(--accent-ink); transform: translateY(var(--b));
-  box-shadow:
-    inset 0 var(--b) 0 0 var(--accent-lo), inset 0 calc(-1 * var(--b)) 0 0 var(--accent-hi),
-    0 calc(-1 * var(--b)) 0 0 var(--edge), 0 var(--b) 0 0 var(--edge),
-    calc(-1 * var(--b)) 0 0 0 var(--edge), var(--b) 0 0 0 var(--edge);
-}
-button:focus-visible { outline: var(--b) dashed var(--focus); outline-offset: calc(var(--b) * 2); }
-
-.panels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; align-items: start; }
-@media (max-width: 860px) { .panels { grid-template-columns: minmax(0, 1fr); } }
-.body { padding: 14px 16px; display: grid; gap: 12px; }
-.label { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--muted); }
-.need { display: grid; grid-template-columns: 3.2em minmax(0, 1fr) 2.6em; align-items: center; gap: 10px; }
-.need span:last-child { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
-.bar { height: 14px; background: var(--edge); padding: 2px; display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; }
-.bar i { display: block; background: var(--panel-2); }
-.bar i.on { background: var(--c); }
-.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
-.log li { display: grid; grid-template-columns: 3.4em minmax(0, 1fr); gap: 8px; }
-.log time { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; padding-top: 1px; }
+button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--focus); outline-offset: calc(var(--u) * 2); }
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 200px; overflow-y: auto; }
+.log li { display: grid; grid-template-columns: 3.2em minmax(0, 1fr); gap: 8px; }
+.log time { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
 .log li.day { grid-template-columns: 1fr; color: var(--muted); font-size: 12px; letter-spacing: .1em; }
-.note { color: var(--muted); font-size: 13px; margin: 0; }
-@media (prefers-reduced-motion: reduce) { button { transform: none !important; } }
+@media (prefers-reduced-motion: reduce) { .need, .need .fill, .need .name { transition: none; } }
 </style>
 
-<div class="wrap">
-  <header>
-    <h1>Buddy 小屋</h1>
-    <p>可以运行的原型：她会按自己的需求过日子 —— 饿了做饭、累了睡觉、无聊了玩电脑看电视，走过房间时会开门，天黑了会开灯。点她一下试试。</p>
-  </header>
+<main class="desk">
+  <div class="widget" id="widget">
+    <div class="needs" id="needs" tabindex="0" role="button" aria-expanded="false" aria-label="她的状态（饱腹、精力、清洁、开心）">
+      <div class="need" data-k="hunger" role="meter" aria-label="饱腹" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><span class="name">饱腹</span></div>
+      <div class="need" data-k="energy" role="meter" aria-label="精力" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><span class="name">精力</span></div>
+      <div class="need" data-k="hygiene" role="meter" aria-label="清洁" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><span class="name">清洁</span></div>
+      <div class="need" data-k="fun" role="meter" aria-label="开心" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><span class="name">开心</span></div>
+    </div>
+    <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点她一下试试。"></canvas>
+  </div>
+</main>
 
-  <section class="window px" aria-label="小屋">
-    <div class="titlebar"><span class="clock" id="clock">第 1 天 · 07:00</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
-    <div class="stage">
-      <div class="screen"><canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活"></canvas></div>
-      <div class="toolbar">
-        <div class="doing" id="doing">正在：睡觉<small id="ff"></small></div>
-        <div class="row" role="group" aria-label="时间速度">
-          <button type="button" data-speed="0" aria-pressed="false">暂停</button>
-          <button type="button" data-speed="1" aria-pressed="false">×1</button>
-          <button type="button" data-speed="3" aria-pressed="true">×3</button>
-          <button type="button" data-speed="10" aria-pressed="false">×10</button>
-        </div>
+<details class="console">
+  <summary>临时控制台：时间 · 建议 · 外观 · 日记（这些之后也会改成隐藏式）</summary>
+  <div class="grid">
+    <div class="box">
+      <div class="clock" id="clock">第 1 天 · 07:00</div>
+      <div id="doing">正在：睡觉<small id="ff"></small></div>
+      <div class="label">时间速度</div>
+      <div class="row" role="group" aria-label="时间速度">
+        <button type="button" data-speed="0" aria-pressed="false">暂停</button>
+        <button type="button" data-speed="1" aria-pressed="false">×1</button>
+        <button type="button" data-speed="3" aria-pressed="true">×3</button>
+        <button type="button" data-speed="10" aria-pressed="false">×10</button>
       </div>
     </div>
-  </section>
-
-  <div class="panels">
-    <section class="window px" aria-label="状态">
-      <div class="titlebar"><span>状态</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
-      <div class="body" id="needs"></div>
-    </section>
-    <section class="window px" aria-label="建议">
-      <div class="titlebar"><span>给她建议</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
-      <div class="body">
-        <div class="row" id="suggest">
-          <button type="button" data-act="cook">做饭吃</button>
-          <button type="button" data-act="bath">泡澡</button>
-          <button type="button" data-act="computer">玩电脑</button>
-          <button type="button" data-act="tv">看电视</button>
-          <button type="button" data-act="read">看书</button>
-          <button type="button" data-act="sleep">睡觉</button>
-        </div>
-        <div class="label">外观</div>
-        <div class="row" id="look">
-          <button type="button" data-gender="f" aria-pressed="true">女生</button>
-          <button type="button" data-gender="m" aria-pressed="false">男生</button>
-          <button type="button" id="randomLook">随机外观</button>
-        </div>
-        <p class="note">她不一定马上照做：建议会排在她手头的事之后。</p>
+    <div class="box">
+      <div class="label">给她建议</div>
+      <div class="row" id="suggest">
+        <button type="button" data-act="cook">做饭吃</button>
+        <button type="button" data-act="bath">泡澡</button>
+        <button type="button" data-act="computer">玩电脑</button>
+        <button type="button" data-act="tv">看电视</button>
+        <button type="button" data-act="read">看书</button>
+        <button type="button" data-act="sleep">睡觉</button>
       </div>
-    </section>
-    <section class="window px" aria-label="日记">
-      <div class="titlebar"><span>日记</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
-      <div class="body"><ul class="log" id="log"></ul></div>
-    </section>
+      <div class="label">外观</div>
+      <div class="row" id="look">
+        <button type="button" data-gender="f" aria-pressed="true">女生</button>
+        <button type="button" data-gender="m" aria-pressed="false">男生</button>
+        <button type="button" id="randomLook">随机外观</button>
+      </div>
+    </div>
+    <div class="box">
+      <div class="label">日记</div>
+      <ul class="log" id="log"></ul>
+    </div>
   </div>
-</div>
+</details>
 
 <script>
 const DATA = /*__DEMO_DATA__*/null;
@@ -541,10 +582,24 @@ const bctx = buf.getContext("2d", { willReadFrequently: true });
 let scale = 3, realClock = 0, reaction = null;
 
 function fit() {
-  const avail = view.parentElement.parentElement.clientWidth - 12;
-  scale = Math.max(1, Math.min(4, Math.floor(avail / W)));
-  view.width = W * scale; view.height = H * scale;
+  // Leave room on the left for the need bars; on narrow screens the dots sit
+  // over the house instead and the bars open to the right.
+  const desk = document.querySelector(".desk");
+  const cs = getComputedStyle(desk);
+  const avail = desk.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const SIDE = 170;
+  let s = 4;
+  while (s > 1 && W * s + SIDE * 2 > avail) s--;
+  const overlay = W * s + SIDE * 2 > avail;
+  if (overlay) { s = Math.max(1, Math.min(4, Math.floor(avail / W))); }
+  scale = s;
+  view.width = W * s; view.height = H * s;
   view.style.width = view.width + "px"; view.style.height = view.height + "px";
+  const widget = document.getElementById("widget");
+  widget.classList.toggle("overlay", overlay);
+  const side = (avail - W * s) / 2;
+  const barW = overlay ? Math.min(220, W * s * 0.62) : Math.max(120, Math.min(240, side - 34));
+  widget.style.setProperty("--bar-w", Math.round(barW / 3) * 3 + "px");
 }
 
 function activityFrame(ms) {
@@ -621,24 +676,35 @@ function render() {
 
 // ================================================================ UI
 const needsEl = document.getElementById("needs");
-needsEl.innerHTML = Object.entries(NEED_NAMES).map(([k, n]) =>
-  `<div class="need" data-k="${k}"><span>${n}</span><div class="bar" role="meter" aria-label="${n}" aria-valuemin="0" aria-valuemax="100">${"<i></i>".repeat(10)}</div><span></span></div>`).join("");
+function needColor(v) { return v < 20 ? "var(--need-low)" : v < 50 ? "var(--need-warn)" : "var(--need-ok)"; }
 function syncUI() {
   const day = Math.floor(sim.t / 1440) + 1, h = hour();
   const part = h < 5 ? "深夜" : h < 9 ? "早上" : h < 12 ? "上午" : h < 14 ? "中午" : h < 18 ? "下午" : h < 22 ? "晚上" : "深夜";
   document.getElementById("clock").textContent = `第 ${day} 天 · ${fmt(sim.t)} · ${part}`;
   const doing = sim.mode === "walk" ? `走去${ACTS[sim.act].label}` : sim.mode === "act" ? ACTS[sim.act].label : "闲着";
   document.getElementById("doing").firstChild.textContent = `正在：${doing}`;
-  document.getElementById("ff").textContent = sim.mode === "act" && sim.act === "sleep" && speed ? "夜里自动快进" : "";
+  document.getElementById("ff").textContent = sim.mode === "act" && sim.act === "sleep" && speed ? "（夜里自动快进）" : "";
   for (const [k, v] of Object.entries(sim.needs)) {
-    const row = needsEl.querySelector(`[data-k="${k}"]`);
-    const on = Math.round(v / 10);
-    const c = v > 60 ? "var(--good)" : v > 30 ? "var(--mid)" : "var(--low)";
-    row.querySelectorAll("i").forEach((el, i) => { el.classList.toggle("on", i < on); el.style.setProperty("--c", c); });
-    row.querySelector(".bar").setAttribute("aria-valuenow", Math.round(v));
-    row.lastElementChild.textContent = Math.round(v);
+    const el = needsEl.querySelector(`[data-k="${k}"]`);
+    el.style.setProperty("--c", needColor(v));
+    el.style.setProperty("--v", (v / 100).toFixed(3));
+    el.setAttribute("aria-valuenow", Math.round(v));
   }
 }
+
+// Open when the pointer comes near the dots (or on focus / tap); close shortly after it leaves.
+let closeT = null;
+function setNeedsOpen(open) {
+  clearTimeout(closeT);
+  needsEl.classList.toggle("open", open);
+  needsEl.setAttribute("aria-expanded", String(open));
+}
+needsEl.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") setNeedsOpen(true); });
+needsEl.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") closeT = setTimeout(() => setNeedsOpen(false), 250); });
+needsEl.addEventListener("click", e => { if (e.pointerType !== "mouse") setNeedsOpen(!needsEl.classList.contains("open")); });
+needsEl.addEventListener("focus", () => { if (needsEl.matches(":focus-visible")) setNeedsOpen(true); });  // keyboard only
+needsEl.addEventListener("blur", () => setNeedsOpen(false));
+needsEl.addEventListener("keydown", e => { if (e.key === "Escape") needsEl.blur(); });
 
 document.querySelectorAll("[data-speed]").forEach(b => b.addEventListener("click", () => {
   speed = +b.dataset.speed;
