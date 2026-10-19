@@ -272,22 +272,32 @@ def room_x(key):
     return next(r[3] for r in ROOMS if r[0] == key)
 
 
-def furnish(s, night=False, buddy=doll.GIRL):
+# Where key pieces ended up — filled by furnish(), read by the demo exporter.
+ANCHORS = {}
+
+
+def furnish(s, night=False, buddy=doll.GIRL, lamps=None):
+    """buddy=None draws the empty house (the demo animates Buddy at runtime).
+    lamps=False keeps every lamp off even at night (the demo lights rooms itself)."""
     sky = "night" if night else "day"
+    lit = night if lamps is None else lamps
     lights, z_at = [], None
 
     # --- stairwell
     s.blit(F.round_window(night), STAIRS[0] + 4, UP_WALL + 10)
-    place(s, F.sconce(on=night), STAIRS[0] + 30, UP_WALL + 14)
+    place(s, F.sconce(on=lit), STAIRS[0] + 30, UP_WALL + 14)
+    ANCHORS["sconce"] = (STAIRS[0] + 30, UP_WALL + 14)
 
     # --- bedroom: window over the bed, nightstand + lamp, wardrobe
     x, (top, fl) = room_x("bedroom"), levels(1)
     place(s, F.window(sky), x + 7, top + 5)
     bed_y = on_floor(s, F.bed(), x + 2, 1)
     ns_y = on_floor(s, F.nightstand(), x + 46, 1, 0)
-    place(s, F.lamp(on=night), x + 47, ns_y - 12)
+    place(s, F.lamp(on=lit), x + 47, ns_y - 12)
+    ANCHORS["bed"] = (x + 2, bed_y)
+    ANCHORS["bed_lamp"] = (x + 47, ns_y - 12)
     on_floor(s, F.wardrobe(), x + 76, 1, 0)
-    if night:
+    if night and buddy:
         z_at = sleeper(s, x + 2, bed_y, buddy)
         lights.append((x + 51, ns_y - 8, 30, (1.0, 0.86, 0.62), "bedroom"))
 
@@ -295,7 +305,7 @@ def furnish(s, night=False, buddy=doll.GIRL):
     x = room_x("bath")
     s.blit(F.backsplash(66, 18), x, fl - 21)
     s.hline(x, x + 65, fl - 21, POR[3])
-    on_floor(s, F.bathtub(), x + 1, 1, 1)
+    ANCHORS["bathtub"] = (x + 1, on_floor(s, F.bathtub(), x + 1, 1, 1))
     on_floor(s, F.toilet(), x + 33, 1, 1)
     place(s, F.towel(), x + 34, top + 12)
     on_floor(s, F.vanity(), x + 48, 1, 0)
@@ -305,12 +315,14 @@ def furnish(s, night=False, buddy=doll.GIRL):
     place(s, F.window(sky, curtains=None), x + 66, top + 5)
     on_floor(s, F.bookshelf(), x + 3, 1, 0)
     dy = on_floor(s, F.desk(), x + 30, 1, 0)
-    place(s, F.monitor(on=not night), x + 38, dy - 13)
+    place(s, F.monitor(on=bool(buddy) and not night), x + 38, dy - 13)
+    ANCHORS["monitor"] = (x + 38, dy - 13)
     place(s, F.keyboard(), x + 39, dy - 2, shadow=False)
     place(s, F.desk_lamp(), x + 55, dy - 11)
     place(s, F.mug(), x + 33, dy - 4)
     place(s, F.pendant(on=False), x + 42, top)
-    on_floor(s, F.office_chair(), x + 22, 1, 2)
+    ANCHORS["pendant"] = (x + 42, top)
+    ANCHORS["office_chair"] = (x + 22, on_floor(s, F.office_chair(), x + 22, 1, 2))
     on_floor(s, F.plant(), x + 82, 1, 1)
 
     # --- living room
@@ -318,12 +330,13 @@ def furnish(s, night=False, buddy=doll.GIRL):
     place(s, F.window(sky), x + 42, top + 5)
     on_floor(s, F.plant(), x + 6, 0, 1)
     s.blit(F.rug(46), x + 35, fl + 2)
-    on_floor(s, F.floor_lamp(on=night), x + 26, 0, 1)
-    on_floor(s, F.sofa(), x + 38, 0, 1)
-    on_floor(s, F.coffee_table(), x + 47, 0, 5)
+    ANCHORS["floor_lamp"] = (x + 26, on_floor(s, F.floor_lamp(on=lit), x + 26, 0, 1))
+    ANCHORS["sofa"] = (x + 38, on_floor(s, F.sofa(), x + 38, 0, 1))
+    ANCHORS["coffee_table"] = (x + 47, on_floor(s, F.coffee_table(), x + 47, 0, 5))
     place(s, F.art_print(18, 13, "hills"), x + 119, top + 7)
     c_y = on_floor(s, F.media_console(), x + 112, 0, 0)
     place(s, F.tv(), x + 115, c_y - 15)
+    ANCHORS["tv"] = (x + 115, c_y - 15)
     if night:
         lights.append((x + 32, top + 20, 34, (1.0, 0.88, 0.64), "living"))
 
@@ -335,9 +348,11 @@ def furnish(s, night=False, buddy=doll.GIRL):
     on_floor(s, F.fridge(), x + 55, 0, 0)
     on_floor(s, F.chair("right"), x + 70, 0, 3)
     t_y = on_floor(s, F.dining_table(), x + 75, 0, 2)
+    ANCHORS["dining_table"] = (x + 75, t_y)
     place(s, F.bowl(), x + 82, t_y - 4, shadow=False)
     on_floor(s, F.chair("left"), x + 91, 0, 3)
-    if not night:
+    ANCHORS["hood"] = (x + 2 + 27, top + 8)
+    if buddy and not night:
         on_floor(s, doll.with_emote(buddy.render(expr="happy"), "note"), x + 18, 0, 5, shadow=False)
     else:
         lights.append((x + 40, top + 18, 16, (1.0, 0.9, 0.72), "kitchen"))
@@ -356,16 +371,28 @@ ooooo
 """
 
 
+SLEEP_HEAD = (-1, -5)     # head offset from the bed's top-left
+SLEEP_COVER = (14, 4)     # duvet-lump offset from the bed's top-left
+
+
+def sleep_cover():
+    """The duvet pulled up to the chin, with a body-shaped lump."""
+    D = P.oat
+    qw = 18
+    s = Sprite(qw, 13)
+    qy = 2
+    s.rect(0, qy, qw, 11, D[0])
+    s.ellipse(9, qy, 7, 1.5, D[0]).ellipse(9, qy + 1, 6, 1, D[3])
+    s.rect(1, qy + 1, qw - 2, 9, D[3]).rect(1, qy + 1, qw - 2, 2, D[4]).hline(1, qw - 2, qy + 9, D[2])
+    s.rect(1, qy + 1, 4, 9, POR[3]).vline(5, qy + 2, qy + 9, D[2])
+    return s
+
+
 def sleeper(s, bed_x, bed_y, buddy=doll.GIRL):
     """Buddy asleep: head on the pillow, duvet pulled up to the chin."""
     head = buddy.render(expr="sleepy").crop(0, 0, doll.W, 15)
-    s.blit(head, bed_x - 1, bed_y - 5)
-    D = P.oat
-    qx, qy, qw = bed_x + 14, bed_y + 6, 18
-    s.rect(qx, qy, qw, 11, D[0])
-    s.ellipse(qx + 9, qy, 7, 1.5, D[0]).ellipse(qx + 9, qy + 1, 6, 1, D[3])
-    s.rect(qx + 1, qy + 1, qw - 2, 9, D[3]).rect(qx + 1, qy + 1, qw - 2, 2, D[4]).hline(qx + 1, qx + qw - 2, qy + 9, D[2])
-    s.rect(qx + 1, qy + 1, 4, 9, POR[3]).vline(qx + 5, qy + 2, qy + 9, D[2])
+    s.blit(head, bed_x + SLEEP_HEAD[0], bed_y + SLEEP_HEAD[1])
+    s.blit(sleep_cover(), bed_x + SLEEP_COVER[0], bed_y + SLEEP_COVER[1])
     return bed_x + 22, bed_y - 4
 
 
@@ -415,13 +442,14 @@ def night_grade(s, lights, bands=4):
     return s
 
 
-def scene(night=False, buddy=doll.GIRL, doors=None):
+def scene(night=False, buddy=doll.GIRL, doors=None, grade=True):
     doors = doors or {}
     s = shell(night, open_doors=[d for d, (a, _) in doors.items() if a])
     lights, z_at = furnish(s, night, buddy)
     draw_doors(s, doors)
-    if night:
+    if night and grade:
         s = night_grade(s, lights)
+    if night and z_at:
         zzz(s, *z_at)
     return s
 

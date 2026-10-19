@@ -342,13 +342,62 @@ oSSSSSo
 oSSoSSo
 oo...oo
 """
-EMOTE_COLORS = {"note": P.blue, "heart": P.coral, "bang": P.mustard, "star": P.mustard}
+EMOTES["bowl"] = """
+.L.L.L.
+..L.L..
+ooooooo
+oSSSSSo
+.oSSSo.
+..ooo..
+"""
+EMOTES["book"] = """
+.oo.oo.
+oLLoLLo
+oOLoOLo
+oLLoLLo
+oOLoOLo
+ooo.ooo
+"""
+EMOTES["game"] = """
+.ooooo.
+oSLSSSo
+oLLLSRo
+oSLSRSo
+oSSSSSo
+.oo.oo.
+"""
+EMOTES["soap"] = """
+..oo...
+.oLLo..
+.oLLo.o
+..oo.oLo
+......o.
+.oo.....
+oLLo....
+.oo.....
+"""
+EMOTES["zzz"] = """
+oooo...
+...o...
+..o....
+.o.....
+oooo...
+....ooo
+.....o.
+....ooo
+"""
+EMOTE_COLORS = {"note": P.blue, "heart": P.coral, "bang": P.mustard, "star": P.mustard,
+                "bowl": P.clay, "book": P.sage, "game": P.blue, "soap": P.sky_soft, "zzz": P.blue}
+# per-emote extra legend entries (R = accent button, O = second page shade)
+EMOTE_EXTRA = {"bowl": {"L": P.linen[1]}, "book": {"L": P.linen[3], "O": P.linen[1]},
+               "game": {"L": P.linen[3], "R": P.coral[2]}, "soap": {"o": P.blue[1], "L": P.linen[3]}}
 
 
 def emote(name: str) -> Sprite:
     """Icon on a small white speech bubble so it reads on any background."""
     r = EMOTE_COLORS[name]
-    icon = Sprite.from_grid(EMOTES[name], {"o": r[0], "S": r[2], "L": r[3]})
+    legend = {"o": r[0], "S": r[2], "L": r[3], **EMOTE_EXTRA.get(name, {})}
+    icon = Sprite.from_grid(EMOTES[name], legend)
     bw, bh = icon.w + 4, icon.h + 4
     b = Sprite(bw, bh + 2)
     b.rect(0, 0, bw, bh, P.ink[1]).rect(1, 1, bw - 2, bh - 2, P.linen[3])
