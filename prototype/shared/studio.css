@@ -1,0 +1,101 @@
+/* ---------- Buddy 造型室 (shared by prototype/creator and prototype/demo) ----------
+   A pixel window: title bar, a small stage with Buddy on the left, tabs on the
+   right. Every tab panel sits in the same grid cell, so the window keeps the
+   height of the tallest tab and nothing below it jumps when tabs change.
+   The host page supplies the color tokens; --sp is one UI pixel. */
+.studio {
+  --sp: 3px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.4;
+  box-shadow:
+    0 calc(-1 * var(--sp)) 0 0 var(--edge), 0 var(--sp) 0 0 var(--edge),
+    calc(-1 * var(--sp)) 0 0 0 var(--edge), var(--sp) 0 0 0 var(--edge),
+    calc(var(--sp) * 2) calc(var(--sp) * 2) 0 0 var(--shadow);
+  min-width: 0;
+}
+.studio button {
+  font: inherit; color: var(--ink); background: var(--panel-2);
+  border: 0; margin: var(--sp); padding: 3px 10px; cursor: pointer;
+  box-shadow:
+    inset 0 calc(-1 * var(--sp)) 0 0 var(--bevel-lo), inset 0 var(--sp) 0 0 var(--bevel-hi),
+    0 calc(-1 * var(--sp)) 0 0 var(--edge), 0 var(--sp) 0 0 var(--edge),
+    calc(-1 * var(--sp)) 0 0 0 var(--edge), var(--sp) 0 0 0 var(--edge);
+}
+.studio button:hover { background: var(--panel); }
+.studio button:active { transform: translateY(var(--sp)); }
+.studio button:focus-visible, .studio .st-custom:focus-within { outline: var(--sp) dashed var(--focus); outline-offset: var(--sp); }
+.studio button[aria-pressed="true"]:not(.st-swatch) {
+  background: var(--accent); color: var(--accent-ink);
+  box-shadow:
+    inset 0 var(--sp) 0 0 var(--accent-lo), inset 0 calc(-1 * var(--sp)) 0 0 var(--accent-hi),
+    0 calc(-1 * var(--sp)) 0 0 var(--edge), 0 var(--sp) 0 0 var(--edge),
+    calc(-1 * var(--sp)) 0 0 0 var(--edge), var(--sp) 0 0 0 var(--edge);
+}
+
+.st-title {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  background: var(--title, #33253b); color: var(--title-ink, #f7f6fb);
+  padding: 3px 4px 3px 12px; font-weight: 700; letter-spacing: .12em;
+}
+.st-name::before { content: ""; display: inline-block; width: 6px; height: 6px; background: var(--focus); margin-right: 8px; vertical-align: 2px; }
+.st-tools { display: flex; align-items: center; gap: 4px; }
+.studio .st-tools button { margin: 0; padding: 1px 8px; font-size: 12px; letter-spacing: .04em; box-shadow: none; background: transparent; color: inherit; }
+.studio .st-tools button:hover { background: rgba(255, 255, 255, .14); }
+.studio .st-tools .st-random { background: var(--focus); color: #22182a; }
+.studio .st-tools .st-random:hover { background: var(--focus); filter: brightness(1.1); }
+
+.st-body { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; padding: 12px 14px 14px; align-items: start; }
+.st-stage { display: grid; gap: 8px; justify-items: center; }
+.st-screen { background: var(--edge); padding: var(--sp); }
+.st-preview { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+.st-modes { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; max-width: 100%; }
+.studio .st-modes button { padding: 1px 7px; font-size: 12px; }
+
+.st-main { display: grid; gap: 10px; min-width: 0; }
+.st-tabs { display: flex; flex-wrap: wrap; gap: 2px 4px; border-bottom: var(--sp) solid var(--edge); padding-bottom: 6px; }
+.studio .st-tabs button { padding: 2px 12px; font-weight: 700; letter-spacing: .1em; }
+.studio .st-tabs button[aria-selected="true"] {
+  background: var(--accent); color: var(--accent-ink); transform: translateY(var(--sp));
+  box-shadow:
+    inset 0 var(--sp) 0 0 var(--accent-lo),
+    0 calc(-1 * var(--sp)) 0 0 var(--edge), calc(-1 * var(--sp)) 0 0 0 var(--edge), var(--sp) 0 0 0 var(--edge);
+}
+.st-panels { display: grid; }
+.st-panel { grid-area: 1 / 1; display: grid; gap: 8px; align-content: start; visibility: hidden; min-width: 0; }
+.st-panel.on { visibility: visible; }
+.st-group { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); gap: 6px; align-items: center; }
+.st-label { color: var(--muted); font-weight: 700; font-size: 12px; letter-spacing: .08em; }
+.st-chips { display: flex; flex-wrap: wrap; gap: 2px 4px; }
+.st-thumbs { display: flex; flex-wrap: wrap; gap: 2px 4px; }
+.studio .st-thumb { display: grid; justify-items: center; align-content: end; gap: 2px; padding: 4px 4px 2px; min-width: 50px; }
+.st-thumb canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+.st-thumb span { font-size: 11px; line-height: 1.3; white-space: nowrap; }
+.studio button.st-thumb[aria-pressed="true"] { background: var(--accent-soft, #cfdcf2); color: var(--ink); }
+.studio button.st-thumb[aria-pressed="true"] span { font-weight: 700; }
+.st-swatches { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px; align-items: center; }
+.studio .st-swatch {
+  position: relative; overflow: hidden; width: 22px; height: 22px; margin: 0; padding: 0; background: var(--c);
+  box-shadow: 0 0 0 2px var(--edge);
+}
+.studio .st-swatch:active { transform: none; }
+.st-swatch::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: var(--c2); }
+.st-swatch::before { content: ""; position: absolute; left: 3px; top: 3px; width: 5px; height: 2px; background: rgba(255, 255, 255, .45); z-index: 1; }
+.studio .st-swatch[aria-pressed="true"] { outline: var(--sp) solid var(--accent); outline-offset: 3px; }
+.studio .st-custom {
+  display: grid; place-items: center; cursor: pointer; font-weight: 900; font-size: 15px; color: var(--ink);
+  background: repeating-conic-gradient(var(--bevel-lo) 0 25%, var(--panel) 0 50%) 0 0 / 8px 8px;
+}
+.st-custom::before, .st-custom::after { display: none; }
+.st-custom.has-color { background: var(--c); color: transparent; }
+.st-custom.has-color::after { display: block; }
+.st-custom input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: 0; padding: 0; }
+.st-note { margin: 0; color: var(--muted); font-size: 12px; }
+
+/* narrow: stage above the tabs */
+.studio.narrow .st-body { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 10px; }
+.studio.narrow .st-group { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.studio.narrow .st-thumb { min-width: 44px; }
+.studio.narrow .st-tabs button { padding: 2px 8px; letter-spacing: .04em; }
+@media (prefers-reduced-motion: reduce) { .studio button { transform: none !important; } }

@@ -1,7 +1,7 @@
 """Build the life-sim demo: prototype/demo/index.html.
 
 Packs everything the page needs into one JSON blob:
-  - Buddy's paper-doll role maps (same as the creator) + emote bubbles
+  - Buddy's paper-doll role maps + dressing-room options (same as the creator)
   - the empty house, day windows and night windows (lamps off: the page
     lights rooms itself), as PNG data URIs
   - door gaps and door leaves, appliance "on" overlays, the sleep/bath
@@ -24,12 +24,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "tools"), str(ROOT / "art/src/concept")]
 
 import _furniture as F  # noqa: E402
-import doll  # noqa: E402
 import house as Hs  # noqa: E402
 import need_icons  # noqa: E402
 import make_creator as mc  # noqa: E402
 from pixelkit import P, Sprite, rgba  # noqa: E402
-from pixelkit.palette import CLOTH_STEPS, LIGHT_HUE, SHADOW_HUE, SKIN_SHADOW_HUE, SKIN_STEPS, SWATCHES  # noqa: E402
 
 SRC = ROOT / "prototype/demo/index.src.html"
 OUT = ROOT / "prototype/demo/index.html"
@@ -166,12 +164,9 @@ def main():
         "monitor": (mx + 8, my + 5, 18, (0.75, 0.9, 1.05), "study"),
     }
 
-    layers = mc.collect_layers()
-    emotes = {f"emote/{n}": doll.emote(n) for n in doll.EMOTES}
-    table, enc = mc.encode({**layers, **emotes})
-
     data = {
-        "W": Hs.W, "H": Hs.H, "dollW": doll.W, "dollH": doll.H,
+        "W": Hs.W, "H": Hs.H,
+        "doll": mc.doll_data(),   # Buddy's role maps + dressing-room options (shared with the creator)
         "bg": {"day": png(day), "night": png(night)},
         "needIcons": {k: png(need_icons.icon(k)) for k in need_icons.GRIDS},
         "doors": doors, "leaves": leaves, "overlays": overlays,
@@ -181,15 +176,9 @@ def main():
         "bathHead": [tub_x + 5, tub_y + 6],
         "path": path, "spots": spots, "rooms": rooms, "roomX": room_x, "lights": lights,
         "emissive": sorted({c.lower() for c in Hs.EMISSIVE}),
-        "colors": table, "layers": enc,
-        "seq": [{**{"expr": "neutral", "look": 0, "bob": 0, "sway": 0, "wave": None}, **kw, "emote": em, "ms": ms}
-                for kw, em, ms in doll.IDLE_SEQ],
-        "swatches": SWATCHES,
-        "ramp": {"cloth": CLOTH_STEPS, "skin": SKIN_STEPS, "shadowHue": SHADOW_HUE,
-                 "skinShadowHue": SKIN_SHADOW_HUE, "lightHue": LIGHT_HUE},
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    OUT.write_text(SRC.read_text().replace("/*__DEMO_DATA__*/null", blob))
+    OUT.write_text(mc.inline_shared(SRC.read_text()).replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 
 

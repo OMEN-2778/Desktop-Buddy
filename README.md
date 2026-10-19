@@ -6,8 +6,10 @@ Just like a Sim from *The Sims*, this tiny character lives permanently on your d
 - `prototype/demo/` — playable life-sim demo: the two-storey cross-section house,
   Buddy living on her own (needs, autonomous choices, walking, stairs, doors,
   day/night lighting). Build: `PYTHONPATH=tools python3 tools/make_demo.py`
-- `prototype/creator/` — character creator (gender, hair, outfit, accessory,
-  free colors). Build: `python3 tools/make_creator.py`
+- `prototype/creator/` — Buddy 造型室, the dressing room: hairstyles, eye
+  shapes, tops, bottoms, socks, stackable accessories, free colors. The demo
+  opens the same panel above the house when you click the wardrobe (shared
+  code in `prototype/shared/`). Build: `python3 tools/make_creator.py`
 
 ## Art
 

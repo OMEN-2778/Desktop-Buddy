@@ -22,6 +22,7 @@
   --accent-hi: #6c90c8;
   --accent-lo: #2f3c6d;
   --accent-ink: #f7f6fb;
+  --accent-soft: #cfdcf2;
   --focus: #d29b30;
   /* needs: track ring + three states (from the sketch) */
   --ring: #ffffff;
@@ -36,14 +37,14 @@
   :root:not([data-theme="light"]) {
     --bg: #17131f; --dither: #1d1828; --panel: #2b2538; --panel-2: #332c42; --ink: #f7f6fb; --muted: #bab7c9;
     --edge: #0d0a12; --bevel-hi: #433a54; --bevel-lo: #1f1a2a; --shadow: #0d0a12;
-    --accent: #6c90c8; --accent-hi: #a6c5e7; --accent-lo: #2f3c6d; --accent-ink: #141228; --focus: #efc452;
+    --accent: #6c90c8; --accent-hi: #a6c5e7; --accent-lo: #2f3c6d; --accent-ink: #141228; --accent-soft: #34446a; --focus: #efc452;
     --ring: #f4f1f8; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #17131f; --dither: #1d1828; --panel: #2b2538; --panel-2: #332c42; --ink: #f7f6fb; --muted: #bab7c9;
   --edge: #0d0a12; --bevel-hi: #433a54; --bevel-lo: #1f1a2a; --shadow: #0d0a12;
-  --accent: #6c90c8; --accent-hi: #a6c5e7; --accent-lo: #2f3c6d; --accent-ink: #141228; --focus: #efc452;
+  --accent: #6c90c8; --accent-hi: #a6c5e7; --accent-lo: #2f3c6d; --accent-ink: #141228; --accent-soft: #34446a; --focus: #efc452;
   --ring: #f4f1f8; color-scheme: dark;
 }
 * { box-sizing: border-box; border-radius: 0; }
@@ -75,10 +76,11 @@ body {
    Sizes come from JS (fit): --u is one house pixel on screen, --bh the dot /
    bar height, --bar-w the open length; the column is exactly as tall as the
    house and sits just left of it. Bars only ever grow to the left. */
-.widget { display: flex; align-items: stretch; gap: var(--g, 12px); padding-left: calc(var(--bar-w, 200px) - var(--bh, 24px)); }
+.widget { display: flex; align-items: flex-end; gap: var(--g, 12px); padding-left: calc(var(--bar-w, 200px) - var(--bh, 24px)); }
 .needs {
   position: relative;
   flex: none;
+  height: var(--house-h, 236px);   /* flush with the house, not with the studio above it */
   width: var(--bh, 24px);
   display: flex;
   flex-direction: column;
@@ -144,35 +146,27 @@ body {
   content: ""; position: absolute; inset: -6px; border: 2px dashed var(--focus); pointer-events: none;
 }
 
-/* ---------- wardrobe: a small pixel window that pops up beside the wardrobe ---------- */
-.wardrobe {
-  position: absolute;
-  z-index: 5;
-  width: 248px;
-  background: var(--panel);
-  color: var(--ink);
-  font-size: 12px;
-  box-shadow:
-    0 -3px 0 0 var(--edge), 0 3px 0 0 var(--edge), -3px 0 0 0 var(--edge), 3px 0 0 0 var(--edge),
-    6px 6px 0 0 var(--shadow);
-  animation: wpop .32s cubic-bezier(.3, 1.6, .5, 1) both;
-  transform-origin: 0 0;
+/* ---------- 造型室: opens above the house (never over it), as wide as the house ----------
+   The slot grows from 0 to the studio's height, pushing the house down; the
+   clip keeps room for the studio's pixel outline and drop shadow. */
+.house-col { display: grid; min-width: 0; width: var(--house-w, 684px); }
+.studio-slot {
+  display: grid;
+  width: var(--studio-w, 684px);
+  margin-left: calc(-1 * var(--studio-dx, 0px));   /* phones: also spans the needs column (see fit) */
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .42s cubic-bezier(.3, 1.2, .5, 1), margin-bottom .42s cubic-bezier(.3, 1.2, .5, 1);
+  margin-bottom: 0;
 }
-@keyframes wpop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.wardrobe .wtitle { display: flex; justify-content: space-between; align-items: center; background: #33253b; color: #f7f6fb; padding: 3px 4px 3px 10px; font-weight: 700; letter-spacing: .1em; }
-.wardrobe .wtitle button { margin: 0; padding: 0 6px; font-size: 12px; box-shadow: none; background: transparent; color: inherit; }
-.wardrobe .wbody { padding: 8px 10px 10px; display: grid; gap: 6px; }
-.wardrobe .wrow { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); gap: 6px; align-items: center; }
-.wardrobe .wl { color: var(--muted); font-weight: 700; }
-.wardrobe .chips { display: flex; flex-wrap: wrap; gap: 3px 4px; }
-.wardrobe .chips button { margin: 2px; padding: 1px 6px; font-size: 12px; }
-.wardrobe .sw { display: flex; flex-wrap: wrap; gap: 3px; }
-.wardrobe .sw button {
-  width: 14px; height: 14px; margin: 0; padding: 0; background: var(--c);
-  box-shadow: 0 0 0 1px var(--edge);
+.studio-slot.open { grid-template-rows: 1fr; margin-bottom: calc(var(--u) * 7); }
+.studio-clip {
+  min-height: 0; overflow: hidden;
+  padding: var(--u) calc(var(--u) * 3) calc(var(--u) * 3) var(--u);
+  margin: calc(-1 * var(--u)) calc(-3 * var(--u)) calc(-3 * var(--u)) calc(-1 * var(--u));
 }
-.wardrobe .sw button[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
-.wardrobe #wRandom { justify-self: start; margin-top: 2px; }
+#studio { --sp: var(--u); width: var(--studio-w, 684px); }
+@media (prefers-reduced-motion: reduce) { .studio-slot { transition: none; } }
+/*__SHARED_STUDIO_CSS__*/
 
 /* ---------- temporary console (time, suggestions, look, diary) ---------- */
 .console {
@@ -222,19 +216,9 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
       <div class="need" style="--i:2" data-k="hygiene" role="meter" aria-label="清洁" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="hygiene"></div>
       <div class="need" style="--i:3" data-k="fun" role="meter" aria-label="开心" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="fun"></div>
     </div>
-    <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点她一下试试。"></canvas>
-    <div class="wardrobe" id="wardrobe" hidden role="dialog" aria-label="衣柜">
-      <div class="wtitle"><span>衣柜</span><button type="button" id="wClose" aria-label="关上衣柜">✕</button></div>
-      <div class="wbody">
-        <div class="wrow"><span class="wl">性别</span><div class="chips" data-k="gender"><button type="button" data-v="f">女生</button><button type="button" data-v="m">男生</button></div></div>
-        <div class="wrow"><span class="wl">发型</span><div class="chips" data-k="style"><button type="button" data-v="messy">短发</button><button type="button" data-v="neat">侧分</button><button type="button" data-v="long">长发</button><button type="button" data-v="buns">丸子</button></div></div>
-        <div class="wrow"><span class="wl">衣服</span><div class="chips" data-k="outfit"><button type="button" data-v="jacket">夹克</button><button type="button" data-v="hoodie">卫衣</button><button type="button" data-v="dress">裙装</button></div></div>
-        <div class="wrow"><span class="wl">配饰</span><div class="chips" data-k="acc"><button type="button" data-v="">无</button><button type="button" data-v="glasses">眼镜</button><button type="button" data-v="bow">蝴蝶结</button><button type="button" data-v="headphones">耳机</button></div></div>
-        <div class="wrow"><span class="wl">发色</span><div class="sw" data-k="hair"></div></div>
-        <div class="wrow"><span class="wl">上衣</span><div class="sw" data-k="top"></div></div>
-        <div class="wrow"><span class="wl" id="wBottomLabel">下装</span><div class="sw" data-k="bottom"></div></div>
-        <button type="button" id="wRandom">随机搭配</button>
-      </div>
+    <div class="house-col">
+      <div class="studio-slot" id="studioSlot"><div class="studio-clip"><section id="studio" hidden></section></div></div>
+      <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她一下试试。"></canvas>
     </div>
   </div>
 </main>
@@ -252,7 +236,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <button type="button" data-speed="3" aria-pressed="true">×3</button>
         <button type="button" data-speed="10" aria-pressed="false">×10</button>
       </div>
-      <p class="note">点家具让她去做事：床、衣柜、浴缸、马桶、洗手台、毛巾、书架、电脑、沙发、电视、灶台、餐桌、冰箱、绿植；台灯和窗户可以开关。</p>
+      <p class="note">点家具让她去做事：床、衣柜（打开造型室）、浴缸、马桶、洗手台、毛巾、书架、电脑、沙发、电视、灶台、餐桌、冰箱、绿植；台灯和窗户可以开关。</p>
     </div>
     <div class="box" style="grid-column: span 2">
       <div class="label">日记</div>
@@ -265,85 +249,29 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
 const DATA = /*__DEMO_DATA__*/null;
 const D = DATA;
 
-// ================================================================ colors
-function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; }
-function rgbToHex(r, g, b) { return "#" + [r, g, b].map(v => Math.round(v * 255).toString(16).padStart(2, "0")).join(""); }
-function rgbToHsv(r, g, b) {
-  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
-  let h = 0;
-  if (d) { if (max === r) h = ((g - b) / d) % 6; else if (max === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
-  return [h, max ? d / max : 0, max];
-}
-function hsvToRgb(h, s, v) {
-  const c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c;
-  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
-  return [r + m, g + m, b + m];
-}
-function toward(h, t, a) { const d = (((t - h + 180) % 360) + 360) % 360 - 180; return (h + Math.max(-a, Math.min(a, d)) + 360) % 360; }
-function rampFrom(base, skin = false) {
-  const R = D.ramp, steps = skin ? R.skin : R.cloth, sh = skin ? R.skinShadowHue : R.shadowHue;
-  const [h, s, v] = rgbToHsv(...hexToRgb(base));
-  return steps.map(([dv, fs, dh]) => {
-    let hh = h, ss = s, vv = v;
-    if (dv < 0) { hh = toward(h, sh, dh); ss = Math.min(1, s * fs + 0.06); vv = v * (1 + dv); }
-    else if (dv > 0) { hh = toward(h, R.lightHue, dh); ss = s * fs; vv = Math.min(1, v + (1 - v) * dv * (0.4 + 0.6 * v)); }
-    return rgbToHex(...hsvToRgb(hh, ss, vv));
-  });
-}
+/*__SHARED_DOLL_JS__*/
+/*__SHARED_STUDIO_JS__*/
 
 // ================================================================ Buddy's look
-const PRESETS = {
-  f: { gender: "f", style: "long", outfit: "dress", acc: "bow", hair: "#433a54", skin: "#f6c39c", top: "#b94b4b", bottom: "#46619e", eye: "#46619e" },
-  m: { gender: "m", style: "messy", outfit: "jacket", acc: "", hair: "#7c4734", skin: "#f6c39c", top: "#447840", bottom: "#46619e", eye: "#7c4734" },
-};
-let look = { ...PRESETS.f };
-let ramps = null;
+const doll = BuddyDoll(D.doll);
+let look = doll.normalize(doll.PRESETS.f);
+let ramps = doll.rampsOf(look);
 function setLook(l) {
-  look = l;
-  ramps = { hair: rampFrom(l.hair), skin: rampFrom(l.skin, true), top: rampFrom(l.top), bottom: rampFrom(l.bottom), eye: rampFrom(l.eye) };
+  look = doll.normalize(l);
+  ramps = doll.rampsOf(look);
   dollCache.clear();
+  rotCache.clear();
 }
 
-const DW = D.dollW, DH = D.dollH;
-const LEG_START = { jacket: 23, hoodie: 24, dress: 25 };
-const SIT_DROP = { jacket: [23, 24], hoodie: [23, 24], dress: [22, 25] };
-const dollCache = new Map();
-
-function layerKeys(st, f) {
-  const arm = f.wave !== null && f.wave !== undefined;
-  const k = [];
-  if (st.style === "long" || st.style === "buns") k.push(`back/${st.style}/${f.bob}`);
-  k.push(`body/${st.outfit}/${arm ? 1 : 0}`);
-  k.push(`head/${st.style}/${f.bob}`);
-  if (st.style === "messy") k.push(`ahoge/${f.sway % 2}/${f.bob}`);
-  k.push(`face/${st.gender}/${f.expr}/${f.look}/${f.bob}/${st.acc === "glasses" ? 1 : 0}`);
-  if (st.acc) k.push(`acc/${st.acc}/${f.bob}`);
-  if (arm) k.push(`arm/${f.wave}`);
-  return k;
-}
-function paintLayer(buf, w, h, layer, ox, oy) {
-  if (!layer) return;
-  const y0 = layer.y || 0;
-  layer.rows.forEach((row, j) => {
-    for (let i = 0; i < row.length; i++) {
-      const t = row[i];
-      if (t === ".") continue;
-      const c = D.colors[t];
-      const hex = typeof c === "string" ? c : ramps[c[0]][c[1]];
-      const x = ox + i, y = oy + y0 + j;
-      if (x < 0 || y < 0 || x >= w || y >= h) continue;
-      const [r, g, b] = hexToRgb(hex), p = (y * w + x) * 4;
-      buf[p] = r * 255; buf[p + 1] = g * 255; buf[p + 2] = b * 255; buf[p + 3] = 255;
-    }
-  });
-}
+const DW = doll.W, DH = doll.H;
+const dollCache = new Map(), rotCache = new Map();
 function rowsOf(buf, w, r) { return buf.slice(r * w * 4, (r + 1) * w * 4); }
 function applyPose(buf, pose) {
-  const W4 = DW * 4;
+  const W4 = DW * 4, P = D.doll.pose[look.bottomStyle];
   if (pose === "walkL" || pose === "walkR") {   // lift one foot by a pixel
     const out = buf.slice();
     const c0 = pose === "walkL" ? 0 : DW / 2, c1 = c0 + DW / 2;
-    for (let r = LEG_START[look.outfit]; r < DH; r++) {
+    for (let r = P.legStart; r < DH; r++) {
       for (let c = c0; c < c1; c++) {
         const src = (r * DW + c) * 4, dst = ((r - 1) * DW + c) * 4;
         for (let k = 0; k < 4; k++) out[dst + k] = buf[src + k];
@@ -353,9 +281,8 @@ function applyPose(buf, pose) {
     return out;
   }
   if (pose === "sit") {                         // drop the thighs: head sinks, knees forward
-    const drop = SIT_DROP[look.outfit];
     const keep = [];
-    for (let r = 0; r < DH; r++) if (!drop.includes(r)) keep.push(r);
+    for (let r = 0; r < DH; r++) if (!P.sitDrop.includes(r)) keep.push(r);
     const out = new Uint8ClampedArray(buf.length);
     const off = DH - keep.length;
     keep.forEach((r, i) => out.set(rowsOf(buf, DW, r), (i + off) * W4));
@@ -366,24 +293,15 @@ function applyPose(buf, pose) {
 function dollCanvas(f, pose = "stand", cropRows = DH) {
   const key = JSON.stringify([f.expr, f.look, f.bob, f.sway, f.wave ?? null, pose, cropRows]);
   if (dollCache.has(key)) return dollCache.get(key);
-  let buf = new Uint8ClampedArray(DW * DH * 4);
-  for (const k of layerKeys(look, f)) paintLayer(buf, DW, DH, D.layers[k], 0, 0);
-  buf = applyPose(buf, pose);
-  const c = document.createElement("canvas");
-  c.width = DW; c.height = cropRows;
-  c.getContext("2d").putImageData(new ImageData(buf.slice(0, DW * cropRows * 4), DW, cropRows), 0, 0);
+  const c = doll.toCanvas(applyPose(doll.pixels(look, f, ramps), pose), DW, DH, cropRows);
   dollCache.set(key, c);
   return c;
 }
 const emoteCache = new Map();
 function emoteCanvas(name) {
   if (emoteCache.has(name)) return emoteCache.get(name);
-  const L = D.layers["emote/" + name];
-  const buf = new Uint8ClampedArray(L.w * L.h * 4);
-  paintLayer(buf, L.w, L.h, L, 0, 0);
-  const c = document.createElement("canvas");
-  c.width = L.w; c.height = L.h;
-  c.getContext("2d").putImageData(new ImageData(buf, L.w, L.h), 0, 0);
+  const e = doll.emotePixels(name, ramps);
+  const c = doll.toCanvas(e.buf, e.w, e.h);
   emoteCache.set(name, c);
   return c;
 }
@@ -795,6 +713,8 @@ function fit() {
   const barW = Math.round(Math.max(BAR_MIN, Math.min(BAR_MAX, avail - wPx - g, wPx * 0.42)) / u) * u;
   const widget = document.getElementById("widget");
   widget.style.setProperty("--u", u + "px");
+  widget.style.setProperty("--house-w", wPx + "px");
+  widget.style.setProperty("--house-h", hPx + "px");
   widget.style.setProperty("--bh", bh + "px");
   widget.style.setProperty("--g", g + "px");
   widget.style.setProperty("--bar-w", barW + "px");
@@ -807,6 +727,11 @@ function fit() {
   widget.style.setProperty("--fmin", (n - 4) * u + "px");
   widget.style.setProperty("--stripes", `url(${stripePattern(u)})`);
   needGeo = { u, bh, barW };
+  // the 造型室 is exactly as wide as the house; on phones the house is too
+  // small for it, so it also spans the needs column to the house's left
+  const narrowHouse = wPx < 520;
+  widget.style.setProperty("--studio-w", (narrowHouse ? wPx + g + barW : wPx) + "px");
+  widget.style.setProperty("--studio-dx", (narrowHouse ? g + barW : 0) + "px");
   if (typeof kickNeeds === "function") kickNeeds();
 }
 
@@ -838,14 +763,13 @@ function activityFrame(ms) {
     }
   }
   // idle: replay the lively idle loop
-  const total = D.seq.reduce((a, s) => a + s.ms, 0);
-  let t = ms % total, fr = D.seq[0];
-  for (const s of D.seq) { if (t < s.ms) { fr = s; break; } t -= s.ms; }
-  const em = fr.emote === "cheer" ? (look.gender === "f" ? "heart" : "star") : fr.emote;
+  const seq = D.doll.seq, total = seq.reduce((a, s) => a + s.ms, 0);
+  let t = ms % total, fr = seq[0];
+  for (const s of seq) { if (t < s.ms) { fr = s; break; } t -= s.ms; }
+  const em = fr.emote === "cheer" ? doll.cheer(look) : fr.emote;
   return { f: { ...fr }, pose: "stand", emote: em && fr.wave == null ? em : null };
 }
 
-const rotCache = new Map();
 function lyingHead(f) {   // the sleepy head turned 90 degrees: lying on the pillow
   const key = JSON.stringify(f);
   if (rotCache.has(key)) return rotCache.get(key);
@@ -1025,7 +949,7 @@ view.addEventListener("click", e => {
   const [x, y] = canvasXY(e);
   if (buddyHit(x, y)) {
     if (sim.mode === "act" && sim.act === "sleep") { log("你戳了戳她，她咂咂嘴继续睡。"); return; }
-    reaction = { until: realClock + 1.6, emote: look.gender === "f" ? "heart" : "star" };
+    reaction = { until: realClock + 1.6, emote: doll.cheer(look) };
     sim.needs.fun = clamp(sim.needs.fun + 4);
     if (Math.random() < 0.5) log(["你戳了她一下，她冲你挥挥手。", "她发现你在看她，开心地挥了挥手。", "被你戳得咯咯笑。"][Math.floor(Math.random() * 3)]);
     return;
@@ -1034,59 +958,41 @@ view.addEventListener("click", e => {
   if (id) useFurniture(id);
 });
 
-// ================================================================ wardrobe
+// ================================================================ 造型室
+// Clicking the wardrobe sends her there; when she arrives the dressing room
+// slides open above the house (pushing it down, never covering it).
 let wardrobeOpen = false;
-const wardEl = document.getElementById("wardrobe");
-function saveLook() { try { localStorage.setItem("buddy-look", JSON.stringify(look)); } catch (e) { /* storage unavailable */ } }
-function positionWardrobe() {
-  const c = D.clickables.wardrobe, cw = CLICK.wardrobe ? CLICK.wardrobe.w : 22;
-  const panelW = wardEl.offsetWidth || 248;
-  let left = view.offsetLeft + (c.x + cw + 3) * scale;
-  if (left + panelW > view.offsetLeft + view.width) left = view.offsetLeft + c.x * scale - panelW - 8;
-  wardEl.style.left = Math.max(0, left) + "px";
-  wardEl.style.top = view.offsetTop + Math.max(0, c.y - 6) * scale + "px";
-}
-function syncWardrobe() {
-  wardEl.querySelectorAll(".chips").forEach(g => g.querySelectorAll("button").forEach(b =>
-    b.setAttribute("aria-pressed", String((look[g.dataset.k] || "") === b.dataset.v))));
-  wardEl.querySelectorAll(".sw").forEach(g => g.querySelectorAll("button").forEach(b =>
-    b.setAttribute("aria-pressed", String(look[g.dataset.k].toLowerCase() === b.dataset.v))));
-  document.getElementById("wBottomLabel").textContent = look.outfit === "dress" ? "裙子" : "裤子";
-}
-function changeLook(patch) {
-  setLook({ ...look, ...patch });
+const studioEl = document.getElementById("studio"), studioSlot = document.getElementById("studioSlot");
+function saveLook() { try { localStorage.setItem("buddy-look-v2", JSON.stringify(look)); } catch (e) { /* storage unavailable */ } }
+function changeLook(l) {
+  setLook(l);
   saveLook();
-  syncWardrobe();
   const p = pathPos(sim.s);
   poof = { t0: realClock, x: p.x, y: p.y - 14 };
 }
-function openWardrobe() { wardrobeOpen = true; wardEl.hidden = false; syncWardrobe(); positionWardrobe(); }
-function closeWardrobe() { if (!wardrobeOpen) return; wardrobeOpen = false; wardEl.hidden = true; log("换好衣服了，美美的！"); }
-for (const [k, list] of [["hair", D.swatches.hair], ["top", D.swatches.cloth], ["bottom", D.swatches.cloth]]) {
-  const box = wardEl.querySelector(`.sw[data-k="${k}"]`);
-  for (const [label, hex] of list) {
-    const b = document.createElement("button");
-    b.type = "button"; b.title = label; b.setAttribute("aria-label", label);
-    b.dataset.v = hex.toLowerCase(); b.style.setProperty("--c", hex);
-    box.appendChild(b);
-  }
+let studio = null;
+function openWardrobe() {
+  if (wardrobeOpen) return;
+  wardrobeOpen = true;
+  studio.setLook(look);
+  studioEl.hidden = false;
+  studio.refit();
+  studio.start();
+  requestAnimationFrame(() => {
+    studioSlot.classList.add("open");
+    const r = view.getBoundingClientRect();
+    if (r.top < 0 || studioEl.getBoundingClientRect().top < 0) studioEl.scrollIntoView({ block: "start", behavior: "smooth" });
+  });
 }
-wardEl.addEventListener("click", e => {
-  const b = e.target.closest("button"); if (!b) return;
-  if (b.id === "wClose") { closeWardrobe(); return; }
-  if (b.id === "wRandom") {
-    const pick = a => a[Math.floor(Math.random() * a.length)];
-    const cloth = D.swatches.cloth.map(c => c[1].toLowerCase());
-    const top = pick(cloth);
-    changeLook({ style: pick(["messy", "neat", "long", "buns"]), outfit: pick(["jacket", "hoodie", "dress"]),
-      acc: pick(["", "", "glasses", "bow", "headphones"]), hair: pick(D.swatches.hair)[1].toLowerCase(),
-      top, bottom: pick(cloth.filter(c => c !== top)) });
-    return;
-  }
-  const g = b.closest("[data-k]"); if (!g) return;
-  changeLook({ [g.dataset.k]: b.dataset.v });
-});
-wardEl.addEventListener("keydown", e => { if (e.key === "Escape") closeWardrobe(); });
+function closeWardrobe() {
+  if (!wardrobeOpen) return;
+  wardrobeOpen = false;
+  studioSlot.classList.remove("open");
+  studio.stop();
+  const hide = () => { if (!wardrobeOpen) studioEl.hidden = true; };
+  if (reduceMotionUI) hide(); else setTimeout(hide, 450);
+  log("换好衣服了，美美的！");
+}
 
 // ================================================================ loop
 let last = performance.now(), uiT = 0;
@@ -1105,10 +1011,11 @@ function frame(now) {
 
 (async function boot() {
   let saved = null;
-  try { saved = JSON.parse(localStorage.getItem("buddy-look") || "null"); } catch (e) { /* storage unavailable */ }
-  setLook(saved && typeof saved === "object" ? { ...PRESETS.f, ...saved } : { ...PRESETS.f });
+  try { saved = JSON.parse(localStorage.getItem("buddy-look-v2") || "null"); } catch (e) { /* storage unavailable */ }
+  setLook(saved && typeof saved === "object" ? saved : doll.PRESETS.f);
+  studio = BuddyStudio(studioEl, doll, D.doll, { look, previewScale: 3, thumbH: 40, onChange: changeLook, onClose: closeWardrobe });
   fit();
-  window.addEventListener("resize", () => { fit(); if (wardrobeOpen) positionWardrobe(); });
+  window.addEventListener("resize", fit);
   await loadAssets();
   log("—— 第 1 天 ——", "day");
   log("还在被窝里睡觉。");

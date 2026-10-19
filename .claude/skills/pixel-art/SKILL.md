@@ -16,7 +16,8 @@ PYTHONPATH=tools python3 -m pixelkit build                 # every asset script
 PYTHONPATH=tools python3 -m pixelkit build art/src/x/y.py  # one script
 PYTHONPATH=tools python3 -m pixelkit swatch                # palette -> art/preview/palette.png
 PYTHONPATH=tools python3 -m pixelkit lint some.png
-python3 tools/make_creator.py   # after any doll.py change: rebuild prototype/creator/index.html
+python3 tools/make_creator.py   # after any doll.py / prototype/shared change: rebuild the 造型室 page
+PYTHONPATH=tools python3 tools/make_demo.py   # ...and the house demo (it embeds the same doll + studio)
 ```
 
 - An asset script defines `build() -> {name: Sprite | Anim}` (optional
@@ -55,35 +56,59 @@ own material (hair with hair[0], skin with skin[0]…). Only shoes/eyes use ink.
 **Characters (paper doll)** — `art/src/concept/doll.py`.
 - Frame 20×28, chibi (~15px head). Eyes 2×3 at rows 10–12, cols 6–7 and
   12–13; mouth row 13 cols 9–10; blush row 13 cols 5–6 / 13–14.
+- Every part is its own layer, back→front: back hair, skin (neck, arms,
+  legs — hands always come from here), socks, shoes, bottom, top, overall
+  bib, scarf, head (front hair + face skin), ahoge, face (eye shape +
+  expression), head accessories, raised arm, emote bubble.
 - Grids use *role letters* (hair `O k h H Y`, skin `q s S L`, top `u c C T`,
-  bottom `n p P`, shoes `o x X`, `W` white trim). A `Doll` maps roles to
-  ramps, so every hairstyle/outfit works in every color.
-- Layers back→front: back hair, body (outfit/pose), head, face
-  (expression), accessory, raised arm, emote bubble.
-- Boys vs girls differ in more than hair: boys get thick brows on row 9,
-  compact 2×2 eyes (rows 11–12, big 2×3 only when surprised) and a lopsided
-  smirk; girls get 2×3 eyes with a lash flick.
+  bottom `n p P R`, socks `m b M N`, shoes `o x X`, `W w` white trim). A
+  `Doll` maps roles to ramps, so every part works in every color.
+- Body rows: neck 15, torso/arms 16–21 (arms cols 3–5 / 14–16), legs 22–25
+  (2px legs at cols 7–8 / 11–12), shoes 26–27. Long sleeves end on row 19,
+  tees on 18 (outline row), tanks show the whole arm.
+- Option sets (`OPTIONS`, also the UI order + names): hair `HEADS` (short:
+  messy, neat, buzz, mid, curly; long: long, bob, buns, pony, twin),
+  `EYE_SHAPES` (round, bean, sparkle, droopy, cat, smile), `TOPS` (+ `SLEEVES`
+  for the waving arm), `BOTTOMS` (+ `BOTTOM_POSE`: shoes, walk leg-lift row,
+  rows dropped when sitting), `SOCKS` (none/short/long), `ACCESSORIES`
+  (any number at once, one pair of eyewear; `HEAD_ACC_ORDER` is draw order).
+- Gender only changes face traits + presets: boys get thick brows on row 9
+  (hidden under eyewear) and a lopsided smirk; girls get a lash flick on
+  round/sparkle eyes. Eye shape applies to the neutral face; surprised
+  always opens round eyes; happy/blink/sleepy/flustered are shared.
+- Only 2 columns are free beside the head: ponytails/twin tails hang IN
+  FRONT of the side hair (`draw_tails`), not behind it (they vanished).
+  Curls are overlapping puffs (`draw_curly`); keep them above row 10.
+- Socks only show where the bottom leaves legs: shorts/overalls/mini show 2
+  rows (none/short/long all differ), the pleated hem dips so long socks
+  peek through, trousers/jeans/maxi hide them (the UI says so).
 - User feedback so far: the girl (long hair, bow, collar, pleated skirt) is
   liked as is. The spiky "hedgehog" boy hair was rejected as ugly — the boy
   keeps the round messy crown with the small ahoge. Ask before reshaping it.
 
-**Player colors (role maps)** — players pick hair, skin, top, bottom and eye
-colors freely. Never bake those colors into shipped character art:
+**Player colors (role maps)** — players pick hair, skin, top, bottom, sock and
+eye colors freely. Never bake those colors into shipped character art:
 - `ramp_from(base, skin=False)` in `palette.py` turns one picked color into a
   5-shade ramp (base = index 2; for skin, index 3). `SWATCHES` holds the
-  creator's preset swatches. `prototype/creator/index.src.html` has a JS copy
-  of `ramp_from` — change both together.
+  preset swatches. `prototype/shared/doll.js` has a JS copy of `ramp_from` —
+  change both together.
 - `Doll.layers()` yields `(key, draw)` per layer; the key names everything
-  except colors. `tools/make_creator.py` draws each key once with marker
-  colors and stores a role map (pixel = "hair shade 2", or a fixed color).
-  The runtime recolors role maps with the player's ramps.
-- Fixed colors (ink, white trim, blush, mouth, glasses, bow, shoes per
-  outfit) stay real colors in the role map.
+  except colors. `tools/make_creator.py` (`collect_layers`, walking options
+  per part, not the full product) draws each key once with marker colors
+  and stores a role map (pixel = "hair shade 2", or a fixed color). The
+  runtime recolors role maps with the player's ramps.
+- `prototype/shared/doll.js` `layerKeys()` must build exactly the keys
+  `Doll.layers()` builds (it skips keys that don't exist, e.g. back hair for
+  short styles). After changing keys, run a parity check: random looks ×
+  frames, Python keys vs JS keys.
+- Fixed colors (ink, white trim, blush, mouth, accessories, hair ties, shoes
+  per bottom) stay real colors in the role map.
 - Liveliness comes from small things: blink, 1px head bob with ahoge sway,
   1px eye glances, expression changes, emote bubbles, a wave.
-- New hairstyle/outfit = new entry in `HEADS` / `BODIES` (+ back-hair
-  shape if needed). Keep every row ≤ 20 chars; write intentional empty rows
-  as `.` (blank lines between joined blocks are dropped).
+- New part = new entry in its dict + `OPTIONS`; keep every row ≤ 20 chars;
+  write intentional empty rows as `.` (blank lines between joined blocks
+  are dropped). Review with the build's `hair_styles`, `eye_shapes`, `tops`,
+  `bottoms`, `accessories` sheets at 8–14x.
 
 **House (cross-section)** — `art/src/concept/house.py`, furniture in
 `art/src/concept/_furniture.py` (build also emits `furniture.png`, every
@@ -123,11 +148,19 @@ piece side by side — review new pieces there at 6x).
   warm pools confined to the light's own room. `sky_night`, `light` and
   `glass[1:]` colors are emissive — don't use glass for non-glowing things.
 
-**UI** — app UI (creator, menus) is pixel style too: square corners, notched
+**UI** — app UI (造型室, menus) is pixel style too: square corners, notched
 3px outlines in `ink`, hard offset shadows, bevelled buttons that press down,
 game-window title bars, colors from the palette. Font: Source Han Sans /
 Noto Sans SC (思源黑体) only — the user asked for it; no pixel fonts.
-Reference: `prototype/creator/index.src.html`.
+Reference: `prototype/shared/studio.css`.
+- The dressing room is called **Buddy 造型室** (not 捏人台). One component
+  (`prototype/shared/studio.js` + `.css`, pasted into both pages by
+  `make_creator.inline_shared`): stage with Buddy, tabs 发型 / 五官 / 上装 /
+  下装 / 袜子 / 饰品, every option a live thumbnail in the current colors,
+  swatch rows + a custom picker per color. Accessories are toggles.
+- In the house demo the wardrobe opens it ABOVE the house, never over it,
+  exactly as wide as the house (it slides open and pushes the house down).
+  On phones the house is too small, so it also spans the needs column.
 - In-game UI stays hidden until asked for (user's direction: "the screen is
   just the house"). Needs are four pixel dots left of the house, flush with
   its top and bottom, that stretch LEFT into bars on hover/tap — never over
@@ -158,3 +191,7 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   and an ahoge rather than spikes (the user disliked spikes).
 - Anything dark right under the chin reads as a beard (tried neck
   headphones); brows directly on top of 3-row eyes merge into one blob.
+- `Sprite.outline()` uses `np.roll`, so shapes touching the canvas edge
+  wrap around to the other side — outline with `grow=True`, then crop.
+- Thin things behind the head (tails, ribbons) disappear: at 20px wide
+  there is no room beside the face, draw them in front.
