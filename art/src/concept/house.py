@@ -10,7 +10,7 @@ sparse — a few real pieces each, with space to walk.
 """
 
 import numpy as np
-from pixelkit import P, Sprite, rgba
+from pixelkit import Anim, P, Sprite, rgba
 
 import _furniture as F
 import doll
@@ -66,12 +66,24 @@ for _c in (OAK[2], OAK[3], OAK[4]):
 
 # ---------------------------------------------------------------- shell
 
+# Doors sit in the interior walls. Closed, the wall is solid and seamless;
+# open, the wall shows a 2.1m gap and the leaf swings into one room.
+# (id, storey, wall x, left side, right side)
+DOORS = [
+    ("stair|bedroom", 1, 54, "stairs", "bedroom"),
+    ("bedroom|bath", 1, 158, "bedroom", "bath"),
+    ("bath|study", 1, 228, "bath", "study"),
+    ("stair|living", 0, 54, "stairs", "living"),
+    ("living|kitchen", 0, 228, "living", "kitchen"),
+]
+DOOR_W = {0: 0, 30: 5, 60: 10, 90: 13}  # leaf width seen front-on at each angle
 
-def cut_block(s, x, y, w, h):
-    s.rect(x, y, w, h, FR[0])
-    if w > 2 and h > 2:
-        s.rect(x + 1, y + 1, w - 2, h - 2, FR[2])
-        s.hline(x + 1, x + w - 2, y + 1, FR[3])
+
+def side_style(key):
+    if key == "stairs":
+        return P.plaster_stair, "wood"
+    r = next(r for r in ROOMS if r[0] == key)
+    return r[5], r[6]
 
 
 def back_wall(s, x, w, top, bottom, ramp):
@@ -95,38 +107,91 @@ def floor_band(s, x, w, y, kind):
                 s.set(sx, yy, OAK[1])
 
 
-def doorway_wall(s, x, storey, left, right):
-    top, fl = levels(storey)
-    for dx, (ramp, kind) in ((0, left), (INNER // 2, right)):
-        back_wall(s, x + dx, INNER // 2, top, fl, ramp)
-        floor_band(s, x + dx, INNER // 2, fl, kind)
-    cut_block(s, x, top, INNER, LINTEL)
-    s.rect(x - 2, top + LINTEL, INNER + 4, 2, POR[1]).hline(x - 1, x + INNER, top + LINTEL, POR[3])
+def structure_mask(open_doors=()):
+    """Every cut surface (slabs, outer and inner walls) as one boolean mask,
+    so it can be drawn as a single seamless shape."""
+    m = np.zeros((H, W), bool)
+
+    def add(x, y, w, h):
+        m[y : y + h, x : x + w] = True
+
+    sx, sw = STAIRS
+    add(X0, 0, X1 - X0, SLAB)
+    add(sx + sw, MID_SLAB, X1 - (sx + sw), SLAB)  # open above the stairwell
+    add(X0, FOUND, X1 - X0, SLAB + 1)
+    add(X0, 0, OUTER, FOUND + SLAB + 1)
+    add(X1 - OUTER, 0, OUTER, FOUND + SLAB + 1)
+    for did, storey, x, _, _ in DOORS:
+        top, fl = levels(storey)
+        add(x, top, INNER, fl + BAND - top)
+        if did in open_doors:
+            m[top + LINTEL : fl + BAND, x : x + INNER] = False
+    return m
+
+
+def draw_structure(s, m):
+    """Fill the mask, outline only its outer boundary, light its top edges."""
+    pad = np.pad(m, 1, constant_values=False)
+    inner = pad[:-2, 1:-1] & pad[2:, 1:-1] & pad[1:-1, :-2] & pad[1:-1, 2:]
+    edge = m & ~inner
+    lit = np.zeros_like(m)
+    lit[1:] = edge[:-1] & ~pad[:-2, 1:-1][:-1]  # just below a top edge
+    lit &= m & ~edge
+    s.px[m] = rgba(FR[2])
+    s.px[lit] = rgba(FR[3])
+    s.px[edge] = rgba(FR[0])
 
 
 def stairs(s):
-    """Oak treads on a white stringer, slim steel balusters, walnut rail."""
+    """Switchback: flight 1 climbs right-to-left to a landing on the left wall,
+    flight 2 turns and climbs left-to-right to the upper floor. Flight 2 is the
+    far flight (drawn first, a shade darker); flight 1 is the near one."""
     x0, w = STAIRS
-    n, run, rise = 14, 3, 4
+    x1 = x0 + w                      # 54, the wall to the rooms
+    n, run, rise = 7, 5, 4
+    mid = GR_FLOOR - n * rise        # landing level
+    WAL = P.walnut
+
+    def step(x, top, under, near):
+        body, face, edge = (POR[2], POR[3], POR[0]) if near else (POR[1], POR[2], POR[0])
+        tread = (OAK[3], OAK[1]) if near else (OAK[2], OAK[0])
+        s.rect(x, top, run, under - top, body).vline(x, top + 2, under - 1, face)
+        s.hline(x, x + run - 1, top, tread[0]).hline(x, x + run - 1, top + 1, tread[1])
+        s.hline(x, x + run - 1, under - 1, edge)
+
+    # flight 2 (far): from the landing up to the right
+    for j in range(n):
+        x = x1 - run * (n - j)
+        top = mid - rise * (j + 1)
+        step(x, top, top + 7, near=False)
+    xs = x1 - run * n
+    rail2 = lambda x: int(mid - 4 - (x - xs) * rise / run) - 11
+    for j in range(n):
+        px = xs + run * j + 2
+        s.vline(px, rail2(px) + 1, mid - rise * (j + 1) - 1, P.steel[1])
+    for x in range(xs, x1):
+        s.set(x, rail2(x), WAL[0])
+    # landing on the left wall
+    lw = x1 - run * n - x0
+    s.rect(x0, mid, lw, 6, POR[2]).hline(x0, x0 + lw - 1, mid, OAK[3]).hline(x0, x0 + lw - 1, mid + 1, OAK[1])
+    s.hline(x0, x0 + lw - 1, mid + 5, POR[0])
+    # flight 1 (near): from the ground floor up to the left
     for i in range(n):
-        x = x0 + i * run
+        x = x1 - run * (i + 1)
         top = GR_FLOOR - rise * (i + 1)
-        under = min(top + 12, GR_FLOOR + 1)
-        s.rect(x, top, run, under - top, POR[2])
-        s.vline(x, top + 2, under - 1, POR[3])
-        s.hline(x, x + run - 1, top, OAK[4]).hline(x, x + run - 1, top + 1, OAK[1])
-        s.hline(x, x + run - 1, under - 1, POR[0])
-    s.rect(x0 + n * run, UP_FLOOR, w - n * run, 2, OAK[2]).hline(x0 + n * run, x0 + w - 1, UP_FLOOR, OAK[3])
-    s.rect(x0 + n * run, UP_FLOOR + 2, w - n * run, 2, POR[2])
-    rail = lambda x: int(GR_FLOOR - 15 - (x - x0) * rise / run)
-    for px in range(x0 + 2, x0 + n * run, 4):
-        tread = GR_FLOOR - rise * ((px - x0) // run + 1)
-        s.vline(px, rail(px) + 1, tread - 1, P.steel[2])
-    for x in range(x0, x0 + n * run + 1):
-        s.set(x, rail(x), P.walnut[1]).set(x, rail(x) - 1, P.walnut[3])
+        step(x, top, min(top + 9, GR_FLOOR + 1), near=True)
+    # near handrail ~11px above the treads, one post per step
+    rail1 = lambda x: int(GR_FLOOR - 4 - (x1 - 1 - x) * rise / run) - 11
+    for i in range(n):
+        px = x1 - run * i - 3
+        top = GR_FLOOR - rise * (i + 1)
+        s.vline(px, rail1(px) + 1, top - 1, P.steel[2])
+    for x in range(xs, x1):
+        s.set(x, rail1(x), WAL[1]).set(x, rail1(x) - 1, WAL[3])
+    s.rect(xs - 2, mid - 12, 2, 12, WAL[1]).set(xs - 2, mid - 13, WAL[3]).set(xs - 1, mid - 13, WAL[3])  # newel post
 
 
-def shell(night=False):
+def shell(night=False, open_doors=()):
     s = Sprite(W, H)
     sx, sw = STAIRS
     back_wall(s, sx, sw, UP_WALL, GR_FLOOR, P.plaster_stair)
@@ -135,20 +200,34 @@ def shell(night=False):
         top, fl = levels(storey)
         back_wall(s, x, w, top, fl, ramp)
         floor_band(s, x, w, fl, kind)
-    cut_block(s, X0, 0, X1 - X0, SLAB)
-    cut_block(s, sx + sw, MID_SLAB, X1 - (sx + sw), SLAB)
-    cut_block(s, X0, FOUND, X1 - X0, SLAB + 1)
-    cut_block(s, X0, 0, OUTER, FOUND + SLAB + 1)
-    cut_block(s, X1 - OUTER, 0, OUTER, FOUND + SLAB + 1)
-    room = {k: (ramp, kind) for k, _, _, _, _, ramp, kind in ROOMS}
-    stair = (P.plaster_stair, "wood")
-    doorway_wall(s, 54, 1, stair, room["bedroom"])
-    doorway_wall(s, 158, 1, room["bedroom"], room["bath"])
-    doorway_wall(s, 228, 1, room["bath"], room["study"])
-    doorway_wall(s, 54, 0, stair, room["living"])
-    doorway_wall(s, 228, 0, room["living"], room["kitchen"])
+    # what shows through a door gap when it opens: each side's wall and floor
+    for _, storey, x, left, right in DOORS:
+        top, fl = levels(storey)
+        for dx, key in ((0, left), (INNER // 2, right)):
+            ramp, kind = side_style(key)
+            back_wall(s, x + dx, INNER // 2, top, fl, ramp)
+            floor_band(s, x + dx, INNER // 2, fl, kind)
     stairs(s)
+    draw_structure(s, structure_mask(open_doors))
     return s
+
+
+def draw_doors(s, doors):
+    """doors: {door id: (angle, side)} — side 'l'/'r' = room the leaf swings into."""
+    for did, storey, x, _, _ in DOORS:
+        if did not in doors:
+            continue
+        angle, side = doors[did]
+        top, fl = levels(storey)
+        y = top + LINTEL
+        # shadowed reveal inside the opening
+        s.vline(x, y, fl - 1, FR[1]) if side == "r" else s.vline(x + INNER - 1, y, fl - 1, FR[1])
+        w = DOOR_W[angle]
+        if not w:
+            continue
+        leaf = F.door_leaf(w, fl - y, hinge="left" if side == "r" else "right")
+        lx = x + INNER if side == "r" else x - w
+        s.blit(leaf, lx, y)
 
 
 # ---------------------------------------------------------------- placing
@@ -198,8 +277,8 @@ def furnish(s, night=False, buddy=doll.GIRL):
     lights, z_at = [], None
 
     # --- stairwell
-    s.blit(F.round_window(night), STAIRS[0] + 8, UP_WALL + 10)
-    place(s, F.sconce(on=night), STAIRS[0] + 3, GR_WALL + 12)
+    s.blit(F.round_window(night), STAIRS[0] + 4, UP_WALL + 10)
+    place(s, F.sconce(on=night), STAIRS[0] + 30, UP_WALL + 14)
 
     # --- bedroom: window over the bed, nightstand + lamp, wardrobe
     x, (top, fl) = room_x("bedroom"), levels(1)
@@ -264,7 +343,7 @@ def furnish(s, night=False, buddy=doll.GIRL):
         lights.append((x + 40, top + 18, 16, (1.0, 0.9, 0.72), "kitchen"))
 
     if night:
-        lights.append((STAIRS[0] + 6, GR_WALL + 15, 18, (1.0, 0.85, 0.62), "stairs"))
+        lights.append((STAIRS[0] + 33, UP_WALL + 18, 22, (1.0, 0.85, 0.62), "stairs"))
     return lights, z_at
 
 
@@ -336,9 +415,11 @@ def night_grade(s, lights, bands=4):
     return s
 
 
-def scene(night=False, buddy=doll.GIRL):
-    s = shell(night)
+def scene(night=False, buddy=doll.GIRL, doors=None):
+    doors = doors or {}
+    s = shell(night, open_doors=[d for d, (a, _) in doors.items() if a])
     lights, z_at = furnish(s, night, buddy)
+    draw_doors(s, doors)
     if night:
         s = night_grade(s, lights)
         zzz(s, *z_at)
@@ -362,8 +443,22 @@ def furniture_sheet():
     return s
 
 
+def door_demo():
+    """Living room -> kitchen door: closed, swings open, holds, swings shut.
+    Cropped around the wall; the leaf swings into the living room."""
+    seq = [(0, 500), (30, 70), (60, 70), (90, 600), (60, 70), (30, 70), (0, 400)]
+    x, storey = 228, 0
+    top, fl = levels(storey)
+    frames = []
+    for angle, _ in seq:
+        full = scene(doors={"living|kitchen": (angle, "l")} if angle else {})
+        frames.append(full.crop(x - 40, top - SLAB, 84, WALL_H + BAND + SLAB * 2))
+    return Anim(frames, [ms for _, ms in seq])
+
+
 def build():
     return {
+        "door_demo": door_demo(),
         "house_day": scene(),
         "house_night": scene(night=True),
         "house_day_boy": scene(buddy=doll.BOY),

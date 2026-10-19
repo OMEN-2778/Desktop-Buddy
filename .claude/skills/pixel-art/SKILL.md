@@ -101,6 +101,18 @@ piece side by side — review new pieces there at 6x).
   furniture ramps.
 - **Sparse rooms**: 3–5 real pieces per room, space to walk, at most one
   plant per room, no striped rugs, no prop clutter.
+- **Walls are closed and seamless** (user request): every cut surface
+  (slabs, outer and inner walls) goes into one mask (`structure_mask`) and
+  is drawn by `draw_structure` — fill + outline of the outer boundary only,
+  so no seams where walls meet slabs. Never draw cut blocks one by one.
+- **Doors** (`DOORS`): invisible when closed. `scene(doors={id: (angle,
+  side)})` opens one: the wall gets a 37px gap (lintel stays) and
+  `door_leaf()` swings into the `side` room at 30°/60°/90° (5/10/13px
+  wide, darker while foreshortened). `door_demo` is the reference anim.
+- **Stairs**: switchback (user found the straight flight too steep).
+  Flight 1 (near) climbs right→left from the ground-floor door to a landing
+  on the left wall; flight 2 (far, a shade darker, drawn first) climbs
+  left→right to the upper-floor door. 7 steps × 5px run × 4px rise each.
 - **Real scale**: wall 45px ≈ 2.6m → 1px ≈ 6cm. Desk 13px, worktop 16px,
   wardrobe/fridge ~31–34px, door openings 37px (lintel 8px below ceiling).
 - **Realism**: tops show a 2–3px lit surface (`box()`), soft goods use

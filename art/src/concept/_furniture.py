@@ -518,3 +518,23 @@ def clock():
     s.ellipse(4.5, 4.5, 4.5, 4.5, WAL[1]).ellipse(4.5, 4.5, 3.5, 3.5, POR[3])
     s.vline(4, 2, 4, P.ink[0]).hline(5, 6, 5, P.ink[0])
     return s
+
+
+def door_leaf(w=13, h=37, hinge="left"):
+    """Ash door leaf seen front-on; narrower widths are the leaf mid-swing
+    (foreshortened, turned away from the light, so darker)."""
+    s = Sprite(w, h)
+    R = ASH
+    base = R[2] if w >= 12 else R[1] if w >= 8 else R[0]
+    s.rect(0, 0, w, h, R[0]).rect(1, 1, w - 2, h - 2, base)
+    if w >= 8:
+        for py, ph in ((3, 14), (20, 14)):
+            s.frame(2, py, w - 4, ph, R[1])
+            if w >= 12:
+                s.hline(3, w - 4, py + 1, R[3]).vline(3, py + 1, py + ph - 2, R[3])
+    if w >= 12:
+        s.vline(1, 1, h - 2, R[3])
+    hx = w - 3 if hinge == "left" else 1
+    if w >= 5:
+        s.rect(hx, 18, 2, 1, ST[3]).set(hx, 19, ST[1])
+    return s

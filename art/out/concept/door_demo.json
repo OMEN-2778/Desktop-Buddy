@@ -1,0 +1,20 @@
+{
+  "frame_w": 84,
+  "frame_h": 61,
+  "anims": {
+    "door_demo": {
+      "row": 0,
+      "frames": 7,
+      "durations": [
+        500,
+        70,
+        70,
+        600,
+        70,
+        70,
+        400
+      ],
+      "loop": true
+    }
+  }
+}
