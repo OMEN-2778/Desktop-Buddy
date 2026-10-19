@@ -1,0 +1,17 @@
+{
+  "frame_w": 16,
+  "frame_h": 16,
+  "anims": {
+    "sky_moon": {
+      "row": 0,
+      "frames": 4,
+      "durations": [
+        250,
+        250,
+        250,
+        250
+      ],
+      "loop": true
+    }
+  }
+}

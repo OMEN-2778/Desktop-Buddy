@@ -403,29 +403,66 @@ ooooo
 """
 
 
-SLEEP_HEAD = (-1, -5)     # head offset from the bed's top-left
-SLEEP_COVER = (14, 4)     # duvet-lump offset from the bed's top-left
+SLEEP_HEAD = (3, -7)      # the head turned on its side (rotated 90 deg), from the bed's top-left
+SLEEP_COVER = (18, -3)    # duvet offset from the bed's top-left
+
+# Duvet over a body lying on its side, chin at bed x 17. Control points
+# (bed x, top y) of the smooth curve the body pushes up: shoulder, waist,
+# hip (highest), knee, shin, feet; a chibi body is about as wide as the head
+# is tall, so the shoulder stands well above the mattress (top at y 10).
+SLEEP_CURVE = [(18, 4), (20, 1), (22, 0), (25, 2), (28, 0), (30, -1), (32, 0), (35, 3), (37, 5), (39, 4),
+               (40, 4), (41, 6)]
+SLEEP_PROFILE = {x: int(round(float(np.interp(x, *zip(*SLEEP_CURVE))))) for x in range(18, 42)}
 
 
 def sleep_cover():
-    """The duvet pulled up to the chin, with a body-shaped lump."""
-    D = P.oat
-    qw = 18
-    s = Sprite(qw, 13)
-    qy = 2
-    s.rect(0, qy, qw, 11, D[0])
-    s.ellipse(9, qy, 7, 1.5, D[0]).ellipse(9, qy + 1, 6, 1, D[3])
-    s.rect(1, qy + 1, qw - 2, 9, D[3]).rect(1, qy + 1, qw - 2, 2, D[4]).hline(1, qw - 2, qy + 9, D[2])
-    s.rect(1, qy + 1, 4, 9, POR[3]).vline(5, qy + 2, qy + 9, D[2])
-    return s
+    """The duvet pulled up to the chin, shaped by the body under it: the
+    slopes facing the light (up-left) are lit, the far sides of the bulges
+    and the hollows (waist, behind the knee) are shaded, a crease where it
+    bends over the mattress, the sheet turned down at the neck and the clay
+    throw over the shins."""
+    D, C = P.oat, P.clay
+    ox, oy = SLEEP_COVER
+    s = Sprite(42 - ox, 18 - oy)
+    top = {x - ox: y - oy for x, y in SLEEP_PROFILE.items()}
+    crease, hem = 9 - oy, 16 - oy
+    xs = sorted(top)
+    for x in xs:
+        t = top[x]
+        nxt = top.get(x + 1, t)
+        prv = top.get(x - 1, t)
+        s.vline(x, t, hem - 1, D[3])
+        if nxt > t or (nxt == t and prv < t):       # far side of a bulge, facing away from the light
+            s.vline(x, t, min(crease - 1, t + 2), D[2])
+        else:                                        # rising or flat: lit band along the top
+            s.set(x, t, D[4]).set(x, t + 1, D[4])
+        s.set(x, crease, D[2]).set(x, hem - 1, D[2])
+    for fx in (25, 31, 37):                          # soft folds on the side face
+        s.vline(fx - ox, crease + 2, hem - 2, D[2])
+    out = s.outline(D[0], grow=True).crop(1, 1, s.w, s.h)
+    for wx in range(20 - ox, 42 - ox, 4):            # draped hem
+        out.set(wx, hem, None)
+    # sheet turned down at the neck: a narrow white fold
+    out.vline(0, top[0] + 1, crease - 1, POR[3]).vline(1, top[1] + 1, crease - 1, POR[2])
+    # clay throw across the shins
+    tx0, tx1 = 34 - ox, 38 - ox
+    for x in range(tx0, tx1 + 1):
+        t = top[x]
+        out.vline(x, t, hem + 1, C[2])
+        out.set(x, t, C[4] if top.get(x + 1, t) <= t else C[3]).set(x, t + 1, C[3])
+    out.vline(tx0, top[tx0], hem + 1, C[0]).vline(tx1, top[tx1], hem + 1, C[0])
+    out.vline(tx1 - 1, top[tx1 - 1] + 2, hem, C[1])
+    out.set(tx0, hem + 1, None).set(tx1, hem + 1, None)
+    return out
 
 
 def sleeper(s, bed_x, bed_y, buddy=doll.GIRL):
-    """Buddy asleep: head on the pillow, duvet pulled up to the chin."""
+    """Buddy asleep on her side: head turned on the pillow, body under the duvet."""
     head = buddy.render(expr="sleepy").crop(0, 0, doll.W, 15)
+    head = Sprite(0, 0, px=np.ascontiguousarray(np.rot90(head.px, 1)))
     s.blit(head, bed_x + SLEEP_HEAD[0], bed_y + SLEEP_HEAD[1])
     s.blit(sleep_cover(), bed_x + SLEEP_COVER[0], bed_y + SLEEP_COVER[1])
-    return bed_x + 22, bed_y - 4
+    return bed_x + 13, bed_y - 21
 
 
 def zzz(s, x, y):

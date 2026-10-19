@@ -184,6 +184,26 @@ Reference: `prototype/shared/studio.css`.
   icons over words, chibi style (10x10, round, chunky, blush), shown at one
   icon pixel per house pixel.
 
+**Time, seasons, weather (demo)** — a sky bar sits right above the house,
+exactly as wide as it (not the needs column): a pixel pill (2-unit white
+ring, yellow → pink → purple → blue gradient) covering one day from 06:00 on
+the left to 06:00 on the right. The icon walks along it with the clock;
+`art/src/concept/sky_icons.py` draws sun / moon / rain / snow (16×16, white
+outline, 4-frame loops). Icon changes (dusk, dawn wrap, weather) are a short
+morph: old icon spins out, new one springs in with sparkles.
+- 14 game days per season (春夏秋冬). Spring/summer/autumn roll a small
+  chance of a rain episode per day, winter of snow (`SEASONS` in the demo).
+- Weather shows through the windows: `make_demo.py` exports per-window
+  sky/ground masks (closed + open); the demo greys the sky, draws rain
+  streaks or snow on the glass, tints the hill per season (autumn gold,
+  summer deeper green) and lets snow settle on it. Drawn before the night
+  pass so it dims at night.
+
+**Sleeping** — the head lies on its side on the pillow and the duvet
+(`house.sleep_cover`) follows a smooth body curve (`SLEEP_CURVE`: shoulder,
+waist, hip, knee, feet), lit on up-left slopes and shaded on the far sides.
+The user found a bare head with no body "突兀" — keep the body readable.
+
 **Interaction (demo)** — the player directs Buddy by clicking furniture, not
 buttons. Every clickable piece is registered in `house.CLICK` via `reg()`
 inside `furnish()` (sprite + position); the demo builds hit masks and 1-3px

@@ -26,6 +26,7 @@ sys.path[:0] = [str(ROOT / "tools"), str(ROOT / "art/src/concept")]
 import _furniture as F  # noqa: E402
 import house as Hs  # noqa: E402
 import need_icons  # noqa: E402
+import sky_icons  # noqa: E402
 import make_creator as mc  # noqa: E402
 from pixelkit import P, Sprite, rgba  # noqa: E402
 
@@ -102,6 +103,38 @@ def main():
             f"{sky}{sw}": png(F.window(sky, curtains=curt, opened=True, sway=sw))
             for sky in ("day", "night") for sw in (0, 1, 2)}}
 
+    # weather through the windows: where the glass shows sky, and where it
+    # shows the hill (tinted per season). Open casements cover part of the
+    # glass and the curtains drift, so the open mask keeps only pixels that
+    # are sky in every sway frame.
+    sky_cols = {rgba(c) for c in P.sky_soft}
+    ground_cols = {rgba(c) for c in F.LEAF}
+
+    def masks(sprites):
+        sky = ground = None
+        for spr in sprites:
+            px = spr.px
+            cols = [tuple(v) for v in px.reshape(-1, 4)]
+            ks = [c in sky_cols for c in cols]
+            gs = [c in ground_cols for c in cols]
+            sky = ks if sky is None else [a and b for a, b in zip(sky, ks)]
+            ground = gs if ground is None else [a and b for a, b in zip(ground, gs)]
+        out = []
+        for m in (sky, ground):
+            spr = Sprite(sprites[0].w, sprites[0].h)
+            for i, on in enumerate(m):
+                if on:
+                    spr.set(i % spr.w, i // spr.w, "#ffffff")
+            out.append(png(spr))
+        return {"sky": out[0], "ground": out[1]}
+
+    weather_masks = {}
+    for cid, curt in (("win_bed", F.OAT), ("win_living", F.OAT), ("win_study", None)):
+        _, x, y = C[cid]
+        weather_masks[cid] = {"x": int(x), "y": int(y), "closed": masks([F.window("day", curtains=curt)]),
+                              "open": masks([F.window("day", curtains=curt, opened=True, sway=sw) for sw in (0, 1, 2)])}
+    weather_masks["win_round"] = {"x": Hs.STAIRS[0] + 4, "y": Hs.UP_WALL + 10, "closed": masks([F.round_window()]), "open": None}
+
     # screens (drawn after the night pass, they glow) and effects
     tvx, tvy = A["tv"]
     mx, my = A["monitor"]
@@ -169,9 +202,10 @@ def main():
         "doll": mc.doll_data(),   # Buddy's role maps + dressing-room options (shared with the creator)
         "bg": {"day": png(day), "night": png(night)},
         "needIcons": {k: png(need_icons.icon(k)) for k in need_icons.GRIDS},
+        "skyIcons": {k: [png(f) for f in sky_icons.frames(k)] for k in sky_icons.NAMES},
+        "weatherMasks": weather_masks,
         "doors": doors, "leaves": leaves, "overlays": overlays,
-        "sleepHead": [bed_x + Hs.SLEEP_HEAD[0], bed_y + Hs.SLEEP_HEAD[1]],
-        "sleepLying": [bed_x + 3, bed_y - 7],
+        "sleepLying": [bed_x + Hs.SLEEP_HEAD[0], bed_y + Hs.SLEEP_HEAD[1]],
         "clickables": clickables, "windows": windows, "screens": screens, "fx": fx,
         "bathHead": [tub_x + 5, tub_y + 6],
         "path": path, "spots": spots, "rooms": rooms, "roomX": room_x, "lights": lights,

@@ -60,6 +60,7 @@ RAMPS: dict[str, list[str]] = {
     "frame": ["#2a2427", "#3d3538", "#52484a", "#6a5f60", "#837677"],
     "sky_soft": ["#86a3c4", "#a3bdd8", "#c4d6e8", "#e5edf4"],
     # sky / light
+    "moon": ["#0b1a5c", "#123194", "#1f4bc4", "#5b82e0", "#a9c2f5"],
     "sky_day": ["#5c8dd0", "#80b1e7", "#b4d7f3", "#e3f1fb"],
     "sky_night": ["#141833", "#1f2550", "#333a75", "#5a5f9c"],
     "light": ["#fff1b8", "#fffbe6"],
