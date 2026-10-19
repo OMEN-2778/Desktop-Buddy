@@ -1079,7 +1079,7 @@ function sizeSky(wPx, hPx, u) {
   skyCanvas.width = wPx; skyCanvas.height = SKY_ICON * b;
   const widget = document.getElementById("widget");
   widget.style.setProperty("--sky-h", SKY_ICON * b + "px");
-  widget.style.setProperty("--sky-gap", 3 * b + "px");       // sits just above the house (user: not over the roof)
+  widget.style.setProperty("--sky-gap", 1 * b + "px");       // just above the roof, never over it (user tuned this)
   widget.style.setProperty("--sky-over", "0px");
   buildSkyTrack();
 }
