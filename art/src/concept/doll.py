@@ -59,15 +59,38 @@ _FACE = """
 _TOP = ".\n.\n"  # rows 0-1 left free for ahoge / buns
 
 HEADS = {
-    # messy boy hair: spiky fringe, ahoge drawn separately so it can sway
-    "messy": rows(_TOP + _CROWN + """
-.OhhhShhhhShhShhhkO
-..OhkLLhLLLLLhLLkO
-""" + _FACE),
-    # neat side part
-    "neat": rows(_TOP + _CROWN.replace("..OhHhhhhhhhhhhhkO", "..OhHhhhhhhkkhhhkO") + """
-..OhhhhhhhhhkkhhkO
-..OhhhLLLLLLLLhhkO
+    # spiky boy hair: tufts break the silhouette at the top and both sides,
+    # pointed fringe leaves room for eyebrows; the centre tuft is the ahoge
+    "messy": rows("""
+.
+....O..........O
+...OHO........OhO
+...OHHOOOHYhOOhhkO
+..OHHYYHhhhhhhhhkO
+.OOHYYhhhhhhhhhhhkOO
+OHHhhhhhhhhhhhhhhkkO
+.OOhhhhhhhhhhhhhkO
+..OhhhhhhhhhhhhhkO
+..OhhhSShhhSSShhkO
+..OhLLLLLhLLLLLLhO
+..OkLLLLLLLLLLLLkO
+..OkLLLLLLLLLLLLkO
+...OSLLLLLLLLLLSO
+....qqSLLLLLLSqq
+"""),
+    # side-swept: parted on the left, fringe sweeps diagonally down-right,
+    # a stray tuft at the back-right breaks the dome
+    "neat": rows("""
+.
+...............O
+......OOOOOOOOOkO
+....OOHHkHHhhhOOkO
+...OHHYkYYhhhhhkO
+..OHHhkhhhhhhhhhkO
+..OhHhhhhhhhhhhhkO
+..OkhhhhhhhhhhhhkO
+..OkLLLhhhhhhhhhkO
+..OhLLLLLLhhhhhhkO
 """ + _FACE),
     # long hair: blunt bangs + sidelocks framing the face
     "long": rows(_TOP + _CROWN + """
@@ -85,14 +108,16 @@ HEADS = {
 """ + _FACE),
 }
 
-AHOGE = [  # two sway positions
+AHOGE = [  # centre tuft, two sway positions (rows 0-2, joins the crown at row 3)
     rows("""
-..........OO
+...........OO
+..........OYO
 .........OHO
 """),
     rows("""
-...........OO
-..........OHO
+........OO
+.........OYO
+.........OHO
 """),
 ]
 
@@ -121,6 +146,22 @@ def draw_back_hair(s: Sprite, d: "Doll", bob: int = 0):
 # rows 15-27
 
 BODIES = {
+    # open jacket over a printed tee, rolled jeans, sneakers
+    "jacket": rows("""
+......uTqssqcu
+....uTTTWWWWCCcu
+...uTTcTWWWWCcCcu
+...uTTcTWGGWCcCcu
+...uTTcTwWWwCcCcu
+...qLLcTWWWWCcSSq
+....qqcTwwwwCcqq
+.....nPPPPPPPpn
+.....nPPpnnPPpn
+.....nPPpnnPPpn
+.....nRRRnnRRRn
+....oxXxxooxxXxo
+....oooooooooooo
+"""),
     "hoodie": rows("""
 .....uTTqssqccu
 ....uTTTWCCWcccu
@@ -181,7 +222,10 @@ def draw_face(s: Sprite, d: "Doll", expr: str, look: int = 0, dy: int = 0):
     blush = P.blush[0]
     for i, ex in enumerate(EYE_X):
         x = ex + look
-        if expr in ("neutral", "surprised"):
+        if expr == "neutral" and d.gender == "m":
+            s.set(x, y0 + 1, shine).set(x + 1, y0 + 1, ink)
+            s.hline(x, x + 1, y0 + 2, ink)
+        elif expr in ("neutral", "surprised"):
             s.hline(x, x + 1, y0, ink)
             s.set(x, y0 + 1, shine).set(x + 1, y0 + 1, ink)
             s.hline(x, x + 1, y0 + 2, iris)
@@ -198,6 +242,13 @@ def draw_face(s: Sprite, d: "Doll", expr: str, look: int = 0, dy: int = 0):
             s.set(a, y0, ink).set(b, y0 + 1, ink).set(a, y0 + 2, ink)
         if d.gender == "f" and expr in ("neutral", "surprised"):  # lash flick
             s.set(x - 1 if i == 0 else x + 2, y0, ink)
+    if d.gender == "m" and expr != "sleepy" and d.accessory != "glasses":  # thick brows; frames replace them
+        for i, ex in enumerate(EYE_X):
+            x = ex + look
+            if expr == "flustered":  # worried tilt
+                s.set(x, y0 - 1 + (i == 0), d.hair[0]).set(x + 1, y0 - 1 + (i == 1), d.hair[0])
+            else:
+                s.hline(x, x + 1, y0 - 1, d.hair[1] if expr != "surprised" else d.hair[0])
     # blush
     for bx in (5, 13):
         s.hline(bx, bx + 1, y0 + 3, blush)
@@ -212,6 +263,8 @@ def draw_face(s: Sprite, d: "Doll", expr: str, look: int = 0, dy: int = 0):
         s.set(16, 6 + dy, P.glass[3]).set(16, 7 + dy, P.glass[2])  # sweat drop
     elif expr == "sleepy":
         s.set(10, my, mouth)
+    elif d.gender == "m":  # lopsided smirk
+        s.hline(9, 10, my, mouth).set(11, my - 1, mouth)
     else:
         s.hline(9, 10, my, mouth)
 
@@ -290,7 +343,16 @@ oSSSLLo
 .ooo.
 """,
 }
-EMOTE_COLORS = {"note": P.blue, "heart": P.coral, "bang": P.mustard}
+EMOTES["star"] = """
+...o...
+..oLo..
+ooSLSoo
+oSSSSSo
+.oSSSo.
+oSSoSSo
+oo...oo
+"""
+EMOTE_COLORS = {"note": P.blue, "heart": P.coral, "bang": P.mustard, "star": P.mustard}
 
 
 def emote(name: str) -> Sprite:
@@ -325,6 +387,7 @@ class Doll:
     shoes: tuple = (P.linen[3], P.coral[2])
     eye: tuple = tuple(P.hair_brown)
     accessory: str | None = None
+    print_color: str = P.coral[2]
 
     def legend(self):
         h, s, t, b = self.hair, self.skin, self.top, self.bottom
@@ -334,7 +397,7 @@ class Doll:
             "u": t[0], "c": t[1], "C": t[2], "T": t[3],
             "n": b[0], "p": b[1], "P": b[2],
             "o": P.ink[0], "x": self.shoes[0], "X": self.shoes[1],
-            "W": P.linen[3],
+            "W": P.linen[3], "w": P.linen[2], "G": self.print_color, "R": b[3],
         }
 
     def render(self, expr="neutral", look=0, bob=0, sway=0, wave=None) -> Sprite:
@@ -370,7 +433,7 @@ def with_emote(spr: Sprite, name: str | None, x=13, y=0) -> Sprite:
 
 # ------------------------------------------------------------------ presets
 
-BOY = Doll()
+BOY = Doll(outfit="jacket")
 GIRL = Doll(
     gender="f", hair_style="long", hair=tuple(P.hair_black), outfit="dress",
     top=tuple(P.coral), bottom=tuple(P.blue), shoes=(P.wood[1], P.wood[2]),
@@ -393,6 +456,7 @@ VARIANTS = [
 
 def idle_life(d: Doll) -> Anim:
     """A lively idle loop: breathe, blink, glance around, hum, wave."""
+    cheer = "heart" if d.gender == "f" else "star"
     seq = [
         (dict(), None, 600),
         (dict(bob=1, sway=1), None, 350),
@@ -405,10 +469,10 @@ def idle_life(d: Doll) -> Anim:
         (dict(expr="happy"), "note", 450),
         (dict(expr="happy", bob=1, sway=1), "note", 300),
         (dict(expr="happy"), "note", 450),
-        (dict(expr="happy", wave=0), "heart", 180),
-        (dict(expr="happy", wave=1), "heart", 180),
-        (dict(expr="happy", wave=0), "heart", 180),
-        (dict(expr="happy", wave=1), "heart", 180),
+        (dict(expr="happy", wave=0), cheer, 180),
+        (dict(expr="happy", wave=1), cheer, 180),
+        (dict(expr="happy", wave=0), cheer, 180),
+        (dict(expr="happy", wave=1), cheer, 180),
         (dict(expr="blink"), None, 110),
         (dict(), None, 500),
     ]

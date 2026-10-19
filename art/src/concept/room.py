@@ -422,7 +422,7 @@ def wall_shelf():
     return s
 
 
-def scene(night=False):
+def scene(night=False, buddy=doll.GIRL):
     s = house(night)
     # --- bedroom
     bx = ROOMS[0][0]
@@ -434,9 +434,9 @@ def scene(night=False):
     s.blit(lamp(on=night), bx + 48, FLOOR_Y - 13 - 13)
     on_floor(s, plant(), bx + 84, 1)
     if night:
-        z_at = sleeper(s, bx + 4, FLOOR_Y + 1 - 22 + 1)
+        z_at = sleeper(s, bx + 4, FLOOR_Y + 1 - 22 + 1, buddy)
     else:
-        on_floor(s, doll.with_emote(doll.GIRL.render(expr="happy"), "note"), bx + 62, 4)
+        on_floor(s, doll.with_emote(buddy.render(expr="happy"), "note"), bx + 62, 4)
     # --- study
     sx = ROOMS[1][0]
     s.blit(clock(), sx + 10, 52)
@@ -468,10 +468,10 @@ ooooo
 """
 
 
-def sleeper(s, bed_x, bed_y):
+def sleeper(s, bed_x, bed_y, buddy=doll.GIRL):
     """Buddy asleep: head on the pillow, quilt pulled up to the chin.
     Returns where the Zzz goes (drawn after lighting, like UI)."""
-    head = doll.GIRL.render(expr="sleepy").crop(0, 0, doll.W, 15)
+    head = buddy.render(expr="sleepy").crop(0, 0, doll.W, 15)
     s.blit(head, bed_x - 1, bed_y - 5)
     C = P.coral
     qx, qy, qw = bed_x + 15, bed_y + 8, 21
@@ -532,6 +532,7 @@ def build():
     return {
         "house_day": scene(),
         "house_night": scene(night=True),
+        "house_day_boy": scene(buddy=doll.BOY),
         "bed": bed(),
         "desk": desk(),
         "bookshelf": bookshelf(),

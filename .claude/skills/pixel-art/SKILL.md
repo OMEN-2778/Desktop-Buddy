@@ -59,6 +59,10 @@ own material (hair with hair[0], skin with skin[0]…). Only shoes/eyes use ink.
   ramps, so every hairstyle/outfit works in every color.
 - Layers back→front: back hair, body (outfit/pose), head, face
   (expression), accessory, raised arm, emote bubble.
+- Boys vs girls differ in more than hair: boys get thick brows on row 9,
+  compact 2×2 eyes (rows 11–12, big 2×3 only when surprised) and a lopsided
+  smirk; girls get 2×3 eyes with a lash flick. Silhouettes must differ too —
+  spikes/tufts that break the head outline, not a smooth dome.
 - Liveliness comes from small things: blink, 1px head bob with ahoge sway,
   1px eye glances, expression changes, emote bubbles, a wave.
 - New hairstyle/outfit = new entry in `HEADS` / `BODIES` (+ back-hair
@@ -85,3 +89,6 @@ own material (hair with hair[0], skin with skin[0]…). Only shoes/eyes use ink.
 - Dither textures on big flat areas read as noise at 3–4x; prefer flat color.
 - Thin plants read as weeds; build foliage from overlapping ellipse clumps.
 - Low-contrast icons vanish on busy backgrounds — put emotes on a bubble.
+- A smooth round hair mass reads as a helmet/mushroom. Break the outline.
+- Anything dark right under the chin reads as a beard (tried neck
+  headphones); brows directly on top of 3-row eyes merge into one blob.
