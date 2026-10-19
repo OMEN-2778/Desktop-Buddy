@@ -200,13 +200,15 @@ jagged): integer sizes and positions only, symmetric hand-placed frames.
   sky/ground masks (closed + open); the demo greys the sky, draws rain
   streaks or snow on the glass, tints the hill per season (autumn gold,
   summer deeper green) and lets snow settle on it. Drawn before the night
-  pass so it dims at night.
+  pass so it dims at night. Draw it right after the windows, BEFORE doors,
+  furniture overlays and Buddy — the masks are window-shaped, so drawing
+  later paints rain over whatever stands in front of the glass.
 
 **Sleeping** — the head lies on its side on the pillow and the duvet
 (`house.sleep_cover`) is ONE soft, round mound (`SLEEP_PROFILE`): its LEFT
 side, right beside the head, is already taller than the head (user's exact
-point), with a rounded shoulder corner, a gentle crown and a long slope to
-the feet; lit top-left, shaded bottom-right like a round form. The user rejected a bare head
+point), with a rounded shoulder corner, a crown level with that edge (at
+most a pixel higher, user) and a long slope to the feet; lit top-left, shaded bottom-right like a round form. The user rejected a bare head
 ("突兀"), a flat cover, separate shoulder/hip bumps ("像驼峰") and a mound
 lower than the head.
 

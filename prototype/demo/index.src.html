@@ -826,6 +826,7 @@ function render() {
     bctx.drawImage(IMG.win[id]["day" + sway], wv.x, wv.y);
     if (f > 0) { bctx.globalAlpha = f; bctx.drawImage(IMG.win[id]["night" + sway], wv.x, wv.y); bctx.globalAlpha = 1; }
   }
+  drawWeather(bctx, f > 0.5);   // on the glass only, behind everything that stands in front of a window
   drawDoors(bctx);
   const room = roomAt(sim.s), acting = sim.mode === "act", act = acting ? sim.act : null;
   const sleeping = act === "sleep";
@@ -859,7 +860,6 @@ function render() {
     if (act === "tv") drawOverlay(bctx, "coffee_table");
     emoteAt = [x + 13, y - 15];
   }
-  drawWeather(bctx, f > 0.5);
   grade(bctx, f, lit);
   // things that glow on their own: screens, flames, steam
   if (act === "tv") {

@@ -409,12 +409,13 @@ SLEEP_COVER = (18, -12)   # duvet offset from the bed's top-left (top row is the
 # Duvet over a body lying on its side, chin at bed x 17: ONE soft, round
 # mound (user: no camel humps). Its left side, right beside the head, is
 # already taller than the head on the pillow (head top is about bed y -4,
-# the bow -6): a rounded shoulder corner by the chin, a gentle crown, then a
+# the bow -6): a rounded shoulder corner by the chin, a crown only a pixel
+# above that shoulder (user), then a
 # long easy slope down to the feet. The mattress top is y 10.
-SLEEP_PROFILE = {18: -5, 19: -7, 20: -8, 21: -9, 22: -9, 23: -10, 24: -10, 25: -10, 26: -10, 27: -10,
-                 28: -9, 29: -9, 30: -8, 31: -8, 32: -7, 33: -6, 34: -5, 35: -4, 36: -3, 37: -2, 38: -1,
-                 39: 0, 40: 2, 41: 4}
-SLEEP_PEAK_X, SLEEP_PEAK_Y = 25, -10
+SLEEP_PROFILE = {18: -5, 19: -7, 20: -7, 21: -8, 22: -8, 23: -8, 24: -8, 25: -8, 26: -8, 27: -8,
+                 28: -8, 29: -7, 30: -7, 31: -6, 32: -6, 33: -5, 34: -4, 35: -3, 36: -2, 37: -1, 38: 0,
+                 39: 1, 40: 2, 41: 4}
+SLEEP_PEAK_X, SLEEP_PEAK_Y = 24, -8
 
 
 def sleep_cover():
