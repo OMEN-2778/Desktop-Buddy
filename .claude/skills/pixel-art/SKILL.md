@@ -132,7 +132,9 @@ Reference: `prototype/creator/index.src.html`.
   just the house"). Needs are four pixel dots left of the house, flush with
   its top and bottom, that stretch LEFT into bars on hover/tap — never over
   the house. One UI pixel = one house pixel on screen. Bar icons (drumstick,
-  Zz, soap + bubbles, smiley) live in `art/src/concept/need_icons.py`; keep
+  Zz, soap + bubbles, smiley) sit in a slot at the bar's LEFT end, the fill
+  starts right of it (so the maximum is never covered); they live in
+  `art/src/concept/need_icons.py`; keep
   icons over words, and scale them by whole pixels only.
 
 ## Pitfalls seen so far

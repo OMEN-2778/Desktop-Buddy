@@ -100,10 +100,12 @@ body {
 }
 .need .fill {
   position: absolute;
-  top: calc(var(--u) * 2); bottom: calc(var(--u) * 2); left: calc(var(--u) * 2);   /* 2px white ring */
-  /* --p is 0 in a dot (fill = the dot's centre) and springs to 1 once the bar is open */
-  width: min(100% - var(--u) * 4,
-             var(--fmin) + (100% - var(--u) * 4 - var(--fmin)) * var(--v, 1) * var(--p, 0));
+  /* 2px white ring; once open (--p springs 0 -> 1) the fill starts right of
+     the icon slot, so the icon never hides the fill's start or its maximum */
+  --room: calc(100% - var(--u) * 4 - var(--slot, 30px) * var(--p, 0));
+  top: calc(var(--u) * 2); bottom: calc(var(--u) * 2);
+  left: calc(var(--u) * 2 + var(--slot, 30px) * var(--p, 0));
+  width: min(var(--room), var(--fmin) + (var(--room) - var(--fmin)) * var(--v, 1) * var(--p, 0));
   background-color: var(--c, var(--need-ok));
   background-image: var(--stripes);
   background-size: calc(var(--u) * 8) calc(var(--u) * 8);
@@ -121,7 +123,7 @@ body {
 @keyframes pulse { 50% { filter: brightness(1.18) saturate(1.1); } }
 .need img {
   position: absolute;
-  right: calc(var(--u) * 3);
+  left: calc(var(--u) * 3);
   top: 50%;
   width: var(--icon, 24px);
   height: var(--icon, 24px);
@@ -637,7 +639,9 @@ function fit() {
   widget.style.setProperty("--bh", bh + "px");
   widget.style.setProperty("--g", g + "px");
   widget.style.setProperty("--bar-w", barW + "px");
-  widget.style.setProperty("--icon", 12 * Math.max(1, Math.floor((bh - 2 * u) / 12)) + "px");  // whole-pixel icon scale
+  const icon = 12 * Math.max(1, Math.floor((bh - 2 * u) / 12));      // whole-pixel icon scale
+  widget.style.setProperty("--icon", icon + "px");
+  widget.style.setProperty("--slot", icon + 2 * u + "px");           // icon + a pixel of air each side
   widget.style.setProperty("--clip-track", pillClip(n, u));
   widget.style.setProperty("--clip-fill", pillClip(n - 4, u));
   widget.style.setProperty("--fmin", (n - 4) * u + "px");
