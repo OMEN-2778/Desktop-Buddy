@@ -26,6 +26,7 @@ sys.path[:0] = [str(ROOT / "tools"), str(ROOT / "art/src/concept")]
 import _furniture as F  # noqa: E402
 import doll  # noqa: E402
 import house as Hs  # noqa: E402
+import need_icons  # noqa: E402
 import make_creator as mc  # noqa: E402
 from pixelkit import P, Sprite, rgba  # noqa: E402
 from pixelkit.palette import CLOTH_STEPS, LIGHT_HUE, SHADOW_HUE, SKIN_SHADOW_HUE, SKIN_STEPS, SWATCHES  # noqa: E402
@@ -132,6 +133,7 @@ def main():
     data = {
         "W": Hs.W, "H": Hs.H, "dollW": doll.W, "dollH": doll.H,
         "bg": {"day": png(day), "night": png(night)},
+        "needIcons": {k: png(need_icons.icon(k)) for k in need_icons.GRIDS},
         "doors": doors, "leaves": leaves, "overlays": overlays,
         "sleepHead": [bed_x + Hs.SLEEP_HEAD[0], bed_y + Hs.SLEEP_HEAD[1]],
         "bathHead": [tub_x + 5, tub_y + 6],

@@ -128,6 +128,12 @@ piece side by side — review new pieces there at 6x).
 game-window title bars, colors from the palette. Font: Source Han Sans /
 Noto Sans SC (思源黑体) only — the user asked for it; no pixel fonts.
 Reference: `prototype/creator/index.src.html`.
+- In-game UI stays hidden until asked for (user's direction: "the screen is
+  just the house"). Needs are four pixel dots left of the house, flush with
+  its top and bottom, that stretch LEFT into bars on hover/tap — never over
+  the house. One UI pixel = one house pixel on screen. Bar icons (drumstick,
+  Zz, soap + bubbles, smiley) live in `art/src/concept/need_icons.py`; keep
+  icons over words, and scale them by whole pixels only.
 
 ## Pitfalls seen so far
 
