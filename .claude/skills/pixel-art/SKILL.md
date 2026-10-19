@@ -189,9 +189,9 @@ Reference: `prototype/shared/studio.css`.
   icons over words, chibi style (10x10, round, chunky, blush), shown at one
   icon pixel per house pixel.
 
-**Time, seasons, weather (demo)** — a sky bar hangs over the house's top
-edge (user: lower it, overlapping the roof a little is fine), exactly as
-wide as the house (not the needs column): a pixel pill (2-unit white
+**Time, seasons, weather (demo)** — a sky bar sits just above the house
+with a small gap (the user tried it overlapping the roof and asked for it
+back up), exactly as wide as the house (not the needs column): a pixel pill (2-unit white
 ring, yellow → pink → purple → blue gradient) covering one day from 06:00 on
 the left to 06:00 on the right. The icon walks along it with the clock;
 `art/src/concept/sky_icons.py` draws sun / moon / rain / snow (16×16, white
