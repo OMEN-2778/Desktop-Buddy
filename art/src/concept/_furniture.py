@@ -62,8 +62,10 @@ def leg(s, x, y, h, R=WAL):
 # ---------------------------------------------------------------- windows & walls
 
 
-def window(sky="day", curtains=OAT):
-    """Window 22x22 with a deep sill and sheer curtains on a rod."""
+def window(sky="day", curtains=OAT, opened=False, sway=0):
+    """Window 22x22 with a deep sill and sheer curtains on a rod.
+    opened=True swings both casements in against the jambs; sway (0/1/2)
+    lets the curtains drift in the breeze."""
     gw, gh = 22, 22
     pad = 5 if curtains else 1
     s = Sprite(gw + pad * 2, gh + 4)
@@ -85,20 +87,31 @@ def window(sky="day", curtains=OAT):
             s.set(gx + px, gy + py, P.light[1])
         s.ellipse(gx + 13, gy + 5, 2, 2, P.light[0]).set(gx + 14, gy + 4, K[1]).set(gx + 15, gy + 5, K[1])
         glint = K[3]
-    s.line(gx + 1, gy + 6, gx + 6, gy + 1, glint)
-    # mullions
-    s.vline(gx + w // 2, gy, gy + h - 1, POR[3]).vline(gx + w // 2 + 1, gy, gy + h - 1, POR[1])
-    s.hline(gx, gx + w - 1, gy + 7, POR[3]).hline(gx, gx + w - 1, gy + 8, POR[1])
+    if opened:
+        # casements folded in against the jambs, seen almost edge-on
+        for px in (gx, gx + w - 4):
+            s.rect(px, gy, 4, h, POR[1]).rect(px + 1, gy + 1, 2, h - 2, K[2]).vline(px + 1, gy + 1, gy + h - 2, POR[3])
+            s.hline(px, px + 3, gy + 7, POR[3])
+    else:
+        s.line(gx + 1, gy + 6, gx + 6, gy + 1, glint)
+        # mullions
+        s.vline(gx + w // 2, gy, gy + h - 1, POR[3]).vline(gx + w // 2 + 1, gy, gy + h - 1, POR[1])
+        s.hline(gx, gx + w - 1, gy + 7, POR[3]).hline(gx, gx + w - 1, gy + 8, POR[1])
     s.frame(gx - 1, gy - 1, w + 2, h + 2, POR[1])
     # sill
     s.rect(x0 - 1, gh, gw + 2, 3, POR[0]).hline(x0, x0 + gw - 1, gh, POR[3]).hline(x0, x0 + gw - 1, gh + 1, POR[2])
     if curtains:
         C = curtains
         s.hline(0, s.w - 1, 0, WAL[1]).set(0, 1, WAL[1]).set(s.w - 1, 1, WAL[1])
-        for cx in (0, s.w - 6):
-            s.rect(cx, 1, 6, gh + 2, C[0]).rect(cx + 1, 1, 4, gh + 1, C[3])
-            s.vline(cx + 2, 2, gh + 1, C[2]).vline(cx + 4, 2, gh + 1, C[2])
-            s.hline(cx + 1, cx + 4, gh + 2, C[2])
+        for side, cx in ((1, 0), (-1, s.w - 6)):
+            for y in range(1, gh + 3):  # breeze pushes the lower curtain inward
+                off = side * (sway if y > gh // 2 else 0) + side * (sway if y > gh - 3 else 0)
+                x = cx + off
+                last = y == gh + 2
+                s.hline(x, x + 5, y, C[0])
+                s.hline(x + 1, x + 4, y, C[2] if last else C[3])
+                if not last:
+                    s.set(x + 2, y, C[2]).set(x + 4, y, C[2])
     return s
 
 
@@ -322,10 +335,12 @@ def keyboard():
     return s
 
 
-def desk_lamp():
+def desk_lamp(on=False):
     s = Sprite(9, 11)
     s.line(2, 10, 2, 5, ST[1]).line(2, 5, 6, 1, ST[1])
     s.rect(5, 0, 4, 3, SAGE[0]).rect(6, 1, 2, 1, SAGE[3])
+    if on:
+        s.hline(6, 7, 3, P.light[1]).hline(5, 8, 4, P.light[0])
     s.hline(0, 4, 10, ST[0])
     return s
 
@@ -537,4 +552,128 @@ def door_leaf(w=13, h=37, hinge="left"):
     hx = w - 3 if hinge == "left" else 1
     if w >= 5:
         s.rect(hx, 18, 2, 1, ST[3]).set(hx, 19, ST[1])
+    return s
+
+
+# ---------------------------------------------------------------- screens & effects
+# Screens are drawn after the night pass (they glow); frames loop.
+
+TV_CHANNELS = ["cartoon", "sea", "news", "music"]
+GAMES = ["jump", "blocks", "space"]
+
+
+def tv_screen(ch, f):
+    """24x12 picture for the TV, frame f of 4."""
+    s = Sprite(24, 12)
+    if ch == "cartoon":
+        s.rect(0, 0, 24, 12, P.sky_day[1]).rect(0, 9, 24, 3, LEAF[3]).hline(0, 23, 9, LEAF[4])
+        s.ellipse(19, 2, 1.5, 1.5, P.mustard[3])
+        s.ellipse(4 + f % 2, 3, 2.5, 1, P.sky_day[3])
+        bx, by = 4 + f * 4, (7, 4, 3, 5)[f]
+        s.rect(bx - 1, by - 1, 3, 3, CLAY[2]).set(bx - 1, by - 1, CLAY[4]).set(bx + 1, by + 1, CLAY[1])
+        s.set(bx, by - 2, CLAY[2]).set(bx, by + 2, CLAY[1]).set(bx - 2, by, CLAY[2]).set(bx + 2, by, CLAY[1])
+    elif ch == "sea":
+        s.rect(0, 0, 24, 6, CLAY[4]).rect(0, 0, 24, 2, CLAY[3])
+        s.ellipse(12, 6, 3, 3, P.mustard[3])
+        s.rect(0, 6, 24, 6, P.blue[2]).hline(0, 23, 6, P.blue[3])
+        for x in range(-4, 24, 6):
+            s.hline(x + f * 2 % 6, x + f * 2 % 6 + 2, 8, P.blue[4]).hline(x + 3 + f % 3, x + 4 + f % 3, 10, P.blue[3])
+    elif ch == "news":
+        s.rect(0, 0, 24, 12, P.blue[1]).rect(0, 0, 24, 3, P.blue[0])
+        s.rect(17, 1, 5, 3, CLAY[2])
+        s.ellipse(7, 4, 2, 2, P.skin[3]).rect(5, 2, 5, 2, P.hair_black[2])
+        s.rect(3, 7, 9, 3, ST[2]).rect(6, 7, 3, 2, POR[3])
+        s.set(6, 4, P.ink[0]).set(8, 4, P.ink[0])
+        if f % 2:
+            s.set(7, 5, CLAY[1])
+        s.rect(0, 9, 24, 3, CLAY[2]).hline(0, 23, 9, CLAY[3])
+        for x in range(-6, 24, 6):
+            s.hline(x + (f * 3) % 6, x + (f * 3) % 6 + 3, 10, POR[3])
+    else:  # music
+        s.rect(0, 0, 24, 12, P.ink[1])
+        heights = [(3, 7, 5, 9, 4), (6, 4, 8, 5, 7), (8, 6, 3, 7, 9), (4, 9, 6, 3, 6)][f]
+        cols = [CLAY[3], P.mustard[3], SAGE[3], P.sky_soft[2], CLAY[4]]
+        for i, hgt in enumerate(heights):
+            s.rect(2 + i * 4, 11 - hgt, 3, hgt, cols[i]).hline(2 + i * 4, 4 + i * 4, 11 - hgt, POR[3])
+    return s
+
+
+def monitor_screen(game, f):
+    """14x8 game on the computer, frame f of 4."""
+    s = Sprite(14, 8)
+    if game == "jump":
+        s.rect(0, 0, 14, 8, P.sky_day[1]).rect(0, 7, 14, 1, LEAF[2])
+        bx = 12 - f * 4
+        s.rect(bx, 5, 2, 2, CLAY[2])
+        cy = (5, 3, 2, 4)[f]
+        s.rect(3, cy, 2, 2, P.coral[2]).set(3, cy, P.skin[3]).set(4, cy, P.skin[3])
+        s.set(10, 1, P.mustard[3]).set(11, 1, P.mustard[3])
+    elif game == "blocks":
+        s.rect(0, 0, 14, 8, P.ink[1]).vline(3, 0, 7, ST[2]).vline(10, 0, 7, ST[2])
+        s.rect(4, 6, 6, 2, SAGE[3]).rect(4, 5, 2, 1, CLAY[3]).rect(8, 5, 2, 1, P.mustard[3])
+        py = f
+        s.rect(6, py, 2, 1, P.sky_soft[2]).rect(5, py + 1, 3, 1, P.sky_soft[2])
+        s.set(12, 2, POR[3]).set(12, 4, POR[2])
+    else:  # space
+        s.rect(0, 0, 14, 8, P.sky_night[0])
+        for x, y in ((2, 1), (9, 3), (12, 0), (5, 5)):
+            s.set(x, (y + f) % 8, P.sky_night[3])
+        s.set(7, 6, POR[3]).hline(6, 8, 7, SAGE[3])
+        s.set(7, 5 - f, P.light[0])
+        ex = (4, 6, 8, 6)[f]
+        s.hline(ex, ex + 2, 1, CLAY[3]).set(ex + 1, 2, CLAY[2])
+    return s
+
+
+def cook_fx(f):
+    """Pot on the hob with flickering flames and smoke rising; 14x24, bottom = worktop."""
+    s = Sprite(14, 24)
+    # smoke puffs drifting up and growing as they rise
+    for i in range(3):
+        t = (f + i * 4) % 12
+        y = 13 - t
+        x = 6 + (1 if (t // 3) % 2 else -1) + i % 2
+        r = 1 + t / 6
+        c = OAT[4] if t < 5 else OAT[3] if t < 9 else OAT[2]
+        if t < 11:
+            s.ellipse(x, y, r, r * 0.8, c)
+    # pot with lid, raised on the trivet so the flames show beneath it
+    s.rect(2, 12, 10, 6, CLAY[0]).rect(3, 13, 8, 4, CLAY[2]).hline(3, 10, 13, CLAY[3])
+    s.hline(1, 12, 11, CLAY[0]).hline(2, 11, 12, CLAY[3]).rect(6, 10, 2, 1, ST[1])
+    s.set(0, 13, CLAY[0]).set(13, 13, CLAY[0])
+    s.vline(2, 18, 22, ST[1]).vline(11, 18, 22, ST[1])          # trivet legs
+    # flames: tongues of different heights that flicker frame to frame
+    hs = [(4, 2, 3, 4, 2), (3, 4, 2, 3, 4), (2, 3, 4, 2, 3), (4, 3, 2, 4, 3)][f % 4]
+    for fx, hgt in zip((3, 5, 7, 9, 10), hs):
+        for k in range(hgt):
+            s.set(fx, 22 - k, P.light[1] if k == 0 else P.light[0] if k == 1 else P.mustard[3] if k == 2 else CLAY[3])
+    s.hline(1, 12, 23, ST[0])
+    return s
+
+
+def meal_fx(f):
+    """A bowl of rice with chopsticks, steam curling up; 12x13, bottom = table top."""
+    s = Sprite(12, 13)
+    for i, (x0, ph) in enumerate(((4, 0), (7, 2))):
+        for k in range(5):
+            y = 6 - k - (f % 2)
+            x = x0 + (1 if (k + f + ph) % 4 < 2 else 0)
+            if y >= 0:
+                s.set(x, y, POR[3] if k < 3 else POR[2])
+    s.ellipse(5.5, 8, 4, 1.5, POR[3]).set(4, 7, POR[3])          # rice mound
+    s.rect(1, 9, 10, 3, POR[0]).rect(2, 9, 8, 2, POR[3]).hline(2, 9, 10, P.blue[2])
+    s.hline(3, 8, 12, POR[0])
+    s.line(8, 4, 11, 9, WAL[1])                                   # chopsticks
+    s.line(9, 4, 11, 8, WAL[2])
+    return s
+
+
+def water_fx(f):
+    """Drops falling onto a plant; 8x10."""
+    s = Sprite(8, 10)
+    for i, x in enumerate((1, 4, 6)):
+        y = (f * 3 + i * 4) % 10
+        s.set(x, y, P.sky_soft[1])
+        if y + 1 < 10:
+            s.set(x, y + 1, P.sky_soft[0])
     return s

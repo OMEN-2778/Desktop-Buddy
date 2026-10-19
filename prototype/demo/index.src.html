@@ -144,6 +144,36 @@ body {
   content: ""; position: absolute; inset: -6px; border: 2px dashed var(--focus); pointer-events: none;
 }
 
+/* ---------- wardrobe: a small pixel window that pops up beside the wardrobe ---------- */
+.wardrobe {
+  position: absolute;
+  z-index: 5;
+  width: 248px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 12px;
+  box-shadow:
+    0 -3px 0 0 var(--edge), 0 3px 0 0 var(--edge), -3px 0 0 0 var(--edge), 3px 0 0 0 var(--edge),
+    6px 6px 0 0 var(--shadow);
+  animation: wpop .32s cubic-bezier(.3, 1.6, .5, 1) both;
+  transform-origin: 0 0;
+}
+@keyframes wpop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.wardrobe .wtitle { display: flex; justify-content: space-between; align-items: center; background: #33253b; color: #f7f6fb; padding: 3px 4px 3px 10px; font-weight: 700; letter-spacing: .1em; }
+.wardrobe .wtitle button { margin: 0; padding: 0 6px; font-size: 12px; box-shadow: none; background: transparent; color: inherit; }
+.wardrobe .wbody { padding: 8px 10px 10px; display: grid; gap: 6px; }
+.wardrobe .wrow { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); gap: 6px; align-items: center; }
+.wardrobe .wl { color: var(--muted); font-weight: 700; }
+.wardrobe .chips { display: flex; flex-wrap: wrap; gap: 3px 4px; }
+.wardrobe .chips button { margin: 2px; padding: 1px 6px; font-size: 12px; }
+.wardrobe .sw { display: flex; flex-wrap: wrap; gap: 3px; }
+.wardrobe .sw button {
+  width: 14px; height: 14px; margin: 0; padding: 0; background: var(--c);
+  box-shadow: 0 0 0 1px var(--edge);
+}
+.wardrobe .sw button[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
+.wardrobe #wRandom { justify-self: start; margin-top: 2px; }
+
 /* ---------- temporary console (time, suggestions, look, diary) ---------- */
 .console {
   justify-self: center;
@@ -176,6 +206,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
 .log { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 200px; overflow-y: auto; }
 .log li { display: grid; grid-template-columns: 3.2em minmax(0, 1fr); gap: 8px; }
 .log time { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+.note { color: var(--muted); font-size: 12px; margin: 0; }
 .log li.day { grid-template-columns: 1fr; color: var(--muted); font-size: 12px; letter-spacing: .1em; }
 @media (prefers-reduced-motion: reduce) {
   .need .fill, .need.low .fill { animation: none; transition: none; }
@@ -191,12 +222,25 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
       <div class="need" style="--i:2" data-k="hygiene" role="meter" aria-label="清洁" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="hygiene"></div>
       <div class="need" style="--i:3" data-k="fun" role="meter" aria-label="开心" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="fun"></div>
     </div>
-    <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点她一下试试。"></canvas>
+    <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点她一下试试。"></canvas>
+    <div class="wardrobe" id="wardrobe" hidden role="dialog" aria-label="衣柜">
+      <div class="wtitle"><span>衣柜</span><button type="button" id="wClose" aria-label="关上衣柜">✕</button></div>
+      <div class="wbody">
+        <div class="wrow"><span class="wl">性别</span><div class="chips" data-k="gender"><button type="button" data-v="f">女生</button><button type="button" data-v="m">男生</button></div></div>
+        <div class="wrow"><span class="wl">发型</span><div class="chips" data-k="style"><button type="button" data-v="messy">短发</button><button type="button" data-v="neat">侧分</button><button type="button" data-v="long">长发</button><button type="button" data-v="buns">丸子</button></div></div>
+        <div class="wrow"><span class="wl">衣服</span><div class="chips" data-k="outfit"><button type="button" data-v="jacket">夹克</button><button type="button" data-v="hoodie">卫衣</button><button type="button" data-v="dress">裙装</button></div></div>
+        <div class="wrow"><span class="wl">配饰</span><div class="chips" data-k="acc"><button type="button" data-v="">无</button><button type="button" data-v="glasses">眼镜</button><button type="button" data-v="bow">蝴蝶结</button><button type="button" data-v="headphones">耳机</button></div></div>
+        <div class="wrow"><span class="wl">发色</span><div class="sw" data-k="hair"></div></div>
+        <div class="wrow"><span class="wl">上衣</span><div class="sw" data-k="top"></div></div>
+        <div class="wrow"><span class="wl" id="wBottomLabel">下装</span><div class="sw" data-k="bottom"></div></div>
+        <button type="button" id="wRandom">随机搭配</button>
+      </div>
+    </div>
   </div>
 </main>
 
 <details class="console">
-  <summary>临时控制台：时间 · 建议 · 外观 · 日记（这些之后也会改成隐藏式）</summary>
+  <summary>临时控制台：时间 · 日记（之后也会改成隐藏式）</summary>
   <div class="grid">
     <div class="box">
       <div class="clock" id="clock">第 1 天 · 07:00</div>
@@ -208,25 +252,9 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <button type="button" data-speed="3" aria-pressed="true">×3</button>
         <button type="button" data-speed="10" aria-pressed="false">×10</button>
       </div>
+      <p class="note">点家具让她去做事：床、衣柜、浴缸、马桶、洗手台、毛巾、书架、电脑、沙发、电视、灶台、餐桌、冰箱、绿植；台灯和窗户可以开关。</p>
     </div>
-    <div class="box">
-      <div class="label">给她建议</div>
-      <div class="row" id="suggest">
-        <button type="button" data-act="cook">做饭吃</button>
-        <button type="button" data-act="bath">泡澡</button>
-        <button type="button" data-act="computer">玩电脑</button>
-        <button type="button" data-act="tv">看电视</button>
-        <button type="button" data-act="read">看书</button>
-        <button type="button" data-act="sleep">睡觉</button>
-      </div>
-      <div class="label">外观</div>
-      <div class="row" id="look">
-        <button type="button" data-gender="f" aria-pressed="true">女生</button>
-        <button type="button" data-gender="m" aria-pressed="false">男生</button>
-        <button type="button" id="randomLook">随机外观</button>
-      </div>
-    </div>
-    <div class="box">
+    <div class="box" style="grid-column: span 2">
       <div class="label">日记</div>
       <ul class="log" id="log"></ul>
     </div>
@@ -369,6 +397,16 @@ async function loadAssets() {
   IMG.gap = {}; for (const d of D.doors) IMG.gap[d.id] = await loadImg(d.gap);
   IMG.leaf = {}; for (const [k, v] of Object.entries(D.leaves)) IMG.leaf[k] = await loadImg(v);
   IMG.ov = {}; for (const [k, v] of Object.entries(D.overlays)) IMG.ov[k] = await loadImg(v.src);
+  IMG.click = {}; for (const [k, v] of Object.entries(D.clickables)) IMG.click[k] = await loadImg(v.src);
+  IMG.win = {};
+  for (const [k, v] of Object.entries(D.windows)) {
+    IMG.win[k] = {};
+    for (const key of ["day0", "day1", "day2", "night0", "night1", "night2"]) IMG.win[k][key] = await loadImg(v[key]);
+  }
+  IMG.tv = {}; for (const [c, fr] of Object.entries(D.screens.tv.channels)) IMG.tv[c] = await Promise.all(fr.map(loadImg));
+  IMG.mon = {}; for (const [g, fr] of Object.entries(D.screens.monitor.games)) IMG.mon[g] = await Promise.all(fr.map(loadImg));
+  IMG.fx = {}; for (const [k, v] of Object.entries(D.fx)) IMG.fx[k] = await Promise.all(v.frames.map(loadImg));
+  buildClickables();
 }
 function drawOverlay(ctx, name) { const o = D.overlays[name]; ctx.drawImage(IMG.ov[name], o.x, o.y); }
 
@@ -396,23 +434,27 @@ function roomAt(s) {
 // ================================================================ simulation
 const ACTS = {
   sleep:    { spot: "bed",       label: "睡觉",       emote: "zzz",  dur: 600, log: "困了，回卧室睡觉。" },
-  cook:     { spot: "cook",      label: "做饭",       emote: "note", dur: 20,  log: "肚子饿了，去厨房做饭。", then: "eat" },
-  eat:      { spot: "eat",       label: "吃饭",       emote: "bowl", dur: 15,  log: "开饭！" },
+  cook:     { spot: "cook",      label: "做饭",       emote: "note", dur: 20,  log: "去厨房开火做饭。", then: "eat" },
+  eat:      { spot: "eat",       label: "吃饭",       emote: "bowl", dur: 15,  log: "开饭！热腾腾的。" },
   snack:    { spot: "fridge",    label: "找零食",     emote: "bowl", dur: 4,   log: "去冰箱里翻零食。" },
   bath:     { spot: "bath",      label: "泡澡",       emote: "soap", dur: 25,  log: "放了一缸热水泡澡。" },
-  computer: { spot: "computer",  label: "玩电脑",     emote: "game", dur: 45,  log: "打开电脑玩游戏。" },
+  toilet:   { spot: "toilet",    label: "上厕所",     emote: null,   dur: 5,   log: "去了趟卫生间。" },
+  wash:     { spot: "vanity",    label: "洗脸刷牙",   emote: "soap", dur: 6,   log: "对着镜子洗脸刷牙。" },
+  towel:    { spot: "towel",     label: "擦干手脸",   emote: "soap", dur: 3,   log: "拿毛巾擦了擦脸。" },
+  computer: { spot: "computer",  label: "打游戏",     emote: "game", dur: 45,  log: "打开电脑玩游戏。" },
   tv:       { spot: "sofa",      label: "看电视",     emote: "star", dur: 40,  log: "窝在沙发上看电视。" },
   read:     { spot: "bookshelf", label: "看书",       emote: "book", dur: 30,  log: "从书架上挑了本书来看。" },
-  mirror:   { spot: "mirror",    label: "照镜子",     emote: "heart", dur: 4,  log: "对着镜子理了理头发。" },
   window:   { spot: "study_window", label: "看窗外发呆", emote: null, dur: 8, log: "在窗边发了会儿呆。" },
-  plant:    { spot: "plant",     label: "给植物浇水", emote: "note", dur: 5,   log: "给客厅的绿植浇了水。" },
+  water_living: { spot: "water_living", label: "浇花", emote: "note", dur: 5, log: "给客厅的绿植浇了水。" },
+  water_study:  { spot: "water_study",  label: "浇花", emote: "note", dur: 5, log: "给书房的绿植浇了水。" },
   art:      { spot: "art",       label: "欣赏挂画",   emote: null,   dur: 5,   log: "盯着墙上的画看了一会儿。" },
-  wardrobe: { spot: "wardrobe",  label: "翻衣柜",     emote: "star", dur: 6,   log: "翻了翻衣柜，想想明天穿什么。" },
+  dress:    { spot: "wardrobe",  label: "换衣服",     emote: "star", dur: 6,   log: "打开衣柜挑衣服。" },
 };
 const EFFECT = {   // per game minute while doing it
   sleep: { energy: 0.2 }, eat: { hunger: 4 }, snack: { hunger: 5 }, bath: { hygiene: 3.2, fun: 0.2 },
-  computer: { fun: 1.4, energy: -0.03 }, tv: { fun: 1.1 }, read: { fun: 0.8 }, mirror: { hygiene: 1 },
-  window: { fun: 0.4 }, plant: { fun: 0.5 }, art: { fun: 0.4 }, wardrobe: { fun: 0.5 }, cook: { fun: 0.2 },
+  toilet: { hygiene: 1.2 }, wash: { hygiene: 2.4 }, towel: { hygiene: 1.6 },
+  computer: { fun: 1.4, energy: -0.03 }, tv: { fun: 1.1 }, read: { fun: 0.8 },
+  window: { fun: 0.4 }, water_living: { fun: 0.5 }, water_study: { fun: 0.5 }, art: { fun: 0.4 }, dress: { fun: 0.6 }, cook: { fun: 0.2 },
 };
 const DECAY = { hunger: 0.115, energy: 0.065, hygiene: 0.045, fun: 0.11 };
 const NEED_NAMES = { hunger: "饱腹", energy: "精力", hygiene: "清洁", fun: "开心" };
@@ -451,7 +493,8 @@ function choose() {
     computer: (100 - n.fun) * 1.0 + r() * 25,
     tv: (100 - n.fun) * 0.9 + r() * 25 + (h >= 19 ? 15 : 0),
     read: (100 - n.fun) * 0.8 + r() * 25,
-    mirror: 6 + r() * 12, window: 7 + r() * 14, plant: 5 + r() * 12, art: 4 + r() * 12, wardrobe: 4 + r() * 12,
+    toilet: n.hygiene < 75 ? 10 + r() * 14 : 0, wash: (h >= 6.5 && h < 9) || (h >= 21 && h < 23) ? 28 + r() * 10 : 4 + r() * 8,
+    towel: 3 + r() * 6, window: 7 + r() * 14, water_living: 5 + r() * 10, water_study: 4 + r() * 10, art: 4 + r() * 12, dress: 4 + r() * 10,
   };
   for (const a of sim.recent) score[a] *= 0.3;   // don't repeat the last few things
   return Object.entries(score).sort((a, b) => b[1] - a[1])[0][0];
@@ -467,18 +510,40 @@ function startAct(name) {
 function arrive() {
   const a = ACTS[sim.act];
   sim.mode = "act";
+  if (sim.act === "sleep") {
+    const h = hour();
+    sim.nap = !(h >= 21 || h < 6);
+    if (!sim.nap && lamps.bed_lamp) { lamps.bed_lamp = false; log("关掉台灯，钻进被窝。"); }
+  }
+  if (sim.act === "dress" && sim.player) openWardrobe();
   sim.actEnd = sim.t + (sim.act === "sleep" ? 900 : a.dur * (0.8 + Math.random() * 0.4));
   sim.recent = [sim.act, ...sim.recent].slice(0, 3);
 }
 function finishAct() {
   const a = ACTS[sim.act];
-  if (sim.act === "sleep") log("醒了，伸了个大大的懒腰。");
+  sim.player = false;
+  if (sim.act === "sleep") log(sim.nap ? "睡了个午觉，精神多了。" : "醒了，伸了个大大的懒腰。");
   if (sim.act === "eat") log("吃饱了，好满足～");
   if (sim.act === "bath") log("洗得香喷喷的。");
   if (a.then) { startAct(a.then); return; }
   sim.mode = "idle";
   sim.act = null;
   sim.idleUntil = sim.t + 2 + Math.random() * 6;
+}
+
+// The player clicked a piece of furniture: drop what she's doing and go.
+function command(act) {
+  if (sim.mode === "act" && sim.act === "sleep") {
+    const h = hour();
+    if (act === "sleep") return;
+    if (!sim.nap && (h >= 22 || h < 6)) { log(`她睡得正香，等醒了再去${ACTS[act].label}吧。`); sim.queue = [act]; return; }
+    log("你把她从午觉里叫醒了。");
+  }
+  if (sim.act === act && sim.mode !== "idle") return;
+  if (sim.act === "dress" && act !== "dress") closeWardrobe();
+  sim.queue = [];
+  sim.player = true;
+  startAct(act);
 }
 
 function step(dtGame, dtReal) {
@@ -507,8 +572,8 @@ function step(dtGame, dtReal) {
   } else if (sim.mode === "act") {
     const h = hour();
     const done = sim.act === "sleep"
-      ? (n.energy >= 99 && h >= 6.5 && h < 12) || (h >= 9 && h < 20)
-      : sim.t >= sim.actEnd;
+      ? sim.nap ? n.energy >= 95 || sim.t >= sim.actEnd - 780 : (n.energy >= 99 && h >= 6.5 && h < 12) || (h >= 9 && h < 20)
+      : sim.act === "dress" && wardrobeOpen ? false : sim.t >= sim.actEnd;
     if (done) finishAct();
   } else if (sim.mode === "idle" && sim.t >= sim.idleUntil) {
     startAct(sim.queue.length ? sim.queue.shift() : choose());
@@ -547,14 +612,14 @@ function drawDoors(ctx) {
 const W = D.W, H = D.H;
 const EMISSIVE = new Set(D.emissive.map(h => parseInt(h.slice(1), 16)));
 const LIGHT_G = {};
-for (const [room, [lx, ly, r]] of Object.entries(D.lights)) {
+for (const [id, [lx, ly, r, , room]] of Object.entries(D.lights)) {
   const [rx, ry, rw, rh] = D.rooms[room];
   const g = new Float32Array(W * H);
   for (let y = ry; y < ry + rh; y++) for (let x = rx; x < rx + rw; x++) {
     const d = Math.hypot(x - lx, (y - ly) * 1.15) / r;
     g[y * W + x] = Math.ceil(Math.max(0, 1 - d) * 4) / 4 * 0.9;
   }
-  LIGHT_G[room] = g;
+  LIGHT_G[id] = g;
 }
 function nightness(h) {
   if (h >= 7 && h < 17) return 0;
@@ -565,7 +630,7 @@ function nightness(h) {
 function grade(ctx, f, lit) {
   if (f <= 0) return;
   const img = ctx.getImageData(0, 0, W, H), d = img.data;
-  const L = lit.map(room => [LIGHT_G[room], D.lights[room][3]]);
+  const L = lit.map(id => [LIGHT_G[id], D.lights[id][3]]);
   for (let i = 0, p = 0; i < W * H; i++, p += 4) {
     const r = d[p], g = d[p + 1], b = d[p + 2];
     if (EMISSIVE.has((r << 16) | (g << 8) | b)) continue;
@@ -581,6 +646,100 @@ function grade(ctx, f, lit) {
     d[p] = r + (or - r) * f; d[p + 1] = g + (og - g) * f; d[p + 2] = b + (ob - b) * f;
   }
   ctx.putImageData(img, 0, 0);
+}
+
+// ================================================================ clickable furniture
+const lamps = { bed_lamp: true, desk_lamp: false, floor_lamp: true };
+const windowsOpen = { win_bed: false, win_study: false, win_living: false };
+const CLICK_ACT = {
+  bed: "sleep", wardrobe: "dress", bathtub: "bath", toilet: "toilet", vanity: "wash", towel: "towel",
+  bookshelf: "read", computer: "computer", sofa: "tv", tv: "tv", stove: "cook", table: "eat", fridge: "snack",
+  plant_living: "water_living", plant_study: "water_study", art: "art",
+};
+const CLICK_NAME = {
+  bed_lamp: "台灯", desk_lamp: "台灯", floor_lamp: "落地灯", win_bed: "窗户", win_study: "窗户", win_living: "窗户",
+};
+const CLICK = {};   // id -> { x, y, w, h, mask:Set, rings:[ring1, ring2, ring3], sparks }
+function buildClickables() {
+  for (const [id, c] of Object.entries(D.clickables)) {
+    const img = IMG.click[id], w = img.width, h = img.height;
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    const cx = cv.getContext("2d"); cx.drawImage(img, 0, 0);
+    const a = cx.getImageData(0, 0, w, h).data;
+    const inside = new Set();
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (a[(y * w + x) * 4 + 3]) inside.add((c.x + x) + "," + (c.y + y));
+    const rings = [];
+    let grown = new Set(inside);
+    for (let k = 0; k < 3; k++) {   // dilate one pixel at a time: the glow's rings
+      const ring = [], seen = new Set();
+      for (const key of grown) {
+        const [x, y] = key.split(",").map(Number);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nk = (x + dx) + "," + (y + dy);
+          if (!grown.has(nk) && !seen.has(nk)) { seen.add(nk); ring.push([x + dx, y + dy]); }
+        }
+      }
+      for (const k of seen) grown.add(k);
+      rings.push(ring);
+    }
+    CLICK[id] = { x: c.x, y: c.y, w, h, area: inside.size, inside, near: new Set([...inside, ...rings[0].map(p => p[0] + "," + p[1])]), rings };
+  }
+}
+function clickableAt(x, y) {
+  const key = Math.floor(x) + "," + Math.floor(y);
+  let best = null;
+  for (const [id, c] of Object.entries(CLICK)) if (c.near.has(key) && (!best || c.area < CLICK[best].area)) best = id;
+  return best;
+}
+let hoverId = null, glow = null, poof = null;
+
+function useFurniture(id) {
+  glow = { id, t0: realClock, sparks: Array.from({ length: 6 }, () => ({ p: CLICK[id].rings[1][Math.floor(Math.random() * CLICK[id].rings[1].length)], d: Math.random() * 0.35 })) };
+  if (id in lamps) { lamps[id] = !lamps[id]; log(`${lamps[id] ? "打开" : "关掉"}了${CLICK_NAME[id]}。`); return; }
+  if (id in windowsOpen) { windowsOpen[id] = !windowsOpen[id]; log(windowsOpen[id] ? "推开窗户，风吹了进来。" : "关上了窗户。"); return; }
+  if (CLICK_ACT[id]) command(CLICK_ACT[id]);
+}
+
+// warm gold: reads on the pale walls by day and glows at night
+const GLOW = "255,196,64", GLOW_SOFT = "255,226,150", GLOW_PALE = "255,243,205";
+function px(ctx, x, y, a, c = GLOW) { ctx.fillStyle = `rgba(${c},${a})`; ctx.fillRect(x, y, 1, 1); }
+function drawClickFx(ctx) {
+  if (hoverId && !(glow && glow.id === hoverId && realClock - glow.t0 < 0.9)) {
+    const shimmer = Math.floor(realClock * 6);   // marching highlight around the piece
+    for (const [x, y] of CLICK[hoverId].rings[0]) px(ctx, x, y, (x + y + shimmer) % 4 ? 0.7 : 1, (x + y + shimmer) % 4 ? GLOW : GLOW_PALE);
+  }
+  if (glow) {
+    const t = realClock - glow.t0, c = CLICK[glow.id];
+    if (t > 0.9) { glow = null; return; }
+    if (t < 0.22) {   // flash: brighten the piece itself
+      ctx.save(); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = 0.55 * (1 - t / 0.22);
+      ctx.drawImage(IMG.click[glow.id], c.x, c.y); ctx.restore();
+    }
+    const fade = 1 - t / 0.9;
+    const ringCol = [GLOW, GLOW_SOFT, GLOW_PALE];
+    for (let k = 0; k < 3; k++) {     // rings ripple outward one pixel at a time
+      if (t < k * 0.07) continue;
+      const a = fade * (k === 0 ? 1 : k === 1 ? 0.75 : 0.45);
+      for (const [x, y] of c.rings[k]) px(ctx, x, y, a, ringCol[k]);
+    }
+    for (const sp of glow.sparks) {   // four-point twinkles
+      const st = t - sp.d;
+      if (st < 0 || st > 0.5) continue;
+      const a = Math.sin(st / 0.5 * Math.PI), [x, y] = sp.p, arm = st < 0.15 || st > 0.38 ? 1 : 2;
+      px(ctx, x, y, a, "255,255,255");
+      for (let i = 1; i <= arm; i++) { px(ctx, x + i, y, a * 0.9, GLOW); px(ctx, x - i, y, a * 0.9, GLOW); px(ctx, x, y + i, a * 0.9, GLOW); px(ctx, x, y - i, a * 0.9, GLOW); }
+    }
+  }
+  if (poof) {          // sparkle burst around Buddy when she changes clothes
+    const t = realClock - poof.t0;
+    if (t > 0.8) { poof = null; return; }
+    for (let i = 0; i < 10; i++) {
+      const ang = i / 10 * Math.PI * 2, r = 6 + t * 22;
+      const x = Math.round(poof.x + Math.cos(ang) * r), y = Math.round(poof.y + Math.sin(ang) * r * 0.8);
+      const a = 1 - t / 0.8;
+      px(ctx, x, y, a, "255,255,255"); px(ctx, x + 1, y, a * 0.7, GLOW); px(ctx, x - 1, y, a * 0.7, GLOW); px(ctx, x, y + 1, a * 0.7, GLOW); px(ctx, x, y - 1, a * 0.7, GLOW);
+    }
+  }
 }
 
 // ================================================================ drawing
@@ -664,7 +823,12 @@ function activityFrame(ms) {
     const em = ACTS[a].emote;
     const showEm = em && Math.floor(ms / 2400) % 2 === 0;
     switch (a) {
-      case "cook": return { f: { expr: phase ? "happy" : "neutral", bob: phase, sway: phase, look: 1 }, pose: "stand", emote: showEm ? em : null };
+      case "cook": return { f: { expr: phase ? "happy" : "neutral", bob: phase, sway: phase, look: -1 }, pose: "stand", emote: showEm ? em : null };
+      case "toilet": return { f: { expr: Math.floor(ms / 2000) % 3 === 2 ? "blink" : "neutral", look: Math.floor(ms / 2600) % 2 ? 1 : -1 }, pose: "sit", emote: null };
+      case "wash": return { f: { expr: phase ? "happy" : "blink", bob: phase, look: 1 }, pose: "stand", emote: showEm ? em : null };
+      case "towel": return { f: { expr: "happy", bob: phase, look: -1 }, pose: "stand", emote: showEm ? em : null };
+      case "water_living": case "water_study": return { f: { expr: "happy", look: a === "water_living" ? -1 : 1, bob: phase }, pose: "stand", emote: showEm ? em : null };
+      case "dress": return { f: { expr: phase ? "happy" : "neutral", look: 1, bob: phase }, pose: "stand", emote: showEm ? em : null };
       case "eat": return { f: { expr: phase ? "happy" : "blink", bob: phase }, pose: "sit", emote: showEm ? em : null };
       case "computer": return { f: { expr: Math.floor(ms / 3000) % 3 === 2 ? "happy" : "neutral", look: Math.floor(ms / 1500) % 2 ? 1 : 0 }, pose: "sit", emote: showEm ? em : null };
       case "tv": return { f: { expr: Math.floor(ms / 2000) % 3 === 0 ? "happy" : "neutral", look: 1 }, pose: "sit", emote: showEm ? em : null };
@@ -681,21 +845,42 @@ function activityFrame(ms) {
   return { f: { ...fr }, pose: "stand", emote: em && fr.wave == null ? em : null };
 }
 
+const rotCache = new Map();
+function lyingHead(f) {   // the sleepy head turned 90 degrees: lying on the pillow
+  const key = JSON.stringify(f);
+  if (rotCache.has(key)) return rotCache.get(key);
+  const src = dollCanvas(f, "stand", 15);
+  const c = document.createElement("canvas"); c.width = src.height; c.height = src.width;
+  const x = c.getContext("2d"); x.translate(0, src.width); x.rotate(-Math.PI / 2); x.drawImage(src, 0, 0);
+  rotCache.set(key, c);
+  return c;
+}
+function frameOf(list, fps) { return list[Math.floor(realClock * fps) % list.length]; }
+
 function render() {
   const h = hour(), f = nightness(h);
   bctx.clearRect(0, 0, W, H);
   bctx.globalAlpha = 1; bctx.drawImage(IMG.day, 0, 0);
   if (f > 0) { bctx.globalAlpha = f; bctx.drawImage(IMG.night, 0, 0); bctx.globalAlpha = 1; }
+  // open windows: casements swung in, curtains drifting
+  const sway = [0, 1, 2, 1][Math.floor(realClock * 2.2) % 4];
+  for (const [id, open] of Object.entries(windowsOpen)) {
+    if (!open) continue;
+    const wv = D.windows[id];
+    bctx.drawImage(IMG.win[id]["day" + sway], wv.x, wv.y);
+    if (f > 0) { bctx.globalAlpha = f; bctx.drawImage(IMG.win[id]["night" + sway], wv.x, wv.y); bctx.globalAlpha = 1; }
+  }
   drawDoors(bctx);
-  const room = roomAt(sim.s), acting = sim.mode === "act";
-  if (acting && sim.act === "tv") drawOverlay(bctx, "tv");
-  if (acting && sim.act === "computer") drawOverlay(bctx, "monitor");
-  const sleeping = acting && sim.act === "sleep";
+  const room = roomAt(sim.s), acting = sim.mode === "act", act = acting ? sim.act : null;
+  const sleeping = act === "sleep";
+  for (const [id, on] of Object.entries(lamps)) if (on) drawOverlay(bctx, id);
   const lit = [];
-  if (f > 0.05 && !sleeping) {
-    lit.push(room);
-    const lamp = { bedroom: "bed_lamp", living: "floor_lamp", stairs: "sconce", study: "pendant" }[room];
-    if (lamp) drawOverlay(bctx, lamp);
+  if (f > 0.05) {
+    for (const [id, on] of Object.entries(lamps)) if (on) lit.push(id);
+    const auto = { kitchen: "kitchen", bath: "bath", stairs: "stairs", study: "study" }[room];
+    if (auto && !sleeping) { lit.push(auto); if (auto === "stairs") drawOverlay(bctx, "sconce"); if (auto === "study") drawOverlay(bctx, "pendant"); }
+    if (act === "tv") lit.push("tv");
+    if (act === "computer") lit.push("monitor");
   }
   // Buddy
   const ms = realClock * 1000;
@@ -703,10 +888,11 @@ function render() {
   const full = { expr: "neutral", look: 0, bob: 0, sway: 0, wave: null, ...fr.f };
   let emoteAt = null;
   if (sleeping) {
-    bctx.drawImage(dollCanvas({ ...full, expr: "sleepy", look: 0, wave: null }, "stand", 15), D.sleepHead[0], D.sleepHead[1]);
+    const [lx, ly] = D.sleepLying;
+    bctx.drawImage(lyingHead({ ...full, expr: "sleepy", look: 0, bob: 0, sway: 0, wave: null }), lx, ly);
     drawOverlay(bctx, "sleep_cover");
-    emoteAt = [D.sleepHead[0] + 20, D.sleepHead[1] - 13];
-  } else if (acting && sim.act === "bath") {
+    emoteAt = [lx + 10, ly - 14];
+  } else if (act === "bath") {
     bctx.drawImage(dollCanvas({ ...full, look: 0, wave: null }, "stand", 14), D.bathHead[0], D.bathHead[1]);
     drawOverlay(bctx, "tub_front"); drawOverlay(bctx, "bubbles");
     emoteAt = [D.bathHead[0] + 13, D.bathHead[1] - 15];
@@ -714,13 +900,26 @@ function render() {
     const p = pathPos(sim.s);
     const x = Math.round(p.x - DW / 2), y = Math.round(p.y - DH + 1);
     bctx.drawImage(dollCanvas(full, fr.pose), x, y);
-    if (acting && sim.act === "tv") drawOverlay(bctx, "coffee_table");
+    if (act === "tv") drawOverlay(bctx, "coffee_table");
     emoteAt = [x + 13, y - 15];
   }
   grade(bctx, f, lit);
+  // things that glow on their own: screens, flames, steam
+  if (act === "tv") {
+    const ch = Object.keys(IMG.tv)[Math.floor(realClock / 6) % 4];
+    bctx.drawImage(frameOf(IMG.tv[ch], 4), D.screens.tv.x, D.screens.tv.y);
+  }
+  if (act === "computer") {
+    const g = Object.keys(IMG.mon)[Math.floor(realClock / 8) % 3];
+    bctx.drawImage(frameOf(IMG.mon[g], 5), D.screens.monitor.x, D.screens.monitor.y);
+  }
+  if (act === "cook") bctx.drawImage(frameOf(IMG.fx.cook, 8), D.fx.cook.x, D.fx.cook.y);
+  if (act === "eat") bctx.drawImage(frameOf(IMG.fx.meal, 4), D.fx.meal.x, D.fx.meal.y);
+  if (act === "water_living" || act === "water_study") bctx.drawImage(frameOf(IMG.fx[act], 6), D.fx[act].x, D.fx[act].y);
   if (fr.emote || sleeping) bctx.drawImage(emoteCanvas(sleeping ? "zzz" : fr.emote), emoteAt[0], emoteAt[1]);
+  drawClickFx(bctx);
   vctx.imageSmoothingEnabled = false;
-  vctx.drawImage(buf, 0, 0, W * scale, H * scale);
+  vctx.drawImage(buf, 0, 0, view.width, view.height);
 }
 
 // ================================================================ UI
@@ -804,43 +1003,90 @@ document.querySelectorAll("[data-speed]").forEach(b => b.addEventListener("click
   speed = +b.dataset.speed;
   document.querySelectorAll("[data-speed]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
 }));
-document.getElementById("suggest").addEventListener("click", e => {
-  const b = e.target.closest("button"); if (!b) return;
-  const act = b.dataset.act;
-  if (sim.act === "sleep" && sim.mode === "act" && act !== "sleep") { log(`你建议她${ACTS[act].label}，可她睡得正香，等醒了再说吧。`); sim.queue.push(act); return; }
-  log(`你建议她${ACTS[act].label}，她点点头。`);
-  if (sim.mode === "idle") { sim.idleUntil = sim.t; sim.queue.unshift(act); }
-  else sim.queue.push(act);
-});
-document.getElementById("look").addEventListener("click", e => {
-  const b = e.target.closest("button"); if (!b) return;
-  if (b.dataset.gender) setLook({ ...PRESETS[b.dataset.gender] });
-  else {
-    const pick = a => a[Math.floor(Math.random() * a.length)];
-    const g = pick(["f", "m"]);
-    const cloth = D.swatches.cloth.map(c => c[1].toLowerCase());
-    const top = pick(cloth);
-    setLook({ gender: g, style: pick(["messy", "neat", "long", "buns"]), outfit: pick(["jacket", "hoodie", "dress"]),
-      acc: pick(["", "", "glasses", "bow", "headphones"]), hair: pick(D.swatches.hair)[1], skin: pick(D.swatches.skin)[1],
-      top, bottom: pick(cloth.filter(c => c !== top)), eye: pick(["#7c4734", "#433a54", "#46619e", "#447840"]) });
-  }
-  document.querySelectorAll("[data-gender]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.gender === look.gender)));
-});
-view.addEventListener("click", e => {
+function canvasXY(e) {
   const r = view.getBoundingClientRect();
-  const x = (e.clientX - r.left) * W / r.width, y = (e.clientY - r.top) * H / r.height;
+  return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height];
+}
+function buddyHit(x, y) {
   if (sim.mode === "act" && sim.act === "sleep") {
-    const [hx, hy] = D.sleepHead;
-    if (Math.abs(x - hx - 10) < 14 && Math.abs(y - hy - 8) < 12) log("你戳了戳她，她翻了个身继续睡。");
-    return;
+    const [lx, ly] = D.sleepLying;
+    return x >= lx && x < lx + 15 && y >= ly && y < ly + 20;
   }
   const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : pathPos(sim.s);
-  if (Math.abs(x - p.x) < 11 && y > p.y - DH - 2 && y < p.y + 3) {
+  return Math.abs(x - p.x) < 9 && y > p.y - DH + 2 && y < p.y + 2;
+}
+view.addEventListener("pointermove", e => {
+  const [x, y] = canvasXY(e);
+  hoverId = buddyHit(x, y) ? null : clickableAt(x, y);
+  view.style.cursor = hoverId || buddyHit(x, y) ? "pointer" : "default";
+});
+view.addEventListener("pointerleave", () => { hoverId = null; });
+view.addEventListener("click", e => {
+  const [x, y] = canvasXY(e);
+  if (buddyHit(x, y)) {
+    if (sim.mode === "act" && sim.act === "sleep") { log("你戳了戳她，她咂咂嘴继续睡。"); return; }
     reaction = { until: realClock + 1.6, emote: look.gender === "f" ? "heart" : "star" };
     sim.needs.fun = clamp(sim.needs.fun + 4);
     if (Math.random() < 0.5) log(["你戳了她一下，她冲你挥挥手。", "她发现你在看她，开心地挥了挥手。", "被你戳得咯咯笑。"][Math.floor(Math.random() * 3)]);
+    return;
   }
+  const id = clickableAt(x, y);
+  if (id) useFurniture(id);
 });
+
+// ================================================================ wardrobe
+let wardrobeOpen = false;
+const wardEl = document.getElementById("wardrobe");
+function saveLook() { try { localStorage.setItem("buddy-look", JSON.stringify(look)); } catch (e) { /* storage unavailable */ } }
+function positionWardrobe() {
+  const c = D.clickables.wardrobe, cw = CLICK.wardrobe ? CLICK.wardrobe.w : 22;
+  const panelW = wardEl.offsetWidth || 248;
+  let left = view.offsetLeft + (c.x + cw + 3) * scale;
+  if (left + panelW > view.offsetLeft + view.width) left = view.offsetLeft + c.x * scale - panelW - 8;
+  wardEl.style.left = Math.max(0, left) + "px";
+  wardEl.style.top = view.offsetTop + Math.max(0, c.y - 6) * scale + "px";
+}
+function syncWardrobe() {
+  wardEl.querySelectorAll(".chips").forEach(g => g.querySelectorAll("button").forEach(b =>
+    b.setAttribute("aria-pressed", String((look[g.dataset.k] || "") === b.dataset.v))));
+  wardEl.querySelectorAll(".sw").forEach(g => g.querySelectorAll("button").forEach(b =>
+    b.setAttribute("aria-pressed", String(look[g.dataset.k].toLowerCase() === b.dataset.v))));
+  document.getElementById("wBottomLabel").textContent = look.outfit === "dress" ? "裙子" : "裤子";
+}
+function changeLook(patch) {
+  setLook({ ...look, ...patch });
+  saveLook();
+  syncWardrobe();
+  const p = pathPos(sim.s);
+  poof = { t0: realClock, x: p.x, y: p.y - 14 };
+}
+function openWardrobe() { wardrobeOpen = true; wardEl.hidden = false; syncWardrobe(); positionWardrobe(); }
+function closeWardrobe() { if (!wardrobeOpen) return; wardrobeOpen = false; wardEl.hidden = true; log("换好衣服了，美美的！"); }
+for (const [k, list] of [["hair", D.swatches.hair], ["top", D.swatches.cloth], ["bottom", D.swatches.cloth]]) {
+  const box = wardEl.querySelector(`.sw[data-k="${k}"]`);
+  for (const [label, hex] of list) {
+    const b = document.createElement("button");
+    b.type = "button"; b.title = label; b.setAttribute("aria-label", label);
+    b.dataset.v = hex.toLowerCase(); b.style.setProperty("--c", hex);
+    box.appendChild(b);
+  }
+}
+wardEl.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "wClose") { closeWardrobe(); return; }
+  if (b.id === "wRandom") {
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+    const cloth = D.swatches.cloth.map(c => c[1].toLowerCase());
+    const top = pick(cloth);
+    changeLook({ style: pick(["messy", "neat", "long", "buns"]), outfit: pick(["jacket", "hoodie", "dress"]),
+      acc: pick(["", "", "glasses", "bow", "headphones"]), hair: pick(D.swatches.hair)[1].toLowerCase(),
+      top, bottom: pick(cloth.filter(c => c !== top)) });
+    return;
+  }
+  const g = b.closest("[data-k]"); if (!g) return;
+  changeLook({ [g.dataset.k]: b.dataset.v });
+});
+wardEl.addEventListener("keydown", e => { if (e.key === "Escape") closeWardrobe(); });
 
 // ================================================================ loop
 let last = performance.now(), uiT = 0;
@@ -858,9 +1104,11 @@ function frame(now) {
 }
 
 (async function boot() {
-  setLook({ ...PRESETS.f });
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem("buddy-look") || "null"); } catch (e) { /* storage unavailable */ }
+  setLook(saved && typeof saved === "object" ? { ...PRESETS.f, ...saved } : { ...PRESETS.f });
   fit();
-  window.addEventListener("resize", fit);
+  window.addEventListener("resize", () => { fit(); if (wardrobeOpen) positionWardrobe(); });
   await loadAssets();
   log("—— 第 1 天 ——", "day");
   log("还在被窝里睡觉。");

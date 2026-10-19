@@ -274,6 +274,13 @@ def room_x(key):
 
 # Where key pieces ended up — filled by furnish(), read by the demo exporter.
 ANCHORS = {}
+# Furniture the player can click in the demo: id -> (sprite, x, y).
+CLICK = {}
+
+
+def reg(cid, spr, x, y):
+    CLICK[cid] = (spr, x, y)
+    return y
 
 
 def furnish(s, night=False, buddy=doll.GIRL, lamps=None):
@@ -290,52 +297,72 @@ def furnish(s, night=False, buddy=doll.GIRL, lamps=None):
 
     # --- bedroom: window over the bed, nightstand + lamp, wardrobe
     x, (top, fl) = room_x("bedroom"), levels(1)
-    place(s, F.window(sky), x + 7, top + 5)
-    bed_y = on_floor(s, F.bed(), x + 2, 1)
+    w = F.window(sky)
+    reg("win_bed", w, x + 7, place(s, w, x + 7, top + 5))
+    bed = F.bed()
+    bed_y = reg("bed", bed, x + 2, on_floor(s, bed, x + 2, 1))
     ns_y = on_floor(s, F.nightstand(), x + 46, 1, 0)
-    place(s, F.lamp(on=lit), x + 47, ns_y - 12)
+    lamp = F.lamp(on=lit)
+    reg("bed_lamp", lamp, x + 47, place(s, lamp, x + 47, ns_y - 12))
     ANCHORS["bed"] = (x + 2, bed_y)
     ANCHORS["bed_lamp"] = (x + 47, ns_y - 12)
-    on_floor(s, F.wardrobe(), x + 76, 1, 0)
+    wr = F.wardrobe()
+    reg("wardrobe", wr, x + 76, on_floor(s, wr, x + 76, 1, 0))
     if night and buddy:
         z_at = sleeper(s, x + 2, bed_y, buddy)
         lights.append((x + 51, ns_y - 8, 30, (1.0, 0.86, 0.62), "bedroom"))
 
-    # --- bathroom: tiled to dado height
+    # --- bathroom: tiled to dado height; every fixture helps hygiene
     x = room_x("bath")
     s.blit(F.backsplash(66, 18), x, fl - 21)
     s.hline(x, x + 65, fl - 21, POR[3])
-    ANCHORS["bathtub"] = (x + 1, on_floor(s, F.bathtub(), x + 1, 1, 1))
-    on_floor(s, F.toilet(), x + 33, 1, 1)
-    place(s, F.towel(), x + 34, top + 12)
-    on_floor(s, F.vanity(), x + 48, 1, 0)
+    tub = F.bathtub()
+    ANCHORS["bathtub"] = (x + 1, reg("bathtub", tub, x + 1, on_floor(s, tub, x + 1, 1, 1)))
+    toilet = F.toilet()
+    ANCHORS["toilet"] = (x + 33, reg("toilet", toilet, x + 33, on_floor(s, toilet, x + 33, 1, 1)))
+    towel = F.towel()
+    reg("towel", towel, x + 34, place(s, towel, x + 34, top + 12))
+    van = F.vanity()
+    reg("vanity", van, x + 48, on_floor(s, van, x + 48, 1, 0))
 
     # --- study
     x = room_x("study")
-    place(s, F.window(sky, curtains=None), x + 66, top + 5)
-    on_floor(s, F.bookshelf(), x + 3, 1, 0)
+    w = F.window(sky, curtains=None)
+    reg("win_study", w, x + 66, place(s, w, x + 66, top + 5))
+    bs = F.bookshelf()
+    reg("bookshelf", bs, x + 3, on_floor(s, bs, x + 3, 1, 0))
     dy = on_floor(s, F.desk(), x + 30, 1, 0)
-    place(s, F.monitor(on=bool(buddy) and not night), x + 38, dy - 13)
+    mon = F.monitor(on=bool(buddy) and not night)
+    reg("computer", mon, x + 38, place(s, mon, x + 38, dy - 13))
     ANCHORS["monitor"] = (x + 38, dy - 13)
     place(s, F.keyboard(), x + 39, dy - 2, shadow=False)
-    place(s, F.desk_lamp(), x + 55, dy - 11)
+    dl = F.desk_lamp()
+    reg("desk_lamp", dl, x + 55, place(s, dl, x + 55, dy - 11))
+    ANCHORS["desk_lamp"] = (x + 55, dy - 11)
     place(s, F.mug(), x + 33, dy - 4)
     place(s, F.pendant(on=False), x + 42, top)
     ANCHORS["pendant"] = (x + 42, top)
     ANCHORS["office_chair"] = (x + 22, on_floor(s, F.office_chair(), x + 22, 1, 2))
-    on_floor(s, F.plant(), x + 82, 1, 1)
+    pl = F.plant()
+    ANCHORS["plant_study"] = (x + 82, reg("plant_study", pl, x + 82, on_floor(s, pl, x + 82, 1, 1)))
 
     # --- living room
     x, (top, fl) = room_x("living"), levels(0)
-    place(s, F.window(sky), x + 42, top + 5)
-    on_floor(s, F.plant(), x + 6, 0, 1)
+    w = F.window(sky)
+    reg("win_living", w, x + 42, place(s, w, x + 42, top + 5))
+    pl = F.plant()
+    ANCHORS["plant_living"] = (x + 6, reg("plant_living", pl, x + 6, on_floor(s, pl, x + 6, 0, 1)))
     s.blit(F.rug(46), x + 35, fl + 2)
-    ANCHORS["floor_lamp"] = (x + 26, on_floor(s, F.floor_lamp(on=lit), x + 26, 0, 1))
-    ANCHORS["sofa"] = (x + 38, on_floor(s, F.sofa(), x + 38, 0, 1))
+    fl_lamp = F.floor_lamp(on=lit)
+    ANCHORS["floor_lamp"] = (x + 26, reg("floor_lamp", fl_lamp, x + 26, on_floor(s, fl_lamp, x + 26, 0, 1)))
+    sofa = F.sofa()
+    ANCHORS["sofa"] = (x + 38, reg("sofa", sofa, x + 38, on_floor(s, sofa, x + 38, 0, 1)))
     ANCHORS["coffee_table"] = (x + 47, on_floor(s, F.coffee_table(), x + 47, 0, 5))
-    place(s, F.art_print(18, 13, "hills"), x + 119, top + 7)
+    art = F.art_print(18, 13, "hills")
+    reg("art", art, x + 119, place(s, art, x + 119, top + 7))
     c_y = on_floor(s, F.media_console(), x + 112, 0, 0)
-    place(s, F.tv(), x + 115, c_y - 15)
+    tv = F.tv()
+    reg("tv", tv, x + 115, place(s, tv, x + 115, c_y - 15))
     ANCHORS["tv"] = (x + 115, c_y - 15)
     if night:
         lights.append((x + 32, top + 20, 34, (1.0, 0.88, 0.64), "living"))
@@ -344,12 +371,17 @@ def furnish(s, night=False, buddy=doll.GIRL, lamps=None):
     x = room_x("kitchen")
     place(s, F.wall_cabinets(), x + 2, top + 8)
     s.blit(F.backsplash(52, 10), x + 2, top + 19)
-    on_floor(s, F.kitchen_base(), x + 2, 0, 0)
-    on_floor(s, F.fridge(), x + 55, 0, 0)
+    kb = F.kitchen_base()
+    kb_y = reg("stove", kb, x + 2, on_floor(s, kb, x + 2, 0, 0))
+    ANCHORS["hob"] = (x + 2 + 26, kb_y + 6)          # left burner, worktop row
+    fr = F.fridge()
+    reg("fridge", fr, x + 55, on_floor(s, fr, x + 55, 0, 0))
     on_floor(s, F.chair("right"), x + 70, 0, 3)
-    t_y = on_floor(s, F.dining_table(), x + 75, 0, 2)
+    tbl = F.dining_table()
+    t_y = reg("table", tbl, x + 75, on_floor(s, tbl, x + 75, 0, 2))
     ANCHORS["dining_table"] = (x + 75, t_y)
-    place(s, F.bowl(), x + 82, t_y - 4, shadow=False)
+    if buddy:
+        place(s, F.bowl(), x + 82, t_y - 4, shadow=False)
     on_floor(s, F.chair("left"), x + 91, 0, 3)
     ANCHORS["hood"] = (x + 2 + 27, top + 8)
     if buddy and not night:

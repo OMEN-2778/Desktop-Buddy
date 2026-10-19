@@ -138,6 +138,15 @@ Reference: `prototype/creator/index.src.html`.
   icons over words, chibi style (10x10, round, chunky, blush), shown at one
   icon pixel per house pixel.
 
+**Interaction (demo)** — the player directs Buddy by clicking furniture, not
+buttons. Every clickable piece is registered in `house.CLICK` via `reg()`
+inside `furnish()` (sprite + position); the demo builds hit masks and 1-3px
+outline rings from those sprites. Hover = marching gold 1px outline; click =
+flash + gold rings rippling out + four-point twinkles. Anything that lights
+up on its own (TV/monitor screens, flames, steam) is drawn after the night
+pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
+`monitor_screen`, `cook_fx`, `meal_fx`, `water_fx`; review in `fx_sheet.py`).
+
 ## Pitfalls seen so far
 
 - Joining grid strings with `"\n"` on both sides inserted blank rows and

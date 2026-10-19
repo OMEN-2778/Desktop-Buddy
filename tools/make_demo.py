@@ -82,11 +82,42 @@ def main():
         "bed_lamp": overlay(F.lamp(on=True), *A["bed_lamp"]),
         "floor_lamp": overlay(F.floor_lamp(on=True), *A["floor_lamp"]),
         "sconce": overlay(F.sconce(on=True), *A["sconce"]),
+        "desk_lamp": overlay(F.desk_lamp(on=True), *A["desk_lamp"]),
         "pendant": overlay(F.pendant(on=True), *A["pendant"]),
         "coffee_table": overlay(F.coffee_table(), *A["coffee_table"]),
         "sleep_cover": overlay(Hs.sleep_cover(), bed_x + Hs.SLEEP_COVER[0], bed_y + Hs.SLEEP_COVER[1]),
         "tub_front": overlay(tub_front, tub_x, tub_y + 21),
         "bubbles": overlay(bubbles, tub_x, tub_y + 18),
+    }
+
+    # clickable furniture (taken from the daytime furnish)
+    Hs.CLICK.clear()
+    empty_house(False)
+    C = dict(Hs.CLICK)
+    clickables = {cid: {"src": png(spr), "x": int(x), "y": int(y)} for cid, (spr, x, y) in C.items()}
+
+    # window open states: day/night, three sway frames
+    windows = {}
+    for cid, curt in (("win_bed", F.OAT), ("win_living", F.OAT), ("win_study", None)):
+        _, x, y = C[cid]
+        windows[cid] = {"x": int(x), "y": int(y), **{
+            f"{sky}{sw}": png(F.window(sky, curtains=curt, opened=True, sway=sw))
+            for sky in ("day", "night") for sw in (0, 1, 2)}}
+
+    # screens (drawn after the night pass, they glow) and effects
+    tvx, tvy = A["tv"]
+    mx, my = A["monitor"]
+    hx, hy = A["hob"]
+    tx, ty = A["dining_table"]
+    screens = {
+        "tv": {"x": tvx + 1, "y": tvy + 1, "channels": {c: [png(F.tv_screen(c, f)) for f in range(4)] for c in F.TV_CHANNELS}},
+        "monitor": {"x": mx + 1, "y": my + 1, "games": {g: [png(F.monitor_screen(g, f)) for f in range(4)] for g in F.GAMES}},
+    }
+    fx = {
+        "cook": {"x": hx - 1, "y": hy - 23, "frames": [png(F.cook_fx(f)) for f in range(12)]},
+        "meal": {"x": tx + 11, "y": ty - 13, "frames": [png(F.meal_fx(f)) for f in range(4)]},
+        "water_living": {"x": A["plant_living"][0] + 4, "y": A["plant_living"][1] - 6, "frames": [png(F.water_fx(f)) for f in range(4)]},
+        "water_study": {"x": A["plant_study"][0] + 4, "y": A["plant_study"][1] - 6, "frames": [png(F.water_fx(f)) for f in range(4)]},
     }
 
     # walk path, feet positions (x = Buddy's centre column)
@@ -101,9 +132,9 @@ def main():
     k, lv, bd, bt, st = (Hs.room_x(r) for r in ("kitchen", "living", "bedroom", "bath", "study"))
     spots = {
         # name: storey, x, pose ("stand" | "sit" | "sleep" | "bath")
-        "cook": (0, k + 36, "stand"),
+        "cook": (0, k + 49, "stand"),        # beside the pot, looking at it
         "fridge": (0, k + 62, "stand"),
-        "eat": (0, k + 80, "sit"),
+        "eat": (0, k + 75, "sit"),           # left side of the table, bowl to her right
         "sofa": (0, lv + 55, "sit"),
         "art": (0, lv + 128, "stand"),
         "plant": (0, lv + 20, "stand"),
@@ -112,18 +143,27 @@ def main():
         "bath": (1, bt + 16, "bath"),
         "mirror": (1, bt + 56, "stand"),
         "computer": (1, st + 28, "sit"),
+        "toilet": (1, bt + 39, "sit"),
+        "vanity": (1, bt + 56, "stand"),
+        "towel": (1, bt + 38, "stand"),
+        "water_living": (0, lv + 25, "stand"),
+        "water_study": (1, st + 78, "stand"),
         "bookshelf": (1, st + 13, "stand"),
         "study_window": (1, st + 78, "stand"),
     }
     rooms = {key: Hs.room_rect(key) for key in ["stairs"] + [r[0] for r in Hs.ROOMS]}
     room_x = {r[0]: (r[2], r[3], r[3] + r[4]) for r in Hs.ROOMS}
-    lights = {
-        "bedroom": (A["bed_lamp"][0] + 4, A["bed_lamp"][1] + 4, 32, (1.0, 0.86, 0.62)),
-        "living": (A["floor_lamp"][0] + 6, A["floor_lamp"][1] + 4, 40, (1.0, 0.88, 0.64)),
-        "kitchen": (A["hood"][0] + 11, A["hood"][1] + 10, 30, (1.0, 0.9, 0.72)),
-        "stairs": (A["sconce"][0] + 3, A["sconce"][1] + 3, 26, (1.0, 0.85, 0.62)),
-        "study": (A["pendant"][0] + 5, A["pendant"][1] + 12, 36, (1.0, 0.9, 0.72)),
-        "bath": (bt + 33, Hs.UP_WALL + 8, 34, (0.95, 0.95, 1.0)),
+    sx_, sy_ = A["sconce"]
+    lights = {   # id: x, y, radius, colour, room (pools never leave their room)
+        "bed_lamp": (A["bed_lamp"][0] + 4, A["bed_lamp"][1] + 4, 32, (1.0, 0.86, 0.62), "bedroom"),
+        "floor_lamp": (A["floor_lamp"][0] + 6, A["floor_lamp"][1] + 4, 40, (1.0, 0.88, 0.64), "living"),
+        "desk_lamp": (A["desk_lamp"][0] + 7, A["desk_lamp"][1] + 5, 22, (1.0, 0.9, 0.7), "study"),
+        "kitchen": (A["hood"][0] + 11, A["hood"][1] + 10, 30, (1.0, 0.9, 0.72), "kitchen"),
+        "stairs": (sx_ + 3, sy_ + 3, 26, (1.0, 0.85, 0.62), "stairs"),
+        "study": (A["pendant"][0] + 5, A["pendant"][1] + 12, 36, (1.0, 0.9, 0.72), "study"),
+        "bath": (bt + 33, Hs.UP_WALL + 8, 34, (0.95, 0.95, 1.0), "bath"),
+        "tv": (tvx + 13, tvy + 8, 30, (0.7, 0.85, 1.05), "living"),
+        "monitor": (mx + 8, my + 5, 18, (0.75, 0.9, 1.05), "study"),
     }
 
     layers = mc.collect_layers()
@@ -136,6 +176,8 @@ def main():
         "needIcons": {k: png(need_icons.icon(k)) for k in need_icons.GRIDS},
         "doors": doors, "leaves": leaves, "overlays": overlays,
         "sleepHead": [bed_x + Hs.SLEEP_HEAD[0], bed_y + Hs.SLEEP_HEAD[1]],
+        "sleepLying": [bed_x + 3, bed_y - 7],
+        "clickables": clickables, "windows": windows, "screens": screens, "fx": fx,
         "bathHead": [tub_x + 5, tub_y + 6],
         "path": path, "spots": spots, "rooms": rooms, "roomX": room_x, "lights": lights,
         "emissive": sorted({c.lower() for c in Hs.EMISSIVE}),

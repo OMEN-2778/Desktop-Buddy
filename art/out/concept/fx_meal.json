@@ -1,0 +1,17 @@
+{
+  "frame_w": 18,
+  "frame_h": 19,
+  "anims": {
+    "fx_meal": {
+      "row": 0,
+      "frames": 4,
+      "durations": [
+        260,
+        260,
+        260,
+        260
+      ],
+      "loop": true
+    }
+  }
+}
