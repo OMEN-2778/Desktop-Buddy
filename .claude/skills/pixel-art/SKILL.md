@@ -67,7 +67,7 @@ own material (hair with hair[0], skin with skin[0]…). Only shoes/eyes use ink.
   (2px legs at cols 7–8 / 11–12), shoes 26–27. Long sleeves end on row 19,
   tees on 18 (outline row), tanks show the whole arm.
 - Option sets (`OPTIONS`, also the UI order + names): hair `HEADS` (short:
-  messy, neat, buzz, mid, curly; long: long, bob, buns, pony, twin),
+  messy, afro, neat, buzz, mid, curly; long: long, bob, buns, pony, twin),
   `EYE_SHAPES` (round, bean, sparkle, droopy, cat, smile), `TOPS` (+ `SLEEVES`
   for the waving arm), `BOTTOMS` (+ `BOTTOM_POSE`: shoes, walk leg-lift row,
   rows dropped when sitting), `SOCKS` (none/short/long), `ACCESSORIES`
@@ -76,6 +76,19 @@ own material (hair with hair[0], skin with skin[0]…). Only shoes/eyes use ink.
   (hidden under eyewear) and a lopsided smirk; girls get a lash flick on
   round/sparkle eyes. Eye shape applies to the neutral face; surprised
   always opens round eyes; happy/blink/sleepy/flustered are shared.
+- 爆炸头 (`afro`, user asked for it 2nd in the list, "like Hinata Shoyo,
+  not too wild"): a fluffy mop wider than the head with soft tufts at the
+  edge, clean top-left highlight, a few 2–3px strand lines — never noise
+  dots inside the mass, never tall sharp spikes (the hedgehog was rejected).
+- Hats clip hair: with a beanie the back-hair and head layers are drawn
+  through `under_hat()` (rows above `HAT_CLIP` cleared), so no tuft, bun,
+  tie or curl pokes through it; their keys end in `/{hat}`. The beanie is a
+  shaded dome + ribbed cuff with a lit fold line and a cast shadow + pom.
+- Headphones follow the head: `head_outline_box()` measures each
+  hairstyle (or the hat) and the band is an elliptical arc hugging that
+  outline, lit top-left; cups are rounded and shaded in the top's color.
+  Key `acc/headphones/{style|hat}/{bob}`. Never draw straight bands across
+  the hair (user: "穿模、不是弧形").
 - Only 2 columns are free beside the head: ponytails/twin tails hang IN
   FRONT of the side hair (`draw_tails`), not behind it (they vanished).
   Curls are overlapping puffs (`draw_curly`); keep them above row 10.

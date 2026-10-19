@@ -68,6 +68,9 @@ def collect_layers() -> dict[str, Sprite]:
         add(replace(base, bottom_style=bottom, socks=socks), still[:1])
     for a in doll.ACCESSORIES:
         add(replace(base, accessories=(a,)), still)
+    for style in doll.HEADS:                       # hair under a beanie, headphones fitted per head
+        add(replace(base, hair_style=style, accessories=("beanie", "headphones")), still)
+        add(replace(base, hair_style=style, accessories=("headphones",)), still)
     return layers
 
 
@@ -111,6 +114,7 @@ def doll_data() -> dict:
         "seq": [{**{"expr": "neutral", "look": 0, "bob": 0, "sway": 0, "wave": None}, **kw, "emote": em, "ms": ms}
                 for kw, em, ms in doll.IDLE_SEQ],
         "options": doll.OPTIONS,
+        "shortStyles": doll.SHORT_STYLES,
         "sleeves": doll.SLEEVES,
         "pose": {k: {"shoes": sh, "legStart": ls, "sitDrop": list(sd)} for k, (sh, ls, sd) in doll.BOTTOM_POSE.items()},
         "headAcc": doll.HEAD_ACC_ORDER,

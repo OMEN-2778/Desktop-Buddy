@@ -280,8 +280,8 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
   const pick = a => a[Math.floor(Math.random() * a.length)];
   function randomLook() {
     const g = pick(["f", "m"]);
-    const half = O.style.length / 2;    // the list is short styles first, then long ones
-    const styles = Math.random() < 0.8 ? (g === "m" ? O.style.slice(0, half) : O.style.slice(half)) : O.style;
+    const short = O.style.filter(o => DATA.shortStyles.includes(o[0])), long = O.style.filter(o => !DATA.shortStyles.includes(o[0]));
+    const styles = Math.random() < 0.8 ? (g === "m" ? short : long) : O.style;
     const cloth = DATA.swatches.cloth.map(c => c[1].toLowerCase());
     const top = pick(cloth);
     let acc = [];

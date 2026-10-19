@@ -84,7 +84,8 @@ function BuddyDoll(DATA) {
     const keys = [];
     const add = k => { if (DATA.layers[k]) keys.push(k); };
     const pose = DATA.pose[look.bottomStyle];
-    add(`back/${look.style}/${f.bob}/${f.sway % 2}`);
+    const hat = acc.has("beanie") ? 1 : 0;      // hair above the beanie's cuff is clipped away
+    add(`back/${look.style}/${f.bob}/${f.sway % 2}/${hat}`);
     add(`base/${arm ? 1 : 0}`);
     if (look.socks !== "none") add(`socks/${look.socks}`);
     add(`shoes/${pose.shoes}`);
@@ -92,12 +93,16 @@ function BuddyDoll(DATA) {
     add(`top/${look.topStyle}/${arm ? 1 : 0}`);
     add(`bib/${look.bottomStyle}`);
     if (acc.has("scarf")) add("acc/scarf/0");
-    add(`head/${look.style}/${f.bob}`);
+    add(`head/${look.style}/${f.bob}/${hat}`);
     if (!acc.has("beanie")) add(`ahoge/${look.style}/${f.sway % 2}/${f.bob}`);
     const eyes = f.expr === "neutral" ? look.eyes : "-";
     const brows = look.gender === "m" && DATA.eyewear.some(a => acc.has(a)) ? 1 : 0;
     add(`face/${look.gender}/${eyes}/${f.expr}/${f.look}/${f.bob}/${brows}`);
-    for (const a of DATA.headAcc) if (acc.has(a)) add(`acc/${a}/${f.bob}`);
+    for (const a of DATA.headAcc) {
+      if (!acc.has(a)) continue;
+      // the headphone band is fitted to the hairstyle's outline (or the hat's)
+      add(a === "headphones" ? `acc/headphones/${hat ? "hat" : look.style}/${f.bob}` : `acc/${a}/${f.bob}`);
+    }
     if (arm) add(`arm/${DATA.sleeves[look.topStyle]}/${f.wave}`);
     return keys;
   }

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 
-from pixelkit import Anim, P, Sprite
+from pixelkit import Anim, P, Sprite, rgba
 
 PREVIEW_SCALE = 8
 W, H = 20, 28
@@ -72,6 +72,25 @@ HEADS = {
 .OhhhShhhhShhShhhkO
 ..OhkLLhLLLLLhLLkO
 """ + _FACE),
+    # afro (爆炸头): a fluffy mop with soft tufts all round, a few strand
+    # lines radiating from the crown, pointed bangs (think Hinata Shoyo)
+    "afro": rows("""
+.......O....OO......
+....OO.OOO.OhO.OO...
+...OHHOHYHOhhkOhkO..
+..OHYHHYhhhhHHhhkkO.
+.OHYHhhhkhhhhkhhhkO.
+OOHHhhhkhhhhhkhhhkOO
+.OHhhhkhhhhhhhkhhkkO
+OhHhhhhhhhhhhhhhhhkO
+.OhhhhShhhhShhhShkO.
+..OhkLLhkLLLLhkLLhO.
+.OhhLLLLLLLLLLLLhhO
+..OkLLLLLLLLLLLLkO
+..OkLLLLLLLLLLLLkO
+...OSLLLLLLLLLLSO
+....qqSLLLLLLSqq
+"""),
     # side-swept: parted on the left, fringe sweeps diagonally down-right,
     # a stray tuft at the back-right breaks the dome
     "neat": rows("""
@@ -147,7 +166,7 @@ HEADS = {
     "pony": rows(_TOP + _CROWN + _BANGS + _FACE),
     "twin": rows(_TOP + _CROWN + _BANGS + _FACE),
 }
-SHORT_STYLES = ["messy", "neat", "buzz", "mid", "curly"]
+SHORT_STYLES = ["messy", "afro", "neat", "buzz", "mid", "curly"]
 LONG_STYLES = ["long", "bob", "buns", "pony", "twin"]
 
 AHOGE = [  # two sway positions
@@ -209,6 +228,21 @@ def draw_tails(s: Sprite, d: "Doll", dy: int = 0):
         out.rect(tx - 1, ty, 4, 2, TIE[0]).rect(tx, ty - 1, 2, 4, TIE[0])  # rounded scrunchie
         out.rect(tx, ty, 2, 2, TIE[1]).set(tx, ty, TIE[2])
     s.blit(out, 0, dy)
+
+
+HAT_TOP = 5  # a beanie's cuff covers rows 5-7: hair above its lower edge is hidden under the hat
+HAT_CLIP = HAT_TOP + 3
+
+
+def under_hat(draw, dy: int):
+    """Wrap a hair draw so nothing above the hat's cuff shows (no hair
+    poking through the beanie)."""
+    def run(s: Sprite):
+        tmp = Sprite(W, H)
+        draw(tmp)
+        tmp.px[: max(0, HAT_CLIP + dy)] = 0
+        s.blit(tmp, 0, 0)
+    return run
 
 
 def draw_back_hair(s: Sprite, d: "Doll", bob: int = 0, sway: int = 0):
@@ -561,23 +595,9 @@ def draw_accessory(s: Sprite, d: "Doll", name: str, dy: int = 0):
             .oo.oo.
         """, {"o": m[0], "Y": m[3], "S": m[2]}), 1, 4 + dy)
     elif name == "headphones":
-        m = P.metal
-        s.line(3, 7 + dy, 9, 1 + dy, m[0]).line(10, 1 + dy, 16, 7 + dy, m[0])
-        for hx in (1, 16):
-            s.rect(hx, 7 + dy, 3, 5, m[0]).rect(hx + 1, 8 + dy, 1, 3, d.top[2])
+        draw_headphones(s, d, dy)
     elif name == "beanie":
-        m = P.mustard
-        s.blit(_grid("""
-            ........oo
-            .......oWWo
-            ......ooWwoo
-            ....ooCTTCCCoo
-            ...oCTTCCCCCCco
-            ..oCTCCCCCCCCcco
-            ..obBbBbBbBbBbbo
-            ..obBbBbBbBbBbbo
-        """, {"o": m[0], "c": m[1], "C": m[2], "T": m[3], "B": m[2], "b": m[1],
-              "W": P.linen[3], "w": P.linen[1]}), 0, dy)
+        draw_beanie(s, dy)
     elif name == "scarf":
         c = P.coral
         s.blit(_grid("""
@@ -589,6 +609,103 @@ def draw_accessory(s: Sprite, d: "Doll", name: str, dy: int = 0):
             ......oCco
             ......oooo
         """, {"o": c[0], "c": c[1], "C": c[2], "T": c[3], "W": P.linen[3]}), 0, 15)
+
+
+def _shade_dome(spr: Sprite, cx, cy, rx, ry, rows, ramp, cols=range(W)):
+    """Fill an ellipse slice lit from the top-left: highlight, light, base, shadow."""
+    for y in rows:
+        for x in cols:
+            nx, ny = (x - cx) / (rx + 0.5), (y - cy) / (ry + 0.5)
+            if nx * nx + ny * ny > 1:
+                continue
+            lit = -0.6 * nx - 0.8 * ny
+            spr.set(x, y, ramp[4] if lit > 0.78 else ramp[3] if lit > 0.45 else ramp[2] if lit > -0.1 else ramp[1])
+
+
+def draw_beanie(s: Sprite, dy: int = 0):
+    """Knit beanie: a round crown lit from the top-left, a folded rib cuff
+    (lit fold line on top, shadow cast onto the crown) and a shaded pom-pom."""
+    m = P.mustard
+    hat = Sprite(W, H)
+    _shade_dome(hat, 9.5, HAT_TOP + 0.6, 7.4, 4.6, range(0, HAT_TOP), m)
+    for y in range(HAT_TOP, HAT_TOP + 3):          # folded cuff, ribbed
+        for x in range(2, 18):
+            row = y - HAT_TOP
+            hi, lo = [(m[3], m[2]), (m[2], m[1]), (m[2], m[1])][row]
+            c = hi if x % 2 == 0 else lo
+            if x in (2, 17) or (row == 2 and x in (3, 16)):
+                c = m[1]                            # the cuff turns away at the sides
+            hat.set(x, y, c)
+    for x in range(3, 17):                          # crisp fold line along the cuff's top
+        hat.set(x, HAT_TOP, m[4] if 4 <= x <= 9 else m[3])
+    out = hat.outline(m[0], grow=True).crop(1, 1, W, H)
+    for x in range(3, 17):                          # shadow the cuff casts on the crown
+        if out.get(x, HAT_TOP - 1) not in (rgba(m[0]), (0, 0, 0, 0)):
+            out.set(x, HAT_TOP - 1, m[1] if x > 5 else m[2])
+    l = P.linen
+    pom = Sprite.from_grid("""
+        .oooo.
+        oWWWwo
+        oWWwgo
+        .oggo.
+    """, {"o": l[0], "W": l[3], "w": l[2], "g": l[1]})
+    out.blit(pom, 7, -1)
+    s.blit(out, 0, dy)
+
+
+def head_outline_box(style: str):
+    """(top, left, right) of a head's hair silhouette, used to fit the
+    headphone band: top over the crown centre, sides at temple height."""
+    if style == "hat":
+        return 1, 2, 17
+    mk = Doll(hair_style=style)
+    spr = Sprite(W, H)
+    spr.blit(Sprite.from_grid("\n".join(HEADS[style]), mk.legend()), 0, 0)
+    if style == "curly":
+        draw_curly(spr, mk)
+    a = spr.px[..., 3] > 0
+    top = min(y for y in range(H) if a[y, 7:13].any())
+    side = [x for y in range(6, 9) for x in range(W) if a[y, x]]
+    return top, min(side), max(side)
+
+
+_BOX_CACHE: dict[str, tuple] = {}
+
+
+def draw_headphones(s: Sprite, d: "Doll", dy: int = 0):
+    """A curved band that hugs the top of the hair (or the hat), ending in
+    rounded, shaded cups over the ears. Cups take the top's color."""
+    m, t = P.metal, d.top
+    shape = "hat" if "beanie" in d.accessories else d.hair_style
+    if shape not in _BOX_CACHE:
+        _BOX_CACHE[shape] = head_outline_box(shape)
+    top, left, right = _BOX_CACHE[shape]
+    cx, cy = (left + right) / 2, 9.0
+    rx, ry = (right - left) / 2, cy - top
+    band = Sprite(W, H)
+    for y in range(0, 9):
+        for x in range(W):
+            nx, ny = (x - cx) / (rx + 0.5), (y - cy) / (ry + 0.5)
+            d_out = nx * nx + ny * ny
+            nx2, ny2 = (x - cx) / (rx - 0.7), (y - cy) / (ry - 0.7)
+            if d_out > 1 or nx2 * nx2 + ny2 * ny2 <= 1:
+                continue
+            lit = -0.6 * nx - 0.8 * ny
+            band.set(x, y, m[4] if lit > 0.8 else m[3] if lit > 0.2 else m[2])
+    band = band.outline(m[0], grow=True).crop(1, 1, W, H)
+    s.blit(band, 0, dy)
+    cup = Sprite.from_grid("""
+        .oo.
+        oLCo
+        oLCp
+        oCcp
+        oCcp
+        .oo.
+    """, {"o": t[0], "L": t[3], "C": t[2], "c": t[1], "p": P.ink[1]})
+    lx = max(0, int(left) - 2)
+    rx_ = min(W - 4, int(right) - 1)
+    s.blit(cup, lx, 7 + dy)
+    s.blit(cup.flip_h(), rx_, 7 + dy)
 
 
 def raised_arm(s: Sprite, d: "Doll", frame: int, sleeve: str = "long"):
@@ -762,14 +879,15 @@ class Doll:
         lg = self.legend()
         arm = wave is not None
         acc = set(self.accessories)
+        hat = int("beanie" in acc)
 
         def grid_at(src, y):
             return lambda s: s.blit(Sprite.from_grid("\n".join(src), lg), 0, y)
 
         out = []
         if self.hair_style in ("long", "bob", "buns"):
-            out.append((f"back/{self.hair_style}/{bob}/{sway % 2}",
-                        lambda s: draw_back_hair(s, self, bob, sway % 2)))
+            back = lambda s: draw_back_hair(s, self, bob, sway % 2)
+            out.append((f"back/{self.hair_style}/{bob}/{sway % 2}/{hat}", under_hat(back, bob) if hat else back))
         base = lower_arm_removed(BASE, 15, "q") if arm else BASE
         out.append((f"base/{int(arm)}", grid_at(base, 15)))
         if self.socks in SOCKS:
@@ -785,8 +903,8 @@ class Doll:
         if "scarf" in acc:
             out.append(("acc/scarf/0", lambda s: draw_accessory(s, self, "scarf")))
         extra = HEAD_EXTRA.get(self.hair_style)
-        out.append((f"head/{self.hair_style}/{bob}",
-                    lambda s: (grid_at(HEADS[self.hair_style], bob)(s), extra and extra(s, self, bob))))
+        head = lambda s: (grid_at(HEADS[self.hair_style], bob)(s), extra and extra(s, self, bob))
+        out.append((f"head/{self.hair_style}/{bob}/{hat}", under_hat(head, bob) if hat else head))
         if self.hair_style == "messy" and "beanie" not in acc:
             out.append((f"ahoge/messy/{sway % 2}/{bob}", grid_at(AHOGE[sway % 2], bob)))
         eyes = self.eye_shape if expr == "neutral" else "-"
@@ -795,7 +913,8 @@ class Doll:
                     lambda s: draw_face(s, self, expr, look, bob)))
         for a in HEAD_ACC_ORDER:
             if a in acc:
-                out.append((f"acc/{a}/{bob}", lambda s, a=a: draw_accessory(s, self, a, bob)))
+                key = f"acc/{a}/{bob}" if a != "headphones" else f"acc/headphones/{'hat' if hat else self.hair_style}/{bob}"
+                out.append((key, lambda s, a=a: draw_accessory(s, self, a, bob)))
         if arm:
             sleeve = SLEEVES[self.top_style]
             out.append((f"arm/{sleeve}/{wave}", lambda s: raised_arm(s, self, wave, sleeve)))
@@ -842,7 +961,7 @@ VARIANTS = [
 
 # Option lists with the names the dressing room shows (order = UI order).
 OPTIONS = {
-    "style": [("messy", "呆毛短发"), ("neat", "侧分"), ("buzz", "寸头"), ("mid", "中分"), ("curly", "卷毛"),
+    "style": [("messy", "呆毛短发"), ("afro", "爆炸头"), ("neat", "侧分"), ("buzz", "寸头"), ("mid", "中分"), ("curly", "卷毛"),
               ("long", "长直发"), ("bob", "波波头"), ("buns", "丸子头"), ("pony", "侧马尾"), ("twin", "双马尾")],
     "eyes": [("round", "圆眼"), ("bean", "豆豆眼"), ("sparkle", "闪亮眼"), ("droopy", "下垂眼"),
              ("cat", "猫眼"), ("smile", "眯眯眼")],
