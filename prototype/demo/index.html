@@ -93,38 +93,51 @@ body {
 .need {
   position: relative;
   flex: none;
-  width: var(--bh, 24px);
+  width: var(--bh, 24px);          /* JS springs this between the dot and the open bar */
   height: var(--bh, 24px);
   background: var(--ring);
   clip-path: var(--clip-track);
-  transition: width .3s steps(10, end);
 }
 .need .fill {
   position: absolute;
-  top: var(--u); bottom: var(--u); left: var(--u);
-  width: calc(100% - var(--u) * 2);
-  background: var(--c, var(--need-ok));
+  top: calc(var(--u) * 2); bottom: calc(var(--u) * 2); left: calc(var(--u) * 2);   /* 2px white ring */
+  /* --p is 0 in a dot (fill = the dot's centre) and springs to 1 once the bar is open */
+  width: min(100% - var(--u) * 4,
+             var(--fmin) + (100% - var(--u) * 4 - var(--fmin)) * var(--v, 1) * var(--p, 0));
+  background-color: var(--c, var(--need-ok));
+  background-image: var(--stripes);
+  background-size: calc(var(--u) * 8) calc(var(--u) * 8);
+  image-rendering: pixelated;
   clip-path: var(--clip-fill);
-  transition: width .3s steps(10, end), background-color .2s;
+  animation: crawl 3.2s steps(8) infinite;
+  transition: background-color .3s;
 }
+.need .fill::before {              /* a 1px gloss line along the top */
+  content: ""; position: absolute; top: var(--u); left: calc(var(--u) * 2); right: calc(var(--u) * 2);
+  height: var(--u); background: rgba(255, 255, 255, .38);
+}
+.need.low .fill { animation: crawl 3.2s steps(8) infinite, pulse 1.4s ease-in-out infinite; }
+@keyframes crawl { from { background-position: 0 0; } to { background-position: calc(var(--u) * -8) 0; } }
+@keyframes pulse { 50% { filter: brightness(1.18) saturate(1.1); } }
 .need img {
   position: absolute;
-  right: calc(var(--u) * 2);
+  right: calc(var(--u) * 3);
   top: 50%;
   width: var(--icon, 24px);
   height: var(--icon, 24px);
-  transform: translateY(-50%);
+  transform: translateY(-50%) scale(.2);
   image-rendering: pixelated;
   opacity: 0;
-  transition: opacity .15s;
   pointer-events: none;
 }
-.needs.open .need { width: var(--bar-w, 200px); }
-.needs.open .need .fill {
-  /* never thinner than the dot's centre, so an empty need still shows red */
-  width: calc(var(--bh) - var(--u) * 2 + (100% - var(--bh)) * var(--v, 1));
+.needs.open .need img {
+  animation: pop .5s cubic-bezier(.3, 1.9, .5, 1) both;
+  animation-delay: calc(var(--i, 0) * 55ms + 200ms);
 }
-.needs.open .need img { opacity: 1; transition-delay: .22s; }
+@keyframes pop {
+  from { opacity: 0; transform: translateY(-50%) scale(.2) rotate(-12deg); }
+  to   { opacity: 1; transform: translateY(-50%) scale(1) rotate(0); }
+}
 .needs:focus-visible::after {
   content: ""; position: absolute; inset: -6px; border: 2px dashed var(--focus); pointer-events: none;
 }
@@ -162,16 +175,19 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
 .log li { display: grid; grid-template-columns: 3.2em minmax(0, 1fr); gap: 8px; }
 .log time { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
 .log li.day { grid-template-columns: 1fr; color: var(--muted); font-size: 12px; letter-spacing: .1em; }
-@media (prefers-reduced-motion: reduce) { .need, .need .fill, .need .name { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .need .fill, .need.low .fill { animation: none; transition: none; }
+  .needs.open .need img { animation: none; opacity: 1; transform: translateY(-50%); }
+}
 </style>
 
 <main class="desk">
   <div class="widget" id="widget">
     <div class="needs" id="needs" tabindex="0" role="button" aria-expanded="false" aria-label="她的状态（饱腹、精力、清洁、开心）">
-      <div class="need" data-k="hunger" role="meter" aria-label="饱腹" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="hunger"></div>
-      <div class="need" data-k="energy" role="meter" aria-label="精力" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="energy"></div>
-      <div class="need" data-k="hygiene" role="meter" aria-label="清洁" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="hygiene"></div>
-      <div class="need" data-k="fun" role="meter" aria-label="开心" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="fun"></div>
+      <div class="need" style="--i:0" data-k="hunger" role="meter" aria-label="饱腹" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="hunger"></div>
+      <div class="need" style="--i:1" data-k="energy" role="meter" aria-label="精力" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="energy"></div>
+      <div class="need" style="--i:2" data-k="hygiene" role="meter" aria-label="清洁" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="hygiene"></div>
+      <div class="need" style="--i:3" data-k="fun" role="meter" aria-label="开心" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="fun"></div>
     </div>
     <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点她一下试试。"></canvas>
   </div>
@@ -585,6 +601,17 @@ function pillClip(n, u) {
   return `polygon(${pts.join(",")})`;
 }
 
+// 8x8 UI-pixel tile of faint diagonal stripes; it crawls along the fill.
+function stripePattern(u) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 8 * u;
+  const x = c.getContext("2d");
+  x.fillStyle = "rgba(255,255,255,0.22)";
+  for (let py = 0; py < 8; py++) for (let px = 0; px < 8; px++) if ((px + py) % 8 < 3) x.fillRect(px * u, py * u, u, u);
+  return c.toDataURL();
+}
+let needGeo = { u: 2, bh: 28, barW: 200 };
+
 function fit() {
   // The widget is [room for the bars][dots][house]; the bars always open to
   // the left into their own room, so they never cover the house.
@@ -612,7 +639,11 @@ function fit() {
   widget.style.setProperty("--bar-w", barW + "px");
   widget.style.setProperty("--icon", 12 * Math.max(1, Math.floor((bh - 2 * u) / 12)) + "px");  // whole-pixel icon scale
   widget.style.setProperty("--clip-track", pillClip(n, u));
-  widget.style.setProperty("--clip-fill", pillClip(n - 2, u));
+  widget.style.setProperty("--clip-fill", pillClip(n - 4, u));
+  widget.style.setProperty("--fmin", (n - 4) * u + "px");
+  widget.style.setProperty("--stripes", `url(${stripePattern(u)})`);
+  needGeo = { u, bh, barW };
+  if (typeof kickNeeds === "function") kickNeeds();
 }
 
 function activityFrame(ms) {
@@ -701,17 +732,61 @@ function syncUI() {
   for (const [k, v] of Object.entries(sim.needs)) {
     const el = needsEl.querySelector(`[data-k="${k}"]`);
     el.style.setProperty("--c", needColor(v));
+    el.classList.toggle("low", v < 20);
     el.style.setProperty("--v", (v / 100).toFixed(3));
     el.setAttribute("aria-valuenow", Math.round(v));
   }
 }
 
 // Open when the pointer comes near the dots (or on focus / tap); close shortly after it leaves.
+// Each bar is a damped spring (overshoots, then settles), snapped to whole UI
+// pixels every frame; bars pop out one after another, then their fill springs up.
+const reduceMotionUI = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const springs = [...needsEl.querySelectorAll(".need")].map((el, i) => ({ el, i, x: 0, v: 0, target: 0, start: 0, p: 0, pv: 0, ptarget: 0, pstart: 0 }));
+let springRaf = 0, springLast = 0;
+function springStep(now) {
+  const dt = springLast ? Math.min(0.033, (now - springLast) / 1000) : 0.016;
+  springLast = now;
+  const { u, bh, barW } = needGeo;
+  let active = false;
+  for (const s of springs) {
+    if (reduceMotionUI) { s.x = s.target; s.p = s.ptarget; s.v = s.pv = 0; }
+    if (now >= s.start) {
+      const opening = s.target === 1;
+      const k = opening ? 330 : 420, c = opening ? 17 : 30;      // bouncy out, firmer back
+      s.v += (-k * (s.x - s.target) - c * s.v) * dt;
+      s.x = Math.min(1.12, s.x + s.v * dt);
+    }
+    if (now >= s.pstart) {
+      s.pv += (-260 * (s.p - s.ptarget) - 15 * s.pv) * dt;
+      s.p += s.pv * dt;
+    }
+    const moving = now < s.start || now < s.pstart ||
+      Math.abs(s.x - s.target) > 0.002 || Math.abs(s.v) > 0.02 || Math.abs(s.p - s.ptarget) > 0.002 || Math.abs(s.pv) > 0.02;
+    if (moving) active = true; else { s.x = s.target; s.p = s.ptarget; s.v = s.pv = 0; }
+    const w = bh + (barW - bh) * s.x;
+    s.el.style.width = Math.max(bh, Math.round(w / u) * u) + "px";
+    s.el.style.setProperty("--p", Math.max(0, s.p).toFixed(3));
+  }
+  springRaf = active ? requestAnimationFrame(springStep) : 0;
+  if (!active) springLast = 0;
+}
+function kickNeeds() { if (!springRaf) springRaf = requestAnimationFrame(springStep); }
+
 let closeT = null;
 function setNeedsOpen(open) {
   clearTimeout(closeT);
+  if (needsEl.classList.contains("open") === open) return;
   needsEl.classList.toggle("open", open);
   needsEl.setAttribute("aria-expanded", String(open));
+  const now = performance.now();
+  for (const s of springs) {
+    s.target = open ? 1 : 0;
+    s.ptarget = open ? 1 : 0;
+    s.start = now + (open ? s.i * 55 : (springs.length - 1 - s.i) * 35);
+    s.pstart = open ? s.start + 140 : now;
+  }
+  kickNeeds();
 }
 needsEl.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") setNeedsOpen(true); });
 needsEl.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") closeT = setTimeout(() => setNeedsOpen(false), 250); });
