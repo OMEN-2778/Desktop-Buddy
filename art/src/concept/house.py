@@ -404,40 +404,52 @@ ooooo
 
 
 SLEEP_HEAD = (3, -7)      # the head turned on its side (rotated 90 deg), from the bed's top-left
-SLEEP_COVER = (18, -9)    # duvet offset from the bed's top-left
+SLEEP_COVER = (18, -12)   # duvet offset from the bed's top-left
 
-# Duvet over a body lying on its side, chin at bed x 17. Control points
-# (bed x, top y) of the smooth curve the body pushes up: shoulder, waist,
-# hip (highest, above the head on the pillow, as when lying on one's side),
-# knee, shin, feet. The mattress top is y 10.
-SLEEP_CURVE = [(18, 2), (19, -1), (21, -4), (23, -5), (25, -3), (26, -3), (28, -6), (30, -7), (32, -6),
-               (34, -3), (36, 0), (38, 2), (39, 2), (40, 1), (41, 4)]
-SLEEP_PROFILE = {x: int(round(float(np.interp(x, *zip(*SLEEP_CURVE))))) for x in range(18, 42)}
+# Duvet over a body lying on its side, chin at bed x 17: ONE soft, round
+# mound (user: no camel humps), peaking above the head on the pillow (head
+# top is about bed y -6) a little toward the hips, easing down to the foot.
+# The mattress top is y 10.
+SLEEP_PEAK_X, SLEEP_PEAK_Y, SLEEP_BASE_Y = 28, -9, 7
+
+
+def _mound_top(x: int) -> int:
+    half = 11.5 if x < SLEEP_PEAK_X else 14.5          # steeper by the chin, long slope to the feet
+    t = min(1.0, abs(x - SLEEP_PEAK_X) / half)
+    return int(round(SLEEP_BASE_Y - (SLEEP_BASE_Y - SLEEP_PEAK_Y) * (1 - t * t) ** 0.75))
+
+
+SLEEP_PROFILE = {x: _mound_top(x) for x in range(18, 42)}
 
 
 def sleep_cover():
-    """The duvet pulled up to the chin, shaped by the body under it: the
-    slopes facing the light (up-left) are lit, the far sides of the bulges
-    and the hollows (waist, behind the knee) are shaded, a crease where it
-    bends over the mattress, the sheet turned down at the neck and the clay
-    throw over the shins."""
+    """The duvet pulled up to the chin over one soft, round mound: lit on
+    the upper left, shading softly toward the right and where the body
+    turns under toward the bed, a crease where it bends over the mattress,
+    the sheet turned down at the neck and the clay throw over the feet."""
     D, C = P.oat, P.clay
     ox, oy = SLEEP_COVER
     s = Sprite(42 - ox, 18 - oy)
     top = {x - ox: y - oy for x, y in SLEEP_PROFILE.items()}
     crease, hem = 9 - oy, 16 - oy
-    xs = sorted(top)
-    for x in xs:
-        t = top[x]
-        nxt = top.get(x + 1, t)
-        prv = top.get(x - 1, t)
+    peak_x, peak_y = SLEEP_PEAK_X - ox, SLEEP_PEAK_Y - oy
+    for x, t in top.items():
         s.vline(x, t, hem - 1, D[3])
-        if nxt > t or (nxt == t and prv < t):       # far side of a bulge, facing away from the light
-            s.vline(x, t, min(crease - 1, t + 2), D[2])
-        else:                                        # rising or flat: lit band along the top
-            s.set(x, t, D[4]).set(x, t + 1, D[4])
-        if crease - t > 6:                           # round body: shade where it turns under, toward the bed
-            s.vline(x, crease - 3, crease - 1, D[2])
+        for y in range(t, crease):
+            # light from the top-left over a round form: normal from the
+            # mound's centre, a little highlight cap, soft shade bottom-right
+            nx = (x - peak_x) / 14
+            ny = (y - (crease + 2)) / (crease + 2 - peak_y)
+            lit = -0.55 * nx - 0.85 * ny
+            if y <= t + 1 and lit > 0.62:
+                c = D[4]
+            elif lit > 0.78:
+                c = D[4]
+            elif lit < 0.18 or y >= crease - 2:
+                c = D[2]
+            else:
+                c = D[3]
+            s.set(x, y, c)
         s.set(x, crease, D[2]).set(x, hem - 1, D[2])
     for fx in (25, 31, 37):                          # soft folds on the side face
         s.vline(fx - ox, crease + 2, hem - 2, D[2])
@@ -446,12 +458,12 @@ def sleep_cover():
         out.set(wx, hem, None)
     # sheet turned down at the neck: a narrow white fold
     out.vline(0, top[0] + 1, crease - 1, POR[3]).vline(1, top[1] + 1, crease - 1, POR[2])
-    # clay throw across the feet
+    # clay throw across the feet, following the slope
     tx0, tx1 = 37 - ox, 40 - ox
     for x in range(tx0, tx1 + 1):
         t = top[x]
         out.vline(x, t, hem + 1, C[2])
-        out.set(x, t, C[4] if top.get(x + 1, t) <= t else C[3]).set(x, t + 1, C[3])
+        out.set(x, t, C[3]).set(x, t + 1, C[3] if x < tx1 else C[2])
     out.vline(tx0, top[tx0], hem + 1, C[0]).vline(tx1, top[tx1], hem + 1, C[0])
     out.vline(tx1 - 1, top[tx1 - 1] + 2, hem, C[1])
     out.set(tx0, hem + 1, None).set(tx1, hem + 1, None)

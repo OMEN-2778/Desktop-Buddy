@@ -203,10 +203,11 @@ jagged): integer sizes and positions only, symmetric hand-placed frames.
   pass so it dims at night.
 
 **Sleeping** — the head lies on its side on the pillow and the duvet
-(`house.sleep_cover`) follows a smooth body curve (`SLEEP_CURVE`: shoulder,
-waist, hip, knee, feet), lit on up-left slopes, shaded on the far sides and
-where the body turns under toward the bed. Lying on her side the hip rises
-ABOVE the head (user: "凸起都没有高过头" looked wrong).
+(`house.sleep_cover`) is ONE soft, round mound (`_mound_top`: steeper by the
+chin, long slope to the feet) whose top rises above the head, lit top-left
+and shaded bottom-right like a round form. The user rejected a bare head
+("突兀"), a flat cover, separate shoulder/hip bumps ("像驼峰") and a mound
+lower than the head.
 
 **Interaction (demo)** — the player directs Buddy by clicking furniture, not
 buttons. Every clickable piece is registered in `house.CLICK` via `reg()`
