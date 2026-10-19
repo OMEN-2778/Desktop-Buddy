@@ -98,6 +98,12 @@ colors freely. Never bake those colors into shipped character art:
   warm light pools; sky/bulb/screen colors stay emissive. Base sprites stay
   on-palette — the night preview is expected to fail palette lint.
 
+**UI** — app UI (creator, menus) is pixel style too: square corners, notched
+3px outlines in `ink`, hard offset shadows, bevelled buttons that press down,
+game-window title bars, colors from the palette. Font: Source Han Sans /
+Noto Sans SC (思源黑体) only — the user asked for it; no pixel fonts.
+Reference: `prototype/creator/index.src.html`.
+
 ## Pitfalls seen so far
 
 - Joining grid strings with `"\n"` on both sides inserted blank rows and

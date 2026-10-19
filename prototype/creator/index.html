@@ -2,159 +2,196 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700&family=Pixelify+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap">
 <style>
-/* Layout: a two-pane workbench — the room "stage" where Buddy stands on the left,
-   the wardrobe panel (shape, then colors) on the right; stacks on phones. */
+/* Layout: a pixel game menu — a "window" with the room preview on the left, the
+   wardrobe window on the right; stacks on phones. Everything is square: notched
+   pixel outlines, hard offset shadows, bevelled buttons. Colors are the game palette. */
 :root {
-  --bg: #eeedf3;
-  --panel: #fbfbfd;
+  --bg: #e6e3ee;
+  --dither: #dcd8e6;
+  --panel: #f7f6fb;
+  --panel-2: #eceaf2;
   --ink: #22182a;
-  --muted: #6a6478;
-  --line: #dcd9e5;
+  --muted: #5e5b71;
+  --edge: #22182a;
+  --bevel-hi: #ffffff;
+  --bevel-lo: #bab7c9;
+  --shadow: #8f8ba2;
   --accent: #46619e;
-  --accent-ink: #ffffff;
+  --accent-hi: #6c90c8;
+  --accent-lo: #2f3c6d;
+  --accent-ink: #f7f6fb;
+  --title: #33253b;
+  --title-ink: #f7f6fb;
   --focus: #d29b30;
-  --font-display: "ZCOOL KuaiLe", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
-  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --font-pixel: "Pixelify Sans", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --b: 3px; /* one "pixel" of UI chrome */
+  --font: "Source Han Sans SC", "Noto Sans SC", "思源黑体", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #1a1722; --panel: #24202f; --ink: #edeaf4; --muted: #a49eb4; --line: #3a3449;
-    --accent: #8fb0e6; --accent-ink: #141228; --focus: #efc452; color-scheme: dark;
+    --bg: #17131f; --dither: #1d1828; --panel: #2b2538; --panel-2: #332c42; --ink: #f7f6fb; --muted: #bab7c9;
+    --edge: #0d0a12; --bevel-hi: #433a54; --bevel-lo: #1f1a2a; --shadow: #0d0a12;
+    --accent: #6c90c8; --accent-hi: #a6c5e7; --accent-lo: #2f3c6d; --accent-ink: #141228;
+    --title: #0d0a12; --title-ink: #f7f6fb; --focus: #efc452; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #1a1722; --panel: #24202f; --ink: #edeaf4; --muted: #a49eb4; --line: #3a3449;
-  --accent: #8fb0e6; --accent-ink: #141228; --focus: #efc452; color-scheme: dark;
+  --bg: #17131f; --dither: #1d1828; --panel: #2b2538; --panel-2: #332c42; --ink: #f7f6fb; --muted: #bab7c9;
+  --edge: #0d0a12; --bevel-hi: #433a54; --bevel-lo: #1f1a2a; --shadow: #0d0a12;
+  --accent: #6c90c8; --accent-hi: #a6c5e7; --accent-lo: #2f3c6d; --accent-ink: #141228;
+  --title: #0d0a12; --title-ink: #f7f6fb; --focus: #efc452; color-scheme: dark;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; border-radius: 0; }
 body {
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: repeating-conic-gradient(var(--dither) 0 25%, transparent 0 50%);
+  background-size: 6px 6px;
   color: var(--ink);
-  font-family: var(--font-body);
+  font-family: var(--font);
   font-size: 14px;
   line-height: 1.55;
 }
 .wrap {
   max-width: 1040px;
   margin: 0 auto;
-  padding-block: 24px 40px;
+  padding-block: 28px 48px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
-header { display: grid; gap: 4px; }
+header { display: grid; gap: 6px; }
 h1 {
-  font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 900;
   font-size: clamp(26px, 4vw, 34px);
   line-height: 1.15;
   margin: 0;
+  letter-spacing: 0.04em;
+  text-shadow: 3px 3px 0 var(--accent-hi);
   text-wrap: balance;
 }
 header p { margin: 0; color: var(--muted); max-width: 60ch; }
 
+/* notched pixel outline + hard drop shadow */
+.px {
+  box-shadow:
+    0 calc(-1 * var(--b)) 0 0 var(--edge),
+    0 var(--b) 0 0 var(--edge),
+    calc(-1 * var(--b)) 0 0 0 var(--edge),
+    var(--b) 0 0 0 var(--edge),
+    calc(var(--b) * 2) calc(var(--b) * 2) 0 0 var(--shadow);
+}
+
 .bench {
   display: grid;
   grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
-  gap: 20px;
+  gap: 28px;
   align-items: start;
 }
 @media (max-width: 760px) { .bench { grid-template-columns: minmax(0, 1fr); } }
 
-.card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 10px;
+.window { background: var(--panel); margin: var(--b); }
+.titlebar {
+  background: var(--title);
+  color: var(--title-ink);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
-.stage {
-  padding: 16px;
-  display: grid;
-  gap: 12px;
-  justify-items: center;
-}
+.titlebar .dots { display: flex; gap: 4px; }
+.titlebar .dots i { width: 6px; height: 6px; background: var(--title-ink); opacity: .55; display: block; }
+.titlebar .dots i:first-child { background: var(--focus); opacity: 1; }
+
+.stage { display: grid; gap: 14px; justify-items: center; padding: 16px; }
 @media (min-width: 761px) {
-  .stage { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+  .stage-win { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
 }
-#stage {
-  display: block;
-  max-width: 100%;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  border-radius: 4px;
-}
-.stage-meta {
-  font-family: var(--font-pixel);
-  font-size: 12px;
-  color: var(--muted);
-  letter-spacing: 0.04em;
-}
-.row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.screen { background: var(--edge); padding: var(--b); }
+#stage { display: block; max-width: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+.stage-meta { font-size: 12px; color: var(--muted); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 
 button {
   font: inherit;
+  font-weight: 500;
   color: var(--ink);
-  background: transparent;
-  border: 1.5px solid var(--line);
-  border-radius: 8px;
+  background: var(--panel-2);
+  border: 0;
   padding: 6px 12px;
+  margin: var(--b);
   cursor: pointer;
-  transition: border-color .12s, background-color .12s, color .12s;
+  box-shadow:
+    inset 0 calc(-1 * var(--b)) 0 0 var(--bevel-lo),
+    inset 0 var(--b) 0 0 var(--bevel-hi),
+    0 calc(-1 * var(--b)) 0 0 var(--edge),
+    0 var(--b) 0 0 var(--edge),
+    calc(-1 * var(--b)) 0 0 0 var(--edge),
+    var(--b) 0 0 0 var(--edge),
+    0 calc(var(--b) * 2) 0 0 var(--shadow);
 }
-button:not(.swatch):hover { border-color: var(--accent); }
-button:not(.swatch)[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-button:focus-visible, .swatch:focus-within, .swatch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.random { border-style: dashed; }
-
-.panel { padding: 4px 18px; }
-.section { padding-block: 16px; display: grid; gap: 10px; }
-.section + .section { border-top: 1px solid var(--line); }
-.section h2 {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--muted);
+button:not(.swatch):hover { background: var(--panel); }
+button:not(.swatch):active { transform: translateY(var(--b)); }
+button:not(.swatch)[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-ink);
+  transform: translateY(var(--b));
+  box-shadow:
+    inset 0 var(--b) 0 0 var(--accent-lo),
+    inset 0 calc(-1 * var(--b)) 0 0 var(--accent-hi),
+    0 calc(-1 * var(--b)) 0 0 var(--edge),
+    0 var(--b) 0 0 var(--edge),
+    calc(-1 * var(--b)) 0 0 0 var(--edge),
+    var(--b) 0 0 0 var(--edge);
 }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+button:focus-visible, .swatch:focus-within { outline: var(--b) dashed var(--focus); outline-offset: calc(var(--b) * 2); }
+.random { background: var(--focus); color: #22182a; }
+.random:hover { background: var(--focus) !important; filter: brightness(1.08); }
 
-.color-row { display: grid; gap: 8px; }
-.color-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.color-head .name { font-weight: 500; min-width: 3.5em; }
-.ramp { display: flex; }
-.ramp i { width: 14px; height: 14px; display: block; }
-.ramp-label { font-family: var(--font-pixel); font-size: 12px; color: var(--muted); letter-spacing: 0.04em; }
-.swatches { display: grid; grid-template-columns: repeat(auto-fill, 30px); gap: 8px; }
+.panel { padding: 2px 18px; }
+.section { padding-block: 16px; display: grid; gap: 12px; }
+.section + .section { border-top: var(--b) dotted var(--bevel-lo); }
+.section h2 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); }
+.section h2::before { content: "▶ "; color: var(--accent); font-size: 10px; vertical-align: 1px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px 10px; }
+
+.color-row { display: grid; gap: 10px; }
+.color-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.color-head .name { font-weight: 700; min-width: 3.5em; }
+.ramp { display: flex; background: var(--edge); padding: 2px; gap: 0; }
+.ramp i { width: 12px; height: 12px; display: block; }
+.ramp-label { font-size: 12px; color: var(--muted); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, 30px); gap: 12px; padding: 2px; }
 .swatch {
   width: 30px; height: 30px;
-  border-radius: 6px;
-  border: 0;
   padding: 0;
+  margin: 0;
   position: relative;
   overflow: hidden;
   background: var(--c);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--line);
+  box-shadow: 0 -2px 0 0 var(--edge), 0 2px 0 0 var(--edge), -2px 0 0 0 var(--edge), 2px 0 0 0 var(--edge);
+}
+.swatch::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: var(--c2); }
+.swatch::before { content: ""; position: absolute; left: 3px; top: 3px; width: 6px; height: 3px; background: rgba(255, 255, 255, .45); z-index: 1; }
+.swatch[aria-pressed="true"] { outline: var(--b) solid var(--accent); outline-offset: 4px; }
+.swatch.custom {
+  background: repeating-conic-gradient(var(--bevel-lo) 0 25%, var(--panel) 0 50%) 0 0 / 10px 10px;
+  display: grid; place-items: center;
+  font-size: 18px; font-weight: 900; color: var(--ink);
   cursor: pointer;
 }
-.swatch::after {
-  content: "";
-  position: absolute; left: 0; right: 0; bottom: 0; height: 7px;
-  background: var(--c2);
-}
-.swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
-.swatch.custom {
-  background: repeating-conic-gradient(var(--line) 0 25%, var(--panel) 0 50%) 0 0 / 10px 10px;
-  display: grid; place-items: center;
-  font-size: 18px; color: var(--muted);
-}
+.swatch.custom::before, .swatch.custom::after { display: none; }
 .swatch.custom.has-color { background: var(--c); color: transparent; }
+.swatch.custom.has-color::after { display: block; }
 .swatch.custom input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: 0; padding: 0; }
 .note { color: var(--muted); font-size: 13px; margin: 0; }
-@media (prefers-reduced-motion: reduce) { button { transition: none; } }
+@media (prefers-reduced-motion: reduce) { button { transform: none !important; } }
 </style>
 
 <div class="wrap">
@@ -164,60 +201,66 @@ button:focus-visible, .swatch:focus-within, .swatch:focus-visible { outline: 2px
   </header>
 
   <div class="bench">
-    <section class="card stage" aria-label="预览">
-      <canvas id="stage" width="384" height="416" aria-label="角色预览"></canvas>
-      <div class="row" id="modes" role="group" aria-label="表情">
-        <button type="button" data-mode="idle" aria-pressed="true">日常</button>
-        <button type="button" data-mode="happy" aria-pressed="false">开心</button>
-        <button type="button" data-mode="surprised" aria-pressed="false">惊讶</button>
-        <button type="button" data-mode="sleepy" aria-pressed="false">犯困</button>
-        <button type="button" data-mode="flustered" aria-pressed="false">慌张</button>
+    <section class="window px stage-win" aria-label="预览">
+      <div class="titlebar"><span>我的小屋 · 卧室</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+      <div class="stage">
+        <div class="screen"><canvas id="stage" width="384" height="416" aria-label="角色预览"></canvas></div>
+        <div class="row" id="modes" role="group" aria-label="表情">
+          <button type="button" data-mode="idle" aria-pressed="true">日常</button>
+          <button type="button" data-mode="happy" aria-pressed="false">开心</button>
+          <button type="button" data-mode="surprised" aria-pressed="false">惊讶</button>
+          <button type="button" data-mode="sleepy" aria-pressed="false">犯困</button>
+          <button type="button" data-mode="flustered" aria-pressed="false">慌张</button>
+        </div>
+        <div class="row">
+          <button type="button" class="random" id="random">随机搭配</button>
+        </div>
+        <div class="stage-meta" id="meta">20×28 px · ×8</div>
       </div>
-      <div class="row">
-        <button type="button" class="random" id="random">随机搭配</button>
-      </div>
-      <div class="stage-meta" id="meta">20×28 px · ×8</div>
     </section>
 
-    <section class="card panel" aria-label="外观">
-      <div class="section">
-        <h2>性别</h2>
-        <div class="chips" data-key="gender">
-          <button type="button" data-val="f">女生</button>
-          <button type="button" data-val="m">男生</button>
+    <section class="window px" aria-label="外观">
+      <div class="titlebar"><span>衣柜</span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+      <div class="panel">
+        <div class="section">
+          <h2>性别</h2>
+          <div class="chips" data-key="gender">
+            <button type="button" data-val="f">女生</button>
+            <button type="button" data-val="m">男生</button>
+          </div>
         </div>
-      </div>
-      <div class="section">
-        <h2>发型</h2>
-        <div class="chips" data-key="style">
-          <button type="button" data-val="messy">短发呆毛</button>
-          <button type="button" data-val="neat">侧分</button>
-          <button type="button" data-val="long">长发</button>
-          <button type="button" data-val="buns">丸子头</button>
+        <div class="section">
+          <h2>发型</h2>
+          <div class="chips" data-key="style">
+            <button type="button" data-val="messy">短发呆毛</button>
+            <button type="button" data-val="neat">侧分</button>
+            <button type="button" data-val="long">长发</button>
+            <button type="button" data-val="buns">丸子头</button>
+          </div>
         </div>
-      </div>
-      <div class="section">
-        <h2>服装</h2>
-        <div class="chips" data-key="outfit">
-          <button type="button" data-val="jacket">夹克 + T恤</button>
-          <button type="button" data-val="hoodie">卫衣 + 短裤</button>
-          <button type="button" data-val="dress">毛衣 + 百褶裙</button>
+        <div class="section">
+          <h2>服装</h2>
+          <div class="chips" data-key="outfit">
+            <button type="button" data-val="jacket">夹克 + T恤</button>
+            <button type="button" data-val="hoodie">卫衣 + 短裤</button>
+            <button type="button" data-val="dress">毛衣 + 百褶裙</button>
+          </div>
         </div>
-      </div>
-      <div class="section">
-        <h2>配饰</h2>
-        <div class="chips" data-key="acc">
-          <button type="button" data-val="">无</button>
-          <button type="button" data-val="glasses">眼镜</button>
-          <button type="button" data-val="bow">蝴蝶结</button>
-          <button type="button" data-val="headphones">耳机</button>
+        <div class="section">
+          <h2>配饰</h2>
+          <div class="chips" data-key="acc">
+            <button type="button" data-val="">无</button>
+            <button type="button" data-val="glasses">眼镜</button>
+            <button type="button" data-val="bow">蝴蝶结</button>
+            <button type="button" data-val="headphones">耳机</button>
+          </div>
         </div>
-      </div>
-      <div class="section" id="colors">
-        <h2>颜色</h2>
-      </div>
-      <div class="section">
-        <p class="note">色板下方那条深色是自动生成的阴影。点 <b>+</b> 可以挑任意颜色，同样会生成整套明暗。</p>
+        <div class="section" id="colors">
+          <h2>颜色</h2>
+        </div>
+        <div class="section">
+          <p class="note">色块下方那条深色是自动生成的阴影。点 <b>+</b> 可以挑任意颜色，同样会生成整套明暗。</p>
+        </div>
       </div>
     </section>
   </div>
