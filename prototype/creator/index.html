@@ -1,0 +1,506 @@
+<title>Buddy 捏人台</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700&family=Pixelify+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: a two-pane workbench — the room "stage" where Buddy stands on the left,
+   the wardrobe panel (shape, then colors) on the right; stacks on phones. */
+:root {
+  --bg: #eeedf3;
+  --panel: #fbfbfd;
+  --ink: #22182a;
+  --muted: #6a6478;
+  --line: #dcd9e5;
+  --accent: #46619e;
+  --accent-ink: #ffffff;
+  --focus: #d29b30;
+  --font-display: "ZCOOL KuaiLe", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-pixel: "Pixelify Sans", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1a1722; --panel: #24202f; --ink: #edeaf4; --muted: #a49eb4; --line: #3a3449;
+    --accent: #8fb0e6; --accent-ink: #141228; --focus: #efc452; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1a1722; --panel: #24202f; --ink: #edeaf4; --muted: #a49eb4; --line: #3a3449;
+  --accent: #8fb0e6; --accent-ink: #141228; --focus: #efc452; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.wrap {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-block: 24px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 20px;
+}
+header { display: grid; gap: 4px; }
+h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(26px, 4vw, 34px);
+  line-height: 1.15;
+  margin: 0;
+  text-wrap: balance;
+}
+header p { margin: 0; color: var(--muted); max-width: 60ch; }
+
+.bench {
+  display: grid;
+  grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 760px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.stage {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+@media (min-width: 761px) {
+  .stage { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+}
+#stage {
+  display: block;
+  max-width: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border-radius: 4px;
+}
+.stage-meta {
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+
+button {
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color .12s, background-color .12s, color .12s;
+}
+button:not(.swatch):hover { border-color: var(--accent); }
+button:not(.swatch)[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button:focus-visible, .swatch:focus-within, .swatch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.random { border-style: dashed; }
+
+.panel { padding: 4px 18px; }
+.section { padding-block: 16px; display: grid; gap: 10px; }
+.section + .section { border-top: 1px solid var(--line); }
+.section h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.color-row { display: grid; gap: 8px; }
+.color-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.color-head .name { font-weight: 500; min-width: 3.5em; }
+.ramp { display: flex; }
+.ramp i { width: 14px; height: 14px; display: block; }
+.ramp-label { font-family: var(--font-pixel); font-size: 12px; color: var(--muted); letter-spacing: 0.04em; }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, 30px); gap: 8px; }
+.swatch {
+  width: 30px; height: 30px;
+  border-radius: 6px;
+  border: 0;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  background: var(--c);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--line);
+  cursor: pointer;
+}
+.swatch::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: 0; height: 7px;
+  background: var(--c2);
+}
+.swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent); }
+.swatch.custom {
+  background: repeating-conic-gradient(var(--line) 0 25%, var(--panel) 0 50%) 0 0 / 10px 10px;
+  display: grid; place-items: center;
+  font-size: 18px; color: var(--muted);
+}
+.swatch.custom.has-color { background: var(--c); color: transparent; }
+.swatch.custom input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: 0; padding: 0; }
+.note { color: var(--muted); font-size: 13px; margin: 0; }
+@media (prefers-reduced-motion: reduce) { button { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Buddy 捏人台</h1>
+    <p>选好样子和颜色，你的小人就会这样住进桌面上的小屋。每个颜色只需选一个，阴影和高光会自动生成。</p>
+  </header>
+
+  <div class="bench">
+    <section class="card stage" aria-label="预览">
+      <canvas id="stage" width="384" height="416" aria-label="角色预览"></canvas>
+      <div class="row" id="modes" role="group" aria-label="表情">
+        <button type="button" data-mode="idle" aria-pressed="true">日常</button>
+        <button type="button" data-mode="happy" aria-pressed="false">开心</button>
+        <button type="button" data-mode="surprised" aria-pressed="false">惊讶</button>
+        <button type="button" data-mode="sleepy" aria-pressed="false">犯困</button>
+        <button type="button" data-mode="flustered" aria-pressed="false">慌张</button>
+      </div>
+      <div class="row">
+        <button type="button" class="random" id="random">随机搭配</button>
+      </div>
+      <div class="stage-meta" id="meta">20×28 px · ×8</div>
+    </section>
+
+    <section class="card panel" aria-label="外观">
+      <div class="section">
+        <h2>性别</h2>
+        <div class="chips" data-key="gender">
+          <button type="button" data-val="f">女生</button>
+          <button type="button" data-val="m">男生</button>
+        </div>
+      </div>
+      <div class="section">
+        <h2>发型</h2>
+        <div class="chips" data-key="style">
+          <button type="button" data-val="messy">短发呆毛</button>
+          <button type="button" data-val="neat">侧分</button>
+          <button type="button" data-val="long">长发</button>
+          <button type="button" data-val="buns">丸子头</button>
+        </div>
+      </div>
+      <div class="section">
+        <h2>服装</h2>
+        <div class="chips" data-key="outfit">
+          <button type="button" data-val="jacket">夹克 + T恤</button>
+          <button type="button" data-val="hoodie">卫衣 + 短裤</button>
+          <button type="button" data-val="dress">毛衣 + 百褶裙</button>
+        </div>
+      </div>
+      <div class="section">
+        <h2>配饰</h2>
+        <div class="chips" data-key="acc">
+          <button type="button" data-val="">无</button>
+          <button type="button" data-val="glasses">眼镜</button>
+          <button type="button" data-val="bow">蝴蝶结</button>
+          <button type="button" data-val="headphones">耳机</button>
+        </div>
+      </div>
+      <div class="section" id="colors">
+        <h2>颜色</h2>
+      </div>
+      <div class="section">
+        <p class="note">色板下方那条深色是自动生成的阴影。点 <b>+</b> 可以挑任意颜色，同样会生成整套明暗。</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const DATA = {"W":20,"H":28,"colors":{"a":["top",0],"b":["top",3],"c":["skin",0],"d":["skin",1],"e":["top",1],"f":"#f7f6fb","g":["top",2],"h":"#b94b4b","i":"#dedce7","j":["skin",3],"k":["skin",2],"l":["bottom",0],"m":["bottom",2],"n":["bottom",1],"o":["bottom",3],"p":"#22182a","q":["hair",0],"r":["hair",3],"s":["hair",2],"t":["hair",4],"u":["hair",1],"v":"#7e2f3b","w":"#e8857a","x":"#e1725b","y":["eye",2],"z":"#90d4d0","A":"#4f9ba4","B":"#4a1f2c","C":"#f6a487","D":"#262434","E":"#87573e","F":"#5d3831","G":"#33253b","H":"#1f2242","I":"#46619e","J":"#5c3b1f","K":"#d29b30","L":"#efc452"},"layers":{"body/jacket/0":{"y":15,"rows":["......abcddcea......","....abbbffffggea....","...abbebffffgegea...","...abbebfhhfgegea...","...abbebiffigegea...","...cjjebffffgekkc...","....ccebiiiigecc....",".....lmmmmmmmnl.....",".....lmmnllmmnl.....",".....lmmnllmmnl.....",".....looolloool.....","....phfhhpphhfhp....","....pppppppppppp...."]},"head/messy/0":{"y":2,"rows":["......qqqqqqqq......","....qqrrrsssssqq....","...qrrttsssssssuq...","..qrrtssssssssssuq..","..qsrsssssssssssuq..","..qsssssssssssssuq..",".qsssksssskssksssuq.","..qsujjsjjjjjsjjuq..","..qsjjjjjjjjjjjjsq..","..qujjjjjjjjjjjjuq..","..qujjjjjjjjjjjjuq..","...qkjjjjjjjjjjkq...","....cckjjjjjjkcc...."]},"ahoge/0/0":{"y":0,"rows":["..........qq........",".........qrq........"]},"face/m/neutral/-1/0/0":{"y":9,"rows":[".....uu....uu.......","....................",".....fp....fp.......",".....pp....vp.......",".....ww..vv..ww....."]},"body/jacket/1":{"y":15,"rows":["......abcddcea......","....abbbffffggea....","...abbebffffga......","...abbebfhhfga......","...abbebiffiga......","...cjjebffffga......","....ccebiiiige......",".....lmmmmmmmnl.....",".....lmmnllmmnl.....",".....lmmnllmmnl.....",".....looolloool.....","....phfhhpphhfhp....","....pppppppppppp...."]},"arm/0":{"y":9,"rows":["...............cccc.","...............cjjc.","...............cjkc.","...............cccc.","...............agga.","..............aagga.","..............aggaa.",".............aabga..",".............abgaa..",".............aaaa..."]},"arm/1":{"y":9,"rows":["................cccc","................cjjc","................cjkc","................cccc","................agga","..............aaagga","..............aggaaa",".............aabga..",".............abgaa..",".............aaaa..."]},"ahoge/1/0":{"y":0,"rows":["...........qq.......","..........qrq......."]},"head/messy/1":{"y":3,"rows":["......qqqqqqqq......","....qqrrrsssssqq....","...qrrttsssssssuq...","..qrrtssssssssssuq..","..qsrsssssssssssuq..","..qsssssssssssssuq..",".qsssksssskssksssuq.","..qsujjsjjjjjsjjuq..","..qsjjjjjjjjjjjjsq..","..qujjjjjjjjjjjjuq..","..qujjjjjjjjjjjjuq..","...qkjjjjjjjjjjkq...","....cckjjjjjjkcc...."]},"ahoge/0/1":{"y":1,"rows":["..........qq........",".........qrq........"]},"face/m/neutral/-1/1/0":{"y":10,"rows":[".....uu....uu.......","....................",".....fp....fp.......",".....pp....vp.......",".....ww..vv..ww....."]},"ahoge/1/1":{"y":1,"rows":["...........qq.......","..........qrq......."]},"face/m/neutral/0/0/0":{"y":9,"rows":["......uu....uu......","....................","......fp....fp......","......pp...vpp......",".....ww..vv..ww....."]},"face/m/neutral/0/1/0":{"y":10,"rows":["......uu....uu......","....................","......fp....fp......","......pp...vpp......",".....ww..vv..ww....."]},"face/m/neutral/1/0/0":{"y":9,"rows":[".......uu....uu.....","....................",".......fp....fp.....",".......pp..v.pp.....",".....ww..vv..ww....."]},"face/m/neutral/1/1/0":{"y":10,"rows":[".......uu....uu.....","....................",".......fp....fp.....",".......pp..v.pp.....",".....ww..vv..ww....."]},"face/m/happy/-1/0/0":{"y":9,"rows":[".....uu....uu.......","....................",".....pp....pp.......","....p..p..p..p......",".....ww.vxxv.ww....."]},"face/m/happy/-1/1/0":{"y":10,"rows":[".....uu....uu.......","....................",".....pp....pp.......","....p..p..p..p......",".....ww.vxxv.ww....."]},"face/m/happy/0/0/0":{"y":9,"rows":["......uu....uu......","....................","......pp....pp......",".....p..p..p..p.....",".....ww.vxxv.ww....."]},"face/m/happy/0/1/0":{"y":10,"rows":["......uu....uu......","....................","......pp....pp......",".....p..p..p..p.....",".....ww.vxxv.ww....."]},"face/m/happy/1/0/0":{"y":9,"rows":[".......uu....uu.....","....................",".......pp....pp.....","......p..p..p..p....",".....ww.vxxv.ww....."]},"face/m/happy/1/1/0":{"y":10,"rows":[".......uu....uu.....","....................",".......pp....pp.....","......p..p..p..p....",".....ww.vxxv.ww....."]},"face/m/surprised/-1/0/0":{"y":9,"rows":["....uqq....qqu......",".....pp....pp.......",".....fp....fp.......",".....yy....yy.......",".....ww..vv..ww.....",".........vv........."]},"face/m/surprised/-1/1/0":{"y":10,"rows":["....uqq....qqu......",".....pp....pp.......",".....fp....fp.......",".....yy....yy.......",".....ww..vv..ww.....",".........vv........."]},"face/m/surprised/0/0/0":{"y":9,"rows":[".....uqq....qqu.....","......pp....pp......","......fp....fp......","......yy....yy......",".....ww..vv..ww.....",".........vv........."]},"face/m/surprised/0/1/0":{"y":10,"rows":[".....uqq....qqu.....","......pp....pp......","......fp....fp......","......yy....yy......",".....ww..vv..ww.....",".........vv........."]},"face/m/surprised/1/0/0":{"y":9,"rows":["......uqq....qqu....",".......pp....pp.....",".......fp....fp.....",".......yy....yy.....",".....ww..vv..ww.....",".........vv........."]},"face/m/surprised/1/1/0":{"y":10,"rows":["......uqq....qqu....",".......pp....pp.....",".......fp....fp.....",".......yy....yy.....",".....ww..vv..ww.....",".........vv........."]},"face/m/sleepy/-1/0/0":{"y":12,"rows":["....ppp....ppp......",".....ww...v..ww....."]},"face/m/sleepy/-1/1/0":{"y":13,"rows":["....ppp....ppp......",".....ww...v..ww....."]},"face/m/sleepy/0/0/0":{"y":12,"rows":[".....ppp....ppp.....",".....ww...v..ww....."]},"face/m/sleepy/0/1/0":{"y":13,"rows":[".....ppp....ppp.....",".....ww...v..ww....."]},"face/m/sleepy/1/0/0":{"y":12,"rows":["......ppp....ppp....",".....ww...v..ww....."]},"face/m/sleepy/1/1/0":{"y":13,"rows":["......ppp....ppp....",".....ww...v..ww....."]},"face/m/flustered/-1/0/0":{"y":6,"rows":["................z...","................A...","....................","......q....q........",".....q......q.......","......p....p........",".....p......p.......",".....ww.v.v..ww.....",".........v.v........"]},"face/m/flustered/-1/1/0":{"y":7,"rows":["................z...","................A...","....................","......q....q........",".....q......q.......","......p....p........",".....p......p.......",".....ww.v.v..ww.....",".........v.v........"]},"face/m/flustered/0/0/0":{"y":6,"rows":["................z...","................A...","....................",".......q....q.......","......q......q......",".......p....p.......","......p......p......",".....ww.v.v..ww.....",".........v.v........"]},"face/m/flustered/0/1/0":{"y":7,"rows":["................z...","................A...","....................",".......q....q.......","......q......q......",".......p....p.......","......p......p......",".....ww.v.v..ww.....",".........v.v........"]},"face/m/flustered/1/0/0":{"y":6,"rows":["................z...","................A...","....................","........q....q......",".......q......q.....","........p....p......",".......p......p.....",".....ww.v.v..ww.....",".........v.v........"]},"face/m/flustered/1/1/0":{"y":7,"rows":["................z...","................A...","....................","........q....q......",".......q......q.....","........p....p......",".......p......p.....",".....ww.v.v..ww.....",".........v.v........"]},"face/m/blink/-1/0/0":{"y":9,"rows":[".....uu....uu.......","....................","....................",".....pp....vp.......",".....ww..vv..ww....."]},"face/m/blink/-1/1/0":{"y":10,"rows":[".....uu....uu.......","....................","....................",".....pp....vp.......",".....ww..vv..ww....."]},"face/m/blink/0/0/0":{"y":9,"rows":["......uu....uu......","....................","....................","......pp...vpp......",".....ww..vv..ww....."]},"face/m/blink/0/1/0":{"y":10,"rows":["......uu....uu......","....................","....................","......pp...vpp......",".....ww..vv..ww....."]},"face/m/blink/1/0/0":{"y":9,"rows":[".......uu....uu.....","....................","....................",".......pp..v.pp.....",".....ww..vv..ww....."]},"face/m/blink/1/1/0":{"y":10,"rows":[".......uu....uu.....","....................","....................",".......pp..v.pp.....",".....ww..vv..ww....."]},"face/m/neutral/-1/0/1":{"y":11,"rows":[".....fp....fp.......",".....pp....vp.......",".....ww..vv..ww....."]},"acc/glasses/0":{"y":9,"rows":["......vv....vv......",".....v..vvvv..v.....",".....v..v..v..v.....",".....v..v..v..v.....","......vv....vv......"]},"face/m/neutral/-1/1/1":{"y":12,"rows":[".....fp....fp.......",".....pp....vp.......",".....ww..vv..ww....."]},"acc/glasses/1":{"y":10,"rows":["......vv....vv......",".....v..vvvv..v.....",".....v..v..v..v.....",".....v..v..v..v.....","......vv....vv......"]},"face/m/neutral/0/0/1":{"y":11,"rows":["......fp....fp......","......pp...vpp......",".....ww..vv..ww....."]},"face/m/neutral/0/1/1":{"y":12,"rows":["......fp....fp......","......pp...vpp......",".....ww..vv..ww....."]},"face/m/neutral/1/0/1":{"y":11,"rows":[".......fp....fp.....",".......pp..v.pp.....",".....ww..vv..ww....."]},"face/m/neutral/1/1/1":{"y":12,"rows":[".......fp....fp.....",".......pp..v.pp.....",".....ww..vv..ww....."]},"face/m/happy/-1/0/1":{"y":11,"rows":[".....pp....pp.......","....p..p..p..p......",".....ww.vxxv.ww....."]},"face/m/happy/-1/1/1":{"y":12,"rows":[".....pp....pp.......","....p..p..p..p......",".....ww.vxxv.ww....."]},"face/m/happy/0/0/1":{"y":11,"rows":["......pp....pp......",".....p..p..p..p.....",".....ww.vxxv.ww....."]},"face/m/happy/0/1/1":{"y":12,"rows":["......pp....pp......",".....p..p..p..p.....",".....ww.vxxv.ww....."]},"face/m/happy/1/0/1":{"y":11,"rows":[".......pp....pp.....","......p..p..p..p....",".....ww.vxxv.ww....."]},"face/m/happy/1/1/1":{"y":12,"rows":[".......pp....pp.....","......p..p..p..p....",".....ww.vxxv.ww....."]},"face/m/surprised/-1/0/1":{"y":9,"rows":["....u........u......",".....pp....pp.......",".....fp....fp.......",".....yy....yy.......",".....ww..vv..ww.....",".........vv........."]},"face/m/surprised/-1/1/1":{"y":10,"rows":["....u........u......",".....pp....pp.......",".....fp....fp.......",".....yy....yy.......",".....ww..vv..ww.....",".........vv........."]},"face/m/surprised/0/0/1":{"y":9,"rows":[".....u........u.....","......pp....pp......","......fp....fp......","......yy....yy......",".....ww..vv..ww.....",".........vv........."]},"face/m/surprised/0/1/1":{"y":10,"rows":[".....u........u.....","......pp....pp......","......fp....fp......","......yy....yy......",".....ww..vv..ww.....",".........vv........."]},"face/m/surprised/1/0/1":{"y":9,"rows":["......u........u....",".......pp....pp.....",".......fp....fp.....",".......yy....yy.....",".....ww..vv..ww.....",".........vv........."]},"face/m/surprised/1/1/1":{"y":10,"rows":["......u........u....",".......pp....pp.....",".......fp....fp.....",".......yy....yy.....",".....ww..vv..ww.....",".........vv........."]},"face/m/sleepy/-1/0/1":{"y":12,"rows":["....ppp....ppp......",".....ww...v..ww....."]},"face/m/sleepy/-1/1/1":{"y":13,"rows":["....ppp....ppp......",".....ww...v..ww....."]},"face/m/sleepy/0/0/1":{"y":12,"rows":[".....ppp....ppp.....",".....ww...v..ww....."]},"face/m/sleepy/0/1/1":{"y":13,"rows":[".....ppp....ppp.....",".....ww...v..ww....."]},"face/m/sleepy/1/0/1":{"y":12,"rows":["......ppp....ppp....",".....ww...v..ww....."]},"face/m/sleepy/1/1/1":{"y":13,"rows":["......ppp....ppp....",".....ww...v..ww....."]},"face/m/flustered/-1/0/1":{"y":6,"rows":["................z...","................A...","....................","....................",".....p......p.......","......p....p........",".....p......p.......",".....ww.v.v..ww.....",".........v.v........"]},"face/m/flustered/-1/1/1":{"y":7,"rows":["................z...","................A...","....................","....................",".....p......p.......","......p....p........",".....p......p.......",".....ww.v.v..ww.....",".........v.v........"]},"face/m/flustered/0/0/1":{"y":6,"rows":["................z...","................A...","....................","....................","......p......p......",".......p....p.......","......p......p......",".....ww.v.v..ww.....",".........v.v........"]},"face/m/flustered/0/1/1":{"y":7,"rows":["................z...","................A...","....................","....................","......p......p......",".......p....p.......","......p......p......",".....ww.v.v..ww.....",".........v.v........"]},"face/m/flustered/1/0/1":{"y":6,"rows":["................z...","................A...","....................","....................",".......p......p.....","........p....p......",".......p......p.....",".....ww.v.v..ww.....",".........v.v........"]},"face/m/flustered/1/1/1":{"y":7,"rows":["................z...","................A...","....................","....................",".......p......p.....","........p....p......",".......p......p.....",".....ww.v.v..ww.....",".........v.v........"]},"face/m/blink/-1/0/1":{"y":12,"rows":[".....pp....vp.......",".....ww..vv..ww....."]},"face/m/blink/-1/1/1":{"y":13,"rows":[".....pp....vp.......",".....ww..vv..ww....."]},"face/m/blink/0/0/1":{"y":12,"rows":["......pp...vpp......",".....ww..vv..ww....."]},"face/m/blink/0/1/1":{"y":13,"rows":["......pp...vpp......",".....ww..vv..ww....."]},"face/m/blink/1/0/1":{"y":12,"rows":[".......pp..v.pp.....",".....ww..vv..ww....."]},"face/m/blink/1/1/1":{"y":13,"rows":[".......pp..v.pp.....",".....ww..vv..ww....."]},"acc/bow/0":{"y":2,"rows":[".............BB...BB",".............BxxBhhB",".............BxBCBhB",".............BxxBhhB",".............BB...BB"]},"acc/bow/1":{"y":3,"rows":[".............BB...BB",".............BxxBhhB",".............BxBCBhB",".............BxxBhhB",".............BB...BB"]},"acc/headphones/0":{"y":1,"rows":[".........DD.........","........D..D........",".......D....D.......","......D......D......",".....D........D.....","....D..........D....",".DDD............DDD.",".DgD............DgD.",".DgD............DgD.",".DgD............DgD.",".DDD............DDD."]},"acc/headphones/1":{"y":2,"rows":[".........DD.........","........D..D........",".......D....D.......","......D......D......",".....D........D.....","....D..........D....",".DDD............DDD.",".DgD............DgD.",".DgD............DgD.",".DgD............DgD.",".DDD............DDD."]},"body/hoodie/0":{"y":15,"rows":[".....abbcddceea.....","....abbbfggfeeea....","...abbebfggfgegea...","...abbebgggggegea...","...abbebeeeegegea...","...cjjeeggggeekkc...","....ccaeeeeeeacc....","......lmmmmmnl......","......lmnllmnl......","......cjkccjkc......","......pffppffp......",".....phffppfhfp.....",".....pppppppppp....."]},"body/hoodie/1":{"y":15,"rows":[".....abbcddceea.....","....abbbfggfeeea....","...abbebfggfga......","...abbebggggga......","...abbebeeeega......","...cjjeeggggea......","....ccaeeeeeea......","......lmmmmmnl......","......lmnllmnl......","......cjkccjkc......","......pffppffp......",".....phffppfhfp.....",".....pppppppppp....."]},"body/dress/0":{"y":15,"rows":["........cddc........","....abfffggfffea....","...abbeffggffegea...","...abbebgggggegea...","...abbebgggggegea...","...cjjeggggggekkc...","....ccaeeeeeeacc....",".....lmnmnmnmnl.....","....lmnmmnmmnmnl....","....llllllllllll....","......pffppffp......",".....pEFFppFEFp.....",".....pppppppppp....."]},"body/dress/1":{"y":15,"rows":["........cddc........","....abfffggfffea....","...abbeffggffa......","...abbebggggga......","...abbebggggga......","...cjjegggggga......","....ccaeeeeeea......",".....lmnmnmnmnl.....","....lmnmmnmmnmnl....","....llllllllllll....","......pffppffp......",".....pEFFppFEFp.....",".....pppppppppp....."]},"head/neat/0":{"y":1,"rows":["...............q....","......qqqqqqqqquq...","....qqrrurrsssqquq..","...qrrtuttsssssuq...","..qrrsusssssssssuq..","..qsrsssssssssssuq..","..qussssssssssssuq..","..qujjjsssssssssuq..","..qsjjjjjjssssssuq..","..qsjjjjjjjjjjjjsq..","..qujjjjjjjjjjjjuq..","..qujjjjjjjjjjjjuq..","...qkjjjjjjjjjjkq...","....cckjjjjjjkcc...."]},"head/neat/1":{"y":2,"rows":["...............q....","......qqqqqqqqquq...","....qqrrurrsssqquq..","...qrrtuttsssssuq...","..qrrsusssssssssuq..","..qsrsssssssssssuq..","..qussssssssssssuq..","..qujjjsssssssssuq..","..qsjjjjjjssssssuq..","..qsjjjjjjjjjjjjsq..","..qujjjjjjjjjjjjuq..","..qujjjjjjjjjjjjuq..","...qkjjjjjjjjjjkq...","....cckjjjjjjkcc...."]},"back/long/0":{"y":5,"rows":["..qqqqqqqqqqqqqqqq..",".qssssssssssssssssq.",".qssssssssssssssssq.",".qsssssssssssssuusq.",".qsrsssssssssssuusq.",".qsrsssssssssssuusq.",".qsrsssssssssssuusq.",".qsrsssssssssssuusq.",".qsrsssssssssssuusq.",".qsrsssssssssssuusq.","..qrsssssssssssuuq..","..qrsssssssssssuuq..","..qrsssssssssssuuq..","..qssssssssssssuuq..","...qsssqqqqqquuuq...","....qqq......qqq...."]},"head/long/0":{"y":2,"rows":["......qqqqqqqq......","....qqrrrsssssqq....","...qrrttsssssssuq...","..qrrtssssssssssuq..","..qsrsssssssssssuq..","..qsssssssssssssuq..","..qsssssssssssssuq..","..qssjsssssjjsssuq..","..qsjjjjjjjjjjjjsq..","..qujjjjjjjjjjjjuq..","..qujjjjjjjjjjjjuq..","..qskjjjjjjjjjjksq..","..qscckjjjjjjkccuq..","..qsu.........quq...","...qq..........qq..."]},"back/long/1":{"y":6,"rows":["..qqqqqqqqqqqqqqqq..",".qssssssssssssssssq.",".qssssssssssssssssq.",".qsssssssssssssuusq.",".qsrsssssssssssuusq.",".qsrsssssssssssuusq.",".qsrsssssssssssuusq.",".qsrsssssssssssuusq.",".qsrsssssssssssuusq.",".qsrsssssssssssuusq.","..qrsssssssssssuuq..","..qrsssssssssssuuq..","..qrsssssssssssuuq..","..qssssssssssssuuq..","...qsssqqqqqquuuq...","....qqq......qqq...."]},"head/long/1":{"y":3,"rows":["......qqqqqqqq......","....qqrrrsssssqq....","...qrrttsssssssuq...","..qrrtssssssssssuq..","..qsrsssssssssssuq..","..qsssssssssssssuq..","..qsssssssssssssuq..","..qssjsssssjjsssuq..","..qsjjjjjjjjjjjjsq..","..qujjjjjjjjjjjjuq..","..qujjjjjjjjjjjjuq..","..qskjjjjjjjjjjksq..","..qscckjjjjjjkccuq..","..qsu.........quq...","...qq..........qq..."]},"back/buns/0":{"y":0,"rows":["....q..........q....","..qqsqq......qqsqq..",".qsstssq....qsstssq.",".qsrsssq....qsrsssq.","qsssssssq..qsssssssq",".qssssuq....qssssuq.",".qsssusq....qsssusq.","..qqsqq......qqsqq..","....q..........q...."]},"head/buns/0":{"y":2,"rows":["......qqqqqqqq......","....qqrrrsssssqq....","...qrrttsssssssuq...","..qrrtssssssssssuq..","..qsrsssssssssssuq..","..qsssssssssssssuq..","..qsssssssssssssuq..","..qssjsssssjjsssuq..","..qsjjjjjjjjjjjjsq..","..qujjjjjjjjjjjjuq..","..qujjjjjjjjjjjjuq..","...qkjjjjjjjjjjkq...","....cckjjjjjjkcc...."]},"back/buns/1":{"y":1,"rows":["....q..........q....","..qqsqq......qqsqq..",".qsstssq....qsstssq.",".qsrsssq....qsrsssq.","qsssssssq..qsssssssq",".qssssuq....qssssuq.",".qsssusq....qsssusq.","..qqsqq......qqsqq..","....q..........q...."]},"head/buns/1":{"y":3,"rows":["......qqqqqqqq......","....qqrrrsssssqq....","...qrrttsssssssuq...","..qrrtssssssssssuq..","..qsrsssssssssssuq..","..qsssssssssssssuq..","..qsssssssssssssuq..","..qssjsssssjjsssuq..","..qsjjjjjjjjjjjjsq..","..qujjjjjjjjjjjjuq..","..qujjjjjjjjjjjjuq..","...qkjjjjjjjjjjkq...","....cckjjjjjjkcc...."]},"face/f/neutral/-1/0/0":{"y":10,"rows":["....ppp....ppp......",".....fp....fp.......",".....yy....yy.......",".....ww..vv..ww....."]},"face/f/neutral/-1/1/0":{"y":11,"rows":["....ppp....ppp......",".....fp....fp.......",".....yy....yy.......",".....ww..vv..ww....."]},"face/f/neutral/0/0/0":{"y":10,"rows":[".....ppp....ppp.....","......fp....fp......","......yy....yy......",".....ww..vv..ww....."]},"face/f/neutral/0/1/0":{"y":11,"rows":[".....ppp....ppp.....","......fp....fp......","......yy....yy......",".....ww..vv..ww....."]},"face/f/neutral/1/0/0":{"y":10,"rows":["......ppp....ppp....",".......fp....fp.....",".......yy....yy.....",".....ww..vv..ww....."]},"face/f/neutral/1/1/0":{"y":11,"rows":["......ppp....ppp....",".......fp....fp.....",".......yy....yy.....",".....ww..vv..ww....."]},"face/f/happy/-1/0/0":{"y":11,"rows":[".....pp....pp.......","....p..p..p..p......",".....ww.vxxv.ww....."]},"face/f/happy/-1/1/0":{"y":12,"rows":[".....pp....pp.......","....p..p..p..p......",".....ww.vxxv.ww....."]},"face/f/happy/0/0/0":{"y":11,"rows":["......pp....pp......",".....p..p..p..p.....",".....ww.vxxv.ww....."]},"face/f/happy/0/1/0":{"y":12,"rows":["......pp....pp......",".....p..p..p..p.....",".....ww.vxxv.ww....."]},"face/f/happy/1/0/0":{"y":11,"rows":[".......pp....pp.....","......p..p..p..p....",".....ww.vxxv.ww....."]},"face/f/happy/1/1/0":{"y":12,"rows":[".......pp....pp.....","......p..p..p..p....",".....ww.vxxv.ww....."]},"face/f/surprised/-1/0/0":{"y":9,"rows":["....u........u......","....ppp....ppp......",".....fp....fp.......",".....yy....yy.......",".....ww..vv..ww.....",".........vv........."]},"face/f/surprised/-1/1/0":{"y":10,"rows":["....u........u......","....ppp....ppp......",".....fp....fp.......",".....yy....yy.......",".....ww..vv..ww.....",".........vv........."]},"face/f/surprised/0/0/0":{"y":9,"rows":[".....u........u.....",".....ppp....ppp.....","......fp....fp......","......yy....yy......",".....ww..vv..ww.....",".........vv........."]},"face/f/surprised/0/1/0":{"y":10,"rows":[".....u........u.....",".....ppp....ppp.....","......fp....fp......","......yy....yy......",".....ww..vv..ww.....",".........vv........."]},"face/f/surprised/1/0/0":{"y":9,"rows":["......u........u....","......ppp....ppp....",".......fp....fp.....",".......yy....yy.....",".....ww..vv..ww.....",".........vv........."]},"face/f/surprised/1/1/0":{"y":10,"rows":["......u........u....","......ppp....ppp....",".......fp....fp.....",".......yy....yy.....",".....ww..vv..ww.....",".........vv........."]},"face/f/sleepy/-1/0/0":{"y":12,"rows":["....ppp....ppp......",".....ww...v..ww....."]},"face/f/sleepy/-1/1/0":{"y":13,"rows":["....ppp....ppp......",".....ww...v..ww....."]},"face/f/sleepy/0/0/0":{"y":12,"rows":[".....ppp....ppp.....",".....ww...v..ww....."]},"face/f/sleepy/0/1/0":{"y":13,"rows":[".....ppp....ppp.....",".....ww...v..ww....."]},"face/f/sleepy/1/0/0":{"y":12,"rows":["......ppp....ppp....",".....ww...v..ww....."]},"face/f/sleepy/1/1/0":{"y":13,"rows":["......ppp....ppp....",".....ww...v..ww....."]},"face/f/flustered/-1/0/0":{"y":6,"rows":["................z...","................A...","....................","....................",".....p......p.......","......p....p........",".....p......p.......",".....ww.v.v..ww.....",".........v.v........"]},"face/f/flustered/-1/1/0":{"y":7,"rows":["................z...","................A...","....................","....................",".....p......p.......","......p....p........",".....p......p.......",".....ww.v.v..ww.....",".........v.v........"]},"face/f/flustered/0/0/0":{"y":6,"rows":["................z...","................A...","....................","....................","......p......p......",".......p....p.......","......p......p......",".....ww.v.v..ww.....",".........v.v........"]},"face/f/flustered/0/1/0":{"y":7,"rows":["................z...","................A...","....................","....................","......p......p......",".......p....p.......","......p......p......",".....ww.v.v..ww.....",".........v.v........"]},"face/f/flustered/1/0/0":{"y":6,"rows":["................z...","................A...","....................","....................",".......p......p.....","........p....p......",".......p......p.....",".....ww.v.v..ww.....",".........v.v........"]},"face/f/flustered/1/1/0":{"y":7,"rows":["................z...","................A...","....................","....................",".......p......p.....","........p....p......",".......p......p.....",".....ww.v.v..ww.....",".........v.v........"]},"face/f/blink/-1/0/0":{"y":12,"rows":[".....pp....pp.......",".....ww..vv..ww....."]},"face/f/blink/-1/1/0":{"y":13,"rows":[".....pp....pp.......",".....ww..vv..ww....."]},"face/f/blink/0/0/0":{"y":12,"rows":["......pp....pp......",".....ww..vv..ww....."]},"face/f/blink/0/1/0":{"y":13,"rows":["......pp....pp......",".....ww..vv..ww....."]},"face/f/blink/1/0/0":{"y":12,"rows":[".......pp....pp.....",".....ww..vv..ww....."]},"face/f/blink/1/1/0":{"y":13,"rows":[".......pp....pp.....",".....ww..vv..ww....."]},"face/f/neutral/-1/0/1":{"y":10,"rows":["....ppp....ppp......",".....fp....fp.......",".....yy....yy.......",".....ww..vv..ww....."]},"face/f/neutral/-1/1/1":{"y":11,"rows":["....ppp....ppp......",".....fp....fp.......",".....yy....yy.......",".....ww..vv..ww....."]},"face/f/neutral/0/0/1":{"y":10,"rows":[".....ppp....ppp.....","......fp....fp......","......yy....yy......",".....ww..vv..ww....."]},"face/f/neutral/0/1/1":{"y":11,"rows":[".....ppp....ppp.....","......fp....fp......","......yy....yy......",".....ww..vv..ww....."]},"face/f/neutral/1/0/1":{"y":10,"rows":["......ppp....ppp....",".......fp....fp.....",".......yy....yy.....",".....ww..vv..ww....."]},"face/f/neutral/1/1/1":{"y":11,"rows":["......ppp....ppp....",".......fp....fp.....",".......yy....yy.....",".....ww..vv..ww....."]},"face/f/happy/-1/0/1":{"y":11,"rows":[".....pp....pp.......","....p..p..p..p......",".....ww.vxxv.ww....."]},"face/f/happy/-1/1/1":{"y":12,"rows":[".....pp....pp.......","....p..p..p..p......",".....ww.vxxv.ww....."]},"face/f/happy/0/0/1":{"y":11,"rows":["......pp....pp......",".....p..p..p..p.....",".....ww.vxxv.ww....."]},"face/f/happy/0/1/1":{"y":12,"rows":["......pp....pp......",".....p..p..p..p.....",".....ww.vxxv.ww....."]},"face/f/happy/1/0/1":{"y":11,"rows":[".......pp....pp.....","......p..p..p..p....",".....ww.vxxv.ww....."]},"face/f/happy/1/1/1":{"y":12,"rows":[".......pp....pp.....","......p..p..p..p....",".....ww.vxxv.ww....."]},"face/f/surprised/-1/0/1":{"y":9,"rows":["....u........u......","....ppp....ppp......",".....fp....fp.......",".....yy....yy.......",".....ww..vv..ww.....",".........vv........."]},"face/f/surprised/-1/1/1":{"y":10,"rows":["....u........u......","....ppp....ppp......",".....fp....fp.......",".....yy....yy.......",".....ww..vv..ww.....",".........vv........."]},"face/f/surprised/0/0/1":{"y":9,"rows":[".....u........u.....",".....ppp....ppp.....","......fp....fp......","......yy....yy......",".....ww..vv..ww.....",".........vv........."]},"face/f/surprised/0/1/1":{"y":10,"rows":[".....u........u.....",".....ppp....ppp.....","......fp....fp......","......yy....yy......",".....ww..vv..ww.....",".........vv........."]},"face/f/surprised/1/0/1":{"y":9,"rows":["......u........u....","......ppp....ppp....",".......fp....fp.....",".......yy....yy.....",".....ww..vv..ww.....",".........vv........."]},"face/f/surprised/1/1/1":{"y":10,"rows":["......u........u....","......ppp....ppp....",".......fp....fp.....",".......yy....yy.....",".....ww..vv..ww.....",".........vv........."]},"face/f/sleepy/-1/0/1":{"y":12,"rows":["....ppp....ppp......",".....ww...v..ww....."]},"face/f/sleepy/-1/1/1":{"y":13,"rows":["....ppp....ppp......",".....ww...v..ww....."]},"face/f/sleepy/0/0/1":{"y":12,"rows":[".....ppp....ppp.....",".....ww...v..ww....."]},"face/f/sleepy/0/1/1":{"y":13,"rows":[".....ppp....ppp.....",".....ww...v..ww....."]},"face/f/sleepy/1/0/1":{"y":12,"rows":["......ppp....ppp....",".....ww...v..ww....."]},"face/f/sleepy/1/1/1":{"y":13,"rows":["......ppp....ppp....",".....ww...v..ww....."]},"face/f/flustered/-1/0/1":{"y":6,"rows":["................z...","................A...","....................","....................",".....p......p.......","......p....p........",".....p......p.......",".....ww.v.v..ww.....",".........v.v........"]},"face/f/flustered/-1/1/1":{"y":7,"rows":["................z...","................A...","....................","....................",".....p......p.......","......p....p........",".....p......p.......",".....ww.v.v..ww.....",".........v.v........"]},"face/f/flustered/0/0/1":{"y":6,"rows":["................z...","................A...","....................","....................","......p......p......",".......p....p.......","......p......p......",".....ww.v.v..ww.....",".........v.v........"]},"face/f/flustered/0/1/1":{"y":7,"rows":["................z...","................A...","....................","....................","......p......p......",".......p....p.......","......p......p......",".....ww.v.v..ww.....",".........v.v........"]},"face/f/flustered/1/0/1":{"y":6,"rows":["................z...","................A...","....................","....................",".......p......p.....","........p....p......",".......p......p.....",".....ww.v.v..ww.....",".........v.v........"]},"face/f/flustered/1/1/1":{"y":7,"rows":["................z...","................A...","....................","....................",".......p......p.....","........p....p......",".......p......p.....",".....ww.v.v..ww.....",".........v.v........"]},"face/f/blink/-1/0/1":{"y":12,"rows":[".....pp....pp.......",".....ww..vv..ww....."]},"face/f/blink/-1/1/1":{"y":13,"rows":[".....pp....pp.......",".....ww..vv..ww....."]},"face/f/blink/0/0/1":{"y":12,"rows":["......pp....pp......",".....ww..vv..ww....."]},"face/f/blink/0/1/1":{"y":13,"rows":["......pp....pp......",".....ww..vv..ww....."]},"face/f/blink/1/0/1":{"y":12,"rows":[".......pp....pp.....",".....ww..vv..ww....."]},"face/f/blink/1/1/1":{"y":13,"rows":[".......pp....pp.....",".....ww..vv..ww....."]},"emote/note":{"w":10,"h":13,"rows":[".GGGGGGGG.","GffffffffG","GffffHHffG","GffffHIHfG","GffffHfHfG","GffffHfffG","GffHHHfffG","GfHIIHfffG","GffHHffffG","GiiiiiiiiG",".GfGGGGGG.",".GfG......","..G......."]},"emote/heart":{"w":11,"h":12,"rows":[".GGGGGGGGG.","GfffffffffG","GffBBfBBffG","GfBhhBxxBfG","GfBhhhxxBfG","GffBhhhBffG","GfffBhBfffG","GffffBffffG","GiiiiiiiiiG",".GfGGGGGGG.",".GfG.......","..G........"]},"emote/bang":{"w":9,"h":14,"rows":[".GGGGGGG.","GfffffffG","GffJJJffG","GffJKJffG","GffJKJffG","GffJKJffG","GfffJfffG","GffJJJffG","GffJKJffG","GffJJJffG","GiiiiiiiG",".GfGGGGG.",".GfG.....","..G......"]},"emote/star":{"w":11,"h":13,"rows":[".GGGGGGGGG.","GfffffffffG","GffffJffffG","GfffJLJfffG","GfJJKLKJJfG","GfJKKKKKJfG","GffJKKKJffG","GfJKKJKKJfG","GfJJfffJJfG","GiiiiiiiiiG",".GfGGGGGGG.",".GfG.......","..G........"]}},"seq":[{"expr":"neutral","look":0,"bob":0,"sway":0,"wave":null,"emote":null,"ms":600},{"expr":"neutral","look":0,"bob":1,"sway":1,"wave":null,"emote":null,"ms":350},{"expr":"neutral","look":0,"bob":0,"sway":0,"wave":null,"emote":null,"ms":450},{"expr":"blink","look":0,"bob":0,"sway":0,"wave":null,"emote":null,"ms":110},{"expr":"neutral","look":0,"bob":0,"sway":0,"wave":null,"emote":null,"ms":500},{"expr":"neutral","look":-1,"bob":0,"sway":0,"wave":null,"emote":null,"ms":650},{"expr":"neutral","look":1,"bob":0,"sway":0,"wave":null,"emote":null,"ms":650},{"expr":"surprised","look":0,"bob":0,"sway":0,"wave":null,"emote":"bang","ms":500},{"expr":"happy","look":0,"bob":0,"sway":0,"wave":null,"emote":"note","ms":450},{"expr":"happy","look":0,"bob":1,"sway":1,"wave":null,"emote":"note","ms":300},{"expr":"happy","look":0,"bob":0,"sway":0,"wave":null,"emote":"note","ms":450},{"expr":"happy","look":0,"bob":0,"sway":0,"wave":0,"emote":"cheer","ms":180},{"expr":"happy","look":0,"bob":0,"sway":0,"wave":1,"emote":"cheer","ms":180},{"expr":"happy","look":0,"bob":0,"sway":0,"wave":0,"emote":"cheer","ms":180},{"expr":"happy","look":0,"bob":0,"sway":0,"wave":1,"emote":"cheer","ms":180},{"expr":"blink","look":0,"bob":0,"sway":0,"wave":null,"emote":null,"ms":110},{"expr":"neutral","look":0,"bob":0,"sway":0,"wave":null,"emote":null,"ms":500}],"swatches":{"hair":[["乌黑","#433a54"],["深棕","#7c4734"],["栗色","#9a5a34"],["奶茶","#b08f78"],["金色","#d29b30"],["橘红","#c4562e"],["酒红","#8a2f45"],["粉色","#c75f81"],["薰衣草","#9a86c8"],["雾蓝","#5a78b8"],["薄荷","#6fb59a"],["银白","#c9c6d6"]],"skin":[["白皙","#fbd9c0"],["自然","#f6c39c"],["暖米","#ecb98e"],["小麦","#dea074"],["棕色","#b97a55"],["深色","#a2654b"]],"cloth":[["白","#e8e6ef"],["浅灰","#a9a7b5"],["炭黑","#4a4658"],["红","#b94b4b"],["珊瑚","#e07a62"],["橙","#e08a3a"],["芥末黄","#d29b30"],["橄榄","#8a8a3e"],["草绿","#447840"],["薄荷","#5fae96"],["湖蓝","#3f8fa6"],["天蓝","#6c90c8"],["藏青","#46619e"],["紫","#7a5aa6"],["粉","#e39ab0"],["咖啡","#87573e"]]},"eyes":[["棕","#7c4734"],["黑","#433a54"],["蓝","#46619e"],["绿","#447840"],["紫","#7a5aa6"],["琥珀","#d29b30"]],"ramp":{"cloth":[[-0.58,1.2,22],[-0.3,1.1,10],[0,1,0],[0.42,0.95,8],[0.72,0.72,16]],"skin":[[-0.55,1.25,26],[-0.25,1.5,12],[-0.07,1.3,5],[0,1,0],[0.5,0.6,6]],"shadowHue":250.0,"skinShadowHue":350.0,"lightHue":55.0}};
+
+// ---------------------------------------------------------------- color ramps
+// Mirror of tools/pixelkit/palette.py ramp_from(): one picked color -> 5 shades,
+// shadows drift cool (skin: toward red), highlights drift warm.
+function hexToRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; }
+function rgbToHex(r, g, b) { return "#" + [r, g, b].map(v => Math.round(v * 255).toString(16).padStart(2, "0")).join(""); }
+function rgbToHsv(r, g, b) {
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  let h = 0;
+  if (d) {
+    if (max === r) h = ((g - b) / d) % 6; else if (max === g) h = (b - r) / d + 2; else h = (r - g) / d + 4;
+    h *= 60; if (h < 0) h += 360;
+  }
+  return [h, max ? d / max : 0, max];
+}
+function hsvToRgb(h, s, v) {
+  const c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c;
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return [r + m, g + m, b + m];
+}
+function toward(h, t, a) { const d = (((t - h + 180) % 360) + 360) % 360 - 180; return (h + Math.max(-a, Math.min(a, d)) + 360) % 360; }
+const rampCache = new Map();
+function rampFrom(base, skin = false) {
+  const key = base + (skin ? "s" : "c");
+  if (rampCache.has(key)) return rampCache.get(key);
+  const R = DATA.ramp, steps = skin ? R.skin : R.cloth, shadowHue = skin ? R.skinShadowHue : R.shadowHue;
+  const [h, s, v] = rgbToHsv(...hexToRgb(base));
+  const out = steps.map(([dv, fs, dh]) => {
+    let hh = h, ss = s, vv = v;
+    if (dv < 0) { hh = toward(h, shadowHue, dh); ss = Math.min(1, s * fs + 0.06); vv = v * (1 + dv); }
+    else if (dv > 0) { hh = toward(h, R.lightHue, dh); ss = s * fs; vv = Math.min(1, v + (1 - v) * dv * (0.4 + 0.6 * v)); }
+    return rgbToHex(...hsvToRgb(hh, ss, vv));
+  });
+  rampCache.set(key, out);
+  return out;
+}
+
+// ---------------------------------------------------------------- state
+const PRESETS = {
+  f: { style: "long", outfit: "dress", acc: "bow" },
+  m: { style: "messy", outfit: "jacket", acc: "" },
+};
+const DEFAULT = {
+  gender: "f", style: "long", outfit: "dress", acc: "bow",
+  hair: "#433a54", skin: "#f6c39c", top: "#b94b4b", bottom: "#46619e", eye: "#46619e",
+  mode: "idle",
+};
+const COLOR_ROWS = [
+  { key: "hair", name: "发色", list: () => DATA.swatches.hair },
+  { key: "skin", name: "肤色", list: () => DATA.swatches.skin, skin: true },
+  { key: "top", name: "上衣", list: () => DATA.swatches.cloth },
+  { key: "bottom", name: () => state.outfit === "dress" ? "裙子" : "裤子", list: () => DATA.swatches.cloth },
+  { key: "eye", name: "瞳色", list: () => DATA.eyes },
+];
+let state = { ...DEFAULT };
+try {
+  const saved = JSON.parse(localStorage.getItem("buddy-creator") || "null");
+  if (saved && typeof saved === "object") state = { ...DEFAULT, ...saved };
+} catch (e) { /* storage unavailable: start from defaults */ }
+function save() { try { localStorage.setItem("buddy-creator", JSON.stringify(state)); } catch (e) { /* ignore */ } }
+
+// ---------------------------------------------------------------- rendering
+const W = DATA.W, H = DATA.H;               // doll frame 20x28
+const CW = W + 4, CH = H + 15, DOLL_Y = 15; // with room for an emote bubble
+const SW = 48, SH = 52;                     // stage in art pixels
+const STAGE_X = 14, FLOOR_TOP = 41, FEET_Y = 47;
+const off = document.createElement("canvas");
+off.width = SW; off.height = SH;
+const octx = off.getContext("2d");
+const canvas = document.getElementById("stage");
+const ctx = canvas.getContext("2d");
+
+function layerKeys(st, f) {
+  const arm = f.wave !== null && f.wave !== undefined;
+  const k = [];
+  if (st.style === "long" || st.style === "buns") k.push(`back/${st.style}/${f.bob}`);
+  k.push(`body/${st.outfit}/${arm ? 1 : 0}`);
+  k.push(`head/${st.style}/${f.bob}`);
+  if (st.style === "messy") k.push(`ahoge/${f.sway % 2}/${f.bob}`);
+  k.push(`face/${st.gender}/${f.expr}/${f.look}/${f.bob}/${st.acc === "glasses" ? 1 : 0}`);
+  if (st.acc) k.push(`acc/${st.acc}/${f.bob}`);
+  if (arm) k.push(`arm/${f.wave}`);
+  return k;
+}
+
+function paintLayer(img, layer, ox, oy, ramps) {
+  if (!layer) return;
+  const y0 = layer.y || 0;
+  layer.rows.forEach((row, j) => {
+    for (let i = 0; i < row.length; i++) {
+      const t = row[i];
+      if (t === ".") continue;
+      const c = DATA.colors[t];
+      const hex = typeof c === "string" ? c : ramps[c[0]][c[1]];
+      const x = ox + i, y = oy + y0 + j;
+      if (x < 0 || y < 0 || x >= SW || y >= SH) continue;
+      const [r, g, b] = hexToRgb(hex), p = (y * SW + x) * 4;
+      img.data[p] = r * 255; img.data[p + 1] = g * 255; img.data[p + 2] = b * 255; img.data[p + 3] = 255;
+    }
+  });
+}
+
+function rect(img, x, y, w, h, hex) {
+  const [r, g, b] = hexToRgb(hex);
+  for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) {
+    if (i < 0 || j < 0 || i >= SW || j >= SH) continue;
+    const p = (j * SW + i) * 4;
+    img.data[p] = r * 255; img.data[p + 1] = g * 255; img.data[p + 2] = b * 255; img.data[p + 3] = 255;
+  }
+}
+
+// a slice of the bedroom from the house concept: plain wall, baseboard, plank floor
+function paintRoom(img) {
+  rect(img, 0, 0, SW, FLOOR_TOP, "#e1beb8");
+  rect(img, 0, 0, SW, 1, "#9e7b7d");
+  rect(img, 0, 1, SW, 1, "#c59c9b");
+  for (let i = 0; i < SW; i += 2) rect(img, i, 2, 1, 1, "#c59c9b");
+  rect(img, 0, FLOOR_TOP - 3, SW, 3, "#dedce7");
+  rect(img, 0, FLOOR_TOP - 3, SW, 1, "#f7f6fb");
+  rect(img, 0, FLOOR_TOP - 1, SW, 1, "#8f8ba2");
+  rect(img, 0, FLOOR_TOP, SW, SH - FLOOR_TOP, "#b18051");
+  rect(img, 0, FLOOR_TOP, SW, 1, "#5d3831");
+  rect(img, 0, FLOOR_TOP + 1, SW, 1, "#d7ac6f");
+  for (let r = 0, y = FLOOR_TOP + 2; y < SH; r++, y += 3) {
+    rect(img, 0, y + 2, SW, 1, "#87573e");
+    for (let x = (r * 7) % 17; x < SW; x += 17) rect(img, x, y, 1, 2, "#87573e");
+  }
+}
+
+function paint(f) {
+  const st = state;
+  const ramps = {
+    hair: rampFrom(st.hair), skin: rampFrom(st.skin, true),
+    top: rampFrom(st.top), bottom: rampFrom(st.bottom), eye: rampFrom(st.eye),
+  };
+  const img = octx.createImageData(SW, SH);
+  paintRoom(img);
+  const top = FEET_Y - H + 1;
+  // contact shadow under the shoes
+  const body = DATA.layers[`body/${st.outfit}/0`];
+  const feet = body.rows[body.rows.length - 1];
+  const fx0 = feet.search(/[^.]/), fx1 = feet.length - 1 - [...feet].reverse().join("").search(/[^.]/);
+  rect(img, STAGE_X + fx0, FEET_Y + 1, fx1 - fx0 + 1, 1, "#5d3831");
+  for (const key of layerKeys(st, f)) paintLayer(img, DATA.layers[key], STAGE_X, top, ramps);
+  if (f.emote) {
+    const name = f.emote === "cheer" ? (st.gender === "f" ? "heart" : "star") : f.emote;
+    paintLayer(img, DATA.layers[`emote/${name}`], STAGE_X + 13, top - DOLL_Y, ramps);
+  }
+  octx.putImageData(img, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(off, 0, 0, canvas.width, canvas.height);
+}
+
+function fitCanvas() {
+  const avail = canvas.parentElement.clientWidth - 32;
+  const scale = Math.max(3, Math.min(8, Math.floor(avail / SW)));
+  canvas.width = SW * scale; canvas.height = SH * scale;
+  canvas.style.width = canvas.width + "px"; canvas.style.height = canvas.height + "px";
+  document.getElementById("meta").textContent = `${W}×${H} px · 放大 ×${scale}（桌面上约 ×3）`;
+}
+
+// ---------------------------------------------------------------- animation
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const FRAME = { expr: "neutral", look: 0, bob: 0, sway: 0, wave: null, emote: null };
+const MODE_SEQ = {
+  happy: [{ expr: "happy", emote: "note", ms: 700 }, { expr: "happy", bob: 1, sway: 1, emote: "note", ms: 400 }],
+  surprised: [{ expr: "surprised", emote: "bang", ms: 900 }, { expr: "surprised", bob: 1, sway: 1, emote: "bang", ms: 300 }],
+  sleepy: [{ expr: "sleepy", ms: 900 }, { expr: "sleepy", bob: 1, sway: 1, ms: 700 }],
+  flustered: [{ expr: "flustered", ms: 500 }, { expr: "flustered", bob: 1, sway: 1, ms: 250 }, { expr: "flustered", look: 0, ms: 400 }],
+};
+let timer = null, step = 0;
+function sequence() { return state.mode === "idle" ? DATA.seq : MODE_SEQ[state.mode]; }
+function tick() {
+  const seq = sequence();
+  const f = { ...FRAME, ...seq[step % seq.length] };
+  paint(f);
+  if (reduceMotion) return;
+  timer = setTimeout(() => { step++; tick(); }, f.ms);
+}
+function restart() { clearTimeout(timer); step = 0; tick(); }
+function redraw() { clearTimeout(timer); tick(); }
+
+// ---------------------------------------------------------------- controls
+function syncChips() {
+  document.querySelectorAll(".chips").forEach(g => {
+    const key = g.dataset.key;
+    g.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String((state[key] || "") === b.dataset.val)));
+  });
+  document.querySelectorAll("#modes button").forEach(b => b.setAttribute("aria-pressed", String(state.mode === b.dataset.mode)));
+}
+
+const colorsEl = document.getElementById("colors");
+function buildColorRows() {
+  colorsEl.querySelectorAll(".color-row").forEach(n => n.remove());
+  for (const row of COLOR_ROWS) {
+    const wrap = document.createElement("div");
+    wrap.className = "color-row";
+    wrap.dataset.key = row.key;
+    const name = typeof row.name === "function" ? row.name() : row.name;
+    wrap.innerHTML = `<div class="color-head"><span class="name">${name}</span><span class="ramp" aria-hidden="true"></span><span class="ramp-label"></span></div><div class="swatches" role="group" aria-label="${name}"></div>`;
+    const sw = wrap.querySelector(".swatches");
+    for (const [label, hex] of row.list()) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "swatch"; b.title = label; b.setAttribute("aria-label", label);
+      b.dataset.hex = hex.toLowerCase();
+      const r = rampFrom(hex, row.skin);
+      b.style.setProperty("--c", hex); b.style.setProperty("--c2", r[1]);
+      b.addEventListener("click", () => setColor(row.key, hex));
+      sw.appendChild(b);
+    }
+    const custom = document.createElement("label");
+    custom.className = "swatch custom"; custom.title = "自定义颜色";
+    custom.innerHTML = `+<input type="color" id="custom-${row.key}" aria-label="${name}：自定义颜色">`;
+    custom.querySelector("input").addEventListener("input", e => setColor(row.key, e.target.value));
+    sw.appendChild(custom);
+    colorsEl.appendChild(wrap);
+  }
+  syncColors();
+}
+
+function syncColors() {
+  for (const row of COLOR_ROWS) {
+    const wrap = colorsEl.querySelector(`.color-row[data-key="${row.key}"]`);
+    const cur = state[row.key].toLowerCase();
+    const ramp = rampFrom(cur, row.skin);
+    const name = typeof row.name === "function" ? row.name() : row.name;
+    wrap.querySelector(".name").textContent = name;
+    wrap.querySelector(".swatches").setAttribute("aria-label", name);
+    wrap.querySelector(".ramp").innerHTML = ramp.map(c => `<i style="background:${c}" title="${c}"></i>`).join("");
+    wrap.querySelector(".ramp-label").textContent = `${cur.toUpperCase()} → 5 阶`;
+    let matched = false;
+    wrap.querySelectorAll(".swatch:not(.custom)").forEach(b => {
+      const on = b.dataset.hex === cur; matched ||= on;
+      b.setAttribute("aria-pressed", String(on));
+    });
+    const custom = wrap.querySelector(".swatch.custom");
+    custom.classList.toggle("has-color", !matched);
+    custom.setAttribute("aria-pressed", String(!matched));
+    if (!matched) { custom.style.setProperty("--c", cur); custom.querySelector("input").value = cur; }
+  }
+}
+
+function setColor(key, hex) { state[key] = hex.toLowerCase(); save(); syncColors(); redraw(); }
+
+document.querySelectorAll(".chips").forEach(g => g.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const key = g.dataset.key;
+  state[key] = b.dataset.val;
+  if (key === "gender") Object.assign(state, PRESETS[b.dataset.val]);
+  save(); syncChips(); syncColors(); restart();
+}));
+document.getElementById("modes").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  state.mode = b.dataset.mode; save(); syncChips(); restart();
+});
+const pick = a => a[Math.floor(Math.random() * a.length)];
+document.getElementById("random").addEventListener("click", () => {
+  state.gender = pick(["f", "m"]);
+  state.style = pick(["messy", "neat", "long", "buns"]);
+  state.outfit = pick(["jacket", "hoodie", "dress"]);
+  state.acc = pick(["", "", "glasses", "bow", "headphones"]);
+  state.hair = pick(DATA.swatches.hair)[1].toLowerCase();
+  state.skin = pick(DATA.swatches.skin)[1].toLowerCase();
+  const cloth = DATA.swatches.cloth.map(c => c[1].toLowerCase());
+  state.top = pick(cloth);
+  state.bottom = pick(cloth.filter(c => c !== state.top));
+  state.eye = pick(DATA.eyes)[1].toLowerCase();
+  save(); syncChips(); syncColors(); restart();
+});
+
+let resizeT;
+window.addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(() => { fitCanvas(); redraw(); }, 120); });
+
+buildColorRows();
+syncChips();
+fitCanvas();
+restart();
+</script>

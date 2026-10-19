@@ -51,3 +51,71 @@ ALL_COLORS: set[str] = {c.lower() for ramp in RAMPS.values() for c in ramp}
 
 def ramp(name: str) -> list[str]:
     return RAMPS[name]
+
+
+# ---------------------------------------------------------------- user colors
+# Players pick ONE color per part; a full 5-shade ramp is generated from it so
+# the pick matches the hand-tuned ramps above (cool shadows, warm highlights).
+# The creator page (prototype/creator) mirrors this in JS — keep them in sync.
+
+import colorsys
+
+# per ramp index: (value change, saturation factor, hue shift in degrees)
+#   value < 0 darkens (v * (1 + d)); value > 0 lightens toward white
+#   hue shift moves toward SHADOW_HUE for darker shades, LIGHT_HUE for lighter
+CLOTH_STEPS = [(-0.58, 1.2, 22), (-0.3, 1.1, 10), (0, 1, 0), (0.42, 0.95, 8), (0.72, 0.72, 16)]
+SKIN_STEPS = [(-0.55, 1.25, 26), (-0.25, 1.5, 12), (-0.07, 1.3, 5), (0, 1, 0), (0.5, 0.6, 6)]
+SHADOW_HUE, LIGHT_HUE, SKIN_SHADOW_HUE = 250.0, 55.0, 350.0
+
+
+def _toward(h: float, target: float, amount: float) -> float:
+    d = (target - h + 180) % 360 - 180
+    return (h + max(-amount, min(amount, d))) % 360
+
+
+def ramp_from(base: str, skin: bool = False) -> list[str]:
+    """5-shade ramp around `base` (the color the player picked).
+
+    Cloth/hair: base is index 2. Skin: base is index 3 (the face color)."""
+    steps = SKIN_STEPS if skin else CLOTH_STEPS
+    shadow_hue = SKIN_SHADOW_HUE if skin else SHADOW_HUE
+    r, g, b = (int(base.lstrip("#")[i : i + 2], 16) / 255 for i in (0, 2, 4))
+    h, s, v = colorsys.rgb_to_hsv(r, g, b)
+    h *= 360
+    out = []
+    for dv, fs, dh in steps:
+        if dv < 0:
+            hh = _toward(h, shadow_hue, dh)
+            ss = min(1.0, s * fs + 0.06)
+            vv = v * (1 + dv)
+        elif dv > 0:
+            hh = _toward(h, LIGHT_HUE, dh)
+            ss = s * fs
+            vv = min(1.0, v + (1 - v) * dv * (0.4 + 0.6 * v))
+        else:
+            hh, ss, vv = h, s, v
+        rr, gg, bb = colorsys.hsv_to_rgb(hh / 360, ss, vv)
+        out.append("#%02x%02x%02x" % (round(rr * 255), round(gg * 255), round(bb * 255)))
+    return out
+
+
+# Swatches shown in the character creator: (label, base color).
+# Base = hair/cloth ramp[2], skin ramp[3].
+SWATCHES = {
+    "hair": [
+        ("乌黑", RAMPS["hair_black"][2]), ("深棕", RAMPS["hair_brown"][2]), ("栗色", "#9a5a34"),
+        ("奶茶", "#b08f78"), ("金色", RAMPS["mustard"][2]), ("橘红", "#c4562e"),
+        ("酒红", "#8a2f45"), ("粉色", RAMPS["hair_pink"][2]), ("薰衣草", "#9a86c8"),
+        ("雾蓝", "#5a78b8"), ("薄荷", "#6fb59a"), ("银白", "#c9c6d6"),
+    ],
+    "skin": [
+        ("白皙", "#fbd9c0"), ("自然", RAMPS["skin"][3]), ("暖米", "#ecb98e"),
+        ("小麦", RAMPS["skin_tan"][3]), ("棕色", "#b97a55"), ("深色", RAMPS["skin_deep"][3]),
+    ],
+    "cloth": [
+        ("白", "#e8e6ef"), ("浅灰", "#a9a7b5"), ("炭黑", "#4a4658"), ("红", RAMPS["coral"][2]),
+        ("珊瑚", "#e07a62"), ("橙", "#e08a3a"), ("芥末黄", RAMPS["mustard"][2]), ("橄榄", "#8a8a3e"),
+        ("草绿", RAMPS["green"][2]), ("薄荷", "#5fae96"), ("湖蓝", "#3f8fa6"), ("天蓝", RAMPS["blue"][3]),
+        ("藏青", RAMPS["blue"][2]), ("紫", "#7a5aa6"), ("粉", "#e39ab0"), ("咖啡", RAMPS["wood"][2]),
+    ],
+}

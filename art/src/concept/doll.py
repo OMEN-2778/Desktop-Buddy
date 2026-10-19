@@ -59,25 +59,11 @@ _FACE = """
 _TOP = ".\n.\n"  # rows 0-1 left free for ahoge / buns
 
 HEADS = {
-    # spiky boy hair: tufts break the silhouette at the top and both sides,
-    # pointed fringe leaves room for eyebrows; the centre tuft is the ahoge
-    "messy": rows("""
-.
-....O..........O
-...OHO........OhO
-...OHHOOOHYhOOhhkO
-..OHHYYHhhhhhhhhkO
-.OOHYYhhhhhhhhhhhkOO
-OHHhhhhhhhhhhhhhhkkO
-.OOhhhhhhhhhhhhhkO
-..OhhhhhhhhhhhhhkO
-..OhhhSShhhSSShhkO
-..OhLLLLLhLLLLLLhO
-..OkLLLLLLLLLLLLkO
-..OkLLLLLLLLLLLLkO
-...OSLLLLLLLLLLSO
-....qqSLLLLLLSqq
-"""),
+    # messy boy hair: round crown, choppy fringe; ahoge drawn separately so it can sway
+    "messy": rows(_TOP + _CROWN + """
+.OhhhShhhhShhShhhkO
+..OhkLLhLLLLLhLLkO
+""" + _FACE),
     # side-swept: parted on the left, fringe sweeps diagonally down-right,
     # a stray tuft at the back-right breaks the dome
     "neat": rows("""
@@ -108,16 +94,14 @@ OHHhhhhhhhhhhhhhhkkO
 """ + _FACE),
 }
 
-AHOGE = [  # centre tuft, two sway positions (rows 0-2, joins the crown at row 3)
+AHOGE = [  # two sway positions
     rows("""
-...........OO
-..........OYO
+..........OO
 .........OHO
 """),
     rows("""
-........OO
-.........OYO
-.........OHO
+...........OO
+..........OHO
 """),
 ]
 
@@ -192,6 +176,12 @@ BODIES = {
 .....oXxxooxXxo
 .....oooooooooo
 """),
+}
+
+OUTFIT_SHOES = {  # (base, accent)
+    "jacket": (P.coral[2], P.linen[3]),
+    "hoodie": (P.linen[3], P.coral[2]),
+    "dress": (P.wood[1], P.wood[2]),
 }
 
 ARM_ROWS = range(17, 22)  # rows where the viewer-right arm hangs (cols 14-16)
@@ -384,41 +374,55 @@ class Doll:
     outfit: str = "hoodie"
     top: tuple = tuple(P.green)
     bottom: tuple = tuple(P.blue)
-    shoes: tuple = (P.linen[3], P.coral[2])
+    shoes: tuple | None = None   # None = the outfit's own shoes
     eye: tuple = tuple(P.hair_brown)
     accessory: str | None = None
     print_color: str = P.coral[2]
 
     def legend(self):
         h, s, t, b = self.hair, self.skin, self.top, self.bottom
+        shoes = self.shoes or OUTFIT_SHOES[self.outfit]
         return {
             "O": h[0], "k": h[1], "h": h[2], "H": h[3], "Y": h[4],
             "q": s[0], "s": s[1], "S": s[2], "L": s[3],
             "u": t[0], "c": t[1], "C": t[2], "T": t[3],
             "n": b[0], "p": b[1], "P": b[2],
-            "o": P.ink[0], "x": self.shoes[0], "X": self.shoes[1],
+            "o": P.ink[0], "x": shoes[0], "X": shoes[1],
             "W": P.linen[3], "w": P.linen[2], "G": self.print_color, "R": b[3],
         }
 
-    def render(self, expr="neutral", look=0, bob=0, sway=0, wave=None) -> Sprite:
-        """Emotes live outside the 20x28 frame — wrap the result with with_emote()."""
+    def layers(self, expr="neutral", look=0, bob=0, sway=0, wave=None):
+        """Ordered (key, draw) pairs, back to front. A key names everything the
+        layer's pixels depend on except colors, so recolorable role maps can
+        be exported once per key (see tools/make_creator.py)."""
         lg = self.legend()
-        s = Sprite(W, H)
-        draw_back_hair(s, self, bob)
-        # body
-        body = BODIES[self.outfit]
-        if wave is not None:
-            body = lower_arm_removed(body)
-        s.blit(Sprite.from_grid("\n".join(body), lg), 0, 15)
-        # head (+ ahoge) bobs together
-        head = Sprite.from_grid("\n".join(HEADS[self.hair_style]), lg)
-        s.blit(head, 0, bob)
+        arm = wave is not None
+
+        def grid_at(src, y):
+            return lambda s: s.blit(Sprite.from_grid("\n".join(src), lg), 0, y)
+
+        body = lower_arm_removed(BODIES[self.outfit]) if arm else BODIES[self.outfit]
+        out = []
+        if self.hair_style in ("long", "buns"):
+            out.append((f"back/{self.hair_style}/{bob}", lambda s: draw_back_hair(s, self, bob)))
+        out.append((f"body/{self.outfit}/{int(arm)}", grid_at(body, 15)))
+        out.append((f"head/{self.hair_style}/{bob}", grid_at(HEADS[self.hair_style], bob)))
         if self.hair_style == "messy":
-            s.blit(Sprite.from_grid("\n".join(AHOGE[sway % 2]), lg), 0, bob)
-        draw_face(s, self, expr, look, bob)
-        draw_accessory(s, self, bob)
-        if wave is not None:
-            raised_arm(s, self, wave)
+            out.append((f"ahoge/{sway % 2}/{bob}", grid_at(AHOGE[sway % 2], bob)))
+        glasses = int(self.accessory == "glasses")
+        out.append((f"face/{self.gender}/{expr}/{look}/{bob}/{glasses}",
+                    lambda s: draw_face(s, self, expr, look, bob)))
+        if self.accessory:
+            out.append((f"acc/{self.accessory}/{bob}", lambda s: draw_accessory(s, self, bob)))
+        if arm:
+            out.append((f"arm/{wave}", lambda s: raised_arm(s, self, wave)))
+        return out
+
+    def render(self, **frame) -> Sprite:
+        """Emotes live outside the 20x28 frame — wrap the result with with_emote()."""
+        s = Sprite(W, H)
+        for _, draw in self.layers(**frame):
+            draw(s)
         return s
 
 
@@ -436,7 +440,7 @@ def with_emote(spr: Sprite, name: str | None, x=13, y=0) -> Sprite:
 BOY = Doll(outfit="jacket")
 GIRL = Doll(
     gender="f", hair_style="long", hair=tuple(P.hair_black), outfit="dress",
-    top=tuple(P.coral), bottom=tuple(P.blue), shoes=(P.wood[1], P.wood[2]),
+    top=tuple(P.coral), bottom=tuple(P.blue),
     eye=tuple(P.blue), accessory="bow",
 )
 
@@ -454,30 +458,33 @@ VARIANTS = [
 ]
 
 
+# (frame params, emote, ms). "cheer" = heart for girls, star for boys.
+IDLE_SEQ = [
+    (dict(), None, 600),
+    (dict(bob=1, sway=1), None, 350),
+    (dict(), None, 450),
+    (dict(expr="blink"), None, 110),
+    (dict(), None, 500),
+    (dict(look=-1), None, 650),
+    (dict(look=1), None, 650),
+    (dict(expr="surprised"), "bang", 500),
+    (dict(expr="happy"), "note", 450),
+    (dict(expr="happy", bob=1, sway=1), "note", 300),
+    (dict(expr="happy"), "note", 450),
+    (dict(expr="happy", wave=0), "cheer", 180),
+    (dict(expr="happy", wave=1), "cheer", 180),
+    (dict(expr="happy", wave=0), "cheer", 180),
+    (dict(expr="happy", wave=1), "cheer", 180),
+    (dict(expr="blink"), None, 110),
+    (dict(), None, 500),
+]
+
+
 def idle_life(d: Doll) -> Anim:
     """A lively idle loop: breathe, blink, glance around, hum, wave."""
     cheer = "heart" if d.gender == "f" else "star"
-    seq = [
-        (dict(), None, 600),
-        (dict(bob=1, sway=1), None, 350),
-        (dict(), None, 450),
-        (dict(expr="blink"), None, 110),
-        (dict(), None, 500),
-        (dict(look=-1), None, 650),
-        (dict(look=1), None, 650),
-        (dict(expr="surprised"), "bang", 500),
-        (dict(expr="happy"), "note", 450),
-        (dict(expr="happy", bob=1, sway=1), "note", 300),
-        (dict(expr="happy"), "note", 450),
-        (dict(expr="happy", wave=0), cheer, 180),
-        (dict(expr="happy", wave=1), cheer, 180),
-        (dict(expr="happy", wave=0), cheer, 180),
-        (dict(expr="happy", wave=1), cheer, 180),
-        (dict(expr="blink"), None, 110),
-        (dict(), None, 500),
-    ]
-    frames = [with_emote(d.render(**kw), em) for kw, em, _ in seq]
-    return Anim(frames, [ms for *_, ms in seq])
+    frames = [with_emote(d.render(**kw), cheer if em == "cheer" else em) for kw, em, _ in IDLE_SEQ]
+    return Anim(frames, [ms for *_, ms in IDLE_SEQ])
 
 
 EXPRS = ["neutral", "happy", "surprised", "sleepy", "flustered", "blink"]

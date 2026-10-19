@@ -16,6 +16,7 @@ PYTHONPATH=tools python3 -m pixelkit build                 # every asset script
 PYTHONPATH=tools python3 -m pixelkit build art/src/x/y.py  # one script
 PYTHONPATH=tools python3 -m pixelkit swatch                # palette -> art/preview/palette.png
 PYTHONPATH=tools python3 -m pixelkit lint some.png
+python3 tools/make_creator.py   # after any doll.py change: rebuild prototype/creator/index.html
 ```
 
 - An asset script defines `build() -> {name: Sprite | Anim}` (optional
@@ -61,8 +62,23 @@ own material (hair with hair[0], skin with skin[0]…). Only shoes/eyes use ink.
   (expression), accessory, raised arm, emote bubble.
 - Boys vs girls differ in more than hair: boys get thick brows on row 9,
   compact 2×2 eyes (rows 11–12, big 2×3 only when surprised) and a lopsided
-  smirk; girls get 2×3 eyes with a lash flick. Silhouettes must differ too —
-  spikes/tufts that break the head outline, not a smooth dome.
+  smirk; girls get 2×3 eyes with a lash flick.
+- User feedback so far: the girl (long hair, bow, collar, pleated skirt) is
+  liked as is. The spiky "hedgehog" boy hair was rejected as ugly — the boy
+  keeps the round messy crown with the small ahoge. Ask before reshaping it.
+
+**Player colors (role maps)** — players pick hair, skin, top, bottom and eye
+colors freely. Never bake those colors into shipped character art:
+- `ramp_from(base, skin=False)` in `palette.py` turns one picked color into a
+  5-shade ramp (base = index 2; for skin, index 3). `SWATCHES` holds the
+  creator's preset swatches. `prototype/creator/index.src.html` has a JS copy
+  of `ramp_from` — change both together.
+- `Doll.layers()` yields `(key, draw)` per layer; the key names everything
+  except colors. `tools/make_creator.py` draws each key once with marker
+  colors and stores a role map (pixel = "hair shade 2", or a fixed color).
+  The runtime recolors role maps with the player's ramps.
+- Fixed colors (ink, white trim, blush, mouth, glasses, bow, shoes per
+  outfit) stay real colors in the role map.
 - Liveliness comes from small things: blink, 1px head bob with ahoge sway,
   1px eye glances, expression changes, emote bubbles, a wave.
 - New hairstyle/outfit = new entry in `HEADS` / `BODIES` (+ back-hair
@@ -89,6 +105,7 @@ own material (hair with hair[0], skin with skin[0]…). Only shoes/eyes use ink.
 - Dither textures on big flat areas read as noise at 3–4x; prefer flat color.
 - Thin plants read as weeds; build foliage from overlapping ellipse clumps.
 - Low-contrast icons vanish on busy backgrounds — put emotes on a bubble.
-- A smooth round hair mass reads as a helmet/mushroom. Break the outline.
+- A smooth dome of hair *can* read as a helmet; fix it with fringe detail
+  and an ahoge rather than spikes (the user disliked spikes).
 - Anything dark right under the chin reads as a beard (tried neck
   headphones); brows directly on top of 3-row eyes merge into one blob.
