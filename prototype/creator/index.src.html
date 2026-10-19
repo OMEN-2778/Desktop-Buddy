@@ -379,21 +379,19 @@ function rect(img, x, y, w, h, hex) {
   }
 }
 
-// a slice of the bedroom from the house concept: plain wall, baseboard, plank floor
+// a slice of the bedroom from the house concept: plain plaster wall, white skirting, oak floor
 function paintRoom(img) {
-  rect(img, 0, 0, SW, FLOOR_TOP, "#e1beb8");
-  rect(img, 0, 0, SW, 1, "#9e7b7d");
-  rect(img, 0, 1, SW, 1, "#c59c9b");
-  for (let i = 0; i < SW; i += 2) rect(img, i, 2, 1, 1, "#c59c9b");
-  rect(img, 0, FLOOR_TOP - 3, SW, 3, "#dedce7");
-  rect(img, 0, FLOOR_TOP - 3, SW, 1, "#f7f6fb");
-  rect(img, 0, FLOOR_TOP - 1, SW, 1, "#8f8ba2");
-  rect(img, 0, FLOOR_TOP, SW, SH - FLOOR_TOP, "#b18051");
-  rect(img, 0, FLOOR_TOP, SW, 1, "#5d3831");
-  rect(img, 0, FLOOR_TOP + 1, SW, 1, "#d7ac6f");
+  rect(img, 0, 0, SW, FLOOR_TOP, "#ece2d9");
+  rect(img, 0, 0, SW, 1, "#cdbfb4");
+  rect(img, 0, 1, SW, 1, "#dccfc5");
+  rect(img, 0, FLOOR_TOP - 3, SW, 3, "#f4f2ee");
+  rect(img, 0, FLOOR_TOP - 1, SW, 1, "#c4c1bc");
+  rect(img, 0, FLOOR_TOP, SW, SH - FLOOR_TOP, "#b48a62");
+  rect(img, 0, FLOOR_TOP, SW, 1, "#5b4232");
+  rect(img, 0, FLOOR_TOP + 1, SW, 1, "#d1ab80");
   for (let r = 0, y = FLOOR_TOP + 2; y < SH; r++, y += 3) {
-    rect(img, 0, y + 2, SW, 1, "#87573e");
-    for (let x = (r * 7) % 17; x < SW; x += 17) rect(img, x, y, 1, 2, "#87573e");
+    rect(img, 0, y + 2, SW, 1, "#8a6446");
+    for (let x = (r * 11) % 23; x < SW; x += 23) rect(img, x, y, 1, 2, "#8a6446");
   }
 }
 
@@ -410,7 +408,7 @@ function paint(f) {
   const body = DATA.layers[`body/${st.outfit}/0`];
   const feet = body.rows[body.rows.length - 1];
   const fx0 = feet.search(/[^.]/), fx1 = feet.length - 1 - [...feet].reverse().join("").search(/[^.]/);
-  rect(img, STAGE_X + fx0, FEET_Y + 1, fx1 - fx0 + 1, 1, "#5d3831");
+  rect(img, STAGE_X + fx0, FEET_Y + 1, fx1 - fx0 + 2, 1, "#8a6446");
   for (const key of layerKeys(st, f)) paintLayer(img, DATA.layers[key], STAGE_X, top, ramps);
   if (f.emote) {
     const name = f.emote === "cheer" ? (st.gender === "f" ? "heart" : "star") : f.emote;

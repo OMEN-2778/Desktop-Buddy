@@ -86,24 +86,30 @@ colors freely. Never bake those colors into shipped character art:
   as `.` (blank lines between joined blocks are dropped).
 
 **House (cross-section)** — `art/src/concept/house.py`, furniture in
-`art/src/concept/_furniture.py`.
-- No roof (user removed it). Two storeys, canvas 342×122:
+`art/src/concept/_furniture.py` (build also emits `furniture.png`, every
+piece side by side — review new pieces there at 6x).
+- No roof. Two storeys, canvas 342×118:
   upper = stairwell | bedroom | bathroom | study (computer + books);
-  ground = stairwell | living room | kitchen. Room geometry lives in `ROOMS`;
+  ground = stairwell | living room | kitchen. Geometry lives in `ROOMS`;
   `levels(storey)` gives wall-top / floor-top rows.
-- Back walls 45 rows, floor band 6 rows (wood, or tile for kitchen/bath),
-  cut slabs 5 rows. Interior walls are cut down 18 rows to a lintel with an
-  open passage below.
-- Walls stay plain: one pastel ramp per room (blush, sky, sage, butter,
-  cream), AO line under the ceiling, white baseboard. Only exception: a
-  small tile splash-back behind the bathtub.
-- Cut surfaces are solid `cut` ramp with a lighter top edge — no textures.
-- Furniture is front view with a 1–2px visible top surface; place it with
-  `on_floor(s, sprite, x, storey, depth)` for a contact shadow.
+- **Calm scheme** (user found the first version too colourful/cluttered):
+  walls are warm off-white `plaster_*` ramps, only slightly tinted per room;
+  one `oak` floor (tile in kitchen/bath); furniture in `ash`/`walnut`/`oak`,
+  fabrics `oat`, appliances and fixtures `porcelain`/`steel`. The ONLY
+  accents are `sage` and `clay`, used sparingly. Buddy should be the most
+  colourful thing in the house. Don't bring back the old saturated wall or
+  furniture ramps.
+- **Sparse rooms**: 3–5 real pieces per room, space to walk, at most one
+  plant per room, no striped rugs, no prop clutter.
+- **Real scale**: wall 45px ≈ 2.6m → 1px ≈ 6cm. Desk 13px, worktop 16px,
+  wardrobe/fridge ~31–34px, door openings 37px (lintel 8px below ceiling).
+- **Realism**: tops show a 2–3px lit surface (`box()`), soft goods use
+  `soft()` (rounded corners), slim legs, grain as sparse streaks.
+  `place()`/`on_floor()` cast a 2px offset shadow onto the wall and a
+  contact shadow on the floor — always place furniture through them.
 - Night is a runtime lighting pass (`night_grade`): cool multiply + banded
   warm pools confined to the light's own room. `sky_night`, `light` and
-  `glass[2:]` colors are emissive — don't use glass for non-glowing things
-  (the mirror uses the sky ramp). The night preview fails palette lint by design.
+  `glass[1:]` colors are emissive — don't use glass for non-glowing things.
 
 **UI** — app UI (creator, menus) is pixel style too: square corners, notched
 3px outlines in `ink`, hard offset shadows, bevelled buttons that press down,
