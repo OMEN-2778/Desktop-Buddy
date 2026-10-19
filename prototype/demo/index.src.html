@@ -203,7 +203,7 @@ body {
 .pop {
   --pe: var(--edge);
   position: relative; max-width: 100%; display: flex; align-items: baseline; gap: 8px;
-  font-size: 16px; line-height: 1.4; padding: 5px 12px; color: var(--ink);
+  font-size: var(--say-fs, 32px); line-height: 1.35; padding: 6px 16px; color: var(--ink);
   box-shadow: 0 -2px 0 0 var(--pe), 0 2px 0 0 var(--pe), -2px 0 0 0 var(--pe), 2px 0 0 0 var(--pe), 3px 3px 0 0 var(--shadow);
   transform-origin: left center;
   animation: popin .42s cubic-bezier(.3, 1.6, .5, 1) both;
@@ -212,13 +212,13 @@ body {
 .pop span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pop.out { opacity: 0; transform: translateY(-3px); }
 .pop[hidden] { display: none; }
-.pop.say { --pe: #8a6446; background: #ecd5ad; color: #3d2a1e; margin-left: 8px; }
+.pop.say { --pe: #8a6446; background: #ecd5ad; color: #3d2a1e; margin-left: 14px; }
 .pop.say::before, .pop.say::after {           /* pixel tail pointing left at the face */
   content: ""; position: absolute; top: 50%; transform: translateY(-50%);
   clip-path: polygon(100% 0, 100% 100%, 0 50%);
 }
-.pop.say::before { left: -14px; width: 14px; height: 18px; background: #8a6446; }
-.pop.say::after { left: -10px; width: 11px; height: 12px; background: #ecd5ad; }
+.pop.say::before { left: -20px; width: 20px; height: 28px; background: #8a6446; }
+.pop.say::after { left: -15px; width: 16px; height: 20px; background: #ecd5ad; }
 @keyframes popin { from { opacity: 0; transform: scale(.5) translateX(-10px); } to { opacity: 1; transform: none; } }
 .mood-tip {
   position: absolute; left: 0; top: calc(100% + 6px); z-index: 6; min-width: 230px; max-width: 320px;
@@ -861,6 +861,7 @@ function fit() {
   const narrowHouse = wPx < 520;
   widget.style.setProperty("--studio-w", (narrowHouse ? wPx + g + barW : wPx) + "px");
   widget.style.setProperty("--studio-dx", (narrowHouse ? g + barW : 0) + "px");
+  widget.style.setProperty("--say-fs", (narrowHouse ? 24 : 32) + "px");   // her words: big, smaller on phones
   if (typeof kickNeeds === "function") kickNeeds();
 }
 
