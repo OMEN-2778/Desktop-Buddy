@@ -1,0 +1,15 @@
+{
+  "frame_w": 16,
+  "frame_h": 16,
+  "anims": {
+    "mood_confident": {
+      "row": 0,
+      "frames": 2,
+      "durations": [
+        400,
+        400
+      ],
+      "loop": true
+    }
+  }
+}

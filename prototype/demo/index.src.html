@@ -182,6 +182,63 @@ body {
   box-shadow: 0 -2px 0 0 var(--edge), 0 2px 0 0 var(--edge), -2px 0 0 0 var(--edge), 2px 0 0 0 var(--edge), 3px 3px 0 0 var(--shadow);
 }
 .sky-tip[hidden] { display: none; }
+
+/* ---------- mood: an emoji in a round frame at the top-left of the sky bar;
+   to its right the latest diary line (white box) on top and Buddy's own
+   thought / words below it (light-wood bubble with a tail pointing at her
+   face). Bubbles pop in and fade out; they never cover the house. */
+.moodrow {
+  position: relative; z-index: 3; width: var(--studio-w, 684px); margin-left: calc(-1 * var(--studio-dx, 0px));
+  display: flex; align-items: center; gap: calc(var(--sky-b, 3px) * 4);
+  height: var(--mood-h, 72px); margin-bottom: calc(var(--sky-b, 3px) * 1);
+}
+.mood-face { position: relative; flex: none; width: var(--mood-d, 78px); height: var(--mood-d, 78px); cursor: pointer; outline: none; }
+.mood-face canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+.mood-face:focus-visible::after { content: ""; position: absolute; inset: -4px; border: 2px dashed var(--focus); }
+.mood-talk {
+  flex: 1 1 auto; min-width: 0; height: 100%;
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 5px;
+}
+.pop {
+  --pe: var(--edge);
+  position: relative; max-width: 100%; display: flex; align-items: baseline; gap: 8px;
+  font-size: 13px; line-height: 1.35; padding: 3px 10px; color: var(--ink);
+  box-shadow: 0 -2px 0 0 var(--pe), 0 2px 0 0 var(--pe), -2px 0 0 0 var(--pe), 2px 0 0 0 var(--pe), 3px 3px 0 0 var(--shadow);
+  transform-origin: left center;
+  animation: popin .42s cubic-bezier(.3, 1.6, .5, 1) both;
+  transition: opacity .35s, transform .35s;
+}
+.pop span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pop.out { opacity: 0; transform: translateY(-3px); }
+.pop[hidden] { display: none; }
+.pop.diary { background: #ffffff; }
+.pop.diary time { flex: none; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.pop.diary::before { content: "日记"; flex: none; font-size: 11px; font-weight: 700; color: #f7f6fb; background: #8a6446; padding: 0 5px; align-self: center; }
+.pop.say { --pe: #8a6446; background: #ecd5ad; color: #3d2a1e; margin-left: 8px; }
+.pop.say::before, .pop.say::after {           /* pixel tail pointing left at the face */
+  content: ""; position: absolute; top: 50%; transform: translateY(-50%);
+  clip-path: polygon(100% 0, 100% 100%, 0 50%);
+}
+.pop.say::before { left: -12px; width: 12px; height: 14px; background: #8a6446; }
+.pop.say::after { left: -8px; width: 9px; height: 9px; background: #ecd5ad; }
+@keyframes popin { from { opacity: 0; transform: scale(.5) translateX(-10px); } to { opacity: 1; transform: none; } }
+.mood-tip {
+  position: absolute; left: 0; top: calc(100% + 6px); z-index: 6; min-width: 230px; max-width: 320px;
+  background: var(--panel); color: var(--ink); font-size: 12px; line-height: 1.5; padding: 8px 10px 9px;
+  box-shadow: 0 -2px 0 0 var(--edge), 0 2px 0 0 var(--edge), -2px 0 0 0 var(--edge), 2px 0 0 0 var(--edge), 4px 4px 0 0 var(--shadow);
+  cursor: default;
+}
+.mood-tip[hidden] { display: none; }
+.mood-tip .mt-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.mood-tip .mt-name { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.mood-tip .mt-name i { width: 10px; height: 10px; display: block; background: var(--c); box-shadow: 0 0 0 1px var(--edge); }
+.mood-tip .mt-level { color: var(--muted); }
+.mood-tip ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.mood-tip li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+.mood-tip li i { width: 8px; height: 8px; display: block; background: var(--c); box-shadow: 0 0 0 1px var(--edge); }
+.mood-tip li b { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mood-tip li small { grid-column: 2 / 4; color: var(--muted); font-size: 11px; margin-top: -2px; }
+@media (prefers-reduced-motion: reduce) { .pop { animation: none; transition: none; } }
 @media (prefers-reduced-motion: reduce) { .studio-slot { transition: none; } }
 /*__SHARED_STUDIO_CSS__*/
 
@@ -235,6 +292,16 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
     </div>
     <div class="house-col">
       <div class="studio-slot" id="studioSlot"><div class="studio-clip"><section id="studio" hidden></section></div></div>
+      <div class="moodrow" id="moodrow">
+        <div class="mood-face" id="moodFace" tabindex="0" role="button" aria-label="情绪" aria-expanded="false">
+          <canvas id="mood" width="78" height="78"></canvas>
+          <div class="mood-tip" id="moodTip" hidden></div>
+        </div>
+        <div class="mood-talk" aria-live="polite">
+          <div class="pop diary" id="popDiary" hidden><time></time><span></span></div>
+          <div class="pop say" id="popSay" hidden><span></span></div>
+        </div>
+      </div>
       <div class="skybar" id="skybar" role="img" aria-label="时间与天气">
         <canvas id="sky" width="684" height="48"></canvas>
         <div class="sky-hit" id="skyHit"></div>
@@ -257,6 +324,10 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <button type="button" data-speed="1" aria-pressed="false">×1</button>
         <button type="button" data-speed="3" aria-pressed="true">×3</button>
         <button type="button" data-speed="10" aria-pressed="false">×10</button>
+      </div>
+      <div class="label">情绪（UI 预览，情绪系统还没接上）</div>
+      <div class="row">
+        <select id="moodPick" aria-label="预览情绪"><option value="">自动（按她在做的事）</option></select>
       </div>
       <div class="label">天气（测试用）</div>
       <div class="row" role="group" aria-label="天气">
@@ -416,6 +487,7 @@ const sim = {
 };
 sim.s = sOf(1, D.spots.bed[1]);
 let speed = 3;
+let moodReady = false;   // diary bubbles start once the page is up
 
 const hour = () => (sim.t % 1440) / 60;
 const clamp = v => Math.max(0, Math.min(100, v));
@@ -423,6 +495,7 @@ const fmt = t => { const m = Math.floor(t % 1440); return String(Math.floor(m / 
 
 const logEl = document.getElementById("log");
 function log(text, cls) {
+  if (!cls && typeof showDiary === "function" && moodReady) showDiary(text);
   const li = document.createElement("li");
   if (cls) { li.className = cls; li.textContent = text; }
   else li.innerHTML = `<time>${fmt(sim.t)}</time><span></span>`, li.querySelector("span").textContent = text;
@@ -1082,6 +1155,7 @@ function sizeSky(wPx, hPx, u) {
   widget.style.setProperty("--sky-gap", 1 * b + "px");       // just above the roof, never over it (user tuned this)
   widget.style.setProperty("--sky-over", "0px");
   buildSkyTrack();
+  sizeMood(b);
 }
 function skyTarget() {
   if (weather.kind !== "clear") return weather.kind;
@@ -1152,6 +1226,199 @@ document.getElementById("nextSeason").addEventListener("click", () => {
   const d = Math.floor(sim.t / 1440);
   sim.t += ((Math.floor(d / SEASON_DAYS) + 1) * SEASON_DAYS - d) * 1440;
 });
+
+// ================================================================ mood (UI preview)
+// The emotion engine (moodlets, traits, events) comes next; for now the
+// preview picks an emotion from what she is doing, or the one chosen in
+// the console, and shows sample moodlets and thoughts for it.
+const MOOD = Object.fromEntries(D.moods.map(([k, name, color]) => [k, { name, color }]));
+const LEVEL_WORD = ["", "有点", "", "非常"];
+const MOOD_DEMO = {
+  happy: { m: [["吃了一顿好饭", 2, "还剩 3 小时"], ["阳光正好", 1, "还剩 1 小时"]],
+    say: ["今天的饭好香！", "嘿嘿，心情好好～", "感觉什么都很顺利！", "哼着歌就想转个圈。"] },
+  confident: { m: [["新衣服很合身", 2, "还剩 4 小时"], ["厨艺进步了", 1, "还剩 2 小时"]],
+    say: ["我今天也太好看了吧。", "这点小事，难不倒我。", "镜子里那个人是谁？哦是我。"] },
+  energized: { m: [["睡了个好觉", 2, "还剩 3 小时"], ["开窗透气", 1, "还剩 1 小时"]],
+    say: ["浑身是劲！", "想去跑两圈！", "今天能干好多事！"] },
+  flirty: { m: [["收到一张匿名明信片", 2, "还剩 3 小时"]],
+    say: ["明信片上是谁的字呢……", "心里有点甜甜的。", "想给某个人发消息。"] },
+  focused: { m: [["写代码进入状态了", 2, "还剩 2 小时"], ["一杯热咖啡", 1, "还剩 1 小时"]],
+    say: ["别吵，马上就好。", "这个 bug 我一定能找到。", "再做一点点就休息。"] },
+  inspired: { m: [["读到一段好句子", 2, "还剩 2 小时"], ["窗外的景色真美", 1, "还剩 1 小时"]],
+    say: ["我有个绝妙的点子！", "要把这句话记下来。", "说不定能写成一个故事……"] },
+  playful: { m: [["看了一集搞笑动画", 2, "还剩 2 小时"]],
+    say: ["哈哈哈哈这集太好笑了！", "想恶作剧一下……可家里就我一个。", "来跳支舞吧！"] },
+  fine: { m: [],
+    say: ["嗯……今天也挺好的。", "该做点什么呢？", "家里安安静静的。"] },
+  bored: { m: [["好久没玩了", 2, "直到玩一会儿"]],
+    say: ["好——无——聊——", "有没有什么好玩的……", "盯着天花板数裂缝。"] },
+  embarrassed: { m: [["该洗澡了", 2, "直到洗澡"], ["做饭差点糊了", 1, "还剩 2 小时"]],
+    say: ["刚才那一下……谁都没看见吧？", "身上有点黏，好想洗澡。", "呜，好丢人。"] },
+  uncomfortable: { m: [["饿得心慌", 3, "直到吃饭"]],
+    say: ["肚子咕咕叫……", "浑身不得劲。", "先吃点东西吧。"] },
+  tense: { m: [["明天的事还没做完", 2, "还剩 5 小时"]],
+    say: ["来得及吗来得及吗……", "深呼吸，深呼吸。", "泡个澡也许能放松一下。"] },
+  angry: { m: [["游戏连输三局", 3, "还剩 2 小时"]],
+    say: ["气死我了！", "这一关是谁设计的！", "我需要捶一下枕头。"] },
+  sad: { m: [["下雨天", 1, "直到雨停"], ["想家了", 2, "还剩 6 小时"]],
+    say: ["雨一直下……", "有点想家了。", "抱着枕头发会儿呆。"] },
+  dazed: { m: [["困到睁不开眼", 2, "直到睡觉"]],
+    say: ["我刚才要干嘛来着……", "眼皮好重……", "大脑已关机。"] },
+  scared: { m: [["屋里太黑了", 2, "直到开灯"]],
+    say: ["刚才那是什么声音？！", "快把灯打开……", "被子是最强的盾牌。"] },
+};
+const ACT_SAY = {
+  cook: ["今天做什么好呢……", "火候要刚刚好。"], eat: ["开动啦！", "好吃到跺脚。"], tv: ["这个节目好有意思。", "再看一集就去干活。"],
+  computer: ["再玩一局！", "这关我一定能过。"], read: ["这本书写得真好。", "再看一章就睡。"], bath: ["泡澡是世界上最舒服的事。"],
+  window: ["外面的天好蓝。", "风吹进来凉凉的。"], water_living: ["多喝水，快快长。"], water_study: ["小绿植又长高了一点。"],
+  dress: ["今天穿哪件好呢？"], art: ["这幅画怎么看都看不腻。"],
+};
+
+const IMG_MOOD = {};
+async function loadMoodIcons() {
+  for (const [k, frames] of Object.entries(D.moodIcons)) IMG_MOOD[k] = await Promise.all(frames.map(loadImg));
+}
+const MOOD_D = 26;                                      // 24-unit frame + a 1-unit glow all round
+const moodCanvas = document.getElementById("mood"), mctx = moodCanvas.getContext("2d");
+const moodFace = document.getElementById("moodFace"), moodTip = document.getElementById("moodTip");
+const moodState = { key: null, level: 1, from: null, t0: -9 };
+const frameCache = new Map();
+function moodFrame(color) {                              // white ring + emotion tint, at one pixel per unit
+  if (frameCache.has(color)) return frameCache.get(color);
+  const c = document.createElement("canvas"); c.width = c.height = MOOD_D;
+  const x = c.getContext("2d");
+  for (let j = 0; j < MOOD_D; j++) for (let i = 0; i < MOOD_D; i++) {
+    const d = Math.hypot(i + 0.5 - MOOD_D / 2, j + 0.5 - MOOD_D / 2);
+    if (d > 12) continue;
+    x.fillStyle = d > 10.2 ? "#ffffff" : color;
+    x.fillRect(i, j, 1, 1);
+  }
+  frameCache.set(color, c);
+  return c;
+}
+let moodB = 3;
+function sizeMood(b) {
+  b = moodB = Math.max(2, b);
+  const d = MOOD_D * b;
+  moodCanvas.width = moodCanvas.height = d;
+  const w = document.getElementById("widget");
+  w.style.setProperty("--sky-b", b + "px");
+  w.style.setProperty("--mood-d", d + "px");
+  w.style.setProperty("--mood-h", Math.max(d, 64) + "px");
+}
+function drawFace(key, scale, bob) {
+  const b = moodB, fr = IMG_MOOD[key];
+  if (!fr || scale <= 0.02) return;
+  const img = reduceMotionUI ? fr[0] : fr[Math.floor(realClock * 2.2) % fr.length];
+  const frameSize = Math.round(24 * b * scale), faceSize = Math.round(16 * b * scale);
+  const c = MOOD_D * b / 2;
+  mctx.drawImage(moodFrame(MOOD[key].color), b, b, 24, 24, Math.round(c - frameSize / 2), Math.round(c - frameSize / 2), frameSize, frameSize);
+  mctx.drawImage(img, Math.round(c - faceSize / 2), Math.round(c - faceSize / 2 + bob), faceSize, faceSize);
+}
+function renderMood() {
+  if (!IMG_MOOD.fine || !moodState.key) return;
+  const b = moodB, d = MOOD_D * b;
+  mctx.imageSmoothingEnabled = false;
+  mctx.clearRect(0, 0, d, d);
+  const key = moodState.key;
+  // strong emotions breathe a soft halo of their colour
+  if (moodState.level >= 3 && !reduceMotionUI) {
+    mctx.globalAlpha = 0.35 + 0.25 * Math.sin(realClock * 4);
+    mctx.drawImage(moodFrame(MOOD[key].color), 0, 0, MOOD_D, MOOD_D, 0, 0, d, d);
+    mctx.globalAlpha = 1;
+    mctx.clearRect(b * 2, b * 2, d - b * 4, d - b * 4);
+  }
+  const bouncy = ["happy", "energized", "playful", "inspired"].includes(key);
+  const bob = !reduceMotionUI && bouncy && Math.floor(realClock * 2.2) % 2 ? -b : 0;
+  const p = reduceMotionUI ? 1 : (realClock - moodState.t0) / 0.7;
+  if (p < 1 && moodState.from) {
+    const out = Math.min(1, p / 0.45), q = Math.max(0, (p - 0.3) / 0.7), c1 = 1.9;
+    drawFace(moodState.from, (1 - out) * (1 - out), 0);
+    drawFace(key, q <= 0 ? 0 : 1 + (c1 + 1) * (q - 1) ** 3 + c1 * (q - 1) ** 2, 0);
+  } else {
+    drawFace(key, 1, bob);
+  }
+}
+function setMood(key, level) {
+  if (key === moodState.key && level === moodState.level) return;
+  const changed = key !== moodState.key;
+  moodState.from = moodState.key; moodState.key = key; moodState.level = level; moodState.t0 = realClock;
+  moodFace.setAttribute("aria-label", `情绪：${LEVEL_WORD[level]}${MOOD[key].name}`);
+  if (!moodTip.hidden) fillMoodTip();
+  if (changed && moodState.from) setTimeout(() => say(pick(MOOD_DEMO[key].say)), 700);
+}
+function previewMood() {
+  const forced = document.getElementById("moodPick").value;
+  if (forced) return [forced, 2];
+  const n = sim.needs, a = sim.mode === "act" ? sim.act : null;
+  if (a === "sleep") return ["fine", 1];
+  if (n.hunger < 20) return ["uncomfortable", 3];
+  if (n.energy < 18) return ["dazed", 2];
+  if (n.hygiene < 25) return ["embarrassed", 2];
+  if (n.fun < 25) return ["bored", 2];
+  const byAct = { tv: "playful", computer: "focused", read: "inspired", cook: "happy", eat: "happy", snack: "happy", bath: "fine",
+                  window: "inspired", art: "inspired", water_living: "happy", water_study: "happy", dress: "confident", wash: "fine" };
+  if (a && byAct[a]) return [byAct[a], a === "eat" || a === "tv" ? 3 : 2];
+  if (weather.kind === "rain") return ["sad", 1];
+  if (weather.kind === "snow") return ["playful", 1];
+  return ["fine", 1];
+}
+function fillMoodTip() {
+  const k = moodState.key, M = MOOD[k], demo = MOOD_DEMO[k];
+  const head = `<div class="mt-head"><span class="mt-name"><i style="--c:${M.color}"></i>${LEVEL_WORD[moodState.level]}${M.name}</span>` +
+    `<span class="mt-level">${["", "轻微", "明显", "强烈"][moodState.level]}</span></div>`;
+  const rows = demo.m.length ? demo.m.map(([name, pts, left]) =>
+    `<li><i style="--c:${M.color}"></i><span>${name}</span><b>+${pts}</b><small>${left}</small></li>`).join("")
+    : `<li><i style="--c:${M.color}"></i><span>没有什么特别的心情</span><b></b></li>`;
+  moodTip.innerHTML = head + `<ul>${rows}</ul>`;
+}
+function showMoodTip(on) {
+  moodTip.hidden = !on;
+  moodFace.setAttribute("aria-expanded", String(on));
+  if (on) fillMoodTip();
+}
+let tipPinned = false;
+moodFace.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") showMoodTip(true); });
+moodFace.addEventListener("pointerleave", e => { if (e.pointerType === "mouse" && !tipPinned) showMoodTip(false); });
+moodFace.addEventListener("click", () => { tipPinned = !tipPinned || moodTip.hidden; showMoodTip(tipPinned); });
+moodFace.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tipPinned = moodTip.hidden; showMoodTip(tipPinned); } if (e.key === "Escape") { tipPinned = false; showMoodTip(false); } });
+const moodPickEl = document.getElementById("moodPick");
+for (const [k, name] of D.moods) moodPickEl.insertAdjacentHTML("beforeend", `<option value="${k}">${name}</option>`);
+
+// ---------- bubbles: diary on top, her own words below
+const popDiary = document.getElementById("popDiary"), popSay = document.getElementById("popSay");
+function popBubble(el, ms) {
+  clearTimeout(el._t); clearTimeout(el._t2);
+  el.hidden = false;
+  el.classList.remove("out");
+  el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";   // replay the pop
+  el._t = setTimeout(() => { el.classList.add("out"); el._t2 = setTimeout(() => { el.hidden = true; }, 380); }, ms);
+}
+function showDiary(text) {
+  popDiary.querySelector("time").textContent = fmt(sim.t);
+  popDiary.querySelector("span").textContent = text;
+  popDiary.title = text;
+  popBubble(popDiary, 7000);
+}
+let nextSay = 6, lastSaid = "";
+function say(text) {
+  if (!text || text === lastSaid) return;
+  lastSaid = text;
+  popSay.querySelector("span").textContent = text;
+  popSay.title = text;
+  popBubble(popSay, 5200);
+  nextSay = realClock + 14 + Math.random() * 12;
+}
+function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+function updateMood() {
+  const [k, lvl] = previewMood();
+  setMood(k, lvl);
+  if (realClock >= nextSay && !(sim.mode === "act" && sim.act === "sleep")) {
+    const a = sim.mode === "act" ? sim.act : null;
+    const pool = [...MOOD_DEMO[k].say, ...(a && ACT_SAY[a] ? ACT_SAY[a] : [])];
+    say(pick(pool.filter(t => t !== lastSaid)));
+  }
+}
 
 // ================================================================ UI
 const needsEl = document.getElementById("needs");
@@ -1315,8 +1582,9 @@ function frame(now) {
   updateDoors(speed ? dt : 0);
   render();
   renderSky();
+  renderMood();
   uiT += dt;
-  if (uiT > 0.25) { uiT = 0; syncUI(); }
+  if (uiT > 0.25) { uiT = 0; syncUI(); updateMood(); }
   requestAnimationFrame(frame);
 }
 
@@ -1329,10 +1597,13 @@ function frame(now) {
   window.addEventListener("resize", fit);
   await loadAssets();
   await loadSkyIcons();
+  await loadMoodIcons();
   await loadWeatherMasks();
   weather.kind = weatherAt(sim.t);
   log("—— 第 1 天 · 春 ——", "day");
+  moodReady = true;
   log("还在被窝里睡觉。");
+  updateMood();
   syncUI();
   render();
   requestAnimationFrame(frame);

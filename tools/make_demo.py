@@ -27,6 +27,7 @@ import _furniture as F  # noqa: E402
 import house as Hs  # noqa: E402
 import need_icons  # noqa: E402
 import sky_icons  # noqa: E402
+import mood_icons  # noqa: E402
 import make_creator as mc  # noqa: E402
 from pixelkit import P, Sprite, rgba  # noqa: E402
 
@@ -207,6 +208,8 @@ def main():
         "bg": {"day": png(day), "night": png(night)},
         "needIcons": {k: png(need_icons.icon(k)) for k in need_icons.GRIDS},
         "skyIcons": {k: [png(f) for f in sky_icons.frames(k)] for k in sky_icons.NAMES},
+        "moodIcons": {k: [png(f) for f in mood_icons.frames(k)] for k in mood_icons.NAMES},
+        "moods": [list(m) for m in mood_icons.EMOTIONS],
         "weatherMasks": weather_masks,
         "doors": doors, "leaves": leaves, "overlays": overlays,
         "sleepLying": [bed_x + Hs.SLEEP_HEAD[0], bed_y + Hs.SLEEP_HEAD[1]],
