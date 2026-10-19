@@ -96,11 +96,14 @@ def main():
     clickables = {cid: {"src": png(spr), "x": int(x), "y": int(y)} for cid, (spr, x, y) in C.items()}
 
     # window open states: day/night, three sway frames
+    # upstairs windows look out on sky only; the living room sees the hill
+    WIN = (("win_bed", F.OAT, False), ("win_living", F.OAT, True), ("win_study", None, False))
     windows = {}
-    for cid, curt in (("win_bed", F.OAT), ("win_living", F.OAT), ("win_study", None)):
+    for cid, curt, ground in WIN:
         _, x, y = C[cid]
-        windows[cid] = {"x": int(x), "y": int(y), **{
-            f"{sky}{sw}": png(F.window(sky, curtains=curt, opened=True, sway=sw))
+        windows[cid] = {"x": int(x), "y": int(y),
+                        "drawn": png(F.window("day", curtains=curt, ground=ground, drawn=True)), **{
+            f"{sky}{sw}": png(F.window(sky, curtains=curt, opened=True, sway=sw, ground=ground))
             for sky in ("day", "night") for sw in (0, 1, 2)}}
 
     # weather through the windows: where the glass shows sky, and where it
@@ -129,10 +132,11 @@ def main():
         return {"sky": out[0], "ground": out[1]}
 
     weather_masks = {}
-    for cid, curt in (("win_bed", F.OAT), ("win_living", F.OAT), ("win_study", None)):
+    for cid, curt, ground in WIN:
         _, x, y = C[cid]
-        weather_masks[cid] = {"x": int(x), "y": int(y), "closed": masks([F.window("day", curtains=curt)]),
-                              "open": masks([F.window("day", curtains=curt, opened=True, sway=sw) for sw in (0, 1, 2)])}
+        weather_masks[cid] = {"x": int(x), "y": int(y), "closed": masks([F.window("day", curtains=curt, ground=ground)]),
+                              "open": masks([F.window("day", curtains=curt, opened=True, sway=sw, ground=ground)
+                                             for sw in (0, 1, 2)])}
     weather_masks["win_round"] = {"x": Hs.STAIRS[0] + 4, "y": Hs.UP_WALL + 10, "closed": masks([F.round_window()]), "open": None}
 
     # screens (drawn after the night pass, they glow) and effects

@@ -349,7 +349,7 @@ async function loadAssets() {
   IMG.win = {};
   for (const [k, v] of Object.entries(D.windows)) {
     IMG.win[k] = {};
-    for (const key of ["day0", "day1", "day2", "night0", "night1", "night2"]) IMG.win[k][key] = await loadImg(v[key]);
+    for (const key of ["day0", "day1", "day2", "night0", "night1", "night2", "drawn"]) IMG.win[k][key] = await loadImg(v[key]);
   }
   IMG.tv = {}; for (const [c, fr] of Object.entries(D.screens.tv.channels)) IMG.tv[c] = await Promise.all(fr.map(loadImg));
   IMG.mon = {}; for (const [g, fr] of Object.entries(D.screens.monitor.games)) IMG.mon[g] = await Promise.all(fr.map(loadImg));
@@ -576,6 +576,26 @@ function nightness(h) {
   if (h >= 5 && h < 7) return 1 - (h - 5) / 2;
   return 1;
 }
+// The room Buddy is in has its ceiling light on: it keeps daytime brightness
+// while the rest of the house is night. The light fades on/off as she moves.
+const ROOM_KEYS = Object.keys(D.rooms);
+const ROOM_IDX = new Uint8Array(W * H);          // pixel -> 1 + room index (0: walls, outside)
+ROOM_KEYS.forEach((k, i) => {
+  const [rx, ry, rw, rh] = D.rooms[k];
+  for (let y = ry; y < ry + rh; y++) for (let x = rx; x < rx + rw; x++) ROOM_IDX[y * W + x] = i + 1;
+});
+const roomGlow = new Float32Array(ROOM_KEYS.length + 1);
+let glowClock = 0;
+function updateRoomLights(room, on) {
+  const dt = Math.min(0.1, realClock - glowClock);
+  glowClock = realClock;
+  const target = on ? ROOM_KEYS.indexOf(room) + 1 : -1;
+  for (let i = 1; i < roomGlow.length; i++) {
+    const want = i === target ? 1 : 0;
+    roomGlow[i] += (want - roomGlow[i]) * Math.min(1, dt * 7);
+    if (Math.abs(want - roomGlow[i]) < 0.01) roomGlow[i] = want;
+  }
+}
 function grade(ctx, f, lit) {
   if (f <= 0) return;
   const img = ctx.getImageData(0, 0, W, H), d = img.data;
@@ -592,14 +612,17 @@ function grade(ctx, f, lit) {
       og = Math.max(og, ng * (1 - k) + g * c[1] * k);
       ob = Math.max(ob, nb * (1 - k) + b * c[2] * k);
     }
-    d[p] = r + (or - r) * f; d[p + 1] = g + (og - g) * f; d[p + 2] = b + (ob - b) * f;
+    const k = f * (1 - roomGlow[ROOM_IDX[i]]);          // a lit room keeps its daytime colours
+    d[p] = r + (or - r) * k; d[p + 1] = g + (og - g) * k; d[p + 2] = b + (ob - b) * k;
   }
   ctx.putImageData(img, 0, 0);
 }
 
 // ================================================================ clickable furniture
 const lamps = { bed_lamp: true, desk_lamp: false, floor_lamp: true };
-const windowsOpen = { win_bed: false, win_study: false, win_living: false };
+// windows cycle on click: closed -> curtains drawn -> open -> closed
+const windowState = { win_bed: "closed", win_study: "closed", win_living: "closed" };
+const WINDOW_NEXT = { closed: "drawn", drawn: "open", open: "closed" };
 const CLICK_ACT = {
   bed: "sleep", wardrobe: "dress", bathtub: "bath", toilet: "toilet", vanity: "wash", towel: "towel",
   bookshelf: "read", computer: "computer", sofa: "tv", tv: "tv", stove: "cook", table: "eat", fridge: "snack",
@@ -645,7 +668,13 @@ let hoverId = null, glow = null, poof = null;
 function useFurniture(id) {
   glow = { id, t0: realClock, sparks: Array.from({ length: 6 }, () => ({ p: CLICK[id].rings[1][Math.floor(Math.random() * CLICK[id].rings[1].length)], d: Math.random() * 0.35 })) };
   if (id in lamps) { lamps[id] = !lamps[id]; log(`${lamps[id] ? "打开" : "关掉"}了${CLICK_NAME[id]}。`); return; }
-  if (id in windowsOpen) { windowsOpen[id] = !windowsOpen[id]; log(windowsOpen[id] ? "推开窗户，风吹了进来。" : "关上了窗户。"); return; }
+  if (id in windowState) {
+    const st = windowState[id] = WINDOW_NEXT[windowState[id]];
+    const blind = id === "win_study";   // the study window has a roller blind instead of curtains
+    log(st === "drawn" ? (blind ? "放下了卷帘。" : "拉上了窗帘。")
+      : st === "open" ? (blind ? "卷起卷帘，推开窗户，风吹了进来。" : "拉开窗帘，推开窗户，风吹了进来。") : "关上了窗户。");
+    return;
+  }
   if (CLICK_ACT[id]) command(CLICK_ACT[id]);
 }
 
@@ -820,9 +849,10 @@ function render() {
   if (f > 0) { bctx.globalAlpha = f; bctx.drawImage(IMG.night, 0, 0); bctx.globalAlpha = 1; }
   // open windows: casements swung in, curtains drifting
   const sway = [0, 1, 2, 1][Math.floor(realClock * 2.2) % 4];
-  for (const [id, open] of Object.entries(windowsOpen)) {
-    if (!open) continue;
+  for (const [id, st] of Object.entries(windowState)) {
     const wv = D.windows[id];
+    if (st === "drawn") { bctx.drawImage(IMG.win[id].drawn, wv.x, wv.y); continue; }   // the night pass dims it
+    if (st !== "open") continue;
     bctx.drawImage(IMG.win[id]["day" + sway], wv.x, wv.y);
     if (f > 0) { bctx.globalAlpha = f; bctx.drawImage(IMG.win[id]["night" + sway], wv.x, wv.y); bctx.globalAlpha = 1; }
   }
@@ -831,6 +861,7 @@ function render() {
   const room = roomAt(sim.s), acting = sim.mode === "act", act = acting ? sim.act : null;
   const sleeping = act === "sleep";
   for (const [id, on] of Object.entries(lamps)) if (on) drawOverlay(bctx, id);
+  updateRoomLights(room, !sleeping);                  // lights out when she goes to bed
   const lit = [];
   if (f > 0.05) {
     for (const [id, on] of Object.entries(lamps)) if (on) lit.push(id);
@@ -963,7 +994,8 @@ function drawWeather(ctx, night) {
   const se = weather.season, w = weather.kind;
   const tint = se === 2 ? "rgba(214, 140, 52, 0.62)" : se === 1 ? "rgba(46, 104, 52, 0.22)" : null;
   for (const [id, win] of Object.entries(WMASK)) {
-    const m = windowsOpen[id] && win.open ? win.open : win.closed;
+    if (windowState[id] === "drawn") continue;              // curtains shut: no view
+    const m = windowState[id] === "open" && win.open ? win.open : win.closed;
     if (!m) continue;
     // the season on the hill
     if (tint || weather.snowCover > 0) {

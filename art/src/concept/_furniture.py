@@ -62,10 +62,12 @@ def leg(s, x, y, h, R=WAL):
 # ---------------------------------------------------------------- windows & walls
 
 
-def window(sky="day", curtains=OAT, opened=False, sway=0):
+def window(sky="day", curtains=OAT, opened=False, sway=0, ground=True, drawn=False):
     """Window 22x22 with a deep sill and sheer curtains on a rod.
     opened=True swings both casements in against the jambs; sway (0/1/2)
-    lets the curtains drift in the breeze."""
+    lets the curtains drift in the breeze. ground=False: upstairs, the view
+    is all sky (no hill). drawn=True: curtains pulled shut (a roller blind
+    pulled down when the window has no curtains)."""
     gw, gh = 22, 22
     pad = 5 if curtains else 1
     s = Sprite(gw + pad * 2, gh + 4)
@@ -77,8 +79,11 @@ def window(sky="day", curtains=OAT, opened=False, sway=0):
         K = P.sky_soft
         s.rect(gx, gy, w, h, K[1]).rect(gx, gy, w, 5, K[0]).rect(gx, gy + 12, w, h - 12, K[2])
         s.ellipse(gx + 6, gy + 8, 3, 1.5, K[3]).ellipse(gx + 9, gy + 7, 2.5, 1.5, K[3])
-        s.rect(gx, gy + h - 3, w, 3, LEAF[3]).hline(gx, gx + w - 1, gy + h - 3, LEAF[4])
-        s.hline(gx + w - 7, gx + w - 1, gy + h - 4, LEAF[3]).set(gx + w - 5, gy + h - 5, LEAF[3])
+        if ground:
+            s.rect(gx, gy + h - 3, w, 3, LEAF[3]).hline(gx, gx + w - 1, gy + h - 3, LEAF[4])
+            s.hline(gx + w - 7, gx + w - 1, gy + h - 4, LEAF[3]).set(gx + w - 5, gy + h - 5, LEAF[3])
+        else:  # upstairs: only sky, a second small cloud low down
+            s.ellipse(gx + 13, gy + 14, 2.5, 1, K[3]).ellipse(gx + 15, gy + 13.5, 1.5, 1, K[3])
         glint = K[3]
     else:
         K = P.sky_night
@@ -100,7 +105,29 @@ def window(sky="day", curtains=OAT, opened=False, sway=0):
     s.frame(gx - 1, gy - 1, w + 2, h + 2, POR[1])
     # sill
     s.rect(x0 - 1, gh, gw + 2, 3, POR[0]).hline(x0, x0 + gw - 1, gh, POR[3]).hline(x0, x0 + gw - 1, gh + 1, POR[2])
-    if curtains:
+    if drawn and not curtains:
+        # roller blind pulled all the way down over the glass
+        B = OAT
+        s.rect(gx - 1, gy - 1, w + 2, h + 1, B[1])
+        s.rect(gx, gy, w, h - 1, B[3])
+        for yy in range(gy + 3, gy + h - 2, 4):
+            s.hline(gx, gx + w - 1, yy, B[2])
+        s.hline(gx, gx + w - 1, gy, B[4])
+        s.rect(gx - 1, gy + h - 2, w + 2, 2, WAL[1]).hline(gx, gx + w - 1, gy + h - 2, WAL[2])
+        s.vline(gx + w // 2, gy + h, gy + h + 1, WAL[1])          # pull cord
+    if curtains and drawn:
+        # both panels pulled to the middle: gathered folds, lit on the left
+        C = curtains
+        s.hline(0, s.w - 1, 0, WAL[1]).set(0, 1, WAL[1]).set(s.w - 1, 1, WAL[1])
+        mid = s.w // 2
+        for x0, x1 in ((0, mid - 1), (mid, s.w - 1)):
+            s.rect(x0, 1, x1 - x0 + 1, gh + 2, C[0])
+            s.rect(x0 + 1, 1, x1 - x0 - 1, gh + 1, C[3])
+            for fx in range(x0 + 2, x1, 3):
+                s.vline(fx, 2, gh + 1, C[2])
+            s.vline(x0 + 1, 2, gh + 1, C[4])
+            s.hline(x0 + 1, x1 - 1, gh + 2, C[2])
+    elif curtains:
         C = curtains
         s.hline(0, s.w - 1, 0, WAL[1]).set(0, 1, WAL[1]).set(s.w - 1, 1, WAL[1])
         for side, cx in ((1, 0), (-1, s.w - 6)):

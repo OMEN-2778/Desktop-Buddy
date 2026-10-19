@@ -158,7 +158,12 @@ piece side by side — review new pieces there at 6x).
   `place()`/`on_floor()` cast a 2px offset shadow onto the wall and a
   contact shadow on the floor — always place furniture through them.
 - Night is a runtime lighting pass (`night_grade`): cool multiply + banded
-  warm pools confined to the light's own room. `sky_night`, `light` and
+  warm pools confined to the light's own room. In the demo the room Buddy
+  is in has its light on at DAYTIME brightness (user), everything else
+  stays night; lights go out when she sleeps; the light fades as she moves.
+- Windows (`F.window`): upstairs ones look out on sky only (`ground=False`,
+  user); clicking cycles closed -> curtains drawn (`drawn=True`; a roller
+  blind on the curtainless study window) -> open -> closed. `sky_night`, `light` and
   `glass[1:]` colors are emissive — don't use glass for non-glowing things.
 
 **UI** — app UI (造型室, menus) is pixel style too: square corners, notched

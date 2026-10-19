@@ -297,7 +297,7 @@ def furnish(s, night=False, buddy=doll.GIRL, lamps=None):
 
     # --- bedroom: window over the bed, nightstand + lamp, wardrobe
     x, (top, fl) = room_x("bedroom"), levels(1)
-    w = F.window(sky)
+    w = F.window(sky, ground=False)
     reg("win_bed", w, x + 7, place(s, w, x + 7, top + 5))
     bed = F.bed()
     bed_y = reg("bed", bed, x + 2, on_floor(s, bed, x + 2, 1))
@@ -327,7 +327,7 @@ def furnish(s, night=False, buddy=doll.GIRL, lamps=None):
 
     # --- study
     x = room_x("study")
-    w = F.window(sky, curtains=None)
+    w = F.window(sky, curtains=None, ground=False)
     reg("win_study", w, x + 66, place(s, w, x + 66, top + 5))
     bs = F.bookshelf()
     reg("bookshelf", bs, x + 3, on_floor(s, bs, x + 3, 1, 0))
