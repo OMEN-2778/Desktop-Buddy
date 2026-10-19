@@ -85,18 +85,25 @@ colors freely. Never bake those colors into shipped character art:
   shape if needed). Keep every row ≤ 20 chars; write intentional empty rows
   as `.` (blank lines between joined blocks are dropped).
 
-**House (cross-section)** — `art/src/concept/room.py`.
-- Canvas 232×108. Rooms are 100px wide; back wall rows 45–89, floor band
-  90–95 (things stand on it at depth 0–5), slab below.
-- Walls stay plain: one pastel ramp per room, AO line under the ceiling,
-  white baseboard. No wallpaper patterns.
-- Cut surfaces (where the house is sliced) are solid `cut` ramp with a
-  lighter top edge — no textures.
-- Furniture is front view with a 1–2px visible top surface; stand it with
-  `on_floor()` so it gets a contact shadow.
+**House (cross-section)** — `art/src/concept/house.py`, furniture in
+`art/src/concept/_furniture.py`.
+- No roof (user removed it). Two storeys, canvas 342×122:
+  upper = stairwell | bedroom | bathroom | study (computer + books);
+  ground = stairwell | living room | kitchen. Room geometry lives in `ROOMS`;
+  `levels(storey)` gives wall-top / floor-top rows.
+- Back walls 45 rows, floor band 6 rows (wood, or tile for kitchen/bath),
+  cut slabs 5 rows. Interior walls are cut down 18 rows to a lintel with an
+  open passage below.
+- Walls stay plain: one pastel ramp per room (blush, sky, sage, butter,
+  cream), AO line under the ceiling, white baseboard. Only exception: a
+  small tile splash-back behind the bathtub.
+- Cut surfaces are solid `cut` ramp with a lighter top edge — no textures.
+- Furniture is front view with a 1–2px visible top surface; place it with
+  `on_floor(s, sprite, x, storey, depth)` for a contact shadow.
 - Night is a runtime lighting pass (`night_grade`): cool multiply + banded
-  warm light pools; sky/bulb/screen colors stay emissive. Base sprites stay
-  on-palette — the night preview is expected to fail palette lint.
+  warm pools confined to the light's own room. `sky_night`, `light` and
+  `glass[2:]` colors are emissive — don't use glass for non-glowing things
+  (the mirror uses the sky ramp). The night preview fails palette lint by design.
 
 **UI** — app UI (creator, menus) is pixel style too: square corners, notched
 3px outlines in `ink`, hard offset shadows, bevelled buttons that press down,

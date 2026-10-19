@@ -38,6 +38,8 @@ RAMPS: dict[str, list[str]] = {
     "wall_cream": ["#a99789", "#cebdac", "#e5d7c4", "#f2e8d7"],
     "wall_sage": ["#6f7e6b", "#90a18b", "#aec0a6", "#ccdbc1"],
     "wall_blush": ["#9e7b7d", "#c59c9b", "#e1beb8", "#f3d9d1"],
+    "wall_sky": ["#6f8299", "#93a8bf", "#b9cede", "#dae8f1"],
+    "wall_butter": ["#a8946a", "#cdb98a", "#e8d7a8", "#f5ebcb"],
     # sky / light
     "sky_day": ["#5c8dd0", "#80b1e7", "#b4d7f3", "#e3f1fb"],
     "sky_night": ["#141833", "#1f2550", "#333a75", "#5a5f9c"],

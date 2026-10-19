@@ -1,13 +1,9 @@
-"""Style test: a two-room cross-section house (bedroom + study) with Buddy."""
+"""Furniture and fixtures for the cross-section house. Each function returns a
+Sprite drawn front-on, lit from the top-left; house.py places them."""
 
 import random
 
-import numpy as np
-from pixelkit import P, Sprite, rgba
-
-import doll
-
-PREVIEW_SCALE = 4
+from pixelkit import P, Sprite
 
 W_, R_ = P.wood, P.birch
 
@@ -270,124 +266,6 @@ def rug(w=44):
     return s
 
 
-# ---------------------------------------------------------------- house shell
-
-W, H = 232, 108
-ROOF_TOP, EAVE = 2, 40
-CEIL_Y, CEIL_H = 41, 4
-WALL_Y, FLOOR_Y = 45, 90  # wall area 45..89, floor band 90..95
-SLAB_Y = 96
-OUTER_L, OUTER_R = 8, 218  # outer walls are 6px wide
-ROOMS = [(14, 100, P.wall_blush), (118, 100, P.wall_sage)]  # (x, width, ramp)
-
-
-def cut_block(s, x, y, w, h):
-    """Cross-section 'cut' surface: what you see where the house is sliced."""
-    C = P.cut
-    s.rect(x, y, w, h, C[0])
-    s.rect(x + 1, y + 1, w - 2, h - 2, C[2])
-    s.hline(x + 1, x + w - 2, y + 1, C[3])
-
-
-def roof(s, night=False):
-    C, T = P.cut, P.terracotta
-    cx = (W - 1) / 2
-    half = cx - 2
-    slope = (EAVE - ROOF_TOP) / half
-    # attic interior (locked, unlit)
-    for x in range(OUTER_L, OUTER_R + 6):
-        top = int(ROOF_TOP + abs(x - cx) * slope) + 5
-        if top < CEIL_Y:
-            s.vline(x, top, CEIL_Y - 1, C[1])
-    # roof slabs
-    for x in range(2, W - 2):
-        top = int(ROOF_TOP + abs(x - cx) * slope)
-        s.vline(x, top, top + 5, C[0])
-        s.set(x, top + 4, C[2]).set(x, top + 3, C[2])
-        # shingles
-        s.set(x, top, T[0]).set(x, top + 1, T[3]).set(x, top + 2, T[2])
-        if (x // 5) % 2 == 0 and x % 5 == 0:
-            s.set(x, top + 2, T[1])
-    # ridge cap
-    s.rect(int(cx) - 2, ROOF_TOP - 1, 6, 2, T[0]).hline(int(cx) - 1, int(cx) + 2, ROOF_TOP - 1, T[4])
-    # round attic window
-    ox, oy = int(cx), 26
-    s.ellipse(ox + 0.5, oy, 5, 5, C[0]).ellipse(ox + 0.5, oy, 4, 4, P.linen[1])
-    sk = P.sky_night if night else P.sky_day
-    s.ellipse(ox + 0.5, oy, 3, 3, sk[1]).set(ox - 1, oy - 2, sk[3]).set(ox - 2, oy - 1, sk[3])
-    s.vline(ox, oy - 3, oy + 3, P.linen[1]).vline(ox + 1, oy - 3, oy + 3, P.linen[1])
-    # chimney on the right slope
-    chx = 176
-    top = int(ROOF_TOP + abs(chx - cx) * slope)
-    s.rect(chx, 6, 10, top - 4, T[0]).rect(chx + 1, 7, 8, top - 6, T[2])
-    for by in range(8, top, 3):
-        s.hline(chx + 1, chx + 8, by, T[1])
-        s.set(chx + (4 if (by // 3) % 2 else 2), by + 1, T[1])
-    s.rect(chx - 1, 4, 12, 3, C[0]).hline(chx, chx + 9, 5, C[3])
-
-
-def room_wall(s, x, w, ramp):
-    s.rect(x, WALL_Y, w, FLOOR_Y - WALL_Y, ramp[2])
-    s.hline(x, x + w - 1, WALL_Y, ramp[0]).hline(x, x + w - 1, WALL_Y + 1, ramp[1])
-    s.dither(x, WALL_Y + 2, w, 1, ramp[1], pattern="checker")
-    # baseboard
-    s.rect(x, FLOOR_Y - 3, w, 3, P.linen[2]).hline(x, x + w - 1, FLOOR_Y - 3, P.linen[3])
-    s.hline(x, x + w - 1, FLOOR_Y - 1, P.linen[0])
-
-
-def floor(s, x, w):
-    s.rect(x, FLOOR_Y, w, SLAB_Y - FLOOR_Y, W_[3])
-    s.hline(x, x + w - 1, FLOOR_Y, W_[1])
-    for i, y in enumerate(range(FLOOR_Y + 1, SLAB_Y, 2)):
-        s.hline(x, x + w - 1, y + 1, W_[2])
-        for sx in range(x + (i * 7) % 17, x + w, 17):
-            s.set(sx, y, W_[2])
-    s.hline(x, x + w - 1, FLOOR_Y + 1, W_[4])
-
-
-def house(night=False):
-    s = Sprite(W, H)
-    roof(s, night)
-    cut_block(s, OUTER_L, CEIL_Y, OUTER_R + 6 - OUTER_L, CEIL_H)
-    for x, w, ramp in ROOMS:
-        room_wall(s, x, w, ramp)
-        floor(s, x, w)
-    # walls: outer + divider with a doorway
-    cut_block(s, OUTER_L, CEIL_Y, 6, SLAB_Y - CEIL_Y)
-    cut_block(s, OUTER_R, CEIL_Y, 6, SLAB_Y - CEIL_Y)
-    cut_block(s, 114, CEIL_Y, 4, 18)
-    door_top = CEIL_Y + 18
-    # open passage: each room's back wall simply continues under the lintel
-    room_wall(s, 114, 2, ROOMS[0][2])
-    room_wall(s, 116, 2, ROOMS[1][2])
-    s.rect(114, CEIL_Y, 4, door_top - CEIL_Y, None)
-    cut_block(s, 114, CEIL_Y, 4, 18)
-    s.rect(112, door_top, 8, 2, W_[0]).hline(113, 118, door_top, W_[3])  # lintel
-    floor(s, 114, 4)
-    # foundation slab
-    cut_block(s, OUTER_L, SLAB_Y, OUTER_R + 6 - OUTER_L, 7)
-    # grass lip
-    G = P.green
-    s.hline(OUTER_L - 4, OUTER_R + 9, SLAB_Y + 7, G[0])
-    s.rect(OUTER_L - 3, SLAB_Y + 7, OUTER_R + 12 - OUTER_L, 4, G[2])
-    s.hline(OUTER_L - 3, OUTER_R + 8, SLAB_Y + 7, G[3])
-    for gx in range(OUTER_L - 2, OUTER_R + 9, 7):
-        s.set(gx, SLAB_Y + 6, G[3]).set(gx + 3, SLAB_Y + 6, G[2])
-    s.hline(OUTER_L - 3, OUTER_R + 8, H - 1, G[1])
-    return s
-
-
-def on_floor(s, spr, x, depth=3, shadow=True):
-    """Stand a sprite on the floor band; depth = px into the band (0 = at the wall).
-    Draws a 1px contact shadow under its footprint so it sits on the floor."""
-    y = FLOOR_Y + depth - spr.h + 1
-    sy = FLOOR_Y + depth + 1
-    if shadow and sy < SLAB_Y:
-        feet = np.nonzero(spr.px[-1, :, 3])[0]  # footprint = opaque cols of the bottom row
-        if len(feet):
-            s.hline(x + int(feet.min()), x + int(feet.max()), sy, W_[1])
-    s.blit(spr, x, y)
-
 
 def pendant(on=False):
     s = Sprite(9, 13)
@@ -422,118 +300,275 @@ def wall_shelf():
     return s
 
 
-def scene(night=False, buddy=doll.GIRL):
-    s = house(night)
-    # --- bedroom
-    bx = ROOMS[0][0]
-    s.blit(picture(), bx + 12, 56)
-    s.blit(window("night" if night else "day"), bx + 64, 52)
-    on_floor(s, rug(), bx + 46, 4)
-    on_floor(s, bed(), bx + 4, 1)
-    on_floor(s, nightstand(), bx + 47, 0)
-    s.blit(lamp(on=night), bx + 48, FLOOR_Y - 13 - 13)
-    on_floor(s, plant(), bx + 84, 1)
-    if night:
-        z_at = sleeper(s, bx + 4, FLOOR_Y + 1 - 22 + 1, buddy)
+
+M_, L_ = P.metal, P.linen
+
+
+# ---------------------------------------------------------------- living room
+
+
+def sofa(C=P.blue):
+    s = Sprite(48, 21)
+    # back cushions
+    s.rect(4, 0, 40, 11, C[0]).rect(5, 1, 38, 9, C[2]).hline(5, 42, 1, C[3])
+    s.vline(24, 2, 9, C[1]).set(14, 5, C[1]).set(34, 5, C[1])
+    # seat cushions
+    s.rect(4, 10, 40, 6, C[0]).rect(5, 11, 38, 4, C[3]).hline(5, 42, 14, C[2]).vline(24, 11, 14, C[1])
+    s.hline(5, 23, 11, C[4])
+    # front rail
+    s.rect(4, 15, 40, 4, C[0]).rect(5, 16, 38, 2, C[1])
+    # armrests
+    for ax in (0, 42):
+        s.rect(ax, 6, 6, 13, C[0]).rect(ax + 1, 7, 4, 11, C[2]).hline(ax + 1, ax + 4, 7, C[3])
+    s.vline(1, 7, 17, C[3]).vline(46, 8, 17, C[1])
+    s.set(0, 6, None).set(47, 6, None)
+    # throw pillow
+    K = P.mustard
+    s.rect(7, 5, 8, 7, K[0]).rect(8, 6, 6, 5, K[3]).set(8, 6, K[4]).vline(13, 7, 10, K[2])
+    # legs
+    s.rect(3, 19, 2, 2, W_[0]).rect(43, 19, 2, 2, W_[0])
+    return s
+
+
+def coffee_table():
+    s = Sprite(28, 13)
+    # a mug and a book on top
+    s.rect(4, 0, 9, 4, P.coral[0]).rect(5, 1, 7, 2, P.coral[3]).hline(5, 11, 1, P.coral[4])
+    s.rect(18, 0, 4, 4, L_[0]).rect(19, 1, 2, 3, L_[3])
+    s.rect(0, 4, 28, 3, R_[0]).hline(1, 26, 5, R_[3]).hline(1, 26, 4, R_[0]).hline(2, 25, 5, R_[4])
+    for lx in (2, 24):
+        s.rect(lx, 7, 2, 6, R_[0]).vline(lx, 7, 11, R_[2])
+    s.hline(4, 23, 10, R_[1])
+    return s
+
+
+def tv_unit(on=False):
+    s = Sprite(36, 29)
+    s.rect(4, 0, 28, 17, M_[0]).rect(5, 1, 26, 15, M_[1])
+    if on:
+        G = P.glass
+        s.rect(6, 2, 24, 13, G[2]).rect(6, 10, 24, 5, P.green[3]).hline(6, 29, 10, P.green[4])
+        s.ellipse(22, 5, 2, 2, P.light[0]).hline(9, 14, 5, G[4])
     else:
-        on_floor(s, doll.with_emote(buddy.render(expr="happy"), "note"), bx + 62, 4)
-    # --- study
-    sx = ROOMS[1][0]
-    s.blit(clock(), sx + 10, 52)
-    s.blit(pendant(on=night), sx + 30, CEIL_Y + CEIL_H)
-    s.blit(wall_shelf(), sx + 46, 50)
-    on_floor(s, bookshelf(), sx + 70, 0)
-    d = desk()
-    on_floor(s, d, sx + 26, 0)
-    dtop = FLOOR_Y - d.h
-    s.blit(monitor(), sx + 34, dtop - 14)
-    s.blit(mug(), sx + 54, dtop - 4)
-    on_floor(s, chair(), sx + 18, 2)
-    if night:
-        s = night_grade(s, lights=[
-            (bx + 54, 70, 30, (1.0, 0.86, 0.6)),     # bedside lamp
-            (sx + 34, 60, 34, (1.0, 0.9, 0.7)),      # pendant
-            (sx + 42, 74, 12, (0.7, 0.95, 1.0)),     # monitor glow
-        ])
-        zzz(s, *z_at)
+        s.rect(6, 2, 24, 13, M_[0])
+        s.line(8, 12, 16, 4, M_[1]).line(10, 13, 19, 4, M_[1])  # reflection
+    s.hline(5, 30, 1, M_[2])
+    s.rect(16, 17, 4, 2, M_[0]).hline(17, 18, 17, M_[3])
+    # low cabinet
+    panel(s, 0, 19, 36, 10, W_)
+    s.hline(1, 34, 20, W_[4])
+    for dx in (2, 19):
+        s.frame(dx, 22, 15, 5, W_[1]).hline(dx + 1, dx + 13, 23, W_[3])
+    s.set(16, 24, R_[4]).set(19, 24, R_[4])
     return s
 
 
-ZZZ = """
-ooooo
-...o.
-..o..
-.o...
-ooooo
-"""
+def floor_lamp(on=False):
+    s = Sprite(12, 40)
+    sh = [P.mustard[1], P.mustard[3], P.light[0], P.light[1]] if on else [L_[0], L_[1], L_[2], L_[3]]
+    for i, (a, b) in enumerate([(3, 8), (2, 9), (2, 9), (1, 10), (1, 10), (0, 11), (0, 11)]):
+        s.hline(a, b, i, sh[0])
+        s.hline(a + 1, b - 1, i, sh[2])
+        s.set(a + 1, i, sh[3])
+    s.hline(3, 8, 0, sh[0]).hline(0, 11, 7, sh[0]).hline(1, 10, 6, sh[1])
+    s.vline(5, 8, 37, M_[0]).vline(6, 8, 37, M_[2])
+    s.rect(2, 37, 8, 3, M_[0]).hline(3, 8, 38, M_[3])
+    return s
 
 
-def sleeper(s, bed_x, bed_y, buddy=doll.GIRL):
-    """Buddy asleep: head on the pillow, quilt pulled up to the chin.
-    Returns where the Zzz goes (drawn after lighting, like UI)."""
-    head = buddy.render(expr="sleepy").crop(0, 0, doll.W, 15)
-    s.blit(head, bed_x - 1, bed_y - 5)
+# ---------------------------------------------------------------- kitchen
+
+
+def fridge():
+    s = Sprite(18, 40)
+    s.rect(0, 0, 18, 40, L_[0]).rect(1, 1, 16, 38, L_[2])
+    s.vline(1, 1, 38, L_[3]).hline(1, 16, 1, L_[3]).vline(16, 2, 38, L_[1])
+    s.hline(1, 16, 13, L_[0]).hline(1, 16, 14, L_[3])
+    s.vline(14, 4, 10, M_[1]).vline(14, 17, 25, M_[1])
+    # magnets + a note
+    s.set(5, 18, P.coral[2]).set(9, 20, P.mustard[3]).set(6, 23, P.blue[3])
+    s.rect(4, 27, 6, 6, P.mustard[4]).hline(5, 8, 29, P.mustard[2]).hline(5, 7, 31, P.mustard[2])
+    s.rect(1, 39, 16, 1, M_[0])
+    return s
+
+
+def counter():
+    """Base cabinets with a sink (left) and a stove (right), pot on the hob."""
+    s = Sprite(50, 25)
+    ty = 9
+    panel(s, 0, ty + 3, 50, 13, R_)
+    # sink cabinet doors
+    for dx in (2, 13):
+        s.frame(dx, ty + 5, 10, 9, R_[1]).set(dx + (8 if dx == 2 else 1), ty + 9, R_[0])
+    # oven
+    s.rect(26, ty + 4, 22, 11, M_[0]).rect(27, ty + 5, 20, 9, M_[3]).hline(27, 46, ty + 5, M_[4])
+    s.rect(29, ty + 8, 16, 5, M_[1]).rect(30, ty + 9, 14, 3, P.glass[0]).hline(31, 36, ty + 9, P.glass[1])
+    s.hline(29, 44, ty + 7, M_[1])
+    for kx in (29, 33, 37, 41):
+        s.set(kx, ty + 6, M_[0])
+    # worktop
+    s.rect(0, ty, 50, 3, M_[0]).rect(1, ty, 48, 2, L_[2]).hline(1, 48, ty, L_[3])
+    s.hline(4, 18, ty + 1, M_[1])  # sink basin edge
+    s.hline(29, 34, ty, M_[0]).hline(39, 44, ty, M_[0])  # burners
+    # faucet
+    s.vline(10, 2, ty - 1, M_[1]).hline(10, 14, 2, M_[1]).vline(14, 3, 4, M_[1]).vline(11, 3, ty - 1, M_[3])
+    # pot
     C = P.coral
-    qx, qy, qw = bed_x + 15, bed_y + 8, 21
-    s.rect(qx, qy, qw, 9, C[0])
-    s.ellipse(qx + 11, qy, 7, 1.5, C[0])  # body lump
-    s.ellipse(qx + 11, qy + 1, 6, 1, C[2])
-    s.rect(qx + 1, qy + 1, qw - 2, 7, C[2])
-    s.hline(qx + 7, qx + 15, qy - 1, C[3]).hline(qx + 1, qx + qw - 2, qy + 7, C[1])
-    s.rect(qx + 1, qy + 1, 4, 7, C[3]).vline(qx + 5, qy + 2, qy + 7, C[1]).hline(qx + 1, qx + 4, qy + 1, C[4])
-    for zx in range(qx + 9, qx + qw - 2, 4):
-        for zy in (qy + 3, qy + 6):
-            s.set(zx, zy, C[4])
-    return bed_x + 22, bed_y - 4
-
-
-def zzz(s, x, y):
-    s.blit(Sprite.from_grid(ZZZ, {"o": P.linen[3]}), x, y)
-    small = Sprite.from_grid("""
-        oooo
-        ..o.
-        .o..
-        oooo
-    """, {"o": P.linen[2]})
-    s.blit(small, x + 7, y - 6)
-
-
-EMISSIVE = set(P.sky_night) | set(P.light) | set(P.glass[2:])
-
-
-def night_grade(s, lights, bands=4):
-    """Preview of the in-game night pass: cool multiply + stepped warm pools
-    of light (banded, not smooth, so it still reads as pixel art). In the
-    app this is a runtime overlay; the base sprites stay on-palette."""
-    px = s.px.astype(np.float32)
-    rgb = px[..., :3]
-    h, w = s.h, s.w
-    Y, X = np.mgrid[0:h, 0:w]
-    night = rgb * np.array([0.40, 0.43, 0.66])
-    out = night.copy()
-    interior = np.zeros((h, w), bool)
-    interior[CEIL_Y + CEIL_H : SLAB_Y, OUTER_L + 6 : OUTER_R] = True
-    for lx, ly, r, col in lights:
-        d = np.sqrt((X - lx) ** 2 + ((Y - ly) * 1.15) ** 2) / r
-        g = np.clip(1 - d, 0, 1)
-        g = np.ceil(g * bands) / bands * 0.9
-        g = np.where(interior, g, 0)[..., None]
-        lit = rgb * np.array(col)
-        out = np.maximum(out, night * (1 - g) + lit * g)
-    glow_px = np.zeros((h, w), bool)  # emissive pixels (sky, bulbs, screen) keep full brightness
-    for c in EMISSIVE:
-        glow_px |= np.all(s.px[..., :3] == np.array(rgba(c)[:3]), axis=-1)
-    out[glow_px] = rgb[glow_px]
-    s.px[..., :3] = np.clip(np.rint(out), 0, 255).astype(np.uint8)
+    s.rect(28, ty - 6, 9, 6, C[0]).rect(29, ty - 5, 7, 4, C[2]).hline(29, 35, ty - 5, C[3])
+    s.hline(27, 37, ty - 6, C[0]).set(26, ty - 5, C[0]).set(37, ty - 5, C[0])
+    s.set(31, ty - 7, L_[2]).set(33, ty - 8, L_[3]).set(32, ty - 9, L_[2])  # steam
     return s
 
 
-def build():
-    return {
-        "house_day": scene(),
-        "house_night": scene(night=True),
-        "house_day_boy": scene(buddy=doll.BOY),
-        "bed": bed(),
-        "desk": desk(),
-        "bookshelf": bookshelf(),
-    }
+def upper_cabinet(w=30):
+    s = Sprite(w, 13)
+    panel(s, 0, 0, w, 13, R_)
+    s.hline(1, w - 2, 1, R_[4])
+    half = w // 2
+    s.frame(2, 3, half - 3, 8, R_[1]).frame(half + 1, 3, half - 3, 8, R_[1])
+    s.set(half - 2, 9, R_[0]).set(half + 1, 9, R_[0])
+    return s
+
+
+def range_hood():
+    s = Sprite(20, 9)
+    s.rect(7, 0, 6, 4, M_[0]).rect(8, 0, 4, 4, M_[3])
+    for i, (a, b) in enumerate([(5, 14), (3, 16), (1, 18), (0, 19)]):
+        s.hline(a, b, 4 + i, M_[0])
+        s.hline(a + 1, b - 1, 4 + i, M_[3] if i < 3 else M_[2])
+    s.hline(2, 17, 8, M_[0]).hline(8, 11, 8, P.light[0])
+    return s
+
+
+def dining_table():
+    s = Sprite(28, 15)
+    s.rect(0, 0, 28, 3, W_[0]).hline(1, 26, 1, W_[3]).hline(1, 26, 0, W_[0])
+    for lx in (3, 23):
+        s.rect(lx, 3, 2, 12, W_[0]).vline(lx, 3, 13, W_[2])
+    s.hline(5, 22, 5, W_[1])
+    return s
+
+
+def fruit_bowl():
+    s = Sprite(10, 6)
+    s.ellipse(3, 2, 2, 2, P.coral[0]).ellipse(3, 2, 1, 1, P.coral[3])
+    s.ellipse(6, 2, 2, 2, P.green[1]).ellipse(6, 2, 1, 1, P.green[3])
+    s.rect(0, 3, 10, 3, L_[0]).rect(1, 3, 8, 2, L_[3])
+    s.set(0, 5, None).set(9, 5, None)
+    return s
+
+
+def stool():
+    s = Sprite(10, 11)
+    s.rect(0, 0, 10, 3, W_[0]).hline(1, 8, 1, W_[3])
+    s.vline(1, 3, 10, W_[0]).vline(8, 3, 10, W_[0]).vline(2, 3, 9, W_[2])
+    s.hline(2, 7, 7, W_[1])
+    return s
+
+
+# ---------------------------------------------------------------- bathroom
+
+
+def bathtub():
+    s = Sprite(36, 17)
+    # bubbles over the rim
+    for bx, by, r in ((7, 3, 2.5), (12, 2, 3), (18, 3, 2.5), (24, 3, 2)):
+        s.ellipse(bx, by, r, r, L_[1])
+    for bx, by, r in ((7, 3, 1.5), (12, 2, 2), (18, 3, 1.5), (24, 3, 1)):
+        s.ellipse(bx, by, r, r, L_[3])
+    s.set(11, 1, P.glass[4])
+    # tub
+    s.rect(0, 4, 36, 11, L_[0]).rect(1, 6, 34, 8, L_[3]).vline(34, 6, 13, L_[1]).hline(2, 33, 13, L_[1])
+    s.rect(0, 4, 36, 2, L_[0]).hline(1, 34, 4, L_[3]).hline(1, 34, 5, L_[2])
+    for fx in (3, 30):
+        s.rect(fx, 15, 3, 2, M_[1]).set(fx, 16, M_[0])
+    return s
+
+
+def shower():
+    s = Sprite(12, 26)
+    s.vline(2, 4, 25, M_[1]).vline(3, 4, 25, M_[3])
+    s.hline(2, 8, 3, M_[1]).hline(2, 8, 4, M_[3])
+    s.rect(7, 2, 5, 4, M_[0]).hline(8, 10, 3, M_[3]).hline(7, 11, 6, M_[1])
+    s.rect(1, 18, 4, 3, M_[0]).set(2, 19, M_[4])  # mixer valve
+    return s
+
+
+def toilet():
+    s = Sprite(13, 18)
+    s.rect(5, 0, 8, 9, L_[0]).rect(6, 1, 6, 7, L_[3]).vline(11, 2, 7, L_[1]).rect(8, 1, 2, 1, M_[2])
+    s.rect(0, 8, 13, 3, L_[0]).hline(1, 11, 9, L_[3])
+    s.rect(2, 11, 10, 4, L_[0]).rect(3, 11, 8, 3, L_[2]).hline(3, 9, 11, L_[3])
+    s.rect(4, 14, 6, 4, L_[0]).rect(5, 14, 4, 3, L_[2])
+    return s
+
+
+def washbasin():
+    s = Sprite(14, 22)
+    s.vline(7, 0, 3, M_[1]).hline(5, 7, 0, M_[1]).vline(8, 1, 3, M_[3])
+    s.rect(0, 4, 14, 5, L_[0]).rect(1, 5, 12, 3, L_[3]).hline(1, 12, 5, L_[3]).hline(2, 11, 7, L_[2])
+    s.rect(4, 9, 6, 13, L_[0]).rect(5, 9, 4, 12, L_[2]).vline(5, 9, 20, L_[3])
+    return s
+
+
+def mirror():
+    s = Sprite(14, 16)
+    s.rect(0, 0, 14, 16, R_[0]).rect(1, 1, 12, 14, R_[3])
+    # sky ramp, not glass: glass colors are emissive in the night pass
+    s.rect(2, 2, 10, 12, P.sky_day[2]).rect(2, 9, 10, 5, P.sky_day[1])
+    s.line(3, 7, 7, 3, P.sky_day[3]).line(4, 9, 9, 4, P.sky_day[3])
+    return s
+
+
+def towel_rail():
+    s = Sprite(14, 13)
+    s.hline(0, 13, 0, M_[1]).set(0, 1, M_[0]).set(13, 1, M_[0])
+    T = P.blue
+    s.rect(3, 1, 8, 12, T[0]).rect(4, 1, 6, 11, T[3]).vline(9, 2, 11, T[2])
+    s.hline(4, 9, 9, T[4]).hline(4, 9, 10, T[2])
+    return s
+
+
+def tiles(w, h):
+    """Splash-back tiles behind the tub."""
+    s = Sprite(w, h, fill=L_[2])
+    for y in range(0, h, 5):
+        s.hline(0, w - 1, y, L_[1])
+    for y in range(0, h, 5):
+        for x in range((y // 5) % 2 * 3, w, 6):
+            s.vline(x, y, min(y + 4, h - 1), L_[1])
+    s.hline(0, w - 1, 0, L_[0])
+    return s
+
+
+# ---------------------------------------------------------------- bedroom
+
+
+def wardrobe():
+    s = Sprite(26, 42)
+    panel(s, 0, 2, 26, 39, W_)
+    s.rect(0, 0, 26, 3, W_[0]).hline(1, 24, 1, W_[4])
+    for dx in (2, 13):
+        s.frame(dx, 5, 11, 33, W_[1])
+        s.rect(dx + 2, 8, 7, 12, W_[1]).rect(dx + 2, 8, 6, 11, W_[3])
+        s.rect(dx + 2, 23, 7, 12, W_[1]).rect(dx + 2, 23, 6, 11, W_[3])
+    s.set(11, 21, R_[4]).set(14, 21, R_[4])
+    s.rect(1, 41, 3, 1, W_[0]).rect(22, 41, 3, 1, W_[0])
+    return s
+
+
+def round_window(night=False):
+    s = Sprite(12, 12)
+    sk = P.sky_night if night else P.sky_day
+    s.ellipse(5.5, 5.5, 5.5, 5.5, R_[0]).ellipse(5.5, 5.5, 4.5, 4.5, L_[2])
+    s.ellipse(5.5, 5.5, 3.5, 3.5, sk[1]).set(4, 3, sk[3]).set(3, 4, sk[3])
+    s.vline(5, 2, 9, L_[2]).vline(6, 2, 9, L_[2]).hline(2, 9, 5, L_[2]).hline(2, 9, 6, L_[2])
+    return s
+
+
+def sconce(on=False):
+    s = Sprite(6, 7)
+    s.rect(2, 4, 2, 3, M_[0])
+    c = [P.mustard[1], P.light[0], P.light[1]] if on else [L_[0], L_[1], L_[2]]
+    s.rect(0, 0, 6, 4, c[0]).rect(1, 1, 4, 2, c[1]).set(1, 1, c[2])
+    return s
