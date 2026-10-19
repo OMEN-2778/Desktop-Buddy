@@ -170,8 +170,10 @@ body {
    exactly as wide as it. The icon walks along it with the clock and turns
    into the moon at dusk, or a rain cloud / snowflake when the weather turns.
    Drawn in a canvas at one UI pixel per bar unit (set by fit). */
-.skybar { position: relative; width: var(--house-w, 684px); height: var(--sky-h, 48px); margin-bottom: var(--sky-gap, 12px); }
+.skybar { position: relative; z-index: 2; width: var(--house-w, 684px); height: var(--sky-h, 48px); margin-bottom: var(--sky-gap, 12px); pointer-events: none; }
 #sky { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+/* the bar hangs over the house's top edge; only the part above the house takes the pointer (tooltip) */
+.sky-hit { position: absolute; left: 0; right: 0; top: 0; bottom: var(--sky-over, 0px); pointer-events: auto; }
 .sky-tip {
   position: absolute; bottom: calc(100% + 6px); left: 0; transform: translateX(-50%);
   white-space: nowrap; pointer-events: none; z-index: 3;
@@ -235,6 +237,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
       <div class="studio-slot" id="studioSlot"><div class="studio-clip"><section id="studio" hidden></section></div></div>
       <div class="skybar" id="skybar" role="img" aria-label="时间与天气">
         <canvas id="sky" width="684" height="48"></canvas>
+        <div class="sky-hit" id="skyHit"></div>
         <div class="sky-tip" id="skyTip" hidden></div>
       </div>
       <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她一下试试。"></canvas>
@@ -1044,7 +1047,8 @@ function sizeSky(wPx, hPx, u) {
   skyCanvas.width = wPx; skyCanvas.height = SKY_ICON * b;
   const widget = document.getElementById("widget");
   widget.style.setProperty("--sky-h", SKY_ICON * b + "px");
-  widget.style.setProperty("--sky-gap", 3 * b + "px");
+  widget.style.setProperty("--sky-gap", -7 * b + "px");      // hangs 7 units over the house's top edge
+  widget.style.setProperty("--sky-over", 7 * b + "px");
   buildSkyTrack();
 }
 function skyTarget() {
@@ -1052,16 +1056,15 @@ function skyTarget() {
   const h = hour();
   return h >= 6 && h < 19 ? "sun" : "moon";
 }
-function drawIcon(name, cx, cy, scale, rot) {
+function drawIcon(name, cx, cy, scale) {
   const fr = IMG_SKY[name];
   if (!fr || scale <= 0.02) return;
   const fps = name === "rain" ? 6 : name === "sun" ? 3 : 4;
   const img = reduceMotionUI ? fr[0] : fr[Math.floor(realClock * fps) % fr.length];
-  const s = skyGeo.b * scale;
-  skx.save();
-  skx.translate(cx, cy); skx.rotate(rot); skx.scale(s, s);
-  skx.drawImage(img, -SKY_ICON / 2, -SKY_ICON / 2);
-  skx.restore();
+  // whole screen pixels only: the icon is drawn at an integer size and position,
+  // so it never lands between pixels (that is what made it look jagged)
+  const size = Math.max(1, Math.round(SKY_ICON * skyGeo.b * scale));
+  skx.drawImage(img, Math.round(cx - size / 2), Math.round(cy - size / 2), size, size);
 }
 function renderSky() {
   if (!skyTrack || !IMG_SKY.sun) return;
@@ -1077,14 +1080,14 @@ function renderSky() {
   skx.clearRect(0, 0, w, skyCanvas.height);
   skx.drawImage(skyTrack, 0, 0);
   const p = reduceMotionUI ? 1 : (realClock - sky.t0) / SKY_MORPH;
-  const bob = reduceMotionUI || sky.icon === "sun" ? 0 : Math.round(Math.sin(realClock * 1.8)) * b * 0.5;
+  const bob = reduceMotionUI || sky.icon === "sun" ? 0 : (Math.sin(realClock * 1.8) > 0.6 ? -b : 0);   // whole units
   if (p < 1 && sky.from) {
     // the old icon spins down to nothing, the new one springs up in its place
     const out = Math.min(1, p / 0.5), back = 1 - out;
-    drawIcon(sky.from, sky.fromX, cy, back * back * (3 - 2 * back), -out * 0.9);
+    drawIcon(sky.from, sky.fromX, cy, back * back * (3 - 2 * back));
     const q = Math.max(0, (p - 0.3) / 0.7), c1 = 1.9;     // ease-out-back: overshoots a little, settles
     const pop = q <= 0 ? 0 : 1 + (c1 + 1) * (q - 1) ** 3 + c1 * (q - 1) ** 2;
-    drawIcon(sky.icon, x, cy + bob, pop, (1 - q) * 0.9);
+    drawIcon(sky.icon, x, cy + bob, pop);
     // sparkles fly out from where the change happens
     skx.fillStyle = "#ffffff";
     if (p > 0.25 && p < 0.95) {
@@ -1096,7 +1099,7 @@ function renderSky() {
       }
     }
   } else {
-    drawIcon(sky.icon, x, cy + bob, 1, 0);
+    drawIcon(sky.icon, x, cy + bob, 1);
   }
   if (!skyTip.hidden) skyTip.style.left = x + "px";
 }
@@ -1104,9 +1107,10 @@ function skyText() {
   const se = seasonOf(sim.t);
   return `${SEASONS[se.i].name}季 · 第 ${se.day} 天 · ${fmt(sim.t)} · ${WEATHER_NAME[weather.kind]}`;
 }
-skyEl.addEventListener("pointerenter", () => { skyTip.hidden = false; skyTip.textContent = skyText(); });
-skyEl.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") skyTip.hidden = true; });
-skyEl.addEventListener("click", () => { skyTip.hidden = !skyTip.hidden; skyTip.textContent = skyText(); });
+const skyHit = document.getElementById("skyHit");
+skyHit.addEventListener("pointerenter", () => { skyTip.hidden = false; skyTip.textContent = skyText(); });
+skyHit.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") skyTip.hidden = true; });
+skyHit.addEventListener("click", () => { skyTip.hidden = !skyTip.hidden; skyTip.textContent = skyText(); });
 
 document.querySelectorAll("[data-weather]").forEach(btn => btn.addEventListener("click", () => {
   weather.force = btn.dataset.weather || null;

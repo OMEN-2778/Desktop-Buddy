@@ -404,14 +404,14 @@ ooooo
 
 
 SLEEP_HEAD = (3, -7)      # the head turned on its side (rotated 90 deg), from the bed's top-left
-SLEEP_COVER = (18, -3)    # duvet offset from the bed's top-left
+SLEEP_COVER = (18, -9)    # duvet offset from the bed's top-left
 
 # Duvet over a body lying on its side, chin at bed x 17. Control points
 # (bed x, top y) of the smooth curve the body pushes up: shoulder, waist,
-# hip (highest), knee, shin, feet; a chibi body is about as wide as the head
-# is tall, so the shoulder stands well above the mattress (top at y 10).
-SLEEP_CURVE = [(18, 4), (20, 1), (22, 0), (25, 2), (28, 0), (30, -1), (32, 0), (35, 3), (37, 5), (39, 4),
-               (40, 4), (41, 6)]
+# hip (highest, above the head on the pillow, as when lying on one's side),
+# knee, shin, feet. The mattress top is y 10.
+SLEEP_CURVE = [(18, 2), (19, -1), (21, -4), (23, -5), (25, -3), (26, -3), (28, -6), (30, -7), (32, -6),
+               (34, -3), (36, 0), (38, 2), (39, 2), (40, 1), (41, 4)]
 SLEEP_PROFILE = {x: int(round(float(np.interp(x, *zip(*SLEEP_CURVE))))) for x in range(18, 42)}
 
 
@@ -436,6 +436,8 @@ def sleep_cover():
             s.vline(x, t, min(crease - 1, t + 2), D[2])
         else:                                        # rising or flat: lit band along the top
             s.set(x, t, D[4]).set(x, t + 1, D[4])
+        if crease - t > 6:                           # round body: shade where it turns under, toward the bed
+            s.vline(x, crease - 3, crease - 1, D[2])
         s.set(x, crease, D[2]).set(x, hem - 1, D[2])
     for fx in (25, 31, 37):                          # soft folds on the side face
         s.vline(fx - ox, crease + 2, hem - 2, D[2])
@@ -444,8 +446,8 @@ def sleep_cover():
         out.set(wx, hem, None)
     # sheet turned down at the neck: a narrow white fold
     out.vline(0, top[0] + 1, crease - 1, POR[3]).vline(1, top[1] + 1, crease - 1, POR[2])
-    # clay throw across the shins
-    tx0, tx1 = 34 - ox, 38 - ox
+    # clay throw across the feet
+    tx0, tx1 = 37 - ox, 40 - ox
     for x in range(tx0, tx1 + 1):
         t = top[x]
         out.vline(x, t, hem + 1, C[2])

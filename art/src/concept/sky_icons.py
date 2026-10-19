@@ -23,23 +23,28 @@ def _outlined(body: Sprite) -> Sprite:
 
 
 def sun(f: int) -> Sprite:
-    """Disc on an 8-point star of rays; each frame turns the star 1/32 of a
-    turn, so the 4-frame loop reads as a slow, continuous spin."""
+    """Disc with 8 rays, 4-fold symmetric in every frame (no rotation, so no
+    jagged in-between angles). The loop breathes: straight rays long ->
+    all long -> diagonal rays long -> all long."""
     m = P.mustard
     s = Sprite(SIZE, SIZE)
-    c = 7.5
-    rot = f * math.pi / 16
-    for y in range(SIZE):
-        for x in range(SIZE):
-            dx, dy = x - c, y - c
-            r, th = math.hypot(dx, dy), math.atan2(dy, dx) - rot
-            reach = 4.6 + 2.6 * abs(math.cos(4 * th)) ** 4
-            if r <= reach:
-                s.set(x, y, m[2] if r > 5.2 else m[1])
-    s.ellipse(c, c, 3.6, 3.6, m[1])
-    s.ellipse(c, c, 2.9, 2.9, m[3])
-    s.ellipse(c - 0.6, c - 0.6, 1.6, 1.6, m[4])
-    s.set(6, 6, P.light[1])
+    card, diag = [(2, 1), (2, 2), (1, 2), (2, 2)][f]
+    lo, hi = 7, 8                                   # the 2px-wide straight rays sit on cols/rows 7-8
+    for i in range(card):                           # straight rays, touching the disc (rows/cols 4..11)
+        d = 3 - i
+        s.rect(lo, d, 2, 1, m[2]).rect(lo, 15 - d, 2, 1, m[2])
+        s.rect(d, lo, 1, 2, m[2]).rect(15 - d, lo, 1, 2, m[2])
+    for i in range(diag):                           # diagonal rays: 2x2 steps out from the disc's corners
+        d = 4 - i
+        for x, y in ((d, d), (15 - d, d), (d, 15 - d), (15 - d, 15 - d)):
+            s.set(x, y, m[2])
+        if i:
+            for x, y in ((d + 1, d), (d, d + 1), (14 - d, d), (15 - d, d + 1),
+                         (d, 14 - d), (d + 1, 15 - d), (15 - d, 14 - d), (14 - d, 15 - d)):
+                s.set(x, y, m[2])
+    s.ellipse(7.5, 7.5, 3.5, 3.5, m[1])
+    s.ellipse(7.5, 7.5, 2.6, 2.6, m[3])
+    s.rect(6, 6, 2, 2, m[4]).set(6, 6, P.light[1])
     return _outlined(s)
 
 
