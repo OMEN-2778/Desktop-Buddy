@@ -3198,7 +3198,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && pickOn) cl
 // before any comes again; cards with a `when` wait for a fitting moment.
 /*__CARDS_JS__*/
 for (const cd of CARDS) for (const k of ["a", "b"]) cd[k].out.forEach((o, i) => { if (o.mood) ML[o.id = `card${cd.n}${k}${i}`] = { ...o.mood }; });
-const CARD_GAP = 300, CARD_CHANCE = 0.3;         // game minutes between cards, odds per hour after that
+const CARD_GAP = 330, CARD_CHANCE = 0.3;         // game minutes between cards, odds per hour after that
 const CARD_WAIT = 60000, CARD_LOCK = 900;        // ms: until she picks herself / before a result can be clicked away
 const cardEl = document.getElementById("card"), cardRes = document.getElementById("cardRes");
 const cardOpts = [...cardEl.querySelectorAll(".cd-opt")], crBox = cardRes.querySelector(".cr-box"), crMood = cardRes.querySelector(".cr-mood");
@@ -3238,8 +3238,8 @@ function rollCard(c) {
 // ---------- moments (user: cards for the bath, the toilet, cooking, the
 // stairs, passing a window, opening / closing one, ...): cards with `on` only
 // come at that moment, with these odds (frequent moments get lower ones).
-// All told about 2-3 cards a waking day.
-const MOMENT_ODDS = { stairs: 0.1, passWindow: 0.1, toilet: 0.2, wash: 0.25, eat: 0.3, phone: 0.3, pc: 0.3 };
+// All told about 2.5-3 cards a day (20 simulated days).
+const MOMENT_ODDS = { stairs: 0.1, passWindow: 0.06, toilet: 0.2, wash: 0.25, wake: 0.3, eat: 0.3, phone: 0.3, pc: 0.3 };
 const ACT_MOMENT = act => act.startsWith("water_") ? "water" : act.startsWith("pc_") || act === "computer" ? "pc"
   : act.startsWith("phone_") ? "phone" : act;
 function cardMoment(tag) {

@@ -428,12 +428,20 @@ edits; copy changes into life_text.js.
   (`outcomes` by weight). Running state in `lifeFlags.chains` (saved). The
   six from the doc (投稿 种花 线上比赛 学做新菜 神秘明信片 漏水维修) + 学吉他,
   窗外的小猫; about one starts a week.
-- **Chance cards** (机会卡, user, like The Sims): the user's 100 cards live in
-  `prototype/demo/cards_text.js` (`CARDS`, pasted in by make_demo.py). Each:
+- **Chance cards** (机会卡, user, like The Sims): the user's 100 cards + 100
+  more written in their style (101-200, user asked for moment cards) live in
+  `prototype/demo/cards_text.js` (`CARDS`, pasted in by make_demo.py).
+  Cards with `on` come only at that moment (`cardMoment`, odds per tag in
+  `MOMENT_ODDS`, frequent moments lower): arriving at an activity (bath
+  toilet wash cook eat bed tv read pc phone snack dress art window water;
+  `ACT_MOMENT`), `wake`, `stairs` and `passWindow` (`walkMoments`: onto the
+  stairs / crossing a window's middle on her floor), `openWindow` /
+  `closeWindow` (the player's click). `cardVars` lets a card name the dish
+  ({食物}), book, show, game or snack of that moment. About 3 a day. Each:
   title, text, options a / b, each with two results (one at random); per
   result an optional moodlet (`mood`, registered in `ML` as `card<n><k><i>`;
   391 of 400 have one) and `need` changes; `when` = WHEN tags, `+` and, `|`
-  or. `rollCard` in `rollEvents`: about 1.5 a day (`CARD_GAP` 360 game min
+  or. `rollCard` in `rollEvents` (any-time cards only; `CARD_GAP` 330 game min
   + `CARD_CHANCE` 0.3 / hour), not asleep / in the bath / on the toilet /
   dressing / with a panel open; unseen cards first (`lifeFlags.cards.seen`,
   saved), cards with a `when` x2 when it fits. While the card or the result
