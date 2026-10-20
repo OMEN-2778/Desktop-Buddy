@@ -268,6 +268,11 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   (`monitor_screen` "video" / "forum" / "code"). More options will be added
   over time: add them to `RINGS`. Phone use happens on the spot with
   `phone_held()` (in her hands, or at her ear on a call).
+- **Computer chair** (user): there is no chair in the study; when she sits
+  at the computer she conjures one (`F.office_chair_front`, a front-view
+  high-back chair drawn behind her, taller than her seated head so it
+  reads) with a sparkle burst and a 4-step ordered-dither fade, waving her
+  hand; she sits once it's solid, and it dithers away when she gets up.
 - **Collapse** (user: extreme emotions never do harm): hunger/energy at 0 or
   an emotion at 8+ points -> she lies on her side on the floor (whole doll
   rotated) under a `skull` emote; holding her for 5 s (a pixel ring fills

@@ -363,7 +363,7 @@ def furnish(s, night=False, buddy=doll.GIRL, lamps=None):
     place(s, F.mug(), x + 33, dy - 4)
     place(s, F.pendant(on=False), x + 42, top)
     ANCHORS["pendant"] = (x + 42, top)
-    ANCHORS["office_chair"] = (x + 22, on_floor(s, F.office_chair(), x + 22, 1, 2))
+    # no chair here: she conjures one (F.office_chair_front) when she sits at the computer (user)
     pl = F.plant()
     ANCHORS["plant_study"] = (x + 82, reg("plant_study", pl, x + 82, on_floor(s, pl, x + 82, 1, 1)))
 
@@ -557,7 +557,7 @@ def scene(night=False, buddy=doll.GIRL, doors=None, grade=True):
 def furniture_sheet():
     """All pieces side by side on a wall swatch, for reviewing them up close."""
     pieces = [F.bed(), F.nightstand(), F.lamp(), F.wardrobe(), F.window(), F.bathtub(), F.toilet(),
-              F.vanity(), F.towel(), F.bookshelf(), F.desk(), F.monitor(), F.office_chair(), F.plant(),
+              F.vanity(), F.towel(), F.bookshelf(), F.desk(), F.monitor(), F.office_chair_front(), F.plant(),
               F.sofa(), F.coffee_table(), F.media_console(), F.tv(), F.floor_lamp(), F.kitchen_base(),
               F.wall_cabinets(), F.fridge(), F.dining_table(), F.chair(), F.art_print()]
     w = sum(p.w for p in pieces) + 4 * (len(pieces) + 1)

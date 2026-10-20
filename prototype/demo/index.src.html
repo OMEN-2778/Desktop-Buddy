@@ -1149,6 +1149,7 @@ function activityFrame(ms) {
       case "dress": return { f: { expr: phase ? "happy" : "neutral", look: 1, bob: phase }, pose: "stand", emote: showEm ? em : null };
       case "eat": return { f: { expr: phase ? "happy" : "blink", bob: phase }, pose: "sit", emote: showEm ? em : null };
       case "computer": case "pc_code": case "pc_forum": case "pc_video":
+        if (!chairReady()) return { f: { expr: "happy", wave: 1 }, pose: "stand", emote: null };   // a wave of the hand: the chair pops in, then she sits
         return { f: { expr: Math.floor(ms / 3000) % 3 === 2 ? "happy" : "neutral", look: Math.floor(ms / 1500) % 2 ? 1 : 0 }, pose: "sit", emote: showEm ? em : null };
       case "phone_call": return { f: { expr: Math.floor(ms / 1800) % 3 === 1 ? "happy" : "neutral", bob: phase, look: Math.floor(ms / 2600) % 2 ? -1 : 0 }, pose: "stand", emote: showEm ? em : null };
       case "phone_video": case "phone_feed": case "phone_text": case "phone_game":
@@ -1204,6 +1205,40 @@ function drawRevive(ctx) {
   }
   if (holding && k >= 1) { holding = null; revive(); }
 }
+// ---------- the computer chair: conjured when she sits down at the computer
+// (sparkles + an ordered-dither fade, whole pixels only), gone when she leaves
+const PC_ACTS = ["computer", "pc_video", "pc_forum", "pc_code"];
+const CHAIR_S = 0.32;                                   // fade length, seconds
+const chair = { on: false, t0: -9, steps: null };
+function chairSteps() {                                 // 4 dither levels of the chair sprite
+  if (chair.steps) return chair.steps;
+  const img = IMG.fx.chair[0], w = img.width, h = img.height, BAYER = [0, 2, 3, 1];
+  chair.steps = [1, 2, 3, 4].map(level => {
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    const x = c.getContext("2d"); x.drawImage(img, 0, 0);
+    const d = x.getImageData(0, 0, w, h);
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (BAYER[(i % 2) + (j % 2) * 2] >= level) d.data[(j * w + i) * 4 + 3] = 0;
+    x.putImageData(d, 0, 0);
+    return c;
+  });
+  return chair.steps;
+}
+const chairXY = () => [D.spots.computer[1] - DW / 2 - 3, FLOOR_Y[1] - IMG.fx.chair[0].height + 1];
+function drawChair(ctx) {
+  const want = sim.mode === "act" && PC_ACTS.includes(sim.act);
+  if (want !== chair.on) {                              // appear / vanish with a little sparkle burst
+    chair.on = want; chair.t0 = realClock;
+    const [cx, cy] = chairXY();
+    poof = { t0: realClock, x: cx + 13, y: cy + 15 };
+  }
+  const k = reduceMotionUI ? 1 : Math.min(1, (realClock - chair.t0) / CHAIR_S);
+  const level = Math.ceil((chair.on ? k : 1 - k) * 4);
+  if (level <= 0) return;
+  const [cx, cy] = chairXY();
+  ctx.drawImage(chairSteps()[level - 1], cx, cy);
+}
+const chairReady = () => realClock - chair.t0 >= CHAIR_S;   // she sits once it's all there
+
 function frameOf(list, fps) { return list[Math.floor(realClock * fps) % list.length]; }
 
 function render() {
@@ -1234,6 +1269,7 @@ function render() {
     if (act === "tv") lit.push("tv");
     if (act === "computer" || (act && act.startsWith("pc_"))) lit.push("monitor");
   }
+  drawChair(bctx);
   // Buddy
   const ms = realClock * 1000;
   const fr = activityFrame(ms);

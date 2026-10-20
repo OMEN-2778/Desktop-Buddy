@@ -382,6 +382,28 @@ def office_chair():
     return s
 
 
+def office_chair_front():
+    """The swivel chair Buddy conjures at the computer, seen from the front
+    so she can sit in it facing us. 26x31, bottom row = floor, drawn BEHIND
+    her: a high back that rises well above her head (with an oat neck
+    pillow) and shows beside her head and arms, arm pads, the seat's ends,
+    gas lift, star base. Its centre lines up with hers (chair x = her x - 3)."""
+    s = Sprite(26, 31)
+    soft(s, 2, 0, 22, 26, SAGE)                        # high back
+    s.vline(3, 2, 23, SAGE[3]).vline(22, 2, 23, SAGE[1])   # lit left rim, shaded right rim
+    s.vline(7, 6, 22, SAGE[1]).vline(18, 6, 22, SAGE[1])   # stitched side bolsters
+    soft(s, 8, 1, 10, 4, OAT)                           # neck pillow
+    for ax in (0, 21):                                  # arm pads on short posts
+        s.rect(ax, 20, 5, 2, ST[0]).hline(ax + 1, ax + 3, 20, ST[3])
+        s.vline(ax + 2, 22, 24, ST[1])
+    soft(s, 1, 23, 24, 4, SAGE)                         # seat cushion
+    s.rect(12, 27, 2, 2, ST[1]).set(12, 27, ST[3])      # gas lift
+    s.hline(4, 21, 29, ST[0]).hline(5, 20, 28, ST[2])   # star base
+    for cx in (3, 4, 12, 13, 21, 22):                   # casters
+        s.set(cx, 30, P.ink[0])
+    return s
+
+
 BOOKS = [OAT, SAGE, CLAY, WAL, P.steel, POR]
 
 

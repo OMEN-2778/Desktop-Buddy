@@ -159,6 +159,7 @@ def main():
         # her phone, placed relative to Buddy by the page
         "phone": {"frames": [png(F.phone_held(False, f)) for f in range(2)]},
         "phone_call": {"frames": [png(F.phone_held(True))]},
+        "chair": {"frames": [png(F.office_chair_front())]},   # conjured at the computer, placed by the page
     }
 
     # walking: feet y on each floor, and the flight Buddy climbs (straight up,
@@ -178,7 +179,7 @@ def main():
         "wardrobe": (1, bd + 87, "stand"),
         "bath": (1, bt + 16, "bath"),
         "mirror": (1, bt + 56, "stand"),
-        "computer": (1, st + 28, "sit"),
+        "computer": (1, st + 26, "sit"),      # the conjured chair (26 wide) stays clear of the monitor
         "toilet": (1, bt + 39, "sit"),
         "vanity": (1, bt + 56, "stand"),
         "towel": (1, bt + 38, "stand"),
