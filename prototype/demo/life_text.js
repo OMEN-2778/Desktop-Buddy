@@ -5682,6 +5682,14 @@ const LIFE_TEXT = {
           plus: { fun: 5 },
         },
         {
+          name: "薄荷炸排骨",
+          look: "meat",
+          fill: 50,
+          time: 40,
+          blurb: "排骨炸得酥脆，配一把薄荷正解腻",
+          moods: [["foodCrispy", 3], ["foodLight", 2], ["foodTravel", 1], ["foodGreasy", 1]],
+        },
+        {
           name: "野生菌炒饭",
           look: "rice",
           fill: 50,

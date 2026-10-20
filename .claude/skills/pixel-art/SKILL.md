@@ -377,12 +377,14 @@ edits; copy changes into life_text.js.
   odds; burnt fills 60%, great 120% + fun), `mealNewDish` per new cuisine.
 - **Pick-a-thing panel** (`#picker`, `PICK`, user): clicking the bookshelf,
   the TV / sofa, 打游戏 on the computer, 玩手机游戏 on the phone or the stove
-  pops a panel out to the LEFT of the house (left of the needs bars) listing
-  every book / show / game / dish with its picture and a line
-  (`T.blurbs`; dishes: 饱食 + 分钟). Picking sends her with that item
-  (`command(act, item)` -> `sim.chosen` -> `lifeArrive`); 随便来一个 lets her
-  choose. The page gets `--room-left`; the app window grows left
-  (`fit_window` dx). A phone's screen: over the house instead.
+  (the fridge and the dining table too: all three open the dish panel) pops
+  a panel EXACTLY the house's size right over the house (user: every such
+  panel covers the house, `fitPicker`) listing every book / show / game /
+  dish with its picture and a line (`T.blurbs`; dishes: 饱食 + 分钟); a small
+  house gets the `.tight` layout (titles only, 1x pictures). Picking sends
+  her with that item (`command(act, item)` -> `sim.chosen` ->
+  `lifeArrive`); 随便来一个 lets her choose. (`--room-left` / `fit_window` dx
+  remain for anything that opens to the left.)
 - **Item pictures** (`art/src/concept/item_icons.py`, user's idea): covers,
   show cards, game boxes and app icons are a rectangle in one colour ramp
   with one simple pattern — 48 designs each, matched to titles by a hash

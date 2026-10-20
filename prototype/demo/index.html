@@ -479,7 +479,23 @@ body {
 }
 .picker.on { transform: none; opacity: 1; }
 .picker[hidden] { display: none; }
-.picker.over { right: auto; left: calc(-1 * var(--studio-dx, 0px)); width: min(360px, var(--studio-w, 342px)); }   /* no room on the left (a phone): over the house */
+/* user: every panel is exactly the house's size and lies right over it */
+.picker.over { right: auto; left: var(--pick-left, 0px); width: var(--pick-w, 342px); height: var(--pick-h, 118px); transform-origin: 50% 50%; transform: scale(.94); }
+.picker.over.on { transform: none; }
+.picker.over .pk-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+/* a small house: titles only, smaller pictures (the line shows on hover) */
+.picker.tight .pk-head { padding: 2px 6px 2px 10px; }
+.picker.tight .pk-head h3 { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.picker.tight .pk-head h3 .long, .picker.tight .rand .long { display: none; }
+.picker.tight .pk-head button { padding: 1px 8px; font-size: 11px; }
+.picker.tight .pk-body { padding: 2px 6px 6px; }
+.picker.tight .pk-group { margin-top: 4px; font-size: 11px; }
+.picker.tight .pk-grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 4px; }
+.picker.tight .pk-item { padding: 3px 4px; gap: 5px; }
+.picker.tight .pk-item img { width: calc(var(--iw) * 1px); height: calc(var(--ih) * 1px); }
+.picker.tight .pk-item span { display: none; }
+.picker.tight .pk-item b { font-size: 11.5px; }
+.picker.tight .pk-item i { font-size: 10px; }
 .pk-head { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; background: var(--title, #33253b); color: #f7f6fb; }
 .pk-head h3 { margin: 0; flex: 1; font-size: 14px; font-weight: 700; letter-spacing: .06em; }
 .pk-head button { margin: 0; padding: 3px 10px; font-size: 12px; font-weight: 700; }
@@ -696,7 +712,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <div class="sky-hit" id="skyHit"></div>
         <div class="sky-tip" id="skyTip" hidden></div>
       </div>
-      <section class="picker" id="picker" hidden aria-label="选择"><div class="pk-head"><h3></h3><button type="button" class="rand">随便来一个</button><button type="button" class="x" aria-label="关闭">✕</button></div><div class="pk-body"></div></section>
+      <section class="picker" id="picker" hidden aria-label="选择"><div class="pk-head"><h3></h3><button type="button" class="rand">随便<span class="long">来一个</span></button><button type="button" class="x" aria-label="关闭">✕</button></div><div class="pk-body"></div></section>
       <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她弹出互动菜单。"></canvas>
       <div class="ring" id="ring" role="menu" aria-label="和她互动" hidden></div>
       <div class="nametag" id="nametag" aria-hidden="true"></div>
@@ -1870,7 +1886,8 @@ function useFurniture(id, glowOnly = false) {
       : st === "open" ? (blind ? "卷起卷帘，推开窗户，风吹了进来。" : "拉开窗帘，推开窗户，风吹了进来。") : "关上了窗户。");
     return;
   }
-  if (PICK[CLICK_ACT[id]]) { openPicker(CLICK_ACT[id]); return; }   // books, shows, dishes: choose in the panel
+  if (id === "stove" || id === "fridge" || id === "table") { openPicker("cook"); return; }   // all three: pick a dish to cook (user)
+  if (PICK[CLICK_ACT[id]]) { openPicker(CLICK_ACT[id]); return; }   // books, shows: choose in the panel
   if (CLICK_ACT[id]) command(CLICK_ACT[id]);
 }
 
@@ -2079,7 +2096,8 @@ function fit() {
   document.documentElement.style.setProperty("--row-h", 52 + "px");   // the gear + diary row: as tall as the emoji's canvas
   di.style.setProperty("--diary-max", Math.round(Math.max(150, Math.min(320, hPx * 1.1))) + "px");
   if (typeof kickNeeds === "function") kickNeeds();
-  if (wardrobeOpen || diaryOn) { studio.refit(); makeRoom(); }   // what's open above the house got a new size
+  if (wardrobeOpen || diaryOn) { studio.refit(); makeRoom(); }
+  if (pickOn) fitPicker();                          // (fit runs only after the page has loaded)   // what's open above the house got a new size
   if (TAURI) { fitWindow(); requestAnimationFrame(fitWindow); }   // the app window starts hidden: no frames until it's sized
 }
 
@@ -8220,6 +8238,14 @@ const LIFE_TEXT = {
           plus: { fun: 5 },
         },
         {
+          name: "薄荷炸排骨",
+          look: "meat",
+          fill: 50,
+          time: 40,
+          blurb: "排骨炸得酥脆，配一把薄荷正解腻",
+          moods: [["foodCrispy", 3], ["foodLight", 2], ["foodTravel", 1], ["foodGreasy", 1]],
+        },
+        {
           name: "野生菌炒饭",
           look: "rice",
           fill: 50,
@@ -9713,7 +9739,8 @@ function openPicker(act) {
   if (!P_ || sim.mode === "down") return;
   closeRing(); setDiaryOpen(false);
   pickOn = act;
-  pickerEl.querySelector("h3").textContent = P_.title;
+  const [place, ask] = P_.title.split(" · ");                 // a small house shows just the place
+  pickerEl.querySelector("h3").innerHTML = `${place}<span class="long"> · ${ask}</span>`;
   pickBody.replaceChildren();
   for (const g of P_.groups()) {
     const h = document.createElement("div"); h.className = "pk-group"; h.textContent = g.name;
@@ -9734,15 +9761,20 @@ function openPicker(act) {
     pickBody.append(h, grid);
   }
   pickBody.scrollTop = 0;
-  // beside the house, as tall as it (at least a usable height); over the house when there's no room
-  const viewEl = document.getElementById("view");
-  pickerEl.style.setProperty("--pick-top", viewEl.offsetTop + "px");
-  pickerEl.style.setProperty("--pick-h", Math.max(320, viewEl.offsetHeight) + "px");
-  const widgetLeft = document.getElementById("widget").getBoundingClientRect().left;
-  pickerEl.classList.toggle("over", !TAURI && widgetLeft < 380 + 24 && window.innerWidth <= 720);
+  fitPicker();
   pickerEl.hidden = false;
   pickerEl.classList.remove("on"); void pickerEl.offsetWidth; pickerEl.classList.add("on");
   makeRoom();
+}
+// exactly over the house (user): same place, same size
+function fitPicker() {
+  const v = document.getElementById("view");
+  pickerEl.classList.add("over");
+  pickerEl.style.setProperty("--pick-left", v.offsetLeft + "px");
+  pickerEl.style.setProperty("--pick-top", v.offsetTop + "px");
+  pickerEl.style.setProperty("--pick-w", v.offsetWidth + "px");
+  pickerEl.style.setProperty("--pick-h", v.offsetHeight + "px");
+  pickerEl.classList.toggle("tight", v.offsetHeight < 240 || v.offsetWidth < 420);
 }
 function closePicker() {
   if (!pickOn) return;
@@ -10014,7 +10046,6 @@ function fitWindow() {
   const r = w.getBoundingClientRect();
   let right = r.right, bottom = r.bottom;
   if (!setPop.hidden) { const p = setPop.getBoundingClientRect(); right = Math.max(right, p.right + 8); bottom = Math.max(bottom, p.bottom + 8); }
-  if (!pickerEl.hidden) bottom = Math.max(bottom, pickerEl.offsetTop + pickerEl.offsetHeight + document.querySelector(".house-col").getBoundingClientRect().top + 8);
   const width = Math.ceil(right - r.left + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight));
   const height = Math.ceil(bottom - r.top + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom));
   // room made above the house (makeRoom) moves it down in the window: move
