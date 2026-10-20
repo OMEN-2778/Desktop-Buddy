@@ -218,16 +218,15 @@ body {
 .pop.out { translate: 0 -4px; filter: drop-shadow(3px 3px 0 var(--shadow)) opacity(0); }
 .mood-talk.listing .pop { translate: 16px 0; filter: drop-shadow(3px 3px 0 var(--shadow)) opacity(0); pointer-events: none; }
 .pop[hidden] { display: none; }
-/* body: a 2px outline and the fill, both with big stepped round corners (--clip-say, made in fit) */
-.pop .bg { position: absolute; inset: 0; z-index: -1; background: var(--pe); clip-path: var(--clip-say); }
-.pop .bg::after { content: ""; position: absolute; inset: 2px; background: var(--pf); clip-path: var(--clip-say-in); }
-.pop.say { --pe: #8a6446; --pf: #ecd5ad; color: #3d2a1e; margin-left: 14px; }
-.pop.say::before, .pop.say::after {           /* pixel tail pointing left at the face */
-  content: ""; position: absolute; top: 50%; transform: translateY(-50%);
-  clip-path: polygon(100% 0, 100% 100%, 0 50%);
+/* body + tail are ONE pixel shape (sayClip, made in fit): a 2px outline layer
+   and a fill layer, big stepped round corners, a stepped tail pointing left
+   at her face. .bg reaches the tail's length left of the bubble. */
+.pop .bg { position: absolute; inset: 0 0 0 calc(-1 * var(--tail, 16px)); z-index: -1; background: var(--pe); clip-path: var(--clip-say); }
+.pop .bg::after { content: ""; position: absolute; inset: 0; background: var(--pf); clip-path: var(--clip-say-in); }
+.pop.say {
+  --pe: #8a6446; --pf: #ecd5ad; color: #3d2a1e; margin-left: var(--tail, 16px);
+  height: var(--say-h, 60px); padding-block: 0; align-items: center;   /* whole-pixel height keeps every step crisp */
 }
-.pop.say::before { left: -20px; width: 20px; height: 28px; background: #8a6446; }
-.pop.say::after { left: -15px; width: 18px; height: 20px; background: #ecd5ad; }   /* runs 3px into the body to open its outline */
 @keyframes popin { from { opacity: 0; transform: scale(.5) translateX(-10px); } to { opacity: 1; transform: none; } }
 /* her moodlets: hovering (or tapping) the emoji swaps her words for a row of
    pills in the same place, so nothing gets covered. First pill = the
@@ -1010,6 +1009,36 @@ function pillClip(n, u) {
   return `polygon(${pts.join(",")})`;
 }
 
+// The speech bubble as one pixel shape, H px tall: a body with round corners
+// (nR steps of p px on the right, nL on the left, so the left side keeps a
+// straight run for the tail) and a stepped tail T px long, 2h steps tall,
+// centred on its left side. Returns [outline, fill] polygons for .bg (which starts T px
+// left of the bubble); the fill is the outline shape shrunk by one step, so
+// the outline is exactly one step thick everywhere, tail included.
+function sayClip(H, T, nL, nR, p, h) {
+  const rows = Math.round(H / p), c = rows / 2;
+  const insets = n => Array.from({ length: n }, (_, r) => { const dy = n - (r + 0.5); return Math.round(n - Math.sqrt(Math.max(0, n * n - dy * dy))); });
+  const inL = insets(nL), inR = insets(nR);
+  const corner = (ins, n, r) => (r < n ? ins[r] : r >= rows - n ? ins[rows - 1 - r] : 0);
+  const L = [], Rt = [];                    // per row: left edge from .bg's left, inset from the right
+  for (let r = 0; r < rows; r++) {
+    let left = T + corner(inL, nL, r) * p;
+    const k = r < c ? c - r : r - c + 1;    // 1 = the two rows at the tip
+    // slightly hollow sides: a sharp tip that flares into the body
+    if (k <= h) left = Math.min(left, Math.round((T / p) * Math.pow((k - 1) / h, 0.75)) * p);
+    L.push(left); Rt.push(corner(inR, nR, r) * p);
+  }
+  const poly = (L, Rt, r0, r1) => {
+    const pts = [];
+    for (let r = r0; r <= r1; r++) pts.push(`calc(100% - ${Rt[r]}px) ${r * p}px`, `calc(100% - ${Rt[r]}px) ${(r + 1) * p}px`);
+    for (let r = r1; r >= r0; r--) pts.push(`${L[r]}px ${(r + 1) * p}px`, `${L[r]}px ${r * p}px`);
+    return `polygon(${pts.join(",")})`;
+  };
+  const Li = L.map((v, r) => Math.max(v, L[r - 1] ?? v, L[r + 1] ?? v) + p);
+  const Ri = Rt.map((v, r) => Math.max(v, Rt[r - 1] ?? v, Rt[r + 1] ?? v) + p);
+  return [poly(L, Rt, 0, rows - 1), poly(Li, Ri, 1, rows - 2)];
+}
+
 // A rectangle whose corners are pixel-stepped quarter circles: n steps of p px.
 function roundClip(n, p) {
   const ins = [];
@@ -1083,13 +1112,17 @@ function fit() {
   const nb = narrowHouse ? 7 : 9;
   widget.style.setProperty("--clip-btn", roundClip(nb, 2));
   widget.style.setProperty("--clip-btn-in", roundClip(nb - 1, 2));
-  widget.style.setProperty("--clip-say", roundClip(narrowHouse ? 9 : 13, 2));
+  const sayFs = narrowHouse ? 24 : 32, sayH = Math.ceil((sayFs * 1.35 + 16) / 4) * 4;   // a whole, even number of steps
+  const [sayOut, sayIn] = narrowHouse ? sayClip(sayH, 16, 5, 9, 2, 5) : sayClip(sayH, 20, 7, 13, 2, 6);
+  widget.style.setProperty("--say-h", sayH + "px");
+  widget.style.setProperty("--tail", (narrowHouse ? 16 : 20) + "px");
+  widget.style.setProperty("--clip-say", sayOut);
   const sets = document.getElementById("settings"), np = window.innerWidth <= 520 ? 7 : 9;
   sets.style.setProperty("--clip-btn", roundClip(np, 2));
   sets.style.setProperty("--clip-btn-in", roundClip(np - 1, 2));
   sets.style.setProperty("--clip-gear", roundClip(11, 2));            // 42px button: a circle
   sets.style.setProperty("--clip-gear-in", roundClip(10, 2));
-  widget.style.setProperty("--clip-say-in", roundClip(narrowHouse ? 8 : 12, 2));
+  widget.style.setProperty("--clip-say-in", sayIn);
   if (typeof kickNeeds === "function") kickNeeds();
 }
 
