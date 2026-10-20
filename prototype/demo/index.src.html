@@ -64,7 +64,7 @@ body {
 .desk {
   display: grid;
   place-items: center;
-  padding-block: calc(66px + var(--room-top, 0px)) 32px;   /* top: the gear + diary row, and room for what opens above it */
+  padding-block: calc(var(--row-h, 42px) + 24px + var(--room-top, 0px)) 32px;   /* top: the gear + diary row, and room for what opens above it */
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   min-width: 0;
@@ -153,7 +153,7 @@ body {
    room for the studio's pixel outline and drop shadow. */
 .house-col { display: grid; min-width: 0; width: var(--house-w, 684px); }
 .studio-slot {
-  position: absolute; z-index: 2; bottom: calc(100% + 62px); left: calc(-1 * var(--studio-dx, 0px));   /* phones: also spans the needs column (see fit) */
+  position: absolute; z-index: 2; bottom: calc(100% + var(--row-h, 42px) + 20px); left: calc(-1 * var(--studio-dx, 0px));   /* phones: also spans the needs column (see fit) */
   display: grid;
   width: var(--studio-w, 684px);
   grid-template-rows: 0fr;
@@ -339,7 +339,8 @@ body {
    options pop out to the RIGHT as rows of pill bubbles in the ring-menu style ---------- */
 .settings {
   position: absolute; z-index: 20; display: flex; align-items: flex-start; gap: 10px;
-  left: calc(var(--mood-d, 78px) / 2 - 21px); top: -50px;   /* the gear sits right over the emoji; rows grow down from it */
+  /* the gear sits right over the emoji, centred in the diary's row (--row-h); rows grow down from it */
+  left: calc(var(--mood-d, 78px) / 2 - 21px); top: calc(-8px - var(--row-h, 42px) + (var(--row-h, 42px) - 42px) / 2);
   --pill-fs: 14px; cursor: default;
 }
 .settings button, .set-label {
@@ -377,43 +378,65 @@ body {
 .set-gear img { display: block; width: 26px; height: 26px; image-rendering: pixelated; transition: transform .45s cubic-bezier(.3, 1.6, .5, 1); }
 .set-gear[aria-expanded="true"] img { transform: rotate(90deg); }    /* a quarter turn: the 8 teeth land back on the pixel grid */
 .set-gear[aria-expanded="true"]::after { background: var(--panel); }
-.set-pop { display: grid; gap: 10px; justify-items: start; padding-top: 4px; }
+/* never wider than the house (user): from right of the gear to the house's right edge */
+.set-pop { display: grid; gap: 10px; justify-items: start; padding-top: 4px;
+  max-width: calc(var(--house-w, 684px) - var(--mood-d, 78px) / 2 - 31px); }
 .set-pop[hidden] { display: none; }
-.set-row { display: flex; align-items: center; gap: 8px; }
-.set-row > * {
+/* a small house (phones, small 界面大小): the rows open under the gear across
+   the house's full width instead, still never past either of its edges */
+.widget.narrow .set-pop {
+  position: absolute; top: 50px; max-width: none; width: var(--house-w, 342px);
+  left: calc(21px - var(--mood-d, 78px) / 2);
+}
+/* a phone's screen: a house that small can't hold them, so use the 造型室's width */
+@media (max-width: 520px) {
+  .widget.narrow .set-pop { width: var(--studio-w, 342px); left: calc(21px - var(--mood-d, 78px) / 2 - var(--studio-dx, 0px)); }
+}
+/* while the rows are out, her words step aside like the diary box */
+.moodrow.setting .mood-talk { opacity: 0; transition: opacity .2s; }
+.set-row { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+.set-items { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.set-row > .set-label, .set-items > * {
   transform: translateX(calc(var(--k) * -26px - 40px)) scale(.3); opacity: 0;
   transition: transform .38s cubic-bezier(.3, 1.6, .5, 1), opacity .2s;
   transition-delay: calc(var(--k) * 40ms);
 }
-.set-pop.on .set-row > * { transform: none; opacity: 1; }
+.set-pop.on .set-row > .set-label, .set-pop.on .set-items > * { transform: none; opacity: 1; }
 .settings button:focus-visible { outline: 2px dashed var(--focus); outline-offset: 3px; }
 @media (max-width: 520px) { .settings { --pill-fs: 12px; } .settings button, .set-label { padding: 6px 12px; } }
-@media (prefers-reduced-motion: reduce) { .set-row > *, .set-gear img { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .set-row > .set-label, .set-items > *, .set-gear img { transition: none; } }
 /* ---------- diary: a light-wood box like her speech bubble (no tail) in the
    gear's row, right above the bubble and exactly as wide; it shows the
    latest line, and a click pops every recent line up above it ---------- */
 .diary {
-  position: absolute; z-index: 19; top: -50px; height: 42px;
+  position: absolute; z-index: 19; height: var(--say-h, 60px);   /* as tall as the speech bubble */
+  top: calc(-8px - var(--row-h, 42px) + (var(--row-h, 42px) - var(--say-h, 60px)) / 2);
   left: calc(var(--mood-d, 78px) + var(--sky-b, 3px) * 4 + var(--tail, 16px)); right: 0;   /* = the bubble's body */
   --pe: #8a6446; --pf: #ecd5ad; --wood-ink: #3d2a1e;
   transition: opacity .2s, translate .25s cubic-bezier(.3, 1.4, .5, 1);
 }
 .diary.away { opacity: 0; translate: 12px 0; pointer-events: none; }   /* while the settings rows are out */
 .diary-box {
-  position: relative; isolation: isolate; width: 100%; height: 100%; margin: 0; border: 0; padding: 0 18px;
+  position: relative; isolation: isolate; width: 100%; height: 100%; margin: 0; border: 0;
+  padding: 0 calc(var(--say-h, 60px) * .3) 0 calc(var(--say-h, 60px) * .16);   /* the 日记 tag tucked into the round end */
   display: flex; align-items: center; gap: 10px; min-width: 0;
-  background: none; box-shadow: none; color: var(--wood-ink); font-size: 15px; line-height: 1.3; text-align: left; cursor: pointer;
+  background: none; box-shadow: none; color: var(--wood-ink); font-size: var(--diary-fs, 18px); line-height: 1.3; text-align: left; cursor: pointer;
   filter: drop-shadow(3px 3px 0 var(--shadow));
 }
 .diary-box:hover { background: none; }
 .diary-box::before, .diary-box::after, .diary-pop::before, .diary-pop::after { content: ""; position: absolute; z-index: -1; }
-.diary-box::before, .diary-pop::before { inset: 0; background: var(--pe); clip-path: var(--clip-diary); }
-.diary-box::after, .diary-pop::after { inset: 2px; background: var(--pf); clip-path: var(--clip-diary-in); }
+.diary-box::before, .diary-pop::before { inset: 0; background: var(--pe); }
+.diary-box::after, .diary-pop::after { inset: 2px; background: var(--pf); }
+/* the box: the speech bubble's own shape without the tail (same height, same corners) */
+.diary-box::before { clip-path: var(--clip-diary); }
+.diary-box::after { inset: 0; clip-path: var(--clip-diary-in); }
+.diary-pop::before { clip-path: var(--clip-pop); }
+.diary-pop::after { clip-path: var(--clip-pop-in); }
 .diary-box:hover::after, .diary-box[aria-expanded="true"]::after { background: #f3e2c2; }
 .diary-box:active { transform: translateY(2px); }
-.diary-box b { flex: none; font-size: 13px; font-weight: 700; color: #f7ecd8; padding: 2px 9px; position: relative; isolation: isolate; }
+.diary-box b { flex: none; font-size: max(12px, calc(var(--diary-fs, 18px) * .75)); font-weight: 700; color: #f7ecd8; padding: 2px 9px; position: relative; isolation: isolate; }
 .diary-box b::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--pe); clip-path: var(--clip-btn); }
-.diary time, .diary-pop time { flex: none; color: #8a6446; font-size: 13px; font-variant-numeric: tabular-nums; }
+.diary-pop time { flex: none; color: #8a6446; font-size: 13px; font-variant-numeric: tabular-nums; }
 .diary-box span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .diary-box:focus-visible { outline: 2px dashed var(--focus); outline-offset: 3px; }
 /* the list: grows up out of the box, newest line at the bottom (nearest the box) */
@@ -435,12 +458,12 @@ body {
 .diary-pop li { display: grid; grid-template-columns: 3.4em minmax(0, 1fr); gap: 8px; align-items: baseline; }
 .diary-pop li.day { grid-template-columns: 1fr; text-align: center; color: #8a6446; font-size: 12px; letter-spacing: .1em; padding-top: 4px; }
 .diary-pop li.empty { grid-template-columns: 1fr; color: #8a6446; }
-@media (max-width: 520px) { .diary-box { font-size: 13px; padding: 0 12px; gap: 7px; } .diary-box time { display: none; } }
+@media (max-width: 520px) { .diary-box { gap: 6px; } .diary-box b { padding: 1px 6px; } }
 @media (prefers-reduced-motion: reduce) { .diary, .diary-pop { transition: none; } }
 /* ---------- the desktop app: the window is the game, see-through around it */
 html.desktop, html.desktop body { background: transparent !important; }
 html.desktop body { background-image: none !important; overflow: hidden; }
-html.desktop .desk { padding: calc(64px + var(--room-top, 0px)) 40px 48px; place-items: start; }   /* pinned top-left: the window grows right/down around it */
+html.desktop .desk { padding: calc(var(--row-h, 42px) + 22px + var(--room-top, 0px)) 40px 48px; place-items: start; }   /* pinned top-left: the window grows right/down around it */
 html.desktop .console { display: none; }
 html.desktop .desk, html.desktop .moodrow, html.desktop .sky-hit { cursor: grab; }   /* press here to move the window */
 /*__SHARED_STUDIO_CSS__*/
@@ -505,7 +528,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         </div>
         <div class="diary" id="diary">
           <div class="diary-pop" id="diaryPop" hidden><ol id="diaryList" aria-label="最近发生的事"></ol></div>
-          <button type="button" class="diary-box" id="diaryBox" aria-expanded="false" aria-controls="diaryPop" title="看看最近发生的事"><b>日记</b><time></time><span></span></button>
+          <button type="button" class="diary-box" id="diaryBox" aria-expanded="false" aria-controls="diaryPop" title="看看最近发生的事"><b>日记</b><span></span></button>
         </div>
         <div class="mood-face" id="moodFace" tabindex="0" role="button" aria-label="情绪" aria-expanded="false" aria-controls="moodTip">
           <canvas id="mood" width="78" height="78"></canvas>
@@ -568,7 +591,7 @@ if (TAURI) {
   window.addEventListener("error", e => report(`${e.message} @${e.lineno}:${e.colno}`));
   window.addEventListener("unhandledrejection", e => report(`unhandled: ${e.reason && (e.reason.stack || e.reason)}`));
 }
-// 界面大小 (% or "auto" = fit the page), 总在最上层, 自动保存 (every 5 minutes, or never)
+// 界面大小 (% or "auto" = fit the page), 置顶游戏, 自动保存 (every 5 minutes, or never)
 const prefs = { scale: TAURI ? 100 : "auto", onTop: false, autosave: true };
 // 界面大小 counts SCREEN pixels: 25% = one game pixel is one pixel of the
 // monitor (at any Windows display scaling), 100% = 4 of them; every step is
@@ -901,7 +924,12 @@ function step(dtGame, dtReal) {
   if (day !== sim.lastDay) { sim.lastDay = day; log(`—— 第 ${day} 天 · ${SEASONS[seasonOf(sim.t).i].name} ——`, "day"); }
   updateWeather(dtGame);
   // needs
-  const n = sim.needs, eff = sim.mode === "act" ? (EFFECT[sim.act] || {}) : {};
+  const n = sim.needs;
+  let eff = sim.mode === "act" ? (EFFECT[sim.act] || {}) : {};
+  if (sim.mode === "act" && sim.act === "eat" && sim.meal?.quality) {   // a burnt meal fills less, a great one cheers her up
+    const q = sim.meal.quality;
+    eff = { ...eff, hunger: eff.hunger * ({ burnt: 0.6, plain: 1, good: 1.1, great: 1.2 }[q] || 1), ...(q === "great" ? { fun: 0.3 } : {}) };
+  }
   for (const k of Object.keys(n)) {
     let d = -DECAY[k];
     if (sim.act === "sleep" && sim.mode === "act") d *= k === "energy" ? 0 : k === "bladder" ? 0.35 : 0.4;
@@ -1269,6 +1297,7 @@ function fit() {
   widget.style.setProperty("--studio-w", (narrowHouse ? wPx + g + barW : wPx) + "px");
   widget.style.setProperty("--studio-dx", (narrowHouse ? g + barW : 0) + "px");
   widget.style.setProperty("--pop-wide", narrowHouse ? "1" : "0");
+  widget.classList.toggle("narrow", narrowHouse);
   // text and round corners grow with the house: k = 1 at 100% (phones in auto: 0.75)
   const k = prefs.scale !== "auto" ? s / 4 : narrowHouse ? 0.75 : 1;
   const sayFs = Math.max(14, Math.round(32 * k));             // her words: big
@@ -1294,9 +1323,15 @@ function fit() {
   widget.style.setProperty("--clip-say-in", sayIn);
   // the diary box: the bubble's wood without the tail, as tall as the gear
   const di = document.getElementById("diary");
-  di.style.setProperty("--clip-diary", roundClip(10, 2));
-  di.style.setProperty("--clip-diary-in", roundClip(9, 2));
-  di.style.setProperty("--clip-btn", roundClip(6, 2));
+  const nR = Math.max(6, Math.round(13 * k));
+  const [dOut, dIn] = sayClip(sayH, 0, nR, nR, 2, 0);
+  di.style.setProperty("--clip-diary", dOut);
+  di.style.setProperty("--clip-diary-in", dIn);
+  di.style.setProperty("--clip-pop", roundClip(nR, 2));
+  di.style.setProperty("--clip-pop-in", roundClip(nR - 1, 2));
+  di.style.setProperty("--clip-btn", roundClip(Math.max(5, Math.round(8 * k)), 2));
+  di.style.setProperty("--diary-fs", Math.max(13, Math.round(19 * k)) + "px");
+  document.documentElement.style.setProperty("--row-h", Math.max(42, sayH) + "px");   // the gear + diary row
   di.style.setProperty("--diary-max", Math.round(Math.max(150, Math.min(320, hPx * 1.1))) + "px");
   if (typeof kickNeeds === "function") kickNeeds();
   if (wardrobeOpen || diaryOn) { studio.refit(); makeRoom(); }   // what's open above the house got a new size
@@ -1416,6 +1451,7 @@ function drawChair(ctx) {
 }
 const chairReady = () => realClock - chair.t0 >= CHAIR_S;   // she sits once it's all there
 
+const DREAMS = ["heart", "star", "note", "bowl", "game", "book"];   // what she dreams of, shown in a bubble now and then
 function frameOf(list, fps) { return list[Math.floor(realClock * fps) % list.length]; }
 
 function render() {
@@ -1481,11 +1517,11 @@ function render() {
   grade(bctx, f, lit);
   // things that glow on their own: screens, flames, steam
   if (act === "tv") {
-    const ch = Object.keys(IMG.tv)[Math.floor(realClock / 6) % 4];
+    const ch = IMG.tv[sim.item?.screen] ? sim.item.screen : Object.keys(IMG.tv)[Math.floor(realClock / 6) % 4];
     bctx.drawImage(frameOf(IMG.tv[ch], 4), D.screens.tv.x, D.screens.tv.y);
   }
   if (act === "computer") {
-    const g = Object.keys(IMG.mon)[Math.floor(realClock / 8) % 3];
+    const g = IMG.mon[sim.item?.screen] ? sim.item.screen : Object.keys(IMG.mon)[Math.floor(realClock / 8) % 3];
     bctx.drawImage(frameOf(IMG.mon[g], 5), D.screens.monitor.x, D.screens.monitor.y);
   }
   if (act && act.startsWith("pc_")) bctx.drawImage(frameOf(IMG.app[act.slice(3)], act === "pc_video" ? 2 : 3), D.screens.monitor.x, D.screens.monitor.y);
@@ -1493,7 +1529,13 @@ function render() {
   if (act === "eat") bctx.drawImage(frameOf(IMG.fx.meal, 4), D.fx.meal.x, D.fx.meal.y);
   if (act === "water_living" || act === "water_study") bctx.drawImage(frameOf(IMG.fx[act], 6), D.fx[act].x, D.fx[act].y);
   const down = sim.mode === "down";
-  if (fr.emote || sleeping || down) bctx.drawImage(emoteCanvas(down ? "skull" : sleeping ? "zzz" : fr.emote), emoteAt[0], emoteAt[1] + (down ? Math.floor(realClock * 2) % 2 : 0));
+  if (sleeping) {
+    // Zs drift up from the pillow; now and then a dream bubble instead (user:
+    // not the same dark zzz bubble all night)
+    const cyc = Math.floor(realClock / 26), inDream = realClock % 26 > 19;
+    if (inDream) bctx.drawImage(emoteCanvas(DREAMS[cyc % DREAMS.length]), emoteAt[0], emoteAt[1]);
+    else bctx.drawImage(frameOf(IMG.fx.sleep_z, 4), emoteAt[0] - 2, emoteAt[1] - 6);
+  } else if (fr.emote || down) bctx.drawImage(emoteCanvas(down ? "skull" : fr.emote), emoteAt[0], emoteAt[1] + (down ? Math.floor(realClock * 2) % 2 : 0));
   if (down) drawRevive(bctx);
   drawClickFx(bctx);
   vctx.imageSmoothingEnabled = false;
@@ -1751,9 +1793,13 @@ document.getElementById("nextSeason").addEventListener("click", () => {
 // their condition holds, the rest run out. All text lives in life_text.js.
 /*__LIFE_TEXT_JS__*/
 const T = LIFE_TEXT, ML = T.moodlets;
+// {书} {游戏} {节目} {零食} anywhere else: any title from the catalogs
+Object.assign(T.fill, { 书: T.reading.flatMap(g => g.books), 节目: T.tv.flatMap(k => k.shows),
+  游戏: [...T.games, ...T.phoneGames].flatMap(g => g.games), 零食: T.snacks });
 const MOOD = Object.fromEntries(D.moods.map(([k, name, color]) => [k, { name, color }]));
 const LEVEL_WORD = ["", "有点", "", "非常"];
 function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+const one = v => (Array.isArray(v) ? pick(v) : v);   // a line, or one of its variants
 // "{食物}" -> a random dish; vars pins a value so diary and words agree
 function fill(text, vars = {}) {
   vars.名字 ??= nameOf(); vars.她 ??= ta();
@@ -1764,9 +1810,9 @@ function addMood(id, { vars = {}, diary = true, words = true } = {}) {
   const m = ML[id];
   if (!m) return;
   const had = moods.has(id);
-  moods.set(id, { until: m.min ? sim.t + m.min : null, t: sim.t });
+  moods.set(id, { until: m.min ? sim.t + m.min : null, t: sim.t, vars: had ? moods.get(id).vars : vars });
   if (had) return;                 // refreshed quietly
-  if (diary && m.diary) log(fill(m.diary, vars));
+  if (diary && m.diary) log(fill(one(m.diary), vars));
   if (words && m.say) speak(fill(pick(m.say), vars));
 }
 function emotion() {
@@ -1817,7 +1863,24 @@ function weighted(list) {               // [[id, weight], ...] -> id (or null)
   for (const [id, w] of list) if ((r -= w) < 0) return id;
   return null;
 }
+// what she reads / watches / plays / cooks: picked when she gets there, so
+// the screen, her words and the diary all agree. -> sim.item { list, kind, vars, screen }
+const CATALOG = {
+  read: () => ["reading", "books", "书"], tv: () => ["tv", "shows", "节目"],
+  computer: () => ["games", "games", "游戏"], phone_game: () => ["phoneGames", "games", "游戏"],
+};
+function pickItem(act) {
+  if (act === "cook") {
+    const c = pick(T.cuisines);
+    return { kind: c, vars: { 菜系: c.name, 食物: pick(c.dishes) } };
+  }
+  if (act === "snack") return { vars: { 零食: pick(T.snacks) } };
+  if (!CATALOG[act]) return null;
+  const [list, items, key] = CATALOG[act](), kind = pick(T[list]);
+  return { kind, vars: { [key]: pick(kind[items]) }, screen: kind.screen };
+}
 function lifeArrive(act) {
+  sim.item = pickItem(act);
   if (act === "eat") sim.meal = { ...(sim.meal || {}), full: sim.needs.hunger > 95 };
   if (act === "sleep" && !sim.nap && emotion().key === "tense" && Math.random() < 0.3) sim.insomnia = true;
 }
@@ -1825,41 +1888,58 @@ function lifeFinish(act) {
   const n = sim.needs, h = hour(), r = Math.random();
   switch (act) {
     case "cook": {
-      const food = pick(T.fill.食物);
-      sim.meal = { food, cooked: true, burnt: r < 0.12 };
-      if (sim.meal.burnt) {
-        addMood("burnt", { vars: { 食物: food } });
-        if (r < 0.04) { addMood("nearFire"); lifeEvent("smokeAlarm"); }
+      const it = sim.item || pickItem("cook"), c = it.kind, vars = it.vars;
+      // how it turned out: a clear head cooks better, a foggy one burns things
+      const e = emotion().key, sharp = ["focused", "inspired", "confident", "happy"].includes(e), foggy = ["dazed", "tense", "angry"].includes(e);
+      const burnt = 0.1 + (foggy ? 0.1 : 0) - (sharp ? 0.04 : 0), great = 0.14 + (sharp ? 0.1 : 0);
+      const quality = r < burnt ? "burnt" : r < burnt + great ? "great" : r < 0.62 ? "good" : "plain";
+      sim.meal = { vars, cooked: true, quality, spicy: !!c.spicy, sweet: !!c.sweet };
+      const seen = (lifeFlags.cuisines ||= []);
+      if (!seen.includes(c.name)) { seen.push(c.name); if (seen.length > 1) addMood("mealNewDish", { vars }); }
+      if (quality === "burnt") {
+        addMood("mealBurnt", { vars });
+        if (Math.random() < 0.3) { addMood("nearFire"); lifeEvent("smokeAlarm"); }
       }
       break;
     }
     case "eat": {
-      const m = sim.meal || {};
-      if (!m.burnt) addMood(m.cooked ? "goodMeal" : "plainMeal", { vars: { 食物: m.food || pick(T.fill.食物) } });
+      const m = sim.meal || { vars: { 食物: pick(T.fill.食物) }, quality: "plain" }, vars = m.vars;
+      if (m.quality !== "burnt") addMood({ plain: "mealPlain", good: "mealGood", great: "mealGreat" }[m.quality] || "mealPlain", { vars });
+      if (m.spicy) addMood(Math.random() < 0.3 ? "mealTooSpicy" : "mealSpicy", { vars, diary: false });
+      if (m.sweet) addMood("mealSweet", { vars, diary: false });
       if (m.full) addMood("stuffed");
       sim.meal = null;
       break;
     }
-    case "snack": addMood(r < 0.08 ? "expired" : "snack"); break;
-    case "tv": { const id = weighted([["funnyShow", 30], ["documentary", 25], ["news", 15], ["song", 22], ["sadMovie", 8]]); addMood(id); break; }
-    case "computer":
-      if (h < 4 || h >= 23.5) addMood("lateGame");
-      else addMood(r < 0.5 ? "gameWin" : r < 0.65 ? "gameLose" : null);
+    case "snack": addMood(weighted(T.outcomes.snack), { vars: sim.item?.vars || { 零食: pick(T.snacks) } }); break;
+    case "tv": case "phone_game": {
+      const it = sim.item || pickItem(act);
+      addMood(weighted(it.kind.moods), { vars: it.vars });
       break;
-    case "read": addMood(n.energy < 30 ? "bookNap" : r < 0.55 ? "goodLine" : r < 0.8 ? "finishBook" : null); break;
+    }
+    case "computer": {
+      const it = sim.item || pickItem(act);
+      if (h < 4 || h >= 23.5) addMood("lateGame", { vars: it.vars });
+      else addMood(weighted(it.kind.moods), { vars: it.vars });
+      break;
+    }
+    case "read": {
+      const it = sim.item || pickItem(act), vars = it.vars;
+      if (n.energy < 30) addMood("bookNap", { vars });
+      else addMood(r < 0.12 ? "finishBook" : r < 0.26 ? "goodLine" : weighted(it.kind.moods), { vars });
+      break;
+    }
     case "art": addMood("artLook"); break;
     case "window": addMood("windowGaze"); break;
     case "bath": addMood("goodBath"); if (r < 0.15) addMood("bathIdea"); if (n.hygiene > 90) addMood("smellGood", { words: false }); break;
     case "towel": addMood("warmTowel"); break;
     case "wash": lifeFlags.bedHair = false; moods.delete("bedHair"); addMood("mirror"); break;
     case "water_living": case "water_study": lifeFlags.watered[act] = sim.t; addMood("plantHappy"); break;
-    case "pc_code": addMood("codeFlow"); if (r < 0.25) addMood("bugFixed"); break;
-    case "pc_video": case "phone_video": addMood("friendVideo"); break;
-    case "pc_forum": addMood(r < 0.85 ? "forumFun" : "forumFight"); break;
-    case "phone_call": addMood("momCall", { vars: {} }); if (r < 0.3) addMood("homesick"); break;
-    case "phone_text": addMood("gotReply"); break;
-    case "phone_feed": addMood(r < 0.6 ? "feedFun" : r < 0.85 ? "feedEnvy" : null); break;
-    case "phone_game": if (r < 0.5) addMood("phoneWin"); break;
+    case "pc_code": case "pc_video": case "pc_forum": case "phone_video": case "phone_call": case "phone_text": case "phone_feed":
+      if (sim.forced) { addMood(sim.forced); if (sim.forced === "momCall" && r < 0.3) addMood("homesick"); }   // the call / video an event started
+      else addMood(weighted(T.outcomes[act]), { vars: { 朋友: pick(T.fill.朋友 || ["老朋友"]) } });
+      sim.forced = null;
+      break;
     case "dance": addMood("danced"); break;
     case "sleep":
       if (sim.nap || h < 5 || h >= 14) break;      // a nap, or up in the night for the toilet
@@ -1883,7 +1963,7 @@ function lifeSeason(i) { addMood(["spring", "summer", "autumn", "winter"][i], { 
 function lifeEvent(id, vars = {}) {
   const e = T.events[id];
   if (!e) return;
-  if (e.diary) log(fill(e.diary, vars));
+  if (e.diary) log(fill(one(e.diary), vars));
   if (e.say && !asleep()) speak(fill(pick(e.say), vars));
 }
 function busyWith(...acts) { return sim.mode === "act" && acts.includes(sim.act); }
@@ -1900,8 +1980,8 @@ const EVENTS = [
   ["spill", c => ["computer", "pc_video", "pc_forum", "pc_code"].includes(c.act), 0.05, 5760],
   ["parcel", c => c.awake && c.h >= 10 && c.h < 18, 0.03, 2880, () => {
     const vars = {}; lifeEvent("parcel", vars); addMood(Math.random() < 0.75 ? "parcelGood" : "parcelOdd", { words: false }); }],
-  ["momCall", c => c.h >= 17 && c.h < 21 && free(), 0.1, 5 * 1440, () => { lifeEvent("momCall"); sim.queue = []; startAct("phone_call", true); }],
-  ["friendVideo", c => c.act === "computer" && c.h >= 19 && c.h < 23, 0.25, 4 * 1440, () => { lifeEvent("friendVideo"); startAct("pc_video", true); }],
+  ["momCall", c => c.h >= 17 && c.h < 21 && free(), 0.1, 5 * 1440, () => { lifeEvent("momCall"); sim.queue = []; startAct("phone_call", true); sim.forced = "momCall"; }],
+  ["friendVideo", c => c.act === "computer" && c.h >= 19 && c.h < 23, 0.25, 4 * 1440, () => { lifeEvent("friendVideo"); startAct("pc_video", true); sim.forced = "friendVideo"; }],
   ["bill", c => c.awake && c.se.day % 7 === 0 && c.h >= 10, 1, 6 * 1440],
   ["magazine", c => c.awake && c.se.day === 10 && c.h >= 9, 1, 10 * 1440],
   ["postcard", c => c.awake && c.se.day === 5 && c.h >= 10, 1, 10 * 1440],
@@ -1919,6 +1999,20 @@ const EVENTS = [
   ["mosquito", c => c.sleeping && !sim.nap && c.se.i === 1, 0.06, 1440, () => { lifeEvent("mosquito"); addMood("wokenUp", { diary: false, words: false }); }],
   ["sleepTalk", c => c.sleeping, 0.06, 1440, () => { const t = pick(T.events.sleepTalk.say); log(`说梦话：「${t}」`); speak(`（梦话）${t}`, true); }],
 ];
+// everyday events written in life_text.js with a `when`: tags joined with "+"
+const WHEN = {
+  morning: c => c.awake && c.h >= 6 && c.h < 10, day: c => c.awake && c.day, evening: c => c.awake && c.h >= 18 && c.h < 22,
+  night: c => c.awake && (c.h >= 22 || c.h < 4), sleeping: c => c.sleeping,
+  rain: () => weather.kind === "rain", snow: () => weather.kind === "snow", clear: c => c.clear, windowOpen: c => c.open,
+  tv: c => c.act === "tv", computer: c => !!c.act && (c.act === "computer" || c.act.startsWith("pc_")), cooking: c => c.act === "cook",
+  reading: c => c.act === "read", bath: c => c.act === "bath", walking: () => sim.mode === "walk", phone: c => !!c.act && c.act.startsWith("phone_"),
+  spring: c => c.se.i === 0, summer: c => c.se.i === 1, autumn: c => c.se.i === 2, winter: c => c.se.i === 3,
+};
+for (const [id, e] of Object.entries(T.events)) {
+  if (!e.when) continue;
+  const tags = e.when.split("+").map(t => WHEN[t.trim()]).filter(Boolean);
+  EVENTS.push([id, c => tags.every(f => f(c)), e.chance || 0.05, e.cd || 2880, () => { lifeEvent(id); if (e.mood) addMood(e.mood, { diary: false, words: false }); }]);
+}
 const eventLast = {};
 let lastHour = -1, lastFestivalDay = 0;
 function rollEvents() {
@@ -1934,7 +2028,7 @@ function rollEvents() {
   if (h >= 9 && c.awake && lastFestivalDay !== day) {
     lastFestivalDay = day;
     const f = T.festivals.find(f => f.season === c.se.i && f.day === c.se.day);
-    if (f) { log(`今天是${f.name}。` + f.diary); speak(pick(f.say)); addMood(f.mood || "festival", { diary: false, words: false }); if (f.sad) addMood("festivalSad", { diary: false, words: false }); }
+    if (f) { log(`今天是${f.name}。` + one(f.diary)); speak(pick(f.say)); addMood(f.mood || "festival", { diary: false, words: false }); if (f.sad) addMood("festivalSad", { diary: false, words: false }); }
     if (day === 30) { log("今天是生日！给自己做了一个小蛋糕，许了个愿。"); speak("生日快乐，我！"); addMood("birthday", { diary: false, words: false }); }
     if (day === 14 || day === 56) { log(`搬进这个小屋已经${day}天了。`); speak("这里越来越像家了"); addMood("anniversary", { diary: false, words: false }); }
   }
@@ -1961,7 +2055,7 @@ function collapse(cause) {
   const p = here();
   sim.route = [[Math.round(p.x), FLOOR_Y[storeyOfY(p.y)]]]; sim.s = 0;
   sim.mode = "down"; sim.act = null; sim.queue = []; sim.down = { cause, t: sim.t };
-  log(T.collapse[cause]);
+  log(fill(one(T.collapse[cause])));
   speak("……", true);
 }
 function revive() {
@@ -1981,15 +2075,21 @@ function revive() {
 // ---------- her own words
 function thought() {
   const e = emotion(), a = sim.mode === "act" ? sim.act : null, h = hour(), se = seasonOf(sim.t).i;
-  const pool = [...T.thoughts[e.key], ...T.thoughts[e.key]];           // feelings first
-  if (a && T.acts[a]) pool.push(...T.acts[a], ...T.acts[a]);
-  for (const [id] of moods) if (ML[id].say) pool.push(...ML[id].say);
+  // [line, vars]: what she's doing and what she feels about keep their own
+  // book / show / dish, so her words match the diary
+  const pool = [], add = (lines, vars = {}, n = 1) => { for (let i = 0; i < n; i++) for (const t of lines || []) pool.push([t, vars]); };
+  add(T.thoughts[e.key], {}, 2);                                        // feelings first
+  if (a && T.acts[a]) add(T.acts[a], sim.item?.vars || {}, 2);
+  for (const [id, m] of moods) add(ML[id].say, m.vars || {});
   const sc = T.scene;
-  if (h >= 6 && h < 9) pool.push(...sc.wake); else if (h >= 11.5 && h < 13.5) pool.push(...sc.noon);
-  else if (h >= 17 && h < 19) pool.push(...sc.dusk); else if (h >= 22.5 || h < 5) pool.push(...sc.late);
-  pool.push(...(weather.kind === "rain" ? sc.rain : weather.kind === "snow" ? sc.snow : sc.sunny));
-  if (se === 1) pool.push(...sc.summer); if (se === 3) pool.push(...sc.winter);
-  return fill(pick(pool.filter(t => t !== lastSaid)));
+  if (h >= 6 && h < 9) add(sc.wake); else if (h >= 11.5 && h < 13.5) add(sc.noon);
+  else if (h >= 17 && h < 19) add(sc.dusk); else if (h >= 22.5 || h < 5) add(sc.late);
+  if (h >= 21 || h < 5) add(sc.night);
+  add(weather.kind === "rain" ? sc.rain : weather.kind === "snow" ? sc.snow : sc.sunny);
+  add([sc.spring, sc.summer, sc.autumn, sc.winter][se]);
+  const choices = pool.filter(([t]) => t !== lastSaid);
+  const [t, vars] = pick(choices.length ? choices : pool);
+  return fill(t, { ...vars });
 }
 
 const IMG_MOOD = {};
@@ -2325,10 +2425,9 @@ const SETTINGS = [
           title: `每个游戏像素 = ${+(cur / 25).toFixed(2)} 个屏幕像素` }),
         pill("+", { label: "放大", disabled: up === undefined, onClick: () => setScale(up) }),
       ];
-      if (!TAURI) out.push(pill("适应窗口", { pressed: prefs.scale === "auto", onClick: () => setScale("auto") }));
       return out;
     } },
-  { label: "总在最上层", role: "radiogroup", items: () => [[true, "开"], [false, "关"]].map(([v, name]) =>
+  { label: "置顶游戏", role: "radiogroup", items: () => [[true, "开"], [false, "关"]].map(([v, name]) =>
       pill(name, { pressed: prefs.onTop === v, disabled: !TAURI, title: TAURI ? "" : "桌面版里才能用",
         onClick: b => { setOnTop(v); b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); } })) },
   { label: "存档", role: "group", items: () => [
@@ -2376,8 +2475,11 @@ function buildSettings() {
     const row = document.createElement("div");
     row.className = "set-row"; row.setAttribute("role", st.role); row.setAttribute("aria-label", st.label);
     const lab = document.createElement("span"); lab.className = "set-label"; lab.textContent = st.label; lab.dataset.label = st.label;
-    const items = [lab, ...st.items()];
-    items.forEach((el, i) => { el.style.setProperty("--k", i); row.appendChild(el); });   // nearest the gear pops first
+    // the label, then its pills, which wrap onto more lines rather than run past the house
+    const box = document.createElement("div"); box.className = "set-items";
+    lab.style.setProperty("--k", 0); row.appendChild(lab);
+    st.items().forEach((el, i) => { el.style.setProperty("--k", i + 1); box.appendChild(el); });   // nearest the gear pops first
+    row.appendChild(box);
     setPop.appendChild(row);
   }
 }
@@ -2413,6 +2515,7 @@ function applySettings(st) {
 function setSettingsOpen(open) {
   setGear.setAttribute("aria-expanded", String(open));
   diaryEl.classList.toggle("away", open);          // its rows run where the diary box sits
+  moodrow.classList.toggle("setting", open);
   if (open) {
     setDiaryOpen(false);
     setPop.hidden = false;
@@ -2638,10 +2741,9 @@ function diaryItem(li) {
 }
 function syncDiary() {
   const li = logEl.firstElementChild;
-  const time = diaryBox.querySelector("time"), text = diaryBox.querySelector("span");
-  if (!li) { time.textContent = ""; text.textContent = "今天还没有写什么。"; }
-  else if (li.classList.contains("day")) { time.textContent = ""; text.textContent = li.textContent; }
-  else { time.textContent = li.querySelector("time").textContent; text.textContent = li.querySelector("span").textContent; }
+  // just the words: the times show in the opened list, so more of the line fits here
+  const text = diaryBox.querySelector("span");
+  text.textContent = !li ? "今天还没有写什么。" : li.classList.contains("day") ? li.textContent : li.querySelector("span").textContent;
   if (diaryOn) fillDiary();
 }
 function fillDiary() {
@@ -2680,8 +2782,9 @@ function makeRoom() {
   const desk = document.querySelector(".desk");
   const u = parseFloat(getComputedStyle(document.getElementById("widget")).getPropertyValue("--u")) || 4;
   let need = 0;                                         // px needed above the mood row's top
-  if (wardrobeOpen) need = Math.max(need, 62 + studioEl.offsetHeight + 4 * u);
-  if (diaryOn) need = Math.max(need, 58 + diaryPop.offsetHeight);
+  const mTop = moodrow.getBoundingClientRect().top, rowH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-h")) || 42;
+  if (wardrobeOpen) need = Math.max(need, rowH + 20 + studioEl.offsetHeight + 4 * u);
+  if (diaryOn) need = Math.max(need, mTop - diaryBox.getBoundingClientRect().top + 8 + diaryPop.offsetHeight);
   need += 8;
   // the smallest room that fits it (a centred page moves by half: iterate)
   for (let i = 0; i < 12; i++) {

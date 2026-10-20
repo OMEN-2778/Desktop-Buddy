@@ -171,6 +171,9 @@ piece side by side — review new pieces there at 6x).
   toilet when the bladder drops under 15. Check a change with a multi-day
   headless run (needs' daily minimums, collapses, accidents) — needs should
   take a while to come back but never run out.
+- **Sleeping**: Zs drift up from the pillow (`sleep_z_fx`, light blue with a
+  white rim — the old static dark zzz bubble was disliked); for ~7 s of
+  every 26 a dream bubble (`DREAMS` emotes) shows instead.
 - **Wind-up** (user): a command (furniture click, ring menu) waits 0.3–1 s
   (`sim.windup`) before she sets off; she halts meanwhile.
 - **Real scale**: wall 45px ≈ 2.6m → 1px ≈ 6cm. Desk 13px, worktop 16px,
@@ -293,15 +296,22 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   `#moodrow`) and its rows open to the RIGHT, growing downward; in the
   desktop app `fitWindow` also covers the open menu so it is never clipped.
   The emoji lines up with the house's left edge, never with the open bars.
-- **Diary box** (`#diary`): in the gear's row, right above the speech
-  bubble and exactly as wide as its body; the bubble's wood, no tail. Shows
-  the latest diary line; a click pops the whole recent list (`logEl`, the
+- **Diary box** (`#diary`): in the gear's row (`--row-h`), right above the
+  speech bubble: as wide as its body, as tall (`--say-h`) and the same shape
+  (`sayClip` without the tail). The 日记 tag sits in its round left end; it
+  shows only the latest line's words (times appear in the opened list), so
+  more of the line fits. A click pops the whole recent list (`logEl`, the
   one the save keeps) up above it, newest at the bottom. It steps aside
-  while the settings rows are out (they run where it sits).
-- **Settings rows** (`SETTINGS`): 时间流速, 界面大小 (− 100% + 适应窗口;
+  while the settings rows are out, and so do her words.
+- **Settings menu**: never past the house's left or right edge (user):
+  `.set-pop` max-width ends at the house's right edge and each row's pills
+  wrap after the label (`.set-items`); with a small house (`.narrow`) the
+  rows open under the gear across the house width (on a phone's screen,
+  the 造型室's width).
+- **Settings rows** (`SETTINGS`): 时间流速, 界面大小 (− 100% +;
   counted in SCREEN pixels: 25% = one game pixel per monitor pixel, user's
   smallest; 100% = 4; the house canvas is drawn at device resolution
-  (`devPx`), `scale` is CSS px per house px; text keeps a readable minimum), 总在最上层
+  (`devPx`), `scale` is CSS px per house px; text keeps a readable minimum), 置顶游戏
   (desktop app only), 存档 (保存 / one 自动保存 switch: 每 5 分钟自动保存 <->
   不自动保存 / 导出 (browser) / 导入 / 重新开始, which asks twice), and in the desktop app 存档位置
   (默认位置 or the folder's name / 打开 / 更改 / 恢复默认).
@@ -343,8 +353,22 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
 
 **Emotions (demo)** — Sims-style moodlets, all text in
 `prototype/demo/life_text.js`, which mirrors the user's Claude Doc
-"Buddy 情绪与事件文本" (https://claude.ai/code/artifact/cc0511bd-cb89-43d3-9d96-f3dd8a5c3135):
-the doc is the source the user edits; copy changes into life_text.js.
+"Buddy 情绪与事件文本" (https://claude.ai/code/artifact/cc0511bd-cb89-43d3-9d96-f3dd8a5c3135),
+tab 第二版：扩充文本 (the first tab is the original design, incl. traits,
+skills, wishes and chains not built yet): the doc is the source the user
+edits; copy changes into life_text.js.
+- **Variants** (user): every line comes in several wordings — `say` arrays
+  of 5–6, `diary` arrays of 3–4 (`one()` picks); keep it that way.
+- **Catalogs**: `reading` (genres → books → reactions), `tv` (kinds →
+  shows, `screen` = TV picture), `games` / `phoneGames` (`screen` = monitor
+  picture), `cuisines` (dishes, spicy / sweet), `snacks`, and `outcomes`
+  for the phone / computer social acts. `pickItem` chooses at arrival
+  (`sim.item`), so the screen, her words (`thought()` fills act lines with
+  `sim.item.vars`, moodlet lines with the vars they were added with) and the
+  diary agree. Cooking rolls burnt / plain / good / great (mood shifts the
+  odds; burnt fills 60%, great 120% + fun), `mealNewDish` per new cuisine.
+- **Events** with a `when` (tags joined by +, see `WHEN`) are added to
+  `EVENTS` from the text file; others keep their conditions in the page.
 Moodlets add points to one emotion, the top sum wins (1-2 有点, 3-5, 6+ 非常),
 condition moodlets last while true. Events roll once a game hour with
 cooldowns; her words queue so bubbles never cut each other off. Social

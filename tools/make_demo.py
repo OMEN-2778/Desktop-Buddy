@@ -160,6 +160,7 @@ def main():
         "phone": {"frames": [png(F.phone_held(False, f)) for f in range(2)]},
         "phone_call": {"frames": [png(F.phone_held(True))]},
         "chair": {"frames": [png(F.office_chair_front())]},   # conjured at the computer, placed by the page
+        "sleep_z": {"frames": [png(F.sleep_z_fx(f)) for f in range(12)]},   # over her pillow, placed by the page
     }
 
     # walking: feet y on each floor, and the flight Buddy climbs (straight up,

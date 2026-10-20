@@ -10,9 +10,9 @@ The game is the same single web page as the browser demo
   around it, the mood row or the time bar
 - 设置 (gear, above the mood emoji; rows open to the right): 时间流速,
   界面大小 (25%–200%; 25% = one game pixel per screen pixel, at any Windows
-  display scaling), 总在最上层, 存档 (with the 自动保存 switch: every 5
+  display scaling), 置顶游戏, 存档 (with the 自动保存 switch: every 5
   minutes or never), 存档位置
-- a tray icon: 显示 / 隐藏, 总在最上层, 退出
+- a tray icon: 显示 / 隐藏, 置顶游戏, 退出
 - the save is a JSON file in the app's data folder by default
   (Windows: `%APPDATA%\com.desktopbuddy.app\save.json`, previous copy kept
   as `save.json.bak`), so it is always found again after a restart;

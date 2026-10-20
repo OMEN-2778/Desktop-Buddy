@@ -767,3 +767,27 @@ def water_fx(f):
         if y + 1 < 10:
             s.set(x, y + 1, P.sky_soft[0])
     return s
+
+
+def sleep_z_fx(f, n=12):
+    """Zs drifting up from her pillow while she sleeps; 15x20, frame f of n.
+    Three letters at a time, each growing 3 -> 4 -> 5px as it rises, light
+    blue with a white rim so they read on the day wall and the night one alike."""
+    s = Sprite(15, 20)
+    rim, fill = "#ffffff", P.blue[3]
+    for k in range(3):
+        p = (f + k * n // 3) % n
+        if p >= n - 1:
+            continue                                   # gone: the next one is on its way
+        t = p / (n - 1)
+        size = 3 if p < n // 3 else 4 if p < 2 * n // 3 else 5
+        x0, y0 = 1 + round(t * 8), 18 - round(t * 13) - size
+        pts = {(x0 + i, y0) for i in range(size)} | {(x0 + i, y0 + size - 1) for i in range(size)}
+        pts |= {(x0 + size - 1 - j, y0 + j) for j in range(size)}
+        for x, y in pts:
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                if (x + dx, y + dy) not in pts and 0 <= x + dx < 15 and 0 <= y + dy < 20:
+                    s.set(x + dx, y + dy, rim)
+        for x, y in pts:
+            s.set(x, y, fill)
+    return s

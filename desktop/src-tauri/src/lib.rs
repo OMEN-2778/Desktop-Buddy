@@ -14,7 +14,7 @@
 //!                            apart from the save and written right away
 //!   fit_window               size the window to the game
 //!   start_drag               move the window with the mouse (no title bar)
-//!   set_on_top               "总在最上层" (also ticks the tray item)
+//!   set_on_top               "置顶游戏" (also ticks the tray item)
 //!   exit_app                 quit, once the page has saved
 //!   log_js                   the page's errors, printed to the app's stderr
 //! Events sent to the page: "app-quit" (save, then call exit_app) and
@@ -34,7 +34,7 @@ use tauri::{
     AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, State, WebviewWindow, WindowEvent, Wry,
 };
 
-/// The tray's "总在最上层" item, kept so the page's own setting can tick it.
+/// The tray's "置顶游戏" item, kept so the page's own setting can tick it.
 struct OnTopItem(CheckMenuItem<Wry>);
 
 /// The app's own config folder: config.json (where the save lives) and
@@ -253,7 +253,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let show = MenuItem::with_id(app, "show", "显示 / 隐藏", true, None::<&str>)?;
-            let on_top = CheckMenuItem::with_id(app, "on_top", "总在最上层", true, false, None::<&str>)?;
+            let on_top = CheckMenuItem::with_id(app, "on_top", "置顶游戏", true, false, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show, &on_top, &quit])?;
             app.manage(OnTopItem(on_top.clone()));
