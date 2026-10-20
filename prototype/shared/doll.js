@@ -152,6 +152,59 @@ function BuddyDoll(DATA) {
   }
   const cheer = look => (look.gender === "f" ? "heart" : "star");
 
+  // ---------------------------------------------------------- back view
+  // Buddy seen from behind (climbing the stairs): the same layers without the
+  // face, eyewear or a raised arm. The face's skin turns into the back of the
+  // head (ears and the nape stay skin), prints on the top become plain cloth,
+  // and long hair hangs in front of the head and shoulders instead of behind.
+  const tokenOf = {};                       // "role/shade" -> the token that paints it
+  for (const [t, c] of Object.entries(DATA.colors)) if (typeof c !== "string") tokenOf[c.join("/")] = t;
+  const SKIN_TO_HAIR = [0, 2, 2, 2];        // skin shade -> hair shade
+  const backCache = new Map();
+  function backLayer(k, bob) {
+    const key = k + "|" + bob;
+    if (backCache.has(key)) return backCache.get(key);
+    const L = DATA.layers[k];
+    const swap = (row, fn) => [...row].map((t, i) => (t === "." ? t : fn(DATA.colors[t], i) || t)).join("");
+    let out = L;
+    if (k.startsWith("head/")) {
+      const y0 = L.y || 0;
+      out = { ...L, rows: L.rows.map((row, j) => y0 + j >= 14 + bob ? row
+        : swap(row, (c, i) => c[0] === "skin" && i > 2 && i < DW - 3 && tokenOf["hair/" + SKIN_TO_HAIR[c[1]]])) };
+    } else if (k.startsWith("back/")) {
+      // hair that hung behind her is now the surface we look at: mid shade,
+      // a few darker strands below the crown, dark outline kept on the edge
+      const y0 = L.y || 0, at = (x, y) => (L.rows[y] && L.rows[y][x]) || ".";
+      out = { ...L, rows: L.rows.map((row, j) => swap(row, (c, i) => {
+        if (c[0] !== "hair") return null;
+        // (a top edge that starts below the crown lies on the head: no seam there)
+        const dirs = y0 + j > 4 + bob ? [[1, 0], [-1, 0], [0, 1]] : [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        if (dirs.some(([dx, dy]) => at(i + dx, j + dy) === ".")) return c[1] === 0 ? null : tokenOf["hair/1"];
+        return tokenOf["hair/" + (y0 + j > 12 + bob && i % 4 === 1 ? 1 : 2)];
+      })) };
+    } else if (k.startsWith("top/")) {
+      out = { ...L, rows: L.rows.map(row => swap(row, c => typeof c === "string" && tokenOf["top/2"])) };
+    }
+    backCache.set(key, out);
+    return out;
+  }
+  function backKeys(look, f) {
+    const eyewear = DATA.eyewear.map(a => `acc/${a}/`);
+    const keys = layerKeys(look, { ...f, wave: null, expr: "neutral" })
+      .filter(k => !k.startsWith("face/") && !eyewear.some(e => k.startsWith(e)));
+    const hair = keys.filter(k => k.startsWith("back/")), rest = keys.filter(k => !k.startsWith("back/"));
+    let at = rest.findIndex(k => k.startsWith("head/")) + 1;
+    if (rest[at] && rest[at].startsWith("ahoge/")) at++;
+    rest.splice(at, 0, ...hair);
+    return rest;
+  }
+  function pixelsBack(look, f, ramps = rampsOf(look)) {
+    const buf = new Uint8ClampedArray(DW * DH * 4);
+    const fr = { ...FRAME, ...f };
+    for (const k of backKeys(look, fr)) paintLayer(buf, DW, DH, backLayer(k, fr.bob), 0, 0, ramps);
+    return buf;
+  }
+
   return { W: DW, H: DH, ROLES, PRESETS, rampFrom, rampsOf, normalize, toggleAcc, layerKeys, paintLayer,
-           pixels, emotePixels, toCanvas, hexToRgb, cheer };
+           pixels, pixelsBack, emotePixels, toCanvas, hexToRgb, cheer };
 }

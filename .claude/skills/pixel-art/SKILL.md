@@ -127,9 +127,12 @@ eye colors freely. Never bake those colors into shipped character art:
 `art/src/concept/_furniture.py` (build also emits `furniture.png`, every
 piece side by side — review new pieces there at 6x).
 - No roof. Two storeys, canvas 342×118:
-  upper = stairwell | bedroom | bathroom | study (computer + books);
-  ground = stairwell | living room | kitchen. Geometry lives in `ROOMS`;
-  `levels(storey)` gives wall-top / floor-top rows.
+  upper = bathroom | bedroom | stairwell | study (computer + books);
+  ground = living room | stairwell | kitchen (user's floor plan). Geometry
+  lives in `ROOMS`, `STAIRS` (the stairwell, both storeys), `STAIR_COL`
+  (the flight, right part) and `ENTRY` (front door, left part, ground);
+  `levels(storey)` gives wall-top / floor-top rows. Place furniture with
+  `room_x(key) + offset` so it follows when rooms move.
 - **Calm scheme** (user found the first version too colourful/cluttered):
   walls are warm off-white `plaster_*` ramps, only slightly tinted per room;
   one `oak` floor (tile in kitchen/bath); furniture in `ash`/`walnut`/`oak`,
@@ -147,10 +150,20 @@ piece side by side — review new pieces there at 6x).
   side)})` opens one: the wall gets a 37px gap (lintel stays) and
   `door_leaf()` swings into the `side` room at 30°/60°/90° (5/10/13px
   wide, darker while foreshortened). `door_demo` is the reference anim.
-- **Stairs**: switchback (user found the straight flight too steep).
-  Flight 1 (near) climbs right→left from the ground-floor door to a landing
-  on the left wall; flight 2 (far, a shade darker, drawn first) climbs
-  left→right to the upper-floor door. 7 steps × 5px run × 4px rise each.
+- **Stairs** (`stairs()`): one flight running straight back INTO the
+  screen (user's choice), seen front-on as stacked treads 4px apart that
+  narrow and darken toward the top; the mid slab has a hole over
+  `STAIR_COL`. Upstairs the opening is guarded by a railing (`stair_railing`,
+  drawn after the structure; user asked for 扶手). Buddy climbs it with her
+  back to us (`doll.pixelsBack`: no face/eyewear, face skin -> back of the
+  head, long hair hangs in front) and comes down facing us.
+- **Front door** (`entry_door`): sage, beside the stairs on the ground
+  floor. Decoration for now — an outdoor scene is a future idea the user
+  is still weighing; don't build it unasked.
+- **Demo walking**: `make_demo` exports `floors` (feet y per storey) and
+  `stair.x`; each trip is its own polyline (`planRoute`: along the floor ->
+  stair column -> other floor -> spot). Doors open only if the trip crosses
+  them (`doorsOn`).
 - **Real scale**: wall 45px ≈ 2.6m → 1px ≈ 6cm. Desk 13px, worktop 16px,
   wardrobe/fridge ~31–34px, door openings 37px (lintel 8px below ceiling).
 - **Realism**: tops show a 2–3px lit surface (`box()`), soft goods use

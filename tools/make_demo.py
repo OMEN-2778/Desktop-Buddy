@@ -6,8 +6,8 @@ Packs everything the page needs into one JSON blob:
     lights rooms itself), as PNG data URIs
   - door gaps and door leaves, appliance "on" overlays, the sleep/bath
     covers drawn in front of Buddy's head
-  - the walk path (one polyline: kitchen -> living -> stairs -> bedroom ->
-    bath -> study), activity spots, lights and room rectangles
+  - the walkable floors (one y per storey) and the stair column joining
+    them, activity spots, lights and room rectangles
 
     PYTHONPATH=tools python3 tools/make_demo.py
 """
@@ -156,15 +156,10 @@ def main():
         "water_study": {"x": A["plant_study"][0] + 4, "y": A["plant_study"][1] - 6, "frames": [png(F.water_fx(f)) for f in range(4)]},
     }
 
-    # walk path, feet positions (x = Buddy's centre column)
-    gy, uy = Hs.GR_FLOOR + 3, Hs.UP_FLOOR + 3
-    path = [
-        (322, gy), (56, gy),                  # kitchen + living (ground floor)
-        (51, Hs.GR_FLOOR - 3), (22, 79),      # flight 1, up to the left
-        (18, 78), (22, 75),                   # landing turn
-        (51, 51), (56, uy),                   # flight 2, up to the right
-        (322, uy),                            # bedroom, bath, study
-    ]
+    # walking: feet y on each floor, and the flight Buddy climbs (straight up,
+    # into the screen) at the stair column's centre
+    floors = [Hs.GR_FLOOR + 3, Hs.UP_FLOOR + 3]
+    stair = {"x": Hs.STAIR_COL[0] + Hs.STAIR_COL[1] // 2, "x0": Hs.STAIRS[0], "x1": Hs.STAIRS[0] + Hs.STAIRS[1]}
     k, lv, bd, bt, st = (Hs.room_x(r) for r in ("kitchen", "living", "bedroom", "bath", "study"))
     spots = {
         # name: storey, x, pose ("stand" | "sit" | "sleep" | "bath")
@@ -215,7 +210,7 @@ def main():
         "sleepLying": [bed_x + Hs.SLEEP_HEAD[0], bed_y + Hs.SLEEP_HEAD[1]],
         "clickables": clickables, "windows": windows, "screens": screens, "fx": fx,
         "bathHead": [tub_x + 5, tub_y + 6],
-        "path": path, "spots": spots, "rooms": rooms, "roomX": room_x, "lights": lights,
+        "floors": floors, "stair": stair, "spots": spots, "rooms": rooms, "roomX": room_x, "lights": lights,
         "emissive": sorted({c.lower() for c in Hs.EMISSIVE}),
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))

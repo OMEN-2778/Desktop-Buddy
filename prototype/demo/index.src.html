@@ -395,6 +395,13 @@ function dollCanvas(f, pose = "stand", cropRows = DH) {
   dollCache.set(key, c);
   return c;
 }
+function backCanvas(f, pose = "stand") {   // seen from behind, climbing the stairs
+  const key = JSON.stringify(["back", f.bob, f.sway, pose]);
+  if (dollCache.has(key)) return dollCache.get(key);
+  const c = doll.toCanvas(applyPose(doll.pixelsBack(look, f, ramps), pose), DW, DH);
+  dollCache.set(key, c);
+  return c;
+}
 const emoteCache = new Map();
 function emoteCanvas(name) {
   if (emoteCache.has(name)) return emoteCache.get(name);
@@ -426,23 +433,52 @@ async function loadAssets() {
 }
 function drawOverlay(ctx, name) { const o = D.overlays[name]; ctx.drawImage(IMG.ov[name], o.x, o.y); }
 
-// ================================================================ walk path
-// One polyline through the whole house; Buddy's position is a distance s along it.
-const PATH = D.path;
-const SEG = [0];
-for (let i = 1; i < PATH.length; i++) SEG.push(SEG[i - 1] + Math.hypot(PATH[i][0] - PATH[i - 1][0], PATH[i][1] - PATH[i - 1][1]));
-const UP_START = SEG[PATH.length - 2];                       // start of the upper-floor segment
-function pathPos(s) {
-  s = Math.max(0, Math.min(SEG[SEG.length - 1], s));
-  let i = 1; while (i < SEG.length - 1 && SEG[i] < s) i++;
-  const t = (s - SEG[i - 1]) / (SEG[i] - SEG[i - 1] || 1);
-  return { x: PATH[i - 1][0] + (PATH[i][0] - PATH[i - 1][0]) * t, y: PATH[i - 1][1] + (PATH[i][1] - PATH[i - 1][1]) * t };
+// ================================================================ walking
+// The floors are flat; the only way between them is the flight in the
+// stairwell, which runs straight back into the screen: Buddy climbs it with
+// her back to us and comes down facing us. Each trip is its own short
+// polyline (along the floor, up or down the stairs, along again) and her
+// position is the distance sim.s walked along it.
+const FLOOR_Y = D.floors, STAIR_X = D.stair.x;
+const MID_Y = (FLOOR_Y[0] + FLOOR_Y[1]) / 2;
+const storeyOfY = y => (y < MID_Y ? 1 : 0);
+function planRoute(fx, fy, tx, ty) {
+  if (fy === ty) return [[fx, fy], [tx, ty]];
+  return [[fx, fy], [STAIR_X, fy], [STAIR_X, ty], [tx, ty]];
 }
-function sOf(storey, x) { return storey === 0 ? PATH[0][0] - x : UP_START + (x - PATH[PATH.length - 2][0]); }
-const DOOR_S = Object.fromEntries(D.doors.map(d => [d.id, sOf(d.storey, d.x + 2)]));
-function roomAt(s) {
-  if (s > SEG[1] + 2 && s < UP_START - 2) return "stairs";
-  const p = pathPos(s), storey = s >= UP_START ? 1 : 0;
+function routeLength(r) {
+  let L = 0;
+  for (let i = 1; i < r.length; i++) L += Math.hypot(r[i][0] - r[i - 1][0], r[i][1] - r[i - 1][1]);
+  return L;
+}
+function routePos(r, s) {   // -> { x, y, dy }: dy < 0 while climbing, > 0 coming down
+  for (let i = 1; i < r.length; i++) {
+    const [x0, y0] = r[i - 1], [x1, y1] = r[i], L = Math.hypot(x1 - x0, y1 - y0);
+    if (s <= L || i === r.length - 1) {
+      const t = L ? Math.max(0, Math.min(1, s / L)) : 1;
+      return { x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * t, dy: t < 1 ? Math.sign(y1 - y0) : 0 };
+    }
+    s -= L;
+  }
+  return { x: r[0][0], y: r[0][1], dy: 0 };
+}
+const here = () => routePos(sim.route, sim.s);
+// doors this trip walks through: [door id, x] on the storey it crosses them
+function doorsOn(r) {
+  const out = [];
+  for (let i = 1; i < r.length; i++) {
+    const [x0, y0] = r[i - 1], [x1, y1] = r[i];
+    if (y0 !== y1) continue;
+    for (const d of D.doors) {
+      const dx = d.x + 2;
+      if (d.storey === storeyOfY(y0) && dx > Math.min(x0, x1) && dx < Math.max(x0, x1)) out.push([d.id, dx]);
+    }
+  }
+  return out;
+}
+function roomAt(p) {
+  if (p.dy) return "stairs";
+  const storey = storeyOfY(p.y);
   for (const [k, [st, x0, x1]] of Object.entries(D.roomX)) if (st === storey && p.x >= x0 && p.x < x1) return k;
   return "stairs";
 }
@@ -478,11 +514,10 @@ const NEED_NAMES = { hunger: "饱腹", energy: "精力", hygiene: "清洁", fun:
 const sim = {
   t: 6 * 60 + 52,                           // game minutes since day 1, 00:00
   needs: { hunger: 62, energy: 88, hygiene: 70, fun: 64 },
-  s: 0, target: null, mode: "act", act: "sleep", actEnd: 7 * 60 + 600,
+  route: [[D.spots.bed[1], FLOOR_Y[1]]], s: 0, target: 0, crossing: [], mode: "act", act: "sleep", actEnd: 7 * 60 + 600,
   facing: 1, walkDist: 0, idleUntil: 0, queue: [], recent: [],
   poke: 0, lastDay: 1,
 };
-sim.s = sOf(1, D.spots.bed[1]);
 let speed = 3;
 
 const hour = () => (sim.t % 1440) / 60;
@@ -519,7 +554,9 @@ function choose() {
 function startAct(name) {
   const a = ACTS[name];
   sim.act = name;
-  sim.target = sOf(D.spots[a.spot][0], D.spots[a.spot][1]);
+  const p = here(), [st, x] = D.spots[a.spot];
+  sim.route = planRoute(Math.round(p.x), Math.round(p.y), x, FLOOR_Y[st]);
+  sim.s = 0; sim.target = routeLength(sim.route); sim.crossing = doorsOn(sim.route);
   sim.mode = "walk";
   if (a.log) log(a.log);
 }
@@ -577,13 +614,12 @@ function step(dtGame, dtReal) {
   }
   // behaviour
   if (sim.mode === "walk") {
-    const v = 28 * Math.min(speed, 4) * dtReal;
-    const d = sim.target - sim.s;
-    if (Math.abs(d) <= v) { sim.s = sim.target; arrive(); }
+    const v = 28 * Math.min(speed, 4) * dtReal * (here().dy ? 0.7 : 1);   // a little slower on the stairs
+    if (sim.target - sim.s <= v) { sim.s = sim.target; arrive(); }
     else {
-      const before = pathPos(sim.s).x;
-      sim.s += Math.sign(d) * v; sim.walkDist += v;
-      const dx = pathPos(sim.s).x - before;
+      const before = here().x;
+      sim.s += v; sim.walkDist += v;
+      const dx = here().x - before;
       if (Math.abs(dx) > 0.01) sim.facing = Math.sign(dx);
     }
   } else if (sim.mode === "act") {
@@ -601,10 +637,11 @@ function step(dtGame, dtReal) {
 const doorState = Object.fromEntries(D.doors.map(d => [d.id, { angle: 0, side: "r", t: 0 }]));
 const ANGLES = [0, 30, 60, 90];
 function updateDoors(dtReal) {
-  const p = pathPos(sim.s);
+  const p = here(), storey = storeyOfY(p.y);
   for (const d of D.doors) {
     const st = doorState[d.id];
-    const near = sim.mode === "walk" && Math.abs(sim.s - DOOR_S[d.id]) < 16;
+    const near = sim.mode === "walk" && !p.dy && d.storey === storey
+      && sim.crossing.some(([id, x]) => id === d.id && Math.abs(p.x - x) < 16);
     if (near && st.angle === 0) st.side = sim.facing > 0 ? "r" : "l";
     st.t += dtReal * Math.min(speed, 4);
     if (st.t < 0.06) continue;
@@ -872,7 +909,8 @@ function activityFrame(ms) {
   if (sim.mode === "walk") {
     const i = Math.floor(sim.walkDist / 4) % 4;
     // contact frames (a foot lifted) dip the head a pixel, passing frames rise
-    return { f: { look: sim.facing, bob: i % 2 ? 0 : 1, sway: i % 2 }, pose: ["walkL", "stand", "walkR", "stand"][i], emote: null };
+    const dy = here().dy;   // on the stairs: back to us going up, facing us coming down
+    return { f: { look: dy ? 0 : sim.facing, bob: i % 2 ? 0 : 1, sway: i % 2 }, pose: ["walkL", "stand", "walkR", "stand"][i], emote: null, back: dy < 0 };
   }
   if (sim.mode === "act") {
     const em = ACTS[a].emote;
@@ -927,7 +965,7 @@ function render() {
   }
   drawWeather(bctx, f > 0.5);   // on the glass only, behind everything that stands in front of a window
   drawDoors(bctx);
-  const room = roomAt(sim.s), acting = sim.mode === "act", act = acting ? sim.act : null;
+  const room = roomAt(here()), acting = sim.mode === "act", act = acting ? sim.act : null;
   const sleeping = act === "sleep";
   for (const [id, on] of Object.entries(lamps)) if (on) drawOverlay(bctx, id);
   updateRoomLights(room, !sleeping);                  // lights out when she goes to bed
@@ -954,9 +992,9 @@ function render() {
     drawOverlay(bctx, "tub_front"); drawOverlay(bctx, "bubbles");
     emoteAt = [D.bathHead[0] + 13, D.bathHead[1] - 15];
   } else {
-    const p = pathPos(sim.s);
+    const p = here();
     const x = Math.round(p.x - DW / 2), y = Math.round(p.y - DH + 1);
-    bctx.drawImage(dollCanvas(full, fr.pose), x, y);
+    bctx.drawImage(fr.back ? backCanvas(full, fr.pose) : dollCanvas(full, fr.pose), x, y);
     if (act === "tv") drawOverlay(bctx, "coffee_table");
     emoteAt = [x + 13, y - 15];
   }
@@ -1503,7 +1541,7 @@ function buddyHit(x, y) {
     const [lx, ly] = D.sleepLying;
     return x >= lx && x < lx + 15 && y >= ly && y < ly + 20;
   }
-  const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : pathPos(sim.s);
+  const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : here();
   return Math.abs(x - p.x) < 9 && y > p.y - DH + 2 && y < p.y + 2;
 }
 view.addEventListener("pointermove", e => {
@@ -1534,7 +1572,7 @@ function saveLook() { try { localStorage.setItem("buddy-look-v2", JSON.stringify
 function changeLook(l) {
   setLook(l);
   saveLook();
-  const p = pathPos(sim.s);
+  const p = here();
   poof = { t0: realClock, x: p.x, y: p.y - 14 };
 }
 let studio = null;
