@@ -276,14 +276,25 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   `{名字}` / `{她}` in life_text.js); `spaced()` puts a space where Chinese
   meets Latin ("Buddy 的小屋"). A rename gets a diary line, a moodlet and
   a reaction, once you stop typing.
-- The settings gear sits at the page top (absolute, not fixed) and the page
-  keeps 66px clear above the content, so the 造型室's ✕ never sits under it.
+- The settings gear sits just above the mood emoji (first child of
+  `#moodrow`) and its rows open to the RIGHT, growing downward; in the
+  desktop app `fitWindow` also covers the open menu so it is never clipped.
 - **Settings rows** (`SETTINGS`): 时间流速, 界面大小 (− 100% + 适应窗口;
   counted in SCREEN pixels: 25% = one game pixel per monitor pixel, user's
   smallest; 100% = 4; the house canvas is drawn at device resolution
   (`devPx`), `scale` is CSS px per house px; text keeps a readable minimum), 总在最上层
-  (desktop app only), 存档 (保存 / 导出 or 存档位置 / 导入 / 重新开始, which
-  asks twice).
+  (desktop app only), 自动保存 (每 5 分钟 / 关闭), 存档 (保存 / 导出 (browser) /
+  导入 / 重新开始, which asks twice), and in the desktop app 存档位置
+  (默认位置 or the folder's name / 打开 / 更改 / 恢复默认).
+- **Settings are stored apart from the save** (`settingsStore`: browser
+  localStorage `buddy-settings`, desktop `settings.json` in the config
+  folder) and applied after `restore()`, so turning 自动保存 off is kept even
+  though the game itself isn't saved. 自动保存 on: every 5 minutes, when the
+  window is hidden, on quit and after a look change; off: only 保存 writes.
+- **Save folder** (desktop): always the default app data folder unless the
+  user picks another under 存档位置 → 更改 (kept in the config folder's
+  `config.json`; a missing folder falls back to the default). Never ask for
+  a folder on first save — users would lose track of it.
 - **Saves**: one versioned JSON (`snapshot()` / `restore()` / `migrate()`);
   bump `SAVE_VERSION` and add a migrate step whenever its shape changes.
   Browser: localStorage; desktop app: a file via Tauri commands.

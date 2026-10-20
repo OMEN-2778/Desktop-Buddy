@@ -3,8 +3,15 @@
 //! it a frameless, see-through window, a tray menu and a save file.
 //!
 //! Commands the page calls (window.__TAURI__.core.invoke):
-//!   load_save / write_save   the save, as JSON text, in the app data folder
+//!   load_save / write_save   the save, as JSON text: by default in the app
+//!                            data folder, or in a folder the player picked
+//!   get_save_dir             { path, custom } of the folder in use
+//!   choose_save_dir          pick another folder (a folder dialog); the
+//!                            choice is kept in config.json
+//!   reset_save_dir           back to the default folder
 //!   open_save_dir            show that folder in the file manager
+//!   load_settings / write_settings   the settings (settings.json), kept
+//!                            apart from the save and written right away
 //!   fit_window               size the window to the game
 //!   start_drag               move the window with the mouse (no title bar)
 //!   set_on_top               "总在最上层" (also ticks the tray item)
@@ -30,10 +37,95 @@ use tauri::{
 /// The tray's "总在最上层" item, kept so the page's own setting can tick it.
 struct OnTopItem(CheckMenuItem<Wry>);
 
-fn save_file(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+/// The app's own config folder: config.json (where the save lives) and
+/// settings.json.
+fn config_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    let dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    Ok(dir.join("save.json"))
+    Ok(dir)
+}
+
+fn read_config(app: &AppHandle) -> serde_json::Value {
+    config_dir(app)
+        .ok()
+        .and_then(|d| fs::read_to_string(d.join("config.json")).ok())
+        .and_then(|t| serde_json::from_str(&t).ok())
+        .unwrap_or_else(|| serde_json::json!({}))
+}
+
+fn write_config(app: &AppHandle, config: &serde_json::Value) -> Result<(), String> {
+    let file = config_dir(app)?.join("config.json");
+    fs::write(file, config.to_string()).map_err(|e| e.to_string())
+}
+
+fn default_save_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    app.path().app_data_dir().map_err(|e| e.to_string())
+}
+
+/// The folder the save lives in: the one the player picked, if it still
+/// exists, else the default (the app data folder) — so it is always found.
+fn save_dir(app: &AppHandle) -> Result<(PathBuf, bool), String> {
+    if let Some(dir) = read_config(app).get("save_dir").and_then(|v| v.as_str()) {
+        let dir = PathBuf::from(dir);
+        if dir.is_dir() {
+            return Ok((dir, true));
+        }
+    }
+    let dir = default_save_dir(app)?;
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok((dir, false))
+}
+
+fn save_file(app: &AppHandle) -> Result<PathBuf, String> {
+    Ok(save_dir(app)?.0.join("save.json"))
+}
+
+#[tauri::command]
+fn get_save_dir(app: AppHandle) -> Result<serde_json::Value, String> {
+    let (dir, custom) = save_dir(&app)?;
+    Ok(serde_json::json!({ "path": dir.to_string_lossy(), "custom": custom }))
+}
+
+/// A folder dialog; the new folder is remembered and the page then saves
+/// into it. None if the player cancelled.
+#[tauri::command]
+async fn choose_save_dir(app: AppHandle) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+    let start = save_dir(&app)?.0;
+    let picked = app
+        .dialog()
+        .file()
+        .set_title("选择存档位置")
+        .set_directory(start)
+        .blocking_pick_folder();
+    let Some(picked) = picked else { return Ok(None) };
+    let dir = picked.into_path().map_err(|e| e.to_string())?;
+    let mut config = read_config(&app);
+    config["save_dir"] = serde_json::Value::String(dir.to_string_lossy().into_owned());
+    write_config(&app, &config)?;
+    Ok(Some(dir.to_string_lossy().into_owned()))
+}
+
+#[tauri::command]
+fn reset_save_dir(app: AppHandle) -> Result<(), String> {
+    let mut config = read_config(&app);
+    if let Some(obj) = config.as_object_mut() {
+        obj.remove("save_dir");
+    }
+    write_config(&app, &config)
+}
+
+#[tauri::command]
+fn load_settings(app: AppHandle) -> Result<Option<String>, String> {
+    Ok(fs::read_to_string(config_dir(&app)?.join("settings.json"))
+        .ok()
+        .filter(|t| serde_json::from_str::<serde_json::Value>(t).is_ok()))
+}
+
+#[tauri::command]
+fn write_settings(app: AppHandle, data: String) -> Result<(), String> {
+    serde_json::from_str::<serde_json::Value>(&data).map_err(|e| e.to_string())?;
+    fs::write(config_dir(&app)?.join("settings.json"), data).map_err(|e| e.to_string())
 }
 
 /// The save (or its backup when the save itself is unreadable); None on a
@@ -67,8 +159,7 @@ fn write_save(app: AppHandle, data: String) -> Result<(), String> {
 
 #[tauri::command]
 fn open_save_dir(app: AppHandle) -> Result<(), String> {
-    let file = save_file(&app)?;
-    let dir = file.parent().ok_or("no save folder")?;
+    let (dir, _) = save_dir(&app)?;
     let opener = if cfg!(target_os = "windows") {
         "explorer"
     } else if cfg!(target_os = "macos") {
@@ -142,6 +233,7 @@ fn quit_after_save(app: &AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let show = MenuItem::with_id(app, "show", "显示 / 隐藏", true, None::<&str>)?;
             let on_top = CheckMenuItem::with_id(app, "on_top", "总在最上层", true, false, None::<&str>)?;
@@ -200,6 +292,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             load_save,
             write_save,
+            get_save_dir,
+            choose_save_dir,
+            reset_save_dir,
+            load_settings,
+            write_settings,
             open_save_dir,
             fit_window,
             start_drag,
