@@ -204,11 +204,14 @@ Reference: `prototype/shared/studio.css`.
   outlines (`roundClip()` in the demo, clip-path on an outline layer + a
   fill layer, `drop-shadow` for the hard shadow). Buttons come out almost
   pill-shaped. Small square-notched corners read as "too sharp" there.
-- The speech bubble and its tail are ONE pixel shape (`sayClip()`: per-row
-  left/right edges, the fill = the outline shape shrunk by one step), at a
-  whole even pixel height. Never bolt a CSS triangle onto a rounded box: the
-  seams, uneven outline and blurry diagonals read as bugs (user). The left
-  corners are smaller than the right so the tail sits on a straight run.
+- The speech bubble is ONE pixel shape (`sayClip()`: per-row left/right
+  edges, the fill = the outline shape shrunk by one step), at a whole even
+  pixel height, both ends full half-circles like the diary box (user: the
+  old stepped tail made the left corners differ — removed). In the 24px
+  `--tail` gap two little round bubbles (8px, 12px, `.dot`, stepped circles
+  from `roundClip`) lead from the emoji to it, thought-bubble style. Never
+  bolt a CSS triangle onto a rounded box: seams and blurry diagonals read
+  as bugs (user).
 - Mood details: hovering/tapping the emoji does NOT open a panel over the
   house (user: stiff, ugly, covers things). Her speech bubble fades aside
   and the same space fills with pills popping out from the emoji: the
