@@ -340,7 +340,7 @@ body {
 .settings {
   position: absolute; z-index: 20; display: flex; align-items: flex-start; gap: 10px;
   /* the gear sits right over the emoji, centred in the diary's row (--row-h); rows grow down from it */
-  left: calc(var(--mood-d, 78px) / 2 - 21px); top: calc(-8px - var(--row-h, 42px) + (var(--row-h, 42px) - 42px) / 2);
+  left: calc(var(--mood-d, 52px) / 2 - 24px); top: calc(-8px - var(--row-h, 52px) + (var(--row-h, 52px) - 48px) / 2);
   --pill-fs: 14px; cursor: default;
 }
 .settings button, .set-label {
@@ -368,11 +368,11 @@ body {
 .settings button.off { color: var(--muted); cursor: not-allowed; }
 .settings button.off::after { background: var(--panel); box-shadow: none; }
 .settings button.danger { color: #9a3b3b; }
-.settings button.glyph { display: grid; place-items: center; min-width: 58px; padding-block: 8px; }
+.settings button.glyph { display: grid; place-items: center; padding-block: 8px; }
 .settings button.glyph svg { display: block; }
-@media (max-width: 520px) { .settings button.glyph { min-width: 50px; padding-block: 7px; } }
+@media (max-width: 520px) { .settings button.glyph { padding-block: 7px; } }
 .set-label::before { background: var(--title, #33253b); }
-.set-gear { padding: 8px !important; }
+.set-gear { padding: 11px !important; }   /* 48px: as tall as the emoji, the diary box and her words */
 .set-gear::before { clip-path: var(--clip-gear) !important; }
 .set-gear::after { clip-path: var(--clip-gear-in) !important; }
 .set-gear img { display: block; width: 26px; height: 26px; image-rendering: pixelated; transition: transform .45s cubic-bezier(.3, 1.6, .5, 1); }
@@ -380,22 +380,26 @@ body {
 .set-gear[aria-expanded="true"]::after { background: var(--panel); }
 /* never wider than the house (user): from right of the gear to the house's right edge */
 .set-pop { display: grid; gap: 10px; justify-items: start; padding-top: 4px;
-  max-width: calc(var(--house-w, 684px) - var(--mood-d, 78px) / 2 - 31px); }
+  max-width: calc(var(--house-w, 684px) - var(--mood-d, 52px) / 2 - 34px); }
 .set-pop[hidden] { display: none; }
 /* a small house (phones, small 界面大小): the rows open under the gear across
    the house's full width instead, still never past either of its edges */
 .widget.narrow .set-pop {
-  position: absolute; top: 50px; max-width: none; width: var(--house-w, 342px);
-  left: calc(21px - var(--mood-d, 78px) / 2);
+  position: absolute; top: 56px; max-width: none; width: var(--house-w, 342px);
+  left: calc(24px - var(--mood-d, 52px) / 2);
 }
 /* a phone's screen: a house that small can't hold them, so use the 造型室's width */
 @media (max-width: 520px) {
-  .widget.narrow .set-pop { width: var(--studio-w, 342px); left: calc(21px - var(--mood-d, 78px) / 2 - var(--studio-dx, 0px)); }
+  .widget.narrow .set-pop { width: var(--studio-w, 342px); left: calc(24px - var(--mood-d, 52px) / 2 - var(--studio-dx, 0px)); }
 }
 /* while the rows are out, her words step aside like the diary box */
 .moodrow.setting .mood-talk { opacity: 0; transition: opacity .2s; }
 .set-row { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
-.set-items { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+/* the pills sit on a 12-column grid (user's sketch): a row of 4, 3 or 2
+   equal pills, or 存档's wide switch + 保存 over three — every row the same width */
+.set-items { display: grid; grid-template-columns: repeat(12, var(--sc, 13px)); align-items: center; gap: 8px; min-width: 0; }
+.set-items > button, .set-items > .set-value { width: 100%; min-width: 0; padding-inline: 4px; text-align: center; }
+.set-label { min-width: 6.6em; text-align: center; }   /* labels all one width, 存档 too */
 .set-row > .set-label, .set-items > * {
   transform: translateX(calc(var(--k) * -26px - 40px)) scale(.3); opacity: 0;
   transition: transform .38s cubic-bezier(.3, 1.6, .5, 1), opacity .2s;
@@ -418,7 +422,7 @@ body {
 .diary.away { opacity: 0; translate: 12px 0; pointer-events: none; }   /* while the settings rows are out */
 .diary-box {
   position: relative; isolation: isolate; width: 100%; height: 100%; margin: 0; border: 0;
-  padding: 0 calc(var(--say-h, 60px) * .3) 0 calc(var(--say-h, 60px) * .16);   /* the 日记 tag tucked into the round end */
+  padding: 0 20px 0 6px;   /* the 日记 tag: 6px in from the left, like from the top and bottom */
   display: flex; align-items: center; gap: 10px; min-width: 0;
   background: none; box-shadow: none; color: var(--wood-ink); font-size: var(--diary-fs, 18px); line-height: 1.3; text-align: left; cursor: pointer;
   filter: drop-shadow(3px 3px 0 var(--shadow));
@@ -434,8 +438,8 @@ body {
 .diary-pop::after { clip-path: var(--clip-pop-in); }
 .diary-box:hover::after, .diary-box[aria-expanded="true"]::after { background: #f3e2c2; }
 .diary-box:active { transform: translateY(2px); }
-.diary-box b { flex: none; font-size: max(12px, calc(var(--diary-fs, 18px) * .75)); font-weight: 700; color: #f7ecd8; padding: 2px 9px; position: relative; isolation: isolate; }
-.diary-box b::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--pe); clip-path: var(--clip-btn); }
+.diary-box b { flex: none; height: 36px; display: flex; align-items: center; font-size: 14px; font-weight: 700; color: #f7ecd8; padding: 0 13px; position: relative; isolation: isolate; }
+.diary-box b::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--pe); clip-path: var(--clip-tag); }
 .diary-pop time { flex: none; color: #8a6446; font-size: 13px; font-variant-numeric: tabular-nums; }
 .diary-box span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .diary-box:focus-visible { outline: 2px dashed var(--focus); outline-offset: 3px; }
@@ -458,7 +462,7 @@ body {
 .diary-pop li { display: grid; grid-template-columns: 3.4em minmax(0, 1fr); gap: 8px; align-items: baseline; }
 .diary-pop li.day { grid-template-columns: 1fr; text-align: center; color: #8a6446; font-size: 12px; letter-spacing: .1em; padding-top: 4px; }
 .diary-pop li.empty { grid-template-columns: 1fr; color: #8a6446; }
-@media (max-width: 520px) { .diary-box { gap: 6px; } .diary-box b { padding: 1px 6px; } }
+@media (max-width: 520px) { .diary-box { gap: 6px; padding-right: 14px; } .diary-box b { padding: 0 10px; font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { .diary, .diary-pop { transition: none; } }
 /* ---------- the desktop app: the window is the game, see-through around it */
 html.desktop, html.desktop body { background: transparent !important; }
@@ -1300,7 +1304,8 @@ function fit() {
   widget.classList.toggle("narrow", narrowHouse);
   // text and round corners grow with the house: k = 1 at 100% (phones in auto: 0.75)
   const k = prefs.scale !== "auto" ? s / 4 : narrowHouse ? 0.75 : 1;
-  const sayFs = Math.max(14, Math.round(32 * k));             // her words: big
+  // the emoji, the gear, the diary box and her words share one height (user): 48px
+  const sayFs = narrowHouse && prefs.scale === "auto" ? 17 : 20;
   widget.style.setProperty("--say-fs", sayFs + "px");
   widget.style.setProperty("--ring-fs", Math.max(11, Math.round(14 * k)) + "px");
   widget.style.setProperty("--mp-fs", Math.max(11, Math.round(15 * k)) + "px");
@@ -1309,29 +1314,30 @@ function fit() {
   const nb = Math.max(6, Math.round(9 * k));
   widget.style.setProperty("--clip-btn", roundClip(nb, 2));
   widget.style.setProperty("--clip-btn-in", roundClip(nb - 1, 2));
-  const sayH = Math.ceil((sayFs * 1.35 + 16) / 4) * 4;       // a whole, even number of steps
-  const tail = 2 * Math.max(6, Math.round(10 * k));
-  const [sayOut, sayIn] = sayClip(sayH, tail, Math.max(4, Math.round(7 * k)), Math.max(6, Math.round(13 * k)), 2, Math.max(3, Math.round(6 * k)));
+  const sayH = 48, tail = 16;                                 // a whole, even number of 2px steps
+  const [sayOut, sayIn] = sayClip(sayH, tail, 5, 12, 2, 4);  // right end: a full half-circle
   widget.style.setProperty("--say-h", sayH + "px");
   widget.style.setProperty("--tail", tail + "px");
   widget.style.setProperty("--clip-say", sayOut);
   const sets = document.getElementById("settings"), np = window.innerWidth <= 520 ? 7 : 9;
   sets.style.setProperty("--clip-btn", roundClip(np, 2));
   sets.style.setProperty("--clip-btn-in", roundClip(np - 1, 2));
-  sets.style.setProperty("--clip-gear", roundClip(11, 2));            // 42px button: a circle
-  sets.style.setProperty("--clip-gear-in", roundClip(10, 2));
+  sets.style.setProperty("--clip-gear", roundClip(12, 2));            // 48px button: a circle
+  sets.style.setProperty("--clip-gear-in", roundClip(11, 2));
   widget.style.setProperty("--clip-say-in", sayIn);
   // the diary box: the bubble's wood without the tail, as tall as the gear
   const di = document.getElementById("diary");
-  const nR = Math.max(6, Math.round(13 * k));
-  const [dOut, dIn] = sayClip(sayH, 0, nR, nR, 2, 0);
+  // the box: a 48px pill like her words' right end; the 日记 tag inside it is
+  // a 36px pill 6px in from its top, bottom and left, so the two round ends
+  // share one centre (user: concentric corners)
+  const [dOut, dIn] = sayClip(sayH, 0, 12, 12, 2, 0);
   di.style.setProperty("--clip-diary", dOut);
   di.style.setProperty("--clip-diary-in", dIn);
-  di.style.setProperty("--clip-pop", roundClip(nR, 2));
-  di.style.setProperty("--clip-pop-in", roundClip(nR - 1, 2));
-  di.style.setProperty("--clip-btn", roundClip(Math.max(5, Math.round(8 * k)), 2));
-  di.style.setProperty("--diary-fs", Math.max(13, Math.round(19 * k)) + "px");
-  document.documentElement.style.setProperty("--row-h", Math.max(42, sayH) + "px");   // the gear + diary row
+  di.style.setProperty("--clip-tag", roundClip(9, 2));
+  di.style.setProperty("--clip-pop", roundClip(12, 2));
+  di.style.setProperty("--clip-pop-in", roundClip(11, 2));
+  di.style.setProperty("--diary-fs", (sayFs - 4) + "px");
+  document.documentElement.style.setProperty("--row-h", 52 + "px");   // the gear + diary row: as tall as the emoji's canvas
   di.style.setProperty("--diary-max", Math.round(Math.max(150, Math.min(320, hPx * 1.1))) + "px");
   if (typeof kickNeeds === "function") kickNeeds();
   if (wardrobeOpen || diaryOn) { studio.refit(); makeRoom(); }   // what's open above the house got a new size
@@ -1714,7 +1720,7 @@ function sizeSky(wPx, hPx, u) {
   widget.style.setProperty("--sky-gap", 1 * b + "px");       // just above the roof, never over it (user tuned this)
   widget.style.setProperty("--sky-over", "0px");
   buildSkyTrack();
-  sizeMood(b);
+  sizeMood(2);                                              // a 48px emoji at every 界面大小, like the gear
 }
 function skyTarget() {
   if (weather.kind !== "clear") return weather.kind;
@@ -2122,7 +2128,7 @@ function sizeMood(b) {
   const w = document.getElementById("widget");
   w.style.setProperty("--sky-b", b + "px");
   w.style.setProperty("--mood-d", d + "px");
-  w.style.setProperty("--mood-h", Math.max(d, 64) + "px");
+  w.style.setProperty("--mood-h", d + "px");
 }
 function drawFace(key, scale, bob) {
   const b = moodB, fr = IMG_MOOD[key];
@@ -2386,7 +2392,8 @@ needsEl.addEventListener("keydown", e => { if (e.key === "Escape") needsEl.blur(
 // ================================================================ settings
 // The gear right above the mood emoji; each setting is a row of pills
 // popping out to its right (label first). Add rows to SETTINGS.
-// 一倍 = 3 game minutes per real second (the old default).
+// 一倍 (two arrows) = 3 game minutes per real second, the old default; one
+// arrow is half of it, three arrows twice (user).
 const setPop = document.getElementById("setPop"), setGear = document.getElementById("setGear");
 document.getElementById("gearImg").src = D.uiIcons.gear;
 // a pixel glyph (ui_icons.GLYPHS) as crisp SVG squares in the button's text colour
@@ -2411,7 +2418,7 @@ function pill(text, { glyph, label, pressed, disabled, cls, title, onClick } = {
 const scalePct = () => (prefs.scale === "auto" ? Math.round(devPx * 25) : prefs.scale);   // what the page shows now
 function setScale(v) { prefs.scale = v; fit(); saveSettings(); buildSettings(); }
 const SETTINGS = [
-  { label: "时间流速", role: "radiogroup", items: () => [[0, "暂停", "pause"], [3, "一倍", "play"], [6, "两倍", "ff"]].map(([v, name, g]) =>
+  { label: "时间流速", role: "radiogroup", items: () => [[0, "暂停", "pause"], [1.5, "0.5 倍", "play"], [3, "一倍", "ff"], [6, "两倍", "fff"]].map(([v, name, g]) =>
       pill(name, { glyph: g, pressed: speed === v, onClick: b => {
         speed = v; saveSettings();
         b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
@@ -2430,23 +2437,23 @@ const SETTINGS = [
   { label: "置顶游戏", role: "radiogroup", items: () => [[true, "开"], [false, "关"]].map(([v, name]) =>
       pill(name, { pressed: prefs.onTop === v, disabled: !TAURI, title: TAURI ? "" : "桌面版里才能用",
         onClick: b => { setOnTop(v); b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); } })) },
-  { label: "存档", role: "group", items: () => [
-      pill("保存", { onClick: async () => flashLabel("存档", (await saveGame()) ? "已保存" : "没存上") }),
+  { label: "存档", role: "group", spans: n => (n === 5 ? [8, 4, 4, 4, 4] : [8, 4, 6, 6]), items: () => [
       // 自动保存: one switch, every 5 minutes <-> never
       pill(prefs.autosave ? "每 5 分钟自动保存" : "不自动保存", { pressed: prefs.autosave,
         title: prefs.autosave ? "每 5 分钟、退出和切到后台时自动保存（再按一下关掉）" : "只在你点「保存」时保存（再按一下打开）",
         onClick: () => { prefs.autosave = !prefs.autosave; saveSettings(); buildSettings(); } }),
+      pill("保存", { onClick: async () => flashLabel("存档", (await saveGame()) ? "已保存" : "没存上") }),
       ...(TAURI ? [] : [pill("导出", { title: "把存档下载成一个文件", onClick: exportSave })]),
       pill("导入", { title: "从存档文件读取", onClick: () => document.getElementById("importSave").click() }),
-      pill("重新开始", { cls: "danger", onClick: b => {
+      pill("重生！", { cls: "danger", title: "清空存档，从第 1 天重新开始（要按两下）", onClick: b => {
         if (b.dataset.armed) { resetSave(); return; }
-        b.dataset.armed = "1"; b.textContent = "确定重来？";
-        setTimeout(() => { delete b.dataset.armed; b.textContent = "重新开始"; }, 3000);
+        b.dataset.armed = "1"; b.textContent = "真的吗？";
+        setTimeout(() => { delete b.dataset.armed; b.textContent = "重生！"; }, 3000);
       } }),
     ] },
   // desktop app: the save lives in a fixed default folder, so it is always
   // found again; only if you pick another folder does it move there
-  ...(TAURI ? [{ label: "存档位置", role: "group", items: () => [
+  ...(TAURI ? [{ label: "存档位置", role: "group", spans: () => [6, 6, 6, 6], items: () => [
       Object.assign(document.createElement("span"), { className: "set-value", textContent: saveDir.custom ? folderName(saveDir.path) : "默认位置",
         title: saveDir.path }),
       pill("打开", { title: "打开存档所在的文件夹", onClick: () => TAURI.core.invoke("open_save_dir").catch(() => {}) }),
@@ -2478,7 +2485,8 @@ function buildSettings() {
     // the label, then its pills, which wrap onto more lines rather than run past the house
     const box = document.createElement("div"); box.className = "set-items";
     lab.style.setProperty("--k", 0); row.appendChild(lab);
-    st.items().forEach((el, i) => { el.style.setProperty("--k", i + 1); box.appendChild(el); });   // nearest the gear pops first
+    const items = st.items(), spans = st.spans ? st.spans(items.length) : items.map(() => 12 / items.length);
+    items.forEach((el, i) => { el.style.setProperty("--k", i + 1); el.style.gridColumn = `span ${spans[i]}`; box.appendChild(el); });   // nearest the gear pops first
     row.appendChild(box);
     setPop.appendChild(row);
   }
@@ -2507,7 +2515,7 @@ function saveSettings() {
 }
 function applySettings(st) {
   if (!st || typeof st !== "object") return;
-  if ([0, 3, 6].includes(st.speed)) speed = st.speed;
+  if ([0, 1.5, 3, 6].includes(st.speed)) speed = st.speed;
   if (st.scale === "auto" ? !TAURI : SCALES.includes(st.scale)) prefs.scale = st.scale;
   if (typeof st.onTop === "boolean") prefs.onTop = st.onTop;
   if (typeof st.autosave === "boolean") prefs.autosave = st.autosave;

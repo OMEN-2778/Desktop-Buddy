@@ -296,9 +296,12 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   `#moodrow`) and its rows open to the RIGHT, growing downward; in the
   desktop app `fitWindow` also covers the open menu so it is never clipped.
   The emoji lines up with the house's left edge, never with the open bars.
+- **One row height** (user): the mood emoji (2 units a pixel at every size,
+  48px), the gear, the diary box and her speech bubble are all 48px tall.
 - **Diary box** (`#diary`): in the gear's row (`--row-h`), right above the
-  speech bubble: as wide as its body, as tall (`--say-h`) and the same shape
-  (`sayClip` without the tail). The 日记 tag sits in its round left end; it
+  speech bubble: as wide as its body, as tall and the same shape (`sayClip`
+  without the tail: a 48px pill). The 日记 tag is a 36px pill 6px in from
+  the box's top, bottom and left — concentric round ends (user). It
   shows only the latest line's words (times appear in the opened list), so
   more of the line fits. A click pops the whole recent list (`logEl`, the
   one the save keeps) up above it, newest at the bottom. It steps aside
@@ -308,6 +311,11 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   wrap after the label (`.set-items`); with a small house (`.narrow`) the
   rows open under the gear across the house width (on a phone's screen,
   the 造型室's width).
+- **Settings grid** (user's sketch): labels one width; pills on a 12-column
+  grid (`spans`): 时间流速 4 pills, 界面大小 3, 置顶游戏 2, 存档 = the
+  autosave switch (8) + 保存 (4), then 导出 导入 重生！ (重生！ asks twice).
+- **Time speeds**: 暂停, one arrow 0.5 倍 (speed 1.5), two arrows 一倍 (3,
+  the default), three arrows 两倍 (6).
 - **Settings rows** (`SETTINGS`): 时间流速, 界面大小 (− 100% +;
   counted in SCREEN pixels: 25% = one game pixel per monitor pixel, user's
   smallest; 100% = 4; the house canvas is drawn at device resolution
