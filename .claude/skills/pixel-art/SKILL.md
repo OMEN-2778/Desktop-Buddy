@@ -184,6 +184,11 @@ piece side by side — review new pieces there at 6x).
 game-window title bars, colors from the palette. Font: Source Han Sans /
 Noto Sans SC (思源黑体) only — the user asked for it; no pixel fonts.
 Reference: `prototype/shared/studio.css`.
+- Exception (user): the ring-menu buttons and Buddy's speech bubble get BIG
+  round corners — pixel-stepped quarter circles in 2px steps with 2px
+  outlines (`roundClip()` in the demo, clip-path on an outline layer + a
+  fill layer, `drop-shadow` for the hard shadow). Buttons come out almost
+  pill-shaped. Small square-notched corners read as "too sharp" there.
 - The dressing room is called **Buddy 造型室** (not 捏人台). One component
   (`prototype/shared/studio.js` + `.css`, pasted into both pages by
   `make_creator.inline_shared`): stage with Buddy, tabs 发型 / 五官 / 上装 /

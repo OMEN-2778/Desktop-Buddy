@@ -198,13 +198,13 @@ body {
 .mood-talk {
   flex: 1 1 auto; min-width: 0; height: 100%;
   display: flex; flex-direction: column; justify-content: center; align-items: stretch; gap: 5px;
-  padding-right: 2px;   /* the bubble's 2px outline ends exactly at the house's right edge */
+  padding-right: 0;     /* the bubble's outline ends exactly at the house's right edge */
 }
 .pop {
   --pe: var(--edge);
   position: relative; max-width: 100%; display: flex; align-items: baseline; gap: 8px;
-  font-size: var(--say-fs, 32px); line-height: 1.35; padding: 6px 16px; color: var(--ink);
-  box-shadow: 0 -2px 0 0 var(--pe), 0 2px 0 0 var(--pe), -2px 0 0 0 var(--pe), 2px 0 0 0 var(--pe), 3px 3px 0 0 var(--shadow);
+  font-size: var(--say-fs, 32px); line-height: 1.35; padding: 8px 20px; color: var(--ink);
+  isolation: isolate; filter: drop-shadow(3px 3px 0 var(--shadow));
   transform-origin: left center;
   animation: popin .42s cubic-bezier(.3, 1.6, .5, 1) both;
   transition: opacity .35s, transform .35s;
@@ -212,13 +212,16 @@ body {
 .pop span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pop.out { opacity: 0; transform: translateY(-3px); }
 .pop[hidden] { display: none; }
-.pop.say { --pe: #8a6446; background: #ecd5ad; color: #3d2a1e; margin-left: 14px; }
+/* body: a 2px outline and the fill, both with big stepped round corners (--clip-say, made in fit) */
+.pop .bg { position: absolute; inset: 0; z-index: -1; background: var(--pe); clip-path: var(--clip-say); }
+.pop .bg::after { content: ""; position: absolute; inset: 2px; background: var(--pf); clip-path: var(--clip-say-in); }
+.pop.say { --pe: #8a6446; --pf: #ecd5ad; color: #3d2a1e; margin-left: 14px; }
 .pop.say::before, .pop.say::after {           /* pixel tail pointing left at the face */
   content: ""; position: absolute; top: 50%; transform: translateY(-50%);
   clip-path: polygon(100% 0, 100% 100%, 0 50%);
 }
 .pop.say::before { left: -20px; width: 20px; height: 28px; background: #8a6446; }
-.pop.say::after { left: -15px; width: 16px; height: 20px; background: #ecd5ad; }
+.pop.say::after { left: -15px; width: 18px; height: 20px; background: #ecd5ad; }   /* runs 3px into the body to open its outline */
 @keyframes popin { from { opacity: 0; transform: scale(.5) translateX(-10px); } to { opacity: 1; transform: none; } }
 .mood-tip {
   position: absolute; left: 0; top: calc(100% + 6px); z-index: 6; min-width: 230px; max-width: 320px;
@@ -248,18 +251,28 @@ body {
   transform: translate(-50%, -50%) scale(.2); opacity: 0;
   transition: transform .34s cubic-bezier(.3, 1.7, .5, 1), opacity .18s;
   transition-delay: calc(var(--k, 0) * 35ms);
-  box-shadow:
-    inset 0 calc(-1 * var(--u)) 0 0 var(--bevel-lo), inset 0 var(--u) 0 0 var(--bevel-hi),
-    0 calc(-1 * var(--u)) 0 0 var(--edge), 0 var(--u) 0 0 var(--edge),
-    calc(-1 * var(--u)) 0 0 0 var(--edge), var(--u) 0 0 0 var(--edge), calc(var(--u) * 2) calc(var(--u) * 2) 0 0 var(--shadow);
+  /* round pixel corners: an outline layer and a fill layer, each clipped to
+     a stepped rounded rect (--clip-btn, made in fit) behind the label */
+  background: none; box-shadow: none; isolation: isolate;
+  padding: 7px 16px;
+  filter: drop-shadow(3px 3px 0 var(--shadow));
 }
+.ring button::before, .ring button::after { content: ""; position: absolute; z-index: -1; }
+.ring button::before { inset: 0; background: var(--edge); clip-path: var(--clip-btn); }
+.ring button::after {
+  inset: 2px; background: var(--panel-2); clip-path: var(--clip-btn-in);
+  box-shadow: inset 0 -2px 0 0 var(--bevel-lo), inset 0 2px 0 0 var(--bevel-hi);
+}
+.ring button:hover { background: none; }
+.ring button:hover::after { background: var(--panel); }
 .ring.on button { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))); opacity: 1; }
-.ring button.more::after { content: " ▸"; }
-.ring button.back { background: var(--panel); color: var(--muted); }
-.ring button:active { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) + var(--u))); }
+.ring button.back { color: var(--muted); }
+.ring button.back::after { background: var(--panel); }
+.ring button:active { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) + 2px)); }
 .ring .hint {
   position: absolute; transform: translate(-50%, -100%); white-space: nowrap; pointer-events: none;
-  background: var(--title, #33253b); color: #f7f6fb; font-size: var(--ring-fs, 14px); padding: 4px 10px;
+  background: var(--title, #33253b); color: #f7f6fb; font-size: var(--ring-fs, 14px); padding: 6px 14px;
+  clip-path: var(--clip-btn);
 }
 @media (prefers-reduced-motion: reduce) { .ring button { transition: none; } }
 /*__SHARED_STUDIO_CSS__*/
@@ -322,7 +335,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
           <div class="mood-tip" id="moodTip" hidden></div>
         </div>
         <div class="mood-talk" aria-live="polite">
-          <div class="pop say" id="popSay" hidden><span></span></div>
+          <div class="pop say" id="popSay" hidden><i class="bg" aria-hidden="true"></i><span></span></div>
         </div>
       </div>
       <div class="skybar" id="skybar" role="img" aria-label="时间与天气">
@@ -925,6 +938,18 @@ function pillClip(n, u) {
   return `polygon(${pts.join(",")})`;
 }
 
+// A rectangle whose corners are pixel-stepped quarter circles: n steps of p px.
+function roundClip(n, p) {
+  const ins = [];
+  for (let r = 0; r < n; r++) { const dy = n - (r + 0.5); ins.push(Math.round(n - Math.sqrt(Math.max(0, n * n - dy * dy)))); }
+  const pts = [], R = i => `calc(100% - ${i}px)`;
+  for (let r = 0; r < n; r++) pts.push(`${R(ins[r] * p)} ${r * p}px`, `${R(ins[r] * p)} ${(r + 1) * p}px`);
+  for (let r = n - 1; r >= 0; r--) pts.push(`${R(ins[r] * p)} ${R((r + 1) * p)}`, `${R(ins[r] * p)} ${R(r * p)}`);
+  for (let r = 0; r < n; r++) pts.push(`${ins[r] * p}px ${R(r * p)}`, `${ins[r] * p}px ${R((r + 1) * p)}`);
+  for (let r = n - 1; r >= 0; r--) pts.push(`${ins[r] * p}px ${(r + 1) * p}px`, `${ins[r] * p}px ${r * p}px`);
+  return `polygon(${pts.join(",")})`;
+}
+
 // 8x8 UI-pixel tile of faint diagonal stripes; it crawls along the fill.
 function stripePattern(u) {
   const c = document.createElement("canvas");
@@ -980,6 +1005,13 @@ function fit() {
   widget.style.setProperty("--studio-dx", (narrowHouse ? g + barW : 0) + "px");
   widget.style.setProperty("--say-fs", (narrowHouse ? 24 : 32) + "px");   // her words: big, smaller on phones
   widget.style.setProperty("--ring-fs", (narrowHouse ? 12 : 14) + "px");
+  // round corners (user: as round as they can be): 2px steps and 2px outlines,
+  // like the speech bubble; the buttons come out almost pill-shaped
+  const nb = narrowHouse ? 7 : 9;
+  widget.style.setProperty("--clip-btn", roundClip(nb, 2));
+  widget.style.setProperty("--clip-btn-in", roundClip(nb - 1, 2));
+  widget.style.setProperty("--clip-say", roundClip(narrowHouse ? 9 : 13, 2));
+  widget.style.setProperty("--clip-say-in", roundClip(narrowHouse ? 8 : 12, 2));
   if (typeof kickNeeds === "function") kickNeeds();
 }
 
@@ -1913,7 +1945,7 @@ view.addEventListener("click", e => {
 // computer: what to do on it. More options will join later.
 const ringEl = document.getElementById("ring");
 const RINGS = {
-  buddy: [["chat", "聊聊天"], ["pat", "摸摸头"], ["phone", "玩手机", "more"], ["dance", "跳支舞"], ["bed", "去睡觉"]],
+  buddy: [["chat", "聊聊天"], ["pat", "摸摸头"], ["phone", "玩手机 ▸", "more"], ["dance", "跳支舞"], ["bed", "去睡觉"]],
   phone: [["phone_call", "打给妈妈"], ["phone_video", "和朋友视频"], ["phone_feed", "刷动态"], ["phone_text", "发消息"], ["phone_game", "玩手机游戏"], ["back", "返回", "back"]],
   computer: [["computer", "打游戏"], ["pc_video", "视频聊天"], ["pc_forum", "逛论坛"], ["pc_code", "写代码"]],
 };
