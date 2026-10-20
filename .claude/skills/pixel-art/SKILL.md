@@ -426,11 +426,17 @@ edits; copy changes into life_text.js.
   or. `rollCard` in `rollEvents`: about 1.5 a day (`CARD_GAP` 360 game min
   + `CARD_CHANCE` 0.3 / hour), not asleep / in the bath / on the toilet /
   dressing / with a panel open; unseen cards first (`lifeFlags.cards.seen`,
-  saved), cards with a `when` x2 when it fits. UI: `#card` over the house
-  (`placeCard`: house-sized, a bit bigger on a tiny phone house) springs out
+  saved), cards with a `when` x2 when it fits. While the card or the result
+  is up (`card.hold`) game time stands still (the loop runs 0 speed) and the
+  house dims (`#view.dim`, a brightness filter on the canvas, so only the
+  house's pixels darken; user: dim, don't hide). UI: `#card` over the house,
+  no panel, white outlined text (`placeCard`: house-sized; a bit bigger with
+  a dark backing, `.big`, on a tiny phone house) springs out
   of her (`cardIn` keyframes, `--from-x/y` via `fromBuddy`), the pick gets
   pressed + lit, the card shrinks back into her; 3-6 s later `#cardRes`: the
-  result box pops out of her with the moodlet pill above; any click closes
+  result box pops out of her with the moodlet pill above (user: make it
+  stand out — after the box lands: colour + white flash waves, 20 pixel
+  sparks, a big wobbly pop, a shine sweep, a glow pulsing twice); any click closes
   it (eaten, `CARD_LOCK` 0.9 s first so it can't be missed) and the pill
   flies into the emoji (`.fly`), where the moodlet is added. No pick in 60 s
   (`CARD_WAIT`, bar along the bottom): she picks, the result only goes in
