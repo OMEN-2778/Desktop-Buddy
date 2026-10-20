@@ -302,6 +302,9 @@ body {
   background: var(--accent); box-shadow: inset 0 2px 0 0 var(--accent-lo), inset 0 -2px 0 0 var(--accent-hi);
 }
 .set-label { color: #f7f6fb; font-weight: 700; }
+.settings button.glyph { display: grid; place-items: center; min-width: 58px; padding-block: 8px; }
+.settings button.glyph svg { display: block; }
+@media (max-width: 520px) { .settings button.glyph { min-width: 50px; padding-block: 7px; } }
 .set-label::before { background: var(--title, #33253b); }
 .set-gear { padding: 8px !important; }
 .set-gear::before { clip-path: var(--clip-gear) !important; }
@@ -1944,11 +1947,18 @@ needsEl.addEventListener("keydown", e => { if (e.key === "Escape") needsEl.blur(
 // The gear at the top-right; options pop out to its left. More rows later:
 // add them to SETTINGS. 一倍 = 3 game minutes per real second (the old default).
 const SETTINGS = [
-  { id: "speed", label: "时间流速", options: [[0, "暂停"], [3, "一倍"], [6, "两倍"]],
+  { id: "speed", label: "时间流速", options: [[0, "暂停", "pause"], [3, "一倍", "play"], [6, "两倍", "ff"]],
     get: () => speed, set: v => { speed = v; } },
 ];
 const setPop = document.getElementById("setPop"), setGear = document.getElementById("setGear");
 document.getElementById("gearImg").src = D.uiIcons.gear;
+// a pixel glyph (ui_icons.GLYPHS) as crisp SVG squares in the button's text colour
+function glyphSvg(name, p = 2) {
+  const rows = D.uiGlyphs[name], w = rows[0].length, h = rows.length;
+  let r = "";
+  rows.forEach((row, y) => [...row].forEach((c, x) => { if (c === "#") r += `<rect x="${x}" y="${y}" width="1" height="1"/>`; }));
+  return `<svg width="${w * p}" height="${h * p}" viewBox="0 0 ${w} ${h}" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
+}
 function buildSettings() {
   setPop.innerHTML = "";
   for (const st of SETTINGS) {
@@ -1956,9 +1966,11 @@ function buildSettings() {
     row.className = "set-row"; row.setAttribute("role", "radiogroup"); row.setAttribute("aria-label", st.label);
     const items = [];
     const lab = document.createElement("span"); lab.className = "set-label"; lab.textContent = st.label; items.push(lab);
-    for (const [v, name] of st.options) {
+    for (const [v, name, g] of st.options) {
       const b = document.createElement("button");
-      b.type = "button"; b.textContent = name; b.setAttribute("aria-pressed", String(st.get() === v));
+      b.type = "button"; b.setAttribute("aria-pressed", String(st.get() === v));
+      if (g) { b.innerHTML = glyphSvg(g); b.setAttribute("aria-label", name); b.title = name; b.classList.add("glyph"); }
+      else b.textContent = name;
       b.addEventListener("click", () => {
         st.set(v); saveSettings();
         row.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));

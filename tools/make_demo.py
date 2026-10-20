@@ -208,6 +208,7 @@ def main():
         "bg": {"day": png(day), "night": png(night)},
         "needIcons": {k: png(need_icons.icon(k)) for k in need_icons.GRIDS},
         "uiIcons": {"gear": png(ui_icons.icon("gear"))},
+        "uiGlyphs": ui_icons.GLYPHS,
         "skyIcons": {k: [png(f) for f in sky_icons.frames(k)] for k in sky_icons.NAMES},
         "moodIcons": {k: [png(f) for f in mood_icons.frames(k)] for k in mood_icons.NAMES},
         "moods": [list(m) for m in mood_icons.EMOTIONS],

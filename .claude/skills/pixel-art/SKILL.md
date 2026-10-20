@@ -193,7 +193,9 @@ Reference: `prototype/shared/studio.css`.
   (`art/src/concept/ui_icons.py`); clicking it pops the options out to the
   LEFT as rows of pills in the same ring-menu style (dark label pill, then
   choices; the chosen one in the accent colour). Add rows to `SETTINGS`.
-  Time speed: 暂停 / 一倍 (3 game min per real second) / 两倍.
+  Time speed: 暂停 / 一倍 (3 game min per real second) / 两倍, shown as
+  pixel glyphs (two bars / one triangle / two triangles, `ui_icons.GLYPHS`,
+  drawn as crisp SVG in the text colour); the words stay as aria-labels.
 - The dressing room is called **Buddy 造型室** (not 捏人台). One component
   (`prototype/shared/studio.js` + `.css`, pasted into both pages by
   `make_creator.inline_shared`): stage with Buddy, tabs 发型 / 五官 / 上装 /

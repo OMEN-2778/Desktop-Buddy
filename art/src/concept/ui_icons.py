@@ -38,9 +38,50 @@ def gear() -> Sprite:
     return s
 
 
+# One-colour glyphs for pill buttons: the page draws them in the button's text
+# colour (white on the chosen one), 2 screen pixels per glyph pixel.
+GLYPHS = {
+    "pause": [            # two bars
+        "##..##",
+    ] * 9,
+    "play": [             # one triangle pointing right
+        "#....",
+        "##...",
+        "###..",
+        "####.",
+        "#####",
+        "####.",
+        "###..",
+        "##...",
+        "#....",
+    ],
+    "ff": [               # two triangles
+        "#....#....",
+        "##...##...",
+        "###..###..",
+        "####.####.",
+        "##########",
+        "####.####.",
+        "###..###..",
+        "##...##...",
+        "#....#....",
+    ],
+}
+
+
+def glyph(name: str, color=P.ink[1]) -> Sprite:
+    return Sprite.from_grid("\n".join(GLYPHS[name]), {"#": color})
+
+
 def icon(name: str) -> Sprite:
     return {"gear": gear}[name]()
 
 
 def build():
-    return {"ui_icons": icon("gear")}
+    out = Sprite(13 + sum(len(GLYPHS[g][0]) + 3 for g in GLYPHS), 13)
+    out.blit(icon("gear"), 0, 0)
+    x = 16
+    for g in GLYPHS:
+        out.blit(glyph(g), x, 2)
+        x += len(GLYPHS[g][0]) + 3
+    return {"ui_icons": out}
