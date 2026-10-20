@@ -279,15 +279,20 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
 - The settings gear sits at the page top (absolute, not fixed) and the page
   keeps 66px clear above the content, so the 造型室's ✕ never sits under it.
 - **Settings rows** (`SETTINGS`): 时间流速, 界面大小 (− 100% + 适应窗口;
-  25% steps = whole house pixels; text and corners scale with it), 总在最上层
+  counted in SCREEN pixels: 25% = one game pixel per monitor pixel, user's
+  smallest; 100% = 4; the house canvas is drawn at device resolution
+  (`devPx`), `scale` is CSS px per house px; text keeps a readable minimum), 总在最上层
   (desktop app only), 存档 (保存 / 导出 or 存档位置 / 导入 / 重新开始, which
   asks twice).
 - **Saves**: one versioned JSON (`snapshot()` / `restore()` / `migrate()`);
   bump `SAVE_VERSION` and add a migrate step whenever its shape changes.
   Browser: localStorage; desktop app: a file via Tauri commands.
 - **Desktop app** (`desktop/`, Tauri): the same page in a frameless,
-  transparent window sized to the game (`fitWindow` -> `fit_window`); drag
-  regions are the empty page, the mood row and the time bar. Icon:
+  transparent window sized to the game (`fitWindow` -> `fit_window`). It is
+  moved by our own handler (`dragWindow` -> `start_drag`): press on the
+  house's walls/floor and move 3px, or press the empty page, mood row or time
+  bar. `data-tauri-drag-region` didn't work for the user on Windows (the
+  see-through margins may not even get clicks) — don't go back to it. Icon:
   `art/src/concept/app_icon.py` -> `tools/make_desktop_icons.py`.
   Gotchas found running it (Linux build under Xvfb): the demo page is a
   fragment, so `copy-web.mjs` adds a doctype + UTF-8 charset (without it the

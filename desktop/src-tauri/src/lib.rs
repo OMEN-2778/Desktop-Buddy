@@ -6,6 +6,7 @@
 //!   load_save / write_save   the save, as JSON text, in the app data folder
 //!   open_save_dir            show that folder in the file manager
 //!   fit_window               size the window to the game
+//!   start_drag               move the window with the mouse (no title bar)
 //!   set_on_top               "总在最上层" (also ticks the tray item)
 //!   exit_app                 quit, once the page has saved
 //!   log_js                   the page's errors, printed to the app's stderr
@@ -108,6 +109,11 @@ fn fit_window(window: WebviewWindow, width: f64, height: f64) -> Result<(), Stri
 }
 
 #[tauri::command]
+fn start_drag(window: WebviewWindow) -> Result<(), String> {
+    window.start_dragging().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn set_on_top(window: WebviewWindow, item: State<OnTopItem>, on: bool) -> Result<(), String> {
     window.set_always_on_top(on).map_err(|e| e.to_string())?;
     item.0.set_checked(on).map_err(|e| e.to_string())
@@ -196,6 +202,7 @@ pub fn run() {
             write_save,
             open_save_dir,
             fit_window,
+            start_drag,
             set_on_top,
             exit_app,
             log_js
