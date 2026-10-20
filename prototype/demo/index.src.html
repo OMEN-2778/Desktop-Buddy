@@ -65,7 +65,7 @@ body {
   display: grid;
   place-items: center;
   padding-block: calc(var(--row-h, 42px) + 24px + var(--room-top, 0px)) 32px;   /* top: the gear + diary row, and room for what opens above it */
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-left: calc(max(16px, env(safe-area-inset-left, 0px)) + var(--room-left, 0px));   /* + room for the pick-a-thing panel */
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   min-width: 0;
 }
@@ -464,10 +464,45 @@ body {
 .diary-pop li.empty { grid-template-columns: 1fr; color: #8a6446; }
 @media (max-width: 520px) { .diary-box { gap: 6px; padding-right: 14px; } .diary-box b { padding: 0 10px; font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { .diary, .diary-pop { transition: none; } }
+/* ---------- pick-a-thing panel (user): clicking the bookshelf, the TV, a
+   game on the computer or the phone, or the stove pops a panel out to the
+   LEFT of the house: every book / show / game / dish with its little
+   picture, a line about it, and for dishes how filling it is and how long
+   it takes. The page (or the app window) makes room on the left. */
+.picker {
+  position: absolute; z-index: 30; right: calc(100% + var(--g, 12px) + var(--bar-w, 200px) + 14px); top: var(--pick-top, 0px);   /* left of the needs bars */
+  width: 360px; height: var(--pick-h, 360px); display: flex; flex-direction: column;
+  background: var(--panel); color: var(--ink);
+  box-shadow: 0 -2px 0 0 var(--edge), 0 2px 0 0 var(--edge), -2px 0 0 0 var(--edge), 2px 0 0 0 var(--edge), 5px 5px 0 0 var(--shadow);
+  transform-origin: 100% 50%; transform: translateX(16px) scale(.92); opacity: 0;
+  transition: transform .3s cubic-bezier(.3, 1.5, .5, 1), opacity .18s;
+}
+.picker.on { transform: none; opacity: 1; }
+.picker[hidden] { display: none; }
+.picker.over { right: auto; left: calc(-1 * var(--studio-dx, 0px)); width: min(360px, var(--studio-w, 342px)); }   /* no room on the left (a phone): over the house */
+.pk-head { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; background: var(--title, #33253b); color: #f7f6fb; }
+.pk-head h3 { margin: 0; flex: 1; font-size: 14px; font-weight: 700; letter-spacing: .06em; }
+.pk-head button { margin: 0; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+.pk-head button.x { padding: 3px 8px; background: none; box-shadow: none; color: #f7f6fb; }
+.pk-body { flex: 1; overflow-y: auto; padding: 6px 10px 12px; scrollbar-width: thin; }
+.pk-group { margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .08em; display: flex; gap: 6px; align-items: baseline; }
+.pk-group small { font-weight: 400; letter-spacing: 0; }
+.pk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
+.pk-item {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: center; text-align: left;
+  margin: 2px; padding: 6px; background: var(--panel-2); color: var(--ink); font-size: 12px; line-height: 1.3;
+  box-shadow: inset 0 -2px 0 0 var(--bevel-lo), inset 0 2px 0 0 var(--bevel-hi), 0 0 0 2px var(--edge);
+}
+.pk-item:hover { background: #fff; }
+.pk-item img { width: calc(var(--iw) * 2px); height: calc(var(--ih) * 2px); image-rendering: pixelated; image-rendering: crisp-edges; }
+.pk-item b { display: block; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pk-item span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--muted); font-size: 11px; }
+.pk-item i { display: block; font-style: normal; color: #8a6446; font-size: 11px; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .picker { transition: none; } }
 /* ---------- the desktop app: the window is the game, see-through around it */
 html.desktop, html.desktop body { background: transparent !important; }
 html.desktop body { background-image: none !important; overflow: hidden; }
-html.desktop .desk { padding: calc(var(--row-h, 42px) + 22px + var(--room-top, 0px)) 40px 48px; place-items: start; }   /* pinned top-left: the window grows right/down around it */
+html.desktop .desk { padding: calc(var(--row-h, 42px) + 22px + var(--room-top, 0px)) 40px 48px calc(40px + var(--room-left, 0px)); place-items: start; }   /* pinned top-left: the window grows right/down around it */
 html.desktop .console { display: none; }
 html.desktop .desk, html.desktop .moodrow, html.desktop .sky-hit { cursor: grab; }   /* press here to move the window */
 /*__SHARED_STUDIO_CSS__*/
@@ -547,6 +582,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <div class="sky-hit" id="skyHit"></div>
         <div class="sky-tip" id="skyTip" hidden></div>
       </div>
+      <section class="picker" id="picker" hidden aria-label="选择"><div class="pk-head"><h3></h3><button type="button" class="rand">随便来一个</button><button type="button" class="x" aria-label="关闭">✕</button></div><div class="pk-body"></div></section>
       <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她弹出互动菜单。"></canvas>
       <div class="ring" id="ring" role="menu" aria-label="和她互动" hidden></div>
       <div class="nametag" id="nametag" aria-hidden="true"></div>
@@ -905,7 +941,8 @@ function finishAct() {
 }
 
 // The player clicked a piece of furniture: drop what she's doing and go.
-function command(act) {
+function command(act, item = null) {
+  sim.chosen = item ? { act, item } : null;     // picked in the panel; otherwise she picks
   if (sim.mode === "down") { log(`${nameOf()}晕倒了，先长按${ta()} 5 秒把${ta()}叫醒吧。`); return; }
   if (sim.mode === "act" && sim.act === "sleep") {
     const h = hour();
@@ -932,7 +969,7 @@ function step(dtGame, dtReal) {
   let eff = sim.mode === "act" ? (EFFECT[sim.act] || {}) : {};
   if (sim.mode === "act" && sim.act === "eat" && sim.meal?.quality) {   // a burnt meal fills less, a great one cheers her up
     const q = sim.meal.quality;
-    eff = { ...eff, hunger: eff.hunger * ({ burnt: 0.6, plain: 1, good: 1.1, great: 1.2 }[q] || 1), ...(q === "great" ? { fun: 0.3 } : {}) };
+    eff = { ...eff, hunger: sim.meal.rate ?? eff.hunger * ({ burnt: 0.6, plain: 1, good: 1.1, great: 1.2 }[q] || 1), ...(q === "great" ? { fun: 0.3 } : {}) };
   }
   for (const k of Object.keys(n)) {
     let d = -DECAY[k];
@@ -1132,6 +1169,7 @@ function useFurniture(id, glowOnly = false) {
       : st === "open" ? (blind ? "卷起卷帘，推开窗户，风吹了进来。" : "拉开窗帘，推开窗户，风吹了进来。") : "关上了窗户。");
     return;
   }
+  if (PICK[CLICK_ACT[id]]) { openPicker(CLICK_ACT[id]); return; }   // books, shows, dishes: choose in the panel
   if (CLICK_ACT[id]) command(CLICK_ACT[id]);
 }
 
@@ -1871,14 +1909,18 @@ function weighted(list) {               // [[id, weight], ...] -> id (or null)
 }
 // what she reads / watches / plays / cooks: picked when she gets there, so
 // the screen, her words and the diary all agree. -> sim.item { list, kind, vars, screen }
+const dishItem = (c, d) => (typeof d === "string" ? { kind: c, vars: { 菜系: c.name, 食物: d } } : { kind: c, dish: d, vars: { 菜系: c.name, 食物: d.name } });
 const CATALOG = {
   read: () => ["reading", "books", "书"], tv: () => ["tv", "shows", "节目"],
   computer: () => ["games", "games", "游戏"], phone_game: () => ["phoneGames", "games", "游戏"],
 };
 function pickItem(act) {
-  if (act === "cook") {
-    const c = pick(T.cuisines);
-    return { kind: c, vars: { 菜系: c.name, 食物: pick(c.dishes) } };
+  if (act === "cook") {   // hungry: she goes for something filling
+    const all = T.cuisines.flatMap(c => c.dishes.map(d => [c, d]));
+    const hungry = sim.needs.hunger < 50, w = ([, d]) => (hungry ? Math.max(1, (d.fill || 40) - 25) ** 2 : 1);
+    let r = Math.random() * all.reduce((a, x) => a + w(x), 0);
+    const [c, d] = all.find(x => (r -= w(x)) < 0) || all[0];
+    return dishItem(c, d);
   }
   if (act === "snack") return { vars: { 零食: pick(T.snacks) } };
   if (!CATALOG[act]) return null;
@@ -1886,7 +1928,14 @@ function pickItem(act) {
   return { kind, vars: { [key]: pick(kind[items]) }, screen: kind.screen };
 }
 function lifeArrive(act) {
-  sim.item = pickItem(act);
+  sim.item = sim.chosen && sim.chosen.act === act ? sim.chosen.item : pickItem(act);
+  sim.chosen = null;
+  const dish = sim.item && sim.item.dish;
+  if (act === "cook" && dish && dish.time) sim.actEnd = sim.t + dish.time;          // each dish its own cooking time
+  if (act === "eat" && sim.meal && sim.meal.fill) {                                  // and fills her by its own amount
+    const q = { burnt: 0.6, plain: 1, good: 1.1, great: 1.2 }[sim.meal.quality] || 1;
+    sim.meal.rate = sim.meal.fill * q / Math.max(10, sim.actEnd - sim.t);
+  }
   if (act === "eat") sim.meal = { ...(sim.meal || {}), full: sim.needs.hunger > 95 };
   if (act === "sleep" && !sim.nap && emotion().key === "tense" && Math.random() < 0.3) sim.insomnia = true;
 }
@@ -1899,7 +1948,8 @@ function lifeFinish(act) {
       const e = emotion().key, sharp = ["focused", "inspired", "confident", "happy"].includes(e), foggy = ["dazed", "tense", "angry"].includes(e);
       const burnt = 0.1 + (foggy ? 0.1 : 0) - (sharp ? 0.04 : 0), great = 0.14 + (sharp ? 0.1 : 0);
       const quality = r < burnt ? "burnt" : r < burnt + great ? "great" : r < 0.62 ? "good" : "plain";
-      sim.meal = { vars, cooked: true, quality, spicy: !!c.spicy, sweet: !!c.sweet };
+      const d = it.dish || {};
+      sim.meal = { vars, cooked: true, quality, spicy: !!c.spicy, sweet: !!c.sweet, fill: d.fill, moods: d.moods, plus: d.plus };
       const seen = (lifeFlags.cuisines ||= []);
       if (!seen.includes(c.name)) { seen.push(c.name); if (seen.length > 1) addMood("mealNewDish", { vars }); }
       if (quality === "burnt") {
@@ -1913,6 +1963,8 @@ function lifeFinish(act) {
       if (m.quality !== "burnt") addMood({ plain: "mealPlain", good: "mealGood", great: "mealGreat" }[m.quality] || "mealPlain", { vars });
       if (m.spicy) addMood(Math.random() < 0.3 ? "mealTooSpicy" : "mealSpicy", { vars, diary: false });
       if (m.sweet) addMood("mealSweet", { vars, diary: false });
+      if (m.moods && m.quality !== "burnt") addMood(weighted(m.moods), { vars });    // this dish's own effects
+      for (const [k, v] of Object.entries(m.plus || {})) if (k in sim.needs) sim.needs[k] = clamp(sim.needs[k] + v * (m.quality === "burnt" ? 0.5 : 1));
       if (m.full) addMood("stuffed");
       sim.meal = null;
       break;
@@ -2780,8 +2832,76 @@ function ringPick(id) {
     if (sim.needs.energy < 70 || h >= 21 || h < 6) command("sleep"); else speak(pick(T.you.notSleepy), true);
     return;
   }
+  if (PICK[id]) { openPicker(id); return; }          // a game: choose in the panel
   command(id);
 }
+
+// ================================================================ pick-a-thing panel
+// What to read / watch / play / cook (user): every title with its picture
+// (covers matched to titles at random by a hash; dishes by their look) and
+// a line about it. Picking one sends her to do it with that one.
+const pickerEl = document.getElementById("picker"), pickBody = pickerEl.querySelector(".pk-body");
+let pickOn = null;
+const hashOf = t => { let h = 7; for (const ch of t) h = (h * 31 + ch.codePointAt(0)) >>> 0; return h; };
+const coverOf = (kind, title) => D.items[kind][hashOf(title) % D.items[kind].length];
+const catalogPick = (list, key, cover) => () => T[list].map(g => ({ name: g.genre || g.kind, items: g[list === "tv" ? "shows" : list === "reading" ? "books" : "games"].map(t => ({
+  title: t, icon: coverOf(cover, t), line: T.blurbs?.[t] || "", item: { kind: g, vars: { [key]: t }, screen: g.screen } })) }));
+const PICK = {
+  read: { title: "书架 · 看哪本书", groups: catalogPick("reading", "书", "book") },
+  tv: { title: "电视 · 看什么节目", groups: catalogPick("tv", "节目", "tv") },
+  computer: { title: "电脑 · 玩什么游戏", groups: catalogPick("games", "游戏", "game") },
+  phone_game: { title: "手机 · 玩什么游戏", groups: catalogPick("phoneGames", "游戏", "app") },
+  cook: { title: "厨房 · 做什么菜", groups: () => T.cuisines.map(c => ({ name: c.name, note: [c.spicy && "辣", c.sweet && "甜"].filter(Boolean).join(" "),
+    items: c.dishes.map(d => typeof d === "string" ? { title: d, icon: D.items.dish.rice[0], item: dishItem(c, d) } : {
+      title: d.name, line: d.blurb || "", info: `饱食 ${d.fill} · ${d.time}分钟`,
+      icon: (D.items.dish[d.look] || D.items.dish.rice)[hashOf(d.name) % 3], item: dishItem(c, d) }) })) },
+};
+function openPicker(act) {
+  const P_ = PICK[act];
+  if (!P_ || sim.mode === "down") return;
+  closeRing(); setDiaryOpen(false);
+  pickOn = act;
+  pickerEl.querySelector("h3").textContent = P_.title;
+  pickBody.replaceChildren();
+  for (const g of P_.groups()) {
+    const h = document.createElement("div"); h.className = "pk-group"; h.textContent = g.name;
+    if (g.note) h.append(Object.assign(document.createElement("small"), { textContent: g.note }));
+    const grid = document.createElement("div"); grid.className = "pk-grid";
+    for (const it of g.items) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "pk-item"; b.title = it.line ? `${it.title}：${it.line}` : it.title;
+      const img = new Image(); img.alt = ""; img.src = it.icon;
+      img.onload = () => { b.style.setProperty("--iw", img.naturalWidth); b.style.setProperty("--ih", img.naturalHeight); };
+      const txt = document.createElement("div");
+      txt.append(Object.assign(document.createElement("b"), { textContent: it.title }));
+      if (it.info) txt.append(Object.assign(document.createElement("i"), { textContent: it.info }));
+      if (it.line) txt.append(Object.assign(document.createElement("span"), { textContent: it.line }));
+      b.append(img, txt);
+      b.addEventListener("click", () => { closePicker(); command(act, it.item); });
+      grid.append(b);
+    }
+    pickBody.append(h, grid);
+  }
+  pickBody.scrollTop = 0;
+  // beside the house, as tall as it (at least a usable height); over the house when there's no room
+  const viewEl = document.getElementById("view");
+  pickerEl.style.setProperty("--pick-top", viewEl.offsetTop + "px");
+  pickerEl.style.setProperty("--pick-h", Math.max(320, viewEl.offsetHeight) + "px");
+  const widgetLeft = document.getElementById("widget").getBoundingClientRect().left;
+  pickerEl.classList.toggle("over", !TAURI && widgetLeft < 380 + 24 && window.innerWidth <= 720);
+  pickerEl.hidden = false;
+  pickerEl.classList.remove("on"); void pickerEl.offsetWidth; pickerEl.classList.add("on");
+  makeRoom();
+}
+function closePicker() {
+  if (!pickOn) return;
+  pickOn = null;
+  pickerEl.classList.remove("on");
+  setTimeout(() => { if (!pickOn) { pickerEl.hidden = true; makeRoom(); } }, reduceMotionUI ? 0 : 220);
+}
+pickerEl.querySelector(".x").addEventListener("click", closePicker);
+pickerEl.querySelector(".rand").addEventListener("click", () => { const a = pickOn; closePicker(); command(a); });
+document.addEventListener("pointerdown", e => { if (pickOn && !pickerEl.contains(e.target) && e.target !== view) closePicker(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && pickOn) closePicker(); });
 
 // ================================================================ diary
 // A box over her speech bubble with the latest diary line; clicking it pops
@@ -2845,6 +2965,16 @@ function makeRoom() {
     const r = Math.max(0, Math.round(roomTop + need - top));
     if (r === roomTop) break;
     roomTop = r; desk.style.setProperty("--room-top", r + "px");
+  }
+  // and on the left for the pick-a-thing panel (unless it lies over the house)
+  // (it ends 14px left of the widget; its own pop-in transform doesn't count)
+  const needL = pickOn && !pickerEl.classList.contains("over") ? pickerEl.offsetWidth + 14 + 8 : 0;
+  let roomL = parseFloat(desk.style.getPropertyValue("--room-left")) || 0;
+  for (let i = 0; i < 12; i++) {
+    const left = document.getElementById("widget").getBoundingClientRect().left + window.scrollX;
+    const r = Math.max(0, Math.round(roomL + needL - left));
+    if (r === roomL) break;
+    roomL = r; desk.style.setProperty("--room-left", r + "px");
   }
   if (TAURI) fitWindow();
   else {   // a scrolled page: bring what just opened into view
@@ -3024,7 +3154,7 @@ async function resetSave() {
 }
 
 // ---------- the desktop window: sized to the game, tray menu events
-let lastWin = "", lastTop = null, lifted = 0;
+let lastWin = "", lastTop = null, lastLeft = null, lifted = 0, shifted = 0;
 function fitWindow() {
   if (!TAURI) return;
   const w = document.getElementById("widget"), desk = document.querySelector(".desk"), cs = getComputedStyle(desk);
@@ -3032,19 +3162,22 @@ function fitWindow() {
   const r = w.getBoundingClientRect();
   let right = r.right, bottom = r.bottom;
   if (!setPop.hidden) { const p = setPop.getBoundingClientRect(); right = Math.max(right, p.right + 8); bottom = Math.max(bottom, p.bottom + 8); }
+  if (!pickerEl.hidden) bottom = Math.max(bottom, pickerEl.offsetTop + pickerEl.offsetHeight + document.querySelector(".house-col").getBoundingClientRect().top + 8);
   const width = Math.ceil(right - r.left + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight));
   const height = Math.ceil(bottom - r.top + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom));
   // room made above the house (makeRoom) moves it down in the window: move
   // the window up as much, so it stays put on screen; give back only what
   // the window really moved (it stops at the top of the screen)
-  const top = moodrow.getBoundingClientRect().top;
-  let dy = lastTop === null ? 0 : top - lastTop;
-  lastTop = top;
+  // (and the same leftward for the pick-a-thing panel)
+  const mr = moodrow.getBoundingClientRect(), top = mr.top, left = mr.left;
+  let dy = lastTop === null ? 0 : top - lastTop, dx = lastLeft === null ? 0 : left - lastLeft;
+  lastTop = top; lastLeft = left;
   if (dy < 0) dy = -Math.min(-dy, lifted);
-  if (`${width}x${height}` === lastWin && !dy) return;
+  if (dx < 0) dx = -Math.min(-dx, shifted);
+  if (`${width}x${height}` === lastWin && !dy && !dx) return;
   lastWin = `${width}x${height}`;
-  TAURI.core.invoke("fit_window", { width, height, dy })
-    .then(moved => { lifted = Math.max(0, lifted + (+moved || 0)); })
+  TAURI.core.invoke("fit_window", { width, height, dx, dy })
+    .then(m => { const [mx, my] = Array.isArray(m) ? m : [0, +m || 0]; shifted = Math.max(0, shifted + mx); lifted = Math.max(0, lifted + my); })
     .catch(e => TAURI.core.invoke("log_js", { message: `fit_window: ${e}` }));
 }
 // Moving the window (it has no title bar): press on the empty space around

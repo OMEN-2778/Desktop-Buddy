@@ -375,6 +375,23 @@ edits; copy changes into life_text.js.
   `sim.item.vars`, moodlet lines with the vars they were added with) and the
   diary agree. Cooking rolls burnt / plain / good / great (mood shifts the
   odds; burnt fills 60%, great 120% + fun), `mealNewDish` per new cuisine.
+- **Pick-a-thing panel** (`#picker`, `PICK`, user): clicking the bookshelf,
+  the TV / sofa, 打游戏 on the computer, 玩手机游戏 on the phone or the stove
+  pops a panel out to the LEFT of the house (left of the needs bars) listing
+  every book / show / game / dish with its picture and a line
+  (`T.blurbs`; dishes: 饱食 + 分钟). Picking sends her with that item
+  (`command(act, item)` -> `sim.chosen` -> `lifeArrive`); 随便来一个 lets her
+  choose. The page gets `--room-left`; the app window grows left
+  (`fit_window` dx). A phone's screen: over the house instead.
+- **Item pictures** (`art/src/concept/item_icons.py`, user's idea): covers,
+  show cards, game boxes and app icons are a rectangle in one colour ramp
+  with one simple pattern — 48 designs each, matched to titles by a hash
+  (`coverOf`), so new titles need no new art. Dishes are drawn per `look`
+  (29 looks x 3 colour variants).
+- **Dishes** (`T.cuisines[].dishes`: look, fill, time, blurb, moods, plus):
+  each cooks for its own `time`, fills `fill` hunger over the meal (x0.6
+  burnt … x1.2 great), and leaves one of its own `moods` (weighted) plus
+  `plus` needs. Left to herself she favours filling dishes when hungry.
 - **Events** with a `when` (tags joined by +, see `WHEN`: time, weather,
   season, what she's doing, which room, low needs, good / bad mood) are added
   to `EVENTS` from the text file; others keep their conditions in the page.

@@ -28,6 +28,7 @@ import house as Hs  # noqa: E402
 import need_icons  # noqa: E402
 import sky_icons  # noqa: E402
 import ui_icons  # noqa: E402
+import item_icons  # noqa: E402
 import mood_icons  # noqa: E402
 import make_creator as mc  # noqa: E402
 from pixelkit import P, Sprite, rgba  # noqa: E402
@@ -211,6 +212,9 @@ def main():
         "needIcons": {k: png(need_icons.icon(k)) for k in need_icons.GRIDS},
         "uiIcons": {"gear": png(ui_icons.icon("gear"))},
         "uiGlyphs": ui_icons.GLYPHS,
+        # pick-a-thing panels: covers matched to titles by hash, dishes by look
+        "items": {**{k: [png(c) for c in item_icons.covers(k)] for k in ("book", "tv", "game", "app")},
+                  "dish": {k: [png(d) for d in v] for k, v in item_icons.dishes().items()}},
         "skyIcons": {k: [png(f) for f in sky_icons.frames(k)] for k in sky_icons.NAMES},
         "moodIcons": {k: [png(f) for f in mood_icons.frames(k)] for k in mood_icons.NAMES},
         "moods": [list(m) for m in mood_icons.EMOTIONS],

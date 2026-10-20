@@ -183,21 +183,25 @@ fn open_save_dir(app: AppHandle) -> Result<(), String> {
 static SHOWN: AtomicBool = AtomicBool::new(false);
 
 #[tauri::command]
-fn fit_window(window: WebviewWindow, width: f64, height: f64, dy: Option<f64>) -> Result<f64, String> {
-    // dy > 0: the page made room above the house (造型室, diary list) — move
-    // the window up as much so the house stays put on screen, but not past
-    // the top of the screen; dy < 0 gives it back. Returns how far it moved up.
-    let mut moved = 0.0;
-    if let (Some(dy), Ok(pos), Ok(sf)) = (dy, window.outer_position(), window.scale_factor()) {
-        if dy.abs() >= 0.5 {
+fn fit_window(window: WebviewWindow, width: f64, height: f64, dx: Option<f64>, dy: Option<f64>) -> Result<(f64, f64), String> {
+    // dy > 0: the page made room above the house (造型室, diary list), dx > 0
+    // to its left (the pick-a-thing panel) — move the window up / left as
+    // much so the house stays put on screen, but not past the screen's edge;
+    // negative gives it back. Returns how far it moved (left, up).
+    let (mut moved_x, mut moved_y) = (0.0, 0.0);
+    let (dx, dy) = (dx.unwrap_or(0.0), dy.unwrap_or(0.0));
+    if dx.abs() >= 0.5 || dy.abs() >= 0.5 {
+        if let (Ok(pos), Ok(sf)) = (window.outer_position(), window.scale_factor()) {
+            let mut x = pos.x - (dx * sf).round() as i32;
             let mut y = pos.y - (dy * sf).round() as i32;
-            if dy > 0.0 {
-                if let Ok(Some(m)) = window.current_monitor() {
-                    y = y.max(m.work_area().position.y.min(pos.y));
-                }
+            if let Ok(Some(m)) = window.current_monitor() {
+                let wa = m.work_area().position;
+                if dx > 0.0 { x = x.max(wa.x.min(pos.x)); }
+                if dy > 0.0 { y = y.max(wa.y.min(pos.y)); }
             }
-            moved = (pos.y - y) as f64 / sf;
-            let _ = window.set_position(PhysicalPosition::new(pos.x, y));
+            moved_x = (pos.x - x) as f64 / sf;
+            moved_y = (pos.y - y) as f64 / sf;
+            let _ = window.set_position(PhysicalPosition::new(x, y));
         }
     }
     let _ = window.set_resizable(true);
@@ -213,7 +217,7 @@ fn fit_window(window: WebviewWindow, width: f64, height: f64, dy: Option<f64>) -
             let _ = window.set_focus();
         }
     });
-    done.map(|_| moved).map_err(|e| e.to_string())
+    done.map(|_| (moved_x, moved_y)).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
