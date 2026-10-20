@@ -3231,10 +3231,18 @@ function placeCard(el) {
   }
   el.style.setProperty("--cs", Math.max(0.6, Math.min(1.35, H / 280)).toFixed(3));
 }
-function fromBuddy(el, target = el) {           // grow out of / shrink into her, wherever she is now
-  const p = pickFrom("buddy"), vr = view.getBoundingClientRect(), tr = target.getBoundingClientRect();
-  el.style.setProperty("--from-x", (vr.left + p.x * scale - tr.left) + "px");
-  el.style.setProperty("--from-y", (vr.top + p.y * scale - tr.top) + "px");
+// where an element sits on the page by layout, ignoring transforms: a card
+// that is about to grow is still scaled down to a dot, so its bounding box
+// would put "her" in the wrong place (it grew out of the top left)
+function layoutPos(el) {
+  let x = 0, y = 0;
+  for (; el; el = el.offsetParent) { x += el.offsetLeft; y += el.offsetTop; }
+  return { x, y };
+}
+function fromBuddy(el) {                         // grow out of / shrink into her, wherever she is now
+  const p = pickFrom("buddy"), v = layoutPos(view), t = layoutPos(el);
+  el.style.setProperty("--from-x", (v.x + p.x * scale - t.x) + "px");
+  el.style.setProperty("--from-y", (v.y + p.y * scale - t.y) + "px");
 }
 function showCard(cd) {
   closeRing(); setDiaryOpen(false); showMoodTip(false);
