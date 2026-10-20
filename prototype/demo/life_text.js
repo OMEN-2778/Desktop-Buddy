@@ -2,7 +2,8 @@
 // All the emotion-system text, taken from the doc "Buddy 情绪与事件文本"
 // (edit it there first, then copy here). tools/make_demo.py pastes this file
 // into the demo. Lines with " / " in the doc are arrays here: one is picked
-// at random. {食物} etc. are filled from FILL.
+// at random. {食物} etc. are filled from FILL; {名字} is her name and {她}
+// becomes 她 or 他 with her gender.
 const LIFE_TEXT = {
   // emotion -> [a little, normal, very]  (no moodlets at all = 平静)
   words: {
@@ -138,6 +139,7 @@ const LIFE_TEXT = {
     flowers: { name: "给自己买了花", emo: "flirty", pts: 1, min: 1440 },
     birthday: { name: "生日", emo: "happy", pts: 4, min: 1440 },
     anniversary: { name: "入住纪念日", emo: "happy", pts: 2, min: 1440 },
+    newName: { name: "有了新名字", emo: "confident", pts: 1, min: 360, say: ["{名字}，{名字}……越念越好听", "以后就叫我{名字}啦"] },
     revived: { name: "劫后余生", emo: "dazed", pts: 2, min: 180, say: ["我……刚才怎么了？", "谢谢你把我叫醒"] },
   },
 
@@ -166,7 +168,7 @@ const LIFE_TEXT = {
     snowman: { diary: "在窗台上用雪捏了个小雪人。", say: ["你叫小白", "别融化啊"] },
     frost: { diary: "窗玻璃上结了一层冰花。", say: ["好像画", "在上面写个字"] },
     cicadas: { diary: "外面的蝉叫个不停。", say: ["知了知了……", "夏天的声音"] },
-    catVisit: { diary: "一只橘猫蹲在窗台上，和她对视了三秒。", say: ["喵？", "可以摸摸你吗"] },
+    catVisit: { diary: "一只橘猫蹲在窗台上，和{她}对视了三秒。", say: ["喵？", "可以摸摸你吗"] },
     weirdNoise: { diary: "楼上传来咚的一声，屏住呼吸听了半天。", say: ["什……什么声音？", "是风吧，一定是风"] },
     mosquito: { diary: "半夜被蚊子嗡嗡吵醒，开灯打了三次都没打着。", say: ["嗡嗡嗡烦死了！", "别让我抓到你"] },
     sleepTalk: { say: ["再来一碗……", "别抢我的布丁……", "嘿嘿……飞起来了……"] },
@@ -241,11 +243,12 @@ const LIFE_TEXT = {
 
   // when you use the ring menu
   you: {
-    chat: ["今天过得怎么样？我挺好的！", "你知道吗，章鱼有三颗心脏", "我刚才在想，晚饭吃什么好呢", "有你陪我说话真好", "嘿嘿，你来啦", "我跟你说个秘密……算了不说了"],
+    chat: ["叫我{名字}就好啦", "今天过得怎么样？我挺好的！", "你知道吗，章鱼有三颗心脏", "我刚才在想，晚饭吃什么好呢", "有你陪我说话真好", "嘿嘿，你来啦", "我跟你说个秘密……算了不说了"],
     pat: ["嘿嘿", "再摸一下", "头发要被你揉乱啦"],
     notSleepy: ["我还不困呢", "现在睡太早啦", "再玩一会儿嘛"],
     collapse: ["……", "（倒下了）"],
     revive: ["我……刚才怎么了？", "谢谢你把我叫醒", "感觉活过来了"],
+    renamed: ["以后就叫我{名字}啦！", "{名字}……嗯！我喜欢这个名字", "{名字}，请多指教～"],
   },
 
   // she collapses (never dangerous): what the diary says, by cause

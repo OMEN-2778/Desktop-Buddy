@@ -2,6 +2,7 @@
 // One panel, used as the whole page in prototype/creator and as the pop-up
 // above the house in prototype/demo. Tabs: hair / face / top / bottom / socks /
 // accessories; every option is a live thumbnail of Buddy in the current colors.
+// Under the preview: her name (typed in, or rolled with the die).
 //
 //   const studio = BuddyStudio(rootEl, doll, DATA, {
 //     look, onChange(look), onClose?, modes?: true, previewScale?: 4, thumbH?: 44 })
@@ -43,6 +44,13 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
     }
   }
 
+  // a pixel die (10x10, face four) drawn as crisp SVG in the button's text colour
+  const DIE = [".########.", "#........#", "#.##..##.#", "#.##..##.#", "#........#",
+               "#........#", "#.##..##.#", "#.##..##.#", "#........#", ".########."];
+  const dieSvg = `<svg width="20" height="20" viewBox="0 0 10 10" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">${
+    DIE.flatMap((row, y) => [...row].map((c, x) => (c === "#" ? `<rect x="${x}" y="${y}" width="1" height="1"/>` : ""))).join("")}</svg>`;
+  const uid = Math.random().toString(36).slice(2, 7);
+
   // ---------------------------------------------------------- markup
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   root.classList.add("studio");
@@ -58,6 +66,11 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
     <div class="st-body">
       <div class="st-stage">
         <div class="st-screen"><canvas class="st-preview" aria-label="Buddy 预览"></canvas></div>
+        <div class="st-namerow">
+          <label class="st-label" for="st-name-${uid}">名字</label>
+          <input class="st-nameinput" id="st-name-${uid}" type="text" autocomplete="off" spellcheck="false" enterkeyhint="done">
+          <button type="button" class="st-dice" aria-label="随机起个名字" title="随机起个名字">${dieSvg}</button>
+        </div>
         ${opts.modes ? `<div class="st-modes" role="group" aria-label="表情">${[["idle", "日常"], ["happy", "开心"], ["surprised", "惊讶"],
           ["sleepy", "犯困"], ["flustered", "慌张"]].map(([m, n]) => `<button type="button" data-mode="${m}">${n}</button>`).join("")}</div>` : ""}
       </div>
@@ -96,6 +109,7 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
 
   const $ = s => root.querySelector(s), $$ = s => [...root.querySelectorAll(s)];
   const preview = $(".st-preview"), pctx = preview.getContext("2d");
+  const nameInput = $(".st-nameinput");
 
   // ---------------------------------------------------------- thumbnails
   const scratch = document.createElement("canvas");
@@ -154,6 +168,9 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
         : "短袜只露出脚踝一圈，长袜一直拉到膝盖。";
     }
     $$(".st-modes [data-mode]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
+    if (document.activeElement !== nameInput) nameInput.value = look.name;   // never fight the typing
+    nameInput.placeholder = `给${doll.pronoun(look)}起个名字`;
+    preview.setAttribute("aria-label", `${look.name} 预览`);
   }
 
   function change(patch) {
@@ -255,11 +272,26 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
     }
     if (b.classList.contains("st-swatch")) { change({ [b.dataset.color]: b.dataset.v }); return; }
     if (b.classList.contains("st-random")) { change(randomLook()); return; }
+    if (b.classList.contains("st-dice")) { change({ name: doll.randomName(look.gender, look.name) }); nameInput.value = look.name; return; }
     if (b.classList.contains("st-close") && opts.onClose) opts.onClose();
   });
   root.addEventListener("input", e => {
     const inp = e.target.closest("input[type=color]");
     if (inp) change({ [inp.dataset.color]: inp.value });
+  });
+  // the name: every keystroke counts (an empty box keeps the last name),
+  // the box is cut to NAME_MAX characters and tidied when you leave it
+  nameInput.addEventListener("input", () => {
+    const chars = Array.from(nameInput.value);
+    if (chars.length > doll.NAME_MAX) nameInput.value = chars.slice(0, doll.NAME_MAX).join("");
+    const v = doll.cleanName(nameInput.value);
+    if (v && v !== look.name) change({ name: v });
+  });
+  nameInput.addEventListener("change", () => { nameInput.value = look.name; });
+  nameInput.addEventListener("keydown", e => {
+    if (e.key === "Escape") nameInput.value = look.name;
+    if (e.key === "Enter" || e.key === "Escape") nameInput.blur();
+    e.stopPropagation();                      // Escape here leaves the box, not the 造型室
   });
   root.querySelector(".st-tabs").addEventListener("keydown", e => {   // arrow keys move between tabs
     const i = TABS.findIndex(t => t.id === tab);

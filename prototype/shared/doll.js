@@ -4,7 +4,7 @@
 // make_creator.doll_data(): role maps per layer key + option tables.
 //
 // A look is plain data:
-//   { gender, style, eyes, topStyle, bottomStyle, socks, acc: [..],
+//   { name, gender, style, eyes, topStyle, bottomStyle, socks, acc: [..],
 //     hair, skin, top, bottom, sock, eye }        <- the last six are colors
 // layerKeys() must build the same keys as Doll.layers() in art/src/concept/doll.py.
 function BuddyDoll(DATA) {
@@ -57,9 +57,28 @@ function BuddyDoll(DATA) {
          hair: "#7c4734", skin: "#f6c39c", top: "#447840", bottom: "#46619e", sock: "#e8e6ef", eye: "#7c4734" },
   };
   const has = (list, v) => list.some(o => o[0] === v);
+
+  // ---------------------------------------------------------- names
+  // Up to NAME_MAX characters, no control characters or angle brackets;
+  // an empty name falls back to the default.
+  const NAME_DEFAULT = "Buddy", NAME_MAX = 8;
+  function cleanName(s) {
+    const t = String(s ?? "").replace(/[\u0000-\u001f\u007f<>]/g, "").replace(/\s+/g, " ").trim();
+    return Array.from(t).slice(0, NAME_MAX).join("").trim();
+  }
+  const NAMES = {
+    f: ["小桃", "糯米", "栗子", "小满", "阿梨", "七七", "柚子", "年糕", "芝麻", "汤圆", "布丁", "小鹿", "月月", "甜橙", "棉花", "小樱"],
+    m: ["阿布", "土豆", "小树", "石头", "包子", "阿福", "冬瓜", "小虎", "卷卷", "毛毛", "大橙", "阿柴", "豆丁", "饭团", "小舟", "阿星"],
+  };
+  function randomName(gender, not) {
+    const pool = NAMES[gender === "m" ? "m" : "f"].filter(n => n !== not);
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+  const pronoun = look => (look && look.gender === "m" ? "他" : "她");
   function normalize(l) {   // fill gaps / drop unknown values (old saves, hand edits)
     const p = PRESETS[l && l.gender === "m" ? "m" : "f"], o = DATA.options;
     const out = { ...p, ...(l || {}) };
+    out.name = cleanName(out.name) || NAME_DEFAULT;
     if (!has(o.style, out.style)) out.style = p.style;
     if (!has(o.eyes, out.eyes)) out.eyes = p.eyes;
     if (!has(o.top, out.topStyle)) out.topStyle = p.topStyle;
@@ -205,6 +224,6 @@ function BuddyDoll(DATA) {
     return buf;
   }
 
-  return { W: DW, H: DH, ROLES, PRESETS, rampFrom, rampsOf, normalize, toggleAcc, layerKeys, paintLayer,
+  return { W: DW, H: DH, ROLES, PRESETS, NAME_DEFAULT, NAME_MAX, cleanName, randomName, pronoun, rampFrom, rampsOf, normalize, toggleAcc, layerKeys, paintLayer,
            pixels, pixelsBack, emotePixels, toCanvas, hexToRgb, cheer };
 }

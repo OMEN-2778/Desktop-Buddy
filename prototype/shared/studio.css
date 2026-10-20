@@ -50,6 +50,19 @@
 .st-stage { display: grid; gap: 8px; justify-items: center; }
 .st-screen { background: var(--edge); padding: var(--sp); }
 .st-preview { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+.st-namerow { display: flex; align-items: center; gap: 6px; max-width: 100%; }
+.st-nameinput {
+  font: inherit; font-weight: 700; color: var(--ink); background: var(--panel-2);
+  width: calc(8.4em + 16px); min-width: 0; border: 0; margin: var(--sp); padding: 3px 8px; outline: none;   /* 8 characters + padding */
+  box-shadow:
+    inset 0 var(--sp) 0 0 var(--bevel-lo),
+    0 calc(-1 * var(--sp)) 0 0 var(--edge), 0 var(--sp) 0 0 var(--edge),
+    calc(-1 * var(--sp)) 0 0 0 var(--edge), var(--sp) 0 0 0 var(--edge);
+}
+.st-nameinput:focus-visible { outline: var(--sp) dashed var(--focus); outline-offset: var(--sp); }
+.st-nameinput::placeholder { color: var(--muted); font-weight: 400; }
+.studio .st-dice { padding: 3px 6px; display: grid; place-items: center; }
+.st-dice svg { display: block; }
 .st-modes { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; max-width: 100%; }
 .studio .st-modes button { padding: 1px 7px; font-size: 12px; }
 

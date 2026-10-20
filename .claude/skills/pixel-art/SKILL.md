@@ -268,6 +268,16 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   (`monitor_screen` "video" / "forum" / "code"). More options will be added
   over time: add them to `RINGS`. Phone use happens on the spot with
   `phone_held()` (in her hands, or at her ear on a call).
+- **Names**: the look carries `name` (default "Buddy", at most 8 characters,
+  `doll.cleanName`). Set in the 造型室 under the preview (box + pixel die
+  for a random name by gender) or from the ring's 改名字 (a row of pills
+  over her head); the ring's top pill and a hover name tag show it. All
+  page text says her name and 她/他 by gender (`nameOf()`, `ta()`, and
+  `{名字}` / `{她}` in life_text.js); `spaced()` puts a space where Chinese
+  meets Latin ("Buddy 的小屋"). A rename gets a diary line, a moodlet and
+  a reaction, once you stop typing.
+- The settings gear sits at the page top (absolute, not fixed) and the page
+  keeps 66px clear above the content, so the 造型室's ✕ never sits under it.
 - **Computer chair** (user): there is no chair in the study; when she sits
   at the computer she conjures one (`F.office_chair_front`, a front-view
   high-back chair drawn behind her, taller than her seated head so it

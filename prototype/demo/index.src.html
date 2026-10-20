@@ -64,7 +64,7 @@ body {
 .desk {
   display: grid;
   place-items: center;
-  padding-block: 32px;
+  padding-block: 66px 32px;   /* top: room for the settings gear, so nothing (the 造型室's ✕) ever sits under it */
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   min-width: 0;
@@ -164,7 +164,7 @@ body {
   padding: var(--u) calc(var(--u) * 3) calc(var(--u) * 3) var(--u);
   margin: calc(-1 * var(--u)) calc(-3 * var(--u)) calc(-3 * var(--u)) calc(-1 * var(--u));
 }
-#studio { --sp: var(--u); width: var(--studio-w, 684px); }
+#studio { --sp: var(--u); width: var(--studio-w, 684px); scroll-margin-top: 72px; }   /* clear of the settings gear */
 
 /* ---------- sky bar: one day from 06:00 (left) to 06:00 (right) above the house,
    exactly as wide as it. The icon walks along it with the clock and turns
@@ -266,44 +266,78 @@ body {
 @media (prefers-reduced-motion: reduce) { .mp, .mood-face canvas { transition: none; } }
 @media (prefers-reduced-motion: reduce) { .pop { animation: none; transition: none; } }
 @media (prefers-reduced-motion: reduce) { .studio-slot { transition: none; } }
-/* ---------- ring menu: pixel buttons that pop out around Buddy (or the computer) ---------- */
+/* ---------- ring menu: pixel pills that pop out around Buddy (or the computer) ---------- */
 .house-col { position: relative; }
 .ring { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 8; }
 .ring[hidden] { display: none; }
-.ring button {
-  position: absolute; left: 0; top: 0; margin: 0; white-space: nowrap;
-  font-size: var(--ring-fs, 14px); font-weight: 700; letter-spacing: .04em; padding: 5px 12px;
-  transform: translate(-50%, -50%) scale(.2); opacity: 0;
-  transition: transform .34s cubic-bezier(.3, 1.7, .5, 1), opacity .18s;
-  transition-delay: calc(var(--k, 0) * 35ms);
-  /* round pixel corners: an outline layer and a fill layer, each clipped to
-     a stepped rounded rect (--clip-btn, made in fit) behind the label */
-  background: none; box-shadow: none; isolation: isolate;
-  padding: 7px 16px;
+/* every pill: an outline layer and a fill layer, each clipped to a stepped
+   rounded rect (--clip-btn, made in fit) behind the label */
+.ring button, .ring .ring-label, .ring .ring-field {
+  position: relative; margin: 0; white-space: nowrap; color: var(--ink);
+  font-size: var(--ring-fs, 14px); font-weight: 700; letter-spacing: .04em;
+  background: none; box-shadow: none; isolation: isolate; padding: 7px 16px;
   filter: drop-shadow(3px 3px 0 var(--shadow));
 }
-.ring button::before, .ring button::after { content: ""; position: absolute; z-index: -1; }
-.ring button::before { inset: 0; background: var(--edge); clip-path: var(--clip-btn); }
-.ring button::after {
+.ring button::before, .ring button::after, .ring .ring-label::before, .ring .ring-field::before, .ring .ring-field::after {
+  content: ""; position: absolute; z-index: -1;
+}
+.ring button::before, .ring .ring-label::before, .ring .ring-field::before { inset: 0; background: var(--edge); clip-path: var(--clip-btn); }
+.ring button::after, .ring .ring-field::after {
   inset: 2px; background: var(--panel-2); clip-path: var(--clip-btn-in);
   box-shadow: inset 0 -2px 0 0 var(--bevel-lo), inset 0 2px 0 0 var(--bevel-hi);
 }
+.ring .ring-label { color: #f7f6fb; cursor: default; }
+.ring .ring-label::before { background: var(--title, #33253b); }
 .ring button:hover { background: none; }
 .ring button:hover::after { background: var(--panel); }
-.ring.on button { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))); opacity: 1; }
 .ring button.back { color: var(--muted); }
 .ring button.back::after { background: var(--panel); }
-.ring button:active { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) + 2px)); }
+.ring button.ok::after { background: var(--accent); box-shadow: inset 0 2px 0 0 var(--accent-lo), inset 0 -2px 0 0 var(--accent-hi); }
+.ring button.ok { color: var(--accent-ink); }
+/* the items of a ring sit on a circle (--x, --y) and spring out of its centre */
+.ring > button, .ring > .ring-label {
+  position: absolute; left: 0; top: 0;
+  transform: translate(-50%, -50%) scale(.2); opacity: 0;
+  transition: transform .34s cubic-bezier(.3, 1.7, .5, 1), opacity .18s;
+  transition-delay: calc(var(--k, 0) * 35ms);
+}
+.ring.on > button, .ring.on > .ring-label { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))); opacity: 1; }
+.ring > button:active { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) + 2px)); }
+/* renaming: one row of pills above her head (name box, die, OK) */
+.ring-edit {
+  position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 8px;
+  transform: translate(-50%, calc(-100% - var(--lift, 60px))) scale(.3); opacity: 0; transform-origin: 50% 100%;
+  transition: transform .34s cubic-bezier(.3, 1.7, .5, 1), opacity .18s;
+}
+.ring.on .ring-edit { transform: translate(-50%, calc(-100% - var(--lift, 60px))); opacity: 1; }
+.ring .ring-field { padding: 4px 10px; }
+.ring .ring-field input {
+  font: inherit; color: inherit; background: none; border: 0; outline: none; padding: 3px 4px; width: calc(8.4em + 8px);   /* 8 characters */
+}
+.ring .ring-field input::placeholder { color: var(--muted); font-weight: 400; }
+.ring .ring-field:focus-within { outline: 2px dashed var(--focus); outline-offset: 3px; }
+.ring button.die { padding: 6px 10px; display: grid; place-items: center; }
+.ring button.die svg { display: block; }
 .ring .hint {
   position: absolute; transform: translate(-50%, -100%); white-space: nowrap; pointer-events: none;
   background: var(--title, #33253b); color: #f7f6fb; font-size: var(--ring-fs, 14px); padding: 6px 14px;
   clip-path: var(--clip-btn);
 }
-@media (prefers-reduced-motion: reduce) { .ring button { transition: none; } }
+/* her name tag: a dark pill over her head while the pointer is on her */
+.nametag {
+  position: absolute; left: 0; top: 0; z-index: 7; pointer-events: none; white-space: nowrap;
+  font-size: var(--ring-fs, 14px); font-weight: 700; letter-spacing: .04em; color: #f7f6fb; padding: 4px 12px;
+  isolation: isolate; filter: drop-shadow(2px 2px 0 var(--shadow));
+  transform: translate(-50%, -100%) scale(.4); opacity: 0; transform-origin: 50% 100%;
+  transition: transform .26s cubic-bezier(.3, 1.7, .5, 1), opacity .15s;
+}
+.nametag::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--title, #33253b); clip-path: var(--clip-btn); }
+.nametag.on { transform: translate(-50%, -100%); opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .ring > button, .ring > .ring-label, .ring-edit, .nametag { transition: none; } }
 /* ---------- settings: a round gear at the page's top-right; its options pop
    out to the LEFT as a row of pill bubbles in the ring-menu style ---------- */
-.settings {
-  position: fixed; z-index: 20; display: flex; align-items: flex-start; gap: 10px;
+.settings {   /* at the top of the page (not fixed: content scrolled up never slides under it) */
+  position: absolute; z-index: 20; display: flex; align-items: flex-start; gap: 10px;
   top: max(14px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
   --pill-fs: 14px;
 }
@@ -423,6 +457,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
       </div>
       <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她弹出互动菜单。"></canvas>
       <div class="ring" id="ring" role="menu" aria-label="和她互动" hidden></div>
+      <div class="nametag" id="nametag" aria-hidden="true"></div>
     </div>
   </div>
 </main>
@@ -471,6 +506,21 @@ function setLook(l) {
   ramps = doll.rampsOf(look);
   dollCache.clear();
   rotCache.clear();
+  syncNames();
+}
+// her name and 她/他 (by gender) wherever the page talks about her
+const nameOf = () => look.name, ta = () => doll.pronoun(look);
+// Chinese running text gets a space where it meets Latin letters or digits
+// ("和 Buddy 聊天", "Buddy 的小屋"): applied to every line the page writes
+const spaced = t => t.replace(/([\u3400-\u9fff])([A-Za-z0-9])/g, "$1 $2").replace(/([A-Za-z0-9])([\u3400-\u9fff])/g, "$1 $2");
+function syncNames() {
+  const n = nameOf();
+  document.title = spaced(`${n}的小屋`);
+  const set = (id, attr, text) => { const el = document.getElementById(id); if (el) el.setAttribute(attr, spaced(text)); };
+  set("needs", "aria-label", `${n}的状态（饱腹、精力、清洁、如厕、社交、开心）`);
+  set("moodTip", "aria-label", `${n}现在的心情`);
+  set("ring", "aria-label", `和${n}互动`);
+  set("view", "aria-label", `小屋剖面，${n}在里面生活。点家具让${ta()}去做事，点衣柜打开造型室，点${ta()}弹出互动菜单。`);
 }
 
 const DW = doll.W, DH = doll.H;
@@ -654,6 +704,7 @@ const fmt = t => { const m = Math.floor(t % 1440); return String(Math.floor(m / 
 
 const logEl = document.getElementById("log");
 function log(text, cls) {
+  text = spaced(text);
   const li = document.createElement("li");
   if (cls) { li.className = cls; li.textContent = text; }
   else li.innerHTML = `<time>${fmt(sim.t)}</time><span></span>`, li.querySelector("span").textContent = text;
@@ -736,12 +787,12 @@ function finishAct() {
 
 // The player clicked a piece of furniture: drop what she's doing and go.
 function command(act) {
-  if (sim.mode === "down") { log("她晕倒了，先长按她 5 秒把她叫醒吧。"); return; }
+  if (sim.mode === "down") { log(`${nameOf()}晕倒了，先长按${ta()} 5 秒把${ta()}叫醒吧。`); return; }
   if (sim.mode === "act" && sim.act === "sleep") {
     const h = hour();
     if (act === "sleep") return;
-    if (!sim.nap && (h >= 22 || h < 6)) { log(`她睡得正香，等醒了再去${ACTS[act].label}吧。`); sim.queue = [act]; return; }
-    log("你把她从午觉里叫醒了。");
+    if (!sim.nap && (h >= 22 || h < 6)) { log(`${nameOf()}睡得正香，等醒了再去${ACTS[act].label}吧。`); sim.queue = [act]; return; }
+    log(`你把${nameOf()}从午觉里叫醒了。`);
   }
   if (sim.act === act && sim.mode !== "idle") return;
   if (sim.act === "dress" && act !== "dress") closeWardrobe();
@@ -1579,6 +1630,7 @@ const LEVEL_WORD = ["", "有点", "", "非常"];
 function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
 // "{食物}" -> a random dish; vars pins a value so diary and words agree
 function fill(text, vars = {}) {
+  vars.名字 ??= nameOf(); vars.她 ??= ta();
   return text.replace(/\{(\S+?)\}/g, (m, k) => vars[k] || (T.fill[k] ? (vars[k] = pick(T.fill[k])) : m));
 }
 const moods = new Map();          // id -> { until: game minute | null (condition), t: when added }
@@ -1793,7 +1845,7 @@ function revive() {
   for (const [id] of moods) if (ML[id].emo === cause) moods.delete(id);   // the feeling that knocked her out has passed
   sim.mode = "idle"; sim.down = null; sim.idleUntil = sim.t + 3;
   sim.graceUntil = sim.t + 180;
-  log("你一直按着她，她慢慢睁开了眼睛。");
+  log(`你一直按着${nameOf()}，${ta()}慢慢睁开了眼睛。`);
   addMood("revived", { words: false });
   speak(pick(T.you.revive), true);
   const p = here();
@@ -1897,7 +1949,7 @@ let listOpen = false, listPinned = false, listSig = "", listCloseT = null;
 function moodPills() {           // -> [{ cls, c, html, title, left }]
   const k = moodState.key, e = emotion();
   const out = [{ cls: "head", c: MOOD[k].color, html: `${emoWord(k, moodState.level)}${e.pts ? `<b>${e.pts} 分</b>` : ""}`, title: `现在的情绪：${emoWord(k, moodState.level)}` }];
-  if (sim.mode === "down") { out.push({ c: "#8b8899", html: "晕倒了：长按她 5 秒叫醒她", title: "" }); return out; }
+  if (sim.mode === "down") { out.push({ c: "#8b8899", html: `晕倒了：长按${ta()} 5 秒叫醒${ta()}`, title: "" }); return out; }
   const list = [...moods].map(([id, m]) => [id, ML[id], m]).sort((a, b) => b[1].pts - a[1].pts || b[2].t - a[2].t);
   if (!list.length) out.push({ c: MOOD.fine.color, html: "没有什么特别的心情", title: "" });
   for (const [id, d, m] of list) {
@@ -2007,6 +2059,7 @@ function speak(text, now = false) {
   showSay(text);
 }
 function showSay(text) {
+  text = spaced(text);
   lastSaid = text;
   popSay.querySelector("span").textContent = text;
   popSay.title = text;
@@ -2173,12 +2226,28 @@ function buddyHit(x, y) {
   const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : here();
   return Math.abs(x - p.x) < 9 && y > p.y - DH + 2 && y < p.y + 2;
 }
+const nametag = document.getElementById("nametag");
+let hoverBuddy = false;
 view.addEventListener("pointermove", e => {
   const [x, y] = canvasXY(e);
+  hoverBuddy = e.pointerType === "mouse" && buddyHit(x, y);
   hoverId = buddyHit(x, y) ? null : clickableAt(x, y);
   view.style.cursor = hoverId || buddyHit(x, y) ? "pointer" : "default";
 });
-view.addEventListener("pointerleave", () => { hoverId = null; holding = null; });
+view.addEventListener("pointerleave", () => { hoverId = null; holding = null; hoverBuddy = false; });
+// her name over her head while the pointer rests on her (and no menu is open)
+function placeNametag() {
+  const on = hoverBuddy && ringEl.hidden && sim.mode !== "down";
+  nametag.classList.toggle("on", on);
+  if (!on) return;
+  if (nametag.textContent !== nameOf()) nametag.textContent = nameOf();
+  const asleepNow = sim.mode === "act" && sim.act === "sleep";
+  const p = asleepNow ? { x: D.sleepLying[0] + 8, y: D.sleepLying[1] + 2 }
+    : sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] - 2 } : { x: here().x, y: here().y - DH - 1 };
+  const k = view.width / W;
+  nametag.style.left = view.offsetLeft + p.x * k + "px";
+  nametag.style.top = view.offsetTop + p.y * k + "px";
+}
 // she's collapsed: press and hold on her
 view.addEventListener("pointerdown", e => {
   if (sim.mode !== "down") return;
@@ -2186,7 +2255,7 @@ view.addEventListener("pointerdown", e => {
   if (buddyHit(x, y)) { holding = { t0: realClock }; view.setPointerCapture(e.pointerId); e.preventDefault(); }
 });
 for (const ev of ["pointerup", "pointercancel"]) view.addEventListener(ev, () => {
-  if (holding && realClock - holding.t0 < REVIVE_S) { holding = null; showHint("长按她 5 秒，把她叫醒"); }
+  if (holding && realClock - holding.t0 < REVIVE_S) { holding = null; showHint(`长按${ta()} 5 秒，把${ta()}叫醒`); }
 });
 view.addEventListener("contextmenu", e => { if (sim.mode === "down") e.preventDefault(); });
 view.addEventListener("click", e => {
@@ -2196,7 +2265,7 @@ view.addEventListener("click", e => {
   if (sim.mode === "down") return;
   if (buddyHit(x, y)) {
     if (wasOpen) return;                          // a second click on her closes the menu
-    if (sim.mode === "act" && sim.act === "sleep") { log("你戳了戳她，她咂咂嘴继续睡。"); return; }
+    if (sim.mode === "act" && sim.act === "sleep") { log(`你戳了戳${nameOf()}，${ta()}咂咂嘴继续睡。`); return; }
     openRing("buddy");
     return;
   }
@@ -2210,7 +2279,8 @@ view.addEventListener("click", e => {
 // computer: what to do on it. More options will join later.
 const ringEl = document.getElementById("ring");
 const RINGS = {
-  buddy: [["chat", "聊聊天"], ["pat", "摸摸头"], ["phone", "玩手机 ▸", "more"], ["dance", "跳支舞"], ["bed", "去睡觉"]],
+  buddy: [["name", null, "label"], ["chat", "聊聊天"], ["pat", "摸摸头"], ["phone", "玩手机 ▸", "more"], ["dance", "跳支舞"],
+          ["bed", "去睡觉"], ["rename", "改名字"]],
   phone: [["phone_call", "打给妈妈"], ["phone_video", "和朋友视频"], ["phone_feed", "刷动态"], ["phone_text", "发消息"], ["phone_game", "玩手机游戏"], ["back", "返回", "back"]],
   computer: [["computer", "打游戏"], ["pc_video", "视频聊天"], ["pc_forum", "逛论坛"], ["pc_code", "写代码"]],
 };
@@ -2232,14 +2302,14 @@ function openRing(which, at = which === "computer" ? "computer" : "buddy") {
   const k = view.width / W, R = Math.max(48, Math.min(118, 24 * k));
   ringEl.innerHTML = "";
   items.forEach(([id, label, cls], i) => {
-    const b = document.createElement("button");
-    b.type = "button"; b.textContent = label; b.setAttribute("role", "menuitem");
-    if (cls) b.className = cls;
+    const b = document.createElement(cls === "label" ? "span" : "button");
+    if (cls === "label") { b.className = "ring-label"; b.textContent = nameOf(); }   // her name tops the ring
+    else { b.type = "button"; b.textContent = label; b.setAttribute("role", "menuitem"); if (cls) b.className = cls; }
     const a = -Math.PI / 2 + i / items.length * Math.PI * 2;
     b.style.setProperty("--x", Math.round(Math.cos(a) * R * 1.25) + "px");
     b.style.setProperty("--y", Math.round(Math.sin(a) * R) + "px");
     b.style.setProperty("--k", i);
-    b.addEventListener("click", ev => { ev.stopPropagation(); ringPick(id); });
+    if (cls !== "label") b.addEventListener("click", ev => { ev.stopPropagation(); ringPick(id); });
     ringEl.appendChild(b);
   });
   ringEl.hidden = false;
@@ -2250,6 +2320,56 @@ function openRing(which, at = which === "computer" ? "computer" : "buddy") {
   if (reduceMotionUI) ringEl.classList.add("on");
 }
 function closeRing() { ringEl.hidden = true; ringEl.classList.remove("on"); ringOf = null; }
+// renaming from the ring: a name box, a die and OK, in a row over her head
+const DIE = [".########.", "#........#", "#.##..##.#", "#.##..##.#", "#........#",
+             "#........#", "#.##..##.#", "#.##..##.#", "#........#", ".########."];
+function openRename() {
+  ringOf = "rename"; ringAt = "buddy";
+  ringEl.innerHTML = "";
+  const row = document.createElement("div");
+  row.className = "ring-edit";
+  row.style.setProperty("--lift", Math.round(16 * view.width / W) + "px");
+  row.innerHTML = `<label class="ring-field"><input type="text" autocomplete="off" spellcheck="false" enterkeyhint="done"
+      aria-label="新名字（最多 ${doll.NAME_MAX} 个字）"></label>
+    <button type="button" class="die" aria-label="随机起个名字" title="随机起个名字"><svg width="20" height="20" viewBox="0 0 10 10"
+      fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">${DIE.flatMap((r, y) => [...r].map((c, x) =>
+      (c === "#" ? `<rect x="${x}" y="${y}" width="1" height="1"/>` : ""))).join("")}</svg></button>
+    <button type="button" class="ok">好了</button>`;
+  const input = row.querySelector("input");
+  input.value = nameOf(); input.placeholder = `给${ta()}起个名字`;
+  input.addEventListener("input", () => {
+    const chars = Array.from(input.value);
+    if (chars.length > doll.NAME_MAX) input.value = chars.slice(0, doll.NAME_MAX).join("");
+  });
+  const done = () => { rename(input.value); closeRing(); };
+  input.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Enter") done(); if (e.key === "Escape") closeRing(); });
+  row.querySelector(".die").addEventListener("click", e => { e.stopPropagation(); input.value = doll.randomName(look.gender, input.value); input.focus(); });
+  row.querySelector(".ok").addEventListener("click", e => { e.stopPropagation(); done(); });
+  ringEl.appendChild(row);
+  ringEl.hidden = false; placeRing();
+  ringEl.classList.remove("on"); void ringEl.offsetWidth; ringEl.classList.add("on");
+  setTimeout(() => { input.focus(); input.select(); }, reduceMotionUI ? 0 : 120);
+}
+// a new name: saved with her look, and she reacts to it (once you stop typing)
+let namedAs = null, nameT = null;
+function rename(raw) {
+  const n = doll.cleanName(raw);
+  if (!n || n === nameOf()) return;
+  setLook({ ...look, name: n });
+  saveLook();
+  if (wardrobeOpen) studio.setLook(look);
+  announceName(0);
+}
+function announceName(delay) {
+  clearTimeout(nameT);
+  nameT = setTimeout(() => {
+    if (nameOf() === namedAs) return;
+    namedAs = nameOf();
+    log(`从今天起，${ta()}叫「${namedAs}」了。`);
+    addMood("newName", { diary: false, words: false });
+    speak(fill(pick(T.you.renamed)), true);
+  }, delay);
+}
 let hintT = null;
 function showHint(text) {
   ringOf = null; ringAt = "buddy";
@@ -2264,6 +2384,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) cl
 let lastChat = -1e9;
 function ringPick(id) {
   if (id === "phone") { openRing("phone", "buddy"); return; }
+  if (id === "rename") { openRename(); return; }
   if (id === "back") { openRing("buddy"); return; }
   closeRing();
   if (sim.mode === "down") return;
@@ -2274,7 +2395,7 @@ function ringPick(id) {
     reaction = { until: realClock + 1.8, emote: "chat", wave: false };
     speak(fill(pick(Math.random() < 0.5 ? T.you.chat : T.thoughts[emotion().key])), true);
     if (!often) addMood("chatYou", { words: false });
-    log("你和她聊了一会儿天。");
+    log(`你和${nameOf()}聊了一会儿天。`);
     return;
   }
   if (id === "pat") {
@@ -2282,7 +2403,7 @@ function ringPick(id) {
     sim.needs.fun = clamp(sim.needs.fun + 4); sim.needs.social = clamp(sim.needs.social + 2);
     addMood("patted", { words: false });
     speak(pick(T.you.pat), true);
-    log(pick(["你摸了摸她的头，她冲你挥挥手。", "被你摸了摸头，她咯咯笑。"]));
+    log(pick([`你摸了摸${nameOf()}的头，${ta()}冲你挥挥手。`, `被你摸了摸头，${nameOf()}咯咯笑。`]));
     return;
   }
   if (id === "bed") {
@@ -2300,8 +2421,10 @@ let wardrobeOpen = false;
 const studioEl = document.getElementById("studio"), studioSlot = document.getElementById("studioSlot");
 function saveLook() { try { localStorage.setItem("buddy-look-v2", JSON.stringify(look)); } catch (e) { /* storage unavailable */ } }
 function changeLook(l) {
+  const named = l.name !== look.name;
   setLook(l);
   saveLook();
+  if (named) { announceName(1400); return; }    // typing a name: no sparkle per keystroke
   const p = here();
   poof = { t0: realClock, x: p.x, y: p.y - 14 };
 }
@@ -2316,7 +2439,8 @@ function openWardrobe() {
   requestAnimationFrame(() => {
     studioSlot.classList.add("open");
     const r = view.getBoundingClientRect();
-    if (r.top < 0 || studioEl.getBoundingClientRect().top < 0) studioEl.scrollIntoView({ block: "start", behavior: "smooth" });
+    // keep its title bar (and ✕) out from under the settings gear in the top-right corner
+    if (r.top < 0 || studioEl.getBoundingClientRect().top < 64) studioEl.scrollIntoView({ block: "start", behavior: "smooth" });
   });
 }
 function closeWardrobe() {
@@ -2342,6 +2466,7 @@ function frame(now) {
   renderSky();
   renderMood();
   placeRing();
+  placeNametag();
   uiT += dt;
   if (uiT > 0.25) { uiT = 0; syncUI(); updateMood(); }
   requestAnimationFrame(frame);
@@ -2353,6 +2478,7 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem("buddy-look-v2") || "null"); } catch (e) { /* storage unavailable */ }
   setLook(saved && typeof saved === "object" ? saved : doll.PRESETS.f);
+  namedAs = nameOf();
   studio = BuddyStudio(studioEl, doll, D.doll, { look, previewScale: 3, thumbH: 40, onChange: changeLook, onClose: closeWardrobe });
   fit();
   window.addEventListener("resize", fit);
@@ -2362,7 +2488,7 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
   await loadWeatherMasks();
   weather.kind = weatherAt(sim.t);
   log("—— 第 1 天 · 春 ——", "day");
-  log("还在被窝里睡觉。");
+  log(`${nameOf()}还在被窝里睡觉。`);
   updateMood();
   syncUI();
   render();
