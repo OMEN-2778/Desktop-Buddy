@@ -289,6 +289,13 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   transparent window sized to the game (`fitWindow` -> `fit_window`); drag
   regions are the empty page, the mood row and the time bar. Icon:
   `art/src/concept/app_icon.py` -> `tools/make_desktop_icons.py`.
+  Gotchas found running it (Linux build under Xvfb): the demo page is a
+  fragment, so `copy-web.mjs` adds a doctype + UTF-8 charset (without it the
+  app's webview shows mojibake and the game never boots); the window's first
+  size acts as its minimum on some platforms, so it starts 320x240 and
+  hidden and `fit_window` shows it, centred, after the first fit; a hidden
+  webview runs no requestAnimationFrame, so `fit()` calls `fitWindow()`
+  directly. Page errors go to the app's stderr through `log_js`.
 - **Computer chair** (user): there is no chair in the study; when she sits
   at the computer she conjures one (`F.office_chair_front`, a front-view
   high-back chair drawn behind her, taller than her seated head so it
