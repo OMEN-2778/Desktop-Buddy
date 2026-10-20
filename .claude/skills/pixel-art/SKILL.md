@@ -189,6 +189,12 @@ Reference: `prototype/shared/studio.css`.
   outlines (`roundClip()` in the demo, clip-path on an outline layer + a
   fill layer, `drop-shadow` for the hard shadow). Buttons come out almost
   pill-shaped. Small square-notched corners read as "too sharp" there.
+- Mood details: hovering/tapping the emoji does NOT open a panel over the
+  house (user: stiff, ugly, covers things). Her speech bubble fades aside
+  and the same space fills with pills popping out from the emoji: the
+  emotion in its own colour, then each moodlet tinted with its emotion's
+  colour (the tint shrinks as its time runs out), up to two rows, the rest
+  folded into "还有 N 个". Her words wait while it's open.
 - Settings: a round pixel gear button fixed at the page's top-right
   (`art/src/concept/ui_icons.py`); clicking it pops the options out to the
   LEFT as rows of pills in the same ring-menu style (dark label pill, then
