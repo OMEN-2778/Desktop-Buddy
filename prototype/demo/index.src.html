@@ -622,7 +622,7 @@ body {
 .card-res .mp.cr-mood::before { background: #f7f6fb; }
 .card-res.on .mp.cr-mood {
   transform: none; opacity: 1;
-  animation: moodPop .7s linear .34s backwards, moodGlow 1.6s ease-in-out .7s 2;
+  animation: moodPop .7s linear .2s backwards, moodGlow 1.6s ease-in-out .55s 2;
 }
 @keyframes moodPop {
   0% { transform: scale(0) rotate(-10deg); opacity: 0; animation-timing-function: cubic-bezier(.2, .8, .4, 1); }
@@ -640,7 +640,7 @@ body {
   background: linear-gradient(105deg, transparent 0 38%, rgba(255, 255, 255, .85) 46% 54%, transparent 62%) no-repeat;
   background-size: 260% 100%; background-position: 130% 0; opacity: 0;
 }
-.card-res.on .cr-mood .shine { animation: moodShine .9s ease-out .5s; }
+.card-res.on .cr-mood .shine { animation: moodShine .9s ease-out .36s; }
 @keyframes moodShine {
   0% { opacity: 1; background-color: rgba(255, 255, 255, .9); background-position: 130% 0; }
   25% { background-color: transparent; }
@@ -652,8 +652,8 @@ body {
   content: ""; position: absolute; inset: 0; clip-path: var(--clip-btn); background: var(--c); opacity: 0;
 }
 .cr-burst::after { background: #fff; }
-.card-res.on .cr-burst::before { animation: moodWave .7s cubic-bezier(.2, .7, .3, 1) .42s; }
-.card-res.on .cr-burst::after { animation: moodWave .6s cubic-bezier(.2, .7, .3, 1) .5s; }
+.card-res.on .cr-burst::before { animation: moodWave .7s cubic-bezier(.2, .7, .3, 1) .28s; }
+.card-res.on .cr-burst::after { animation: moodWave .6s cubic-bezier(.2, .7, .3, 1) .36s; }
 @keyframes moodWave { 0% { transform: scale(.6); opacity: .9; } 100% { transform: scale(2.1, 2.8); opacity: 0; } }
 .cr-burst s {
   position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px; background: var(--c);
@@ -661,7 +661,7 @@ body {
 }
 .cr-burst s:nth-child(3n) { width: 6px; height: 6px; margin: -3px; background: #fff; box-shadow: 0 0 0 2px var(--c); }
 .cr-burst s:nth-child(4n+1) { width: 8px; height: 8px; margin: -4px; }
-.card-res.on .cr-burst s { animation: moodSpark .85s cubic-bezier(.15, .7, .3, 1) calc(.42s + var(--i) * 18ms); }
+.card-res.on .cr-burst s { animation: moodSpark .85s cubic-bezier(.15, .7, .3, 1) calc(.28s + var(--i) * 18ms); }
 @keyframes moodSpark {
   0% { transform: translate(0, 0) scale(1.2); opacity: 1; }
   70% { opacity: 1; }
@@ -3242,11 +3242,10 @@ function chooseCard(k, auto = false) {
   setTimeout(() => {                             // let the press show, then back into her
     fromBuddy(cardEl);
     cardEl.classList.remove("on");
-    dimHouse(false); card.hold = false;          // time goes on until the result
     setTimeout(() => { if (!card || card.phase !== "ask") cardEl.hidden = true; }, reduceMotionUI ? 0 : 320);
-    if (auto) { cardDiary(); if (card.o.id) addMood(card.o.id, { diary: false, words: false }); cardNeeds(); card = null; }   // nobody's looking: no result box
-    else card.timer = setTimeout(showResult, 3000 + Math.random() * 3000);
-  }, reduceMotionUI ? 0 : 620);
+    if (auto) { dimHouse(false); cardDiary(); if (card.o.id) addMood(card.o.id, { diary: false, words: false }); cardNeeds(); card = null; }   // nobody's looking: no result box
+    else card.timer = setTimeout(showResult, reduceMotionUI ? 0 : 260);   // user: result + pill out within a second of the click
+  }, reduceMotionUI ? 0 : 420);
 }
 function cardDiary() {
   const { cd, k, o, vars, auto } = card;
@@ -3257,7 +3256,6 @@ function cardNeeds() {
 }
 function showResult() {
   if (!card || card.phase !== "wait") return;
-  if (pickOn || sim.act === "dress") { card.timer = setTimeout(showResult, 800); return; }   // wait for the panel to close
   closeRing(); setDiaryOpen(false); showMoodTip(false);
   card.phase = "result"; card.hold = true;
   dimHouse(true);

@@ -433,7 +433,7 @@ edits; copy changes into life_text.js.
   no panel, white outlined text (`placeCard`: house-sized; a bit bigger with
   a dark backing, `.big`, on a tiny phone house) springs out
   of her (`cardIn` keyframes, `--from-x/y` via `fromBuddy`), the pick gets
-  pressed + lit, the card shrinks back into her; 3-6 s later `#cardRes`: the
+  pressed + lit, the card shrinks back into her; right away `#cardRes` (user: box + pill out within 1 s of the click; the house stays dim and the clock stopped in between): the
   result box pops out of her with the moodlet pill above (user: make it
   stand out — after the box lands: colour + white flash waves, 20 pixel
   sparks, a big wobbly pop, a shine sweep, a glow pulsing twice); any click closes
