@@ -12,6 +12,10 @@ The game is the same single web page as the browser demo
   界面大小 (25%–200%; 25% = one game pixel per screen pixel, at any Windows
   display scaling), 置顶游戏, 存档 (with the 自动保存 switch: every 5
   minutes or never), 存档位置
+- 机会卡 (chance cards): now and then a little situation springs out of
+  Buddy with two choices; the result pops out of her a few seconds later
+  with the mood it gave her (click anywhere to close it). Left alone for a
+  minute, she chooses by herself
 - a tray icon: 显示 / 隐藏, 置顶游戏, 退出
 - the save is a JSON file in the app's data folder by default
   (Windows: `%APPDATA%\com.desktopbuddy.app\save.json`, previous copy kept

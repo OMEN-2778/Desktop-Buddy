@@ -418,6 +418,23 @@ edits; copy changes into life_text.js.
   (`outcomes` by weight). Running state in `lifeFlags.chains` (saved). The
   six from the doc (投稿 种花 线上比赛 学做新菜 神秘明信片 漏水维修) + 学吉他,
   窗外的小猫; about one starts a week.
+- **Chance cards** (机会卡, user, like The Sims): the user's 100 cards live in
+  `prototype/demo/cards_text.js` (`CARDS`, pasted in by make_demo.py). Each:
+  title, text, options a / b, each with two results (one at random); per
+  result an optional moodlet (`mood`, registered in `ML` as `card<n><k><i>`;
+  391 of 400 have one) and `need` changes; `when` = WHEN tags, `+` and, `|`
+  or. `rollCard` in `rollEvents`: about 1.5 a day (`CARD_GAP` 360 game min
+  + `CARD_CHANCE` 0.3 / hour), not asleep / in the bath / on the toilet /
+  dressing / with a panel open; unseen cards first (`lifeFlags.cards.seen`,
+  saved), cards with a `when` x2 when it fits. UI: `#card` over the house
+  (`placeCard`: house-sized, a bit bigger on a tiny phone house) springs out
+  of her (`cardIn` keyframes, `--from-x/y` via `fromBuddy`), the pick gets
+  pressed + lit, the card shrinks back into her; 3-6 s later `#cardRes`: the
+  result box pops out of her with the moodlet pill above; any click closes
+  it (eaten, `CARD_LOCK` 0.9 s first so it can't be missed) and the pill
+  flies into the emoji (`.fly`), where the moodlet is added. No pick in 60 s
+  (`CARD_WAIT`, bar along the bottom): she picks, the result only goes in
+  the diary. Results left open close after 60 s. Console: 机会卡测试.
 Moodlets add points to one emotion, the top sum wins (1-2 有点, 3-5, 6+ 非常),
 condition moodlets last while true. Events roll once a game hour with
 cooldowns; her words queue so bubbles never cut each other off. Social

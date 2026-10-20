@@ -530,6 +530,88 @@ body {
 .pk-item span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--muted); font-size: 11px; }
 .pk-item i { display: block; font-style: normal; color: #8a6446; font-size: 11px; font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { .picker, .picker.over, .picker.over.on { transition: none; } }
+/* ---------- chance cards (user, like The Sims): a card springs out of her
+   over the house (same place and size as the pick-a-thing panel), two
+   choices; the one you pick gets pressed in and the card shrinks back into
+   her. Later the result pops out of her, with the moodlet it gave her on a
+   pill above it; any click closes it and the pill flies into the emoji.
+   --cs scales the text with the house (set in JS). */
+.card, .card-res {
+  position: absolute; z-index: 34; left: var(--pick-left, 0px); top: var(--pick-top, 0px); width: var(--pick-w, 342px); height: var(--pick-h, 118px);
+}
+.card[hidden], .card-res[hidden] { display: none; }
+.card {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(8px * var(--cs, 1));
+  padding: 8px calc(22px * var(--cs, 1)) 12px; text-align: center; overflow: hidden;
+  background: var(--panel); color: var(--ink);
+  box-shadow: 0 -2px 0 0 var(--edge), 0 2px 0 0 var(--edge), -2px 0 0 0 var(--edge), 2px 0 0 0 var(--edge), 5px 5px 0 0 var(--shadow);
+  transform-origin: var(--from-x, 50%) var(--from-y, 50%); transform: scale(.04); opacity: 0;
+  transition: transform .28s cubic-bezier(.45, 0, .8, .5), opacity .12s .16s;   /* closing: back into her */
+}
+.card.on { transform: none; opacity: 1; animation: cardIn .62s linear; transition: none; }
+/* opening: a springy pop with a couple of wobbles */
+@keyframes cardIn {
+  0% { transform: scale(.04); opacity: 0; animation-timing-function: cubic-bezier(.2, .7, .4, 1); }
+  12% { opacity: 1; }
+  48% { transform: scale(1.045); animation-timing-function: ease-in-out; }
+  70% { transform: scale(.982); animation-timing-function: ease-in-out; }
+  86% { transform: scale(1.008); }
+  100% { transform: none; opacity: 1; }
+}
+.card h3 { margin: 0; font-size: calc(24px * var(--cs, 1)); line-height: 1.2; font-weight: 700; letter-spacing: .04em; }
+.card p { margin: 0; max-width: 36em; font-size: calc(15px * var(--cs, 1)); line-height: 1.5; font-weight: 500; }
+.cd-opts { display: flex; justify-content: center; gap: calc(28px * var(--cs, 1)); width: 100%; margin-top: calc(4px * var(--cs, 1)); }
+.cd-opt {
+  position: relative; isolation: isolate; flex: 0 1 40%; min-width: 0; margin: 0;
+  padding: calc(8px * var(--cs, 1)) calc(16px * var(--cs, 1)); line-height: 1.3;
+  font-size: calc(15px * var(--cs, 1)); font-weight: 700; letter-spacing: .03em; color: #f7f6fb;
+  background: none; box-shadow: none; filter: drop-shadow(3px 3px 0 var(--shadow));
+  transition: transform .18s, opacity .25s, filter .25s;
+}
+.cd-opt::before, .cd-opt::after { content: ""; position: absolute; z-index: -1; }
+.cd-opt::before { inset: 0; background: var(--edge); clip-path: var(--clip-btn); }
+.cd-opt::after { inset: 2px; background: var(--title, #33253b); clip-path: var(--clip-btn-in); box-shadow: inset 0 2px 0 0 rgba(255, 255, 255, .16); }
+.cd-opt:hover { background: none; transform: translateY(-2px); }
+.cd-opt:hover::after { background: var(--accent); }
+.cd-opt:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+/* picked: pressed in, lit up, and a little bounce; the other one steps back */
+.card.picked .cd-opt { pointer-events: none; }
+.card.picked .cd-opt:not(.chosen) { opacity: .3; transform: scale(.94); filter: none; }
+.cd-opt.chosen { animation: chosen .5s cubic-bezier(.3, 1.6, .5, 1); filter: drop-shadow(1px 1px 0 var(--shadow)); }
+.cd-opt.chosen::after { background: var(--accent); box-shadow: inset 0 2px 0 0 var(--accent-lo), inset 0 -2px 0 0 var(--accent-hi); }
+@keyframes chosen { 0% { transform: translate(2px, 2px) scale(.92); } 45% { transform: scale(1.08); } 100% { transform: none; } }
+/* a minute to choose, then she decides by herself: a thin bar runs out */
+.cd-clock { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--bevel-lo); transform-origin: left; }
+.card.on .cd-clock { animation: cdClock var(--wait, 60s) linear forwards; }
+.card.picked .cd-clock { animation-play-state: paused; }
+@keyframes cdClock { to { transform: scaleX(0); } }
+.card-res { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(10px * var(--cs, 1)); pointer-events: none; }
+.cr-box {
+  position: relative; isolation: isolate; max-width: 86%; text-align: center;
+  padding: calc(12px * var(--cs, 1)) calc(30px * var(--cs, 1));
+  font-size: calc(16px * var(--cs, 1)); line-height: 1.45; font-weight: 700; letter-spacing: .03em; color: #f7f6fb;
+  filter: drop-shadow(4px 4px 0 var(--shadow));
+  transform-origin: var(--from-x, 50%) var(--from-y, 50%); transform: scale(.05); opacity: 0;
+  transition: transform .28s cubic-bezier(.45, 0, .8, .5), opacity .12s .16s;
+}
+.cr-box::before, .cr-box::after { content: ""; position: absolute; z-index: -1; }
+.cr-box::before { inset: 0; background: var(--edge); clip-path: var(--clip-btn); }
+.cr-box::after { inset: 2px; background: var(--title, #33253b); clip-path: var(--clip-btn-in); box-shadow: inset 0 2px 0 0 rgba(255, 255, 255, .16); }
+.card-res.on .cr-box { transform: none; opacity: 1; animation: cardIn .62s linear; transition: none; }
+.card-res.on.closing .cr-box { transform: scale(.05); opacity: 0; animation: none; transition: transform .28s cubic-bezier(.45, 0, .8, .5), opacity .12s .16s; }
+/* the moodlet pill: pops up just after the box, flies into the emoji at the end */
+.card-res .mp.cr-mood { --left: 100%; font-size: calc(var(--mp-fs, 15px) * var(--cs, 1)); transform: translateY(14px) scale(.3); opacity: 0; transition: none; }
+.card-res.on .mp.cr-mood { transform: none; opacity: 1; transition: transform .45s cubic-bezier(.3, 1.6, .5, 1) .22s, opacity .15s .22s; }
+.card-res .mp.cr-mood[hidden] { display: none; }
+.card-res.on .mp.cr-mood.fly {
+  transform: translate(var(--fly-x, 0px), var(--fly-y, 0px)) scale(.12); opacity: 0;
+  transition: transform .5s cubic-bezier(.55, 0, .8, .4), opacity .16s .36s;
+}
+.mood-face.gulp canvas { animation: gulp .42s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes gulp { 0% { transform: scale(1); } 35% { transform: scale(1.22); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .card, .card.on, .cr-box, .card-res.on .cr-box, .card-res .mp.cr-mood, .card-res.on .mp.cr-mood, .cd-opt { transition: none; animation: none; }
+}
 /* ---------- the desktop app: the window is the game, see-through around it */
 html.desktop, html.desktop body { background: transparent !important; }
 html.desktop body { background-image: none !important; overflow: hidden; }
@@ -615,6 +697,10 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <div class="sky-fest" id="skyFest" hidden></div>
       </div>
       <section class="picker" id="picker" hidden aria-label="选择"><div class="pk-head"><h3></h3><button type="button" class="rand">随便<span class="long">来一个</span></button><button type="button" class="x" aria-label="关闭">✕</button></div><div class="pk-body"></div></section>
+      <section class="card" id="card" hidden role="dialog" aria-label="机会卡"><h3></h3><p></p>
+        <div class="cd-opts"><button type="button" class="cd-opt" data-k="a"></button><button type="button" class="cd-opt" data-k="b"></button></div>
+        <i class="cd-clock" aria-hidden="true"></i></section>
+      <div class="card-res" id="cardRes" hidden aria-live="polite"><span class="mp cr-mood"></span><div class="cr-box"></div></div>
       <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她弹出互动菜单。"></canvas>
       <div class="ring" id="ring" role="menu" aria-label="和她互动" hidden></div>
       <div class="nametag" id="nametag" aria-hidden="true"></div>
@@ -632,6 +718,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
       <div class="row">
         <select id="moodPick" aria-label="加一条测试心情"><option value="">加一条测试心情……</option></select>
         <button type="button" id="testDown">晕倒测试</button>
+        <button type="button" id="testCard">机会卡测试</button>
       </div>
       <div class="label">天气（测试用）</div>
       <div class="row" role="group" aria-label="天气">
@@ -2125,6 +2212,7 @@ const WHEN = {
   reading: c => c.act === "read", bath: c => c.act === "bath", walking: () => sim.mode === "walk", phone: c => !!c.act && c.act.startsWith("phone_"),
   spring: c => c.se.i === 0, summer: c => c.se.i === 1, autumn: c => c.se.i === 2, winter: c => c.se.i === 3,
   eating: c => c.act === "eat",
+  idle: c => c.awake && !c.act, screen: c => !!c.act && (c.act === "tv" || c.act === "computer" || c.act.startsWith("pc_") || c.act.startsWith("phone_")),
   inBedroom: () => roomAt(here()) === "bedroom", inBath: () => roomAt(here()) === "bath", inStudy: () => roomAt(here()) === "study",
   inLiving: () => roomAt(here()) === "living", inKitchen: () => roomAt(here()) === "kitchen",
   hungry: () => sim.needs.hunger < 40, tired: () => sim.needs.energy < 35, lonely: () => sim.needs.social < 35,
@@ -2191,7 +2279,8 @@ function rollEvents() {
     const f = T.festivals.find(f => f.season === c.se.i && f.day === c.se.day);
     if (f) {
       const line = fill(one(f.diary));
-      log(line.includes(f.name) ? line : `今天是${f.name}。` + line);   // no "今天是彩票日。彩票日…" speak(fill(pick(f.say))); addMood(f.mood || "festival", { diary: false, words: false });
+      log(line.includes(f.name) ? line : `今天是${f.name}。` + line);   // no "今天是彩票日。彩票日…"
+      speak(fill(pick(f.say))); addMood(f.mood || "festival", { diary: false, words: false });
       if (f.sad) addMood("festivalSad", { diary: false, words: false });
       eventThen(f.then);                                     // e.g. 赖床节: back to bed
       if (f.outcomes) sim.festLater = { f: f.name, at: sim.t + 120 + Math.random() * 240 };   // how it turns out, later that day
@@ -2210,6 +2299,7 @@ function rollEvents() {
       return;
     }
   }
+  if (rollCard(c)) return;                            // a chance card takes the hour
   if (rollChains(c)) return;                          // a story step takes the hour
   for (const [id, when, p, cd, run] of EVENTS) {
     if (sim.t - (eventLast[id] ?? -1e9) < cd || !when(c) || Math.random() >= p) continue;
@@ -2942,7 +3032,7 @@ function pickFrom(id) {
 }
 function openPicker(act, from = null) {
   const P_ = PICK[act];
-  if (!P_ || sim.mode === "down") return;
+  if (!P_ || sim.mode === "down" || card) return;
   closeRing(); setDiaryOpen(false);
   pickOn = act;
   const [place, ask] = P_.title.split(" · ");                 // a small house shows just the place
@@ -2975,14 +3065,16 @@ function openPicker(act, from = null) {
   makeRoom();
 }
 // exactly over the house (user): same place, same size
+function overHouse(el) {
+  el.style.setProperty("--pick-left", view.offsetLeft + "px");
+  el.style.setProperty("--pick-top", view.offsetTop + "px");
+  el.style.setProperty("--pick-w", view.offsetWidth + "px");
+  el.style.setProperty("--pick-h", view.offsetHeight + "px");
+}
 function fitPicker() {
-  const v = document.getElementById("view");
   pickerEl.classList.add("over");
-  pickerEl.style.setProperty("--pick-left", v.offsetLeft + "px");
-  pickerEl.style.setProperty("--pick-top", v.offsetTop + "px");
-  pickerEl.style.setProperty("--pick-w", v.offsetWidth + "px");
-  pickerEl.style.setProperty("--pick-h", v.offsetHeight + "px");
-  pickerEl.classList.toggle("tight", v.offsetHeight < 240 || v.offsetWidth < 420);
+  overHouse(pickerEl);
+  pickerEl.classList.toggle("tight", view.offsetHeight < 240 || view.offsetWidth < 420);
 }
 function closePicker() {
   if (!pickOn) return;
@@ -2994,6 +3086,157 @@ pickerEl.querySelector(".x").addEventListener("click", closePicker);
 pickerEl.querySelector(".rand").addEventListener("click", () => { const a = pickOn; closePicker(); command(a); });
 document.addEventListener("pointerdown", e => { if (pickOn && !pickerEl.contains(e.target) && e.target !== view) closePicker(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && pickOn) closePicker(); });
+
+// ================================================================ chance cards
+// Like The Sims' chance cards (user): now and then a little situation pops
+// out of her (CARDS: the user's 100 cards, cards_text.js) with two choices,
+// and each choice has two possible results. The card springs out of her over
+// the house; the choice gets pressed in and the card shrinks back into her;
+// a few seconds later the result pops out of her, with the moodlet it gave
+// her on a pill above it. Any click closes the result (not while it is still
+// popping, so it can't be clicked away unread), and the pill flies into the
+// emoji, where the moodlet lands. Untouched for a minute, she picks by
+// herself and the result just goes in the diary. Every card comes once
+// before any comes again; cards with a `when` wait for a fitting moment.
+/*__CARDS_JS__*/
+for (const cd of CARDS) for (const k of ["a", "b"]) cd[k].out.forEach((o, i) => { if (o.mood) ML[o.id = `card${cd.n}${k}${i}`] = { ...o.mood }; });
+const CARD_GAP = 360, CARD_CHANCE = 0.3;         // game minutes between cards, odds per hour after that: about 1.5 a day
+const CARD_WAIT = 60000, CARD_LOCK = 900;        // ms: until she picks herself / before a result can be clicked away
+const cardEl = document.getElementById("card"), cardRes = document.getElementById("cardRes");
+const cardOpts = [...cardEl.querySelectorAll(".cd-opt")], crBox = cardRes.querySelector(".cr-box"), crMood = cardRes.querySelector(".cr-mood");
+let card = null;            // { cd, vars, phase: ask | wait | result | closing, k, o, auto, timer, lockUntil }
+let swallowUntil = 0;       // the click that closed a result does nothing else
+const cardWhen = new Map();
+function cardFits(cd, c) {
+  if (!cd.when) return true;
+  if (!cardWhen.has(cd)) { const any = cd.when.split("|").map(whenOk); cardWhen.set(cd, c => any.some(f => f(c))); }
+  return cardWhen.get(cd)(c);
+}
+function rollCard(c) {
+  const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
+  if (card || !c.awake || busyWith("bath", "toilet", "dress") || pickOn || sim.t - st.last < CARD_GAP || Math.random() >= CARD_CHANCE) return false;
+  let fresh = CARDS.filter(cd => !st.seen.includes(cd.n));
+  if (!fresh.length) { st.seen = st.seen.slice(-20); fresh = CARDS.filter(cd => !st.seen.includes(cd.n)); }   // all seen: start over, not the latest ones
+  const ok = fresh.filter(cd => cardFits(cd, c));
+  if (!ok.length) return false;
+  const w = cd => (cd.when ? 2 : 1);              // a fitting moment is used when it comes
+  let r = Math.random() * ok.reduce((a, cd) => a + w(cd), 0);
+  const cd = ok.find(x => (r -= w(x)) < 0) || ok[0];
+  st.seen.push(cd.n); st.last = sim.t;
+  showCard(cd);
+  return true;
+}
+// over the house like the pick-a-thing panel; a very small house (a phone
+// page) is too small for a card, so then it is a bit bigger, centred on it
+function placeCard(el) {
+  overHouse(el);
+  const w = view.offsetWidth, h = view.offsetHeight, W = Math.max(w, Math.min(360, innerWidth - 24)), H = Math.max(h, 210);
+  if (W > w || H > h) {
+    const vl = view.getBoundingClientRect().left, x = Math.max(12, Math.min(innerWidth - 12 - W, vl - (W - w) / 2));   // on screen
+    const vt = view.getBoundingClientRect().top, y = Math.max(8, Math.min(innerHeight - 8 - H, vt - (H - h) / 2));
+    el.style.setProperty("--pick-left", view.offsetLeft + x - vl + "px"); el.style.setProperty("--pick-top", view.offsetTop + y - vt + "px");
+    el.style.setProperty("--pick-w", W + "px"); el.style.setProperty("--pick-h", H + "px");
+  }
+  el.style.setProperty("--cs", Math.max(0.6, Math.min(1.35, H / 280)).toFixed(3));
+}
+function fromBuddy(el, target = el) {           // grow out of / shrink into her, wherever she is now
+  const p = pickFrom("buddy"), vr = view.getBoundingClientRect(), tr = target.getBoundingClientRect();
+  el.style.setProperty("--from-x", (vr.left + p.x * scale - tr.left) + "px");
+  el.style.setProperty("--from-y", (vr.top + p.y * scale - tr.top) + "px");
+}
+function showCard(cd) {
+  closeRing(); setDiaryOpen(false); showMoodTip(false);
+  card = { cd, vars: {}, phase: "ask" };
+  cardEl.querySelector("h3").textContent = fill(cd.title, card.vars);
+  cardEl.querySelector("p").textContent = spaced(fill(cd.text, card.vars));
+  for (const b of cardOpts) { b.textContent = spaced(fill(cd[b.dataset.k].label, card.vars)).replace(/[。.]$/, ""); b.classList.remove("chosen"); }
+  placeCard(cardEl);
+  cardEl.style.setProperty("--wait", CARD_WAIT / 1000 + "s");
+  cardEl.hidden = false;
+  fromBuddy(cardEl);
+  cardEl.classList.remove("on", "picked"); void cardEl.offsetWidth; cardEl.classList.add("on");
+  card.timer = setTimeout(() => chooseCard(Math.random() < 0.5 ? "a" : "b", true), CARD_WAIT);
+}
+function chooseCard(k, auto = false) {
+  if (!card || card.phase !== "ask") return;
+  clearTimeout(card.timer);
+  Object.assign(card, { phase: "wait", k, auto, o: card.cd[k].out[Math.random() < 0.5 ? 0 : 1] });
+  cardEl.classList.add("picked");
+  cardOpts.find(b => b.dataset.k === k).classList.add("chosen");
+  setTimeout(() => {                             // let the press show, then back into her
+    fromBuddy(cardEl);
+    cardEl.classList.remove("on");
+    setTimeout(() => { if (!card || card.phase !== "ask") cardEl.hidden = true; }, reduceMotionUI ? 0 : 320);
+    if (auto) { cardDiary(); if (card.o.id) addMood(card.o.id, { diary: false, words: false }); cardNeeds(); card = null; }   // nobody's looking: no result box
+    else card.timer = setTimeout(showResult, 3000 + Math.random() * 3000);
+  }, reduceMotionUI ? 0 : 620);
+}
+function cardDiary() {
+  const { cd, k, o, vars, auto } = card;
+  log(`「${fill(cd.title, vars)}」${auto ? `（${nameOf()}自己拿了主意）` : ""}${fill(cd[k].label, vars).replace(/[。.]$/, "")}——${fill(o.text, vars)}`);
+}
+function cardNeeds() {
+  for (const [n, v] of Object.entries(card.o.need || {})) if (n in sim.needs) sim.needs[n] = clamp(sim.needs[n] + v);
+}
+function showResult() {
+  if (!card || card.phase !== "wait") return;
+  if (pickOn || sim.act === "dress") { card.timer = setTimeout(showResult, 800); return; }   // wait for the panel to close
+  closeRing(); setDiaryOpen(false); showMoodTip(false);
+  card.phase = "result";
+  cardDiary(); cardNeeds();
+  const o = card.o, m = o.mood;
+  crBox.textContent = spaced(fill(o.text, card.vars));
+  crMood.hidden = !m;
+  if (m) {
+    crMood.innerHTML = `${m.name}<b>+${m.pts}</b>`;
+    crMood.title = `${m.name} · ${MOOD[m.emo].name} +${m.pts}`;
+    crMood.style.setProperty("--c", MOOD[m.emo].color);
+    crMood.classList.remove("fly");
+  }
+  placeCard(cardRes);
+  cardRes.hidden = false;
+  fromBuddy(crBox);
+  cardRes.classList.remove("on"); void cardRes.offsetWidth; cardRes.classList.add("on");
+  card.lockUntil = performance.now() + (reduceMotionUI ? 300 : CARD_LOCK);
+  card.timer = setTimeout(closeResult, CARD_WAIT);          // left alone: it goes away by itself
+}
+function closeResult() {
+  if (!card || card.phase !== "result") return;
+  clearTimeout(card.timer);
+  card.phase = "closing";
+  const o = card.o, done = card;
+  fromBuddy(crBox);
+  if (o.mood) {                                  // the pill heads for the emoji
+    const f = moodFace.getBoundingClientRect(), r = crMood.getBoundingClientRect();
+    crMood.style.setProperty("--fly-x", (f.left + f.width / 2 - (r.left + r.width / 2)) + "px");
+    crMood.style.setProperty("--fly-y", (f.top + f.height / 2 - (r.top + r.height / 2)) + "px");
+    crMood.classList.add("fly");
+  }
+  cardRes.classList.add("closing");
+  setTimeout(() => {
+    if (o.id) { addMood(o.id, { diary: false, words: false }); moodFace.classList.remove("gulp"); void moodFace.offsetWidth; moodFace.classList.add("gulp"); }
+    cardRes.hidden = true; cardRes.classList.remove("on", "closing");
+    if (card === done) card = null;
+  }, reduceMotionUI ? 0 : 480);
+}
+cardOpts.forEach(b => b.addEventListener("click", () => chooseCard(b.dataset.k)));
+// the result: any click anywhere closes it, and does nothing else
+for (const ev of ["pointerdown", "pointerup", "click"]) document.addEventListener(ev, e => {
+  const showing = card && card.phase === "result";
+  if (!showing && performance.now() > swallowUntil) return;
+  e.stopPropagation(); e.preventDefault();
+  if (showing && ev === "pointerdown" && performance.now() >= card.lockUntil) { swallowUntil = performance.now() + 500; closeResult(); }
+}, true);
+document.addEventListener("keydown", e => {
+  if (card && card.phase === "result" && ["Escape", "Enter", " "].includes(e.key) && performance.now() >= card.lockUntil) { e.preventDefault(); closeResult(); }
+});
+document.getElementById("testCard").addEventListener("click", () => {       // test: a card now
+  if (card) return;
+  const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
+  const fresh = CARDS.filter(cd => !st.seen.includes(cd.n)), cd = pick(fresh.length ? fresh : CARDS);
+  st.seen.push(cd.n); st.last = sim.t;
+  showCard(cd);
+});
 
 // ================================================================ diary
 // A box over her speech bubble with the latest diary line; clicking it pops
