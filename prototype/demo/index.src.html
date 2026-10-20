@@ -1888,7 +1888,7 @@ function emotion() {
   for (const [e, p] of Object.entries(sum)) if (p > pts || (p === pts && last[e] > last[key])) { key = e; pts = p; }
   return { key, pts, level: pts >= 6 ? 3 : pts >= 3 ? 2 : 1 };
 }
-const emoWord = (key, level) => T.words[key][level - 1];
+const emoWord = (key, level) => (T.words[key] ? T.words[key][level - 1] : MOOD[key].name);
 
 // ---------- condition moodlets: checked a few times a second
 const lifeFlags = { bedHair: false, firstSnowYear: -1, windowSince: {}, watered: { water_living: 0, water_study: 0 } };
@@ -2419,7 +2419,8 @@ let lifeT = -1;
 function updateMood() {
   if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); rollEvents(); checkCollapse(); }
   const e = emotion();
-  setMood(e.key, e.level);
+  if (asleep()) setMood("asleep", 1);                // a dark grey sleeping face the whole time she sleeps (user)
+  else setMood(e.key, e.level);
   if (listOpen) { fillMoodTip(); return; }          // her words wait until you're done looking
   if (realClock >= sayBusy && sayQueue.length) showSay(sayQueue.shift());
   else if (realClock >= nextSay && !asleep() && sim.mode !== "down") speak(thought());

@@ -171,7 +171,9 @@ piece side by side — review new pieces there at 6x).
   toilet when the bladder drops under 15. Check a change with a multi-day
   headless run (needs' daily minimums, collapses, accidents) — needs should
   take a while to come back but never run out.
-- **Sleeping**: Zs drift up from the pillow (`sleep_z_fx`, light blue with a
+- **Sleeping**: the mood emoji shows a dark grey sleeping face (`asleep`
+  in mood_icons, not an emotion) the whole time she's asleep (user).
+  Over her head, Zs drift up from the pillow (`sleep_z_fx`, light blue with a
   white rim — the old static dark zzz bubble was disliked); for ~7 s of
   every 26 a dream bubble (`DREAMS` emotes) shows instead.
 - **Wind-up** (user): a command (furniture click, ring menu) waits 0.3–1 s

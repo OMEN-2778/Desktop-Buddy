@@ -21,6 +21,8 @@ EMOTIONS = [
     ("embarrassed", "难为情", "#f29a9a"), ("uncomfortable", "浑身难受", "#c9b46e"), ("tense", "焦虑", "#e9a463"),
     ("angry", "气鼓鼓", "#e86f6f"), ("sad", "失落", "#7fa9e2"), ("dazed", "发懵", "#c8b6e8"),
     ("scared", "害怕", "#9d91d2"),
+    # not an emotion: shown the whole time she's asleep (user: a dark grey sleeping face)
+    ("asleep", "睡着了", "#5e5a6b"),
 ]
 NAMES = [k for k, _, _ in EMOTIONS]
 COLORS = {k: c for k, _, c in EMOTIONS}
@@ -96,6 +98,8 @@ def draw(name: str, f: int) -> Sprite:
         s = face(P.sky_soft + [P.linen[3]])
     elif name == "uncomfortable":
         s = face(P.sage)
+    elif name == "asleep":
+        s = face([P.metal[1], P.metal[2], P.metal[3], P.metal[4], P.metal[5]])
     else:
         s = face()
     if name == "happy":
@@ -207,6 +211,16 @@ def draw(name: str, f: int) -> Sprite:
             out = Sprite(SIZE, SIZE)
             out.blit(s, 1, 0)
             s = out
+    elif name == "asleep":
+        for x in (4, 10):                                  # peaceful closed eyes: little arcs
+            s.set(x - 1, 7, P.metal[0]).hline(x, x + 1, 8, P.metal[0]).set(x + 2, 7, P.metal[0])
+        s.hline(7, 8, 11, P.metal[1])                     # a small, soft mouth
+        s.set(3, 9, P.hair_pink[3]).set(12, 9, P.hair_pink[3])   # sleepy blush
+        z = P.linen[3]                                      # a z drifting up
+        if f == 0:
+            s.hline(11, 13, 1, z).set(12, 2, z).hline(11, 13, 3, z)
+        else:
+            s.hline(12, 15, 0, z).set(14, 1, z).set(13, 2, z).hline(12, 15, 3, z)
     return s
 
 
