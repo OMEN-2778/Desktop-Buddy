@@ -381,7 +381,7 @@ edits; copy changes into life_text.js.
   a panel EXACTLY the house's size right over the house (user: every such
   panel covers the house, `fitPicker`) listing every book / show / game /
   dish with its picture and a line (`T.blurbs`; dishes: 饱食 + 分钟); a small
-  house gets the `.tight` layout (titles only, 1x pictures). Picking sends
+  house gets a one-line header (`.tight`); items keep their size and scroll (user). Picking sends
   her with that item (`command(act, item)` -> `sim.chosen` ->
   `lifeArrive`); 随便来一个 lets her choose. (`--room-left` / `fit_window` dx
   remain for anything that opens to the left.)
@@ -394,6 +394,8 @@ edits; copy changes into life_text.js.
   each cooks for its own `time`, fills `fill` hunger over the meal (x0.6
   burnt … x1.2 great), and leaves one of its own `moods` (weighted) plus
   `plus` needs. Left to herself she favours filling dishes when hungry.
+  The dish she cooked is the picture on the dining table while she eats
+  (`sim.meal.pic`, same `dishIcon` as in the menu).
 - **Events** with a `when` (tags joined by +, see `WHEN`: time, weather,
   season, what she's doing, which room, low needs, good / bad mood) are added
   to `EVENTS` from the text file; others keep their conditions in the page.
