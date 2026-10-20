@@ -1621,11 +1621,12 @@ function startAct(name, quiet = false) {
   sim.route = planRoute(Math.round(p.x), Math.round(p.y), x, FLOOR_Y[st]);
   sim.s = 0; sim.target = routeLength(sim.route); sim.crossing = doorsOn(sim.route);
   sim.mode = "walk";
-  if (a.log && !quiet) log(a.log);
+  sim.pendingLog = a.log && !quiet ? a.log : null;   // written when she gets there and starts (user), not when she sets off
 }
 function arrive() {
   const a = ACTS[sim.act];
   sim.mode = "act";
+  if (sim.pendingLog) { log(sim.pendingLog); sim.pendingLog = null; }
   if (sim.act === "sleep") {
     const h = hour();
     sim.nap = !(h >= 21 || h < 6);
