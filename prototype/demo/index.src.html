@@ -183,6 +183,19 @@ body {
   box-shadow: 0 -2px 0 0 var(--edge), 0 2px 0 0 var(--edge), -2px 0 0 0 var(--edge), 2px 0 0 0 var(--edge), 3px 3px 0 0 var(--shadow);
 }
 .sky-tip[hidden] { display: none; }
+/* on a festival (or her birthday) its name rides the time bar in a little
+   rounded tag right of the sun / moon; when the icon is too near the bar's
+   end for it to fit, it fades away (the day is nearly over anyway; user) */
+.sky-fest {
+  position: absolute; top: 50%; left: 0; z-index: 2; pointer-events: none; white-space: nowrap;
+  transform: translate(var(--fx, 0px), -50%); isolation: isolate;
+  font-size: 12px; font-weight: 700; letter-spacing: .06em; color: #fff; padding: 2px 9px; line-height: 1.35;
+  filter: drop-shadow(2px 2px 0 var(--shadow)); transition: opacity .35s;
+}
+.sky-fest::before { content: ""; position: absolute; inset: -2px; z-index: -2; background: #fff; clip-path: var(--clip-btn); }
+.sky-fest::after { content: ""; position: absolute; inset: 0; z-index: -1; background: #e1725b; clip-path: var(--clip-btn); }
+.sky-fest.gone { opacity: 0; }
+.sky-fest[hidden] { display: none; }
 
 /* ---------- mood: an emoji in a round frame at the top-left of the sky bar;
    to its right Buddy's own thoughts / words in a light-wood bubble with a
@@ -599,6 +612,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <canvas id="sky" width="684" height="48"></canvas>
         <div class="sky-hit" id="skyHit"></div>
         <div class="sky-tip" id="skyTip" hidden></div>
+        <div class="sky-fest" id="skyFest" hidden></div>
       </div>
       <section class="picker" id="picker" hidden aria-label="选择"><div class="pk-head"><h3></h3><button type="button" class="rand">随便<span class="long">来一个</span></button><button type="button" class="x" aria-label="关闭">✕</button></div><div class="pk-body"></div></section>
       <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她弹出互动菜单。"></canvas>
@@ -1838,6 +1852,23 @@ function renderSky() {
     drawIcon(sky.icon, x, cy + bob, 1);
   }
   if (!skyTip.hidden) skyTip.style.left = x + "px";
+  placeFestTag(x, (SKY_ICON * b) / 2, w);
+}
+// today's festival (or birthday / anniversary) on the time bar
+const skyFest = document.getElementById("skyFest");
+function festivalToday() {
+  const se = seasonOf(sim.t), day = Math.floor(sim.t / 1440) + 1;
+  const f = T.festivals.find(f => f.season === se.i && f.day === se.day);
+  return f ? (f.chip || f.name) : day === 30 ? "生日" : day === 14 || day === 56 ? "纪念日" : null;
+}
+function placeFestTag(x, half, w) {
+  const name = festivalToday();
+  if (!name) { skyFest.hidden = true; return; }
+  if (skyFest.textContent !== name) skyFest.textContent = name;
+  skyFest.hidden = false;
+  const left = Math.round(x + half + 6), fits = left + skyFest.offsetWidth + 4 <= w;
+  skyFest.style.setProperty("--fx", left + "px");
+  skyFest.classList.toggle("gone", !fits);
 }
 function skyText() {
   const se = seasonOf(sim.t);
@@ -2158,9 +2189,25 @@ function rollEvents() {
   if (h >= 9 && c.awake && lastFestivalDay !== day) {
     lastFestivalDay = day;
     const f = T.festivals.find(f => f.season === c.se.i && f.day === c.se.day);
-    if (f) { log(`今天是${f.name}。` + one(f.diary)); speak(pick(f.say)); addMood(f.mood || "festival", { diary: false, words: false }); if (f.sad) addMood("festivalSad", { diary: false, words: false }); }
+    if (f) {
+      log(`今天是${f.name}。` + fill(one(f.diary))); speak(fill(pick(f.say))); addMood(f.mood || "festival", { diary: false, words: false });
+      if (f.sad) addMood("festivalSad", { diary: false, words: false });
+      eventThen(f.then);                                     // e.g. 赖床节: back to bed
+      if (f.outcomes) sim.festLater = { f: f.name, at: sim.t + 120 + Math.random() * 240 };   // how it turns out, later that day
+    }
     if (day === 30) { log("今天是生日！给自己做了一个小蛋糕，许了个愿。"); speak("生日快乐，我！"); addMood("birthday", { diary: false, words: false }); }
     if (day === 14 || day === 56) { log(`搬进这个小屋已经${day}天了。`); speak("这里越来越像家了"); addMood("anniversary", { diary: false, words: false }); }
+  }
+  if (sim.festLater && sim.t >= sim.festLater.at) {          // the festival's second beat (彩票开奖…)
+    const f = T.festivals.find(x => x.name === sim.festLater.f); sim.festLater = null;
+    if (f && f.outcomes) {
+      let r = Math.random() * f.outcomes.reduce((a, o) => a + (o.w || 1), 0);
+      const o = f.outcomes.find(o => (r -= o.w || 1) < 0) || f.outcomes[0];
+      if (o.diary) log(fill(one(o.diary)));
+      if (o.say && c.awake) speak(fill(pick(o.say)));
+      if (o.mood) addMood(o.mood, { diary: false, words: false });
+      return;
+    }
   }
   if (rollChains(c)) return;                          // a story step takes the hour
   for (const [id, when, p, cd, run] of EVENTS) {
