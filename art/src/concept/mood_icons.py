@@ -1,6 +1,10 @@
 """Emotion emoji for the mood circle: 16 round chibi faces, 16x16, two
 frames each (blink, tear, steam, sparkle...). The circle frame around them
 (white ring + emotion colour) is drawn by the page; COLORS holds that tint.
+Each face is tinted in its emotion's colour family (user), lighter than the
+circle behind it, and the colours are spread round the wheel so no two
+emotions look alike: hue first, then lightness for neighbours (rust 焦虑 vs
+orange 元气满满, olive 浑身难受 vs yellow 美滋滋, lilac 发懵 vs violet 专心致志).
 
     frames(name) -> [Sprite, Sprite]
 """
@@ -15,12 +19,22 @@ SIZE = 16
 # (key, name shown in the game, frame tint). Names echo The Sims 4's
 # emotions, reworded.
 EMOTIONS = [
-    ("happy", "美滋滋", "#b9dd7d"), ("confident", "小得意", "#f4b25d"), ("energized", "元气满满", "#ffcf4a"),
-    ("flirty", "心动", "#f6a3bd"), ("focused", "专心致志", "#9aa8ec"), ("inspired", "灵光一闪", "#82d3d8"),
-    ("playful", "调皮", "#cfe86e"), ("fine", "平静", "#e3e1ea"), ("bored", "好无聊", "#b9b5c6"),
-    ("embarrassed", "难为情", "#f29a9a"), ("uncomfortable", "浑身难受", "#c9b46e"), ("tense", "焦虑", "#e9a463"),
-    ("angry", "气鼓鼓", "#e86f6f"), ("sad", "失落", "#7fa9e2"), ("dazed", "发懵", "#c8b6e8"),
-    ("scared", "害怕", "#9d91d2"),
+    ("happy", "美滋滋", "#f5c938"),          # sunny yellow
+    ("confident", "小得意", "#3dbd8a"),      # emerald
+    ("energized", "元气满满", "#ff9330"),     # bright orange
+    ("flirty", "心动", "#e070c8"),           # magenta
+    ("focused", "专心致志", "#8a68e6"),       # violet
+    ("inspired", "灵光一闪", "#36c3d6"),      # cyan
+    ("playful", "调皮", "#98cf3c"),          # lime
+    ("fine", "平静", "#e6e4ee"),             # near white
+    ("bored", "好无聊", "#a6a2b5"),          # cool grey
+    ("embarrassed", "难为情", "#f585a6"),     # rose pink
+    ("uncomfortable", "浑身难受", "#a59a42"),  # olive
+    ("tense", "焦虑", "#c4673a"),            # rust
+    ("angry", "气鼓鼓", "#e34646"),          # red
+    ("sad", "失落", "#4e9be6"),              # blue
+    ("dazed", "发懵", "#cdb6ef"),            # pale lilac
+    ("scared", "害怕", "#5d6cbf"),           # slate indigo
     # not an emotion: shown the whole time she's asleep (user: a dark grey sleeping face)
     ("asleep", "睡着了", "#5e5a6b"),
 ]
@@ -33,6 +47,24 @@ E = P.walnut[0]                  # features
 MOUTH, TONGUE = P.coral[1], P.coral[3]
 BLUSH = P.blush[0]
 TEAR = P.glass[3]
+
+
+def _ramp(hex_color: str) -> list[str]:
+    """Five face tones in one colour family: outline, shade, rim, fill,
+    highlight. Shadows lean a little cool, highlights a little warm."""
+    import colorsys
+    r, g, b = (int(hex_color[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    h, l, s = colorsys.rgb_to_hls(r, g, b)
+    s = min(0.85, s) if s > 0.12 else s
+    out = []
+    for light, shift, sat in ((0.30, -0.025, 1.0), (0.46, -0.012, 1.0), (0.62, 0, 0.95), (0.78, 0.008, 0.9), (0.91, 0.02, 0.8)):
+        hh = h + (shift if 0.12 < h < 0.65 else -shift)     # cool shadows / warm lights, either side of the wheel
+        rr, gg, bb = colorsys.hls_to_rgb(hh % 1, light, s * sat)
+        out.append("#%02x%02x%02x" % (round(rr * 255), round(gg * 255), round(bb * 255)))
+    return out
+
+
+RAMPS = {k: _ramp(c) for k, _, c in EMOTIONS if k != "asleep"}
 
 
 def face(ramp=M) -> Sprite:
@@ -92,16 +124,11 @@ def sparkle(s, x, y, big, c=P.linen[3]):
 
 
 def draw(name: str, f: int) -> Sprite:
-    if name == "angry":
-        s = face(P.coral)
-    elif name == "scared":
-        s = face(P.sky_soft + [P.linen[3]])
-    elif name == "uncomfortable":
-        s = face(P.sage)
-    elif name == "asleep":
+    if name == "asleep":
         s = face([P.metal[1], P.metal[2], P.metal[3], P.metal[4], P.metal[5]])
     else:
-        s = face()
+        R = RAMPS[name]
+        s = face(R)
     if name == "happy":
         happy_eyes(s, 7 - f)
         big_grin(s, 9)
@@ -160,7 +187,7 @@ def draw(name: str, f: int) -> Sprite:
             closed_eyes(s, 7)
         smile(s, 10, 1)
     elif name == "bored":
-        s.hline(3, 6, 6, M[1]).hline(9, 12, 6, M[1])     # heavy lids
+        s.hline(3, 6, 6, R[1]).hline(9, 12, 6, R[1])     # heavy lids
         s.hline(4, 5, 7, E).hline(10, 11, 7, E)
         s.hline(6, 9, 11, E)
         if f:                                             # a sigh puff

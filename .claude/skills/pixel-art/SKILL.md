@@ -172,7 +172,8 @@ piece side by side — review new pieces there at 6x).
   headless run (needs' daily minimums, collapses, accidents) — needs should
   take a while to come back but never run out.
 - **Sleeping**: the mood emoji shows a dark grey sleeping face (`asleep`
-  in mood_icons, not an emotion) the whole time she's asleep (user).
+  in mood_icons, not an emotion) the whole time she's asleep (user);
+  pointing at it / opening the moodlet list shows her real mood (`showFace`).
   Over her head, Zs drift up from the pillow (`sleep_z_fx`, light blue with a
   white rim — the old static dark zzz bubble was disliked); for ~7 s of
   every 26 a dream bubble (`DREAMS` emotes) shows instead.
@@ -214,6 +215,12 @@ Reference: `prototype/shared/studio.css`.
   emotion in its own colour, then each moodlet tinted with its emotion's
   colour (the tint shrinks as its time runs out), up to two rows, the rest
   folded into "还有 N 个". Her words wait while it's open.
+- Emotion colours (user: same family as the face, no two alike): one hue
+  per emotion round the wheel, neighbours told apart by lightness (rust 焦虑
+  vs orange 元气满满, olive 浑身难受 vs yellow 美滋滋, lilac 发懵 vs violet
+  专心致志). Each face is tinted from its colour (`_ramp`: 5 tones, cool
+  shadows, warm lights), lighter than the disc behind it. The head pill
+  picks dark or white text by contrast (`inkOn`).
 - Settings: a round pixel gear button fixed at the page's top-right
   (`art/src/concept/ui_icons.py`); clicking it pops the options out to the
   LEFT as rows of pills in the same ring-menu style (dark label pill, then
@@ -439,8 +446,14 @@ edits; copy changes into life_text.js.
   sparks, a big wobbly pop, a shine sweep, a glow pulsing twice); any click closes
   it (eaten, `CARD_LOCK` 0.9 s first so it can't be missed) and the pill
   flies into the emoji (`.fly`), where the moodlet is added. No pick in 60 s
-  (`CARD_WAIT`, bar along the bottom): she picks, the result only goes in
-  the diary. Results left open close after 60 s. Console: 机会卡测试.
+  (`CARD_WAIT`, bar along the bottom, shown only once the card is out):
+  she picks, the result only goes in the diary. Results left open close
+  after 60 s. Every result has her own line (`say`), spoken when it closes
+  (no "new mood" thought right after it). Card moodlets are 2-4 points:
+  the doc's +1 (a choice moves her more), +1 more for the emotions daily
+  life rarely gives (30 simulated days: 专心 焦虑 生气 发懵 调皮 心动 害怕
+  无聊 under 2.5%, 美滋滋 48%), at most 4 for the ones that can make her
+  collapse; they last x1.25 (2-8 h). Console: 机会卡测试.
 Moodlets add points to one emotion, the top sum wins (1-2 有点, 3-5, 6+ 非常),
 condition moodlets last while true. Events roll once a game hour with
 cooldowns; her words queue so bubbles never cut each other off. Social
