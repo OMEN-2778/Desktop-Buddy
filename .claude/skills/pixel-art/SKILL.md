@@ -385,7 +385,9 @@ edits; copy changes into life_text.js.
   dish with its picture and a line (`T.blurbs`; dishes: 饱食 + 分钟); a small
   house gets a one-line header (`.tight`); items keep their size and scroll (user). Picking sends
   her with that item (`command(act, item)` -> `sim.chosen` ->
-  `lifeArrive`); 随便来一个 lets her choose. (`--room-left` / `fit_window` dx
+  `lifeArrive`); 随便来一个 lets her choose. It grows out of the thing you clicked and
+  shrinks back into it, like a window on macOS / Windows 11 (user;
+  `pickFrom` -> `--from-x/y` as the transform origin). (`--room-left` / `fit_window` dx
   remain for anything that opens to the left.)
 - **Item pictures** (`art/src/concept/item_icons.py`, user's idea): covers,
   show cards, game boxes and app icons are a rectangle in one colour ramp

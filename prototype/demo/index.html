@@ -480,8 +480,17 @@ body {
 .picker.on { transform: none; opacity: 1; }
 .picker[hidden] { display: none; }
 /* user: every panel is exactly the house's size and lies right over it */
-.picker.over { right: auto; left: var(--pick-left, 0px); width: var(--pick-w, 342px); height: var(--pick-h, 118px); transform-origin: 50% 50%; transform: scale(.94); }
-.picker.over.on { transform: none; }
+.picker.over { right: auto; left: var(--pick-left, 0px); width: var(--pick-w, 342px); height: var(--pick-h, 118px); }
+/* it grows out of the thing you clicked and shrinks back into it, like a
+   window opening on macOS / Windows 11 (user); --from-x/y = that thing */
+.picker.over {
+  transform-origin: var(--from-x, 50%) var(--from-y, 50%); transform: scale(.04); opacity: 0;
+  transition: transform .26s cubic-bezier(.45, 0, .8, .5), opacity .12s .15s;   /* closing: shrinks into the object, fading at the end */
+}
+.picker.over.on {
+  transform: none; opacity: 1;
+  transition: transform .36s cubic-bezier(.16, .9, .3, 1), opacity .14s;          /* opening: shoots out, settles */
+}
 .picker.over .pk-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 /* a small house: a one-line header; the items keep their size (user) — scroll */
 .picker.tight .pk-head { padding: 2px 6px 2px 10px; }
@@ -507,7 +516,7 @@ body {
 .pk-item b { display: block; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pk-item span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--muted); font-size: 11px; }
 .pk-item i { display: block; font-style: normal; color: #8a6446; font-size: 11px; font-variant-numeric: tabular-nums; }
-@media (prefers-reduced-motion: reduce) { .picker { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .picker, .picker.over, .picker.over.on { transition: none; } }
 /* ---------- the desktop app: the window is the game, see-through around it */
 html.desktop, html.desktop body { background: transparent !important; }
 html.desktop body { background-image: none !important; overflow: hidden; }
@@ -1880,8 +1889,8 @@ function useFurniture(id, glowOnly = false) {
       : st === "open" ? (blind ? "卷起卷帘，推开窗户，风吹了进来。" : "拉开窗帘，推开窗户，风吹了进来。") : "关上了窗户。");
     return;
   }
-  if (id === "stove" || id === "fridge" || id === "table") { openPicker("cook"); return; }   // all three: pick a dish to cook (user)
-  if (PICK[CLICK_ACT[id]]) { openPicker(CLICK_ACT[id]); return; }   // books, shows: choose in the panel
+  if (id === "stove" || id === "fridge" || id === "table") { openPicker("cook", pickFrom(id)); return; }   // all three: pick a dish to cook (user)
+  if (PICK[CLICK_ACT[id]]) { openPicker(CLICK_ACT[id], pickFrom(id)); return; }   // books, shows: choose in the panel
   if (CLICK_ACT[id]) command(CLICK_ACT[id]);
 }
 
@@ -9712,7 +9721,7 @@ function ringPick(id) {
     if (sim.needs.energy < 70 || h >= 21 || h < 6) command("sleep"); else speak(pick(T.you.notSleepy), true);
     return;
   }
-  if (PICK[id]) { openPicker(id); return; }          // a game: choose in the panel
+  if (PICK[id]) { openPicker(id, pickFrom(id === "computer" ? "computer" : "buddy")); return; }   // a game: choose in the panel
   command(id);
 }
 
@@ -9737,7 +9746,13 @@ const PICK = {
       title: d.name, line: d.blurb || "", info: `饱食 ${d.fill} · ${d.time}分钟`,
       icon: dishIcon(d), item: dishItem(c, d) }) })) },
 };
-function openPicker(act) {
+// from = where it grows out of, in house pixels (the furniture, or Buddy)
+function pickFrom(id) {
+  if (id === "buddy") { const p = here(); return { x: p.x, y: p.y - 12 }; }
+  const c = CLICK[id];
+  return c ? { x: c.x + c.w / 2, y: c.y + c.h / 2 } : null;
+}
+function openPicker(act, from = null) {
   const P_ = PICK[act];
   if (!P_ || sim.mode === "down") return;
   closeRing(); setDiaryOpen(false);
@@ -9765,6 +9780,8 @@ function openPicker(act) {
   }
   pickBody.scrollTop = 0;
   fitPicker();
+  if (from) { pickerEl.style.setProperty("--from-x", from.x * scale + "px"); pickerEl.style.setProperty("--from-y", from.y * scale + "px"); }
+  else { pickerEl.style.removeProperty("--from-x"); pickerEl.style.removeProperty("--from-y"); }
   pickerEl.hidden = false;
   pickerEl.classList.remove("on"); void pickerEl.offsetWidth; pickerEl.classList.add("on");
   makeRoom();
@@ -9783,7 +9800,7 @@ function closePicker() {
   if (!pickOn) return;
   pickOn = null;
   pickerEl.classList.remove("on");
-  setTimeout(() => { if (!pickOn) { pickerEl.hidden = true; makeRoom(); } }, reduceMotionUI ? 0 : 220);
+  setTimeout(() => { if (!pickOn) { pickerEl.hidden = true; makeRoom(); } }, reduceMotionUI ? 0 : 300);   // after it has shrunk back
 }
 pickerEl.querySelector(".x").addEventListener("click", closePicker);
 pickerEl.querySelector(".rand").addEventListener("click", () => { const a = pickOn; closePicker(); command(a); });
