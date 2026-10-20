@@ -2050,13 +2050,14 @@ function stepChain(id, st, c) {
   if (st.step >= ch.steps.length) { delete lifeFlags.chains[id]; lifeFlags.chainLast[id] = sim.t; }
   return true;
 }
+const CHAIN_ODDS = 2.5;   // stories start a bit more often than the text's own odds: about one a week
 function rollChains(c) {
   const run = (lifeFlags.chains ||= {}), last = (lifeFlags.chainLast ||= {});
   for (const [id, st] of Object.entries(run)) if (T.chains[id] && stepChain(id, st, c)) return true;
   else if (!T.chains[id]) delete run[id];
   for (const [id, ch] of Object.entries(T.chains || {})) {
     const s = ch.start || {};
-    if (run[id] || sim.t - (last[id] ?? -1e9) < (s.cd || 20160) || (s.when && !whenOk(s.when)(c)) || Math.random() >= (s.chance ?? 0.03)) continue;
+    if (run[id] || sim.t - (last[id] ?? -1e9) < (s.cd || 20160) || (s.when && !whenOk(s.when)(c)) || Math.random() >= (s.chance ?? 0.03) * CHAIN_ODDS) continue;
     run[id] = { step: 0, at: sim.t };
     return stepChain(id, run[id], c);
   }
@@ -2081,7 +2082,7 @@ function rollEvents() {
     if (day === 30) { log("今天是生日！给自己做了一个小蛋糕，许了个愿。"); speak("生日快乐，我！"); addMood("birthday", { diary: false, words: false }); }
     if (day === 14 || day === 56) { log(`搬进这个小屋已经${day}天了。`); speak("这里越来越像家了"); addMood("anniversary", { diary: false, words: false }); }
   }
-  if (Math.random() < 0.5 && rollChains(c)) return;   // a running story takes the hour now and then
+  if (rollChains(c)) return;                          // a story step takes the hour
   for (const [id, when, p, cd, run] of EVENTS) {
     if (sim.t - (eventLast[id] ?? -1e9) < cd || !when(c) || Math.random() >= p) continue;
     eventLast[id] = sim.t;

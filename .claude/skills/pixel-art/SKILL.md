@@ -375,8 +375,18 @@ edits; copy changes into life_text.js.
   `sim.item.vars`, moodlet lines with the vars they were added with) and the
   diary agree. Cooking rolls burnt / plain / good / great (mood shifts the
   odds; burnt fills 60%, great 120% + fun), `mealNewDish` per new cuisine.
-- **Events** with a `when` (tags joined by +, see `WHEN`) are added to
-  `EVENTS` from the text file; others keep their conditions in the page.
+- **Events** with a `when` (tags joined by +, see `WHEN`: time, weather,
+  season, what she's doing, which room, low needs, good / bad mood) are added
+  to `EVENTS` from the text file; others keep their conditions in the page.
+  `then: [acts]` sends her off (e.g. up in the night for a snack, then back
+  to bed). Events + chains are kept at 4–5x+ the doc's original events
+  section (user); 107 events now.
+- **Event chains** (`T.chains`, `rollChains`): short stories over several
+  days — start tags + odds (x`CHAIN_ODDS`) + cooldown, then steps each
+  `after` game minutes and their own tags, the last may branch
+  (`outcomes` by weight). Running state in `lifeFlags.chains` (saved). The
+  six from the doc (投稿 种花 线上比赛 学做新菜 神秘明信片 漏水维修) + 学吉他,
+  窗外的小猫; about one starts a week.
 Moodlets add points to one emotion, the top sum wins (1-2 有点, 3-5, 6+ 非常),
 condition moodlets last while true. Events roll once a game hour with
 cooldowns; her words queue so bubbles never cut each other off. Social
