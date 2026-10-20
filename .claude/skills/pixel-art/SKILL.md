@@ -164,6 +164,15 @@ piece side by side — review new pieces there at 6x).
   `stair.x`; each trip is its own polyline (`planRoute`: along the floor ->
   stair column -> other floor -> spot). Doors open only if the trip crosses
   them (`doorsOn`).
+- **Pace** (user): she walks at `WALK` = 28 × 2/3 house px per real second
+  at 1x (the walk cycle follows distance, so it slows with her). Every
+  activity but sleep lasts `PACE` (2) times its listed `dur` and fills needs
+  `PACE` times slower (`EFFECT`); she breaks off a long activity for the
+  toilet when the bladder drops under 15. Check a change with a multi-day
+  headless run (needs' daily minimums, collapses, accidents) — needs should
+  take a while to come back but never run out.
+- **Wind-up** (user): a command (furniture click, ring menu) waits 0.3–1 s
+  (`sim.windup`) before she sets off; she halts meanwhile.
 - **Real scale**: wall 45px ≈ 2.6m → 1px ≈ 6cm. Desk 13px, worktop 16px,
   wardrobe/fridge ~31–34px, door openings 37px (lintel 8px below ceiling).
 - **Realism**: tops show a 2–3px lit surface (`box()`), soft goods use
@@ -213,7 +222,11 @@ Reference: `prototype/shared/studio.css`.
   下装 / 袜子 / 饰品, every option a live thumbnail in the current colors,
   swatch rows + a custom picker per color. Accessories are toggles.
 - In the house demo the wardrobe opens it ABOVE the house, never over it,
-  exactly as wide as the house (it slides open and pushes the house down).
+  exactly as wide as the house. It grows UPWARD from above the gear row and
+  the house never moves (user): `makeRoom` gives the page just enough room
+  at the top (`--room-top` on `.desk`); in the desktop app the window grows
+  upward by moving up (`fit_window`'s `dy`; it stops at the screen top and
+  gives back only what it moved).
   On phones the house is too small, so it also spans the needs column.
 - In-game UI stays hidden until asked for (user's direction: "the screen is
   just the house"). Needs are six pixel dots (饱腹 精力 清洁 如厕 社交 开心) left of the house, flush with
@@ -279,12 +292,18 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
 - The settings gear sits just above the mood emoji (first child of
   `#moodrow`) and its rows open to the RIGHT, growing downward; in the
   desktop app `fitWindow` also covers the open menu so it is never clipped.
+  The emoji lines up with the house's left edge, never with the open bars.
+- **Diary box** (`#diary`): in the gear's row, right above the speech
+  bubble and exactly as wide as its body; the bubble's wood, no tail. Shows
+  the latest diary line; a click pops the whole recent list (`logEl`, the
+  one the save keeps) up above it, newest at the bottom. It steps aside
+  while the settings rows are out (they run where it sits).
 - **Settings rows** (`SETTINGS`): 时间流速, 界面大小 (− 100% + 适应窗口;
   counted in SCREEN pixels: 25% = one game pixel per monitor pixel, user's
   smallest; 100% = 4; the house canvas is drawn at device resolution
   (`devPx`), `scale` is CSS px per house px; text keeps a readable minimum), 总在最上层
-  (desktop app only), 自动保存 (每 5 分钟 / 关闭), 存档 (保存 / 导出 (browser) /
-  导入 / 重新开始, which asks twice), and in the desktop app 存档位置
+  (desktop app only), 存档 (保存 / one 自动保存 switch: 每 5 分钟自动保存 <->
+  不自动保存 / 导出 (browser) / 导入 / 重新开始, which asks twice), and in the desktop app 存档位置
   (默认位置 or the folder's name / 打开 / 更改 / 恢复默认).
 - **Settings are stored apart from the save** (`settingsStore`: browser
   localStorage `buddy-settings`, desktop `settings.json` in the config

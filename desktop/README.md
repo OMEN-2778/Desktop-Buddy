@@ -4,13 +4,14 @@ The game is the same single web page as the browser demo
 (`prototype/demo/index.html`); this folder wraps it in a
 [Tauri](https://tauri.app) window:
 
-- frameless and see-through, sized to the game (it grows when the 造型室
-  opens); move it by pressing on the house's walls or floor (anywhere that
+- frameless and see-through, sized to the game (it grows upward when the
+  造型室 or the diary list opens, so the house stays where it is); move it by pressing on the house's walls or floor (anywhere that
   isn't Buddy or a piece of furniture) and dragging, or on the empty space
   around it, the mood row or the time bar
 - 设置 (gear, above the mood emoji; rows open to the right): 时间流速,
   界面大小 (25%–200%; 25% = one game pixel per screen pixel, at any Windows
-  display scaling), 总在最上层, 自动保存 (每 5 分钟 / 关闭), 存档, 存档位置
+  display scaling), 总在最上层, 存档 (with the 自动保存 switch: every 5
+  minutes or never), 存档位置
 - a tray icon: 显示 / 隐藏, 总在最上层, 退出
 - the save is a JSON file in the app's data folder by default
   (Windows: `%APPDATA%\com.desktopbuddy.app\save.json`, previous copy kept

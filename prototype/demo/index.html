@@ -64,7 +64,7 @@ body {
 .desk {
   display: grid;
   place-items: center;
-  padding-block: 66px 32px;   /* top: room for the settings gear, so nothing (the 造型室's ✕) ever sits under it */
+  padding-block: calc(66px + var(--room-top, 0px)) 32px;   /* top: the gear + diary row, and room for what opens above it */
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   min-width: 0;
@@ -146,25 +146,26 @@ body {
   content: ""; position: absolute; inset: -6px; border: 2px dashed var(--focus); pointer-events: none;
 }
 
-/* ---------- 造型室: opens above the house (never over it), as wide as the house ----------
-   The slot grows from 0 to the studio's height, pushing the house down; the
-   clip keeps room for the studio's pixel outline and drop shadow. */
+/* ---------- 造型室: opens UPWARD above the gear row, as wide as the house ----------
+   The house and its UI never move (user): the slot hangs above the mood row
+   and grows from 0 to the studio's height upward; the page (or the app
+   window) makes room above it (--room-top, see makeRoom). The clip keeps
+   room for the studio's pixel outline and drop shadow. */
 .house-col { display: grid; min-width: 0; width: var(--house-w, 684px); }
 .studio-slot {
+  position: absolute; z-index: 2; bottom: calc(100% + 62px); left: calc(-1 * var(--studio-dx, 0px));   /* phones: also spans the needs column (see fit) */
   display: grid;
   width: var(--studio-w, 684px);
-  margin-left: calc(-1 * var(--studio-dx, 0px));   /* phones: also spans the needs column (see fit) */
   grid-template-rows: 0fr;
-  transition: grid-template-rows .42s cubic-bezier(.3, 1.2, .5, 1), margin-bottom .42s cubic-bezier(.3, 1.2, .5, 1);
-  margin-bottom: 0;
+  transition: grid-template-rows .42s cubic-bezier(.3, 1.2, .5, 1);
 }
-.studio-slot.open { grid-template-rows: 1fr; margin-bottom: calc(var(--u) * 7 + 52px); }   /* + room for the settings gear */
+.studio-slot.open { grid-template-rows: 1fr; }
 .studio-clip {
   min-height: 0; overflow: hidden;
   padding: var(--u) calc(var(--u) * 3) calc(var(--u) * 3) var(--u);
   margin: calc(-1 * var(--u)) calc(-3 * var(--u)) calc(-3 * var(--u)) calc(-1 * var(--u));
 }
-#studio { --sp: var(--u); width: var(--studio-w, 684px); scroll-margin-top: 72px; }   /* clear of the settings gear */
+#studio { --sp: var(--u); width: var(--studio-w, 684px); }
 
 /* ---------- sky bar: one day from 06:00 (left) to 06:00 (right) above the house,
    exactly as wide as it. The icon walks along it with the clock and turns
@@ -388,10 +389,58 @@ body {
 .settings button:focus-visible { outline: 2px dashed var(--focus); outline-offset: 3px; }
 @media (max-width: 520px) { .settings { --pill-fs: 12px; } .settings button, .set-label { padding: 6px 12px; } }
 @media (prefers-reduced-motion: reduce) { .set-row > *, .set-gear img { transition: none; } }
+/* ---------- diary: a light-wood box like her speech bubble (no tail) in the
+   gear's row, right above the bubble and exactly as wide; it shows the
+   latest line, and a click pops every recent line up above it ---------- */
+.diary {
+  position: absolute; z-index: 19; top: -50px; height: 42px;
+  left: calc(var(--mood-d, 78px) + var(--sky-b, 3px) * 4 + var(--tail, 16px)); right: 0;   /* = the bubble's body */
+  --pe: #8a6446; --pf: #ecd5ad; --wood-ink: #3d2a1e;
+  transition: opacity .2s, translate .25s cubic-bezier(.3, 1.4, .5, 1);
+}
+.diary.away { opacity: 0; translate: 12px 0; pointer-events: none; }   /* while the settings rows are out */
+.diary-box {
+  position: relative; isolation: isolate; width: 100%; height: 100%; margin: 0; border: 0; padding: 0 18px;
+  display: flex; align-items: center; gap: 10px; min-width: 0;
+  background: none; box-shadow: none; color: var(--wood-ink); font-size: 15px; line-height: 1.3; text-align: left; cursor: pointer;
+  filter: drop-shadow(3px 3px 0 var(--shadow));
+}
+.diary-box:hover { background: none; }
+.diary-box::before, .diary-box::after, .diary-pop::before, .diary-pop::after { content: ""; position: absolute; z-index: -1; }
+.diary-box::before, .diary-pop::before { inset: 0; background: var(--pe); clip-path: var(--clip-diary); }
+.diary-box::after, .diary-pop::after { inset: 2px; background: var(--pf); clip-path: var(--clip-diary-in); }
+.diary-box:hover::after, .diary-box[aria-expanded="true"]::after { background: #f3e2c2; }
+.diary-box:active { transform: translateY(2px); }
+.diary-box b { flex: none; font-size: 13px; font-weight: 700; color: #f7ecd8; padding: 2px 9px; position: relative; isolation: isolate; }
+.diary-box b::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--pe); clip-path: var(--clip-btn); }
+.diary time, .diary-pop time { flex: none; color: #8a6446; font-size: 13px; font-variant-numeric: tabular-nums; }
+.diary-box span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.diary-box:focus-visible { outline: 2px dashed var(--focus); outline-offset: 3px; }
+/* the list: grows up out of the box, newest line at the bottom (nearest the box) */
+.diary-pop {
+  position: absolute; right: 0; bottom: calc(100% + 8px); isolation: isolate; padding: 12px 8px 12px 18px;
+  /* as wide as the box; on phones (--pop-wide: 1) as wide as the 造型室, so lines stay readable */
+  left: calc(var(--pop-wide, 0) * -1 * (var(--mood-d, 78px) + var(--sky-b, 3px) * 4 + var(--tail, 16px) + var(--studio-dx, 0px)));
+  color: var(--wood-ink); filter: drop-shadow(3px 3px 0 var(--shadow));
+  transform-origin: 30% 100%; transform: translateY(14px) scale(.6); opacity: 0;
+  transition: transform .34s cubic-bezier(.3, 1.5, .5, 1), opacity .18s;
+}
+.diary-pop.on { transform: none; opacity: 1; }
+.diary-pop[hidden] { display: none; }
+.diary-pop ol {
+  list-style: none; margin: 0; padding: 0 10px 0 0; display: grid; gap: 6px;
+  max-height: var(--diary-max, 300px); overflow-y: auto; font-size: 14px; line-height: 1.45;
+  scrollbar-width: thin; scrollbar-color: #b08a63 transparent;
+}
+.diary-pop li { display: grid; grid-template-columns: 3.4em minmax(0, 1fr); gap: 8px; align-items: baseline; }
+.diary-pop li.day { grid-template-columns: 1fr; text-align: center; color: #8a6446; font-size: 12px; letter-spacing: .1em; padding-top: 4px; }
+.diary-pop li.empty { grid-template-columns: 1fr; color: #8a6446; }
+@media (max-width: 520px) { .diary-box { font-size: 13px; padding: 0 12px; gap: 7px; } .diary-box time { display: none; } }
+@media (prefers-reduced-motion: reduce) { .diary, .diary-pop { transition: none; } }
 /* ---------- the desktop app: the window is the game, see-through around it */
 html.desktop, html.desktop body { background: transparent !important; }
 html.desktop body { background-image: none !important; overflow: hidden; }
-html.desktop .desk { padding: 64px 40px 48px; place-items: start; }   /* pinned top-left: the window grows right/down around it */
+html.desktop .desk { padding: calc(64px + var(--room-top, 0px)) 40px 48px; place-items: start; }   /* pinned top-left: the window grows right/down around it */
 html.desktop .console { display: none; }
 html.desktop .desk, html.desktop .moodrow, html.desktop .sky-hit { cursor: grab; }   /* press here to move the window */
 /* ---------- Buddy 造型室 (shared by prototype/creator and prototype/demo) ----------
@@ -567,6 +616,10 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <div class="settings" id="settings">
           <button type="button" class="set-gear" id="setGear" aria-label="设置" aria-expanded="false" aria-controls="setPop"><img alt="" id="gearImg" width="26" height="26"></button>
           <div class="set-pop" id="setPop" role="group" aria-label="设置" hidden></div>
+        </div>
+        <div class="diary" id="diary">
+          <div class="diary-pop" id="diaryPop" hidden><ol id="diaryList" aria-label="最近发生的事"></ol></div>
+          <button type="button" class="diary-box" id="diaryBox" aria-expanded="false" aria-controls="diaryPop" title="看看最近发生的事"><b>日记</b><time></time><span></span></button>
         </div>
         <div class="mood-face" id="moodFace" tabindex="0" role="button" aria-label="情绪" aria-expanded="false" aria-controls="moodTip">
           <canvas id="mood" width="78" height="78"></canvas>
@@ -1414,6 +1467,12 @@ const EFFECT = {   // per game minute while doing it
   phone_call: { social: 2.2 }, phone_video: { social: 1.8, fun: 0.5 }, phone_feed: { social: 0.6, fun: 0.9 },
   phone_text: { social: 1.6 }, phone_game: { fun: 1.3 }, dance: { fun: 1.8, energy: -0.1, hygiene: -0.1 },
 };
+// Pace (user: needs came back too fast): every activity but sleep takes
+// PACE times as long and fills needs PACE times slower, so a need takes a
+// while to come back while a day still has room for all of them.
+const PACE = 2;
+for (const [k, a] of Object.entries(ACTS)) if (k !== "sleep") a.dur *= PACE;
+for (const [k, e] of Object.entries(EFFECT)) if (k !== "sleep") for (const n in e) if (e[n] > 0) e[n] /= PACE;
 // per game minute. Social runs dry in two days (user); the bladder in ~5 hours
 const DECAY = { hunger: 0.115, energy: 0.065, hygiene: 0.045, bladder: 0.3, social: 100 / 2880, fun: 0.11 };
 const NEED_NAMES = { hunger: "饱腹", energy: "精力", hygiene: "清洁", bladder: "如厕", social: "社交", fun: "开心" };
@@ -1432,6 +1491,10 @@ const clamp = v => Math.max(0, Math.min(100, v));
 const fmt = t => { const m = Math.floor(t % 1440); return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); };
 
 const logEl = document.getElementById("log");
+// (the diary box over her speech bubble shows the same list: see syncDiary)
+const diaryEl = document.getElementById("diary"), diaryBox = document.getElementById("diaryBox");
+const diaryPop = document.getElementById("diaryPop"), diaryList = document.getElementById("diaryList");
+let diaryOn = false;
 function log(text, cls) {
   text = spaced(text);
   const li = document.createElement("li");
@@ -1439,6 +1502,7 @@ function log(text, cls) {
   else li.innerHTML = `<time>${fmt(sim.t)}</time><span></span>`, li.querySelector("span").textContent = text;
   logEl.prepend(li);
   while (logEl.children.length > 40) logEl.lastChild.remove();
+  syncDiary();
 }
 
 function choose() {
@@ -1523,13 +1587,15 @@ function command(act) {
     if (!sim.nap && (h >= 22 || h < 6)) { log(`${nameOf()}睡得正香，等醒了再去${ACTS[act].label}吧。`); sim.queue = [act]; return; }
     log(`你把${nameOf()}从午觉里叫醒了。`);
   }
-  if (sim.act === act && sim.mode !== "idle") return;
+  if ((sim.windup ? sim.windup.act : sim.act) === act && sim.mode !== "idle") return;
   if (sim.act === "dress" && act !== "dress") closeWardrobe();
   sim.queue = [];
   sim.player = true;
-  startAct(act);
+  // a beat before she goes (user): she stops where she is, then sets off
+  sim.windup = { act, at: realClock + 0.3 + Math.random() * 0.7 };
 }
 
+const WALK = 28 * 2 / 3;   // house pixels per real second at 1x (user: two thirds of the old 28)
 function step(dtGame, dtReal) {
   sim.t += dtGame;
   const day = Math.floor(sim.t / 1440) + 1;
@@ -1551,9 +1617,13 @@ function step(dtGame, dtReal) {
     if (!asleep()) { sim.queue = []; startAct("bath"); }
   }
   // behaviour
-  if (sim.mode === "down") return;
+  if (sim.mode === "down") { sim.windup = null; return; }
+  if (sim.windup) {
+    if (realClock >= sim.windup.at) { const a = sim.windup.act; sim.windup = null; startAct(a); }
+    else return;   // she halts (mid-step, or keeps at what she was doing) until she sets off
+  }
   if (sim.mode === "walk") {
-    const v = 28 * Math.min(speed, 4) * dtReal * (here().dy ? 0.7 : 1);   // a little slower on the stairs
+    const v = WALK * Math.min(speed, 4) * dtReal * (here().dy ? 0.7 : 1);   // a little slower on the stairs
     if (sim.target - sim.s <= v) { sim.s = sim.target; arrive(); }
     else {
       const before = here().x;
@@ -1568,6 +1638,13 @@ function step(dtGame, dtReal) {
       : sim.act === "dress" && wardrobeOpen ? false : sim.t >= sim.actEnd;
     // up in the night for the toilet, then back to bed
     if (sim.act === "sleep" && !done && n.bladder < 10) { sim.upAtNight = true; log("半夜起来上了个厕所。"); finishAct(); sim.queue = ["toilet", "sleep"]; return; }
+    // longer activities: she breaks off for the toilet before it's too late
+    if (!done && !["sleep", "toilet", "dress"].includes(sim.act) && n.bladder < 15) {
+      const next = ACTS[sim.act].then;               // (a cooked meal still gets eaten after)
+      sim.player = false; lifeFinish(sim.act); sim.act = null;
+      startAct("toilet"); sim.queue = next ? [next] : [];
+      return;
+    }
     if (done) finishAct();
   } else if (sim.mode === "idle" && sim.t >= sim.idleUntil) {
     startAct(sim.queue.length ? sim.queue.shift() : choose());
@@ -1892,6 +1969,7 @@ function fit() {
   const narrowHouse = wPx < 520;
   widget.style.setProperty("--studio-w", (narrowHouse ? wPx + g + barW : wPx) + "px");
   widget.style.setProperty("--studio-dx", (narrowHouse ? g + barW : 0) + "px");
+  widget.style.setProperty("--pop-wide", narrowHouse ? "1" : "0");
   // text and round corners grow with the house: k = 1 at 100% (phones in auto: 0.75)
   const k = prefs.scale !== "auto" ? s / 4 : narrowHouse ? 0.75 : 1;
   const sayFs = Math.max(14, Math.round(32 * k));             // her words: big
@@ -1915,7 +1993,14 @@ function fit() {
   sets.style.setProperty("--clip-gear", roundClip(11, 2));            // 42px button: a circle
   sets.style.setProperty("--clip-gear-in", roundClip(10, 2));
   widget.style.setProperty("--clip-say-in", sayIn);
+  // the diary box: the bubble's wood without the tail, as tall as the gear
+  const di = document.getElementById("diary");
+  di.style.setProperty("--clip-diary", roundClip(10, 2));
+  di.style.setProperty("--clip-diary-in", roundClip(9, 2));
+  di.style.setProperty("--clip-btn", roundClip(6, 2));
+  di.style.setProperty("--diary-max", Math.round(Math.max(150, Math.min(320, hPx * 1.1))) + "px");
   if (typeof kickNeeds === "function") kickNeeds();
+  if (wardrobeOpen || diaryOn) { studio.refit(); makeRoom(); }   // what's open above the house got a new size
   if (TAURI) { fitWindow(); requestAnimationFrame(fitWindow); }   // the app window starts hidden: no frames until it's sized
 }
 
@@ -3180,8 +3265,8 @@ needsEl.addEventListener("blur", () => setNeedsOpen(false));
 needsEl.addEventListener("keydown", e => { if (e.key === "Escape") needsEl.blur(); });
 
 // ================================================================ settings
-// The gear at the top-right; each setting is a row of pills popping out to
-// its left (label first). Add rows to SETTINGS.
+// The gear right above the mood emoji; each setting is a row of pills
+// popping out to its right (label first). Add rows to SETTINGS.
 // 一倍 = 3 game minutes per real second (the old default).
 const setPop = document.getElementById("setPop"), setGear = document.getElementById("setGear");
 document.getElementById("gearImg").src = D.uiIcons.gear;
@@ -3227,11 +3312,12 @@ const SETTINGS = [
   { label: "总在最上层", role: "radiogroup", items: () => [[true, "开"], [false, "关"]].map(([v, name]) =>
       pill(name, { pressed: prefs.onTop === v, disabled: !TAURI, title: TAURI ? "" : "桌面版里才能用",
         onClick: b => { setOnTop(v); b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); } })) },
-  { label: "自动保存", role: "radiogroup", items: () => [[true, "每 5 分钟"], [false, "关闭"]].map(([v, name]) =>
-      pill(name, { pressed: prefs.autosave === v, title: v ? "每 5 分钟、退出和切到后台时自动保存" : "只在你点「保存」时保存",
-        onClick: b => { prefs.autosave = v; saveSettings(); b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); } })) },
   { label: "存档", role: "group", items: () => [
       pill("保存", { onClick: async () => flashLabel("存档", (await saveGame()) ? "已保存" : "没存上") }),
+      // 自动保存: one switch, every 5 minutes <-> never
+      pill(prefs.autosave ? "每 5 分钟自动保存" : "不自动保存", { pressed: prefs.autosave,
+        title: prefs.autosave ? "每 5 分钟、退出和切到后台时自动保存（再按一下关掉）" : "只在你点「保存」时保存（再按一下打开）",
+        onClick: () => { prefs.autosave = !prefs.autosave; saveSettings(); buildSettings(); } }),
       ...(TAURI ? [] : [pill("导出", { title: "把存档下载成一个文件", onClick: exportSave })]),
       pill("导入", { title: "从存档文件读取", onClick: () => document.getElementById("importSave").click() }),
       pill("重新开始", { cls: "danger", onClick: b => {
@@ -3307,7 +3393,9 @@ function applySettings(st) {
 }
 function setSettingsOpen(open) {
   setGear.setAttribute("aria-expanded", String(open));
+  diaryEl.classList.toggle("away", open);          // its rows run where the diary box sits
   if (open) {
+    setDiaryOpen(false);
     setPop.hidden = false;
     buildSettings();
     setPop.classList.remove("on"); void setPop.offsetWidth; setPop.classList.add("on");
@@ -3520,9 +3608,79 @@ function ringPick(id) {
   command(id);
 }
 
+// ================================================================ diary
+// A box over her speech bubble with the latest diary line; clicking it pops
+// every recent line (the same list the save keeps) up above it.
+function diaryItem(li) {
+  const out = document.createElement("li");
+  if (li.classList.contains("day")) { out.className = "day"; out.textContent = li.textContent; }
+  else { out.innerHTML = "<time></time><span></span>"; out.firstChild.textContent = li.querySelector("time").textContent; out.lastChild.textContent = li.querySelector("span").textContent; }
+  return out;
+}
+function syncDiary() {
+  const li = logEl.firstElementChild;
+  const time = diaryBox.querySelector("time"), text = diaryBox.querySelector("span");
+  if (!li) { time.textContent = ""; text.textContent = "今天还没有写什么。"; }
+  else if (li.classList.contains("day")) { time.textContent = ""; text.textContent = li.textContent; }
+  else { time.textContent = li.querySelector("time").textContent; text.textContent = li.querySelector("span").textContent; }
+  if (diaryOn) fillDiary();
+}
+function fillDiary() {
+  const ol = diaryList, atEnd = ol.scrollHeight - ol.scrollTop - ol.clientHeight < 8;
+  ol.replaceChildren(...[...logEl.children].reverse().map(diaryItem));     // oldest at the top, newest by the box
+  if (!ol.children.length) ol.append(Object.assign(document.createElement("li"), { className: "empty", textContent: "还没有发生什么事。" }));
+  if (atEnd || !ol._seen) { ol.scrollTop = ol.scrollHeight; ol._seen = true; }
+}
+function setDiaryOpen(on) {
+  if (on === diaryOn) return;
+  diaryOn = on;
+  diaryBox.setAttribute("aria-expanded", String(on));
+  if (on) {
+    diaryList._seen = false;
+    // a page has no room to grow upward for free: keep the list within the
+    // space above the box (the app window grows instead)
+    if (!TAURI) diaryPop.style.setProperty("--diary-max", Math.max(140, Math.min(320, diaryBox.getBoundingClientRect().top - 48)) + "px");
+    diaryPop.hidden = false; fillDiary();
+    diaryPop.classList.remove("on"); void diaryPop.offsetWidth; diaryPop.classList.add("on");
+    makeRoom();
+  } else {
+    diaryPop.classList.remove("on");
+    setTimeout(() => { if (!diaryOn) { diaryPop.hidden = true; makeRoom(); } }, reduceMotionUI ? 0 : 240);
+  }
+}
+diaryBox.addEventListener("click", () => setDiaryOpen(!diaryOn));
+document.addEventListener("pointerdown", e => { if (diaryOn && !diaryEl.contains(e.target)) setDiaryOpen(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && diaryOn) { setDiaryOpen(false); diaryBox.focus(); } });
+
+// ---------- room above the house for what opens upward (造型室, diary list)
+// The house and its UI stay where they are (user): the page gets just
+// enough room at the top (--room-top on .desk); in the desktop app the
+// window grows upward by the same amount (fitWindow moves it).
+let roomTop = 0;
+function makeRoom() {
+  const desk = document.querySelector(".desk");
+  const u = parseFloat(getComputedStyle(document.getElementById("widget")).getPropertyValue("--u")) || 4;
+  let need = 0;                                         // px needed above the mood row's top
+  if (wardrobeOpen) need = Math.max(need, 62 + studioEl.offsetHeight + 4 * u);
+  if (diaryOn) need = Math.max(need, 58 + diaryPop.offsetHeight);
+  need += 8;
+  // the smallest room that fits it (a centred page moves by half: iterate)
+  for (let i = 0; i < 12; i++) {
+    const top = moodrow.getBoundingClientRect().top + window.scrollY;
+    const r = Math.max(0, Math.round(roomTop + need - top));
+    if (r === roomTop) break;
+    roomTop = r; desk.style.setProperty("--room-top", r + "px");
+  }
+  if (TAURI) fitWindow();
+  else {   // a scrolled page: bring what just opened into view
+    const top = moodrow.getBoundingClientRect().top - need;
+    if (top < 0) window.scrollBy({ top, behavior: reduceMotionUI ? "auto" : "smooth" });
+  }
+}
+
 // ================================================================ 造型室
 // Clicking the wardrobe sends her there; when she arrives the dressing room
-// slides open above the house (pushing it down, never covering it).
+// slides open upward above the house (never covering it, never moving it).
 let wardrobeOpen = false;
 const studioEl = document.getElementById("studio"), studioSlot = document.getElementById("studioSlot");
 function saveLook() { autoSave(); }
@@ -3542,19 +3700,16 @@ function openWardrobe() {
   studioEl.hidden = false;
   studio.refit();
   studio.start();
-  requestAnimationFrame(() => {
-    studioSlot.classList.add("open");
-    const r = view.getBoundingClientRect();
-    // keep its title bar (and ✕) out from under the settings gear in the top-right corner
-    if (r.top < 0 || studioEl.getBoundingClientRect().top < 64) studioEl.scrollIntoView({ block: "start", behavior: "smooth" });
-  });
+  setDiaryOpen(false);
+  makeRoom();                                       // room above first: the house stays put
+  requestAnimationFrame(() => studioSlot.classList.add("open"));
 }
 function closeWardrobe() {
   if (!wardrobeOpen) return;
   wardrobeOpen = false;
   studioSlot.classList.remove("open");
   studio.stop();
-  const hide = () => { if (!wardrobeOpen) studioEl.hidden = true; };
+  const hide = () => { if (!wardrobeOpen) { studioEl.hidden = true; makeRoom(); } };   // give the room back once it has folded away
   if (reduceMotionUI) hide(); else setTimeout(hide, 450);
   log("换好衣服了，美美的！");
 }
@@ -3564,9 +3719,9 @@ function closeWardrobe() {
 // what she's doing and where, her moodlets, the house (lamps, windows), the
 // weather plan and the diary. The desktop app keeps it as a file in its data
 // folder (written whole then swapped in, the previous copy kept as .bak);
-// a browser keeps it in localStorage. Saved every 30 s, when the page is
-// hidden or closed, and right after anything you change by hand. Game time
-// waits while the game is closed.
+// a browser keeps it in localStorage. With 自动保存 on it is saved every
+// 5 minutes, when the page is hidden or closed, and after a look change;
+// off, only 保存 writes it. Game time waits while the game is closed.
 const SAVE_VERSION = 1, SAVE_KEY = "buddy-save";
 const store = TAURI ? {
   load: async () => { const t = await TAURI.core.invoke("load_save"); return t ? JSON.parse(t) : null; },
@@ -3583,7 +3738,7 @@ function snapshot() {
     look,
     settings: { speed, scale: prefs.scale, onTop: prefs.onTop },
     sim: { t: sim.t, needs: sim.needs, mode: sim.mode, act: sim.act, actEnd: sim.actEnd, nap: !!sim.nap,
-           at: [Math.round(p.x), storeyOfY(p.y)], facing: sim.facing, queue: sim.queue, recent: sim.recent,
+           at: [Math.round(p.x), storeyOfY(p.y)], facing: sim.facing, queue: sim.windup ? [sim.windup.act] : sim.queue, recent: sim.recent,
            lastDay: sim.lastDay, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
            graceUntil: sim.graceUntil, insomnia: !!sim.insomnia },
     moods: [...moods].filter(([id]) => ML[id] && !id.startsWith("test_")).map(([id, m]) => [id, m.until, m.t]),
@@ -3639,6 +3794,7 @@ function restore(sv) {
     else { li.innerHTML = "<time></time><span></span>"; li.firstChild.textContent = e[1]; li.lastChild.textContent = e[2]; }
     logEl.appendChild(li);
   }
+  syncDiary();
 }
 async function saveGame() {
   if (!booted || saving) return false;
@@ -3693,7 +3849,7 @@ async function resetSave() {
 }
 
 // ---------- the desktop window: sized to the game, tray menu events
-let lastWin = "";
+let lastWin = "", lastTop = null, lifted = 0;
 function fitWindow() {
   if (!TAURI) return;
   const w = document.getElementById("widget"), desk = document.querySelector(".desk"), cs = getComputedStyle(desk);
@@ -3703,9 +3859,18 @@ function fitWindow() {
   if (!setPop.hidden) { const p = setPop.getBoundingClientRect(); right = Math.max(right, p.right + 8); bottom = Math.max(bottom, p.bottom + 8); }
   const width = Math.ceil(right - r.left + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight));
   const height = Math.ceil(bottom - r.top + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom));
-  if (`${width}x${height}` === lastWin) return;
+  // room made above the house (makeRoom) moves it down in the window: move
+  // the window up as much, so it stays put on screen; give back only what
+  // the window really moved (it stops at the top of the screen)
+  const top = moodrow.getBoundingClientRect().top;
+  let dy = lastTop === null ? 0 : top - lastTop;
+  lastTop = top;
+  if (dy < 0) dy = -Math.min(-dy, lifted);
+  if (`${width}x${height}` === lastWin && !dy) return;
   lastWin = `${width}x${height}`;
-  TAURI.core.invoke("fit_window", { width, height }).catch(e => TAURI.core.invoke("log_js", { message: `fit_window: ${e}` }));
+  TAURI.core.invoke("fit_window", { width, height, dy })
+    .then(moved => { lifted = Math.max(0, lifted + (+moved || 0)); })
+    .catch(e => TAURI.core.invoke("log_js", { message: `fit_window: ${e}` }));
 }
 // Moving the window (it has no title bar): press on the empty space around
 // the game, the mood row or the time bar; or press on the house's walls or

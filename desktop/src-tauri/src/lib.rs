@@ -31,7 +31,7 @@ use std::{
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem},
     tray::TrayIconBuilder,
-    AppHandle, Emitter, LogicalSize, Manager, State, WebviewWindow, WindowEvent, Wry,
+    AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, State, WebviewWindow, WindowEvent, Wry,
 };
 
 /// The tray's "总在最上层" item, kept so the page's own setting can tick it.
@@ -174,7 +174,8 @@ fn open_save_dir(app: AppHandle) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
-/// The window is exactly as big as the game (it grows when the 造型室 opens).
+/// The window is exactly as big as the game (it grows upward when the 造型室
+/// or the diary list opens, so the house stays where it is on screen).
 /// It starts tiny and hidden (on some platforms the first size is also the
 /// smallest it can get) and is shown, centred, once the page has sized it.
 /// It isn't resizable by the user; some platforms ignore set_size on a
@@ -182,7 +183,23 @@ fn open_save_dir(app: AppHandle) -> Result<(), String> {
 static SHOWN: AtomicBool = AtomicBool::new(false);
 
 #[tauri::command]
-fn fit_window(window: WebviewWindow, width: f64, height: f64) -> Result<(), String> {
+fn fit_window(window: WebviewWindow, width: f64, height: f64, dy: Option<f64>) -> Result<f64, String> {
+    // dy > 0: the page made room above the house (造型室, diary list) — move
+    // the window up as much so the house stays put on screen, but not past
+    // the top of the screen; dy < 0 gives it back. Returns how far it moved up.
+    let mut moved = 0.0;
+    if let (Some(dy), Ok(pos), Ok(sf)) = (dy, window.outer_position(), window.scale_factor()) {
+        if dy.abs() >= 0.5 {
+            let mut y = pos.y - (dy * sf).round() as i32;
+            if dy > 0.0 {
+                if let Ok(Some(m)) = window.current_monitor() {
+                    y = y.max(m.work_area().position.y.min(pos.y));
+                }
+            }
+            moved = (pos.y - y) as f64 / sf;
+            let _ = window.set_position(PhysicalPosition::new(pos.x, y));
+        }
+    }
     let _ = window.set_resizable(true);
     let done = window.set_size(LogicalSize::new(width.max(200.0), height.max(150.0)));
     let first = !SHOWN.swap(true, Ordering::SeqCst);
@@ -196,7 +213,7 @@ fn fit_window(window: WebviewWindow, width: f64, height: f64) -> Result<(), Stri
             let _ = window.set_focus();
         }
     });
-    done.map_err(|e| e.to_string())
+    done.map(|_| moved).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
