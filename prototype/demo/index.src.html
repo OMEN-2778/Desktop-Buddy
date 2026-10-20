@@ -2013,11 +2013,54 @@ const WHEN = {
   tv: c => c.act === "tv", computer: c => !!c.act && (c.act === "computer" || c.act.startsWith("pc_")), cooking: c => c.act === "cook",
   reading: c => c.act === "read", bath: c => c.act === "bath", walking: () => sim.mode === "walk", phone: c => !!c.act && c.act.startsWith("phone_"),
   spring: c => c.se.i === 0, summer: c => c.se.i === 1, autumn: c => c.se.i === 2, winter: c => c.se.i === 3,
+  eating: c => c.act === "eat",
+  inBedroom: () => roomAt(here()) === "bedroom", inBath: () => roomAt(here()) === "bath", inStudy: () => roomAt(here()) === "study",
+  inLiving: () => roomAt(here()) === "living", inKitchen: () => roomAt(here()) === "kitchen",
+  hungry: () => sim.needs.hunger < 40, tired: () => sim.needs.energy < 35, lonely: () => sim.needs.social < 35,
+  bored: () => sim.needs.fun < 35, dirty: () => sim.needs.hygiene < 35,
+  goodMood: () => ["happy", "playful", "energized", "confident"].includes(emotion().key),
+  badMood: () => ["sad", "tense", "angry", "uncomfortable"].includes(emotion().key),
+  inspired: () => ["inspired", "focused"].includes(emotion().key),
 };
+const whenOk = when => { const tags = when.split("+").map(t => WHEN[t.trim()]).filter(Boolean); return c => tags.every(f => f(c)); };
+// an event may send her off to do something (e.g. up in the night for a snack, then back to bed)
+function eventThen(acts) {
+  if (!acts || !acts.length || sim.mode === "down") return;
+  if (sim.mode === "act") { sim.upAtNight = asleep(); if (sim.act === "dress") closeWardrobe(); finishAct(); }
+  sim.queue = [...acts]; sim.mode = sim.mode === "walk" ? sim.mode : "idle"; sim.idleUntil = sim.t;
+}
 for (const [id, e] of Object.entries(T.events)) {
   if (!e.when) continue;
-  const tags = e.when.split("+").map(t => WHEN[t.trim()]).filter(Boolean);
-  EVENTS.push([id, c => tags.every(f => f(c)), e.chance || 0.05, e.cd || 2880, () => { lifeEvent(id); if (e.mood) addMood(e.mood, { diary: false, words: false }); }]);
+  EVENTS.push([id, whenOk(e.when), e.chance || 0.05, e.cd || 2880, () => {
+    lifeEvent(id); if (e.mood) addMood(e.mood, { diary: false, words: false }); eventThen(e.then);
+  }]);
+}
+
+// ---------- event chains: a short story over several days, one step at a
+// time (T.chains). lifeFlags.chains: id -> { step, at (game minute of the
+// last step) } while running; chainLast: id -> when it last ended
+function stepChain(id, st, c) {
+  const ch = T.chains[id], s = ch.steps[st.step];
+  if (sim.t - st.at < (s.after || 0) || (s.when && !whenOk(s.when)(c))) return false;
+  const o = s.outcomes ? (() => { let r = Math.random() * s.outcomes.reduce((a, x) => a + (x.w || 1), 0); return s.outcomes.find(x => (r -= x.w || 1) < 0) || s.outcomes[0]; })() : s;
+  if (o.diary) log(fill(one(o.diary)));
+  if (o.say && !asleep()) speak(fill(pick(o.say)));
+  if (o.mood) addMood(o.mood, { diary: false, words: false });
+  st.step++; st.at = sim.t;
+  if (st.step >= ch.steps.length) { delete lifeFlags.chains[id]; lifeFlags.chainLast[id] = sim.t; }
+  return true;
+}
+function rollChains(c) {
+  const run = (lifeFlags.chains ||= {}), last = (lifeFlags.chainLast ||= {});
+  for (const [id, st] of Object.entries(run)) if (T.chains[id] && stepChain(id, st, c)) return true;
+  else if (!T.chains[id]) delete run[id];
+  for (const [id, ch] of Object.entries(T.chains || {})) {
+    const s = ch.start || {};
+    if (run[id] || sim.t - (last[id] ?? -1e9) < (s.cd || 20160) || (s.when && !whenOk(s.when)(c)) || Math.random() >= (s.chance ?? 0.03)) continue;
+    run[id] = { step: 0, at: sim.t };
+    return stepChain(id, run[id], c);
+  }
+  return false;
 }
 const eventLast = {};
 let lastHour = -1, lastFestivalDay = 0;
@@ -2038,6 +2081,7 @@ function rollEvents() {
     if (day === 30) { log("今天是生日！给自己做了一个小蛋糕，许了个愿。"); speak("生日快乐，我！"); addMood("birthday", { diary: false, words: false }); }
     if (day === 14 || day === 56) { log(`搬进这个小屋已经${day}天了。`); speak("这里越来越像家了"); addMood("anniversary", { diary: false, words: false }); }
   }
+  if (Math.random() < 0.5 && rollChains(c)) return;   // a running story takes the hour now and then
   for (const [id, when, p, cd, run] of EVENTS) {
     if (sim.t - (eventLast[id] ?? -1e9) < cd || !when(c) || Math.random() >= p) continue;
     eventLast[id] = sim.t;
