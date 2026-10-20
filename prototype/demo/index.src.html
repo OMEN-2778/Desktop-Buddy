@@ -2190,7 +2190,8 @@ function rollEvents() {
     lastFestivalDay = day;
     const f = T.festivals.find(f => f.season === c.se.i && f.day === c.se.day);
     if (f) {
-      log(`今天是${f.name}。` + fill(one(f.diary))); speak(fill(pick(f.say))); addMood(f.mood || "festival", { diary: false, words: false });
+      const line = fill(one(f.diary));
+      log(line.includes(f.name) ? line : `今天是${f.name}。` + line);   // no "今天是彩票日。彩票日…" speak(fill(pick(f.say))); addMood(f.mood || "festival", { diary: false, words: false });
       if (f.sad) addMood("festivalSad", { diary: false, words: false });
       eventThen(f.then);                                     // e.g. 赖床节: back to bed
       if (f.outcomes) sim.festLater = { f: f.name, at: sim.t + 120 + Math.random() * 240 };   // how it turns out, later that day

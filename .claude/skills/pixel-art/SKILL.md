@@ -406,6 +406,12 @@ edits; copy changes into life_text.js.
   `then: [acts]` sends her off (e.g. up in the night for a snack, then back
   to bed). Events + chains are kept at 4–5x+ the doc's original events
   section (user); 107 events now.
+- **Festivals**: 7 real + 12 invented ones (Sims-style: 彩票日, 赖床节, 甜品节,
+  怪兽夜…), by [season, day]; `then` sends her off (赖床节 -> back to bed),
+  `outcomes` resolve a few hours later (彩票开奖). On the day its name (`chip`)
+  rides the time bar in a little rounded tag right of the sun / moon
+  (`placeFestTag`); it fades out when it no longer fits before the bar's
+  right end (user). Birthday (day 30) and anniversaries get a tag too.
 - **Event chains** (`T.chains`, `rollChains`): short stories over several
   days — start tags + odds (x`CHAIN_ODDS`) + cooldown, then steps each
   `after` game minutes and their own tags, the last may branch
