@@ -193,11 +193,12 @@ Reference: `prototype/shared/studio.css`.
   exactly as wide as the house (it slides open and pushes the house down).
   On phones the house is too small, so it also spans the needs column.
 - In-game UI stays hidden until asked for (user's direction: "the screen is
-  just the house"). Needs are four pixel dots left of the house, flush with
+  just the house"). Needs are six pixel dots (饱腹 精力 清洁 如厕 社交 开心) left of the house, flush with
   its top and bottom, that stretch LEFT into bars on hover/tap — never over
   the house. One UI pixel = one house pixel on screen. Bar icons (drumstick,
   Zz, soap + bubbles, smiley) sit in a slot at the bar's LEFT end, the fill
-  starts right of it (so the maximum is never covered); they live in
+  starts right of it (so the maximum is never covered; toilet = 如厕, speech
+bubble with a heart = 社交); they live in
   `art/src/concept/need_icons.py`; keep
   icons over words, chibi style (10x10, round, chunky, blush), shown at one
   icon pixel per house pixel.
@@ -238,6 +239,26 @@ flash + gold rings rippling out + four-point twinkles. Anything that lights
 up on its own (TV/monitor screens, flames, steam) is drawn after the night
 pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
 `monitor_screen`, `cook_fx`, `meal_fx`, `water_fx`; review in `fx_sheet.py`).
+- Clicking Buddy opens a **ring menu** of pixel buttons around her (聊聊天 /
+  摸摸头 / 玩手机 ▸ / 跳支舞 / 去睡觉; 玩手机 swaps in a second ring);
+  clicking the computer opens one for 打游戏 / 视频聊天 / 逛论坛 / 写代码
+  (`monitor_screen` "video" / "forum" / "code"). More options will be added
+  over time: add them to `RINGS`. Phone use happens on the spot with
+  `phone_held()` (in her hands, or at her ear on a call).
+- **Collapse** (user: extreme emotions never do harm): hunger/energy at 0 or
+  an emotion at 8+ points -> she lies on her side on the floor (whole doll
+  rotated) under a `skull` emote; holding her for 5 s (a pixel ring fills
+  around her) revives her with every need +10.
+
+**Emotions (demo)** — Sims-style moodlets, all text in
+`prototype/demo/life_text.js`, which mirrors the user's Claude Doc
+"Buddy 情绪与事件文本" (https://claude.ai/code/artifact/cc0511bd-cb89-43d3-9d96-f3dd8a5c3135):
+the doc is the source the user edits; copy changes into life_text.js.
+Moodlets add points to one emotion, the top sum wins (1-2 有点, 3-5, 6+ 非常),
+condition moodlets last while true. Events roll once a game hour with
+cooldowns; her words queue so bubbles never cut each other off. Social
+empties in two game days (user), the bladder in ~5 hours. Traits, skills,
+wishes and event chains are not in yet (traits: user still deciding).
 
 ## Pitfalls seen so far
 

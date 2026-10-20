@@ -1,10 +1,12 @@
 """Need icons for the status bars, chibi style: chubby drumstick, bubbly Zz,
-soap with bubbles, blushing smiley. 10x10, outlined, game palette.
+soap with bubbles, blushing smiley, a speech bubble with a heart (social),
+a little toilet (bladder). 10x10, outlined, game palette.
 Shown at one icon pixel per house pixel."""
 
 from pixelkit import P, Sprite
 
 PREVIEW_SCALE = 10
+SAGE0 = P.sage[0]
 SIZE = 10
 
 GRIDS = {
@@ -56,6 +58,30 @@ oYYoYYoYYo
 ..oooooo..
 ..........
 """, {"o": P.mustard[0], "Y": P.mustard[3], "H": P.mustard[4], "B": P.coral[3]}),
+    "social": ("""
+.ooooooo..
+oLLLLLLLo.
+oLRRLRRLo.
+oLRHRRRLo.
+oLLRRRLLo.
+oLLLRLLLo.
+oLLLLLLLo.
+.oLoooooo.
+.oo.......
+..........
+""", {"o": P.coral[0], "L": P.linen[3], "R": P.coral[2], "H": P.coral[4]}),
+    "bladder": ("""
+.oooo.....
+.oLHo.....
+.oLLo.....
+.oLLoooooo
+.oLLLLLLLo
+.oSLLLLLSo
+..oSSSSSo.
+...oSSSo..
+...oSSSo..
+..ooooooo.
+""", {"o": SAGE0, "L": P.linen[3], "H": P.sky_soft[3], "S": P.linen[1]}),
 }
 
 
@@ -69,7 +95,7 @@ def icon(name: str) -> Sprite:
 
 
 def build():
-    out = Sprite(SIZE * 4 + 4 * 3, SIZE)
+    out = Sprite(SIZE * len(GRIDS) + 4 * (len(GRIDS) - 1), SIZE)
     for i, n in enumerate(GRIDS):
         out.blit(icon(n), i * (SIZE + 4), 0)
     return {"need_icons": out}

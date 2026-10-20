@@ -238,6 +238,30 @@ body {
 .mood-tip li small { grid-column: 2 / 4; color: var(--muted); font-size: 11px; margin-top: -2px; }
 @media (prefers-reduced-motion: reduce) { .pop { animation: none; transition: none; } }
 @media (prefers-reduced-motion: reduce) { .studio-slot { transition: none; } }
+/* ---------- ring menu: pixel buttons that pop out around Buddy (or the computer) ---------- */
+.house-col { position: relative; }
+.ring { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 8; }
+.ring[hidden] { display: none; }
+.ring button {
+  position: absolute; left: 0; top: 0; margin: 0; white-space: nowrap;
+  font-size: var(--ring-fs, 14px); font-weight: 700; letter-spacing: .04em; padding: 5px 12px;
+  transform: translate(-50%, -50%) scale(.2); opacity: 0;
+  transition: transform .34s cubic-bezier(.3, 1.7, .5, 1), opacity .18s;
+  transition-delay: calc(var(--k, 0) * 35ms);
+  box-shadow:
+    inset 0 calc(-1 * var(--u)) 0 0 var(--bevel-lo), inset 0 var(--u) 0 0 var(--bevel-hi),
+    0 calc(-1 * var(--u)) 0 0 var(--edge), 0 var(--u) 0 0 var(--edge),
+    calc(-1 * var(--u)) 0 0 0 var(--edge), var(--u) 0 0 0 var(--edge), calc(var(--u) * 2) calc(var(--u) * 2) 0 0 var(--shadow);
+}
+.ring.on button { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))); opacity: 1; }
+.ring button.more::after { content: " ▸"; }
+.ring button.back { background: var(--panel); color: var(--muted); }
+.ring button:active { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y) + var(--u))); }
+.ring .hint {
+  position: absolute; transform: translate(-50%, -100%); white-space: nowrap; pointer-events: none;
+  background: var(--title, #33253b); color: #f7f6fb; font-size: var(--ring-fs, 14px); padding: 4px 10px;
+}
+@media (prefers-reduced-motion: reduce) { .ring button { transition: none; } }
 /*__SHARED_STUDIO_CSS__*/
 
 /* ---------- temporary console (time, suggestions, look, diary) ---------- */
@@ -282,11 +306,13 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
 
 <main class="desk">
   <div class="widget" id="widget">
-    <div class="needs" id="needs" tabindex="0" role="button" aria-expanded="false" aria-label="她的状态（饱腹、精力、清洁、开心）">
+    <div class="needs" id="needs" tabindex="0" role="button" aria-expanded="false" aria-label="她的状态（饱腹、精力、清洁、如厕、社交、开心）">
       <div class="need" style="--i:0" data-k="hunger" role="meter" aria-label="饱腹" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="hunger"></div>
       <div class="need" style="--i:1" data-k="energy" role="meter" aria-label="精力" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="energy"></div>
       <div class="need" style="--i:2" data-k="hygiene" role="meter" aria-label="清洁" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="hygiene"></div>
-      <div class="need" style="--i:3" data-k="fun" role="meter" aria-label="开心" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="fun"></div>
+      <div class="need" style="--i:3" data-k="bladder" role="meter" aria-label="如厕" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="bladder"></div>
+      <div class="need" style="--i:4" data-k="social" role="meter" aria-label="社交" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="social"></div>
+      <div class="need" style="--i:5" data-k="fun" role="meter" aria-label="开心" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="fun"></div>
     </div>
     <div class="house-col">
       <div class="studio-slot" id="studioSlot"><div class="studio-clip"><section id="studio" hidden></section></div></div>
@@ -304,7 +330,8 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <div class="sky-hit" id="skyHit"></div>
         <div class="sky-tip" id="skyTip" hidden></div>
       </div>
-      <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她一下试试。"></canvas>
+      <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她弹出互动菜单。"></canvas>
+      <div class="ring" id="ring" role="menu" aria-label="和她互动" hidden></div>
     </div>
   </div>
 </main>
@@ -322,9 +349,10 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <button type="button" data-speed="3" aria-pressed="true">×3</button>
         <button type="button" data-speed="10" aria-pressed="false">×10</button>
       </div>
-      <div class="label">情绪（UI 预览，情绪系统还没接上）</div>
+      <div class="label">情绪（测试用）</div>
       <div class="row">
-        <select id="moodPick" aria-label="预览情绪"><option value="">自动（按她在做的事）</option></select>
+        <select id="moodPick" aria-label="加一条测试心情"><option value="">加一条测试心情……</option></select>
+        <button type="button" id="testDown">晕倒测试</button>
       </div>
       <div class="label">天气（测试用）</div>
       <div class="row" role="group" aria-label="天气">
@@ -334,7 +362,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <button type="button" data-weather="snow" aria-pressed="false">下雪</button>
         <button type="button" id="nextSeason">跳到下个季节</button>
       </div>
-      <p class="note">点家具让她去做事：床、衣柜（打开造型室）、浴缸、马桶、洗手台、毛巾、书架、电脑、沙发、电视、灶台、餐桌、冰箱、绿植；台灯和窗户可以开关。</p>
+      <p class="note">点家具让她去做事：床、衣柜（打开造型室）、浴缸、马桶、洗手台、毛巾、书架、电脑（会弹出菜单）、沙发、电视、灶台、餐桌、冰箱、绿植；台灯和窗户可以开关。点她本人弹出互动菜单；她晕倒时长按她 5 秒。</p>
     </div>
     <div class="box" style="grid-column: span 2">
       <div class="label">日记</div>
@@ -428,6 +456,7 @@ async function loadAssets() {
   }
   IMG.tv = {}; for (const [c, fr] of Object.entries(D.screens.tv.channels)) IMG.tv[c] = await Promise.all(fr.map(loadImg));
   IMG.mon = {}; for (const [g, fr] of Object.entries(D.screens.monitor.games)) IMG.mon[g] = await Promise.all(fr.map(loadImg));
+  IMG.app = {}; for (const [g, fr] of Object.entries(D.screens.monitor.apps)) IMG.app[g] = await Promise.all(fr.map(loadImg));
   IMG.fx = {}; for (const [k, v] of Object.entries(D.fx)) IMG.fx[k] = await Promise.all(v.frames.map(loadImg));
   buildClickables();
 }
@@ -501,22 +530,37 @@ const ACTS = {
   water_study:  { spot: "water_study",  label: "浇花", emote: "note", dur: 5, log: "给书房的绿植浇了水。" },
   art:      { spot: "art",       label: "欣赏挂画",   emote: null,   dur: 5,   log: "盯着墙上的画看了一会儿。" },
   dress:    { spot: "wardrobe",  label: "换衣服",     emote: "star", dur: 6,   log: "打开衣柜挑衣服。" },
+  // social & more on the computer
+  pc_video: { spot: "computer",  label: "视频聊天",   emote: "chat", dur: 30,  log: "打开电脑和朋友视频聊天。" },
+  pc_forum: { spot: "computer",  label: "逛论坛",     emote: "chat", dur: 25,  log: "打开电脑逛论坛。" },
+  pc_code:  { spot: "computer",  label: "写代码",     emote: null,   dur: 40,  log: "打开电脑写起了代码。" },
+  // on the phone / on the spot (spot null: wherever she is)
+  phone_call:  { spot: null, label: "打电话",     emote: "chat", dur: 15, log: "拿起手机给妈妈打电话。" },
+  phone_video: { spot: null, label: "手机视频",   emote: "chat", dur: 20, log: "用手机和朋友视频。" },
+  phone_feed:  { spot: null, label: "刷动态",     emote: null,   dur: 15, log: "刷了一会儿手机。" },
+  phone_text:  { spot: null, label: "发消息",     emote: "chat", dur: 8,  log: "给朋友发了几条消息。" },
+  phone_game:  { spot: null, label: "玩手机游戏", emote: "game", dur: 15, log: "玩了会儿手机游戏。" },
+  dance:       { spot: null, label: "跳舞",       emote: "note", dur: 6,  log: "放起音乐跳了支舞。" },
 };
 const EFFECT = {   // per game minute while doing it
   sleep: { energy: 0.2 }, eat: { hunger: 4 }, snack: { hunger: 5 }, bath: { hygiene: 3.2, fun: 0.2 },
-  toilet: { hygiene: 1.2 }, wash: { hygiene: 2.4 }, towel: { hygiene: 1.6 },
+  toilet: { bladder: 22 }, wash: { hygiene: 2.4 }, towel: { hygiene: 1.6 },
   computer: { fun: 1.4, energy: -0.03 }, tv: { fun: 1.1 }, read: { fun: 0.8 },
   window: { fun: 0.4 }, water_living: { fun: 0.5 }, water_study: { fun: 0.5 }, art: { fun: 0.4 }, dress: { fun: 0.6 }, cook: { fun: 0.2 },
+  pc_video: { social: 1.8, fun: 0.6 }, pc_forum: { social: 1.0, fun: 0.8 }, pc_code: { fun: 0.3, energy: -0.04 },
+  phone_call: { social: 2.2 }, phone_video: { social: 1.8, fun: 0.5 }, phone_feed: { social: 0.6, fun: 0.9 },
+  phone_text: { social: 1.6 }, phone_game: { fun: 1.3 }, dance: { fun: 1.8, energy: -0.1, hygiene: -0.1 },
 };
-const DECAY = { hunger: 0.115, energy: 0.065, hygiene: 0.045, fun: 0.11 };
-const NEED_NAMES = { hunger: "饱腹", energy: "精力", hygiene: "清洁", fun: "开心" };
+// per game minute. Social runs dry in two days (user); the bladder in ~5 hours
+const DECAY = { hunger: 0.115, energy: 0.065, hygiene: 0.045, bladder: 0.3, social: 100 / 2880, fun: 0.11 };
+const NEED_NAMES = { hunger: "饱腹", energy: "精力", hygiene: "清洁", bladder: "如厕", social: "社交", fun: "开心" };
 
 const sim = {
   t: 6 * 60 + 52,                           // game minutes since day 1, 00:00
-  needs: { hunger: 62, energy: 88, hygiene: 70, fun: 64 },
+  needs: { hunger: 62, energy: 88, hygiene: 70, bladder: 45, social: 72, fun: 64 },
   route: [[D.spots.bed[1], FLOOR_Y[1]]], s: 0, target: 0, crossing: [], mode: "act", act: "sleep", actEnd: 7 * 60 + 600,
   facing: 1, walkDist: 0, idleUntil: 0, queue: [], recent: [],
-  poke: 0, lastDay: 1,
+  poke: 0, lastDay: 1, sleptTonight: 420, meal: null, down: null, graceUntil: 0,
 };
 let speed = 3;
 
@@ -544,21 +588,40 @@ function choose() {
     computer: (100 - n.fun) * 1.0 + r() * 25,
     tv: (100 - n.fun) * 0.9 + r() * 25 + (h >= 19 ? 15 : 0),
     read: (100 - n.fun) * 0.8 + r() * 25,
-    toilet: n.hygiene < 75 ? 10 + r() * 14 : 0, wash: (h >= 6.5 && h < 9) || (h >= 21 && h < 23) ? 28 + r() * 10 : 4 + r() * 8,
+    toilet: n.bladder < 12 ? 400 : n.bladder < 35 ? (100 - n.bladder) * 1.6 : n.bladder < 55 ? 6 + r() * 8 : 0,
+    phone_text: (100 - n.social) * 0.8 + r() * 15,
+    phone_feed: (100 - n.fun) * 0.5 + (100 - n.social) * 0.3 + r() * 15,
+    phone_video: (100 - n.social) * 0.8 + r() * 15 - (h >= 22 || h < 8 ? 40 : 0),
+    phone_call: h >= 9 && h < 21.5 ? (100 - n.social) * 0.6 + r() * 10 : 0,
+    pc_video: (100 - n.social) * 0.95 + r() * 15 + (h >= 19 && h < 23 ? 10 : 0),
+    pc_forum: (100 - n.social) * 0.6 + (100 - n.fun) * 0.4 + r() * 15,
+    pc_code: 8 + r() * 20, phone_game: (100 - n.fun) * 0.6 + r() * 15, dance: 2 + r() * 6,
+    wash: (h >= 6.5 && h < 9) || (h >= 21 && h < 23) ? 28 + r() * 10 : 4 + r() * 8,
     towel: 3 + r() * 6, window: 7 + r() * 14, water_living: 5 + r() * 10, water_study: 4 + r() * 10, art: 4 + r() * 12, dress: 4 + r() * 10,
   };
+  // how she feels tips the scales (Sims-style)
+  for (const [a, v] of Object.entries(EMO_PULL[emotion().key] || {})) score[a] += v;
   for (const a of sim.recent) score[a] *= 0.3;   // don't repeat the last few things
   return Object.entries(score).sort((a, b) => b[1] - a[1])[0][0];
 }
 
-function startAct(name) {
+const EMO_PULL = {
+  playful: { dance: 30, tv: 10 }, energized: { dance: 20, water_living: 8 }, focused: { pc_code: 35, read: 10 },
+  inspired: { read: 20, pc_code: 15, art: 15, window: 10 }, sad: { phone_call: 25, bath: 15, phone_video: 15 },
+  angry: { dance: 10, bath: 10, computer: -20 }, tense: { bath: 30, read: 10 }, bored: { tv: 15, computer: 15, pc_forum: 10 },
+  flirty: { phone_text: 25, dress: 15 }, confident: { dress: 15, pc_code: 10 }, scared: { phone_call: 20, tv: 10 },
+  embarrassed: { bath: 15 }, uncomfortable: {}, dazed: { window: 10 },
+};
+function startAct(name, quiet = false) {
   const a = ACTS[name];
   sim.act = name;
-  const p = here(), [st, x] = D.spots[a.spot];
+  const p = here();
+  // spot null: right where she is (stepping off the stairs first)
+  const [st, x] = a.spot ? D.spots[a.spot] : [storeyOfY(p.y), Math.round(p.x)];
   sim.route = planRoute(Math.round(p.x), Math.round(p.y), x, FLOOR_Y[st]);
   sim.s = 0; sim.target = routeLength(sim.route); sim.crossing = doorsOn(sim.route);
   sim.mode = "walk";
-  if (a.log) log(a.log);
+  if (a.log && !quiet) log(a.log);
 }
 function arrive() {
   const a = ACTS[sim.act];
@@ -571,11 +634,14 @@ function arrive() {
   if (sim.act === "dress" && sim.player) openWardrobe();
   sim.actEnd = sim.t + (sim.act === "sleep" ? 900 : a.dur * (0.8 + Math.random() * 0.4));
   sim.recent = [sim.act, ...sim.recent].slice(0, 3);
+  lifeArrive(sim.act);
 }
 function finishAct() {
   const a = ACTS[sim.act];
   sim.player = false;
-  if (sim.act === "sleep") log(sim.nap ? "睡了个午觉，精神多了。" : "醒了，伸了个大大的懒腰。");
+  lifeFinish(sim.act);
+  if (sim.act === "sleep" && !sim.upAtNight) log(sim.nap ? "睡了个午觉，精神多了。" : "醒了，伸了个大大的懒腰。");
+  sim.upAtNight = false;
   if (sim.act === "eat") log("吃饱了，好满足～");
   if (sim.act === "bath") log("洗得香喷喷的。");
   if (a.then) { startAct(a.then); return; }
@@ -586,6 +652,7 @@ function finishAct() {
 
 // The player clicked a piece of furniture: drop what she's doing and go.
 function command(act) {
+  if (sim.mode === "down") { log("她晕倒了，先长按她 5 秒把她叫醒吧。"); return; }
   if (sim.mode === "act" && sim.act === "sleep") {
     const h = hour();
     if (act === "sleep") return;
@@ -608,11 +675,19 @@ function step(dtGame, dtReal) {
   const n = sim.needs, eff = sim.mode === "act" ? (EFFECT[sim.act] || {}) : {};
   for (const k of Object.keys(n)) {
     let d = -DECAY[k];
-    if (sim.act === "sleep" && sim.mode === "act") d *= k === "energy" ? 0 : 0.4;
-    if (eff[k] && k === "fun") d = 0;
+    if (sim.act === "sleep" && sim.mode === "act") d *= k === "energy" ? 0 : k === "bladder" ? 0.35 : 0.4;
+    if (eff[k] > 0) d = 0;
     n[k] = clamp(n[k] + (d + (eff[k] || 0)) * dtGame);
   }
+  if (sim.mode === "act" && sim.act === "sleep" && !sim.nap) sim.sleptTonight += dtGame;
+  // couldn't hold it: no harm done, just embarrassing (and a bath)
+  if (n.bladder <= 0 && sim.mode !== "down" && sim.act !== "toilet") {
+    n.bladder = 100; n.hygiene = Math.max(0, n.hygiene - 40);
+    addMood("accident");
+    if (!asleep()) { sim.queue = []; startAct("bath"); }
+  }
   // behaviour
+  if (sim.mode === "down") return;
   if (sim.mode === "walk") {
     const v = 28 * Math.min(speed, 4) * dtReal * (here().dy ? 0.7 : 1);   // a little slower on the stairs
     if (sim.target - sim.s <= v) { sim.s = sim.target; arrive(); }
@@ -627,6 +702,8 @@ function step(dtGame, dtReal) {
     const done = sim.act === "sleep"
       ? sim.nap ? n.energy >= 95 || sim.t >= sim.actEnd - 780 : (n.energy >= 99 && h >= 6.5 && h < 12) || (h >= 9 && h < 20)
       : sim.act === "dress" && wardrobeOpen ? false : sim.t >= sim.actEnd;
+    // up in the night for the toilet, then back to bed
+    if (sim.act === "sleep" && !done && n.bladder < 10) { sim.upAtNight = true; log("半夜起来上了个厕所。"); finishAct(); sim.queue = ["toilet", "sleep"]; return; }
     if (done) finishAct();
   } else if (sim.mode === "idle" && sim.t >= sim.idleUntil) {
     startAct(sim.queue.length ? sim.queue.shift() : choose());
@@ -770,11 +847,14 @@ function clickableAt(x, y) {
 }
 let hoverId = null, glow = null, poof = null;
 
-function useFurniture(id) {
+function useFurniture(id, glowOnly = false) {
   glow = { id, t0: realClock, sparks: Array.from({ length: 6 }, () => ({ p: CLICK[id].rings[1][Math.floor(Math.random() * CLICK[id].rings[1].length)], d: Math.random() * 0.35 })) };
+  if (glowOnly) return;
   if (id in lamps) { lamps[id] = !lamps[id]; log(`${lamps[id] ? "打开" : "关掉"}了${CLICK_NAME[id]}。`); return; }
   if (id in windowState) {
     const st = windowState[id] = WINDOW_NEXT[windowState[id]];
+    lifeFlags.windowSince[id] = sim.t;
+    if (st === "open") addMood(seasonOf(sim.t).i === 3 ? "chilly" : "freshAir", { diary: false });
     const blind = id === "win_study";   // the study window has a roller blind instead of curtains
     log(st === "drawn" ? (blind ? "放下了卷帘。" : "拉上了窗帘。")
       : st === "open" ? (blind ? "卷起卷帘，推开窗户，风吹了进来。" : "拉开窗帘，推开窗户，风吹了进来。") : "关上了窗户。");
@@ -872,8 +952,8 @@ function fit() {
   view.style.width = wPx + "px"; view.style.height = hPx + "px";
   // UI pixel = house pixel (at least 2px so the dots stay round)
   const u = Math.max(2, Math.round(s));
-  let n = Math.max(14, Math.round(hPx * 0.14 / u));          // dot height in UI pixels
-  while (n > 6 && n * u * 4 > hPx) n--;                      // four must fit in the house height
+  let n = Math.max(12, Math.round(hPx * 0.11 / u));          // dot height in UI pixels
+  while (n > 5 && n * u * 6 + 5 * 2 * u > hPx) n--;          // six (and a little air) must fit in the house height
   const bh = n * u, g = 6 * u;
   const barW = Math.round(Math.max(BAR_MIN, Math.min(BAR_MAX, avail - wPx - g, wPx * 0.42)) / u) * u;
   const widget = document.getElementById("widget");
@@ -899,13 +979,15 @@ function fit() {
   widget.style.setProperty("--studio-w", (narrowHouse ? wPx + g + barW : wPx) + "px");
   widget.style.setProperty("--studio-dx", (narrowHouse ? g + barW : 0) + "px");
   widget.style.setProperty("--say-fs", (narrowHouse ? 24 : 32) + "px");   // her words: big, smaller on phones
+  widget.style.setProperty("--ring-fs", (narrowHouse ? 12 : 14) + "px");
   if (typeof kickNeeds === "function") kickNeeds();
 }
 
 function activityFrame(ms) {
   // what Buddy looks like right now: frame params, pose, emote
   const a = sim.act, phase = Math.floor(ms / 600) % 2;
-  if (reaction && realClock < reaction.until) return { f: { expr: "happy", wave: Math.floor(ms / 180) % 2 }, pose: "stand", emote: reaction.emote };
+  if (reaction && realClock < reaction.until && sim.mode !== "down")
+    return { f: { expr: "happy", wave: reaction.wave === false ? null : Math.floor(ms / 180) % 2, bob: Math.floor(ms / 300) % 2 }, pose: "stand", emote: reaction.emote };
   if (sim.mode === "walk") {
     const i = Math.floor(sim.walkDist / 4) % 4;
     // contact frames (a foot lifted) dip the head a pixel, passing frames rise
@@ -923,7 +1005,15 @@ function activityFrame(ms) {
       case "water_living": case "water_study": return { f: { expr: "happy", look: a === "water_living" ? -1 : 1, bob: phase }, pose: "stand", emote: showEm ? em : null };
       case "dress": return { f: { expr: phase ? "happy" : "neutral", look: 1, bob: phase }, pose: "stand", emote: showEm ? em : null };
       case "eat": return { f: { expr: phase ? "happy" : "blink", bob: phase }, pose: "sit", emote: showEm ? em : null };
-      case "computer": return { f: { expr: Math.floor(ms / 3000) % 3 === 2 ? "happy" : "neutral", look: Math.floor(ms / 1500) % 2 ? 1 : 0 }, pose: "sit", emote: showEm ? em : null };
+      case "computer": case "pc_code": case "pc_forum": case "pc_video":
+        return { f: { expr: Math.floor(ms / 3000) % 3 === 2 ? "happy" : "neutral", look: Math.floor(ms / 1500) % 2 ? 1 : 0 }, pose: "sit", emote: showEm ? em : null };
+      case "phone_call": return { f: { expr: Math.floor(ms / 1800) % 3 === 1 ? "happy" : "neutral", bob: phase, look: Math.floor(ms / 2600) % 2 ? -1 : 0 }, pose: "stand", emote: showEm ? em : null };
+      case "phone_video": case "phone_feed": case "phone_text": case "phone_game":
+        return { f: { expr: Math.floor(ms / 2200) % 3 === 2 ? "happy" : Math.floor(ms / 3100) % 5 === 4 ? "blink" : "neutral", look: 1 }, pose: "stand", emote: showEm ? em : null };
+      case "dance": {
+        const i = Math.floor(ms / 260) % 4;
+        return { f: { expr: "happy", wave: i % 2, bob: i % 2, sway: i % 2, look: i < 2 ? -1 : 1 }, pose: ["walkL", "stand", "walkR", "stand"][i], emote: showEm ? em : null };
+      }
       case "tv": return { f: { expr: Math.floor(ms / 2000) % 3 === 0 ? "happy" : "neutral", look: 1 }, pose: "sit", emote: showEm ? em : null };
       case "read": return { f: { expr: "neutral", look: -1, bob: Math.floor(ms / 1800) % 2 }, pose: "stand", emote: showEm ? em : null };
       case "window": return { f: { expr: Math.floor(ms / 2500) % 4 === 3 ? "blink" : "neutral", look: 1 }, pose: "stand", emote: null };
@@ -946,6 +1036,30 @@ function lyingHead(f) {   // the sleepy head turned 90 degrees: lying on the pil
   const x = c.getContext("2d"); x.translate(0, src.width); x.rotate(-Math.PI / 2); x.drawImage(src, 0, 0);
   rotCache.set(key, c);
   return c;
+}
+function lyingBody(f) {   // the whole doll turned 90 degrees: lying on her side, head to the left
+  const key = "body" + JSON.stringify(f);
+  if (rotCache.has(key)) return rotCache.get(key);
+  const src = dollCanvas(f, "stand");
+  const c = document.createElement("canvas"); c.width = src.height; c.height = src.width;
+  const x = c.getContext("2d"); x.translate(0, src.width); x.rotate(-Math.PI / 2); x.drawImage(src, 0, 0);
+  rotCache.set(key, c);
+  return c;
+}
+// hold her for 5 seconds to wake her: a ring of pixels fills up around her
+const REVIVE_S = 5;
+let holding = null;
+function drawRevive(ctx) {
+  const p = here(), cx = Math.round(p.x), cy = Math.round(p.y) - 8;
+  const k = holding ? Math.min(1, (realClock - holding.t0) / REVIVE_S) : 0;
+  const N = 36;
+  for (let i = 0; i < N; i++) {
+    const a = -Math.PI / 2 + i / N * Math.PI * 2;
+    const x = Math.round(cx + Math.cos(a) * 17), y = Math.round(cy + Math.sin(a) * 12);
+    if (i / N < k) { px(ctx, x, y, 1, "255,255,255"); px(ctx, x, y + 1, 0.9, GLOW); }
+    else if (holding || Math.floor(realClock * 1.5) % 2) px(ctx, x, y, 0.35, "255,255,255");
+  }
+  if (holding && k >= 1) { holding = null; revive(); }
 }
 function frameOf(list, fps) { return list[Math.floor(realClock * fps) % list.length]; }
 
@@ -975,14 +1089,20 @@ function render() {
     const auto = { kitchen: "kitchen", bath: "bath", stairs: "stairs", study: "study" }[room];
     if (auto && !sleeping) { lit.push(auto); if (auto === "stairs") drawOverlay(bctx, "sconce"); if (auto === "study") drawOverlay(bctx, "pendant"); }
     if (act === "tv") lit.push("tv");
-    if (act === "computer") lit.push("monitor");
+    if (act === "computer" || (act && act.startsWith("pc_"))) lit.push("monitor");
   }
   // Buddy
   const ms = realClock * 1000;
   const fr = activityFrame(ms);
   const full = { expr: "neutral", look: 0, bob: 0, sway: 0, wave: null, ...fr.f };
   let emoteAt = null;
-  if (sleeping) {
+  if (sim.mode === "down") {
+    // lying on her side on the floor, a skull bubble over her (no harm done)
+    const p = here(), body = lyingBody({ ...full, expr: "sleepy", look: 0, bob: 0, sway: 0, wave: null });
+    const x = Math.round(p.x - body.width / 2), y = Math.round(p.y) - 17;
+    bctx.drawImage(body, x, y);
+    emoteAt = [x + 10, y - 13];
+  } else if (sleeping) {
     const [lx, ly] = D.sleepLying;
     bctx.drawImage(lyingHead({ ...full, expr: "sleepy", look: 0, bob: 0, sway: 0, wave: null }), lx, ly);
     drawOverlay(bctx, "sleep_cover");
@@ -996,6 +1116,10 @@ function render() {
     const x = Math.round(p.x - DW / 2), y = Math.round(p.y - DH + 1);
     bctx.drawImage(fr.back ? backCanvas(full, fr.pose) : dollCanvas(full, fr.pose), x, y);
     if (act === "tv") drawOverlay(bctx, "coffee_table");
+    if (act && act.startsWith("phone_")) {          // her phone: at the ear on a call, in her hands otherwise
+      if (act === "phone_call") bctx.drawImage(IMG.fx.phone_call[0], x + 16, y + 8 + full.bob);
+      else bctx.drawImage(frameOf(IMG.fx.phone, 2), x + 8, y + 17);
+    }
     emoteAt = [x + 13, y - 15];
   }
   grade(bctx, f, lit);
@@ -1008,10 +1132,13 @@ function render() {
     const g = Object.keys(IMG.mon)[Math.floor(realClock / 8) % 3];
     bctx.drawImage(frameOf(IMG.mon[g], 5), D.screens.monitor.x, D.screens.monitor.y);
   }
+  if (act && act.startsWith("pc_")) bctx.drawImage(frameOf(IMG.app[act.slice(3)], act === "pc_video" ? 2 : 3), D.screens.monitor.x, D.screens.monitor.y);
   if (act === "cook") bctx.drawImage(frameOf(IMG.fx.cook, 8), D.fx.cook.x, D.fx.cook.y);
   if (act === "eat") bctx.drawImage(frameOf(IMG.fx.meal, 4), D.fx.meal.x, D.fx.meal.y);
   if (act === "water_living" || act === "water_study") bctx.drawImage(frameOf(IMG.fx[act], 6), D.fx[act].x, D.fx[act].y);
-  if (fr.emote || sleeping) bctx.drawImage(emoteCanvas(sleeping ? "zzz" : fr.emote), emoteAt[0], emoteAt[1]);
+  const down = sim.mode === "down";
+  if (fr.emote || sleeping || down) bctx.drawImage(emoteCanvas(down ? "skull" : sleeping ? "zzz" : fr.emote), emoteAt[0], emoteAt[1] + (down ? Math.floor(realClock * 2) % 2 : 0));
+  if (down) drawRevive(bctx);
   drawClickFx(bctx);
   vctx.imageSmoothingEnabled = false;
   vctx.drawImage(buf, 0, 0, view.width, view.height);
@@ -1022,10 +1149,10 @@ function render() {
 // shower; winter gets snow. Each day rolls its episodes once (lazily).
 const SEASON_DAYS = 14;
 const SEASONS = [
-  { name: "春", kind: "rain", p: 0.32, hello: "春天来了，窗外的山坡绿起来了。" },
-  { name: "夏", kind: "rain", p: 0.28, hello: "夏天到了，阳光晒得暖暖的。" },
-  { name: "秋", kind: "rain", p: 0.26, hello: "秋天了，窗外的山坡变成了金色。" },
-  { name: "冬", kind: "snow", p: 0.45, hello: "冬天来了，要多穿一点哦。" },
+  { name: "春", kind: "rain", p: 0.32 },
+  { name: "夏", kind: "rain", p: 0.28 },
+  { name: "秋", kind: "rain", p: 0.26 },
+  { name: "冬", kind: "snow", p: 0.45 },
 ];
 const WEATHER_NAME = { clear: "晴", rain: "小雨", snow: "下雪" };
 function seasonOf(t) {
@@ -1054,14 +1181,14 @@ function weatherAt(t) {
 }
 function updateWeather(dtGame) {
   const se = seasonOf(sim.t).i;
-  if (se !== weather.season) { weather.season = se; log(SEASONS[se].hello); }
+  if (se !== weather.season) { weather.season = se; lifeSeason(se); }
   const w = weatherAt(sim.t);
   if (w !== weather.kind) {
     const was = weather.kind;
     weather.kind = w;
-    if (w === "rain") log("窗外下起了小雨。");
-    else if (w === "snow") log("下雪了！窗外白白的一片。");
-    else log(was === "snow" ? "雪停了。" : "雨停了。");
+    lifeWeather(was, w);
+    if (w === "snow") log("下雪了！窗外白白的一片。");
+    else if (w === "clear") log(was === "snow" ? "雪停了。" : "雨停了。");
   }
   // snow settles on the hill while it snows and melts slowly afterwards (fast outside winter)
   if (w === "snow") weather.snowCover = Math.min(1, weather.snowCover + dtGame / 150);
@@ -1261,52 +1388,252 @@ document.getElementById("nextSeason").addEventListener("click", () => {
   sim.t += ((Math.floor(d / SEASON_DAYS) + 1) * SEASON_DAYS - d) * 1440;
 });
 
-// ================================================================ mood (UI preview)
-// The emotion engine (moodlets, traits, events) comes next; for now the
-// preview picks an emotion from what she is doing, or the one chosen in
-// the console, and shows sample moodlets and thoughts for it.
+// ================================================================ moodlets & emotions
+// Sims-style. Every moodlet adds points to one emotion; the emotion with the
+// most points is how she feels (no moodlets = 平静): 1-2 points "a little",
+// 3-5 normal, 6+ "very". Condition moodlets (hungry, rainy...) last while
+// their condition holds, the rest run out. All text lives in life_text.js.
+/*__LIFE_TEXT_JS__*/
+const T = LIFE_TEXT, ML = T.moodlets;
 const MOOD = Object.fromEntries(D.moods.map(([k, name, color]) => [k, { name, color }]));
 const LEVEL_WORD = ["", "有点", "", "非常"];
-const MOOD_DEMO = {
-  happy: { m: [["吃了一顿好饭", 2, "还剩 3 小时"], ["阳光正好", 1, "还剩 1 小时"]],
-    say: ["今天的饭好香！", "嘿嘿，心情好好～", "感觉什么都很顺利！", "哼着歌就想转个圈。"] },
-  confident: { m: [["新衣服很合身", 2, "还剩 4 小时"], ["厨艺进步了", 1, "还剩 2 小时"]],
-    say: ["我今天也太好看了吧。", "这点小事，难不倒我。", "镜子里那个人是谁？哦是我。"] },
-  energized: { m: [["睡了个好觉", 2, "还剩 3 小时"], ["开窗透气", 1, "还剩 1 小时"]],
-    say: ["浑身是劲！", "想去跑两圈！", "今天能干好多事！"] },
-  flirty: { m: [["收到一张匿名明信片", 2, "还剩 3 小时"]],
-    say: ["明信片上是谁的字呢……", "心里有点甜甜的。", "想给某个人发消息。"] },
-  focused: { m: [["写代码进入状态了", 2, "还剩 2 小时"], ["一杯热咖啡", 1, "还剩 1 小时"]],
-    say: ["别吵，马上就好。", "这个 bug 我一定能找到。", "再做一点点就休息。"] },
-  inspired: { m: [["读到一段好句子", 2, "还剩 2 小时"], ["窗外的景色真美", 1, "还剩 1 小时"]],
-    say: ["我有个绝妙的点子！", "要把这句话记下来。", "说不定能写成一个故事……"] },
-  playful: { m: [["看了一集搞笑动画", 2, "还剩 2 小时"]],
-    say: ["哈哈哈哈这集太好笑了！", "想恶作剧一下……可家里就我一个。", "来跳支舞吧！"] },
-  fine: { m: [],
-    say: ["嗯……今天也挺好的。", "该做点什么呢？", "家里安安静静的。"] },
-  bored: { m: [["好久没玩了", 2, "直到玩一会儿"]],
-    say: ["好——无——聊——", "有没有什么好玩的……", "盯着天花板数裂缝。"] },
-  embarrassed: { m: [["该洗澡了", 2, "直到洗澡"], ["做饭差点糊了", 1, "还剩 2 小时"]],
-    say: ["刚才那一下……谁都没看见吧？", "身上有点黏，好想洗澡。", "呜，好丢人。"] },
-  uncomfortable: { m: [["饿得心慌", 3, "直到吃饭"]],
-    say: ["肚子咕咕叫……", "浑身不得劲。", "先吃点东西吧。"] },
-  tense: { m: [["明天的事还没做完", 2, "还剩 5 小时"]],
-    say: ["来得及吗来得及吗……", "深呼吸，深呼吸。", "泡个澡也许能放松一下。"] },
-  angry: { m: [["游戏连输三局", 3, "还剩 2 小时"]],
-    say: ["气死我了！", "这一关是谁设计的！", "我需要捶一下枕头。"] },
-  sad: { m: [["下雨天", 1, "直到雨停"], ["想家了", 2, "还剩 6 小时"]],
-    say: ["雨一直下……", "有点想家了。", "抱着枕头发会儿呆。"] },
-  dazed: { m: [["困到睁不开眼", 2, "直到睡觉"]],
-    say: ["我刚才要干嘛来着……", "眼皮好重……", "大脑已关机。"] },
-  scared: { m: [["屋里太黑了", 2, "直到开灯"]],
-    say: ["刚才那是什么声音？！", "快把灯打开……", "被子是最强的盾牌。"] },
+function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+// "{食物}" -> a random dish; vars pins a value so diary and words agree
+function fill(text, vars = {}) {
+  return text.replace(/\{(\S+?)\}/g, (m, k) => vars[k] || (T.fill[k] ? (vars[k] = pick(T.fill[k])) : m));
+}
+const moods = new Map();          // id -> { until: game minute | null (condition), t: when added }
+function addMood(id, { vars = {}, diary = true, words = true } = {}) {
+  const m = ML[id];
+  if (!m) return;
+  const had = moods.has(id);
+  moods.set(id, { until: m.min ? sim.t + m.min : null, t: sim.t });
+  if (had) return;                 // refreshed quietly
+  if (diary && m.diary) log(fill(m.diary, vars));
+  if (words && m.say) speak(fill(pick(m.say), vars));
+}
+function emotion() {
+  const sum = {}, last = {};
+  for (const [id, m] of moods) {
+    const d = ML[id];
+    sum[d.emo] = (sum[d.emo] || 0) + d.pts;
+    last[d.emo] = Math.max(last[d.emo] ?? -1, m.t);
+  }
+  let key = "fine", pts = 0;
+  for (const [e, p] of Object.entries(sum)) if (p > pts || (p === pts && last[e] > last[key])) { key = e; pts = p; }
+  return { key, pts, level: pts >= 6 ? 3 : pts >= 3 ? 2 : 1 };
+}
+const emoWord = (key, level) => T.words[key][level - 1];
+
+// ---------- condition moodlets: checked a few times a second
+const lifeFlags = { bedHair: false, firstSnowYear: -1, windowSince: {}, watered: { water_living: 0, water_study: 0 } };
+function asleep() { return sim.mode === "act" && sim.act === "sleep"; }
+function band(v, lo, hi) { return v < hi && v >= lo; }
+const COND = {
+  hungry1: n => band(n.hunger, 15, 40), hungry3: n => n.hunger < 15,
+  tired1: n => band(n.energy, 12, 35) && !asleep(), tired3: n => n.energy < 12 && !asleep(),
+  dirty2: n => band(n.hygiene, 12, 30), dirty3: n => n.hygiene < 12,
+  bored2: n => band(n.fun, 12, 30), bored3: n => n.fun < 12,
+  lonely1: n => band(n.social, 12, 35), lonely3: n => n.social < 12,
+  bladder1: n => band(n.bladder, 12, 35), bladder3: n => n.bladder < 12,
+  fresh: n => Object.values(n).every(v => v > 80),
+  bedHair: () => lifeFlags.bedHair && !asleep(),
+  stuffy: () => Object.entries(windowState).some(([id, st]) => st === "drawn" && sim.t - (lifeFlags.windowSince[id] ?? sim.t) > 1440),
+  lampGlow: () => nightness(hour()) > 0.5 && lamps.bed_lamp && !asleep() && roomAt(here()) === "bedroom",
+  plantWilt: () => Object.values(lifeFlags.watered).some(t => sim.t - t > 4320),
+  rainy: () => weather.kind === "rain",
+  hot: () => seasonOf(sim.t).i === 1 && weather.kind === "clear" && hour() >= 12 && hour() < 16,
 };
-const ACT_SAY = {
-  cook: ["今天做什么好呢……", "火候要刚刚好。"], eat: ["开动啦！", "好吃到跺脚。"], tv: ["这个节目好有意思。", "再看一集就去干活。"],
-  computer: ["再玩一局！", "这关我一定能过。"], read: ["这本书写得真好。", "再看一章就睡。"], bath: ["泡澡是世界上最舒服的事。"],
-  window: ["外面的天好蓝。", "风吹进来凉凉的。"], water_living: ["多喝水，快快长。"], water_study: ["小绿植又长高了一点。"],
-  dress: ["今天穿哪件好呢？"], art: ["这幅画怎么看都看不腻。"],
-};
+function updateConds() {
+  for (const [id, m] of moods) if (m.until !== null && sim.t >= m.until) moods.delete(id);
+  if (sim.mode === "down") return;
+  for (const [id, test] of Object.entries(COND)) {
+    const on = test(sim.needs);
+    if (on && !moods.has(id)) addMood(id, { words: !asleep() });
+    else if (!on && moods.has(id) && moods.get(id).until === null) moods.delete(id);
+  }
+}
+
+// ---------- what activities leave behind
+function weighted(list) {               // [[id, weight], ...] -> id (or null)
+  let r = Math.random() * list.reduce((a, [, w]) => a + w, 0);
+  for (const [id, w] of list) if ((r -= w) < 0) return id;
+  return null;
+}
+function lifeArrive(act) {
+  if (act === "eat") sim.meal = { ...(sim.meal || {}), full: sim.needs.hunger > 95 };
+  if (act === "sleep" && !sim.nap && emotion().key === "tense" && Math.random() < 0.3) sim.insomnia = true;
+}
+function lifeFinish(act) {
+  const n = sim.needs, h = hour(), r = Math.random();
+  switch (act) {
+    case "cook": {
+      const food = pick(T.fill.食物);
+      sim.meal = { food, cooked: true, burnt: r < 0.12 };
+      if (sim.meal.burnt) {
+        addMood("burnt", { vars: { 食物: food } });
+        if (r < 0.04) { addMood("nearFire"); lifeEvent("smokeAlarm"); }
+      }
+      break;
+    }
+    case "eat": {
+      const m = sim.meal || {};
+      if (!m.burnt) addMood(m.cooked ? "goodMeal" : "plainMeal", { vars: { 食物: m.food || pick(T.fill.食物) } });
+      if (m.full) addMood("stuffed");
+      sim.meal = null;
+      break;
+    }
+    case "snack": addMood(r < 0.08 ? "expired" : "snack"); break;
+    case "tv": { const id = weighted([["funnyShow", 30], ["documentary", 25], ["news", 15], ["song", 22], ["sadMovie", 8]]); addMood(id); break; }
+    case "computer":
+      if (h < 4 || h >= 23.5) addMood("lateGame");
+      else addMood(r < 0.5 ? "gameWin" : r < 0.65 ? "gameLose" : null);
+      break;
+    case "read": addMood(n.energy < 30 ? "bookNap" : r < 0.55 ? "goodLine" : r < 0.8 ? "finishBook" : null); break;
+    case "art": addMood("artLook"); break;
+    case "window": addMood("windowGaze"); break;
+    case "bath": addMood("goodBath"); if (r < 0.15) addMood("bathIdea"); if (n.hygiene > 90) addMood("smellGood", { words: false }); break;
+    case "towel": addMood("warmTowel"); break;
+    case "wash": lifeFlags.bedHair = false; moods.delete("bedHair"); addMood("mirror"); break;
+    case "water_living": case "water_study": lifeFlags.watered[act] = sim.t; addMood("plantHappy"); break;
+    case "pc_code": addMood("codeFlow"); if (r < 0.25) addMood("bugFixed"); break;
+    case "pc_video": case "phone_video": addMood("friendVideo"); break;
+    case "pc_forum": addMood(r < 0.85 ? "forumFun" : "forumFight"); break;
+    case "phone_call": addMood("momCall", { vars: {} }); if (r < 0.3) addMood("homesick"); break;
+    case "phone_text": addMood("gotReply"); break;
+    case "phone_feed": addMood(r < 0.6 ? "feedFun" : r < 0.85 ? "feedEnvy" : null); break;
+    case "phone_game": if (r < 0.5) addMood("phoneWin"); break;
+    case "dance": addMood("danced"); break;
+    case "sleep":
+      if (sim.nap || h < 5 || h >= 14) break;      // a nap, or up in the night for the toilet
+      if (sim.sleptTonight >= 420) addMood("goodSleep"); else if (sim.sleptTonight < 300) addMood("shortSleep");
+      if (r < 0.3) addMood("sweetDream"); else if (r < 0.42) addMood("nightmare");
+      if (sim.insomnia) addMood("insomnia");
+      sim.insomnia = false; sim.sleptTonight = 0;
+      lifeFlags.bedHair = true;
+      break;
+  }
+}
+function lifeWeather(was, now) {
+  const se = seasonOf(sim.t).i, h = hour(), year = Math.floor(sim.t / (1440 * SEASON_DAYS * 4));
+  if (was === "rain" && now !== "rain" && h >= 7 && h < 18 && Math.random() < 0.3) addMood("rainbow");
+  if (now === "rain" && se === 1 && Math.random() < 0.25) addMood("thunder", { words: !asleep() });
+  if (now === "snow" && lifeFlags.firstSnowYear !== year) { lifeFlags.firstSnowYear = year; addMood("firstSnow", { words: !asleep() }); }
+}
+function lifeSeason(i) { addMood(["spring", "summer", "autumn", "winter"][i], { words: false }); }
+
+// ---------- events: rolled once a game hour, each with its own cooldown
+function lifeEvent(id, vars = {}) {
+  const e = T.events[id];
+  if (!e) return;
+  if (e.diary) log(fill(e.diary, vars));
+  if (e.say && !asleep()) speak(fill(pick(e.say), vars));
+}
+function busyWith(...acts) { return sim.mode === "act" && acts.includes(sim.act); }
+function free() {             // she can drop what she's doing for a phone call
+  return sim.mode !== "down" && !busyWith("sleep", "bath", "toilet", "eat", "cook", "dress") && !(sim.mode === "walk" && ["toilet", "sleep"].includes(sim.act));
+}
+const EVENTS = [
+  // [id, when(c), chance per hour, cooldown in game minutes, what happens (default: diary + words + moodlet of the same id)]
+  ["tvStatic", c => c.act === "tv", 0.08, 1440],
+  ["prank", c => c.awake && c.h >= 9 && c.h < 18, 0.01, 4320],
+  ["stubToe", c => sim.mode === "walk", 0.25, 2880],
+  ["lostKeys", c => c.awake && c.h >= 7 && c.h < 10, 0.05, 7200],
+  ["slipper", c => c.awake && c.h >= 6 && c.h < 9, 0.04, 7200],
+  ["spill", c => ["computer", "pc_video", "pc_forum", "pc_code"].includes(c.act), 0.05, 5760],
+  ["parcel", c => c.awake && c.h >= 10 && c.h < 18, 0.03, 2880, () => {
+    const vars = {}; lifeEvent("parcel", vars); addMood(Math.random() < 0.75 ? "parcelGood" : "parcelOdd", { words: false }); }],
+  ["momCall", c => c.h >= 17 && c.h < 21 && free(), 0.1, 5 * 1440, () => { lifeEvent("momCall"); sim.queue = []; startAct("phone_call", true); }],
+  ["friendVideo", c => c.act === "computer" && c.h >= 19 && c.h < 23, 0.25, 4 * 1440, () => { lifeEvent("friendVideo"); startAct("pc_video", true); }],
+  ["bill", c => c.awake && c.se.day % 7 === 0 && c.h >= 10, 1, 6 * 1440],
+  ["magazine", c => c.awake && c.se.day === 10 && c.h >= 9, 1, 10 * 1440],
+  ["postcard", c => c.awake && c.se.day === 5 && c.h >= 10, 1, 10 * 1440],
+  ["ladybug", c => c.awake && c.open && c.se.i <= 1 && c.day, 0.12, 2880],
+  ["butterfly", c => c.awake && c.open && c.se.i === 0 && c.day, 0.12, 2880],
+  ["birds", c => c.awake && c.se.i <= 1 && c.h >= 6 && c.h < 9, 0.3, 1440],
+  ["redLeaf", c => c.awake && c.open && c.se.i === 2 && c.day, 0.15, 2880],
+  ["shootingStar", c => c.awake && c.clear && (c.h >= 21 || c.h < 1), 0.03, 4320],
+  ["fullMoon", c => c.awake && c.clear && c.se.day === 7 && c.h >= 20 && c.h < 23, 1, 10 * 1440],
+  ["snowman", c => c.awake && weather.kind === "snow" && c.day, 0.3, 2880],
+  ["frost", c => c.awake && c.se.i === 3 && c.h >= 6 && c.h < 10, 0.3, 1440],
+  ["cicadas", c => c.awake && c.se.i === 1 && c.h >= 17 && c.h < 19, 0.3, 1440],
+  ["catVisit", c => c.awake && c.open, 0.02, 4320],
+  ["weirdNoise", c => c.awake && c.h < 4, 0.15, 2880],
+  ["mosquito", c => c.sleeping && !sim.nap && c.se.i === 1, 0.06, 1440, () => { lifeEvent("mosquito"); addMood("wokenUp", { diary: false, words: false }); }],
+  ["sleepTalk", c => c.sleeping, 0.06, 1440, () => { const t = pick(T.events.sleepTalk.say); log(`说梦话：「${t}」`); speak(`（梦话）${t}`, true); }],
+];
+const eventLast = {};
+let lastHour = -1, lastFestivalDay = 0;
+function rollEvents() {
+  const hNow = Math.floor(sim.t / 60);
+  if (hNow === lastHour) return;
+  lastHour = hNow;
+  if (sim.mode === "down") return;
+  const h = hour(), sleeping = asleep();
+  const c = { h, se: seasonOf(sim.t), act: sim.mode === "act" ? sim.act : null, sleeping, awake: !sleeping,
+              open: Object.values(windowState).includes("open"), clear: weather.kind === "clear", day: h >= 8 && h < 18 };
+  // festivals, birthday and anniversaries, once on their day
+  const day = Math.floor(sim.t / 1440) + 1;
+  if (h >= 9 && c.awake && lastFestivalDay !== day) {
+    lastFestivalDay = day;
+    const f = T.festivals.find(f => f.season === c.se.i && f.day === c.se.day);
+    if (f) { log(`今天是${f.name}。` + f.diary); speak(pick(f.say)); addMood(f.mood || "festival", { diary: false, words: false }); if (f.sad) addMood("festivalSad", { diary: false, words: false }); }
+    if (day === 30) { log("今天是生日！给自己做了一个小蛋糕，许了个愿。"); speak("生日快乐，我！"); addMood("birthday", { diary: false, words: false }); }
+    if (day === 14 || day === 56) { log(`搬进这个小屋已经${day}天了。`); speak("这里越来越像家了"); addMood("anniversary", { diary: false, words: false }); }
+  }
+  for (const [id, when, p, cd, run] of EVENTS) {
+    if (sim.t - (eventLast[id] ?? -1e9) < cd || !when(c) || Math.random() >= p) continue;
+    eventLast[id] = sim.t;
+    if (run) run(); else { lifeEvent(id); addMood(id, { diary: false, words: false }); }
+    break;                                        // one thing at a time
+  }
+}
+
+// ---------- collapse: never dangerous. She lies on the floor under a skull
+// bubble until you hold her for 5 seconds; then every need gets +10.
+const EXTREME = ["angry", "sad", "scared", "embarrassed", "tense", "uncomfortable", "playful"];
+function checkCollapse() {
+  if (sim.mode === "down" || asleep() || sim.t < (sim.graceUntil || 0)) return;
+  const n = sim.needs, e = emotion();
+  const cause = n.hunger <= 0 ? "hunger" : n.energy <= 0 ? "energy" : e.pts >= 8 && EXTREME.includes(e.key) ? e.key : null;
+  if (cause) collapse(cause);
+}
+function collapse(cause) {
+  if (sim.act === "dress") closeWardrobe();
+  closeRing();
+  const p = here();
+  sim.route = [[Math.round(p.x), FLOOR_Y[storeyOfY(p.y)]]]; sim.s = 0;
+  sim.mode = "down"; sim.act = null; sim.queue = []; sim.down = { cause, t: sim.t };
+  log(T.collapse[cause]);
+  speak("……", true);
+}
+function revive() {
+  const n = sim.needs;
+  for (const k of Object.keys(n)) n[k] = clamp(n[k] + 10);
+  const cause = sim.down.cause;
+  for (const [id] of moods) if (ML[id].emo === cause) moods.delete(id);   // the feeling that knocked her out has passed
+  sim.mode = "idle"; sim.down = null; sim.idleUntil = sim.t + 3;
+  sim.graceUntil = sim.t + 180;
+  log("你一直按着她，她慢慢睁开了眼睛。");
+  addMood("revived", { words: false });
+  speak(pick(T.you.revive), true);
+  const p = here();
+  poof = { t0: realClock, x: p.x, y: p.y - 10 };
+}
+
+// ---------- her own words
+function thought() {
+  const e = emotion(), a = sim.mode === "act" ? sim.act : null, h = hour(), se = seasonOf(sim.t).i;
+  const pool = [...T.thoughts[e.key], ...T.thoughts[e.key]];           // feelings first
+  if (a && T.acts[a]) pool.push(...T.acts[a], ...T.acts[a]);
+  for (const [id] of moods) if (ML[id].say) pool.push(...ML[id].say);
+  const sc = T.scene;
+  if (h >= 6 && h < 9) pool.push(...sc.wake); else if (h >= 11.5 && h < 13.5) pool.push(...sc.noon);
+  else if (h >= 17 && h < 19) pool.push(...sc.dusk); else if (h >= 22.5 || h < 5) pool.push(...sc.late);
+  pool.push(...(weather.kind === "rain" ? sc.rain : weather.kind === "snow" ? sc.snow : sc.sunny));
+  if (se === 1) pool.push(...sc.summer); if (se === 3) pool.push(...sc.winter);
+  return fill(pick(pool.filter(t => t !== lastSaid)));
+}
 
 const IMG_MOOD = {};
 async function loadMoodIcons() {
@@ -1377,32 +1704,22 @@ function setMood(key, level) {
   if (key === moodState.key && level === moodState.level) return;
   const changed = key !== moodState.key;
   moodState.from = moodState.key; moodState.key = key; moodState.level = level; moodState.t0 = realClock;
-  moodFace.setAttribute("aria-label", `情绪：${LEVEL_WORD[level]}${MOOD[key].name}`);
-  if (!moodTip.hidden) fillMoodTip();
-  if (changed && moodState.from) setTimeout(() => say(pick(MOOD_DEMO[key].say)), 700);
+  moodFace.setAttribute("aria-label", `情绪：${emoWord(key, level)}`);
+  if (changed && moodState.from && sim.mode !== "down" && !asleep()) speak(fill(pick(T.thoughts[key])));
 }
-function previewMood() {
-  const forced = document.getElementById("moodPick").value;
-  if (forced) return [forced, 2];
-  const n = sim.needs, a = sim.mode === "act" ? sim.act : null;
-  if (a === "sleep") return ["fine", 1];
-  if (n.hunger < 20) return ["uncomfortable", 3];
-  if (n.energy < 18) return ["dazed", 2];
-  if (n.hygiene < 25) return ["embarrassed", 2];
-  if (n.fun < 25) return ["bored", 2];
-  const byAct = { tv: "playful", computer: "focused", read: "inspired", cook: "happy", eat: "happy", snack: "happy", bath: "fine",
-                  window: "inspired", art: "inspired", water_living: "happy", water_study: "happy", dress: "confident", wash: "fine" };
-  if (a && byAct[a]) return [byAct[a], a === "eat" || a === "tv" ? 3 : 2];
-  if (weather.kind === "rain") return ["sad", 1];
-  if (weather.kind === "snow") return ["playful", 1];
-  return ["fine", 1];
+function leftText(m, d) {
+  if (m.until === null) return d.until || "";
+  const left = m.until - sim.t;
+  return left >= 90 ? `还剩 ${Math.round(left / 60)} 小时` : `还剩 ${Math.max(1, Math.round(left))} 分钟`;
 }
 function fillMoodTip() {
-  const k = moodState.key, M = MOOD[k], demo = MOOD_DEMO[k];
-  const head = `<div class="mt-head"><span class="mt-name"><i style="--c:${M.color}"></i>${LEVEL_WORD[moodState.level]}${M.name}</span>` +
-    `<span class="mt-level">${["", "轻微", "明显", "强烈"][moodState.level]}</span></div>`;
-  const rows = demo.m.length ? demo.m.map(([name, pts, left]) =>
-    `<li><i style="--c:${M.color}"></i><span>${name}</span><b>+${pts}</b><small>${left}</small></li>`).join("")
+  const k = moodState.key, M = MOOD[k], e = emotion();
+  const head = `<div class="mt-head"><span class="mt-name"><i style="--c:${M.color}"></i>${emoWord(k, moodState.level)}</span>` +
+    `<span class="mt-level">${e.pts ? `${e.pts} 分` : ""}</span></div>`;
+  const list = [...moods].map(([id, m]) => [ML[id], m]).sort((a, b) => b[0].pts - a[0].pts || b[1].t - a[1].t);
+  const rows = sim.mode === "down" ? `<li><i style="--c:#555"></i><span>晕倒了：长按她 5 秒叫醒她</span><b></b></li>`
+    : list.length ? list.map(([d, m]) =>
+      `<li><i style="--c:${MOOD[d.emo].color}"></i><span>${d.name}</span><b>+${d.pts}</b><small>${MOOD[d.emo].name} · ${leftText(m, d)}</small></li>`).join("")
     : `<li><i style="--c:${M.color}"></i><span>没有什么特别的心情</span><b></b></li>`;
   moodTip.innerHTML = head + `<ul>${rows}</ul>`;
 }
@@ -1417,7 +1734,15 @@ moodFace.addEventListener("pointerleave", e => { if (e.pointerType === "mouse" &
 moodFace.addEventListener("click", () => { tipPinned = !tipPinned || moodTip.hidden; showMoodTip(tipPinned); });
 moodFace.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tipPinned = moodTip.hidden; showMoodTip(tipPinned); } if (e.key === "Escape") { tipPinned = false; showMoodTip(false); } });
 const moodPickEl = document.getElementById("moodPick");
-for (const [k, name] of D.moods) moodPickEl.insertAdjacentHTML("beforeend", `<option value="${k}">${name}</option>`);
+for (const [k, name] of D.moods) if (k !== "fine") moodPickEl.insertAdjacentHTML("beforeend", `<option value="${k}">+3 ${name}（2 小时）</option>`);
+moodPickEl.addEventListener("change", () => {     // test: a 3-point moodlet of that emotion
+  const k = moodPickEl.value;
+  if (!k) return;
+  const id = "test_" + k + "_" + Math.floor(sim.t);
+  ML[id] = { name: `测试：${MOOD[k].name}`, emo: k, pts: 3, min: 120 };
+  addMood(id);
+  moodPickEl.value = "";
+});
 
 // ---------- her own words, in a bubble that runs to the house's right edge
 const popSay = document.getElementById("popSay");
@@ -1428,24 +1753,31 @@ function popBubble(el, ms) {
   el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";   // replay the pop
   el._t = setTimeout(() => { el.classList.add("out"); el._t2 = setTimeout(() => { el.hidden = true; }, 380); }, ms);
 }
-let nextSay = 6, lastSaid = "";
-function say(text) {
-  if (!text || text === lastSaid) return;
+let nextSay = 6, lastSaid = "", sayBusy = 0;
+const sayQueue = [];
+// her words wait their turn: one bubble at a time, at most a few queued
+function speak(text, now = false) {
+  if (!text) return;
+  if (now) { sayQueue.length = 0; showSay(text); return; }
+  if (realClock < sayBusy) { if (sayQueue.length < 2 && !sayQueue.includes(text)) sayQueue.push(text); return; }
+  showSay(text);
+}
+function showSay(text) {
   lastSaid = text;
   popSay.querySelector("span").textContent = text;
   popSay.title = text;
   popBubble(popSay, 5200);
+  sayBusy = realClock + 5.6;
   nextSay = realClock + 14 + Math.random() * 12;
 }
-function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+let lifeT = -1;
 function updateMood() {
-  const [k, lvl] = previewMood();
-  setMood(k, lvl);
-  if (realClock >= nextSay && !(sim.mode === "act" && sim.act === "sleep")) {
-    const a = sim.mode === "act" ? sim.act : null;
-    const pool = [...MOOD_DEMO[k].say, ...(a && ACT_SAY[a] ? ACT_SAY[a] : [])];
-    say(pick(pool.filter(t => t !== lastSaid)));
-  }
+  if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); rollEvents(); checkCollapse(); }
+  const e = emotion();
+  setMood(e.key, e.level);
+  if (!moodTip.hidden) fillMoodTip();
+  if (realClock >= sayBusy && sayQueue.length) showSay(sayQueue.shift());
+  else if (realClock >= nextSay && !asleep() && sim.mode !== "down") speak(thought());
 }
 
 // ================================================================ UI
@@ -1549,19 +1881,120 @@ view.addEventListener("pointermove", e => {
   hoverId = buddyHit(x, y) ? null : clickableAt(x, y);
   view.style.cursor = hoverId || buddyHit(x, y) ? "pointer" : "default";
 });
-view.addEventListener("pointerleave", () => { hoverId = null; });
+view.addEventListener("pointerleave", () => { hoverId = null; holding = null; });
+// she's collapsed: press and hold on her
+view.addEventListener("pointerdown", e => {
+  if (sim.mode !== "down") return;
+  const [x, y] = canvasXY(e);
+  if (buddyHit(x, y)) { holding = { t0: realClock }; view.setPointerCapture(e.pointerId); e.preventDefault(); }
+});
+for (const ev of ["pointerup", "pointercancel"]) view.addEventListener(ev, () => {
+  if (holding && realClock - holding.t0 < REVIVE_S) { holding = null; showHint("长按她 5 秒，把她叫醒"); }
+});
+view.addEventListener("contextmenu", e => { if (sim.mode === "down") e.preventDefault(); });
 view.addEventListener("click", e => {
   const [x, y] = canvasXY(e);
+  const wasOpen = !!ringOf;
+  closeRing();
+  if (sim.mode === "down") return;
   if (buddyHit(x, y)) {
+    if (wasOpen) return;                          // a second click on her closes the menu
     if (sim.mode === "act" && sim.act === "sleep") { log("你戳了戳她，她咂咂嘴继续睡。"); return; }
-    reaction = { until: realClock + 1.6, emote: doll.cheer(look) };
-    sim.needs.fun = clamp(sim.needs.fun + 4);
-    if (Math.random() < 0.5) log(["你戳了她一下，她冲你挥挥手。", "她发现你在看她，开心地挥了挥手。", "被你戳得咯咯笑。"][Math.floor(Math.random() * 3)]);
+    openRing("buddy");
     return;
   }
   const id = clickableAt(x, y);
+  if (id === "computer") { useFurniture(id, true); openRing("computer"); return; }
   if (id) useFurniture(id);
 });
+
+// ================================================================ ring menu
+// Click Buddy: chat, pat, phone (a second ring), dance, bed. Click the
+// computer: what to do on it. More options will join later.
+const ringEl = document.getElementById("ring");
+const RINGS = {
+  buddy: [["chat", "聊聊天"], ["pat", "摸摸头"], ["phone", "玩手机", "more"], ["dance", "跳支舞"], ["bed", "去睡觉"]],
+  phone: [["phone_call", "打给妈妈"], ["phone_video", "和朋友视频"], ["phone_feed", "刷动态"], ["phone_text", "发消息"], ["phone_game", "玩手机游戏"], ["back", "返回", "back"]],
+  computer: [["computer", "打游戏"], ["pc_video", "视频聊天"], ["pc_forum", "逛论坛"], ["pc_code", "写代码"]],
+};
+let ringOf = null, ringAt = null;
+function ringCenter() {
+  if (ringAt === "computer") { const c = CLICK.computer; return { x: c.x + c.w / 2, y: c.y + c.h / 2 }; }
+  const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : here();
+  return { x: p.x, y: p.y - 13 };
+}
+function placeRing() {
+  if (ringEl.hidden) return;
+  const c = ringCenter(), k = view.width / W;
+  ringEl.style.left = view.offsetLeft + c.x * k + "px";
+  ringEl.style.top = view.offsetTop + c.y * k + "px";
+}
+function openRing(which, at = which === "computer" ? "computer" : "buddy") {
+  ringOf = which; ringAt = at;
+  const items = RINGS[which];
+  const k = view.width / W, R = Math.max(48, Math.min(118, 24 * k));
+  ringEl.innerHTML = "";
+  items.forEach(([id, label, cls], i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = label; b.setAttribute("role", "menuitem");
+    if (cls) b.className = cls;
+    const a = -Math.PI / 2 + i / items.length * Math.PI * 2;
+    b.style.setProperty("--x", Math.round(Math.cos(a) * R * 1.25) + "px");
+    b.style.setProperty("--y", Math.round(Math.sin(a) * R) + "px");
+    b.style.setProperty("--k", i);
+    b.addEventListener("click", ev => { ev.stopPropagation(); ringPick(id); });
+    ringEl.appendChild(b);
+  });
+  ringEl.hidden = false;
+  placeRing();
+  ringEl.classList.remove("on");
+  void ringEl.offsetWidth;
+  ringEl.classList.add("on");
+  if (reduceMotionUI) ringEl.classList.add("on");
+}
+function closeRing() { ringEl.hidden = true; ringEl.classList.remove("on"); ringOf = null; }
+let hintT = null;
+function showHint(text) {
+  ringOf = null; ringAt = "buddy";
+  ringEl.innerHTML = `<div class="hint"></div>`;
+  ringEl.firstChild.textContent = text;
+  ringEl.firstChild.style.top = -Math.round(18 * view.width / W) + "px";
+  ringEl.hidden = false; placeRing();
+  clearTimeout(hintT); hintT = setTimeout(() => { if (!ringOf) closeRing(); }, 1800);
+}
+document.addEventListener("pointerdown", e => { if (ringOf && !ringEl.contains(e.target) && e.target !== view) closeRing(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) closeRing(); });
+let lastChat = -1e9;
+function ringPick(id) {
+  if (id === "phone") { openRing("phone", "buddy"); return; }
+  if (id === "back") { openRing("buddy"); return; }
+  closeRing();
+  if (sim.mode === "down") return;
+  if (id === "chat") {
+    const often = sim.t - lastChat < 60;           // chatting non-stop helps less
+    lastChat = sim.t;
+    sim.needs.social = clamp(sim.needs.social + (often ? 3 : 8));
+    reaction = { until: realClock + 1.8, emote: "chat", wave: false };
+    speak(fill(pick(Math.random() < 0.5 ? T.you.chat : T.thoughts[emotion().key])), true);
+    if (!often) addMood("chatYou", { words: false });
+    log("你和她聊了一会儿天。");
+    return;
+  }
+  if (id === "pat") {
+    reaction = { until: realClock + 1.6, emote: doll.cheer(look) };
+    sim.needs.fun = clamp(sim.needs.fun + 4); sim.needs.social = clamp(sim.needs.social + 2);
+    addMood("patted", { words: false });
+    speak(pick(T.you.pat), true);
+    log(pick(["你摸了摸她的头，她冲你挥挥手。", "被你摸了摸头，她咯咯笑。"]));
+    return;
+  }
+  if (id === "bed") {
+    const h = hour();
+    if (sim.needs.energy < 70 || h >= 21 || h < 6) command("sleep"); else speak(pick(T.you.notSleepy), true);
+    return;
+  }
+  command(id);
+}
 
 // ================================================================ 造型室
 // Clicking the wardrobe sends her there; when she arrives the dressing room
@@ -1611,10 +2044,13 @@ function frame(now) {
   render();
   renderSky();
   renderMood();
+  placeRing();
   uiT += dt;
   if (uiT > 0.25) { uiT = 0; syncUI(); updateMood(); }
   requestAnimationFrame(frame);
 }
+
+document.getElementById("testDown").addEventListener("click", () => { if (sim.mode !== "down") collapse(pick(EXTREME)); });
 
 (async function boot() {
   let saved = null;

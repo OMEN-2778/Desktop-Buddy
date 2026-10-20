@@ -147,13 +147,17 @@ def main():
     tx, ty = A["dining_table"]
     screens = {
         "tv": {"x": tvx + 1, "y": tvy + 1, "channels": {c: [png(F.tv_screen(c, f)) for f in range(4)] for c in F.TV_CHANNELS}},
-        "monitor": {"x": mx + 1, "y": my + 1, "games": {g: [png(F.monitor_screen(g, f)) for f in range(4)] for g in F.GAMES}},
+        "monitor": {"x": mx + 1, "y": my + 1, "games": {g: [png(F.monitor_screen(g, f)) for f in range(4)] for g in F.GAMES},
+                    "apps": {g: [png(F.monitor_screen(g, f)) for f in range(4)] for g in F.APPS}},
     }
     fx = {
         "cook": {"x": hx - 1, "y": hy - 23, "frames": [png(F.cook_fx(f)) for f in range(12)]},
         "meal": {"x": tx + 11, "y": ty - 13, "frames": [png(F.meal_fx(f)) for f in range(4)]},
         "water_living": {"x": A["plant_living"][0] + 4, "y": A["plant_living"][1] - 6, "frames": [png(F.water_fx(f)) for f in range(4)]},
         "water_study": {"x": A["plant_study"][0] + 4, "y": A["plant_study"][1] - 6, "frames": [png(F.water_fx(f)) for f in range(4)]},
+        # her phone, placed relative to Buddy by the page
+        "phone": {"frames": [png(F.phone_held(False, f)) for f in range(2)]},
+        "phone_call": {"frames": [png(F.phone_held(True))]},
     }
 
     # walking: feet y on each floor, and the flight Buddy climbs (straight up,
@@ -214,7 +218,8 @@ def main():
         "emissive": sorted({c.lower() for c in Hs.EMISSIVE}),
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    OUT.write_text(mc.inline_shared(SRC.read_text()).replace("/*__DEMO_DATA__*/null", blob))
+    html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text())
+    OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 
 

@@ -587,6 +587,7 @@ def door_leaf(w=13, h=37, hinge="left"):
 
 TV_CHANNELS = ["cartoon", "sea", "news", "music"]
 GAMES = ["jump", "blocks", "space"]
+APPS = ["video", "forum", "code"]      # social + work on the computer
 
 
 def tv_screen(ch, f):
@@ -641,6 +642,32 @@ def monitor_screen(game, f):
         py = f
         s.rect(6, py, 2, 1, P.sky_soft[2]).rect(5, py + 1, 3, 1, P.sky_soft[2])
         s.set(12, 2, POR[3]).set(12, 4, POR[2])
+    elif game == "video":      # video call: a friend waving, her own picture in the corner
+        s.rect(0, 0, 14, 8, SAGE[3]).rect(0, 6, 14, 2, SAGE[2])
+        hy = 2 + (f in (1, 2))
+        s.ellipse(6, hy + 1.5, 2.5, 2.5, P.skin[3]).rect(4, hy - 1, 5, 2, P.hair_brown[2]).set(3, hy, P.hair_brown[2])
+        s.set(5, hy + 1, P.ink[0]).set(7, hy + 1, P.ink[0]).set(6, hy + 3, CLAY[2] if f % 2 else CLAY[1])
+        s.rect(3, hy + 5, 7, 3, P.blue[2])
+        s.set(1 + (f % 2), 4, P.skin[3]).set(1, 5, P.skin[3])     # waving hand
+        s.rect(10, 0, 4, 3, P.ink[1]).set(11, 1, P.skin[3]).set(12, 1, P.skin[3]).hline(11, 12, 2, P.coral[2])
+    elif game == "forum":      # a feed scrolling up: avatars, lines of text, a heart
+        s.rect(0, 0, 14, 8, POR[3]).rect(0, 0, 14, 1, P.blue[2])
+        for k in range(3):
+            y = 2 + k * 3 - f % 3
+            if 1 <= y < 8:
+                s.rect(1, y, 2, 2, (CLAY[3], SAGE[3], P.mustard[3])[(k + f // 3) % 3])
+                s.hline(4, 4 + (8, 5, 7)[(k + f) % 3], y, ST[2])
+            if 1 <= y + 1 < 8:
+                s.hline(4, 4 + (6, 8, 4)[(k + f) % 3], y + 1, ST[3])
+        if f % 2:
+            s.set(12, 6, P.coral[2]).set(11, 5, P.coral[2]).set(13, 5, P.coral[2])
+    elif game == "code":       # an editor: coloured lines typing in, cursor blinking
+        s.rect(0, 0, 14, 8, P.ink[0]).vline(2, 0, 7, P.ink[1])
+        rows = [(3, 6, SAGE[3]), (4, 9, P.sky_soft[2]), (4, 5, P.mustard[3]), (3, 8, CLAY[3]), (5, 7, P.sky_soft[2])]
+        for i, (x, w, c) in enumerate(rows[: 2 + f]):
+            s.hline(x, min(13, x + w), 1 + i * 1 + i // 2, c)
+        if f % 2 == 0:
+            s.vline(12, 6, 7, POR[3])
     else:  # space
         s.rect(0, 0, 14, 8, P.sky_night[0])
         for x, y in ((2, 1), (9, 3), (12, 0), (5, 5)):
@@ -649,6 +676,20 @@ def monitor_screen(game, f):
         s.set(7, 5 - f, P.light[0])
         ex = (4, 6, 8, 6)[f]
         s.hline(ex, ex + 2, 1, CLAY[3]).set(ex + 1, 2, CLAY[2])
+    return s
+
+
+def phone_held(call=False, f=0):
+    """The phone in Buddy's hand. Held: 4x6 at chest height, its screen
+    glowing on her face side; call: pressed to her ear, 3x6 with the hand."""
+    if call:                       # a bright case so it reads against her hair, hand underneath
+        s = Sprite(3, 6)
+        s.rect(0, 0, 2, 4, P.blue[2]).vline(0, 0, 2, P.blue[3]).set(1, 3, P.blue[1])
+        s.rect(0, 4, 3, 2, P.skin[3]).set(2, 5, P.skin[2])
+        return s
+    s = Sprite(4, 6)
+    s.rect(0, 0, 4, 5, P.ink[1]).rect(1, 1, 2, 3, P.glass[2] if f % 2 else P.glass[1]).set(1, 1, P.glass[3])
+    s.hline(0, 3, 5, P.skin[3]).set(0, 5, P.skin[2])          # fingers round the bottom
     return s
 
 

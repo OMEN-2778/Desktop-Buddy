@@ -809,11 +809,32 @@ oooo...
 .....o.
 ....ooo
 """
+EMOTES["skull"] = """
+.ooooo.
+oLLLLSo
+oEELEEo
+oEELEEo
+oLLELSo
+.oLLSo.
+.oLoLo.
+..ooo..
+"""
+EMOTES["chat"] = """
+.ooooooo.
+oLLLLLLLo
+oLSLSLSLo
+oLLLLLLLo
+.oLooooo.
+.oo......
+"""
 EMOTE_COLORS = {"note": P.blue, "heart": P.coral, "bang": P.mustard, "star": P.mustard,
-                "bowl": P.clay, "book": P.sage, "game": P.blue, "soap": P.sky_soft, "zzz": P.blue}
+                "bowl": P.clay, "book": P.sage, "game": P.blue, "soap": P.sky_soft, "zzz": P.blue,
+                "skull": P.linen, "chat": P.coral}
 # per-emote extra legend entries (R = accent button, O = second page shade)
 EMOTE_EXTRA = {"bowl": {"L": P.linen[1]}, "book": {"L": P.linen[3], "O": P.linen[1]},
-               "game": {"L": P.linen[3], "R": P.coral[2]}, "soap": {"o": P.blue[1], "L": P.linen[3]}}
+               "game": {"L": P.linen[3], "R": P.coral[2]}, "soap": {"o": P.blue[1], "L": P.linen[3]},
+               "skull": {"o": P.ink[1], "L": P.linen[3], "S": P.linen[1], "E": P.ink[0]},
+               "chat": {"L": P.linen[3]}}
 
 
 def emote(name: str) -> Sprite:
