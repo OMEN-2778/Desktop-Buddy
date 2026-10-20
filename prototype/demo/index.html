@@ -3604,11 +3604,19 @@ async function saveGame() {
 setInterval(saveGame, 30000);
 document.addEventListener("visibilitychange", () => { if (document.hidden) saveGame(); });
 window.addEventListener("pagehide", () => { if (!TAURI && booted) try { localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot())); } catch (e) { /* full */ } });
-function exportSave() {
+async function exportSave() {
   const d = new Date(), stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+  const filename = `${look.name}-存档-${stamp}.json`, text = JSON.stringify(snapshot(), null, 1);
+  // on claude.ai the page may only hand over files through the viewer's own save prompt
+  const downloads = window.claude && window.claude.use ? await window.claude.use("downloads").catch(() => null) : null;
+  if (downloads) {
+    try { await downloads.save({ filename, data: text }); flashLabel("存档", "已导出"); }
+    catch (e) { if (!e || e.code !== "declined") flashLabel("存档", "没导出"); }
+    return;
+  }
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot(), null, 1)], { type: "application/json" }));
-  a.download = `${look.name}-存档-${stamp}.json`;
+  a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+  a.download = filename;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
