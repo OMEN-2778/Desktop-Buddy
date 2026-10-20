@@ -11,6 +11,11 @@ Just like a Sim from *The Sims*, this tiny character lives permanently on your d
   opens the same panel above the house when you click the wardrobe (shared
   code in `prototype/shared/`). Build: `python3 tools/make_creator.py`
 
+- `desktop/` — the desktop app (Tauri): the demo page in a frameless,
+  see-through window that lives on your desktop, with a tray icon, an
+  always-on-top switch, adjustable size and a save file. See
+  `desktop/README.md`; GitHub Actions builds the Windows installer.
+
 ## Art
 
 All pixel art is drawn in code with `tools/pixelkit` (see

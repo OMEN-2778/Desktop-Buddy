@@ -361,6 +361,10 @@ body {
   background: var(--accent); box-shadow: inset 0 2px 0 0 var(--accent-lo), inset 0 -2px 0 0 var(--accent-hi);
 }
 .set-label { color: #f7f6fb; font-weight: 700; }
+.set-value { position: relative; isolation: isolate; font-size: var(--pill-fs); font-weight: 700; padding: 7px 10px; min-width: 3.6em; text-align: center; font-variant-numeric: tabular-nums; }
+.settings button.off { color: var(--muted); cursor: not-allowed; }
+.settings button.off::after { background: var(--panel); box-shadow: none; }
+.settings button.danger { color: #9a3b3b; }
 .settings button.glyph { display: grid; place-items: center; min-width: 58px; padding-block: 8px; }
 .settings button.glyph svg { display: block; }
 @media (max-width: 520px) { .settings button.glyph { min-width: 50px; padding-block: 7px; } }
@@ -383,6 +387,12 @@ body {
 .settings button:focus-visible { outline: 2px dashed var(--focus); outline-offset: 3px; }
 @media (max-width: 520px) { .settings { --pill-fs: 12px; } .settings button, .set-label { padding: 6px 12px; } }
 @media (prefers-reduced-motion: reduce) { .set-row > *, .set-gear img { transition: none; } }
+/* ---------- the desktop app: the window is the game, see-through around it */
+html.desktop, html.desktop body { background: transparent !important; }
+html.desktop body { background-image: none !important; overflow: hidden; }
+html.desktop .desk { padding: 64px 40px 48px; }
+html.desktop .console { display: none; }
+html.desktop .settings { position: fixed; }
 /*__SHARED_STUDIO_CSS__*/
 
 /* ---------- temporary console (time, suggestions, look, diary) ---------- */
@@ -429,7 +439,8 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
   <div class="set-pop" id="setPop" role="group" aria-label="设置" hidden></div>
   <button type="button" class="set-gear" id="setGear" aria-label="设置" aria-expanded="false" aria-controls="setPop"><img alt="" id="gearImg" width="26" height="26"></button>
 </div>
-<main class="desk">
+<input type="file" id="importSave" accept=".json,application/json" hidden>
+<main class="desk" data-tauri-drag-region>
   <div class="widget" id="widget">
     <div class="needs" id="needs" tabindex="0" role="button" aria-expanded="false" aria-label="她的状态（饱腹、精力、清洁、如厕、社交、开心）">
       <div class="need" style="--i:0" data-k="hunger" role="meter" aria-label="饱腹" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="hunger"></div>
@@ -441,7 +452,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
     </div>
     <div class="house-col">
       <div class="studio-slot" id="studioSlot"><div class="studio-clip"><section id="studio" hidden></section></div></div>
-      <div class="moodrow" id="moodrow">
+      <div class="moodrow" id="moodrow" data-tauri-drag-region>
         <div class="mood-face" id="moodFace" tabindex="0" role="button" aria-label="情绪" aria-expanded="false" aria-controls="moodTip">
           <canvas id="mood" width="78" height="78"></canvas>
         </div>
@@ -452,7 +463,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
       </div>
       <div class="skybar" id="skybar" role="img" aria-label="时间与天气">
         <canvas id="sky" width="684" height="48"></canvas>
-        <div class="sky-hit" id="skyHit"></div>
+        <div class="sky-hit" id="skyHit" data-tauri-drag-region></div>
         <div class="sky-tip" id="skyTip" hidden></div>
       </div>
       <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她弹出互动菜单。"></canvas>
@@ -493,6 +504,18 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
 <script>
 const DATA = /*__DEMO_DATA__*/null;
 const D = DATA;
+// Inside the desktop app (Tauri, desktop/) the page is the whole frameless,
+// transparent window; in a browser it's a page.
+const TAURI = window.__TAURI__ && window.__TAURI__.core ? window.__TAURI__ : null;
+if (TAURI) {
+  document.documentElement.classList.add("desktop");
+  // no devtools in the app: page errors go to the app's log
+  const report = m => TAURI.core.invoke("log_js", { message: String(m) }).catch(() => {});
+  window.addEventListener("error", e => report(`${e.message} @${e.lineno}:${e.colno}`));
+  window.addEventListener("unhandledrejection", e => report(`unhandled: ${e.reason && (e.reason.stack || e.reason)}`));
+}
+const prefs = { scale: TAURI ? 100 : "auto", onTop: false };   // 界面大小 (% or "auto" = fit the page), 总在最上层
+const SCALES = [50, 75, 100, 125, 150, 175, 200];             // 25% steps keep every house pixel whole
 
 /*__SHARED_DOLL_JS__*/
 /*__SHARED_STUDIO_JS__*/
@@ -1121,8 +1144,11 @@ function fit() {
   const avail = desk.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
   const BAR_MIN = 150, BAR_MAX = 300;
   let s = 4;
-  while (s > 1 && W * s + 12 + BAR_MIN > avail) s--;
-  if (W * s + 12 + BAR_MIN > avail) s = Math.max(0.4, (avail - 12 - BAR_MIN) / W);  // phones: shrink the house
+  if (prefs.scale !== "auto") s = prefs.scale / 25;          // 界面大小: 100% = 4 screen px per house px
+  else {
+    while (s > 1 && W * s + 12 + BAR_MIN > avail) s--;
+    if (W * s + 12 + BAR_MIN > avail) s = Math.max(0.4, (avail - 12 - BAR_MIN) / W);  // phones: shrink the house
+  }
   scale = s;
   const hPx = Math.round(H * s), wPx = Math.round(W * s);
   view.width = wPx; view.height = hPx;
@@ -1132,7 +1158,8 @@ function fit() {
   let n = Math.max(12, Math.round(hPx * 0.11 / u));          // dot height in UI pixels
   while (n > 5 && n * u * 6 + 5 * 2 * u > hPx) n--;          // six (and a little air) must fit in the house height
   const bh = n * u, g = 6 * u;
-  const barW = Math.round(Math.max(BAR_MIN, Math.min(BAR_MAX, avail - wPx - g, wPx * 0.42)) / u) * u;
+  const barW = prefs.scale !== "auto" ? Math.round(BAR_MAX * s / 4 / u) * u     // a set size: everything scales together
+    : Math.round(Math.max(BAR_MIN, Math.min(BAR_MAX, avail - wPx - g, wPx * 0.42)) / u) * u;
   const widget = document.getElementById("widget");
   widget.style.setProperty("--u", u + "px");
   widget.style.setProperty("--house-w", wPx + "px");
@@ -1155,18 +1182,22 @@ function fit() {
   const narrowHouse = wPx < 520;
   widget.style.setProperty("--studio-w", (narrowHouse ? wPx + g + barW : wPx) + "px");
   widget.style.setProperty("--studio-dx", (narrowHouse ? g + barW : 0) + "px");
-  widget.style.setProperty("--say-fs", (narrowHouse ? 24 : 32) + "px");   // her words: big, smaller on phones
-  widget.style.setProperty("--ring-fs", (narrowHouse ? 12 : 14) + "px");
-  widget.style.setProperty("--mp-fs", (narrowHouse ? 12 : 15) + "px");
+  // text and round corners grow with the house: k = 1 at 100% (phones in auto: 0.75)
+  const k = prefs.scale !== "auto" ? s / 4 : narrowHouse ? 0.75 : 1;
+  const sayFs = Math.max(14, Math.round(32 * k));             // her words: big
+  widget.style.setProperty("--say-fs", sayFs + "px");
+  widget.style.setProperty("--ring-fs", Math.max(11, Math.round(14 * k)) + "px");
+  widget.style.setProperty("--mp-fs", Math.max(11, Math.round(15 * k)) + "px");
   // round corners (user: as round as they can be): 2px steps and 2px outlines,
   // like the speech bubble; the buttons come out almost pill-shaped
-  const nb = narrowHouse ? 7 : 9;
+  const nb = Math.max(6, Math.round(9 * k));
   widget.style.setProperty("--clip-btn", roundClip(nb, 2));
   widget.style.setProperty("--clip-btn-in", roundClip(nb - 1, 2));
-  const sayFs = narrowHouse ? 24 : 32, sayH = Math.ceil((sayFs * 1.35 + 16) / 4) * 4;   // a whole, even number of steps
-  const [sayOut, sayIn] = narrowHouse ? sayClip(sayH, 16, 5, 9, 2, 5) : sayClip(sayH, 20, 7, 13, 2, 6);
+  const sayH = Math.ceil((sayFs * 1.35 + 16) / 4) * 4;       // a whole, even number of steps
+  const tail = 2 * Math.max(6, Math.round(10 * k));
+  const [sayOut, sayIn] = sayClip(sayH, tail, Math.max(4, Math.round(7 * k)), Math.max(6, Math.round(13 * k)), 2, Math.max(3, Math.round(6 * k)));
   widget.style.setProperty("--say-h", sayH + "px");
-  widget.style.setProperty("--tail", (narrowHouse ? 16 : 20) + "px");
+  widget.style.setProperty("--tail", tail + "px");
   widget.style.setProperty("--clip-say", sayOut);
   const sets = document.getElementById("settings"), np = window.innerWidth <= 520 ? 7 : 9;
   sets.style.setProperty("--clip-btn", roundClip(np, 2));
@@ -1175,6 +1206,7 @@ function fit() {
   sets.style.setProperty("--clip-gear-in", roundClip(10, 2));
   widget.style.setProperty("--clip-say-in", sayIn);
   if (typeof kickNeeds === "function") kickNeeds();
+  if (TAURI) { fitWindow(); requestAnimationFrame(fitWindow); }   // the app window starts hidden: no frames until it's sized
 }
 
 function activityFrame(ms) {
@@ -2158,12 +2190,9 @@ needsEl.addEventListener("blur", () => setNeedsOpen(false));
 needsEl.addEventListener("keydown", e => { if (e.key === "Escape") needsEl.blur(); });
 
 // ================================================================ settings
-// The gear at the top-right; options pop out to its left. More rows later:
-// add them to SETTINGS. 一倍 = 3 game minutes per real second (the old default).
-const SETTINGS = [
-  { id: "speed", label: "时间流速", options: [[0, "暂停", "pause"], [3, "一倍", "play"], [6, "两倍", "ff"]],
-    get: () => speed, set: v => { speed = v; } },
-];
+// The gear at the top-right; each setting is a row of pills popping out to
+// its left (label first). Add rows to SETTINGS.
+// 一倍 = 3 game minutes per real second (the old default).
 const setPop = document.getElementById("setPop"), setGear = document.getElementById("setGear");
 document.getElementById("gearImg").src = D.uiIcons.gear;
 // a pixel glyph (ui_icons.GLYPHS) as crisp SVG squares in the button's text colour
@@ -2173,33 +2202,80 @@ function glyphSvg(name, p = 2) {
   rows.forEach((row, y) => [...row].forEach((c, x) => { if (c === "#") r += `<rect x="${x}" y="${y}" width="1" height="1"/>`; }));
   return `<svg width="${w * p}" height="${h * p}" viewBox="0 0 ${w} ${h}" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">${r}</svg>`;
 }
+function pill(text, { glyph, label, pressed, disabled, cls, title, onClick } = {}) {
+  const b = document.createElement("button");
+  b.type = "button";
+  if (glyph) { b.innerHTML = glyphSvg(glyph); b.classList.add("glyph"); b.setAttribute("aria-label", label || text); b.title = label || text; }
+  else { b.textContent = text; if (label) b.setAttribute("aria-label", label); }
+  if (pressed !== undefined) b.setAttribute("aria-pressed", String(pressed));
+  if (disabled) { b.setAttribute("aria-disabled", "true"); b.classList.add("off"); }
+  if (cls) b.classList.add(cls);
+  if (title) b.title = title;
+  b.addEventListener("click", () => { if (!disabled) onClick && onClick(b); });
+  return b;
+}
+const scalePct = () => (prefs.scale === "auto" ? Math.round(scale * 25) : prefs.scale);   // what the page shows now
+function setScale(v) { prefs.scale = v; fit(); saveGame(); buildSettings(); }
+const SETTINGS = [
+  { label: "时间流速", role: "radiogroup", items: () => [[0, "暂停", "pause"], [3, "一倍", "play"], [6, "两倍", "ff"]].map(([v, name, g]) =>
+      pill(name, { glyph: g, pressed: speed === v, onClick: b => {
+        speed = v; saveGame();
+        b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+      } })) },
+  { label: "界面大小", role: "group", items: () => {
+      const cur = scalePct();
+      const down = [...SCALES].reverse().find(v => v < cur), up = SCALES.find(v => v > cur);
+      const out = [
+        pill("−", { label: "缩小", disabled: down === undefined, onClick: () => setScale(down) }),
+        Object.assign(document.createElement("span"), { className: "set-value", textContent: `${cur}%` }),
+        pill("+", { label: "放大", disabled: up === undefined, onClick: () => setScale(up) }),
+      ];
+      if (!TAURI) out.push(pill("适应窗口", { pressed: prefs.scale === "auto", onClick: () => setScale("auto") }));
+      return out;
+    } },
+  { label: "总在最上层", role: "radiogroup", items: () => [[true, "开"], [false, "关"]].map(([v, name]) =>
+      pill(name, { pressed: prefs.onTop === v, disabled: !TAURI, title: TAURI ? "" : "桌面版里才能用",
+        onClick: b => { setOnTop(v); b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); } })) },
+  { label: "存档", role: "group", items: () => [
+      pill("保存", { onClick: async () => flashLabel("存档", (await saveGame()) ? "已保存" : "没存上") }),
+      TAURI ? pill("存档位置", { title: "打开存档所在的文件夹", onClick: () => TAURI.core.invoke("open_save_dir").catch(() => {}) })
+            : pill("导出", { title: "把存档下载成一个文件", onClick: exportSave }),
+      pill("导入", { title: "从存档文件读取", onClick: () => document.getElementById("importSave").click() }),
+      pill("重新开始", { cls: "danger", onClick: b => {
+        if (b.dataset.armed) { resetSave(); return; }
+        b.dataset.armed = "1"; b.textContent = "确定重来？";
+        setTimeout(() => { delete b.dataset.armed; b.textContent = "重新开始"; }, 3000);
+      } }),
+    ] },
+];
 function buildSettings() {
+  if (setGear.getAttribute("aria-expanded") !== "true") return;
   setPop.innerHTML = "";
   for (const st of SETTINGS) {
     const row = document.createElement("div");
-    row.className = "set-row"; row.setAttribute("role", "radiogroup"); row.setAttribute("aria-label", st.label);
-    const items = [];
-    const lab = document.createElement("span"); lab.className = "set-label"; lab.textContent = st.label; items.push(lab);
-    for (const [v, name, g] of st.options) {
-      const b = document.createElement("button");
-      b.type = "button"; b.setAttribute("aria-pressed", String(st.get() === v));
-      if (g) { b.innerHTML = glyphSvg(g); b.setAttribute("aria-label", name); b.title = name; b.classList.add("glyph"); }
-      else b.textContent = name;
-      b.addEventListener("click", () => {
-        st.set(v); saveSettings();
-        row.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-      });
-      items.push(b);
-    }
+    row.className = "set-row"; row.setAttribute("role", st.role); row.setAttribute("aria-label", st.label);
+    const lab = document.createElement("span"); lab.className = "set-label"; lab.textContent = st.label; lab.dataset.label = st.label;
+    const items = [lab, ...st.items()];
     items.forEach((el, i) => { el.style.setProperty("--k", items.length - 1 - i); row.appendChild(el); });   // nearest the gear pops first
     setPop.appendChild(row);
   }
 }
+function flashLabel(label, text) {
+  const el = setPop.querySelector(`[data-label="${label}"]`);
+  if (!el) return;
+  el.textContent = text;
+  clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = label; }, 1600);
+}
+function setOnTop(on) {
+  prefs.onTop = !!on;
+  if (TAURI) TAURI.core.invoke("set_on_top", { on: prefs.onTop }).catch(() => {});
+  saveGame();
+}
 function setSettingsOpen(open) {
   setGear.setAttribute("aria-expanded", String(open));
   if (open) {
-    buildSettings();
     setPop.hidden = false;
+    buildSettings();
     setPop.classList.remove("on"); void setPop.offsetWidth; setPop.classList.add("on");
   } else {
     setPop.classList.remove("on");
@@ -2209,11 +2285,7 @@ function setSettingsOpen(open) {
 setGear.addEventListener("click", () => setSettingsOpen(setGear.getAttribute("aria-expanded") !== "true"));
 document.addEventListener("pointerdown", e => { if (!document.getElementById("settings").contains(e.target) && setGear.getAttribute("aria-expanded") === "true") setSettingsOpen(false); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && setGear.getAttribute("aria-expanded") === "true") { setSettingsOpen(false); setGear.focus(); } });
-function saveSettings() { try { localStorage.setItem("buddy-settings", JSON.stringify({ speed })); } catch (e) { /* storage unavailable */ } }
-try {
-  const saved = JSON.parse(localStorage.getItem("buddy-settings") || "null");
-  if (saved && [0, 3, 6].includes(saved.speed)) speed = saved.speed;
-} catch (e) { /* storage unavailable */ }
+
 function canvasXY(e) {
   const r = view.getBoundingClientRect();
   return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height];
@@ -2419,7 +2491,11 @@ function ringPick(id) {
 // slides open above the house (pushing it down, never covering it).
 let wardrobeOpen = false;
 const studioEl = document.getElementById("studio"), studioSlot = document.getElementById("studioSlot");
-function saveLook() { try { localStorage.setItem("buddy-look-v2", JSON.stringify(look)); } catch (e) { /* storage unavailable */ } }
+function saveLook() {
+  // the 造型室 page (prototype/creator) shares her look through these two keys
+  if (!TAURI) try { localStorage.setItem("buddy-look-v2", JSON.stringify(look)); localStorage.setItem("buddy-look-at", String(Date.now())); } catch (e) { /* storage unavailable */ }
+  saveGame();
+}
 function changeLook(l) {
   const named = l.name !== look.name;
   setLook(l);
@@ -2453,6 +2529,143 @@ function closeWardrobe() {
   log("换好衣服了，美美的！");
 }
 
+// ================================================================ saving
+// One versioned save: her look and name, the settings, the clock, her needs,
+// what she's doing and where, her moodlets, the house (lamps, windows), the
+// weather plan and the diary. The desktop app keeps it as a file in its data
+// folder (written whole then swapped in, the previous copy kept as .bak);
+// a browser keeps it in localStorage. Saved every 30 s, when the page is
+// hidden or closed, and right after anything you change by hand. Game time
+// waits while the game is closed.
+const SAVE_VERSION = 1, SAVE_KEY = "buddy-save";
+const store = TAURI ? {
+  load: async () => { const t = await TAURI.core.invoke("load_save"); return t ? JSON.parse(t) : null; },
+  save: async obj => TAURI.core.invoke("write_save", { data: JSON.stringify(obj) }),
+} : {
+  load: async () => JSON.parse(localStorage.getItem(SAVE_KEY) || "null"),
+  save: async obj => { if (obj === null) localStorage.removeItem(SAVE_KEY); else localStorage.setItem(SAVE_KEY, JSON.stringify(obj)); },
+};
+let booted = false, saving = false;
+function snapshot() {
+  const p = here();
+  return {
+    version: SAVE_VERSION, savedAt: Date.now(),
+    look,
+    settings: { speed, scale: prefs.scale, onTop: prefs.onTop },
+    sim: { t: sim.t, needs: sim.needs, mode: sim.mode, act: sim.act, actEnd: sim.actEnd, nap: !!sim.nap,
+           at: [Math.round(p.x), storeyOfY(p.y)], facing: sim.facing, queue: sim.queue, recent: sim.recent,
+           lastDay: sim.lastDay, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
+           graceUntil: sim.graceUntil, insomnia: !!sim.insomnia },
+    moods: [...moods].filter(([id]) => ML[id] && !id.startsWith("test_")).map(([id, m]) => [id, m.until, m.t]),
+    flags: lifeFlags, events: eventLast, lastFestivalDay, namedAs,
+    house: { lamps, windows: windowState },
+    weather: { plan: [...weather.plan], snowCover: weather.snowCover, season: weather.season },
+    diary: [...logEl.children].map(li => li.classList.contains("day") ? ["day", li.textContent]
+      : ["", li.querySelector("time").textContent, li.querySelector("span").textContent]),
+  };
+}
+// older saves are brought up to date here, one version step at a time
+function migrate(sv) {
+  if (!sv || typeof sv !== "object" || !sv.look || !sv.sim) return null;
+  // (version 1 is the first; future steps go here: if (sv.version < 2) { ...; sv.version = 2; })
+  return sv;
+}
+function restore(sv) {
+  setLook(sv.look);
+  const st = sv.settings || {};
+  if ([0, 3, 6].includes(st.speed)) speed = st.speed;
+  if (st.scale === "auto" ? !TAURI : SCALES.includes(st.scale)) prefs.scale = st.scale;
+  prefs.onTop = !!st.onTop;
+  const m = sv.sim;
+  if (Number.isFinite(m.t)) sim.t = m.t;
+  for (const k of Object.keys(sim.needs)) if (Number.isFinite(m.needs?.[k])) sim.needs[k] = clamp(m.needs[k]);
+  for (const k of ["facing", "lastDay", "sleptTonight", "graceUntil"]) if (Number.isFinite(m[k])) sim[k] = m[k];
+  sim.queue = (m.queue || []).filter(a => ACTS[a]); sim.recent = (m.recent || []).filter(a => ACTS[a]);
+  sim.meal = m.meal || null; sim.insomnia = !!m.insomnia; sim.nap = !!m.nap;
+  let [x, storey] = Array.isArray(m.at) ? m.at : [D.spots.bed[1], 1];
+  if (m.mode === "act" && ACTS[m.act] && m.act !== "dress") {
+    sim.mode = "act"; sim.act = m.act; sim.actEnd = m.actEnd;
+    if (ACTS[m.act].spot) [storey, x] = D.spots[ACTS[m.act].spot];       // back at her spot
+  } else if (m.mode === "down" && m.down) {
+    sim.mode = "down"; sim.act = null; sim.down = m.down;
+  } else {
+    sim.mode = "idle"; sim.act = null; sim.idleUntil = sim.t + 1;          // she was walking: she'll decide again
+  }
+  sim.route = [[x, FLOOR_Y[storey] ?? FLOOR_Y[1]]]; sim.s = 0; sim.target = 0; sim.crossing = [];
+  moods.clear();
+  for (const [id, until, t] of sv.moods || []) if (ML[id]) moods.set(id, { until, t });
+  Object.assign(lifeFlags, sv.flags || {});
+  Object.assign(eventLast, sv.events || {});
+  lastFestivalDay = sv.lastFestivalDay || 0;
+  namedAs = sv.namedAs || look.name;
+  Object.assign(lamps, sv.house?.lamps || {});
+  Object.assign(windowState, sv.house?.windows || {});
+  if (sv.weather) {
+    weather.plan = new Map(sv.weather.plan || []);
+    weather.snowCover = sv.weather.snowCover || 0;
+    weather.season = sv.weather.season ?? seasonOf(sim.t).i;
+  }
+  logEl.innerHTML = "";
+  for (const e of sv.diary || []) {
+    const li = document.createElement("li");
+    if (e[0] === "day") { li.className = "day"; li.textContent = e[1]; }
+    else { li.innerHTML = "<time></time><span></span>"; li.firstChild.textContent = e[1]; li.lastChild.textContent = e[2]; }
+    logEl.appendChild(li);
+  }
+}
+async function saveGame() {
+  if (!booted || saving) return false;
+  saving = true;
+  try { await store.save(snapshot()); return true; }
+  catch (e) { console.warn("save failed", e); return false; }
+  finally { saving = false; }
+}
+setInterval(saveGame, 30000);
+document.addEventListener("visibilitychange", () => { if (document.hidden) saveGame(); });
+window.addEventListener("pagehide", () => { if (!TAURI && booted) try { localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot())); } catch (e) { /* full */ } });
+function exportSave() {
+  const d = new Date(), stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot(), null, 1)], { type: "application/json" }));
+  a.download = `${look.name}-存档-${stamp}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+document.getElementById("importSave").addEventListener("change", async e => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  let sv = null;
+  try { sv = migrate(JSON.parse(await f.text())); } catch (err) { sv = null; }
+  if (!sv) { flashLabel("存档", "读不出来"); return; }
+  booted = false;                                   // nothing may save over it before the reload
+  await store.save(sv);
+  location.reload();
+});
+async function resetSave() {
+  booted = false;
+  await store.save(null);
+  if (!TAURI) try { localStorage.removeItem("buddy-look-v2"); localStorage.removeItem("buddy-look-at"); } catch (e) { /* ignore */ }
+  location.reload();
+}
+
+// ---------- the desktop window: sized to the game, tray menu events
+let lastWin = "";
+function fitWindow() {
+  if (!TAURI) return;
+  const w = document.getElementById("widget"), desk = document.querySelector(".desk"), cs = getComputedStyle(desk);
+  const width = Math.ceil(w.offsetWidth + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight));
+  const height = Math.ceil(w.offsetHeight + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom));
+  if (`${width}x${height}` === lastWin) return;
+  lastWin = `${width}x${height}`;
+  TAURI.core.invoke("fit_window", { width, height }).catch(e => TAURI.core.invoke("log_js", { message: `fit_window: ${e}` }));
+}
+if (TAURI) {
+  new ResizeObserver(fitWindow).observe(document.getElementById("widget"));
+  TAURI.event.listen("app-quit", async () => { await saveGame(); TAURI.core.invoke("exit_app"); });
+  TAURI.event.listen("on-top-changed", e => { prefs.onTop = !!e.payload; saveGame(); buildSettings(); });
+}
+
 // ================================================================ loop
 let last = performance.now(), uiT = 0;
 function frame(now) {
@@ -2475,23 +2688,41 @@ function frame(now) {
 document.getElementById("testDown").addEventListener("click", () => { if (sim.mode !== "down") collapse(pick(EXTREME)); });
 
 (async function boot() {
-  let saved = null;
-  try { saved = JSON.parse(localStorage.getItem("buddy-look-v2") || "null"); } catch (e) { /* storage unavailable */ }
-  setLook(saved && typeof saved === "object" ? saved : doll.PRESETS.f);
-  namedAs = nameOf();
+  let sv = null;
+  try { sv = migrate(await store.load()); } catch (e) { sv = null; }
+  if (sv) restore(sv);
+  // her look may have been changed on the 造型室 page since (browser only)
+  let shared = null, sharedAt = 0;
+  if (!TAURI) try { shared = JSON.parse(localStorage.getItem("buddy-look-v2") || "null"); sharedAt = +localStorage.getItem("buddy-look-at") || 0; } catch (e) { /* storage unavailable */ }
+  if (!sv) setLook(shared && typeof shared === "object" ? shared : doll.PRESETS.f);
+  else if (shared && typeof shared === "object" && sharedAt > sv.savedAt) setLook({ ...shared, name: shared.name || look.name });
+  namedAs = namedAs || nameOf();
   studio = BuddyStudio(studioEl, doll, D.doll, { look, previewScale: 3, thumbH: 40, onChange: changeLook, onClose: closeWardrobe });
   fit();
+  if (TAURI && !sv) {             // first run of the desktop app: the biggest size that leaves most of the screen free
+    const w = document.getElementById("widget"), k = prefs.scale / 100;
+    const need = (w.offsetWidth + 80) / k, needH = (w.offsetHeight + 112) / k;
+    prefs.scale = [...SCALES].reverse().find(v => need * v / 100 <= screen.availWidth * 0.6 && needH * v / 100 <= screen.availHeight * 0.6) || SCALES[0];
+    fit();
+  }
   window.addEventListener("resize", fit);
   await loadAssets();
   await loadSkyIcons();
   await loadMoodIcons();
   await loadWeatherMasks();
   weather.kind = weatherAt(sim.t);
-  log("—— 第 1 天 · 春 ——", "day");
-  log(`${nameOf()}还在被窝里睡觉。`);
+  if (!sv) {
+    log("—— 第 1 天 · 春 ——", "day");
+    log(`${nameOf()}还在被窝里睡觉。`);
+  } else {
+    log(`—— 回来啦 · 第 ${Math.floor(sim.t / 1440) + 1} 天 ——`, "day");
+  }
+  if (TAURI) TAURI.core.invoke("set_on_top", { on: prefs.onTop }).catch(() => {});
+  booted = true;
   updateMood();
   syncUI();
   render();
   requestAnimationFrame(frame);
+  if (!sv) saveGame();
 })();
 </script>

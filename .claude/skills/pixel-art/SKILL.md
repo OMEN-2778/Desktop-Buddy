@@ -278,6 +278,17 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   a reaction, once you stop typing.
 - The settings gear sits at the page top (absolute, not fixed) and the page
   keeps 66px clear above the content, so the 造型室's ✕ never sits under it.
+- **Settings rows** (`SETTINGS`): 时间流速, 界面大小 (− 100% + 适应窗口;
+  25% steps = whole house pixels; text and corners scale with it), 总在最上层
+  (desktop app only), 存档 (保存 / 导出 or 存档位置 / 导入 / 重新开始, which
+  asks twice).
+- **Saves**: one versioned JSON (`snapshot()` / `restore()` / `migrate()`);
+  bump `SAVE_VERSION` and add a migrate step whenever its shape changes.
+  Browser: localStorage; desktop app: a file via Tauri commands.
+- **Desktop app** (`desktop/`, Tauri): the same page in a frameless,
+  transparent window sized to the game (`fitWindow` -> `fit_window`); drag
+  regions are the empty page, the mood row and the time bar. Icon:
+  `art/src/concept/app_icon.py` -> `tools/make_desktop_icons.py`.
 - **Computer chair** (user): there is no chair in the study; when she sits
   at the computer she conjures one (`F.office_chair_front`, a front-view
   high-back chair drawn behind her, taller than her seated head so it

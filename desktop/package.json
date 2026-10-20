@@ -1,0 +1,15 @@
+{
+  "name": "desktop-buddy",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Desktop Buddy as a desktop app: the demo page in a frameless, see-through window.",
+  "scripts": {
+    "web": "node scripts/copy-web.mjs",
+    "dev": "npm run web && tauri dev",
+    "build": "npm run web && tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

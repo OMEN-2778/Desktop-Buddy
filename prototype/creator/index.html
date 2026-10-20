@@ -804,7 +804,7 @@ const studio = BuddyStudio(document.getElementById("studio"), doll, DATA, {
   modes: true,
   previewScale: 5,
   thumbH: 46,
-  onChange(look) { try { localStorage.setItem("buddy-look-v2", JSON.stringify(look)); } catch (e) { /* ignore */ } },
+  onChange(look) { try { localStorage.setItem("buddy-look-v2", JSON.stringify(look)); localStorage.setItem("buddy-look-at", String(Date.now())); } catch (e) { /* ignore */ } },
 });
 studio.start();
 </script>
