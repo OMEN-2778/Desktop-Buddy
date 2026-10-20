@@ -189,6 +189,11 @@ Reference: `prototype/shared/studio.css`.
   outlines (`roundClip()` in the demo, clip-path on an outline layer + a
   fill layer, `drop-shadow` for the hard shadow). Buttons come out almost
   pill-shaped. Small square-notched corners read as "too sharp" there.
+- Settings: a round pixel gear button fixed at the page's top-right
+  (`art/src/concept/ui_icons.py`); clicking it pops the options out to the
+  LEFT as rows of pills in the same ring-menu style (dark label pill, then
+  choices; the chosen one in the accent colour). Add rows to `SETTINGS`.
+  Time speed: 暂停 / 一倍 (3 game min per real second) / 两倍.
 - The dressing room is called **Buddy 造型室** (not 捏人台). One component
   (`prototype/shared/studio.js` + `.css`, pasted into both pages by
   `make_creator.inline_shared`): stage with Buddy, tabs 发型 / 五官 / 上装 /
