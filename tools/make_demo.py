@@ -87,6 +87,10 @@ def main():
         "desk_lamp": overlay(F.desk_lamp(on=True), *A["desk_lamp"]),
         "pendant": overlay(F.pendant(on=True), *A["pendant"]),
         "coffee_table": overlay(F.coffee_table(), *A["coffee_table"]),
+        # the potted trees stand in front of the windows: drawn again after
+        # the open-window / curtain / weather layers so those never cover them
+        "plant_study": overlay(F.plant(), *A["plant_study"]),
+        "plant_living": overlay(F.plant(), *A["plant_living"]),
         "sleep_cover": overlay(Hs.sleep_cover(), bed_x + Hs.SLEEP_COVER[0], bed_y + Hs.SLEEP_COVER[1]),
         "tub_front": overlay(tub_front, tub_x, tub_y + 21),
         "bubbles": overlay(bubbles, tub_x, tub_y + 18),

@@ -1720,6 +1720,7 @@ function render() {
     if (f > 0) { bctx.globalAlpha = f; bctx.drawImage(IMG.win[id]["night" + sway], wv.x, wv.y); bctx.globalAlpha = 1; }
   }
   drawWeather(bctx, f > 0.5);   // on the glass only, behind everything that stands in front of a window
+  drawOverlay(bctx, "plant_study"); drawOverlay(bctx, "plant_living");   // the potted trees stay in front of windows and curtains (user)
   drawDoors(bctx);
   const room = roomAt(here()), acting = sim.mode === "act", act = acting ? sim.act : null;
   const sleeping = act === "sleep";
