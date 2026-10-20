@@ -1822,6 +1822,7 @@ function arrive() {
   sim.actEnd = sim.t + (sim.act === "sleep" ? 900 : a.dur * (0.8 + Math.random() * 0.4));
   sim.recent = [sim.act, ...sim.recent].slice(0, 3);
   lifeArrive(sim.act);
+  cardMoment(sim.act === "sleep" ? (sim.nap ? null : "bed") : sim.act === "dress" && sim.player ? null : ACT_MOMENT(sim.act));
 }
 function finishAct() {
   const a = ACTS[sim.act];
@@ -1832,9 +1833,11 @@ function finishAct() {
   if (sim.act === "eat") log("吃饱了，好满足～");
   if (sim.act === "bath") log("洗得香喷喷的。");
   if (a.then) { startAct(a.then); return; }
+  const woke = sim.act === "sleep" && !sim.nap;
   sim.mode = "idle";
   sim.act = null;
   sim.idleUntil = sim.t + 2 + Math.random() * 6;
+  if (woke) cardMoment("wake");
 }
 
 // The player clicked a piece of furniture: drop what she's doing and go.
@@ -1891,10 +1894,11 @@ function step(dtGame, dtReal) {
     const v = WALK * Math.min(speed, 4) * dtReal * (here().dy ? 0.7 : 1);   // a little slower on the stairs
     if (sim.target - sim.s <= v) { sim.s = sim.target; arrive(); }
     else {
-      const before = here().x;
+      const before = here();
       sim.s += v; sim.walkDist += v;
-      const dx = here().x - before;
+      const now = here(), dx = now.x - before.x;
       if (Math.abs(dx) > 0.01) sim.facing = Math.sign(dx);
+      walkMoments(before, now);
     }
   } else if (sim.mode === "act") {
     const h = hour();
@@ -2064,6 +2068,7 @@ function useFurniture(id, glowOnly = false) {
     const blind = id === "win_study";   // the study window has a roller blind instead of curtains
     log(st === "drawn" ? (blind ? "放下了卷帘。" : "拉上了窗帘。")
       : st === "open" ? (blind ? "卷起卷帘，推开窗户，风吹了进来。" : "拉开窗帘，推开窗户，风吹了进来。") : "关上了窗户。");
+    cardMoment(st === "open" ? "openWindow" : "closeWindow");
     return;
   }
   if (id === "stove" || id === "fridge" || id === "table") { openPicker("cook", pickFrom(id)); return; }   // all three: pick a dish to cook (user)
@@ -9539,6 +9544,11 @@ function rollChains(c) {
   }
   return false;
 }
+function lifeCtx() {          // what the event / card conditions look at
+  const h = hour(), sleeping = asleep();
+  return { h, se: seasonOf(sim.t), act: sim.mode === "act" ? sim.act : null, sleeping, awake: !sleeping,
+           open: Object.values(windowState).includes("open"), clear: weather.kind === "clear", day: h >= 8 && h < 18 };
+}
 const eventLast = {};
 let lastHour = -1, lastFestivalDay = 0;
 function rollEvents() {
@@ -9546,9 +9556,7 @@ function rollEvents() {
   if (hNow === lastHour) return;
   lastHour = hNow;
   if (sim.mode === "down") return;
-  const h = hour(), sleeping = asleep();
-  const c = { h, se: seasonOf(sim.t), act: sim.mode === "act" ? sim.act : null, sleeping, awake: !sleeping,
-              open: Object.values(windowState).includes("open"), clear: weather.kind === "clear", day: h >= 8 && h < 18 };
+  const c = lifeCtx(), h = c.h;
   // festivals, birthday and anniversaries, once on their day
   const day = Math.floor(sim.t / 1440) + 1;
   if (h >= 9 && c.awake && lastFestivalDay !== day) {
@@ -11204,7 +11212,7 @@ const CARDS = [
 ];
 
 for (const cd of CARDS) for (const k of ["a", "b"]) cd[k].out.forEach((o, i) => { if (o.mood) ML[o.id = `card${cd.n}${k}${i}`] = { ...o.mood }; });
-const CARD_GAP = 360, CARD_CHANCE = 0.3;         // game minutes between cards, odds per hour after that: about 1.5 a day
+const CARD_GAP = 300, CARD_CHANCE = 0.3;         // game minutes between cards, odds per hour after that
 const CARD_WAIT = 60000, CARD_LOCK = 900;        // ms: until she picks herself / before a result can be clicked away
 const cardEl = document.getElementById("card"), cardRes = document.getElementById("cardRes");
 const cardOpts = [...cardEl.querySelectorAll(".cd-opt")], crBox = cardRes.querySelector(".cr-box"), crMood = cardRes.querySelector(".cr-mood");
@@ -11229,8 +11237,9 @@ function cardFits(cd, c) {
 function rollCard(c) {
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   if (card || !c.awake || busyWith("bath", "toilet", "dress") || pickOn || sim.t - st.last < CARD_GAP || Math.random() >= CARD_CHANCE) return false;
-  let fresh = CARDS.filter(cd => !st.seen.includes(cd.n));
-  if (!fresh.length) { st.seen = st.seen.slice(-20); fresh = CARDS.filter(cd => !st.seen.includes(cd.n)); }   // all seen: start over, not the latest ones
+  const any = CARDS.filter(cd => !cd.on);
+  let fresh = any.filter(cd => !st.seen.includes(cd.n));
+  if (!fresh.length) { st.seen = st.seen.filter(n => !any.some(cd => cd.n === n) || st.seen.lastIndexOf(n) >= st.seen.length - 20); fresh = any.filter(cd => !st.seen.includes(cd.n)); }   // all seen: start over, not the latest ones
   const ok = fresh.filter(cd => cardFits(cd, c));
   if (!ok.length) return false;
   const w = cd => (cd.when ? 2 : 1);              // a fitting moment is used when it comes
@@ -11240,6 +11249,46 @@ function rollCard(c) {
   showCard(cd);
   return true;
 }
+// ---------- moments (user: cards for the bath, the toilet, cooking, the
+// stairs, passing a window, opening / closing one, ...): cards with `on` only
+// come at that moment, with these odds (frequent moments get lower ones).
+// All told about 2-3 cards a waking day.
+const MOMENT_ODDS = { stairs: 0.1, passWindow: 0.1, toilet: 0.2, wash: 0.25, eat: 0.3, phone: 0.3, pc: 0.3 };
+const ACT_MOMENT = act => act.startsWith("water_") ? "water" : act.startsWith("pc_") || act === "computer" ? "pc"
+  : act.startsWith("phone_") ? "phone" : act;
+function cardMoment(tag) {
+  if (!tag || card || sim.mode === "down" || pickOn || !CARDS.some(cd => cd.on === tag)) return false;
+  const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
+  if (sim.t - st.last < CARD_GAP || Math.random() >= (MOMENT_ODDS[tag] ?? 0.4)) return false;
+  const c = lifeCtx(), pool = CARDS.filter(cd => cd.on === tag && cardFits(cd, c));
+  // unseen first; once all are seen, any but the last few
+  const cd = pick(pool.filter(x => !st.seen.includes(x.n)).length ? pool.filter(x => !st.seen.includes(x.n))
+    : pool.filter(x => !st.seen.slice(-3).includes(x.n)).length ? pool.filter(x => !st.seen.slice(-3).includes(x.n)) : pool);
+  if (!cd) return false;
+  st.seen = [...st.seen.filter(n => n !== cd.n), cd.n]; st.last = sim.t;
+  showCard(cd);
+  return true;
+}
+// walking: onto the stairs; past a window (its middle, on her floor)
+let passedWin = null;
+function walkMoments(a, b) {
+  if (!a.dy && b.dy) cardMoment("stairs");
+  const fl = storeyOfY(b.y);
+  for (const id of Object.keys(windowState)) {
+    const w = CLICK[id];
+    if (!w || storeyOfY(w.y + w.h) !== fl) continue;
+    const mid = w.x + w.w / 2;
+    if (Math.abs(b.x - mid) > 30) { if (passedWin === id) passedWin = null; continue; }
+    if (passedWin !== id && (a.x - mid) * (b.x - mid) <= 0 && sim.act !== "window") { passedWin = id; cardMoment("passWindow"); }
+  }
+}
+// what the card can mention: the dish she's cooking / eating, the book, the show...
+function cardVars() {
+  const v = { ...(sim.item && sim.item.vars) };
+  if (sim.act === "eat" && sim.meal && sim.meal.vars) Object.assign(v, sim.meal.vars);
+  return v;
+}
+
 // over the house like the pick-a-thing panel; a very small house (a phone
 // page) is too small for a card, so then it is a bit bigger, centred on it
 function placeCard(el) {
@@ -11269,7 +11318,7 @@ function fromBuddy(el) {                         // grow out of / shrink into he
 }
 function showCard(cd) {
   closeRing(); setDiaryOpen(false); showMoodTip(false);
-  card = { cd, vars: {}, phase: "ask", hold: true };
+  card = { cd, vars: cardVars(), phase: "ask", hold: true };
   dimHouse(true);
   cardEl.querySelector("h3").textContent = fill(cd.title, card.vars);
   cardEl.querySelector("p").textContent = spaced(fill(cd.text, card.vars));
