@@ -203,7 +203,7 @@ body {
    and fades out; it never covers the house. */
 .moodrow {
   position: relative; z-index: 3; width: var(--house-w, 684px);   /* the emoji lines up with the house's left edge, never the open bars */
-  display: flex; align-items: center; gap: calc(var(--sky-b, 3px) * 4);
+  display: flex; align-items: center; gap: calc(var(--sky-b, 3px) * 2);   /* her words sit close to the emoji (user) */
   height: var(--mood-h, 72px); margin-bottom: calc(var(--sky-b, 3px) * 1);
 }
 .mood-face { position: relative; flex: none; width: var(--mood-d, 78px); height: var(--mood-d, 78px); cursor: pointer; outline: none; }
@@ -241,8 +241,8 @@ body {
 .pop .bg::after { content: ""; position: absolute; inset: 0; background: var(--pf); clip-path: var(--clip-say-in); }
 .pop .dot { position: absolute; z-index: -1; background: var(--pe); clip-path: var(--clip-dot); animation: dotin .32s cubic-bezier(.3, 1.6, .5, 1) both; }
 .pop .dot::after { content: ""; position: absolute; inset: 2px; background: var(--pf); clip-path: var(--clip-dot-in); }
-.pop .d1 { --clip-dot: var(--clip-dot-s); --clip-dot-in: var(--clip-dot-s-in); width: 8px; height: 8px; left: calc(2px - var(--tail, 24px)); top: calc(50% - 1px); }
-.pop .d2 { --clip-dot: var(--clip-dot-m); --clip-dot-in: var(--clip-dot-m-in); width: 12px; height: 12px; left: calc(12px - var(--tail, 24px)); top: calc(50% - 8px); animation-delay: .06s; }
+.pop .d1 { --clip-dot: var(--clip-dot-xs); --clip-dot-in: var(--clip-dot-xs-in); width: 6px; height: 6px; left: calc(1px - var(--tail, 18px)); top: calc(50% - 0px); }
+.pop .d2 { --clip-dot: var(--clip-dot-s); --clip-dot-in: var(--clip-dot-s-in); width: 8px; height: 8px; left: calc(9px - var(--tail, 18px)); top: calc(50% - 6px); animation-delay: .06s; }
 @keyframes dotin { from { transform: scale(0); } }
 .pop.say {
   --pe: #8a6446; --pf: #ecd5ad; color: #3d2a1e; font-weight: 700; margin-left: var(--tail, 16px);
@@ -449,7 +449,7 @@ body {
 .diary {
   position: absolute; z-index: 19; height: var(--say-h, 60px);   /* as tall as the speech bubble */
   top: calc(-8px - var(--row-h, 42px) + (var(--row-h, 42px) - var(--say-h, 60px)) / 2);
-  left: calc(var(--mood-d, 78px) + var(--sky-b, 3px) * 4 + var(--tail, 16px)); right: 0;   /* = the bubble's body */
+  left: calc(var(--mood-d, 78px) + var(--sky-b, 3px) * 2 + var(--tail, 16px)); right: 0;   /* = the bubble's body */
   --pe: #8a6446; --pf: #ecd5ad; --wood-ink: #3d2a1e;
   transition: opacity .2s, translate .25s cubic-bezier(.3, 1.4, .5, 1);
 }
@@ -2318,8 +2318,9 @@ function fit() {
   const nb = Math.max(6, Math.round(9 * k));
   widget.style.setProperty("--clip-btn", roundClip(nb, 2));
   widget.style.setProperty("--clip-btn-in", roundClip(nb - 1, 2));
-  const sayH = 48, tail = 24;                                 // a whole, even number of 2px steps; tail = the gap for the two little bubbles
+  const sayH = 48, tail = 18;                                 // a whole, even number of 2px steps; tail = the gap for the two little bubbles (user: closer to the emoji)
   const [sayOut, sayIn] = sayClip(sayH, tail, 12, 12, 2, 0);  // no tail, both ends full half-circles (user)
+  widget.style.setProperty("--clip-dot-xs", roundClip(1, 2)); widget.style.setProperty("--clip-dot-xs-in", roundClip(1, 1));   // 6px dot
   widget.style.setProperty("--clip-dot-s", roundClip(2, 2)); widget.style.setProperty("--clip-dot-s-in", roundClip(1, 2));   // 8px dot
   widget.style.setProperty("--clip-dot-m", roundClip(3, 2)); widget.style.setProperty("--clip-dot-m-in", roundClip(2, 2));   // 12px dot
   widget.style.setProperty("--say-h", sayH + "px");
@@ -2346,6 +2347,7 @@ function fit() {
   document.documentElement.style.setProperty("--row-h", 52 + "px");   // the gear + diary row: as tall as the emoji's canvas
   di.style.setProperty("--diary-max", Math.round(Math.max(150, Math.min(320, hPx * 1.1))) + "px");
   if (typeof kickNeeds === "function") kickNeeds();
+  if (typeof fitSay === "function") { fitSay(); fitDiary(); }   // a new size: refit both lines
   if (wardrobeOpen || diaryOn) { studio.refit(); makeRoom(); }
   if (pickOn) fitPicker();                          // (fit runs only after the page has loaded)   // what's open above the house got a new size
   if (TAURI) { fitWindow(); requestAnimationFrame(fitWindow); }   // the app window starts hidden: no frames until it's sized
@@ -9930,6 +9932,36 @@ function speak(text, now = false) {
   if (realClock < sayBusy || listOpen) { if (sayQueue.length < 2 && !sayQueue.includes(text)) sayQueue.push(text); return; }
   showSay(text);
 }
+// User: at small sizes her words and the diary line were cut off ("…"). A
+// line that doesn't fit first shrinks a little; if it still doesn't, it wraps
+// onto two lines (smaller again if need be) and the box grows to hold them,
+// its pixel outline remade for the new height (same 2px steps, same ends).
+function fitText(box, span, base, tail, H0, outVar, inVar) {
+  Object.assign(span.style, { fontSize: "", whiteSpace: "", display: "", webkitLineClamp: "", webkitBoxOrient: "", lineHeight: "" });
+  box.style.height = ""; box.style.removeProperty(outVar); box.style.removeProperty(inVar); box.classList.remove("two");
+  if (box.hidden || span.scrollWidth <= span.clientWidth + 1) return 0;
+  for (let fs = base - 1; fs >= Math.round(base * 0.85); fs--) {          // a little smaller, still one line
+    span.style.fontSize = fs + "px";
+    if (span.scrollWidth <= span.clientWidth + 1) return 0;
+  }
+  Object.assign(span.style, { whiteSpace: "normal", lineHeight: "1.25" });  // two lines, as large as fits
+  let fs = Math.round(base * 0.85);
+  const lines = () => Math.round(span.scrollHeight / (fs * 1.25));
+  span.style.fontSize = fs + "px";
+  while (lines() > 2 && fs > 12) span.style.fontSize = --fs + "px";
+  if (lines() > 2) Object.assign(span.style, { display: "-webkit-box", webkitBoxOrient: "vertical", webkitLineClamp: "2" });
+  const H = Math.max(H0, Math.ceil((2 * fs * 1.25 + 14) / 4) * 4);       // whole 2px steps, even rows
+  box.style.height = H + "px"; box.classList.add("two");
+  const [o, i] = sayClip(H, tail, 12, 12, 2, 0);
+  box.style.setProperty(outVar, o); box.style.setProperty(inVar, i);
+  return H - H0;
+}
+const SAY_FS = () => parseFloat(getComputedStyle(widget).getPropertyValue("--say-fs")) || 20;
+function fitSay() { fitText(popSay, popSay.querySelector("span"), SAY_FS(), 18, 48, "--clip-say", "--clip-say-in"); }
+function fitDiary() {
+  const di = document.getElementById("diary"), grow = fitText(diaryBox, diaryBox.querySelector("span"), SAY_FS() - 4, 0, 48, "--clip-diary", "--clip-diary-in");
+  di.style.height = grow ? 48 + grow + "px" : ""; di.style.translate = grow ? `0 ${-grow}px` : "";   // it grows upward, never onto her words
+}
 function showSay(text, who = "") {
   text = spaced(text);
   lastSaid = text;
@@ -9938,6 +9970,7 @@ function showSay(text, who = "") {
   if (who) span.prepend(Object.assign(document.createElement("em"), { className: "who", textContent: who }));   // someone else's line
   popSay.title = who + text;
   popBubble(popSay, 5200);
+  fitSay();
   sayBusy = realClock + 5.6;
   nextSay = realClock + 14 + Math.random() * 12;
 }
@@ -17008,6 +17041,7 @@ function syncDiary() {
   // just the words: the times show in the opened list, so more of the line fits here
   const text = diaryBox.querySelector("span");
   text.textContent = !li ? "今天还没有写什么。" : li.classList.contains("day") ? li.textContent : li.querySelector("span").textContent;
+  fitDiary();
   if (diaryOn) fillDiary();
 }
 function fillDiary() {

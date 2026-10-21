@@ -256,6 +256,12 @@ piece side by side — review new pieces there at 6x).
   one popping in when the screen fills is too abrupt).
   The scene swaps behind the full screen. View canvas is cleared before
   every frame (the house has see-through edges: outdoor leftovers showed).
+- **Words that don't fit** (user, at 25%): her bubble and the diary line
+  first shrink a little (to 85%), then wrap onto two lines (down to 12px,
+  clamped after two) and the box grows to hold them, its pixel outline
+  remade by `sayClip` for the new height (`fitText`; the diary grows
+  upward). Both boxes sit closer to the emoji / gear: row gap 2 x sky-b,
+  tail 18px with 6px + 8px dots.
 - **Strangers (NPCs)** (demo, user): random looks from the 造型室 options
   (`npcLook`, never both her hairstyle AND hair colour), kids = the same head
   on a shorter body (`kidBody` drops 2 leg + 2 torso rows), drawn with
