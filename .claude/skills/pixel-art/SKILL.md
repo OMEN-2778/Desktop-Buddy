@@ -461,7 +461,8 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   the 造型室's width).
 - **Settings grid** (user's sketch): labels one width; pills on a 12-column
   grid (`spans`): 时间流速 4 pills, 界面大小 3, 置顶游戏 2, 存档 = the
-  autosave switch (8) + 保存 (4), then 导出 导入 重生！ (重生！ asks twice).
+  autosave switch (8) + 保存 (4), then 教程 导出 导入 重生！ (3 each; 教程
+  sits right under the 存档 label's right side, user; 重生！ asks twice).
 - **Time speeds**: 暂停, one arrow 0.5 倍 (speed 1.5), two arrows 一倍 (3,
   the default), three arrows 两倍 (6).
 - **Settings rows** (`SETTINGS`): 时间流速, 界面大小 (− 100% +;
@@ -472,6 +473,21 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   不自动保存 / 保存, then 导出 / 导入 / 重生！ which asks twice) — exactly the
   user's sketch, desktop too (no 存档位置 row any more; 导出 in the app opens
   a save dialog, `export_save`).
+- **新手教程** (user: detailed, with pictures, always re-openable): a
+  picture book opening upward above the gear row like the 造型室 (`openGuide`,
+  `#guideSlot`), by itself on the first run (`prefs.guided` in the settings
+  file, not the save, so 重生！ doesn't bring it back) and from 设置 → 存档 →
+  教程. The clock stops while it's open (`cardHolds`). Pages live in
+  `prototype/demo/guide_text.js` (`[3]` = the picture's mark 3, `**bold**`,
+  `{名字}`/`{她}`); pictures are REAL screenshots with numbered marks,
+  `tools/make_guide_shots.js` (Playwright, DPR 2 at 100%, lossless WebP in
+  `art/out/guide/` + `guide.json`), embedded as `D.guide`. **When the UI
+  changes, reshoot** (`ONLY=id,...` for some) and rebuild; when a mechanic
+  changes, fix its page. Width: house width, at least 460 (it may reach
+  past a small house; `fitWindow` covers it), at most 880; narrow (<640) =
+  a 目录 button instead of the contents column. Height ≤ the room up to the
+  screen top in the app. The picture is sticky; pointing at a line lights
+  its marks.
 - **Settings are stored apart from the save** (`settingsStore`: browser
   localStorage `buddy-settings`, desktop `settings.json` in the config
   folder) and applied after `restore()`, so turning 自动保存 off is kept even

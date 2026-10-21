@@ -42,6 +42,14 @@ SRC = ROOT / "prototype/demo/index.src.html"
 OUT = ROOT / "prototype/demo/index.html"
 
 
+def guide_shots() -> dict:
+    """The 新手教程's screenshots (tools/make_guide_shots.js): {id: {src, w, h, marks}}."""
+    d = ROOT / "art/out/guide"
+    meta = json.loads((d / "guide.json").read_text()) if (d / "guide.json").exists() else {}
+    return {k: {**v, "src": "data:image/webp;base64," + base64.b64encode((d / f"{k}.webp").read_bytes()).decode()}
+            for k, v in meta.items() if (d / f"{k}.webp").exists()}
+
+
 def png(s: Sprite) -> str:
     buf = io.BytesIO()
     s.to_image().save(buf, "PNG", optimize=True)
@@ -286,9 +294,10 @@ def main():
         "bathHead": [tub_x + 5, tub_y + 6],
         "floors": floors, "stair": stair, "spots": spots, "rooms": rooms, "roomX": room_x, "lights": lights,
         "emissive": sorted({c.lower() for c in Hs.EMISSIVE}),
+        "guide": guide_shots(),
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", (SRC.parent / "chats_text.js").read_text()).replace("/*__PLACES_JS__*/", (SRC.parent / "places_text.js").read_text()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text())
+    html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", (SRC.parent / "chats_text.js").read_text()).replace("/*__PLACES_JS__*/", (SRC.parent / "places_text.js").read_text()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text()).replace("/*__GUIDE_JS__*/", (SRC.parent / "guide_text.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 

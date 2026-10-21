@@ -11,7 +11,9 @@ The game is the same single web page as the browser demo
 - 设置 (gear, above the mood emoji; rows open to the right): 时间流速,
   界面大小 (25%–200%; 25% = one game pixel per screen pixel, at any Windows
   display scaling), 置顶游戏, 存档 (with the 自动保存 switch: every 5
-  minutes or never; 导出 saves a copy where you pick)
+  minutes or never; 导出 saves a copy where you pick; 教程 opens the guide)
+- 新手教程: a picture book on how to play (real screenshots with numbered
+  marks), opening by itself the first time; 设置 → 存档 → 教程 brings it back
 - 机会卡 (chance cards; 200 at home, 50 more for each place she can go out to): now and then a little situation springs out of
   Buddy with two choices; the result pops out of her right after
   with the mood it gave her (click anywhere to close it). Left alone for a
