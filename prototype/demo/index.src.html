@@ -326,6 +326,7 @@ body {
   height: var(--say-h, 60px); padding-block: 0; align-items: center;   /* whole-pixel height keeps every step crisp */
 }
 .pop .who { font-style: normal; color: #9a6a3c; margin-right: .15em; }   /* "妈妈：", "【音符】", "评论：" */
+.pop.other span { color: #9a6a3c; }                                          /* and the whole line someone else says */
 @keyframes popin { from { opacity: 0; transform: scale(.5) translateX(-10px); } to { opacity: 1; transform: none; } }
 /* her moodlets: hovering (or tapping) the emoji swaps her words for a row of
    pills in the same place, so nothing gets covered. First pill = the
@@ -574,6 +575,21 @@ body {
 .diary-pop li { display: grid; grid-template-columns: 3.4em minmax(0, 1fr); gap: 8px; align-items: baseline; }
 .diary-pop li.day { grid-template-columns: 1fr; text-align: center; color: #8a6446; font-size: 12px; letter-spacing: .1em; padding-top: 4px; }
 .diary-pop li.empty { grid-template-columns: 1fr; color: #8a6446; }
+/* a call or video chat: its whole conversation folds out under the line */
+.diary-pop .talk-btn {
+  font: inherit; font-size: 12px; margin-left: 6px; padding: 0 8px; border: 0; cursor: pointer;
+  background: #e2c49c; color: #6b4a2b; border-radius: 9px; vertical-align: 1px; box-shadow: none; outline: none;
+}
+.diary-pop .talk-btn:focus-visible { outline: 2px dashed var(--focus); outline-offset: 1px; }
+.diary-pop .talk-btn::after { content: " ▸"; }
+.diary-pop .talk-btn[aria-expanded="true"]::after { content: " ▾"; }
+.diary-pop .talk-btn:hover { background: #d8b588; }
+.diary-pop .talk-log { display: none; grid-column: 2; margin: 2px 0 4px; padding: 4px 0 4px 10px; border-left: 2px solid #d3ae80; font-size: 13px; }
+.diary-pop li.open .talk-log { display: grid; gap: 2px; animation: talkIn .2s ease-out; }
+.diary-pop .talk-log p { margin: 0; }
+.diary-pop .talk-log em { font-style: normal; font-weight: 700; margin-right: .2em; }
+.diary-pop .talk-log .other { color: #9a6a3c; }
+@keyframes talkIn { from { opacity: 0; transform: translateY(-4px); } }
 @media (max-width: 520px) { .diary-box { gap: 6px; padding-right: 14px; } .diary-box b { padding: 0 10px; font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { .diary, .diary-pop { transition: none; } }
 /* ---------- pick-a-thing panel (user): clicking the bookshelf, the TV, a
@@ -1170,11 +1186,12 @@ const logEl = document.getElementById("log");
 const diaryEl = document.getElementById("diary"), diaryBox = document.getElementById("diaryBox");
 const diaryPop = document.getElementById("diaryPop"), diaryList = document.getElementById("diaryList");
 let diaryOn = false;
-function log(text, cls) {
+function log(text, cls, talk = null) {   // talk: [[who, line], ...], a whole conversation kept with the line
   text = spaced(text);
   const li = document.createElement("li");
   if (cls) { li.className = cls; li.textContent = text; }
   else li.innerHTML = `<time>${fmt(sim.t)}</time><span></span>`, li.querySelector("span").textContent = text;
+  if (talk && talk.length) li._talk = talk;
   logEl.prepend(li);
   while (logEl.children.length > 40) logEl.lastChild.remove();
   syncDiary();
@@ -2306,6 +2323,8 @@ const CATALOG = {
 function pickItem(act) {
   if (act === "pc_video") return chatItem("video", weighted([["friend", 3], ["mom", 1.2], ["dad", 1]]));
   if (act === "pc_forum") return chatItem("forum", pick(Object.keys(CHATS.forum)));
+  if (act === "phone_call") return chatItem("video", "mom", "call");
+  if (act === "phone_video") return chatItem("video", "friend", "phone");
   if (act === "cook") {   // hungry: she goes for something filling
     const all = T.cuisines.flatMap(c => c.dishes.map(d => [c, d]));
     const hungry = sim.needs.hunger < 50, w = ([, d]) => (hungry ? Math.max(1, (d.fill || 40) - 25) ** 2 : 1);
@@ -2389,9 +2408,10 @@ function lifeFinish(act) {
     case "pc_code": case "pc_video": case "pc_forum": case "phone_video": case "phone_call": case "phone_text": case "phone_feed":
       if (sim.item && sim.item.talk) {                // a conversation (user): its own diary line and mood
         const tk = sim.item.talk;
-        log(fill(tk.end, sim.item.vars));
+        log(fill(tk.end, sim.item.vars), null, tk.kind === "video" && sim.talk && sim.talk.said || null);
         if (tk.id) addMood(tk.id, { vars: sim.item.vars, diary: false, words: false });
         else addMood(weighted(T.outcomes[act]), { vars: sim.item.vars });
+        if (sim.forced) addMood(sim.forced);           // mom rang (an event): that feeling too
       }
       else if (sim.forced) { addMood(sim.forced); if (sim.forced === "momCall" && r < 0.3) addMood("homesick"); }   // the call / video an event started
       else addMood(weighted(T.outcomes[act]), { vars: { 朋友: pick(T.fill.朋友 || ["老朋友"]) } });
@@ -2873,6 +2893,7 @@ function showSay(text, who = "") {
   const span = popSay.querySelector("span");
   span.textContent = text;
   if (who) span.prepend(Object.assign(document.createElement("em"), { className: "who", textContent: who }));   // someone else's line
+  popSay.classList.toggle("other", !!who);           // ...all of it in the name's lighter colour (user)
   popSay.title = who + text;
   popBubble(popSay, 5200);
   fitSay();
@@ -4548,19 +4569,23 @@ function renderMall(dt) {
 // plain = her. The same conversation doesn't come back until most of its
 // group has been seen.
 /*__CHATS_JS__*/
-const CHAT_ACT = { pc_video: "video", pc_forum: "forum" };
+const CHAT_ACT = { pc_video: "video", pc_forum: "forum", phone_call: "video", phone_video: "video" };
 for (const [kind, groups] of Object.entries(CHATS)) for (const [who, g] of Object.entries(groups))
   g.talks.forEach((t, i) => { if (t.mood) ML[t.id = `chat_${who}_${i}`] = { ...t.mood }; });
-function chatItem(kind, who) {
+// on the phone (user: calls get a record too): 打给妈妈 is a voice call, so only
+// talks that never mention a camera; 和朋友视频 is a video call on the phone
+const VOICE_OK = t => !/镜头|画面|屏幕|摄像|看你|看看你/.test(t.lines.join(""));
+function chatItem(kind, who, via = "pc") {
   const g = CHATS[kind][who], seen = ((lifeFlags.talkSeen ||= {})[who] ||= []);
-  let fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i));
-  if (!fresh.length) { seen.splice(0, seen.length - 3); fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i)); }
+  const ok = i => !(via === "call" && !VOICE_OK(g.talks[i]));
+  let fresh = g.talks.map((_, i) => i).filter(i => ok(i) && !seen.includes(i));
+  if (!fresh.length) { seen.splice(0, seen.length - 3); fresh = g.talks.map((_, i) => i).filter(i => ok(i) && !seen.includes(i)); }
   const i = pick(fresh), t = g.talks[i], vars = { 朋友: pick(T.fill.朋友) };
   seen.push(i);
   const name = fill(g.name, vars);
   return { vars, talk: { ...t, kind, who, name,
-    start: kind === "video" ? `打开电脑，和${name}视频聊天。` : `打开电脑，${g.verb}。`,
-    end: kind === "video" ? `和${name}视频：${t.title}。` : `${g.verb}：${t.title}。` } };
+    start: via === "call" ? `拿起手机给${name}打电话。` : via === "phone" ? `拿起手机和${name}视频。` : kind === "video" ? `打开电脑，和${name}视频聊天。` : `打开电脑，${g.verb}。`,
+    end: via === "call" ? `和${name}打电话：${t.title}。` : kind === "video" ? `和${name}视频：${t.title}。` : `${g.verb}：${t.title}。` } };
 }
 function playTalk(dt) {
   if (!sim.item || !sim.item.talk || !CHAT_ACT[sim.act]) { sim.talk = null; return; }   // she was sent off to do something else
@@ -4569,6 +4594,7 @@ function playTalk(dt) {
   const raw = tk.lines[st.i++], mark = raw[0], text = fill((mark === ">" || mark === "#" ? raw.slice(1) : raw).trim(), sim.item.vars);
   const who = mark === ">" ? (tk.kind === "video" ? `${tk.name}：` : "评论：") : mark === "#" ? `【${CHATS.forum[tk.who].tag}】` : "";
   showSay(text, who);
+  (st.said ||= []).push([who, text]);                 // for the diary when it's over (user)
   st.wait = Math.min(4.6, Math.max(2.6, 1.4 + (who + text).length * 0.13));      // seconds of running time per line
 }
 
@@ -4798,8 +4824,25 @@ function diaryItem(li) {
   const out = document.createElement("li");
   if (li.classList.contains("day")) { out.className = "day"; out.textContent = li.textContent; }
   else { out.innerHTML = "<time></time><span></span>"; out.firstChild.textContent = li.querySelector("time").textContent; out.lastChild.textContent = li.querySelector("span").textContent; }
+  if (li._talk) {   // the whole conversation, folded under its line (user)
+    const b = Object.assign(document.createElement("button"), { type: "button", className: "talk-btn", textContent: `聊天记录 · ${li._talk.length} 句` });
+    const box = Object.assign(document.createElement("div"), { className: "talk-log" });
+    for (const [who, line] of li._talk) {
+      const p = document.createElement("p");
+      if (who) { p.className = "other"; p.append(Object.assign(document.createElement("em"), { textContent: who })); }
+      else p.append(Object.assign(document.createElement("em"), { textContent: nameOf() + "：" }));
+      p.append(spaced(line));
+      box.append(p);
+    }
+    const open = on => { out.classList.toggle("open", on); b.setAttribute("aria-expanded", String(on)); on ? talkOpen.add(li) : talkOpen.delete(li); };
+    b.addEventListener("click", () => open(!out.classList.contains("open")));
+    out.lastChild.append(b);
+    out.append(box);
+    open(talkOpen.has(li));
+  }
   return out;
 }
+const talkOpen = new WeakSet();   // records left open stay open when the list is redrawn
 function syncDiary() {
   const li = logEl.firstElementChild;
   // just the words: the times show in the opened list, so more of the line fits here
@@ -5047,7 +5090,7 @@ function snapshot() {
     house: { lamps, windows: windowState },
     weather: { plan: [...weather.plan], snowCover: weather.snowCover, season: weather.season },
     diary: [...logEl.children].map(li => li.classList.contains("day") ? ["day", li.textContent]
-      : ["", li.querySelector("time").textContent, li.querySelector("span").textContent]),
+      : ["", li.querySelector("time").textContent, li.querySelector("span").textContent, ...(li._talk ? [li._talk] : [])]),
   };
 }
 // older saves are brought up to date here, one version step at a time
@@ -5099,7 +5142,7 @@ function restore(sv) {
   for (const e of sv.diary || []) {
     const li = document.createElement("li");
     if (e[0] === "day") { li.className = "day"; li.textContent = e[1]; }
-    else { li.innerHTML = "<time></time><span></span>"; li.firstChild.textContent = e[1]; li.lastChild.textContent = e[2]; }
+    else { li.innerHTML = "<time></time><span></span>"; li.firstChild.textContent = e[1]; li.lastChild.textContent = e[2]; if (Array.isArray(e[3])) li._talk = e[3]; }
     logEl.appendChild(li);
   }
   syncDiary();

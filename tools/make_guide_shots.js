@@ -29,16 +29,10 @@ const SHOTS = [
     marks: ["#view", "#needs", "#moodFace", "#popSay", "#diaryBox", "#skybar", "#setGear"] },
   { id: "furniture", setup: () => { at("bookshelf"); hoverId = "fridge"; },
     clip: ["#view"], pad: 4,
-    marks: ["@bed", "@wardrobe", "@computer", "@bookshelf", "@sofa", "@stove", "@fridge", "@bathtub", "@toilet", "@front_door", "@win_living", "@floor_lamp"] },
-  { id: "picker", setup: () => { at("bookshelf"); useFurniture("bookshelf"); }, wait: 900,
-    clip: ["#view"], pad: 4,
-    marks: [".pk-item:nth-of-type(2)", "#picker .rand", "#picker .x"] },
+    marks: ["@bed", "@wardrobe", "@computer", "@bookshelf", "@stove", "@front_door"] },
   { id: "ring", setup: () => { at("sofa", 40); openRing("buddy"); }, wait: 800,
     clip: ["#view"], pad: 4,
     marks: [() => box(ringEl.querySelector(".ring-label")), () => btn("玩手机"), () => btn("改名字")] },
-  { id: "computer", setup: () => { at("computer"); openRing("computer"); }, wait: 800,
-    clip: ["#view"], pad: 4,
-    marks: [() => btn("打游戏"), () => btn("视频聊天"), () => btn("逛论坛"), () => btn("写代码")] },
   { id: "needs", setup: () => { at("sofa"); Object.assign(sim.needs, { hunger: 14, energy: 66, hygiene: 82, bladder: 38, social: 55, fun: 91 }); setNeedsOpen(true); }, wait: 1400,
     clip: [() => bar(0), () => bar(5), "#needs"], pad: 12, extendRight: 120,
     marks: [() => bar(0), () => bar(1), () => bar(2), () => bar(3), () => bar(4), () => bar(5)] },
@@ -49,36 +43,12 @@ const SHOTS = [
     }, wait: 1100,
     clip: ["#moodrow", "#moodTip"], pad: 12,
     marks: ["#moodFace", () => box(moodTip.children[0]), () => box(moodTip.children[1])] },
-  { id: "diary", setup: () => {
-      at("sofa"); logEl.innerHTML = ""; log("—— 第 4 天 · 春 ——", "day");
-      for (const t of ["起床伸了个懒腰。", "去卫生间洗脸刷牙。", "做了一碗番茄鸡蛋面。", "窝在沙发上看电视。", "给客厅的绿植浇了水。"]) log(t);
-      speak("这集也太好看了吧！", true); setDiaryOpen(true);
-    }, wait: 900,
-    clip: ["#moodrow", "#diaryPop"], pad: 12,
-    marks: ["#diaryBox", "#diaryPop", "#popSay"] },
-  { id: "sky", setup: () => { at("sofa"); popSay.hidden = true; skyTipShow(); }, wait: 700,
-    clip: ["#skybar", "#skyTip"], pad: 12,
-    marks: [() => skyIcon(), "#skyTip"] },
   { id: "card", setup: () => { at("sofa"); showCard(CARDS.find(c => c.n === 4)); }, wait: 1400,
     clip: ["#view"], pad: 4,
     marks: [() => box(cardEl.querySelector("h3")), ".cd-opt[data-k=a]", ".cd-opt[data-k=b]"] },
-  { id: "down", setup: () => { at("sofa"); collapse("hunger"); holding = { t0: realClock - 2.6 }; }, wait: 700,
-    clip: ["#view"], pad: 4, crop: () => around(here(), 120, 70),
-    marks: [() => around(here(), 14, 22)] },
-  { id: "studio", setup: () => { at("wardrobe"); openWardrobe(); }, wait: 1200,
-    clip: ["#studio"], pad: 10,
-    marks: [() => box(document.querySelector(".st-stage")), () => box(document.querySelector(".st-tabs")), () => box(document.querySelector(".st-namerow"))] },
   { id: "door", setup: () => { at("front_door"); openRing("door", "door"); }, wait: 800,
     clip: ["#view"], pad: 4,
     marks: ["@front_door", () => btn("去门口"), () => btn("去公园"), () => btn("去商场"), () => btn("去海边")] },
-  { id: "out", setup: async () => {
-      throughDoor("mall");
-      await new Promise(r => { const k = setInterval(() => { if (sim.place === "mall" && sim.mode === "act") { clearInterval(k); r(); } }, 50); });
-      await new Promise(r => setTimeout(r, 2600));
-      speed = 0;
-    }, wait: 600,
-    clip: ["#view"], pad: 4,
-    marks: [() => around({ x: here().x, y: here().y - 32 }, 8, 8), () => shopRect()] },
   { id: "settings", setup: () => { at("sofa"); setSettingsOpen(true); }, wait: 1000,
     clip: ["#setGear", "#setPop"], pad: 12,
     marks: [() => row("时间流速"), () => row("界面大小"), () => row("置顶游戏"), () => row("存档"), () => btn("教程", setPop)] },

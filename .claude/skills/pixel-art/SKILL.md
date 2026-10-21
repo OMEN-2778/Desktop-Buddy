@@ -478,7 +478,8 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   `#guideSlot`), by itself on the first run (`prefs.guided` in the settings
   file, not the save, so 重生！ doesn't bring it back) and from 设置 → 存档 →
   教程. The clock stops while it's open (`cardHolds`). Pages live in
-  `prototype/demo/guide_text.js` (`[3]` = the picture's mark 3, `**bold**`,
+  `prototype/demo/guide_text.js` — 8 short pages of short lines (user: the
+  first, detailed 16-page version was too much; keep it brief) (`[3]` = the picture's mark 3, `**bold**`,
   `{名字}`/`{她}`); pictures are REAL screenshots with numbered marks,
   `tools/make_guide_shots.js` (Playwright, DPR 2 at 100%, lossless WebP in
   `art/out/guide/` + `guide.json`), embedded as `D.guide`. **When the UI
@@ -640,6 +641,12 @@ edits; copy changes into life_text.js.
   plain = her); she stays until it's over; diary line at the start (who /
   which forum) and the end (its title), and its moodlet (`chat_<who>_<i>`).
   She picks one herself too (friends weighted 3 : mom 1.2 : dad 1).
+  The phone ring's 打给妈妈 / 和朋友视频 play the same talks (`chatItem(kind,
+  who, via)`; a voice call skips talks that mention a camera, `VOICE_OK`).
+  Someone else's whole line is in the name's colour (`.pop.other`, user).
+  When a call or video chat ends, the whole conversation is kept with its
+  diary line (`li._talk`, saved as the 4th field of a diary entry) and folds
+  out under it in the opened diary (聊天记录 · N 句, user). Forums don't.
 Moodlets add points to one emotion, the top sum wins (1-2 有点, 3-5, 6+ 非常),
 condition moodlets last while true. Events roll once a game hour with
 cooldowns; her words queue so bubbles never cut each other off. Social
