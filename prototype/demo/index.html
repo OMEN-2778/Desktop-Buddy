@@ -10744,6 +10744,7 @@ function renderOutside() {
   const down = sim.mode === "down";
   if (fr.emote || down) bctx.drawImage(emoteCanvas(down ? "skull" : fr.emote), emoteAt[0], emoteAt[1] + (down ? Math.floor(realClock * 2) % 2 : 0));
   if (down) drawRevive(bctx);
+  drawYouMark(bctx, fr.emote);
   drawWalkMark(bctx);
   drawClickFx(bctx);
   vctx.imageSmoothingEnabled = false;
@@ -12732,8 +12733,32 @@ function drawOutBuddy(ctx, fr) {
   }
   return { emoteAt: [x + 13, y - 15 + (pose === "sit" ? 3 : 0)], dollAt: [dc, x, y] };
 }
+// Outside she's easy to lose (user): a little outlined triangle over her head
+// in the colour of her lowest need's bar, bobbing gently.
+const markCache = new Map();
+function markCanvas(col) {
+  if (markCache.has(col)) return markCache.get(col);
+  const c = document.createElement("canvas"); c.width = 9; c.height = 6;
+  const x = c.getContext("2d");
+  const fill = (cx, cy) => [0, 1, 2, 3].forEach(i => x.fillRect(cx - 3 + i, cy + i, 7 - 2 * i, 1));
+  x.fillStyle = "#33253b";
+  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) fill(4 + dx, 1 + dy);   // outline: the shape grown a pixel each way
+  x.fillStyle = col; fill(4, 1);
+  x.fillStyle = "rgba(255, 255, 255, .55)"; x.fillRect(2, 1, 3, 1);                  // a glint on the top edge
+  markCache.set(col, c);
+  return c;
+}
+function drawYouMark(ctx, emote) {
+  if (sim.mode === "down" || (sim.place === "mall" && mallInside())) return;
+  const low = Math.min(...Object.values(sim.needs)), css = getComputedStyle(document.documentElement);
+  const col = (css.getPropertyValue(low < 20 ? "--need-low" : low < 50 ? "--need-warn" : "--need-ok") || "#b2d683").trim();
+  const p = here(), sit = OUT[sim.place] && OUT[sim.place].kind === "sit";
+  const y = Math.round(p.y - DH + (sit ? 3 : 0) - 7 - (emote ? 14 : 0) + Math.sin(realClock * 3.2) * 1.5);
+  ctx.drawImage(markCanvas(col), Math.round(p.x) - 4, y);
+}
 function finishOut(fr, emoteAt) {
   const down = sim.mode === "down";
+  drawYouMark(bctx, fr.emote);
   if (fr.emote || down) bctx.drawImage(emoteCanvas(down ? "skull" : fr.emote), emoteAt[0], emoteAt[1] + (down ? Math.floor(realClock * 2) % 2 : 0));
   if (down) drawRevive(bctx);
   drawWalkMark(bctx);

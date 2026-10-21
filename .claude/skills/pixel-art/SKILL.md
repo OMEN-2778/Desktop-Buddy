@@ -232,6 +232,11 @@ piece side by side — review new pieces there at 6x).
   at night), fireflies on summer nights, the lamp lit. Dock: ships, gulls,
   glints, lamps at night.
 
+- **"You are here" mark** (user: outside she's easy to lose): a 7x4 pixel
+  down-triangle over her head, 1px `ink` outline, a glint on top, in the
+  colour of her LOWEST need's bar (--need-ok / warn / low), bobbing ±1px;
+  lifted over an emote, hidden when she's down or inside a shop
+  (`drawYouMark`). Outside only.
 - **Strangers (NPCs)** (demo, user): random looks from the 造型室 options
   (`npcLook`, never both her hairstyle AND hair colour), kids = the same head
   on a shorter body (`kidBody` drops 2 leg + 2 torso rows), drawn with
