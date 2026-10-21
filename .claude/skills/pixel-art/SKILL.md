@@ -465,9 +465,14 @@ edits; copy changes into life_text.js.
   life rarely gives (30 simulated days: 专心 焦虑 生气 发懵 调皮 心动 害怕
   无聊 under 2.5%, 美滋滋 48%), at most 4 for the ones that can make her
   collapse; they last x1.25 (2-8 h). Console: 机会卡测试.
+- **Ring menus** (`layoutRing`, user: no overlaps, every label in full):
+  pills are measured, placed on an ellipse (aspect from their average
+  size) that grows until no two touch (8px apart), then the whole ring is
+  shifted (`ringShift`) to stay inside the house — or the window when the
+  house is too small to hold it (phone pages).
 - **Video chats & forums** (user): the computer ring's 视频聊天 ▸ / 逛论坛 ▸
   open second rings (和爸爸 / 和妈妈 / 和朋友; 刷音符 / 刷小红本 / 逛树洞岛 /
-  逛冷知识). `CHATS` (prototype/demo/chats_text.js, pasted in by make_demo):
+  逛冷知识研究所). `CHATS` (prototype/demo/chats_text.js, pasted in by make_demo):
   dad 10, mom 10, friends 30 ({朋友} picked per call), 30 per forum. One
   conversation per visit (`chatItem`, unseen first, `lifeFlags.talkSeen`)
   plays line by line in her bubble while time runs (`playTalk`; ">" someone

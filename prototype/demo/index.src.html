@@ -2987,7 +2987,7 @@ const RINGS = {
   computer: [["computer", "打游戏"], ["video", "视频聊天 ▸", "more"], ["forum", "逛论坛 ▸", "more"], ["pc_code", "写代码"]],
   // user: video chat with 爸爸 / 妈妈 / a friend, forums by platform (CHATS, chats_text.js)
   video: [["talk:dad", "和爸爸"], ["talk:mom", "和妈妈"], ["talk:friend", "和朋友"], ["back", "返回", "back"]],
-  forum: [["feed:yinfu", "刷音符"], ["feed:xiaohongben", "刷小红本"], ["feed:shudong", "逛树洞岛"], ["feed:lengzhishi", "逛冷知识"], ["back", "返回", "back"]],
+  forum: [["feed:yinfu", "刷音符"], ["feed:xiaohongben", "刷小红本"], ["feed:shudong", "逛树洞岛"], ["feed:lengzhishi", "逛冷知识研究所"], ["back", "返回", "back"]],
 };
 let ringOf = null, ringAt = null;
 function ringCenter() {
@@ -2995,29 +2995,57 @@ function ringCenter() {
   const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : here();
   return { x: p.x, y: p.y - 13 };
 }
+let ringShift = { x: 0, y: 0 };
 function placeRing() {
   if (ringEl.hidden) return;
   const c = ringCenter(), k = scale;
-  ringEl.style.left = view.offsetLeft + c.x * k + "px";
-  ringEl.style.top = view.offsetTop + c.y * k + "px";
+  ringEl.style.left = view.offsetLeft + c.x * k + ringShift.x + "px";
+  ringEl.style.top = view.offsetTop + c.y * k + ringShift.y + "px";
+}
+// Lay the pills out round the centre without any two touching (user: no
+// overlaps, every label in full): measure them, then grow the ellipse until
+// every pair is apart; then move the whole ring back inside the house (or
+// the window, for a house too small to hold it).
+function layoutRing() {
+  const els = [...ringEl.children].filter(el => el.matches("button, .ring-label"));
+  const n = els.length, sz = els.map(el => [el.offsetWidth, el.offsetHeight]), gap = 8;
+  if (!n) return;
+  const avgW = sz.reduce((a, [w]) => a + w, 0) / n, avgH = sz.reduce((a, [, h]) => a + h, 0) / n;
+  const aspect = Math.max(1.25, Math.min(2.2, avgW / avgH * 0.42));
+  const ang = els.map((_, i) => -Math.PI / 2 + i / n * Math.PI * 2);
+  const apart = pos => pos.every(([x, y], i) => pos.every(([x2, y2], j) => j <= i
+    || Math.abs(x - x2) >= (sz[i][0] + sz[j][0]) / 2 + gap || Math.abs(y - y2) >= (sz[i][1] + sz[j][1]) / 2 + gap));
+  let R = Math.max(40, Math.min(118, 24 * scale)), pos;
+  for (let t = 0; t < 80; t++) {
+    pos = ang.map(a => [Math.round(Math.cos(a) * R * aspect), Math.round(Math.sin(a) * R)]);
+    if (apart(pos)) break;
+    R *= 1.05;
+  }
+  els.forEach((el, i) => { el.style.setProperty("--x", pos[i][0] + "px"); el.style.setProperty("--y", pos[i][1] + "px"); });
+  // keep it all inside the house (margin 4px); if it can't fit, inside the window
+  const c = ringCenter(), cx = view.offsetLeft + c.x * scale, cy = view.offsetTop + c.y * scale;
+  const L = Math.min(...pos.map(([x], i) => x - sz[i][0] / 2)), Rt = Math.max(...pos.map(([x], i) => x + sz[i][0] / 2));
+  const T = Math.min(...pos.map(([, y], i) => y - sz[i][1] / 2)), B = Math.max(...pos.map(([, y], i) => y + sz[i][1] / 2));
+  const wr = ringEl.offsetParent.getBoundingClientRect();
+  const fitIn = (lo, hi, a, b, c0) => (b - a > hi - lo ? (lo + hi) / 2 - (a + b) / 2 - c0 : Math.max(lo - (c0 + a), Math.min(0, hi - (c0 + b))));
+  const boxX = Rt - L > view.offsetWidth - 8 ? [12 - wr.left, innerWidth - 12 - wr.left] : [view.offsetLeft + 4, view.offsetLeft + view.offsetWidth - 4];
+  const boxY = B - T > view.offsetHeight - 8 ? [12 - wr.top, innerHeight - 12 - wr.top] : [view.offsetTop + 4, view.offsetTop + view.offsetHeight - 4];
+  ringShift = { x: Math.round(fitIn(boxX[0], boxX[1], L, Rt, cx)), y: Math.round(fitIn(boxY[0], boxY[1], T, B, cy)) };
 }
 function openRing(which, at = which === "computer" ? "computer" : "buddy") {
   ringOf = which; ringAt = at;
   const items = RINGS[which];
-  const k = scale, R = Math.max(48, Math.min(118, 24 * k));
   ringEl.innerHTML = "";
   items.forEach(([id, label, cls], i) => {
     const b = document.createElement(cls === "label" ? "span" : "button");
     if (cls === "label") { b.className = "ring-label"; b.textContent = nameOf(); }   // her name tops the ring
     else { b.type = "button"; b.textContent = label; b.setAttribute("role", "menuitem"); if (cls) b.className = cls; }
-    const a = -Math.PI / 2 + i / items.length * Math.PI * 2;
-    b.style.setProperty("--x", Math.round(Math.cos(a) * R * 1.25) + "px");
-    b.style.setProperty("--y", Math.round(Math.sin(a) * R) + "px");
     b.style.setProperty("--k", i);
     if (cls !== "label") b.addEventListener("click", ev => { ev.stopPropagation(); ringPick(id); });
     ringEl.appendChild(b);
   });
   ringEl.hidden = false;
+  layoutRing();
   placeRing();
   ringEl.classList.remove("on");
   void ringEl.offsetWidth;
@@ -3051,7 +3079,7 @@ function openRename() {
   row.querySelector(".die").addEventListener("click", e => { e.stopPropagation(); input.value = doll.randomName(look.gender, input.value); input.focus(); });
   row.querySelector(".ok").addEventListener("click", e => { e.stopPropagation(); done(); });
   ringEl.appendChild(row);
-  ringEl.hidden = false; placeRing();
+  ringEl.hidden = false; ringShift = { x: 0, y: 0 }; placeRing();
   ringEl.classList.remove("on"); void ringEl.offsetWidth; ringEl.classList.add("on");
   setTimeout(() => { input.focus(); input.select(); }, reduceMotionUI ? 0 : 120);
 }
@@ -3081,7 +3109,7 @@ function showHint(text) {
   ringEl.innerHTML = `<div class="hint"></div>`;
   ringEl.firstChild.textContent = text;
   ringEl.firstChild.style.top = -Math.round(18 * scale) + "px";
-  ringEl.hidden = false; placeRing();
+  ringEl.hidden = false; ringShift = { x: 0, y: 0 }; placeRing();
   clearTimeout(hintT); hintT = setTimeout(() => { if (!ringOf) closeRing(); }, 1800);
 }
 document.addEventListener("pointerdown", e => { if (ringOf && !ringEl.contains(e.target) && e.target !== view) closeRing(); });
