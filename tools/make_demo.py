@@ -135,7 +135,7 @@ def main():
         "kind": "sit",
         "img": {"seasons": {se: {"bg": png(PK.background(se)), "trees": [png(PK.trees(se, f)) for f in (0, 1)]} for se in PK.SEASONS},
                 "snow": png(PK.snow_layer()), "wet": png(PK.wet_layer()), "lit": png(PK.lit()),
-                "duck": [png(PK.duck(f)) for f in range(3)], "plane": png(PK.plane()), "sparrow": sparrows, "butterfly": flies, "cloud": clouds},
+                "duck": [png(PK.duck(f)) for f in range(3)], "plane": png(PK.plane()), "bench": png(PK.bench_layer()), "sparrow": sparrows, "butterfly": flies, "cloud": clouds},
         "trees": [[kind, x, cy, rx, ry] for kind, x, cy, _, rx, ry in PK.TREES], "pond": list(PK.POND),
         "horizon": PK.HORIZON, "path": list(PK.PATH), "side": PK.PATH[0], "feet": PK.FEET,
         "walk": [PK.BENCH, PK.BENCH], "doorX": PK.BENCH, "lamp": PK.LAMP},
@@ -286,7 +286,7 @@ def main():
         "emissive": sorted({c.lower() for c in Hs.EMISSIVE}),
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", (SRC.parent / "chats_text.js").read_text())
+    html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", (SRC.parent / "chats_text.js").read_text()).replace("/*__PLACES_JS__*/", (SRC.parent / "places_text.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 

@@ -416,6 +416,13 @@ def lit():
     return s
 
 
+def bench_layer():
+    """The bench alone: the page draws it over people walking behind it."""
+    s = Sprite(W, H)
+    bench(s)
+    return s
+
+
 def plane():
     """A far-off airliner, a few pixels long (the page adds the contrail)."""
     s = Sprite(9, 4)

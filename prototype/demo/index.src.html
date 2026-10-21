@@ -311,6 +311,17 @@ body {
   box-shadow: inset 0 -2px 0 0 var(--bevel-lo), inset 0 2px 0 0 var(--bevel-hi);
 }
 .ring .ring-label { color: #f7f6fb; cursor: default; }
+/* strangers outside talk in small pills over their heads */
+.npcsay {
+  position: absolute; z-index: 6; transform: translate(-50%, -100%); white-space: nowrap; pointer-events: none; isolation: isolate;
+  font-size: calc(var(--ring-fs, 14px) * .86); font-weight: 700; color: var(--ink); padding: 5px 12px;
+  filter: drop-shadow(2px 2px 0 var(--shadow)); animation: npcIn .32s cubic-bezier(.3, 1.6, .5, 1);
+}
+.npcsay::before, .npcsay::after { content: ""; position: absolute; z-index: -1; }
+.npcsay::before { inset: 0; background: var(--edge); clip-path: var(--clip-btn); }
+.npcsay::after { inset: 2px; background: var(--panel-2); clip-path: var(--clip-btn-in); }
+@keyframes npcIn { from { transform: translate(-50%, -100%) scale(.3); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .npcsay { animation: none; } }
 .ring .ring-label::before { background: var(--title, #33253b); }
 .ring button:hover { background: none; }
 .ring button:hover::after { background: var(--panel); }
@@ -876,8 +887,8 @@ function syncNames() {
 const DW = doll.W, DH = doll.H;
 const dollCache = new Map(), rotCache = new Map();
 function rowsOf(buf, w, r) { return buf.slice(r * w * 4, (r + 1) * w * 4); }
-function applyPose(buf, pose) {
-  const W4 = DW * 4, P = D.doll.pose[look.bottomStyle];
+function applyPose(buf, pose, lk = look) {
+  const W4 = DW * 4, P = D.doll.pose[lk.bottomStyle];
   if (pose === "walkL" || pose === "walkR") {   // lift one foot by a pixel
     const out = buf.slice();
     const c0 = pose === "walkL" ? 0 : DW / 2, c1 = c0 + DW / 2;
@@ -3491,6 +3502,7 @@ function renderOutside() {
   if (sim.place === "mall") return renderMall(dt);
   const f = nightness(hour()), O = IMG.out[sim.place], se = SEASON_KEYS[seasonOf(sim.t).i], S = O.seasons[se];
   if (speed && !cardHolds() && !wiping) outsideLife(dt);
+  npcTick(dt, speed && !cardHolds() && !wiping);
   bctx.clearRect(0, 0, W, H);
   bctx.drawImage(S.bg, 0, 0);
   if (life.wet > 0.02) { bctx.globalAlpha = life.wet; bctx.drawImage(O.wet, 0, 0); bctx.globalAlpha = 1; }
@@ -3499,6 +3511,7 @@ function renderOutside() {
   bctx.drawImage(treeImg, 0, 0);
   if (weather.snowCover > 0.02) { bctx.globalAlpha = Math.min(1, weather.snowCover); bctx.drawImage(O.snow, 0, 0); bctx.globalAlpha = 1; }
   drawOutsideLife(bctx);
+  drawNpcs(bctx, "back");
   const ms = realClock * 1000, fr = activityFrame(ms);
   const full = { expr: "neutral", look: 0, bob: 0, sway: 0, wave: null, ...fr.f };
   let emoteAt, dollAt = null;
@@ -3519,6 +3532,7 @@ function renderOutside() {
     }
     emoteAt = [x + 13, y - 15];
   }
+  drawNpcs(bctx, "front");
   drawOutsideWeather(bctx);
   gradeOutside(bctx, f);
   if (f > 0) {                                     // lit windows at night, behind the trees and her
@@ -3535,6 +3549,7 @@ function renderOutside() {
   drawClickFx(bctx);
   vctx.imageSmoothingEnabled = false;
   vctx.drawImage(buf, 0, 0, view.width, view.height);
+  placeNpcPills();
 }
 
 // ================================================================ the park, the mall, the beach
@@ -3601,6 +3616,7 @@ function redNeed() {
 }
 function homeFor(k) { speak(pick([`${NEED_NAMES[k]}不太行了，回家吧`, "该回家了", "先回家一趟"])); }
 function arriveAt(place) {                       // fresh life for the new place
+  if (place === "home") { life.npcs = []; life.talkQ = null; clearNpcPills(); return; }
   life.birds = []; life.flies = []; life.bits = []; life.ducks = []; life.gulls = []; life.ship = null; life.boat = null; life.plane = null; life.front = [];
   life.clouds = [0, 1, 2, 3].map(i => ({ k: i % 3, x: Math.random() * W, y: 3 + Math.random() * 22, v: 1.2 + Math.random() * 2.4 }));
   if (place === "park" && seasonOf(sim.t).i !== 3) {
@@ -3611,6 +3627,252 @@ function arriveAt(place) {                       // fresh life for the new place
     Object.assign(mallS, { x: Math.random() * OUT.mall.nearW, dist: 0, dir: -1, goal: null, stop: null });
     mallS.shoppers = [0, 1, 2, 3, 4, 5].map(i => ({ k: i % 5, x: Math.random() * OUT.mall.farW, dir: i % 2 ? 1 : -1, v: 5 + Math.random() * 5 }));
   }
+  npcSetup(place);
+}
+
+
+// ================================================================ strangers (NPCs) and what's said out there
+// User: people pass through every place (not clickable yet), each a random
+// look from the 造型室's options — never both her hairstyle and her hair
+// colour — kids among them (the same head on a shorter body). Front and
+// park: grown-ups and kids along the sidewalk / path; the mall: kiosk staff
+// behind their counters, clerks at some shop doors, 地摊 sellers on their
+// stools calling out, shoppers both ways; the dock: now and then someone
+// strolling, sometimes an angler at the railing. They talk in little pills
+// over their heads; one passing her may swap a line or two with her, and
+// she muses about the place by herself (PLACE_TEXT, places_text.js).
+/*__PLACES_JS__*/
+const NO = D.doll.options, NSW = D.doll.swatches;
+function npcLook() {
+  const short = NO.style.filter(o => D.doll.shortStyles.includes(o[0])), long = NO.style.filter(o => !D.doll.shortStyles.includes(o[0]));
+  const cloth = NSW.cloth.map(c => c[1].toLowerCase()), skirts = ["pleated", "maxi"];
+  for (;;) {
+    const g = pick(["f", "m"]), top = pick(cloth);
+    const lk = doll.normalize({ gender: g, style: pick(Math.random() < 0.85 ? (g === "m" ? short : long) : NO.style)[0], eyes: pick(NO.eyes)[0],
+      topStyle: pick(NO.top)[0], bottomStyle: pick(NO.bottom.filter(o => g === "f" || !skirts.includes(o[0])))[0], socks: pick(NO.socks)[0],
+      acc: Math.random() < 0.25 ? [pick(NO.acc)[0]] : [], hair: pick(NSW.hair)[1], skin: pick(NSW.skin)[1],
+      top, bottom: pick(cloth.filter(c => c !== top)), sock: pick(cloth), eye: pick(NSW.eye)[1] });
+    if (!(lk.style === look.style && lk.hair === look.hair)) return lk;   // never her double
+  }
+}
+function makeNpc(role, o = {}) {
+  const lk = npcLook(), kid = role === "kid";
+  return { role, kid, look: lk, ramps: doll.rampsOf(lk), cache: new Map(), dist: 0, ph: Math.random() * 1e4, sayUntil: 0, dir: 1, v: 0, ...o };
+}
+function kidBody(buf, lk) {                     // the same chibi head on a shorter body: two leg rows and two torso rows go
+  const drop = new Set([...D.doll.pose[lk.bottomStyle].sitDrop, 18, 20]), keep = [];
+  for (let r = 0; r < DH; r++) if (!drop.has(r)) keep.push(r);
+  const out = new Uint8ClampedArray(buf.length), off = DH - keep.length;
+  keep.forEach((r, i) => out.set(rowsOf(buf, DW, r), (i + off) * DW * 4));
+  return out;
+}
+function npcCanvas(n, f, pose, back) {
+  const key = JSON.stringify([f.expr, f.look, f.bob, f.sway, f.wave ?? null, pose, !!back]);
+  let c = n.cache.get(key);
+  if (!c) {
+    let buf = back ? doll.pixelsBack(n.look, f, n.ramps) : doll.pixels(n.look, f, n.ramps);
+    buf = applyPose(buf, pose, n.look);
+    if (n.kid) buf = kidBody(buf, n.look);
+    n.cache.set(key, c = doll.toCanvas(buf, DW, DH));
+  }
+  return c;
+}
+function npcFrame(n) {
+  if (n.v && !n.paused) {
+    const i = Math.floor(n.dist / 4) % 4;
+    return [{ expr: "neutral", look: n.dir, bob: i % 2 ? 0 : 1, sway: i % 2 }, ["walkL", "stand", "walkR", "stand"][i]];
+  }
+  const ms = realClock * 1000 + n.ph, talking = n.sayUntil > realClock;
+  const f = { expr: talking ? "happy" : Math.floor(ms / 2900) % 5 === 0 ? "blink" : "neutral", bob: Math.floor(ms / 1300) % 2,
+    look: n.back ? 0 : [0, 1, 0, -1][Math.floor(ms / 3100) % 4] };
+  if (talking && n.role === "hawker") f.wave = Math.floor(ms / 260) % 2;
+  return [f, n.sit ? "sit" : "stand"];
+}
+const npcX = n => n.u != null ? onScreen(n.u) : n.x;
+function drawNpcs(ctx, layer) {
+  for (const n of life.npcs || []) {
+    if (n.layer !== layer || n.gone) continue;
+    const x = npcX(n);
+    if (x < -20 || x > W + 20) continue;
+    const [f, pose] = npcFrame(n);
+    ctx.drawImage(npcCanvas(n, f, pose, n.back), Math.round(x - DW / 2), Math.round(n.feet - DH + 1));
+    if (n.rod) drawRod(ctx, n, x);
+  }
+}
+function drawRod(ctx, n, x) {                    // the angler's rod over the railing, the line down to the water
+  const hx = Math.round(x) + 5, hy = n.feet - 12, bite = n.bite > realClock;
+  const tx = hx + 16, ty = hy - 14 + (bite ? 3 : 0);
+  ctx.strokeStyle = "#5d3831"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(hx + 0.5, hy + 0.5); ctx.lineTo(tx + 0.5, ty + 0.5); ctx.stroke();
+  ctx.strokeStyle = "rgba(247, 246, 251, 0.75)";
+  ctx.beginPath(); ctx.moveTo(tx + 0.5, ty + 0.5); ctx.quadraticCurveTo(tx + 8, ty + 10, tx + 9.5, OUT.beach.deck - 14.5); ctx.stroke();
+  ctx.fillStyle = bite ? "#e1725b" : "#f6a487";
+  ctx.fillRect(tx + 9, OUT.beach.deck - 15 + (bite ? Math.floor(realClock * 8) % 2 : 0), 2, 1);   // the float bobs on a bite
+}
+// ---- who comes along where
+const PLACE_NPC = {
+  front: { lanes: [[107, "back"], [112, "front"]], gap: [10, 26], roles: [["walker", 0.5], ["neighbor", 0.2], ["kid", 0.3]], speed: [12, 18] },
+  park: { lanes: [[99, "back"], [107, "front"]], gap: [7, 18], roles: [["kid", 0.5], ["adult", 0.5]], speed: [10, 16] },
+  beach: { lanes: [[100, "back"], [112, "front"]], gap: [35, 80], roles: [["walker", 0.75], ["kid", 0.25]], speed: [9, 14] },
+  mall: { lanes: [[107, "back"], [114, "front"]], gap: [3, 8], roles: [["shopper", 0.75], ["kid", 0.25]], speed: [9, 15] },
+};
+function npcSetup(place) {
+  life.npcs = []; life.npcNext = realClock + 1 + Math.random() * 3; life.chatNext = realClock + 6 + Math.random() * 8;
+  life.talkQ = null; life.npcTalked = new WeakSet();
+  clearNpcPills();
+  if (place === "mall") {                        // staff and sellers stay at their spots on the strip
+    for (const it of MALL.items) {
+      if (it.kind === "kiosk") life.npcs.push(makeNpc("clerk", { u: it.stop + 1, feet: MALL.feet - 8, layer: "counter", item: it.id }));
+      else if (it.kind === "mat") life.npcs.push(makeNpc("hawker", { u: it.px + 4, feet: MALL.feet - 1, layer: "back", sit: true, item: it.id }));
+      else if (Math.random() < 0.5) life.npcs.push(makeNpc("clerk", { u: it.stop + 15, feet: MALL.floor + 1, layer: "back", item: it.id }));
+    }
+    for (let i = 0; i < 4; i++) spawnWalker(place, (Math.random() * 2 - 1) * 200);
+  } else if (place === "beach" && Math.random() < 0.5) spawnFisher();
+  else if (place === "park" || place === "front") for (let i = 0; i < 2; i++) spawnWalker(place, 30 + Math.random() * (W - 60));
+}
+function spawnWalker(place, at = null) {
+  const C = PLACE_NPC[place], [feet, layer] = pick(C.lanes), dir = Math.random() < 0.5 ? 1 : -1;
+  let r = Math.random(), role = C.roles[0][0];
+  for (const [k, p] of C.roles) { if ((r -= p) < 0) { role = k; break; } }
+  const v = (C.speed[0] + Math.random() * (C.speed[1] - C.speed[0])) * (role === "kid" ? 1.5 : Math.random() < 0.12 ? 0.6 : 1);
+  const start = at != null ? at : dir > 0 ? -16 : W + 16;
+  const pos = n => place === "mall" ? { u: mallS.x + (n - MALL.at) } : { x: n };
+  const lead = makeNpc(role, { ...pos(start), feet, layer, dir, v });
+  life.npcs.push(lead);
+  if (role === "kid" && Math.random() < 0.55 && place !== "front") {   // most kids come with a grown-up (or a friend)
+    const other = makeNpc(Math.random() < 0.3 ? "kid" : place === "park" ? "adult" : place === "mall" ? "shopper" : "walker",
+      { ...pos(start - dir * 13), feet: feet + (layer === "back" ? -1 : 1), layer, dir, v });
+    life.npcs.push(other);
+  }
+}
+function spawnFisher() {
+  const x = 30 + Math.random() * (W - 60);
+  if (Math.abs(x - here().x) < 30) return;
+  life.npcs.push(makeNpc("fisher", { x, feet: OUT.beach.deck + 3, layer: "back", back: true, rod: true, stayUntil: realClock + 90 + Math.random() * 150, bite: 0 }));
+}
+function stepNpcs(dt) {
+  const place = sim.place, C = PLACE_NPC[place];
+  if (!C || !life.npcs) return;
+  const h = hour(), night = h >= 21 || h < 6.5, w = weather.kind;
+  const walkers = life.npcs.filter(n => n.v && !n.gone).length;
+  if (realClock > life.npcNext) {               // fewer people at night and in bad weather
+    const want = place === "mall" ? 6 : place === "park" ? 4 : place === "front" ? 3 : 2;
+    if (walkers < want && !(night && Math.random() < 0.7) && !(w !== "clear" && place !== "mall" && Math.random() < 0.5)) spawnWalker(place);
+    life.npcNext = realClock + C.gap[0] + Math.random() * (C.gap[1] - C.gap[0]);
+    if (place === "beach" && !life.npcs.some(n => n.role === "fisher") && Math.random() < 0.15 && !night) spawnFisher();
+  }
+  for (const n of life.npcs) {
+    if (n.v) {
+      n.paused = n.sayUntil > realClock && life.talkQ && life.talkQ.n === n;     // stops for a word with her
+      if (!n.paused) {
+        const d = n.dir * n.v * dt;
+        if (n.u != null) n.u += d; else n.x += d;
+        n.dist += Math.abs(d);
+      }
+      const x = npcX(n);
+      if ((n.dir > 0 && x > W + 30) || (n.dir < 0 && x < -30)) n.gone = true;
+      if (place === "mall" && (x < -400 || x > W + 400)) n.gone = true;
+    }
+    if (n.role === "fisher") {
+      if (realClock > n.stayUntil && !n.v) { n.back = false; n.rod = false; n.v = 12; n.dir = Math.random() < 0.5 ? 1 : -1; }
+      else if (n.rod && realClock > n.bite + 4 && Math.random() < dt / 25) { n.bite = realClock + 1.6; if (Math.random() < 0.5) npcLine(n); }
+    }
+  }
+  life.npcs = life.npcs.filter(n => !n.gone);
+  if (place === "mall" && life.npcs.filter(n => n.v).length < 3) spawnWalker(place, Math.random() < 0.5 ? -40 : W + 40);
+}
+// ---- the little pills over their heads
+const npcPillEls = new Map();
+function clearNpcPills() { for (const el of npcPillEls.values()) el.remove(); npcPillEls.clear(); }
+function placeNpcPills() {
+  const host = ringEl.parentElement;
+  for (const [n, el] of npcPillEls) if (n.sayUntil <= realClock || n.gone || !(life.npcs || []).includes(n) || sim.place === "home") { el.remove(); npcPillEls.delete(n); }
+  for (const n of life.npcs || []) {
+    if (n.sayUntil <= realClock) continue;
+    let el = npcPillEls.get(n);
+    if (!el) { el = document.createElement("div"); el.className = "npcsay"; el.textContent = n.sayText; host.appendChild(el); npcPillEls.set(n, el); }
+    const top = n.feet - (n.kid ? 24 : n.sit ? 25 : 28) - 2;
+    const half = el.offsetWidth / 2, vw = W * scale;               // kept over the house, even for someone at its edge
+    el.style.left = view.offsetLeft + Math.max(half, Math.min(vw - half, npcX(n) * scale)) + "px";
+    el.style.top = view.offsetTop + top * scale + "px";
+  }
+}
+function npcSay(n, text) {
+  n.sayText = spaced(text);
+  n.sayUntil = realClock + Math.min(5, 2.2 + text.length * 0.13);
+  const el = npcPillEls.get(n);
+  if (el) { el.remove(); npcPillEls.delete(n); }
+}
+// ---- what's said
+const PT = () => PLACE_TEXT[sim.place];
+function placeWhen(w) {
+  if (!w) return true;
+  const se = seasonOf(sim.t).i, h = hour(), k = weather.kind;
+  switch (w) {
+    case "spring": return se === 0; case "summer": return se === 1; case "autumn": return se === 2; case "winter": return se === 3;
+    case "rain": return k === "rain"; case "snow": return k === "snow";
+    case "night": return h >= 19.5 || h < 5.5; case "morning": return h >= 6 && h < 10; case "evening": return h >= 17 && h < 20;
+    case "day": return h >= 9 && h < 17 && k === "clear";
+    case "ship": return !!life.ship; case "boat": return !!life.boat;
+  }
+  return false;
+}
+const lineText = l => typeof l === "string" ? l : l.t;
+function pickLine(list, tag = null) {
+  const ok = (list || []).filter(l => tag ? l.when === tag : placeWhen(l.when));
+  if (!ok.length) return null;
+  const tagged = ok.filter(l => l.when);                       // lines made for this very moment come up more often
+  return lineText(tagged.length && Math.random() < 0.5 ? pick(tagged) : pick(ok));
+}
+const kidVars = () => ({ 姐姐: look.gender === "m" ? "哥哥" : "姐姐" });
+function npcLine(n, key = n.role) {
+  const t = pickLine((PT().npc || {})[key]);
+  if (t) npcSay(n, fill(t, kidVars()));
+}
+function startTalk(n) {
+  const list = (PT().talk || {})[n.role];
+  if (!list || !list.length) return false;
+  life.talkQ = { n, lines: pick(list), i: 0, next: realClock };
+  life.npcTalked.add(n);
+  return true;
+}
+function stepTalk() {
+  const q = life.talkQ;
+  if (!q || realClock < q.next) return;
+  if (q.i >= q.lines.length || q.n.gone) { life.talkQ = null; return; }
+  const raw = q.lines[q.i++], other = raw[0] === ">", text = fill((other ? raw.slice(1) : raw).trim(), kidVars());
+  if (other) npcSay(q.n, text); else speak(text, true);
+  q.next = realClock + Math.min(4.2, 1.8 + text.length * 0.12);
+  if (q.i === q.lines.length) { sim.needs.social = clamp(sim.needs.social + 2); }
+}
+function placeChatter() {                       // now and then: a stranger's line, a word with one passing, or her own thought
+  if (!PT() || sim.mode === "down" || life.talkQ || realClock < life.chatNext) return;
+  const busy = !!(mallS.stop && sim.place === "mall");
+  if (life.tagNext) {                           // a ship / a speedboat just came into view
+    const t = pickLine(PT().say, life.tagNext); life.tagNext = null;
+    if (t) { speak(fill(t, kidVars())); return; }
+  }
+  life.chatNext = realClock + 9 + Math.random() * 14;
+  const p = here(), near = (life.npcs || []).filter(n => !n.gone && Math.abs(npcX(n) - p.x) < 34 && !life.npcTalked.has(n));
+  const seen = (life.npcs || []).filter(n => { const x = npcX(n); return x > 10 && x < W - 10 && n.sayUntil < realClock; });
+  const r = Math.random();
+  if (near.length && r < 0.45 && startTalk(pick(near))) return;
+  if (seen.length && r < 0.8) {
+    const n = pick(seen);
+    npcLine(n, n.role === "hawker" ? `hawk_${n.item}` : n.role);
+    return;
+  }
+  if (!busy) { const t = pickLine(PT().say); if (t) speak(fill(t, kidVars())); }
+}
+function mallStallTalk(it) {                     // at a kiosk / 地摊: its seller has a word with her
+  const n = (life.npcs || []).find(m => m.item === it.id && (m.role === "clerk" || m.role === "hawker"));
+  if (n && !life.talkQ && Math.random() < 0.7) startTalk(n);
+  else if (n) npcLine(n, n.role === "hawker" ? `hawk_${it.id}` : "clerk");
+}
+function npcTick(dt, run) {
+  if (run) stepNpcs(dt);
+  stepTalk();
+  if (run) placeChatter();
 }
 
 // ---------------------------------------------------------------- the mall
@@ -3646,6 +3908,8 @@ function stopAt(it) {                            // shops: a look, in she goes, 
   mallS.goal = null;
   mallS.stop = { it, inAt: shop ? sim.t + 3 : null, outAt: sim.t + (shop ? 3 + inside : 9), until: sim.t + (shop ? 9 + inside : 16), turned: false };
   mallS.seen[it.id] = sim.t;
+  if (it.kind !== "shop") mallStallTalk(it);
+  else { const c = (life.npcs || []).find(m => m.item === it.id && m.role === "clerk"); if (c) npcLine(c); }
 }
 function stallVisit(it) {                        // she turns round with what she got
   const s = STALL[it.id], vars = { 电影: pick(FILMS) };
@@ -3746,6 +4010,7 @@ function finishOut(fr, emoteAt) {
   drawClickFx(bctx);
   vctx.imageSmoothingEnabled = false;
   vctx.drawImage(buf, 0, 0, view.width, view.height);
+  placeNpcPills();
 }
 function drawLit(ctx, f, img, masks) {          // night glow, hidden behind whatever stands in front
   if (f <= 0) return;
@@ -3865,8 +4130,12 @@ function renderPark(dt) {
     bctx.drawImage(O.butterfly[fl.k + (Math.floor(realClock * 6) % 2)], Math.round(x) - 3, Math.round(y) - 2);
   }
   life.flies = life.flies.filter(fl => !fl.gone);
+  npcTick(dt, run);
+  drawNpcs(bctx, "back");
+  bctx.drawImage(O.bench, 0, 0);                 // people behind the bench stay behind it
   const fr = activityFrame(realClock * 1000);
   const { emoteAt, dollAt } = drawOutBuddy(bctx, fr);
+  drawNpcs(bctx, "front");
   // butterflies crossing right in front of us (user)
   if (run && flyOk && life.front.length < 1 && Math.random() < dt / 14) {
     const d = Math.random() < 0.5 ? 1 : -1;
@@ -3904,8 +4173,8 @@ function renderBeach(dt) {
   drawClouds(bctx, O, run ? dt : 0);
   if (w !== "clear") { bctx.fillStyle = "rgba(92, 100, 122, 0.3)"; bctx.fillRect(0, 0, W, L.horizon); }   // a grey sky in rain and snow
   // ships: rarely, from either side; far ones slow, the speedboat quick
-  if (run && !life.ship && Math.random() < dt / 70) { const d = Math.random() < 0.5 ? 1 : -1; life.ship = { x: d > 0 ? -42 : W + 2, d }; }
-  if (run && !life.boat && Math.random() < dt / 45) { const d = Math.random() < 0.5 ? 1 : -1; life.boat = { x: d > 0 ? -20 : W + 4, d, y: L.horizon + 10 + Math.round(Math.random() * 14), trail: [] }; }
+  if (run && !life.ship && Math.random() < dt / 70) { const d = Math.random() < 0.5 ? 1 : -1; life.ship = { x: d > 0 ? -42 : W + 2, d }; life.tagNext = Math.random() < 0.6 ? "ship" : null; life.chatNext = realClock + 4; }
+  if (run && !life.boat && Math.random() < dt / 45) { const d = Math.random() < 0.5 ? 1 : -1; life.tagNext = Math.random() < 0.6 ? "boat" : null; life.chatNext = realClock + 2; life.boat = { x: d > 0 ? -20 : W + 4, d, y: L.horizon + 10 + Math.round(Math.random() * 14), trail: [] }; }
   const sh = life.ship;
   if (sh) {
     if (run) sh.x += sh.d * 2.2 * dt;
@@ -3951,8 +4220,11 @@ function renderBeach(dt) {
   if (life.wet > 0.02) { bctx.globalAlpha = life.wet; bctx.drawImage(O.wet, 0, 0); bctx.globalAlpha = 1; }
   if (run) life.wet += ((w === "rain" ? 1 : 0) - life.wet) * Math.min(1, dt * (w === "rain" ? 0.8 : 0.08));
   if (weather.snowCover > 0.02) { bctx.globalAlpha = Math.min(1, weather.snowCover); bctx.drawImage(O.snow, 0, 0); bctx.globalAlpha = 1; }
+  npcTick(dt, run);
+  drawNpcs(bctx, "back");
   const fr = activityFrame(realClock * 1000);
   const { emoteAt, dollAt } = drawOutBuddy(bctx, fr);
+  drawNpcs(bctx, "front");
   drawOutsideWeather(bctx);
   gradeOutside(bctx, f);
   drawLit(bctx, f, O.lit, dollAt ? [dollAt] : []);
@@ -3985,14 +4257,18 @@ function renderMall(dt) {
   bctx.fillRect(0, 0, W, L.fascia);
   tile(O.deco[se], offD, L.nearW);
   tile(O.near, offN, L.nearW);
+  npcTick(dt, run);
+  drawNpcs(bctx, "counter");                     // kiosk staff behind their counters
   for (const it of L.items) if (O.props[it.id]) {
     const x0 = mod(it.px - mallS.x + L.at, L.nearW);
     for (const x of [x0, x0 - L.nearW]) if (x > -60 && x < W) bctx.drawImage(O.props[it.id], Math.round(x), it.top);
   }
+  drawNpcs(bctx, "back");
   drawMallHover(bctx);
   const fr = activityFrame(realClock * 1000);
   let emoteAt = [L.at + 3, L.feet - 42], dollAt = null;
   if (!mallInside()) ({ emoteAt, dollAt } = drawOutBuddy(bctx, fr));     // (in a shop: out of sight)
+  drawNpcs(bctx, "front");
   if (dollAt) {                                  // her reflection in the polished floor
     const [dc, x, y] = dollAt;
     bctx.save(); bctx.globalAlpha = 0.16; bctx.translate(x, 2 * (L.feet + 1) - y); bctx.scale(1, -1);

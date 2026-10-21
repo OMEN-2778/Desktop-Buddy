@@ -232,6 +232,28 @@ piece side by side — review new pieces there at 6x).
   at night), fireflies on summer nights, the lamp lit. Dock: ships, gulls,
   glints, lamps at night.
 
+- **Strangers (NPCs)** (demo, user): random looks from the 造型室 options
+  (`npcLook`, never both her hairstyle AND hair colour), kids = the same head
+  on a shorter body (`kidBody` drops 2 leg + 2 torso rows), drawn with
+  `doll.pixels(npc.look)` + `applyPose(buf, pose, look)`, cached per NPC.
+  Layers per place: "back" (before her; in the park the `bench` overlay is
+  drawn over them), "front" (after her), mall "counter" (kiosk staff behind
+  the counter, before the props). Front: walkers / neighbours / kids on two
+  sidewalk lanes; park: kids (faster, often with a grown-up) and adults on
+  the path; mall: kiosk clerks, clerks at half the shop doors, 地摊 sellers
+  sitting on their stools, shoppers both ways (world coords `u`); dock: rare
+  walkers, sometimes an angler at the railing (back to us, rod + float that
+  bobs on a bite). They talk in `.npcsay` pills (same pixel pill as the
+  ring, clamped inside the house). Not clickable yet.
+- **Place lines** (`prototype/demo/places_text.js`, built from JSON by the
+  helper in the scratchpad; hundreds per place): `say` = her musings
+  (`when` tag: season / rain / snow / night / morning / evening / day, the
+  dock also ship / boat), `talk.<role>` = little exchanges when a stranger
+  passes her (">" = the stranger), `npc.<role>` = strangers' own lines,
+  `npc.hawk_<stall>` = mall sellers calling out. `placeChatter` every
+  9–23 s: a word with someone near, a stranger's line, or her own thought;
+  at a kiosk / 地摊 its seller talks to her (`mallStallTalk`), shop clerks
+  greet her at the door. `{姐姐}` = 姐姐 / 哥哥 by her gender.
 - **Outside, alive** (`outsideLife` / `drawOutsideLife`): the season's
   background, trees swaying between 2 frames with the gusts, snow fading in
   by `weather.snowCover`, the sidewalk wet (`life.wet`, dries slowly), the

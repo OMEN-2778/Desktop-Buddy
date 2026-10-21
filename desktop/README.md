@@ -22,7 +22,9 @@ The game is the same single web page as the browser demo
   while the mall slides past (click a shop and she goes in, click a kiosk or
   a 地摊 and she stops there a while). Click the
   door (家门口) or click her for 回家 to bring her home. She comes home by
-  herself when a need runs red
+  herself when a need runs red. People pass by everywhere (kids too; in the
+  mall shop staff and sellers calling out, on the dock now and then an
+  angler), say things, and sometimes chat with her
 - a tray icon: 显示 / 隐藏, 置顶游戏, 退出
 - the save is a JSON file in the app's data folder by default
   (Windows: `%APPDATA%\com.desktopbuddy.app\save.json`, previous copy kept
