@@ -3356,7 +3356,7 @@ const T_IN = 620, T_LOAD = 1500, T_OUT = 620, STRIPS = 7, STAGGER = 55;
 const easeCubic = t => t <= 0 ? 0 : t >= 1 ? 1 : t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 // the colour isn't left plain (user): a pattern of the place drifting
 // slowly — clover (park), little waves (dock), hearts and sparkles (mall),
-// tiny diamonds (home) — in a lighter tint, and a pixel frame once it's full
+// tiny diamonds (home) — in a lighter tint (a frame popping in was too abrupt, user)
 const TRIP_MOTIF = {
   park: ["................", "..#.#...........", ".#####..........", "..###...........", ".#####..........", "..#.#...........", "....#...........", "................",
          "................", "................", "...........##...", "..........####..", ".........####...", "..........##....", ".........#......", "................"],
@@ -3378,18 +3378,6 @@ function tripPattern(to) {
   x.fillStyle = tint(base, 0.22);
   TRIP_MOTIF[to].forEach((row, j) => [...row].forEach((ch, i) => { if (ch === "#") x.fillRect(i, j, 1, 1); }));
   return (tripPat[to] = tripCtx.createPattern(c, "repeat"));
-}
-function tripFrameBorder(x, to) {                // a band, a light inner line, notched corners with little studs
-  const base = TRIP_COL[to], dark = tint(base, -0.16), light = tint(base, 0.55);
-  x.fillStyle = dark;
-  x.fillRect(0, 0, W, 4); x.fillRect(0, H - 4, W, 4); x.fillRect(0, 0, 4, H); x.fillRect(W - 4, 0, 4, H);
-  x.fillStyle = light;
-  x.fillRect(7, 6, W - 14, 1); x.fillRect(7, H - 7, W - 14, 1); x.fillRect(6, 7, 1, H - 14); x.fillRect(W - 7, 7, 1, H - 14);
-  for (const [cx, cy] of [[6, 6], [W - 7, 6], [6, H - 7], [W - 7, H - 7]]) {   // corners: a stud instead of a sharp angle
-    x.fillRect(cx - 1 + (cx < W / 2 ? 2 : -1), cy - 1 + (cy < H / 2 ? 2 : -1), 2, 2);
-  }
-  for (let k = 16; k < W - 16; k += 12) { x.fillRect(k, 2, 2, 1); x.fillRect(k, H - 3, 2, 1); }   // stitches along the band
-  for (let k = 14; k < H - 14; k += 12) { x.fillRect(2, k, 1, 2); x.fillRect(W - 3, k, 1, 2); }
 }
 let tripRun = null;
 function trip(to, swap) {
@@ -3431,7 +3419,6 @@ function tripFrame(now) {
     ends.forEach((w, i) => { if (w > 0 && w < W) x.fillRect(w - 2, i * rowH, 2, rowH); });
   } else if (ms < T_IN + T_LOAD) {
     fill(0, 0, W, H); x.restore();
-    tripFrameBorder(x, to);
     drawTripLoad(x, (ms - T_IN) / T_LOAD, r);
     if (!r.swapped) { r.swapped = true; r.swap(); render(); }    // the new scene waits behind the strips
   } else if (ms < T_IN + T_LOAD + T_OUT) {

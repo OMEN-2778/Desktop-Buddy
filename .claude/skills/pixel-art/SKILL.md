@@ -252,8 +252,8 @@ piece side by side — review new pieces there at 6x).
   when she arrives; then the strips run off to the right, top first.
   The colour is never plain (user): a 16px motif tile in a lighter tint
   (`TRIP_MOTIF`: clover / waves / hearts + sparkles / diamonds) drifting a
-  pixel at a time, a darker leading edge on each strip, and once full a
-  frame: dark band with stitches, light inner line, studs in the corners.
+  pixel at a time, a darker leading edge on each strip. No frame (user:
+  one popping in when the screen fills is too abrupt).
   The scene swaps behind the full screen. View canvas is cleared before
   every frame (the house has see-through edges: outdoor leftovers showed).
 - **Strangers (NPCs)** (demo, user): random looks from the 造型室 options
