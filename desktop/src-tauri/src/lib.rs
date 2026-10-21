@@ -106,6 +106,24 @@ async fn choose_save_dir(app: AppHandle) -> Result<Option<String>, String> {
     Ok(Some(dir.to_string_lossy().into_owned()))
 }
 
+/// 导出: a save-file dialog, then a copy of the save is written where the
+/// player chose. None if they cancelled.
+#[tauri::command]
+async fn export_save(app: AppHandle, name: String, data: String) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+    let picked = app
+        .dialog()
+        .file()
+        .set_title("导出存档")
+        .set_file_name(name)
+        .add_filter("存档", &["json"])
+        .blocking_save_file();
+    let Some(picked) = picked else { return Ok(None) };
+    let path = picked.into_path().map_err(|e| e.to_string())?;
+    std::fs::write(&path, data).map_err(|e| e.to_string())?;
+    Ok(Some(path.to_string_lossy().into_owned()))
+}
+
 #[tauri::command]
 fn reset_save_dir(app: AppHandle) -> Result<(), String> {
     let mut config = read_config(&app);
@@ -315,6 +333,7 @@ pub fn run() {
             write_save,
             get_save_dir,
             choose_save_dir,
+            export_save,
             reset_save_dir,
             load_settings,
             write_settings,

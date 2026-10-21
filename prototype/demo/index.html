@@ -183,6 +183,9 @@ body {
   box-shadow: 0 -2px 0 0 var(--edge), 0 2px 0 0 var(--edge), -2px 0 0 0 var(--edge), 2px 0 0 0 var(--edge), 3px 3px 0 0 var(--shadow);
 }
 .sky-tip[hidden] { display: none; }
+.sky-tip { opacity: 0; transform: translate(-50%, 6px) scale(.6); transform-origin: 50% 100%; transition: opacity .16s, transform .3s cubic-bezier(.3, 1.6, .5, 1); }
+.sky-tip.on { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.skybar.tipping { z-index: 9; }   /* while its tip is up, the bar sits over the mood row (user: not under her words) */
 /* on a festival (or her birthday) its name rides the time bar in a little
    rounded tag right of the sun / moon; when the icon is too near the bar's
    end for it to fit, it fades away (the day is nearly over anyway; user) */
@@ -451,9 +454,10 @@ body {
   top: calc(-8px - var(--row-h, 42px) + (var(--row-h, 42px) - var(--say-h, 60px)) / 2);
   left: calc(var(--mood-d, 78px) + var(--sky-b, 3px) * 2 + var(--tail, 16px)); right: 0;   /* = the bubble's body */
   --pe: #8a6446; --pf: #ecd5ad; --wood-ink: #3d2a1e;
-  transition: opacity .2s, translate .25s cubic-bezier(.3, 1.4, .5, 1);
+  translate: 0 var(--lift, 0px);
+  transition: opacity .2s, translate .35s cubic-bezier(.3, 1.4, .5, 1);
 }
-.diary.away { opacity: 0; translate: 12px 0; pointer-events: none; }   /* while the settings rows are out */
+.diary.away { opacity: 0; translate: 12px var(--lift, 0px); pointer-events: none; }   /* while the settings rows are out */
 .diary-box {
   position: relative; isolation: isolate; width: 100%; height: 100%; margin: 0; border: 0;
   padding: 0 20px 0 6px;   /* the 日记 tag: 6px in from the left, like from the top and bottom */
@@ -2793,7 +2797,7 @@ function renderSky() {
   } else {
     drawIcon(sky.icon, x, cy + bob, 1);
   }
-  if (!skyTip.hidden) skyTip.style.left = x + "px";
+  if (!skyTip.hidden) { const half = skyTip.offsetWidth / 2, bw = skyTip.parentElement.clientWidth; skyTip.style.left = Math.max(half, Math.min(bw - half, x)) + "px"; }   // kept over the bar
   placeFestTag(x, (SKY_ICON * b) / 2, w);
 }
 // today's festival (or birthday / anniversary) on the time bar
@@ -2817,9 +2821,19 @@ function skyText() {
   return `${SEASONS[se.i].name}季 · 第 ${se.day} 天 · ${fmt(sim.t)} · ${WEATHER_NAME[weather.kind]}`;
 }
 const skyHit = document.getElementById("skyHit");
-skyHit.addEventListener("pointerenter", () => { skyTip.hidden = false; skyTip.textContent = skyText(); });
-skyHit.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") skyTip.hidden = true; });
-skyHit.addEventListener("click", () => { skyTip.hidden = !skyTip.hidden; skyTip.textContent = skyText(); });
+function skyTipShow() {
+  clearTimeout(skyTip._t);
+  skyTip.textContent = skyText(); skyTip.hidden = false; skyTip.parentElement.classList.add("tipping");
+  void skyTip.offsetWidth; skyTip.classList.add("on");
+}
+function skyTipHide() {
+  skyTip.classList.remove("on");
+  clearTimeout(skyTip._t);
+  skyTip._t = setTimeout(() => { skyTip.hidden = true; skyTip.parentElement.classList.remove("tipping"); }, 220);
+}
+skyHit.addEventListener("pointerenter", skyTipShow);
+skyHit.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") skyTipHide(); });
+skyHit.addEventListener("click", () => (skyTip.classList.contains("on") ? skyTipHide() : skyTipShow()));
 
 document.querySelectorAll("[data-weather]").forEach(btn => btn.addEventListener("click", () => {
   weather.force = btn.dataset.weather || null;
@@ -9921,7 +9935,11 @@ function popBubble(el, ms) {
   el.hidden = false;
   el.classList.remove("out");
   el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";   // replay the pop
-  el._t = setTimeout(() => { el.classList.add("out"); el._t2 = setTimeout(() => { el.hidden = true; }, 380); }, ms);
+  el._t = setTimeout(() => {
+    el.classList.add("out");
+    if (el === popSay && sayGrow) { sayGrow = 0; liftDiary(); }   // the diary slides back down
+    el._t2 = setTimeout(() => { el.hidden = true; }, 380);
+  }, ms);
 }
 let nextSay = 6, lastSaid = "", sayBusy = 0;
 const sayQueue = [];
@@ -9957,10 +9975,20 @@ function fitText(box, span, base, tail, H0, outVar, inVar) {
   return H - H0;
 }
 const SAY_FS = () => parseFloat(getComputedStyle(widget).getPropertyValue("--say-fs")) || 20;
-function fitSay() { fitText(popSay, popSay.querySelector("span"), SAY_FS(), 18, 48, "--clip-say", "--clip-say-in"); }
+// a taller bubble grows UPWARD (never into the time bar, user) and the diary
+// box slides up out of its way; it slides back when her words go
+let sayGrow = 0, diaryGrow = 0;
+function liftDiary() { document.getElementById("diary").style.setProperty("--lift", -(sayGrow + diaryGrow) + "px"); }
+function fitSay() {
+  sayGrow = fitText(popSay, popSay.querySelector("span"), SAY_FS(), 18, 48, "--clip-say", "--clip-say-in");
+  popSay.style.marginTop = sayGrow ? -sayGrow + "px" : "";
+  liftDiary();
+}
 function fitDiary() {
-  const di = document.getElementById("diary"), grow = fitText(diaryBox, diaryBox.querySelector("span"), SAY_FS() - 4, 0, 48, "--clip-diary", "--clip-diary-in");
-  di.style.height = grow ? 48 + grow + "px" : ""; di.style.translate = grow ? `0 ${-grow}px` : "";   // it grows upward, never onto her words
+  const di = document.getElementById("diary");
+  diaryGrow = fitText(diaryBox, diaryBox.querySelector("span"), SAY_FS() - 4, 0, 48, "--clip-diary", "--clip-diary-in");
+  di.style.height = diaryGrow ? 48 + diaryGrow + "px" : "";   // it grows upward too
+  liftDiary();
 }
 function showSay(text, who = "") {
   text = spaced(text);
@@ -10117,7 +10145,7 @@ const SETTINGS = [
         title: prefs.autosave ? "每 5 分钟、退出和切到后台时自动保存（再按一下关掉）" : "只在你点「保存」时保存（再按一下打开）",
         onClick: () => { prefs.autosave = !prefs.autosave; saveSettings(); buildSettings(); } }),
       pill("保存", { onClick: async () => flashLabel("存档", (await saveGame()) ? "已保存" : "没存上") }),
-      ...(TAURI ? [] : [pill("导出", { title: "把存档下载成一个文件", onClick: exportSave })]),
+      pill("导出", { title: "把存档另存成一个文件", onClick: exportSave }),
       pill("导入", { title: "从存档文件读取", onClick: () => document.getElementById("importSave").click() }),
       pill("重生！", { cls: "danger", title: "清空存档，从第 1 天重新开始（要按两下）", onClick: b => {
         if (b.dataset.armed) { resetSave(); return; }
@@ -10125,22 +10153,6 @@ const SETTINGS = [
         setTimeout(() => { delete b.dataset.armed; b.textContent = "重生！"; }, 3000);
       } }),
     ] },
-  // desktop app: the save lives in a fixed default folder, so it is always
-  // found again; only if you pick another folder does it move there
-  ...(TAURI ? [{ label: "存档位置", role: "group", spans: () => [6, 6, 6, 6], items: () => [
-      Object.assign(document.createElement("span"), { className: "set-value", textContent: saveDir.custom ? folderName(saveDir.path) : "默认位置",
-        title: saveDir.path }),
-      pill("打开", { title: "打开存档所在的文件夹", onClick: () => TAURI.core.invoke("open_save_dir").catch(() => {}) }),
-      pill("更改", { title: "换一个文件夹放存档", onClick: async () => {
-        const path = await TAURI.core.invoke("choose_save_dir").catch(() => null);
-        if (!path) return;
-        await refreshSaveDir(); await saveGame(); buildSettings(); flashLabel("存档位置", "已更改");
-      } }),
-      pill("恢复默认", { disabled: !saveDir.custom, onClick: async () => {
-        await TAURI.core.invoke("reset_save_dir").catch(() => {});
-        await refreshSaveDir(); await saveGame(); buildSettings(); flashLabel("存档位置", "已恢复");
-      } }),
-    ] }] : []),
 ];
 let saveDir = { path: "", custom: false };
 const folderName = p => p.split(/[\\/]/).filter(Boolean).pop() || p;
@@ -16823,7 +16835,7 @@ CARDS.push(
 
 for (const cd of CARDS) for (const k of ["a", "b"]) cd[k].out.forEach((o, i) => { if (o.mood) ML[o.id = `card${cd.n}${k}${i}`] = { ...o.mood }; });
 const CARD_GAP = 330, CARD_CHANCE = 0.3;         // game minutes between cards, odds per hour after that
-const CARD_GAP_OUT = 150, CARD_CHANCE_OUT = 0.35; // out and about (user: 50 cards per place) they come a bit more often
+const CARD_GAP_OUT = 60, CARD_CHANCE_OUT = 0.6;   // out and about they come much more often (user)
 const CARD_WAIT = 60000, CARD_LOCK = 900;        // ms: until she picks herself / before a result can be clicked away
 const cardEl = document.getElementById("card"), cardRes = document.getElementById("cardRes");
 const cardOpts = [...cardEl.querySelectorAll(".cd-opt")], crBox = cardRes.querySelector(".cr-box"), crMood = cardRes.querySelector(".cr-mood");
@@ -17254,6 +17266,11 @@ window.addEventListener("pagehide", () => { if (!TAURI && booted && prefs.autosa
 async function exportSave() {
   const d = new Date(), stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
   const filename = `${look.name}-存档-${stamp}.json`, text = JSON.stringify(snapshot(), null, 1);
+  if (TAURI) {                                    // the desktop app: a save dialog, the copy goes where you pick
+    const at = await TAURI.core.invoke("export_save", { name: filename, data: text }).catch(() => undefined);
+    if (at) flashLabel("存档", "已导出"); else if (at === undefined) flashLabel("存档", "没导出");
+    return;
+  }
   // on claude.ai the page may only hand over files through the viewer's own save prompt
   const downloads = window.claude && window.claude.use ? await window.claude.use("downloads").catch(() => null) : null;
   if (downloads) {

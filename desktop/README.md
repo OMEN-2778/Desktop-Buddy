@@ -11,7 +11,7 @@ The game is the same single web page as the browser demo
 - 设置 (gear, above the mood emoji; rows open to the right): 时间流速,
   界面大小 (25%–200%; 25% = one game pixel per screen pixel, at any Windows
   display scaling), 置顶游戏, 存档 (with the 自动保存 switch: every 5
-  minutes or never), 存档位置
+  minutes or never; 导出 saves a copy where you pick)
 - 机会卡 (chance cards; 200 at home, 50 more for each place she can go out to): now and then a little situation springs out of
   Buddy with two choices; the result pops out of her right after
   with the mood it gave her (click anywhere to close it). Left alone for a
@@ -29,8 +29,7 @@ The game is the same single web page as the browser demo
 - the save is a JSON file in the app's data folder by default
   (Windows: `%APPDATA%\com.desktopbuddy.app\save.json`, previous copy kept
   as `save.json.bak`), so it is always found again after a restart;
-  设置 → 存档位置 → 打开 shows it, 更改 picks another folder (remembered in
-  `config.json`), 恢复默认 goes back
+  设置 → 存档 → 导出 writes a copy anywhere you like
 - settings (speed, size, on-top, autosave) live in `settings.json` in the
   app's config folder (on Windows the same folder), apart from the save
 

@@ -259,8 +259,12 @@ piece side by side — review new pieces there at 6x).
 - **Words that don't fit** (user, at 25%): her bubble and the diary line
   first shrink a little (to 85%), then wrap onto two lines (down to 12px,
   clamped after two) and the box grows to hold them, its pixel outline
-  remade by `sayClip` for the new height (`fitText`; the diary grows
-  upward). Both boxes sit closer to the emoji / gear: row gap 2 x sky-b,
+  remade by `sayClip` for the new height (`fitText`). Her bubble grows
+  UPWARD (negative margin, never into the time bar) and the diary slides up
+  out of its way (`--lift`, eased), sliding back when her words go; the
+  diary grows upward too. The time tooltip pops in / fades out and lifts
+  its bar above the mood row while shown (`.skybar.tipping`), kept inside
+  the bar. Both boxes sit closer to the emoji / gear: row gap 2 x sky-b,
   tail 18px with 6px + 8px dots.
 - **Strangers (NPCs)** (demo, user): random looks from the 造型室 options
   (`npcLook`, never both her hairstyle AND hair colour), kids = the same head
@@ -465,16 +469,17 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   smallest; 100% = 4; the house canvas is drawn at device resolution
   (`devPx`), `scale` is CSS px per house px; text keeps a readable minimum), 置顶游戏
   (desktop app only), 存档 (保存 / one 自动保存 switch: 每 5 分钟自动保存 <->
-  不自动保存 / 导出 (browser) / 导入 / 重新开始, which asks twice), and in the desktop app 存档位置
-  (默认位置 or the folder's name / 打开 / 更改 / 恢复默认).
+  不自动保存 / 保存, then 导出 / 导入 / 重生！ which asks twice) — exactly the
+  user's sketch, desktop too (no 存档位置 row any more; 导出 in the app opens
+  a save dialog, `export_save`).
 - **Settings are stored apart from the save** (`settingsStore`: browser
   localStorage `buddy-settings`, desktop `settings.json` in the config
   folder) and applied after `restore()`, so turning 自动保存 off is kept even
   though the game itself isn't saved. 自动保存 on: every 5 minutes, when the
   window is hidden, on quit and after a look change; off: only 保存 writes.
-- **Save folder** (desktop): always the default app data folder unless the
-  user picks another under 存档位置 → 更改 (kept in the config folder's
-  `config.json`; a missing folder falls back to the default). Never ask for
+- **Save folder** (desktop): always the default app data folder (a folder
+  chosen earlier is still honoured via `config.json`; the 存档位置 row was
+  dropped for the user's settings layout). Never ask for
   a folder on first save — users would lose track of it.
 - **Saves**: one versioned JSON (`snapshot()` / `restore()` / `migrate()`);
   bump `SAVE_VERSION` and add a migrate step whenever its shape changes.
@@ -560,11 +565,11 @@ edits; copy changes into life_text.js.
   (`outcomes` by weight). Running state in `lifeFlags.chains` (saved). The
   six from the doc (投稿 种花 线上比赛 学做新菜 神秘明信片 漏水维修) + 学吉他,
   窗外的小猫; about one starts a week.
-- **Chance cards out and about** (user: 50 per place): `place_cards.js`
+- **Chance cards out and about** (user: 50 per place, and often): `place_cards.js`
   (cards 201-400, `at` = front / park / mall / beach, same shape as
   cards_text.js) pushed onto `CARDS`; `rollCard` outside takes only that
-  place's cards, at most every `CARD_GAP_OUT` (150) game minutes with
-  `CARD_CHANCE_OUT` (0.35) per hour; never while she's inside a mall shop or
+  place's cards, at most every `CARD_GAP_OUT` (60) game minutes with
+  `CARD_CHANCE_OUT` (0.6) per hour; unseen cards first everywhere; never while she's inside a mall shop or
   mid-wipe. Everything else (pop from her, dim, frozen clock, result, mood
   pill) works the same out there.
 - **Chance cards** (机会卡, user, like The Sims): the user's 100 cards + 100
