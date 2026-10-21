@@ -242,8 +242,13 @@ piece side by side — review new pieces there at 6x).
   in house pixels: 7 strips sweep in from the left, staggered top first,
   cubic ease, in the place's colour (park #86c98a, dock #4a97c9, mall
   #f4a99c, home #e9d6b4); then her face in a white outlined badge hops along
-  a dotted trail to the place's icon (`trip_icons.py`: park tree + bench,
-  dock sailboat, mall shopping bag with a heart, home house), which hops
+  a dotted trail to the place's icon (`trip_icons.py`, v2 after "not
+  refined enough": 32x28 stickers, every part shaded from its own ramp and
+  outlined in its darkest shade, white sticker edge + soft shadow; park =
+  apple tree, bench, flowers, a bee; dock = sailboat with banded mainsail,
+  jib, portholes, flag, waves with foam; mall = teal + pink bags with rope
+  handles, heart, sparkles; home = tiled roof, chimney, window, door,
+  bushes), which hops
   when she arrives; then the strips run off to the right, top first.
   The scene swaps behind the full screen. View canvas is cleared before
   every frame (the house has see-through edges: outdoor leftovers showed).

@@ -3401,8 +3401,8 @@ function tripFrame(now) {
 }
 function drawTripLoad(x, p, r) {
   const icon = IMG.trip[TRIP_ICON[r.to] || "home"], cy = Math.round(H / 2);
-  const ix = Math.round(W / 2 - 64), iy = cy - 9;
-  const start = Math.round(W / 2 + 52), end = ix + 34, k = easeCubic(Math.min(1, p / 0.85));
+  const ix = Math.round(W / 2 - 70), iy = cy - Math.round(icon.height / 2);
+  const start = Math.round(W / 2 + 56), end = ix + icon.width + 16, k = easeCubic(Math.min(1, p / 0.85));
   const ax = Math.round(start + (end - start) * k);
   const hop = k < 1 ? Math.round(Math.abs(Math.sin(p * Math.PI * 7)) * 3) : 0;
   x.fillStyle = "#f7f6fb";                       // the trail ahead of her
