@@ -15068,8 +15068,15 @@ const CARDS = [
       { text: "一路上撞到了三件家具，其中一件{名字}根本不记得家里有。", say: "这是什么东西", mood: { name: "摸黑探险", emo: "dazed", pts: 3, min: 120 } } ] } },
 ];
 
+// ================================================================ chance cards out and about
+// User: 50 more for each place she can go (家门口 公园 商场 海边), same shape
+// as cards_text.js; `at` = the place. They come only there, rolled hourly.
+CARDS.push(
+);
+
 for (const cd of CARDS) for (const k of ["a", "b"]) cd[k].out.forEach((o, i) => { if (o.mood) ML[o.id = `card${cd.n}${k}${i}`] = { ...o.mood }; });
 const CARD_GAP = 330, CARD_CHANCE = 0.3;         // game minutes between cards, odds per hour after that
+const CARD_GAP_OUT = 150, CARD_CHANCE_OUT = 0.35; // out and about (user: 50 cards per place) they come a bit more often
 const CARD_WAIT = 60000, CARD_LOCK = 900;        // ms: until she picks herself / before a result can be clicked away
 const cardEl = document.getElementById("card"), cardRes = document.getElementById("cardRes");
 const cardOpts = [...cardEl.querySelectorAll(".cd-opt")], crBox = cardRes.querySelector(".cr-box"), crMood = cardRes.querySelector(".cr-mood");
@@ -15093,8 +15100,10 @@ function cardFits(cd, c) {
 }
 function rollCard(c) {
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
-  if (card || sim.place !== "home" || !c.awake || busyWith("bath", "toilet", "dress") || pickOn || sim.t - st.last < CARD_GAP || Math.random() >= CARD_CHANCE) return false;
-  const any = CARDS.filter(cd => !cd.on);
+  const out = sim.place !== "home";               // outside: that place's own cards (cd.at)
+  if (card || !c.awake || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside())
+    || sim.t - st.last < (out ? CARD_GAP_OUT : CARD_GAP) || Math.random() >= (out ? CARD_CHANCE_OUT : CARD_CHANCE)) return false;
+  const any = CARDS.filter(cd => !cd.on && (cd.at || "home") === sim.place);
   let fresh = any.filter(cd => !st.seen.includes(cd.n));
   if (!fresh.length) { st.seen = st.seen.filter(n => !any.some(cd => cd.n === n) || st.seen.lastIndexOf(n) >= st.seen.length - 20); fresh = any.filter(cd => !st.seen.includes(cd.n)); }   // all seen: start over, not the latest ones
   const ok = fresh.filter(cd => cardFits(cd, c));

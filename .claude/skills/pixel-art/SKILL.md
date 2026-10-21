@@ -213,7 +213,7 @@ piece side by side — review new pieces there at 6x).
   home; left alone she strolls; she heads home by herself only when a
   need is red (< 20, `chooseOutside`); anything that needs the house
   (sleep, cooking...) queues `go_home` first (`startAct`). Clickables
-  belong to a place (`CLICK_PLACE`); chance cards, moments and room tags
+  belong to a place (`CLICK_PLACE`); home chance cards, moments and room tags
   are off outside (`roomAt` -> "outside").
 - **Park / mall / beach** (demo): `OUT[place].kind` = walk (front, beach) |
   sit (park: act `bench`, sit pose, never ends on its own) | scroll (mall:
@@ -535,6 +535,13 @@ edits; copy changes into life_text.js.
   (`outcomes` by weight). Running state in `lifeFlags.chains` (saved). The
   six from the doc (投稿 种花 线上比赛 学做新菜 神秘明信片 漏水维修) + 学吉他,
   窗外的小猫; about one starts a week.
+- **Chance cards out and about** (user: 50 per place): `place_cards.js`
+  (cards 201-400, `at` = front / park / mall / beach, same shape as
+  cards_text.js) pushed onto `CARDS`; `rollCard` outside takes only that
+  place's cards, at most every `CARD_GAP_OUT` (150) game minutes with
+  `CARD_CHANCE_OUT` (0.35) per hour; never while she's inside a mall shop or
+  mid-wipe. Everything else (pop from her, dim, frozen clock, result, mood
+  pill) works the same out there.
 - **Chance cards** (机会卡, user, like The Sims): the user's 100 cards + 100
   more written in their style (101-200, user asked for moment cards) live in
   `prototype/demo/cards_text.js` (`CARDS`, pasted in by make_demo.py).

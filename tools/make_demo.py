@@ -286,7 +286,7 @@ def main():
         "emissive": sorted({c.lower() for c in Hs.EMISSIVE}),
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", (SRC.parent / "chats_text.js").read_text()).replace("/*__PLACES_JS__*/", (SRC.parent / "places_text.js").read_text())
+    html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", (SRC.parent / "chats_text.js").read_text()).replace("/*__PLACES_JS__*/", (SRC.parent / "places_text.js").read_text()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 
