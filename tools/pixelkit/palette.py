@@ -73,6 +73,12 @@ RAMPS: dict[str, list[str]] = {
     "blossom": ["#7a3a55", "#b8668a", "#e095b2", "#f5c3d4", "#fde6ee"],
     "hydrangea": ["#35407a", "#4f63ad", "#7b95d6", "#a9c0ee", "#d6e3fa"],
     "snow": ["#8d9ab3", "#b8c4d8", "#dfe7f2", "#f6f9fd"],
+    # 公园 / 海边 / 商场
+    "sea": ["#163651", "#1f557a", "#2f7aa0", "#57a5c2", "#9bd3df"],
+    "sea_grey": ["#2a3a4a", "#3e5466", "#5d7484", "#8499a4", "#b5c4ca"],
+    "sand": ["#8a6a4a", "#b8946a", "#d9b98a", "#ecd5a8", "#f8ebcc"],
+    "marble": ["#8f8b96", "#b5b1b9", "#d3d0d6", "#e7e5e9", "#f7f6f8"],
+    "lilac": ["#3d2a52", "#5f4384", "#8a6ab5", "#b49ad9", "#dccbf2"],
     # sky / light
     "moon": ["#0b1a5c", "#123194", "#1f4bc4", "#5b82e0", "#a9c2f5"],
     "sky_day": ["#5c8dd0", "#80b1e7", "#b4d7f3", "#e3f1fb"],

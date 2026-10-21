@@ -17,9 +17,11 @@ The game is the same single web page as the browser demo
   with the mood it gave her (click anywhere to close it). Left alone for a
   minute, she chooses by herself
 - 出门: click the front door (beside the stairs) for 去门口 / 去公园 / 去商场 /
-  去海边 (only 家门口 so far). Outside, click anywhere and Buddy walks there;
-  click the door to bring her home. She comes home by herself when a need
-  runs red
+  去海边. At 家门口 and the beach, click anywhere and Buddy walks there; in the
+  park she sits on a bench; in the mall she keeps walking left while the
+  mall slides past (click a stall and she stops there a while). Click the
+  door (家门口) or click her for 回家 to bring her home. She comes home by
+  herself when a need runs red
 - a tray icon: 显示 / 隐藏, 置顶游戏, 退出
 - the save is a JSON file in the app's data folder by default
   (Windows: `%APPDATA%\com.desktopbuddy.app\save.json`, previous copy kept

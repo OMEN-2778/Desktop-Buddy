@@ -425,14 +425,18 @@ LEAVES = {
 }
 
 
-def branches(kind, bare=False):
+def branches(kind, bare=False, at=None):
     """The tree's skeleton: segments (x0, y0, x1, y1, thickness), from a
     fixed seed so every season and frame shares it. Bare (winter): longer,
-    one level deeper, so the twigs fill the crown's outline."""
-    _, tx, cy = next(t for t in TREES if t[0] == kind)
-    rnd = random.Random(kind)
+    one level deeper, so the twigs fill the crown's outline. `at` =
+    (trunk x, crown y, foot y, rx, ry) places a tree elsewhere (the park)."""
+    if at:
+        tx, cy, base, k = at[0], at[1], at[2], at[3] / 19
+    else:
+        (_, tx, cy), base, k = next(t for t in TREES if t[0] == kind), BASE, 1
+    rnd = random.Random(kind if not at else f"{kind}{tx}")
     segs = []
-    depth0, reach = (4, (9.5, 11.5)) if bare else (3, (6.5, 8.5))
+    depth0, reach = (4, (9.5 * k, 11.5 * k)) if bare else (3, (6.5 * k, 8.5 * k))
 
     def grow(x, y, ang, length, th, depth):
         x1, y1 = x + math.cos(ang) * length, y - math.sin(ang) * length
@@ -445,7 +449,7 @@ def branches(kind, bare=False):
             grow(x1, y1, ang + rnd.choice([-1, 1]) * 1.1, length * 0.45, 1, 0)
 
     fork = cy + 5
-    segs.append((tx, BASE + 2, tx, fork, 4))                          # trunk
+    segs.append((tx, base + 2, tx, fork, 4 if k < 1.2 else 5))        # trunk
     for a in ((0.85, 1.3, 1.85, 2.3) if bare else (1.15, 1.95, 1.57)):
         grow(tx, fork, a + rnd.uniform(-0.1, 0.1), rnd.uniform(*reach), 3, depth0)
     return segs
@@ -458,35 +462,40 @@ def draw_branch(s, x0, y0, x1, y1, th, R):
         x, y = x0 + (x1 - x0) * t, y0 + (y1 - y0) * t
         for k in range(th):
             c = R[3] if k == 0 and th > 1 else R[1] if k == th - 1 and th > 1 else R[2]
-            s.set(int(round(x - th / 2 + k)), int(round(y)), c)
+            s.set(math.floor(x - th / 2 + k + 0.5) if th % 2 else int(round(x - th / 2 + k)), int(round(y)), c)   # (odd widths: no banker's rounding gaps)
 
 
-def tree(kind, season, frame):
+def tree(kind, season, frame, at=None):
     s = Sprite(W, H)
-    _, tx, cy = next(t for t in TREES if t[0] == kind)
-    segs = branches(kind, bare=season == "winter")
+    if at:
+        tx, cy, base, rx, ry = at
+    else:
+        _, tx, cy = next(t for t in TREES if t[0] == kind)
+        base = BASE
+        rx, ry = (19, 16) if kind != "cherry" else (17, 15)
+    segs = branches(kind, bare=season == "winter", at=at)
     BARK = P.walnut
-    rx, ry = (19, 16) if kind != "cherry" else (17, 15)
     inside = lambda x, y, k=0.8: ((x - tx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= k * k
     for x0, y0, x1, y1, th in segs:                                   # trunk and boughs (in leaf: only what the crown hides)
         if season == "winter" or th >= 4 or (inside(x0, y0) and inside(x1, y1)):
             draw_branch(s, x0, y0, x1, y1, th, BARK)
-    s.hline(tx - 4, tx + 3, BASE + 2, BARK[1]).hline(tx - 3, tx + 2, BASE + 1, BARK[2])   # root flare
+    s.hline(tx - 4, tx + 3, base + 2, BARK[1]).hline(tx - 3, tx + 2, base + 1, BARK[2])   # root flare
     rnd = random.Random(kind + "bark")
     for _ in range(10):
-        y = rnd.randint(cy + 8, BASE)
+        y = rnd.randint(cy + 8, base)
         s.set(tx + rnd.choice([-1, 0]), y, BARK[1]).set(tx + rnd.choice([-1, 0]), y + 1, BARK[1])
     if season == "winter":
         return s
     # crown: clusters inside an ellipse, toned by the light (top left bright)
-    rnd = random.Random(kind + "crown")
+    rnd = random.Random(kind + "crown" + (str(tx) if at else ""))
     pts = []
-    for _ in range(64 if season != "autumn" else 50):
+    sc = max(1, (rx / 19) ** 0.6) if at else 1                        # bigger trees, bigger leaf clusters
+    for _ in range(int((64 if season != "autumn" else 50) * (rx * ry / 304 / sc / sc if at else 1))):
         while True:
             u, v = rnd.uniform(-1, 1), rnd.uniform(-1, 1)
             if u * u + v * v <= 1:
                 break
-        pts.append((tx + u * rx, cy + v * ry, rnd.uniform(2.6, 4.6), rnd.random(), u, v))
+        pts.append((tx + u * rx, cy + v * ry, rnd.uniform(2.6, 4.6) * sc, rnd.random(), u, v))
     pts.sort(key=lambda p: -(p[4] * 0.6 + p[5]))                      # back (lower right) first
     ramps = LEAVES[(kind, season)]
     sway = lambda v: (1 if frame and v < 0.2 else 0) + (1 if frame and v < -0.5 else 0)   # the top moves most
@@ -515,10 +524,10 @@ def tree(kind, season, frame):
 
 # ---------------------------------------------------------------- shrubs
 
-def bush(kind, cx, hw, ht, season):
+def bush(kind, cx, hw, ht, season, base=None):
     s = Sprite(W, H)
     rnd = random.Random(cx)
-    base = SIDE - 1
+    base = SIDE - 1 if base is None else base
     if kind == "hydrangea" and season == "winter":                    # bare twigs
         for _ in range(9):
             x = cx + rnd.randint(-hw + 2, hw - 2)

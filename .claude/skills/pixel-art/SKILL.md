@@ -159,8 +159,7 @@ piece side by side — review new pieces there at 6x).
   head, long hair hangs in front) and comes down facing us.
 - **Front door** (`entry_door`): sage, beside the stairs on the ground
   floor; clickable (`front_door`, cropped from the day picture): a ring of
-  places (去门口 / 去公园 / 去商场 / 去海边; only 门口 is built, the rest
-  say they're still being built).
+  places (去门口 / 去公园 / 去商场 / 去海边).
 - **家门口** (`art/src/concept/front_yard.py`): the street side, same
   342x118 canvas and scale (door 37px). Layout from the user's sketch, but
   NOT its colours (user: the sketch's colours only told parts apart; "场景一定
@@ -181,6 +180,28 @@ piece side by side — review new pieces there at 6x).
   Overlays: `front_snow` (auto snow caps: `LEDGES` registered while
   drawing + top edges of branch / shrub masks, roofs blanketed, a trodden
   lane), `front_wet` (darker pavers with sheen + puddles), `front_lit`.
+- **公园** (`park.py`): sky, a pale far skyline (lit windows at night),
+  a hazy treeline, a striped lawn, a pond (stone rim, reeds, lilies, a duck
+  house; frozen in winter), big maple + linden in front and two small
+  trees back (front_yard's `tree(..., at=(x, crown y, foot y, rx, ry))`,
+  leaf clusters scale with the crown), hedge, lamp post, THE BENCH (she
+  only sits there, user), bin, gravel path, a seasonal flower border.
+  Overlays snow (keeps what stands in it clear) / wet / lit; ducks.
+- **海边** (`beach.py`): sky, a far island, the sea (glitter path), a pier
+  on the left, a headland with a lighthouse + cottage on the right (its own
+  layer `head`, drawn over the clouds and the boat), lifeguard tower,
+  sandcastle + bucket, umbrella + towel + ball (summer; furled in spring and
+  autumn, gone in winter, grey sea), a dune with marram grass and fences.
+  `surf` = 8 frames of the wash running up and sliding back (wet sand).
+  Gulls, crabs, a boat, clouds (`cloud(i)`, shared with the park).
+- **商场** (`mall.py`): two endless strips the page scrolls. `far` (456,
+  half speed): skylight, 6 + 6 shops across the atrium on two floors (sign
+  glyph, window goods: books, glasses, music, beauty, tech, cafe, clothes,
+  bakery, toys, shoes), the glass `rail` (redrawn over the shoppers),
+  the slab with downlights; `sky_night` panes. `near` (720, full speed):
+  marble floor, the 6 clickable stalls (奶茶 冰淇淋 棉花糖 鲜花 气球 饰品,
+  `STALLS`, 38 wide) and a fixture each; `deco` per season hangs from the
+  ceiling (bunting, paper blossoms / fish / leaves, red lanterns).
 - **Going out** (demo): acts `go_out` (to the front door), `go_home` (to
   the door outside), `stroll` (to `sim.strollX`); `sim.place` = "home" |
   "front" (saved). Through a door: two black bars close in from the sides
@@ -192,6 +213,20 @@ piece side by side — review new pieces there at 6x).
   (sleep, cooking...) queues `go_home` first (`startAct`). Clickables
   belong to a place (`CLICK_PLACE`); chance cards, moments and room tags
   are off outside (`roomAt` -> "outside").
+- **Park / mall / beach** (demo): `OUT[place].kind` = walk (front, beach) |
+  sit (park: act `bench`, sit pose, never ends on its own) | scroll (mall:
+  act `mall`, `mallS.x` = the near-strip spot under her at screen x `AT`;
+  walking left shrinks it). `sim.dest` picks where `go_out` leads. No door
+  there: clicking her opens `RINGS.away` (聊聊天 / 摸摸头 / 回家) and
+  `go_home` wipes straight home. A red need (< 20) sends her home from any
+  activity out there (`redNeed`). Mall: click a stall -> she walks (either
+  way) till it's in front of her, looks at it from behind (`backCanvas`),
+  turns round with an emote, its line, diary, moodlet `stall_<id>` and a
+  little hunger / fun (`STALL`), then walks on; now and then she stops at
+  one by herself. Her reflection shows in the mall floor. Park life: ducks,
+  sparrows, petals / leaves, butterflies, fireflies (summer nights), the
+  lamp lit. Beach life: surf frames, glitter, gulls (one perches and flies
+  off as she nears), crabs (dash off), the boat, the lighthouse beam.
 - **Outside, alive** (`outsideLife` / `drawOutsideLife`): the season's
   background, trees swaying between 2 frames with the gusts, snow fading in
   by `weather.snowCover`, the sidewalk wet (`life.wet`, dries slowly), the

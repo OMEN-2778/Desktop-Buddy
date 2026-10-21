@@ -31,6 +31,9 @@ import ui_icons  # noqa: E402
 import item_icons  # noqa: E402
 import mood_icons  # noqa: E402
 import front_yard as FY  # noqa: E402
+import park as PK  # noqa: E402
+import beach as BC  # noqa: E402
+import mall as MALL  # noqa: E402
 import make_creator as mc  # noqa: E402
 from pixelkit import P, Sprite, rgba  # noqa: E402
 
@@ -113,14 +116,44 @@ def main():
     dy = FY.BASE - 37
     clickables["out_door"] = {"src": png(front.crop(dx - 2, dy - 8, dw + 4, 47)), "x": dx - 2, "y": dy - 8}
     crown = {"maple": (19, 16), "cherry": (17, 15), "linden": (19, 16)}
+    # places to go (user): 家门口, 公园 (she sits on the bench), 商场 (she walks
+    # on, the mall scrolls past), 海边. "img" holds every picture (the page
+    # loads it as is), the rest is layout.
+    clouds = [png(BC.cloud(i)) for i in range(3)]
+    sparrows = [png(FY.sparrow(f)) for f in range(4)]
+    flies = [png(FY.butterfly(f)) for f in range(4)]
     outside = {"front": {
-        "seasons": {se: {"bg": png(FY.background(se)), "trees": [png(FY.trees(se, f)) for f in (0, 1)]} for se in FY.SEASONS},
-        "snow": png(FY.snow_layer()), "wet": png(FY.wet_layer()), "lit": png(FY.lit()),
-        "cat": [png(FY.cat(f)) for f in (0, 1)], "sparrow": [png(FY.sparrow(f)) for f in range(4)],
-        "butterfly": [png(FY.butterfly(f)) for f in range(4)],
+        "kind": "walk",
+        "img": {"seasons": {se: {"bg": png(FY.background(se)), "trees": [png(FY.trees(se, f)) for f in (0, 1)]} for se in FY.SEASONS},
+                "snow": png(FY.snow_layer()), "wet": png(FY.wet_layer()), "lit": png(FY.lit()),
+                "cat": [png(FY.cat(f)) for f in (0, 1)], "sparrow": sparrows, "butterfly": flies},
         "sill": list(FY.SILL_CAT), "trees": [[kind, x, cy, *crown[kind]] for kind, x, cy in FY.TREES],
         "bushes": [[cx, hw, ht] for _, cx, hw, ht in FY.BUSHES], "side": FY.SIDE, "base": FY.BASE,
-        "feet": FY.FEET, "walk": list(FY.WALK), "doorX": dx + dw // 2, "door": [dx - 2, dy - 8, dw + 4, 47]}}
+        "feet": FY.FEET, "walk": list(FY.WALK), "doorX": dx + dw // 2, "door": [dx - 2, dy - 8, dw + 4, 47]},
+      "park": {
+        "kind": "sit",
+        "img": {"seasons": {se: {"bg": png(PK.background(se)), "trees": [png(PK.trees(se, f)) for f in (0, 1)]} for se in PK.SEASONS},
+                "snow": png(PK.snow_layer()), "wet": png(PK.wet_layer()), "lit": png(PK.lit()),
+                "duck": [png(PK.duck(f)) for f in range(3)], "sparrow": sparrows, "butterfly": flies, "cloud": clouds},
+        "trees": [[kind, x, cy, rx, ry] for kind, x, cy, _, rx, ry in PK.TREES], "pond": list(PK.POND),
+        "horizon": PK.HORIZON, "path": list(PK.PATH), "side": PK.PATH[0], "feet": PK.FEET,
+        "walk": [PK.BENCH, PK.BENCH], "doorX": PK.BENCH, "lamp": PK.LAMP},
+      "beach": {
+        "kind": "walk",
+        "img": {"seasons": {se: {"bg": png(BC.background(se)), "head": png(BC.head_layer(se)), "surf": [png(BC.surf(se, f)) for f in range(BC.SURF_FRAMES)]} for se in BC.SEASONS},
+                "snow": png(BC.snow_layer()), "wet": png(BC.wet_layer()), "lit": png(BC.lit()),
+                "gull": [png(BC.gull(f)) for f in range(4)], "crab": [png(BC.crab(f)) for f in (0, 1)],
+                "boat": png(BC.boat()), "cloud": clouds},
+        "horizon": BC.HORIZON, "shore": BC.SHORE, "side": BC.SHORE + 8, "feet": BC.FEET, "walk": list(BC.WALK),
+        "doorX": 200, "light": list(BC.LIGHT)},
+      "mall": {
+        "kind": "scroll",
+        "img": {"far": png(MALL.far()), "near": png(MALL.near()), "rail": png(MALL.rail()), "skyNight": png(MALL.sky_night()),
+                "deco": {se: png(MALL.deco(se)) for se in MALL.SEASONS},
+                "shopper": [[png(MALL.shopper(k, f)) for f in (0, 1)] for k in range(5)]},
+        "farW": MALL.FAR_W, "nearW": MALL.NEAR_W, "at": MALL.AT, "feet": MALL.FEET, "upWalk": MALL.UP_WALK,
+        "walk": [MALL.AT, MALL.AT], "doorX": MALL.AT,
+        "stalls": [{"id": k, "name": n, "u": i * MALL.SEG + MALL.STALL_X, "w": MALL.STALL_W} for i, (k, n) in enumerate(MALL.STALLS)]}}
 
     # window open states: day/night, three sway frames
     # upstairs windows look out on sky only; the living room sees the hill
