@@ -59,11 +59,20 @@ RAMPS: dict[str, list[str]] = {
     "leaf": ["#24352b", "#36513b", "#4f6d4c", "#6f8c5f", "#9db285"],
     "frame": ["#2a2427", "#3d3538", "#52484a", "#6a5f60", "#837677"],
     "sky_soft": ["#86a3c4", "#a3bdd8", "#c4d6e8", "#e5edf4"],
-    # outside (家门口): the townhouse row
+    # outside (家门口): the townhouse row (ours white, left light blue, right brick)
+    "facade_white": ["#8e8a93", "#b7b3b5", "#d8d5d2", "#eeebe6", "#faf8f4"],
     "facade_blue": ["#5f7591", "#86a0bd", "#b3cbe0", "#d4e5f2", "#ecf5fb"],
-    "facade_peach": ["#94695a", "#c18f7a", "#e3b9a3", "#f4d7c6", "#fcebe0"],
+    "brick": ["#4e2c2b", "#7a4136", "#a65a45", "#c4785c", "#dca084"],
+    "slate": ["#262a36", "#363c4c", "#4b5366", "#656e82", "#8a92a3"],
+    "teal": ["#163a3f", "#22575b", "#337a78", "#4f9f97", "#7fc4b6"],
     "mint": ["#2f5a48", "#4f8a6c", "#7fb79a", "#a9d6bd", "#d2eedd"],
     "pave": ["#5f5c63", "#807c82", "#a3a0a3", "#c2bfbe", "#dcdad6"],
+    "grass": ["#22402a", "#335c33", "#4c7d3e", "#6ea24c", "#9cc865"],
+    "leaf_spring": ["#2a4a2c", "#3f6d36", "#5f9443", "#86bb57", "#b6dc7c"],
+    "autumn": ["#4a1d1c", "#8a2f1f", "#c65022", "#e88a2f", "#f6c45a"],
+    "blossom": ["#7a3a55", "#b8668a", "#e095b2", "#f5c3d4", "#fde6ee"],
+    "hydrangea": ["#35407a", "#4f63ad", "#7b95d6", "#a9c0ee", "#d6e3fa"],
+    "snow": ["#8d9ab3", "#b8c4d8", "#dfe7f2", "#f6f9fd"],
     # sky / light
     "moon": ["#0b1a5c", "#123194", "#1f4bc4", "#5b82e0", "#a9c2f5"],
     "sky_day": ["#5c8dd0", "#80b1e7", "#b4d7f3", "#e3f1fb"],

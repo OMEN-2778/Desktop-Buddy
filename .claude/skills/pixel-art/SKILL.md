@@ -161,16 +161,26 @@ piece side by side — review new pieces there at 6x).
   floor; clickable (`front_door`, cropped from the day picture): a ring of
   places (去门口 / 去公园 / 去商场 / 去海边; only 门口 is built, the rest
   say they're still being built).
-- **家门口** (`art/src/concept/front_yard.py`, user's sketch): the street
-  side, same 342x118 canvas and scale (door 37px, storeys ~50px): our
-  townhouse in the middle (`facade_blue`, windows upper left / upper right
-  / lower right, navy door with canopy, lamp, number, step), slices of the
-  neighbours' (`facade_peach`) left and right, two big round trees left and
-  one right (cloud-shaped crowns of clumps, 4px trunks), `mint` bushes,
-  `pave` sidewalk where she walks (`FEET` 111). `front_lit` = the window
-  glass glowing at night (drawn over the night pass). Night outside is a
-  plain cool multiply (`gradeOutside`), weather is rain / snow over the
-  whole scene.
+- **家门口** (`art/src/concept/front_yard.py`): the street side, same
+  342x118 canvas and scale (door 37px). Layout from the user's sketch, but
+  NOT its colours (user: the sketch's colours only told parts apart; "场景一定
+  要生动且精致"): ours white plaster (`facade_white`, quoins, shutters,
+  window boxes, teal door with arched fanlight + keystone, two lanterns,
+  mailbox + number, topiary balls in terracotta pots, ivy up the corner),
+  left neighbour light blue clapboard + a bicycle, right neighbour brick
+  (`brick`, stone lintels, a pot and a napping cat on the sill), slate
+  roofs + a chimney along the top, downpipes, plinth, garden strip, paver
+  sidewalk, kerb. Trees (maple, cherry, linden) = a seeded branch
+  skeleton + a crown of ~60 leaf clusters toned by the light, leaf texture,
+  outline; frame 1 shifts the upper clusters for sway; in leaf only the
+  hidden boughs are drawn, bare (winter) gets a fuller, deeper skeleton.
+  Shrubs (box / hydrangea) the same way, clipped at the soil. Seasons
+  (user): spring fresh green + cherry blossom + tulips + petals; summer
+  deep green + hydrangeas + geraniums; autumn red maple, gold linden, red
+  ivy, mums, fallen leaves; winter bare branches, evergreens with berries.
+  Overlays: `front_snow` (auto snow caps: `LEDGES` registered while
+  drawing + top edges of branch / shrub masks, roofs blanketed, a trodden
+  lane), `front_wet` (darker pavers with sheen + puddles), `front_lit`.
 - **Going out** (demo): acts `go_out` (to the front door), `go_home` (to
   the door outside), `stroll` (to `sim.strollX`); `sim.place` = "home" |
   "front" (saved). Through a door: two black bars close in from the sides
@@ -182,6 +192,14 @@ piece side by side — review new pieces there at 6x).
   (sleep, cooking...) queues `go_home` first (`startAct`). Clickables
   belong to a place (`CLICK_PLACE`); chance cards, moments and room tags
   are off outside (`roomAt` -> "outside").
+- **Outside, alive** (`outsideLife` / `drawOutsideLife`): the season's
+  background, trees swaying between 2 frames with the gusts, snow fading in
+  by `weather.snowCover`, the sidewalk wet (`life.wet`, dries slowly), the
+  cat napping on the sill (clear days), sparrows flying in to hop and peck
+  (they scatter when she's within 22px, or for rain / dusk), butterflies
+  over the shrubs (spring / summer), leaves (autumn) and petals (spring)
+  drifting from the crowns, rain streaks + splashes / snowflakes. At night
+  the lit windows are masked by the trees and her (`litCv`).
 - **Demo walking**: `make_demo` exports `floors` (feet y per storey) and
   `stair.x`; each trip is its own polyline (`planRoute`: along the floor ->
   stair column -> other floor -> spot). Doors open only if the trip crosses

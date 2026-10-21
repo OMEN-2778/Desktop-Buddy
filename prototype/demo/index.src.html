@@ -933,7 +933,13 @@ async function loadAssets() {
   IMG.leaf = {}; for (const [k, v] of Object.entries(D.leaves)) IMG.leaf[k] = await loadImg(v);
   IMG.ov = {}; for (const [k, v] of Object.entries(D.overlays)) IMG.ov[k] = await loadImg(v.src);
   IMG.click = {}; for (const [k, v] of Object.entries(D.clickables)) IMG.click[k] = await loadImg(v.src);
-  IMG.out = {}; for (const [k, v] of Object.entries(D.outside)) IMG.out[k] = { day: await loadImg(v.day), lit: await loadImg(v.lit) };
+  IMG.out = {};
+  for (const [k, v] of Object.entries(D.outside)) {
+    const o = IMG.out[k] = { seasons: {} };
+    for (const [se, l] of Object.entries(v.seasons)) o.seasons[se] = { bg: await loadImg(l.bg), trees: await Promise.all(l.trees.map(loadImg)) };
+    for (const key of ["snow", "wet", "lit"]) o[key] = await loadImg(v[key]);
+    for (const key of ["cat", "sparrow", "butterfly"]) o[key] = await Promise.all(v[key].map(loadImg));
+  }
   IMG.win = {};
   for (const [k, v] of Object.entries(D.windows)) {
     IMG.win[k] = {};
@@ -3364,32 +3370,118 @@ function gradeOutside(ctx, f) {                  // the night pass without rooms
   }
   ctx.putImageData(img, 0, 0);
 }
+// the street is alive (user: 生动): trees sway, a cat naps on the
+// neighbour's sill, sparrows drop in to peck and flee when she comes near,
+// butterflies in spring and summer, leaves (autumn) and petals (spring) drift
+// down; rain wets the sidewalk, snow settles as deep as it lies.
+const SEASON_KEYS = ["spring", "summer", "autumn", "winter"];
+const life = { t: realClock, wet: 0, birds: [], flies: [], bits: [], nextBirds: 0 };
+function outsideLife(dt) {
+  const O = OUT[sim.place], se = seasonOf(sim.t).i, h = hour(), day = h >= 7 && h < 18.5, w = weather.kind;
+  life.wet += ((w === "rain" ? 1 : 0) - life.wet) * Math.min(1, dt * (w === "rain" ? 0.8 : 0.08));   // dries slowly
+  const p = here();
+  // sparrows: now and then a few fly in, hop and peck, and scatter when she's close
+  if (day && w === "clear" && !life.birds.length && realClock > life.nextBirds) {
+    const n = 1 + Math.floor(Math.random() * 3), from = Math.random() < 0.5 ? -8 : W + 8;
+    for (let i = 0; i < n; i++) {
+      const x = 20 + Math.random() * (W - 40);
+      life.birds.push({ x: from, y: 30 + Math.random() * 20, tx: x, ty: O.feet - 4 + Math.round(Math.random() * 3), mode: "in", t: 0, face: x > from ? 1 : -1 });
+    }
+  }
+  for (const b of life.birds) {
+    b.t += dt;
+    if (b.mode === "in" || b.mode === "out") {
+      const dx = b.tx - b.x, dy = b.ty - b.y, d = Math.hypot(dx, dy), v = 70 * dt;
+      if (d <= v) { b.x = b.tx; b.y = b.ty; if (b.mode === "in") { b.mode = "ground"; b.t = 0; } else b.gone = true; }
+      else { b.x += dx / d * v; b.y += dy / d * v; b.face = dx > 0 ? 1 : -1; }
+    } else {
+      if (Math.abs(b.x - p.x) < 22 || b.t > 18 + Math.random() * 10 || !day || w !== "clear") {   // too close / bored / rain or dusk: away they go
+        b.mode = "out"; b.tx = b.x + (b.x < p.x ? -1 : 1) * 160; b.ty = -10;
+      } else if (Math.random() < dt * 1.2) { b.x += (Math.random() < 0.5 ? -3 : 3); b.face = Math.random() < 0.5 ? 1 : -1; }   // a hop
+    }
+  }
+  if (life.birds.length && life.birds.every(b => b.gone)) { life.birds = []; life.nextBirds = realClock + 25 + Math.random() * 40; }
+  // butterflies over the shrubs
+  const flyOk = day && w === "clear" && (se === 0 || se === 1);
+  if (flyOk && life.flies.length < 2 && Math.random() < dt * 0.05) {
+    const [bx] = pick(O.bushes);
+    life.flies.push({ hx: bx, x: bx, y: O.side - 14, t: 0, ph: Math.random() * 6, k: Math.random() < 0.5 ? 0 : 2 });
+  }
+  for (const f of life.flies) {
+    f.t += dt;
+    f.x = f.hx + Math.sin(f.t * 0.7 + f.ph) * 22 + Math.sin(f.t * 2.3) * 4;
+    f.y = O.side - 16 + Math.sin(f.t * 1.9 + f.ph) * 6;
+    if (!flyOk || f.t > 40) f.gone = true;
+  }
+  life.flies = life.flies.filter(f => !f.gone);
+  // leaves (autumn), petals (spring), drifting down from the crowns
+  if ((se === 2 || se === 0) && life.bits.length < 14 && Math.random() < dt * (se === 2 ? 2.2 : 1.2)) {
+    const trees = se === 0 ? O.trees.filter(t => t[0] === "cherry") : O.trees, [, tx, cy, rx, ry] = pick(trees);
+    const cols = se === 2 ? ["#c65022", "#e88a2f", "#f6c45a", "#8a2f1f", "#d29b30"] : ["#f5c3d4", "#fde6ee", "#e095b2"];
+    life.bits.push({ x: tx + (Math.random() * 2 - 1) * rx, y: cy + (Math.random() * 0.6) * ry, vy: 6 + Math.random() * 6, ph: Math.random() * 6, c: pick(cols), t: 0 });
+  }
+  for (const b of life.bits) {
+    b.t += dt; b.y += b.vy * dt; b.x += Math.sin(b.t * 2.4 + b.ph) * 10 * dt + 3 * dt;
+    if (b.y > O.side + 6) b.gone = true;
+  }
+  life.bits = life.bits.filter(b => !b.gone);
+}
+function drawOutsideLife(ctx) {
+  const O = IMG.out[sim.place], L = OUT[sim.place], h = hour();
+  if (weather.kind === "clear" && h >= 7 && h < 20) {              // the cat on the sill; the tail flicks now and then
+    const fr = realClock % 4 < 0.35 ? 1 : 0;
+    ctx.drawImage(O.cat[fr], L.sill[0], L.sill[1] - 4);
+  }
+  for (const b of life.birds) {
+    const fl = b.mode !== "ground", fr = fl ? 2 + (Math.floor(realClock * 10) % 2) : Math.floor(b.t * 1.7) % 3 === 2 ? 1 : 0;
+    ctx.save(); ctx.translate(Math.round(b.x), Math.round(b.y) - 6);
+    if (b.face < 0) { ctx.scale(-1, 1); ctx.translate(-8, 0); }
+    ctx.drawImage(O.sparrow[fr], 0, 0); ctx.restore();
+  }
+  for (const f of life.flies) ctx.drawImage(O.butterfly[f.k + (Math.floor(realClock * 6) % 2)], Math.round(f.x) - 3, Math.round(f.y) - 2);
+  for (const b of life.bits) { ctx.fillStyle = b.c; ctx.fillRect(Math.round(b.x), Math.round(b.y), Math.sin(b.t * 5 + b.ph) > 0 ? 2 : 1, 1); }
+}
 function drawOutsideWeather(ctx) {
-  const w = weather.kind;
-  if (w === "clear") return;
+  const w = weather.kind, L = OUT[sim.place];
   if (w === "rain") {
     ctx.fillStyle = "rgba(220, 232, 250, 0.7)";
-    for (let i = 0; i < 70; i++) {
+    for (let i = 0; i < 80; i++) {
       const x0 = hash(i * 7.3) * (W + 30), sp = 60 + hash(i * 3.1) * 30;
       const y = ((realClock * sp + hash(i * 1.7) * H) % (H + 6)) - 4;
       ctx.fillRect(Math.floor(x0 - y * 0.25), Math.floor(y), 1, 3);
     }
-  } else {
+    ctx.fillStyle = "rgba(235, 242, 252, 0.8)";                   // splashes on the sidewalk
+    for (let i = 0; i < 10; i++) {
+      const ph = (realClock * 1.7 + hash(i * 9.1)) % 1, x = Math.floor(hash(i * 3.7 + Math.floor(realClock * 1.7 + hash(i * 9.1))) * W);
+      const y = L.side + 2 + Math.floor(hash(i * 5.3) * 8);
+      if (ph < 0.25) { ctx.fillRect(x - 1, y, 1, 1); ctx.fillRect(x + 1, y, 1, 1); ctx.fillRect(x, y - 1, 1, 1); }
+    }
+  } else if (w === "snow") {
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    for (let i = 0; i < 46; i++) {
+    for (let i = 0; i < 60; i++) {
       const x0 = hash(i * 5.9) * W, sp = 9 + hash(i * 2.3) * 7;
       const y = ((realClock * sp + hash(i * 4.1) * H) % (H + 2)) - 1;
       ctx.fillRect(Math.floor(x0 + Math.sin(realClock * 1.3 + i) * 3), Math.floor(y), i % 3 ? 1 : 2, i % 3 ? 1 : 2);
     }
   }
 }
+const litCv = document.createElement("canvas"); litCv.width = W; litCv.height = H;
+const litCtx = litCv.getContext("2d");
 function renderOutside() {
-  const f = nightness(hour()), O = IMG.out[sim.place];
+  const f = nightness(hour()), O = IMG.out[sim.place], se = SEASON_KEYS[seasonOf(sim.t).i], S = O.seasons[se];
+  const dt = Math.min(0.1, realClock - life.t); life.t = realClock;
+  if (speed && !cardHolds() && !wiping) outsideLife(dt);
   bctx.clearRect(0, 0, W, H);
-  bctx.drawImage(O.day, 0, 0);
+  bctx.drawImage(S.bg, 0, 0);
+  if (life.wet > 0.02) { bctx.globalAlpha = life.wet; bctx.drawImage(O.wet, 0, 0); bctx.globalAlpha = 1; }
+  const gust = Math.sin(realClock * 0.9) + Math.sin(realClock * 2.3) * 0.4;   // the trees sway with the wind
+  const treeImg = S.trees[gust > 0.55 || (weather.kind !== "clear" && gust > 0) ? 1 : 0];
+  bctx.drawImage(treeImg, 0, 0);
+  if (weather.snowCover > 0.02) { bctx.globalAlpha = Math.min(1, weather.snowCover); bctx.drawImage(O.snow, 0, 0); bctx.globalAlpha = 1; }
+  drawOutsideLife(bctx);
   const ms = realClock * 1000, fr = activityFrame(ms);
   const full = { expr: "neutral", look: 0, bob: 0, sway: 0, wave: null, ...fr.f };
-  let emoteAt;
+  let emoteAt, dollAt = null;
   const p = here();
   if (sim.mode === "down") {
     const body = lyingBody({ ...full, expr: "sleepy", look: 0, bob: 0, sway: 0, wave: null });
@@ -3397,8 +3489,9 @@ function renderOutside() {
     bctx.drawImage(body, x, y);
     emoteAt = [x + 10, y - 13];
   } else {
-    const x = Math.round(p.x - DW / 2), y = Math.round(p.y - DH + 1);
-    bctx.drawImage(dollCanvas(full, fr.pose), x, y);
+    const x = Math.round(p.x - DW / 2), y = Math.round(p.y - DH + 1), dc = dollCanvas(full, fr.pose);
+    bctx.drawImage(dc, x, y);
+    dollAt = [dc, x, y];
     const act = sim.mode === "act" ? sim.act : null;
     if (act && act.startsWith("phone_")) {
       if (act === "phone_call") bctx.drawImage(IMG.fx.phone_call[0], x + 16, y + 8 + full.bob);
@@ -3408,7 +3501,13 @@ function renderOutside() {
   }
   drawOutsideWeather(bctx);
   gradeOutside(bctx, f);
-  if (f > 0) { bctx.globalAlpha = Math.min(1, f * 1.3); bctx.drawImage(O.lit, 0, 0); bctx.globalAlpha = 1; }   // lit windows at night
+  if (f > 0) {                                     // lit windows at night, behind the trees and her
+    litCtx.clearRect(0, 0, W, H);
+    litCtx.globalCompositeOperation = "source-over"; litCtx.drawImage(O.lit, 0, 0);
+    litCtx.globalCompositeOperation = "destination-out"; litCtx.drawImage(treeImg, 0, 0);
+    if (dollAt) litCtx.drawImage(dollAt[0], dollAt[1], dollAt[2]);
+    bctx.globalAlpha = Math.min(1, f * 1.3); bctx.drawImage(litCv, 0, 0); bctx.globalAlpha = 1;
+  }
   const down = sim.mode === "down";
   if (fr.emote || down) bctx.drawImage(emoteCanvas(down ? "skull" : fr.emote), emoteAt[0], emoteAt[1] + (down ? Math.floor(realClock * 2) % 2 : 0));
   if (down) drawRevive(bctx);

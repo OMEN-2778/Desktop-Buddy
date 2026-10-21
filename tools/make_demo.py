@@ -108,12 +108,19 @@ def main():
     ex, ew = Hs.ENTRY
     ey = Hs.GR_FLOOR - 37
     clickables["front_door"] = {"src": png(day.crop(ex - 1, ey - 1, ew + 2, 38)), "x": ex - 1, "y": ey - 1}
-    front = FY.scene()
+    front = FY.scene("summer")
     dx, dw = FY.DOOR
     dy = FY.BASE - 37
     clickables["out_door"] = {"src": png(front.crop(dx - 2, dy - 8, dw + 4, 47)), "x": dx - 2, "y": dy - 8}
-    outside = {"front": {"day": png(front), "lit": png(FY.lit()), "feet": FY.FEET, "walk": list(FY.WALK),
-                         "doorX": dx + dw // 2, "door": [dx - 2, dy - 8, dw + 4, 47]}}
+    crown = {"maple": (19, 16), "cherry": (17, 15), "linden": (19, 16)}
+    outside = {"front": {
+        "seasons": {se: {"bg": png(FY.background(se)), "trees": [png(FY.trees(se, f)) for f in (0, 1)]} for se in FY.SEASONS},
+        "snow": png(FY.snow_layer()), "wet": png(FY.wet_layer()), "lit": png(FY.lit()),
+        "cat": [png(FY.cat(f)) for f in (0, 1)], "sparrow": [png(FY.sparrow(f)) for f in range(4)],
+        "butterfly": [png(FY.butterfly(f)) for f in range(4)],
+        "sill": list(FY.SILL_CAT), "trees": [[kind, x, cy, *crown[kind]] for kind, x, cy in FY.TREES],
+        "bushes": [[cx, hw, ht] for _, cx, hw, ht in FY.BUSHES], "side": FY.SIDE, "base": FY.BASE,
+        "feet": FY.FEET, "walk": list(FY.WALK), "doorX": dx + dw // 2, "door": [dx - 2, dy - 8, dw + 4, 47]}}
 
     # window open states: day/night, three sway frames
     # upstairs windows look out on sky only; the living room sees the hill
