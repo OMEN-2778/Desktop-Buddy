@@ -30,6 +30,7 @@ import sky_icons  # noqa: E402
 import ui_icons  # noqa: E402
 import item_icons  # noqa: E402
 import mood_icons  # noqa: E402
+import front_yard as FY  # noqa: E402
 import make_creator as mc  # noqa: E402
 from pixelkit import P, Sprite, rgba  # noqa: E402
 
@@ -101,6 +102,18 @@ def main():
     empty_house(False)
     C = dict(Hs.CLICK)
     clickables = {cid: {"src": png(spr), "x": int(x), "y": int(y)} for cid, (spr, x, y) in C.items()}
+
+    # the front door (user: it opens a ring of places to go) and, outside,
+    # 家门口: the street side of the house (art/src/concept/front_yard.py)
+    ex, ew = Hs.ENTRY
+    ey = Hs.GR_FLOOR - 37
+    clickables["front_door"] = {"src": png(day.crop(ex - 1, ey - 1, ew + 2, 38)), "x": ex - 1, "y": ey - 1}
+    front = FY.scene()
+    dx, dw = FY.DOOR
+    dy = FY.BASE - 37
+    clickables["out_door"] = {"src": png(front.crop(dx - 2, dy - 8, dw + 4, 47)), "x": dx - 2, "y": dy - 8}
+    outside = {"front": {"day": png(front), "lit": png(FY.lit()), "feet": FY.FEET, "walk": list(FY.WALK),
+                         "doorX": dx + dw // 2, "door": [dx - 2, dy - 8, dw + 4, 47]}}
 
     # window open states: day/night, three sway frames
     # upstairs windows look out on sky only; the living room sees the hill
@@ -193,6 +206,7 @@ def main():
         "water_study": (1, st + 78, "stand"),
         "bookshelf": (1, st + 13, "stand"),
         "study_window": (1, st + 78, "stand"),
+        "front_door": (0, Hs.ENTRY[0] + Hs.ENTRY[1] // 2, "stand"),   # inside, at the front door
     }
     rooms = {key: Hs.room_rect(key) for key in ["stairs"] + [r[0] for r in Hs.ROOMS]}
     room_x = {r[0]: (r[2], r[3], r[3] + r[4]) for r in Hs.ROOMS}
@@ -225,7 +239,7 @@ def main():
         "weatherMasks": weather_masks,
         "doors": doors, "leaves": leaves, "overlays": overlays,
         "sleepLying": [bed_x + Hs.SLEEP_HEAD[0], bed_y + Hs.SLEEP_HEAD[1]],
-        "clickables": clickables, "windows": windows, "screens": screens, "fx": fx,
+        "clickables": clickables, "outside": outside, "windows": windows, "screens": screens, "fx": fx,
         "bathHead": [tub_x + 5, tub_y + 6],
         "floors": floors, "stair": stair, "spots": spots, "rooms": rooms, "roomX": room_x, "lights": lights,
         "emissive": sorted({c.lower() for c in Hs.EMISSIVE}),

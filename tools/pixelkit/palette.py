@@ -59,6 +59,11 @@ RAMPS: dict[str, list[str]] = {
     "leaf": ["#24352b", "#36513b", "#4f6d4c", "#6f8c5f", "#9db285"],
     "frame": ["#2a2427", "#3d3538", "#52484a", "#6a5f60", "#837677"],
     "sky_soft": ["#86a3c4", "#a3bdd8", "#c4d6e8", "#e5edf4"],
+    # outside (家门口): the townhouse row
+    "facade_blue": ["#5f7591", "#86a0bd", "#b3cbe0", "#d4e5f2", "#ecf5fb"],
+    "facade_peach": ["#94695a", "#c18f7a", "#e3b9a3", "#f4d7c6", "#fcebe0"],
+    "mint": ["#2f5a48", "#4f8a6c", "#7fb79a", "#a9d6bd", "#d2eedd"],
+    "pave": ["#5f5c63", "#807c82", "#a3a0a3", "#c2bfbe", "#dcdad6"],
     # sky / light
     "moon": ["#0b1a5c", "#123194", "#1f4bc4", "#5b82e0", "#a9c2f5"],
     "sky_day": ["#5c8dd0", "#80b1e7", "#b4d7f3", "#e3f1fb"],

@@ -689,6 +689,15 @@ body {
   .card, .card.on, .cr-box, .card-res.on .cr-box, .card-res .mp.cr-mood, .card-res.on .mp.cr-mood, .cd-opt, #view,
   .card-res.on .cr-burst::before, .card-res.on .cr-burst::after, .card-res.on .cr-burst s, .card-res.on .cr-mood .shine { transition: none; animation: none; }
 }
+/* ---------- going out (user): two black bars close in from the sides over
+   the house and open again on the other scene — quick and smooth */
+.wipe { position: absolute; z-index: 36; left: var(--pick-left, 0px); top: var(--pick-top, 0px); width: var(--pick-w, 342px); height: var(--pick-h, 118px); pointer-events: none; overflow: hidden; }
+.wipe[hidden] { display: none; }
+.wipe i { position: absolute; top: 0; bottom: 0; width: 50.5%; background: #160f1d; transform: scaleX(0); transition: transform .23s cubic-bezier(.55, 0, .85, .45); }
+.wipe i:first-child { left: 0; transform-origin: left center; box-shadow: inset -3px 0 0 #2e2238; }
+.wipe i:last-child { right: 0; transform-origin: right center; box-shadow: inset 3px 0 0 #2e2238; }
+.wipe.shut i { transform: scaleX(1); }
+.wipe.open i { transition: transform .3s cubic-bezier(.15, .55, .35, 1); }
 /* ---------- the desktop app: the window is the game, see-through around it */
 html.desktop, html.desktop body { background: transparent !important; }
 html.desktop body { background-image: none !important; overflow: hidden; }
@@ -777,6 +786,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
       <section class="card" id="card" hidden role="dialog" aria-label="机会卡"><h3></h3><p></p>
         <div class="cd-opts"><button type="button" class="cd-opt" data-k="a"></button><button type="button" class="cd-opt" data-k="b"></button></div>
         <i class="cd-clock" aria-hidden="true"></i></section>
+      <div class="wipe" id="wipe" hidden aria-hidden="true"><i></i><i></i></div>
       <div class="card-res" id="cardRes" hidden aria-live="polite"><div class="cr-moodwrap"><i class="cr-burst" aria-hidden="true"></i><span class="mp cr-mood"></span></div><div class="cr-box"></div></div>
       <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她弹出互动菜单。"></canvas>
       <div class="ring" id="ring" role="menu" aria-label="和她互动" hidden></div>
@@ -923,6 +933,7 @@ async function loadAssets() {
   IMG.leaf = {}; for (const [k, v] of Object.entries(D.leaves)) IMG.leaf[k] = await loadImg(v);
   IMG.ov = {}; for (const [k, v] of Object.entries(D.overlays)) IMG.ov[k] = await loadImg(v.src);
   IMG.click = {}; for (const [k, v] of Object.entries(D.clickables)) IMG.click[k] = await loadImg(v.src);
+  IMG.out = {}; for (const [k, v] of Object.entries(D.outside)) IMG.out[k] = { day: await loadImg(v.day), lit: await loadImg(v.lit) };
   IMG.win = {};
   for (const [k, v] of Object.entries(D.windows)) {
     IMG.win[k] = {};
@@ -980,6 +991,7 @@ function doorsOn(r) {
   return out;
 }
 function roomAt(p) {
+  if (sim.place !== "home") return "outside";
   if (p.dy) return "stairs";
   const storey = storeyOfY(p.y);
   for (const [k, [st, x0, x1]] of Object.entries(D.roomX)) if (st === storey && p.x >= x0 && p.x < x1) return k;
@@ -1015,6 +1027,10 @@ const ACTS = {
   phone_text:  { spot: null, label: "发消息",     emote: "chat", dur: 8,  log: "给朋友发了几条消息。" },
   phone_game:  { spot: null, label: "玩手机游戏", emote: "game", dur: 15, log: "玩了会儿手机游戏。" },
   dance:       { spot: null, label: "跳舞",       emote: "note", dur: 6,  log: "放起音乐跳了支舞。" },
+  // going out (user): to the front door and out / back to it from outside and in; a stroll out there
+  go_out:  { spot: "front_door", label: "出门", emote: null, dur: 1, log: null },
+  go_home: { spot: "out_door",   label: "回家", emote: null, dur: 1, log: null },
+  stroll:  { spot: "out_x",      label: "散步", emote: null, dur: 5, log: null },
 };
 const EFFECT = {   // per game minute while doing it
   sleep: { energy: 0.2 }, eat: { hunger: 4 }, snack: { hunger: 5 }, bath: { hygiene: 3.2, fun: 0.2 },
@@ -1024,6 +1040,7 @@ const EFFECT = {   // per game minute while doing it
   pc_video: { social: 1.8, fun: 0.6 }, pc_forum: { social: 1.0, fun: 0.8 }, pc_code: { fun: 0.3, energy: -0.04 },
   phone_call: { social: 2.2 }, phone_video: { social: 1.8, fun: 0.5 }, phone_feed: { social: 0.6, fun: 0.9 },
   phone_text: { social: 1.6 }, phone_game: { fun: 1.3 }, dance: { fun: 1.8, energy: -0.1, hygiene: -0.1 },
+  stroll: { fun: 0.5 },
 };
 // Pace (user: needs came back too fast): every activity but sleep takes
 // PACE times as long and fills needs PACE times slower, so a need takes a
@@ -1064,6 +1081,7 @@ function log(text, cls) {
 }
 
 function choose() {
+  if (sim.place !== "home") return chooseOutside();
   const h = hour(), n = sim.needs, r = () => Math.random();
   const meal = (h >= 7 && h < 9) || (h >= 11.5 && h < 13) || (h >= 18 && h < 20);
   const score = {
@@ -1099,9 +1117,18 @@ const EMO_PULL = {
   embarrassed: { bath: 15 }, uncomfortable: {}, dazed: { window: 10 },
 };
 function startAct(name, quiet = false) {
+  if (sim.place !== "home" && !OUT_ACTS.has(name) && ACTS[name].spot) { sim.queue.unshift(name); name = "go_home"; }   // indoor things: home first
+  if (sim.place === "home" && OUT_ACTS.has(name) && name !== "go_out") name = "go_out";
   const a = ACTS[name];
   sim.act = name;
   const p = here();
+  if (sim.place !== "home") {                    // out on the sidewalk: straight along it
+    const O = OUT[sim.place], x = name === "go_home" ? O.doorX : name === "stroll" ? sim.strollX ?? p.x : p.x;
+    sim.route = [[Math.round(p.x), O.feet], [Math.round(x), O.feet]];
+    sim.s = 0; sim.target = routeLength(sim.route); sim.crossing = [];
+    sim.mode = "walk"; sim.pendingLog = a.log && !quiet ? a.log : null;
+    return;
+  }
   // spot null: right where she is (stepping off the stairs first)
   const [st, x] = a.spot ? D.spots[a.spot] : [storeyOfY(p.y), Math.round(p.x)];
   sim.route = planRoute(Math.round(p.x), Math.round(p.y), x, FLOOR_Y[st]);
@@ -1112,6 +1139,7 @@ function startAct(name, quiet = false) {
   sim.pendingLog = !quiet && (talk ? talk.start : a.log) || null;   // written when she gets there and starts (user), not when she sets off
 }
 function arrive() {
+  if (sim.act === "go_out" || sim.act === "go_home") { throughDoor(sim.act === "go_out" ? "front" : "home"); return; }
   const a = ACTS[sim.act];
   sim.mode = "act";
   if (sim.pendingLog) { log(sim.pendingLog); sim.pendingLog = null; }
@@ -1355,7 +1383,7 @@ function buildClickables() {
 function clickableAt(x, y) {
   const key = Math.floor(x) + "," + Math.floor(y);
   let best = null;
-  for (const [id, c] of Object.entries(CLICK)) if (c.near.has(key) && (!best || c.area < CLICK[best].area)) best = id;
+  for (const [id, c] of Object.entries(CLICK)) if (clickPlace(id) === sim.place && c.near.has(key) && (!best || c.area < CLICK[best].area)) best = id;
   return best;
 }
 let hoverId = null, glow = null, poof = null;
@@ -1607,6 +1635,7 @@ function activityFrame(ms) {
     const showEm = em && Math.floor(ms / 2400) % 2 === 0;
     switch (a) {
       case "cook": return { f: { expr: phase ? "happy" : "neutral", bob: phase, sway: phase, look: -1 }, pose: "stand", emote: showEm ? em : null };
+      case "stroll": return { f: { expr: phase ? "happy" : "neutral", look: Math.floor(ms / 1700) % 3 - 1, bob: Math.floor(ms / 900) % 2 }, pose: "stand", emote: null };
       case "toilet": return { f: { expr: Math.floor(ms / 2000) % 3 === 2 ? "blink" : "neutral", look: Math.floor(ms / 2600) % 2 ? 1 : -1 }, pose: "sit", emote: null };
       case "wash": return { f: { expr: phase ? "happy" : "blink", bob: phase, look: 1 }, pose: "stand", emote: showEm ? em : null };
       case "towel": return { f: { expr: "happy", bob: phase, look: -1 }, pose: "stand", emote: showEm ? em : null };
@@ -1710,6 +1739,7 @@ function dishPic(src) { if (!dishPics.has(src)) { const i = new Image(); i.src =
 function frameOf(list, fps) { return list[Math.floor(realClock * fps) % list.length]; }
 
 function render() {
+  if (sim.place !== "home") { renderOutside(); return; }
   const h = hour(), f = nightness(h);
   bctx.clearRect(0, 0, W, H);
   bctx.globalAlpha = 1; bctx.drawImage(IMG.day, 0, 0);
@@ -2422,7 +2452,7 @@ function collapse(cause) {
   if (sim.act === "dress") closeWardrobe();
   closeRing();
   const p = here();
-  sim.route = [[Math.round(p.x), FLOOR_Y[storeyOfY(p.y)]]]; sim.s = 0;
+  sim.route = [[Math.round(p.x), sim.place !== "home" ? OUT[sim.place].feet : FLOOR_Y[storeyOfY(p.y)]]]; sim.s = 0;
   sim.mode = "down"; sim.act = null; sim.queue = []; sim.down = { cause, t: sim.t };
   log(fill(one(T.collapse[cause])));
   speak("……", true);
@@ -2934,7 +2964,7 @@ view.addEventListener("pointermove", e => {
   const [x, y] = canvasXY(e);
   hoverBuddy = e.pointerType === "mouse" && buddyHit(x, y);
   hoverId = buddyHit(x, y) ? null : clickableAt(x, y);
-  view.style.cursor = hoverId || buddyHit(x, y) ? "pointer" : TAURI ? "grab" : "default";   // the app: walls and floor move the window
+  view.style.cursor = hoverId || buddyHit(x, y) || sim.place !== "home" ? "pointer" : TAURI ? "grab" : "default";   // outside: anywhere is somewhere to walk   // the app: walls and floor move the window
 });
 view.addEventListener("pointerleave", () => { hoverId = null; holding = null; hoverBuddy = false; });
 // her name over her head while the pointer rests on her (and no menu is open)
@@ -2973,6 +3003,8 @@ view.addEventListener("click", e => {
   }
   const id = clickableAt(x, y);
   if (id === "computer") { useFurniture(id, true); openRing("computer"); return; }
+  if (id === "front_door") { useFurniture(id, true); openRing("door", "door"); return; }
+  if (sim.place !== "home") { outsideClick(id, x); return; }
   if (id) useFurniture(id);
 });
 
@@ -2986,12 +3018,14 @@ const RINGS = {
   phone: [["phone_call", "打给妈妈"], ["phone_video", "和朋友视频"], ["phone_feed", "刷动态"], ["phone_text", "发消息"], ["phone_game", "玩手机游戏"], ["back", "返回", "back"]],
   computer: [["computer", "打游戏"], ["video", "视频聊天 ▸", "more"], ["forum", "逛论坛 ▸", "more"], ["pc_code", "写代码"]],
   // user: video chat with 爸爸 / 妈妈 / a friend, forums by platform (CHATS, chats_text.js)
+  // the front door (user): where to go; only 家门口 is built so far
+  door: [["go:front", "去门口"], ["go:park", "去公园"], ["go:mall", "去商场"], ["go:beach", "去海边"]],
   video: [["talk:dad", "和爸爸"], ["talk:mom", "和妈妈"], ["talk:friend", "和朋友"], ["back", "返回", "back"]],
   forum: [["feed:yinfu", "刷音符"], ["feed:xiaohongben", "刷小红本"], ["feed:shudong", "逛树洞岛"], ["feed:lengzhishi", "逛冷知识研究所"], ["back", "返回", "back"]],
 };
 let ringOf = null, ringAt = null;
 function ringCenter() {
-  if (ringAt === "computer") { const c = CLICK.computer; return { x: c.x + c.w / 2, y: c.y + c.h / 2 }; }
+  if (ringAt === "computer" || ringAt === "door") { const c = CLICK[ringAt === "door" ? "front_door" : "computer"]; return { x: c.x + c.w / 2, y: c.y + c.h / 2 }; }
   const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : here();
   return { x: p.x, y: p.y - 13 };
 }
@@ -3119,6 +3153,12 @@ function ringPick(id) {
   if (id === "phone") { openRing("phone", "buddy"); return; }
   if (id === "rename") { openRename(); return; }
   if (id === "video" || id === "forum") { openRing(id, "computer"); return; }
+  if (id.startsWith("go:")) {
+    closeRing();
+    if (id === "go:front") command("go_out");
+    else showHint(`${{ "go:park": "公园", "go:mall": "商场", "go:beach": "海边" }[id]}还在建，过阵子再去吧`);
+    return;
+  }
   if (id === "back") { openRing(ringAt === "computer" ? "computer" : "buddy"); return; }
   if (id.startsWith("talk:") || id.startsWith("feed:")) {
     closeRing();
@@ -3239,6 +3279,145 @@ pickerEl.querySelector(".rand").addEventListener("click", () => { const a = pick
 document.addEventListener("pointerdown", e => { if (pickOn && !pickerEl.contains(e.target) && e.target !== view) closePicker(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && pickOn) closePicker(); });
 
+// ================================================================ going out (user)
+// The front door opens a ring of places; 家门口 (the street side of the
+// house, art/src/concept/front_yard.py) is the first. She walks to the door,
+// two black bars close in from the sides, the scene swaps, they open again.
+// Outside she strolls along the sidewalk; a click anywhere sends her to that
+// spot (straight below it), a click on the door brings her in. She goes
+// home by herself only when a need runs red (under 20), or when you ask her
+// to do something that needs the house (it queues after coming in).
+const OUT = D.outside, OUT_ACTS = new Set(["go_home", "stroll"]);
+const CLICK_PLACE = { out_door: "front" };
+const clickPlace = id => CLICK_PLACE[id] || "home";
+sim.place = "home";
+ML.outdoors = { name: "出门透透气", emo: "energized", pts: 2, min: 180,
+  say: ["外面空气真好", "出来走走真舒服", "今天的天好好看", "邻居家的树又长高了", "风吹得好舒服", "就在门口晃一晃"] };
+const wipeEl = document.getElementById("wipe");
+let wiping = false;
+function wipe(swap) {
+  if (wiping || reduceMotionUI) { swap(); return; }
+  wiping = true;
+  overHouse(wipeEl);
+  wipeEl.hidden = false; wipeEl.className = "wipe"; void wipeEl.offsetWidth;
+  wipeEl.classList.add("shut");                                   // bars close in from both sides
+  setTimeout(() => {
+    swap(); render();
+    wipeEl.classList.add("open"); wipeEl.classList.remove("shut");   // ...and open on the other side
+    setTimeout(() => { wipeEl.hidden = true; wiping = false; }, 300);
+  }, 230);
+}
+function throughDoor(to) {
+  sim.mode = "idle"; sim.act = null; sim.idleUntil = Infinity;      // she waits at the door while the bars close
+  closeRing(); closePicker();
+  wipe(() => {
+    sim.place = to;
+    if (to === "home") { const [st, x] = D.spots.front_door; sim.route = [[x, FLOOR_Y[st]]]; }
+    else sim.route = [[OUT[to].doorX, OUT[to].feet]];
+    sim.s = 0; sim.target = 0; sim.crossing = []; sim.facing = 1;
+    sim.idleUntil = sim.t + (to === "home" ? 1 : 4);
+    if (to === "home") log(pick(["回到家，换上拖鞋。", "推门进屋，还是家里舒服。", "从门口回来了。"]));
+    else { log(pick(["出门在家门口走走。", "推开门，到门口透透气。", "出了门，站在门口伸了个懒腰。"])); addMood("outdoors"); }
+  });
+}
+function chooseOutside() {
+  const low = Object.entries(sim.needs).filter(([, v]) => v < 20).sort((a, b) => a[1] - b[1]);
+  if (low.length) {                               // a need ran red: home to sort it out (user)
+    speak(pick([`${NEED_NAMES[low[0][0]]}不太行了，回家吧`, "该回家了", "先回家一趟"]));
+    return "go_home";
+  }
+  const O = OUT[sim.place], p = here();
+  let x;
+  do x = O.walk[0] + Math.random() * (O.walk[1] - O.walk[0]); while (Math.abs(x - p.x) < 30);
+  sim.strollX = Math.round(x);
+  return "stroll";
+}
+// a click outside: the door -> home; anywhere else -> she walks there
+function outsideClick(id, x) {
+  if (id === "out_door") { useFurniture(id, true); command("go_home"); return; }
+  const O = OUT[sim.place];
+  sim.strollX = Math.round(Math.max(O.walk[0], Math.min(O.walk[1], x)));
+  clickFx(sim.strollX, O.feet);
+  if (sim.act === "stroll" && (sim.mode === "walk" || sim.mode === "act") && !sim.windup) { startAct("stroll"); return; }   // already out strolling: straight to the new spot
+  command("stroll");
+}
+// a little marker where you clicked on the sidewalk
+let walkMark = null;
+function clickFx(x, y) { walkMark = { x, y, t0: realClock }; }
+function drawWalkMark(ctx) {
+  if (!walkMark) return;
+  const t = (realClock - walkMark.t0) / 0.5;
+  if (t >= 1) { walkMark = null; return; }
+  const r = Math.round(2 + t * 6);
+  ctx.globalAlpha = 1 - t;
+  ctx.fillStyle = "#fff1b8";
+  ctx.fillRect(walkMark.x - r, walkMark.y, r * 2 + 1, 1);
+  ctx.fillRect(walkMark.x - r + 1, walkMark.y - 1, 1, 1); ctx.fillRect(walkMark.x + r - 1, walkMark.y - 1, 1, 1);
+  ctx.globalAlpha = 1;
+}
+function gradeOutside(ctx, f) {                  // the night pass without rooms: cool, glass keeps its glow
+  if (f <= 0) return;
+  const img = ctx.getImageData(0, 0, W, H), d = img.data;
+  for (let p = 0; p < d.length; p += 4) {
+    if (EMISSIVE.has((d[p] << 16) | (d[p + 1] << 8) | d[p + 2])) continue;
+    d[p] += (d[p] * 0.40 - d[p]) * f; d[p + 1] += (d[p + 1] * 0.42 - d[p + 1]) * f; d[p + 2] += (d[p + 2] * 0.62 - d[p + 2]) * f;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+function drawOutsideWeather(ctx) {
+  const w = weather.kind;
+  if (w === "clear") return;
+  if (w === "rain") {
+    ctx.fillStyle = "rgba(220, 232, 250, 0.7)";
+    for (let i = 0; i < 70; i++) {
+      const x0 = hash(i * 7.3) * (W + 30), sp = 60 + hash(i * 3.1) * 30;
+      const y = ((realClock * sp + hash(i * 1.7) * H) % (H + 6)) - 4;
+      ctx.fillRect(Math.floor(x0 - y * 0.25), Math.floor(y), 1, 3);
+    }
+  } else {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    for (let i = 0; i < 46; i++) {
+      const x0 = hash(i * 5.9) * W, sp = 9 + hash(i * 2.3) * 7;
+      const y = ((realClock * sp + hash(i * 4.1) * H) % (H + 2)) - 1;
+      ctx.fillRect(Math.floor(x0 + Math.sin(realClock * 1.3 + i) * 3), Math.floor(y), i % 3 ? 1 : 2, i % 3 ? 1 : 2);
+    }
+  }
+}
+function renderOutside() {
+  const f = nightness(hour()), O = IMG.out[sim.place];
+  bctx.clearRect(0, 0, W, H);
+  bctx.drawImage(O.day, 0, 0);
+  const ms = realClock * 1000, fr = activityFrame(ms);
+  const full = { expr: "neutral", look: 0, bob: 0, sway: 0, wave: null, ...fr.f };
+  let emoteAt;
+  const p = here();
+  if (sim.mode === "down") {
+    const body = lyingBody({ ...full, expr: "sleepy", look: 0, bob: 0, sway: 0, wave: null });
+    const x = Math.round(p.x - body.width / 2), y = Math.round(p.y) - 17;
+    bctx.drawImage(body, x, y);
+    emoteAt = [x + 10, y - 13];
+  } else {
+    const x = Math.round(p.x - DW / 2), y = Math.round(p.y - DH + 1);
+    bctx.drawImage(dollCanvas(full, fr.pose), x, y);
+    const act = sim.mode === "act" ? sim.act : null;
+    if (act && act.startsWith("phone_")) {
+      if (act === "phone_call") bctx.drawImage(IMG.fx.phone_call[0], x + 16, y + 8 + full.bob);
+      else bctx.drawImage(frameOf(IMG.fx.phone, 2), x + 8, y + 17);
+    }
+    emoteAt = [x + 13, y - 15];
+  }
+  drawOutsideWeather(bctx);
+  gradeOutside(bctx, f);
+  if (f > 0) { bctx.globalAlpha = Math.min(1, f * 1.3); bctx.drawImage(O.lit, 0, 0); bctx.globalAlpha = 1; }   // lit windows at night
+  const down = sim.mode === "down";
+  if (fr.emote || down) bctx.drawImage(emoteCanvas(down ? "skull" : fr.emote), emoteAt[0], emoteAt[1] + (down ? Math.floor(realClock * 2) % 2 : 0));
+  if (down) drawRevive(bctx);
+  drawWalkMark(bctx);
+  drawClickFx(bctx);
+  vctx.imageSmoothingEnabled = false;
+  vctx.drawImage(buf, 0, 0, view.width, view.height);
+}
+
 // ================================================================ video chats & forums
 // User: on the computer, video chat with 爸爸 / 妈妈 / a friend, or browse a
 // forum (音符, 小红本, 树洞岛, 冷知识研究所). Each picks one conversation
@@ -3309,7 +3488,7 @@ function cardFits(cd, c) {
 }
 function rollCard(c) {
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
-  if (card || !c.awake || busyWith("bath", "toilet", "dress") || pickOn || sim.t - st.last < CARD_GAP || Math.random() >= CARD_CHANCE) return false;
+  if (card || sim.place !== "home" || !c.awake || busyWith("bath", "toilet", "dress") || pickOn || sim.t - st.last < CARD_GAP || Math.random() >= CARD_CHANCE) return false;
   const any = CARDS.filter(cd => !cd.on);
   let fresh = any.filter(cd => !st.seen.includes(cd.n));
   if (!fresh.length) { st.seen = st.seen.filter(n => !any.some(cd => cd.n === n) || st.seen.lastIndexOf(n) >= st.seen.length - 20); fresh = any.filter(cd => !st.seen.includes(cd.n)); }   // all seen: start over, not the latest ones
@@ -3330,7 +3509,7 @@ const MOMENT_ODDS = { stairs: 0.1, passWindow: 0.06, toilet: 0.2, wash: 0.25, wa
 const ACT_MOMENT = act => act.startsWith("water_") ? "water" : act.startsWith("pc_") || act === "computer" ? "pc"
   : act.startsWith("phone_") ? "phone" : act;
 function cardMoment(tag) {
-  if (!tag || card || sim.mode === "down" || pickOn || !CARDS.some(cd => cd.on === tag)) return false;
+  if (!tag || card || sim.place !== "home" || sim.mode === "down" || pickOn || !CARDS.some(cd => cd.on === tag)) return false;
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   if (sim.t - st.last < CARD_GAP || Math.random() >= (MOMENT_ODDS[tag] ?? 0.4)) return false;
   const c = lifeCtx(), pool = CARDS.filter(cd => cd.on === tag && cardFits(cd, c));
@@ -3345,6 +3524,7 @@ function cardMoment(tag) {
 // walking: onto the stairs; past a window (its middle, on her floor)
 let passedWin = null;
 function walkMoments(a, b) {
+  if (sim.place !== "home") return;
   if (!a.dy && b.dy) cardMoment("stairs");
   const fl = storeyOfY(b.y);
   for (const id of Object.keys(windowState)) {
@@ -3628,7 +3808,7 @@ function snapshot() {
     sim: { t: sim.t, needs: sim.needs, mode: sim.mode, act: sim.act, actEnd: sim.actEnd, nap: !!sim.nap,
            at: [Math.round(p.x), storeyOfY(p.y)], facing: sim.facing, queue: sim.windup ? [sim.windup.act] : sim.queue, recent: sim.recent,
            lastDay: sim.lastDay, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
-           graceUntil: sim.graceUntil, insomnia: !!sim.insomnia },
+           graceUntil: sim.graceUntil, insomnia: !!sim.insomnia, place: sim.place },
     moods: [...moods].filter(([id]) => ML[id] && !id.startsWith("test_")).map(([id, m]) => [id, m.until, m.t]),
     flags: lifeFlags, events: eventLast, lastFestivalDay, namedAs,
     house: { lamps, windows: windowState },
@@ -3662,6 +3842,12 @@ function restore(sv) {
     sim.mode = "idle"; sim.act = null; sim.idleUntil = sim.t + 1;          // she was walking: she'll decide again
   }
   sim.route = [[x, FLOOR_Y[storey] ?? FLOOR_Y[1]]]; sim.s = 0; sim.target = 0; sim.crossing = [];
+  sim.place = OUT[m.place] ? m.place : "home";
+  if (sim.place !== "home") {                     // out in front: back on the sidewalk where she was
+    const O = OUT[sim.place], ox = Math.max(O.walk[0], Math.min(O.walk[1], Array.isArray(m.at) ? m.at[0] : O.doorX));
+    sim.route = [[ox, O.feet]];
+    if (sim.mode !== "down") { sim.mode = "idle"; sim.act = null; sim.idleUntil = sim.t + 1; }
+  }
   moods.clear();
   for (const [id, until, t] of sv.moods || []) if (ML[id]) moods.set(id, { until, t });
   Object.assign(lifeFlags, sv.flags || {});
@@ -3795,7 +3981,7 @@ function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   realClock += dt;
-  const fast = sim.mode === "act" && sim.act === "sleep" ? 8 : 1, run = cardHolds() ? 0 : speed;   // a chance card stops the clock
+  const fast = sim.mode === "act" && sim.act === "sleep" ? 8 : 1, run = cardHolds() || wiping ? 0 : speed;   // a chance card (or a scene change) stops the clock
   step(dt * run * fast, dt * (run ? 1 : 0));
   updateDoors(run ? dt : 0);
   render();

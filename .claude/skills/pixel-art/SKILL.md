@@ -158,8 +158,30 @@ piece side by side — review new pieces there at 6x).
   back to us (`doll.pixelsBack`: no face/eyewear, face skin -> back of the
   head, long hair hangs in front) and comes down facing us.
 - **Front door** (`entry_door`): sage, beside the stairs on the ground
-  floor. Decoration for now — an outdoor scene is a future idea the user
-  is still weighing; don't build it unasked.
+  floor; clickable (`front_door`, cropped from the day picture): a ring of
+  places (去门口 / 去公园 / 去商场 / 去海边; only 门口 is built, the rest
+  say they're still being built).
+- **家门口** (`art/src/concept/front_yard.py`, user's sketch): the street
+  side, same 342x118 canvas and scale (door 37px, storeys ~50px): our
+  townhouse in the middle (`facade_blue`, windows upper left / upper right
+  / lower right, navy door with canopy, lamp, number, step), slices of the
+  neighbours' (`facade_peach`) left and right, two big round trees left and
+  one right (cloud-shaped crowns of clumps, 4px trunks), `mint` bushes,
+  `pave` sidewalk where she walks (`FEET` 111). `front_lit` = the window
+  glass glowing at night (drawn over the night pass). Night outside is a
+  plain cool multiply (`gradeOutside`), weather is rain / snow over the
+  whole scene.
+- **Going out** (demo): acts `go_out` (to the front door), `go_home` (to
+  the door outside), `stroll` (to `sim.strollX`); `sim.place` = "home" |
+  "front" (saved). Through a door: two black bars close in from the sides
+  over the house and open on the other scene (`wipe`, ~0.5 s, the clock
+  stops meanwhile). Outside: a click anywhere -> she walks to that x
+  (`outsideClick`, a little marker where you clicked), the door ->
+  home; left alone she strolls; she heads home by herself only when a
+  need is red (< 20, `chooseOutside`); anything that needs the house
+  (sleep, cooking...) queues `go_home` first (`startAct`). Clickables
+  belong to a place (`CLICK_PLACE`); chance cards, moments and room tags
+  are off outside (`roomAt` -> "outside").
 - **Demo walking**: `make_demo` exports `floors` (feet y per storey) and
   `stair.x`; each trip is its own polyline (`planRoute`: along the floor ->
   stair column -> other floor -> spot). Doors open only if the trip crosses
