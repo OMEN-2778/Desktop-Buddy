@@ -465,6 +465,16 @@ edits; copy changes into life_text.js.
   life rarely gives (30 simulated days: 专心 焦虑 生气 发懵 调皮 心动 害怕
   无聊 under 2.5%, 美滋滋 48%), at most 4 for the ones that can make her
   collapse; they last x1.25 (2-8 h). Console: 机会卡测试.
+- **Video chats & forums** (user): the computer ring's 视频聊天 ▸ / 逛论坛 ▸
+  open second rings (和爸爸 / 和妈妈 / 和朋友; 刷音符 / 刷小红本 / 逛树洞岛 /
+  逛冷知识). `CHATS` (prototype/demo/chats_text.js, pasted in by make_demo):
+  dad 10, mom 10, friends 30 ({朋友} picked per call), 30 per forum. One
+  conversation per visit (`chatItem`, unseen first, `lifeFlags.talkSeen`)
+  plays line by line in her bubble while time runs (`playTalk`; ">" someone
+  else, shown with "爸爸：" / "评论："; "#" a post, shown with 【音符】;
+  plain = her); she stays until it's over; diary line at the start (who /
+  which forum) and the end (its title), and its moodlet (`chat_<who>_<i>`).
+  She picks one herself too (friends weighted 3 : mom 1.2 : dad 1).
 Moodlets add points to one emotion, the top sum wins (1-2 有点, 3-5, 6+ 非常),
 condition moodlets last while true. Events roll once a game hour with
 cooldowns; her words queue so bubbles never cut each other off. Social

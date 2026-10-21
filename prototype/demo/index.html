@@ -248,6 +248,7 @@ body {
   --pe: #8a6446; --pf: #ecd5ad; color: #3d2a1e; font-weight: 700; margin-left: var(--tail, 16px);
   height: var(--say-h, 60px); padding-block: 0; align-items: center;   /* whole-pixel height keeps every step crisp */
 }
+.pop .who { font-style: normal; color: #9a6a3c; margin-right: .15em; }   /* "妈妈：", "【音符】", "评论：" */
 @keyframes popin { from { opacity: 0; transform: scale(.5) translateX(-10px); } to { opacity: 1; transform: none; } }
 /* her moodlets: hovering (or tapping) the emoji swaps her words for a row of
    pills in the same place, so nothing gets covered. First pill = the
@@ -1807,7 +1808,9 @@ function startAct(name, quiet = false) {
   sim.route = planRoute(Math.round(p.x), Math.round(p.y), x, FLOOR_Y[st]);
   sim.s = 0; sim.target = routeLength(sim.route); sim.crossing = doorsOn(sim.route);
   sim.mode = "walk";
-  sim.pendingLog = a.log && !quiet ? a.log : null;   // written when she gets there and starts (user), not when she sets off
+  if (CHAT_ACT[name] && !(sim.chosen && sim.chosen.act === name)) sim.chosen = { act: name, item: pickItem(name) };
+  const talk = CHAT_ACT[name] && sim.chosen.item.talk;
+  sim.pendingLog = !quiet && (talk ? talk.start : a.log) || null;   // written when she gets there and starts (user), not when she sets off
 }
 function arrive() {
   const a = ACTS[sim.act];
@@ -1901,10 +1904,11 @@ function step(dtGame, dtReal) {
       walkMoments(before, now);
     }
   } else if (sim.mode === "act") {
+    if (sim.talk && dtReal > 0) playTalk(dtReal);
     const h = hour();
     const done = sim.act === "sleep"
       ? sim.nap ? n.energy >= 95 || sim.t >= sim.actEnd - 780 : (n.energy >= 99 && h >= 6.5 && h < 12) || (h >= 9 && h < 20)
-      : sim.act === "dress" && wardrobeOpen ? false : sim.t >= sim.actEnd;
+      : sim.act === "dress" && wardrobeOpen ? false : sim.t >= sim.actEnd && !(sim.talk && sim.talk.i < sim.item.talk.lines.length);
     // up in the night for the toilet, then back to bed
     if (sim.act === "sleep" && !done && n.bladder < 10) { sim.upAtNight = true; log("半夜起来上了个厕所。"); finishAct(); sim.queue = ["toilet", "sleep"]; return; }
     // longer activities: she breaks off for the toilet before it's too late
@@ -9343,6 +9347,8 @@ const CATALOG = {
   computer: () => ["games", "games", "游戏"], phone_game: () => ["phoneGames", "games", "游戏"],
 };
 function pickItem(act) {
+  if (act === "pc_video") return chatItem("video", weighted([["friend", 3], ["mom", 1.2], ["dad", 1]]));
+  if (act === "pc_forum") return chatItem("forum", pick(Object.keys(CHATS.forum)));
   if (act === "cook") {   // hungry: she goes for something filling
     const all = T.cuisines.flatMap(c => c.dishes.map(d => [c, d]));
     const hungry = sim.needs.hunger < 50, w = ([, d]) => (hungry ? Math.max(1, (d.fill || 40) - 25) ** 2 : 1);
@@ -9358,6 +9364,7 @@ function pickItem(act) {
 function lifeArrive(act) {
   sim.item = sim.chosen && sim.chosen.act === act ? sim.chosen.item : pickItem(act);
   sim.chosen = null;
+  sim.talk = sim.item && sim.item.talk ? { i: 0, wait: 1 } : null;
   const dish = sim.item && sim.item.dish;
   if (act === "cook" && dish && dish.time) sim.actEnd = sim.t + dish.time;          // each dish its own cooking time
   if (act === "eat" && sim.meal && sim.meal.fill) {                                  // and fills her by its own amount
@@ -9423,9 +9430,15 @@ function lifeFinish(act) {
     case "wash": lifeFlags.bedHair = false; moods.delete("bedHair"); addMood("mirror"); break;
     case "water_living": case "water_study": lifeFlags.watered[act] = sim.t; addMood("plantHappy"); break;
     case "pc_code": case "pc_video": case "pc_forum": case "phone_video": case "phone_call": case "phone_text": case "phone_feed":
-      if (sim.forced) { addMood(sim.forced); if (sim.forced === "momCall" && r < 0.3) addMood("homesick"); }   // the call / video an event started
+      if (sim.item && sim.item.talk) {                // a conversation (user): its own diary line and mood
+        const tk = sim.item.talk;
+        log(fill(tk.end, sim.item.vars));
+        if (tk.id) addMood(tk.id, { vars: sim.item.vars, diary: false, words: false });
+        else addMood(weighted(T.outcomes[act]), { vars: sim.item.vars });
+      }
+      else if (sim.forced) { addMood(sim.forced); if (sim.forced === "momCall" && r < 0.3) addMood("homesick"); }   // the call / video an event started
       else addMood(weighted(T.outcomes[act]), { vars: { 朋友: pick(T.fill.朋友 || ["老朋友"]) } });
-      sim.forced = null;
+      sim.forced = null; sim.talk = null;
       break;
     case "dance": addMood("danced"); break;
     case "sleep":
@@ -9853,11 +9866,13 @@ function speak(text, now = false) {
   if (realClock < sayBusy || listOpen) { if (sayQueue.length < 2 && !sayQueue.includes(text)) sayQueue.push(text); return; }
   showSay(text);
 }
-function showSay(text) {
+function showSay(text, who = "") {
   text = spaced(text);
   lastSaid = text;
-  popSay.querySelector("span").textContent = text;
-  popSay.title = text;
+  const span = popSay.querySelector("span");
+  span.textContent = text;
+  if (who) span.prepend(Object.assign(document.createElement("em"), { className: "who", textContent: who }));   // someone else's line
+  popSay.title = who + text;
   popBubble(popSay, 5200);
   sayBusy = realClock + 5.6;
   nextSay = realClock + 14 + Math.random() * 12;
@@ -9868,7 +9883,7 @@ function updateMood() {
   showFace();
   if (listOpen) { fillMoodTip(); return; }          // her words wait until you're done looking
   if (realClock >= sayBusy && sayQueue.length) showSay(sayQueue.shift());
-  else if (realClock >= nextSay && !asleep() && sim.mode !== "down") speak(thought());
+  else if (realClock >= nextSay && !asleep() && sim.mode !== "down" && !sim.talk) speak(thought());
 }
 
 // ================================================================ UI
@@ -10168,7 +10183,10 @@ const RINGS = {
   buddy: [["name", null, "label"], ["chat", "聊聊天"], ["pat", "摸摸头"], ["phone", "玩手机 ▸", "more"], ["dance", "跳支舞"],
           ["bed", "去睡觉"], ["rename", "改名字"]],
   phone: [["phone_call", "打给妈妈"], ["phone_video", "和朋友视频"], ["phone_feed", "刷动态"], ["phone_text", "发消息"], ["phone_game", "玩手机游戏"], ["back", "返回", "back"]],
-  computer: [["computer", "打游戏"], ["pc_video", "视频聊天"], ["pc_forum", "逛论坛"], ["pc_code", "写代码"]],
+  computer: [["computer", "打游戏"], ["video", "视频聊天 ▸", "more"], ["forum", "逛论坛 ▸", "more"], ["pc_code", "写代码"]],
+  // user: video chat with 爸爸 / 妈妈 / a friend, forums by platform (CHATS, chats_text.js)
+  video: [["talk:dad", "和爸爸"], ["talk:mom", "和妈妈"], ["talk:friend", "和朋友"], ["back", "返回", "back"]],
+  forum: [["feed:yinfu", "刷音符"], ["feed:xiaohongben", "刷小红本"], ["feed:shudong", "逛树洞岛"], ["feed:lengzhishi", "逛冷知识"], ["back", "返回", "back"]],
 };
 let ringOf = null, ringAt = null;
 function ringCenter() {
@@ -10271,7 +10289,14 @@ let lastChat = -1e9;
 function ringPick(id) {
   if (id === "phone") { openRing("phone", "buddy"); return; }
   if (id === "rename") { openRename(); return; }
-  if (id === "back") { openRing("buddy"); return; }
+  if (id === "video" || id === "forum") { openRing(id, "computer"); return; }
+  if (id === "back") { openRing(ringAt === "computer" ? "computer" : "buddy"); return; }
+  if (id.startsWith("talk:") || id.startsWith("feed:")) {
+    closeRing();
+    const [kind, who] = id.startsWith("talk:") ? ["video", id.slice(5)] : ["forum", id.slice(5)];
+    command(kind === "video" ? "pc_video" : "pc_forum", chatItem(kind, who));
+    return;
+  }
   closeRing();
   if (sim.mode === "down") return;
   if (id === "chat") {
@@ -10384,6 +10409,409 @@ pickerEl.querySelector(".x").addEventListener("click", closePicker);
 pickerEl.querySelector(".rand").addEventListener("click", () => { const a = pickOn; closePicker(); command(a); });
 document.addEventListener("pointerdown", e => { if (pickOn && !pickerEl.contains(e.target) && e.target !== view) closePicker(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && pickOn) closePicker(); });
+
+// ================================================================ video chats & forums
+// User: on the computer, video chat with 爸爸 / 妈妈 / a friend, or browse a
+// forum (音符, 小红本, 树洞岛, 冷知识研究所). Each picks one conversation
+// (CHATS, chats_text.js) and plays it line by line in her bubble while time
+// runs; she stays until it's over. Its mood lands when she's done, with a
+// diary line. Lines: ">" someone else (the person / a comment), "#" a post,
+// plain = her. The same conversation doesn't come back until most of its
+// group has been seen.
+// ================================================================ video chats & forums
+// What she talks about on the computer (user): video chats with 爸爸 (10),
+// 妈妈 (10) and friends (30; {朋友} = a friend's name), and four forums
+// (30 each): 音符 (short videos), 小红本 (lifestyle notes), 树洞岛
+// (anonymous confessions) and 冷知识研究所 (odd facts). One conversation
+// plays line by line in her speech bubble:
+//   ">" someone else (the person on the call / a comment), "#" a post or
+//   video she scrolls to, no mark = her. title goes in the diary; mood is
+//   the moodlet she's left with (emo, pts, game minutes).
+// tools/make_demo.py pastes this file into the demo.
+const CHATS = {
+  video: {
+    dad: { name: "爸爸", talks: [
+      { title: "爸爸的镜头只拍到下巴", mood: { name: "下巴视角", emo: "playful", pts: 3, min: 120 },
+        lines: [">喂？喂？能看见我吗？", "爸，我只看见你的下巴。", ">那你看我胡子刮干净没？", "刮得挺干净的。", ">往上挪点……现在呢？", "现在是天花板的灯。", ">也行，那灯是我新换的。"] },
+      { title: "爸爸一天转了八篇文章", mood: { name: "八篇养生文", emo: "bored", pts: 2, min: 120 },
+        lines: [">我转你那篇文章看了没？", "哪篇？你今天转了八篇。", ">就那个，熬夜等于慢性……", "爸，那篇底下已经辟谣了。", ">哦……那你也别熬夜。", ">谣言也有它有道理的部分。"] },
+      { title: "爸爸准备了一周的笑话", mood: { name: "被冷到了", emo: "dazed", pts: 2, min: 90 },
+        lines: [">考考你，什么东西越洗越脏？", "水。", ">……你怎么一下就猜到了？", ">我准备了一个礼拜。", "那你再出一个。", ">你等着，我去翻小本子。"] },
+      { title: "爸爸远程修柜门", mood: { name: "自己修好了", emo: "confident", pts: 2, min: 180 },
+        lines: ["爸，我这柜门关不上了。", ">镜头对准合页，我看看。", ">螺丝松了，找把一字起子。", "没有起子，用硬币行吗？", ">行，顺时针，慢慢拧。", "好了！关得严严实实！", ">嗯，随我。"] },
+      { title: "爸爸偷偷转了零花钱",
+        lines: [">最近钱够不够花？", "够的，爸，我有工资。", ">工资是工资，零花是零花。", ">刚给你转了点，别告诉你妈。", "你哪来的私房钱？", ">……卖废报纸攒的。"] },
+      { title: "爸爸换了个灯泡", mood: { name: "有点想家", emo: "sad", pts: 2, min: 240 },
+        lines: [">没啥事，就打个电话。", "嗯，你吃饭了吗？", ">吃了。你房间我没动。", ">就是灯泡换了个亮点的。", "我又不在，换它干嘛。", ">万一你哪天突然回来呢。"] },
+      { title: "爸爸长出了猫耳朵", mood: { name: "猫耳爸爸", emo: "happy", pts: 2, min: 150 },
+        lines: [">今天画面怎么这么亮？", "爸，你开美颜了，还有猫耳。", ">什么猫耳？在哪儿？", "头上，你一说话它就动。", ">……这个怎么关？", ">算了，你妈说挺好看的。"] },
+      { title: "我的照片上了单位墙", mood: { name: "被公开处刑", emo: "embarrassed", pts: 2, min: 150 },
+        lines: [">你上次发的照片我打印了。", "打印干嘛？", ">贴单位墙上了，大家都夸。", "爸！那张我眼睛闭着的！", ">闭着好，显得有气质。", ">老王问能不能也给他一张。"] },
+      { title: "爸爸钓了一天的鱼", mood: { name: "也想去钓鱼", emo: "energized", pts: 2, min: 180 },
+        lines: [">你看，今天钓的。", "这是……一根小拇指？", ">别小看它，挣扎了半天。", "一整天就钓到这一条？", ">还钓上来一只拖鞋，挺新。", "下次放假带我一起去！", ">行，拖鞋归你。"] },
+      { title: "爸爸手上贴了胶布", mood: { name: "虚惊一场", emo: "tense", pts: 3, min: 120 },
+        lines: ["爸，你手上贴的什么？", ">没事，修水管划了一下。", "划一下贴这么大一块？", ">你妈非要贴，大惊小怪。", "下次修东西记得戴手套。", ">好好好，戴两层。"] },
+    ] },
+    mom: { name: "妈妈", talks: [
+      { title: "妈妈检查了我的冰箱", mood: { name: "冰箱检查", emo: "uncomfortable", pts: 1, min: 120 },
+        lines: [">吃饭了吗？吃的什么？", "吃了，泡面加了个蛋。", ">泡面？那也叫吃饭？", ">镜头对着冰箱，我看看。", "……里面只有一瓶辣酱。", ">我明天就寄两箱饺子。"] },
+      { title: "被妈妈抓到熬夜", mood: { name: "被查岗", emo: "tense", pts: 2, min: 180 },
+        lines: [">你眼睛下面怎么黑黑的？", "灯光问题，妈。", ">昨晚几点睡的？说实话。", "……两点。", ">两点！你小时候八点就睡。", ">今晚十一点我打电话查岗。"] },
+      { title: "妈妈织了条毛裤",
+        lines: [">降温了，秋裤穿了没？", "还没那么冷吧。", ">寒从脚下起，懂不懂。", ">我织了条毛裤，已经寄了。", "妈，现在没人穿毛裤了。", ">没人穿，你穿，你就是人。"] },
+      { title: "隔着屏幕闻红烧肉", mood: { name: "隔屏馋肉", emo: "sad", pts: 1, min: 150 },
+        lines: [">你看，红烧肉！刚出锅！", "妈，镜头太近了，全是油光。", ">你闻闻，香不香？", "隔着屏幕闻不到啊。", ">那你回来闻。", ">留了一碗，冻着等你。"] },
+      { title: "妈妈的茉莉开了", mood: { name: "绿萝告急", emo: "scared", pts: 2, min: 120 },
+        lines: [">看我阳台，茉莉开了七朵！", "好香的样子，养得真好。", ">你那盆绿萝呢？给我看看。", "……它在努力活着。", ">叶子都黄了！浇多了吧？", ">跟你一样，太惦记也不行。"] },
+      { title: "妈妈站上了第一排", mood: { name: "广场舞直播", emo: "playful", pts: 3, min: 150 },
+        lines: [">妈今天跳舞站第一排了！", "厉害啊，给我跳一段。", ">等着，我把手机立起来。", "妈，你出画了，只剩音乐。", ">现在呢？看见没？", "看见一只手，转得很好看。"] },
+      { title: "妈妈的亲戚新闻联播", mood: { name: "亲戚新闻", emo: "dazed", pts: 2, min: 120 },
+        lines: [">你表姐生了，七斤二两。", "恭喜恭喜，好大一只。", ">你二舅家孩子考上研了。", ">隔壁小张都买房了。", "妈，你到底想说什么？", ">没什么，就是你也要好好的。"] },
+      { title: "爸爸躲在镜头后面", mood: { name: "爸爸躲镜头", emo: "happy", pts: 2, min: 180 },
+        lines: [">等等，你爸要跟你说话。", ">他说……让你按时吃饭。", "爸怎么不自己说？", ">他害羞，躲镜头后面了。", "爸！我看见你的拖鞋了！", ">他又跑了。他说他想你。"] },
+      { title: "信号突然不好了", mood: { name: "被识破", emo: "embarrassed", pts: 1, min: 90 },
+        lines: [">你身后那堆是什么？", "衣服，待会就叠。", ">待会是几点？", ">镜头转一圈，我看看屋里。", "妈，信号不好，卡了……", ">卡了还能说话？别装。"] },
+      { title: "妈妈远程教我炒蛋", mood: { name: "远程炒蛋", emo: "focused", pts: 3, min: 150 },
+        lines: [">锅热了没？油放下去。", "放了，现在放蛋吗？", ">等油冒烟……好，倒！", "妈！溅起来了！", ">别躲，翻面，快翻面！", "成功了！虽然有点焦。", ">焦的香，跟我做的一样。"] },
+    ] },
+    friend: { name: "{朋友}", talks: [
+      { title: "朋友又在减肥了", mood: { name: "笑出了声", emo: "playful", pts: 2, min: 90 },
+        lines: [">我从今天开始只吃草了。", "你上周也是这么说的。", ">这次不一样，我买了体重秤。", "那你手里拿的是什么？", ">……是奶茶，但它是少糖的。", "少糖也是糖啊。", ">少糖就是走在减肥的路上。"] },
+      { title: "等朋友打完一局", mood: { name: "等到发呆", emo: "bored", pts: 2, min: 90 },
+        lines: [">等一下，我这把马上打完。", "我已经等了二十分钟了。", ">最后一波！真的最后一波！", "你都说了五个最后一波了。", ">输了。都怪队友。", "你玩的是单机游戏啊。", ">那就怪电脑。"] },
+      { title: "朋友好像恋爱了", mood: { name: "替你开心", emo: "happy", pts: 2, min: 150 },
+        lines: [">我跟你说个事，你别笑。", "你先说，我尽量。", ">我好像喜欢上一个人了。", "谁谁谁？快说！", ">每天在楼下遛狗的那个。", "你是喜欢人还是喜欢狗？", ">这个问题我还在想。"] },
+      { title: "朋友上班坐错工位", mood: { name: "替人尴尬", emo: "embarrassed", pts: 1, min: 90 },
+        lines: [">新公司第一天，我好紧张。", "同事们人怎么样？", ">都挺好，就是我坐错了工位。", "坐了多久才发现？", ">一上午，还帮人回了邮件。", "那人家没说什么？", ">他说我回得比他还好。"] },
+      { title: "朋友家来了新猫", mood: { name: "被萌化了", emo: "happy", pts: 2, min: 180 },
+        lines: [">快看！我家新来的猫！", "哪儿呢？我只看到一团毛。", ">那就是它的脸。", "好可爱！叫什么名字？", ">本来想叫团子，它不理。", "那现在叫什么？", ">叫“喂”，只有这个它会回头。"] },
+      { title: "夜猫子朋友的早安", mood: { name: "时差错乱", emo: "dazed", pts: 2, min: 90 },
+        lines: [">你醒啦？早上好。", "现在是晚上八点啊。", ">对我来说是早上。", "你几点睡的？", ">今天上午十点，看了部纪录片。", "什么纪录片？", ">讲猫头鹰的，很有共鸣。"] },
+      { title: "朋友的番茄炒蛋", mood: { name: "哭笑不得", emo: "playful", pts: 2, min: 90 },
+        lines: [">看！我自己做的番茄炒蛋！", "哇，颜色好……特别。", ">是有点黑，但是香的黑。", "番茄去哪儿了？", ">番茄在锅底，和锅合体了。", "那你今晚吃什么？", ">外卖，二十分钟后到。"] },
+      { title: "楼下煎饼店的瓜", mood: { name: "吃瓜吃饱了", emo: "energized", pts: 1, min: 120 },
+        lines: [">跟你说，楼下那家店有情况。", "什么情况？", ">老板和隔壁老板吵架了。", "为什么吵？", ">因为隔壁也开始卖煎饼了。", "那最后谁赢了？", ">我。两家我各买了一份。"] },
+      { title: "说好的周末见面", mood: { name: "白期待了", emo: "sad", pts: 1, min: 60 },
+        lines: [">周末出来见面吧！", "好啊，几点？", ">十点？不，太早了，十二点。", "好，在哪儿见？", ">要不……还是改成视频吧。", "你是不是根本不想出门？", ">被你发现了，那就视频吧。"] },
+      { title: "和朋友同步追剧", mood: { name: "追剧上头", emo: "focused", pts: 3, min: 150 },
+        lines: [">三、二、一，一起按播放！", "好了，我这边开始了。", ">我这才片头，你到哪儿了？", "我……已经演到第一个吻了。", ">你怎么快那么多！", "是你那边网卡了吧？", ">别剧透！我先关麦了！"] },
+      { title: "老板改了七次方案", mood: { name: "替你生气", emo: "angry", pts: 3, min: 120 },
+        lines: [">我老板今天又改需求了。", "这是第几次了？", ">第七次，最后改回第一版。", "那不是挺好，现成的。", ">他说第一版感觉不对。", "那你打算怎么办？", ">改个文件名再交，他说对了。"] },
+      { title: "寄错地址的蛋糕", mood: { name: "又气又好笑", emo: "angry", pts: 2, min: 60 },
+        lines: [">你今天怎么穿这么正式？", "见寿星嘛，生日快乐！", ">你居然记得！", "我还订了蛋糕，寄到你家了。", ">收到了，就是送到隔壁了。", "那赶快去要回来啊！", ">去了，隔壁已经吃了一半。"] },
+      { title: "看朋友的旅行照", mood: { name: "想去看海", emo: "inspired", pts: 2, min: 180 },
+        lines: [">给你看我旅行的照片！", "好呀，去哪儿玩了？", ">海边！你看这张，日落！", "这张是你的手指吧？", ">那看这张，大海！", "这是酒店的窗帘。", ">反正我玩得特别开心。"] },
+      { title: "朋友剪坏了头发", mood: { name: "憋笑好辛苦", emo: "tense", pts: 2, min: 90 },
+        lines: [">你先答应我，看到不准笑。", "我保证。", ">好，我要摘帽子了。", "……噗。", ">你答应过的！", "我没笑，我在咳嗽。", ">理发师说这是今年最流行的。"] },
+      { title: "朋友科目二又挂了", mood: { name: "替你加油", emo: "energized", pts: 1, min: 90 },
+        lines: [">我科目二又挂了。", "这次哪里出问题了？", ">倒车入库，入到隔壁库了。", "那也算入库了吧？", ">教练也是这么安慰我的。", "下次一定能过！", ">嗯，下次我挑个宽点的库。"] },
+      { title: "半夜的咚咚声", mood: { name: "吓了一跳", emo: "scared", pts: 3, min: 90 },
+        lines: [">跟你讲件事，你别害怕。", "你这么说我已经开始怕了。", ">我家半夜总有咚咚的声音。", "啊？那是什么？", ">我昨晚终于查清楚了。", "是什么？快说！", ">是冰箱在自己做冰块。"] },
+      { title: "朋友办了健身卡",
+        lines: [">我办了一张健身年卡！", "厉害！去了几次了？", ">去了一次。", "就一次？", ">那次我在里面洗了个澡。", "那也算锻炼了。", ">对，锻炼了我的勇气。"] },
+      { title: "朋友的多肉长高了", mood: { name: "笑到打嗝", emo: "playful", pts: 2, min: 60 },
+        lines: [">我的多肉好像不太对劲。", "怎么了？给我看看。", ">它最近长得特别快特别高。", "这……这是一棵葱吧？", ">怪不得闻起来像炒菜。"] },
+      { title: "朋友学吉他一个月", mood: { name: "耳朵受伤", emo: "uncomfortable", pts: 1, min: 60 },
+        lines: [">听，这是我练了一个月的。", "……这是什么歌？", ">生日快乐歌啊。", "原来如此，节奏很……自由。", ">邻居也这么说，还敲了墙。"] },
+      { title: "参观朋友的新家",
+        lines: [">我搬新家啦，带你参观！", "哇，好大的客厅！", ">这是卧室。", "那客厅呢？", ">也是这儿。厨房也是这儿。", "这叫一室全能。", ">对，我躺床上就能炒菜。"] },
+      { title: "考前陪朋友复习", mood: { name: "认真学习中", emo: "focused", pts: 3, min: 150 },
+        lines: [">明天考试，我一页都没看。", "那你现在在干什么？", ">在整理书桌，准备开始看。", "整理多久了？", ">三个小时，桌子从没这么干净。", "快去看书！我陪你。", ">好，比赛谁先看完一章！"] },
+      { title: "朋友的十个盲盒", mood: { name: "也想抽一个", emo: "energized", pts: 1, min: 90 },
+        lines: [">我抽了十个盲盒，你猜怎样？", "抽到隐藏款了？", ">抽到十个一模一样的。", "啊这……", ">现在我有一支小队了。", "它们有名字吗？", ">都叫小明，方便。"] },
+      { title: "朋友的年会雕塑舞", mood: { name: "也想自信点", emo: "confident", pts: 2, min: 120 },
+        lines: [">公司年会让我上台跳舞。", "你会跳舞吗？", ">不会，所以我选了站着不动。", "那叫什么舞？", ">雕塑舞，还是压轴节目。", "结果呢？", ">拿了最佳创意奖。"] },
+      { title: "朋友第一次约会", mood: { name: "粉红泡泡", emo: "flirty", pts: 2, min: 120 },
+        lines: [">救命，我明天第一次约会！", "穿什么想好了吗？", ">想好了，不知道聊什么。", "聊聊爱好呀。", ">我的爱好就是跟你视频。", "那约会时给我打视频。", ">好主意！你也一起来吧。"] },
+      { title: "朋友家的狗拆家", mood: { name: "心惊胆战", emo: "tense", pts: 2, min: 90 },
+        lines: [">你看我家沙发。", "沙发怎么少了一块？", ">在狗肚子里。", "啊？那狗没事吧？", ">它很好，正盯着我的鞋。", "快把鞋收起来！", ">来不及了，这已经是第二只。"] },
+      { title: "朋友的第一根白发", mood: { name: "时间好快", emo: "dazed", pts: 2, min: 90 },
+        lines: [">我今天发现一根白头发。", "拔掉就好了。", ">听说拔一根会长三根。", "那就留着？", ">我给它起名叫阿白。", "它会感谢你的。", ">今天又发现了它弟弟。"] },
+      { title: "朋友那边下雪了",
+        lines: [">你那边天气怎么样？", "晴天，还有点热。", ">我这边下雪了，给你看！", "哇，好美……", ">我刚堆了一个雪人。", "怎么才这么小一个？", ">雪不够，这是车顶上的雪。"] },
+      { title: "朋友戒手机第二天", mood: { name: "当场拆穿", emo: "confident", pts: 1, min: 60 },
+        lines: [">我决定戒手机一个星期。", "真的？从什么时候开始？", ">从昨天开始。", "那你用什么跟我视频的？", ">平板。平板不算手机。", "你这是钻空子。", ">不，这叫灵活执行。"] },
+      { title: "朋友画歪了眉毛", mood: { name: "憋不住笑", emo: "playful", pts: 2, min: 60 },
+        lines: [">我在学化妆，看我的眉毛。", "挺好，挺……有精神的。", ">是不是不太一样高？", "有一点，左边在生气。", ">那右边呢？", "右边在惊讶。", ">那我今天是个复杂的人。"] },
+      { title: "翻到旧合照的朋友", mood: { name: "暖暖的", emo: "happy", pts: 3, min: 240 },
+        lines: [">好久不见！最近好吗？", "挺好的，怎么突然打来？", ">收拾房间翻到我们的合照。", "哪张？是很丑的那张吗？", ">对，你闭着眼，我张着嘴。", "那是我们最好看的一张。", ">我也这么觉得，所以打给你。"] },
+    ] },
+  },
+  forum: {
+    yinfu: { name: "音符", tag: "音符", verb: "刷音符", talks: [
+      { title: "刷到会做饭的柯基", mood: { name: "被狗比下去", emo: "embarrassed", pts: 1, min: 120 },
+        lines: ["# 柯基叼着锅铲站在灶台边", "> 它比我会做饭", "> 主人呢？主人在后面洗碗", "它好像在翻炒……空气", "我做饭也就这个水平吧"] },
+      { title: "说好只刷一条", mood: { name: "熬夜上头", emo: "dazed", pts: 3, min: 180 },
+        lines: ["# 你刷到这条，说明你该睡觉了", "> 凌晨两点还在刷的举手", "> 举了，手机砸脸上了", "……它怎么知道现在几点", "好，再刷一条，最后一条", "……这条也是最后一条"] },
+      { title: "一个手势舞都学不会", mood: { name: "手脚打架", emo: "playful", pts: 3, min: 120 },
+        lines: ["# 三步学会最火手势舞", "> 第一步就把我劝退了", "> 我的手不听我的", "跟着比划了一下", "左手和右手打起来了", "好吧，我选第四步：放弃"] },
+      { title: "十秒剥蒜法翻车", mood: { name: "满地是蒜", emo: "embarrassed", pts: 1, min: 90 },
+        lines: ["# 蒜放碗里盖上摇十秒，皮全掉", "> 试了，蒜飞出去了", "> 碗也飞出去了", "这么神奇？我也试试", "……厨房地上全是蒜"] },
+      { title: "看切肥皂看了一小时", mood: { name: "盯着看入迷", emo: "focused", pts: 3, min: 90 },
+        lines: ["# 刀切彩色肥皂，一片一片落下", "> 这声音太舒服了", "> 我的焦虑也被切掉了", "沙沙沙……沙沙沙……", "等等，我怎么看了一个小时"] },
+      { title: "猫咪看人消失魔术", mood: { name: "笑出声", emo: "playful", pts: 3, min: 120 },
+        lines: ["# 主人举起床单，人突然不见了", "> 猫：我主人呢？？", "> 它的表情像见了鬼", "哈哈哈，尾巴都炸成刷子了", "我要是有猫也想试一下"] },
+      { title: "公园大爷在充电", mood: { name: "评论区笑疯", emo: "happy", pts: 2, min: 120 },
+        lines: ["# 大爷在公园一动不动打太极", "> 大爷：别吵，我在充电", "> 楼上，大爷在等信号", "> 评论区比视频还精彩", "我笑到把水喷出来了"] },
+      { title: "合拍唱歌输给了鹅", mood: { name: "不如一只鹅", emo: "sad", pts: 1, min: 60 },
+        lines: ["# 合拍挑战：用最怪的声音唱歌", "> 合拍里一只鹅唱得最好", "> 鹅：我是专业的", "我也想合拍一个", "算了，我可能唱不过鹅"] },
+      { title: "评论区开始找邻居", mood: { name: "帮忙找猫", emo: "focused", pts: 3, min: 120 },
+        lines: ["# 你刷到这条，说明你就在附近", "> 我真的在附近，我在楼下", "> 我在你楼上", "……评论区怎么开始认亲了", "有人说猫丢了，就在我们小区？", "我下楼去看一眼！"] },
+      { title: "算法偷听我说饿", mood: { name: "被算法拿捏", emo: "uncomfortable", pts: 2, min: 120 },
+        lines: ["# 凌晨的炸鸡，咔嚓一声", "> 谁大半夜给我推这个", "> 算法：我知道你饿", "我刚嘀咕了一句好饿", "它就推给我了，它在偷听吧"] },
+      { title: "小狗学会按铃要饭", mood: { name: "想养狗了", emo: "happy", pts: 1, min: 90 },
+        lines: ["# 小狗按铃要吃的，按了四十次", "> 主人：我错了，不该教它", "> 这是在点外卖吧", "叮叮叮叮叮……", "它比我的闹钟还准时"] },
+      { title: "卷衣服收纳三分钟", mood: { name: "三分钟热度", emo: "bored", pts: 2, min: 60 },
+        lines: ["# 衣服卷成小卷，一格放十件", "> 收纳后整齐，三天后原样", "> 楼上在我家装摄像头了吧", "我立刻去卷了三件", "然后累了，剩下的明天再说"] },
+      { title: "被点头鸭子洗脑", mood: { name: "被洗脑了", emo: "dazed", pts: 3, min: 180 },
+        lines: ["# 一只鸭子跟着神曲疯狂点头", "> 听了一遍就忘不掉了", "> 别放了，我梦里都是", "嘎嘎嘎，嘎嘎，嘎……", "完了，我也开始点头了"] },
+      { title: "刷到像老家的小河", mood: { name: "想家了", emo: "sad", pts: 2, min: 240 },
+        lines: ["# 航拍一条小河，岸边一排柿子树", "> 这是我老家吧", "> 每个人的老家都长这样", "……真的好像外婆家门口", "看着看着有点想回去了"] },
+      { title: "被标题骗看到最后", mood: { name: "被骗了", emo: "angry", pts: 3, min: 120 },
+        lines: ["# 最后一秒有惊喜，一定看到最后", "> 我看到最后了，惊喜呢", "> 惊喜是：关注看下集", "我等了整整三分钟！", "就为了一句关注看下集？", "气死了，我才不关注"] },
+      { title: "被一条视频夸了", mood: { name: "被夸了", emo: "confident", pts: 2, min: 180 },
+        lines: ["# 你刷到这条，说明今天你很棒", "> 收到，我今天起床了", "> 我也很棒，我今天喝水了", "好，我收下了", "我今天浇花了，我也很棒"] },
+      { title: "电饭锅一锅出", mood: { name: "跃跃欲试", emo: "inspired", pts: 2, min: 180 },
+        lines: ["# 米上铺鸡腿土豆，电饭锅一按", "> 一锅出，懒人福音", "> 洗锅的时候请叫我", "这个我能学会！", "今晚就做，先记下来"] },
+      { title: "楼下面包店火了", mood: { name: "宝藏店曝光", emo: "tense", pts: 3, min: 120 },
+        lines: ["# 小巷面包店，奶油包出炉就抢光", "> 这家在哪，求地址", "> 别说了，再说就排不上了", "等等，这不是我楼下那家吗", "明天开始要排队了吧", "不行，我得赶紧先去买两个"] },
+      { title: "教猫叫妈妈失败", mood: { name: "被猫戳中", emo: "embarrassed", pts: 1, min: 90 },
+        lines: ["# 主人教猫说妈妈，猫说嗯哼", "> 它说了，只是不想好好说", "> 这是青春期的猫", "哈哈，好敷衍", "……跟我回妈妈消息一模一样"] },
+      { title: "越学入睡越清醒", mood: { name: "睡不着了", emo: "energized", pts: 1, min: 90 },
+        lines: ["# 一分钟入睡法：先放松眉毛", "> 我看完更精神了", "> 看着看着就睡着了，有用", "放松眉毛，放松肩膀……", "然后我又划到了下一条"] },
+      { title: "接龙画一只鸡", mood: { name: "接龙加一笔", emo: "playful", pts: 3, min: 120 },
+        lines: ["# 接力挑战：每人一笔，画只鸡", "> 第一百个人画成了恐龙", "> 第二百个人画成了外星人", "现在这只鸡长了八条腿", "我也加一笔，给它戴个帽子"] },
+      { title: "我是来学切葱的", mood: { name: "心动一下", emo: "flirty", pts: 3, min: 120 },
+        lines: ["# 好看的厨师低头切葱，切得飞快", "> 我是来看切葱的，真的", "> 葱：我也是这么想的", "……我也是来学切葱的", "再看一遍，我还没学会"] },
+      { title: "水枪洗地毯好解压", mood: { name: "被洗干净了", emo: "happy", pts: 1, min: 90 },
+        lines: ["# 水枪冲地毯，脏的一条变白", "> 能顺便冲一下我的周一吗", "> 我想把人生也冲一冲", "这一条也太干净了", "我突然好想去拖地", "……想想而已"] },
+      { title: "平板支撑挑战", mood: { name: "运动了一下", emo: "energized", pts: 2, min: 180 },
+        lines: ["# 平板支撑挑战，坚持一分钟", "> 我坚持了十秒，地板很凉", "> 我家狗趴我背上了", "好，我也来！", "……三十秒！我是不是很厉害"] },
+      { title: "会学铃声的鹦鹉",
+        lines: ["# 鹦鹉学会了主人的手机铃声", "> 主人接了一星期空电话", "> 它还学会了微波炉叮", "哈哈，主人好可怜", "等等，我的闹钟也是这个声吗"] },
+      { title: "看磨剪刀看入迷", mood: { name: "看入迷了", emo: "focused", pts: 3, min: 120 },
+        lines: ["# 修复生锈的老剪刀，磨到发亮", "> 为什么我看完了全程", "> 我又不用剪刀，我就看看", "磨，磨，再磨……", "好亮！我为什么这么激动"] },
+      { title: "小狗第一次吃柠檬",
+        lines: ["# 小狗第一次舔柠檬，整张脸皱了", "> 它在思考狗生", "> 这就是我周一的表情", "我嘴里也跟着酸了", "……还想再看一遍"] },
+      { title: "吐司小熊翻车现场",
+        lines: ["# 用一片吐司做出一只小熊", "> 我做的像被揍过的熊", "> 我的熊只剩一只耳朵", "这个好可爱，明早试试", "……可能也会是一只惨熊"] },
+      { title: "深夜刷到弹珠故事", mood: { name: "不敢关灯", emo: "scared", pts: 3, min: 180 },
+        lines: ["# 深夜故事：楼上每晚都有弹珠声", "> 我家楼上也是！！", "> 别说了，我今晚不睡了", "……我家楼上好像也有", "我还是开着灯刷吧"] },
+      { title: "爷爷奶奶跳热门舞", mood: { name: "暖暖的", emo: "happy", pts: 2, min: 180 },
+        lines: ["# 爷爷奶奶跟着孙辈跳热门舞", "> 奶奶的动作最标准", "> 爷爷在节奏外面自己跳", "爷爷跳得好认真，好可爱", "我也想拍一个给爸妈看"] },
+    ] },
+    xiaohongben: { name: "小红本", tag: "小红本", verb: "刷小红本", talks: [
+      { title: "收藏从未停止", mood: { name: "自我认知", emo: "embarrassed", pts: 1, min: 120 },
+        lines: ["# 三十天练出马甲线，跟练就行", "> 收藏了，明天开始", "> 收藏了，下辈子开始", "我也收藏了，这是第几个了", "翻了翻收藏夹，八十七个健身", "一个都没练过。先收藏这条吧"] },
+      { title: "排队两小时的小熊", mood: { name: "清醒消费", emo: "confident", pts: 1, min: 120 },
+        lines: ["# 宝藏咖啡店！拉花是一只小熊", "> 排了两个小时，小熊是歪的", "> 我的小熊在杯里溺水了", "> 喝着像速溶的味道", "两小时……够我睡个午觉了", "我还是在家冲一杯，画个圆"] },
+      { title: "滤镜比海还蓝", mood: { name: "被滤镜骗", emo: "dazed", pts: 3, min: 90 },
+        lines: ["# 海边小镇，美得像电影", "> 我去了，海是灰的", "> 博主，你的天空是买的吗", "> 原图在评论区，大家冷静", "原图……是个停车场？", "滤镜真是世上最大的魔法"] },
+      { title: "懒人一人食", mood: { name: "想下厨了", emo: "inspired", pts: 1, min: 120 },
+        lines: ["# 十分钟懒人一人食：番茄蛋面", "> 步骤一：买一口好锅", "> 步骤二：洗那口好锅", "看起来好简单，我也能做！", "……家里没有番茄，也没有蛋", "只有面。那就清汤面吧"] },
+      { title: "五百块改造出租屋", mood: { name: "小窝焕新", emo: "energized", pts: 2, min: 180 },
+        lines: ["# 五百块改造出租屋，房东看哭了", "> 房东哭是因为墙上打了孔", "> 押金还能要回来吗博主", "我也想买那个奶油色地毯", "等等，我是不是也得问房东", "先挪一下沙发，感觉焕然一新"] },
+      { title: "外卖小哥加了蛋", mood: { name: "被暖到", emo: "happy", pts: 2, min: 120 },
+        lines: ["# 家人们谁懂啊，外卖给我加了蛋", "> 谁懂啊，我的蛋被偷吃了", "> 这种好人请长命百岁", "> 楼上，偷吃你蛋的是谁", "看得我也想点一碗面了", "备注写上：谢谢你呀"] },
+      { title: "这些东西别买", mood: { name: "钱包在哭", emo: "sad", pts: 2, min: 180 },
+        lines: ["# 后悔药：这些东西千万别买", "> 第三条我刚下单，还没发货", "> 第五条我买了两个", "往下一划……我全买了", "会唱歌的加湿器还在柜子里", "不看了，越看越心疼"] },
+      { title: "一周不重样", mood: { name: "穿搭自信", emo: "confident", pts: 1, min: 120 },
+        lines: ["# 一周不重样通勤穿搭", "> 一周工资够买这些吗", "> 衣服好看，主要是人好看", "我数了数，我只有三件上衣", "那就三天不重样，周四重来", "这也叫胶囊衣橱，没毛病"] },
+      { title: "月薪三千存两千五", mood: { name: "存钱计划", emo: "focused", pts: 3, min: 240 },
+        lines: ["# 月薪三千，我存下了两千五", "> 怎么做到的", "> 博主：住家里，吃家里", "> 我爸妈说家里已经满员了", "这招我学不了，我自己住", "那我就……少买一杯奶茶吧"] },
+      { title: "特种兵式旅游", mood: { name: "懒洋洋", emo: "bored", pts: 2, min: 120 },
+        lines: ["# 特种兵三天打卡十二个景点", "> 第二天腿就不是我的了", "> 回来上了三天班才缓过来", "光看行程表我就累了", "我的旅游是：找个地方躺着", "换个地方躺，也算旅游"] },
+      { title: "躺着看书的支架", mood: { name: "冷静期", emo: "playful", pts: 2, min: 90 },
+        lines: ["# 懒人神器：躺着看书的支架", "> 买了，睡着了，书掉脸上了", "> 第二天鼻子还是红的", "哈哈哈，这画面好真实", "不过躺着看书确实很香", "加入购物车，先冷静三天"] },
+      { title: "等一只猫来视察", mood: { name: "鸽子来访", emo: "playful", pts: 3, min: 120 },
+        lines: ["# 楼下的流浪猫成了我家常客", "> 它是来视察的，你是员工", "> 每天几点上班打卡啊", "好羡慕，我也想被猫视察", "我在窗台放一碗水试试", "……来了只鸽子"] },
+      { title: "能砸核桃的面包", mood: { name: "笑出声", emo: "happy", pts: 2, min: 90 },
+        lines: ["# 第一次烤面包，成功了！", "> 这是面包还是砖块", "> 能砸核桃吗，想买", "> 博主：能，已砸开三个", "笑死，这算一物两用", "我也想试试，先买袋核桃"] },
+      { title: "手账的第四页",
+        lines: ["# 手账博主的一天：晨间计划页", "> 画了两小时，计划是睡觉", "> 本子比我的人生规划还好看", "我也买过一本好看的手账", "写了三页，第四页是购物清单"] },
+      { title: "五点起床的人", mood: { name: "早起挣扎", emo: "uncomfortable", pts: 1, min: 120 },
+        lines: ["# 五点起床的第一百天", "> 你五点起，我五点睡", "> 我们刚好错开一个轮回", "五点……天都还没醒吧", "我定个七点的闹钟试试", "……还是七点半吧"] },
+      { title: "撞了同款围巾", mood: { name: "小鹿乱撞", emo: "flirty", pts: 3, min: 150 },
+        lines: ["# 在咖啡店被陌生人夸了围巾", "> 然后呢然后呢", "> 博主：然后他说他也有一条", "> 撞围巾了，这就是缘分", "哎呀，这偶遇也太巧了", "明天我也戴那条红围巾出门"] },
+      { title: "独居安全小贴士", mood: { name: "疑神疑鬼", emo: "scared", pts: 3, min: 120 },
+        lines: ["# 独居安全小贴士，一定要看完", "> 第三条：门口放双大号拖鞋", "> 我放了，半夜把自己吓一跳", "等等，我家门口有拖鞋吗", "……刚刚是不是有人敲门", "哦，是风。先去把门锁好"] },
+      { title: "差点买了漏水杯", mood: { name: "差点被坑", emo: "angry", pts: 3, min: 120 },
+        lines: ["# 网红水杯，喝水量直接翻倍", "> 买了，杯子漏水，喝水翻倍", "> 地板也喝了不少", "> 博主已经关了评论区", "可恶，我差点就下单了", "这种广告能不能标一下啊"] },
+      { title: "断舍离到只剩床", mood: { name: "理直气壮", emo: "confident", pts: 1, min: 90 },
+        lines: ["# 断舍离后，我家只剩一张床", "> 那你坐哪", "> 博主：坐床上", "> 吃饭呢？博主：也在床上", "这就是传说中的床上人生", "我舍不得，那个空盒子还有用"] },
+      { title: "天花板草莓蛋糕", mood: { name: "手作快乐", emo: "inspired", pts: 2, min: 120 },
+        lines: ["# 天花板级别的草莓蛋糕", "> 天花板太高，够不着价格", "> 一块的钱够我吃一周", "看着真好吃，草莓好大颗", "我去楼下买盒草莓，自己堆", "堆好了，也是天花板级别"] },
+      { title: "一周学会尤克里里",
+        lines: ["# 零基础一周学会尤克里里", "> 第一天，我学会了调音", "> 第七天，我还在调音", "> 邻居已经学会了敲墙", "哈哈，邻居才是进步最快的", "我的吉他也在角落吃灰呢"] },
+      { title: "多肉养不死指南", mood: { name: "拯救多肉", emo: "tense", pts: 3, min: 120 },
+        lines: ["# 多肉养不死指南", "> 照着养的，已经第三盆了", "> 前两盆呢", "> 在天上看着我", "我窗台那盆好像也有点软", "从今天开始，少浇点水"] },
+      { title: "下雨天窝在家", mood: { name: "窝家日", emo: "happy", pts: 1, min: 180 },
+        lines: ["# 下雨天就该窝在家里", "> 配一杯热可可，一本书", "> 再加一只猫", "> 我只有一盒泡面", "泡面也很好啊，热乎乎的", "今天不出门了，就这么定"] },
+      { title: "盲测十款薯片",
+        lines: ["# 盲测十款薯片，结果意外", "> 第一名居然是最便宜的", "> 博主吃完去跑步了吗", "> 博主：跑了，跑去买第十一款", "我也想当薯片测评员", "我家只有一包，它就是第一"] },
+      { title: "自己剪刘海", mood: { name: "定力满分", emo: "focused", pts: 2, min: 90 },
+        lines: ["# 给自己剪刘海，零失败教程", "> 剪完了，现在是零刘海", "> 我的刘海去了远方", "摸了摸自己的刘海……", "手好痒，但我忍住了", "剪刀先放远一点"] },
+      { title: "深夜炸鸡放毒", mood: { name: "饿到发慌", emo: "uncomfortable", pts: 2, min: 120 },
+        lines: ["# 深夜放毒：凌晨的炸鸡", "> 博主，你这是犯罪", "> 我已经下楼了", "> 楼上，带我一份", "肚子咕噜叫了一声", "不行，我在减……减什么来着"] },
+      { title: "衣柜整理前后", mood: { name: "衣柜雪崩", emo: "scared", pts: 2, min: 60 },
+        lines: ["# 收纳达人：衣柜整理前后对比", "> 整理前是我的衣柜", "> 整理后也是，只是在梦里", "我打开衣柜看了一眼", "一件衣服掉出来跟我打招呼", "……关上，今天先不整理了"] },
+      { title: "跑步机变衣架", mood: { name: "同病相怜", emo: "embarrassed", pts: 1, min: 90 },
+        lines: ["# 闲置出：一次没用过的跑步机", "> 我也有一台，现在晾衣服", "> 我家的挂着包", "> 跑步机：我是一个衣架", "我家没跑步机，有张健身椅", "上面堆着三天的衣服"] },
+      { title: "学拍照姿势", mood: { name: "拍照练习", emo: "playful", pts: 2, min: 90 },
+        lines: ["# 拍照不会摆姿势？照着学", "> 学了，像在做广播体操", "# 自拍角度指南：四十五度", "> 四十五度，拍到了天花板", "我试了一下……全是下巴", "算了，拍拍我的窗台吧"] },
+      { title: "家门口的小巷", mood: { name: "想去散步", emo: "inspired", pts: 2, min: 180 },
+        lines: ["# 城市漫步：家附近的小巷", "> 原来我家楼下有这么多花", "> 住了五年才第一次走进去", "我也住这么久了，还没逛过", "明天出门不导航，随便走走", "说不定能捡到个宝藏小店"] },
+    ] },
+    shudong: { name: "树洞岛", tag: "树洞岛", verb: "逛树洞岛", talks: [
+      { title: "吃完了点错的外卖", mood: { name: "同类相惜", emo: "playful", pts: 2, min: 90 },
+        lines: ["# 外卖口味点错了，不好意思找客服", "> 我上周吃了一份香菜全家福", "> 我直接吃完了，还给了五星", "哈哈，这不就是我本人吗", "我回一句：吃完也是一种勇敢"] },
+      { title: "有人暗恋面包店", mood: { name: "心里甜甜", emo: "flirty", pts: 3, min: 120 },
+        lines: ["# 天天去买面包，只为看店员一眼", "> 你已经买了多少个面包了", "> 楼主回：四十七个，冰箱塞满了", "> 下次买个大的，能多站一会儿", "我也有过这样偷偷喜欢的时候", "算了，我先吃个面包冷静一下"] },
+      { title: "电梯里的神仙路人", mood: { name: "笑出眼泪", emo: "happy", pts: 2, min: 90 },
+        lines: ["# 电梯里只有我和陌生人，我没忍住", "> 没忍住什么？放屁吗", "> 楼主回：是的，然后他先说了对不起", "> 这是什么神仙路人", "哈哈哈，世上还是好人多"] },
+      { title: "凌晨三点的报到", mood: { name: "夜猫同盟", emo: "dazed", pts: 2, min: 120 },
+        lines: ["# 凌晨三点，还有人醒着吗", "> 在，刚数到第八百只羊", "> 在，在想明天早饭吃什么", "> 在，猫刚踩了我的脸", "原来这么多人醒着呀", "我也回一句：在，大家晚安"] },
+      { title: "有人科目二过了", mood: { name: "沾沾喜气", emo: "energized", pts: 2, min: 120 },
+        lines: ["# 科目二考了五次，今天终于过了", "> 恭喜！教练终于可以退休了", "> 我第六次，借我一点好运", "> 楼主回：好运已经打包寄给你了", "我也想庆祝一下自己的小事", "比如今天按时起床了，耶"] },
+      { title: "把老师喊成了妈", mood: { name: "替人尴尬", emo: "embarrassed", pts: 2, min: 90 },
+        lines: ["# 上课举手，把老师喊成了妈", "> 我喊过老板爸爸", "> 我对客服说过我也爱你", "> 楼主现在还好吗", "救命，我的脚趾在抠地", "我也对外卖员说过你也慢用"] },
+      { title: "没跟邻居奶奶告别", mood: { name: "想念旧人", emo: "sad", pts: 1, min: 150 },
+        lines: ["# 搬家那天，没跟邻居奶奶告别", "> 现在去也不晚呀", "> 带点水果，奶奶会很高兴的", "> 楼主回：明天就去，带橘子", "看得我心里软软的", "我也该给老邻居打个电话了"] },
+      { title: "室友偷喝酸奶", mood: { name: "义愤填膺", emo: "angry", pts: 2, min: 60 },
+        lines: ["# 冰箱里的酸奶又少了一盒", "> 写名字没用，要写已舔过", "> 楼主回：写了，结果少了两盒", "> 室友留言：舔过的更香", "可恶，我都替楼主生气了", "幸好我一个人住，酸奶全归我"] },
+      { title: "陌生人明天面试", mood: { name: "替人紧张", emo: "tense", pts: 3, min: 90 },
+        lines: ["# 明天面试，手心一直在冒汗", "> 深呼吸，面试官也是打工人", "> 把他们想象成穿睡衣的样子", "> 楼主回：好像真的没那么紧张了", "我看着都跟着紧张起来了", "我留言：加油，明天一定顺利"] },
+      { title: "一个人看电影", mood: { name: "想出门走走", emo: "inspired", pts: 2, min: 180 },
+        lines: ["# 第一次一个人看电影，好自在", "> 爆米花不用分，太爽了", "> 哭的时候也不怕被看见", "> 想上厕所随时就能走", "一个人好像也挺不错的", "下周我也去试试看"] },
+      { title: "被猫嫌弃的人", mood: { name: "幸灾乐祸", emo: "playful", pts: 2, min: 60 },
+        lines: ["# 养了三年的猫，只亲我室友", "> 猫的爱是藏起来的", "> 它踩你键盘就是爱你", "> 楼主回：它只踩室友的键盘", "哈哈哈，好惨，又好好笑"] },
+      { title: "怕黑不敢关灯", mood: { name: "有点发毛", emo: "scared", pts: 2, min: 60 },
+        lines: ["# 二十五岁了，还是不敢关灯睡", "> 我三十岁，还开着小夜灯", "> 我床底下放了只玩偶站岗", "> 怕黑说明想象力丰富", "刚刚走廊好像有声音……", "……我今晚也开着灯睡吧"] },
+      { title: "一把没还的伞", mood: { name: "嗑到了", emo: "flirty", pts: 3, min: 120 },
+        lines: ["# 同事借我一把伞，我一直没还", "> 是不想还，还是想再借一次", "> 下雨天去还，顺便一起走", "> 楼主回：天气预报说周五有雨", "啊啊啊，我也想看后续", "我在评论区蹲一个结局"] },
+      { title: "无聊的人来报到", mood: { name: "百无聊赖", emo: "bored", pts: 2, min: 90 },
+        lines: ["# 周末一整天没说话，好无聊", "> 我今天只跟扫地机器人说话了", "> 跟外卖员说了声谢谢，算吗", "> 无聊的人请在楼下报到", "报到，我也在发呆", "……要不我也跟家具聊聊天"] },
+      { title: "第一次煎蛋没糊", mood: { name: "厨艺自信", emo: "confident", pts: 2, min: 120 },
+        lines: ["# 第一次煎蛋没糊，想炫耀一下", "> 厉害！我的蛋总是粘锅", "> 下一步挑战番茄炒蛋", "> 楼主回：已经在买番茄的路上", "一个煎蛋这么开心，好可爱", "不过我煎蛋也很稳，嘿嘿"] },
+      { title: "认错人挥了手",
+        lines: ["# 在街上热情挥手，认错人了", "> 我直接拍过陌生人的肩", "> 对方也挥手了吗", "> 楼主回：挥了，还说好久不见", "这个陌生人好会接戏", "说不定他们真能成为朋友"] },
+      { title: "偷吃糖的秘密",
+        lines: ["# 小时候偷吃了柜子里的糖", "> 我偷喝过爷爷的蜂蜜", "> 楼主回：后来发现我妈早知道", "> 每个妈妈都会假装没看见", "我小时候偷吃饼干，妈说是老鼠", "……原来她一直都知道"] },
+      { title: "练习说不", mood: { name: "练习拒绝", emo: "focused", pts: 3, min: 120 },
+        lines: ["# 同事总让我带饭，我不会拒绝", "> 练习说：我今天不太方便", "> 对着镜子练十遍", "> 楼主回：练了，镜子都同意了", "哈哈，先从拒绝镜子开始", "我也练练：不太方便，不太方便"] },
+      { title: "浇死了仙人掌", mood: { name: "植物担忧", emo: "tense", pts: 2, min: 60 },
+        lines: ["# 连仙人掌都养死了，我是不是废了", "> 仙人掌通常是被浇死的", "> 说明你太爱它了", "> 楼主回：我一天浇三次", "……那确实是爱得太深了", "我窗台那盆，得少浇点水了"] },
+      { title: "十年前的信", mood: { name: "想写封信", emo: "inspired", pts: 2, min: 180 },
+        lines: ["# 翻到十年前写给自己的信", "> 信里写了什么呀", "> 楼主回：希望你还在画画", "> 楼主回：我上周刚买了画笔", "好温柔的约定啊", "我也想写一封，十年后再拆"] },
+      { title: "把好的打成好吃", mood: { name: "笑到打嗝", emo: "happy", pts: 1, min: 60 },
+        lines: ["# 给领导回好的，打成了好吃", "> 领导回你了吗", "> 楼主回：领导说，确实好吃", "> 原来领导也在吃饭", "哈哈哈，领导居然接住了", "我发消息前得多看两眼了"] },
+      { title: "剪了短发不敢出门", mood: { name: "刘海阴影", emo: "uncomfortable", pts: 1, min: 90 },
+        lines: ["# 剪了短发，不敢出门了", "> 发张照片，大家帮你看看", "> 楼主回：算了，我戴帽子出门了", "> 头发会长的，自信最好看", "我上次剪坏刘海，也戴了一周帽子"] },
+      { title: "楼下的钢琴声",
+        lines: ["# 楼下每晚练同一首曲子，好难听", "> 坚持多久了", "> 楼主回：三个月，今天终于没弹错", "> 楼主回：我差点隔着地板鼓掌", "三个月啊，两个人都好有毅力", "听的人也算一种陪伴吧"] },
+      { title: "又梦到考试了", mood: { name: "考试阴影", emo: "scared", pts: 2, min: 90 },
+        lines: ["# 毕业五年了，还梦到考试没复习", "> 我梦到数学卷全是外文", "> 我梦到找不到考场的门", "> 这是全人类共同的噩梦", "别说了，我后背开始凉了", "还好醒来不用考试"] },
+      { title: "有人睡过了站", mood: { name: "被传染困了", emo: "dazed", pts: 2, min: 60 },
+        lines: ["# 公交睡过站，醒来已经在终点", "> 司机叫醒你了吗", "> 楼主回：叫了，还送了我一瓶水", "> 终点站的司机都是天使", "困成这样，楼主辛苦了", "……说着说着我也有点困了"] },
+      { title: "六十秒的语音", mood: { name: "有点想家", emo: "sad", pts: 1, min: 120 },
+        lines: ["# 存着妈妈发的六十秒语音", "> 都在说什么呀", "> 楼主回：天冷了，记得穿秋裤", "> 是不是每条都是秋裤", "哈哈，我妈也是这样", "……我今天还真没穿"] },
+      { title: "彩票中了五块", mood: { name: "小小运气", emo: "energized", pts: 1, min: 60 },
+        lines: ["# 第一次买彩票，中了五块钱", "> 五块也是中，恭喜恭喜", "> 拿去买根冰淇淋刚刚好", "> 楼主回：又买了一张，没中", "哈哈，好运守恒定律", "不过五块钱的开心也是开心"] },
+      { title: "排队被插了", mood: { name: "气鼓鼓", emo: "angry", pts: 3, min: 90 },
+        lines: ["# 排了半小时队，被人插队了", "> 你说他了吗", "> 楼主回：没敢说，回家气哭了", "> 下次我陪你一起说", "啊，好气，又好心疼", "下次谁插队，我替你瞪他"] },
+      { title: "三十岁学跳舞", mood: { name: "跃跃欲试", emo: "energized", pts: 2, min: 150 },
+        lines: ["# 三十岁才开始偷偷学跳舞", "> 什么时候开始都不晚", "> 楼主回：今天老师夸我了", "> 下次跳给家里人看吧", "好棒啊，我也想学点新东西", "先在客厅扭两下试试"] },
+      { title: "一块橡皮的缘分", mood: { name: "缘分橡皮", emo: "playful", pts: 3, min: 90 },
+        lines: ["# 想对高中同桌说：橡皮是我拿的", "> 同桌说不定也在树洞", "# 新帖：谁拿了我十年前的橡皮", "等等，这两个帖子……", "这不就是同一块橡皮吗"] },
+    ] },
+    lengzhishi: { name: "冷知识研究所", tag: "冷知识", verb: "逛冷知识研究所", talks: [
+      { title: "章鱼有三颗心脏", mood: { name: "三心二意", emo: "playful", pts: 2, min: 120 },
+        lines: ["#章鱼有三颗心脏，血还是蓝色的", ">三颗心，谈恋爱能分三份吗", ">两颗管鳃，一颗管全身，分工明确", ">游泳时主心脏会停跳，所以它爱爬", "我一颗心都操不过来", "它有三颗，还不嫌累"] },
+      { title: "翻出古老蜂蜜", mood: { name: "挖到宝了", emo: "happy", pts: 2, min: 90 },
+        lines: ["#蜂蜜几乎不会变质，古墓里都挖出过", ">那我家柜子里那罐也算文物了", ">糖多水少，细菌活不下去", ">结晶了也不是坏了，别扔", "我翻出了一罐结块的蜂蜜", "泡热水化开了……还挺香", "这是我家的出土文物"] },
+      { title: "香蕉其实是浆果", mood: { name: "世界观裂了", emo: "dazed", pts: 3, min: 120 },
+        lines: ["#植物学上香蕉是浆果，草莓不是", ">我不信，我拒绝", ">茄子和辣椒也算浆果哦", ">草莓反而是“假果”", "等一下，那我吃了半辈子的是啥", "我的水果观崩塌了"] },
+      { title: "捏鼻子哼歌失败", mood: { name: "被封印了", emo: "embarrassed", pts: 1, min: 60 },
+        lines: ["#捏住鼻子闭上嘴，你就哼不出歌", ">不可能，我现在就试", ">……真的，憋得我脸通红", ">哼歌的气要从鼻子出去", "（捏鼻子）嗯——嗯——", "……没声了，憋住了", "我被一条冷知识封印了"] },
+      { title: "舔胳膊肘挑战", mood: { name: "脖子扭了", emo: "uncomfortable", pts: 1, min: 90 },
+        lines: ["#大部分人舔不到自己的胳膊肘", ">看到这条的人现在都在试", ">我试了，脖子差点扭到", ">楼上别逞强，根本做不到", "（拧着胳膊）就差一点点", "……放弃了，脖子好酸", "还好这屋里没别人看见"] },
+      { title: "自己挠自己不痒", mood: { name: "无痒可挠", emo: "bored", pts: 2, min: 60 },
+        lines: ["#为什么自己挠自己不会痒", ">大脑提前知道你要挠哪", ">没有意外，就痒不起来", ">原来痒是被吓出来的", "我挠了自己脚心十分钟", "毫无感觉，像在挠一块木头", "大脑你也太机灵了吧"] },
+      { title: "非春分立鸡蛋", mood: { name: "立蛋成功", emo: "energized", pts: 2, min: 120 },
+        lines: ["#只有春分那天鸡蛋才立得住？", ">小时候老师真让我们立过", ">其实哪天都能立，全靠耐心", ">蛋壳上有小凸起，能撑住", "今天不是春分，我偏要试", "立了二十分钟……立住了！", "屏住呼吸，谁也别碰它"] },
+      { title: "吐司落地实验", mood: { name: "心疼果酱", emo: "sad", pts: 1, min: 90 },
+        lines: ["#吐司掉地上总是抹酱那面朝下？", ">我家地板可以作证", ">有人算过，桌子高度刚好转半圈", ">那把桌子加高不就行了", "我把抹了果酱的吐司推下桌", "推了五次，四次酱面朝下", "地板好甜，我好心痛"] },
+      { title: "袋熊的方形便便", mood: { name: "肃然起敬", emo: "inspired", pts: 1, min: 90 },
+        lines: ["#袋熊的便便是方块形的", ">我以为是修图修的", ">肠道松紧不均，挤成了方块", ">方的不会滚，正好用来做记号", "有人研究这个还拿了奖", "我对这个世界的敬意又多了"] },
+      { title: "金鱼不止七秒", mood: { name: "愧对金鱼", emo: "embarrassed", pts: 2, min: 120 },
+        lines: ["#金鱼记忆只有七秒是谣言", ">实验里金鱼能记好几个月", ">还能学会到点等喂食", ">那我以前骂它的它都记得？", "小时候我总忘了喂金鱼", "原来它全都记得……", "以后对鱼也要客气点"] },
+      { title: "猫尝不出甜味",
+        lines: ["#猫咪尝不出甜味", ">那我家猫为啥偷吃蛋糕", ">它馋的可能是奶油里的油", ">它们少了尝甜味的那段基因", "所以给猫买生日蛋糕没用", "它们只是来凑热闹的"] },
+      { title: "海獭牵手睡觉", mood: { name: "被可爱到了", emo: "happy", pts: 2, min: 150 },
+        lines: ["#海獭睡觉会手拉手，怕漂散", ">这是什么童话故事", ">还会裹着海藻当被子", ">小海獭直接睡在妈妈肚子上", "我把被子裹紧了一点", "虽然没人牵我的手", "但我有枕头，也漂不走"] },
+      { title: "金星的一天", mood: { name: "度日如年", emo: "sad", pts: 1, min: 90 },
+        lines: ["#金星上的一天比一年还长", ">那岂不是天天都在过年", ">自转太慢，绕太阳都比它快", ">在那上一天班等于熬一年", "我今天这班上得也挺金星的", "下班钟怎么还不响"] },
+      { title: "鲨鱼比树还老", mood: { name: "沧海桑田", emo: "dazed", pts: 3, min: 120 },
+        lines: ["#鲨鱼出现时，地球上还没有树", ">骗人，树不是一直都在吗", ">鲨鱼四亿多年前就有了", ">树大概晚了几千万年", "我看着窗外那棵树", "你在鲨鱼面前也只是晚辈"] },
+      { title: "数玉米须",
+        lines: ["#玉米上每根须对应一颗玉米粒", ">那须少的玉米岂不是很秃", ">没授上粉的须，就不长粒", ">以后啃玉米都会想起这个", "我剥了一根玉米开始数须", "数到第六十根就放弃了", "反正最后都要吃掉"] },
+      { title: "火烈鸟是吃粉的", mood: { name: "虚惊一场", emo: "scared", pts: 2, min: 60 },
+        lines: ["#火烈鸟的粉色是吃出来的", ">藻类和小虾里有色素", ">不吃这些会慢慢褪成白色", ">吃太多胡萝卜，人也会发黄", "我看了看自己的手心", "还好，没有变橙色", "明天的胡萝卜汁先停一停"] },
+      { title: "舌头地图是假的", mood: { name: "被课本骗了", emo: "angry", pts: 2, min: 90 },
+        lines: ["#课本上的舌头味觉分区图是错的", ">舌尖尝甜舌根尝苦，我背过", ">其实整条舌头都能尝各种味", ">我考试还答过这题", "我拿糖抹在舌根试了一下", "……甜的，明明白白", "我当年的满分白背了"] },
+      { title: "苹果漂在水上", mood: { name: "想当苹果", emo: "bored", pts: 2, min: 60 },
+        lines: ["#苹果扔进水里会浮着", ">里面差不多四分之一是空气", ">所以才有咬水里苹果的游戏", ">那我也四分之一是空气", "我往盆里扔了个苹果", "它漂着转了一圈，好悠闲", "我也想这样漂着不上班"] },
+      { title: "被菠萝反咬一口", mood: { name: "被反吃了", emo: "scared", pts: 2, min: 60 },
+        lines: ["#吃菠萝嘴麻，是它在分解你", ">吓人，这水果还会还手", ">是菠萝蛋白酶在分解蛋白质", ">听说泡盐水会好一点", "我刚吃完半个菠萝", "舌头确实刺刺的", "原来我们在互相吃"] },
+      { title: "蝴蝶用脚尝味道", mood: { name: "被尝过了", emo: "flirty", pts: 2, min: 90 },
+        lines: ["#蝴蝶是用脚尝味道的", ">踩到花就知道甜不甜", ">落在你身上，是在尝你", ">我小时候被蝴蝶停过手", "我小时候也被停过", "不知道我是什么味道的", "希望是甜的"] },
+      { title: "企鹅送石头", mood: { name: "心动预备", emo: "flirty", pts: 3, min: 180 },
+        lines: ["#有的企鹅会送石头给心上人", ">挑最圆最好看的那一块", ">还有偷邻居家石头的", ">爱情和犯罪就差一块石头", "我在楼下捡了颗小圆石", "擦干净放在窗台上", "先存着，万一用得上呢"] },
+      { title: "学海豚半睡", mood: { name: "困到合眼", emo: "dazed", pts: 2, min: 90 },
+        lines: ["#海豚睡觉时只睡半边脑子", ">另外半边负责看路和换气", ">所以会睁一只眼睡觉", ">我上课就是这样的", "我决定今晚也试试", "闭一只眼……", "不行，两只一起闭上了"] },
+      { title: "长颈鹿的舌头", mood: { name: "甘拜下风", emo: "playful", pts: 2, min: 60 },
+        lines: ["#长颈鹿的舌头是深紫色的", ">据说颜色深是为了防晒", ">舌头快有半米长", ">还能伸进自己鼻孔里", "我对着镜子伸了下舌头", "粉的，短的，够不着鼻子", "输了，输得很彻底"] },
+      { title: "鸵鸟眼比脑大",
+        lines: ["#鸵鸟的眼睛比它的脑子还大", ">难怪看起来呆呆的", ">不许说鸵鸟坏话", ">它时速能跑七十公里好吗", "我不知道该站哪一边", "总之……眼睛大是好事"] },
+      { title: "乌鸦会记仇", mood: { name: "讨好乌鸦", emo: "tense", pts: 2, min: 90 },
+        lines: ["#乌鸦能记住人脸，还会记仇", ">实验里戴面具的人被骂了好几年", ">还会教别的乌鸦一起骂", ">据说也有人收到过乌鸦送礼", "今天楼下乌鸦看了我一眼", "我赶紧冲它笑了笑", "我们之间应该没有过节吧"] },
+      { title: "月亮在偷偷走远", mood: { name: "月色温柔", emo: "inspired", pts: 2, min: 180 },
+        lines: ["#月亮每年离地球远大约四厘米", ">那以后是不是看不到月亮了", ">要好几亿年才看得出来", ">至少我们这辈子它都在", "我抬头看了看今晚的月亮", "不着急，慢慢走", "我会一直看着你的"] },
+      { title: "花生其实是豆", mood: { name: "立场坚定", emo: "confident", pts: 1, min: 90 },
+        lines: ["#花生不是坚果，是豆子", ">它跟黄豆是一家的", ">所以才叫落花生，花落入土", ">那花生过敏和坚果过敏呢", "我手里的花生突然不香了", "……不对，还是很香", "不管你是什么，我都吃"] },
+      { title: "热水先结冰之争", mood: { name: "急性子", emo: "tense", pts: 2, min: 90 },
+        lines: ["#热水比冷水先结冰？吵了很久", ">我家冰箱实测是热水赢", ">那是你冰箱冷热不均", ">科学家到现在也没吵完", "我放了两杯水进冷冻室", "每半小时开门看一次", "门开太多，两杯都没冻上"] },
+      { title: "玻璃是不是液体", mood: { name: "看呆了", emo: "dazed", pts: 2, min: 60 },
+        lines: ["#玻璃其实是流得超慢的液体？", ">老窗户下面厚，就是流下去的", ">不对，是当年做得就不均匀", ">玻璃是非晶态固体，不会流", "我盯着窗玻璃看了一会", "它不动，我也不动", "那就算它是固体吧"] },
+      { title: "数草莓的籽", mood: { name: "认真数籽", emo: "focused", pts: 3, min: 120 },
+        lines: ["#一颗草莓表面大概有两百颗籽", ">每一颗籽其实都是一个小果子", ">谁闲得去数啊", ">我数过，一百八十多颗", "我拿起一颗草莓开始数", "数到一半它被我捏软了", "干脆吃掉，算我赢"] },
+    ] },
+  },
+};
+
+const CHAT_ACT = { pc_video: "video", pc_forum: "forum" };
+for (const [kind, groups] of Object.entries(CHATS)) for (const [who, g] of Object.entries(groups))
+  g.talks.forEach((t, i) => { if (t.mood) ML[t.id = `chat_${who}_${i}`] = { ...t.mood }; });
+function chatItem(kind, who) {
+  const g = CHATS[kind][who], seen = ((lifeFlags.talkSeen ||= {})[who] ||= []);
+  let fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i));
+  if (!fresh.length) { seen.splice(0, seen.length - 3); fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i)); }
+  const i = pick(fresh), t = g.talks[i], vars = { 朋友: pick(T.fill.朋友) };
+  seen.push(i);
+  const name = fill(g.name, vars);
+  return { vars, talk: { ...t, kind, who, name,
+    start: kind === "video" ? `打开电脑，和${name}视频聊天。` : `打开电脑，${g.verb}。`,
+    end: kind === "video" ? `和${name}视频：${t.title}。` : `${g.verb}：${t.title}。` } };
+}
+function playTalk(dt) {
+  if (!sim.item || !sim.item.talk || !CHAT_ACT[sim.act]) { sim.talk = null; return; }   // she was sent off to do something else
+  const tk = sim.item.talk, st = sim.talk;
+  if (st.i >= tk.lines.length || (st.wait -= dt) > 0) return;
+  const raw = tk.lines[st.i++], mark = raw[0], text = fill((mark === ">" || mark === "#" ? raw.slice(1) : raw).trim(), sim.item.vars);
+  const who = mark === ">" ? (tk.kind === "video" ? `${tk.name}：` : "评论：") : mark === "#" ? `【${CHATS.forum[tk.who].tag}】` : "";
+  showSay(text, who);
+  st.wait = Math.min(4.6, Math.max(2.6, 1.4 + (who + text).length * 0.13));      // seconds of running time per line
+}
 
 // ================================================================ chance cards
 // Like The Sims' chance cards (user): now and then a little situation pops

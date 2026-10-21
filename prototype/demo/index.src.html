@@ -248,6 +248,7 @@ body {
   --pe: #8a6446; --pf: #ecd5ad; color: #3d2a1e; font-weight: 700; margin-left: var(--tail, 16px);
   height: var(--say-h, 60px); padding-block: 0; align-items: center;   /* whole-pixel height keeps every step crisp */
 }
+.pop .who { font-style: normal; color: #9a6a3c; margin-right: .15em; }   /* "妈妈：", "【音符】", "评论：" */
 @keyframes popin { from { opacity: 0; transform: scale(.5) translateX(-10px); } to { opacity: 1; transform: none; } }
 /* her moodlets: hovering (or tapping) the emoji swaps her words for a row of
    pills in the same place, so nothing gets covered. First pill = the
@@ -1106,7 +1107,9 @@ function startAct(name, quiet = false) {
   sim.route = planRoute(Math.round(p.x), Math.round(p.y), x, FLOOR_Y[st]);
   sim.s = 0; sim.target = routeLength(sim.route); sim.crossing = doorsOn(sim.route);
   sim.mode = "walk";
-  sim.pendingLog = a.log && !quiet ? a.log : null;   // written when she gets there and starts (user), not when she sets off
+  if (CHAT_ACT[name] && !(sim.chosen && sim.chosen.act === name)) sim.chosen = { act: name, item: pickItem(name) };
+  const talk = CHAT_ACT[name] && sim.chosen.item.talk;
+  sim.pendingLog = !quiet && (talk ? talk.start : a.log) || null;   // written when she gets there and starts (user), not when she sets off
 }
 function arrive() {
   const a = ACTS[sim.act];
@@ -1200,10 +1203,11 @@ function step(dtGame, dtReal) {
       walkMoments(before, now);
     }
   } else if (sim.mode === "act") {
+    if (sim.talk && dtReal > 0) playTalk(dtReal);
     const h = hour();
     const done = sim.act === "sleep"
       ? sim.nap ? n.energy >= 95 || sim.t >= sim.actEnd - 780 : (n.energy >= 99 && h >= 6.5 && h < 12) || (h >= 9 && h < 20)
-      : sim.act === "dress" && wardrobeOpen ? false : sim.t >= sim.actEnd;
+      : sim.act === "dress" && wardrobeOpen ? false : sim.t >= sim.actEnd && !(sim.talk && sim.talk.i < sim.item.talk.lines.length);
     // up in the night for the toilet, then back to bed
     if (sim.act === "sleep" && !done && n.bladder < 10) { sim.upAtNight = true; log("半夜起来上了个厕所。"); finishAct(); sim.queue = ["toilet", "sleep"]; return; }
     // longer activities: she breaks off for the toilet before it's too late
@@ -2144,6 +2148,8 @@ const CATALOG = {
   computer: () => ["games", "games", "游戏"], phone_game: () => ["phoneGames", "games", "游戏"],
 };
 function pickItem(act) {
+  if (act === "pc_video") return chatItem("video", weighted([["friend", 3], ["mom", 1.2], ["dad", 1]]));
+  if (act === "pc_forum") return chatItem("forum", pick(Object.keys(CHATS.forum)));
   if (act === "cook") {   // hungry: she goes for something filling
     const all = T.cuisines.flatMap(c => c.dishes.map(d => [c, d]));
     const hungry = sim.needs.hunger < 50, w = ([, d]) => (hungry ? Math.max(1, (d.fill || 40) - 25) ** 2 : 1);
@@ -2159,6 +2165,7 @@ function pickItem(act) {
 function lifeArrive(act) {
   sim.item = sim.chosen && sim.chosen.act === act ? sim.chosen.item : pickItem(act);
   sim.chosen = null;
+  sim.talk = sim.item && sim.item.talk ? { i: 0, wait: 1 } : null;
   const dish = sim.item && sim.item.dish;
   if (act === "cook" && dish && dish.time) sim.actEnd = sim.t + dish.time;          // each dish its own cooking time
   if (act === "eat" && sim.meal && sim.meal.fill) {                                  // and fills her by its own amount
@@ -2224,9 +2231,15 @@ function lifeFinish(act) {
     case "wash": lifeFlags.bedHair = false; moods.delete("bedHair"); addMood("mirror"); break;
     case "water_living": case "water_study": lifeFlags.watered[act] = sim.t; addMood("plantHappy"); break;
     case "pc_code": case "pc_video": case "pc_forum": case "phone_video": case "phone_call": case "phone_text": case "phone_feed":
-      if (sim.forced) { addMood(sim.forced); if (sim.forced === "momCall" && r < 0.3) addMood("homesick"); }   // the call / video an event started
+      if (sim.item && sim.item.talk) {                // a conversation (user): its own diary line and mood
+        const tk = sim.item.talk;
+        log(fill(tk.end, sim.item.vars));
+        if (tk.id) addMood(tk.id, { vars: sim.item.vars, diary: false, words: false });
+        else addMood(weighted(T.outcomes[act]), { vars: sim.item.vars });
+      }
+      else if (sim.forced) { addMood(sim.forced); if (sim.forced === "momCall" && r < 0.3) addMood("homesick"); }   // the call / video an event started
       else addMood(weighted(T.outcomes[act]), { vars: { 朋友: pick(T.fill.朋友 || ["老朋友"]) } });
-      sim.forced = null;
+      sim.forced = null; sim.talk = null;
       break;
     case "dance": addMood("danced"); break;
     case "sleep":
@@ -2654,11 +2667,13 @@ function speak(text, now = false) {
   if (realClock < sayBusy || listOpen) { if (sayQueue.length < 2 && !sayQueue.includes(text)) sayQueue.push(text); return; }
   showSay(text);
 }
-function showSay(text) {
+function showSay(text, who = "") {
   text = spaced(text);
   lastSaid = text;
-  popSay.querySelector("span").textContent = text;
-  popSay.title = text;
+  const span = popSay.querySelector("span");
+  span.textContent = text;
+  if (who) span.prepend(Object.assign(document.createElement("em"), { className: "who", textContent: who }));   // someone else's line
+  popSay.title = who + text;
   popBubble(popSay, 5200);
   sayBusy = realClock + 5.6;
   nextSay = realClock + 14 + Math.random() * 12;
@@ -2669,7 +2684,7 @@ function updateMood() {
   showFace();
   if (listOpen) { fillMoodTip(); return; }          // her words wait until you're done looking
   if (realClock >= sayBusy && sayQueue.length) showSay(sayQueue.shift());
-  else if (realClock >= nextSay && !asleep() && sim.mode !== "down") speak(thought());
+  else if (realClock >= nextSay && !asleep() && sim.mode !== "down" && !sim.talk) speak(thought());
 }
 
 // ================================================================ UI
@@ -2969,7 +2984,10 @@ const RINGS = {
   buddy: [["name", null, "label"], ["chat", "聊聊天"], ["pat", "摸摸头"], ["phone", "玩手机 ▸", "more"], ["dance", "跳支舞"],
           ["bed", "去睡觉"], ["rename", "改名字"]],
   phone: [["phone_call", "打给妈妈"], ["phone_video", "和朋友视频"], ["phone_feed", "刷动态"], ["phone_text", "发消息"], ["phone_game", "玩手机游戏"], ["back", "返回", "back"]],
-  computer: [["computer", "打游戏"], ["pc_video", "视频聊天"], ["pc_forum", "逛论坛"], ["pc_code", "写代码"]],
+  computer: [["computer", "打游戏"], ["video", "视频聊天 ▸", "more"], ["forum", "逛论坛 ▸", "more"], ["pc_code", "写代码"]],
+  // user: video chat with 爸爸 / 妈妈 / a friend, forums by platform (CHATS, chats_text.js)
+  video: [["talk:dad", "和爸爸"], ["talk:mom", "和妈妈"], ["talk:friend", "和朋友"], ["back", "返回", "back"]],
+  forum: [["feed:yinfu", "刷音符"], ["feed:xiaohongben", "刷小红本"], ["feed:shudong", "逛树洞岛"], ["feed:lengzhishi", "逛冷知识"], ["back", "返回", "back"]],
 };
 let ringOf = null, ringAt = null;
 function ringCenter() {
@@ -3072,7 +3090,14 @@ let lastChat = -1e9;
 function ringPick(id) {
   if (id === "phone") { openRing("phone", "buddy"); return; }
   if (id === "rename") { openRename(); return; }
-  if (id === "back") { openRing("buddy"); return; }
+  if (id === "video" || id === "forum") { openRing(id, "computer"); return; }
+  if (id === "back") { openRing(ringAt === "computer" ? "computer" : "buddy"); return; }
+  if (id.startsWith("talk:") || id.startsWith("feed:")) {
+    closeRing();
+    const [kind, who] = id.startsWith("talk:") ? ["video", id.slice(5)] : ["forum", id.slice(5)];
+    command(kind === "video" ? "pc_video" : "pc_forum", chatItem(kind, who));
+    return;
+  }
   closeRing();
   if (sim.mode === "down") return;
   if (id === "chat") {
@@ -3185,6 +3210,39 @@ pickerEl.querySelector(".x").addEventListener("click", closePicker);
 pickerEl.querySelector(".rand").addEventListener("click", () => { const a = pickOn; closePicker(); command(a); });
 document.addEventListener("pointerdown", e => { if (pickOn && !pickerEl.contains(e.target) && e.target !== view) closePicker(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && pickOn) closePicker(); });
+
+// ================================================================ video chats & forums
+// User: on the computer, video chat with 爸爸 / 妈妈 / a friend, or browse a
+// forum (音符, 小红本, 树洞岛, 冷知识研究所). Each picks one conversation
+// (CHATS, chats_text.js) and plays it line by line in her bubble while time
+// runs; she stays until it's over. Its mood lands when she's done, with a
+// diary line. Lines: ">" someone else (the person / a comment), "#" a post,
+// plain = her. The same conversation doesn't come back until most of its
+// group has been seen.
+/*__CHATS_JS__*/
+const CHAT_ACT = { pc_video: "video", pc_forum: "forum" };
+for (const [kind, groups] of Object.entries(CHATS)) for (const [who, g] of Object.entries(groups))
+  g.talks.forEach((t, i) => { if (t.mood) ML[t.id = `chat_${who}_${i}`] = { ...t.mood }; });
+function chatItem(kind, who) {
+  const g = CHATS[kind][who], seen = ((lifeFlags.talkSeen ||= {})[who] ||= []);
+  let fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i));
+  if (!fresh.length) { seen.splice(0, seen.length - 3); fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i)); }
+  const i = pick(fresh), t = g.talks[i], vars = { 朋友: pick(T.fill.朋友) };
+  seen.push(i);
+  const name = fill(g.name, vars);
+  return { vars, talk: { ...t, kind, who, name,
+    start: kind === "video" ? `打开电脑，和${name}视频聊天。` : `打开电脑，${g.verb}。`,
+    end: kind === "video" ? `和${name}视频：${t.title}。` : `${g.verb}：${t.title}。` } };
+}
+function playTalk(dt) {
+  if (!sim.item || !sim.item.talk || !CHAT_ACT[sim.act]) { sim.talk = null; return; }   // she was sent off to do something else
+  const tk = sim.item.talk, st = sim.talk;
+  if (st.i >= tk.lines.length || (st.wait -= dt) > 0) return;
+  const raw = tk.lines[st.i++], mark = raw[0], text = fill((mark === ">" || mark === "#" ? raw.slice(1) : raw).trim(), sim.item.vars);
+  const who = mark === ">" ? (tk.kind === "video" ? `${tk.name}：` : "评论：") : mark === "#" ? `【${CHATS.forum[tk.who].tag}】` : "";
+  showSay(text, who);
+  st.wait = Math.min(4.6, Math.max(2.6, 1.4 + (who + text).length * 0.13));      // seconds of running time per line
+}
 
 // ================================================================ chance cards
 // Like The Sims' chance cards (user): now and then a little situation pops
