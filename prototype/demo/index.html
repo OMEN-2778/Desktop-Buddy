@@ -10553,6 +10553,43 @@ const TRIP_ICON = { park: "park", beach: "dock", mall: "mall", home: "home" };
 const tripCv = document.getElementById("trip"), tripCtx = (tripCv.width = W, tripCv.height = H, tripCv.getContext("2d"));
 const T_IN = 620, T_LOAD = 1500, T_OUT = 620, STRIPS = 7, STAGGER = 55;
 const easeCubic = t => t <= 0 ? 0 : t >= 1 ? 1 : t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+// the colour isn't left plain (user): a pattern of the place drifting
+// slowly — clover (park), little waves (dock), hearts and sparkles (mall),
+// tiny diamonds (home) — in a lighter tint, and a pixel frame once it's full
+const TRIP_MOTIF = {
+  park: ["................", "..#.#...........", ".#####..........", "..###...........", ".#####..........", "..#.#...........", "....#...........", "................",
+         "................", "................", "...........##...", "..........####..", ".........####...", "..........##....", ".........#......", "................"],
+  beach: ["................", "................", "..##......##....", ".#..#....#..#...", "#....#..#....#..", "......##.......#", "................", "................",
+          "................", "................", "##......##......", "..#....#..#....#", "...#..#....#..#.", "....##......##..", "................", "................"],
+  mall: ["................", "..##.##.........", ".#######........", ".#######........", "..#####.........", "...###..........", "....#...........", "................",
+         "................", "................", "...........#....", "..........###...", "...........#....", "................", "................", "................"],
+  home: ["................", "...#............", "..###...........", ".#####..........", "..###...........", "...#............", "................", "................",
+         "................", "................", "...........#....", "..........###...", ".........#####..", "..........###...", "...........#....", "................"],
+};
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const tint = (h, k) => `rgb(${hexRgb(h).map(v => Math.round(k > 0 ? v + (255 - v) * k : v * (1 + k))).join(",")})`;
+const tripPat = {};
+function tripPattern(to) {
+  if (tripPat[to]) return tripPat[to];
+  const c = document.createElement("canvas"); c.width = c.height = 16;
+  const x = c.getContext("2d"), base = TRIP_COL[to];
+  x.fillStyle = base; x.fillRect(0, 0, 16, 16);
+  x.fillStyle = tint(base, 0.22);
+  TRIP_MOTIF[to].forEach((row, j) => [...row].forEach((ch, i) => { if (ch === "#") x.fillRect(i, j, 1, 1); }));
+  return (tripPat[to] = tripCtx.createPattern(c, "repeat"));
+}
+function tripFrameBorder(x, to) {                // a band, a light inner line, notched corners with little studs
+  const base = TRIP_COL[to], dark = tint(base, -0.16), light = tint(base, 0.55);
+  x.fillStyle = dark;
+  x.fillRect(0, 0, W, 4); x.fillRect(0, H - 4, W, 4); x.fillRect(0, 0, 4, H); x.fillRect(W - 4, 0, 4, H);
+  x.fillStyle = light;
+  x.fillRect(7, 6, W - 14, 1); x.fillRect(7, H - 7, W - 14, 1); x.fillRect(6, 7, 1, H - 14); x.fillRect(W - 7, 7, 1, H - 14);
+  for (const [cx, cy] of [[6, 6], [W - 7, 6], [6, H - 7], [W - 7, H - 7]]) {   // corners: a stud instead of a sharp angle
+    x.fillRect(cx - 1 + (cx < W / 2 ? 2 : -1), cy - 1 + (cy < H / 2 ? 2 : -1), 2, 2);
+  }
+  for (let k = 16; k < W - 16; k += 12) { x.fillRect(k, 2, 2, 1); x.fillRect(k, H - 3, 2, 1); }   // stitches along the band
+  for (let k = 14; k < H - 14; k += 12) { x.fillRect(2, k, 1, 2); x.fillRect(W - 3, k, 1, 2); }
+}
 let tripRun = null;
 function trip(to, swap) {
   if (wiping || reduceMotionUI) { swap(); return; }
@@ -10579,20 +10616,30 @@ function avatarHead() {                          // her face in a white round ba
   return c;
 }
 function tripFrame(now) {
-  const r = tripRun, ms = now - r.t0, x = tripCtx, col = TRIP_COL[r.to] || TRIP_COL.home;
+  const r = tripRun, ms = now - r.t0, x = tripCtx, to = TRIP_COL[r.to] ? r.to : "home", edge = tint(TRIP_COL[to], -0.2);
   const rowH = Math.ceil(H / STRIPS), span = (t, i) => easeCubic((t - i * STAGGER) / (T_IN - (STRIPS - 1) * STAGGER));
+  const drift = Math.floor(ms / 90) % 16;        // the pattern drifts down-right, a pixel at a time
+  overHouse(tripCv);                             // follow the house if the page shifts underneath
   x.clearRect(0, 0, W, H);
-  x.fillStyle = col;
+  x.save(); x.translate(drift, drift); x.fillStyle = tripPattern(to);
+  const fill = (x0, y0, w, h) => tripCtx.fillRect(x0 - drift, y0 - drift, w, h);
   if (ms < T_IN) {
-    for (let i = 0; i < STRIPS; i++) x.fillRect(0, i * rowH, Math.round(W * span(ms, i)), rowH);
+    const ends = [];
+    for (let i = 0; i < STRIPS; i++) { const w = Math.round(W * span(ms, i)); fill(0, i * rowH, w, rowH); ends.push(w); }
+    x.restore(); x.fillStyle = edge;             // a crisp leading edge on each strip
+    ends.forEach((w, i) => { if (w > 0 && w < W) x.fillRect(w - 2, i * rowH, 2, rowH); });
   } else if (ms < T_IN + T_LOAD) {
-    x.fillRect(0, 0, W, H);
+    fill(0, 0, W, H); x.restore();
+    tripFrameBorder(x, to);
     drawTripLoad(x, (ms - T_IN) / T_LOAD, r);
     if (!r.swapped) { r.swapped = true; r.swap(); render(); }    // the new scene waits behind the strips
   } else if (ms < T_IN + T_LOAD + T_OUT) {
-    const m = ms - T_IN - T_LOAD;
-    for (let i = 0; i < STRIPS; i++) { const x0 = Math.round(W * span(m, i)); x.fillRect(x0, i * rowH, W - x0, rowH); }
+    const m = ms - T_IN - T_LOAD, starts = [];
+    for (let i = 0; i < STRIPS; i++) { const x0 = Math.round(W * span(m, i)); fill(x0, i * rowH, W - x0, rowH); starts.push(x0); }
+    x.restore(); x.fillStyle = edge;
+    starts.forEach((x0, i) => { if (x0 > 0 && x0 < W) x.fillRect(x0, i * rowH, 2, rowH); });
   } else {
+    x.restore();                                 // (leave no offset behind for the next trip)
     tripCv.hidden = true; wiping = false; tripRun = null;
     return;
   }

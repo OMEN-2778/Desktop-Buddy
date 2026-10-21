@@ -250,6 +250,10 @@ piece side by side — review new pieces there at 6x).
   handles, heart, sparkles; home = tiled roof, chimney, window, door,
   bushes), which hops
   when she arrives; then the strips run off to the right, top first.
+  The colour is never plain (user): a 16px motif tile in a lighter tint
+  (`TRIP_MOTIF`: clover / waves / hearts + sparkles / diamonds) drifting a
+  pixel at a time, a darker leading edge on each strip, and once full a
+  frame: dark band with stitches, light inner line, studs in the corners.
   The scene swaps behind the full screen. View canvas is cleared before
   every frame (the house has see-through edges: outdoor leftovers showed).
 - **Strangers (NPCs)** (demo, user): random looks from the 造型室 options
