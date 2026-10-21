@@ -709,6 +709,9 @@ body {
 .wipe i:last-child { right: 0; transform-origin: right center; box-shadow: inset 3px 0 0 #2e2238; }
 .wipe.shut i { transform: scaleX(1); }
 .wipe.open i { transition: transform .3s cubic-bezier(.15, .55, .35, 1); }
+/* the trip further out: strips in the place's colour, drawn in house pixels */
+.trip { position: absolute; z-index: 36; left: var(--pick-left, 0px); top: var(--pick-top, 0px); width: var(--pick-w, 342px); height: var(--pick-h, 118px); pointer-events: none; image-rendering: pixelated; }
+.trip[hidden] { display: none; }
 /* ---------- the desktop app: the window is the game, see-through around it */
 html.desktop, html.desktop body { background: transparent !important; }
 html.desktop body { background-image: none !important; overflow: hidden; }
@@ -798,6 +801,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <div class="cd-opts"><button type="button" class="cd-opt" data-k="a"></button><button type="button" class="cd-opt" data-k="b"></button></div>
         <i class="cd-clock" aria-hidden="true"></i></section>
       <div class="wipe" id="wipe" hidden aria-hidden="true"><i></i><i></i></div>
+      <canvas class="trip" id="trip" hidden aria-hidden="true"></canvas>
       <div class="card-res" id="cardRes" hidden aria-live="polite"><div class="cr-moodwrap"><i class="cr-burst" aria-hidden="true"></i><span class="mp cr-mood"></span></div><div class="cr-box"></div></div>
       <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她弹出互动菜单。"></canvas>
       <div class="ring" id="ring" role="menu" aria-label="和她互动" hidden></div>
@@ -944,6 +948,7 @@ async function loadAssets() {
   IMG.leaf = {}; for (const [k, v] of Object.entries(D.leaves)) IMG.leaf[k] = await loadImg(v);
   IMG.ov = {}; for (const [k, v] of Object.entries(D.overlays)) IMG.ov[k] = await loadImg(v.src);
   IMG.click = {}; for (const [k, v] of Object.entries(D.clickables)) IMG.click[k] = await loadImg(v.src);
+  IMG.trip = {}; for (const [k, v] of Object.entries(D.trip)) IMG.trip[k] = await loadImg(v);
   IMG.out = {};
   const deep = async v => typeof v === "string" ? loadImg(v) : Array.isArray(v) ? Promise.all(v.map(deep))
     : Object.fromEntries(await Promise.all(Object.entries(v).map(async ([k, x]) => [k, await deep(x)])));
@@ -1857,6 +1862,7 @@ function render() {
   if (down) drawRevive(bctx);
   drawClickFx(bctx);
   vctx.imageSmoothingEnabled = false;
+  vctx.clearRect(0, 0, view.width, view.height);   // (the house has see-through edges: no leftovers from outside)
   vctx.drawImage(buf, 0, 0, view.width, view.height);
 }
 
@@ -3338,10 +3344,82 @@ function wipe(swap) {
     setTimeout(() => { wipeEl.hidden = true; wiping = false; }, 300);
   }, 230);
 }
+// Going further than the front door (user): strips sweep in from the left
+// one after another (cubic ease, the top one first) in the place's colour —
+// park light green, dock sea blue, mall light salmon — her head hops along a
+// dotted trail to a little icon of the place, then the strips run off to
+// the right, top first. Coming back home: the same with a little house.
+const TRIP_COL = { park: "#86c98a", beach: "#4a97c9", mall: "#f4a99c", home: "#e9d6b4" };
+const TRIP_ICON = { park: "park", beach: "dock", mall: "mall", home: "home" };
+const tripCv = document.getElementById("trip"), tripCtx = (tripCv.width = W, tripCv.height = H, tripCv.getContext("2d"));
+const T_IN = 620, T_LOAD = 1500, T_OUT = 620, STRIPS = 7, STAGGER = 55;
+const easeCubic = t => t <= 0 ? 0 : t >= 1 ? 1 : t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+let tripRun = null;
+function trip(to, swap) {
+  if (wiping || reduceMotionUI) { swap(); return; }
+  wiping = true;
+  overHouse(tripCv); tripCv.hidden = false;
+  tripRun = { to, swap, t0: performance.now(), swapped: false, head: avatarHead() };
+  requestAnimationFrame(tripFrame);
+}
+function avatarHead() {                          // her face in a white round badge with an outline
+  const c = document.createElement("canvas"); c.width = c.height = 25;
+  const x = c.getContext("2d"), R = 11.5;
+  for (let j = 0; j < 25; j++) for (let i = 0; i < 25; i++) {
+    const d = Math.hypot(i + 0.5 - 12.5, j + 0.5 - 12.5);
+    if (d <= R + 1) { x.fillStyle = d > R ? "#33253b" : "#f7f6fb"; x.fillRect(i, j, 1, 1); }
+  }
+  const head = document.createElement("canvas"); head.width = 25; head.height = 25;
+  const hx = head.getContext("2d");
+  hx.drawImage(dollCanvas({ expr: "happy", look: 0, bob: 0, sway: 0, wave: null }), 2, 4);
+  const mask = document.createElement("canvas"); mask.width = mask.height = 25;   // one mask, applied once
+  const mx = mask.getContext("2d");
+  for (let j = 0; j < 25; j++) for (let i = 0; i < 25; i++) if (Math.hypot(i + 0.5 - 12.5, j + 0.5 - 12.5) <= R - 0.5) mx.fillRect(i, j, 1, 1);
+  hx.globalCompositeOperation = "destination-in"; hx.drawImage(mask, 0, 0);
+  x.drawImage(head, 0, 0);
+  return c;
+}
+function tripFrame(now) {
+  const r = tripRun, ms = now - r.t0, x = tripCtx, col = TRIP_COL[r.to] || TRIP_COL.home;
+  const rowH = Math.ceil(H / STRIPS), span = (t, i) => easeCubic((t - i * STAGGER) / (T_IN - (STRIPS - 1) * STAGGER));
+  x.clearRect(0, 0, W, H);
+  x.fillStyle = col;
+  if (ms < T_IN) {
+    for (let i = 0; i < STRIPS; i++) x.fillRect(0, i * rowH, Math.round(W * span(ms, i)), rowH);
+  } else if (ms < T_IN + T_LOAD) {
+    x.fillRect(0, 0, W, H);
+    drawTripLoad(x, (ms - T_IN) / T_LOAD, r);
+    if (!r.swapped) { r.swapped = true; r.swap(); render(); }    // the new scene waits behind the strips
+  } else if (ms < T_IN + T_LOAD + T_OUT) {
+    const m = ms - T_IN - T_LOAD;
+    for (let i = 0; i < STRIPS; i++) { const x0 = Math.round(W * span(m, i)); x.fillRect(x0, i * rowH, W - x0, rowH); }
+  } else {
+    tripCv.hidden = true; wiping = false; tripRun = null;
+    return;
+  }
+  requestAnimationFrame(tripFrame);
+}
+function drawTripLoad(x, p, r) {
+  const icon = IMG.trip[TRIP_ICON[r.to] || "home"], cy = Math.round(H / 2);
+  const ix = Math.round(W / 2 - 64), iy = cy - 9;
+  const start = Math.round(W / 2 + 52), end = ix + 34, k = easeCubic(Math.min(1, p / 0.85));
+  const ax = Math.round(start + (end - start) * k);
+  const hop = k < 1 ? Math.round(Math.abs(Math.sin(p * Math.PI * 7)) * 3) : 0;
+  x.fillStyle = "#f7f6fb";                       // the trail ahead of her
+  for (let i = 0; i < 6; i++) {
+    const dx = Math.round(end - 14 + i * ((start - end + 14) / 6));
+    if (dx > ax - 15) continue;
+    x.fillRect(dx + 1, cy - 2, 2, 4); x.fillRect(dx, cy - 1, 4, 2);
+  }
+  const bounce = p > 0.86 ? Math.round(Math.sin((p - 0.86) / 0.14 * Math.PI) * 3) : 0;   // the place hops when she gets there
+  x.drawImage(icon, ix, iy - bounce);
+  x.drawImage(r.head, ax - 12, cy - 13 - hop);
+}
 function throughDoor(to) {
   sim.mode = "idle"; sim.act = null; sim.idleUntil = Infinity;      // she waits at the door while the bars close
   closeRing(); closePicker();
-  wipe(() => {
+  const go = AWAY.has(to) || AWAY.has(sim.place) ? swap => trip(to, swap) : wipe;   // further out: the trip transition
+  go(() => {
     sim.place = to;
     if (to === "home") { const [st, x] = D.spots.front_door; sim.route = [[x, FLOOR_Y[st]]]; }
     else sim.route = [[OUT[to].doorX, OUT[to].feet]];
@@ -3549,6 +3627,7 @@ function renderOutside() {
   drawWalkMark(bctx);
   drawClickFx(bctx);
   vctx.imageSmoothingEnabled = false;
+  vctx.clearRect(0, 0, view.width, view.height);   // (the house has see-through edges: no leftovers from outside)
   vctx.drawImage(buf, 0, 0, view.width, view.height);
   placeNpcPills();
 }
@@ -4034,6 +4113,7 @@ function finishOut(fr, emoteAt) {
   drawWalkMark(bctx);
   drawClickFx(bctx);
   vctx.imageSmoothingEnabled = false;
+  vctx.clearRect(0, 0, view.width, view.height);   // (the house has see-through edges: no leftovers from outside)
   vctx.drawImage(buf, 0, 0, view.width, view.height);
   placeNpcPills();
 }

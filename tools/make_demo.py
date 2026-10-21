@@ -27,6 +27,7 @@ import _furniture as F  # noqa: E402
 import house as Hs  # noqa: E402
 import need_icons  # noqa: E402
 import sky_icons  # noqa: E402
+import trip_icons  # noqa: E402
 import ui_icons  # noqa: E402
 import item_icons  # noqa: E402
 import mood_icons  # noqa: E402
@@ -280,7 +281,8 @@ def main():
         "weatherMasks": weather_masks,
         "doors": doors, "leaves": leaves, "overlays": overlays,
         "sleepLying": [bed_x + Hs.SLEEP_HEAD[0], bed_y + Hs.SLEEP_HEAD[1]],
-        "clickables": clickables, "outside": outside, "windows": windows, "screens": screens, "fx": fx,
+        "clickables": clickables, "outside": outside,
+        "trip": {k.split("_")[1]: png(v) for k, v in trip_icons.build().items()}, "windows": windows, "screens": screens, "fx": fx,
         "bathHead": [tub_x + 5, tub_y + 6],
         "floors": floors, "stair": stair, "spots": spots, "rooms": rooms, "roomX": room_x, "lights": lights,
         "emissive": sorted({c.lower() for c in Hs.EMISSIVE}),

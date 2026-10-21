@@ -237,6 +237,16 @@ piece side by side — review new pieces there at 6x).
   colour of her LOWEST need's bar (--need-ok / warn / low), bobbing ±1px;
   lifted over an emote, hidden when she's down or inside a shop
   (`drawYouMark`). Outside only.
+- **Trip transition** (user's sketch): to / from the park, dock, mall
+  (not the front door, which keeps the black bars) a canvas over the house,
+  in house pixels: 7 strips sweep in from the left, staggered top first,
+  cubic ease, in the place's colour (park #86c98a, dock #4a97c9, mall
+  #f4a99c, home #e9d6b4); then her face in a white outlined badge hops along
+  a dotted trail to the place's icon (`trip_icons.py`: park tree + bench,
+  dock sailboat, mall shopping bag with a heart, home house), which hops
+  when she arrives; then the strips run off to the right, top first.
+  The scene swaps behind the full screen. View canvas is cleared before
+  every frame (the house has see-through edges: outdoor leftovers showed).
 - **Strangers (NPCs)** (demo, user): random looks from the 造型室 options
   (`npcLook`, never both her hairstyle AND hair colour), kids = the same head
   on a shorter body (`kidBody` drops 2 leg + 2 torso rows), drawn with
