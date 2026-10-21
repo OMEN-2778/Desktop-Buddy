@@ -2981,7 +2981,7 @@ view.addEventListener("pointermove", e => {
   const [x, y] = canvasXY(e);
   hoverBuddy = e.pointerType === "mouse" && buddyHit(x, y);
   hoverId = buddyHit(x, y) ? null : clickableAt(x, y);
-  view.style.cursor = hoverId || buddyHit(x, y) || (sim.place !== "home" && OUT[sim.place].kind === "walk") || stallAt(x, y) ? "pointer" : TAURI ? "grab" : "default";   // outside: anywhere is somewhere to walk   // the app: walls and floor move the window
+  view.style.cursor = hoverId || buddyHit(x, y) || (sim.place !== "home" && OUT[sim.place].kind === "walk") || (mallS.hover = itemAt(x, y)) ? "pointer" : TAURI ? "grab" : "default";   // outside: anywhere is somewhere to walk   // the app: walls and floor move the window
 });
 view.addEventListener("pointerleave", () => { hoverId = null; holding = null; hoverBuddy = false; });
 // her name over her head while the pointer rests on her (and no menu is open)
@@ -3358,7 +3358,7 @@ function outsideClick(id, x, y) {
   if (id === "out_door") { useFurniture(id, true); command("go_home"); return; }
   const O = OUT[sim.place];
   if (O.kind === "sit") return;                   // on the park bench she stays put (user)
-  if (O.kind === "scroll") { const st = stallAt(x, y); if (st) mallGoTo(st); return; }
+  if (O.kind === "scroll") { const it = itemAt(x, y); if (it) mallGoTo(it); return; }
   sim.strollX = Math.round(Math.max(O.walk[0], Math.min(O.walk[1], x)));
   clickFx(sim.strollX, O.feet);
   if (sim.act === "stroll" && (sim.mode === "walk" || sim.mode === "act") && !sim.windup) { startAct("stroll"); return; }   // already out strolling: straight to the new spot
@@ -3556,21 +3556,44 @@ ML.mall = { name: "逛街好心情", emo: "confident", pts: 2, min: 180,
   say: ["逛街就是开心", "这家店新开的吧", "只看看，不买（大概）", "商场里好热闹"] };
 ML.beach = { name: "吹了海风", emo: "energized", pts: 2, min: 180,
   say: ["海风好舒服", "听海浪的声音", "沙子软软的", "海好大呀", "要不要捡个贝壳"] };
-// the mall's stalls: what she gets there, says and writes down
+// the mall (user: shops, special shops, 地摊, not just stalls): what she gets
+// at each, says and writes down. Shops she goes into for `inside` game
+// minutes; at kiosks and 地摊 she stops and looks.
 const STALL = {
+  cinema: { inside: 45, log: ["进电影院看了一场《{电影}》。", "买了桶爆米花，看了场《{电影}》。"], say: ["电影好好看", "结尾哭死我了", "下次还来看续集"],
+    mood: { name: "看了场电影", emo: "inspired", pts: 3, min: 240 }, needs: { fun: 18 }, emote: "star" },
   tea: { log: ["在奶茶摊买了杯奶茶，三分糖。", "买了杯珍珠奶茶，边走边喝。"], say: ["奶茶真好喝", "三分糖刚刚好", "珍珠好有嚼劲"],
     mood: { name: "一杯奶茶", emo: "happy", pts: 2, min: 120 }, needs: { hunger: 6, fun: 4 }, emote: "heart" },
+  boutique: { inside: 15, log: ["进服装店试了好几件衣服。", "在服装店挑了件新外套。"], say: ["这件好显瘦", "颜色好衬我", "忍住，忍住……还是买了"],
+    mood: { name: "试了新衣服", emo: "confident", pts: 3, min: 180 }, needs: { fun: 8 }, emote: "star" },
+  craft: { log: ["在手作地摊挑了一对耳环。", "地摊上的手链好精致，买了一条。"], say: ["手工做的，独一份", "老板手好巧", "这个好配我的衣服"],
+    mood: { name: "手作小饰品", emo: "confident", pts: 2, min: 180 }, needs: { fun: 6 }, emote: "heart" },
+  market: { inside: 18, log: ["逛了趟超市，买了一袋零食。", "在超市推着小车转了一圈，买了水果和零食。"], say: ["零食补货完毕", "今天水果打折", "买多了，提不动了"],
+    mood: { name: "超市大采购", emo: "happy", pts: 2, min: 180 }, needs: { hunger: 10, fun: 4 }, emote: "bowl" },
   ice: { log: ["在冰淇淋车买了个甜筒。", "买了个双球冰淇淋，草莓加香草。"], say: ["冰冰凉凉的", "草莓味的，好甜", "要化了要化了"],
     mood: { name: "冰淇淋", emo: "playful", pts: 2, min: 120 }, needs: { hunger: 5, fun: 5 }, emote: "heart" },
-  candy: { log: ["买了一朵粉色的棉花糖。", "看老板转出一大朵棉花糖，买了。"], say: ["像一朵云", "粉粉的，好可爱", "一口就化了"],
-    mood: { name: "棉花糖", emo: "flirty", pts: 2, min: 120 }, needs: { hunger: 3, fun: 5 }, emote: "heart" },
-  flower: { log: ["在花摊挑了一小束花。", "买了几枝花，回家插瓶。"], say: ["回家插在花瓶里", "好香呀", "今天的花好新鲜"],
-    mood: { name: "买了一小束花", emo: "inspired", pts: 2, min: 180 }, needs: { fun: 6 }, emote: "star" },
+  bakery: { inside: 8, log: ["进面包店买了个刚出炉的面包。", "在面包店买了一袋可颂。"], say: ["好香啊", "刚出炉的，还热乎", "黄油味的，太幸福了"],
+    mood: { name: "刚出炉的面包", emo: "happy", pts: 2, min: 150 }, needs: { hunger: 12 }, emote: "bowl" },
+  oldbooks: { log: ["在旧书地摊淘到一本旧书。", "地摊上翻到一张老唱片，买下了。"], say: ["淘到宝了", "这本绝版了吧", "书里还夹着一张旧书签"],
+    mood: { name: "淘到旧书", emo: "inspired", pts: 2, min: 180 }, needs: { fun: 7 }, emote: "book" },
+  arcade: { inside: 25, log: ["进电玩城夹了半天娃娃。", "在电玩城打了几局赛车。"], say: ["夹到了！", "再来一局", "差一点点就赢了"],
+    mood: { name: "电玩城", emo: "playful", pts: 3, min: 180 }, needs: { fun: 15 }, emote: "game" },
   balloon: { log: ["在气球摊买了一只气球。", "挑了一只最圆的气球。"], say: ["拿到气球啦", "要抓紧，别飞走了", "是我最喜欢的颜色"],
     mood: { name: "一只气球", emo: "playful", pts: 3, min: 120 }, needs: { fun: 7 }, emote: "star" },
-  trinket: { log: ["在饰品摊挑了个发夹。", "试了好几个发夹，买了最闪的那个。"], say: ["这个发夹好看", "戴上试试", "挑了好久才挑中"],
-    mood: { name: "新发夹", emo: "confident", pts: 2, min: 180 }, needs: { fun: 6 }, emote: "star" },
+  pets: { inside: 12, log: ["进宠物店撸了会儿小狗。", "在宠物店看小猫睡觉，看了好久。"], say: ["小狗舔我手了", "好想带一只回家", "毛茸茸的好治愈"],
+    mood: { name: "撸到小狗", emo: "flirty", pts: 3, min: 180 }, needs: { fun: 8, social: 4 }, emote: "heart" },
+  flower: { log: ["在花摊挑了一小束花。", "买了几枝花，回家插瓶。"], say: ["回家插在花瓶里", "好香呀", "今天的花好新鲜"],
+    mood: { name: "买了一小束花", emo: "inspired", pts: 2, min: 180 }, needs: { fun: 6 }, emote: "star" },
+  sneakers: { inside: 12, log: ["在球鞋店试了双新鞋。", "球鞋店到了新款，进去看了看。"], say: ["这双好帅", "走路都轻快了", "钱包在哭"],
+    mood: { name: "新球鞋", emo: "confident", pts: 2, min: 180 }, needs: { fun: 7 }, emote: "star" },
+  candy: { log: ["买了一朵粉色的棉花糖。", "看老板转出一大朵棉花糖，买了。"], say: ["像一朵云", "粉粉的，好可爱", "一口就化了"],
+    mood: { name: "棉花糖", emo: "flirty", pts: 2, min: 120 }, needs: { hunger: 3, fun: 5 }, emote: "heart" },
+  books: { inside: 20, log: ["在书店翻了好久，买了本《{书}》。", "进书店坐着看了一会儿书。"], say: ["书店好安静", "这本一定好看", "又买书了，家里快放不下了"],
+    mood: { name: "逛书店", emo: "focused", pts: 2, min: 180 }, needs: { fun: 8 }, emote: "book" },
+  blindbox: { log: ["在盲盒地摊拆了个盲盒。", "地摊上拆盲盒，拆到了隐藏款！"], say: ["是隐藏款！", "又重复了……", "再拆一个吧"],
+    mood: { name: "拆盲盒", emo: "playful", pts: 3, min: 120 }, needs: { fun: 9 }, emote: "bang" },
 };
+const FILMS = ["星海漫游", "夏天的告白", "怪兽来了", "雨夜侦探", "外婆的厨房", "追风少年"];
 for (const [id, st] of Object.entries(STALL)) ML[`stall_${id}`] = { ...st.mood };
 function redNeed() {
   const low = Object.entries(sim.needs).filter(([, v]) => v < 20).sort((a, b) => a[1] - b[1]);
@@ -3578,9 +3601,8 @@ function redNeed() {
 }
 function homeFor(k) { speak(pick([`${NEED_NAMES[k]}不太行了，回家吧`, "该回家了", "先回家一趟"])); }
 function arriveAt(place) {                       // fresh life for the new place
-  life.birds = []; life.flies = []; life.bits = []; life.ducks = []; life.gulls = []; life.crabs = []; life.perch = null;
+  life.birds = []; life.flies = []; life.bits = []; life.ducks = []; life.gulls = []; life.ship = null; life.boat = null; life.plane = null; life.front = [];
   life.clouds = [0, 1, 2, 3].map(i => ({ k: i % 3, x: Math.random() * W, y: 3 + Math.random() * 22, v: 1.2 + Math.random() * 2.4 }));
-  life.boat = Math.random() * W;
   if (place === "park" && seasonOf(sim.t).i !== 3) {
     const [cx, cy, rx] = OUT.park.pond;
     life.ducks = [0, 1, 2].map(i => ({ x: cx - rx + 14 + Math.random() * (rx * 2 - 28), y: cy - 2 + (i % 2) * 5, dir: Math.random() < 0.5 ? -1 : 1, dip: 0, t: Math.random() * 5 }));
@@ -3593,40 +3615,51 @@ function arriveAt(place) {                       // fresh life for the new place
 
 // ---------------------------------------------------------------- the mall
 // mallS.x is the spot on the near strip right under her; walking left it
-// shrinks and the strips slide right. The far strip goes at half speed.
-const mallS = { x: 0, dist: 0, dir: -1, goal: null, stop: null, shoppers: [], seen: {} };
+// shrinks and the strips slide right: upstairs (far, hazed) at 0.45, the
+// hanging decorations at 0.75, our side of the corridor at full speed.
+const mallS = { x: 0, dist: 0, dir: -1, goal: null, stop: null, shoppers: [], seen: {}, hover: null };
 const MALL = OUT.mall;
 const wrapNear = d => ((d % MALL.nearW) + MALL.nearW * 1.5) % MALL.nearW - MALL.nearW / 2;   // nearest copy
-const stallX = st => MALL.at + wrapNear(st.u + st.w / 2 - mallS.x);     // its centre on screen
-function stallAt(x, y) {
-  if (sim.place !== "mall" || y < MALL.feet - 64 || y > MALL.feet + 2) return null;
-  return MALL.stalls.find(st => Math.abs(x - stallX(st)) <= st.w / 2) || null;
+const onScreen = u => MALL.at + wrapNear(u - mallS.x);                   // a near-strip x on screen
+const itemX = it => onScreen(it.stop);                                   // where she'd stand for it
+function itemAt(x, y) {
+  if (sim.place !== "mall" || y > MALL.feet + 3) return null;
+  let best = null;
+  for (const it of MALL.items) {
+    const x0 = onScreen(it.u);
+    if (x < x0 || x >= x0 + it.w || y < it.top) continue;
+    if (it.kind !== "shop") return it;                                   // a kiosk / 地摊 stands in front of the wall
+    best = it;
+  }
+  return best;
 }
-function mallGoTo(st) {
-  const d = stallX(st) - MALL.at;
-  clickFx(Math.round(stallX(st)), MALL.feet);
+function mallGoTo(it) {
+  const d = itemX(it) - MALL.at;
+  clickFx(Math.round(itemX(it)), MALL.feet);
   mallS.stop = null;
-  mallS.goal = { x: mallS.x + d, st };
-  if (Math.abs(d) < 2) { mallS.x = mallS.goal.x; stopAt(st); }
+  mallS.goal = { x: mallS.x + d, it };
+  if (Math.abs(d) < 2) { mallS.x = mallS.goal.x; stopAt(it); }
   if (sim.act !== "mall" || sim.mode !== "act") command("mall");
 }
-function stopAt(st) {
+function stopAt(it) {                            // shops: a look, in she goes, out again; stalls: a look
+  const shop = it.kind === "shop", inside = shop ? STALL[it.id].inside : 0;
   mallS.goal = null;
-  mallS.stop = { st, turnAt: sim.t + 10, until: sim.t + 17, turned: false };
-  mallS.seen[st.id] = sim.t;
+  mallS.stop = { it, inAt: shop ? sim.t + 3 : null, outAt: sim.t + (shop ? 3 + inside : 9), until: sim.t + (shop ? 9 + inside : 16), turned: false };
+  mallS.seen[it.id] = sim.t;
 }
-function stallVisit(st) {                        // she turns round with what she got
-  const s = STALL[st.id];
-  log(pick(s.log));
+function stallVisit(it) {                        // she turns round with what she got
+  const s = STALL[it.id], vars = { 电影: pick(FILMS) };
+  log(fill(pick(s.log), vars));
   for (const [k, v] of Object.entries(s.needs)) sim.needs[k] = clamp(sim.needs[k] + v);
-  addMood(`stall_${st.id}`, { words: false });
+  addMood(`stall_${it.id}`, { words: false });
   speak(pick(s.say), true);
 }
+const mallInside = () => !!(sim.place === "mall" && mallS.stop && mallS.stop.inAt != null && sim.t >= mallS.stop.inAt && sim.t < mallS.stop.outAt);
 function mallStep(dtReal) {
   if (reaction && realClock < reaction.until) return;      // she stops to wave back
   const st = mallS.stop;
   if (st) {
-    if (!st.turned && sim.t >= st.turnAt) { st.turned = true; stallVisit(st.st); }
+    if (!st.turned && sim.t >= st.outAt) { st.turned = true; stallVisit(st.it); }
     if (sim.t >= st.until) { mallS.stop = null; mallS.dir = -1; }
     return;
   }
@@ -3635,22 +3668,48 @@ function mallStep(dtReal) {
   if (mallS.goal) {
     const d = mallS.goal.x - mallS.x;
     mallS.dir = d < 0 ? -1 : 1;
-    if (Math.abs(d) <= v) { mallS.x = mallS.goal.x; mallS.dist += Math.abs(d); stopAt(mallS.goal.st); return; }
+    if (Math.abs(d) <= v) { mallS.x = mallS.goal.x; mallS.dist += Math.abs(d); stopAt(mallS.goal.it); return; }
   }
-  const before = MALL.stalls.map(s => stallX(s) - MALL.at);
+  const before = MALL.items.map(it => itemX(it) - MALL.at);
   mallS.x += mallS.dir * v; mallS.dist += v;
-  if (!mallS.goal) MALL.stalls.forEach((s, i) => {          // now and then she stops at one by herself
-    const now = stallX(s) - MALL.at;
-    if (Math.sign(now) !== Math.sign(before[i]) && Math.abs(now) < 4 && sim.t - (mallS.seen[s.id] ?? -1e9) > 150 && Math.random() < 0.3) stopAt(s);
+  if (!mallS.goal) MALL.items.forEach((it, i) => {          // now and then she stops at one by herself
+    const now = itemX(it) - MALL.at;
+    if (Math.sign(now) !== Math.sign(before[i]) && Math.abs(now) < 4 && sim.t - (mallS.seen[it.id] ?? -1e9) > 150 && Math.random() < (it.kind === "shop" ? 0.12 : 0.25)) stopAt(it);
   });
 }
 function mallFrame(ms) {
   const st = mallS.stop;
-  if (st && st.turned) return { f: { expr: "happy", bob: Math.floor(ms / 300) % 2, look: 0 }, pose: "stand", emote: STALL[st.st.id].emote };
-  if (st) return { f: { bob: Math.floor(ms / 1300) % 2 }, pose: "stand", emote: null, back: true };   // looking at the stall
+  if (st && st.turned) return { f: { expr: "happy", bob: Math.floor(ms / 300) % 2, look: 0 }, pose: "stand", emote: STALL[st.it.id].emote };
+  if (st) return { f: { bob: Math.floor(ms / 1300) % 2 }, pose: "stand", emote: null, back: true };   // looking at it (or gone in)
   if (!speed) return { f: { look: mallS.dir }, pose: "stand", emote: null };
   const i = Math.floor(mallS.dist / 4) % 4;
   return { f: { look: mallS.dir, bob: i % 2 ? 0 : 1, sway: i % 2 }, pose: ["walkL", "stand", "walkR", "stand"][i], emote: null };
+}
+// a gold outline round what's under the pointer (user: the things to click should stand out)
+const propRing = {};
+function ringOf_(img) {
+  const w = img.width + 2, h = img.height + 2, c = document.createElement("canvas"); c.width = w; c.height = h;
+  const x = c.getContext("2d"); x.drawImage(img, 1, 1);
+  const a = x.getImageData(0, 0, w, h).data, out = x.createImageData(w, h), o = out.data;
+  const on = (i, j) => i >= 0 && j >= 0 && i < w && j < h && a[(j * w + i) * 4 + 3] > 0;
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++)
+    if (!on(i, j) && (on(i - 1, j) || on(i + 1, j) || on(i, j - 1) || on(i, j + 1))) { const k = (j * w + i) * 4; o[k] = 255; o[k + 1] = 214; o[k + 2] = 90; o[k + 3] = 255; }
+  x.clearRect(0, 0, w, h); x.putImageData(out, 0, 0);
+  return c;
+}
+function drawMallHover(ctx) {
+  const it = mallS.hover;
+  if (!it) return;
+  ctx.globalAlpha = 0.65 + 0.35 * Math.sin(realClock * 6);
+  if (it.kind === "shop") {
+    const x = Math.round(onScreen(it.u));
+    ctx.strokeStyle = "#ffd65a"; ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, it.top + 0.5, it.w - 1, MALL.floor - it.top - 1);
+  } else {
+    const r = propRing[it.id] ||= ringOf_(IMG.out.mall.props[it.id]);
+    ctx.drawImage(r, Math.round(onScreen(it.px)) - 1, it.top - 1);
+  }
+  ctx.globalAlpha = 1;
 }
 function benchFrame(ms) {                        // on the park bench: watching the ducks, humming now and then
   const k = Math.floor(ms / 2600) % 6;
@@ -3749,6 +3808,22 @@ function renderPark(dt) {
   bctx.drawImage(S.bg, 0, 0);
   drawClouds(bctx, O, run ? dt : 0);
   if (w !== "clear") { bctx.fillStyle = "rgba(92, 100, 122, 0.3)"; bctx.fillRect(0, 0, W, L.horizon); }   // a grey sky in rain and snow
+  // now and then a plane, tiny and far, from either side, its contrail fading (user)
+  if (run && !life.plane && w === "clear" && Math.random() < dt / 50) {
+    const d = Math.random() < 0.5 ? 1 : -1;
+    life.plane = { x: d > 0 ? -10 : W + 10, y: 5 + Math.random() * 14, d, climb: (Math.random() - 0.5) * 0.08, trail: [] };
+  }
+  const pl = life.plane;
+  if (pl) {
+    if (run) { pl.x += pl.d * 7 * dt; pl.y += pl.climb * 7 * dt; pl.trail.push({ x: pl.x - pl.d * 2, y: pl.y + 2, t: realClock }); }
+    pl.trail = pl.trail.filter(p => realClock - p.t < 9);
+    bctx.fillStyle = "#f7f6fb";
+    for (const p of pl.trail) { bctx.globalAlpha = 0.55 * (1 - (realClock - p.t) / 9); bctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1); }
+    bctx.globalAlpha = 1;
+    if (f > 0.5) { if (Math.floor(realClock * 2) % 2) { bctx.fillStyle = "#e1725b"; bctx.fillRect(Math.round(pl.x) + 4, Math.round(pl.y) + 2, 1, 1); } }
+    else flipDraw(bctx, O.plane, Math.round(pl.x), Math.round(pl.y), pl.d, 9);
+    if (pl.x < -60 || pl.x > W + 60) life.plane = null;
+  }
   if (life.wet > 0.02) { bctx.globalAlpha = life.wet; bctx.drawImage(O.wet, 0, 0); bctx.globalAlpha = 1; }
   if (run) life.wet += ((w === "rain" ? 1 : 0) - life.wet) * Math.min(1, dt * (w === "rain" ? 0.8 : 0.08));
   for (const d of life.ducks) {                  // ducks paddle about the pond
@@ -3792,6 +3867,18 @@ function renderPark(dt) {
   life.flies = life.flies.filter(fl => !fl.gone);
   const fr = activityFrame(realClock * 1000);
   const { emoteAt, dollAt } = drawOutBuddy(bctx, fr);
+  // butterflies crossing right in front of us (user)
+  if (run && flyOk && life.front.length < 1 && Math.random() < dt / 14) {
+    const d = Math.random() < 0.5 ? 1 : -1;
+    life.front.push({ x: d > 0 ? -8 : W + 8, d, y: 96 + Math.random() * 14, t: 0, ph: Math.random() * 6, k: Math.random() < 0.5 ? 0 : 2 });
+  }
+  for (const b of life.front) {
+    if (run) { b.t += dt; b.x += b.d * 16 * dt; }
+    const y = b.y + Math.sin(b.t * 3.1 + b.ph) * 6 + Math.sin(b.t * 7) * 1.5, img = O.butterfly[b.k + (Math.floor(realClock * 8) % 2)];
+    bctx.drawImage(img, Math.round(b.x) - 3, Math.round(y) - 2);
+    if (b.x < -20 || b.x > W + 20) b.gone = true;
+  }
+  life.front = life.front.filter(b => !b.gone);
   drawOutsideWeather(bctx);
   gradeOutside(bctx, f);
   drawLit(bctx, f, O.lit, [[treeImg, 0, 0], ...(dollAt ? [dollAt] : [])]);
@@ -3807,75 +3894,68 @@ function renderPark(dt) {
 }
 
 // ---------------------------------------------------------------- 海边
+// The dock (user: simple): sky, sea, now and then a container ship crawls
+// along the horizon or a speedboat skims past with its wake; a gull or two.
 function renderBeach(dt) {
   const L = OUT.beach, O = IMG.out.beach, se = seasonOf(sim.t).i, S = O.seasons[SEASON_KEYS[se]], f = nightness(hour());
-  const h = hour(), day = h >= 7 && h < 18.5, run = speed && !cardHolds() && !wiping, w = weather.kind, p = here();
+  const h = hour(), day = h >= 7 && h < 18.5, run = speed && !cardHolds() && !wiping, w = weather.kind;
   bctx.clearRect(0, 0, W, H);
   bctx.drawImage(S.bg, 0, 0);
   drawClouds(bctx, O, run ? dt : 0);
   if (w !== "clear") { bctx.fillStyle = "rgba(92, 100, 122, 0.3)"; bctx.fillRect(0, 0, W, L.horizon); }   // a grey sky in rain and snow
-  if (run) life.boat = (life.boat + dt * 1.2) % (W + 30);   // a sailboat along the horizon
-  bctx.drawImage(O.boat, Math.round(life.boat) - 20, L.horizon - 8);
-  bctx.drawImage(S.head, 0, 0);                  // the headland stands in front of both
-  if (day && w === "clear") {                    // the sea glitters
-    bctx.fillStyle = "#f7f6fb";
-    for (let i = 0; i < 14; i++) {
-      const k = Math.floor(realClock * 1.3 + hash(i * 4.7) * 5);
-      if ((k + i) % 3) continue;
-      bctx.fillRect(Math.floor(hash(i * 2.9 + k) * 280), Math.floor(L.horizon + 3 + hash(i * 6.1 + k) * (L.shore - L.horizon - 8)), 1, 1);
-    }
+  // ships: rarely, from either side; far ones slow, the speedboat quick
+  if (run && !life.ship && Math.random() < dt / 70) { const d = Math.random() < 0.5 ? 1 : -1; life.ship = { x: d > 0 ? -42 : W + 2, d }; }
+  if (run && !life.boat && Math.random() < dt / 45) { const d = Math.random() < 0.5 ? 1 : -1; life.boat = { x: d > 0 ? -20 : W + 4, d, y: L.horizon + 10 + Math.round(Math.random() * 14), trail: [] }; }
+  const sh = life.ship;
+  if (sh) {
+    if (run) sh.x += sh.d * 2.2 * dt;
+    flipDraw(bctx, O.ship, Math.round(sh.x), L.horizon - 10, sh.d, 40);
+    if (f > 0.4) { bctx.fillStyle = "#fff1b8"; bctx.fillRect(Math.round(sh.x) + (sh.d > 0 ? 5 : 34), L.horizon - 9, 1, 1); bctx.fillRect(Math.round(sh.x) + 20, L.horizon - 7, 1, 1); }
+    if (sh.x < -50 || sh.x > W + 10) life.ship = null;
   }
-  bctx.drawImage(S.surf[Math.floor(realClock / 0.45) % S.surf.length], 0, 0);   // the surf washes in and out
-  if (life.wet > 0.02) { bctx.globalAlpha = life.wet; bctx.drawImage(O.wet, 0, 0); bctx.globalAlpha = 1; }
-  if (run) life.wet += ((w === "rain" ? 1 : 0) - life.wet) * Math.min(1, dt * (w === "rain" ? 0.8 : 0.08));
-  if (weather.snowCover > 0.02) { bctx.globalAlpha = Math.min(1, weather.snowCover); bctx.drawImage(O.snow, 0, 0); bctx.globalAlpha = 1; }
-  // crabs scuttle on the damp sand and dash off when she comes close
-  if (run && se !== 3 && day && life.crabs.length < 2 && Math.random() < dt * 0.04) {
-    let x; do x = 20 + Math.random() * 250; while (Math.abs(x - p.x) < 30);
-    life.crabs.push({ x, y: L.shore + 4 + Math.round(Math.random() * 4), t: 0, run: 0, dir: 1, life: 20 + Math.random() * 20 });
-  }
-  for (const c of life.crabs) {
+  const bt = life.boat;
+  if (bt) {
     if (run) {
-      c.t += dt;
-      if (Math.abs(c.x - p.x) < 18 && c.run <= 0) { c.run = 2; c.dir = c.x < p.x ? -1 : 1; c.flee = true; }
-      if (c.run <= 0 && Math.random() < dt * 0.4) { c.run = 0.4 + Math.random() * 0.6; c.dir = Math.random() < 0.5 ? -1 : 1; }
-      if (c.run > 0) { c.run -= dt; c.x += c.dir * (c.flee ? 40 : 14) * dt; }
-      if (c.t > c.life || c.x < -10 || c.x > W + 10 || (c.flee && c.run <= 0)) c.gone = true;
+      bt.x += bt.d * 32 * dt;
+      bt.trail.push({ x: bt.x + (bt.d > 0 ? 0 : 16), t: realClock });
+      bt.trail = bt.trail.filter(p => realClock - p.t < 2.2);
     }
-    bctx.drawImage(O.crab[c.run > 0 ? Math.floor(realClock * 12) % 2 : 0], Math.round(c.x) - 3, c.y - 3);
+    bctx.fillStyle = "#f7f6fb";                    // the wake, opening and fading behind it
+    for (const p of bt.trail) {
+      const age = realClock - p.t, sp = Math.round(age * 3);
+      bctx.globalAlpha = Math.max(0, 0.9 - age / 2.2);
+      bctx.fillRect(Math.round(p.x), bt.y + 4 - sp, 1, 1); bctx.fillRect(Math.round(p.x), bt.y + 5 + sp, 1, 1);
+    }
+    bctx.globalAlpha = 1;
+    flipDraw(bctx, O.speedboat, Math.round(bt.x), bt.y, bt.d, 16);
+    if (bt.x < -40 || bt.x > W + 40) life.boat = null;
   }
-  life.crabs = life.crabs.filter(c => !c.gone);
-  // gulls wheel overhead; one stands on the sand till she gets near
-  if (run && life.gulls.length < 2 && Math.random() < dt * 0.08 && w !== "snow")
-    life.gulls.push({ x: -10, y: 8 + Math.random() * 26, v: 14 + Math.random() * 10, ph: Math.random() * 6, t: 0 });
+  if (day && w === "clear") {                    // glints moving on the water
+    bctx.fillStyle = "#f7f6fb";
+    for (let i = 0; i < 16; i++) {
+      const k = Math.floor(realClock * 1.1 + hash(i * 4.7) * 5);
+      if ((k + i) % 3) continue;
+      const x = Math.floor(mod(hash(i * 2.9 + k) * W + realClock * 3, W)), y = Math.floor(L.horizon + 3 + hash(i * 6.1 + k) * (L.deck - L.horizon - 20));
+      bctx.fillRect(x, y, 2, 1);
+    }
+  }
+  if (run && life.gulls.length < 2 && Math.random() < dt * 0.03 && w === "clear")
+    life.gulls.push({ x: -10, y: 8 + Math.random() * 26, v: 12 + Math.random() * 8, ph: Math.random() * 6, t: 0 });
   for (const g of life.gulls) {
     if (run) { g.t += dt; g.x += g.v * dt; }
     if (g.x > W + 10) g.gone = true;
-    const fr = Math.sin(g.t * 3 + g.ph) > 0.3 ? 2 - Math.floor(realClock * 6) % 3 : 1;
-    bctx.drawImage(O.gull[Math.max(0, fr)], Math.round(g.x), Math.round(g.y + Math.sin(g.t * 0.8 + g.ph) * 4));
+    const fr = Math.sin(g.t * 3 + g.ph) > 0.3 ? Math.floor(realClock * 6) % 3 : 1;
+    bctx.drawImage(O.gull[fr], Math.round(g.x), Math.round(g.y + Math.sin(g.t * 0.8 + g.ph) * 4));
   }
   life.gulls = life.gulls.filter(g => !g.gone);
-  if (!life.perch && run && day && w === "clear" && Math.random() < dt * 0.03) life.perch = { x: 30 + Math.random() * 240, y: L.shore + 12 + Math.round(Math.random() * 6), mode: "sit", face: Math.random() < 0.5 ? 1 : -1 };
-  const g = life.perch;
-  if (g) {
-    if (run && g.mode === "sit" && Math.abs(g.x - p.x) < 24) { g.mode = "fly"; g.face = g.x < p.x ? -1 : 1; }
-    if (run && g.mode === "fly") { g.x += g.face * 40 * dt; g.y -= 22 * dt; if (g.y < -8) life.perch = null; }
-    const fr = g.mode === "sit" ? 3 : Math.floor(realClock * 8) % 3;
-    flipDraw(bctx, O.gull[fr], Math.round(g.x) - 4, Math.round(g.y) - 5, g.face, 9);
-  }
+  if (life.wet > 0.02) { bctx.globalAlpha = life.wet; bctx.drawImage(O.wet, 0, 0); bctx.globalAlpha = 1; }
+  if (run) life.wet += ((w === "rain" ? 1 : 0) - life.wet) * Math.min(1, dt * (w === "rain" ? 0.8 : 0.08));
+  if (weather.snowCover > 0.02) { bctx.globalAlpha = Math.min(1, weather.snowCover); bctx.drawImage(O.snow, 0, 0); bctx.globalAlpha = 1; }
   const fr = activityFrame(realClock * 1000);
   const { emoteAt, dollAt } = drawOutBuddy(bctx, fr);
   drawOutsideWeather(bctx);
   gradeOutside(bctx, f);
   drawLit(bctx, f, O.lit, dollAt ? [dollAt] : []);
-  if (f > 0.3) {                                 // the lighthouse sweeps the sea
-    const a = realClock * 0.9, [lx, ly] = L.light, k = Math.cos(a);
-    bctx.globalAlpha = Math.min(1, f) * 0.22 * Math.abs(k);
-    bctx.fillStyle = "#fff1b8";
-    bctx.beginPath(); bctx.moveTo(lx, ly);
-    bctx.lineTo(lx + Math.sign(k) * -170, ly - 6); bctx.lineTo(lx + Math.sign(k) * -170, ly + 14); bctx.closePath(); bctx.fill();
-    bctx.globalAlpha = 1;
-  }
   finishOut(fr, emoteAt);
 }
 
@@ -3884,7 +3964,7 @@ const mod = (a, n) => ((a % n) + n) % n;
 function renderMall(dt) {
   const L = MALL, O = IMG.out.mall, se = SEASON_KEYS[seasonOf(sim.t).i], f = nightness(hour()), run = speed && !cardHolds() && !wiping;
   bctx.clearRect(0, 0, W, H);
-  const offF = mod(-mallS.x * 0.5, L.farW), offN = mod(L.at - mallS.x, L.nearW);
+  const offF = mod(-mallS.x * 0.45, L.farW), offD = mod(L.at - mallS.x * 0.75, L.nearW), offN = mod(L.at - mallS.x, L.nearW);
   const tile = (img, off, wd) => { for (let x = off - wd; x < W; x += wd) bctx.drawImage(img, Math.round(x), 0); };
   tile(O.far, offF, L.farW);
   if (f > 0) { bctx.globalAlpha = Math.min(1, f * 1.2); tile(O.skyNight, offF, L.farW); bctx.globalAlpha = 1; }
@@ -3896,21 +3976,29 @@ function renderMall(dt) {
     for (let i = 0; i < 30; i++) bctx.fillRect(Math.floor(mod(hash(i * 5.3) * L.farW + offF, L.farW)), Math.floor(hash(i * 2.2) * 7), 1, 1);
   }
   for (const s of mallS.shoppers) {              // shoppers upstairs, behind the glass
-    if (run) { s.x = mod(s.x + s.dir * s.v * dt, L.farW); }
-    const fr = Math.floor(realClock * 3 + s.k) % 2;
-    for (const x of [mod(s.x + offF, L.farW), mod(s.x + offF, L.farW) - L.farW]) if (x > -8 && x < W) flipDraw(bctx, O.shopper[s.k][fr], Math.round(x), L.upWalk - 12, s.dir, 7);
+    if (run) s.x = mod(s.x + s.dir * s.v * dt, L.farW);
+    const fr = Math.floor(realClock * 3 + s.k) % 2, x0 = mod(s.x + offF, L.farW);
+    for (const x of [x0, x0 - L.farW]) if (x > -8 && x < W) flipDraw(bctx, O.shopper[s.k][fr], Math.round(x), L.upWalk - 12, s.dir, 7);
   }
   tile(O.rail, offF, L.farW);
+  bctx.fillStyle = "rgba(236, 234, 244, 0.45)";  // upstairs is far: hazed, so our side stands out (user)
+  bctx.fillRect(0, 0, W, L.fascia);
+  tile(O.deco[se], offD, L.nearW);
   tile(O.near, offN, L.nearW);
-  tile(O.deco[se], offN, L.nearW);
+  for (const it of L.items) if (O.props[it.id]) {
+    const x0 = mod(it.px - mallS.x + L.at, L.nearW);
+    for (const x of [x0, x0 - L.nearW]) if (x > -60 && x < W) bctx.drawImage(O.props[it.id], Math.round(x), it.top);
+  }
+  drawMallHover(bctx);
   const fr = activityFrame(realClock * 1000);
-  const { emoteAt, dollAt } = drawOutBuddy(bctx, fr);
+  let emoteAt = [L.at + 3, L.feet - 42], dollAt = null;
+  if (!mallInside()) ({ emoteAt, dollAt } = drawOutBuddy(bctx, fr));     // (in a shop: out of sight)
   if (dollAt) {                                  // her reflection in the polished floor
     const [dc, x, y] = dollAt;
     bctx.save(); bctx.globalAlpha = 0.16; bctx.translate(x, 2 * (L.feet + 1) - y); bctx.scale(1, -1);
     bctx.drawImage(dc, 0, 0); bctx.restore();
   }
-  finishOut(fr, emoteAt);
+  finishOut(mallInside() ? { ...fr, emote: null } : fr, emoteAt);
 }
 
 // ================================================================ video chats & forums

@@ -120,6 +120,7 @@ def main():
     # on, the mall scrolls past), 海边. "img" holds every picture (the page
     # loads it as is), the rest is layout.
     clouds = [png(BC.cloud(i)) for i in range(3)]
+    mall_items = MALL.items()
     sparrows = [png(FY.sparrow(f)) for f in range(4)]
     flies = [png(FY.butterfly(f)) for f in range(4)]
     outside = {"front": {
@@ -134,26 +135,26 @@ def main():
         "kind": "sit",
         "img": {"seasons": {se: {"bg": png(PK.background(se)), "trees": [png(PK.trees(se, f)) for f in (0, 1)]} for se in PK.SEASONS},
                 "snow": png(PK.snow_layer()), "wet": png(PK.wet_layer()), "lit": png(PK.lit()),
-                "duck": [png(PK.duck(f)) for f in range(3)], "sparrow": sparrows, "butterfly": flies, "cloud": clouds},
+                "duck": [png(PK.duck(f)) for f in range(3)], "plane": png(PK.plane()), "sparrow": sparrows, "butterfly": flies, "cloud": clouds},
         "trees": [[kind, x, cy, rx, ry] for kind, x, cy, _, rx, ry in PK.TREES], "pond": list(PK.POND),
         "horizon": PK.HORIZON, "path": list(PK.PATH), "side": PK.PATH[0], "feet": PK.FEET,
         "walk": [PK.BENCH, PK.BENCH], "doorX": PK.BENCH, "lamp": PK.LAMP},
       "beach": {
         "kind": "walk",
-        "img": {"seasons": {se: {"bg": png(BC.background(se)), "head": png(BC.head_layer(se)), "surf": [png(BC.surf(se, f)) for f in range(BC.SURF_FRAMES)]} for se in BC.SEASONS},
+        "img": {"seasons": {se: {"bg": png(BC.background(se))} for se in BC.SEASONS},
                 "snow": png(BC.snow_layer()), "wet": png(BC.wet_layer()), "lit": png(BC.lit()),
-                "gull": [png(BC.gull(f)) for f in range(4)], "crab": [png(BC.crab(f)) for f in (0, 1)],
-                "boat": png(BC.boat()), "cloud": clouds},
-        "horizon": BC.HORIZON, "shore": BC.SHORE, "side": BC.SHORE + 8, "feet": BC.FEET, "walk": list(BC.WALK),
-        "doorX": 200, "light": list(BC.LIGHT)},
+                "ship": png(BC.ship()), "speedboat": png(BC.speedboat()), "gull": [png(BC.gull(f)) for f in range(3)], "cloud": clouds},
+        "horizon": BC.HORIZON, "deck": BC.DECK, "side": BC.DECK + 2, "feet": BC.FEET, "walk": list(BC.WALK),
+        "doorX": 200, "lamps": list(BC.LAMPS)},
       "mall": {
         "kind": "scroll",
-        "img": {"far": png(MALL.far()), "near": png(MALL.near()), "rail": png(MALL.rail()), "skyNight": png(MALL.sky_night()),
+        "img": {"far": png(MALL.far()), "near": png(MALL.near()[0]), "rail": png(MALL.rail()), "skyNight": png(MALL.sky_night()),
                 "deco": {se: png(MALL.deco(se)) for se in MALL.SEASONS},
-                "shopper": [[png(MALL.shopper(k, f)) for f in (0, 1)] for k in range(5)]},
+                "shopper": [[png(MALL.shopper(k, f)) for f in (0, 1)] for k in range(5)],
+                "props": {it["id"]: png(it["sprite"]) for it in mall_items if "sprite" in it}},
         "farW": MALL.FAR_W, "nearW": MALL.NEAR_W, "at": MALL.AT, "feet": MALL.FEET, "upWalk": MALL.UP_WALK,
-        "walk": [MALL.AT, MALL.AT], "doorX": MALL.AT,
-        "stalls": [{"id": k, "name": n, "u": i * MALL.SEG + MALL.STALL_X, "w": MALL.STALL_W} for i, (k, n) in enumerate(MALL.STALLS)]}}
+        "fascia": MALL.FASCIA, "floor": MALL.FLOOR, "walk": [MALL.AT, MALL.AT], "doorX": MALL.AT,
+        "items": [{k: v for k, v in it.items() if k != "sprite"} for it in mall_items]}}
 
     # window open states: day/night, three sway frames
     # upstairs windows look out on sky only; the living room sees the hill

@@ -182,26 +182,28 @@ piece side by side — review new pieces there at 6x).
   lane), `front_wet` (darker pavers with sheen + puddles), `front_lit`.
 - **公园** (`park.py`): sky, a pale far skyline (lit windows at night),
   a hazy treeline, a striped lawn, a pond (stone rim, reeds, lilies, a duck
-  house; frozen in winter), big maple + linden in front and two small
-  trees back (front_yard's `tree(..., at=(x, crown y, foot y, rx, ry))`,
-  leaf clusters scale with the crown), hedge, lamp post, THE BENCH (she
-  only sits there, user), bin, gravel path, a seasonal flower border.
-  Overlays snow (keeps what stands in it clear) / wet / lit; ducks.
-- **海边** (`beach.py`): sky, a far island, the sea (glitter path), a pier
-  on the left, a headland with a lighthouse + cottage on the right (its own
-  layer `head`, drawn over the clouds and the boat), lifeguard tower,
-  sandcastle + bucket, umbrella + towel + ball (summer; furled in spring and
-  autumn, gone in winter, grey sea), a dune with marram grass and fences.
-  `surf` = 8 frames of the wash running up and sliding back (wet sand).
-  Gulls, crabs, a boat, clouds (`cloud(i)`, shared with the park).
-- **商场** (`mall.py`): two endless strips the page scrolls. `far` (456,
-  half speed): skylight, 6 + 6 shops across the atrium on two floors (sign
-  glyph, window goods: books, glasses, music, beauty, tech, cafe, clothes,
-  bakery, toys, shoes), the glass `rail` (redrawn over the shoppers),
-  the slab with downlights; `sky_night` panes. `near` (720, full speed):
-  marble floor, the 6 clickable stalls (奶茶 冰淇淋 棉花糖 鲜花 气球 饰品,
-  `STALLS`, 38 wide) and a fixture each; `deco` per season hangs from the
-  ceiling (bunting, paper blossoms / fish / leaves, red lanterns).
+  house; frozen in winter), 8 trees (`TREES`, back row first; front_yard's
+  `tree(..., at=(x, crown y, foot y, rx, ry))`, leaf clusters scale with
+  the crown) and 10 shrubs (`SHRUBS`, user wanted more of both), hedge,
+  lamp post, THE BENCH (she only sits there, user), bin, gravel path, a
+  seasonal flower border. Overlays snow (keeps what stands in it clear) /
+  wet / lit; ducks; a tiny far `plane` (the page adds the contrail).
+- **海边** (`beach.py`) is a wooden dock (user: simple, no clutter): big
+  sky, the sea, a faint far shore, the railing with a life ring, two lamps,
+  planks that widen towards us, two bollards and a coil of rope. The page
+  adds a container `ship` crawling along the horizon and a `speedboat` with
+  a wake, both rare and from either side, gulls, clouds, glints.
+- **商场** (`mall.py`) — user: front and back must read apart, the things to
+  click must stand out, and not only stalls. `far` (456, page speed 0.45,
+  hazed by the page) is just upstairs: skylight, small shops, the glass
+  `rail` (redrawn over the shoppers). `deco` per season at 0.75. `near`
+  (full speed) is our side, big and saturated under a bold white fascia:
+  `UNITS` = shops she goes into (电影院 marquee + posters + ticket window,
+  超市 aisles + fruit crates + carts, 电玩城 neon + claw machine, 宠物店
+  fish tank + puppy, 服装店, 面包店, 球鞋店, 书店) alternating with open
+  bays holding a kiosk (奶茶 冰淇淋 气球 鲜花 棉花糖) or a 地摊 (手作 旧书
+  盲盒: blanket, goods, cardboard sign, stool). Kiosks and 地摊 are separate
+  sprites (`items()` -> props) so the page can outline them on hover.
 - **Going out** (demo): acts `go_out` (to the front door), `go_home` (to
   the door outside), `stroll` (to `sim.strollX`); `sim.place` = "home" |
   "front" (saved). Through a door: two black bars close in from the sides
@@ -219,14 +221,17 @@ piece side by side — review new pieces there at 6x).
   walking left shrinks it). `sim.dest` picks where `go_out` leads. No door
   there: clicking her opens `RINGS.away` (聊聊天 / 摸摸头 / 回家) and
   `go_home` wipes straight home. A red need (< 20) sends her home from any
-  activity out there (`redNeed`). Mall: click a stall -> she walks (either
-  way) till it's in front of her, looks at it from behind (`backCanvas`),
-  turns round with an emote, its line, diary, moodlet `stall_<id>` and a
-  little hunger / fun (`STALL`), then walks on; now and then she stops at
-  one by herself. Her reflection shows in the mall floor. Park life: ducks,
-  sparrows, petals / leaves, butterflies, fireflies (summer nights), the
-  lamp lit. Beach life: surf frames, glitter, gulls (one perches and flies
-  off as she nears), crabs (dash off), the boat, the lighthouse beam.
+  activity out there (`redNeed`). Mall: click a shop / kiosk / 地摊 (gold
+  outline on hover) -> she walks (either way) till it's in front of her and
+  looks at it from behind (`backCanvas`); into a shop she goes for its
+  `inside` game minutes (out of sight), then turns round with an emote, its
+  line, diary, moodlet `stall_<id>` and a little hunger / fun (`STALL`),
+  and walks on; now and then she stops by herself. Her reflection shows in
+  the mall floor. Park life: ducks, sparrows, petals / leaves, butterflies
+  (also crossing the foreground), a far plane now and then (blinking light
+  at night), fireflies on summer nights, the lamp lit. Dock: ships, gulls,
+  glints, lamps at night.
+
 - **Outside, alive** (`outsideLife` / `drawOutsideLife`): the season's
   background, trees swaying between 2 frames with the gusts, snow fading in
   by `weather.snowCover`, the sidewalk wet (`life.wet`, dries slowly), the

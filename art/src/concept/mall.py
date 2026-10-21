@@ -26,13 +26,12 @@ from pixelkit import P, Sprite
 
 W, H = 342, 118
 SEASONS = ["spring", "summer", "autumn", "winter"]
-FAR_W, NEAR_W = 456, 720
+FAR_W = 456
 BAY = 76                 # far: one shop + its pillar
-SEG = 120                # near: one stall + one fixture
 FLOOR = 105              # the floor starts here
 FEET = 110               # Buddy's feet
 AT = 222                 # Buddy's x on screen; the world moves, she doesn't
-UP_WALK = 40             # upper-floor walkway (shoppers' feet, far strip)
+UP_WALK = 29             # upper-floor walkway (shoppers' feet, far strip)
 
 MB, ST, GL = P.marble, P.steel, P.sky_soft
 
@@ -47,19 +46,18 @@ GLYPHS = {
     "phone": ["..###..", "..#.#..", "..###..", "..#.#..", "..###..", "..###..", "......."],
     "star":  ["...#...", "..###..", "#######", ".#####.", "..###..", ".##.##.", "......."],
     "glass": [".......", ".......", "##...##", "#.#.#.#", "##.#.##", ".......", "......."],
+    "film":  ["#######", "#.#.#.#", "#######", "#.....#", "#######", "#.#.#.#", "#######"],
+    "cart":  ["#......", ".######", ".#....#", "..#####", "..#....", "..#..#.", "......."],
+    "game":  ["...#...", "..###..", "...#...", "#######", "#.#.#.#", "#######", "......."],
+    "paw":   [".#...#.", ".#.#.#.", "...#...", ".#####.", "#######", ".##.##.", "......."],
     "music": ["....##.", "...###.", "...#...", "...#...", ".###...", ".###...", "......."],
 }
 
-# far shops: (glyph, wall ramp, sign ramp, window contents) — upper floor, then ground floor
+STALL_W = 38
+
+# far shops upstairs: (glyph, wall ramp, sign ramp, window contents)
 UPPER = [("book", P.oat, P.teal, "books"), ("glass", P.wall_sky, P.hydrangea, "glasses"), ("music", P.lilac, P.mustard, "music"),
          ("star", P.wall_blush, P.coral, "beauty"), ("phone", P.slate, P.mint, "tech"), ("cup", P.clay, P.oat, "cafe")]
-GROUND = [("shirt", P.wall_blush, P.blossom, "clothes"), ("bread", P.wall_butter, P.oak, "bakery"), ("bear", P.wall_sky, P.coral, "toys"),
-          ("shoe", P.oat, P.walnut, "shoes"), ("cup", P.wall_sage, P.green, "cafe"), ("book", P.lilac, P.mustard, "books")]
-
-# near: the stalls the player can click (id, name, offset in the segment)
-STALLS = [("tea", "奶茶"), ("ice", "冰淇淋"), ("candy", "棉花糖"), ("flower", "鲜花"), ("balloon", "气球"), ("trinket", "饰品")]
-STALL_X, STALL_W = 18, 38
-FIXTURES = ["plant", "bench", "board", "plant2", "bench", "bin"]
 
 
 def glyph(s, name, x, y, c):
@@ -202,24 +200,6 @@ def far():
         pillar(s, x, 11, UP_WALK + 2)
         shop(s, x + 6, 11, UP_WALK, spec, rnd, small=True)
     s.rect(0, UP_WALK, FAR_W, 2, MB[2])
-    s.rect(0, UP_WALK + 2, FAR_W, 10, MB[4])                           # the slab's face
-    s.hline(0, FAR_W - 1, UP_WALK + 2, ST[4]).hline(0, FAR_W - 1, UP_WALK + 11, MB[1])
-    for x in range(6, FAR_W, 12):                                      # downlights
-        s.set(x, UP_WALK + 10, P.light[1]).set(x + 1, UP_WALK + 10, P.light[0])
-    for i, spec in enumerate(GROUND):                                  # ground floor
-        x = i * BAY + BAY // 2
-        pillar(s, x % FAR_W, UP_WALK + 12, FLOOR) if x + 6 <= FAR_W else None
-        shop(s, (x + 6) % FAR_W, UP_WALK + 12, FLOOR, spec, rnd, small=False) if x + 6 + BAY - 6 <= FAR_W else None
-    # the last ground bay runs off the right edge: draw it at -BAY//2 and let it wrap
-    tmp = Sprite(BAY, H)
-    pillar(tmp, 0, UP_WALK + 12, FLOOR)
-    shop(tmp, 6, UP_WALK + 12, FLOOR, GROUND[-1], random.Random(9), small=False)
-    for xx in range(BAY):
-        for yy in range(UP_WALK + 12, FLOOR):
-            px = tmp.px[yy, xx]
-            if px[3]:
-                s.px[yy, (FAR_W - BAY // 2 + xx) % FAR_W] = px
-    s.rect(0, FLOOR - 1, FAR_W, 2, MB[1])
     for x in range(0, FAR_W):                                          # the glass railing upstairs
         for y in range(UP_WALK - 9, UP_WALK):
             if (x + y) % 4 == 0:
@@ -257,21 +237,6 @@ def sky_night():
                 if rnd.random() < 0.02:
                     s.set(x, y, P.light[1])
     return s
-
-
-# ---------------------------------------------------------------- near strip
-
-def floor(s):
-    for y in range(FLOOR, H):
-        for x in range(NEAR_W):
-            tile = ((x // 24) + ((y - FLOOR) // 7)) % 2
-            s.set(x, y, MB[3] if tile else MB[4])
-    for x in range(0, NEAR_W, 24):
-        s.vline(x, FLOOR, H - 1, MB[2])
-    s.hline(0, NEAR_W - 1, FLOOR + 7, MB[2])
-    s.hline(0, NEAR_W - 1, FLOOR, MB[1])
-    for x in range(0, NEAR_W, 31):                                     # the shine of the lights
-        s.hline(x + 3, x + 9, FLOOR + 3, P.linen[3]).hline(x + 5, x + 7, FLOOR + 10, P.linen[3])
 
 
 def wheels(s, x0, x1, b):
@@ -364,45 +329,297 @@ def stall(s, kind, x):
     s.dither(x + 2, b + 2, STALL_W - 4, 1, MB[1], None, "checker")    # shadow
 
 
-def fixture(s, kind, x):
-    b = FEET - 2
-    if kind in ("plant", "plant2"):                                    # a big plant in a planter
-        P2 = P.clay if kind == "plant" else MB
-        s.rect(x, b - 9, 14, 9, P2[2]).hline(x, x + 13, b - 9, P2[3]).vline(x + 13, b - 9, b - 1, P2[1])
-        s.hline(x - 1, x + 14, b - 10, P2[3])
-        rnd = random.Random(x)
-        for _ in range(16 if kind == "plant" else 11):                 # broad leaves (fiddle-leaf / palm)
-            a = rnd.uniform(0.3, 2.85)
-            l = rnd.uniform(8, 22 if kind == "plant" else 16)
-            x1, y1 = x + 7 + math.cos(a) * l * 0.7, b - 10 - math.sin(a) * l
-            s.line(x + 7, b - 10, int(x1), int(y1), P.green[1])
-            s.ellipse(x1, y1, 3, 2, P.green[2] if a > 1.5 else P.green[3]).set(int(x1) - 1, int(y1) - 1, P.green[4])
-    elif kind == "bench":                                              # a long padded bench
-        s.rect(x, b - 7, 34, 3, P.oak[3]).hline(x, x + 33, b - 7, P.oak[4]).hline(x, x + 33, b - 5, P.oak[1])
-        s.rect(x + 1, b - 10, 32, 3, P.teal[2]).hline(x + 1, x + 32, b - 10, P.teal[3])
-        for lx in (x + 3, x + 30):
-            s.vline(lx, b - 4, b, ST[1])
-        s.dither(x + 2, b + 1, 30, 1, MB[1], None, "checker")
-    elif kind == "board":                                              # the directory board
-        s.rect(x + 2, b - 34, 16, 30, ST[1]).rect(x + 3, b - 33, 14, 26, MB[4])
-        for i, yy in enumerate(range(b - 31, b - 9, 4)):
-            s.hline(x + 5, x + 9, yy, (P.coral[2], P.teal[2], P.mustard[3], P.lilac[2], P.green[2], P.hydrangea[2])[i])
-            s.hline(x + 11, x + 14, yy, MB[1])
-        s.rect(x + 7, b - 4, 6, 4, ST[2])
-    elif kind == "bin":
-        s.rect(x + 2, b - 12, 8, 12, ST[3]).vline(x + 2, b - 12, b - 1, ST[4]).vline(x + 9, b - 12, b - 1, ST[1])
-        s.rect(x + 1, b - 14, 10, 2, ST[2]).hline(x + 1, x + 10, b - 14, ST[4])
-        s.rect(x + 5, b - 13, 2, 1, ST[0])
+# ---------------------------------------------------------------- near strip
+# Our side of the corridor, big and bright: shopfronts (cinema, supermarket,
+# boutiques...) and between them open bays with a kiosk or a 地摊 on the
+# floor. Kiosks and mats are separate sprites (PROPS) so the page can draw
+# a hover outline round them; shops get a rectangle.
+
+# (id, name, kind, width): kind shop = she goes in; kiosk / mat = she stops at it
+UNITS = [("cinema", "电影院", "shop", 112), ("tea", "奶茶", "kiosk", 54), ("boutique", "服装店", "shop", 82),
+         ("craft", "手作地摊", "mat", 54), ("market", "超市", "shop", 126), ("ice", "冰淇淋", "kiosk", 54),
+         ("bakery", "面包店", "shop", 82), ("oldbooks", "旧书地摊", "mat", 54), ("arcade", "电玩城", "shop", 94),
+         ("balloon", "气球", "kiosk", 54), ("pets", "宠物店", "shop", 86), ("flower", "鲜花", "kiosk", 54),
+         ("sneakers", "球鞋店", "shop", 82), ("candy", "棉花糖", "kiosk", 54), ("books", "书店", "shop", 82),
+         ("blindbox", "盲盒地摊", "mat", 54)]
+NEAR_W = sum(u[3] for u in UNITS)
+FASCIA, SHOP_TOP = 30, 37
+SHOPS = {   # glyph, wall, sign, window goods
+    "boutique": ("shirt", P.wall_blush, P.blossom, "clothes"), "bakery": ("bread", P.wall_butter, P.oak, "bakery"),
+    "sneakers": ("shoe", P.oat, P.coral, "shoes"), "books": ("book", P.wall_sage, P.teal, "books"),
+}
+
+
+def floor(s):
+    for y in range(FLOOR, H):
+        for x in range(NEAR_W):
+            tile = ((x // 24) + ((y - FLOOR) // 7)) % 2
+            s.set(x, y, MB[3] if tile else MB[4])
+    for x in range(0, NEAR_W, 24):
+        s.vline(x, FLOOR, H - 1, MB[2])
+    s.hline(0, NEAR_W - 1, FLOOR + 7, MB[2])
+    s.hline(0, NEAR_W - 1, FLOOR, MB[0])
+    for x in range(0, NEAR_W, 31):                                     # the shine of the lights
+        s.hline(x + 3, x + 9, FLOOR + 3, P.linen[3]).hline(x + 5, x + 7, FLOOR + 10, P.linen[3])
+
+
+def fascia(s):
+    """The slab over our side: a bold white band that cuts the hazy upstairs off from us."""
+    s.rect(0, FASCIA, NEAR_W, SHOP_TOP - FASCIA, MB[4])
+    s.hline(0, NEAR_W - 1, FASCIA - 1, MB[0]).hline(0, NEAR_W - 1, FASCIA, P.linen[3])
+    s.hline(0, NEAR_W - 1, SHOP_TOP - 2, MB[2]).hline(0, NEAR_W - 1, SHOP_TOP - 1, ST[1])
+    for x in range(8, NEAR_W, 16):                                     # downlights
+        s.hline(x, x + 2, SHOP_TOP - 2, P.light[1]).set(x + 1, SHOP_TOP - 3, P.light[0])
+
+
+def column(s, x):
+    s.rect(x, SHOP_TOP, 5, FLOOR - SHOP_TOP, MB[3]).vline(x, SHOP_TOP, FLOOR - 1, MB[4]).vline(x + 4, SHOP_TOP, FLOOR - 1, MB[1])
+    s.rect(x - 1, FLOOR - 3, 7, 3, MB[2]).hline(x - 1, x + 5, FLOOR - 3, MB[3])
+
+
+def sign(s, x0, x1, R, g, gc=None):
+    y = SHOP_TOP + 2
+    s.rect(x0, y, x1 - x0, 10, R[2]).frame(x0, y, x1 - x0, 10, R[0])
+    s.hline(x0 + 1, x1 - 2, y + 1, R[3])
+    glyph(s, g, (x0 + x1) // 2 - 3, y + 2, gc or MB[4])
+    for gx in (x0 + 4, x1 - 5):
+        s.set(gx, y + 5, P.light[1])
+
+
+def door(s, x, w, R=None):
+    top = FLOOR - 37
+    s.rect(x, top, w, 37, GL[3]).frame(x - 1, top - 1, w + 2, 38, (R or ST)[1] if R else ST[1])
+    s.dither(x + 1, top + 1, w - 2, 35, MB[4], None, "sparse")
+    s.vline(x + w // 2, top, FLOOR - 1, ST[1])
+    s.vline(x + w // 2 - 2, top + 16, top + 22, ST[3]).vline(x + w // 2 + 2, top + 16, top + 22, ST[3])
+    return x + w // 2
+
+
+def big_shop(s, x, w, spec, rnd):
+    g, wall, R, goods = spec
+    x0, x1 = x + 5, x + w
+    s.rect(x0, SHOP_TOP, w - 5, FLOOR - SHOP_TOP, wall[2]).vline(x0, SHOP_TOP, FLOOR - 1, wall[3])
+    sign(s, x0 + 3, x1 - 2, R, g, P.walnut[1] if R is P.oak and False else None)
+    wy = SHOP_TOP + 15
+    dw = 20
+    d = x1 - dw - 5
+    s.rect(x0 + 3, wy, d - x0 - 7, FLOOR - wy - 5, MB[4])
+    window_goods(s, goods, x0 + 4, wy + 1, d - x0 - 9, FLOOR - wy - 7, rnd)
+    s.frame(x0 + 2, wy - 1, d - x0 - 5, FLOOR - wy - 3, wall[0])
+    for k in range(4):
+        s.set(x0 + 6 + k, wy + 2 + k, P.linen[3])
+    if goods in ("bakery",):                                           # a striped awning
+        for k in range(d - x0 - 4):
+            s.vline(x0 + 2 + k, wy - 3, wy, R[3] if (k // 4) % 2 else MB[4])
+        s.hline(x0 + 2, d - 3, wy - 3, R[1])
+    s.rect(x0 + 2, FLOOR - 4, d - x0 - 5, 3, wall[1])                  # stall riser under the window
+    return door(s, d, dw)
+
+
+def cinema(s, x, w, rnd):
+    x0, x1 = x + 5, x + w
+    I, R = P.slate, P.coral
+    s.rect(x0, SHOP_TOP, w - 5, FLOOR - SHOP_TOP, I[1]).vline(x0, SHOP_TOP, FLOOR - 1, I[2])
+    y = SHOP_TOP + 2                                                   # marquee with bulbs
+    s.rect(x0 + 3, y, w - 10, 12, R[1]).frame(x0 + 3, y, w - 10, 12, R[0])
+    for bx in range(x0 + 5, x1 - 7, 3):
+        s.set(bx, y + 1, P.light[1]).set(bx, y + 10, P.light[1])
+    glyph(s, "film", (x0 + x1) // 2 - 3, y + 3, P.mustard[4])
+    py = SHOP_TOP + 18
+    arts = ((P.hydrangea, "space"), (P.blossom, "love"), (P.mint, "monster"))
+    for i, (Rp, kind) in enumerate(arts):                              # three film posters in light boxes
+        px = x0 + 5 + i * 18
+        s.rect(px, py, 15, 22, Rp[1]).frame(px - 1, py - 1, 17, 24, P.mustard[3])
+        s.rect(px, py + 14, 15, 8, Rp[2])
+        if kind == "space":
+            s.ellipse(px + 7, py + 6, 3, 3, P.mustard[4]).line(px + 2, py + 13, px + 12, py + 3, P.linen[3])
+        elif kind == "love":
+            for dx, dy in ((-1, 0), (1, 0), (-2, -1), (-1, -1), (1, -1), (2, -1), (0, 1), (-1, 1), (1, 1), (0, 2)):
+                s.set(px + 7 + dx, py + 8 + dy, P.coral[3])
+        else:
+            s.ellipse(px + 7, py + 10, 4, 5, P.green[2]).set(px + 6, py + 8, P.linen[3]).set(px + 8, py + 8, P.linen[3])
+        s.hline(px + 2, px + 12, py + 18, P.linen[3]).hline(px + 4, px + 10, py + 20, P.linen[2])
+    bx = x0 + 59                                                       # the ticket window
+    s.rect(bx, py + 6, 14, 12, GL[3]).frame(bx - 1, py + 5, 16, 14, P.mustard[2]).hline(bx, bx + 13, py + 14, I[2])
+    s.rect(bx, py + 18, 14, FLOOR - py - 18, I[2])
+    s.hline(x0, x1 - 1, FLOOR, R[2])                                   # red carpet edge
+    return door(s, x1 - 24, 20)
+
+
+def market(s, x, w, rnd):
+    x0, x1 = x + 5, x + w
+    G = P.green
+    s.rect(x0, SHOP_TOP, w - 5, FLOOR - SHOP_TOP, MB[4])
+    sign(s, x0 + 3, x1 - 2, G, "cart")
+    wy = SHOP_TOP + 15
+    s.rect(x0 + 2, wy, w - 8, FLOOR - wy, GL[3]).frame(x0 + 1, wy - 1, w - 6, FLOOR - wy + 1, G[1])
+    for k, y in enumerate(range(wy + 4, FLOOR - 6, 8)):               # aisles of shelves behind the glass
+        s.hline(x0 + 3, x1 - 34, y + 4, ST[2])
+        for gx in range(x0 + 3, x1 - 34, 3):
+            c = rnd.choice([P.coral[2], P.mustard[3], P.teal[2], P.hydrangea[2], P.linen[3], P.green[3], P.clay[3], P.lilac[2]])
+            h = rnd.randint(2, 4)
+            s.rect(gx, y + 4 - h, 2, h, c)
+    s.hline(x0 + 3, x1 - 34, wy + 1, P.light[1])
+    d = door(s, x1 - 30, 24)                                           # wide automatic doors
+    for i, cx in enumerate(range(x0 + 4, x0 + 44, 13)):                # fruit crates out front
+        F = (P.coral, P.mustard, P.green)[i % 3]
+        s.rect(cx, FLOOR - 9, 12, 7, P.oak[2]).hline(cx, cx + 11, FLOOR - 9, P.oak[3]).hline(cx, cx + 11, FLOOR - 5, P.oak[1])
+        for fx in range(cx + 1, cx + 11, 2):
+            s.ellipse(fx, FLOOR - 10 - (fx % 3 == 0), 1.2, 1.2, F[2]).set(fx, FLOOR - 11 - (fx % 3 == 0), F[4])
+        s.vline(cx + 1, FLOOR - 3, FLOOR - 1, P.oak[1]).vline(cx + 10, FLOOR - 3, FLOOR - 1, P.oak[1])
+    for k in range(3):                                                 # a row of carts
+        cx = x0 + 50 + k * 4
+        s.frame(cx, FLOOR - 12, 10, 6, ST[2]).hline(cx + 1, cx + 8, FLOOR - 9, ST[3])
+        s.line(cx + 9, FLOOR - 12, cx + 12, FLOOR - 15, ST[2]).set(cx + 2, FLOOR - 5, P.ink[1]).set(cx + 8, FLOOR - 5, P.ink[1])
+    return d
+
+
+def arcade(s, x, w, rnd):
+    x0, x1 = x + 5, x + w
+    I, N1, N2 = P.lilac, P.blossom, P.hydrangea
+    s.rect(x0, SHOP_TOP, w - 5, FLOOR - SHOP_TOP, I[0]).vline(x0, SHOP_TOP, FLOOR - 1, I[1])
+    for k in range(x0 + 1, x1 - 1, 2):                                 # neon edge, two colours
+        s.set(k, SHOP_TOP + 1, N1[3] if (k // 2) % 2 else N2[3])
+    sign(s, x0 + 3, x1 - 2, P.lilac, "game", P.mustard[4])
+    wy = SHOP_TOP + 15
+    for i, mx in enumerate((x0 + 4, x0 + 26)):                         # claw machine, a racing cabinet
+        if i == 0:
+            s.rect(mx, wy, 18, FLOOR - wy - 1, N1[2]).rect(mx + 2, wy + 2, 14, 18, GL[3]).frame(mx + 1, wy + 1, 16, 20, N1[1])
+            s.vline(mx + 9, wy + 2, wy + 7, ST[1]).hline(mx + 7, mx + 11, wy + 8, ST[2])
+            for px, c in ((mx + 4, P.mustard[3]), (mx + 8, P.coral[3]), (mx + 12, P.mint[3]), (mx + 6, P.hydrangea[3]), (mx + 11, P.oak[3])):
+                s.ellipse(px, wy + 17 - (px % 2) * 2, 1.6, 1.6, c)
+            s.rect(mx + 3, wy + 23, 5, 3, P.ink[1]).set(mx + 12, wy + 24, P.coral[3])
+        else:
+            s.rect(mx, wy + 4, 18, FLOOR - wy - 5, N2[1]).rect(mx + 2, wy + 6, 14, 10, P.ink[1])
+            s.rect(mx + 3, wy + 7, 12, 8, P.sea[2]).hline(mx + 3, mx + 14, wy + 12, P.ink[0]).set(mx + 8, wy + 10, P.coral[3])
+            s.ellipse(mx + 9, wy + 21, 3, 2, P.ink[0], fill=False)
+    s.frame(x0 + 2, wy - 1, 46, FLOOR - wy + 1, N2[3])
+    return door(s, x1 - 26, 20)
+
+
+def pets(s, x, w, rnd):
+    x0, x1 = x + 5, x + w
+    M = P.mint
+    s.rect(x0, SHOP_TOP, w - 5, FLOOR - SHOP_TOP, M[3]).vline(x0, SHOP_TOP, FLOOR - 1, M[4])
+    sign(s, x0 + 3, x1 - 2, P.teal, "paw")
+    wy = SHOP_TOP + 15
+    ww = w - 36
+    s.rect(x0 + 3, wy, ww, FLOOR - wy - 5, MB[4]).frame(x0 + 2, wy - 1, ww + 2, FLOOR - wy - 3, M[1])
+    s.rect(x0 + 5, wy + 3, 18, 12, P.sea[3]).frame(x0 + 4, wy + 2, 20, 14, ST[2])      # fish tank
+    for fx, fy, c in ((x0 + 9, wy + 7, P.mustard[3]), (x0 + 16, wy + 10, P.coral[3]), (x0 + 12, wy + 12, P.mustard[4])):
+        s.hline(fx, fx + 2, fy, c).set(fx - 1, fy, c)
+    s.vline(x0 + 20, wy + 9, wy + 14, P.green[2]).vline(x0 + 7, wy + 11, wy + 14, P.green[3])
+    s.hline(x0 + 3, x0 + ww + 2, wy + 22, P.oak[2])                    # a puppy on a cushion
+    px, py = x0 + 34, wy + 21
+    s.ellipse(px, py + 1, 6, 2, P.coral[3])
+    s.ellipse(px, py - 3, 4, 3, P.oak[3]).ellipse(px + 4, py - 6, 3, 3, P.oak[3])
+    s.set(px + 2, py - 8, P.oak[1]).set(px + 6, py - 8, P.oak[1]).set(px + 3, py - 6, P.ink[0]).set(px + 5, py - 6, P.ink[0])
+    s.set(px + 4, py - 5, P.ink[1]).set(px - 4, py - 4, P.oak[2])
+    return door(s, x1 - 26, 20)
+
+
+def bay(s, x, w, rnd, i):
+    """An open bay between shops: marble wall with an ad light box."""
+    x0 = x + 5
+    s.rect(x0, SHOP_TOP, w - 5, FLOOR - SHOP_TOP, MB[3])
+    s.hline(x0, x + w - 1, FLOOR - 4, MB[1]).rect(x0, FLOOR - 3, w - 5, 3, MB[2])
+    ax, ay = x0 + 8, SHOP_TOP + 6
+    R = (P.hydrangea, P.blossom, P.mint, P.mustard, P.lilac, P.coral, P.teal, P.clay)[i % 8]
+    s.rect(ax, ay, w - 21, 24, P.linen[3]).frame(ax - 1, ay - 1, w - 19, 26, ST[2])
+    s.rect(ax + 2, ay + 2, w - 25, 14, R[3]).ellipse(ax + (w - 21) // 2, ay + 9, 4, 4, R[1])
+    s.hline(ax + 3, ax + w - 25, ay + 19, R[1]).hline(ax + 3, ax + (w - 21) // 2, ay + 21, R[2])
+
+
+def mat(kind, w):
+    """A 地摊: a blanket on the floor heaped with goods, a cardboard sign, a
+    little beach umbrella over it (user: easy to spot)."""
+    s = Sprite(w, H)
+    b = FEET - 1
+    R = {"craft": P.teal, "oldbooks": P.clay, "blindbox": P.lilac}[kind]
+    rnd = random.Random(kind)
+    x0, x1 = 2, w - 3
+    for k in range(9):                                                 # the blanket, in a little perspective
+        y = b - 8 + k
+        s.hline(x0 + (8 - k) // 3, x1 - (8 - k) // 3, y, R[2] if (k // 3) % 2 == 0 else R[3])
+    s.hline(x0 + 2, x1 - 2, b - 8, R[4]).hline(x0, x1, b, R[1])
+    for k in range(x0, x1 + 1, 2):                                     # fringe
+        s.set(k, b + 1, R[1])
+    if kind == "craft":                                                # a jewellery stand, hairbands, bracelets
+        s.rect(x0 + 4, b - 18, 12, 10, P.oak[3]).frame(x0 + 4, b - 18, 12, 10, P.oak[1])
+        for k in range(3):
+            for j in range(2):
+                s.set(x0 + 6 + k * 4, b - 16 + j * 4, P.mustard[4]).set(x0 + 6 + k * 4, b - 15 + j * 4, (P.blossom[3], P.hydrangea[3], P.mint[3])[k])
+        for k, c in enumerate((P.coral, P.mustard, P.hydrangea)):
+            s.ellipse(x0 + 22 + k * 7, b - 5, 2.5, 1.4, c[3], fill=False)
+        s.hline(x0 + 20, x0 + 36, b - 2, P.linen[3])
+    elif kind == "oldbooks":                                           # stacks of old books, a crate of records
+        for k in range(x0 + 3, x0 + 26, 7):
+            for j in range(rnd.randint(2, 4)):
+                c = rnd.choice([P.coral[2], P.teal[2], P.mustard[3], P.oak[2], P.green[2], P.clay[3]])
+                s.rect(k, b - 7 - j * 3, 6, 3, c).hline(k, k + 5, b - 7 - j * 3, P.linen[2]).set(k + 5, b - 6 - j * 3, P.linen[3])
+        cx = x1 - 14
+        s.rect(cx, b - 13, 11, 8, P.oak[2]).frame(cx, b - 13, 11, 8, P.oak[1])
+        for k in range(4):
+            s.vline(cx + 2 + k * 2, b - 16, b - 12, (P.ink[1], P.coral[2], P.ink[1], P.mustard[3])[k])
+    else:                                                              # mystery boxes in a pyramid, a "?" on each
+        for row, n in enumerate((4, 3, 2)):
+            for k in range(n):
+                c = (P.blossom, P.hydrangea, P.mustard, P.mint)[(row + k) % 4]
+                bx, by = x0 + 6 + row * 4 + k * 8, b - 13 - row * 7
+                s.rect(bx, by, 7, 7, c[2]).hline(bx, bx + 6, by, c[3]).vline(bx + 6, by, by + 6, c[1])
+                s.hline(bx + 2, bx + 4, by + 2, P.linen[3]).set(bx + 4, by + 3, P.linen[3]).set(bx + 3, by + 5, P.linen[3])
+    sx = x1 - 3                                                        # cardboard sign on a stick
+    s.vline(sx, b - 30, b - 8, P.oak[1])
+    s.rect(sx - 10, b - 38, 18, 10, P.oak[3]).frame(sx - 10, b - 38, 18, 10, P.oak[1])
+    for k in range(3):
+        s.hline(sx - 8, sx - 3 + k * 2, b - 36 + k * 3, P.ink[1])
+    s.rect(sx - 2, b - 35, 3, 3, P.coral[2])
+    s.rect(x0 - 1, b - 6, 6, 2, P.walnut[2]).vline(x0, b - 4, b, P.walnut[1]).vline(x0 + 4, b - 4, b, P.walnut[1])   # stool
+    return s
+
+
+def prop(kind, w):
+    if kind in ("craft", "oldbooks", "blindbox"):
+        return mat(kind, w)
+    s = Sprite(w, H)
+    stall(s, kind, (w - STALL_W) // 2)
+    return s
 
 
 def near():
     s = Sprite(NEAR_W, H)
+    rnd = random.Random(5)
     floor(s)
-    for i, (kind, _) in enumerate(STALLS):
-        x = i * SEG
-        stall(s, kind, x + STALL_X)
-        fixture(s, FIXTURES[i], x + STALL_X + STALL_W + 18 + (6 if FIXTURES[i] in ("bin", "board") else 0))
-    return s
+    fascia(s)
+    x, doors, props = 0, {}, []
+    for i, (uid, _, kind, w) in enumerate(UNITS):
+        if uid in SHOPS:
+            doors[uid] = big_shop(s, x, w, SHOPS[uid], rnd)
+        elif kind == "shop":
+            doors[uid] = {"cinema": cinema, "market": market, "arcade": arcade, "pets": pets}[uid](s, x, w, rnd)
+        else:
+            bay(s, x, w, rnd, i)
+        column(s, x)
+        x += w
+    return s, doors
+
+
+def items():
+    """What the page needs per unit: where it is, where she stops, its prop."""
+    _, doors = near()
+    out, x = [], 0
+    for uid, name, kind, w in UNITS:
+        it = {"id": uid, "name": name, "kind": kind, "u": x + 5, "w": w - 5}
+        if kind == "shop":
+            it["stop"] = doors[uid]
+            it["top"] = SHOP_TOP
+        else:
+            p = prop(uid, w - 5)
+            x0, y0, x1, y1 = p.bbox()
+            it.update(stop=x + 5 + (x0 + x1) // 2, top=y0, sprite=p.crop(x0, y0, x1 - x0, y1 - y0), px=x + 5 + x0)
+        out.append(it)
+        x += w
+    return out
 
 
 def deco(season):
@@ -474,20 +691,26 @@ def shopper(kind, frame):
 
 def preview(season="summer", off=0):
     s = Sprite(W, H)
-    f, n = far(), near()
+    f, (n, _), d = far(), near(), deco(season)
     for k in (-1, 0, 1):
         s.blit(f, k * FAR_W - (off // 2) % FAR_W, 0)
+    s.blit(Sprite(W, FASCIA, fill=(236, 234, 244, 110)), 0, 0, blend=True)   # (the page hazes upstairs the same way)
+    for k in (-1, 0, 1):
+        s.blit(d, k * NEAR_W - (off * 3 // 4) % NEAR_W, 0)
         s.blit(n, k * NEAR_W - off % NEAR_W, 0)
-        s.blit(deco(season), k * NEAR_W - off % NEAR_W, 0)
+        for it in items():
+            if "sprite" in it:
+                s.blit(it["sprite"], k * NEAR_W - off % NEAR_W + it["px"], it["top"])
     return s
 
 
 def build():
-    out = {"mall_far": far(), "mall_near": near(), "mall_rail": rail(), "mall_sky_night": sky_night()}
+    out = {"mall_far": far(), "mall_near": near()[0], "mall_rail": rail(), "mall_sky_night": sky_night()}
     for se in SEASONS:
         out[f"mall_deco_{se}"] = deco(se)
     out["mall_preview"] = preview("summer")
     out["mall_preview_2"] = preview("winter", 330)
+    out["mall_preview_3"] = preview("autumn", 700)
     sheet = Sprite(80, 12)
     for k in range(5):
         for f in range(2):

@@ -37,8 +37,12 @@ LAMP = 130
 BIN = 214
 POND = (276, 75, 54, 10)  # cx, cy, rx, ry
 DUCKS = (POND[1] - 3,)   # the water line ducks swim on (page)
-TREES = [("cherry", 96, 46, 70, 15, 13), ("maple", 238, 42, 63, 13, 11),
-         ("maple", 38, 38, 96, 31, 27), ("linden", 316, 36, 98, 28, 25)]   # kind, x, crown y, foot y, rx, ry
+TREES = [("linden", 150, 50, 66, 10, 8), ("cherry", 188, 48, 66, 11, 9), ("maple", 302, 47, 64, 10, 8),
+         ("linden", 70, 48, 74, 12, 10), ("cherry", 96, 46, 70, 15, 13), ("maple", 238, 42, 63, 13, 11),
+         ("maple", 38, 38, 96, 31, 27), ("linden", 316, 36, 98, 28, 25)]   # kind, x, crown y, foot y, rx, ry (back first)
+SHRUBS = [("box", 112, 8, 7, 78), ("hydrangea", 126, 9, 8, 80), ("box", 206, 7, 6, 74), ("box", 228, 8, 7, 90),
+          ("hydrangea", 250, 10, 8, 92), ("box", 292, 9, 7, 91), ("hydrangea", 62, 10, 9, 95), ("box", 14, 10, 9, 95),
+          ("box", 84, 7, 6, 93), ("hydrangea", 336, 9, 8, 96)]          # kind, cx, half width, height, foot y
 HEDGE = (140, 204, 80)   # x0, x1, top
 
 G = {"spring": P.leaf_spring, "summer": P.grass, "autumn": P.grass, "winter": P.sage}
@@ -242,6 +246,13 @@ def border(s, season):
         s.set(x + 1, y + 2, R[3]).set(x - 1, y + 3, R[3])
 
 
+def shrubs(season):
+    s = Sprite(W, H)
+    for kind, cx, hw, ht, base in sorted(SHRUBS, key=lambda b: b[4]):
+        s.blit(FY.bush(kind, cx, hw, ht, season, base=base), 0, 0)
+    return s
+
+
 def hedge(season):
     x0, x1, top = HEDGE
     s = Sprite(W, H)
@@ -309,6 +320,7 @@ def background(season):
     lawn(s, season)
     pond(s, season)
     path(s, season)
+    s.blit(shrubs(season), 0, 0)
     s.blit(hedge(season), 0, 0)
     lamp(s)
     bench(s)
@@ -346,6 +358,7 @@ def snow_layer():
     for x in range(0, W, 3):
         s.set(x, PATH[1] + rnd.randint(2, 9), S[2])
     parts = Sprite(W, H)
+    parts.blit(shrubs("winter"), 0, 0)
     parts.blit(hedge("winter"), 0, 0)
     lamp(parts)
     bench(parts)
@@ -400,6 +413,14 @@ def lit():
         for xx in range(104, 232):
             if all(tuple(r[y, xx][:3]) == dark for r in refs) and rnd.random() < 0.45:
                 s.set(xx, y, P.light[0])
+    return s
+
+
+def plane():
+    """A far-off airliner, a few pixels long (the page adds the contrail)."""
+    s = Sprite(9, 4)
+    s.hline(1, 7, 2, P.linen[3]).set(8, 2, P.linen[2]).hline(1, 2, 1, P.linen[2]).set(1, 0, P.linen[2])
+    s.hline(3, 5, 3, P.pave[2]).set(4, 1, P.pave[3])
     return s
 
 
