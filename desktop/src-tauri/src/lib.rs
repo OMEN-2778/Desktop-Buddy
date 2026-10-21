@@ -17,8 +17,15 @@
 //!   set_on_top               "置顶游戏" (also ticks the tray item)
 //!   exit_app                 quit, once the page has saved
 //!   log_js                   the page's errors, printed to the app's stderr
-//! Events sent to the page: "app-quit" (save, then call exit_app) and
-//! "on-top-changed" (the tray item was toggled).
+//!   check_update             a newer version on GitHub? { version, current, notes } or null
+//!   install_update           download it, install it, restart (progress: "update-progress")
+//! Events sent to the page: "app-quit" (save, then call exit_app),
+//! "on-top-changed" (the tray item was toggled) and "check-update" (the
+//! tray's 检查更新).
+//!
+//! Updates: every CI build is a GitHub release with a signed installer and
+//! latest.json (.github/workflows/desktop.yml); plugins.updater in
+//! tauri.conf.json points at the latest one and holds the public key.
 
 use std::{
     fs,
@@ -255,6 +262,33 @@ fn log_js(message: String) {
 }
 
 #[tauri::command]
+async fn check_update(app: AppHandle) -> Result<Option<serde_json::Value>, String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let update = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?;
+    Ok(update.map(|u| serde_json::json!({ "version": u.version, "current": u.current_version, "notes": u.body })))
+}
+
+#[tauri::command]
+async fn install_update(app: AppHandle) -> Result<(), String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let Some(update) = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())? else {
+        return Ok(());
+    };
+    let (mut done, progress) = (0u64, app.clone());
+    update
+        .download_and_install(
+            move |chunk, total| {
+                done += chunk as u64;
+                let _ = progress.emit("update-progress", serde_json::json!({ "done": done, "total": total }));
+            },
+            || {},
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+    app.restart();
+}
+
+#[tauri::command]
 fn exit_app(app: AppHandle) {
     app.exit(0);
 }
@@ -273,11 +307,13 @@ fn quit_after_save(app: &AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let show = MenuItem::with_id(app, "show", "显示 / 隐藏", true, None::<&str>)?;
             let on_top = CheckMenuItem::with_id(app, "on_top", "置顶游戏", true, false, None::<&str>)?;
+            let update = MenuItem::with_id(app, "update", "检查更新", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show, &on_top, &quit])?;
+            let menu = Menu::with_items(app, &[&show, &on_top, &update, &quit])?;
             app.manage(OnTopItem(on_top.clone()));
             let mut tray = TrayIconBuilder::with_id("main")
                 .tooltip("Desktop Buddy")
@@ -299,6 +335,12 @@ pub fn run() {
                             let _ = w.set_always_on_top(on);
                         }
                         let _ = app.emit("on-top-changed", on);
+                    }
+                    "update" => {
+                        if let Some(w) = app.get_webview_window("main") {
+                            let _ = w.show();
+                        }
+                        let _ = app.emit("check-update", ());
                     }
                     "quit" => quit_after_save(app),
                     _ => {}
@@ -342,7 +384,9 @@ pub fn run() {
             start_drag,
             set_on_top,
             exit_app,
-            log_js
+            log_js,
+            check_update,
+            install_update
         ])
         .run(tauri::generate_context!())
         .expect("error while running Desktop Buddy");

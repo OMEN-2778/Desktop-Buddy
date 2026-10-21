@@ -437,6 +437,25 @@ body {
   clip-path: var(--clip-btn);
 }
 /* her name tag: a dark pill over her head while the pointer is on her */
+/* the desktop app's update bar, at the house's top right */
+.update {
+  position: absolute; z-index: 40; display: flex; align-items: center; gap: 6px; overflow: hidden;   /* above cards and panels: it is never in the way for long */
+  padding: 5px 6px 5px 14px; background: var(--panel); color: var(--ink); font-size: 13px; font-weight: 700;
+  border-radius: 999px; box-shadow: 0 0 0 2px var(--edge), 3px 3px 0 2px var(--shadow);
+  transform: translateY(-8px) scale(.9); opacity: 0; transition: transform .3s cubic-bezier(.3, 1.5, .5, 1), opacity .2s;
+}
+.update.on { transform: none; opacity: 1; }
+.update[hidden] { display: none; }
+.update span { white-space: nowrap; }
+.update button {
+  font: inherit; font-size: 12px; border: 0; border-radius: 999px; padding: 2px 10px; cursor: pointer;
+  background: var(--panel-2); color: var(--ink); box-shadow: 0 0 0 2px var(--edge);
+}
+.update button[hidden] { display: none; }
+.update .up-go { background: var(--accent); color: var(--accent-ink); }
+.update button:hover { filter: brightness(1.08); }
+.update .up-bar { position: absolute; left: 0; bottom: 0; height: 3px; width: var(--p, 0%); background: var(--accent); transition: width .2s; }
+@media (prefers-reduced-motion: reduce) { .update { transition: none; } }
 .nametag {
   position: absolute; left: 0; top: 0; z-index: 7; pointer-events: none; white-space: nowrap;
   font-size: var(--ring-fs, 14px); font-weight: 700; letter-spacing: .04em; color: #f7f6fb; padding: 4px 12px;
@@ -901,6 +920,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
       <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她弹出互动菜单。"></canvas>
       <div class="ring" id="ring" role="menu" aria-label="和她互动" hidden></div>
       <div class="nametag" id="nametag" aria-hidden="true"></div>
+      <div class="update" id="update" role="status" hidden><span></span><button type="button" class="up-go">更新</button><button type="button" class="up-later">以后</button><i class="up-bar"></i></div>
     </div>
   </div>
 </main>
@@ -5256,6 +5276,58 @@ if (TAURI) {
   ro.observe(document.getElementById("widget")); ro.observe(setPop);
   TAURI.event.listen("app-quit", async () => { await autoSave(); TAURI.core.invoke("exit_app"); });
   TAURI.event.listen("on-top-changed", e => { prefs.onTop = !!e.payload; saveSettings(); buildSettings(); });
+}
+
+// ================================================================ updates (desktop app)
+// Every CI build is a GitHub release (user: no more sending the .exe
+// around). A while after start, and every 6 hours, the app asks GitHub for a
+// newer one; if there is, a little bar pops up at the house's top right:
+// 更新 saves, downloads, installs and restarts; 以后 hides it until next time.
+// The tray's 检查更新 asks right away and also says when there's nothing new.
+const updEl = document.getElementById("update"), updText = updEl.querySelector("span");
+let updBusy = false, updLater = false;
+function placeUpdate() { updEl.style.top = view.offsetTop + 8 + "px"; updEl.style.right = updEl.parentElement.clientWidth - view.offsetLeft - view.offsetWidth + 8 + "px"; }
+function showUpdate(text, { go = null, later = true } = {}) {
+  updText.textContent = text;
+  updEl.querySelector(".up-go").hidden = !go;
+  updEl.querySelector(".up-go").textContent = go || "";
+  updEl.querySelector(".up-later").hidden = !later;
+  placeUpdate();
+  if (updEl.hidden) { updEl.hidden = false; void updEl.offsetWidth; }
+  updEl.classList.add("on");
+}
+function hideUpdate() { updEl.classList.remove("on"); setTimeout(() => { if (!updEl.classList.contains("on")) updEl.hidden = true; }, 300); }
+async function checkUpdate(asked = false) {
+  if (!TAURI || updBusy || (updLater && !asked)) return;
+  if (asked) showUpdate("正在检查更新……", { later: false });
+  let u = null;
+  try { u = await TAURI.core.invoke("check_update"); }
+  catch (e) { if (asked) { showUpdate("没连上 GitHub，稍后再试"); setTimeout(hideUpdate, 4000); } return; }
+  if (u) showUpdate(`有新版本 ${u.version}`, { go: "更新" });
+  else if (asked) { showUpdate("已经是最新版啦"); setTimeout(hideUpdate, 3000); }
+}
+async function installUpdate() {
+  if (updBusy) return;
+  updBusy = true;
+  showUpdate("正在保存……", { later: false });
+  await autoSave();
+  showUpdate("下载中……", { later: false });
+  try { await TAURI.core.invoke("install_update"); }        // the app restarts into the new version
+  catch (e) { updBusy = false; updEl.style.removeProperty("--p"); showUpdate("更新失败了", { go: "重试" }); TAURI.core.invoke("log_js", { message: `update: ${e}` }); }
+}
+updEl.querySelector(".up-go").addEventListener("click", installUpdate);
+updEl.querySelector(".up-later").addEventListener("click", () => { updLater = true; hideUpdate(); });
+if (TAURI) {
+  TAURI.event.listen("check-update", () => { updLater = false; checkUpdate(true); });
+  TAURI.event.listen("update-progress", e => {
+    const { done, total } = e.payload || {};
+    if (!total) return;
+    const p = Math.min(100, Math.round(done / total * 100));
+    updEl.style.setProperty("--p", p + "%");
+    updText.textContent = p < 100 ? `下载中 ${p}%` : "安装中，马上回来……";
+  });
+  setTimeout(checkUpdate, 8000);
+  setInterval(checkUpdate, 6 * 3600 * 1000);
 }
 
 // ================================================================ loop

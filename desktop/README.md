@@ -27,7 +27,10 @@ The game is the same single web page as the browser demo
   herself when a need runs red. People pass by everywhere (kids too; in the
   mall shop staff and sellers calling out, on the dock now and then an
   angler), say things, and sometimes chat with her
-- a tray icon: 显示 / 隐藏, 置顶游戏, 退出
+- a tray icon: 显示 / 隐藏, 置顶游戏, 检查更新, 退出
+- updates itself: a while after start (and every 6 hours) it asks GitHub
+  for a newer version; a bar at the house's top right offers 更新 (save,
+  download, install, restart) or 以后
 - the save is a JSON file in the app's data folder by default
   (Windows: `%APPDATA%\com.desktopbuddy.app\save.json`, previous copy kept
   as `save.json.bak`), so it is always found again after a restart;
@@ -53,3 +56,18 @@ the game changed. Icons come from `art/src/concept/app_icon.py`:
 Every push that touches the app or the demo page also builds it on GitHub
 Actions (`.github/workflows/desktop.yml`); the Windows installer is the
 run's artifact.
+
+## Updates
+
+Every CI build is version `0.1.<run number>`. When the repository has the
+secret `TAURI_SIGNING_PRIVATE_KEY` (Settings → Secrets and variables →
+Actions), the build signs the installer and publishes a GitHub release
+`v0.1.N` with `latest.json`; installed apps find it through
+`plugins.updater.endpoints` in `src-tauri/tauri.conf.json`, which also holds
+the matching public key. Without the secret the build still works but
+publishes nothing. Losing the private key means installed apps can't update
+any more (they'd need a fresh install with a new public key).
+
+Make a new key pair with `npx tauri signer generate -w updater.key` (no
+password): the `.pub` file's text goes in `tauri.conf.json`, the private
+file's text in the secret.
