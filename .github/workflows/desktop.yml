@@ -82,6 +82,9 @@ jobs:
           bare="Desktop-Buddy_${VERSION}_x64-portable.exe"
           cp "$src" "$exe"
           cp ../../desktop-buddy.exe "$bare"
+          # a zip of the portable exe too: browsers block a rarely seen .exe, rarely a .zip (user)
+          zip="Desktop-Buddy_${VERSION}_portable.zip"
+          mkdir -p pack && cp ../../desktop-buddy.exe "pack/Desktop Buddy.exe" && (cd pack && 7z a -tzip "../$zip" "Desktop Buddy.exe" >/dev/null)
           node -e "
             const fs = require('fs'), v = process.env.VERSION, exe = process.argv[1], bare = process.argv[4];
             const at = f => 'https://github.com/' + process.env.GITHUB_REPOSITORY + '/releases/download/v' + v + '/' + f;
@@ -95,7 +98,7 @@ jobs:
               },
             }, null, 2));
           " "$exe" "$(git log -1 --pretty=%s)" "$src.sig" "$bare"
-          gh release create "v$VERSION" "$exe" "$bare" latest.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+          gh release create "v$VERSION" "$zip" "$exe" "$bare" latest.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             --title "Desktop Buddy $VERSION" --notes "$(git log -1 --pretty=%s)" --latest
 
       - uses: actions/upload-artifact@v4
