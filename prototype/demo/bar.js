@@ -1,8 +1,8 @@
 // After Hours: uses the shared doll, picker, speech pills, moodlets and chance-card runner.
 const BAR_SEATS = [
-  { id: 'booth_l', x: 28, feet: 92, hit: [15, 66, 26, 23], label: '临窗卡座' },
-  { id: 'booth_r', x: 54, feet: 92, hit: [42, 66, 26, 23], label: '临窗卡座' },
-  ...[105, 145, 185, 216].map((x, i) => ({ id: 'stool_' + i, x, feet: 101, hit: [x - 7, 84, 15, 19], label: '吧台高脚椅' })),
+  { id: 'booth_l', x: 28, feet: 92, lift: 9, hit: [15, 66, 26, 23], label: '临窗卡座' },
+  { id: 'booth_r', x: 54, feet: 92, lift: 9, hit: [42, 66, 26, 23], label: '临窗卡座' },
+  ...[105, 145, 185, 216].map((x, i) => ({ id: 'stool_' + i, x, feet: 101, lift: 10, hit: [x - 7, 84, 15, 19], label: '吧台高脚椅' })),
 ];
 const BAR_DRINKS = Object.fromEntries(BAR_TEXT.drinks.map(d => [d.id, d]));
 let barScene = null;
@@ -50,7 +50,7 @@ function initBar() {
   bartender.look = doll.normalize({ ...bartender.look, style: 'neat', hair: '#433a54', topStyle: 'shirt', top: '#e2d8c9', bottomStyle: 'trousers', bottom: '#4a3329', acc: [] });
   bartender.ramps = doll.rampsOf(bartender.look);
   const guestSeats = ['booth_l', 'stool_3', 'booth_r'].map(barSeat).filter(s => s.id !== sim.bar.seat).slice(0, 2);
-  const guests = guestSeats.map(s => makeNpc('bar_guest', { x: s.x, feet: s.feet, seat: s.id, sit: true, layer: 'front' }));
+  const guests = guestSeats.map(s => makeNpc('bar_guest', { x: s.x, feet: s.feet, seat: s.id, seatLift: s.lift, sit: true, layer: 'front' }));
   barScene = { bartender, guests, clock: 0, nextChat: 6, nextGuest: 120, chat: null,
     lastHour: Math.floor(sim.t / 60), watchAt: sim.t, shaker: 0, show: null };
   barNewShow(sim.bar.show);
@@ -152,7 +152,7 @@ function stepBar(dtGame, dtReal) {
       const s = pick(available);
       if (s && !barScene.chat) {
         barScene.guests.shift();
-        barScene.guests.push(makeNpc('bar_guest', { x: s.x, feet: s.feet, seat: s.id, sit: true, layer: 'front' }));
+        barScene.guests.push(makeNpc('bar_guest', { x: s.x, feet: s.feet, seat: s.id, seatLift: s.lift, sit: true, layer: 'front' }));
         life.npcs = [barScene.bartender, ...barScene.guests, barScene.performer];
       }
       barScene.nextGuest = 100 + Math.random() * 100;
@@ -231,13 +231,14 @@ function renderBar() {
   }
   for (const g of barScene.guests) {
     const [f, pose] = npcFrame(g);
-    bctx.drawImage(npcCanvas(g, f, pose), g.x - 10, g.feet - DH + 1);
+    bctx.drawImage(npcCanvas(g, f, pose), g.x - 10, npcFeet(g) - DH + 1);
   }
-  const p = here(), seated = !!sim.bar.seat;
+  const p = buddyFeet(), seated = !!sim.bar.seat;
   let f = { expr: Math.floor(t * 2) % 13 === 0 ? 'blink' : 'neutral', look: seated ? 0 : sim.facing, bob: 0, wave: null };
   let pose = seated ? 'sit' : 'stand';
   if (sim.mode === 'walk') { const fr = activityFrame(realClock * 1000); f = { ...f, ...fr.f }; pose = fr.pose; }
-  bctx.drawImage(dollCanvas(f, pose), Math.round(p.x - DW / 2), Math.round(p.y - DH + 1));
+  if (sim.mode === "down") drawOutBuddy(bctx, { f, pose });
+  else bctx.drawImage(dollCanvas(f, pose), Math.round(p.x - DW / 2), Math.round(p.y - DH + 1));
   if (sim.bar.drink) {
     const d = BAR_DRINKS[sim.bar.drink], x = Math.round(p.x + 5), y = Math.round(p.y - 12 + Math.sin(t * 1.8) * 2);
     bctx.fillStyle = '#c9c5c5'; bctx.fillRect(x, y, 4, 5);
@@ -262,6 +263,7 @@ function renderBar() {
     const r = s?.hit || (hoverId === 'bar_counter' ? [85, 67, 143, 5] : hoverId === 'bar_stage' ? [243, 75, 81, 4] : null);
     if (r) { bctx.strokeStyle = '#efc452'; bctx.lineWidth = 1; bctx.strokeRect(r[0] + .5, r[1] + .5, r[2] - 1, r[3] - 1); }
   }
+  if (sim.mode === "down") drawRevive(bctx);
   vctx.imageSmoothingEnabled = false;
   vctx.clearRect(0, 0, view.width, view.height);
   vctx.drawImage(buf, 0, 0, view.width, view.height);

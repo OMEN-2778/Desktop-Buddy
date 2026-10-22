@@ -157,6 +157,12 @@ function BuddyDoll(DATA) {
     for (const k of layerKeys(look, fr)) paintLayer(buf, DW, DH, DATA.layers[k], 0, 0, ramps);
     return buf;
   }
+  function sitPixels(buf, look, ramps = rampsOf(look)) {
+    const out = new Uint8ClampedArray(buf.length);
+    out.set(buf.subarray(0, DW * 22 * 4), DW * 2 * 4);
+    paintLayer(out, DW, DH, DATA.layers[`pose/sit/${look.bottomStyle}/${look.socks}`], 0, 0, ramps);
+    return out;
+  }
   function emotePixels(name, ramps) {
     const L = DATA.layers["emote/" + name];
     const buf = new Uint8ClampedArray(L.w * L.h * 4);
@@ -225,5 +231,5 @@ function BuddyDoll(DATA) {
   }
 
   return { W: DW, H: DH, ROLES, PRESETS, NAME_DEFAULT, NAME_MAX, cleanName, randomName, pronoun, rampFrom, rampsOf, normalize, toggleAcc, layerKeys, paintLayer,
-           pixels, pixelsBack, emotePixels, toCanvas, hexToRgb, cheer };
+           pixels, pixelsBack, sitPixels, emotePixels, toCanvas, hexToRgb, cheer };
 }

@@ -38,3 +38,9 @@ With Playwright and Chromium available, run
 All pixel art is drawn in code with `tools/pixelkit` (see
 `.claude/skills/pixel-art/SKILL.md`). Sources live in `art/src/`, build with
 `PYTHONPATH=tools python3 -m pixelkit build`.
+
+The home chance-card collection includes 50 sleep-themed cards (451–500):
+17 at bedtime, 17 during dreams and 16 on waking, each with two choices and
+four possible outcomes. Dream cards share the normal cooldown and pause time.
+Hold a collapsed Buddy for five seconds: two pixel angels arrive immediately,
+with falling light and a filling rescue meter; releasing early cancels the rescue.

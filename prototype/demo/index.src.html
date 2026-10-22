@@ -70,7 +70,7 @@ body {
   min-width: 0;
 }
 .widget { position: relative; }
-#view { display: block; image-rendering: pixelated; image-rendering: crisp-edges; cursor: pointer; }
+#view { touch-action: none; display: block; image-rendering: pixelated; image-rendering: crisp-edges; cursor: pointer; }
 
 /* ---------- needs: dots that stretch into bars ----------
    Sizes come from JS (fit): --u is one house pixel on screen, --bh the dot /
@@ -1019,7 +1019,7 @@ const DW = doll.W, DH = doll.H;
 const dollCache = new Map(), rotCache = new Map();
 function rowsOf(buf, w, r) { return buf.slice(r * w * 4, (r + 1) * w * 4); }
 function applyPose(buf, pose, lk = look) {
-  const W4 = DW * 4, P = D.doll.pose[lk.bottomStyle];
+  const P = D.doll.pose[lk.bottomStyle];
   if (pose === "walkL" || pose === "walkR") {   // lift one foot by a pixel
     const out = buf.slice();
     const c0 = pose === "walkL" ? 0 : DW / 2, c1 = c0 + DW / 2;
@@ -1032,14 +1032,7 @@ function applyPose(buf, pose, lk = look) {
     }
     return out;
   }
-  if (pose === "sit") {                         // drop the thighs: head sinks, knees forward
-    const keep = [];
-    for (let r = 0; r < DH; r++) if (!P.sitDrop.includes(r)) keep.push(r);
-    const out = new Uint8ClampedArray(buf.length);
-    const off = DH - keep.length;
-    keep.forEach((r, i) => out.set(rowsOf(buf, DW, r), (i + off) * W4));
-    return out;
-  }
+  if (pose === "sit") return doll.sitPixels(buf, lk);
   return buf;
 }
 function dollCanvas(f, pose = "stand", cropRows = DH) {
@@ -1123,6 +1116,14 @@ function routePos(r, s) {   // -> { x, y, dy }: dy < 0 while climbing, > 0 comin
   return { x: r[0][0], y: r[0][1], dy: 0 };
 }
 const here = () => routePos(sim.route, sim.s);
+function buddyFeet() {
+  const p = here();
+  if (sim.mode === "down") return p;
+  const lift = sim.place === "bar" ? barSeat(sim.bar?.seat)?.lift || 0
+    : sim.place === "park" ? 5
+    : sim.mode === "act" && (!PC_ACTS.includes(sim.act) || chairReady()) ? D.seatLifts[sim.act] || 0 : 0;
+  return { ...p, y: p.y - lift };
+}
 // doors this trip walks through: [door id, x] on the storey it crosses them
 function doorsOn(r) {
   const out = [];
@@ -1839,8 +1840,10 @@ function fit() {
 function activityFrame(ms) {
   // what Buddy looks like right now: frame params, pose, emote
   const a = sim.act, phase = Math.floor(ms / 600) % 2;
-  if (reaction && realClock < reaction.until && sim.mode !== "down")
-    return { f: { expr: "happy", wave: reaction.wave === false ? null : Math.floor(ms / 180) % 2, bob: Math.floor(ms / 300) % 2 }, pose: "stand", emote: reaction.emote };
+  if (reaction && realClock < reaction.until && sim.mode !== "down") {
+    const seated = sim.mode === "act" && (["bench", "eat", "tv", "toilet"].includes(a) || PC_ACTS.includes(a) && chairReady());
+    return { f: { expr: "happy", wave: reaction.wave === false ? null : Math.floor(ms / 180) % 2, bob: Math.floor(ms / 300) % 2 }, pose: seated ? "sit" : "stand", emote: reaction.emote };
+  }
   if (sim.mode === "walk") {
     const i = Math.floor(sim.walkDist / 4) % 4;
     // contact frames (a foot lifted) dip the head a pixel, passing frames rise
@@ -1903,21 +1906,61 @@ function lyingBody(f) {   // the whole doll turned 90 degrees: lying on her side
   rotCache.set(key, c);
   return c;
 }
-// hold her for 5 seconds to wake her: a ring of pixels fills up around her
+// Five seconds of continuous contact: angels respond on the very first frame.
 const REVIVE_S = 5;
-let holding = null;
+let holding = null, rescueClickUntil = 0;
+function drawRescue(ctx, p, elapsed) {
+  const k = Math.min(1, elapsed / REVIVE_S), cx = Math.round(p.x), cy = Math.round(p.y) - 8;
+  const arrive = reduceMotionUI ? 1 : 1 - (1 - Math.min(1, elapsed / .8)) ** 3;
+  ctx.save();
+  // A stepped shaft of warm light reaches all the way down from the sky.
+  for (let y = 0; y <= cy + 8; y++) {
+    const half = Math.round(4 + y / Math.max(1, cy + 8) * 15);
+    ctx.fillStyle = `rgba(247,229,186,${.08 + k * .14})`;
+    ctx.fillRect(cx - half, y, half * 2 + 1, 1);
+    ctx.fillStyle = `rgba(255,241,184,${.12 + k * .2})`;
+    ctx.fillRect(cx - Math.round(half / 3), y, Math.round(half / 3) * 2 + 1, 1);
+  }
+  // The light settles over the body as the revival approaches completion.
+  ctx.fillStyle = `rgba(247,229,186,${.12 + k * .28})`;
+  ctx.fillRect(cx - 16, cy - 5, 33, 13);
+  const f = reduceMotionUI ? 0 : Math.floor(realClock * 6) % 4;
+  for (const side of [-1, 1]) {
+    const x = Math.round(Math.max(0, Math.min(W - 24, cx + side * (40 - arrive * 14) - 12)));
+    const y = Math.round(1 + arrive * Math.max(0, cy - 47) + (reduceMotionUI ? 0 : Math.sin(elapsed * 3 + side) * arrive));
+    ctx.save();
+    if (side === 1) { ctx.translate(x + 24, y); ctx.scale(-1, 1); } else ctx.translate(x, y);
+    ctx.drawImage(IMG.fx.guardian[f], 0, 0);
+    ctx.restore();
+  }
+  // Falling gold motes and rising life sparks: integer pixels, no flashing.
+  for (let i = 0; i < 16; i++) {
+    const x = cx + ((i * 17) % 37) - 18;
+    const y = Math.round(((i * 19 + (reduceMotionUI ? 0 : elapsed * 18)) % Math.max(1, cy + 7)));
+    px(ctx, x, y, .6 + k * .35, '247,229,186');
+    if (i % 4 === 0) { px(ctx, x - 1, y, .4, '255,241,184'); px(ctx, x, y - 1, .4, '255,241,184'); }
+  }
+  // Always-visible five-second meter makes continuous contact unambiguous.
+  const meterY = Math.min(H - 6, cy + 14);
+  ctx.fillStyle = '#5b4232'; ctx.fillRect(cx - 19, meterY, 39, 5);
+  ctx.fillStyle = '#e7c996'; ctx.fillRect(cx - 18, meterY + 1, 37, 3);
+  ctx.fillStyle = '#f7f6fb'; ctx.fillRect(cx - 18, meterY + 1, Math.round(37 * k), 3);
+  ctx.restore();
+}
 function drawRevive(ctx) {
   const p = here(), cx = Math.round(p.x), cy = Math.round(p.y) - 8;
-  const k = holding ? Math.min(1, (realClock - holding.t0) / REVIVE_S) : 0;
-  const N = 36;
-  for (let i = 0; i < N; i++) {
-    const a = -Math.PI / 2 + i / N * Math.PI * 2;
+  const elapsed = holding ? realClock - holding.t0 : 0;
+  const k = Math.min(1, elapsed / REVIVE_S);
+  if (holding) drawRescue(ctx, p, elapsed);
+  for (let i = 0; i < 36; i++) {
+    const a = -Math.PI / 2 + i / 36 * Math.PI * 2;
     const x = Math.round(cx + Math.cos(a) * 17), y = Math.round(cy + Math.sin(a) * 12);
-    if (i / N < k) { px(ctx, x, y, 1, "255,255,255"); px(ctx, x, y + 1, 0.9, GLOW); }
-    else if (holding || Math.floor(realClock * 1.5) % 2) px(ctx, x, y, 0.35, "255,255,255");
+    if (i / 36 < k) { px(ctx, x, y, 1, '247,229,186'); px(ctx, x, y + 1, .9, GLOW); }
+    else if (holding || Math.floor(realClock * 1.5) % 2) px(ctx, x, y, .35, '255,255,255');
   }
   if (holding && k >= 1) { holding = null; revive(); }
 }
+function cancelRescue() { holding = null; }
 // ---------- the computer chair: conjured when she sits down at the computer
 // (sparkles + an ordered-dither fade, whole pixels only), gone when she leaves
 const PC_ACTS = ["computer", "pc_video", "pc_forum", "pc_code"];
@@ -2009,7 +2052,7 @@ function render() {
     drawOverlay(bctx, "tub_front"); drawOverlay(bctx, "bubbles");
     emoteAt = [D.bathHead[0] + 13, D.bathHead[1] - 15];
   } else {
-    const p = here();
+    const p = buddyFeet();
     const x = Math.round(p.x - DW / 2), y = Math.round(p.y - DH + 1);
     bctx.drawImage(fr.back ? backCanvas(full, fr.pose) : dollCanvas(full, fr.pose), x, y);
     if (act === "tv") drawOverlay(bctx, "coffee_table");
@@ -2662,6 +2705,7 @@ function rollEvents() {
       return;
     }
   }
+  if (c.sleeping && cardMoment("dream")) return;
   if (rollCard(c)) return;                            // a chance card takes the hour
   if (rollChains(c)) return;                          // a story step takes the hour
   for (const [id, when, p, cd, run] of EVENTS) {
@@ -2683,7 +2727,7 @@ function checkCollapse() {
 }
 function collapse(cause) {
   if (sim.act === "dress") closeWardrobe();
-  closeRing();
+  closeRing(); cancelRescue();
   const p = here();
   sim.route = [[Math.round(p.x), sim.place !== "home" ? OUT[sim.place].feet : FLOOR_Y[storeyOfY(p.y)]]]; sim.s = 0;
   sim.mode = "down"; sim.act = null; sim.queue = []; sim.down = { cause, t: sim.t };
@@ -2691,6 +2735,8 @@ function collapse(cause) {
   speak("……", true);
 }
 function revive() {
+  if (sim.mode !== "down") return;
+  holding = null; rescueClickUntil = realClock + .5;
   const n = sim.needs;
   for (const k of Object.keys(n)) n[k] = clamp(n[k] + 10);
   const cause = sim.down.cause;
@@ -3298,11 +3344,12 @@ function canvasXY(e) {
   return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height];
 }
 function buddyHit(x, y) {
+  if (sim.mode === "down") { const p = here(); return Math.abs(x - p.x) < 15 && y >= p.y - 17 && y <= p.y + 3; }
   if (sim.mode === "act" && sim.act === "sleep") {
     const [lx, ly] = D.sleepLying;
     return x >= lx && x < lx + 15 && y >= ly && y < ly + 20;
   }
-  const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : here();
+  const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : buddyFeet();
   return Math.abs(x - p.x) < 9 && y > p.y - DH + 2 && y < p.y + 2;
 }
 const nametag = document.getElementById("nametag");
@@ -3322,22 +3369,31 @@ function placeNametag() {
   if (nametag.textContent !== nameOf()) nametag.textContent = nameOf();
   const asleepNow = sim.mode === "act" && sim.act === "sleep";
   const p = asleepNow ? { x: D.sleepLying[0] + 8, y: D.sleepLying[1] + 2 }
-    : sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] - 2 } : { x: here().x, y: here().y - DH - 1 };
+    : sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] - 2 } : { x: buddyFeet().x, y: buddyFeet().y - DH - 1 };
   const k = scale;
   nametag.style.left = view.offsetLeft + p.x * k + "px";
   nametag.style.top = view.offsetTop + p.y * k + "px";
 }
 // she's collapsed: press and hold on her
 view.addEventListener("pointerdown", e => {
-  if (sim.mode !== "down") return;
+  if (sim.mode !== "down" || guideOn || card || !e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) return;
   const [x, y] = canvasXY(e);
-  if (buddyHit(x, y)) { holding = { t0: realClock }; view.setPointerCapture(e.pointerId); e.preventDefault(); }
+  if (buddyHit(x, y)) { holding = { t0: realClock, pointerId: e.pointerId }; view.setPointerCapture(e.pointerId); e.preventDefault(); render(); }
 });
-for (const ev of ["pointerup", "pointercancel"]) view.addEventListener(ev, () => {
-  if (holding && realClock - holding.t0 < REVIVE_S) { holding = null; showHint(`长按${ta()} 5 秒，把${ta()}叫醒`); }
+view.addEventListener("pointerup", e => {
+  if (!holding || holding.pointerId !== e.pointerId) return;
+  const complete = realClock - holding.t0 >= REVIVE_S;
+  cancelRescue();
+  if (complete) revive(); else showHint(`继续按住${ta()} 5 秒，天使就能把${ta()}唤醒`);
 });
+for (const ev of ["pointercancel", "lostpointercapture"]) view.addEventListener(ev, e => {
+  if (holding?.pointerId === e.pointerId) cancelRescue();
+});
+window.addEventListener("blur", cancelRescue);
+document.addEventListener("visibilitychange", () => { if (document.hidden) cancelRescue(); });
 view.addEventListener("contextmenu", e => { if (sim.mode === "down") e.preventDefault(); });
 view.addEventListener("click", e => {
+  if (realClock < rescueClickUntil) return;
   const [x, y] = canvasXY(e);
   const wasOpen = !!ringOf;
   closeRing();
@@ -3377,7 +3433,7 @@ const RINGS = {
 let ringOf = null, ringAt = null;
 function ringCenter() {
   if (ringAt === "computer" || ringAt === "door") { const c = CLICK[ringAt === "door" ? "front_door" : "computer"]; return { x: c.x + c.w / 2, y: c.y + c.h / 2 }; }
-  const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : here();
+  const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : buddyFeet();
   return { x: p.x, y: p.y - 13 };
 }
 let ringShift = { x: 0, y: 0 };
@@ -3581,7 +3637,7 @@ const PICK = {
 };
 // from = where it grows out of, in house pixels (the furniture, or Buddy)
 function pickFrom(id) {
-  if (id === "buddy") { const p = here(); return { x: p.x, y: p.y - 12 }; }
+  if (id === "buddy") { const p = buddyFeet(); return { x: p.x, y: p.y - 12 }; }
   const c = CLICK[id];
   return c ? { x: c.x + c.w / 2, y: c.y + c.h / 2 } : null;
 }
@@ -4141,13 +4197,14 @@ function npcFrame(n) {
   return [f, n.sit ? "sit" : "stand"];
 }
 const npcX = n => n.u != null ? onScreen(n.u) : n.x;
+const npcFeet = n => n.feet - (n.sit ? n.seatLift || 0 : 0);
 function drawNpcs(ctx, layer) {
   for (const n of life.npcs || []) {
     if (n.layer !== layer || n.gone) continue;
     const x = npcX(n);
     if (x < -20 || x > W + 20) continue;
     const [f, pose] = npcFrame(n);
-    ctx.drawImage(npcCanvas(n, f, pose, n.back), Math.round(x - DW / 2), Math.round(n.feet - DH + 1));
+    ctx.drawImage(npcCanvas(n, f, pose, n.back), Math.round(x - DW / 2), Math.round(npcFeet(n) - DH + 1));
     if (n.rod) drawRod(ctx, n, x);
   }
 }
@@ -4244,7 +4301,7 @@ function placeNpcPills() {
     let el = npcPillEls.get(n);
     if (!el) { el = document.createElement("div"); el.className = "npcsay"; el.textContent = n.sayText; host.appendChild(el); npcPillEls.set(n, el); }
     if (sim.place === "bar") { el.style.maxWidth = Math.max(120, view.offsetWidth * .4) + "px"; el.style.whiteSpace = "normal"; el.style.textAlign = "center"; }
-    const top = n.feet - (n.kid ? 24 : n.sit ? 25 : 28) - 2;
+    const top = npcFeet(n) - (n.kid ? 24 : n.sit ? 25 : 28) - 2;
     const half = el.offsetWidth / 2, vw = W * scale;               // kept over the house, even for someone at its edge
     el.style.left = view.offsetLeft + Math.max(half, Math.min(vw - half, npcX(n) * scale)) + "px";
     el.style.top = view.offsetTop + top * scale + "px";
@@ -4441,7 +4498,7 @@ function benchFrame(ms) {                        // on the park bench: watching 
 // ---------------------------------------------------------------- drawing her out there
 function drawOutBuddy(ctx, fr) {
   const full = { expr: "neutral", look: 0, bob: 0, sway: 0, wave: null, ...fr.f };
-  const p = here();
+  const p = buddyFeet();
   if (sim.mode === "down") {
     const body = lyingBody({ ...full, expr: "sleepy", look: 0, bob: 0, sway: 0, wave: null });
     const x = Math.round(p.x - body.width / 2), y = Math.round(p.y) - 17;
@@ -4478,7 +4535,7 @@ function drawYouMark(ctx, emote) {
   if (sim.mode === "down" || (sim.place === "mall" && mallInside())) return;
   const low = Math.min(...Object.values(sim.needs)), css = getComputedStyle(document.documentElement);
   const col = (css.getPropertyValue(low < 20 ? "--need-low" : low < 50 ? "--need-warn" : "--need-ok") || "#b2d683").trim();
-  const p = here(), sit = OUT[sim.place] && OUT[sim.place].kind === "sit";
+  const p = buddyFeet(), sit = OUT[sim.place] && OUT[sim.place].kind === "sit";
   const y = Math.round(p.y - DH + (sit ? 3 : 0) - 7 - (emote ? 14 : 0) + Math.sin(realClock * 3.2) * 1.5);
   ctx.drawImage(markCanvas(col), Math.round(p.x) - 4, y);
 }
@@ -4808,6 +4865,7 @@ function playTalk(dt) {
 /*__CARDS_JS__*/
 /*__PLACE_CARDS_JS__*/
 /*__BAR_CARDS_JS__*/
+/*__SLEEP_CARDS_JS__*/
 for (const cd of CARDS) for (const k of ["a", "b"]) cd[k].out.forEach((o, i) => { if (o.mood) ML[o.id = `card${cd.n}${k}${i}`] = { ...o.mood }; });
 const CARD_GAP = 330, CARD_CHANCE = 0.3;         // game minutes between cards, odds per hour after that
 const CARD_GAP_OUT = 60, CARD_CHANCE_OUT = 0.6;   // out and about they come much more often (user)
@@ -4835,7 +4893,7 @@ function cardFits(cd, c) {
 function rollCard(c) {
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   const out = sim.place !== "home";               // outside: that place's own cards (cd.at)
-  if (card || !c.awake || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside())
+  if (!prefs.guided || guideOn || card || !c.awake || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside())
     || sim.t - st.last < (out ? CARD_GAP_OUT : CARD_GAP) || Math.random() >= (out ? CARD_CHANCE_OUT : CARD_CHANCE)) return false;
   const any = CARDS.filter(cd => !cd.on && (cd.at || "home") === sim.place);
   let fresh = any.filter(cd => !st.seen.includes(cd.n));
@@ -4853,11 +4911,11 @@ function rollCard(c) {
 // stairs, passing a window, opening / closing one, ...): cards with `on` only
 // come at that moment, with these odds (frequent moments get lower ones).
 // All told about 2.5-3 cards a day (20 simulated days).
-const MOMENT_ODDS = { stairs: 0.1, passWindow: 0.06, toilet: 0.2, wash: 0.25, wake: 0.3, eat: 0.3, phone: 0.3, pc: 0.3 };
+const MOMENT_ODDS = { stairs: 0.1, passWindow: 0.06, toilet: 0.2, wash: 0.25, wake: 0.3, dream: 0.35, eat: 0.3, phone: 0.3, pc: 0.3 };
 const ACT_MOMENT = act => act.startsWith("water_") ? "water" : act.startsWith("pc_") || act === "computer" ? "pc"
   : act.startsWith("phone_") ? "phone" : act;
 function cardMoment(tag) {
-  if (!tag || card || sim.place !== "home" || sim.mode === "down" || pickOn || !CARDS.some(cd => cd.on === tag)) return false;
+  if (!tag || !prefs.guided || guideOn || (tag === "dream" && !asleep()) || card || sim.place !== "home" || sim.mode === "down" || pickOn || !CARDS.some(cd => cd.on === tag)) return false;
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   if (sim.t - st.last < CARD_GAP || Math.random() >= (MOMENT_ODDS[tag] ?? 0.4)) return false;
   const c = lifeCtx(), pool = CARDS.filter(cd => cd.on === tag && cardFits(cd, c));

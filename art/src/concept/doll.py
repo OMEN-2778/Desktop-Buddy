@@ -444,6 +444,42 @@ BOTTOM_POSE = {
     "maxi": ("loafer", 26, (23, 24)),
 }
 
+
+def seated_lower(d):
+    """Forward knees, bent shins and outward shoes; colours remain player roles.
+    Waist row 23 meets the torso lowered by 2px. Thighs project beyond it.
+    """
+    s = Sprite(W, H)
+    lg = d.legend()
+    s.rect(6, 23, 8, 1, lg["n"])
+    for x in (4, 11):
+        s.rect(x, 24, 5, 2, lg["n"])
+        s.hline(x + 1, x + 3, 24, lg["R"])
+        s.hline(x + 1, x + 3, 25, lg["P"])
+    long = d.bottom_style in ("trousers", "jeans", "maxi")
+    for x in (5, 12):
+        s.rect(x, 25, 2, 2, lg["p"] if long else lg["S"])
+        s.set(x, 25, lg["P"] if long else lg["L"])
+        if not long and d.socks != "none":
+            s.rect(x, 25 if d.socks == "long" else 26, 2,
+                   2 if d.socks == "long" else 1, lg["M"])
+    if d.bottom_style in ("mini", "pleated", "maxi"):
+        h = 4 if d.bottom_style == "maxi" else 2
+        s.rect(4, 23, 12, h, lg["n"])
+        s.rect(5, 23, 10, h - 1, lg["P"])
+        s.hline(5, 14, 23 + h - 1, lg["p"])
+        if d.bottom_style == "pleated":
+            for x in (6, 9, 12):
+                s.set(x, 23, lg["R"]).set(x + 1, 24, lg["n"])
+        else:
+            s.hline(5, 9, 23, lg["R"])
+    # Toe caps project forward/outwards; ankles remain visible above the soles.
+    for x in (3, 12):
+        s.hline(x, x + 4, 27, lg["o"])
+        toe = x if x == 3 else x + 3
+        s.hline(toe, toe + 1, 26, lg["x"]).set(toe, 26, lg["X"])
+    return s
+
 RIGHT_ARM_ROWS = range(17, 22)  # rows where the viewer-right arm hangs (cols 14-16)
 
 
@@ -941,11 +977,16 @@ class Doll:
             out.append((f"arm/{sleeve}/{wave}", lambda s: raised_arm(s, self, wave, sleeve)))
         return out
 
-    def render(self, **frame) -> Sprite:
+    def render(self, pose="stand", **frame) -> Sprite:
         """Emotes live outside the 20x28 frame — wrap the result with with_emote()."""
         s = Sprite(W, H)
         for _, draw in self.layers(**frame):
             draw(s)
+        if pose == "sit":
+            out = Sprite(W, H)
+            out.blit(s.crop(0, 0, W, 22), 0, 2)
+            out.blit(seated_lower(self), 0, 0)
+            return out
         return s
 
 

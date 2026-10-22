@@ -27,6 +27,7 @@ import _furniture as F  # noqa: E402
 import house as Hs  # noqa: E402
 import need_icons  # noqa: E402
 import sky_icons  # noqa: E402
+import rescue  # noqa: E402
 import trip_icons  # noqa: E402
 import ui_icons  # noqa: E402
 import item_icons  # noqa: E402
@@ -253,6 +254,7 @@ def main():
                     "apps": {g: [png(F.monitor_screen(g, f)) for f in range(4)] for g in F.APPS}},
     }
     fx = {
+        "guardian": {"frames": [png(rescue.angel(f)) for f in range(4)]},
         "cook": {"x": hx - 1, "y": hy - 23, "frames": [png(F.cook_fx(f)) for f in range(12)]},
         "meal": {"x": tx + 11, "y": ty - 13, "frames": [png(F.meal_fx(f)) for f in range(4)]},
         "water_living": {"x": A["plant_living"][0] + 4, "y": A["plant_living"][1] - 6, "frames": [png(F.water_fx(f)) for f in range(4)]},
@@ -326,6 +328,7 @@ def main():
         "trip": {k.split("_")[1]: png(v) for k, v in trip_icons.build().items()}, "windows": windows, "screens": screens, "fx": fx,
         "bathHead": [tub_x + 5, tub_y + 6],
         "floors": floors, "stair": stair, "spots": spots, "rooms": rooms, "roomX": room_x, "lights": lights,
+        "seatLifts": {"tv": 4, "eat": 4, "toilet": 7, "computer": 3, "pc_code": 3, "pc_forum": 3, "pc_video": 3},
         "emissive": sorted({c.lower() for c in Hs.EMISSIVE}),
         "guide": guide_shots(),
         "barDrinks": {d["id"]: png(BAR.drink_icon(d["color"], d["glass"])) for d in bar_text["drinks"]},
@@ -334,6 +337,7 @@ def main():
     html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", chats_js()).replace("/*__PLACES_JS__*/", places_js()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text()).replace("/*__GUIDE_JS__*/", (SRC.parent / "guide_text.js").read_text())
     html = html.replace("/*__BAR_TEXT_JS__*/", "const BAR_TEXT = " + json.dumps(bar_text, ensure_ascii=False) + ";")
     html = html.replace("/*__BAR_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "bar_cards.json").read_text() + ");")
+    html = html.replace("/*__SLEEP_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "sleep_cards.json").read_text() + ");")
     html = html.replace("/*__BAR_JS__*/", (SRC.parent / "bar.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")

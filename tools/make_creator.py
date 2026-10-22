@@ -64,8 +64,10 @@ def collect_layers() -> dict[str, Sprite]:
         add(replace(base, hair_style=style), still)
     for top in doll.TOPS:                          # tops + raised arms
         add(replace(base, top_style=top), still)
-    for bottom, socks in itertools.product(doll.BOTTOMS, doll.SOCKS):
-        add(replace(base, bottom_style=bottom, socks=socks), still[:1])
+    for bottom, socks in itertools.product(doll.BOTTOMS, ("none", *doll.SOCKS)):
+        d = replace(base, bottom_style=bottom, socks=socks)
+        add(d, still[:1])
+        layers[f"pose/sit/{bottom}/{socks}"] = doll.seated_lower(d)
     for a in doll.ACCESSORIES:
         add(replace(base, accessories=(a,)), still)
     for style in doll.HEADS:                       # hair under a beanie, headphones fitted per head

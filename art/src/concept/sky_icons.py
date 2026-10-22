@@ -56,7 +56,7 @@ def _sparkle(s: Sprite, x: int, y: int, size: int, c):
 
 
 def moon(f: int) -> Sprite:
-    """Ivory crescent: hand-stepped horns, a cool inner rim and two quiet stars.
+    """Deep-blue crescent: hand-stepped horns and two quiet stars.
     The silhouette stays fixed; only the star glints change between frames.
     """
     body = Sprite.from_grid(
@@ -78,11 +78,11 @@ def moon(f: int) -> Sprite:
         ................
         ................
         """,
-        {"H": P.light[1], "M": P.light[0], "s": P.linen[1]},
+        {"H": P.moon[3], "M": P.moon[1], "s": P.moon[0]},
     )
     # A shallow crater and a pearly outer glint, not scattered texture.
-    body.set(3, 8, P.linen[2]).set(4, 8, P.linen[2]).set(4, 9, P.linen[1])
-    body.set(3, 5, WHITE).set(3, 6, P.light[1])
+    body.set(3, 8, P.moon[2]).set(4, 8, P.moon[2]).set(4, 9, P.moon[0])
+    body.set(3, 5, P.moon[3]).set(3, 6, P.moon[2])
     s = _outlined(body)
     # The occasional isolated pixel is an intentional distant star.
     _sparkle(s, 12, 3, [1, 0, 1, 1][f], P.mustard[4])

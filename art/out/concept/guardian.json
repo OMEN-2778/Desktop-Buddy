@@ -1,0 +1,17 @@
+{
+  "frame_w": 24,
+  "frame_h": 26,
+  "anims": {
+    "guardian": {
+      "row": 0,
+      "frames": 4,
+      "durations": [
+        180,
+        180,
+        180,
+        180
+      ],
+      "loop": true
+    }
+  }
+}
