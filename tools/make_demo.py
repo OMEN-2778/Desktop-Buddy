@@ -35,6 +35,7 @@ import front_yard as FY  # noqa: E402
 import park as PK  # noqa: E402
 import beach as BC  # noqa: E402
 import mall as MALL  # noqa: E402
+import bar as BAR  # noqa: E402
 import make_creator as mc  # noqa: E402
 from pixelkit import P, Sprite, rgba  # noqa: E402
 
@@ -192,6 +193,9 @@ def main():
         "farW": MALL.FAR_W, "nearW": MALL.NEAR_W, "at": MALL.AT, "feet": MALL.FEET, "upWalk": MALL.UP_WALK,
         "fascia": MALL.FASCIA, "floor": MALL.FLOOR, "walk": [MALL.AT, MALL.AT], "doorX": MALL.AT,
         "items": [{k: v for k, v in it.items() if k != "sprite"} for it in mall_items]}}
+
+    outside["bar"] = {"kind": "still", "img": {"bg": png(BAR.scene())},
+                      "feet": 107, "walk": [128, 128], "doorX": 128}
 
     # window open states: day/night, three sway frames
     # upstairs windows look out on sky only; the living room sees the hill

@@ -1373,6 +1373,10 @@ function finishAct() {
 
 // The player clicked a piece of furniture: drop what she's doing and go.
 function command(act, item = null) {
+  if (sim.place === "bar") {
+    if (act === "go_home") throughDoor("home");
+    return;
+  }
   sim.chosen = item ? { act, item } : null;     // picked in the panel; otherwise she picks
   if (sim.mode === "down") { log(`${nameOf()}晕倒了，先长按${ta()} 5 秒把${ta()}叫醒吧。`); return; }
   if (sim.mode === "act" && sim.act === "sleep") {
@@ -1391,6 +1395,7 @@ function command(act, item = null) {
 
 const WALK = 28 * 2 / 3;   // house pixels per real second at 1x (user: two thirds of the old 28)
 function step(dtGame, dtReal) {
+  if (sim.place === "bar") return;   // scene preview: no simulation or autonomous actions yet
   sim.t += dtGame;
   const day = Math.floor(sim.t / 1440) + 1;
   if (day !== sim.lastDay) { sim.lastDay = day; log(`—— 第 ${day} 天 · ${SEASONS[seasonOf(sim.t).i].name} ——`, "day"); }
@@ -2968,6 +2973,7 @@ let nextSay = 6, lastSaid = "", sayBusy = 0;
 const sayQueue = [];
 // her words wait their turn: one bubble at a time, at most a few queued
 function speak(text, now = false) {
+  if (sim.place === "bar") return;
   if (!text) return;
   if (now) { sayQueue.length = 0; showMoodTip(false); showSay(text); return; }
   if (realClock < sayBusy || listOpen) { if (sayQueue.length < 2 && !sayQueue.includes(text)) sayQueue.push(text); return; }
@@ -3030,6 +3036,7 @@ function showSay(text, who = "") {
 }
 let lifeT = -1;
 function updateMood() {
+  if (sim.place === "bar") { showFace(); return; }
   if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); rollEvents(); checkCollapse(); }
   showFace();
   if (listOpen) { fillMoodTip(); return; }          // her words wait until you're done looking
@@ -3332,7 +3339,7 @@ view.addEventListener("click", e => {
   if (buddyHit(x, y)) {
     if (wasOpen) return;                          // a second click on her closes the menu
     if (sim.mode === "act" && sim.act === "sleep") { log(`你戳了戳${nameOf()}，${ta()}咂咂嘴继续睡。`); return; }
-    openRing(AWAY.has(sim.place) ? "away" : "buddy");
+    openRing(sim.place === "bar" ? "bar" : AWAY.has(sim.place) ? "away" : "buddy");
     return;
   }
   const id = clickableAt(x, y);
@@ -3354,7 +3361,8 @@ const RINGS = {
   computer: [["computer", "打游戏"], ["video", "视频聊天 ▸", "more"], ["forum", "逛论坛 ▸", "more"], ["pc_code", "写代码"]],
   // user: video chat with 爸爸 / 妈妈 / a friend, forums by platform (CHATS, chats_text.js)
   // the front door (user): where to go
-  door: [["go:front", "去门口"], ["go:park", "去公园"], ["go:mall", "去商场"], ["go:beach", "去海边"]],
+  door: [["go:front", "去门口"], ["go:park", "去公园"], ["go:mall", "去商场"], ["go:beach", "去海边"], ["go:bar", "去酒吧"]],
+  bar: [["name", null, "label"], ["go_home", "回家"]],
   // out at the park / mall / beach (user): clicking her offers the way home
   away: [["name", null, "label"], ["chat", "聊聊天"], ["pat", "摸摸头"], ["go_home", "回家"]],
   video: [["talk:dad", "和爸爸"], ["talk:mom", "和妈妈"], ["talk:friend", "和朋友"], ["back", "返回", "back"]],
@@ -3765,7 +3773,7 @@ function throughDoor(to) {
     if (to === "home") sim.outBack = null, sim.outWhy = null;
     if (to === "home") log(pick(["回到家，换上拖鞋。", "推门进屋，还是家里舒服。", "回来了，还是家里舒服。"]));
     else if (to === "front") { log(outLog(to) || pick(["出门在家门口走走。", "推开门，到门口透透气。", "出了门，站在门口伸了个懒腰。"])); addMood("outdoors"); }
-    else { log(outLog(to) || pick(PLACE_LOG[to])); addMood(to); }
+    else if (to !== "bar") { log(outLog(to) || pick(PLACE_LOG[to])); addMood(to); }
     arriveAt(to);
   });
 }
@@ -3786,6 +3794,7 @@ function chooseOutside() {
 }
 // a click outside: the door -> home; anywhere else -> she walks there
 function outsideClick(id, x, y) {
+  if (OUT[sim.place].kind === "still") return;
   if (id === "out_door") { useFurniture(id, true); command("go_home"); return; }
   const O = OUT[sim.place];
   if (O.kind === "sit") return;                   // on the park bench she stays put (user)
@@ -3916,6 +3925,16 @@ function drawOutsideWeather(ctx) {
 const litCv = document.createElement("canvas"); litCv.width = W; litCv.height = H;
 const litCtx = litCv.getContext("2d");
 function renderOutside() {
+  if (sim.place === "bar") {
+    bctx.clearRect(0, 0, W, H);
+    bctx.drawImage(IMG.out.bar.bg, 0, 0);
+    const p = here(), dc = dollCanvas({ expr: "neutral", look: 0, bob: 0, sway: 0, wave: null });
+    bctx.drawImage(dc, Math.round(p.x - DW / 2), Math.round(p.y - DH + 1));
+    vctx.imageSmoothingEnabled = false;
+    vctx.clearRect(0, 0, view.width, view.height);
+    vctx.drawImage(buf, 0, 0, view.width, view.height);
+    return;
+  }
   const dt = Math.min(0.1, realClock - life.t); life.t = realClock;
   if (sim.place === "park") return renderPark(dt);
   if (sim.place === "beach") return renderBeach(dt);
@@ -4038,6 +4057,12 @@ function redNeed() {
 }
 function homeFor(k) { speak(pick([`${NEED_NAMES[k]}不太行了，回家吧`, "该回家了", "先回家一趟"])); }
 function arriveAt(place) {                       // fresh life for the new place
+  if (place === "bar") {
+    life.npcs = []; life.talkQ = null; clearNpcPills();
+    sayQueue.length = 0; popSay.hidden = true; sayGrow = 0; liftDiary();
+    sim.queue = []; sim.windup = null; sim.mode = "idle"; sim.act = null;
+    return;
+  }
   if (place === "home") { life.npcs = []; life.talkQ = null; clearNpcPills(); return; }
   life.birds = []; life.flies = []; life.bits = []; life.ducks = []; life.gulls = []; life.ship = null; life.boat = null; life.plane = null; life.front = [];
   life.clouds = [0, 1, 2, 3].map(i => ({ k: i % 3, x: Math.random() * W, y: 3 + Math.random() * 22, v: 1.2 + Math.random() * 2.4 }));
