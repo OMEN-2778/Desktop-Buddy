@@ -353,7 +353,10 @@ Reference: `prototype/shared/studio.css`.
   and the same space fills with pills popping out from the emoji: the
   emotion in its own colour, then each moodlet tinted with its emotion's
   colour (the tint shrinks as its time runs out), up to two rows, the rest
-  folded into "还有 N 个". Her words wait while it's open.
+  folded into "还有 N 个"; pointing at (or tapping) that pill shows them all
+  (`expandMoodTip`, user): the last row stays put, the rest stack up above
+  it and the diary box slides up as much (`moodGrow` in `liftDiary`).
+  Her words wait while it's open.
 - Emotion colours (user: same family as the face, no two alike): one hue
   per emotion round the wheel, neighbours told apart by lightness (rust 焦虑
   vs orange 元气满满, olive 浑身难受 vs yellow 美滋滋, lilac 发懵 vs violet

@@ -337,6 +337,10 @@ body {
   gap: 6px 8px; padding-left: 4px; overflow: hidden; padding-bottom: 3px;
 }
 .mood-list[hidden] { display: none; }
+/* every pill ("还有 N 个" pointed at): the list grows up from the row's bottom */
+.mood-list.all { inset: auto 0 0 0; padding-bottom: 0; align-content: flex-end; overflow: visible; transition: height .3s cubic-bezier(.3, 1.3, .5, 1); }
+.mood-list.all .mp.late { animation: mpLate .4s cubic-bezier(.3, 1.6, .5, 1) backwards; animation-delay: calc(var(--j) * 40ms); }
+@keyframes mpLate { from { opacity: 0; transform: translateY(10px) scale(.4); } }
 .mp {
   --tint: color-mix(in srgb, var(--c) 42%, var(--panel-2));
   position: relative; isolation: isolate; flex: none; display: flex; align-items: center; gap: 7px;
@@ -2793,6 +2797,19 @@ function fillMoodTip(force = false) {
     if (p.left !== undefined) el.style.setProperty("--left", p.left.toFixed(1) + "%");
     moodTip.appendChild(el);
   });
+  // pointing at "还有 N 个" (user): every pill, the list growing up over the diary box, which steps up
+  if (listAll) {
+    [...moodTip.children].forEach((el, i) => { if (i >= listShown) { el.classList.add("late"); el.style.setProperty("--j", i - listShown); } });
+    // the last row stays where the one row was; the others stack up above it
+    moodTip.style.bottom = moodTalk.clientHeight - listRow[1] + "px";
+    moodTip.style.height = "auto";
+    const h = moodTip.scrollHeight;
+    moodGrow = Math.max(0, h - (listRow[1] - listRow[0]));
+    moodTip.style.height = h + "px";
+    moodTip.style.setProperty("--n", moodTip.children.length);
+    liftDiary();
+    return;
+  }
   // at most two rows: whatever doesn't fit folds into a "还有 N 个" pill
   const roomW = moodTip.clientWidth, roomH = moodTip.clientHeight, hiddenEls = [];
   const overflows = el => el.offsetLeft + el.offsetWidth > roomW || el.offsetTop + el.offsetHeight > roomH;
@@ -2810,8 +2827,28 @@ function fillMoodTip(force = false) {
     }
     more.title = hiddenEls.map(el => el.title).join("\n");
     more.style.setProperty("--k", moodTip.children.length - 1);
+    listShown = moodTip.children.length - 1;
+    const all = e => { if (e.pointerType === "mouse" || e.type === "click") expandMoodTip(); };
+    more.addEventListener("pointerenter", all);
+    more.addEventListener("click", all);
   }
   moodTip.style.setProperty("--n", moodTip.children.length);
+}
+let listAll = false, listShown = 0, moodGrow = 0, listRow = [0, 0];   // listRow: the folded row's top and bottom
+function expandMoodTip() {
+  if (listAll || !listOpen) return;
+  const first = moodTip.firstElementChild, last = moodTip.lastElementChild;
+  listRow = [first.offsetTop, last.offsetTop + last.offsetHeight];
+  listAll = true;
+  moodTip.classList.add("all");
+  fillMoodTip(true);
+}
+function collapseMoodTip() {
+  if (!listAll && !moodGrow) return;
+  listAll = false; moodGrow = 0;
+  moodTip.classList.remove("all");
+  moodTip.style.height = ""; moodTip.style.bottom = "";
+  liftDiary();
 }
 function showMoodTip(on) {
   clearTimeout(listCloseT);
@@ -2829,6 +2866,7 @@ function showMoodTip(on) {
     moodTip.classList.add("on");
   } else {
     moodTip.classList.remove("on");
+    collapseMoodTip();
     listCloseT = setTimeout(() => { if (!listOpen) moodTip.hidden = true; }, reduceMotionUI ? 0 : 360);
   }
 }
@@ -2902,7 +2940,9 @@ const SAY_FS = () => parseFloat(getComputedStyle(widget).getPropertyValue("--say
 // a taller bubble grows UPWARD (never into the time bar, user) and the diary
 // box slides up out of its way; it slides back when her words go
 let sayGrow = 0, diaryGrow = 0;
-function liftDiary() { document.getElementById("diary").style.setProperty("--lift", -(sayGrow + diaryGrow) + "px"); }
+function liftDiary() {   // her words, or the opened moodlet list (her words wait meanwhile), push the diary box up
+  document.getElementById("diary").style.setProperty("--lift", -((listOpen ? moodGrow : sayGrow) + diaryGrow) + "px");
+}
 function fitSay() {
   sayGrow = fitText(popSay, popSay.querySelector("span"), SAY_FS(), 18, 48, "--clip-say", "--clip-say-in");
   popSay.style.marginTop = sayGrow ? -sayGrow + "px" : "";
