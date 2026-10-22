@@ -1230,7 +1230,7 @@ function log(text, cls, talk = null) {   // talk: [[who, line], ...], a whole co
 
 function choose() {
   if (sim.place !== "home") return chooseOutside();
-  const h = hour(), n = sim.needs, r = () => Math.random();
+  const h = hour(), n = sim.needs, r = () => Math.random(), canOut = !!outingDest(h);
   const meal = (h >= 7 && h < 9) || (h >= 11.5 && h < 13) || (h >= 18 && h < 20);
   const score = {
     sleep: (h >= 22.5 || h < 6) ? 300 : n.energy < 15 ? 150 : 0,
@@ -1249,19 +1249,49 @@ function choose() {
     pc_forum: (100 - n.social) * 0.6 + (100 - n.fun) * 0.4 + r() * 15,
     pc_code: 8 + r() * 20, phone_game: (100 - n.fun) * 0.6 + r() * 15, dance: 2 + r() * 6,
     wash: (h >= 6.5 && h < 9) || (h >= 21 && h < 23) ? 28 + r() * 10 : 4 + r() * 8,
+    go_out: canOut ? (100 - n.fun) * 0.7 + (100 - n.social) * 0.5 + r() * 25 + 2 : 0,
     towel: 3 + r() * 6, window: 7 + r() * 14, water_living: 5 + r() * 10, water_study: 4 + r() * 10, art: 4 + r() * 12, dress: 4 + r() * 10,
   };
   // how she feels tips the scales (Sims-style)
-  for (const [a, v] of Object.entries(EMO_PULL[emotion().key] || {})) score[a] += v;
+  for (const [a, v] of Object.entries(EMO_PULL[emotion().key] || {})) if (a !== "go_out" || canOut) score[a] += v;
   for (const a of sim.recent) score[a] *= 0.3;   // don't repeat the last few things
-  return Object.entries(score).sort((a, b) => b[1] - a[1])[0][0];
+  const best = Object.entries(score).sort((a, b) => b[1] - a[1])[0][0];
+  if (best === "go_out") setOuting(h);
+  return best;
+}
+// She goes out to play by herself now and then (user): in the daytime, when
+// she's fed and rested, and not too soon after the last time; where depends
+// on the season, the weather and the hour. She heads home after a while
+// (`sim.outBack`, game minutes), or at once when a need runs red.
+const OUT_GAP = 240;   // game minutes between outings
+const OUTINGS = {   // place: [weight, stay min, stay max (game minutes)]
+  front: [2, 30, 60], park: [3, 90, 180], mall: [3, 90, 180], beach: [2, 90, 200],
+};
+function outingDest(h) {
+  const n = sim.needs, w = weather.kind, se = seasonOf(sim.t).i;
+  if (h < 8.5 || h >= 17.5 || sim.t - (sim.lastOut ?? -1e9) < OUT_GAP) return null;
+  if (n.hunger < 35 || n.energy < 35 || n.hygiene < 30 || n.bladder < 35 || sim.mode === "down") return null;
+  const bad = w === "rain" || w === "snow", hot = se === 1 && w === "clear" && h >= 11 && h < 16;
+  const wt = {
+    front: bad ? 0 : 2,
+    park: bad ? 0 : se === 3 ? 1.5 : se === 1 ? 3 : 4,
+    mall: bad || hot || se === 3 ? 5 : 2.5,
+    beach: bad ? 0 : se === 1 ? 5 : se === 3 ? 0.3 : 1.5,
+  };
+  const all = Object.entries(wt).filter(([, v]) => v > 0);
+  return all.length ? weighted(all) : null;
+}
+function setOuting(h) {
+  const to = outingDest(h) || "front", [, a, b] = OUTINGS[to];
+  sim.dest = to; sim.lastOut = sim.t;
+  sim.outBack = sim.t + a + Math.random() * (b - a) + (to === "front" ? 0 : 20);
 }
 
 const EMO_PULL = {
-  playful: { dance: 30, tv: 10 }, energized: { dance: 20, water_living: 8 }, focused: { pc_code: 35, read: 10 },
+  playful: { dance: 30, tv: 10, go_out: 15 }, energized: { dance: 20, water_living: 8, go_out: 20 }, focused: { pc_code: 35, read: 10 },
   inspired: { read: 20, pc_code: 15, art: 15, window: 10 }, sad: { phone_call: 25, bath: 15, phone_video: 15 },
-  angry: { dance: 10, bath: 10, computer: -20 }, tense: { bath: 30, read: 10 }, bored: { tv: 15, computer: 15, pc_forum: 10 },
-  flirty: { phone_text: 25, dress: 15 }, confident: { dress: 15, pc_code: 10 }, scared: { phone_call: 20, tv: 10 },
+  angry: { dance: 10, bath: 10, computer: -20 }, tense: { bath: 30, read: 10 }, bored: { tv: 15, computer: 15, pc_forum: 10, go_out: 10 },
+  flirty: { phone_text: 25, dress: 15, go_out: 10 }, confident: { dress: 15, pc_code: 10 }, scared: { phone_call: 20, tv: 10 },
   embarrassed: { bath: 15 }, uncomfortable: {}, dazed: { window: 10 },
 };
 function startAct(name, quiet = false) {
@@ -3446,7 +3476,7 @@ function ringPick(id) {
   if (id === "video" || id === "forum") { openRing(id, "computer"); return; }
   if (id.startsWith("go:")) {
     closeRing();
-    sim.dest = id.slice(3);
+    sim.dest = id.slice(3); sim.outBack = null;          // sent out by the player: she stays till she's had enough
     command("go_out");
     return;
   }
@@ -3714,6 +3744,7 @@ function throughDoor(to) {
     else sim.route = [[OUT[to].doorX, OUT[to].feet]];
     sim.s = 0; sim.target = 0; sim.crossing = []; sim.facing = 1; sim.dest = null;
     sim.idleUntil = sim.t + (to === "front" ? 4 : 1);
+    if (to === "home") sim.outBack = null;
     if (to === "home") log(pick(["回到家，换上拖鞋。", "推门进屋，还是家里舒服。", "回来了，还是家里舒服。"]));
     else if (to === "front") { log(pick(["出门在家门口走走。", "推开门，到门口透透气。", "出了门，站在门口伸了个懒腰。"])); addMood("outdoors"); }
     else { log(pick(PLACE_LOG[to])); addMood(to); }
@@ -3723,6 +3754,7 @@ function throughDoor(to) {
 function chooseOutside() {
   const red = redNeed();
   if (red) { homeFor(red); return "go_home"; }   // a need ran red: home to sort it out (user)
+  if (sim.outBack != null && (sim.t >= sim.outBack || hour() >= 20.5)) { speak(pick(["玩够啦，回家吧", "有点累了，回家", "天色不早了，回家吧"])); return "go_home"; }
   const O = OUT[sim.place], p = here();
   if (O.kind === "sit") return "bench";
   if (O.kind === "scroll") return "mall";
@@ -5197,7 +5229,7 @@ function snapshot() {
     sim: { t: sim.t, needs: sim.needs, mode: sim.mode, act: sim.act, actEnd: sim.actEnd, nap: !!sim.nap,
            at: [Math.round(p.x), storeyOfY(p.y)], facing: sim.facing, queue: sim.windup ? [sim.windup.act] : sim.queue, recent: sim.recent,
            lastDay: sim.lastDay, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
-           graceUntil: sim.graceUntil, insomnia: !!sim.insomnia, place: sim.place },
+           graceUntil: sim.graceUntil, insomnia: !!sim.insomnia, place: sim.place, lastOut: sim.lastOut ?? null, outBack: sim.outBack ?? null },
     moods: [...moods].filter(([id]) => ML[id] && !id.startsWith("test_")).map(([id, m]) => [id, m.until, m.t]),
     flags: lifeFlags, events: eventLast, lastFestivalDay, namedAs,
     house: { lamps, windows: windowState },
@@ -5232,6 +5264,7 @@ function restore(sv) {
   }
   sim.route = [[x, FLOOR_Y[storey] ?? FLOOR_Y[1]]]; sim.s = 0; sim.target = 0; sim.crossing = [];
   sim.place = OUT[m.place] ? m.place : "home";
+  sim.lastOut = m.lastOut ?? null; sim.outBack = m.outBack ?? null;
   if (sim.place !== "home") {                     // out in front: back on the sidewalk where she was
     const O = OUT[sim.place], ox = Math.max(O.walk[0], Math.min(O.walk[1], Array.isArray(m.at) ? m.at[0] : O.doorX));
     sim.route = [[ox, O.feet]];
