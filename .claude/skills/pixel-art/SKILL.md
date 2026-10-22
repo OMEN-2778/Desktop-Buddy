@@ -663,19 +663,24 @@ edits; copy changes into life_text.js.
 - **Video chats & forums** (user): the computer ring's 视频聊天 ▸ / 逛论坛 ▸
   open second rings (和爸爸 / 和妈妈 / 和朋友; 刷音符 / 刷小红本 / 逛树洞岛 /
   逛冷知识研究所). `CHATS` (prototype/demo/chats_text.js, pasted in by make_demo):
-  dad 10, mom 10, friends 30 ({朋友} picked per call), 30 per forum. One
+  video: dad 10, mom 10, friends 30 ({朋友} picked per call); forums 30 in
+  chats_text.js + 70 more each in prototype/demo/chats/<forum>.js. Phone calls
+  (`CHATS.call`, voice only, 50 each for dad/mom/friend: chats/call_*.js; the
+  phone ring's 打电话 ▸ → 打给爸爸 / 妈妈 / 朋友, ids `chat_call_<who>_<i>`).
+  New talks: write the array file and run `node tools/check_chats.js <file>
+  call|forum <count>`; about 60% funny (user: absurd / dark humour is fine),
+  the rest every other emotion, many about young adults' lives. One
   conversation per visit (`chatItem`, unseen first, `lifeFlags.talkSeen`)
   plays line by line in her bubble while time runs (`playTalk`; ">" someone
   else, shown with "爸爸：" / "评论："; "#" a post, shown with 【音符】;
   plain = her); she stays until it's over; diary line at the start (who /
   which forum) and the end (its title), and its moodlet (`chat_<who>_<i>`).
   She picks one herself too (friends weighted 3 : mom 1.2 : dad 1).
-  The phone ring's 打给妈妈 / 和朋友视频 play the same talks (`chatItem(kind,
-  who, via)`; a voice call skips talks that mention a camera, `VOICE_OK`).
+  和朋友视频 on the phone plays the video talks (`chatItem(kind, who, via)`).
   Someone else's whole line is in the name's colour (`.pop.other`, user).
   When a call or video chat ends, the whole conversation is kept with its
   diary line (`li._talk`, saved as the 4th field of a diary entry) and folds
-  out under it in the opened diary (聊天记录 · N 句, user). Forums don't.
+  out under it in the opened diary (聊天记录 · N 句, user); forum visits too (浏览记录 · N 条).
 Moodlets add points to one emotion, the top sum wins (1-2 有点, 3-5, 6+ 非常),
 condition moodlets last while true. Events roll once a game hour with
 cooldowns; her words queue so bubbles never cut each other off. Social
