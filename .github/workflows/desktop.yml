@@ -5,7 +5,8 @@
 # the repo's secrets (TAURI_SIGNING_PRIVATE_KEY), the installer is signed and
 # published as a GitHub release (v0.1.N) with latest.json, which the app
 # checks (plugins.updater in desktop/src-tauri/tauri.conf.json). Without the
-# key it builds as before and publishes nothing.
+# key it builds as before and publishes nothing. Run it by hand (Actions →
+# Desktop app → Run workflow) to publish without a code change.
 name: Desktop app
 
 on:
@@ -63,7 +64,7 @@ jobs:
           fi
 
       - name: Release (for the in-app updater)
-        if: env.TAURI_SIGNING_PRIVATE_KEY != '' && github.event_name == 'push'
+        if: env.TAURI_SIGNING_PRIVATE_KEY != ''
         working-directory: desktop/src-tauri/target/release/bundle/nsis
         shell: bash
         env:
