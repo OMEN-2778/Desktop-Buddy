@@ -508,13 +508,19 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   bar. `data-tauri-drag-region` didn't work for the user on Windows (the
   see-through margins may not even get clicks) — don't go back to it. Icon:
   `art/src/concept/app_icon.py` -> `tools/make_desktop_icons.py`.
-  **Self-update** (user: no more sending the .exe around): tauri-plugin-updater,
-  driven from Rust (`check_update` / `install_update`, progress event
-  `update-progress`); CI versions builds 0.1.<run number> and, with the
-  `TAURI_SIGNING_PRIVATE_KEY` secret, publishes each as a release with
-  `latest.json`. The page's `#update` bar (house top right, above cards)
-  appears 8 s after start / every 6 h / tray 检查更新; 更新 runs autoSave
-  first.
+  **Self-update** (user: no more sending the .exe around; portable too;
+  seamless): tauri-plugin-updater driven from Rust — `check_update`,
+  `download_update` (portable entry `windows-x86_64-portable` in
+  latest.json when the exe's folder is writable: verified bytes written as
+  `<exe>.new`; else the installer's bytes), `apply_update` (rename to .old,
+  swap, spawn, exit; the window comes back at `restart_pos` from
+  config.json). CI versions builds 0.1.<run number> and, with the
+  `TAURI_SIGNING_PRIVATE_KEY` secret, signs installer + bare exe and
+  publishes a release with `latest.json`. Page: 设置 → 更新 row (自动更新 /
+  只提醒 switch, `prefs.autoUpdate`, + 检查更新; disabled in the browser);
+  auto = quiet download, then `waitForQuiet` (nothing open, no input 20 s),
+  `saveGame` (always), apply; afterwards a "已更新到 x" note. `#update` bar
+  at the house's top right, above cards.
   Gotchas found running it (Linux build under Xvfb): the demo page is a
   fragment, so `copy-web.mjs` adds a doctype + UTF-8 charset (without it the
   app's webview shows mojibake and the game never boots); the window's first

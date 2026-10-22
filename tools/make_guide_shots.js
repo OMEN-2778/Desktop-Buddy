@@ -51,7 +51,7 @@ const SHOTS = [
     marks: ["@front_door", () => btn("去门口"), () => btn("去公园"), () => btn("去商场"), () => btn("去海边")] },
   { id: "settings", setup: () => { at("sofa"); setSettingsOpen(true); }, wait: 1000,
     clip: ["#setGear", "#setPop"], pad: 12,
-    marks: [() => row("时间流速"), () => row("界面大小"), () => row("置顶游戏"), () => row("存档"), () => btn("教程", setPop)] },
+    marks: [() => row("时间流速"), () => row("界面大小"), () => row("置顶游戏"), () => row("存档"), () => btn("教程", setPop), () => row("更新")] },
 ];
 
 // helpers defined in the page before each setup

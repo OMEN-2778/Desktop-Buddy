@@ -17,20 +17,31 @@
 //!   set_on_top               "置顶游戏" (also ticks the tray item)
 //!   exit_app                 quit, once the page has saved
 //!   log_js                   the page's errors, printed to the app's stderr
+//!   app_version              this build's version
 //!   check_update             a newer version on GitHub? { version, current, notes } or null
-//!   install_update           download it, install it, restart (progress: "update-progress")
+//!   download_update          fetch it (signature checked; progress: "update-progress"),
+//!                            ready to apply; the new version, or null if none
+//!   apply_update             swap it in and restart where the window was
 //! Events sent to the page: "app-quit" (save, then call exit_app),
 //! "on-top-changed" (the tray item was toggled) and "check-update" (the
 //! tray's 检查更新).
 //!
-//! Updates: every CI build is a GitHub release with a signed installer and
-//! latest.json (.github/workflows/desktop.yml); plugins.updater in
-//! tauri.conf.json points at the latest one and holds the public key.
+//! Updates: every CI build is a GitHub release with a signed installer, a
+//! signed bare exe and latest.json (.github/workflows/desktop.yml);
+//! plugins.updater in tauri.conf.json points at the latest one and holds the
+//! public key. Seamless (user): where the exe's folder is writable (the
+//! portable exe, or the default per-user install) the new exe is written
+//! beside it, the running one renamed to .old and the new one put in its
+//! place, then it restarts; only an install the user can't write to runs the
+//! installer instead.
 
 use std::{
     fs,
     path::PathBuf,
-    sync::atomic::{AtomicBool, Ordering},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Mutex,
+    },
     thread,
     time::Duration,
 };
@@ -237,7 +248,21 @@ fn fit_window(window: WebviewWindow, width: f64, height: f64, dx: Option<f64>, d
         thread::sleep(Duration::from_millis(150));
         let _ = window.set_resizable(false);
         if first {
-            let _ = window.center();
+            // back where it was before an update restarted it, else centred
+            let app = window.app_handle();
+            let mut config = read_config(app);
+            match config.get("restart_pos").and_then(|p| Some((p.get(0)?.as_i64()?, p.get(1)?.as_i64()?))) {
+                Some((x, y)) => {
+                    let _ = window.set_position(PhysicalPosition::new(x as i32, y as i32));
+                    if let Some(obj) = config.as_object_mut() {
+                        obj.remove("restart_pos");
+                    }
+                    let _ = write_config(app, &config);
+                }
+                None => {
+                    let _ = window.center();
+                }
+            }
             let _ = window.show();
             let _ = window.set_focus();
         }
@@ -261,6 +286,35 @@ fn log_js(message: String) {
     eprintln!("[page] {message}");
 }
 
+/// latest.json's entry for the bare exe (the installer is "windows-x86_64")
+const PORTABLE_TARGET: &str = "windows-x86_64-portable";
+
+/// A downloaded update waiting to be applied: either a new exe already
+/// written beside the running one (swap), or the installer's bytes.
+struct Ready {
+    update: tauri_plugin_updater::Update,
+    bytes: Vec<u8>,
+    swap: Option<(PathBuf, PathBuf)>, // (running exe, new exe)
+}
+struct Pending(Mutex<Option<Ready>>);
+
+/// The running exe, if new files can be put in its folder (Windows only).
+fn writable_exe() -> Option<PathBuf> {
+    if !cfg!(windows) {
+        return None;
+    }
+    let exe = std::env::current_exe().ok()?;
+    let probe = exe.parent()?.join(".buddy-update-probe");
+    fs::write(&probe, b"").ok()?;
+    let _ = fs::remove_file(&probe);
+    Some(exe)
+}
+
+#[tauri::command]
+fn app_version(app: AppHandle) -> String {
+    app.package_info().version.to_string()
+}
+
 #[tauri::command]
 async fn check_update(app: AppHandle) -> Result<Option<serde_json::Value>, String> {
     use tauri_plugin_updater::UpdaterExt;
@@ -269,14 +323,23 @@ async fn check_update(app: AppHandle) -> Result<Option<serde_json::Value>, Strin
 }
 
 #[tauri::command]
-async fn install_update(app: AppHandle) -> Result<(), String> {
+async fn download_update(app: AppHandle, pending: State<'_, Pending>) -> Result<Option<String>, String> {
     use tauri_plugin_updater::UpdaterExt;
-    let Some(update) = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())? else {
-        return Ok(());
-    };
+    let exe = writable_exe();
+    // the bare exe when we can swap it in (older releases have none: the installer then)
+    let mut found = None;
+    if exe.is_some() {
+        let portable = app.updater_builder().target(PORTABLE_TARGET).build().map_err(|e| e.to_string())?;
+        found = portable.check().await.ok().flatten();
+    }
+    let swap_ok = found.is_some();
+    if found.is_none() {
+        found = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?;
+    }
+    let Some(update) = found else { return Ok(None) };
     let (mut done, progress) = (0u64, app.clone());
-    update
-        .download_and_install(
+    let bytes = update
+        .download(
             move |chunk, total| {
                 done += chunk as u64;
                 let _ = progress.emit("update-progress", serde_json::json!({ "done": done, "total": total }));
@@ -285,7 +348,59 @@ async fn install_update(app: AppHandle) -> Result<(), String> {
         )
         .await
         .map_err(|e| e.to_string())?;
-    app.restart();
+    let version = update.version.clone();
+    let ready = match exe.filter(|_| swap_ok) {
+        Some(exe) => {
+            let new = exe.with_extension("new");
+            fs::write(&new, &bytes).map_err(|e| e.to_string())?;
+            Ready { update, bytes: Vec::new(), swap: Some((exe, new)) }
+        }
+        None => Ready { update, bytes, swap: None },
+    };
+    *pending.0.lock().unwrap() = Some(ready);
+    Ok(Some(version))
+}
+
+#[tauri::command]
+fn apply_update(app: AppHandle, window: WebviewWindow, pending: State<Pending>) -> Result<(), String> {
+    let Some(ready) = pending.0.lock().unwrap().take() else { return Err("nothing downloaded".into()) };
+    // come back where the window is now (see fit_window)
+    if let Ok(pos) = window.outer_position() {
+        let mut config = read_config(&app);
+        config["restart_pos"] = serde_json::json!([pos.x, pos.y]);
+        write_config(&app, &config)?;
+    }
+    match ready.swap {
+        Some((exe, new)) => {
+            // a running exe can be renamed on Windows, not overwritten
+            let old = exe.with_extension("old");
+            let _ = fs::remove_file(&old);
+            fs::rename(&exe, &old).map_err(|e| e.to_string())?;
+            if let Err(e) = fs::rename(&new, &exe) {
+                let _ = fs::rename(&old, &exe);
+                return Err(e.to_string());
+            }
+            std::process::Command::new(&exe).spawn().map_err(|e| e.to_string())?;
+            app.exit(0);
+            Ok(())
+        }
+        None => ready.update.install(&ready.bytes).map_err(|e| e.to_string()), // runs the installer, which closes us
+    }
+}
+
+/// Leftovers of an update: the old exe (once it has quit) and an unapplied download.
+fn clean_after_update() {
+    let Ok(exe) = std::env::current_exe() else { return };
+    let _ = fs::remove_file(exe.with_extension("new"));
+    thread::spawn(move || {
+        for _ in 0..10 {
+            thread::sleep(Duration::from_secs(2));
+            let old = exe.with_extension("old");
+            if !old.exists() || fs::remove_file(&old).is_ok() {
+                break;
+            }
+        }
+    });
 }
 
 #[tauri::command]
@@ -308,7 +423,9 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .manage(Pending(Mutex::new(None)))
         .setup(|app| {
+            clean_after_update();
             let show = MenuItem::with_id(app, "show", "显示 / 隐藏", true, None::<&str>)?;
             let on_top = CheckMenuItem::with_id(app, "on_top", "置顶游戏", true, false, None::<&str>)?;
             let update = MenuItem::with_id(app, "update", "检查更新", true, None::<&str>)?;
@@ -385,8 +502,10 @@ pub fn run() {
             set_on_top,
             exit_app,
             log_js,
+            app_version,
             check_update,
-            install_update
+            download_update,
+            apply_update
         ])
         .run(tauri::generate_context!())
         .expect("error while running Desktop Buddy");

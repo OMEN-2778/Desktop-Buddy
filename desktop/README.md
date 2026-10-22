@@ -28,9 +28,12 @@ The game is the same single web page as the browser demo
   mall shop staff and sellers calling out, on the dock now and then an
   angler), say things, and sometimes chat with her
 - a tray icon: 显示 / 隐藏, 置顶游戏, 检查更新, 退出
-- updates itself: a while after start (and every 6 hours) it asks GitHub
-  for a newer version; a bar at the house's top right offers 更新 (save,
-  download, install, restart) or 以后
+- updates itself (installed or portable): a while after start (and every 6
+  hours) it asks GitHub for a newer version. 设置 → 更新: 有新版本自动更新
+  (default: downloads quietly, then — when nothing is open and you haven't
+  clicked for 20 s — saves, swaps the exe and restarts where the window was)
+  or 有新版本只提醒 (a bar offers 更新 / 以后); 检查更新 there or in the tray
+  updates right away
 - the save is a JSON file in the app's data folder by default
   (Windows: `%APPDATA%\com.desktopbuddy.app\save.json`, previous copy kept
   as `save.json.bak`), so it is always found again after a restart;
@@ -62,7 +65,8 @@ run's artifact.
 Every CI build is version `0.1.<run number>`. When the repository has the
 secret `TAURI_SIGNING_PRIVATE_KEY` (Settings → Secrets and variables →
 Actions), the build signs the installer and publishes a GitHub release
-`v0.1.N` with `latest.json`; installed apps find it through
+`v0.1.N` with the installer, the bare exe (also signed) and `latest.json`
+(`windows-x86_64` = installer, `windows-x86_64-portable` = bare exe); apps find it through
 `plugins.updater.endpoints` in `src-tauri/tauri.conf.json`, which also holds
 the matching public key. Without the secret the build still works but
 publishes nothing. Losing the private key means installed apps can't update
@@ -71,3 +75,10 @@ any more (they'd need a fresh install with a new public key).
 Make a new key pair with `npx tauri signer generate -w updater.key` (no
 password): the `.pub` file's text goes in `tauri.conf.json`, the private
 file's text in the secret.
+
+How an app applies it: if it may write to its own folder (the portable exe,
+or the default per-user install) it downloads the bare exe (signature
+checked), writes it beside itself as `.new`, renames itself to `.old`, puts
+the new one in place and starts it (`.old` is deleted on the next start);
+otherwise it runs the installer. A manual run of the workflow (Actions →
+Desktop app → Run workflow) publishes too.
