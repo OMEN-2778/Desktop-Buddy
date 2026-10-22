@@ -5351,7 +5351,7 @@ function placeUpdate() {
   updEl.style.right = updEl.parentElement.clientWidth - view.offsetLeft - view.offsetWidth + "px";
 }
 function showUpdate(text, { go = null, later = true } = {}) {
-  updText.textContent = text;
+  updText.textContent = text; updEl.title = "";
   updEl.querySelector(".up-go").hidden = !go;
   updEl.querySelector(".up-go").textContent = go || "";
   updEl.querySelector(".up-later").hidden = !later;
@@ -5385,7 +5385,7 @@ async function downloadUpdate(shown) {
   catch (e) {
     upd.state = "idle"; updEl.style.removeProperty("--p");
     TAURI.core.invoke("log_js", { message: `update: ${e}` });
-    if (shown) showUpdate("更新失败了", { go: "重试" });
+    if (shown) updFailed(e);
     return;
   }
   if (!v) { upd.state = "idle"; if (shown) hideUpdate(); return; }
@@ -5408,15 +5408,24 @@ async function applyUpdate() {
   try { localStorage.setItem("buddy-updated", upd.version); } catch (e) { /* only for the note after */ }
   await new Promise(r => setTimeout(r, 1200));
   try { await TAURI.core.invoke("apply_update"); }      // swaps the exe and restarts (or runs the installer)
-  catch (e) { upd.state = "ready"; showUpdate("更新失败了", { go: "重试" }); TAURI.core.invoke("log_js", { message: `apply: ${e}` }); }
+  catch (e) { upd.state = "ready"; updFailed(e); TAURI.core.invoke("log_js", { message: `apply: ${e}` }); }
+}
+// say why (user: it kept failing with no reason); the whole message on hover
+function updFailed(e) {
+  const msg = String(e || "").replace(/^Error:\s*/, "");
+  const head = /^[\u4e00-\u9fff]/.test(msg) ? msg : msg ? `更新失败：${msg}` : "更新失败了";   // the app's own reasons start in Chinese
+  showUpdate(head.length > 18 ? head.slice(0, 18) + "…" : head, { go: "重试" });
+  updEl.title = msg ? `${msg}\n（详细记录在 update.log）` : "";
 }
 updEl.querySelector(".up-go").addEventListener("click", () => { if (upd.state === "ready") applyUpdate(); else { updLater = false; checkUpdate(true); } });
 updEl.querySelector(".up-later").addEventListener("click", () => { updLater = true; if (upd.state === "offered") upd.state = "idle"; hideUpdate(); });
 if (TAURI) {
   TAURI.event.listen("check-update", () => { updLater = false; checkUpdate(true); });
   TAURI.event.listen("update-progress", e => {
-    const { done, total } = e.payload || {};
-    if (!total || !upd.shown) return;
+    const { done, total, source } = e.payload || {};
+    if (!upd.shown) return;
+    if (source && !/^https:\/\/github\.com\//.test(source)) { updText.textContent = "换个线路下载……"; updEl.style.setProperty("--p", "0%"); return; }
+    if (!total) return;
     const p = Math.min(100, Math.round(done / total * 100));
     updEl.style.setProperty("--p", p + "%");
     updText.textContent = `下载中 ${p}%`;

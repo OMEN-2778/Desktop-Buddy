@@ -529,6 +529,9 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   auto = quiet download, then `waitForQuiet` (nothing open, no input 20 s),
   `saveGame` (always), apply; afterwards a "已更新到 x" note. `#update` bar
   above the diary box at the house's right edge (user), above cards.
+  Downloads fall back to GitHub mirrors (`MIRRORS`; endpoints too) — the
+  user's updates kept failing from China; file moves retry (antivirus holds
+  new exes); failures show their reason on the bar and go to `update.log`.
   Gotchas found running it (Linux build under Xvfb): the demo page is a
   fragment, so `copy-web.mjs` adds a doctype + UTF-8 charset (without it the
   app's webview shows mojibake and the game never boots); the window's first

@@ -83,3 +83,9 @@ checked), writes it beside itself as `.new`, renames itself to `.old`, puts
 the new one in place and starts it (`.old` is deleted on the next start);
 otherwise it runs the installer. A manual run of the workflow (Actions →
 Desktop app → Run workflow) publishes too.
+
+Downloads are tried from GitHub, then through public GitHub mirrors
+(`MIRRORS` in `src-tauri/src/lib.rs`; also as extra `endpoints` for
+latest.json) since GitHub is often slow or cut off in mainland China; the
+signature check makes the source irrelevant to safety. Problems are logged
+to `update.log` in the config folder (Windows: `%APPDATA%\com.desktopbuddy.app`).

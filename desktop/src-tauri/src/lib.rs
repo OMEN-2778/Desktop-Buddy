@@ -308,6 +308,37 @@ fn log_js(message: String) {
 /// latest.json's entry for the bare exe (the installer is "windows-x86_64")
 const PORTABLE_TARGET: &str = "windows-x86_64-portable";
 
+/// GitHub's downloads are often slow or cut off in mainland China (user's
+/// updates kept failing): each download is tried straight from GitHub, then
+/// through these public GitHub mirrors. Safe because every file's signature
+/// is checked against our public key whatever the source.
+const MIRRORS: &[&str] = &["https://ghfast.top/", "https://gh-proxy.com/", "https://ghproxy.net/"];
+
+/// Update problems, for us to read later: update.log in the config folder.
+fn update_log(app: &AppHandle, msg: &str) {
+    use std::io::Write;
+    if let Ok(dir) = config_dir(app) {
+        if let Ok(mut f) = fs::OpenOptions::new().create(true).append(true).open(dir.join("update.log")) {
+            let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+            let _ = writeln!(f, "[{secs}] {msg}");
+        }
+    }
+}
+
+/// Retry a file operation a few times: right after the download, antivirus
+/// often holds the new exe for a moment.
+fn retry<T>(mut f: impl FnMut() -> std::io::Result<T>) -> std::io::Result<T> {
+    let mut last = None;
+    for i in 0..12 {
+        match f() {
+            Ok(v) => return Ok(v),
+            Err(e) => last = Some(e),
+        }
+        thread::sleep(Duration::from_millis(250 * (i + 1).min(4)));
+    }
+    Err(last.unwrap())
+}
+
 /// A downloaded update waiting to be applied: either a new exe already
 /// written beside the running one (swap), or the installer's bytes.
 struct Ready {
@@ -337,7 +368,10 @@ fn app_version(app: AppHandle) -> String {
 #[tauri::command]
 async fn check_update(app: AppHandle) -> Result<Option<serde_json::Value>, String> {
     use tauri_plugin_updater::UpdaterExt;
-    let update = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?;
+    let update = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| {
+        update_log(&app, &format!("check: {e}"));
+        e.to_string()
+    })?;
     Ok(update.map(|u| serde_json::json!({ "version": u.version, "current": u.current_version, "notes": u.body })))
 }
 
@@ -355,23 +389,46 @@ async fn download_update(app: AppHandle, pending: State<'_, Pending>) -> Result<
     if found.is_none() {
         found = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?;
     }
-    let Some(update) = found else { return Ok(None) };
-    let (mut done, progress) = (0u64, app.clone());
-    let bytes = update
-        .download(
-            move |chunk, total| {
-                done += chunk as u64;
-                let _ = progress.emit("update-progress", serde_json::json!({ "done": done, "total": total }));
-            },
-            || {},
-        )
-        .await
-        .map_err(|e| e.to_string())?;
+    let Some(mut update) = found else { return Ok(None) };
+    // GitHub first, then the mirrors; each try has 5 minutes (9-10 MB)
+    let direct = update.download_url.to_string();
+    let sources: Vec<String> = std::iter::once(direct.clone()).chain(MIRRORS.iter().map(|m| format!("{m}{direct}"))).collect();
+    update.timeout = Some(Duration::from_secs(300));
+    let (mut bytes, mut errors) = (None, Vec::new());
+    for src in &sources {
+        let Ok(url) = src.parse() else { continue };
+        update.download_url = url;
+        let (mut done, progress) = (0u64, app.clone());
+        let _ = app.emit("update-progress", serde_json::json!({ "done": 0, "total": null, "source": src }));
+        match update
+            .download(
+                move |chunk, total| {
+                    done += chunk as u64;
+                    let _ = progress.emit("update-progress", serde_json::json!({ "done": done, "total": total }));
+                },
+                || {},
+            )
+            .await
+        {
+            Ok(b) => {
+                bytes = Some(b);
+                break;
+            }
+            Err(e) => {
+                update_log(&app, &format!("download {src}: {e}"));
+                errors.push(e.to_string());
+            }
+        }
+    }
+    let Some(bytes) = bytes else { return Err(format!("下载失败：{}", errors.last().cloned().unwrap_or_default())) };
     let version = update.version.clone();
     let ready = match exe.filter(|_| swap_ok) {
         Some(exe) => {
             let new = exe.with_extension("new");
-            fs::write(&new, &bytes).map_err(|e| e.to_string())?;
+            retry(|| fs::write(&new, &bytes)).map_err(|e| {
+                update_log(&app, &format!("write {}: {e}", new.display()));
+                format!("写不进文件夹：{e}")
+            })?;
             Ready { update, bytes: Vec::new(), swap: Some((exe, new)) }
         }
         None => Ready { update, bytes, swap: None },
@@ -394,16 +451,28 @@ fn apply_update(app: AppHandle, window: WebviewWindow, pending: State<Pending>) 
             // a running exe can be renamed on Windows, not overwritten
             let old = exe.with_extension("old");
             let _ = fs::remove_file(&old);
-            fs::rename(&exe, &old).map_err(|e| e.to_string())?;
-            if let Err(e) = fs::rename(&new, &exe) {
+            retry(|| fs::rename(&exe, &old)).map_err(|e| {
+                update_log(&app, &format!("rename running exe: {e}"));
+                format!("换不下旧版本：{e}")
+            })?;
+            if let Err(e) = retry(|| fs::rename(&new, &exe)) {
+                update_log(&app, &format!("put new exe in place: {e}"));
                 let _ = fs::rename(&old, &exe);
-                return Err(e.to_string());
+                return Err(format!("换不上新版本：{e}"));
             }
-            std::process::Command::new(&exe).spawn().map_err(|e| e.to_string())?;
+            if let Err(e) = std::process::Command::new(&exe).spawn() {
+                update_log(&app, &format!("start new exe: {e}"));
+                let _ = fs::rename(&exe, &new);
+                let _ = fs::rename(&old, &exe);
+                return Err(format!("新版本启动不了：{e}"));
+            }
             app.exit(0);
             Ok(())
         }
-        None => ready.update.install(&ready.bytes).map_err(|e| e.to_string()), // runs the installer, which closes us
+        None => ready.update.install(&ready.bytes).map_err(|e| {
+            update_log(&app, &format!("install: {e}"));
+            format!("安装失败：{e}")
+        }), // runs the installer, which closes us
     }
 }
 
