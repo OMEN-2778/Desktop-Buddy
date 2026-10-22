@@ -66,6 +66,21 @@ def overlay(spr, x, y):
     return {"src": png(spr), "x": int(x), "y": int(y)}
 
 
+def chats_js():
+    """chats_text.js plus the longer lists in chats/: phone calls (CHATS.call) and more forum posts."""
+    d = SRC.parent / "chats"
+    out = (SRC.parent / "chats_text.js").read_text()
+    def talks(name):
+        f = d / (name + ".js")
+        return f.read_text().strip() if f.exists() else "[]"
+    out += "\nCHATS.call = {\n" + ",\n".join(
+        f'  {who}: {{ name: "{nm}", talks: {talks("call_" + who)}\n  }}'
+        for who, nm in (("dad", "爸爸"), ("mom", "妈妈"), ("friend", "{朋友}"))) + "\n};\n"
+    for k in ("yinfu", "xiaohongben", "shudong", "lengzhishi"):
+        out += f"CHATS.forum.{k}.talks.push(...{talks(k)}\n);\n"
+    return out
+
+
 def main():
     day = empty_house(False)
     night = empty_house(True)
@@ -297,7 +312,7 @@ def main():
         "guide": guide_shots(),
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", (SRC.parent / "chats_text.js").read_text()).replace("/*__PLACES_JS__*/", (SRC.parent / "places_text.js").read_text()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text()).replace("/*__GUIDE_JS__*/", (SRC.parent / "guide_text.js").read_text())
+    html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", chats_js()).replace("/*__PLACES_JS__*/", (SRC.parent / "places_text.js").read_text()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text()).replace("/*__GUIDE_JS__*/", (SRC.parent / "guide_text.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 

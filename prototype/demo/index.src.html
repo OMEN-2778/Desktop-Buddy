@@ -2354,7 +2354,7 @@ const CATALOG = {
 function pickItem(act) {
   if (act === "pc_video") return chatItem("video", weighted([["friend", 3], ["mom", 1.2], ["dad", 1]]));
   if (act === "pc_forum") return chatItem("forum", pick(Object.keys(CHATS.forum)));
-  if (act === "phone_call") return chatItem("video", "mom", "call");
+  if (act === "phone_call") return chatItem("call", weighted([["mom", 3], ["friend", 2.5], ["dad", 1.5]]), "call");
   if (act === "phone_video") return chatItem("video", "friend", "phone");
   if (act === "cook") {   // hungry: she goes for something filling
     const all = T.cuisines.flatMap(c => c.dishes.map(d => [c, d]));
@@ -2439,7 +2439,7 @@ function lifeFinish(act) {
     case "pc_code": case "pc_video": case "pc_forum": case "phone_video": case "phone_call": case "phone_text": case "phone_feed":
       if (sim.item && sim.item.talk) {                // a conversation (user): its own diary line and mood
         const tk = sim.item.talk;
-        log(fill(tk.end, sim.item.vars), null, tk.kind === "video" && sim.talk && sim.talk.said || null);
+        log(fill(tk.end, sim.item.vars), null, sim.talk && sim.talk.said || null);
         if (tk.id) addMood(tk.id, { vars: sim.item.vars, diary: false, words: false });
         else addMood(weighted(T.outcomes[act]), { vars: sim.item.vars });
         if (sim.forced) addMood(sim.forced);           // mom rang (an event): that feeling too
@@ -2488,7 +2488,7 @@ const EVENTS = [
   ["spill", c => ["computer", "pc_video", "pc_forum", "pc_code"].includes(c.act), 0.05, 5760],
   ["parcel", c => c.awake && c.h >= 10 && c.h < 18, 0.03, 2880, () => {
     const vars = {}; lifeEvent("parcel", vars); addMood(Math.random() < 0.75 ? "parcelGood" : "parcelOdd", { words: false }); }],
-  ["momCall", c => c.h >= 17 && c.h < 21 && free(), 0.1, 5 * 1440, () => { lifeEvent("momCall"); sim.queue = []; startAct("phone_call", true); sim.forced = "momCall"; }],
+  ["momCall", c => c.h >= 17 && c.h < 21 && free(), 0.1, 5 * 1440, () => { lifeEvent("momCall"); sim.queue = []; sim.chosen = { act: "phone_call", item: chatItem("call", "mom", "call") }; startAct("phone_call", true); sim.forced = "momCall"; }],
   ["friendVideo", c => c.act === "computer" && c.h >= 19 && c.h < 23, 0.25, 4 * 1440, () => { lifeEvent("friendVideo"); startAct("pc_video", true); sim.forced = "friendVideo"; }],
   ["bill", c => c.awake && c.se.day % 7 === 0 && c.h >= 10, 1, 6 * 1440],
   ["magazine", c => c.awake && c.se.day === 10 && c.h >= 9, 1, 10 * 1440],
@@ -3301,7 +3301,8 @@ const ringEl = document.getElementById("ring");
 const RINGS = {
   buddy: [["name", null, "label"], ["chat", "聊聊天"], ["pat", "摸摸头"], ["phone", "玩手机 ▸", "more"], ["dance", "跳支舞"],
           ["bed", "去睡觉"], ["rename", "改名字"]],
-  phone: [["phone_call", "打给妈妈"], ["phone_video", "和朋友视频"], ["phone_feed", "刷动态"], ["phone_text", "发消息"], ["phone_game", "玩手机游戏"], ["back", "返回", "back"]],
+  phone: [["call", "打电话 ▸", "more"], ["phone_video", "和朋友视频"], ["phone_feed", "刷动态"], ["phone_text", "发消息"], ["phone_game", "玩手机游戏"], ["back", "返回", "back"]],
+  call: [["dial:dad", "打给爸爸"], ["dial:mom", "打给妈妈"], ["dial:friend", "打给朋友"], ["back", "返回", "back"]],
   computer: [["computer", "打游戏"], ["video", "视频聊天 ▸", "more"], ["forum", "逛论坛 ▸", "more"], ["pc_code", "写代码"]],
   // user: video chat with 爸爸 / 妈妈 / a friend, forums by platform (CHATS, chats_text.js)
   // the front door (user): where to go
@@ -3439,6 +3440,8 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) cl
 let lastChat = -1e9;
 function ringPick(id) {
   if (id === "phone") { openRing("phone", "buddy"); return; }
+  if (id === "call") { openRing("call", "buddy"); return; }
+  if (id.startsWith("dial:")) { closeRing(); command("phone_call", chatItem("call", id.slice(5), "call")); return; }
   if (id === "rename") { openRename(); return; }
   if (id === "video" || id === "forum") { openRing(id, "computer"); return; }
   if (id.startsWith("go:")) {
@@ -3447,7 +3450,7 @@ function ringPick(id) {
     command("go_out");
     return;
   }
-  if (id === "back") { openRing(ringAt === "computer" ? "computer" : "buddy"); return; }
+  if (id === "back") { openRing(ringOf === "call" ? "phone" : ringAt === "computer" ? "computer" : "buddy"); return; }
   if (id === "go_home") { closeRing(); command("go_home"); return; }
   if (id.startsWith("talk:") || id.startsWith("feed:")) {
     closeRing();
@@ -4677,30 +4680,27 @@ function renderMall(dt) {
 // plain = her. The same conversation doesn't come back until most of its
 // group has been seen.
 /*__CHATS_JS__*/
-const CHAT_ACT = { pc_video: "video", pc_forum: "forum", phone_call: "video", phone_video: "video" };
+const CHAT_ACT = { pc_video: "video", pc_forum: "forum", phone_call: "call", phone_video: "video" };
 for (const [kind, groups] of Object.entries(CHATS)) for (const [who, g] of Object.entries(groups))
-  g.talks.forEach((t, i) => { if (t.mood) ML[t.id = `chat_${who}_${i}`] = { ...t.mood }; });
-// on the phone (user: calls get a record too): 打给妈妈 is a voice call, so only
-// talks that never mention a camera; 和朋友视频 is a video call on the phone
-const VOICE_OK = t => !/镜头|画面|屏幕|摄像|看你|看看你/.test(t.lines.join(""));
+  g.talks.forEach((t, i) => { if (t.mood) ML[t.id = `chat_${kind === "call" ? "call_" : ""}${who}_${i}`] = { ...t.mood }; });
+// phone calls (user: 50 per person, voice only) are CHATS.call; a video call on the phone is a video chat
 function chatItem(kind, who, via = "pc") {
-  const g = CHATS[kind][who], seen = ((lifeFlags.talkSeen ||= {})[who] ||= []);
-  const ok = i => !(via === "call" && !VOICE_OK(g.talks[i]));
-  let fresh = g.talks.map((_, i) => i).filter(i => ok(i) && !seen.includes(i));
-  if (!fresh.length) { seen.splice(0, seen.length - 3); fresh = g.talks.map((_, i) => i).filter(i => ok(i) && !seen.includes(i)); }
+  const g = CHATS[kind][who], seen = ((lifeFlags.talkSeen ||= {})[kind === "call" ? "call_" + who : who] ||= []);
+  let fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i));
+  if (!fresh.length) { seen.splice(0, seen.length - 3); fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i)); }
   const i = pick(fresh), t = g.talks[i], vars = { 朋友: pick(T.fill.朋友) };
   seen.push(i);
   const name = fill(g.name, vars);
   return { vars, talk: { ...t, kind, who, name,
-    start: via === "call" ? `拿起手机给${name}打电话。` : via === "phone" ? `拿起手机和${name}视频。` : kind === "video" ? `打开电脑，和${name}视频聊天。` : `打开电脑，${g.verb}。`,
-    end: via === "call" ? `和${name}打电话：${t.title}。` : kind === "video" ? `和${name}视频：${t.title}。` : `${g.verb}：${t.title}。` } };
+    start: kind === "call" ? `拿起手机给${name}打电话。` : via === "phone" ? `拿起手机和${name}视频。` : kind === "video" ? `打开电脑，和${name}视频聊天。` : `打开电脑，${g.verb}。`,
+    end: kind === "call" ? `和${name}打电话：${t.title}。` : kind === "video" ? `和${name}视频：${t.title}。` : `${g.verb}：${t.title}。` } };
 }
 function playTalk(dt) {
   if (!sim.item || !sim.item.talk || !CHAT_ACT[sim.act]) { sim.talk = null; return; }   // she was sent off to do something else
   const tk = sim.item.talk, st = sim.talk;
   if (st.i >= tk.lines.length || (st.wait -= dt) > 0) return;
   const raw = tk.lines[st.i++], mark = raw[0], text = fill((mark === ">" || mark === "#" ? raw.slice(1) : raw).trim(), sim.item.vars);
-  const who = mark === ">" ? (tk.kind === "video" ? `${tk.name}：` : "评论：") : mark === "#" ? `【${CHATS.forum[tk.who].tag}】` : "";
+  const who = mark === ">" ? (tk.kind !== "forum" ? `${tk.name}：` : "评论：") : mark === "#" ? `【${CHATS.forum[tk.who].tag}】` : "";
   showSay(text, who);
   (st.said ||= []).push([who, text]);                 // for the diary when it's over (user)
   st.wait = Math.min(4.6, Math.max(2.6, 1.4 + (who + text).length * 0.13));      // seconds of running time per line
@@ -4933,7 +4933,7 @@ function diaryItem(li) {
   if (li.classList.contains("day")) { out.className = "day"; out.textContent = li.textContent; }
   else { out.innerHTML = "<time></time><span></span>"; out.firstChild.textContent = li.querySelector("time").textContent; out.lastChild.textContent = li.querySelector("span").textContent; }
   if (li._talk) {   // the whole conversation, folded under its line (user)
-    const b = Object.assign(document.createElement("button"), { type: "button", className: "talk-btn", textContent: `聊天记录 · ${li._talk.length} 句` });
+    const b = Object.assign(document.createElement("button"), { type: "button", className: "talk-btn", textContent: li._talk.some(([w]) => w === "评论：" || w.startsWith("【")) ? `浏览记录 · ${li._talk.length} 条` : `聊天记录 · ${li._talk.length} 句` });
     const box = Object.assign(document.createElement("div"), { className: "talk-log" });
     for (const [who, line] of li._talk) {
       const p = document.createElement("p");
