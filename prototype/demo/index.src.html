@@ -967,6 +967,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
 <script>
 const DATA = /*__DEMO_DATA__*/null;
 const D = DATA;
+/*__BAR_TEXT_JS__*/
 // Inside the desktop app (Tauri, desktop/) the page is the whole frameless,
 // transparent window; in a browser it's a page.
 const TAURI = window.__TAURI__ && window.__TAURI__.core ? window.__TAURI__ : null;
@@ -1375,6 +1376,7 @@ function finishAct() {
 function command(act, item = null) {
   if (sim.place === "bar") {
     if (act === "go_home") throughDoor("home");
+    else if (act === "bar_drink") barOrder(item);
     return;
   }
   sim.chosen = item ? { act, item } : null;     // picked in the panel; otherwise she picks
@@ -1395,7 +1397,7 @@ function command(act, item = null) {
 
 const WALK = 28 * 2 / 3;   // house pixels per real second at 1x (user: two thirds of the old 28)
 function step(dtGame, dtReal) {
-  if (sim.place === "bar") return;   // scene preview: no simulation or autonomous actions yet
+  if (sim.place === "bar") { stepBar(dtGame, dtReal); return; }
   sim.t += dtGame;
   const day = Math.floor(sim.t / 1440) + 1;
   if (day !== sim.lastDay) { sim.lastDay = day; log(`—— 第 ${day} 天 · ${SEASONS[seasonOf(sim.t).i].name} ——`, "day"); }
@@ -1592,6 +1594,7 @@ function buildClickables() {
   }
 }
 function clickableAt(x, y) {
+  if (sim.place === "bar") return barHit(x, y);
   const key = Math.floor(x) + "," + Math.floor(y);
   let best = null;
   for (const [id, c] of Object.entries(CLICK)) if (clickPlace(id) === sim.place && c.near.has(key) && (!best || c.area < CLICK[best].area)) best = id;
@@ -2973,7 +2976,6 @@ let nextSay = 6, lastSaid = "", sayBusy = 0;
 const sayQueue = [];
 // her words wait their turn: one bubble at a time, at most a few queued
 function speak(text, now = false) {
-  if (sim.place === "bar") return;
   if (!text) return;
   if (now) { sayQueue.length = 0; showMoodTip(false); showSay(text); return; }
   if (realClock < sayBusy || listOpen) { if (sayQueue.length < 2 && !sayQueue.includes(text)) sayQueue.push(text); return; }
@@ -3036,7 +3038,10 @@ function showSay(text, who = "") {
 }
 let lifeT = -1;
 function updateMood() {
-  if (sim.place === "bar") { showFace(); return; }
+  if (sim.place === "bar") {
+    if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); }
+    showFace(); if (listOpen) fillMoodTip(); return;
+  }
   if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); rollEvents(); checkCollapse(); }
   showFace();
   if (listOpen) { fillMoodTip(); return; }          // her words wait until you're done looking
@@ -3055,7 +3060,8 @@ function syncUI() {
   document.getElementById("clock").textContent = `第 ${day} 天 · ${SEASONS[se.i].name} ${se.day}/${SEASON_DAYS} · ${fmt(sim.t)} · ${part} · ${WEATHER_NAME[weather.kind]}`;
   skyEl.setAttribute("aria-label", `时间与天气：${skyText()}`);
   if (!skyTip.hidden) skyTip.textContent = skyText();
-  const doing = sim.mode === "walk" ? `走去${ACTS[sim.act].label}` : sim.mode === "act" ? ACTS[sim.act].label : "闲着";
+  const doing = sim.place === "bar" ? (sim.mode === "walk" ? "走向座位" : sim.bar.drink ? `品尝${BAR_DRINKS[sim.bar.drink].name}` : sim.bar.seat ? "坐着听音乐" : "欣赏演出")
+    : sim.mode === "walk" ? `走去${ACTS[sim.act].label}` : sim.mode === "act" ? ACTS[sim.act].label : "闲着";
   document.getElementById("doing").firstChild.textContent = `正在：${doing}`;
   document.getElementById("ff").textContent = sim.mode === "act" && sim.act === "sleep" && speed ? "（夜里自动快进）" : "";
   for (const [k, v] of Object.entries(sim.needs)) {
@@ -3362,7 +3368,7 @@ const RINGS = {
   // user: video chat with 爸爸 / 妈妈 / a friend, forums by platform (CHATS, chats_text.js)
   // the front door (user): where to go
   door: [["go:front", "去门口"], ["go:park", "去公园"], ["go:mall", "去商场"], ["go:beach", "去海边"], ["go:bar", "去酒吧"]],
-  bar: [["name", null, "label"], ["go_home", "回家"]],
+  bar: [["name", null, "label"], ["bar_menu", "点一杯"], ["bar_stand", "站起来"], ["bar_watch", "看演出"], ["bar_chat", "和酒保聊聊"], ["go_home", "回家"]],
   // out at the park / mall / beach (user): clicking her offers the way home
   away: [["name", null, "label"], ["chat", "聊聊天"], ["pat", "摸摸头"], ["go_home", "回家"]],
   video: [["talk:dad", "和爸爸"], ["talk:mom", "和妈妈"], ["talk:friend", "和朋友"], ["back", "返回", "back"]],
@@ -3495,6 +3501,14 @@ document.addEventListener("pointerdown", e => { if (ringOf && !ringEl.contains(e
 document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) closeRing(); });
 let lastChat = -1e9;
 function ringPick(id) {
+  if (id.startsWith("bar_")) {
+    closeRing();
+    if (id === "bar_menu") openPicker("bar_drink", pickFrom("buddy"));
+    if (id === "bar_stand") barWalk(null, here().x);
+    if (id === "bar_watch") barWatch();
+    if (id === "bar_chat") barChat("player");
+    return;
+  }
   if (id === "phone") { openRing("phone", "buddy"); return; }
   if (id === "call") { openRing("call", "buddy"); return; }
   if (id.startsWith("dial:")) { closeRing(); command("phone_call", chatItem("call", id.slice(5), "call")); return; }
@@ -3502,6 +3516,7 @@ function ringPick(id) {
   if (id === "video" || id === "forum") { openRing(id, "computer"); return; }
   if (id.startsWith("go:")) {
     closeRing();
+    if (id === "go:bar" && !barIsOpen()) { showHint("现在酒吧还没开门哦！"); return; }
     sim.dest = id.slice(3); sim.outBack = null; sim.outWhy = null;          // sent out by the player: she stays till she's had enough
     command("go_out");
     return;
@@ -3761,6 +3776,10 @@ function drawTripLoad(x, p, r) {
   x.drawImage(r.head, ax - 12, cy - 13 - hop);
 }
 function throughDoor(to) {
+  if (to === "bar" && !barIsOpen()) {
+    sim.mode = "idle"; sim.act = null; sim.dest = null; sim.idleUntil = sim.t + 5;
+    showHint("现在酒吧还没开门哦！"); return;
+  }
   sim.mode = "idle"; sim.act = null; sim.idleUntil = Infinity;      // she waits at the door while the bars close
   closeRing(); closePicker();
   const go = AWAY.has(to) || AWAY.has(sim.place) ? swap => trip(to, swap) : wipe;   // further out: the trip transition
@@ -3770,7 +3789,7 @@ function throughDoor(to) {
     else sim.route = [[OUT[to].doorX, OUT[to].feet]];
     sim.s = 0; sim.target = 0; sim.crossing = []; sim.facing = 1; sim.dest = null;
     sim.idleUntil = sim.t + (to === "front" ? 4 : 1);
-    if (to === "home") sim.outBack = null, sim.outWhy = null;
+    if (to === "home") { sim.outBack = null; sim.outWhy = null; sim.bar = null; }
     if (to === "home") log(pick(["回到家，换上拖鞋。", "推门进屋，还是家里舒服。", "回来了，还是家里舒服。"]));
     else if (to === "front") { log(outLog(to) || pick(["出门在家门口走走。", "推开门，到门口透透气。", "出了门，站在门口伸了个懒腰。"])); addMood("outdoors"); }
     else if (to !== "bar") { log(outLog(to) || pick(PLACE_LOG[to])); addMood(to); }
@@ -3794,7 +3813,7 @@ function chooseOutside() {
 }
 // a click outside: the door -> home; anywhere else -> she walks there
 function outsideClick(id, x, y) {
-  if (OUT[sim.place].kind === "still") return;
+  if (sim.place === "bar") { barClick(id, x, y); return; }
   if (id === "out_door") { useFurniture(id, true); command("go_home"); return; }
   const O = OUT[sim.place];
   if (O.kind === "sit") return;                   // on the park bench she stays put (user)
@@ -3925,16 +3944,7 @@ function drawOutsideWeather(ctx) {
 const litCv = document.createElement("canvas"); litCv.width = W; litCv.height = H;
 const litCtx = litCv.getContext("2d");
 function renderOutside() {
-  if (sim.place === "bar") {
-    bctx.clearRect(0, 0, W, H);
-    bctx.drawImage(IMG.out.bar.bg, 0, 0);
-    const p = here(), dc = dollCanvas({ expr: "neutral", look: 0, bob: 0, sway: 0, wave: null });
-    bctx.drawImage(dc, Math.round(p.x - DW / 2), Math.round(p.y - DH + 1));
-    vctx.imageSmoothingEnabled = false;
-    vctx.clearRect(0, 0, view.width, view.height);
-    vctx.drawImage(buf, 0, 0, view.width, view.height);
-    return;
-  }
+  if (sim.place === "bar") { renderBar(); return; }
   const dt = Math.min(0.1, realClock - life.t); life.t = realClock;
   if (sim.place === "park") return renderPark(dt);
   if (sim.place === "beach") return renderBeach(dt);
@@ -4057,12 +4067,7 @@ function redNeed() {
 }
 function homeFor(k) { speak(pick([`${NEED_NAMES[k]}不太行了，回家吧`, "该回家了", "先回家一趟"])); }
 function arriveAt(place) {                       // fresh life for the new place
-  if (place === "bar") {
-    life.npcs = []; life.talkQ = null; clearNpcPills();
-    sayQueue.length = 0; popSay.hidden = true; sayGrow = 0; liftDiary();
-    sim.queue = []; sim.windup = null; sim.mode = "idle"; sim.act = null;
-    return;
-  }
+  if (place === "bar") { initBar(); return; }
   if (place === "home") { life.npcs = []; life.talkQ = null; clearNpcPills(); return; }
   life.birds = []; life.flies = []; life.bits = []; life.ducks = []; life.gulls = []; life.ship = null; life.boat = null; life.plane = null; life.front = [];
   life.clouds = [0, 1, 2, 3].map(i => ({ k: i % 3, x: Math.random() * W, y: 3 + Math.random() * 22, v: 1.2 + Math.random() * 2.4 }));
@@ -4238,6 +4243,7 @@ function placeNpcPills() {
     if (n.sayUntil <= realClock) continue;
     let el = npcPillEls.get(n);
     if (!el) { el = document.createElement("div"); el.className = "npcsay"; el.textContent = n.sayText; host.appendChild(el); npcPillEls.set(n, el); }
+    if (sim.place === "bar") { el.style.maxWidth = Math.max(120, view.offsetWidth * .4) + "px"; el.style.whiteSpace = "normal"; el.style.textAlign = "center"; }
     const top = n.feet - (n.kid ? 24 : n.sit ? 25 : 28) - 2;
     const half = el.offsetWidth / 2, vw = W * scale;               // kept over the house, even for someone at its edge
     el.style.left = view.offsetLeft + Math.max(half, Math.min(vw - half, npcX(n) * scale)) + "px";
@@ -4801,6 +4807,7 @@ function playTalk(dt) {
 // before any comes again; cards with a `when` wait for a fitting moment.
 /*__CARDS_JS__*/
 /*__PLACE_CARDS_JS__*/
+/*__BAR_CARDS_JS__*/
 for (const cd of CARDS) for (const k of ["a", "b"]) cd[k].out.forEach((o, i) => { if (o.mood) ML[o.id = `card${cd.n}${k}${i}`] = { ...o.mood }; });
 const CARD_GAP = 330, CARD_CHANCE = 0.3;         // game minutes between cards, odds per hour after that
 const CARD_GAP_OUT = 60, CARD_CHANCE_OUT = 0.6;   // out and about they come much more often (user)
@@ -5279,7 +5286,7 @@ function snapshot() {
     sim: { t: sim.t, needs: sim.needs, mode: sim.mode, act: sim.act, actEnd: sim.actEnd, nap: !!sim.nap,
            at: [Math.round(p.x), storeyOfY(p.y)], facing: sim.facing, queue: sim.windup ? [sim.windup.act] : sim.queue, recent: sim.recent,
            lastDay: sim.lastDay, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
-           graceUntil: sim.graceUntil, insomnia: !!sim.insomnia, place: sim.place, lastOut: sim.lastOut ?? null, outBack: sim.outBack ?? null, outWhy: sim.outWhy ?? null },
+           graceUntil: sim.graceUntil, insomnia: !!sim.insomnia, place: sim.place, lastOut: sim.lastOut ?? null, outBack: sim.outBack ?? null, outWhy: sim.outWhy ?? null, bar: sim.place === "bar" ? sim.bar : null },
     moods: [...moods].filter(([id]) => ML[id] && !id.startsWith("test_")).map(([id, m]) => [id, m.until, m.t]),
     flags: lifeFlags, events: eventLast, lastFestivalDay, namedAs,
     house: { lamps, windows: windowState },
@@ -5314,6 +5321,7 @@ function restore(sv) {
   }
   sim.route = [[x, FLOOR_Y[storey] ?? FLOOR_Y[1]]]; sim.s = 0; sim.target = 0; sim.crossing = [];
   sim.place = OUT[m.place] ? m.place : "home";
+  sim.bar = m.bar || null;
   sim.lastOut = m.lastOut ?? null; sim.outBack = m.outBack ?? null; sim.outWhy = m.outWhy ?? null;
   if (sim.place !== "home") {                     // out in front: back on the sidewalk where she was
     const O = OUT[sim.place], ox = Math.max(O.walk[0], Math.min(O.walk[1], Array.isArray(m.at) ? m.at[0] : O.doorX));
@@ -5575,6 +5583,8 @@ if (TAURI) {
   setTimeout(checkUpdate, 8000);
   setInterval(checkUpdate, 6 * 3600 * 1000);
 }
+
+/*__BAR_JS__*/
 
 // ================================================================ loop
 let last = performance.now(), uiT = 0;

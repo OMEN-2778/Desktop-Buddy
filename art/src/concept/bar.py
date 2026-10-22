@@ -1,6 +1,6 @@
-"""Bar concept, 342x118 game pixels. Top-left light; walnut/oat/sage/clay.
+"""After Hours, 342x118 game pixels. Top-left light; walnut/oat/sage/clay.
 Left: window + booth; centre: bar and stools; right: small jazz stage.
-Keep y=98..112 clear as the main walking lane. Static background; the game renders Buddy separately.
+Keep y=98..112 clear as the main walking lane. People and light pools are runtime layers.
 """
 
 from pixelkit import P, Sprite
@@ -74,11 +74,15 @@ def plant(s, x, y):
     box(s, x - 4, y - 4, 9, 9, P.clay, top=1)
 
 
-def scene():
+def scene(night=False):
     s = Sprite(W, H)
     # Cutaway outline, ceiling, plaster and quiet vertical wooden panelling.
     s.rect(3, 5, 336, 110, P.walnut[0]).rect(5, 7, 332, 78, P.oat[1])
-    s.rect(6, 8, 330, 43, P.oat[2]).rect(6, 51, 330, 30, P.sage[0])
+    s.rect(6, 8, 330, 43, P.oat[0]).rect(6, 51, 330, 30, P.sage[0])
+    # Recessed ceiling beams, a cornice, and a narrow brass picture rail.
+    for x in (74, 233):
+        s.rect(x, 10, 4, 70, P.walnut[1]).vline(x, 10, 79, P.walnut[3])
+    s.hline(8, 333, 12, P.walnut[1]).hline(8, 333, 14, P.oak[2])
     for x in range(8, 336, 13):
         s.vline(x, 54, 79, P.sage[1])
     s.hline(6, 335, 50, P.walnut[0]).hline(6, 335, 52, P.oak[3])
@@ -90,15 +94,18 @@ def scene():
         for x in range(20 + off, 334, 61):
             s.vline(x, y, y + 6, P.walnut[1])
     s.rect(4, 5, 334, 4, P.walnut[0]).hline(6, 335, 9, P.oak[3])
-    # Tall nighttime window, distant lit city, cream curtains and deep sill.
+    # The same city window in daylight and at night.
     box(s, 14, 18, 52, 41, P.walnut, top=1)
-    s.rect(17, 21, 46, 33, P.slate[0])
-    s.ellipse(52, 27, 3, 3, P.oat[3])
-    s.ellipse(54, 26, 3, 3, P.slate[0])
+    s.rect(17, 21, 46, 33, P.slate[0] if night else P.sky_soft[0])
+    if night:
+        s.ellipse(52, 27, 3, 3, P.oat[3])
+        s.ellipse(54, 26, 3, 3, P.slate[0])
+    else:
+        s.ellipse(27, 27, 6, 2, P.sky_soft[2]).ellipse(31, 26, 4, 2, P.sky_soft[2])
     for x, h in [(18, 10), (24, 16), (34, 11), (42, 19), (53, 9)]:
-        s.rect(x, 53 - h, 7, h, P.slate[1])
+        s.rect(x, 53 - h, 7, h, P.slate[1] if night else P.slate[2])
         for yy in range(54 - h, 52, 5):
-            s.set(x + 2, yy, P.oak[3])
+            s.set(x + 2, yy, P.oak[3] if night else P.slate[0])
     s.vline(39, 20, 54, P.walnut[1]).hline(17, 62, 38, P.walnut[1])
     s.rect(16, 20, 5, 34, P.clay[1]).vline(17, 21, 52, P.clay[3])
     s.rect(59, 20, 5, 34, P.clay[1]).vline(60, 21, 52, P.clay[2])
@@ -109,6 +116,16 @@ def scene():
     soft(s, 14, 78, 55, 7, P.clay)
     s.rect(17, 85, 49, 4, P.walnut[0])
     s.rect(18, 89, 3, 4, P.walnut[0]).rect(62, 89, 3, 4, P.walnut[0])
+    for x in (23, 48):
+        soft(s, x, 69, 12, 8, P.clay)
+        s.set(x + 6, 73, P.clay[0])
+    # A framed record and a tiny handwritten specials board.
+    box(s, 70, 24, 13, 16, P.walnut, top=1)
+    s.ellipse(76, 31, 4, 4, P.steel[0]).ellipse(76, 31, 1, 1, P.mustard[2])
+    box(s, 230, 43, 12, 21, P.oak, top=1)
+    s.rect(232, 45, 8, 17, P.sage[0])
+    for y, w in ((48, 6), (51, 4), (55, 6), (58, 3)):
+        s.hline(233, 232 + w, y, P.oat[2])
     # Back bar, mirror/sign, shelves and restrained bottle groupings.
     box(s, 88, 17, 137, 43, P.walnut, top=2)
     s.rect(93, 21, 127, 33, P.sage[0])
@@ -197,8 +214,47 @@ def scene():
         glass(s, x + 7, y - 6)
     plant(s, 77, 91)
     plant(s, 328, 91)
+    # Brass taps, a polished shaker, napkins and restrained floor grain.
+    for x in (126, 130):
+        s.vline(x, 58, 64, P.mustard[1]).hline(x, x + 2, 58, P.mustard[3])
+    s.rect(174, 60, 4, 6, P.steel[2]).vline(174, 60, 65, P.steel[4])
+    for x, y in ((19, 98), (83, 107), (161, 97), (222, 109), (302, 88)):
+        s.hline(x, x + 7, y, P.walnut[1])
     return s
 
 
 def build():
-    return {"bar": scene()}
+    return {"bar_day": scene(), "bar_night": scene(True)}
+
+
+def counter():
+    s = Sprite(W, H)
+    s.blit(scene().crop(84, 68, 145, 23), 84, 68)
+    return s
+
+
+def foreground():
+    s = Sprite(W, H)
+    bg = scene()
+    for x, y, w, h in ((27, 84, 33, 24), (260, 87, 34, 25)):
+        s.blit(bg.crop(x, y, w, h), x, y)
+    return s
+
+
+def drink_icon(color, kind="cocktail"):
+    s = Sprite(20, 24)
+    if kind == "beer":
+        s.rect(5, 6, 9, 13, P.steel[1]).rect(6, 8, 7, 10, color)
+        s.frame(14, 9, 3, 7, P.oat[3]).rect(5, 5, 9, 3, P.porcelain[3])
+    elif kind == "short":
+        s.rect(5, 11, 10, 9, P.steel[1]).rect(6, 14, 8, 5, color)
+        s.rect(7, 12, 3, 3, P.sky_soft[2]).rect(11, 13, 2, 2, P.sky_soft[3])
+    else:
+        for row in range(7):
+            s.hline(3 + row, 16 - row, 5 + row, P.porcelain[2])
+            if row < 5:
+                s.hline(5 + row, 14 - row, 6 + row, color)
+        s.vline(9, 12, 19, P.oat[3]).hline(5, 14, 20, P.oat[3])
+        s.ellipse(15, 5, 2, 2, P.leaf[3])
+    s.vline(6, 7, 10, P.porcelain[3])
+    return s

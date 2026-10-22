@@ -1,0 +1,966 @@
+{
+  "drinks": [
+    {
+      "id": "mojito",
+      "name": "莫吉托",
+      "group": "经典调酒",
+      "mood": "薄荷晚风",
+      "emo": "energized",
+      "color": "#7fb79a",
+      "glass": "cocktail",
+      "description": "青柠、薄荷与轻盈气泡，像把晚风装进杯子。",
+      "say": [
+        "脑袋里好像开了一扇窗。",
+        "青柠、薄荷与轻盈气泡，像把晚风装进杯子，今晚刚刚好。"
+      ],
+      "serve": "薄荷轻拍就好，别把它当今天的烦恼捶。",
+      "pts": 3,
+      "minutes": 120,
+      "duration": 18,
+      "needs": {
+        "fun": 5,
+        "social": 2
+      },
+      "alcohol": true
+    },
+    {
+      "id": "martini",
+      "name": "干马天尼",
+      "group": "经典调酒",
+      "mood": "清醒的锋芒",
+      "emo": "focused",
+      "color": "#e2d8c9",
+      "glass": "cocktail",
+      "description": "干净利落的草本香气，尾调微微发苦。",
+      "say": [
+        "这口喝完，思路居然站直了。",
+        "干净利落的草本香气，尾调微微发苦，今晚刚刚好。"
+      ],
+      "serve": "这一杯不拐弯，第一口就会自我介绍。",
+      "pts": 2,
+      "minutes": 150,
+      "duration": 24,
+      "needs": {
+        "fun": 6,
+        "social": 3
+      },
+      "alcohol": true
+    },
+    {
+      "id": "oldfashioned",
+      "name": "古典鸡尾酒",
+      "group": "经典调酒",
+      "mood": "琥珀时光",
+      "emo": "confident",
+      "color": "#d29b30",
+      "glass": "short",
+      "description": "橙皮与木桶香，适合一口一口慢慢喝。",
+      "say": [
+        "今晚我可以慢一点，也很有底气。",
+        "橙皮与木桶香，适合一口一口慢慢喝，今晚刚刚好。"
+      ],
+      "serve": "橙皮的香气在上面，故事留在下面。",
+      "pts": 2,
+      "minutes": 180,
+      "duration": 30,
+      "needs": {
+        "fun": 7,
+        "social": 4
+      },
+      "alcohol": true
+    },
+    {
+      "id": "negroni",
+      "name": "内格罗尼",
+      "group": "经典调酒",
+      "mood": "漂亮的苦味",
+      "emo": "inspired",
+      "color": "#b94b4b",
+      "glass": "short",
+      "description": "红色草本苦酒，苦里藏着一小段甜。",
+      "say": [
+        "原来苦味也能这么有层次。",
+        "红色草本苦酒，苦里藏着一小段甜，今晚刚刚好。"
+      ],
+      "serve": "别急着躲开苦味，等它把后半句说完。",
+      "pts": 3,
+      "minutes": 210,
+      "duration": 18,
+      "needs": {
+        "fun": 8,
+        "social": 2
+      },
+      "alcohol": true
+    },
+    {
+      "id": "whiskysour",
+      "name": "威士忌酸",
+      "group": "经典调酒",
+      "mood": "酸甜平衡",
+      "emo": "happy",
+      "color": "#efc452",
+      "glass": "short",
+      "description": "柠檬的酸与细密泡沫，入口柔和。",
+      "say": [
+        "酸一下，又被甜回来啦。",
+        "柠檬的酸与细密泡沫，入口柔和，今晚刚刚好。"
+      ],
+      "serve": "杯子里的平衡，比生活里的容易一点。",
+      "pts": 2,
+      "minutes": 120,
+      "duration": 24,
+      "needs": {
+        "fun": 5,
+        "social": 3
+      },
+      "alcohol": true
+    },
+    {
+      "id": "sunrise",
+      "name": "龙舌兰日出",
+      "group": "果香特调",
+      "mood": "杯中的日出",
+      "emo": "energized",
+      "color": "#e1725b",
+      "glass": "cocktail",
+      "description": "橙汁与石榴红，像一场装得下的日出。",
+      "say": [
+        "今天还有重新开始的颜色。",
+        "橙汁与石榴红，像一场装得下的日出，今晚刚刚好。"
+      ],
+      "serve": "不用早起，这里的日出可以晚上点。",
+      "pts": 2,
+      "minutes": 150,
+      "duration": 30,
+      "needs": {
+        "fun": 6,
+        "social": 4
+      },
+      "alcohol": true
+    },
+    {
+      "id": "lagoon",
+      "name": "蓝色夏夜",
+      "group": "果香特调",
+      "mood": "海边的幻想",
+      "emo": "inspired",
+      "color": "#4f9ba4",
+      "glass": "cocktail",
+      "description": "清爽柑橘与蓝色气泡，带一点海风般的凉。",
+      "say": [
+        "我人还在这里，心已经到码头了。",
+        "清爽柑橘与蓝色气泡，带一点海风般的凉，今晚刚刚好。"
+      ],
+      "serve": "这片海没有浪，只有冰块碰杯。",
+      "pts": 3,
+      "minutes": 180,
+      "duration": 18,
+      "needs": {
+        "fun": 7,
+        "social": 2
+      },
+      "alcohol": true
+    },
+    {
+      "id": "colada",
+      "name": "椰林飘香",
+      "group": "果香特调",
+      "mood": "热带小假期",
+      "emo": "happy",
+      "color": "#e6c9a0",
+      "glass": "cocktail",
+      "description": "菠萝与椰奶的绵密果香，甜而柔软。",
+      "say": [
+        "我宣布这十分钟是带薪度假。",
+        "菠萝与椰奶的绵密果香，甜而柔软，今晚刚刚好。"
+      ],
+      "serve": "椰子不认识工作日，你也可以暂时不认识。",
+      "pts": 2,
+      "minutes": 210,
+      "duration": 24,
+      "needs": {
+        "fun": 8,
+        "social": 3
+      },
+      "alcohol": true
+    },
+    {
+      "id": "bellini",
+      "name": "桃子贝利尼",
+      "group": "果香特调",
+      "mood": "桃色心事",
+      "emo": "flirty",
+      "color": "#e3b096",
+      "glass": "cocktail",
+      "description": "白桃果香伴细小气泡，甜得恰到好处。",
+      "say": [
+        "心里有一小块地方变软了。",
+        "白桃果香伴细小气泡，甜得恰到好处，今晚刚刚好。"
+      ],
+      "serve": "桃子味很轻，适合说一点小心事。",
+      "pts": 2,
+      "minutes": 120,
+      "duration": 30,
+      "needs": {
+        "fun": 5,
+        "social": 4
+      },
+      "alcohol": true
+    },
+    {
+      "id": "sangria",
+      "name": "桑格利亚",
+      "group": "果香特调",
+      "mood": "热闹的果园",
+      "emo": "playful",
+      "color": "#b0674f",
+      "glass": "short",
+      "description": "红葡萄酒和水果的组合，每一口都有小变化。",
+      "say": [
+        "这一杯里的水果好像在开派对。",
+        "红葡萄酒和水果的组合，每一口都有小变化，今晚刚刚好。"
+      ],
+      "serve": "水果都到齐了，就差你这一口。",
+      "pts": 3,
+      "minutes": 150,
+      "duration": 18,
+      "needs": {
+        "fun": 6,
+        "social": 2
+      },
+      "alcohol": true
+    },
+    {
+      "id": "lager",
+      "name": "清爽拉格",
+      "group": "啤酒与麦香",
+      "mood": "下班的快乐",
+      "emo": "happy",
+      "color": "#d29b30",
+      "glass": "beer",
+      "description": "清冽麦香与干净收口，一点点爽脆的苦。",
+      "say": [
+        "这声气泡，就是下班打卡。",
+        "清冽麦香与干净收口，一点点爽脆的苦，今晚刚刚好。"
+      ],
+      "serve": "泡沫不是偷懒，是这杯的帽子。",
+      "pts": 2,
+      "minutes": 180,
+      "duration": 24,
+      "needs": {
+        "fun": 7,
+        "social": 3
+      },
+      "alcohol": true
+    },
+    {
+      "id": "stout",
+      "name": "黑啤",
+      "group": "啤酒与麦香",
+      "mood": "深夜烘焙香",
+      "emo": "focused",
+      "color": "#6b4a37",
+      "glass": "beer",
+      "description": "烘烤麦芽、咖啡与可可般的厚实香气。",
+      "say": [
+        "像坐进了很安静的旧书房。",
+        "烘烤麦芽、咖啡与可可般的厚实香气，今晚刚刚好。"
+      ],
+      "serve": "颜色深不代表脾气坏，它只是烤得认真。",
+      "pts": 2,
+      "minutes": 210,
+      "duration": 30,
+      "needs": {
+        "fun": 8,
+        "social": 4
+      },
+      "alcohol": true
+    },
+    {
+      "id": "weiss",
+      "name": "小麦白啤",
+      "group": "啤酒与麦香",
+      "mood": "柔软的麦田",
+      "emo": "confident",
+      "color": "#d1ab80",
+      "glass": "beer",
+      "description": "柔和麦香和细密泡沫，轻松不尖锐。",
+      "say": [
+        "今晚的我不用太用力也很好。",
+        "柔和麦香和细密泡沫，轻松不尖锐，今晚刚刚好。"
+      ],
+      "serve": "这杯会留一点云朵在嘴边。",
+      "pts": 3,
+      "minutes": 120,
+      "duration": 18,
+      "needs": {
+        "fun": 5,
+        "social": 2
+      },
+      "alcohol": true
+    },
+    {
+      "id": "cider",
+      "name": "苹果西打",
+      "group": "啤酒与麦香",
+      "mood": "苹果小冒险",
+      "emo": "playful",
+      "color": "#a7cd6b",
+      "glass": "beer",
+      "description": "酸甜苹果气息，尾调有一点干爽。",
+      "say": [
+        "苹果原来也有夜生活。",
+        "酸甜苹果气息，尾调有一点干爽，今晚刚刚好。"
+      ],
+      "serve": "别被苹果骗了，它今晚也打扮过。",
+      "pts": 2,
+      "minutes": 150,
+      "duration": 24,
+      "needs": {
+        "fun": 6,
+        "social": 3
+      },
+      "alcohol": true
+    },
+    {
+      "id": "amber",
+      "name": "琥珀艾尔",
+      "group": "啤酒与麦香",
+      "mood": "温柔的余韵",
+      "emo": "inspired",
+      "color": "#b18051",
+      "glass": "beer",
+      "description": "轻焦糖与麦芽交织，香气像旧木柜。",
+      "say": [
+        "想把今晚写成一封长信。",
+        "轻焦糖与麦芽交织，香气像旧木柜，今晚刚刚好。"
+      ],
+      "serve": "先闻一下，像不像秋天的面包店？",
+      "pts": 2,
+      "minutes": 180,
+      "duration": 30,
+      "needs": {
+        "fun": 7,
+        "social": 4
+      },
+      "alcohol": true
+    },
+    {
+      "id": "shirley",
+      "name": "秀兰邓波儿",
+      "group": "无酒精",
+      "mood": "樱桃汽水心情",
+      "emo": "happy",
+      "color": "#ec8fa6",
+      "glass": "cocktail",
+      "description": "石榴红与姜汁汽水，无酒精也很有仪式感。",
+      "say": [
+        "不需要酒精，我也能开心冒泡。",
+        "石榴红与姜汁汽水，无酒精也很有仪式感，今晚刚刚好。"
+      ],
+      "serve": "这一杯不含酒精，樱桃照样给你两颗。",
+      "pts": 3,
+      "minutes": 210,
+      "duration": 18,
+      "needs": {
+        "fun": 8,
+        "social": 2
+      },
+      "alcohol": false
+    },
+    {
+      "id": "virgin",
+      "name": "薄荷青柠苏打",
+      "group": "无酒精",
+      "mood": "轻盈的呼吸",
+      "emo": "energized",
+      "color": "#a9d6bd",
+      "glass": "cocktail",
+      "description": "清新青柠和薄荷的无酒精气泡。",
+      "say": [
+        "吸一口气，整个人都轻啦。",
+        "清新青柠和薄荷的无酒精气泡，今晚刚刚好。"
+      ],
+      "serve": "清爽不用靠酒精，薄荷已经足够努力。",
+      "pts": 2,
+      "minutes": 120,
+      "duration": 24,
+      "needs": {
+        "fun": 5,
+        "social": 3
+      },
+      "alcohol": false
+    },
+    {
+      "id": "honey",
+      "name": "蜂蜜柚子茶",
+      "group": "无酒精",
+      "mood": "被暖意接住",
+      "emo": "confident",
+      "color": "#fae59c",
+      "glass": "short",
+      "description": "温热柚子与蜂蜜，给晚归的人一小块暖。",
+      "say": [
+        "我被这一点甜好好接住了。",
+        "温热柚子与蜂蜜，给晚归的人一小块暖，今晚刚刚好。"
+      ],
+      "serve": "慢点，杯子也是刚从温暖里来的。",
+      "pts": 2,
+      "minutes": 150,
+      "duration": 30,
+      "needs": {
+        "fun": 6,
+        "social": 4
+      },
+      "alcohol": false
+    },
+    {
+      "id": "lemon",
+      "name": "迷迭香柠檬水",
+      "group": "无酒精",
+      "mood": "草本灵光",
+      "emo": "focused",
+      "color": "#cbd6bf",
+      "glass": "short",
+      "description": "草本清香与清透柠檬水，简单而舒适。",
+      "say": [
+        "脑子里的结好像松开一点了。",
+        "草本清香与清透柠檬水，简单而舒适，今晚刚刚好。"
+      ],
+      "serve": "没有复杂配方，也可以是今晚最好的一杯。",
+      "pts": 3,
+      "minutes": 180,
+      "duration": 18,
+      "needs": {
+        "fun": 7,
+        "social": 2
+      },
+      "alcohol": false
+    },
+    {
+      "id": "berry",
+      "name": "莓果晚霞",
+      "group": "无酒精",
+      "mood": "柔软的晚霞",
+      "emo": "flirty",
+      "color": "#c75f81",
+      "glass": "cocktail",
+      "description": "莓果与细小气泡，无酒精的粉红色晚霞。",
+      "say": [
+        "晚霞好像偷偷亲了杯沿一下。",
+        "莓果与细小气泡，无酒精的粉红色晚霞，今晚刚刚好。"
+      ],
+      "serve": "太阳下班了，晚霞留在你的杯子里。",
+      "pts": 2,
+      "minutes": 210,
+      "duration": 24,
+      "needs": {
+        "fun": 8,
+        "social": 3
+      },
+      "alcohol": false
+    }
+  ],
+  "talks": [
+    {
+      "to": "player",
+      "bartender": "第一次来？靠窗的位置能看见最后一点晚霞。",
+      "reply": "那我把今天慢慢坐完。"
+    },
+    {
+      "to": "player",
+      "bartender": "今天想喝熟悉的，还是给自己一点意外？",
+      "reply": "意外先装小杯吧。"
+    },
+    {
+      "to": "player",
+      "bartender": "你不用想好要说什么，坐着也算来过。",
+      "reply": "那我先把脑袋放空。"
+    },
+    {
+      "to": "player",
+      "bartender": "这杯薄荷拍醒了，香气才肯上班。",
+      "reply": "我也需要被轻轻拍醒。"
+    },
+    {
+      "to": "player",
+      "bartender": "冰块响的时候，通常没有人在催你。",
+      "reply": "这声音比闹钟友好多了。"
+    },
+    {
+      "to": "player",
+      "bartender": "窗外刚停雨，空气都像洗过杯子。",
+      "reply": "连心情也想擦干净。"
+    },
+    {
+      "to": "player",
+      "bartender": "今天的歌适合点头，不适合赶路。",
+      "reply": "那我暂时不赶了。"
+    },
+    {
+      "to": "player",
+      "bartender": "不喝酒也能坐前排，柠檬水同样有杯垫。",
+      "reply": "那给我的柠檬水一个好位置。"
+    },
+    {
+      "to": "player",
+      "bartender": "苦味慢一点喝，后面会有一点甜。",
+      "reply": "像今天终于快结束了。"
+    },
+    {
+      "to": "player",
+      "bartender": "这张吧凳有点高，梦想倒是不用踮脚。",
+      "reply": "我先保证下来的时候体面。"
+    },
+    {
+      "to": "player",
+      "bartender": "想吃点什么？我这儿的坚果不会问工作。",
+      "reply": "那它比我的亲戚懂事。"
+    },
+    {
+      "to": "player",
+      "bartender": "你点的不是最贵的，是今晚刚好想喝的。",
+      "reply": "听起来我很会照顾自己。"
+    },
+    {
+      "to": "player",
+      "bartender": "有人在这儿想明白事情，也有人只是忘了雨伞。",
+      "reply": "我希望今晚只发生后者。"
+    },
+    {
+      "to": "player",
+      "bartender": "今天的驻唱喜欢把最后一句留给窗外。",
+      "reply": "我替窗外鼓个掌。"
+    },
+    {
+      "to": "player",
+      "bartender": "杯口的盐不是规矩，觉得太咸就换一边。",
+      "reply": "原来生活也可以转个方向。"
+    },
+    {
+      "to": "player",
+      "bartender": "别急着评价第一口，第二口有时候会改口。",
+      "reply": "那我也再给今天一次机会。"
+    },
+    {
+      "to": "player",
+      "bartender": "你看起来像刚把一整天从肩上卸下来。",
+      "reply": "先放这儿，离开再决定带不带。"
+    },
+    {
+      "to": "player",
+      "bartender": "这盏灯不够亮，所以大家都可以放松一点。",
+      "reply": "我的黑眼圈表示赞同。"
+    },
+    {
+      "to": "player",
+      "bartender": "想聊聊，还是想安静？这两种我都招待。",
+      "reply": "先安静一会儿，再看看。"
+    },
+    {
+      "to": "player",
+      "bartender": "有人说这杯像日落，我觉得比较像准时下班。",
+      "reply": "这个形容更让我心动。"
+    },
+    {
+      "to": "player",
+      "bartender": "果皮别扔，拧一下，整杯都会醒。",
+      "reply": "好小一件事，好大的香气。"
+    },
+    {
+      "to": "player",
+      "bartender": "你的杯垫歪了，不过世界暂时还没塌。",
+      "reply": "那就让它再歪一会儿。"
+    },
+    {
+      "to": "player",
+      "bartender": "喜欢这首？歌单就在唱片旁边。",
+      "reply": "我要把今晚装进口袋。"
+    },
+    {
+      "to": "player",
+      "bartender": "这杯有点酸，适合假装皱眉很有故事。",
+      "reply": "我不用假装，我真的酸到了。"
+    },
+    {
+      "to": "player",
+      "bartender": "酒吧里最常见的失物，其实是时间。",
+      "reply": "我的半小时刚才还在这儿。"
+    },
+    {
+      "to": "player",
+      "bartender": "你刚刚跟拍了，节奏还挺准。",
+      "reply": "别夸，我一被注意就忘了拍子。"
+    },
+    {
+      "to": "player",
+      "bartender": "如果想把烦恼寄存，吧台下面没有编号。",
+      "reply": "那我就不来领了。"
+    },
+    {
+      "to": "player",
+      "bartender": "这杯气泡升得慢，像在认真挑方向。",
+      "reply": "连气泡都比我有主见。"
+    },
+    {
+      "to": "player",
+      "bartender": "今天的月亮出来得早，像提前订了座。",
+      "reply": "窗边那个位置让给它吧。"
+    },
+    {
+      "to": "player",
+      "bartender": "橙皮、木头和音乐，今天的香味就这些。",
+      "reply": "已经足够像一个好晚上了。"
+    },
+    {
+      "to": "player",
+      "bartender": "你可以点一杯水，然后听完整场。",
+      "reply": "谢谢，我正好只想听歌。"
+    },
+    {
+      "to": "player",
+      "bartender": "别担心点错，没有人第一次就认识整本酒单。",
+      "reply": "我刚把内格罗尼当成了人名。"
+    },
+    {
+      "to": "player",
+      "bartender": "想听个秘密？我擦这个杯子已经第三遍了。",
+      "reply": "它应该快知道自己的前世了。"
+    },
+    {
+      "to": "player",
+      "bartender": "今天的灯光是暖色，坏心情也会显得温柔一点。",
+      "reply": "那我再借它照一会儿。"
+    },
+    {
+      "to": "player",
+      "bartender": "你刚进门时还皱着眉，现在松开一点了。",
+      "reply": "可能是我的眉毛也找到座位了。"
+    },
+    {
+      "to": "player",
+      "bartender": "如果这杯太烈，告诉我，换一杯没关系。",
+      "reply": "我决定对自己的舌头诚实。"
+    },
+    {
+      "to": "player",
+      "bartender": "有时候果汁比酒更能把人从周一里捞出来。",
+      "reply": "来杯有周末味的。"
+    },
+    {
+      "to": "player",
+      "bartender": "听见摇壶了吗？这不是赶工，是今晚的打击乐。",
+      "reply": "那我刚才点的是伴奏。"
+    },
+    {
+      "to": "player",
+      "bartender": "你坐这里刚好，能看见歌手换气。",
+      "reply": "突然觉得每个音都很努力。"
+    },
+    {
+      "to": "player",
+      "bartender": "今天不问明天几点起，我们只看现在几点。",
+      "reply": "这是我今晚最喜欢的问题。"
+    },
+    {
+      "to": "player",
+      "bartender": "这杯颜色像海，杯底可没有救生员。",
+      "reply": "放心，我只打算用吸管旅行。"
+    },
+    {
+      "to": "player",
+      "bartender": "杯子上的雾一会儿就散，人也一样。",
+      "reply": "那我等等自己。"
+    },
+    {
+      "to": "player",
+      "bartender": "想点歌的话，写在这张纸上，字丑也没关系。",
+      "reply": "我先确定歌手认得出我的字。"
+    },
+    {
+      "to": "player",
+      "bartender": "你不用用一杯酒证明什么，喜欢就够了。",
+      "reply": "那我承认我喜欢甜的。"
+    },
+    {
+      "to": "player",
+      "bartender": "最安静的客人，有时笑起来最响。",
+      "reply": "你先别给我安排人设。"
+    },
+    {
+      "to": "player",
+      "bartender": "这会儿风吹进来一点，要不要换个位置？",
+      "reply": "不用，像有人替我翻了一页。"
+    },
+    {
+      "to": "player",
+      "bartender": "你看，窗户已经从晚霞换成城市灯了。",
+      "reply": "我们真的坐过一个傍晚。"
+    },
+    {
+      "to": "player",
+      "bartender": "这杯喝完别急，出口一直在那里。",
+      "reply": "我想等这首歌唱完。"
+    },
+    {
+      "to": "player",
+      "bartender": "如果今晚能留下一件小事，你想留什么？",
+      "reply": "这一刻没有待办事项。"
+    },
+    {
+      "to": "player",
+      "bartender": "回去路上慢一点，下次还能坐这个位置。",
+      "reply": "好，今晚就到这里。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你上次忘的围巾，我替它听了三场歌。",
+      "reply": "它的音乐品味现在比我好了。"
+    },
+    {
+      "to": "guest",
+      "bartender": "老位置留着，不过今天换了杯垫。",
+      "reply": "人没换就行，杯垫随它。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你们那桌谁点的无酒精？",
+      "reply": "唱最大声的那个。"
+    },
+    {
+      "to": "guest",
+      "bartender": "别跟冰块讲道理，它只会慢慢融化。",
+      "reply": "比我同事好沟通。"
+    },
+    {
+      "to": "guest",
+      "bartender": "今天怎么一个人来了？",
+      "reply": "另一个还在跟导航吵架。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你点的歌到了，准备好装作不在意了吗？",
+      "reply": "我耳朵已经坐直了。"
+    },
+    {
+      "to": "guest",
+      "bartender": "这次还加柠檬吗？",
+      "reply": "加吧，给我的表情一个理由。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你朋友刚才说这一轮他请。",
+      "reply": "请把这句话刻在杯垫上。"
+    },
+    {
+      "to": "guest",
+      "bartender": "新鞋不错，不过舞台木板可不认牌子。",
+      "reply": "它能认出我踩错的拍子吗？"
+    },
+    {
+      "to": "guest",
+      "bartender": "你桌上的手机亮了三次。",
+      "reply": "今天它才是来社交的。"
+    },
+    {
+      "to": "guest",
+      "bartender": "这杯慢慢喝，聊到哪里都有人接着。",
+      "reply": "我们刚聊到小时候的暑假。"
+    },
+    {
+      "to": "guest",
+      "bartender": "刚才的掌声，是给歌还是给自己下班？",
+      "reply": "可以一份掌声用两次吗？"
+    },
+    {
+      "to": "guest",
+      "bartender": "你把菜单看反了。",
+      "reply": "难怪今天的酒都这么有设计感。"
+    },
+    {
+      "to": "guest",
+      "bartender": "我记得你不喜欢太甜。",
+      "reply": "今天的我想跟昨天商量一下。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你们聊得开心，我就不推销新杯子了。",
+      "reply": "杯子也有试用期吗？"
+    },
+    {
+      "to": "guest",
+      "bartender": "雨伞放门边，不会给它点酒。",
+      "reply": "那它终于可以清醒地等我。"
+    },
+    {
+      "to": "guest",
+      "bartender": "桌号是三，不是三杯起点。",
+      "reply": "谢谢，我刚在替钱包紧张。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你朋友已经坐在那儿招手半分钟了。",
+      "reply": "我以为他在配合舞台打拍子。"
+    },
+    {
+      "to": "guest",
+      "bartender": "这首老歌你们都会？",
+      "reply": "会副歌也算会吧。"
+    },
+    {
+      "to": "guest",
+      "bartender": "今天的花是客人送的，不是中奖。",
+      "reply": "那瓶子也算收到花了。"
+    },
+    {
+      "to": "guest",
+      "bartender": "慢一点碰杯，杯子比友情脆。",
+      "reply": "友情可以再续，杯子我赔不起。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你那张彩票别压在杯底，湿了就没悬念了。",
+      "reply": "本来也没中，给它降降温。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你笑起来，隔壁桌都开始笑了。",
+      "reply": "我先声明，我讲的是冷笑话。"
+    },
+    {
+      "to": "guest",
+      "bartender": "今天想试新品？",
+      "reply": "只要它不用自我介绍十分钟。"
+    },
+    {
+      "to": "guest",
+      "bartender": "把椅子往里挪一点，给路过的人留首歌的宽度。",
+      "reply": "好，今晚大家都有路可走。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你点的那杯会有点苦。",
+      "reply": "我带了甜点来和它谈判。"
+    },
+    {
+      "to": "guest",
+      "bartender": "这么认真看舞台，是认识那位歌手？",
+      "reply": "不认识，但刚才那句唱到我了。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你们从晚霞聊到月亮了。",
+      "reply": "还差一个话题就聊到早餐。"
+    },
+    {
+      "to": "guest",
+      "bartender": "这里的钟没有坏，只是你没看它。",
+      "reply": "这算它今晚最成功的工作。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你刚才悄悄换了朋友的吸管颜色。",
+      "reply": "他已经研究五分钟了。"
+    },
+    {
+      "to": "guest",
+      "bartender": "今天没带电脑？",
+      "reply": "我让它自己在家反省。"
+    },
+    {
+      "to": "guest",
+      "bartender": "那张凳子会轻轻晃一下。",
+      "reply": "跟我现在的职业规划一样。"
+    },
+    {
+      "to": "guest",
+      "bartender": "舞者今天换了一支曲子。",
+      "reply": "我还没学会上一支的第一步。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你们桌上缺水吗？",
+      "reply": "缺一个能讲完笑话的人。"
+    },
+    {
+      "to": "guest",
+      "bartender": "要再来一点冰吗？",
+      "reply": "给我们的争论也来一点。"
+    },
+    {
+      "to": "guest",
+      "bartender": "最后一颗樱桃通常最受关注。",
+      "reply": "我们已经决定猜拳了。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你上回推荐的电影，我看完了。",
+      "reply": "是不是后劲比这杯还大？"
+    },
+    {
+      "to": "guest",
+      "bartender": "今晚的演出比平常轻一点。",
+      "reply": "适合把声音借给别人。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你们刚才一起沉默了好久。",
+      "reply": "挺好的，不用每分钟都负责有趣。"
+    },
+    {
+      "to": "guest",
+      "bartender": "这杯是你的，那杯是你朋友的。",
+      "reply": "差点把他的失恋也喝了。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你又在收集杯垫？",
+      "reply": "每个地方总得留一点平的纪念品。"
+    },
+    {
+      "to": "guest",
+      "bartender": "今天窗外星星少，里面的人倒挺亮。",
+      "reply": "这句你留着印菜单吧。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你那套开场白，上周用过了。",
+      "reply": "我以为这里不保存聊天记录。"
+    },
+    {
+      "to": "guest",
+      "bartender": "这次来得早，灯刚调好。",
+      "reply": "那我们负责测试氛围。"
+    },
+    {
+      "to": "guest",
+      "bartender": "杯沿的那片橙子不是装饰考试。",
+      "reply": "太好了，我可以吃它。"
+    },
+    {
+      "to": "guest",
+      "bartender": "有人问你们是不是乐队。",
+      "reply": "是，我们叫节拍失踪案。"
+    },
+    {
+      "to": "guest",
+      "bartender": "你给朋友留的座位快变成衣帽间了。",
+      "reply": "他每次都带一整天过来。"
+    },
+    {
+      "to": "guest",
+      "bartender": "门外风大，先把围巾系好再走。",
+      "reply": "这句比今天的酒还暖。"
+    },
+    {
+      "to": "guest",
+      "bartender": "差不多要收尾了，最后一首一起听？",
+      "reply": "听完再把明天还给明天。"
+    },
+    {
+      "to": "guest",
+      "bartender": "今晚开心吗？",
+      "reply": "开心，而且是不用拍照证明的那种。"
+    }
+  ]
+}

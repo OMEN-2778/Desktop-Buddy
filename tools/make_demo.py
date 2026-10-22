@@ -194,8 +194,9 @@ def main():
         "fascia": MALL.FASCIA, "floor": MALL.FLOOR, "walk": [MALL.AT, MALL.AT], "doorX": MALL.AT,
         "items": [{k: v for k, v in it.items() if k != "sprite"} for it in mall_items]}}
 
-    outside["bar"] = {"kind": "still", "img": {"bg": png(BAR.scene())},
-                      "feet": 107, "walk": [128, 128], "doorX": 128}
+    bar_text = json.loads((SRC.parent / "bar_text.json").read_text())
+    outside["bar"] = {"kind": "bar", "img": {"day": png(BAR.scene()), "night": png(BAR.scene(True)), "counter": png(BAR.counter()), "foreground": png(BAR.foreground())},
+                      "feet": 107, "walk": [18, 322], "doorX": 128}
 
     # window open states: day/night, three sway frames
     # upstairs windows look out on sky only; the living room sees the hill
@@ -327,9 +328,13 @@ def main():
         "floors": floors, "stair": stair, "spots": spots, "rooms": rooms, "roomX": room_x, "lights": lights,
         "emissive": sorted({c.lower() for c in Hs.EMISSIVE}),
         "guide": guide_shots(),
+        "barDrinks": {d["id"]: png(BAR.drink_icon(d["color"], d["glass"])) for d in bar_text["drinks"]},
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", chats_js()).replace("/*__PLACES_JS__*/", places_js()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text()).replace("/*__GUIDE_JS__*/", (SRC.parent / "guide_text.js").read_text())
+    html = html.replace("/*__BAR_TEXT_JS__*/", "const BAR_TEXT = " + json.dumps(bar_text, ensure_ascii=False) + ";")
+    html = html.replace("/*__BAR_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "bar_cards.json").read_text() + ");")
+    html = html.replace("/*__BAR_JS__*/", (SRC.parent / "bar.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 
