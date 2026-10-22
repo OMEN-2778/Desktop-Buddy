@@ -10050,7 +10050,7 @@ function collapseMoodTip() {
   liftDiary();
 }
 function showMoodTip(on) {
-  clearTimeout(listCloseT);
+  clearTimeout(listCloseT); listCloseT = null;
   if (!on) listPinned = false;
   if (on === listOpen) return;
   listOpen = on;
@@ -10070,8 +10070,21 @@ function showMoodTip(on) {
   }
 }
 moodFace.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") showMoodTip(true); });
-moodrow.addEventListener("pointerenter", () => clearTimeout(listCloseT));
-moodrow.addEventListener("pointerleave", e => { if (e.pointerType === "mouse" && !listPinned) listCloseT = setTimeout(() => showMoodTip(false), 160); });
+// open by hover: it folds back only once the mouse is out of the whole box
+// (the emoji row plus every pill, a little margin round it), not on the
+// gaps between pills or when the pills move under it (user)
+function inMoodZone(x, y) {
+  const a = moodrow.getBoundingClientRect(), b = moodTip.getBoundingClientRect(), m = 12;
+  return x >= Math.min(a.left, b.left) - m && x <= Math.max(a.right, b.right) + m
+    && y >= Math.min(a.top, b.top) - m && y <= Math.max(a.bottom, b.bottom) + m;
+}
+function moodHover(x, y) {
+  if (!listOpen || listPinned) return;
+  if (inMoodZone(x, y)) clearTimeout(listCloseT), listCloseT = null;
+  else if (!listCloseT) listCloseT = setTimeout(() => { listCloseT = null; showMoodTip(false); }, 160);
+}
+document.addEventListener("pointermove", e => { if (e.pointerType === "mouse") moodHover(e.clientX, e.clientY); });
+document.documentElement.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") moodHover(-1e4, -1e4); });
 moodFace.addEventListener("click", () => { const pin = !(listPinned && listOpen); showMoodTip(pin); listPinned = pin; });
 moodFace.addEventListener("keydown", e => {
   if (e.key === "Enter" || e.key === " ") { e.preventDefault(); const open = !listOpen; showMoodTip(open); listPinned = open; }
@@ -17769,7 +17782,8 @@ if (TAURI) {
     const p = await TAURI.core.invoke("cursor_in_window").catch(() => null);
     if (!p) return;
     const el = document.elementFromPoint(p[0], p[1]);
-    const hollow = !el || el.matches(HOLLOW);
+    moodHover(p[0], p[1]);                              // click-through hides the mouse from the page
+    const hollow = (!el || el.matches(HOLLOW)) && !(listOpen && inMoodZone(p[0], p[1]));
     if (hollow !== through) { through = hollow; TAURI.core.invoke("set_click_through", { on: hollow }).catch(() => {}); }
   }, 70);
   let press = null;

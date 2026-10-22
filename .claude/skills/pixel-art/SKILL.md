@@ -356,6 +356,8 @@ Reference: `prototype/shared/studio.css`.
   folded into "还有 N 个"; pointing at (or tapping) that pill shows them all
   (`expandMoodTip`, user): the last row stays put, the rest stack up above
   it and the diary box slides up as much (`moodGrow` in `liftDiary`).
+  It folds back only once the mouse leaves the whole box (row + pills +
+  12px, `inMoodZone`), never on gaps between pills (user: it snapped shut).
   Her words wait while it's open.
 - Emotion colours (user: same family as the face, no two alike): one hue
   per emotion round the wheel, neighbours told apart by lightness (rust 焦虑
