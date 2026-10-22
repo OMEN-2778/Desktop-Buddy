@@ -521,9 +521,10 @@ body {
   position: absolute; bottom: 56px; max-width: none; width: var(--house-w, 342px);
   left: calc(24px - var(--mood-d, 52px) / 2);
 }
-/* a phone's screen: a house that small can't hold them, so use the 造型室's width */
+/* a phone's screen: a house that small can't hold them, so use the 造型室's width
+   (not in the app: its window is just as narrow, but there the rows fit the house, user) */
 @media (max-width: 520px) {
-  .widget.narrow .set-pop { width: var(--studio-w, 342px); left: calc(24px - var(--mood-d, 52px) / 2 - var(--studio-dx, 0px)); }
+  html:not(.desktop) .widget.narrow .set-pop { width: var(--studio-w, 342px); left: calc(24px - var(--mood-d, 52px) / 2 - var(--studio-dx, 0px)); }
 }
 /* while the rows are out, her words step aside like the diary box */
 .moodrow.setting .mood-talk { opacity: 0; transition: opacity .2s; }
@@ -532,10 +533,10 @@ body {
    equal pills, or 存档's wide switch + 保存 over three — every row the same width */
 .set-items { display: grid; grid-template-columns: repeat(12, var(--sc, 13px)); align-items: center; gap: 8px; min-width: 0; }
 .set-items > button, .set-items > .set-value { width: 100%; min-width: 0; padding-inline: 4px; text-align: center; }
-.set-label { min-width: 6.6em; text-align: center; }   /* labels all one width, 存档 too */
+.set-label { min-width: var(--lab-w, 6.6em); text-align: center; }   /* labels all one width, 存档 too */
 /* a pill under a label (教程 under 存档, user: the free spot there), as wide as it */
 .set-labels { display: grid; gap: 8px; }
-.set-labels > button { min-width: 6.6em; }
+.set-labels > button { min-width: var(--lab-w, 6.6em); }
 .set-row > .set-label, .set-labels > *, .set-items > * {
   transform: translateX(calc(var(--k) * -26px - 40px)) scale(.3); opacity: 0;
   transition: transform .38s cubic-bezier(.3, 1.6, .5, 1), opacity .2s;
@@ -10313,6 +10314,19 @@ function buildSettings() {
     row.appendChild(box);
     setPop.appendChild(row);
   }
+  fitSetPop();
+}
+// over a small house the rows are exactly as wide as it, edge to edge (user:
+// 横平竖直): the 12 columns take whole pixels, the labels take the rest
+function fitSetPop() {
+  const narrow = document.getElementById("widget").classList.contains("narrow") && (TAURI || innerWidth > 520);
+  setPop.style.removeProperty("--sc"); setPop.style.removeProperty("--lab-w");
+  if (!narrow) return;
+  const W = view.offsetWidth, gap = 8;
+  const lab = Math.max(...[...setPop.querySelectorAll(".set-label")].map(l => l.offsetWidth));
+  const sc = Math.max(8, Math.floor((W - lab - gap - 11 * gap) / 12));
+  setPop.style.setProperty("--sc", sc + "px");
+  setPop.style.setProperty("--lab-w", W - gap - 11 * gap - 12 * sc + "px");
 }
 function flashLabel(label, text) {
   const el = setPop.querySelector(`[data-label="${label}"]`);
