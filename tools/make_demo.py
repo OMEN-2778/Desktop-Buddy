@@ -66,6 +66,19 @@ def overlay(spr, x, y):
     return {"src": png(spr), "x": int(x), "y": int(y)}
 
 
+def places_js():
+    """places_text.js plus the outing texts in outing/ (why she goes out, what she says, mood-tagged musings)."""
+    d = SRC.parent / "outing"
+    def body(name):
+        f = d / (name + ".js")
+        return f.read_text().strip() if f.exists() else "{}"
+    out = (SRC.parent / "places_text.js").read_text()
+    out += f"\nconst OUTING_TEXT = Object.assign({{}}, {body('go_a')}, {body('go_b')});\n"
+    for name in ("say_pb", "say_fm"):
+        out += f"for (const [k, list] of Object.entries({body(name)})) PLACE_TEXT[k].say.push(...list);\n"
+    return out
+
+
 def chats_js():
     """chats_text.js plus the longer lists in chats/: phone calls (CHATS.call) and more forum posts."""
     d = SRC.parent / "chats"
@@ -312,7 +325,7 @@ def main():
         "guide": guide_shots(),
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", chats_js()).replace("/*__PLACES_JS__*/", (SRC.parent / "places_text.js").read_text()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text()).replace("/*__GUIDE_JS__*/", (SRC.parent / "guide_text.js").read_text())
+    html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", chats_js()).replace("/*__PLACES_JS__*/", places_js()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text()).replace("/*__GUIDE_JS__*/", (SRC.parent / "guide_text.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 

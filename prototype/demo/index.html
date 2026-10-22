@@ -1950,7 +1950,7 @@ function choose() {
     pc_forum: (100 - n.social) * 0.6 + (100 - n.fun) * 0.4 + r() * 15,
     pc_code: 8 + r() * 20, phone_game: (100 - n.fun) * 0.6 + r() * 15, dance: 2 + r() * 6,
     wash: (h >= 6.5 && h < 9) || (h >= 21 && h < 23) ? 28 + r() * 10 : 4 + r() * 8,
-    go_out: canOut ? (100 - n.fun) * 0.7 + (100 - n.social) * 0.5 + r() * 25 + 2 : 0,
+    go_out: canOut ? (100 - n.fun) * 0.7 + (100 - n.social) * 0.5 + r() * 25 + 2 - (h >= 19 && outReason() !== "low" ? 25 : 0) : 0,
     towel: 3 + r() * 6, window: 7 + r() * 14, water_living: 5 + r() * 10, water_study: 4 + r() * 10, art: 4 + r() * 12, dress: 4 + r() * 10,
   };
   // how she feels tips the scales (Sims-style)
@@ -1960,40 +1960,58 @@ function choose() {
   if (best === "go_out") setOuting(h);
   return best;
 }
-// She goes out to play by herself now and then (user): in the daytime, when
-// she's fed and rested, and not too soon after the last time; where depends
-// on the season, the weather and the hour. She heads home after a while
-// (`sim.outBack`, game minutes), or at once when a need runs red.
+// She goes out by herself now and then (user), by day or at night: bored,
+// in a good mood, lonely, or sad / tense and wanting some quiet (the dock,
+// the park). She's fed and rested, and it's not too soon after the last time;
+// where depends on why, the season, the weather and the hour (the mall is
+// shut at night). She heads home after a while (`sim.outBack`, game
+// minutes; `sim.outWhy` is why she went, for what she says), or at once when
+// a need runs red. OUTING_TEXT (places_text.js + outing/*.js).
 const OUT_GAP = 240;   // game minutes between outings
-const OUTINGS = {   // place: [weight, stay min, stay max (game minutes)]
-  front: [2, 30, 60], park: [3, 90, 180], mall: [3, 90, 180], beach: [2, 90, 200],
+const OUTINGS = {   // place: [stay min, stay max (game minutes)]
+  front: [30, 60], park: [90, 180], mall: [90, 180], beach: [90, 200],
 };
-function outingDest(h) {
+function outReason() {
+  const e = emotion().key;
+  return LOW_EMO.has(e) ? "low" : HIGH_EMO.has(e) ? "happy" : sim.needs.social < 40 ? "lonely" : "bored";
+}
+function outingDest(h, why = outReason()) {
   const n = sim.needs, w = weather.kind, se = seasonOf(sim.t).i;
-  if (h < 8.5 || h >= 17.5 || sim.t - (sim.lastOut ?? -1e9) < OUT_GAP) return null;
+  if (h < 8.5 || h >= 22 || sim.t - (sim.lastOut ?? -1e9) < OUT_GAP) return null;
   if (n.hunger < 35 || n.energy < 35 || n.hygiene < 30 || n.bladder < 35 || sim.mode === "down") return null;
   const bad = w === "rain" || w === "snow", hot = se === 1 && w === "clear" && h >= 11 && h < 16;
+  const night = h >= 19, shop = h < 20.5 && !night;
   const wt = {
-    front: bad ? 0 : 2,
+    front: bad ? 0 : why === "low" ? 2 : 2,
     park: bad ? 0 : se === 3 ? 1.5 : se === 1 ? 3 : 4,
-    mall: bad || hot || se === 3 ? 5 : 2.5,
+    mall: !shop ? 0 : why === "low" ? 0.5 : bad || hot || se === 3 ? 5 : 2.5,
     beach: bad ? 0 : se === 1 ? 5 : se === 3 ? 0.3 : 1.5,
   };
+  if (why === "low") { wt.beach *= 2; wt.park *= 1.3; }                  // somewhere quiet
+  if (why === "lonely") { wt.mall *= 1.5; wt.park *= 1.2; wt.beach *= 0.6; }   // where the people are
+  if (why === "happy") wt.front *= 0.7;
   const all = Object.entries(wt).filter(([, v]) => v > 0);
   return all.length ? weighted(all) : null;
 }
 function setOuting(h) {
-  const to = outingDest(h) || "front", [, a, b] = OUTINGS[to];
-  sim.dest = to; sim.lastOut = sim.t;
+  const why = outReason(), to = outingDest(h, why) || "front", [a, b] = OUTINGS[to];
+  sim.dest = to; sim.lastOut = sim.t; sim.outWhy = why;
   sim.outBack = sim.t + a + Math.random() * (b - a) + (to === "front" ? 0 : 20);
+  const say = (((OUTING_TEXT[why] || {})[to] || {}).say) || [];
+  if (say.length) speak(pick(say));
+}
+// what the diary says when she steps out into `to`
+function outLog(to) {
+  const t = (((OUTING_TEXT[sim.outWhy] || {})[to] || {}).log) || [];
+  return t.length ? pick(t) : null;
 }
 
 const EMO_PULL = {
   playful: { dance: 30, tv: 10, go_out: 15 }, energized: { dance: 20, water_living: 8, go_out: 20 }, focused: { pc_code: 35, read: 10 },
-  inspired: { read: 20, pc_code: 15, art: 15, window: 10 }, sad: { phone_call: 25, bath: 15, phone_video: 15 },
-  angry: { dance: 10, bath: 10, computer: -20 }, tense: { bath: 30, read: 10 }, bored: { tv: 15, computer: 15, pc_forum: 10, go_out: 10 },
+  inspired: { read: 20, pc_code: 15, art: 15, window: 10 }, sad: { phone_call: 25, bath: 15, phone_video: 15, go_out: 35 },
+  angry: { dance: 10, bath: 10, computer: -20, go_out: 25 }, tense: { bath: 30, read: 10, go_out: 20 }, bored: { tv: 15, computer: 15, pc_forum: 10, go_out: 10 },
   flirty: { phone_text: 25, dress: 15, go_out: 10 }, confident: { dress: 15, pc_code: 10 }, scared: { phone_call: 20, tv: 10 },
-  embarrassed: { bath: 15 }, uncomfortable: {}, dazed: { window: 10 },
+  embarrassed: { bath: 15, go_out: 10 }, uncomfortable: { go_out: 15 }, dazed: { window: 10, go_out: 10 },
 };
 function startAct(name, quiet = false) {
   if (sim.place !== "home" && !OUT_ACTS.has(name) && ACTS[name].spot) { sim.queue.unshift(name); name = "go_home"; }   // indoor things: home first
@@ -10675,7 +10693,7 @@ function ringPick(id) {
   if (id === "video" || id === "forum") { openRing(id, "computer"); return; }
   if (id.startsWith("go:")) {
     closeRing();
-    sim.dest = id.slice(3); sim.outBack = null;          // sent out by the player: she stays till she's had enough
+    sim.dest = id.slice(3); sim.outBack = null; sim.outWhy = null;          // sent out by the player: she stays till she's had enough
     command("go_out");
     return;
   }
@@ -10943,17 +10961,20 @@ function throughDoor(to) {
     else sim.route = [[OUT[to].doorX, OUT[to].feet]];
     sim.s = 0; sim.target = 0; sim.crossing = []; sim.facing = 1; sim.dest = null;
     sim.idleUntil = sim.t + (to === "front" ? 4 : 1);
-    if (to === "home") sim.outBack = null;
+    if (to === "home") sim.outBack = null, sim.outWhy = null;
     if (to === "home") log(pick(["回到家，换上拖鞋。", "推门进屋，还是家里舒服。", "回来了，还是家里舒服。"]));
-    else if (to === "front") { log(pick(["出门在家门口走走。", "推开门，到门口透透气。", "出了门，站在门口伸了个懒腰。"])); addMood("outdoors"); }
-    else { log(pick(PLACE_LOG[to])); addMood(to); }
+    else if (to === "front") { log(outLog(to) || pick(["出门在家门口走走。", "推开门，到门口透透气。", "出了门，站在门口伸了个懒腰。"])); addMood("outdoors"); }
+    else { log(outLog(to) || pick(PLACE_LOG[to])); addMood(to); }
     arriveAt(to);
   });
 }
 function chooseOutside() {
   const red = redNeed();
   if (red) { homeFor(red); return "go_home"; }   // a need ran red: home to sort it out (user)
-  if (sim.outBack != null && (sim.t >= sim.outBack || hour() >= 20.5)) { speak(pick(["玩够啦，回家吧", "有点累了，回家", "天色不早了，回家吧"])); return "go_home"; }
+  if (sim.outBack != null && (sim.t >= sim.outBack || hour() >= (sim.outWhy === "low" ? 23.5 : 22.5) || hour() < 5)) {
+    const back = ((OUTING_TEXT.back || {})[sim.outWhy]) || ["玩够啦，回家吧", "有点累了，回家", "不早了，回家吧"];
+    speak(pick(back)); return "go_home";
+  }
   const O = OUT[sim.place], p = here();
   if (O.kind === "sit") return "bench";
   if (O.kind === "scroll") return "mall";
@@ -12773,6 +12794,778 @@ const PLACE_TEXT = {
   },
 };
 
+const OUTING_TEXT = Object.assign({}, // 自己出门：因为 bored（待闷了）/ happy（心情好）。say = 出门时自言自语，log = 日记一句。
+{
+  bored: {
+    front: {
+      say: [
+        "再不出门，我要长蘑菇了",
+        "沙发已经有我的形状了",
+        "手机刷到底了，出去看看",
+        "屋里的灰都认识我了",
+        "出门三步，也算换个地图",
+        "我去门口刷新一下自己",
+        "在家待成了一盆植物",
+        "冰箱我已经看了八遍了",
+        "出去看看世界还在不在",
+        "玩腻了，去街上找点乐子",
+        "家里没新剧情，外面找找",
+        "就去门口晃晃，不走远"
+      ],
+      log: [
+        "在家闷坏了，去门口透透气。",
+        "玩腻了，出门在街上晃了晃。",
+        "屋里待不住，溜达到家门口。",
+        "想换个地方，先走到街上。",
+        "没事做，出门看看街上有啥。",
+        "闷得发慌，推门出去走走。",
+        "把自己从沙发上撕下来，出门了。",
+        "家里的花样玩完了，去街上瞧瞧。",
+        "随便走走，权当给自己放个风。"
+      ]
+    },
+    park: {
+      say: [
+        "去公园，跟鸭子对视",
+        "在家发霉了，去晒晒",
+        "听说公园的长椅很空虚",
+        "我去看看湖有没有变大",
+        "玩腻了，去找棵树聊聊",
+        "去公园，主打一个发呆",
+        "鸭子比手机好看，大概",
+        "出门找点绿色，补补色",
+        "去公园当一个闲人",
+        "屋里没风，公园有",
+        "我去给长椅加点人气",
+        "家里太安静，去听鸭叫"
+      ],
+      log: [
+        "闷得慌，去公园走走。",
+        "玩腻了，跑到公园坐坐。",
+        "在家待烦了，去看湖边的鸭子。",
+        "想换换环境，慢慢晃到公园。",
+        "屋里憋得慌，去树底下坐会儿。",
+        "没什么事，去公园找张长椅。",
+        "对着墙看够了，去看看湖。",
+        "去公园遛自己，顺便遛遛脑子。",
+        "待腻了，去公园放空一下。"
+      ]
+    },
+    mall: {
+      say: [
+        "去商场，蹭一下热闹",
+        "奶茶摊，我又来了",
+        "不买，就看看，真的",
+        "去超市逛逛，当散步",
+        "电影院的海报该换了吧",
+        "钱包说不要，脚说要去",
+        "地摊上说不定有宝贝",
+        "去服装店试衣，不买",
+        "在家无聊，商场有人气",
+        "去超市看看有啥新鲜的",
+        "逛街是一种精神外卖",
+        "进去只逛，出来再说"
+      ],
+      log: [
+        "在家无聊，去商场闲逛。",
+        "玩腻了，晃进商场看热闹。",
+        "闷了，去奶茶摊排了会儿队。",
+        "去超市转了一圈，什么都没买。",
+        "跑去服装店，试了几件又放下。",
+        "没事干，去地摊翻翻小玩意儿。",
+        "在电影院门口看了半天海报。",
+        "屋里待够了，去商场吹冷气。",
+        "想看看人，就去了商场。"
+      ]
+    },
+    beach: {
+      say: [
+        "去海边，让浪帮我清醒",
+        "海鸥应该也很闲吧",
+        "去看海，顺便看开点",
+        "沙子比沙发软，大概",
+        "去栈桥上站着发呆",
+        "家里没浪，只能去找浪",
+        "听说渔船今天也不忙",
+        "去海边，把无聊扔进海里",
+        "海比电视大，去看看",
+        "去踩沙子，踩出个脚印",
+        "我要去和海鸥抢位置",
+        "去海边，听海说废话"
+      ],
+      log: [
+        "闷得慌，去海边吹吹风。",
+        "玩腻了，一路晃到海边。",
+        "在家待烦了，去栈桥上走走。",
+        "想换个地方，来看看海。",
+        "对着屋子发呆够了，去踩沙子。",
+        "没事做，去看海鸥抢东西。",
+        "屋里憋闷，去海边看渔船。",
+        "去海边扔了几颗小石子。",
+        "待腻了，坐在沙滩上看海。"
+      ]
+    }
+  },
+  happy: {
+    front: {
+      say: [
+        "心情太好，屋子装不下",
+        "走，去街上收集好运",
+        "今天连台阶都顺眼",
+        "我要去街上散发快乐",
+        "路过的猫，今天我请客",
+        "脚底像装了弹簧",
+        "出门，让开心见见世面",
+        "哼着歌出门，不收门票",
+        "今天的我，自带光环",
+        "高兴得想绕街区一圈",
+        "好心情不能浪费，出门",
+        "给街上的人点个赞"
+      ],
+      log: [
+        "心情好，哼着歌走到街上。",
+        "高兴得坐不住，出门溜达。",
+        "轻快地跑出门，在街上转圈。",
+        "好心情满出来了，去街上走走。",
+        "蹦蹦跳跳地踏上了门口的街。",
+        "觉得今天很棒，出门庆祝一下。",
+        "笑着出了门，顺着街慢慢走。",
+        "开心得想让邻居们都看见。",
+        "满心欢喜，去街上散散步。"
+      ]
+    },
+    park: {
+      say: [
+        "开心到想去拥抱一棵树",
+        "走，去给鸭子报喜",
+        "今天长椅归我，庆祝一下",
+        "我要在湖边傻笑一会儿",
+        "心情好，连草都顺眼",
+        "去公园，把快乐晒一晒",
+        "高兴，所以要绕湖三圈",
+        "鸭子们，我来发糖了",
+        "好心情配大树，绝配",
+        "去公园，开个人小派对",
+        "我今天是公园最靓的仔",
+        "走，去跟树分享喜讯"
+      ],
+      log: [
+        "心情好，蹦蹦跳跳去公园。",
+        "高兴得很，去湖边绕了一圈。",
+        "笑嘻嘻地走进公园，找长椅坐下。",
+        "开心，去和鸭子分享好心情。",
+        "哼着歌在公园的小路上走。",
+        "满心欢喜，去树荫下转悠。",
+        "觉得全世界都友好，去公园逛逛。",
+        "好心情不浪费，去公园庆祝。",
+        "到公园里散散步，嘴角没放下过。"
+      ]
+    },
+    mall: {
+      say: [
+        "开心，奶茶加双份料",
+        "今天允许自己逛久点",
+        "好心情，值得一杯奶茶",
+        "去服装店，看看新衣服",
+        "走，去超市买点好吃的",
+        "钱包鼓不鼓都要笑着逛",
+        "电影院，我来庆祝了",
+        "地摊淘宝，说不定有惊喜",
+        "高兴，所以全场我最靓",
+        "今天看啥都觉得可爱",
+        "奖励自己，逛个痛快",
+        "去商场，把快乐扩散"
+      ],
+      log: [
+        "心情好，去商场逛逛。",
+        "高兴，给自己买了杯奶茶。",
+        "开开心心逛进服装店，试了好几件。",
+        "好心情，去超市挑了点零食。",
+        "去电影院门口，看新片的海报。",
+        "笑着在地摊前蹲了好久。",
+        "兴致很高，把商场转了个遍。",
+        "觉得该庆祝，就去商场犒劳自己。",
+        "哼着歌逛完了奶茶摊和超市。"
+      ]
+    },
+    beach: {
+      say: [
+        "开心，要去跟海打招呼",
+        "海鸥，快看我心情多好",
+        "去海边，把笑声扔远点",
+        "好心情配大海，刚刚好",
+        "我要在沙滩上留个笑脸",
+        "去栈桥，大喊一声耶",
+        "高兴得想追着浪跑",
+        "渔船也该知道我很开心",
+        "走，去海边庆祝一下",
+        "沙子软，心情更软",
+        "去海边，把快乐加满",
+        "今天的我，和大海同款宽广"
+      ],
+      log: [
+        "心情好，一路小跑到海边。",
+        "高兴得很，去沙滩上踩脚印。",
+        "笑着跑上栈桥，朝大海挥挥手。",
+        "开心，去海边追着浪花玩。",
+        "哼着歌，沿着沙滩慢慢走。",
+        "满心欢喜，去看海鸥和渔船。",
+        "好心情满溢，去海边庆祝。",
+        "到了海边，对着远处笑了好久。",
+        "兴冲冲赶到海边，拾了几枚贝壳。"
+      ]
+    }
+  }
+}, // 出门原因 low / lonely 的出门自语与日记，以及各原因的回家前台词。
+{
+  low: {
+    park: {
+      say: [
+        "屋里太挤了，我去公园腾点地方。",
+        "不想说话，那就去跟树待着。",
+        "锅不是我的，但我先去背一会儿。",
+        "去长椅上把脑子放空十分钟。",
+        "心里堵得慌，出去漏点气。",
+        "鸭子不会甩锅，我去找它们。",
+        "不是想哭，就是想坐着。",
+        "我去公园，把烦心事从头发里抖出去。",
+        "烦成一团了，去外面摊开晾晾。",
+        "没人问我还好吗，我自己出去问。",
+        "去湖边，看水比看手机强。",
+        "存款数字太刺眼，我去看点免费的风景。"
+      ],
+      log: [
+        "心里不痛快，去公园坐坐。",
+        "一个人去了公园，没怎么说话。",
+        "去湖边发了一会儿呆。",
+        "找了张空长椅，把心事摊开。",
+        "憋得慌，出去透口气。",
+        "去公园看鸭子，顺便不想事。",
+        "绕着湖慢慢走了一圈。",
+        "想一个人待着，就去了公园。",
+        "在树下坐着，什么都没想成。"
+      ]
+    },
+    beach: {
+      say: [
+        "去码头吹吹，把脑子吹干净。",
+        "海那么大，我这点事好像也还行。",
+        "栈桥尽头没人，正适合我。",
+        "想家了，去看看海通向哪边。",
+        "被误解了一整天，我去跟海解释。",
+        "海鸥吵吵嚷嚷，倒也不烦。",
+        "去码头坐会儿，让浪替我叹气。",
+        "渔船都有地方回，我也马上回。",
+        "我就去看看海，不干别的。",
+        "谈了又散了，去沙滩踩踩脚印。",
+        "去栈桥发呆，反正没人收费。",
+        "难过的时候，海最不爱追问。"
+      ],
+      log: [
+        "心里发闷，去了海边。",
+        "坐在码头尽头，看海看了很久。",
+        "沿着沙滩慢慢走，不赶时间。",
+        "去栈桥吹风，把烦心事丢给浪。",
+        "一个人看渔船晃来晃去。",
+        "对着海发了好一会儿呆。",
+        "在码头坐了坐，想起家里的人。",
+        "海鸥叫个不停，倒也不觉得吵。",
+        "踩着沙子走了一段，心里松了点。"
+      ]
+    },
+    front: {
+      say: [
+        "出去走两步，不去哪儿。",
+        "在门口站站，也算出过门。",
+        "沿着街随便走，走到不烦为止。",
+        "屋里的空气都在跟我较劲。",
+        "我去街上当一会儿路人。",
+        "没目的地，走累了就回。",
+        "一个人在街上，反而没那么吵。",
+        "先出门，难过的事路上再想。",
+        "发懵的时候，腿比脑子靠谱。",
+        "出去遛遛自己。",
+        "街灯和路牌都不会问我怎么了。",
+        "把鞋穿上，剩下的交给脚。"
+      ],
+      log: [
+        "心情不好，去门口那条街走走。",
+        "漫无目的地在街上晃了晃。",
+        "出门走几步，想把烦躁甩掉。",
+        "一个人沿着街慢慢走。",
+        "在家门口站了一会儿，没想什么。",
+        "出去走走，把脑子里的线理一理。",
+        "街上很多人，没有一个认识我。",
+        "走了一小段，心里敞亮了一点。",
+        "不想待在屋里，就出了门。"
+      ]
+    }
+  },
+  lonely: {
+    park: {
+      say: [
+        "屋里太安静了，我去找点人声。",
+        "去公园看看别人的热闹。",
+        "想看看小孩追着球跑的样子。",
+        "一个人吃饭太冷清，出去蹭点人气。",
+        "公园里总有人，我去数数。",
+        "长椅上坐着，旁边有人也算陪伴。",
+        "我去看别人遛狗，顺便羡慕狗。",
+        "听见谈笑声，心里会暖一点。",
+        "出去沾点烟火气再回来。",
+        "鸭子再加几个路人，够热闹了。",
+        "家里只有我的回声，不行，出门。",
+        "想假装自己也有个约。"
+      ],
+      log: [
+        "屋里太冷清，去公园沾沾人气。",
+        "去公园看人来人往。",
+        "在长椅上看别人聊天。",
+        "听着远处的笑声坐了一会儿。",
+        "一个人去公园，旁边有人就好。",
+        "看小孩跑来跑去，笑了一下。",
+        "想要点热闹，就去了公园。",
+        "坐在人群边上，不说话也踏实。",
+        "绕着公园走，遇见好几只狗。"
+      ]
+    },
+    mall: {
+      say: [
+        "去商场，走在人群里就不孤单。",
+        "想听点杂乱的人声。",
+        "不买东西，就去看别人买。",
+        "一个人逛也行，反正有灯有人。",
+        "去商场蹭点热闹和冷气。",
+        "想看看大家都在忙什么。",
+        "橱窗里的我，旁边至少站着人。",
+        "我去人多的地方，当个背景板。",
+        "家里的安静有点吵，出去换换。",
+        "去商场转转，说不定有人对我笑。",
+        "挤在人群里，也算有伴。",
+        "试吃的阿姨应该还认得我。"
+      ],
+      log: [
+        "觉得冷清，去商场看人来人往。",
+        "在商场逛了逛，什么也没买。",
+        "混在人群里走了一圈。",
+        "听着商场里的嘈杂，心里踏实些。",
+        "一个人逛橱窗，看别人成双成对。",
+        "想沾点人气，就去了商场。",
+        "在商场坐着看人，也挺好。",
+        "边走边看，热闹是别人的也行。",
+        "去商场转转，想找人说句话。"
+      ]
+    },
+    beach: {
+      say: [
+        "去海边看有没有人在玩。",
+        "想听人们在沙滩上笑闹。",
+        "码头上总有钓鱼的，我去搭个话。",
+        "海边人多，我去混个脸熟。",
+        "一个人太静，去看别人堆沙堡。",
+        "渔船上的人在喊话，听着也亲切。",
+        "想去人堆边上站一站。",
+        "海鸥算热闹吗？算吧，再加几个人。",
+        "我去看看大家都在海边做什么。",
+        "栈桥上有人说笑，我路过听听。",
+        "不想只对着墙说话，去对着海。",
+        "去沙滩，看别人的脚印挨在一起。"
+      ],
+      log: [
+        "屋里冷清，去海边找点人气。",
+        "在沙滩边看大家玩闹。",
+        "去码头看人钓鱼，聊了两句。",
+        "看别人堆沙堡，看得入神。",
+        "一个人去海边，周围有人真好。",
+        "听着沙滩上的笑声，心里暖了些。",
+        "坐在栈桥边，看人来人往。",
+        "想要点热闹，就去了海边。",
+        "路过几个人，听见他们在笑。"
+      ]
+    },
+    front: {
+      say: [
+        "出去看看邻居们在忙啥。",
+        "街上有人走动，我也出去走走。",
+        "想听见别人的脚步声。",
+        "站在门口，看有没有熟面孔。",
+        "太安静了，我去街上凑个热闹。",
+        "路过的人说一声你好也行。",
+        "我去街上当个观众。",
+        "家里一个人，街上好歹有一群人。",
+        "想看看店铺里的灯和人影。",
+        "沾点人气，回来再继续宅。",
+        "听听街上的动静，总比空屋子强。",
+        "出去蹭一蹭别人的忙碌。"
+      ],
+      log: [
+        "觉得冷清，去门口那条街走走。",
+        "站在街边看人来人往。",
+        "在家门口晃了晃，想沾点人气。",
+        "听着街上的动静，心里没那么空。",
+        "看邻居们进进出出。",
+        "沿着街走了一段，看了好多脸。",
+        "一个人出门，想遇到熟人。",
+        "在街边看了一会儿别人的日子。",
+        "出门凑个热闹，没说话也行。"
+      ]
+    }
+  },
+  back: {
+    bored: [
+      "玩够了，回家躺平。",
+      "逛得差不多了，回去吧。",
+      "没什么新鲜的了，我回家。",
+      "走累了，家里的沙发想我了。",
+      "再逛下去也就是重复，回去了。",
+      "好了好了，我回家了。",
+      "该看的都看完了，撤。",
+      "有点无聊，还是回屋里待着。",
+      "外面也就这样，回家吧。",
+      "脚在抗议了，回家。",
+      "兜了一圈，没什么新发现，回家。",
+      "出来过了，任务完成，回家。",
+      "看够了，回去找点别的事做。",
+      "我先撤，家里还有事等我。"
+    ],
+    happy: [
+      "好开心，回家把这事记下来。",
+      "这趟真不赖，回家啦。",
+      "心满意足，回家！",
+      "这一趟值了，回去慢慢回味。",
+      "满载而归，回家喽。",
+      "玩得好痛快，回去歇一歇。",
+      "好想把这份开心带回家。",
+      "出来一趟，心情都亮了。",
+      "该回去了，下次还来。",
+      "笑得脸都酸了，回家。",
+      "美滋滋，回家写日记。",
+      "什么都不缺了，回家吧。",
+      "这份好心情，别让它跑了，回家。",
+      "回去吧，这份快乐够用好久。"
+    ],
+    low: [
+      "静够了，回家吧。",
+      "心里松了一点，回去了。",
+      "还是有点难过，但想回家了。",
+      "想通了一半，剩下的回家想。",
+      "出来坐坐，好像好多了。",
+      "没那么堵了，走吧。",
+      "烦心事先放这儿，我回去了。",
+      "再难过也得回家，家里有床。",
+      "冷静了一点，回家睡个好觉。",
+      "不烦了，也不算好，回家。",
+      "把情绪留在外面，我回去了。",
+      "回家抱抱自己。",
+      "深呼吸一下，我们回家。",
+      "以后的事以后算，先回家。"
+    ],
+    lonely: [
+      "沾够人气了，回家。",
+      "热闹是别人的，我也蹭到了点，回家。",
+      "还是有点孤单，但回家也不怕了。",
+      "看了好多人，心里暖了一点。",
+      "人气补满了，回去吧。",
+      "一个人就一个人，回家了。",
+      "听够了别人的笑声，回去吧。",
+      "回去了，家里至少有我自己。",
+      "没人等我，但家在等我。",
+      "不那么冷清了，回家。",
+      "孤单还在，但我先回家了。",
+      "凑完热闹，回屋继续做我自己。",
+      "有人的地方真好，下次再来。",
+      "好了，回去给自己倒杯水。"
+    ]
+  }
+});
+for (const [k, list] of Object.entries(// 公园 / 海边 自言自语（按心情分类）
+{
+  park: [
+    { t: "长椅今晚只有我一个客人", when: "low+night" },
+    { t: "路灯陪我加班，比老板靠谱", when: "low+night" },
+    { t: "湖面的灯光碎了，像我的存款", when: "low+night" },
+    { t: "夜里的鸭子都睡了，真好", when: "low+night" },
+    { t: "今晚的星星少，我数得过来", when: "low+night" },
+    { t: "锅又被甩给我了，树洞收吗", when: "low+night" },
+    { t: "回家前，先在这儿充会儿电", when: "low+night" },
+    { t: "秋千空着，晃一下也没人管", when: "low+night" },
+    { t: "35岁还早，我这样安慰树", when: "low+night" },
+    { t: "想家的时候，月亮格外亮", when: "low+night" },
+    { t: "夜里的公园，谁也不问我进度", when: "low+night" },
+    { t: "长椅有点凉，我也是", when: "low+night" },
+    { t: "他的消息停在那天，我没点开", when: "low+night" },
+    { t: "湖水一晃一晃，像在说没事", when: "low+night" },
+    { t: "小路尽头的灯，亮着就行", when: "low+night" },
+    { t: "今晚不想懂事，只想坐着", when: "low+night" },
+    { t: "手机电量8%，我比它还省", when: "low+night" },
+    { t: "夜风吹过，会议纪要全忘光了", when: "low+night" },
+    { t: "树影黑黑的，却不吓人", when: "low+night" },
+    { t: "没人的公园，哭也不用躲", when: "low+night" },
+    { t: "月亮也独居，我们算邻居", when: "low+night" },
+    { t: "房租日快到了，先看会儿湖", when: "low+night" },
+    { t: "夜深了，烦恼也困得慢下来", when: "low+night" },
+    { t: "远处的窗户亮着，都在硬撑吧", when: "low+night" },
+    { t: "再坐五分钟，就回去睡觉", when: "low+night" },
+    { t: "晚风说：今天也算熬过来了", when: "low+night" },
+    { t: "我和路灯，都在被需要的边缘", when: "low+night" },
+    { t: "今天的我，有点空空的", when: "low" },
+    { t: "鸭子没理我，我也没生气", when: "low" },
+    { t: "长椅很硬，但它一直在", when: "low" },
+    { t: "想说的话太多，就先不说", when: "low" },
+    { t: "我是不是又把事情搞砸了", when: "low" },
+    { t: "树不说话，所以我才来找它", when: "low" },
+    { t: "存款像湖面，看着多，一碰就散", when: "low" },
+    { t: "被甩的锅，我先放在长椅上", when: "low" },
+    { t: "湖里的倒影，今天也没精神", when: "low" },
+    { t: "好想有人问我一句累不累", when: "low" },
+    { t: "风吹乱头发，也吹乱心事", when: "low" },
+    { t: "秋千荡高一点，烦恼就落下了", when: "low" },
+    { t: "别人都在往前跑，我先坐会儿", when: "low" },
+    { t: "我也想被好好对待一次", when: "low" },
+    { t: "落叶不着急，我也不急", when: "low" },
+    { t: "今天什么都不想解决", when: "low" },
+    { t: "鸭子一家子游过去，我看呆了", when: "low" },
+    { t: "好想回家，可家也不在这儿", when: "low" },
+    { t: "难过一会儿就好，我定个闹钟", when: "low" },
+    { t: "小路弯弯的，我也不知去哪", when: "low" },
+    { t: "我的耐心，今天被用完了", when: "low" },
+    { t: "公园很大，装得下我的叹气", when: "low" },
+    { t: "努力了，可还是差一点点", when: "low" },
+    { t: "湖水很静，我却吵得很", when: "low" },
+    { t: "坐一会儿，只一会儿", when: "low" },
+    { t: "今天的云有点重，像我", when: "low" },
+    { t: "嗯，我今天也想当一棵树", when: "low" },
+    { t: "我感觉我今天状态绝佳！", when: "high" },
+    { t: "鸭子们，看我荡秋千！", when: "high" },
+    { t: "这条小路，我要蹦着走完", when: "high" },
+    { t: "灵感像鸭子一样扑腾上来了", when: "high" },
+    { t: "今天的我，闪闪发光", when: "high" },
+    { t: "我宣布，这棵树是我的朋友", when: "high" },
+    { t: "湖里的我笑得像个傻瓜，真好", when: "high" },
+    { t: "好想给鸭子起名字，一只叫小满", when: "high" },
+    { t: "长椅，今天我坐你上面开会", when: "high" },
+    { t: "秋千荡到最高，我就是国王", when: "high" },
+    { t: "什么烦恼，我现在都扛得住", when: "high" },
+    { t: "今天做什么都顺手，嘿嘿", when: "high" },
+    { t: "我要绕湖跑三圈，不，两圈", when: "high" },
+    { t: "鸭子你好！你今天也很圆！", when: "high" },
+    { t: "风一吹，点子就满地跑", when: "high" },
+    { t: "我对着湖喊了一声耶", when: "high" },
+    { t: "今天要吃好吃的，已经决定了", when: "high" },
+    { t: "树叶哗啦啦，像在给我鼓掌", when: "high" },
+    { t: "我觉得我能把明天也搞定", when: "high" },
+    { t: "公园是我的，今天先借给你们", when: "high" },
+    { t: "我想在草地上打个滚", when: "high" },
+    { t: "小路让我蹦两下，不过分吧", when: "high" },
+    { t: "好心情像气球，快飘走啦", when: "high" }
+  ],
+  beach: [
+    { t: "栈桥尽头只有我和一盏灯", when: "low+night" },
+    { t: "潮声一下一下，像在替我叹气", when: "low+night" },
+    { t: "灯塔转一圈，也没照到我的烦恼", when: "low+night" },
+    { t: "夜里的海鸥睡了，我替它们醒着", when: "low+night" },
+    { t: "渔船亮着小灯，也在熬夜吗", when: "low+night" },
+    { t: "海黑黑的，倒让我安心", when: "low+night" },
+    { t: "栈桥的木板，被夜风吹得发凉", when: "low+night" },
+    { t: "浪把加班的疲惫卷走一点点", when: "low+night" },
+    { t: "我对大海说了老板的坏话", when: "low+night" },
+    { t: "海面碎成星星，我也有点碎", when: "low+night" },
+    { t: "灯塔一直亮，不问值不值得", when: "low+night" },
+    { t: "想家的时候，海那头也算远方", when: "low+night" },
+    { t: "码头没人，哭一下也行", when: "low+night" },
+    { t: "潮水退了，心事还留在沙上", when: "low+night" },
+    { t: "35岁的海，也这么晃吗", when: "low+night" },
+    { t: "渔船晃啊晃，替我睡着了", when: "low+night" },
+    { t: "存款像退潮，说走就走", when: "low+night" },
+    { t: "他的名字，我写在沙上又抹掉", when: "low+night" },
+    { t: "夜里的浪声，比闹钟温柔多了", when: "low+night" },
+    { t: "海风有点咸，是海的还是我的", when: "low+night" },
+    { t: "远处的船灯，小小的也在坚持", when: "low+night" },
+    { t: "今晚不回消息，只听海", when: "low+night" },
+    { t: "栈桥上的影子，被灯拉得好长", when: "low+night" },
+    { t: "星星倒在海里，我替它们数着", when: "low+night" },
+    { t: "被甩了锅的夜晚，海听我讲", when: "low+night" },
+    { t: "潮声当白噪音，睡前先听会儿", when: "low+night" },
+    { t: "灯塔孤零零的，我们同病相怜", when: "low+night" },
+    { t: "浪拍栈桥，像有人轻轻敲门", when: "low+night" },
+    { t: "海鸥今天没理我，有点失落", when: "low" },
+    { t: "栈桥好长，却走不到想去的地方", when: "low" },
+    { t: "潮声很大，心事更大", when: "low" },
+    { t: "渔船出海又回来，我却原地不动", when: "low" },
+    { t: "灯塔白天不亮，也一直站着", when: "low" },
+    { t: "码头的缆绳，比我拴得还牢", when: "low" },
+    { t: "浪退了又来，我退了就不想来", when: "low" },
+    { t: "海鸥飞得好自由，我羡慕", when: "low" },
+    { t: "把烦恼扔给海，它又送回来", when: "low" },
+    { t: "栈桥边晃脚，晃不掉心事", when: "low" },
+    { t: "渔船空空地回来，我懂那种感觉", when: "low" },
+    { t: "潮声里，我听见自己的叹气", when: "low" },
+    { t: "今天的海，也不太想说话", when: "low" },
+    { t: "灯塔告诉船方向，谁告诉我", when: "low" },
+    { t: "海鸥叼走了我的薯条和好心情", when: "low" },
+    { t: "栈桥的栏杆，借我靠一会儿", when: "low" },
+    { t: "浪花碎了，也还会再来", when: "low" },
+    { t: "码头旁的绳结，像我的思路", when: "low" },
+    { t: "渔船靠岸了，我什么时候靠岸", when: "low" },
+    { t: "海那么大，我却哪儿都去不了", when: "low" },
+    { t: "潮来潮去，我的情绪也是", when: "low" },
+    { t: "灯塔下面，影子最黑", when: "low" },
+    { t: "海鸥吵吵嚷嚷，我只想安静", when: "low" },
+    { t: "木桩上的贝壳，也扛着潮水", when: "low" },
+    { t: "我把难过折成纸船，没敢放", when: "low" },
+    { t: "栈桥尽头什么都没有，却够了", when: "low" },
+    { t: "今天的浪，拍得我有点累", when: "low" },
+    { t: "海鸥，我今天可以不坚强吗", when: "low" },
+    { t: "海风你好！我来啦！", when: "high" },
+    { t: "栈桥上跑一圈，木板咚咚响", when: "high" },
+    { t: "海鸥，来比比谁飞得高！", when: "high" },
+    { t: "我要对着灯塔挥手打招呼", when: "high" },
+    { t: "渔船满载而归，我也是", when: "high" },
+    { t: "浪花追不上我，略略略", when: "high" },
+    { t: "今天的海是蓝宝石色的，爱了", when: "high" },
+    { t: "我想在沙滩上画一只大海鸥", when: "high" },
+    { t: "灵感像浪一样一波接一波", when: "high" },
+    { t: "潮声是今天的背景音乐", when: "high" },
+    { t: "我是栈桥上最闪亮的人", when: "high" },
+    { t: "海鸥偷我零食，我也不气", when: "high" },
+    { t: "把好心情喊给大海听！", when: "high" },
+    { t: "踩着浪边走，鞋湿了也开心", when: "high" },
+    { t: "码头的风都在夸我今天帅", when: "high" },
+    { t: "我要捡一个最漂亮的贝壳", when: "high" },
+    { t: "灯塔，今天换我给你亮灯", when: "high" },
+    { t: "渔船师傅，带我出海吧！", when: "high" },
+    { t: "我觉得我能游到对岸，大概", when: "high" },
+    { t: "海风吹得我头发飞起来啦", when: "high" },
+    { t: "今天的我，跟浪一样精神", when: "high" },
+    { t: "晒着太阳，什么都能做到", when: "high" }
+  ]
+})) PLACE_TEXT[k].say.push(...list);
+for (const [k, list] of Object.entries(// 按心情分类的自言自语：front / mall
+{
+  front: [
+    { t: "路灯把我的影子拉得好长", when: "low+night" },
+    { t: "街上好安静，只剩路灯陪我", when: "low+night" },
+    { t: "别人家的窗都亮着，真好", when: "low+night" },
+    { t: "那扇窗里在煮东西吧，好香", when: "low+night" },
+    { t: "猫也不理我，今天人缘一般", when: "low+night" },
+    { t: "夜风有点凉，我装作是故意的", when: "low+night" },
+    { t: "站一会儿就回去，真的", when: "low+night" },
+    { t: "我家那盏灯，是我自己留的", when: "low+night" },
+    { t: "路灯闪了一下，是在安慰我吗", when: "low+night" },
+    { t: "大家都睡了，我负责站岗", when: "low+night" },
+    { t: "心里乱乱的，街上倒是整齐", when: "low+night" },
+    { t: "今天的烦恼，先放在门口吧", when: "low+night" },
+    { t: "对面的灯灭了，只剩我这盏", when: "low+night" },
+    { t: "我没事，就是想看看月亮", when: "low+night" },
+    { t: "一个人站着，影子也是个伴", when: "low+night" },
+    { t: "远处有车开过，不是来找我的", when: "low+night" },
+    { t: "发了半天呆，脑子还是空的", when: "low+night" },
+    { t: "邻居家传来笑声，我也笑了下", when: "low+night" },
+    { t: "我把叹气咽回去了，怪浪费的", when: "low+night" },
+    { t: "安静是安静，就是有点太安静", when: "low" },
+    { t: "台阶上坐一会儿，什么都不想", when: "low" },
+    { t: "心情像阴天，但没下雨", when: "low" },
+    { t: "我出来，是想把心事晾一晾", when: "low" },
+    { t: "邮箱空空的，跟我差不多", when: "low" },
+    { t: "不想说话，门口刚好没人", when: "low" },
+    { t: "猫懒得看我，我也懒得动", when: "low" },
+    { t: "今天的我，有点拧巴", when: "low" },
+    { t: "脚下的裂缝，我盯了好久", when: "low" },
+    { t: "没什么事，就是不太开心", when: "low" },
+    { t: "要是烦恼能像落叶，扫掉就好", when: "low" },
+    { t: "隔壁的门开了又关，没人看我", when: "low" },
+    { t: "我蹲下来，数地砖数到发懵", when: "low" },
+    { t: "麻雀都成群，我是落单的那只", when: "low" },
+    { t: "风吹过来，我也没躲", when: "low" },
+    { t: "明明没事，肩膀却很沉", when: "low" },
+    { t: "要不要哭一下？算了，太费力", when: "low" },
+    { t: "我对自己说：辛苦啦，然后沉默", when: "low" },
+    { t: "站在门口，像没电的小机器人", when: "low" },
+    { t: "蚂蚁都有事做，我没有", when: "low" },
+    { t: "再待一会儿，我就好起来", when: "low" },
+    { t: "今天想对自己好一点，笨拙地", when: "low" },
+    { t: "心里有点空，像没装满的杯子", when: "low" },
+    { t: "今天心情超好，连台阶都在笑", when: "high" },
+    { t: "我想在门口转三个圈！", when: "high" },
+    { t: "猫，你今天也好可爱呀", when: "high" },
+    { t: "麻雀，我们来合唱吧", when: "high" },
+    { t: "我要哼一首没有名字的歌", when: "high" },
+    { t: "空气是甜的，我确定", when: "high" },
+    { t: "今天的我，闪闪发光", when: "high" },
+    { t: "蹦一下，再蹦一下，好玩", when: "high" },
+    { t: "我跟邻居的猫挥手了，它没理我", when: "high" },
+    { t: "邮箱，你今天会有好消息的", when: "high" },
+    { t: "世界真好，我想拥抱电线杆", when: "high" },
+    { t: "路过的小狗，你好呀你好呀", when: "high" },
+    { t: "我的影子今天跳得特别欢", when: "high" },
+    { t: "想给每片叶子都点个赞", when: "high" },
+    { t: "出门就开心，这是什么魔法", when: "high" },
+    { t: "我要把这条街，夸一遍", when: "high" },
+    { t: "好想原地跑起来，呜呼！", when: "high" },
+    { t: "蜗牛慢慢走，我陪你快乐", when: "high" },
+    { t: "云朵长得像棉花糖，我饿了", when: "high" },
+    { t: "我的小房子，是全街最可爱的", when: "high" },
+    { t: "台阶都被我踩出节奏了", when: "high" },
+    { t: "今天做什么都顺，信不信", when: "high" },
+    { t: "我笑得像个傻瓜，管它呢", when: "high" },
+    { t: "猫翻了个身，我也想翻", when: "high" }
+  ],
+  mall: [
+    { t: "人这么多，我却一个人逛", when: "low" },
+    { t: "大家都成双成对，我是单数", when: "low" },
+    { t: "橱窗里的我，看起来有点累", when: "low" },
+    { t: "打折的牌子好亮，我没什么想买", when: "low" },
+    { t: "热闹是他们的，我只是路过", when: "low" },
+    { t: "奶茶的队好长，我不想排了", when: "low" },
+    { t: "笑声从四面八方来，没一个是我的", when: "low" },
+    { t: "人来人往，没人认识我", when: "low" },
+    { t: "电影院门口的情侣，我绕着走", when: "low" },
+    { t: "买了也不会开心，我知道", when: "low" },
+    { t: "在人群里发呆，也是一种独处", when: "low" },
+    { t: "他们在拍照，我在躲镜头", when: "low" },
+    { t: "热闹得越凶，我越想回家", when: "low" },
+    { t: "试穿的衣服再好看，也没人夸", when: "low" },
+    { t: "一个人看电影海报，看了好久", when: "low" },
+    { t: "我挤在人群里，还是觉得空", when: "low" },
+    { t: "扶梯往上走，心情往下掉", when: "low" },
+    { t: "手里的奶茶，今天不太甜", when: "low" },
+    { t: "地摊的老板在吆喝，我没听进去", when: "low" },
+    { t: "好多人牵着手，我把手揣兜里", when: "low" },
+    { t: "超市的灯太亮，照得我更蔫", when: "low" },
+    { t: "假装很忙地逛，其实无处可去", when: "low" },
+    { t: "我是人海里一滴不起眼的水", when: "low" },
+    { t: "钱包很瘦，心情也是", when: "low" },
+    { t: "热闹归热闹，我还是有点想家", when: "low" },
+    { t: "连试吃的阿姨都不看我，好吧", when: "low" },
+    { t: "今天逛街，逛得特别开心！", when: "high" },
+    { t: "奶茶到手，人生圆满", when: "high" },
+    { t: "我要买那件，不对，两件！", when: "high" },
+    { t: "试穿一下，我就是主角", when: "high" },
+    { t: "爆米花的香味，让我走不动路", when: "high" },
+    { t: "每个橱窗都想进去看看", when: "high" },
+    { t: "地摊的小玩意儿，全都想带走", when: "high" },
+    { t: "今天的我，买得起快乐", when: "high" },
+    { t: "超市的零食区，是我的天堂", when: "high" },
+    { t: "我要抓到娃娃，一定能！", when: "high" },
+    { t: "人这么多，感觉大家都在过节", when: "high" },
+    { t: "我对着橱窗转了个圈", when: "high" },
+    { t: "奶茶店的小哥，你好帅气", when: "high" },
+    { t: "这首店里的歌，我会唱！", when: "high" },
+    { t: "我想请全世界喝奶茶", when: "high" },
+    { t: "走路带风，不信你看", when: "high" },
+    { t: "逛到哪儿都有惊喜", when: "high" },
+    { t: "打折啦打折啦，钱包别怕", when: "high" },
+    { t: "我挑了好久，终于选中最可爱的", when: "high" },
+    { t: "电影票买好了，期待满分", when: "high" },
+    { t: "冰淇淋甜到心里去了", when: "high" },
+    { t: "看谁都顺眼，连保安叔叔都是", when: "high" },
+    { t: "我好像一朵会走路的小花", when: "high" },
+    { t: "手里拎着小袋子，心也满满的", when: "high" },
+    { t: "今天是个适合乱花钱的好日子", when: "high" },
+    { t: "逛街逛出了舞步，嘿嘿", when: "high" }
+  ]
+})) PLACE_TEXT[k].say.push(...list);
+
 const NO = D.doll.options, NSW = D.doll.swatches;
 function npcLook() {
   const short = NO.style.filter(o => D.doll.shortStyles.includes(o[0])), long = NO.style.filter(o => !D.doll.shortStyles.includes(o[0]));
@@ -12936,8 +13729,11 @@ function npcSay(n, text) {
 }
 // ---- what's said
 const PT = () => PLACE_TEXT[sim.place];
+const LOW_EMO = new Set(["sad", "tense", "angry", "uncomfortable", "dazed", "embarrassed"]);
+const HIGH_EMO = new Set(["happy", "playful", "energized", "inspired", "confident", "flirty"]);
 function placeWhen(w) {
   if (!w) return true;
+  if (w.includes("+")) return w.split("+").every(placeWhen);   // "low+night": both
   const se = seasonOf(sim.t).i, h = hour(), k = weather.kind;
   switch (w) {
     case "spring": return se === 0; case "summer": return se === 1; case "autumn": return se === 2; case "winter": return se === 3;
@@ -12945,6 +13741,7 @@ function placeWhen(w) {
     case "night": return h >= 19.5 || h < 5.5; case "morning": return h >= 6 && h < 10; case "evening": return h >= 17 && h < 20;
     case "day": return h >= 9 && h < 17 && k === "clear";
     case "ship": return !!life.ship; case "boat": return !!life.boat;
+    case "low": return LOW_EMO.has(emotion().key); case "high": return HIGH_EMO.has(emotion().key);
   }
   return false;
 }
@@ -18471,7 +19268,7 @@ function snapshot() {
     sim: { t: sim.t, needs: sim.needs, mode: sim.mode, act: sim.act, actEnd: sim.actEnd, nap: !!sim.nap,
            at: [Math.round(p.x), storeyOfY(p.y)], facing: sim.facing, queue: sim.windup ? [sim.windup.act] : sim.queue, recent: sim.recent,
            lastDay: sim.lastDay, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
-           graceUntil: sim.graceUntil, insomnia: !!sim.insomnia, place: sim.place, lastOut: sim.lastOut ?? null, outBack: sim.outBack ?? null },
+           graceUntil: sim.graceUntil, insomnia: !!sim.insomnia, place: sim.place, lastOut: sim.lastOut ?? null, outBack: sim.outBack ?? null, outWhy: sim.outWhy ?? null },
     moods: [...moods].filter(([id]) => ML[id] && !id.startsWith("test_")).map(([id, m]) => [id, m.until, m.t]),
     flags: lifeFlags, events: eventLast, lastFestivalDay, namedAs,
     house: { lamps, windows: windowState },
@@ -18506,7 +19303,7 @@ function restore(sv) {
   }
   sim.route = [[x, FLOOR_Y[storey] ?? FLOOR_Y[1]]]; sim.s = 0; sim.target = 0; sim.crossing = [];
   sim.place = OUT[m.place] ? m.place : "home";
-  sim.lastOut = m.lastOut ?? null; sim.outBack = m.outBack ?? null;
+  sim.lastOut = m.lastOut ?? null; sim.outBack = m.outBack ?? null; sim.outWhy = m.outWhy ?? null;
   if (sim.place !== "home") {                     // out in front: back on the sidewalk where she was
     const O = OUT[sim.place], ox = Math.max(O.walk[0], Math.min(O.walk[1], Array.isArray(m.at) ? m.at[0] : O.doorX));
     sim.route = [[ox, O.feet]];

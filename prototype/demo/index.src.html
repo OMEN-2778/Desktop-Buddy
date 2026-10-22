@@ -1249,7 +1249,7 @@ function choose() {
     pc_forum: (100 - n.social) * 0.6 + (100 - n.fun) * 0.4 + r() * 15,
     pc_code: 8 + r() * 20, phone_game: (100 - n.fun) * 0.6 + r() * 15, dance: 2 + r() * 6,
     wash: (h >= 6.5 && h < 9) || (h >= 21 && h < 23) ? 28 + r() * 10 : 4 + r() * 8,
-    go_out: canOut ? (100 - n.fun) * 0.7 + (100 - n.social) * 0.5 + r() * 25 + 2 : 0,
+    go_out: canOut ? (100 - n.fun) * 0.7 + (100 - n.social) * 0.5 + r() * 25 + 2 - (h >= 19 && outReason() !== "low" ? 25 : 0) : 0,
     towel: 3 + r() * 6, window: 7 + r() * 14, water_living: 5 + r() * 10, water_study: 4 + r() * 10, art: 4 + r() * 12, dress: 4 + r() * 10,
   };
   // how she feels tips the scales (Sims-style)
@@ -1259,40 +1259,58 @@ function choose() {
   if (best === "go_out") setOuting(h);
   return best;
 }
-// She goes out to play by herself now and then (user): in the daytime, when
-// she's fed and rested, and not too soon after the last time; where depends
-// on the season, the weather and the hour. She heads home after a while
-// (`sim.outBack`, game minutes), or at once when a need runs red.
+// She goes out by herself now and then (user), by day or at night: bored,
+// in a good mood, lonely, or sad / tense and wanting some quiet (the dock,
+// the park). She's fed and rested, and it's not too soon after the last time;
+// where depends on why, the season, the weather and the hour (the mall is
+// shut at night). She heads home after a while (`sim.outBack`, game
+// minutes; `sim.outWhy` is why she went, for what she says), or at once when
+// a need runs red. OUTING_TEXT (places_text.js + outing/*.js).
 const OUT_GAP = 240;   // game minutes between outings
-const OUTINGS = {   // place: [weight, stay min, stay max (game minutes)]
-  front: [2, 30, 60], park: [3, 90, 180], mall: [3, 90, 180], beach: [2, 90, 200],
+const OUTINGS = {   // place: [stay min, stay max (game minutes)]
+  front: [30, 60], park: [90, 180], mall: [90, 180], beach: [90, 200],
 };
-function outingDest(h) {
+function outReason() {
+  const e = emotion().key;
+  return LOW_EMO.has(e) ? "low" : HIGH_EMO.has(e) ? "happy" : sim.needs.social < 40 ? "lonely" : "bored";
+}
+function outingDest(h, why = outReason()) {
   const n = sim.needs, w = weather.kind, se = seasonOf(sim.t).i;
-  if (h < 8.5 || h >= 17.5 || sim.t - (sim.lastOut ?? -1e9) < OUT_GAP) return null;
+  if (h < 8.5 || h >= 22 || sim.t - (sim.lastOut ?? -1e9) < OUT_GAP) return null;
   if (n.hunger < 35 || n.energy < 35 || n.hygiene < 30 || n.bladder < 35 || sim.mode === "down") return null;
   const bad = w === "rain" || w === "snow", hot = se === 1 && w === "clear" && h >= 11 && h < 16;
+  const night = h >= 19, shop = h < 20.5 && !night;
   const wt = {
-    front: bad ? 0 : 2,
+    front: bad ? 0 : why === "low" ? 2 : 2,
     park: bad ? 0 : se === 3 ? 1.5 : se === 1 ? 3 : 4,
-    mall: bad || hot || se === 3 ? 5 : 2.5,
+    mall: !shop ? 0 : why === "low" ? 0.5 : bad || hot || se === 3 ? 5 : 2.5,
     beach: bad ? 0 : se === 1 ? 5 : se === 3 ? 0.3 : 1.5,
   };
+  if (why === "low") { wt.beach *= 2; wt.park *= 1.3; }                  // somewhere quiet
+  if (why === "lonely") { wt.mall *= 1.5; wt.park *= 1.2; wt.beach *= 0.6; }   // where the people are
+  if (why === "happy") wt.front *= 0.7;
   const all = Object.entries(wt).filter(([, v]) => v > 0);
   return all.length ? weighted(all) : null;
 }
 function setOuting(h) {
-  const to = outingDest(h) || "front", [, a, b] = OUTINGS[to];
-  sim.dest = to; sim.lastOut = sim.t;
+  const why = outReason(), to = outingDest(h, why) || "front", [a, b] = OUTINGS[to];
+  sim.dest = to; sim.lastOut = sim.t; sim.outWhy = why;
   sim.outBack = sim.t + a + Math.random() * (b - a) + (to === "front" ? 0 : 20);
+  const say = (((OUTING_TEXT[why] || {})[to] || {}).say) || [];
+  if (say.length) speak(pick(say));
+}
+// what the diary says when she steps out into `to`
+function outLog(to) {
+  const t = (((OUTING_TEXT[sim.outWhy] || {})[to] || {}).log) || [];
+  return t.length ? pick(t) : null;
 }
 
 const EMO_PULL = {
   playful: { dance: 30, tv: 10, go_out: 15 }, energized: { dance: 20, water_living: 8, go_out: 20 }, focused: { pc_code: 35, read: 10 },
-  inspired: { read: 20, pc_code: 15, art: 15, window: 10 }, sad: { phone_call: 25, bath: 15, phone_video: 15 },
-  angry: { dance: 10, bath: 10, computer: -20 }, tense: { bath: 30, read: 10 }, bored: { tv: 15, computer: 15, pc_forum: 10, go_out: 10 },
+  inspired: { read: 20, pc_code: 15, art: 15, window: 10 }, sad: { phone_call: 25, bath: 15, phone_video: 15, go_out: 35 },
+  angry: { dance: 10, bath: 10, computer: -20, go_out: 25 }, tense: { bath: 30, read: 10, go_out: 20 }, bored: { tv: 15, computer: 15, pc_forum: 10, go_out: 10 },
   flirty: { phone_text: 25, dress: 15, go_out: 10 }, confident: { dress: 15, pc_code: 10 }, scared: { phone_call: 20, tv: 10 },
-  embarrassed: { bath: 15 }, uncomfortable: {}, dazed: { window: 10 },
+  embarrassed: { bath: 15, go_out: 10 }, uncomfortable: { go_out: 15 }, dazed: { window: 10, go_out: 10 },
 };
 function startAct(name, quiet = false) {
   if (sim.place !== "home" && !OUT_ACTS.has(name) && ACTS[name].spot) { sim.queue.unshift(name); name = "go_home"; }   // indoor things: home first
@@ -3476,7 +3494,7 @@ function ringPick(id) {
   if (id === "video" || id === "forum") { openRing(id, "computer"); return; }
   if (id.startsWith("go:")) {
     closeRing();
-    sim.dest = id.slice(3); sim.outBack = null;          // sent out by the player: she stays till she's had enough
+    sim.dest = id.slice(3); sim.outBack = null; sim.outWhy = null;          // sent out by the player: she stays till she's had enough
     command("go_out");
     return;
   }
@@ -3744,17 +3762,20 @@ function throughDoor(to) {
     else sim.route = [[OUT[to].doorX, OUT[to].feet]];
     sim.s = 0; sim.target = 0; sim.crossing = []; sim.facing = 1; sim.dest = null;
     sim.idleUntil = sim.t + (to === "front" ? 4 : 1);
-    if (to === "home") sim.outBack = null;
+    if (to === "home") sim.outBack = null, sim.outWhy = null;
     if (to === "home") log(pick(["回到家，换上拖鞋。", "推门进屋，还是家里舒服。", "回来了，还是家里舒服。"]));
-    else if (to === "front") { log(pick(["出门在家门口走走。", "推开门，到门口透透气。", "出了门，站在门口伸了个懒腰。"])); addMood("outdoors"); }
-    else { log(pick(PLACE_LOG[to])); addMood(to); }
+    else if (to === "front") { log(outLog(to) || pick(["出门在家门口走走。", "推开门，到门口透透气。", "出了门，站在门口伸了个懒腰。"])); addMood("outdoors"); }
+    else { log(outLog(to) || pick(PLACE_LOG[to])); addMood(to); }
     arriveAt(to);
   });
 }
 function chooseOutside() {
   const red = redNeed();
   if (red) { homeFor(red); return "go_home"; }   // a need ran red: home to sort it out (user)
-  if (sim.outBack != null && (sim.t >= sim.outBack || hour() >= 20.5)) { speak(pick(["玩够啦，回家吧", "有点累了，回家", "天色不早了，回家吧"])); return "go_home"; }
+  if (sim.outBack != null && (sim.t >= sim.outBack || hour() >= (sim.outWhy === "low" ? 23.5 : 22.5) || hour() < 5)) {
+    const back = ((OUTING_TEXT.back || {})[sim.outWhy]) || ["玩够啦，回家吧", "有点累了，回家", "不早了，回家吧"];
+    speak(pick(back)); return "go_home";
+  }
   const O = OUT[sim.place], p = here();
   if (O.kind === "sit") return "bench";
   if (O.kind === "scroll") return "mall";
@@ -4206,8 +4227,11 @@ function npcSay(n, text) {
 }
 // ---- what's said
 const PT = () => PLACE_TEXT[sim.place];
+const LOW_EMO = new Set(["sad", "tense", "angry", "uncomfortable", "dazed", "embarrassed"]);
+const HIGH_EMO = new Set(["happy", "playful", "energized", "inspired", "confident", "flirty"]);
 function placeWhen(w) {
   if (!w) return true;
+  if (w.includes("+")) return w.split("+").every(placeWhen);   // "low+night": both
   const se = seasonOf(sim.t).i, h = hour(), k = weather.kind;
   switch (w) {
     case "spring": return se === 0; case "summer": return se === 1; case "autumn": return se === 2; case "winter": return se === 3;
@@ -4215,6 +4239,7 @@ function placeWhen(w) {
     case "night": return h >= 19.5 || h < 5.5; case "morning": return h >= 6 && h < 10; case "evening": return h >= 17 && h < 20;
     case "day": return h >= 9 && h < 17 && k === "clear";
     case "ship": return !!life.ship; case "boat": return !!life.boat;
+    case "low": return LOW_EMO.has(emotion().key); case "high": return HIGH_EMO.has(emotion().key);
   }
   return false;
 }
@@ -5229,7 +5254,7 @@ function snapshot() {
     sim: { t: sim.t, needs: sim.needs, mode: sim.mode, act: sim.act, actEnd: sim.actEnd, nap: !!sim.nap,
            at: [Math.round(p.x), storeyOfY(p.y)], facing: sim.facing, queue: sim.windup ? [sim.windup.act] : sim.queue, recent: sim.recent,
            lastDay: sim.lastDay, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
-           graceUntil: sim.graceUntil, insomnia: !!sim.insomnia, place: sim.place, lastOut: sim.lastOut ?? null, outBack: sim.outBack ?? null },
+           graceUntil: sim.graceUntil, insomnia: !!sim.insomnia, place: sim.place, lastOut: sim.lastOut ?? null, outBack: sim.outBack ?? null, outWhy: sim.outWhy ?? null },
     moods: [...moods].filter(([id]) => ML[id] && !id.startsWith("test_")).map(([id, m]) => [id, m.until, m.t]),
     flags: lifeFlags, events: eventLast, lastFestivalDay, namedAs,
     house: { lamps, windows: windowState },
@@ -5264,7 +5289,7 @@ function restore(sv) {
   }
   sim.route = [[x, FLOOR_Y[storey] ?? FLOOR_Y[1]]]; sim.s = 0; sim.target = 0; sim.crossing = [];
   sim.place = OUT[m.place] ? m.place : "home";
-  sim.lastOut = m.lastOut ?? null; sim.outBack = m.outBack ?? null;
+  sim.lastOut = m.lastOut ?? null; sim.outBack = m.outBack ?? null; sim.outWhy = m.outWhy ?? null;
   if (sim.place !== "home") {                     // out in front: back on the sidewalk where she was
     const O = OUT[sim.place], ox = Math.max(O.walk[0], Math.min(O.walk[1], Array.isArray(m.at) ? m.at[0] : O.doorX));
     sim.route = [[ox, O.feet]];

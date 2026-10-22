@@ -681,14 +681,20 @@ edits; copy changes into life_text.js.
   When a call or video chat ends, the whole conversation is kept with its
   diary line (`li._talk`, saved as the 4th field of a diary entry) and folds
   out under it in the opened diary (聊天记录 · N 句, user); forum visits too (浏览记录 · N 条).
-- **Outings** (user: she goes out to play by herself): `choose()` scores
-  `go_out` like any activity (low fun/social, playful/energized/bored/flirty
-  pull) when `outingDest(h)` allows: 08:30-17:30, fed and rested, 240 game
-  min since the last (`sim.lastOut`), weather/season weights (rain/snow:
-  only the mall; summer: beach, park; winter: mall). `setOuting` sets
-  `sim.dest` and `sim.outBack` (30-200 game min; `chooseOutside` sends her
-  home then, after 20:30 or when a need runs red). Sent out by the player:
-  no `outBack`, she stays as before. Both saved.
+- **Outings** (user: she goes out to play by herself, day or night, e.g. to
+  the dock or park to be quiet when sad): `choose()` scores `go_out` like any
+  activity (low fun/social; sad/angry/tense/... pull strongly, happy/bored a
+  little) when `outingDest(h, why)` allows: 08:30-22:00, fed and rested, 240
+  game min since the last (`sim.lastOut`), weather/season/hour weights (rain/
+  snow: nowhere; the mall shuts at 20:30; `low` favours beach/park, `lonely`
+  the mall). Why = `outReason()`: low / happy / lonely / bored. `setOuting`
+  sets `sim.dest`, `sim.outBack` (30-200 game min) and `sim.outWhy`, and she
+  says a line; texts are `OUTING_TEXT[why][place].say/log` and `.back[why]`
+  (prototype/demo/outing/go_*.js, validate with `tools/check_outing.js`);
+  mood-tagged musings (`when: "low"`, `"high"`, `"low+night"`) are merged
+  into `PLACE_TEXT[place].say` (outing/say_*.js; `placeWhen` takes `a+b`).
+  `chooseOutside` sends her home at `outBack`, after 22:30 (23:30 when sad)
+  or when a need runs red. Sent out by the player: no `outBack`. All saved.
 Moodlets add points to one emotion, the top sum wins (1-2 有点, 3-5, 6+ 非常),
 condition moodlets last while true. Events roll once a game hour with
 cooldowns; her words queue so bubbles never cut each other off. Social
