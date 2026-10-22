@@ -4,11 +4,12 @@ The game is the same single web page as the browser demo
 (`prototype/demo/index.html`); this folder wraps it in a
 [Tauri](https://tauri.app) window:
 
-- frameless and see-through, sized to the game (it grows upward when the
-  造型室 or the diary list opens, so the house stays where it is); move it by pressing on the house's walls or floor (anywhere that
-  isn't Buddy or a piece of furniture) and dragging, or on the empty space
-  around it, the mood row or the time bar
-- 设置 (gear, above the mood emoji; rows open to the right): 时间流速,
+- frameless and see-through, with room kept above the house for what
+  opens upward (造型室, diary list, settings, guide), so the window never
+  moves; its see-through parts let clicks through to the desktop. Move it
+  by pressing on the house's walls or floor (anywhere that isn't Buddy or a
+  piece of furniture) and dragging, or on the time bar
+- 设置 (gear, above the mood emoji; rows open to the right and upward): 时间流速,
   界面大小 (25%–200%; 25% = one game pixel per screen pixel, at any Windows
   display scaling), 置顶游戏, 存档 (with the 自动保存 switch: every 5
   minutes or never; 导出 saves a copy where you pick; 教程 opens the guide)

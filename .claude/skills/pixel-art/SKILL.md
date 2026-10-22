@@ -441,7 +441,9 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   meets Latin ("Buddy 的小屋"). A rename gets a diary line, a moodlet and
   a reaction, once you stop typing.
 - The settings gear sits just above the mood emoji (first child of
-  `#moodrow`) and its rows open to the RIGHT, growing downward; in the
+  `#moodrow`) and its rows open to the RIGHT, growing UPWARD from the gear's
+  bottom edge (user: people park the game in the screen's bottom right —
+  nothing may open below the house); in the
   desktop app `fitWindow` also covers the open menu so it is never clipped.
   The emoji lines up with the house's left edge, never with the open bars.
 - **One row height** (user): the mood emoji (2 units a pixel at every size,
@@ -461,8 +463,9 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   the 造型室's width).
 - **Settings grid** (user's sketch): labels one width; pills on a 12-column
   grid (`spans`): 时间流速 4 pills, 界面大小 3, 置顶游戏 2, 存档 = the
-  autosave switch (8) + 保存 (4), then 教程 导出 导入 重生！ (3 each; 教程
-  sits right under the 存档 label's right side, user; 重生！ asks twice).
+  autosave switch (8) + 保存 (4), then 导出 导入 重生！ (4 each); 教程 sits
+  in the label column under 存档 (`under`, user: four in a row was cramped);
+  then 更新. 重生！ asks twice.
 - **Time speeds**: 暂停, one arrow 0.5 倍 (speed 1.5), two arrows 一倍 (3,
   the default), three arrows 两倍 (6).
 - **Settings rows** (`SETTINGS`): 时间流速, 界面大小 (− 100% +;
@@ -504,8 +507,13 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
 - **Desktop app** (`desktop/`, Tauri): the same page in a frameless,
   transparent window sized to the game (`fitWindow` -> `fit_window`). It is
   moved by our own handler (`dragWindow` -> `start_drag`): press on the
-  house's walls/floor and move 3px, or press the empty page, mood row or time
-  bar. `data-tauri-drag-region` didn't work for the user on Windows (the
+  house's walls/floor and move 3px, or press the time bar. **Fixed headroom +
+  click-through** (user: opening the diary flashed and nudged the house):
+  the app always keeps `APP_HEADROOM` (700px) above the mood row, so nothing
+  that opens upward moves the window; every 70 ms the page asks
+  `cursor_in_window` and, if `elementFromPoint` is a layout box (`HOLLOW`),
+  turns `set_click_through` on, so the see-through parts pass clicks to the
+  desktop. `data-tauri-drag-region` didn't work for the user on Windows (the
   see-through margins may not even get clicks) — don't go back to it. Icon:
   `art/src/concept/app_icon.py` -> `tools/make_desktop_icons.py`.
   **Self-update** (user: no more sending the .exe around; portable too;

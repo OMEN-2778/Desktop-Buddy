@@ -14,6 +14,9 @@
 //!                            apart from the save and written right away
 //!   fit_window               size the window to the game
 //!   start_drag               move the window with the mouse (no title bar)
+//!   cursor_in_window         where the mouse is, in page pixels (or null: outside)
+//!   set_click_through        let clicks pass to what's behind (the page
+//!                            turns it on over its see-through parts)
 //!   set_on_top               "置顶游戏" (also ticks the tray item)
 //!   exit_app                 quit, once the page has saved
 //!   log_js                   the page's errors, printed to the app's stderr
@@ -276,6 +279,22 @@ fn start_drag(window: WebviewWindow) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn cursor_in_window(app: AppHandle, window: WebviewWindow) -> Option<(f64, f64)> {
+    let c = app.cursor_position().ok()?;
+    let (p, s, sf) = (window.inner_position().ok()?, window.inner_size().ok()?, window.scale_factor().ok()?);
+    let (x, y) = (c.x - p.x as f64, c.y - p.y as f64);
+    if x < 0.0 || y < 0.0 || x >= s.width as f64 || y >= s.height as f64 {
+        return None;
+    }
+    Some((x / sf, y / sf))
+}
+
+#[tauri::command]
+fn set_click_through(window: WebviewWindow, on: bool) -> Result<(), String> {
+    window.set_ignore_cursor_events(on).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn set_on_top(window: WebviewWindow, item: State<OnTopItem>, on: bool) -> Result<(), String> {
     window.set_always_on_top(on).map_err(|e| e.to_string())?;
     item.0.set_checked(on).map_err(|e| e.to_string())
@@ -499,6 +518,8 @@ pub fn run() {
             open_save_dir,
             fit_window,
             start_drag,
+            cursor_in_window,
+            set_click_through,
             set_on_top,
             exit_app,
             log_js,

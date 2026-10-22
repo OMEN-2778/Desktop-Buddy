@@ -467,11 +467,13 @@ body {
 .nametag.on { transform: translate(-50%, -100%); opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .ring > button, .ring > .ring-label, .ring-edit, .nametag { transition: none; } }
 /* ---------- settings: a round gear right above the mood emoji (user); its
-   options pop out to the RIGHT as rows of pill bubbles in the ring-menu style ---------- */
+   options pop out to its RIGHT and grow UPWARD (user: the game often sits in
+   the screen's bottom right, so nothing may open below the house) ---------- */
 .settings {
-  position: absolute; z-index: 20; display: flex; align-items: flex-start; gap: 10px;
-  /* the gear sits right over the emoji, centred in the diary's row (--row-h); rows grow down from it */
-  left: calc(var(--mood-d, 52px) / 2 - 24px); top: calc(-8px - var(--row-h, 52px) + (var(--row-h, 52px) - 48px) / 2);
+  position: absolute; z-index: 20; display: flex; align-items: flex-end; gap: 10px;
+  /* the gear sits right over the emoji, centred in the diary's row (--row-h); anchored by its
+     bottom edge, so the rows grow up from it */
+  left: calc(var(--mood-d, 52px) / 2 - 24px); bottom: calc(100% + 8px + var(--row-h, 52px) - (var(--row-h, 52px) - 48px) / 2 - 48px);
   --pill-fs: 14px; cursor: default;
 }
 .settings button, .set-label {
@@ -510,13 +512,13 @@ body {
 .set-gear[aria-expanded="true"] img { transform: rotate(90deg); }    /* a quarter turn: the 8 teeth land back on the pixel grid */
 .set-gear[aria-expanded="true"]::after { background: var(--panel); }
 /* never wider than the house (user): from right of the gear to the house's right edge */
-.set-pop { display: grid; gap: 10px; justify-items: start; padding-top: 4px;
+.set-pop { display: grid; gap: 10px; justify-items: start; padding-bottom: 2px;
   max-width: calc(var(--house-w, 684px) - var(--mood-d, 52px) / 2 - 34px); }
 .set-pop[hidden] { display: none; }
-/* a small house (phones, small 界面大小): the rows open under the gear across
+/* a small house (phones, small 界面大小): the rows open over the gear across
    the house's full width instead, still never past either of its edges */
 .widget.narrow .set-pop {
-  position: absolute; top: 56px; max-width: none; width: var(--house-w, 342px);
+  position: absolute; bottom: 56px; max-width: none; width: var(--house-w, 342px);
   left: calc(24px - var(--mood-d, 52px) / 2);
 }
 /* a phone's screen: a house that small can't hold them, so use the 造型室's width */
@@ -531,15 +533,18 @@ body {
 .set-items { display: grid; grid-template-columns: repeat(12, var(--sc, 13px)); align-items: center; gap: 8px; min-width: 0; }
 .set-items > button, .set-items > .set-value { width: 100%; min-width: 0; padding-inline: 4px; text-align: center; }
 .set-label { min-width: 6.6em; text-align: center; }   /* labels all one width, 存档 too */
-.set-row > .set-label, .set-items > * {
+/* a pill under a label (教程 under 存档, user: the free spot there), as wide as it */
+.set-labels { display: grid; gap: 8px; }
+.set-labels > button { min-width: 6.6em; }
+.set-row > .set-label, .set-labels > *, .set-items > * {
   transform: translateX(calc(var(--k) * -26px - 40px)) scale(.3); opacity: 0;
   transition: transform .38s cubic-bezier(.3, 1.6, .5, 1), opacity .2s;
   transition-delay: calc(var(--k) * 40ms);
 }
-.set-pop.on .set-row > .set-label, .set-pop.on .set-items > * { transform: none; opacity: 1; }
+.set-pop.on .set-row > .set-label, .set-pop.on .set-labels > *, .set-pop.on .set-items > * { transform: none; opacity: 1; }
 .settings button:focus-visible { outline: 2px dashed var(--focus); outline-offset: 3px; }
 @media (max-width: 520px) { .settings { --pill-fs: 12px; } .settings button, .set-label { padding: 6px 12px; } }
-@media (prefers-reduced-motion: reduce) { .set-row > .set-label, .set-items > *, .set-gear img { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .set-row > .set-label, .set-labels > *, .set-items > *, .set-gear img { transition: none; } }
 /* ---------- diary: a light-wood box like her speech bubble (no tail) in the
    gear's row, right above the bubble and exactly as wide; it shows the
    latest line, and a click pops every recent line up above it ---------- */
@@ -1765,7 +1770,7 @@ function fit() {
   if (typeof kickNeeds === "function") kickNeeds();
   if (typeof fitSay === "function") { fitSay(); fitDiary(); }   // a new size: refit both lines
   if (typeof guideOn !== "undefined" && guideOn) sizeGuide();
-  if (wardrobeOpen || diaryOn || (typeof guideOn !== "undefined" && guideOn)) { studio.refit(); makeRoom(); }
+  if (TAURI || wardrobeOpen || diaryOn || (typeof guideOn !== "undefined" && guideOn)) { studio.refit(); makeRoom(); }
   if (pickOn) fitPicker();                          // (fit runs only after the page has loaded)   // what's open above the house got a new size
   if (TAURI) { fitWindow(); requestAnimationFrame(fitWindow); }   // the app window starts hidden: no frames until it's sized
 }
@@ -3058,13 +3063,14 @@ const SETTINGS = [
   { label: "置顶游戏", role: "radiogroup", items: () => [[true, "开"], [false, "关"]].map(([v, name]) =>
       pill(name, { pressed: prefs.onTop === v, disabled: !TAURI, title: TAURI ? "" : "桌面版里才能用",
         onClick: b => { setOnTop(v); b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); } })) },
-  { label: "存档", role: "group", spans: () => [8, 4, 3, 3, 3, 3], items: () => [
+  { label: "存档", role: "group", spans: () => [8, 4, 4, 4, 4],
+    under: () => pill("教程", { title: "重新看一遍新手教程", onClick: () => { setSettingsOpen(false); openGuide(); } }),
+    items: () => [
       // 自动保存: one switch, every 5 minutes <-> never
       pill(prefs.autosave ? "每 5 分钟自动保存" : "不自动保存", { pressed: prefs.autosave,
         title: prefs.autosave ? "每 5 分钟、退出和切到后台时自动保存（再按一下关掉）" : "只在你点「保存」时保存（再按一下打开）",
         onClick: () => { prefs.autosave = !prefs.autosave; saveSettings(); buildSettings(); } }),
       pill("保存", { onClick: async () => flashLabel("存档", (await saveGame()) ? "已保存" : "没存上") }),
-      pill("教程", { title: "重新看一遍新手教程", onClick: () => { setSettingsOpen(false); openGuide(); } }),
       pill("导出", { title: "把存档另存成一个文件", onClick: exportSave }),
       pill("导入", { title: "从存档文件读取", onClick: () => document.getElementById("importSave").click() }),
       pill("重生！", { cls: "danger", title: "清空存档，从第 1 天重新开始（要按两下）", onClick: b => {
@@ -3097,7 +3103,12 @@ function buildSettings() {
     const lab = document.createElement("span"); lab.className = "set-label"; lab.textContent = st.label; lab.dataset.label = st.label;
     // the label, then its pills, which wrap onto more lines rather than run past the house
     const box = document.createElement("div"); box.className = "set-items";
-    lab.style.setProperty("--k", 0); row.appendChild(lab);
+    lab.style.setProperty("--k", 0);
+    if (st.under) {   // a pill under the label
+      const col = document.createElement("div"); col.className = "set-labels";
+      const u = st.under(); u.style.setProperty("--k", 1);
+      col.append(lab, u); row.appendChild(col);
+    } else row.appendChild(lab);
     const items = st.items(), spans = st.spans ? st.spans(items.length) : items.map(() => 12 / items.length);
     items.forEach((el, i) => { el.style.setProperty("--k", i + 1); el.style.gridColumn = `span ${spans[i]}`; box.appendChild(el); });   // nearest the gear pops first
     row.appendChild(box);
@@ -3144,9 +3155,10 @@ function setSettingsOpen(open) {
     setPop.hidden = false;
     buildSettings();
     setPop.classList.remove("on"); void setPop.offsetWidth; setPop.classList.add("on");
+    makeRoom();
   } else {
     setPop.classList.remove("on");
-    setTimeout(() => { if (setGear.getAttribute("aria-expanded") === "false") { setPop.hidden = true; if (TAURI) fitWindow(); } }, reduceMotionUI ? 0 : 260);
+    setTimeout(() => { if (setGear.getAttribute("aria-expanded") === "false") { setPop.hidden = true; makeRoom(); } }, reduceMotionUI ? 0 : 260);
   }
 }
 setGear.addEventListener("click", () => setSettingsOpen(setGear.getAttribute("aria-expanded") !== "true"));
@@ -4912,6 +4924,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && diaryOn) {
 // enough room at the top (--room-top on .desk); in the desktop app the
 // window grows upward by the same amount (fitWindow moves it).
 let roomTop = 0;
+const APP_HEADROOM = 700;   // px above the mood row the app always has: the tallest thing that opens up there (the guide) fits
 function makeRoom() {
   const desk = document.querySelector(".desk");
   const u = parseFloat(getComputedStyle(document.getElementById("widget")).getPropertyValue("--u")) || 4;
@@ -4920,6 +4933,10 @@ function makeRoom() {
   if (wardrobeOpen) need = Math.max(need, rowH + 20 + studioEl.offsetHeight + 4 * u);
   if (guideOn) need = Math.max(need, rowH + 20 + guideEl.offsetHeight + 4 * u);
   if (diaryOn) need = Math.max(need, mTop - diaryBox.getBoundingClientRect().top + 8 + diaryPop.offsetHeight);
+  if (!setPop.hidden) need = Math.max(need, mTop - setPop.getBoundingClientRect().top + 8);
+  // the app keeps room above the house for all of these all the time (and
+  // lets clicks through it): opening one never moves the window (user: it flashed)
+  if (TAURI) need = Math.max(need, APP_HEADROOM);
   need += 8;
   // the smallest room that fits it (a centred page moves by half: iterate)
   for (let i = 0; i < 12; i++) {
@@ -5260,15 +5277,29 @@ function fitWindow() {
     .then(m => { const [mx, my] = Array.isArray(m) ? m : [0, +m || 0]; shifted = Math.max(0, shifted + mx); lifted = Math.max(0, lifted + my); })
     .catch(e => TAURI.core.invoke("log_js", { message: `fit_window: ${e}` }));
 }
-// Moving the window (it has no title bar): press on the empty space around
-// the game, the mood row or the time bar; or press on the house's walls or
-// floor (not on her or a piece of furniture) and move a little.
+// Moving the window (it has no title bar): press on the time bar, or on the
+// house's walls or floor (not on her or a piece of furniture) and move a
+// little. The see-through parts of the window let clicks through to the
+// desktop (user: the room kept above the house must not get in the way):
+// a few times a second the page looks at what is under the mouse and turns
+// click-through on over nothing, off over the game.
+// what shows nothing: the page, the layout boxes, the room kept above the house
+const HOLLOW = "html, body, .desk, .widget, .house-col, .moodrow, .mood-talk, .mood-list, .skybar, .studio-slot, .studio-clip, .settings, .set-pop, .set-row, .set-items, .set-labels, .diary, .ring";
 function dragWindow() { TAURI.core.invoke("start_drag").catch(e => TAURI.core.invoke("log_js", { message: `start_drag: ${e}` })); }
 if (TAURI) {
   const desk = document.querySelector(".desk"), widgetEl = document.getElementById("widget");
-  const EMPTY = new Set([document.documentElement, document.body, desk, widgetEl, document.querySelector(".house-col"),
-                         moodrow, moodTalk, document.getElementById("skybar"), skyHit]);
-  document.addEventListener("mousedown", e => { if (e.button === 0 && EMPTY.has(e.target)) { e.preventDefault(); dragWindow(); } });
+  document.addEventListener("mousedown", e => { if (e.button === 0 && (e.target === skyHit || e.target.matches(HOLLOW))) { e.preventDefault(); dragWindow(); } });
+  let through = false, held = false;
+  document.addEventListener("pointerdown", () => { held = true; }, true);
+  window.addEventListener("pointerup", () => { held = false; }, true);
+  setInterval(async () => {
+    if (held) return;                                   // never in the middle of a press or a drag
+    const p = await TAURI.core.invoke("cursor_in_window").catch(() => null);
+    if (!p) return;
+    const el = document.elementFromPoint(p[0], p[1]);
+    const hollow = !el || el.matches(HOLLOW);
+    if (hollow !== through) { through = hollow; TAURI.core.invoke("set_click_through", { on: hollow }).catch(() => {}); }
+  }, 70);
   let press = null;
   view.addEventListener("pointerdown", e => {
     if (e.button !== 0 || e.pointerType !== "mouse" || sim.mode === "down") return;
