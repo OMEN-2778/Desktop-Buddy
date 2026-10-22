@@ -437,7 +437,7 @@ body {
   clip-path: var(--clip-btn);
 }
 /* her name tag: a dark pill over her head while the pointer is on her */
-/* the desktop app's update bar, at the house's top right */
+/* the desktop app's update bar: above the diary box, at the house's right edge */
 .update {
   position: absolute; z-index: 40; display: flex; align-items: center; gap: 6px; overflow: hidden;   /* above cards and panels: it is never in the way for long */
   padding: 5px 6px 5px 14px; background: var(--panel); color: var(--ink); font-size: 13px; font-weight: 700;
@@ -17756,20 +17756,25 @@ if (TAURI) {
 // newer one. With 自动更新 (设置 → 更新, on by default) it downloads it
 // quietly and, once nothing is open and you've left it alone for a bit,
 // saves, swaps itself and restarts where the window was (user: seamless);
-// then says which version it is now. With 只提醒, a bar at the house's top
-// right offers 更新 / 以后. 检查更新 (settings, tray) asks right away and, if
+// then says which version it is now. With 只提醒, a bar above the diary box
+// offers 更新 / 以后. 检查更新 (settings, tray) asks right away and, if
 // there's one, updates at once.
 const updEl = document.getElementById("update"), updText = updEl.querySelector("span");
 let upd = { state: "idle", version: null, shown: false }, updLater = false, lastInput = Date.now();
 for (const ev of ["pointerdown", "keydown", "wheel"]) document.addEventListener(ev, () => { lastInput = Date.now(); }, true);
-function placeUpdate() { updEl.style.top = view.offsetTop + 8 + "px"; updEl.style.right = updEl.parentElement.clientWidth - view.offsetLeft - view.offsetWidth + 8 + "px"; }
+// above the diary box, flush with the house's right edge (user: off the house)
+function placeUpdate() {
+  const box = updEl.parentElement.getBoundingClientRect(), d = diaryBox.getBoundingClientRect();
+  updEl.style.top = Math.round(d.top - box.top - updEl.offsetHeight - 14) + "px";
+  updEl.style.right = updEl.parentElement.clientWidth - view.offsetLeft - view.offsetWidth + "px";
+}
 function showUpdate(text, { go = null, later = true } = {}) {
   updText.textContent = text;
   updEl.querySelector(".up-go").hidden = !go;
   updEl.querySelector(".up-go").textContent = go || "";
   updEl.querySelector(".up-later").hidden = !later;
-  placeUpdate();
   if (updEl.hidden) { updEl.hidden = false; void updEl.offsetWidth; }
+  placeUpdate();                                        // (it needs its own height first)
   updEl.classList.add("on");
 }
 function hideUpdate(after = 0) { setTimeout(() => { updEl.classList.remove("on"); setTimeout(() => { if (!updEl.classList.contains("on")) updEl.hidden = true; }, 300); }, after); }

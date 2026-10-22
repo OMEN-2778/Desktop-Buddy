@@ -528,7 +528,7 @@ pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
   只提醒 switch, `prefs.autoUpdate`, + 检查更新; disabled in the browser);
   auto = quiet download, then `waitForQuiet` (nothing open, no input 20 s),
   `saveGame` (always), apply; afterwards a "已更新到 x" note. `#update` bar
-  at the house's top right, above cards.
+  above the diary box at the house's right edge (user), above cards.
   Gotchas found running it (Linux build under Xvfb): the demo page is a
   fragment, so `copy-web.mjs` adds a doctype + UTF-8 charset (without it the
   app's webview shows mojibake and the game never boots); the window's first
