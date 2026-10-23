@@ -9,9 +9,11 @@ const networkTrigger=document.getElementById('networkTrigger'),contactsPanel=doc
 const contactsList=document.getElementById('contactsList'),contactActions=document.getElementById('contactActions');
 const incomingCall=document.getElementById('incomingCall');
 networkTrigger.querySelector('img').src=D.uiIcons.people;
+for(const [selector,key]of [['.call-answer','answer'],['.call-decline','decline']])incomingCall.querySelector(selector).style.setProperty('--hud-relief-img',`url(${D.uiRelief[key]})`);
 // Share the same stepped circles and two-pixel frames as diary/settings UI.
 function sizeSocialHud(){
   const style=document.getElementById('widget').style,b=skyGeo.b,small=innerWidth<=600;
+  style.setProperty('--hud-badge-img',`url(${D.uiRelief[small?'badgeSmall':'badge']})`);
   for(const [name,n,p]of [['panel',12,2],['card',8,2],['button',9,2],['call-button',7,2],['circle',small?10:12,2],['avatar',small?6:8,2],['small',5,2],['meter',2,2],['track',4,b],['caller',small?7:9,2]]){
     style.setProperty(`--hud-${name}-clip`,roundClip(n,p));
     style.setProperty(`--hud-${name}-in`,roundClip(Math.max(1,n-1),p));

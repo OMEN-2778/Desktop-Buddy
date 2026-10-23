@@ -361,6 +361,9 @@ def main():
         "bg": {"day": png(day), "night": png(night)},
         "needIcons": {k: png(need_icons.icon(k)) for k in need_icons.GRIDS},
         "uiIcons": {name: png(ui_icons.icon(name)) for name in ("gear", "people")},
+        "uiRelief": {"badge": png(ui_icons.relief_plate(22, 11)),
+                     "badgeSmall": png(ui_icons.relief_plate(19, 9)),
+                     "answer": png(ui_icons.relief_plate()), "decline": png(ui_icons.relief_plate(kind="red"))},
         "uiGlyphs": ui_icons.GLYPHS,
         # pick-a-thing panels: covers matched to titles by hash, dishes by look
         "items": {**{k: [png(c) for c in item_icons.covers(k)] for k in ("book", "tv", "game", "app")},
