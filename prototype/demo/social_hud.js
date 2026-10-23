@@ -2,9 +2,18 @@
 const DEFAULT_CONTACTS=[
   {id:'dad',name:'爸爸',family:'dad',affinity:94,look:{...doll.PRESETS.m,style:'neat',hair:'#8c8e9a',top:'#8a9dae'}},
   {id:'mom',name:'妈妈',family:'mom',affinity:96,look:{...doll.PRESETS.f,style:'buns',hair:'#706172',top:'#bb8fa4',acc:[]}},
-  {id:'abu',name:'阿布',family:null,affinity:65,look:{...doll.PRESETS.m,style:'curly',hair:'#655070',top:'#7aa88a'}}
+  {id:'abu',name:'阿布',family:null,affinity:65,look:{...doll.PRESETS.m,style:'curly',hair:'#655070',top:'#7aa88a'}},
+  {id:'xiaoyu',name:'小雨',family:null,affinity:60,look:{...doll.PRESETS.f,style:'bob',hair:'#5b475e',top:'#92abc6'}},
+  {id:'linzhou',name:'林舟',family:null,affinity:56,look:{...doll.PRESETS.m,style:'neat',hair:'#484354',top:'#b39476'}},
+  {id:'tangtang',name:'糖糖',family:null,affinity:50,look:{...doll.PRESETS.f,style:'twin',hair:'#9b6a52',top:'#cc92a3'}},
+  {id:'achen',name:'阿辰',family:null,affinity:44,look:{...doll.PRESETS.m,style:'messy',hair:'#6a5551',top:'#8c9cae'}},
+  {id:'xiaokui',name:'小葵',family:null,affinity:38,look:{...doll.PRESETS.f,style:'pony',hair:'#80633f',top:'#d6b77a'}},
+  {id:'muzi',name:'木子',family:null,affinity:30,look:{...doll.PRESETS.f,style:'long',hair:'#413d51',top:'#91ad9a'}},
+  {id:'dake',name:'大可',family:null,affinity:22,look:{...doll.PRESETS.m,style:'buzz',hair:'#675448',top:'#b59bc5'}},
+  {id:'ningning',name:'宁宁',family:null,affinity:14,look:{...doll.PRESETS.f,style:'buns',hair:'#6a5063',top:'#a1bfcc'}},
+  {id:'xiaoye',name:'小野',family:null,affinity:8,look:{...doll.PRESETS.m,style:'curly',hair:'#986b51',top:'#bfa27e'}}
 ];
-const socialState={contacts:DEFAULT_CONTACTS.map(c=>({...c,look:doll.normalize(c.look)})),nextCall:null};
+const socialState={contacts:DEFAULT_CONTACTS.map(c=>({...c,look:doll.normalize(c.look)})),nextCall:null,rosterVersion:1};
 const networkTrigger=document.getElementById('networkTrigger'),contactsPanel=document.getElementById('contactsPanel');
 const contactsList=document.getElementById('contactsList'),contactActions=document.getElementById('contactActions');
 const incomingCall=document.getElementById('incomingCall');
@@ -36,7 +45,7 @@ function drawContactAvatar(canvas,c){
 }
 function fillContacts(){
   const contacts=sortedContacts(),sig=JSON.stringify(contacts.map(c=>[c.id,c.name,c.family,c.affinity,c.look]));if(sig===contactsSig)return;
-  contactsSig=sig;contactsList.replaceChildren();
+  contactsSig=sig;const scrollTop=contactsList.scrollTop;contactsList.replaceChildren();
   for(const c of contacts){
     const card=document.createElement('button');card.type='button';card.className='contact-card';card.dataset.id=c.id;
     card.setAttribute('aria-label',`${contactName(c)}，${contactRelation(c)}，好感 ${Math.round(c.affinity)}`);card.setAttribute('aria-expanded',String(selectedContact===c.id));
@@ -46,6 +55,7 @@ function fillContacts(){
     const meter=document.createElement('span');meter.className='affinity';meter.title=`好感 ${Math.round(c.affinity)} / 100`;meter.style.setProperty('--affinity',c.affinity);meter.append(document.createElement('i'));
     card.append(avatar,copy,meter);contactsList.append(card);
   }
+  contactsList.scrollTop=scrollTop;
 }
 function revealNetwork(){clearTimeout(networkCloseT);moodrow.classList.add('network-ready');}
 function queueNetworkClose(){clearTimeout(networkCloseT);networkCloseT=setTimeout(()=>{if(!moodrow.classList.contains('contacts-open'))moodrow.classList.remove('network-ready');},300);}
@@ -62,13 +72,14 @@ function queueContactsClose(){clearTimeout(contactsCloseT);if(!selectedContact)c
 moodFace.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')revealNetwork();});
 moodFace.addEventListener('pointerleave',queueNetworkClose);moodFace.addEventListener('focus',revealNetwork);
 moodFace.addEventListener('click',revealNetwork);
-moodrow.addEventListener('pointerleave',()=>{queueNetworkClose();queueContactsClose();});
+moodrow.addEventListener('pointerleave',e=>{if(e.pointerType==='touch')return;queueNetworkClose();queueContactsClose();});
 networkTrigger.addEventListener('pointerenter',e=>{revealNetwork();if(e.pointerType==='mouse')setContactsOpen(true);});
 networkTrigger.addEventListener('focus',revealNetwork);
 networkTrigger.addEventListener('click',()=>setContactsOpen(!moodrow.classList.contains('contacts-open')));
 contactsPanel.addEventListener('pointerenter',()=>{clearTimeout(contactsCloseT);clearTimeout(networkCloseT);});
-contactsPanel.addEventListener('pointerleave',queueContactsClose);
+contactsPanel.addEventListener('pointerleave',e=>{if(e.pointerType!=='touch')queueContactsClose();});
 contactsPanel.addEventListener('focusout',e=>{if(!contactsPanel.contains(e.relatedTarget)&&!contactActions.contains(e.relatedTarget)&&e.relatedTarget!==networkTrigger)queueContactsClose();});
+contactsList.addEventListener('scroll',()=>closeContactActions(),{passive:true});
 contactsList.addEventListener('click',e=>{const card=e.target.closest('.contact-card');if(card)openContactActions(card.dataset.id);});
 function closeContactActions(){selectedContact=null;contactActions.classList.remove('on');contactActions.inert=true;contactActions.setAttribute('aria-hidden','true');contactsList.querySelectorAll('button').forEach(b=>b.setAttribute('aria-expanded','false'));}
 function openContactActions(id){
@@ -200,7 +211,7 @@ function tickSocial(dt,now){
     showSay(text,who);session.said.push([who,text]);session.wait=Math.min(4.6,Math.max(2.6,1.4+(who+text).length*.13));
   }
 }
-function socialSnapshot(){return {contacts:socialState.contacts.map(c=>({id:c.id,name:c.name,family:c.family||null,affinity:c.affinity,look:doll.normalize(c.look),lastContact:c.lastContact??null,gainDay:c.gainDay??null,dailyGain:c.dailyGain||0})),nextCall:socialState.nextCall};}
+function socialSnapshot(){return {rosterVersion:socialState.rosterVersion,contacts:socialState.contacts.map(c=>({id:c.id,name:c.name,family:c.family||null,affinity:c.affinity,look:doll.normalize(c.look),lastContact:c.lastContact??null,gainDay:c.gainDay??null,dailyGain:c.dailyGain||0})),nextCall:socialState.nextCall};}
 function restoreSocial(data){
   clearTimeout(phoneCall.timeout);clearTimeout(phoneCall.exitTimer);phoneCall.phase='idle';phoneCall.contactId=null;incomingCall.hidden=true;moodTalk.classList.remove('phone-active');remoteSocial=null;
   const list=Array.isArray(data?.contacts)?data.contacts:DEFAULT_CONTACTS;
@@ -209,6 +220,8 @@ function restoreSocial(data){
     if(!c||typeof c.id!=='string'||!/^[-a-zA-Z0-9_]{1,64}$/.test(c.id)||seen.has(c.id)||typeof c.name!=='string'||!c.name.trim())continue;
     seen.add(c.id);socialState.contacts.push({id:c.id,name:c.name.slice(0,24),family:c.id==='dad'?'dad':c.id==='mom'?'mom':null,affinity:Number.isFinite(c.affinity)?clamp(c.affinity):50,look:doll.normalize(c.look||doll.PRESETS.m),lastContact:Number.isFinite(c.lastContact)?c.lastContact:null,gainDay:Number.isInteger(c.gainDay)?c.gainDay:null,dailyGain:Number.isFinite(c.dailyGain)?Math.max(0,Math.min(6,c.dailyGain)):0});
   }
-  for(const c of DEFAULT_CONTACTS.slice(0,2))if(!seen.has(c.id))socialState.contacts.push({...c,look:doll.normalize(c.look)});
-  socialState.nextCall=Number.isFinite(data?.nextCall)?data.nextCall:null;contactsSig='';selectedContact=null;
+  // Add the scrolling-test roster once, without changing existing identities or affection.
+  const additions=data?.rosterVersion>=1?DEFAULT_CONTACTS.slice(0,2):DEFAULT_CONTACTS;
+  for(const c of additions)if(!seen.has(c.id))socialState.contacts.push({...c,look:doll.normalize(c.look)});
+  socialState.rosterVersion=1;socialState.nextCall=Number.isFinite(data?.nextCall)?data.nextCall:null;contactsSig='';selectedContact=null;
 }

@@ -43,14 +43,30 @@ const {chromium}=require('playwright');
  }
  assert.equal(await page.locator('#networkTrigger img').evaluate(img=>img.naturalWidth),16,'Use the palette-only pixel people icon');
  for(const selector of ['#networkTrigger','.contact-card'])assert.equal(await page.locator(selector).first().evaluate(el=>getComputedStyle(el).boxShadow),'none','Pixel frames must not inherit rectangular button shadows');
- assert.deepEqual(await page.locator('.contact-card').evaluateAll(els=>els.map(e=>e.dataset.id)),['dad','mom','abu']);
- assert.deepEqual(await page.locator('.contact-copy strong').allTextContents(),['爸爸','妈妈','阿布']);
+ assert.deepEqual(await page.locator('.contact-card').evaluateAll(els=>els.slice(0,3).map(e=>e.dataset.id)),['dad','mom','abu']);
+ assert.deepEqual((await page.locator('.contact-copy strong').allTextContents()).slice(0,3),['爸爸','妈妈','阿布']);
  assert.equal(await page.locator('.settings').evaluate(el=>getComputedStyle(el).visibility),'hidden');
  await page.screenshot({path:'/workspace/artifacts/social-hud/contacts.png'});
+ assert.equal(await page.locator('.contact-card').count(),12);
+ const list=page.locator('#contactsList'),listBox=await list.boundingBox();
+ assert.ok(await list.evaluate(el=>el.scrollHeight>el.clientHeight&&el.scrollWidth===el.clientWidth),'Vertical overflow only');
+ await page.mouse.move(listBox.x+listBox.width/2,listBox.y+listBox.height/2);
+ await page.mouse.wheel(0,140);await page.waitForTimeout(250);
+ assert.ok(await list.evaluate(el=>el.scrollTop)>0,'Wheel scrolls friends vertically');
+ await page.evaluate(()=>{const before=contactsList.scrollTop;contactsSig='';fillContacts();if(contactsList.scrollTop!==before)throw Error('Keep scroll position after refresh');});
+ await page.screenshot({path:'/workspace/artifacts/social-hud/contacts-scrolled.png'});
+ await list.evaluate(el=>el.scrollTop=0);await page.waitForTimeout(100);
+
  await page.locator('.contact-card[data-id="abu"]').click();await page.waitForTimeout(450);
  assert.equal(await page.locator('#contactActions button').count(),6);
  assert.equal(await page.locator('#contactActions [aria-disabled="true"]').count(),3);
  await page.screenshot({path:'/workspace/artifacts/social-hud/actions.png'});
+ await page.mouse.move(listBox.x+listBox.width/2,listBox.y+listBox.height/2);
+ await page.mouse.wheel(0,100);await page.waitForTimeout(200);
+ assert.equal(await page.locator('#contactActions').getAttribute('aria-hidden'),'true','Scroll dismisses detached action bubbles');
+ await list.evaluate(el=>el.scrollTop=0);await page.waitForTimeout(100);
+ await page.locator('.contact-card[data-id="abu"]').click();await page.waitForTimeout(400);
+
  await page.locator('#contactActions [data-action="text"]').click();
  assert.equal(await page.evaluate(()=>sim.chosen?.item?.contactId),'abu');
  assert.equal(await page.evaluate(()=>sim.chosen?.item?.talk?.name),'阿布');
@@ -72,7 +88,7 @@ const {chromium}=require('playwright');
   finishContactTalk('abu','text');finishContactTalk('abu','video');finishContactTalk('abu','video');
   if(socialState.contacts.find(c=>c.id==='abu').affinity!==before+6)throw Error('Daily friendship gain cap');
   socialState.contacts.push({id:'oldfriend',name:'小满',family:null,affinity:99,look:doll.PRESETS.f});
-  if(sortedContacts().map(c=>c.id).join()!=='dad,mom,oldfriend,abu')throw Error('Parents first, then affinity');
+  if(sortedContacts().slice(0,4).map(c=>c.id).join()!=='dad,mom,oldfriend,abu')throw Error('Parents first, then affinity');
   const saved=socialSnapshot();restoreSocial(saved);if(JSON.stringify(socialSnapshot())!==JSON.stringify(saved))throw Error('Contact save round trip');
  });
  // Queue behind a fresh line; only the incoming UI holds the clock, not the two-second grace period.
@@ -100,6 +116,13 @@ const {chromium}=require('playwright');
  assert.ok(Date.now()-ringStart>=5700&&Date.now()-ringStart<7200,'Six-second automatic rejection');
  assert.equal(await page.locator('#incomingCall').isHidden(),true);assert.deepEqual(await page.evaluate(()=>sim.queue),['read']);
  assert.ok(await page.locator('#log').textContent().then(t=>t.includes('六秒后停了')));
+ // Migrate existing three-person saves exactly once, preserving affection.
+ await page.evaluate(()=>{
+  const saved=socialSnapshot();delete saved.rosterVersion;saved.contacts=saved.contacts.filter(c=>['dad','mom','abu'].includes(c.id));
+  saved.contacts.find(c=>c.id==='abu').affinity=77;restoreSocial(saved);
+  if(socialState.contacts.length!==12||contactFor('friend','abu').affinity!==77)throw Error('Test roster migration');
+  const once=socialSnapshot();restoreSocial(once);if(socialState.contacts.length!==12)throw Error('Duplicate test roster');
+ });
  // Restore legacy saves with no social payload; never restore a ringing pause.
  await page.evaluate(()=>{const saved=snapshot();delete saved.social;restore(saved);if(sortedContacts().slice(0,2).map(c=>c.id).join()!=='dad,mom'||phoneHolds())throw Error('Legacy social migration');speed=0;});
  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(550);
@@ -110,7 +133,22 @@ const {chromium}=require('playwright');
  await page.emulateMedia({reducedMotion:'reduce'});await page.reload();await page.waitForFunction(()=>booted);await page.waitForTimeout(1400);
  await page.evaluate(()=>{closeGuide();speed=0;setNeedsOpen(true);setContactsOpen(false);});
  assert.equal(await page.locator('#needsPanel').evaluate(el=>getComputedStyle(el).transitionDuration),'0s');
+ // A native touch scroll cancels its pointer; that must not close the panel.
+ const touch=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+ touch.on('pageerror',e=>errors.push(e.message));
+ await touch.goto(process.argv[2]||'http://127.0.0.1:8781/');await touch.waitForFunction(()=>booted);await touch.waitForTimeout(1600);
+ await touch.evaluate(()=>{closeGuide();speed=0;cardMoment=()=>false;rollCard=()=>false;rollEvents=()=>false;socialState.nextCall=1e9;setContactsOpen(true);});await touch.waitForTimeout(600);
+ const bounds=await touch.locator('#contactsList').boundingBox(),cdp=await touch.context().newCDPSession(touch),x=bounds.x+bounds.width/2,y=bounds.y+bounds.height-8;
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
+ for(let i=1;i<=6;i++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y-i*10}]});await touch.waitForTimeout(30);}
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await touch.waitForTimeout(500);
+ assert.ok(await touch.locator('#contactsList').evaluate(e=>e.scrollTop)>0,'Native touch swipe scrolls friends');
+ assert.equal(await touch.locator('#contactsPanel').getAttribute('aria-hidden'),'false','Touch cancellation keeps contacts open');
+ await touch.locator('.contact-card[data-id="xiaoye"]').scrollIntoViewIfNeeded();await touch.waitForTimeout(150);
+ await touch.locator('.contact-card[data-id="xiaoye"]').tap();await touch.waitForTimeout(400);
+ assert.equal(await touch.evaluate(()=>selectedContact),'xiaoye','Last friend remains interactive');
+ await touch.screenshot({path:'/workspace/artifacts/social-hud/mobile-scroll.png'});await touch.close();
  assert.deepEqual(errors,[]);
- console.log('PASS: pixel frames and glyph, staggered expand/reverse collapse, track-only hover, interrupted reversal, compact layout, stable parents-first contacts, action ring, targeted messages, capped affection, saved contacts, delayed incoming call, pause, distinct answer/decline, six-second timeout, legacy saves, mobile bounds and reduced motion.');
+ console.log('PASS: pixel frames and glyph, staggered expand/reverse collapse, track-only hover, interrupted reversal, compact layout, twelve contacts, vertical wheel scrolling, retained scroll position, migration, stable parents-first contacts, action ring, targeted messages, capped affection, saved contacts, delayed incoming call, pause, distinct answer/decline, six-second timeout, legacy saves, mobile bounds and reduced motion.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -127,9 +127,9 @@ def relief_plate(size=14, radius=6, kind="green") -> Sprite:
     The 14px version has 6px corners for CSS nine-slice scaling at 2x;
     badge versions map 1:1 to desktop/mobile inner discs at the same 2x.
     """
-    shadow, face, light, glint = (
-        (P.coral[2], P.coral[3], P.coral[4], P.skin[4]) if kind == "red"
-        else (P.green[3], P.green[4], P.sage[4], P.linen[3])
+    shadow, face, light = (
+        (P.coral[2], P.coral[3], P.coral[4]) if kind == "red"
+        else (P.green[3], P.green[4], P.sage[4])
     )
     mask = [[False] * size for _ in range(size)]
     for y in range(size):
@@ -147,12 +147,6 @@ def relief_plate(size=14, radius=6, kind="green") -> Sprite:
             shaded = not inside(x + 1, y) or not inside(x, y + 1)
             color = light if lit and x + y < size else shadow if shaded else face
             out.set(x, y, color)
-    # A short, stepped reflection follows the upper-left shoulder of the face.
-    for x in range(radius - 1, size // 2 + 1):
-        if inside(x, 2):
-            out.set(x, 2, light)
-    if inside(radius - 1, 1):
-        out.set(radius - 1, 1, glint)
     return out
 
 
