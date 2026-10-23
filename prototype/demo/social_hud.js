@@ -67,7 +67,7 @@ function setContactsOpen(open){
   else closeContactActions();
   moodrow.classList.toggle('contacts-open',open);contactsPanel.inert=!open;contactsPanel.setAttribute('aria-hidden',String(!open));networkTrigger.setAttribute('aria-expanded',String(open));
   if(open){document.getElementById('settings').inert=true;document.getElementById('diary').inert=true;moodFace.inert=true;moodTalk.inert=true;}
-  else{document.getElementById('settings').inert=false;document.getElementById('diary').inert=false;moodFace.inert=false;moodTalk.inert=false;queueNetworkClose();}
+  else{document.getElementById('settings').inert=false;document.getElementById('diary').inert=peerDiaryReserved();moodFace.inert=false;moodTalk.inert=false;queueNetworkClose();}
 }
 function queueContactsClose(){clearTimeout(contactsCloseT);if(!selectedContact)contactsCloseT=setTimeout(()=>setContactsOpen(false),280);}
 moodFace.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')revealNetwork();});
@@ -171,7 +171,7 @@ function requestIncomingCall(id,kind='call'){
 }
 function showIncomingCall(now){
   const c=socialState.contacts.find(c=>c.id===phoneCall.contactId);if(!c){phoneCall.phase='idle';return;}
-  setContactsOpen(false);setNeedsOpen(false);showMoodTip(false);closeRing();closePicker();
+  hidePeerSay(true);setContactsOpen(false);setNeedsOpen(false);showMoodTip(false);closeRing();closePicker();
   incomingCall.querySelector('strong').textContent=c.family||c.affinity<20?contactName(c):contactRelation(c)+contactName(c);
   incomingCall.querySelector('.caller-copy span').textContent=phoneCall.kind==='video'?'打来视频':'打来电话';
   drawContactAvatar(incomingCall.querySelector('canvas'),c);incomingCall.classList.remove('accepting','declining');incomingCall.hidden=false;
@@ -219,11 +219,12 @@ function tickSocial(dt,now){
       log(fill(tk.end,session.item.vars),null,session.said);if(tk.id)addMood(tk.id,{vars:session.item.vars,diary:false,words:false});finishContactTalk(session.item.contactId,tk.kind);remoteSocial=null;return;
     }
     const raw=tk.lines[session.i++],other=raw.startsWith('>'),text=fill(other?raw.slice(1).trim():raw,session.item.vars),who=other?`${tk.name}：`:'';
-    showSay(text,who);session.said.push([who,text]);session.wait=Math.min(4.6,Math.max(2.6,1.4+(who+text).length*.13));
+    showSay(text,who,socialState.contacts.find(c=>c.id===session.item.contactId));session.said.push([who,text]);session.wait=Math.min(4.6,Math.max(2.6,1.4+(who+text).length*.13));
   }
 }
 function socialSnapshot(){return {...socialLifeSnapshot(),rosterVersion:socialState.rosterVersion,contacts:socialState.contacts.map(c=>({id:c.id,name:c.name,family:c.family||null,affinity:c.affinity,look:doll.normalize(c.look),lastContact:c.lastContact??null,gainDay:c.gainDay??null,dailyGain:c.dailyGain||0,memories:c.memories||[],metAt:c.metAt??null,lastSeen:c.lastSeen??null,forgotten:!!c.forgotten,lastIncoming:c.lastIncoming??null,rejectDay:c.rejectDay??null,rejectLoss:c.rejectLoss||0,farewellTried:!!c.farewellTried,farewellPending:!!c.farewellPending,lastVisitOffer:c.lastVisitOffer??null})),nextCall:socialState.nextCall};}
 function restoreSocial(data){
+  hidePeerSay(true);
   clearTimeout(phoneCall.timeout);clearTimeout(phoneCall.exitTimer);phoneCall.phase='idle';phoneCall.contactId=null;incomingCall.hidden=true;moodTalk.classList.remove('phone-active');remoteSocial=null;
   const list=Array.isArray(data?.contacts)?data.contacts:DEFAULT_CONTACTS;
   const seen=new Set();socialState.contacts=[];

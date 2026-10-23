@@ -124,7 +124,7 @@ function inviteHome(id,proactive=false){
   if(reason){log(reason);visitNotice('暂时不能邀请',reason);return false;}
   const minutes=12+Math.floor(Math.random()*14),at=sim.t+minutes;
   socialState.guest={id,phase:'scheduled',at,until:at+150,s:0,next:0,said:[],count:0,usedTalks:[],usedEvents:[],activity:'chat',proactive};
-  socialState.nextVisit=sim.t+1440;log(`${contactName(c)}答应来家里坐坐，预计 ${minutes} 个游戏分钟后到达。`);showSay(`好呀，我大约 ${minutes} 个游戏分钟后到！`,contactName(c)+'：');
+  socialState.nextVisit=sim.t+1440;log(`${contactName(c)}答应来家里坐坐，预计 ${minutes} 个游戏分钟后到达。`);showSay(`好呀，我大约 ${minutes} 个游戏分钟后到！`,contactName(c)+'：',c);
   if(!speed){const sheet=visitNotice('邀请成功 · 等待出发',`${contactName(c)}答应来啦，预计 ${minutes} 个游戏分钟后到达。当前游戏已暂停，恢复时间后朋友才会过来。`),resume=document.createElement('button');resume.type='button';resume.textContent='恢复时间，等朋友来';resume.onclick=()=>{closeSocialSheet();speed=1;syncUI();};sheet.append(resume);}
   return true;
 }

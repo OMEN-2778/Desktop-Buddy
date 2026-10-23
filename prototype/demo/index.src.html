@@ -824,6 +824,10 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
           <div class="diary-pop" id="diaryPop" hidden><ol id="diaryList" aria-label="最近发生的事"></ol></div>
           <button type="button" class="diary-box" id="diaryBox" aria-expanded="false" aria-controls="diaryPop" title="看看最近发生的事"><b>日记</b><span></span></button>
         </div>
+        <section class="peer-hud" id="peerHud" role="region" aria-label="对方的对话" aria-hidden="true" hidden>
+          <div class="peer-bubble" id="peerBubble" role="status" aria-live="polite"><i class="bg" aria-hidden="true"></i><i class="dot d1" aria-hidden="true"></i><i class="dot d2" aria-hidden="true"></i><span></span></div>
+          <div class="peer-avatar"><canvas width="40" height="40" role="img" aria-label="对方的头像"></canvas></div>
+        </section>
         <button type="button" class="network-trigger" id="networkTrigger" aria-label="人脉" aria-expanded="false" aria-controls="contactsPanel" title="人脉"><img alt="" width="32" height="32"></button>
         <section class="contacts-panel" id="contactsPanel" aria-label="人脉，父母在前，其余按亲密度排列" aria-hidden="true" inert><i class="contacts-tail" aria-hidden="true"></i><div class="contacts-list" id="contactsList"></div></section>
         <div class="contact-actions" id="contactActions" role="menu" aria-label="联系这位亲友" aria-hidden="true" inert></div>
@@ -1774,7 +1778,7 @@ function fit() {
   document.documentElement.style.setProperty("--row-h", 52 + "px");   // the gear + diary row: as tall as the emoji's canvas
   di.style.setProperty("--diary-max", Math.round(Math.max(150, Math.min(320, hPx * 1.1))) + "px");
   sizeSocialHud();
-  if (typeof fitSay === "function") { fitSay(); fitDiary(); }   // a new size: refit both lines
+  if (typeof fitSay === "function") { fitSay(); fitDiary(); if(typeof fitPeerSpeech === "function")fitPeerSpeech(); }   // a new size: refit both lines
   if (typeof guideOn !== "undefined" && guideOn) sizeGuide();
   if (TAURI || wardrobeOpen || diaryOn || (typeof guideOn !== "undefined" && guideOn)) { studio.refit(); makeRoom(); }
   if (pickOn) fitPicker();                          // (fit runs only after the page has loaded)   // what's open above the house got a new size
@@ -3012,6 +3016,7 @@ const SAY_FS = () => parseFloat(getComputedStyle(widget).getPropertyValue("--say
 // box slides up out of its way; it slides back when her words go
 let sayGrow = 0, diaryGrow = 0;
 function liftDiary() {   // her words, or the opened moodlet list (her words wait meanwhile), push the diary box up
+  document.getElementById("peerHud")?.style.setProperty("--peer-lift",-((listOpen?moodGrow:sayGrow))+"px");
   document.getElementById("diary").style.setProperty("--lift", -((listOpen ? moodGrow : sayGrow) + diaryGrow) + "px");
 }
 function fitSay() {
@@ -3025,7 +3030,8 @@ function fitDiary() {
   di.style.height = diaryGrow ? 48 + diaryGrow + "px" : "";   // it grows upward too
   liftDiary();
 }
-function showSay(text, who = "") {
+function showSay(text, who = "", speaker = null) {
+  if(who){showPeerSay(text,who,speaker);return;}
   if(phoneHolds()){if(sayQueue.length<2)sayQueue.push(text);return;}
   sayShownAt=performance.now();
   text = spaced(text);
@@ -4832,7 +4838,8 @@ function playTalk(dt) {
   if (st.i >= tk.lines.length || (st.wait -= dt) > 0) return;
   const raw = tk.lines[st.i++], mark = raw[0], text = fill((mark === ">" || mark === "#" ? raw.slice(1) : raw).trim(), sim.item.vars);
   const who = mark === ">" ? (tk.kind !== "forum" ? `${tk.name}：` : "评论：") : mark === "#" ? `【${CHATS.forum[tk.who].tag}】` : "";
-  showSay(text, who);
+  const speaker=mark==='>'&&tk.kind!=='forum'?socialState.contacts.find(c=>c.id===sim.item.contactId):null;
+  showSay(text, who, speaker);
   (st.said ||= []).push([who, text]);                 // for the diary when it's over (user)
   st.wait = Math.min(4.6, Math.max(2.6, 1.4 + (who + text).length * 0.13));      // seconds of running time per line
 }
@@ -5114,6 +5121,7 @@ function fillDiary() {
   if (atEnd || !ol._seen) { ol.scrollTop = ol.scrollHeight; ol._seen = true; }
 }
 function setDiaryOpen(on) {
+  if(on&&peerDiaryReserved())return;
   if (on === diaryOn) return;
   diaryOn = on;
   diaryBox.setAttribute("aria-expanded", String(on));
@@ -5681,6 +5689,7 @@ if (TAURI) {
 /*__PARK_JS__*/
 /*__SOCIAL_HUD_JS__*/
 /*__SOCIAL_LIFE_JS__*/
+/*__PEER_DIALOGUE_JS__*/
 
 // ================================================================ loop
 let last = performance.now(), uiT = 0;
@@ -5688,6 +5697,7 @@ function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   realClock += dt;
+  tickPeerSpeech(now);
   tickSocial(dt,now);
   tickSocialLife(dt);
   const fast = sim.mode === "act" && sim.act === "sleep" ? 8 : 1, run = cardHolds() || wiping ? 0 : speed;   // a chance card (or a scene change) stops the clock

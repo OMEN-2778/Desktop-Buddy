@@ -1,0 +1,21 @@
+/* Upper counterpart to Buddy's lower speech bubble: the tail points right. */
+.diary.peer-away { opacity:0; translate:-12px var(--lift,0px); pointer-events:none; transition:opacity .18s ease-in,translate .22s cubic-bezier(.4,0,.8,.2); }
+.peer-hud { --pe:#8a6446; --pf:#ecd5ad; --peer-clip:var(--clip-diary); --peer-inner:var(--clip-diary-in); position:absolute; z-index:18; bottom:calc(100% + 10px); left:calc(var(--mood-d,52px) + var(--sky-b,3px)*2 + var(--tail,18px)); right:0; height:48px; translate:0 var(--peer-lift,0px); transition:translate .35s var(--hud-spring); pointer-events:none; }
+.peer-hud[hidden] { display:none; }
+.peer-bubble { position:absolute; inset:0 72px 0 0; display:flex; align-items:center; margin:0; padding:0 18px; min-width:0; color:#3d2a1e; font-size:var(--say-fs,20px); font-weight:700; line-height:1.35; isolation:isolate; filter:drop-shadow(3px 3px 0 var(--shadow)); transform-origin:right center; opacity:0; transform:translateX(10px) scale(.88); transition:transform .44s var(--hud-spring) .04s,opacity .18s .04s; }
+.peer-bubble span { min-width:0; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.peer-bubble .who { font-style:normal; color:#9a6a3c; margin-right:.15em; }
+.peer-bubble .bg,.peer-bubble .bg::after { content:""; position:absolute; inset:0; z-index:-1; background:var(--pe); clip-path:var(--peer-clip); }
+.peer-bubble .bg::after { background:var(--pf); clip-path:var(--peer-inner); }
+.peer-bubble .dot { position:absolute; background:var(--pe); clip-path:var(--clip-dot); opacity:0; transform:scale(.2); transition:transform .3s var(--hud-spring),opacity .15s; }
+.peer-bubble .dot::after { content:""; position:absolute; inset:2px; background:var(--pf); clip-path:var(--clip-dot-in); }
+.peer-bubble .d1 { --clip-dot:var(--clip-dot-xs); --clip-dot-in:var(--clip-dot-xs-in); right:-22px; top:calc(50% + 1px); width:6px; height:6px; transition-delay:.06s; }
+.peer-bubble .d2 { --clip-dot:var(--clip-dot-s); --clip-dot-in:var(--clip-dot-s-in); right:-9px; top:calc(50% - 6px); width:8px; height:8px; transition-delay:.1s; }
+.peer-avatar { position:absolute; right:0; top:calc(50% - 24px); width:48px; height:48px; padding:4px; background:var(--ring); clip-path:var(--hud-circle-clip); opacity:0; transform:translateX(8px) scale(.8); transition:transform .4s var(--hud-spring),opacity .18s; }
+.peer-avatar canvas { display:block; width:40px; height:40px; image-rendering:pixelated; clip-path:var(--hud-avatar-clip); }
+.peer-hud.on .peer-bubble,.peer-hud.on .peer-avatar { opacity:1; transform:none; }
+.peer-hud.on .dot { opacity:1; transform:scale(1); }
+.peer-hud.leaving :is(.peer-bubble,.peer-avatar,.dot) { transition-duration:.2s,.16s; transition-delay:0s; }
+.moodrow.contacts-open>.peer-hud { visibility:hidden; }
+.moodrow.setting .peer-hud { opacity:0; transition:opacity .18s; }
+@media(prefers-reduced-motion:reduce) { .peer-hud,.peer-hud *,.diary { transition:none !important; } }

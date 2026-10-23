@@ -20,7 +20,7 @@ const assert=require('node:assert/strict');const {chromium}=require('playwright'
  assert.equal(await page.evaluate(()=>socialState.guest?.phase),'scheduled');
  const arrival=await page.evaluate(()=>socialState.guest.at-sim.t);assert.ok(arrival>=12&&arrival<=25);
  assert.ok((await page.locator('.social-sheet p').textContent()).includes('游戏已暂停'));
- assert.ok((await page.locator('#popSay span').textContent()).includes('游戏分钟后到'));
+ await page.waitForFunction(()=>peerText.textContent.includes('游戏分钟后到'));assert.ok((await page.locator('#peerBubble span').textContent()).includes('游戏分钟后到'));
  await page.locator('.social-sheet button').filter({hasText:'恢复时间，等朋友来'}).click();assert.equal(await page.evaluate(()=>speed),1);
  await page.evaluate(()=>socialState.guest.at=sim.t);
  await page.waitForFunction(()=>homeVisitActive()&&sim.act==='host'&&sim.mode==='act',null,{timeout:15000});
