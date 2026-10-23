@@ -189,7 +189,7 @@ piece side by side — review new pieces there at 6x).
   seasonal flower border. Overlays snow (keeps what stands in it clear) /
   wet / lit; ducks; a tiny far `plane` (the page adds the contrail).
 - **公园扩展（2026-10-23）**: `park_expansion.py` draws five independent
-  342x118 areas: 湖边凉亭 ↔ 湖畔步道 ↔ 公园中央 ↔ 野餐草坪 ↔ 林间野餐区.
+  342x118 areas: 湖边凉亭 ↔ 湖畔公厕 ↔ 公园中央 ↔ 野餐草坪 ↔ 樱花林·关东煮.
   User explicitly allows a transition, with no seamless artwork requirement.
   `prototype/demo/park.js` keeps `sim.place="park"`, saves `sim.park.zone`
   and `.seated`, uses short `wipe` transitions at the path's left/right edges.
@@ -198,6 +198,17 @@ piece side by side — review new pieces there at 6x).
   Bench feet y=92, seat surface y=83, seated lift=5; path feet y=103.
   Do not restore the former locked-bench behavior. Outer maps do not wrap.
   All areas keep four seasons, weather, wildlife, NPCs, cards and trips home.
+  User numbers these 1–5 left to right. Area 2 has a clickable WC; area 5
+  is a cherry grove centered on an oden yatai. Art details are in
+  `_park_facilities.py`: visible roof/top/front/side planes, recessed doors,
+  contact/cast shadows, stone steps, layered foliage and foreground framing.
+  Preserve this depth; do not return to a flat, uniformly striped lawn.
+  Below 40 bladder or 35 hunger, `parkHandleNeeds` walks Buddy through each
+  adjacent map to use the WC/eat, with toilet first when both are low.
+  `park_toilet` hides Buddy inside and shows progress; `park_eat` uses the
+  actual sit pose at the stall with a bowl. Needs recover during service;
+  save v3 keeps `.goal` and resumes services. Players can still go home.
+
 - **海边** (`beach.py`) is a wooden dock (user: simple, no clutter): big
   sky, the sea, a faint far shore, the railing with a life ring, two lamps,
   planks that widen towards us, two bollards and a coil of rope. The page

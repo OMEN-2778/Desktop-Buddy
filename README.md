@@ -45,8 +45,16 @@ four possible outcomes. Dream cards share the normal cooldown and pause time.
 Hold a collapsed Buddy for five seconds: two pixel angels arrive immediately,
 with falling light and a filling rescue meter; releasing early cancels the rescue.
 
-The park has five connected areas, left to right: 湖边凉亭 ↔ 湖畔步道 ↔
-公园中央 ↔ 野餐草坪 ↔ 林间野餐区. Click the path to walk, click a bench
+The park has five connected areas, left to right: 湖边凉亭 ↔ 湖畔公厕 ↔
+公园中央 ↔ 野餐草坪 ↔ 樱花林·关东煮. Click the path to walk, click a bench
 to sit, or click Buddy → 站起来 to leave the seat. Walking to either edge
 uses a short scene wipe to the neighboring area; the two outer ends stop.
-Park saves retain the area and seat, with version 1 saves migrated to version 2.
+Park saves retain the area and seat, with earlier saves migrated automatically.
+
+Park areas are numbered 1–5 from left to right. Area 2 has a working public
+restroom; area 5 is a cherry grove with an oden stall. While in the park, Buddy
+walks through neighboring areas to the restroom below 40 bladder, or to the
+stall below 35 hunger, prioritizing the restroom when both are low. Needs
+recover gradually during use/eating. Facilities can also be clicked directly.
+Exhaustion still sends Buddy home. Version 3 saves resume service journeys,
+restroom use and eating, and migrate earlier park saves.

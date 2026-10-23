@@ -174,13 +174,15 @@ def main():
       "park": {
         "kind": "walk", "feet": PK.FEET, "walk": [8, PK.W - 8], "doorX": PK.BENCH, "side": PK.PATH[0],
         "img": {"zones": {z["id"]: {
-            "seasons": {se: {"bg": png(PX.background(z, se)), "trees": [png(PX.trees(z, se, f)) for f in (0, 1)]} for se in PK.SEASONS},
-            "snow": png(PX.snow(z)), "wet": png(PK.wet_layer()), "lit": png(PX.lit(z)), "bench": png(PX.bench_layer(z))
+            "seasons": {se: {"bg": png(PX.background(z, se)), "trees": [png(PX.trees(z, se, f)) for f in (0, 1)], "foreground": png(PX.foreground(z, se))} for se in PK.SEASONS},
+            "snow": png(PX.snow(z)), "wet": png(PK.wet_layer()), "lit": png(PX.lit(z)), "bench": png(PX.bench_layer(z)), "facilityFront": png(PX.facility_front(z))
           } for z in PX.ZONES},
           "duck": [png(PK.duck(f)) for f in range(3)], "plane": png(PK.plane()), "sparrow": sparrows, "butterfly": flies, "cloud": clouds},
         "zones": [{"id": z["id"], "name": z["name"], "pond": z["pond"], "lamp": z["lamp"],
                    "trees": [[kind, x, cy, rx, ry] for kind, x, cy, _, rx, ry in z["trees"]],
                    "horizon": PK.HORIZON, "path": list(PK.PATH), "feet": PK.FEET, "side": PK.PATH[0],
+                   "facility": {"kind": "toilet", "x": 270, "feet": 97, "hit": [230,27,90,70]} if z["id"] == "lakeside"
+                     else {"kind": "food", "x": 177, "feet": 103, "lift": 5, "hit": [111,31,118,70]} if z["id"] == "grove" else None,
                    "bench": {"x": z["bench"], "feet": 92, "lift": 5, "hit": [z["bench"] - 23, 64, 47, 30]}}
                   for z in PX.ZONES]},
       "beach": {

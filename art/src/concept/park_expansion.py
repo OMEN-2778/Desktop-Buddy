@@ -1,7 +1,7 @@
 """Five connected 342x118 park screens, shared seasons and walking lane.
 
-Left to right: lakeside pavilion, lake promenade, original park, picnic
-meadow, woodland picnic clearing. Skyline/shore behind, seats at y=92,
+Left to right: lakeside pavilion, lake/WC, original park, picnic
+meadow, cherry grove with an oden stall. Skyline/shore behind, seats at y=92,
 clear gravel path y=94..106, low flowers in front. Light from top left.
 Sage foliage, slate roofs, oak wood, muted clay picnic cloths, teal lake.
 """
@@ -12,6 +12,7 @@ import numpy as np
 from pixelkit import P, Sprite
 import park as PK
 import front_yard as FY
+from _park_facilities import poly, restroom, oden, oden_front
 
 W, H = PK.W, PK.H
 PREVIEW_SCALE = 4
@@ -19,23 +20,90 @@ ZONES = [
     {"id": "gazebo", "name": "湖边凉亭", "bench": 101, "lamp": 197,
      "pond": (224, 72, 114, 15),
      "trees": [("linden", 28, 33, 91, 25, 24), ("cherry", 310, 35, 92, 25, 23), ("maple", 259, 43, 64, 12, 10)]},
-    {"id": "lakeside", "name": "湖畔步道", "bench": 90, "lamp": 205,
-     "pond": (100, 73, 116, 15),
-     "trees": [("linden", 22, 32, 93, 25, 27), ("cherry", 299, 36, 92, 31, 25), ("maple", 235, 42, 66, 13, 12)]},
+    {"id": "lakeside", "name": "湖畔公厕", "bench": 90, "lamp": 192,
+     "pond": (91, 71, 100, 12),
+     "trees": [("linden", 22, 32, 93, 25, 27), ("cherry", 332, 30, 93, 15, 21), ("maple", 211, 38, 62, 12, 15)]},
     {"id": "central", "name": "公园中央", "bench": PK.BENCH, "lamp": PK.LAMP,
      "pond": PK.POND, "trees": PK.TREES},
     {"id": "meadow", "name": "野餐草坪", "bench": 270, "lamp": 228, "pond": None,
      "trees": [("cherry", 37, 35, 91, 30, 25), ("linden", 313, 35, 94, 29, 27), ("maple", 184, 43, 67, 16, 13)]},
-    {"id": "grove", "name": "林间野餐区", "bench": 282, "lamp": 117, "pond": None,
-     "trees": [("maple", 18, 26, 95, 27, 28), ("linden", 64, 31, 71, 27, 26), ("cherry", 150, 25, 65, 24, 24),
-               ("linden", 246, 30, 71, 26, 25), ("maple", 326, 26, 94, 27, 29)]},
+    {"id": "grove", "name": "樱花林·关东煮", "bench": 285, "lamp": 254, "pond": None,
+     "trees": [("cherry", 18, 24, 98, 29, 30), ("cherry", 65, 30, 66, 23, 21),
+               ("cherry", 111, 27, 57, 19, 20), ("cherry", 238, 25, 62, 19, 21),
+               ("cherry", 292, 31, 69, 21, 24), ("cherry", 333, 19, 98, 29, 31)]},
 ]
+
+
+def distant_grove(s, zone, season):
+    """Small, hazy crowns read behind the larger, dark-edged living trees."""
+    colors = P.blossom if season == "spring" and zone["id"] == "grove" else PK.FAR[season][0]
+    for i, x in enumerate(range(9, W, 29)):
+        cy = 45 + i % 3 * 2
+        s.rect(x, cy + 3, 2, 12, P.pave[2])
+        s.ellipse(x, cy, 10 + i % 3, 9, colors[2])
+        s.ellipse(x - 3, cy - 3, 7, 6, colors[min(3,len(colors)-1)])
+
+
+def ground(s, zone, season):
+    r = PK.G[season]
+    s.rect(0,PK.HORIZON,W,36,r[2])
+    # Rounded banks and low slopes, rather than a uniformly striped plane.
+    for cx,cy,rx,ry in [(52,83,80,23),(247,84,108,22),(157,91,95,16)]:
+        s.ellipse(cx+4,cy+4,rx,ry,r[1])
+        s.ellipse(cx,cy,rx,ry,r[2])
+        s.ellipse(cx-6,cy-5,rx-6,ry-5,r[3])
+    rnd = random.Random(114)
+    for _ in range(170):
+        x,y = rnd.randrange(W),rnd.randint(61,92)
+        s.hline(x,x+1,y,r[rnd.choice((2,3,4))])
+
+
+def access_path(s, zone):
+    # An access spur narrows into the scene; the actual movement remains on
+    # the clear public path and the short facility/bench approach.
+    target = {"gazebo":101,"lakeside":270,"central":171,"meadow":125,"grove":177}[zone["id"]]
+    far = target + (16 if target < 170 else -13)
+    poly(s,[(far-5,65),(far+5,65),(target+17,96),(target-17,96)],P.pave[0])
+    poly(s,[(far-4,65),(far+4,65),(target+14,96),(target-14,96)],P.pave[3])
+    for y in (72,80,90):
+        t=(y-65)/31; cx=round(far+(target-far)*t); half=round(4+10*t)
+        s.hline(cx-half,cx+half,y,P.pave[2])
+
+
+def cast_shadows(s, zone):
+    for _,x,_,base,rx,_ in zone["trees"]:
+        s.ellipse(x+12,base+3,rx+4,4,P.grass[1])
+        s.ellipse(x+7,base+2,rx//2,2,P.grass[0])
+    s.ellipse(zone["bench"]+6,93,27,3,P.pave[1])
+
+
+def foreground(zone, season):
+    """A few close plants and cut-edge stones frame a clear center lane."""
+    s = Sprite(W,H)
+    r = P.blossom if zone["id"] == "grove" and season == "spring" else PK.G[season]
+    for x in (-3,W+2):
+        s.ellipse(x+3,114,21,7,P.grass[0])
+        s.ellipse(x,112,18,6,r[1])
+        s.ellipse(x-3,110,13,4,r[2])
+        s.ellipse(x-5,109,8,3,r[3])
+    for x in (24,305):
+        poly(s,[(x,115),(x+10,112),(x+19,114),(x+17,118),(x,118)],P.pave[0])
+        poly(s,[(x,114),(x+9,111),(x+18,113),(x+9,116)],P.pave[3])
+        s.hline(x+3,x+9,114,P.pave[4])
+    return s
+
+
+def facility_front(zone):
+    s=Sprite(W,H)
+    if zone["id"] == "grove": oden_front(s)
+    return s
 
 
 def lake(s, season, geometry):
     cx, cy, rx, ry = geometry
     water = P.snow if season == "winter" else P.sea
-    s.ellipse(cx, cy, rx + 3, ry + 2, P.pave[1])
+    s.ellipse(cx + 2, cy + 3, rx + 4, ry + 2, P.pave[0])
+    s.ellipse(cx, cy + 1, rx + 3, ry + 3, P.pave[1])
     s.ellipse(cx, cy - 1, rx + 2, ry + 1, P.pave[3])
     s.ellipse(cx, cy, rx, ry, water[2])
     s.ellipse(cx, cy - 4, rx - 3, ry - 4, water[1])
@@ -91,6 +159,10 @@ def pavilion(s):
         s.line(x + side * 50, 44, x + side * 62, 40, P.slate[2])
         s.line(x + side * 50, 43, x + side * 62, 39, P.slate[4])
     s.vline(x, y - 7, y, P.slate[0]).rect(x - 2, y - 4, 5, 2, P.slate[3])
+    poly(s,[(101,21),(151,44),(162,44),(101,19)],P.slate[1])
+    s.line(101,20,151,44,P.slate[3])
+    poly(s,[(144,86),(163,79),(163,87),(144,94)],P.pave[0])
+    for xx in range(52,149,11): s.line(xx,85,xx+11,80,P.oak[1])
     # Two little lanterns tucked under the eaves.
     for xx in (x - 35, x + 35):
         s.vline(xx, 48, 53, P.walnut[0])
@@ -113,10 +185,11 @@ def bridge(s):
 def cloth(s, x, y, w=57, h=13, color=None):
     c = color or P.clay
     s.ellipse(x + w // 2 + 2, y + h - 1, w // 2 + 3, 3, P.sage[1])
-    s.rect(x, y, w, h, P.linen[2])
+    poly(s,[(x+5,y),(x+w-6,y),(x+w-1,y+h),(x,y+h)],P.linen[2])
     for yy in range(y, y + h):
         for xx in range(x, x + w):
-            if ((xx - x) // 5 + (yy - y) // 3) % 2 == 0:
+            inset=round(5*(1-(yy-y)/h))
+            if x+inset <= xx < x+w-inset and ((xx - x) // 5 + (yy - y) // 3) % 2 == 0:
                 s.set(xx, yy, c[2])
     s.hline(x, x + w - 1, y, P.linen[3]).hline(x, x + w - 1, y + h - 1, c[0])
     for xx in range(x + 1, x + w, 3):
@@ -177,9 +250,11 @@ def props(zone, season):
     if zone["id"] == "gazebo":
         pavilion(s)
     elif zone["id"] == "lakeside":
-        bridge(s)
-    elif zone["id"] in ("meadow", "grove"):
-        picnic(s, zone["id"] == "grove")
+        restroom(s)
+    elif zone["id"] == "meadow":
+        picnic(s)
+    elif zone["id"] == "grove":
+        oden(s)
     PK.bench(s, zone["bench"], 92)
     # Move the existing cast-iron lantern without changing its pixel style.
     lantern = Sprite(W, H)
@@ -189,17 +264,22 @@ def props(zone, season):
 
 
 def background(zone, season):
-    if zone["id"] == "central":
-        return PK.background(season)
     s = Sprite(W, H)
     PK.sky(s)
+    if zone["id"] == "central": PK.skyline(s)
     PK.treeline(s, season)
-    PK.lawn(s, season)
+    distant_grove(s, zone, season)
+    ground(s, zone, season)
     if zone["pond"]:
         lake(s, season, zone["pond"])
+    access_path(s, zone)
     PK.path(s, season)
+    cast_shadows(s, zone)
     for kind, x, hw, ht, base in (("hydrangea", 15, 13, 8, 92), ("box", 328, 12, 7, 92)):
         s.blit(FY.bush(kind, x, hw, ht, season, base=base), 0, 0)
+    if zone["id"] == "central":
+        s.blit(PK.hedge(season), 0, 0)
+        PK.bin_(s)
     s.blit(props(zone, season), 0, 0)
     PK.border(s, season)
     return s
@@ -215,11 +295,12 @@ def trees(zone, season, frame):
 
 
 def snow(zone):
-    if zone["id"] == "central":
-        return PK.snow_layer()
     s = Sprite(W, H)
     # Snow masks protect water, furniture, pavilion and trees.
     solid = props(zone, "winter")
+    if zone["id"] == "central":
+        PK.bin_(solid)
+        solid.blit(PK.hedge("winter"), 0, 0)
     solid.blit(trees(zone, "winter", 0), 0, 0)
     mask = solid.px[..., 3] > 0
     for y in range(PK.HORIZON, H):
@@ -239,14 +320,18 @@ def snow(zone):
 
 
 def lit(zone):
-    if zone["id"] == "central":
-        return PK.lit()
     s = Sprite(W, H)
     x = zone["lamp"]
     s.rect(x - 2, 46, 6, 5, P.light[0]).rect(x - 1, 47, 4, 3, P.light[1])
     if zone["id"] == "gazebo":
         for xx in (66, 136):
             s.rect(xx - 2, 55, 5, 5, P.light[0]).rect(xx - 1, 56, 3, 3, P.light[1])
+    if zone["id"] == "lakeside":
+        s.rect(299,53,2,4,P.light[0])
+    if zone["id"] == "grove":
+        for xx in (117,213):
+            s.ellipse(xx,58,3,6,P.light[0]).vline(xx,53,62,P.light[1])
+        s.hline(133,197,64,P.light[0])
     return s
 
 
@@ -264,5 +349,6 @@ def build():
             out[f'park_{zone["id"]}_{season}'] = bg
             preview = bg.copy()
             preview.blit(trees(zone, season, 0), 0, 0)
+            preview.blit(foreground(zone, season), 0, 0)
             out[f'park_{zone["id"]}_preview_{season}'] = preview
     return out
