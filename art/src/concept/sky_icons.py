@@ -56,39 +56,24 @@ def _sparkle(s: Sprite, x: int, y: int, size: int, c):
 
 
 def moon(f: int) -> Sprite:
-    """Deep-blue crescent: hand-stepped horns and two quiet stars.
-    The silhouette stays fixed; only the star glints change between frames.
+    """User's rounded blue moon reference: broad lower bowl, short horns,
+    one large four-point star and a smaller companion. Only blue glints twinkle.
     """
-    body = Sprite.from_grid(
-        """
-        ................
-        ................
-        ......HH........
-        ....HHM.........
-        ...HMM..........
-        ..HMMM..........
-        ..HMMs..........
-        ..HMMs..........
-        ..HMMs..........
-        ...MMMs.........
-        ...MMMMs........
-        ....MMMMss......
-        .....MMMMss.....
-        .......sss......
-        ................
-        ................
-        """,
-        {"H": P.moon[3], "M": P.moon[1], "s": P.moon[0]},
-    )
-    # A shallow crater and a pearly outer glint, not scattered texture.
-    body.set(3, 8, P.moon[2]).set(4, 8, P.moon[2]).set(4, 9, P.moon[0])
-    body.set(3, 5, P.moon[3]).set(3, 6, P.moon[2])
+    body = Sprite(SIZE, SIZE)
+    for y in range(SIZE):
+        for x in range(SIZE):
+            outer = (x - 6.5) ** 2 + (y - 9.0) ** 2 <= 5.6 ** 2
+            cut = (x - 8.9) ** 2 + (y - 6.4) ** 2 < 3.05 ** 2
+            if outer and not cut:
+                c = P.moon[0] if y >= 13 else P.moon[1]
+                if x <= 3 and y <= 9: c = P.moon[2]
+                body.set(x, y, c)
     s = _outlined(body)
-    # The occasional isolated pixel is an intentional distant star.
-    _sparkle(s, 12, 3, [1, 0, 1, 1][f], P.mustard[4])
-    s.set(12, 3, WHITE)
-    _sparkle(s, 13, 9, [0, 1, 0, 0][f], P.linen[2])
-    s.set(13, 9, P.light[0] if f == 1 else WHITE)
+    # Stars stay blue like the sketch; the moon alone has the track's thin rim.
+    _sparkle(s, 12, 2, 2, P.moon[1])
+    s.set(12, 2, P.moon[2] if f in (0, 3) else P.moon[1])
+    _sparkle(s, 14, 7, 1, P.moon[1])
+    s.set(14, 7, P.moon[2] if f == 2 else P.moon[1])
     return s
 
 

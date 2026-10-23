@@ -55,7 +55,7 @@ function parkRequest(goal, auto = false) {
 function parkHandleNeeds(run) {
   if (sim.place !== 'park') return false;
   if (wiping || cardHolds() || !run) return true;
-  if (sim.mode === 'down' || sim.act === 'go_home' || sim.windup?.act === 'go_home') return false;
+  if (sim.mode === 'down' || sim.act === 'go_home' || sim.windup) return false;
   if (parkInsideToilet() || parkEating()) {
     if (run && parkEating() && sim.needs.bladder < 20) { parkRequest('toilet',true); return false; }
     if (run && sim.needs.energy < 15) { sim.park.goal = null; startAct('go_home'); return true; }
@@ -65,6 +65,10 @@ function parkHandleNeeds(run) {
   }
   if (!run) return false;
   if (sim.needs.energy < 15 && sim.park?.goal) { sim.park.goal = null; startAct('go_home'); return true; }
+  // Finish a player's requested walk before resuming proactive errands;
+  // critically low needs can still interrupt. Explicit home always wins.
+  if (sim.player && !sim.park?.goal && ['walk','act'].includes(sim.mode)
+      && sim.needs.bladder >= 20 && sim.needs.hunger >= 20) return false;
   const want = parkNeedGoal();
   if (want && (!sim.park?.goal || (want === 'toilet' && sim.park.goal !== 'toilet'))) parkRequest(want,true);
   else if (sim.park?.goal && (sim.mode === 'idle' || (sim.mode === 'act' && sim.act !== 'go_home'))) parkRouteGoal();

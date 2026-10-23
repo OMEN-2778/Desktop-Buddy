@@ -12,7 +12,7 @@ const { chromium } = require(process.env.PW || 'playwright');
     await page.evaluate(()=>{
       closeGuide(); speed=0;
       window.parkTestAt=(zone,needs={})=>{
-        sim.place='park'; sim.t=720; sim.mode='idle'; sim.act=null;sim.windup=null;sim.queue=[];sim.outBack=null;
+        sim.player=false; sim.place='park'; sim.t=720; sim.mode='idle'; sim.act=null;sim.windup=null;sim.queue=[];sim.outBack=null;
         sim.park={zone,seated:false,goal:null}; sim.route=[[171,103]];sim.s=0;sim.target=0;sim.idleUntil=Infinity;
         sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,100]));Object.assign(sim.needs,needs);
         lifeFlags.cards={seen:[],last:1e9}; speed=3;arriveAt('park');
@@ -93,12 +93,18 @@ const { chromium } = require(process.env.PW || 'playwright');
       if(phase!=='walking')assert.equal(r.act,phase==='toilet'?'park_toilet':'park_eat');
       // Test helpers are intentionally not persisted in the game.
       await page.evaluate(()=>{
-        window.parkTestAt=(zone,needs={})=>{sim.place='park';sim.t=720;sim.mode='idle';sim.act=null;sim.windup=null;sim.queue=[];sim.outBack=null;sim.park={zone,seated:false,goal:null};sim.route=[[171,103]];sim.s=0;sim.target=0;sim.idleUntil=Infinity;sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,100]));Object.assign(sim.needs,needs);lifeFlags.cards={seen:[],last:1e9};speed=3;arriveAt('park');};
+        window.parkTestAt=(zone,needs={})=>{sim.player=false;sim.place='park';sim.t=720;sim.mode='idle';sim.act=null;sim.windup=null;sim.queue=[];sim.outBack=null;sim.park={zone,seated:false,goal:null};sim.route=[[171,103]];sim.s=0;sim.target=0;sim.idleUntil=Infinity;sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,100]));Object.assign(sim.needs,needs);lifeFlags.cards={seen:[],last:1e9};speed=3;arriveAt('park');};
         window.parkTestArrive=()=>{for(let i=0;i<14&&!(sim.mode==='act'&&['park_toilet','park_eat'].includes(sim.act));i++)step(0,10);};
       });
     }
     await page.evaluate(()=>{parkTestAt('grove',{energy:10,hunger:25});startAct('bench');sim.s=sim.target;arrive();step(1,0);speed=0;});
     assert.equal(await page.evaluate(()=>sim.place),'home','Exhaustion still takes priority over food');
+    await page.evaluate(()=>{
+      parkTestAt('grove',{hunger:25});parkRequest('food');parkTestArrive();
+      parkStand();realClock=sim.windup.at+.1;step(0,10);speed=0;render();
+    });
+    assert.equal(await page.evaluate(()=>parkEating()),false,'Stand must leave a meal in progress');
+    assert.equal(await page.evaluate(()=>buddyFeet().y),103);
     // A player can choose home during service; the automatic goal cannot trap them.
     await page.evaluate(()=>{parkTestAt('lakeside');parkRequest('toilet');parkTestArrive();command('go_home');realClock=sim.windup.at+.1;step(0,.1);speed=0;});
     assert.equal(await page.evaluate(()=>sim.place),'home');

@@ -1645,6 +1645,7 @@ function drawClickFx(ctx) {
     const shimmer = Math.floor(realClock * 6);   // marching highlight around the piece
     for (const [x, y] of CLICK[hoverId].rings[0]) px(ctx, x, y, (x + y + shimmer) % 4 ? 0.7 : 1, (x + y + shimmer) % 4 ? GLOW : GLOW_PALE);
   }
+  if (glow && !CLICK[glow.id]) glow = null;
   if (glow) {
     const t = realClock - glow.t0, c = CLICK[glow.id];
     if (t > 0.9) { glow = null; return; }
@@ -3851,14 +3852,21 @@ function drawTripLoad(x, p, r) {
   x.drawImage(r.head, ax - 12, cy - 13 - hop);
 }
 function throughDoor(to) {
+  if (wiping) return;
   if (to === "bar" && !barIsOpen()) {
     sim.mode = "idle"; sim.act = null; sim.dest = null; sim.idleUntil = sim.t + 5;
     showHint("现在酒吧还没开门哦！"); return;
   }
-  sim.mode = "idle"; sim.act = null; sim.idleUntil = Infinity;      // she waits at the door while the bars close
-  closeRing(); closePicker();
+  sim.mode = "idle"; sim.act = null; sim.idleUntil = Infinity;
+  sim.windup = null; cancelRescue();
+  hoverId = null; hoverBuddy = false; glow = null; walkMark = null;
+  closeRing(); closePicker(); clearNpcPills();
   const go = AWAY.has(to) || AWAY.has(sim.place) ? swap => trip(to, swap) : wipe;   // further out: the trip transition
   go(() => {
+    // Pointer movement can still arrive while the outgoing scene is covered.
+    // Its furniture IDs must never be drawn as highlights in the next scene.
+    hoverId = null; hoverBuddy = false; glow = null; walkMark = null;
+    if (sim.place === "bar" && to !== "bar") barScene = null;
     sim.place = to;
     sim.park = to === "park" ? { zone: "central", seated: false } : null;
     if (to === "home") { const [st, x] = D.spots.front_door; sim.route = [[x, FLOOR_Y[st]]]; }

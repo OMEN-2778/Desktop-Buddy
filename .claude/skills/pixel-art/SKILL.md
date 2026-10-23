@@ -416,6 +416,14 @@ bubble with a heart = 社交); they live in
   icons over words, chibi style (10x10, round, chunky, blush), shown at one
   icon pixel per house pixel.
 
+**酒吧与月亮（2026-10-23 用户修订）** — 酒吧不要大面积昏黄光与黄褐色
+覆盖，用户觉得脏。`bar.py` 用冷灰地板、蓝绿座椅、紫色舞台幕布、抛光吧台；
+`bar.js` 用小范围暖白灯和舞台冷光，保留夜间氛围。离开酒吧时必须清理
+`hoverId/glow` 等场景高亮；旧版酒吧家具 ID 带到家中会在 `drawClickFx` 报错，
+使逐帧循环和转场卡住。`tools/check_bar_return.js` 必须保留正常动画测试。
+月亮按用户提供的圆润深蓝参考：饱满底部、朝右上开口、一大一小两颗深蓝
+四角星；拒绝干瘦的月牙和亮白主体。仍保持 16x16 与轻微星光动效。
+
 **Time, seasons, weather (demo)** — a sky bar sits just above the house
 with a small gap (the user tried it overlapping the roof and asked for it
 back up), exactly as wide as the house (not the needs column): a pixel pill (2-unit white

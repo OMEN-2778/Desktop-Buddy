@@ -111,7 +111,7 @@ function barChat(to, target = null) {
   barScene.nextChat = 12 + Math.random() * 8;
 }
 function stepBar(dtGame, dtReal) {
-  if (!barScene || !sim.bar) return;
+  if (!barScene || !sim.bar || wiping || cardHolds() || (!dtGame && !dtReal)) return;
   sim.t += dtGame;
   const day = Math.floor(sim.t / 1440) + 1;
   if (day !== sim.lastDay) { sim.lastDay = day; log(`—— 第 ${day} 天 · ${SEASONS[seasonOf(sim.t).i].name} ——`, 'day'); }
@@ -246,17 +246,18 @@ function renderBar() {
   }
   bctx.drawImage(O.foreground, 0, 0);
   bctx.save(); bctx.beginPath(); bctx.rect(6, 10, 330, 103); bctx.clip();
-  bctx.fillStyle = `rgba(20,17,29,${0.18 + night * 0.23})`; bctx.fillRect(6, 10, 330, 103);
-  const flicker = reduceMotionUI ? 1 : 0.92 + Math.sin(t * 2.1) * 0.05;
-  for (const x of [111, 202]) barGlow(x, 49, 40, 28, '251,193,107', .24 * flicker);
-  for (const x of [43, 276]) barGlow(x, 89, 22, 17, '255,205,133', .29 * flicker);
+  bctx.fillStyle = `rgba(19,25,42,${0.08 + night * 0.14})`; bctx.fillRect(6, 10, 330, 103);
+  const flicker = reduceMotionUI ? 1 : 0.97 + Math.sin(t * 2.1) * 0.02;
+  for (const x of [111, 202]) barGlow(x, 49, 28, 23, '247,246,251', .14 * flicker);
+  for (const x of [43, 276]) barGlow(x, 89, 13, 11, '255,251,230', .13 * flicker);
   if (sh.phase === 'perform') {
     barGlow(281 + (reduceMotionUI ? 0 : Math.sin(t * .35) * 8), 59, 30, 28,
-      sh.kind === 'dancer' ? '186,148,222' : '246,200,142', .24);
+      sh.kind === 'dancer' ? '184,168,222' : '185,209,235', .17);
   }
+  barGlow(39, 45, 23, 29, '185,209,235', .07 * night);
   bctx.restore();
   // Tiny emissive pixels stay bright while the room itself stays intimate.
-  bctx.fillStyle = '#fff1b8';
+  bctx.fillStyle = '#f7f6fb';
   for (const [x, y] of [[111, 32], [202, 32], [43, 84], [276, 87]]) bctx.fillRect(x, y, 1, 1);
   if (hoverId) {
     const s = hoverId.startsWith('bar_seat:') ? barSeat(hoverId.slice(9)) : null;

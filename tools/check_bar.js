@@ -16,6 +16,7 @@ const { chromium } = require(process.env.PW || 'playwright');
     };
     await page.evaluate(() => {
       closeGuide(); prefs.guided = true; speed = 0; saveSettings();
+      lifeFlags.cards = { seen: [], last: 1e9 }; // isolate scripted travel from random home cards
       sim.t = 600; sim.mode = 'idle'; sim.act = null; sim.idleUntil = Infinity;
       sim.route = [[D.spots.front_door[1], FLOOR_Y[0]]]; sim.s = 0;
       sim.needs = Object.fromEntries(Object.keys(sim.needs).map(k => [k, 100]));

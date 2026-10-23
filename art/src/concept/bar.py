@@ -53,9 +53,9 @@ def glass(s, x, y):
 
 def lamp(s, x):
     s.vline(x, 9, 25, P.steel[0])
-    s.rect(x - 2, 25, 5, 2, P.walnut[0])
-    s.hline(x - 4, x + 4, 27, P.mustard[1]).rect(x - 6, 28, 13, 3, P.mustard[1])
-    s.hline(x - 5, x + 5, 28, P.mustard[3]).hline(x - 6, x + 6, 31, P.walnut[0]).hline(
+    s.rect(x - 2, 25, 5, 2, P.steel[0])
+    s.hline(x - 4, x + 4, 27, P.steel[1]).rect(x - 6, 28, 13, 3, P.steel[1])
+    s.hline(x - 5, x + 5, 28, P.steel[4]).hline(x - 6, x + 6, 31, P.walnut[0]).hline(
         x - 4, x + 4, 32, P.light[0]
     )
 
@@ -77,22 +77,22 @@ def plant(s, x, y):
 def scene(night=False):
     s = Sprite(W, H)
     # Cutaway outline, ceiling, plaster and quiet vertical wooden panelling.
-    s.rect(3, 5, 336, 110, P.walnut[0]).rect(5, 7, 332, 78, P.oat[1])
-    s.rect(6, 8, 330, 43, P.oat[0]).rect(6, 51, 330, 30, P.sage[0])
+    s.rect(3, 5, 336, 110, P.slate[0]).rect(5, 7, 332, 78, P.slate[1])
+    s.rect(6, 8, 330, 43, P.slate[2]).rect(6, 51, 330, 30, P.teal[0])
     # Recessed ceiling beams, a cornice, and a narrow brass picture rail.
     for x in (74, 233):
         s.rect(x, 10, 4, 70, P.walnut[1]).vline(x, 10, 79, P.walnut[3])
     s.hline(8, 333, 12, P.walnut[1]).hline(8, 333, 14, P.oak[2])
     for x in range(8, 336, 13):
-        s.vline(x, 54, 79, P.sage[1])
+        s.vline(x, 54, 79, P.teal[1])
     s.hline(6, 335, 50, P.walnut[0]).hline(6, 335, 52, P.oak[3])
-    s.rect(6, 81, 330, 32, P.walnut[2])
+    s.rect(6, 81, 330, 32, P.slate[1])
     for y in [85, 93, 103, 112]:
-        s.hline(6, 335, y, P.walnut[0])
-        s.hline(6, 335, y + 1, P.walnut[3])
+        s.hline(6, 335, y, P.slate[0])
+        s.hline(6, 335, y + 1, P.slate[2])
     for y, off in [(86, 0), (94, 29), (104, 57)]:
         for x in range(20 + off, 334, 61):
-            s.vline(x, y, y + 6, P.walnut[1])
+            s.vline(x, y, y + 6, P.slate[0])
     s.rect(4, 5, 334, 4, P.walnut[0]).hline(6, 335, 9, P.oak[3])
     # The same city window in daylight and at night.
     box(s, 14, 18, 52, 41, P.walnut, top=1)
@@ -111,14 +111,14 @@ def scene(night=False):
     s.rect(59, 20, 5, 34, P.clay[1]).vline(60, 21, 52, P.clay[2])
     box(s, 13, 55, 54, 4, P.walnut, top=1)
     # Booth for two; generous space around the small table.
-    soft(s, 16, 66, 51, 15, P.clay)
-    s.vline(40, 68, 78, P.clay[1])
-    soft(s, 14, 78, 55, 7, P.clay)
+    soft(s, 16, 66, 51, 15, P.teal)
+    s.vline(40, 68, 78, P.teal[1])
+    soft(s, 14, 78, 55, 7, P.teal)
     s.rect(17, 85, 49, 4, P.walnut[0])
     s.rect(18, 89, 3, 4, P.walnut[0]).rect(62, 89, 3, 4, P.walnut[0])
     for x in (23, 48):
-        soft(s, x, 69, 12, 8, P.clay)
-        s.set(x + 6, 73, P.clay[0])
+        soft(s, x, 69, 12, 8, P.teal)
+        s.set(x + 6, 73, P.teal[0])
     # A framed record and a tiny handwritten specials board.
     box(s, 70, 24, 13, 16, P.walnut, top=1)
     s.ellipse(76, 31, 4, 4, P.steel[0]).ellipse(76, 31, 1, 1, P.mustard[2])
@@ -128,19 +128,22 @@ def scene(night=False):
         s.hline(233, 232 + w, y, P.oat[2])
     # Back bar, mirror/sign, shelves and restrained bottle groupings.
     box(s, 88, 17, 137, 43, P.walnut, top=2)
-    s.rect(93, 21, 127, 33, P.sage[0])
-    s.frame(132, 22, 51, 15, P.oak[2])
+    s.rect(93, 21, 127, 33, P.blue[0])
+    for xx in (129,184):
+        s.vline(xx,22,52,P.slate[2])
+        s.line(xx-9,22,xx-4,28,P.glass[1])
+    s.frame(132, 22, 51, 15, P.steel[3])
     s.rect(134, 24, 47, 11, P.walnut[0])
-    text(s, "AFTER HOURS", 136, 27, P.oat[3])
+    text(s, "AFTER HOURS", 136, 27, P.linen[3])
     for y in [40, 54]:
         s.hline(93, 219, y, P.walnut[0]).hline(94, 218, y - 1, P.oak[3])
     for x, c, h in [
-        (96, P.sage, 8),
-        (103, P.clay, 9),
-        (111, P.mustard, 7),
-        (194, P.sage, 9),
-        (202, P.clay, 7),
-        (211, P.sage, 10),
+        (96, P.glass, 8),
+        (103, P.coral, 9),
+        (111, P.blue, 7),
+        (194, P.glass, 9),
+        (202, P.lilac, 7),
+        (211, P.glass, 10),
     ]:
         bottle(s, x, 29, c, h)
     for x, c, h in [
@@ -176,15 +179,15 @@ def scene(night=False):
         s.ellipse(x, 102, 7, 2, P.walnut[0])
         s.vline(x - 3, 87, 100, P.steel[0]).vline(x + 3, 87, 100, P.steel[0])
         s.hline(x - 4, x + 4, 96, P.oak[2])
-        soft(s, x - 6, 85, 13, 5, P.clay)
+        soft(s, x - 6, 85, 13, 5, P.teal)
     # Small elevated jazz stage; curtain, live sign, amplifier, microphone.
-    s.rect(245, 19, 77, 59, P.walnut[0]).rect(248, 22, 71, 53, P.clay[0])
+    s.rect(245, 19, 77, 59, P.walnut[0]).rect(248, 22, 71, 53, P.lilac[0])
     for x in range(249, 319, 8):
-        s.rect(x, 23, 3, 48, P.clay[1])
-    s.rect(248, 21, 72, 4, P.clay[2])
-    s.rect(248, 24, 8, 42, P.clay[2]).rect(312, 24, 7, 42, P.clay[2])
+        s.rect(x, 23, 3, 48, P.lilac[1])
+    s.rect(248, 21, 72, 4, P.lilac[2])
+    s.rect(248, 24, 8, 42, P.lilac[2]).rect(312, 24, 7, 42, P.lilac[2])
     s.rect(273, 26, 27, 9, P.walnut[0])
-    text(s, "LIVE", 278, 28, P.mustard[3])
+    text(s, "LIVE", 278, 28, P.lilac[4])
     s.rect(241, 75, 85, 8, P.walnut[0]).rect(242, 75, 82, 3, P.oak[3])
     s.rect(242, 78, 82, 3, P.walnut[1]).hline(243, 323, 81, P.oak[2])
     box(s, 305, 60, 12, 15, P.steel, top=1)
@@ -208,7 +211,7 @@ def scene(night=False):
         s.ellipse(x, y, 15, 4, P.walnut[0])
         s.ellipse(x, y - 1, 14, 3, P.oak[3])
         s.hline(x - 9, x + 9, y - 3, P.oak[4])
-        s.rect(x - 1, y - 7, 3, 5, P.oat[3]).set(x, y - 8, P.mustard[3]).set(
+        s.rect(x - 1, y - 7, 3, 5, P.porcelain[2]).set(x, y - 8, P.mustard[3]).set(
             x, y - 9, P.light[0]
         )
         glass(s, x + 7, y - 6)
@@ -220,6 +223,11 @@ def scene(night=False):
     s.rect(174, 60, 4, 6, P.steel[2]).vline(174, 60, 65, P.steel[4])
     for x, y in ((19, 98), (83, 107), (161, 97), (222, 109), (302, 88)):
         s.hline(x, x + 7, y, P.walnut[1])
+    # Satin rail and polished counter reflections, kept to single pixels.
+    s.hline(96,219,91,P.steel[0]).hline(97,218,90,P.steel[3])
+    for xx in (102,211): s.vline(xx,88,93,P.steel[1])
+    s.hline(91,219,68,P.porcelain[2]).hline(94,215,69,P.porcelain[3])
+    s.hline(99,113,70,P.steel[4]).hline(178,196,70,P.steel[3])
     return s
 
 

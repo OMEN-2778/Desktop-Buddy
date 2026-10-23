@@ -58,3 +58,8 @@ stall below 35 hunger, prioritizing the restroom when both are low. Needs
 recover gradually during use/eating. Facilities can also be clicked directly.
 Exhaustion still sends Buddy home. Version 3 saves resume service journeys,
 restroom use and eating, and migrate earlier park saves.
+
+Bar return transitions clear outgoing furniture highlights, so automatic
+returns for low needs or dawn continue animating instead of freezing.
+The bar uses cool slate, teal upholstery and localized neutral-white light.
+The time-bar moon follows the rounded deep-blue reference with two blue stars.
