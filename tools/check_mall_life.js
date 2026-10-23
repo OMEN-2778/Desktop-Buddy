@@ -33,6 +33,10 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const {ch
   const service=card?.cd.service;chooseCard('a',true);speed=0;return service;
  }),'restaurant','Dining cards must appear before the short meal ends');
  await p.waitForFunction(()=>card===null);
+ await p.evaluate(()=>{mallTest();mallChoose('cinema',MALL.items.find(it=>it.id==='cinema'));});
+ assert.equal(await p.locator('#picker .pk-item').count(),16);
+ await p.locator('#picker .pk-item').filter({hasText:'星海漫游'}).click();
+ assert.equal(await p.evaluate(()=>mallS.visit?.film),'star','Actual movie picker callback');
  fs.mkdirSync('/workspace/artifacts/mall-life',{recursive:true});
  for(const kind of ['diner','bistro','noodle','cinema']){
   await p.evaluate(kind=>{mallTest();mallS.menuShop=kind;mallPlanVisit(kind==='cinema'?'cinema':'restaurant',kind==='cinema'?{id:'star'}:null);mallS.x=mallS.goal.x;stopAt(mallS.goal.it);speed=0;saveSettings();render();},kind);
@@ -40,6 +44,9 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const {ch
   const saved=await p.evaluate(async()=>{await saveGame();return [mallS.visit.kind,mallS.visit.shop,mallS.visit.dish,mallS.visit.film,mallS.visit.elapsed];});
   await p.reload();await p.waitForFunction(()=>booted);
   assert.deepEqual(await p.evaluate(()=>[mallS.visit.kind,mallS.visit.shop,mallS.visit.dish,mallS.visit.film,mallS.visit.elapsed]),saved);
+  const exitAt=await p.evaluate(()=>{const r=view.getBoundingClientRect();return[r.left+320*r.width/W,r.top+54*r.height/H];});
+  await p.mouse.click(...exitAt);
+  assert.equal(await p.evaluate(()=>mallVisitInside()),false,'Projected side door must remain clickable');
   await p.evaluate(()=>{window.mallTest=()=>{closeGuide();closePicker();closeRing();speed=3;sim.mode='act';sim.act='mall';sim.place='mall';sim.t=720;sim.down=null;sim.windup=null;sim.queue=[];sim.route=[[MALL.at,MALL.feet]];sim.s=0;sim.target=0;sim.graceUntil=Infinity;sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,100]));lifeFlags.cards={seen:[],last:1e9};moods.clear();weather.kind='clear';weather.force='clear';arriveAt('mall');};});
  }
  await p.evaluate(()=>{command('go_home');realClock=sim.windup.at+.1;step(0,.1);speed=0;});assert.equal(await p.evaluate(()=>sim.place),'home');

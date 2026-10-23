@@ -8,6 +8,7 @@ from _park_facilities import poly
 
 W,H=342,118
 RESTAURANTS={'diner':P.clay,'bistro':P.teal,'noodle':P.sage}
+DINING={'seat':{'x':171,'feet':99,'lift':4},'guest':{'x':83,'feet':85,'lift':4},'table':{'x':171,'y':94}}
 
 
 def plant(s,x,y):
@@ -17,30 +18,43 @@ def plant(s,x,y):
 
 
 def exit_door(s):
-    s.rect(309,38,22,51,P.walnut[0]).rect(311,40,18,48,P.teal[1])
-    s.vline(311,40,87,P.teal[3]).rect(314,45,12,13,P.glass[0]).rect(315,46,10,11,P.glass[2])
-    s.rect(325,69,2,3,P.steel[4]).rect(313,29,17,6,P.teal[0])
-    s.hline(316,326,32,P.porcelain[3]).line(316,32,319,30,P.porcelain[3]).line(316,32,319,34,P.porcelain[3])
-    s.hline(308,331,89,P.steel[3])
+    # Side wall shares the room horizon: sill falls on the wall/floor joint.
+    poly(s,[(307,24),(333,21),(333,77),(307,69)],P.walnut[0])
+    poly(s,[(309,26),(331,24),(331,74),(309,68)],P.teal[1])
+    s.line(310,27,329,25,P.teal[3]).line(310,27,310,67,P.teal[3])
+    poly(s,[(313,30),(327,29),(327,45),(313,44)],P.glass[0])
+    poly(s,[(315,32),(325,31),(325,43),(315,42)],P.glass[2])
+    s.line(316,33,321,32,P.glass[3]).rect(327,55,2,3,P.steel[4])
+    poly(s,[(309,68),(331,74),(334,76),(310,71)],P.steel[2])
+    s.line(310,69,331,75,P.steel[4])
+    poly(s,[(312,16),(329,14),(329,20),(312,22)],P.teal[0])
+    s.hline(315,325,18,P.porcelain[3]).line(315,18,318,16,P.porcelain[3]).line(315,18,318,20,P.porcelain[3])
 
 
 def chair(s,x,y,ramp):
-    s.ellipse(x,y+4,9,2,P.walnut[0]).rect(x-7,y-22,14,16,P.walnut[0])
-    s.rect(x-6,y-21,12,13,ramp[1]).hline(x-5,x+5,y-21,ramp[3])
-    s.rect(x-7,y-8,15,4,ramp[2]).hline(x-6,x+6,y-8,ramp[4])
-    s.vline(x-6,y-3,y+3,P.walnut[1]).vline(x+6,y-3,y+3,P.walnut[0])
+    # Upholstered back, cushion, open space below the seat and four grounded feet.
+    s.ellipse(x+2,y+4,10,2,P.oak[0])
+    s.rect(x-7,y-21,14,17,P.walnut[0]).hline(x-5,x+4,y-23,P.walnut[1])
+    s.rect(x-6,y-22,12,16,ramp[1]).rect(x-5,y-21,10,12,ramp[2])
+    s.hline(x-4,x+3,y-21,ramp[3]).vline(x-5,y-20,y-11,ramp[3])
+    s.vline(x+4,y-20,y-10,ramp[0]).hline(x-4,x+3,y-9,ramp[0])
+    poly(s,[(x-6,y-7),(x+5,y-7),(x+8,y-3),(x-8,y-3)],ramp[3])
+    s.hline(x-7,x+7,y-2,ramp[0])
+    for dx in [-6,6]:s.vline(x+dx,y-1,y+3,P.walnut[1]).set(x+dx,y+3,P.walnut[0])
 
 
-def table(s,x,y):
-    s.ellipse(x,y+15,25,3,P.oak[0])
+def table(s,x,y,shadow=True,shadow_color=None):
+    if shadow:poly(s,[(x-22,y+16),(x+21,y+14),(x+31,y+21),(x-15,y+24)],shadow_color or P.oak[1])
     poly(s,[(x-23,y),(x+20,y),(x+27,y+9),(x-27,y+9)],P.walnut[1])
     s.rect(x-22,y+8,3,13,P.walnut[1]).rect(x+20,y+8,3,13,P.walnut[0])
     poly(s,[(x-22,y-3),(x+18,y-3),(x+27,y+5),(x-27,y+5)],P.ash[3])
     s.hline(x-26,x+26,y+6,P.ash[1]).hline(x-20,x+17,y-3,P.ash[4])
     s.rect(x-16,y-1,11,5,P.oat[4]).hline(x-14,x-7,y+1,P.oat[2])
     s.ellipse(x+12,y+1,5,2,P.porcelain[0]).ellipse(x+12,y,4,2,P.porcelain[3])
-    s.rect(x-1,y-8,3,7,P.glass[1]).rect(x,y-7,1,5,P.glass[3])
-    s.line(x,y-8,x-2,y-13,P.sage[2]).ellipse(x-2,y-14,3,2,P.blossom[3])
+    s.rect(x-12,y-8,3,7,P.glass[1]).rect(x-11,y-7,1,5,P.glass[3])
+    s.line(x-11,y-8,x-13,y-13,P.sage[2]).ellipse(x-13,y-14,3,2,P.blossom[3])
+    s.line(x-20,y-1,x-18,y+3,P.steel[3]).line(x-18,y-2,x-16,y+2,P.steel[3])
+    s.line(x+20,y,x+21,y+3,P.steel[4])
 
 
 def restaurant_front(kind='diner',x=0,w=96,s=None):
@@ -64,22 +78,38 @@ def restaurant_front(kind='diner',x=0,w=96,s=None):
     return s
 
 
-def restaurant(kind='diner'):
+def dining_furniture(kind):
+    s=Sprite(W,H);r=RESTAURANTS[kind]
+    for x,y in [(83,85),(171,99),(262,101)]:chair(s,x,y,r)
+    for x,y in [(83,76),(171,94),(262,90)]:table(s,x,y,shadow_color=P.pave[1] if kind=='bistro' else P.oak[1])
+    return s
+
+
+def restaurant(kind='diner',furnish=True):
     r=RESTAURANTS[kind];s=Sprite(W,H,P.frame[0])
-    s.rect(4,5,334,107,P.plaster_kitchen[2]).rect(5,65,332,47,P.oak[2])
-    poly(s,[(5,6),(17,16),(17,65),(5,77)],P.plaster_kitchen[0])
-    poly(s,[(325,16),(337,6),(337,77),(325,65)],P.plaster_kitchen[1])
-    s.rect(17,16,308,49,P.plaster_kitchen[3]).rect(17,52,308,13,r[1])
-    for x in range(19,325,13):s.vline(x,53,64,r[0])
-    s.hline(17,324,51,r[3]).hline(7,335,6,P.oat[3]).hline(17,324,65,P.walnut[0])
-    for yy in [73,85,102]:s.hline(5,336,yy,P.oak[1]).hline(5,336,yy+1,P.oak[3])
-    for x in range(-90,440,35):s.line(171+(x-171)//2,66,x,111,P.oak[1])
+    s.rect(4,5,334,107,P.plaster_kitchen[2]).rect(5,65,332,47,P.marble[2] if kind=='bistro' else P.oak[3] if kind=='noodle' else P.oak[2])
+    poly(s,[(5,12),(25,16),(25,65),(5,70)],P.plaster_kitchen[0])
+    poly(s,[(303,16),(337,12),(337,75),(303,65)],P.plaster_kitchen[1])
+    s.rect(25,16,278,49,P.plaster_kitchen[3]).rect(25,52,278,13,r[1])
+    for x in range(27,303,13):s.vline(x,53,64,r[0])
+    s.hline(25,302,51,r[3]).hline(7,335,6,P.oat[3]).hline(25,302,65,P.walnut[0])
+    floor_dark=P.marble[1] if kind=='bistro' else P.oak[1]
+    for yy in [69,75,83,95,111]:s.hline(5,336,yy,floor_dark)
+    # Every depth edge converges on (171,30), including door and wall-floor joints.
+    for x in range(-80,430,38):s.line(round(171+(x-171)*35/82),66,x,111,floor_dark)
+    if kind!='bistro':
+        for x,y in [(55,87),(115,104),(206,80),(229,102),(316,90)]:s.hline(x,x+10,y,P.oak[3])
+    s.line(5,70,25,65,P.walnut[0]).line(303,65,337,75,P.walnut[0])
     # Recessed bay window and layered planters.
     s.rect(26,21,70,33,P.walnut[0]).rect(28,23,66,29,P.glass[0])
     s.rect(30,25,62,25,P.sky_soft[2])
-    for x,y,rr in [(38,43,10),(67,42,13),(84,45,9)]:s.ellipse(x,y,rr,9,P.sage[1]).ellipse(x-2,y-2,rr-3,6,P.sage[3])
+    s.hline(30,91,47,P.slate[3]).hline(30,91,49,P.pave[1])
+    for x,y,rr in [(38,43,10),(67,42,13),(84,45,9)]:
+        s.ellipse(x,y,rr,9,P.sage[1]).ellipse(x-2,y-2,rr-3,6,P.sage[3])
+        for dx,dy in [(-4,-2),(2,-5),(5,1)]:s.ellipse(x+dx,y+dy,3,2,P.sage[2])
     s.vline(51,23,51,P.ash[1]).vline(73,23,51,P.ash[1]).hline(28,93,37,P.ash[2])
     s.rect(25,53,72,3,P.ash[3]).hline(25,96,53,P.ash[4])
+    s.line(32,27,43,25,P.glass[3]).line(76,27,88,25,P.glass[3])
     # Framed textile and discreet pendant lights.
     s.rect(117,23,48,24,P.walnut[0]).rect(119,25,44,20,P.oat[2])
     poly(s,[(121,42),(133,28),(143,39),(153,30),(161,43)],r[2])
@@ -97,32 +127,44 @@ def restaurant(kind='diner'):
     s.rect(212,61,85,14,P.walnut[1]).rect(214,63,81,10,r[1]).rect(210,58,89,4,P.ash[3])
     s.hline(210,298,58,P.ash[4]);exit_door(s)
     for x,y in [(30,88),(296,102)]:plant(s,x,y)
-    for x,y in [(67,79),(148,96),(256,98)]:chair(s,x,y,r)
-    for x,y in [(91,78),(173,94),(275,96)]:table(s,x,y)
+    if furnish:s.blit(dining_furniture(kind),0,0)
     if kind=='noodle':
         for x in range(215,294,16):s.rect(x,23,13,9,r[1]).vline(x+12,23,30,r[0])
+        for x in range(31,94,10):s.vline(x,24,50,P.ash[1])
+        for y in [30,40]:s.hline(29,94,y,P.ash[2])
+        s.rect(177,27,19,20,P.walnut[1]).rect(179,29,15,16,P.oat[4])
+        for y in [33,37,41]:s.hline(183,190,y,P.sage[1])
     if kind=='bistro':
         for x in range(24,198,25):s.ellipse(x,13,8,4,P.sage[1]).ellipse(x+3,15,5,3,P.sage[2])
     return s
 
 
-def cinema_seat(s,x,y):
+def cinema_seat(s,x,y,back=False):
+    if back:
+        s.ellipse(x,y+3,8,2,P.slate[0]).rect(x-6,y-18,13,17,P.coral[0])
+        s.rect(x-5,y-18,11,12,P.coral[1]).hline(x-4,x+4,y-18,P.coral[2])
+        s.rect(x-6,y-5,13,3,P.coral[2]).rect(x-8,y-6,2,4,P.slate[2]).rect(x+7,y-6,2,4,P.slate[2])
+        return
     s.ellipse(x,y+4,10,2,P.slate[0]);s.rect(x-8,y-22,16,19,P.coral[0])
     s.rect(x-7,y-21,14,15,P.coral[1]).hline(x-6,x+6,y-21,P.coral[2])
     s.vline(x-6,y-19,y-8,P.coral[2]);s.rect(x-8,y-6,17,4,P.coral[2])
+    s.hline(x-5,x+5,y-13,P.coral[0]).hline(x-5,x+5,y-12,P.coral[1])
     s.rect(x-10,y-7,3,5,P.slate[1]).rect(x+8,y-7,3,5,P.slate[1]).hline(x+8,x+10,y-7,P.steel[3])
 
 
 def cinema():
     s=Sprite(W,H,P.slate[0]);s.rect(5,5,332,107,P.slate[1])
-    poly(s,[(5,5),(43,17),(43,69),(5,101)],P.slate[0]);poly(s,[(299,17),(337,5),(337,101),(299,69)],P.slate[0])
+    poly(s,[(5,9),(43,17),(43,69),(5,80)],P.slate[0]);poly(s,[(299,17),(337,9),(337,80),(299,69)],P.slate[0])
     for x in [13,24,35,306,317,328]:s.vline(x,13,83,P.coral[0]).vline(x+2,15,80,P.coral[1])
+    for x in [48,284]:
+        s.rect(x,21,10,32,P.slate[0]).rect(x+2,23,6,28,P.slate[2])
+        for y in range(25,50,4):s.hline(x+3,x+6,y,P.slate[1])
     s.rect(73,7,196,60,P.steel[0]).rect(76,9,190,56,P.steel[2]).rect(79,11,184,52,P.glass[0])
     s.hline(74,267,67,P.slate[2]);s.rect(43,69,256,43,P.slate[0])
     for yy in [77,92,110]:s.hline(42,298,yy,P.slate[2]).hline(43,297,yy+1,P.slate[0])
     for x in [50,289]:
         for yy in [75,88,103]:s.rect(x,yy,3,1,P.teal[3])
-    for x in [101,128,155,182,209,236]:cinema_seat(s,x,89)
+    for x in [101,128,155,182,209,236]:cinema_seat(s,x,89,True)
     for x in [85,113,141,169,197,225,253]:cinema_seat(s,x,110)
     exit_door(s);s.hline(6,335,5,P.slate[3])
     return s
@@ -216,7 +258,7 @@ def film_frame(index,beat):
 def hover(kind):
     out={};s=Sprite(W,H);exit_door(s);out['mall_exit']=s
     if kind!='cinema':
-        s=Sprite(W,H);table(s,173,94);out['mall_menu']=s
+        s=Sprite(W,H);table(s,171,94,False);out['mall_menu']=s
     return out
 
 

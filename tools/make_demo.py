@@ -235,11 +235,12 @@ def main():
         if kind=="cinema":
             MR.cinema_seat(front,197,110)
         else:
-            MR.table(front,173,94)
+            MR.table(front,MR.DINING['table']['x'],MR.DINING['table']['y'],False)
             front.rect(212,61,85,14,P.walnut[1]).rect(214,63,81,10,MR.RESTAURANTS[kind][1]).rect(210,58,89,4,P.ash[3]).hline(210,298,58,P.ash[4])
         outside["mall"]["img"]["rooms"][kind]={"bg":png(MR.cinema() if kind=="cinema" else MR.restaurant(kind)),
             "front":png(front),"hover":{k:png(v) for k,v in MR.hover(kind).items()}}
     outside["mall"]["img"]["foodFront"]={k:png(MR.restaurant_front(k)) for k in MR.RESTAURANTS}
+    outside["mall"]["dining"]=MR.DINING
     outside["mall"]["img"]["films"]={f["id"]:[png(MR.film_frame(f["art"],b)) for b in range(3)] for f in mall_life["films"]}
     outside["bar"] = {"kind": "bar", "img": {"day": png(BAR.scene()), "night": png(BAR.scene(True)), "counter": png(BAR.counter()), "foreground": png(BAR.foreground()),
                                              "hover": {key: png(spr) for key, spr in BAR.interaction_sprites().items()}},

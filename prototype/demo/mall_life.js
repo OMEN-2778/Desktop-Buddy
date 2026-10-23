@@ -53,11 +53,13 @@ function mallPlanVisit(kind,item=null,auto=false){
 function mallRoomSetup(){
   clearNpcPills();life.npcs=[];
   if(mallS.visit.kind==='restaurant'){
-    life.npcs.push(makeNpc('clerk',{x:245,feet:64,layer:'back'}),makeNpc('guest',{x:67,feet:75,sit:true,layer:'back'}));
+    const guest=MALL.dining.guest;
+    life.npcs.push(makeNpc('clerk',{x:245,feet:64,layer:'back'}),makeNpc('guest',{x:guest.x,feet:guest.feet,seatLift:guest.lift,sit:true,layer:'back'}));
   }else for(const x of [113,253])life.npcs.push(makeNpc('guest',{x,feet:106,sit:true,back:true,layer:'back'}));
 }
 function mallSetSeat(){
-  sim.route=[mallS.visit.kind==='cinema'?[197,110]:[148,96]];sim.s=0;sim.target=0;
+  const seat=MALL.dining.seat;
+  sim.route=[mallS.visit.kind==='cinema'?[197,110]:[seat.x,seat.feet]];sim.s=0;sim.target=0;
   sim.mode='act';sim.act='mall';sim.actEnd=Infinity;
 }
 function mallEnterVisit(){
@@ -131,8 +133,8 @@ function mallTickVisit(dtGame,dtReal){
   return true;
 }
 function mallInteriorHit(x,y){
-  if(x>=307&&x<=333&&y>=29&&y<=91)return 'mall_exit';
-  if(mallS.visit.kind==='restaurant'&&x>=143&&x<=201&&y>=78&&y<=112)return 'mall_menu';
+  if(x>=307&&x<=334&&y>=14&&y<=78)return 'mall_exit';
+  if(mallS.visit.kind==='restaurant'&&x>=141&&x<=201&&y>=72&&y<=111)return 'mall_menu';
   return null;
 }
 function mallInteriorClick(id){
@@ -154,8 +156,9 @@ function renderMallRoom(){
   const fr=mallRoomFrame(realClock*1000);drawOutBuddy(bctx,fr);
   if(st.kind==='restaurant'){
     bctx.drawImage(O.front,0,0);const pic=dishPic(dishIcon(mallDish()));
-    if(pic?.complete)bctx.drawImage(pic,180-Math.floor(pic.width/2),94-pic.height);
-    if(!reduceMotionUI){bctx.fillStyle='rgba(247,246,251,.6)';for(const x of [177,183])bctx.fillRect(x,77-Math.floor(realClock*2+x)%4,1,2);}
+    const table=MALL.dining.table;
+    if(pic?.complete)bctx.drawImage(pic,table.x+9-Math.floor(pic.width/2),table.y+3-pic.height);
+    if(!reduceMotionUI){bctx.fillStyle='rgba(247,246,251,.6)';for(const x of [table.x+6,table.x+12])bctx.fillRect(x,table.y-14-Math.floor(realClock*2+x)%4,1,2);}
   }else bctx.drawImage(O.front,0,0);
   drawObjectHover(bctx,O.hover[hoverId]);
   finishOut(fr,[here().x+4,here().y-44]);
