@@ -1,5 +1,4 @@
-"""公园: a quiet corner of the park, where Buddy sits on a bench (user: in
-the park she only sits). Same canvas and scale as the house (342x118).
+"""公园: a quiet corner of the park, with a walkable path and a bench behind it. Same canvas and scale as the house (342x118).
 
     sky | a pale city skyline far off | a hazy line of trees
     lawn with mowing stripes; a pond on the right (reeds, lilies, a duck house)
@@ -31,8 +30,8 @@ W, H = 342, 118
 SEASONS = FY.SEASONS
 HORIZON = 58             # where the lawn meets the far trees
 PATH = (94, 107)         # gravel path rows
-FEET = 103               # Buddy's feet on the path, sitting
-BENCH = 171              # bench centre x (she sits here)
+FEET = 103               # walking lane; benches stand behind it
+BENCH = 171              # central bench x, behind the walking lane
 LAMP = 130
 BIN = 214
 POND = (276, 75, 54, 10)  # cx, cy, rx, ry
@@ -278,9 +277,9 @@ def lamp(s):
     return s
 
 
-def bench(s):
+def bench(s, cx=BENCH, base=92):
     """A park bench: oak slats on cast-iron ends, seen front-on."""
-    Wd, cx, b = P.oak, BENCH, FEET
+    Wd, b = P.oak, base
     x0, x1 = cx - 22, cx + 22
     seat = b - 8
     for lx in (x0 + 2, x1 - 3):                                        # iron ends (legs, armrests)

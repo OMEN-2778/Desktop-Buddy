@@ -34,6 +34,7 @@ import item_icons  # noqa: E402
 import mood_icons  # noqa: E402
 import front_yard as FY  # noqa: E402
 import park as PK  # noqa: E402
+import park_expansion as PX  # noqa: E402
 import beach as BC  # noqa: E402
 import mall as MALL  # noqa: E402
 import bar as BAR  # noqa: E402
@@ -155,7 +156,7 @@ def main():
     dy = FY.BASE - 37
     clickables["out_door"] = {"src": png(front.crop(dx - 2, dy - 8, dw + 4, 47)), "x": dx - 2, "y": dy - 8}
     crown = {"maple": (19, 16), "cherry": (17, 15), "linden": (19, 16)}
-    # places to go (user): 家门口, 公园 (she sits on the bench), 商场 (she walks
+    # places to go (user): 家门口, 公园 (five walkable areas), 商场 (she walks
     # on, the mall scrolls past), 海边. "img" holds every picture (the page
     # loads it as is), the rest is layout.
     clouds = [png(BC.cloud(i)) for i in range(3)]
@@ -171,13 +172,17 @@ def main():
         "bushes": [[cx, hw, ht] for _, cx, hw, ht in FY.BUSHES], "side": FY.SIDE, "base": FY.BASE,
         "feet": FY.FEET, "walk": list(FY.WALK), "doorX": dx + dw // 2, "door": [dx - 2, dy - 8, dw + 4, 47]},
       "park": {
-        "kind": "sit",
-        "img": {"seasons": {se: {"bg": png(PK.background(se)), "trees": [png(PK.trees(se, f)) for f in (0, 1)]} for se in PK.SEASONS},
-                "snow": png(PK.snow_layer()), "wet": png(PK.wet_layer()), "lit": png(PK.lit()),
-                "duck": [png(PK.duck(f)) for f in range(3)], "plane": png(PK.plane()), "bench": png(PK.bench_layer()), "sparrow": sparrows, "butterfly": flies, "cloud": clouds},
-        "trees": [[kind, x, cy, rx, ry] for kind, x, cy, _, rx, ry in PK.TREES], "pond": list(PK.POND),
-        "horizon": PK.HORIZON, "path": list(PK.PATH), "side": PK.PATH[0], "feet": PK.FEET,
-        "walk": [PK.BENCH, PK.BENCH], "doorX": PK.BENCH, "lamp": PK.LAMP},
+        "kind": "walk", "feet": PK.FEET, "walk": [8, PK.W - 8], "doorX": PK.BENCH, "side": PK.PATH[0],
+        "img": {"zones": {z["id"]: {
+            "seasons": {se: {"bg": png(PX.background(z, se)), "trees": [png(PX.trees(z, se, f)) for f in (0, 1)]} for se in PK.SEASONS},
+            "snow": png(PX.snow(z)), "wet": png(PK.wet_layer()), "lit": png(PX.lit(z)), "bench": png(PX.bench_layer(z))
+          } for z in PX.ZONES},
+          "duck": [png(PK.duck(f)) for f in range(3)], "plane": png(PK.plane()), "sparrow": sparrows, "butterfly": flies, "cloud": clouds},
+        "zones": [{"id": z["id"], "name": z["name"], "pond": z["pond"], "lamp": z["lamp"],
+                   "trees": [[kind, x, cy, rx, ry] for kind, x, cy, _, rx, ry in z["trees"]],
+                   "horizon": PK.HORIZON, "path": list(PK.PATH), "feet": PK.FEET, "side": PK.PATH[0],
+                   "bench": {"x": z["bench"], "feet": 92, "lift": 5, "hit": [z["bench"] - 23, 64, 47, 30]}}
+                  for z in PX.ZONES]},
       "beach": {
         "kind": "walk",
         "img": {"seasons": {se: {"bg": png(BC.background(se))} for se in BC.SEASONS},
@@ -338,6 +343,7 @@ def main():
     html = html.replace("/*__BAR_TEXT_JS__*/", "const BAR_TEXT = " + json.dumps(bar_text, ensure_ascii=False) + ";")
     html = html.replace("/*__BAR_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "bar_cards.json").read_text() + ");")
     html = html.replace("/*__SLEEP_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "sleep_cards.json").read_text() + ");")
+    html = html.replace("/*__PARK_JS__*/", (SRC.parent / "park.js").read_text())
     html = html.replace("/*__BAR_JS__*/", (SRC.parent / "bar.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")

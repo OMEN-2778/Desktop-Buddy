@@ -49,7 +49,7 @@ const { chromium } = require(process.env.PW || 'playwright');
       assert.ok(r.lift > 0, act + ': must align to chair seat');
       assert.equal(r.clickable, true);
     }
-    await page.evaluate(() => { reaction = null; throughDoor('park'); render(); });
+    await page.evaluate(() => { reaction = null; throughDoor('park'); startAct('bench'); sim.s = sim.target; arrive(); render(); });
     assert.equal(await page.evaluate(() => here().y - buddyFeet().y), 5);
     await page.evaluate(() => { throughDoor('home'); throughDoor('bar'); barWalk('stool_0', 105); speed = 3; stepBar(0, 10); speed = 0; render(); });
     assert.equal(await page.evaluate(() => sim.bar.seat), 'stool_0');

@@ -185,9 +185,19 @@ piece side by side — review new pieces there at 6x).
   house; frozen in winter), 8 trees (`TREES`, back row first; front_yard's
   `tree(..., at=(x, crown y, foot y, rx, ry))`, leaf clusters scale with
   the crown) and 10 shrubs (`SHRUBS`, user wanted more of both), hedge,
-  lamp post, THE BENCH (she only sits there, user), bin, gravel path, a
+  lamp post, a clickable bench behind the open walking lane, bin, gravel path, a
   seasonal flower border. Overlays snow (keeps what stands in it clear) /
   wet / lit; ducks; a tiny far `plane` (the page adds the contrail).
+- **公园扩展（2026-10-23）**: `park_expansion.py` draws five independent
+  342x118 areas: 湖边凉亭 ↔ 湖畔步道 ↔ 公园中央 ↔ 野餐草坪 ↔ 林间野餐区.
+  User explicitly allows a transition, with no seamless artwork requirement.
+  `prototype/demo/park.js` keeps `sim.place="park"`, saves `sim.park.zone`
+  and `.seated`, uses short `wipe` transitions at the path's left/right edges.
+  Click the path to walk freely, click the bench to approach and sit (true
+  shared sit pose); click Buddy → 站起来 or another path spot to leave it.
+  Bench feet y=92, seat surface y=83, seated lift=5; path feet y=103.
+  Do not restore the former locked-bench behavior. Outer maps do not wrap.
+  All areas keep four seasons, weather, wildlife, NPCs, cards and trips home.
 - **海边** (`beach.py`) is a wooden dock (user: simple, no clutter): big
   sky, the sea, a faint far shore, the railing with a life ring, two lamps,
   planks that widen towards us, two bollards and a coil of rope. The page
@@ -215,8 +225,8 @@ piece side by side — review new pieces there at 6x).
   (sleep, cooking...) queues `go_home` first (`startAct`). Clickables
   belong to a place (`CLICK_PLACE`); home chance cards, moments and room tags
   are off outside (`roomAt` -> "outside").
-- **Park / mall / beach** (demo): `OUT[place].kind` = walk (front, beach) |
-  sit (park: act `bench`, sit pose, never ends on its own) | scroll (mall:
+- **Park / mall / beach** (demo): `OUT[place].kind` = walk (front, beach, park) |
+  scroll (mall:
   act `mall`, `mallS.x` = the near-strip spot under her at screen x `AT`;
   walking left shrinks it). `sim.dest` picks where `go_out` leads. No door
   there: clicking her opens `RINGS.away` (聊聊天 / 摸摸头 / 回家) and

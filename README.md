@@ -44,3 +44,9 @@ The home chance-card collection includes 50 sleep-themed cards (451–500):
 four possible outcomes. Dream cards share the normal cooldown and pause time.
 Hold a collapsed Buddy for five seconds: two pixel angels arrive immediately,
 with falling light and a filling rescue meter; releasing early cancels the rescue.
+
+The park has five connected areas, left to right: 湖边凉亭 ↔ 湖畔步道 ↔
+公园中央 ↔ 野餐草坪 ↔ 林间野餐区. Click the path to walk, click a bench
+to sit, or click Buddy → 站起来 to leave the seat. Walking to either edge
+uses a short scene wipe to the neighboring area; the two outer ends stop.
+Park saves retain the area and seat, with version 1 saves migrated to version 2.
