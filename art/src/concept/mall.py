@@ -339,6 +339,7 @@ def stall(s, kind, x):
 UNITS = [("cinema", "电影院", "shop", 112), ("tea", "奶茶", "kiosk", 54), ("boutique", "服装店", "shop", 82),
          ("craft", "手作地摊", "mat", 54), ("market", "超市", "shop", 126), ("ice", "冰淇淋", "kiosk", 54),
          ("bakery", "面包店", "shop", 82), ("oldbooks", "旧书地摊", "mat", 54), ("arcade", "电玩城", "shop", 94),
+         ("restroom", "卫生间", "shop", 74),
          ("balloon", "气球", "kiosk", 54), ("pets", "宠物店", "shop", 86), ("flower", "鲜花", "kiosk", 54),
          ("sneakers", "球鞋店", "shop", 82), ("candy", "棉花糖", "kiosk", 54), ("books", "书店", "shop", 82),
          ("blindbox", "盲盒地摊", "mat", 54)]
@@ -586,6 +587,30 @@ def prop(kind, w):
     return s
 
 
+def restroom(s,x=0,w=74):
+    from _restroom import wc_sign
+    x0=x+5
+    s.rect(x0,SHOP_TOP,w-5,FLOOR-SHOP_TOP,MB[2]).vline(x0,SHOP_TOP,FLOOR-1,MB[4])
+    s.rect(x0+2,SHOP_TOP+2,w-9,11,P.teal[1]).hline(x0+3,x+w-4,SHOP_TOP+3,P.teal[3])
+    wc_sign(s,x+31,SHOP_TOP+5,P.porcelain[3])
+    for px in (x+17,x+54):
+        s.rect(px,SHOP_TOP+5,2,2,P.porcelain[3]).rect(px-1,SHOP_TOP+8,4,3,P.porcelain[3])
+    s.rect(x+32,55,26,FLOOR-55,P.slate[0]).rect(x+34,57,22,FLOOR-58,P.teal[1])
+    s.vline(x+34,57,FLOOR-2,P.teal[3]).hline(x+34,x+55,57,P.teal[3])
+    s.rect(x+37,62,16,10,P.glass[0]).rect(x+38,63,14,8,P.glass[2])
+    s.vline(x+45,63,70,P.teal[2]).rect(x+51,83,2,3,P.steel[3])
+    s.rect(x+12,67,12,18,MB[3]).frame(x+12,67,12,18,MB[1])
+    for yy in (71,75,79): s.hline(x+15,x+21,yy,P.teal[1])
+    s.hline(x+31,x+58,FLOOR-1,P.steel[3])
+    return x+45
+
+
+def restroom_sprite():
+    s=Sprite(74,H)
+    restroom(s);column(s,0)
+    return s
+
+
 def near():
     s = Sprite(NEAR_W, H)
     rnd = random.Random(5)
@@ -593,7 +618,9 @@ def near():
     fascia(s)
     x, doors, props = 0, {}, []
     for i, (uid, _, kind, w) in enumerate(UNITS):
-        if uid in SHOPS:
+        if uid == "restroom":
+            doors[uid] = restroom(s,x,w)
+        elif uid in SHOPS:
             doors[uid] = big_shop(s, x, w, SHOPS[uid], rnd)
         elif kind == "shop":
             doors[uid] = {"cinema": cinema, "market": market, "arcade": arcade, "pets": pets}[uid](s, x, w, rnd)

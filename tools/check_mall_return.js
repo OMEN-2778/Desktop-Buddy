@@ -38,14 +38,14 @@ const {chromium} = require(process.env.PW || 'playwright');
     }
     const count=await page.evaluate(()=>{
       let count=0;
-      for (const it of MALL.items.filter(it=>it.kind==='shop')) for (const need of Object.keys(sim.needs)) {
+      for (const it of MALL.items.filter(it=>it.kind==='shop'&&it.id!=='restroom')) for (const need of Object.keys(sim.needs).filter(k=>k!=='bladder')) {
         atShop(it.id,need); step(.1,.03);
         if (sim.place!=='home') throw new Error(`${it.id}: ${need} did not trigger home`);
         count++;
       }
       speed=0; return count;
     });
-    assert.ok(count>=48);
+    assert.ok(count>=40);
     assert.equal(await page.evaluate(()=>{
       atShop('cinema',null,'windup');sim.needs.energy=20.005;step(.2,.06);speed=0;
       return sim.place;

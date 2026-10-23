@@ -1428,26 +1428,20 @@ function step(dtGame, dtReal) {
   for (const k of Object.keys(n)) {
     let d = -DECAY[k];
     if (sim.act === "sleep" && sim.mode === "act") d *= k === "energy" ? 0 : k === "bladder" ? 0.35 : 0.4;
-    if (eff[k] > 0) d = 0;
+    if (eff[k] > 0 || (k === "bladder" && mallToiletInside())) d = 0;
     n[k] = clamp(n[k] + (d + (eff[k] || 0)) * dtGame);
   }
   if (sim.mode === "act" && sim.act === "sleep" && !sim.nap) sim.sleptTonight += dtGame;
   // couldn't hold it: no harm done, just embarrassing (and a bath)
-  if (n.bladder <= 0 && sim.mode !== "down" && !["toilet","park_toilet"].includes(sim.act)) {
+  if (n.bladder <= 0 && sim.mode !== "down" && !mallToiletInside() && !["toilet","park_toilet"].includes(sim.act)) {
     n.bladder = 100; n.hygiene = Math.max(0, n.hygiene - 40);
     addMood("accident");
     if (!asleep()) { sim.queue = []; startAct("bath"); }
   }
   // behaviour
   if (sim.mode === "down") { sim.windup = null; return; }
-  // Shop visits and pending clicks must not delay an urgent trip home.
-  if (sim.place === "mall") {
-    const red = redNeed();
-    if (red) {
-      homeFor(red); sim.player = false; sim.queue = []; sim.chosen = null;
-      startAct("go_home"); return;
-    }
-  }
+  // Shop visits and pending clicks must not delay finding a WC or an urgent trip home.
+  if (sim.place === "mall" && mallHandleNeeds(dtGame,dtReal)) return;
   if (parkHandleNeeds(dtGame > 0 || dtReal > 0)) return;
   if (sim.windup) {
     if (realClock >= sim.windup.at) { const a = sim.windup.act; sim.windup = null; startAct(a); }
@@ -2772,7 +2766,8 @@ function checkCollapse() {
 }
 function collapse(cause) {
   if (sim.act === "dress") closeWardrobe();
-  if (sim.place === "mall") { mallS.stop = null; mallS.goal = null; }
+  if (sim.place === "mall") { mallS.stop = null; mallS.goal = null; mallS.toilet = null; }
+  if (sim.place === "bar" && sim.bar) sim.bar.toilet = null;
   closeRing(); cancelRescue();
   const p = here();
   sim.route = [[Math.round(p.x), sim.place !== "home" ? OUT[sim.place].feet : FLOOR_Y[storeyOfY(p.y)]]]; sim.s = 0;
@@ -3152,7 +3147,8 @@ function syncUI() {
   document.getElementById("clock").textContent = `第 ${day} 天 · ${SEASONS[se.i].name} ${se.day}/${SEASON_DAYS} · ${fmt(sim.t)} · ${part} · ${WEATHER_NAME[weather.kind]}`;
   skyEl.setAttribute("aria-label", `时间与天气：${skyText()}`);
   if (!skyTip.hidden) skyTip.textContent = skyText();
-  const doing = sim.place === "bar" ? (sim.mode === "walk" ? "走向座位" : sim.bar.drink ? `品尝${BAR_DRINKS[sim.bar.drink].name}` : sim.bar.seat ? "坐着听音乐" : "欣赏演出")
+  const doing = sim.place === "mall" && mallS.toilet ? (mallToiletInside() ? "使用商场卫生间" : "寻找商场卫生间")
+    : sim.place === "bar" ? (sim.bar.toilet ? (barToiletInside() ? "使用酒吧卫生间" : "走向右侧卫生间") : sim.mode === "walk" ? "走向座位" : sim.bar.drink ? `品尝${BAR_DRINKS[sim.bar.drink].name}` : sim.bar.seat ? "坐着听音乐" : "欣赏演出")
     : sim.mode === "walk" ? `走去${ACTS[sim.act].label}` : sim.mode === "act" ? ACTS[sim.act].label : "闲着";
   document.getElementById("doing").firstChild.textContent = `正在：${doing}`;
   document.getElementById("ff").textContent = sim.mode === "act" && sim.act === "sleep" && speed ? "（夜里自动快进）" : "";
@@ -3390,7 +3386,7 @@ function canvasXY(e) {
   return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height];
 }
 function buddyHit(x, y) {
-  if (parkInsideToilet()) return false;
+  if (parkInsideToilet() || barToiletInside() || mallToiletInside()) return false;
   if (sim.mode === "down") { const p = here(); return Math.abs(x - p.x) < 15 && y >= p.y - 17 && y <= p.y + 3; }
   if (sim.mode === "act" && sim.act === "sleep") {
     const [lx, ly] = D.sleepLying;
@@ -3889,7 +3885,7 @@ function throughDoor(to) {
     showHint("现在酒吧还没开门哦！"); return;
   }
   sim.mode = "idle"; sim.act = null; sim.idleUntil = Infinity;
-  if (sim.place === "mall") { mallS.stop = null; mallS.goal = null; mallS.hover = null; mallS.pointer = null; }
+  if (sim.place === "mall") { mallS.stop = null; mallS.goal = null; mallS.hover = null; mallS.pointer = null; mallS.toilet = null; mallS.emergency = null; }
   sim.windup = null; cancelRescue();
   hoverId = null; hoverBuddy = false; glow = null; walkMark = null;
   closeRing(); closePicker(); clearNpcPills();
@@ -4187,8 +4183,8 @@ const STALL = {
 };
 const FILMS = ["星海漫游", "夏天的告白", "怪兽来了", "雨夜侦探", "外婆的厨房", "追风少年"];
 for (const [id, st] of Object.entries(STALL)) ML[`stall_${id}`] = { ...st.mood };
-function redNeed() {
-  const low = Object.entries(sim.needs).filter(([, v]) => v < 20).sort((a, b) => a[1] - b[1]);
+function redNeed(exclude = []) {
+  const low = Object.entries(sim.needs).filter(([k, v]) => v < 20 && !exclude.includes(k)).sort((a, b) => a[1] - b[1]);
   return low.length ? low[0][0] : null;
 }
 function homeFor(k) { speak(pick([`${NEED_NAMES[k]}不太行了，回家吧`, "该回家了", "先回家一趟"])); }
@@ -4202,7 +4198,7 @@ function arriveAt(place) {                       // fresh life for the new place
     life.ducks = [0, 1, 2].map(i => ({ x: cx - rx + 14 + Math.random() * (rx * 2 - 28), y: cy - 2 + (i % 2) * 5, dir: Math.random() < 0.5 ? -1 : 1, dip: 0, t: Math.random() * 5 }));
   }
   if (place === "mall") {
-    Object.assign(mallS, { x: Math.random() * OUT.mall.nearW, dist: 0, dir: -1, goal: null, stop: null, hover: null, pointer: null });
+    Object.assign(mallS, { x: Math.random() * OUT.mall.nearW, dist: 0, dir: -1, goal: null, stop: null, hover: null, pointer: null, toilet: null, emergency: null });
     mallS.shoppers = [0, 1, 2, 3, 4, 5].map(i => ({ k: i % 5, x: Math.random() * OUT.mall.farW, dir: i % 2 ? 1 : -1, v: 5 + Math.random() * 5 }));
   }
   npcSetup(place);
@@ -4272,6 +4268,7 @@ const npcFeet = n => n.feet - (n.sit ? n.seatLift || 0 : 0);
 function drawNpcs(ctx, layer) {
   for (const n of life.npcs || []) {
     if (n.layer !== layer || n.gone) continue;
+    if (sim.place === "mall" && n.item && mallCoveredByRestroom(MALL.items.find(it=>it.id===n.item))) continue;
     const x = npcX(n);
     if (x < -20 || x > W + 20) continue;
     const [f, pose] = npcFrame(n);
@@ -4302,6 +4299,7 @@ function npcSetup(place) {
   clearNpcPills();
   if (place === "mall") {                        // staff and sellers stay at their spots on the strip
     for (const it of MALL.items) {
+      if (it.id === "restroom") continue;
       if (it.kind === "kiosk") life.npcs.push(makeNpc("clerk", { u: it.stop + 1, feet: MALL.feet - 8, layer: "counter", item: it.id }));
       else if (it.kind === "mat") life.npcs.push(makeNpc("hawker", { u: it.px + 4, feet: MALL.feet - 1, layer: "back", sit: true, item: it.id }));
       else if (Math.random() < 0.5) life.npcs.push(makeNpc("clerk", { u: it.stop + 15, feet: MALL.floor + 1, layer: "back", item: it.id }));
@@ -4431,6 +4429,7 @@ function stepTalk() {
   if (q.i === q.lines.length) { sim.needs.social = clamp(sim.needs.social + 2); }
 }
 function placeChatter() {                       // now and then: a stranger's line, a word with one passing, or her own thought
+  if (mallToiletInside()) return;
   if (!PT() || sim.mode === "down" || life.talkQ || realClock < life.chatNext) return;
   const busy = !!(mallS.stop && sim.place === "mall");
   if (life.tagNext) {                           // a ship / a speedboat just came into view
@@ -4464,7 +4463,7 @@ function npcTick(dt, run) {
 // mallS.x is the spot on the near strip right under her; walking left it
 // shrinks and the strips slide right: upstairs (far, hazed) at 0.45, the
 // hanging decorations at 0.75, our side of the corridor at full speed.
-const mallS = { x: 0, dist: 0, dir: -1, goal: null, stop: null, shoppers: [], seen: {}, hover: null, pointer: null };
+const mallS = { x: 0, dist: 0, dir: -1, goal: null, stop: null, shoppers: [], seen: {}, hover: null, pointer: null, toilet: null, emergency: null };
 const MALL = OUT.mall;
 const wrapNear = d => ((d % MALL.nearW) + MALL.nearW * 1.5) % MALL.nearW - MALL.nearW / 2;   // nearest copy
 const onScreen = u => MALL.at + wrapNear(u - mallS.x);                   // a near-strip x on screen
@@ -4472,15 +4471,18 @@ const itemX = it => onScreen(it.stop);                                   // wher
 function itemAt(x, y) {
   if (sim.place !== "mall" || y > MALL.feet + 3) return null;
   let best = null;
-  for (const it of MALL.items) {
+  for (const it of mallItems()) {
     const x0 = onScreen(it.u);
     if (x < x0 || x >= x0 + it.w || y < it.top) continue;
+    if (it.dynamic) return it;
     if (it.kind !== "shop") return it;                                   // a kiosk / 地摊 stands in front of the wall
     best = it;
   }
   return best;
 }
 function mallGoTo(it) {
+  if (mallS.toilet) { showHint("先用完卫生间，再继续逛吧。"); return; }
+  if (it.id === "restroom") { mallSeekToilet(false,it); return; }
   const d = itemX(it) - MALL.at;
   clickFx(Math.round(itemX(it)), MALL.feet);
   mallS.stop = null;
@@ -4489,6 +4491,7 @@ function mallGoTo(it) {
   if (sim.act !== "mall" || sim.mode !== "act") command("mall");
 }
 function stopAt(it) {                            // shops: a look, in she goes, out again; stalls: a look
+  if (it.id === "restroom") { mallEnterToilet(it); return; }
   const shop = it.kind === "shop", inside = shop ? STALL[it.id].inside : 0;
   mallS.goal = null;
   mallS.stop = { it, inAt: shop ? sim.t + 3 : null, outAt: sim.t + (shop ? 3 + inside : 9), until: sim.t + (shop ? 9 + inside : 16), turned: false };
@@ -4503,8 +4506,9 @@ function stallVisit(it) {                        // she turns round with what sh
   addMood(`stall_${it.id}`, { words: false });
   speak(pick(s.say), true);
 }
-const mallInside = () => !!(sim.place === "mall" && mallS.stop && mallS.stop.inAt != null && sim.t >= mallS.stop.inAt && sim.t < mallS.stop.outAt);
+const mallInside = () => mallToiletInside() || !!(sim.place === "mall" && mallS.stop && mallS.stop.inAt != null && sim.t >= mallS.stop.inAt && sim.t < mallS.stop.outAt);
 function mallStep(dtReal) {
+  if (!mallS.toilet && mallS.emergency && Math.abs(itemX(mallS.emergency)-MALL.at)>W/2+80) mallS.emergency=null;
   if (reaction && realClock < reaction.until) return;      // she stops to wave back
   const st = mallS.stop;
   if (st) {
@@ -4522,6 +4526,7 @@ function mallStep(dtReal) {
   const before = MALL.items.map(it => itemX(it) - MALL.at);
   mallS.x += mallS.dir * v; mallS.dist += v;
   if (!mallS.goal) MALL.items.forEach((it, i) => {          // now and then she stops at one by herself
+    if (it.id === "restroom" || mallCoveredByRestroom(it)) return;
     const now = itemX(it) - MALL.at;
     if (Math.sign(now) !== Math.sign(before[i]) && Math.abs(now) < 4 && sim.t - (mallS.seen[it.id] ?? -1e9) > 150 && Math.random() < (it.kind === "shop" ? 0.12 : 0.25)) stopAt(it);
   });
@@ -4867,9 +4872,10 @@ function renderMall(dt) {
   bctx.fillRect(0, 0, W, L.fascia);
   tile(O.deco[se], offD, L.nearW);
   tile(O.near, offN, L.nearW);
+  drawMallRestroom(bctx);
   npcTick(dt, run);
   drawNpcs(bctx, "counter");                     // kiosk staff behind their counters
-  for (const it of L.items) if (O.props[it.id]) {
+  for (const it of L.items) if (O.props[it.id] && !mallCoveredByRestroom(it)) {
     const x0 = mod(it.px - mallS.x + L.at, L.nearW);
     for (const x of [x0, x0 - L.nearW]) if (x > -60 && x < W) bctx.drawImage(O.props[it.id], Math.round(x), it.top);
   }
@@ -4965,7 +4971,7 @@ function cardFits(cd, c) {
 function rollCard(c, service = sim.place === "park" && parkEating() ? "food" : null) {
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   const out = sim.place !== "home";               // outside: that place's own cards (cd.at)
-  if (!prefs.guided || guideOn || card || !c.awake || parkInsideToilet() || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside())
+  if (!prefs.guided || guideOn || card || !c.awake || parkInsideToilet() || (sim.place === "mall" && mallS.toilet) || (sim.place === "bar" && sim.bar?.toilet) || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside())
     || sim.t - st.last < (out ? CARD_GAP_OUT : CARD_GAP) || Math.random() >= (out ? CARD_CHANCE_OUT : CARD_CHANCE)) return false;
   const any = CARDS.filter(cd => !cd.on && (cd.at || "home") === sim.place
     && (service ? cd.service === service : !cd.service));
@@ -5404,7 +5410,7 @@ document.addEventListener("keydown", e => {
 // a browser keeps it in localStorage. With 自动保存 on it is saved every
 // 5 minutes, when the page is hidden or closed, and after a look change;
 // off, only 保存 writes it. Game time waits while the game is closed.
-const SAVE_VERSION = 3, SAVE_KEY = "buddy-save";
+const SAVE_VERSION = 4, SAVE_KEY = "buddy-save";
 const store = TAURI ? {
   load: async () => { const t = await TAURI.core.invoke("load_save"); return t ? JSON.parse(t) : null; },
   save: async obj => TAURI.core.invoke("write_save", { data: JSON.stringify(obj) }),
@@ -5423,7 +5429,8 @@ function snapshot() {
            at: [Math.round(p.x), storeyOfY(p.y)], facing: sim.facing, queue: sim.windup ? [sim.windup.act] : sim.queue, recent: sim.recent,
            lastDay: sim.lastDay, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
            graceUntil: sim.graceUntil, insomnia: !!sim.insomnia, place: sim.place, lastOut: sim.lastOut ?? null, outBack: sim.outBack ?? null, outWhy: sim.outWhy ?? null, bar: sim.place === "bar" ? sim.bar : null,
-           park: sim.place === "park" ? parkState() : null },
+           park: sim.place === "park" ? parkState() : null,
+           mall: sim.place === "mall" ? mallSnapshot() : null },
     moods: [...moods].filter(([id]) => ML[id] && !id.startsWith("test_")).map(([id, m]) => [id, m.until, m.t]),
     flags: lifeFlags, events: eventLast, lastFestivalDay, namedAs,
     house: { lamps, windows: windowState },
@@ -5441,6 +5448,9 @@ function migrate(sv) {
   }
   if (sv.version < 3) {
     sv = { ...sv, version: 3, sim: { ...sv.sim, park: sv.sim.park ? { ...sv.sim.park, goal: null } : null } };
+  }
+  if (sv.version < 4) {
+    sv = { ...sv, version: 4, sim: { ...sv.sim, mall: null, bar: sv.sim.bar ? { ...sv.sim.bar, toilet: null } : null } };
   }
   return sv;
 }
@@ -5482,6 +5492,7 @@ function restore(sv) {
       sim.route = [[seat.x, seat.feet]]; sim.mode = "act"; sim.act = "bench"; sim.actEnd = Infinity;
     } else if (sim.place === "park") sim.park.seated = false;
     arriveAt(sim.place);
+    if (sim.place === "mall") restoreMall(m.mall);
   }
   moods.clear();
   for (const [id, until, t] of sv.moods || []) if (ML[id]) moods.set(id, { until, t });
@@ -5740,6 +5751,7 @@ if (TAURI) {
   setInterval(checkUpdate, 6 * 3600 * 1000);
 }
 
+/*__RESTROOMS_JS__*/
 /*__BAR_JS__*/
 /*__PARK_FOOD_JS__*/
 /*__PARK_JS__*/

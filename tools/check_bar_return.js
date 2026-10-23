@@ -12,7 +12,7 @@ const {chromium}=require(process.env.PW||'playwright');
     await page.waitForFunction(()=>typeof booted!=='undefined'&&booted);
     await page.waitForTimeout(1300);
     await page.evaluate(()=>{closeGuide();speed=0;lifeFlags.cards={seen:[],last:1e9};});
-    for(const [i,cause]of ['hunger','energy','bladder','hygiene','social','fun','dawn','manual'].entries()){
+    for(const [i,cause]of ['hunger','energy','hygiene','social','fun','dawn','manual'].entries()){
       await page.evaluate(()=>{
         speed=0;sim.t=20*60;sim.mode='idle';sim.act=null;sim.windup=null;
         sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,100]));
@@ -44,6 +44,6 @@ const {chromium}=require(process.env.PW||'playwright');
     await page.evaluate(()=>{hoverId='bar_stage';glow={id:'bar_counter',t0:realClock,sparks:[]};render();hoverId=null;});
     assert.equal(await page.evaluate(()=>glow),null);
     assert.deepEqual(errors,[]);
-    console.log('PASS: animated return for all 6 low needs, dawn and manual exit; hover during transition; seated/unfinished drink/chat cleanup; continuing frames; defensive highlight rendering');
+    console.log('PASS: animated return for 5 low needs (bladder uses local WC), dawn and manual exit; hover during transition; seated/unfinished drink/chat cleanup; continuing frames; defensive highlight rendering');
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

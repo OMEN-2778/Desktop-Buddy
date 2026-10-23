@@ -5,6 +5,8 @@ Keep y=98..112 clear as the main walking lane. People and light pools are runtim
 
 from pixelkit import P, Sprite
 from _furniture import box, soft
+from _park_facilities import poly
+from _restroom import wc_sign
 
 W, H = 342, 118
 FONT = {
@@ -102,7 +104,7 @@ def counter_body(s):
     s.rect(139, 64, 7, 3, P.porcelain[2]).hline(139, 145, 64, P.porcelain[3])
 
 
-def stage(s):
+def stage_detail(s):
     # Small elevated jazz stage; curtain, live sign, amplifier, microphone.
     s.rect(245, 19, 77, 59, P.walnut[0]).rect(248, 22, 71, 53, P.lilac[0])
     for x in range(249, 319, 8):
@@ -147,6 +149,26 @@ def stool(s, x):
     s.vline(x - 3, 87, 100, P.steel[0]).vline(x + 3, 87, 100, P.steel[0])
     s.hline(x - 4, x + 4, 96, P.oak[2])
     soft(s, x - 6, 85, 13, 5, P.teal)
+
+
+def stage(s):
+    layer=Sprite(W,H)
+    stage_detail(layer)
+    s.blit(layer,-10,0)  # Make room for the side door without changing the canvas.
+
+
+def restroom_door(s):
+    # Narrow right wall, receding door frame and threshold; cool, clean materials.
+    poly(s,[(315,39),(335,31),(335,88),(315,96)],P.slate[0])
+    poly(s,[(317,41),(333,35),(333,87),(317,93)],P.teal[0])
+    poly(s,[(319,43),(331,38),(331,86),(319,91)],P.teal[1])
+    s.vline(319,43,90,P.teal[3]).line(320,43,330,39,P.teal[3])
+    s.vline(330,40,86,P.teal[0]).rect(327,67,2,3,P.steel[3])
+    poly(s,[(317,93),(333,87),(335,90),(319,97)],P.slate[2])
+    s.line(319,94,333,89,P.steel[3])
+    s.rect(315,29,19,9,P.teal[0]).hline(316,332,29,P.steel[3])
+    wc_sign(s,319,31,P.porcelain[3])
+    s.rect(326,24,4,2,P.porcelain[3]).hline(326,329,26,P.steel[1])
 
 
 def scene(night=False):
@@ -234,6 +256,7 @@ def scene(night=False):
         s.ellipse(x, 102, 7, 2, P.walnut[0])
         stool(s, x)
     stage(s)
+    restroom_door(s)
     # Front tables, candlelight, and pots frame the walking strip.
     for x, y in [(43, 93), (276, 96)]:
         s.ellipse(x, y + 12, 12, 2, P.walnut[0])
@@ -247,7 +270,6 @@ def scene(night=False):
         )
         glass(s, x + 7, y - 6)
     plant(s, 77, 91)
-    plant(s, 328, 91)
     counter_taps(s)
     for x, y in ((19, 98), (83, 107), (161, 97), (222, 109), (302, 88)):
         s.hline(x, x + 7, y, P.walnut[1])
@@ -296,7 +318,7 @@ def interaction_sprites():
     """Reuse scene drawing on transparency: no floor, cast shadows or NPCs."""
     out = {}
     for key, draw in [("bar_counter", lambda s: (counter_body(s), counter_taps(s), counter_trim(s))),
-                      ("bar_stage", stage), ("bar_seat:booth_l", booth), ("bar_seat:booth_r", booth)]:
+                      ("bar_stage", stage), ("bar_wc",restroom_door), ("bar_seat:booth_l", booth), ("bar_seat:booth_r", booth)]:
         s = Sprite(W, H)
         draw(s)
         out[key] = s

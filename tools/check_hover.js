@@ -48,7 +48,7 @@ const {chromium}=require(process.env.PW||'playwright');
     });
     assert.ok(checked>=50);
     // Exercise the real renderers, not only the reusable outline function.
-    const captures=[['bar','bar_seat:stool_0'],['bar','bar_counter'],['bar','bar_stage'],
+    const captures=[['bar','bar_seat:stool_0'],['bar','bar_counter'],['bar','bar_stage'],['bar','bar_wc'],
       ['park','park_bench','central'],['park','park_wc','lakeside'],['park','park_food','grove']];
     fs.mkdirSync('/workspace/artifacts/hover',{recursive:true});
     for(const [place,id,zone]of captures){

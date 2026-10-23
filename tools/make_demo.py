@@ -218,9 +218,11 @@ def main():
                 "deco": {se: png(MALL.deco(se)) for se in MALL.SEASONS},
                 "shopper": [[png(MALL.shopper(k, f)) for f in (0, 1)] for k in range(5)],
                 "props": {it["id"]: png(it["sprite"]) for it in mall_items if "sprite" in it},
+                "restroom": png(MALL.restroom_sprite()),
                 "hover": {it["id"]: png(mall_near.crop(it["u"], it["top"], it["w"], MALL.FLOOR - it["top"])) for it in mall_items if it["kind"] == "shop"}},
         "farW": MALL.FAR_W, "nearW": MALL.NEAR_W, "at": MALL.AT, "feet": MALL.FEET, "upWalk": MALL.UP_WALK,
         "fascia": MALL.FASCIA, "floor": MALL.FLOOR, "walk": [MALL.AT, MALL.AT], "doorX": MALL.AT,
+        "restroom": {"w":74,"door":45,"top":MALL.SHOP_TOP},
         "items": [{k: v for k, v in it.items() if k != "sprite"} for it in mall_items]}}
 
     bar_text = json.loads((SRC.parent / "bar_text.json").read_text())
@@ -373,6 +375,7 @@ def main():
     html = html.replace("/*__PARK_JS__*/", (SRC.parent / "park.js").read_text())
     html = html.replace("/*__BAR_JS__*/", (SRC.parent / "bar.js").read_text())
     html = html.replace("/*__DUSK_JS__*/", (SRC.parent / "dusk.js").read_text())
+    html = html.replace("/*__RESTROOMS_JS__*/", (SRC.parent / "restrooms.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 
