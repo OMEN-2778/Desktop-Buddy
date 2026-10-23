@@ -92,7 +92,7 @@ function openContactActions(id){
     const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.action=action;b.setAttribute('role','menuitem');
     const a=-Math.PI/2+i*2*Math.PI/actions.length;b.style.setProperty('--x',`${Math.cos(a)*112}px`);b.style.setProperty('--y',`${Math.sin(a)*72}px`);
     if(['outing','visit'].includes(action)){b.setAttribute('aria-disabled','true');b.classList.add('coming-soon');b.append(Object.assign(document.createElement('small'),{className:'contact-unavailable',textContent:'下一步开放'}));b.title='串门与同行将在下一步开放';}
-    else if(['text','video','invite'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
+    else if(['text','video'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
       b.setAttribute('aria-disabled','true');b.title=asleep()?'等主角醒来再联系':sim.mode==='down'?'先唤醒晕倒的主角':'正在忙，稍后再联系';b.setAttribute('aria-label',`${label}：${b.title}`);
     }
     contactActions.append(b);
