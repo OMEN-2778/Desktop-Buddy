@@ -188,6 +188,14 @@ piece side by side — review new pieces there at 6x).
   lamp post, a clickable bench behind the open walking lane, bin, gravel path, a
   seasonal flower border. Overlays snow (keeps what stands in it clear) /
   wet / lit; ducks; a tiny far `plane` (the page adds the contrail).
+- **户外黄昏（用户要求）**：`prototype/demo/dusk.js` 与 `art/src/concept/dusk.py`
+  共用暖金 / 粉紫晚霞；晴天 16:30 起渐显，随后渐入夜，20:15 完成入夜。
+  粉紫晚霞按游戏日期约 30% 概率决定，`weather.skySeed` 随存档保存，跨场景与读档
+  不得重新抽取。雨雪天不画晚霞、落日或其倒影。公园五区与码头只在真实天空遮罩
+  内绘制；门口无露天天空，通过窗玻璃映出晚霞；商场天窗同步。码头落日逐渐沉入
+  海平线，水面倒影沿真实海面遮罩绘制，不能盖住栏杆、船、地板或人物。
+  保留清晨逻辑与原有天空条/酒吧开放时刻；仅户外视觉使用 `outdoorNightness`。
+  新增户外地图须导出 `skyMask`、接入共用描绘并更新 `tools/check_dusk.js`。
 - **公园扩展（2026-10-23）**: `park_expansion.py` draws five independent
   342x118 areas: 湖边凉亭 ↔ 湖畔公厕 ↔ 公园中央 ↔ 野餐草坪 ↔ 樱花林·关东煮.
   User explicitly allows a transition, with no seamless artwork requirement.

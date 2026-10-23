@@ -27,6 +27,7 @@ import _furniture as F  # noqa: E402
 import house as Hs  # noqa: E402
 import need_icons  # noqa: E402
 import sky_icons  # noqa: E402
+import dusk as DUSK  # noqa: E402
 import rescue  # noqa: E402
 import trip_icons  # noqa: E402
 import ui_icons  # noqa: E402
@@ -169,9 +170,20 @@ def main():
     sparrows = [png(FY.sparrow(f)) for f in range(4)]
     flies = [png(FY.butterfly(f)) for f in range(4)]
     park_food = json.loads((SRC.parent / "park_food.json").read_text())
+    def park_season(zone, season):
+        bg = PX.background(zone,season)
+        sky = Sprite(PK.W,PK.H); PK.sky(sky)
+        return {"bg":png(bg),"skyMask":png(DUSK.sky_mask(bg,sky)),
+                "trees":[png(PX.trees(zone,season,f)) for f in (0,1)],"foreground":png(PX.foreground(zone,season))}
+
+    def beach_season(season):
+        bg = BC.background(season)
+        sky = Sprite(BC.W,BC.H); BC.sky(sky,season)
+        return {"bg":png(bg),"skyMask":png(DUSK.sky_mask(bg,sky)),"seaMask":png(DUSK.sea_mask(bg,season))}
+
     outside = {"front": {
         "kind": "walk",
-        "img": {"seasons": {se: {"bg": png(FY.background(se)), "trees": [png(FY.trees(se, f)) for f in (0, 1)]} for se in FY.SEASONS},
+        "img": {"seasons": {se: {"bg": png(FY.background(se)), "skyMask":png(DUSK.sky_mask(FY.background(se))), "trees": [png(FY.trees(se, f)) for f in (0, 1)]} for se in FY.SEASONS},
                 "snow": png(FY.snow_layer()), "wet": png(FY.wet_layer()), "lit": png(FY.lit()),
                 "cat": [png(FY.cat(f)) for f in (0, 1)], "sparrow": sparrows, "butterfly": flies},
         "sill": list(FY.SILL_CAT), "trees": [[kind, x, cy, *crown[kind]] for kind, x, cy in FY.TREES],
@@ -180,7 +192,7 @@ def main():
       "park": {
         "kind": "walk", "feet": PK.FEET, "walk": [8, PK.W - 8], "doorX": PK.BENCH, "side": PK.PATH[0],
         "img": {"zones": {z["id"]: {
-            "seasons": {se: {"bg": png(PX.background(z, se)), "trees": [png(PX.trees(z, se, f)) for f in (0, 1)], "foreground": png(PX.foreground(z, se))} for se in PK.SEASONS},
+            "seasons": {se: park_season(z,se) for se in PK.SEASONS},
             "snow": png(PX.snow(z)), "wet": png(PK.wet_layer()), "lit": png(PX.lit(z)), "bench": png(PX.bench_layer(z)), "facilityFront": png(PX.facility_front(z)), "props": png(PX.props(z,"summer")),
             "hover": {key: png(spr) for key, spr in PX.interaction_sprites(z).items()}
           } for z in PX.ZONES},
@@ -195,7 +207,7 @@ def main():
                   for z in PX.ZONES]},
       "beach": {
         "kind": "walk",
-        "img": {"seasons": {se: {"bg": png(BC.background(se))} for se in BC.SEASONS},
+        "img": {"seasons": {se: beach_season(se) for se in BC.SEASONS},
                 "snow": png(BC.snow_layer()), "wet": png(BC.wet_layer()), "lit": png(BC.lit()),
                 "ship": png(BC.ship()), "speedboat": png(BC.speedboat()), "gull": [png(BC.gull(f)) for f in range(3)], "cloud": clouds},
         "horizon": BC.HORIZON, "deck": BC.DECK, "side": BC.DECK + 2, "feet": BC.FEET, "walk": list(BC.WALK),
@@ -349,6 +361,7 @@ def main():
         "emissive": sorted({c.lower() for c in Hs.EMISSIVE}),
         "guide": guide_shots(),
         "barDrinks": {d["id"]: png(BAR.drink_icon(d["color"], d["glass"])) for d in bar_text["drinks"]},
+        "dusk": {"warm":png(DUSK.sky("warm")),"rose":png(DUSK.sky("rose")),"sun":png(DUSK.sun())},
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", chats_js()).replace("/*__PLACES_JS__*/", places_js()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text()).replace("/*__GUIDE_JS__*/", (SRC.parent / "guide_text.js").read_text())
@@ -359,6 +372,7 @@ def main():
     html = html.replace("/*__PARK_FOOD_JS__*/", "const PARK_FOOD = " + json.dumps(park_food, ensure_ascii=False) + ";")
     html = html.replace("/*__PARK_JS__*/", (SRC.parent / "park.js").read_text())
     html = html.replace("/*__BAR_JS__*/", (SRC.parent / "bar.js").read_text())
+    html = html.replace("/*__DUSK_JS__*/", (SRC.parent / "dusk.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 
