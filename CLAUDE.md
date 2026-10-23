@@ -16,6 +16,10 @@ tests, no unasked extras).
 - Demo page: `prototype/demo/index.src.html` → built into `index.html`.
 - Desktop app: `desktop/` (`desktop/README.md`: updater, saves, window).
 - Tutorial text: `prototype/demo/guide_text.js`; shots: `tools/make_guide_shots.js`.
+- UI layout and motion skills: `docs/UI_SKILLS.md` lists installed skills and
+  when to load them. Read only the skill needed for the current task. Existing
+  pixel-art rules and user decisions take priority over generic web defaults;
+  keep the current vanilla JS/Canvas stack unless a migration is requested.
 
 ## After a change
 1. `PYTHONPATH=tools python3 tools/make_demo.py`, then `cd desktop && npm run web`.

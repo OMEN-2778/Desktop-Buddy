@@ -1,0 +1,170 @@
+{
+  "installed_on": "2026-10-23",
+  "scope": "project",
+  "skills": [
+    {
+      "name": "impeccable",
+      "repository": "https://github.com/pbakaus/impeccable",
+      "commit": "5cb95eea9c96479f57afe0732a45470d30183326",
+      "path": "plugin/skills/impeccable",
+      "adaptations": [
+        "POSIX launcher defaults its optional engine cache to scripts/.cache, ignored by git, for the cloud sandbox."
+      ],
+      "skill_sha256": "ee156bbccd926df08772c2b886c79376abfdd6c02b63d4f51d19c6c8446be5ed"
+    },
+    {
+      "name": "ui-ux-pro-max",
+      "repository": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+      "commit": "28327f2f214d31bbd7555ed0c012a5df6484ed96",
+      "path": ".claude/skills/ui-ux-pro-max",
+      "adaptations": [
+        "Search examples use the project-local .agents/skills path instead of a Claude plugin environment variable."
+      ],
+      "skill_sha256": "7a8da3768b7bf633a964d11a69a132fde46808ca87ee69448539683dd4754082"
+    },
+    {
+      "name": "baseline-ui",
+      "repository": "https://github.com/ibelick/ui-skills",
+      "commit": "55363c305097d4c84487bd5f323d29b3f067bf72",
+      "path": "skills/baseline-ui",
+      "adaptations": [],
+      "skill_sha256": "fea3322f36d58fdafafce2aef56e4556dd2ac7b20876b7dff7d8be7f25fa597f"
+    },
+    {
+      "name": "fixing-accessibility",
+      "repository": "https://github.com/ibelick/ui-skills",
+      "commit": "55363c305097d4c84487bd5f323d29b3f067bf72",
+      "path": "skills/fixing-accessibility",
+      "adaptations": [],
+      "skill_sha256": "549261e8a53b53a1a20c0ddbf736821e5fc0876ad82eee76e0efab8e9ee9dadf"
+    },
+    {
+      "name": "fixing-motion-performance",
+      "repository": "https://github.com/ibelick/ui-skills",
+      "commit": "55363c305097d4c84487bd5f323d29b3f067bf72",
+      "path": "skills/fixing-motion-performance",
+      "adaptations": [],
+      "skill_sha256": "0a2d654902bc04263ce68c8c02967ef03f17b482e855360a5463211d99d7baa9"
+    },
+    {
+      "name": "improve-ui",
+      "repository": "https://github.com/ibelick/ui-skills",
+      "commit": "55363c305097d4c84487bd5f323d29b3f067bf72",
+      "path": "skills/improve-ui",
+      "adaptations": [],
+      "skill_sha256": "fa2ac808f6d9dab7bb3620880b014d2c18e227e5b006102856038096e573e69a"
+    },
+    {
+      "name": "create-design-md",
+      "repository": "https://github.com/ibelick/ui-skills",
+      "commit": "55363c305097d4c84487bd5f323d29b3f067bf72",
+      "path": "skills/create-design-md",
+      "adaptations": [],
+      "skill_sha256": "adba4fa94a9ca0291811ac26405e8fe15c1a6375743a80971c6f895bb837eeed"
+    },
+    {
+      "name": "transitions-dev",
+      "repository": "https://github.com/Jakubantalik/transitions.dev",
+      "commit": "b0bad881753eceb656478d66ceb0ba2b643772ce",
+      "path": "skills/transitions-dev",
+      "adaptations": [],
+      "skill_sha256": "558bc963743b1bac98529617d22c4266a0602eadcb0797848c5a82906e1d7608"
+    },
+    {
+      "name": "transitions-polish",
+      "repository": "https://github.com/Jakubantalik/transitions.dev",
+      "commit": "b0bad881753eceb656478d66ceb0ba2b643772ce",
+      "path": "skills/transitions-polish",
+      "adaptations": [],
+      "skill_sha256": "cd7ca4bb79acb72fa1951bb79f5251570e2ef9d290c0ddf9a83a097067226cfa"
+    },
+    {
+      "name": "gsap-core",
+      "repository": "https://github.com/greensock/gsap-skills",
+      "commit": "aed9cfd3277740755f6bfc1155c7aa645403b760",
+      "path": "skills/gsap-core",
+      "adaptations": [],
+      "skill_sha256": "3887b47e050ab5afbe2a9a820f23d39fa02ab785e06a343be44c6f91d84d12b3"
+    },
+    {
+      "name": "gsap-frameworks",
+      "repository": "https://github.com/greensock/gsap-skills",
+      "commit": "aed9cfd3277740755f6bfc1155c7aa645403b760",
+      "path": "skills/gsap-frameworks",
+      "adaptations": [],
+      "skill_sha256": "842d9d3659ec3ddc8abbdc524708f8facf81f468ac25d0577f48c759c4fa31e6"
+    },
+    {
+      "name": "gsap-performance",
+      "repository": "https://github.com/greensock/gsap-skills",
+      "commit": "aed9cfd3277740755f6bfc1155c7aa645403b760",
+      "path": "skills/gsap-performance",
+      "adaptations": [],
+      "skill_sha256": "cb5408d6fba707aabcbfe3320317a14c1f8fca6070074e5261047930f50d441e"
+    },
+    {
+      "name": "gsap-plugins",
+      "repository": "https://github.com/greensock/gsap-skills",
+      "commit": "aed9cfd3277740755f6bfc1155c7aa645403b760",
+      "path": "skills/gsap-plugins",
+      "adaptations": [],
+      "skill_sha256": "5838b856c74c07fbc9fa99b6dfd1eee34ea554c3e530c30e0d58014b707d70a4"
+    },
+    {
+      "name": "gsap-react",
+      "repository": "https://github.com/greensock/gsap-skills",
+      "commit": "aed9cfd3277740755f6bfc1155c7aa645403b760",
+      "path": "skills/gsap-react",
+      "adaptations": [],
+      "skill_sha256": "88e2a5312b45e8cc7b3c496637ff5bc9af2ae9c925b555c8b235b34cbc989d74"
+    },
+    {
+      "name": "gsap-scrolltrigger",
+      "repository": "https://github.com/greensock/gsap-skills",
+      "commit": "aed9cfd3277740755f6bfc1155c7aa645403b760",
+      "path": "skills/gsap-scrolltrigger",
+      "adaptations": [],
+      "skill_sha256": "9351b6666a4749c0740406ea363aaccb99a087ff45cc5e8b99a0f367facf3ef4"
+    },
+    {
+      "name": "gsap-timeline",
+      "repository": "https://github.com/greensock/gsap-skills",
+      "commit": "aed9cfd3277740755f6bfc1155c7aa645403b760",
+      "path": "skills/gsap-timeline",
+      "adaptations": [],
+      "skill_sha256": "1a8b0f39cc4be3ed3d834b89672e4ae2f151b901dc3450bebf10bbc45379fe02"
+    },
+    {
+      "name": "gsap-utils",
+      "repository": "https://github.com/greensock/gsap-skills",
+      "commit": "aed9cfd3277740755f6bfc1155c7aa645403b760",
+      "path": "skills/gsap-utils",
+      "adaptations": [],
+      "skill_sha256": "1927bcc4ea95b38203404ad5ea1d060b15c4a886c65ae53e885ff1793aabe0ba"
+    },
+    {
+      "name": "motion-design",
+      "repository": "https://github.com/LottieFiles/motion-design-skill",
+      "commit": "f9a8a041b85185ee4881b3471d3415e939aac772",
+      "path": "skills/motion-design",
+      "adaptations": [],
+      "skill_sha256": "8729ecbc7e5736c1295baaa8ba0384bb4b1aac9cf91b83fcdc64d9548a57bb19"
+    },
+    {
+      "name": "design-motion-principles",
+      "repository": "https://github.com/kylezantos/design-motion-principles",
+      "commit": "4a9ca879f24a361f4dca4174fe2da0f67b5ddee3",
+      "path": "skills/design-motion-principles",
+      "adaptations": [],
+      "skill_sha256": "599f42dbf011df38f3fcaf1497533af447d91cf97443b92439455af103c25b2e"
+    },
+    {
+      "name": "frontend-design",
+      "repository": "https://github.com/anthropics/skills",
+      "commit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "path": "skills/frontend-design",
+      "adaptations": [],
+      "skill_sha256": "d91970639e9f5c37682ac7ab60094d35f1c7c1f38d731bd56396563aee10c1d3"
+    }
+  ]
+}
