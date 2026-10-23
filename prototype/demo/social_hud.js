@@ -101,7 +101,8 @@ function openContactActions(id){
 }
 function placeContactActions(){
   if(!selectedContact)return;const card=[...contactsList.children].find(b=>b.dataset.id===selectedContact);if(!card){closeContactActions();return;}
-  const r=card.getBoundingClientRect(),x=Math.max(126,Math.min(innerWidth-126,r.x+r.width/2)),y=Math.max(100,Math.min(innerHeight-100,r.y+r.height/2));
+  const buttons=[...contactActions.children],edgeX=Math.max(...buttons.map(b=>Math.abs(parseFloat(b.style.getPropertyValue('--x')))+b.offsetWidth/2))+8;
+  const r=card.getBoundingClientRect(),viewportWidth=document.documentElement.clientWidth,x=Math.max(edgeX,Math.min(viewportWidth-edgeX,r.x+r.width/2)),y=Math.max(100,Math.min(innerHeight-100,r.y+r.height/2));
   contactActions.style.left=x+'px';contactActions.style.top=y+'px';
 }
 contactActions.addEventListener('click',e=>{

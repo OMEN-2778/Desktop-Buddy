@@ -147,6 +147,7 @@ const {chromium}=require('playwright');
  await touch.locator('.contact-card[data-id="xiaoye"]').scrollIntoViewIfNeeded();await touch.waitForTimeout(150);
  await touch.locator('.contact-card[data-id="xiaoye"]').tap();await touch.waitForTimeout(400);
  assert.equal(await touch.evaluate(()=>selectedContact),'xiaoye','Last friend remains interactive');
+ for(const box of await touch.locator('#contactActions button').evaluateAll(es=>es.map(e=>({left:e.getBoundingClientRect().left,right:e.getBoundingClientRect().right}))))assert.ok(box.left>=0&&box.right<=390,'Last friend actions stay within the touch viewport');
  await touch.screenshot({path:'/workspace/artifacts/social-hud/mobile-scroll.png'});await touch.close();
  assert.deepEqual(errors,[]);
  console.log('PASS: pixel frames and glyph, staggered expand/reverse collapse, track-only hover, interrupted reversal, compact layout, twelve contacts, vertical wheel scrolling, retained scroll position, migration, stable parents-first contacts, action ring, targeted messages, capped affection, saved contacts, delayed incoming call, pause, distinct answer/decline, six-second timeout, legacy saves, mobile bounds and reduced motion.');
