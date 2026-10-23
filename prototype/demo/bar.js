@@ -51,7 +51,7 @@ function initBar() {
   if (seat) sim.route = [[seat.x, seat.feet]];
   sim.s = 0; sim.target = 0;
   const bartender = makeNpc('bartender', { x: 157, feet: 75, layer: 'back' });
-  bartender.look = doll.normalize({ ...bartender.look, style: 'neat', hair: '#433a54', topStyle: 'shirt', top: '#e2d8c9', bottomStyle: 'trousers', bottom: '#4a3329', acc: [] });
+  bartender.look = doll.normalize({ ...bartender.look, topStyle: 'shirt', top: '#e2d8c9', bottomStyle: 'trousers', bottom: '#4a3329', acc: [] });
   bartender.ramps = doll.rampsOf(bartender.look);
   const guestSeats = ['booth_l', 'stool_3', 'booth_r'].map(barSeat).filter(s => s.id !== sim.bar.seat && s.id !== toilet?.resumeSeat).slice(0, 2);
   const guests = guestSeats.map(s => makeNpc('bar_guest', { x: s.x, feet: s.feet, seat: s.id, seatLift: s.lift, sit: true, layer: 'front' }));
@@ -211,7 +211,7 @@ function stepBar(dtGame, dtReal) {
         if (c.t.to === 'player') {
           showSay(c.t.reply);
           log('和酒保聊了几句。', null, [['酒保：', c.t.bartender], [nameOf() + '：', c.t.reply]]);
-          sim.needs.social = clamp(sim.needs.social + 3);
+          sim.needs.social = clamp(sim.needs.social + 3);meetWorldNpc(barScene.bartender);
           addMood('bar_company', { words: false, diary: false });
         } else npcSay(c.guest, c.t.reply);
         barScene.chat = null;

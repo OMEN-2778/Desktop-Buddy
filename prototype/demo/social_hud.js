@@ -34,17 +34,18 @@ let networkCloseT=0,contactsCloseT=0,selectedContact=null,contactsSig='',remoteS
 const phoneCall={phase:'idle',contactId:null,kind:'call',deadline:0,timeout:0,exitTimer:0,returnFocus:null};
 function phoneHolds(){return ['ringing','accepting','declining'].includes(phoneCall.phase);}
 function contactName(c){return c.family==='dad'?'爸爸':c.family==='mom'?'妈妈':c.name;}
-function contactRelation(c){return c.family?'家人':c.affinity>=85?'知己':c.affinity>=60?'好友':c.affinity>=35?'朋友':c.affinity>=15?'相识':'萍水之交';}
+function contactRelation(c){return c.family?'家人':c.affinity>90?'最好的朋友':c.affinity>=60?'挚友':c.affinity>=20?'朋友':c.affinity>0?'面熟':'陌生';}
 function sortedContacts(){const rank=c=>c.family==='dad'?0:c.family==='mom'?1:2;return [...socialState.contacts].sort((a,b)=>rank(a)-rank(b)||b.affinity-a.affinity||a.id.localeCompare(b.id));}
 function contactFor(who,id=null){return socialState.contacts.find(c=>c.id===id)||socialState.contacts.find(c=>c.family===who)|| (who==='friend'?sortedContacts().find(c=>!c.family):null);}
 function drawContactAvatar(canvas,c){
+  if(c.forgotten&&!c.family){const ctx=canvas.getContext('2d');ctx.clearRect(0,0,40,40);ctx.fillStyle='#e4e1ec';ctx.fillRect(0,0,40,40);ctx.fillStyle='#666078';for(const [y,row]of ['01110','11011','00011','00110','00100','00000','00100'].entries())for(let x=0;x<row.length;x++)if(row[x]==='1')ctx.fillRect(10+x*4,6+y*4,4,4);return;}
   const lk=doll.normalize(c.look||doll.PRESETS[c.family==='mom'?'f':'m']);
   const body=doll.toCanvas(doll.pixels(lk,{expr:'happy',look:0,bob:0,sway:0},doll.rampsOf(lk)),DW,DH);
   const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,40,40);
   ctx.fillStyle='#eef3f1';ctx.fillRect(0,0,40,40);ctx.drawImage(body,0,0,DW,17,0,2,40,34);
 }
 function fillContacts(){
-  const contacts=sortedContacts(),sig=JSON.stringify(contacts.map(c=>[c.id,c.name,c.family,c.affinity,c.look]));if(sig===contactsSig)return;
+  const contacts=sortedContacts(),sig=JSON.stringify(contacts.map(c=>[c.id,c.name,c.family,c.affinity,c.look,!!c.forgotten]));if(sig===contactsSig)return;
   contactsSig=sig;const scrollTop=contactsList.scrollTop;contactsList.replaceChildren();
   for(const c of contacts){
     const card=document.createElement('button');card.type='button';card.className='contact-card';card.dataset.id=c.id;
@@ -85,12 +86,13 @@ function closeContactActions(){selectedContact=null;contactActions.classList.rem
 function openContactActions(id){
   if(selectedContact===id){closeContactActions();return;}
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return;closeRing();selectedContact=id;contactActions.replaceChildren();
-  const actions=[['text','发消息'],['video','打视频'],['outing','出门玩'],['visit','拜访'],['invite','来我家'],['cancel','算了']];
+  const visitLabel=socialState.guest?.id===id?(socialState.guest.phase==='scheduled'?'取消邀请':'送客'):'来我家';
+  const actions=[['text','发消息'],['video','打视频'],['outing','出门玩'],['visit','拜访'],['invite',visitLabel],['memories','经历'],['cancel','算了']];
   for(const [i,[action,label]]of actions.entries()){
     const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.action=action;b.setAttribute('role','menuitem');
-    const a=-Math.PI/2+i*Math.PI/3;b.style.setProperty('--x',`${Math.cos(a)*112}px`);b.style.setProperty('--y',`${Math.sin(a)*72}px`);
-    if(['outing','visit','invite'].includes(action)){b.setAttribute('aria-disabled','true');b.classList.add('coming-soon');b.append(Object.assign(document.createElement('small'),{className:'contact-unavailable',textContent:'下一步开放'}));b.title='串门与同行将在下一步开放';}
-    else if(['text','video'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
+    const a=-Math.PI/2+i*2*Math.PI/actions.length;b.style.setProperty('--x',`${Math.cos(a)*112}px`);b.style.setProperty('--y',`${Math.sin(a)*72}px`);
+    if(['outing','visit'].includes(action)){b.setAttribute('aria-disabled','true');b.classList.add('coming-soon');b.append(Object.assign(document.createElement('small'),{className:'contact-unavailable',textContent:'下一步开放'}));b.title='串门与同行将在下一步开放';}
+    else if(['text','video','invite'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
       b.setAttribute('aria-disabled','true');b.title=asleep()?'等主角醒来再联系':sim.mode==='down'?'先唤醒晕倒的主角':'正在忙，稍后再联系';b.setAttribute('aria-label',`${label}：${b.title}`);
     }
     contactActions.append(b);
@@ -108,7 +110,7 @@ function placeContactActions(){
 contactActions.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b||b.getAttribute('aria-disabled')==='true')return;
   const id=selectedContact;closeContactActions();if(b.dataset.action==='cancel')return;
-  setContactsOpen(false);startContactTalk(id,b.dataset.action);
+  setContactsOpen(false);if(b.dataset.action==='memories')showSocialMemories(id);else if(b.dataset.action==='invite'){if(socialState.guest?.id===id)endHomeVisit('主角和客人道别，约好下次再聚。');else inviteHome(id);}else startContactTalk(id,b.dataset.action);
 });
 document.addEventListener('pointerdown',e=>{if(!contactsPanel.contains(e.target)&&!contactActions.contains(e.target)&&!networkTrigger.contains(e.target)&&!moodFace.contains(e.target))setContactsOpen(false);});
 document.addEventListener('keydown',e=>{
@@ -155,11 +157,14 @@ function startContactTalk(id,kind='text',incoming=false){
 function finishContactTalk(id,kind){
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return;
   const day=Math.floor(sim.t/1440);if(c.gainDay!==day){c.gainDay=day;c.dailyGain=0;}
-  const gain=Math.min(kind==='text'?2:4,Math.max(0,6-(c.dailyGain||0)));
+  const previous=contactRelation(c),gain=Math.min(kind==='meet'?1:kind==='text'?2:4,Math.max(0,6-(c.dailyGain||0)));
   c.affinity=clamp(c.affinity+gain);c.dailyGain=(c.dailyGain||0)+gain;c.lastContact=sim.t;
+  if(kind==='video'||kind==='meet'||kind==='visit'){c.forgotten=false;c.lastSeen=sim.t;}
+  if(previous!==contactRelation(c)){const message=`和${contactName(c)}从${previous}成为了${contactRelation(c)}。`;log(message);addSocialMemory(c,'关系更近了一步',message);}
+  if(['text','call','video'].includes(kind))addSocialMemory(c,{text:'互发消息',call:'通了电话',video:'视频见面'}[kind],`和${contactName(c)}聊起「${c.lastTopic||'彼此的近况'}」。`);
   sim.needs.social=clamp(sim.needs.social+(kind==='text'?5:10));contactsSig='';if(moodrow.classList.contains('contacts-open'))fillContacts();
 }
-function canReceiveCall(){return !asleep()&&sim.mode!=='down'&&!wiping&&!guideOn&&!card&&!wardrobeOpen&&!socialBusy();}
+function canReceiveCall(){return !asleep()&&sim.mode!=='down'&&!wiping&&!guideOn&&!card&&!wardrobeOpen&&!socialBusy()&&!socialDialogHolds()&&!homeVisitActive();}
 function requestIncomingCall(id,kind='call'){
   if(phoneCall.phase!=='idle'||!socialState.contacts.some(c=>c.id===id)||!canReceiveCall())return false;
   phoneCall.phase='waiting';phoneCall.contactId=id;phoneCall.kind=kind;return true;
@@ -167,24 +172,27 @@ function requestIncomingCall(id,kind='call'){
 function showIncomingCall(now){
   const c=socialState.contacts.find(c=>c.id===phoneCall.contactId);if(!c){phoneCall.phase='idle';return;}
   setContactsOpen(false);setNeedsOpen(false);showMoodTip(false);closeRing();closePicker();
-  incomingCall.querySelector('strong').textContent=c.family?contactName(c):contactRelation(c)+contactName(c);
-  incomingCall.querySelector('.caller-copy span').textContent=phoneCall.kind==='video'?'打来视频，要接吗？':'打来电话，要接吗？';
+  incomingCall.querySelector('strong').textContent=c.family||c.affinity<20?contactName(c):contactRelation(c)+contactName(c);
+  incomingCall.querySelector('.caller-copy span').textContent=phoneCall.kind==='video'?'打来视频':'打来电话';
   drawContactAvatar(incomingCall.querySelector('canvas'),c);incomingCall.classList.remove('accepting','declining');incomingCall.hidden=false;
   moodTalk.classList.add('phone-active');phoneCall.phase='ringing';phoneCall.deadline=now+6000;
   phoneCall.returnFocus=document.activeElement;incomingCall.querySelector('.call-answer').focus({preventScroll:true});
   phoneCall.timeout=setTimeout(()=>finishIncomingCall(false,true),6000);
-  socialState.nextCall=sim.t+600+Math.random()*600;
+  c.lastIncoming=sim.t;socialState.nextCall=sim.t+180+Math.random()*300;
 }
 function finishIncomingCall(accepted,automatic=false){
   if(phoneCall.phase!=='ringing')return;clearTimeout(phoneCall.timeout);
   const id=phoneCall.contactId,kind=phoneCall.kind,c=socialState.contacts.find(c=>c.id===id);
   phoneCall.phase=accepted?'accepting':'declining';incomingCall.classList.add(phoneCall.phase);
+  if(!accepted&&c){socialRejected(c,kind==='visit'?'没能约上这次来访':'的来电没能接通');}
   if(!accepted&&c)log(automatic?`没来得及接听${contactName(c)}的来电，铃声在六秒后停了。`:`暂时婉拒了${contactName(c)}的来电，晚点再联系。`);
   phoneCall.exitTimer=setTimeout(()=>{
     phoneCall.phase='idle';phoneCall.contactId=null;incomingCall.hidden=true;moodTalk.classList.remove('phone-active');
     if(phoneCall.returnFocus?.isConnected&&!phoneCall.returnFocus.closest('[inert]'))phoneCall.returnFocus.focus({preventScroll:true});
     if(accepted){
-      if(!startContactTalk(id,kind,true)&&c){log(`记下了${contactName(c)}的来电，等忙完再回拨。`);}
+      if(kind==='visit'){if(c)showVisitOffer(c);}
+      else if(kind==='farewell'){if(c)showFarewellOffer(c);}
+      else if(!startContactTalk(id,kind,true)&&c){log(`记下了${contactName(c)}的来电，等忙完再回拨。`);}
     }else if(!popSay.hidden&&performance.now()-sayShownAt<5200){popBubble(popSay,Math.max(600,5200-(performance.now()-sayShownAt)));}
   },reduceMotionUI?0:accepted?360:280);
 }
@@ -196,10 +204,12 @@ function tickSocial(dt,now){
   if(phoneHolds())return;
   if(!Number.isFinite(socialState.nextCall))socialState.nextCall=sim.t+210;
   if(phoneCall.phase==='waiting'){
-    if(asleep()||sim.mode==='down'){phoneCall.phase='idle';socialState.nextCall=sim.t+120;return;}
+    if(asleep()||sim.mode==='down'||!socialState.contacts.some(c=>c.id===phoneCall.contactId)){phoneCall.phase='idle';socialState.nextCall=sim.t+120;return;}
     if(canReceiveCall()&&now-sayShownAt>=2000)showIncomingCall(now);
   }else if(speed&&sim.t>=socialState.nextCall&&hour()>=9&&hour()<21&&canReceiveCall()){
-    requestIncomingCall(pick(sortedContacts()).id);socialState.nextCall=sim.t+600+Math.random()*600;
+    const farewell=socialState.contacts.find(c=>c.farewellPending),eligible=sortedContacts().filter(socialCallDue);
+    if(farewell){farewell.farewellPending=false;requestIncomingCall(farewell.id,'farewell');}
+    else if(eligible.length)requestIncomingCall(pick(eligible).id);socialState.nextCall=sim.t+180+Math.random()*300;
   }
   if(remoteSocial&&speed&&!cardHolds()&&!wiping){
     const session=remoteSocial;session.wait-=dt;if(session.wait>0)return;
@@ -212,7 +222,7 @@ function tickSocial(dt,now){
     showSay(text,who);session.said.push([who,text]);session.wait=Math.min(4.6,Math.max(2.6,1.4+(who+text).length*.13));
   }
 }
-function socialSnapshot(){return {rosterVersion:socialState.rosterVersion,contacts:socialState.contacts.map(c=>({id:c.id,name:c.name,family:c.family||null,affinity:c.affinity,look:doll.normalize(c.look),lastContact:c.lastContact??null,gainDay:c.gainDay??null,dailyGain:c.dailyGain||0})),nextCall:socialState.nextCall};}
+function socialSnapshot(){return {...socialLifeSnapshot(),rosterVersion:socialState.rosterVersion,contacts:socialState.contacts.map(c=>({id:c.id,name:c.name,family:c.family||null,affinity:c.affinity,look:doll.normalize(c.look),lastContact:c.lastContact??null,gainDay:c.gainDay??null,dailyGain:c.dailyGain||0,memories:c.memories||[],metAt:c.metAt??null,lastSeen:c.lastSeen??null,forgotten:!!c.forgotten,lastIncoming:c.lastIncoming??null,rejectDay:c.rejectDay??null,rejectLoss:c.rejectLoss||0,farewellTried:!!c.farewellTried,farewellPending:!!c.farewellPending,lastVisitOffer:c.lastVisitOffer??null})),nextCall:socialState.nextCall};}
 function restoreSocial(data){
   clearTimeout(phoneCall.timeout);clearTimeout(phoneCall.exitTimer);phoneCall.phase='idle';phoneCall.contactId=null;incomingCall.hidden=true;moodTalk.classList.remove('phone-active');remoteSocial=null;
   const list=Array.isArray(data?.contacts)?data.contacts:DEFAULT_CONTACTS;
@@ -224,5 +234,5 @@ function restoreSocial(data){
   // Add the scrolling-test roster once, without changing existing identities or affection.
   const additions=data?.rosterVersion>=1?DEFAULT_CONTACTS.slice(0,2):DEFAULT_CONTACTS;
   for(const c of additions)if(!seen.has(c.id))socialState.contacts.push({...c,look:doll.normalize(c.look)});
-  socialState.rosterVersion=1;socialState.nextCall=Number.isFinite(data?.nextCall)?data.nextCall:null;contactsSig='';selectedContact=null;
+  socialState.rosterVersion=1;socialState.nextCall=Number.isFinite(data?.nextCall)?data.nextCall:null;contactsSig='';selectedContact=null;restoreSocialLife(data);
 }

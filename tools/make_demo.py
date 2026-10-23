@@ -403,6 +403,8 @@ def main():
     html = html.replace("/*__SOCIAL_HUD_CSS__*/", (SRC.parent / "social_hud.css").read_text())
     html = html.replace("/*__SOCIAL_HUD_JS__*/", (SRC.parent / "social_hud.js").read_text())
     html = html.replace("/*__STORM_JS__*/", "const STORM_TEXT = " + (SRC.parent / "storm_text.json").read_text() + ";\n" + (SRC.parent / "storm.js").read_text())
+    html = html.replace("/*__SOCIAL_LIFE_JS__*/", "const SOCIAL_TEXT = " + (SRC.parent / "social_text.json").read_text() + ";\n" + (SRC.parent / "social_life.js").read_text())
+    html = html.replace("/*__SOCIAL_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "social_cards.json").read_text() + ");")
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 

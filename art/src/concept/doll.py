@@ -166,8 +166,22 @@ OhHhhhhhhhhhhhhhhhkO
     "pony": rows(_TOP + _CROWN + _BANGS + _FACE),
     "twin": rows(_TOP + _CROWN + _BANGS + _FACE),
 }
-SHORT_STYLES = ["messy", "afro", "neat", "buzz", "mid", "curly"]
-LONG_STYLES = ["long", "bob", "buns", "pony", "twin"]
+# Two quieter silhouettes: a cropped fringe and long temple locks.
+HEADS["crop"] = rows(_TOP + _CROWN + """
+..OhhkhhLLhhkLhhkO
+..OhkLLLLLLLLLLkO
+""" + _FACE)
+HEADS["hime"] = rows(_TOP + _CROWN + _BANGS + """
+..OhLLLLLLLLLLLhkO
+..OhLLLLLLLLLLLhkO
+..OhLLLLLLLLLLLhkO
+..OhSLLLLLLLLLLShO
+..OhqqSLLLLLLSqqkO
+..Ohhk........khO
+...OOO.......OOO
+""")
+SHORT_STYLES = ["messy", "afro", "neat", "buzz", "mid", "curly", "crop"]
+LONG_STYLES = ["long", "bob", "buns", "pony", "twin", "hime"]
 
 AHOGE = [  # two sway positions
     rows("""
@@ -250,7 +264,7 @@ def draw_back_hair(s: Sprite, d: "Doll", bob: int = 0, sway: int = 0):
     h = d.hair
     shape = Sprite(W, H)
     style = d.hair_style
-    if style == "long":
+    if style in ("long", "hime"):
         # a curtain from the crown to mid-back, a bit wider than the head
         shape.rect(2, 6, 16, 9, h[2])           # beside the face
         shape.rect(3, 15, 14, 4, h[2])          # behind the shoulders
@@ -379,8 +393,26 @@ TOPS = {
 ......uccccccu
 """),
 }
+TOPS["vest"] = rows("""
+.......WT..TW
+....uWWTWuuWCWwu
+...uWWcTWCCWCcWwu
+...uWWcTCCCCCcWwu
+...uWWcTCCCCCcWwu
+......cCCCCCCc
+......uccccccu
+""")
+TOPS["cardigan"] = rows("""
+......uT....cu
+....uTTTWWWWCCcu
+...uTTcTWCuWCcCcu
+...uTTcTWCuWCcCcu
+...uTTcTWCuWCcCcu
+......cTWCuWCc
+......ucccuccu
+""")
 SLEEVES = {"jacket": "long", "hoodie": "long", "sweater": "long", "tee": "short",
-           "stripe": "long", "shirt": "long", "tank": "none"}
+           "stripe": "long", "shirt": "long", "tank": "none", "vest": "long", "cardigan": "long"}
 
 BOTTOMS = {
     "trousers": rows("""
@@ -502,7 +534,7 @@ def lower_arm_removed(grid: list[str], y0: int, edge: str) -> list[str]:
 
 EYE_X = (6, 12)  # left column of each 2px eye
 EYE_Y = 10
-EYE_SHAPES = ["round", "bean", "sparkle", "droopy", "cat", "smile"]
+EYE_SHAPES = ["round", "bean", "sparkle", "droopy", "cat", "smile", "almond", "sleepy"]
 LASHES = ("round", "sparkle")  # girls get a lash flick on these
 
 
@@ -530,6 +562,12 @@ def draw_eye(s: Sprite, d: "Doll", shape: str, i: int, x: int, y0: int):
         s.set(out, y0, ink).set(outer_col, y0, ink)
         s.set(outer_col, y0 + 1, shine).set(inner, y0 + 1, ink)
         s.set(outer_col, y0 + 2, e[2]).set(inner, y0 + 2, e[1])
+    elif shape == "almond":
+        s.hline(x, x + 1, y0 + 1, ink).set(out, y0, ink)
+        s.set(x, y0 + 2, shine).set(x + 1, y0 + 2, e[2])
+    elif shape == "sleepy":
+        s.hline(x, x + 1, y0 + 1, e[1])
+        s.set(x, y0 + 2, e[2]).set(x + 1, y0 + 2, ink)
     elif shape == "smile":                 # always-smiling closed arcs
         s.hline(x, x + 1, y0 + 1, ink).set(x - 1, y0 + 2, ink).set(x + 2, y0 + 2, ink)
 
@@ -942,7 +980,7 @@ class Doll:
             return lambda s: s.blit(Sprite.from_grid("\n".join(src), lg), 0, y)
 
         out = []
-        if self.hair_style in ("long", "bob", "buns"):
+        if self.hair_style in ("long", "bob", "buns", "hime"):
             back = lambda s: draw_back_hair(s, self, bob, sway % 2)
             out.append((f"back/{self.hair_style}/{bob}/{sway % 2}/{hat}", under_hat(back, bob) if hat else back))
         base = lower_arm_removed(BASE, 15, "q") if arm else BASE
@@ -1024,11 +1062,11 @@ VARIANTS = [
 # Option lists with the names the dressing room shows (order = UI order).
 OPTIONS = {
     "style": [("messy", "呆毛短发"), ("afro", "爆炸头"), ("neat", "侧分"), ("buzz", "寸头"), ("mid", "中分"), ("curly", "卷毛"),
-              ("long", "长直发"), ("bob", "波波头"), ("buns", "丸子头"), ("pony", "侧马尾"), ("twin", "双马尾")],
+              ("long", "长直发"), ("bob", "波波头"), ("buns", "丸子头"), ("pony", "侧马尾"), ("twin", "双马尾"), ("crop", "碎刘海"), ("hime", "姬发")],
     "eyes": [("round", "圆眼"), ("bean", "豆豆眼"), ("sparkle", "闪亮眼"), ("droopy", "下垂眼"),
-             ("cat", "猫眼"), ("smile", "眯眯眼")],
+             ("cat", "猫眼"), ("smile", "眯眯眼"), ("almond", "杏仁眼"), ("sleepy", "半月眼")],
     "top": [("hoodie", "卫衣"), ("jacket", "夹克"), ("sweater", "翻领毛衣"), ("tee", "T恤"),
-            ("stripe", "条纹衫"), ("shirt", "衬衫"), ("tank", "背心")],
+            ("stripe", "条纹衫"), ("shirt", "衬衫"), ("tank", "背心"), ("vest", "衬衫马甲"), ("cardigan", "针织开衫")],
     "bottom": [("jeans", "卷边牛仔裤"), ("trousers", "长裤"), ("shorts", "短裤"), ("overalls", "背带短裤"),
                ("mini", "A字短裙"), ("pleated", "百褶裙"), ("maxi", "长裙")],
     "socks": [("none", "不穿"), ("short", "短袜"), ("long", "长袜")],

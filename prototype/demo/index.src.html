@@ -1440,7 +1440,8 @@ function updateDoors(dtReal) {
   for (const d of D.doors) {
     const st = doorState[d.id];
     const near = sim.mode === "walk" && !p.dy && d.storey === storey
-      && sim.crossing.some(([id, x]) => id === d.id && Math.abs(p.x - x) < 16);
+      && sim.crossing.some(([id, x]) => id === d.id && Math.abs(p.x - x) < 16)
+      || sim.place==='home'&&d.storey===0&&socialState.guest&&['entering','leaving'].includes(socialState.guest.phase)&&Math.abs(homeGuestPoint(socialState.guest).x-d.x-2)<16;
     if (near && st.angle === 0) st.side = sim.facing > 0 ? "r" : "l";
     st.t += dtReal * Math.min(speed, 4);
     if (st.t < 0.06) continue;
@@ -1785,7 +1786,7 @@ function activityFrame(ms) {
   // what Buddy looks like right now: frame params, pose, emote
   const a = sim.act, phase = Math.floor(ms / 600) % 2;
   if (reaction && realClock < reaction.until && sim.mode !== "down") {
-    const seated = sim.mode === "act" && (["bench", "eat", "tv", "toilet", "park_eat"].includes(a) || PC_ACTS.includes(a) && chairReady());
+    const seated = sim.mode === "act" && (["bench", "eat", "tv", "host", "toilet", "park_eat"].includes(a) || PC_ACTS.includes(a) && chairReady());
     return { f: { expr: "happy", wave: reaction.wave === false ? null : Math.floor(ms / 180) % 2, bob: Math.floor(ms / 300) % 2 }, pose: seated ? "sit" : "stand", emote: reaction.emote };
   }
   if (sim.mode === "walk") {
@@ -1819,7 +1820,7 @@ function activityFrame(ms) {
         const i = Math.floor(ms / 260) % 4;
         return { f: { expr: "happy", wave: i % 2, bob: i % 2, sway: i % 2, look: i < 2 ? -1 : 1 }, pose: ["walkL", "stand", "walkR", "stand"][i], emote: showEm ? em : null };
       }
-      case "tv": return { f: { expr: Math.floor(ms / 2000) % 3 === 0 ? "happy" : "neutral", look: 1 }, pose: "sit", emote: showEm ? em : null };
+      case "host": case "tv": return { f: { expr: Math.floor(ms / 2000) % 3 === 0 ? "happy" : "neutral", look: 1 }, pose: "sit", emote: showEm ? em : null };
       case "read": return { f: { expr: "neutral", look: -1, bob: Math.floor(ms / 1800) % 2 }, pose: "stand", emote: showEm ? em : null };
       case "window": return { f: { expr: Math.floor(ms / 2500) % 4 === 3 ? "blink" : "neutral", look: 1 }, pose: "stand", emote: null };
       default: return { f: { expr: "happy", bob: phase }, pose: "stand", emote: showEm ? em : null };
@@ -1976,6 +1977,7 @@ function render() {
     if (act === "computer" || (act && act.startsWith("pc_"))) lit.push("monitor");
   }
   drawChair(bctx);
+  drawHomeGuest(bctx);
   // Buddy
   const ms = realClock * 1000;
   const fr = activityFrame(ms);
@@ -2000,7 +2002,7 @@ function render() {
     const p = buddyFeet();
     const x = Math.round(p.x - DW / 2), y = Math.round(p.y - DH + 1);
     bctx.drawImage(fr.back ? backCanvas(full, fr.pose) : dollCanvas(full, fr.pose), x, y);
-    if (act === "tv") drawOverlay(bctx, "coffee_table");
+    if (act === "tv"||act === "host") drawOverlay(bctx, "coffee_table");
     if (act && act.startsWith("phone_")) {          // her phone: at the ear on a call, in her hands otherwise
       if (act === "phone_call") bctx.drawImage(IMG.fx.phone_call[0], x + 16, y + 8 + full.bob);
       else bctx.drawImage(frameOf(IMG.fx.phone, 2), x + 8, y + 17);
@@ -4126,8 +4128,8 @@ function npcLook() {
   }
 }
 function makeNpc(role, o = {}) {
-  const lk = npcLook(), kid = role === "kid";
-  return { role, kid, look: lk, ramps: doll.rampsOf(lk), cache: new Map(), dist: 0, ph: Math.random() * 1e4, sayUntil: 0, dir: 1, v: 0, ...o };
+  const person=worldNpcIdentity(role),lk=person.look,kid=role==="kid";
+  return { role, kid, personId:person.id,look: lk, ramps: doll.rampsOf(lk), cache: new Map(), dist: 0, ph: Math.random() * 1e4, sayUntil: 0, dir: 1, v: 0, ...o };
 }
 function kidBody(buf, lk) {                     // the same chibi head on a shorter body: two leg rows and two torso rows go
   const drop = new Set([...D.doll.pose[lk.bottomStyle].sitDrop, 18, 20]), keep = [];
@@ -4310,7 +4312,8 @@ function npcLine(n, key = n.role) {
   if (t) npcSay(n, fill(t, kidVars()));
 }
 function startTalk(n) {
-  const list = (PT().talk || {})[n.role];
+  const contact=socialState.contacts.find(c=>c.id===n.personId);
+  const list = contact?socialTalkPool('meet',contact).map(t=>t.lines):(PT().talk || {})[n.role];
   if (!list || !list.length) return false;
   life.talkQ = { n, lines: pick(list), i: 0, next: realClock };
   life.npcTalked.add(n);
@@ -4320,10 +4323,10 @@ function stepTalk() {
   const q = life.talkQ;
   if (!q || realClock < q.next) return;
   if (q.i >= q.lines.length || q.n.gone) { life.talkQ = null; return; }
-  const raw = q.lines[q.i++], other = raw[0] === ">", text = fill((other ? raw.slice(1) : raw).trim(), kidVars());
+  const raw = q.lines[q.i++], other = raw[0] === ">", text = fill((other ? raw.slice(1) : raw).trim(),{...kidVars(),主角:nameOf(),朋友:socialState.contacts.find(c=>c.id===q.n.personId)?.name||''});
   if (other) npcSay(q.n, text); else speak(text, true);
   q.next = realClock + Math.min(4.2, 1.8 + text.length * 0.12);
-  if (q.i === q.lines.length) { sim.needs.social = clamp(sim.needs.social + 2); }
+  if (q.i === q.lines.length) { sim.needs.social = clamp(sim.needs.social + 2);meetWorldNpc(q.n); }
 }
 function placeChatter() {                       // now and then: a stranger's line, a word with one passing, or her own thought
   if (mallToiletInside() || mallVisitInside() || stormOutside()) return;
@@ -4811,11 +4814,13 @@ for (const [kind, groups] of Object.entries(CHATS)) for (const [who, g] of Objec
   g.talks.forEach((t, i) => { if (t.mood) ML[t.id = `chat_${kind === "call" ? "call_" : ""}${who}_${i}`] = { ...t.mood }; });
 // phone calls (user: 50 per person, voice only) are CHATS.call; a video call on the phone is a video chat
 function chatItem(kind, who, via = "pc", contactId = null) {
-  const g = CHATS[kind][who], seen = ((lifeFlags.talkSeen ||= {})[kind === "call" ? "call_" + who : who] ||= []);
+  const contact=contactFor(who,contactId),level=contact&&!contact.family?socialLevel(contact):null;
+  const g=level?{...CHATS[kind][who],talks:socialTalkPool(kind,contact)}:CHATS[kind][who];
+  const seen=((lifeFlags.talkSeen ||= {})[level?`${kind}_${contact.id}_${level}`:kind+'_'+who] ||= []);
   let fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i));
   if (!fresh.length) { seen.splice(0, seen.length - 3); fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i)); }
-  const i = pick(fresh), t = g.talks[i], contact=contactFor(who,contactId), vars = { 朋友: contact?contactName(contact):pick(T.fill.朋友) };
-  seen.push(i);
+  const i = pick(fresh), t = g.talks[i], vars = { 主角:nameOf(),朋友: contact?contactName(contact):pick(T.fill.朋友) };
+  seen.push(i);if(contact)contact.lastTopic=t.title;
   const name = contact?contactName(contact):fill(g.name, vars);
   return { vars, contactId:contact?.id, talk: { ...t, kind, who, name,
     start: kind === "text" ? `拿起手机给${name}发消息。` : kind === "call" ? `拿起手机给${name}打电话。` : via === "phone" ? `拿起手机和${name}视频。` : kind === "video" ? `打开电脑，和${name}视频聊天。` : `打开电脑，${g.verb}。`,
@@ -4850,6 +4855,7 @@ function playTalk(dt) {
 /*__PARK_CARDS_JS__*/
 /*__MALL_CARDS_JS__*/
 /*__STORM_CARDS_JS__*/
+/*__SOCIAL_CARDS_JS__*/
 for (const cd of CARDS) for (const k of ["a", "b"]) cd[k].out.forEach((o, i) => { if (o.mood) ML[o.id = `card${cd.n}${k}${i}`] = { ...o.mood }; });
 const CARD_GAP = 330, CARD_CHANCE = 0.3;         // game minutes between cards, odds per hour after that
 const CARD_GAP_OUT = 60, CARD_CHANCE_OUT = 0.6;   // out and about they come much more often (user)
@@ -4863,19 +4869,20 @@ for (let i = 0; i < 20; i++) {                   // sparks around the moodlet pi
   crBurst.append(sp);
 }
 // while a card or its result is up the house dims a little and time stands still (user)
-const cardHolds = () => !!(card && card.hold) || guideOn || phoneHolds();   // (the guide stops the clock too)
+const cardHolds = () => !!(card && card.hold) || guideOn || phoneHolds() || socialDialogHolds();   // (the guide stops the clock too)
 const dimHouse = on => view.classList.toggle("dim", on);
 let quietUntil = 0;         // her card line isn't followed by a "new mood" thought
 let card = null;            // { cd, vars, phase: ask | wait | result | closing, k, o, auto, timer, lockUntil }
 let swallowUntil = 0;       // the click that closed a result does nothing else
 const cardWhen = new Map();
 function cardFits(cd, c) {
+  if(cd.service==='visit'&&!homeVisitActive())return false;
   if(cd.weather && cd.weather !== weather.kind)return false;
   if (!cd.when) return true;
   if (!cardWhen.has(cd)) { const any = cd.when.split("|").map(whenOk); cardWhen.set(cd, c => any.some(f => f(c))); }
   return cardWhen.get(cd)(c);
 }
-function rollCard(c, service = sim.place === "park" && parkEating() ? "food" : mallVisitInside() ? mallS.visit.kind : null) {
+function rollCard(c, service = homeVisitActive()&&sim.act==='host'?'visit':sim.place === "park" && parkEating() ? "food" : mallVisitInside() ? mallS.visit.kind : null) {
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   const out = sim.place !== "home";               // outside: that place's own cards (cd.at)
   if (!prefs.guided || guideOn || card || !c.awake || parkInsideToilet() || (sim.place === "mall" && mallS.toilet) || (sim.place === "bar" && sim.bar?.toilet) || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside() && !mallVisitInside())
@@ -4934,7 +4941,8 @@ function walkMoments(a, b) {
 }
 // what the card can mention: the dish she's cooking / eating, the book, the show...
 function cardVars() {
-  const v = { ...(sim.item && sim.item.vars) };
+  const guest=socialState.guest,c=guest&&socialState.contacts.find(c=>c.id===guest.id);
+  const v = { ...(sim.item && sim.item.vars),...(homeVisitActive()&&c?{朋友:contactName(c),visitorId:c.id}: {}) };
   if (mallVisitInside()) Object.assign(v,mallVisitVars());
   if (sim.act === "eat" && sim.meal && sim.meal.vars) Object.assign(v, sim.meal.vars);
   return v;
@@ -5000,6 +5008,7 @@ function cardDiary() {
   log(`「${fill(cd.title, vars)}」${auto ? `（${nameOf()}自己拿了主意）` : ""}${fill(cd[k].label, vars).replace(/[。.]$/, "")}——${fill(o.text, vars)}`);
 }
 function cardNeeds() {
+  if(card.cd.service==='visit'){const c=socialState.contacts.find(c=>c.id===card.vars.visitorId);if(c){const old=contactRelation(c);c.affinity=clamp(c.affinity+(card.o.friendship||0));contactsSig='';addSocialMemory(c,fill(card.cd.title,card.vars),fill(card.o.text,card.vars));if(old!==contactRelation(c))log(`和${contactName(c)}的关系变成了${contactRelation(c)}。`);if(c.affinity<=0)removeSocialContact(c,'这次相处后，彼此选择不再联系。');}}
   for (const [n, v] of Object.entries(card.o.need || {})) if (n in sim.needs) sim.needs[n] = clamp(sim.needs[n] + v);
 }
 function showResult() {
@@ -5671,6 +5680,7 @@ if (TAURI) {
 /*__PARK_FOOD_JS__*/
 /*__PARK_JS__*/
 /*__SOCIAL_HUD_JS__*/
+/*__SOCIAL_LIFE_JS__*/
 
 // ================================================================ loop
 let last = performance.now(), uiT = 0;
@@ -5679,6 +5689,7 @@ function frame(now) {
   last = now;
   realClock += dt;
   tickSocial(dt,now);
+  tickSocialLife(dt);
   const fast = sim.mode === "act" && sim.act === "sleep" ? 8 : 1, run = cardHolds() || wiping ? 0 : speed;   // a chance card (or a scene change) stops the clock
   step(dt * run * fast, dt * (run ? 1 : 0));
   tickStorm(run ? dt : 0);
