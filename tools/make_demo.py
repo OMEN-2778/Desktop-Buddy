@@ -39,6 +39,8 @@ import park_expansion as PX  # noqa: E402
 import park_food as PF  # noqa: E402
 import beach as BC  # noqa: E402
 import mall as MALL  # noqa: E402
+import mall_rooms as MR  # noqa: E402
+import storm as STORM  # noqa: E402
 import bar as BAR  # noqa: E402
 import make_creator as mc  # noqa: E402
 from pixelkit import P, Sprite, rgba  # noqa: E402
@@ -226,6 +228,19 @@ def main():
         "items": [{k: v for k, v in it.items() if k != "sprite"} for it in mall_items]}}
 
     bar_text = json.loads((SRC.parent / "bar_text.json").read_text())
+    mall_life = json.loads((SRC.parent / "mall_life.json").read_text())
+    outside["mall"]["img"]["rooms"] = {}
+    for kind in [*MR.RESTAURANTS,"cinema"]:
+        front=Sprite(MR.W,MR.H)
+        if kind=="cinema":
+            MR.cinema_seat(front,197,110)
+        else:
+            MR.table(front,173,94)
+            front.rect(212,61,85,14,P.walnut[1]).rect(214,63,81,10,MR.RESTAURANTS[kind][1]).rect(210,58,89,4,P.ash[3]).hline(210,298,58,P.ash[4])
+        outside["mall"]["img"]["rooms"][kind]={"bg":png(MR.cinema() if kind=="cinema" else MR.restaurant(kind)),
+            "front":png(front),"hover":{k:png(v) for k,v in MR.hover(kind).items()}}
+    outside["mall"]["img"]["foodFront"]={k:png(MR.restaurant_front(k)) for k in MR.RESTAURANTS}
+    outside["mall"]["img"]["films"]={f["id"]:[png(MR.film_frame(f["art"],b)) for b in range(3)] for f in mall_life["films"]}
     outside["bar"] = {"kind": "bar", "img": {"day": png(BAR.scene()), "night": png(BAR.scene(True)), "counter": png(BAR.counter()), "foreground": png(BAR.foreground()),
                                              "hover": {key: png(spr) for key, spr in BAR.interaction_sprites().items()}},
                       "feet": 107, "walk": [18, 322], "doorX": 128}
@@ -349,7 +364,7 @@ def main():
         # pick-a-thing panels: covers matched to titles by hash, dishes by look
         "items": {**{k: [png(c) for c in item_icons.covers(k)] for k in ("book", "tv", "game", "app")},
                   "dish": {k: [png(d) for d in v] for k, v in item_icons.dishes().items()}},
-        "skyIcons": {k: [png(f) for f in sky_icons.frames(k)] for k in sky_icons.NAMES},
+        "skyIcons": {**{k: [png(f) for f in sky_icons.frames(k)] for k in sky_icons.NAMES},"storm":[png(STORM.icon(i)) for i in range(4)]},
         "moodIcons": {k: [png(f) for f in mood_icons.frames(k)] for k in mood_icons.NAMES},
         "moods": [list(m) for m in mood_icons.EMOTIONS],
         "weatherMasks": weather_masks,
@@ -364,6 +379,8 @@ def main():
         "guide": guide_shots(),
         "barDrinks": {d["id"]: png(BAR.drink_icon(d["color"], d["glass"])) for d in bar_text["drinks"]},
         "dusk": {"warm":png(DUSK.sky("warm")),"rose":png(DUSK.sky("rose")),"sun":png(DUSK.sun())},
+        "mallPosters": {f["id"]:png(MR.poster(f["art"])) for f in mall_life["films"]},
+        "storm": {"bolts":[png(STORM.bolt(i)) for i in range(3)]},
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", chats_js()).replace("/*__PLACES_JS__*/", places_js()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text()).replace("/*__GUIDE_JS__*/", (SRC.parent / "guide_text.js").read_text())
@@ -376,6 +393,10 @@ def main():
     html = html.replace("/*__BAR_JS__*/", (SRC.parent / "bar.js").read_text())
     html = html.replace("/*__DUSK_JS__*/", (SRC.parent / "dusk.js").read_text())
     html = html.replace("/*__RESTROOMS_JS__*/", (SRC.parent / "restrooms.js").read_text())
+    html = html.replace("/*__MALL_LIFE_JS__*/", "const MALL_LIFE = " + json.dumps(mall_life,ensure_ascii=False) + ";\n" + (SRC.parent / "mall_life.js").read_text())
+    html = html.replace("/*__MALL_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "mall_cards.json").read_text() + ");")
+    html = html.replace("/*__STORM_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "storm_cards.json").read_text() + ");")
+    html = html.replace("/*__STORM_JS__*/", "const STORM_TEXT = " + (SRC.parent / "storm_text.json").read_text() + ";\n" + (SRC.parent / "storm.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 

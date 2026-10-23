@@ -199,6 +199,7 @@ piece side by side — review new pieces there at 6x).
 - **公园扩展（2026-10-23）**: `park_expansion.py` draws five independent
   342x118 areas: 湖边凉亭 ↔ 湖畔公厕 ↔ 公园中央 ↔ 野餐草坪 ↔ 樱花林·关东煮.
   User explicitly allows a transition, with no seamless artwork requirement.
+  用户取消了转场头顶的 1/2/3/4/5 区提示；不要恢复编号气泡，日记只写地点名。
   `prototype/demo/park.js` keeps `sim.place="park"`, saves `sim.park.zone`
   and `.seated`, uses short `wipe` transitions at the path's left/right edges.
   Click the path to walk freely, click the bench to approach and sit (true
@@ -444,6 +445,18 @@ bubble with a heart = 社交); they live in
 使用期间隐藏小人、禁止机会卡，渐进恢复需求，显示使用灯与进度，配套日记和对话。
 存档 v4 保留商场位置、搜寻/使用进度和酒吧如厕进度，并迁移旧存档；手动回家、
 酒吧打烊和饥饿/体力危险仍优先退出。`tools/check_restrooms.js` 检查上述流程。
+商场餐饮/影院扩展：`mall_rooms.py` 绘制三家餐厅、放映厅和 16 部原创像素电影，
+`mall_life.js/json` 复用厨房全菜谱与公共坐姿，餐桌前景须遮住腿部，影院用真实软椅。
+饥饿低于 25 优先在前方找餐厅，逐渐吃饱后继续逛；商场的娱乐和社交不自然下降。
+影院必须先选片再转场，16 部影片各有三段银幕画面；体力低于 20 在座位睡着，恢复
+至 85 后继续，离场娱乐补满。如厕仍可中断，手动离场/回家可用。餐饮和影院各有
+10 张情境机会卡、事件与对话，睡着时不打扰。存档 v5 保留餐饮/影片/补觉进度。
+雷雨：春秋雨天约四分之一、夏季约七成雨段为雷雨，冬季不自然出现。`storm.js`
+管理低频单次闪电、室外压暗、窗外白光和入室光照，减少动态模式改为弱而缓的光。
+户外不生成/显示市民，家中与户外有 42 组说明原因的反应（约四分之一正面）、
+10 张户外卡；天气情绪不自行叠加至极端。商场/酒吧不受光效、情绪和行人清除影响。
+雷雨计划、下次闪电与情绪间隔随存档保存，暂停及机会卡期间不推进闪电。
+`tools/check_mall_life.js` 和 `tools/check_storm.js` 检查新增行为和读档。
 月亮按用户提供的圆润深蓝参考：饱满底部、朝右上开口、一大一小两颗深蓝
 四角星；拒绝干瘦的月牙和亮白主体。仍保持 16x16 与轻微星光动效。
 

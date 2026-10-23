@@ -79,7 +79,7 @@ const helpers=()=>{
     });assert.equal(routes,18);
     const shops=await page.evaluate(()=>{
       let count=0;
-      for(const it of MALL.items.filter(it=>it.kind==='shop'&&it.id!=='restroom')){
+      for(const it of MALL.items.filter(it=>it.kind==='shop'&&STALL[it.id]&&it.id!=='cinema')){
         wcMall(19,-1,it.id);step(.3,.1);
         if(sim.place!=='mall'||!mallS.toilet||mallS.stop)throw Error('Cannot leave shop for WC: '+it.id);
         if(moods.has('stall_'+it.id))throw Error('Interrupted shopping paid out');
@@ -89,7 +89,7 @@ const helpers=()=>{
       wcMall();const room=MALL.items.find(it=>it.id==='restroom');mallS.x=room.stop+12;step(.3,.1);
       if(mallS.emergency||mallS.toilet.dynamic)throw Error('Ignored nearby WC');
       speed=0;return count;
-    });assert.equal(shops,8);
+    });assert.equal(shops,7);
     await page.evaluate(()=>{
       wcMall(65);const room=MALL.items.find(it=>it.id==='restroom');mallS.x=room.stop+25;speed=0;render();
     });
@@ -128,8 +128,8 @@ const helpers=()=>{
     assert.deepEqual(await page.evaluate(()=>{
       const old=snapshot();old.version=3;delete old.sim.mall;old.sim.bar={drink:'mojito',remaining:4};
       const upgraded=migrate(old);return [upgraded.version,upgraded.sim.mall,upgraded.sim.bar.toilet,upgraded.sim.bar.drink,upgraded.sim.bar.remaining];
-    }),[4,null,null,'mojito',4],'Legacy saves preserve existing progress');
+    }),[5,null,null,'mojito',4],'Legacy saves preserve existing progress');
     assert.deepEqual(errors,[]);
-    console.log('PASS: bar side-door click + all 6 seat routes; drink/menu privacy; WC pause/save/reload/closing; 18 forward mall searches at 3 speeds; 8 shop interruptions; sparse/nearby room reuse; mall search/use reloads; hit priority; home/exhaustion/rescue overrides');
+    console.log('PASS: bar side-door click + all 6 seat routes; drink/menu privacy; WC pause/save/reload/closing; 18 forward mall searches at 3 speeds; 7 shop interruptions; sparse/nearby room reuse; mall search/use reloads; hit priority; home/exhaustion/rescue overrides');
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

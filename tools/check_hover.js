@@ -13,6 +13,7 @@ const {chromium}=require(process.env.PW||'playwright');
     const checked=await page.evaluate(()=>{
       closeGuide();speed=0;lifeFlags.cards={seen:[],last:1e9};
       const sprites=[...Object.entries(IMG.click),...Object.entries(IMG.out.bar.hover)];
+      for(const [room,O]of Object.entries(IMG.out.mall.rooms))for(const [id,img]of Object.entries(O.hover))sprites.push([`${room}:${id}`,img]);
       for(const [zone,O]of Object.entries(IMG.out.park.zones))
         for(const [id,img]of Object.entries(O.hover))sprites.push([`${zone}:${id}`,img]);
       for(const it of MALL.items)sprites.push([`mall:${it.id}`,it.kind==='shop'?IMG.out.mall.hover[it.id]:IMG.out.mall.props[it.id]]);

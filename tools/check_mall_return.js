@@ -11,7 +11,7 @@ const {chromium} = require(process.env.PW || 'playwright');
     await page.waitForTimeout(1300);
     await page.evaluate(()=>{
       closeGuide(); speed=0;
-      window.atShop=(id='cinema', need=null, phase='inside')=>{
+      window.atShop=(id='arcade', need=null, phase='inside')=>{
         sim.place='mall'; sim.t=720; sim.mode='act'; sim.act='mall'; sim.actEnd=Infinity;
         sim.windup=null; sim.queue=[]; sim.player=true; sim.down=null; sim.graceUntil=0;
         sim.route=[[MALL.at,MALL.feet]]; sim.s=0; sim.target=0; sim.idleUntil=Infinity;
@@ -29,7 +29,7 @@ const {chromium} = require(process.env.PW || 'playwright');
     // Normal shopping already checked needs; action changes must not bypass it.
     for (const phase of ['windup','idle','walking','entering','inside']) {
       const r=await page.evaluate(phase=>{
-        atShop('cinema','energy',phase); step(.1,.03); speed=0;
+        atShop('arcade','energy',phase); step(.1,.03); speed=0;
         return {place:sim.place,stop:mallS.stop,goal:mallS.goal,windup:sim.windup};
       },phase);
       assert.equal(r.place,'home',`Urgent energy during ${phase}`);
@@ -38,16 +38,16 @@ const {chromium} = require(process.env.PW || 'playwright');
     }
     const count=await page.evaluate(()=>{
       let count=0;
-      for (const it of MALL.items.filter(it=>it.kind==='shop'&&it.id!=='restroom')) for (const need of Object.keys(sim.needs).filter(k=>k!=='bladder')) {
+      for (const it of MALL.items.filter(it=>it.kind==='shop'&&STALL[it.id]&&it.id!=='cinema')) for (const need of ['energy','hygiene']) {
         atShop(it.id,need); step(.1,.03);
         if (sim.place!=='home') throw new Error(`${it.id}: ${need} did not trigger home`);
         count++;
       }
       speed=0; return count;
     });
-    assert.ok(count>=40);
+    assert.ok(count>=14);
     assert.equal(await page.evaluate(()=>{
-      atShop('cinema',null,'windup');sim.needs.energy=20.005;step(.2,.06);speed=0;
+      atShop('arcade',null,'windup');sim.needs.energy=20.005;step(.2,.06);speed=0;
       return sim.place;
     }),'home','Natural decay crossing the threshold must interrupt a pending click');
     assert.equal(await page.evaluate(()=>{
@@ -55,14 +55,14 @@ const {chromium} = require(process.env.PW || 'playwright');
     }),true,'Healthy shopping must continue');
     assert.equal(await page.evaluate(()=>{
       atShop();sim.needs.fun=50;sim.t=mallS.stop.outAt;step(.1,.03);speed=0;
-      return sim.place==='mall' && mallS.stop.turned && sim.needs.fun>50 && moods.has('stall_cinema');
+      return sim.place==='mall' && mallS.stop.turned && sim.needs.fun>50 && moods.has('stall_arcade');
     }),true,'A completed healthy visit still grants its usual reward');
     assert.deepEqual(await page.evaluate(()=>{
-      atShop('cinema','energy');speed=0;const t=sim.t;step(0,0);
+      atShop('arcade','energy');speed=0;const t=sim.t;step(0,0);
       return [sim.place,sim.t===t,mallInside()];
     }),['mall',true,true],'Pause must not send her home');
     assert.deepEqual(await page.evaluate(()=>{
-      atShop('cinema','energy');showCard(CARDS.find(c=>c.at==='mall'));step(0,0);
+      atShop('arcade','energy');showCard(CARDS.find(c=>c.at==='mall'));step(0,0);
       const r=[sim.place,mallInside()];chooseCard('a',true);speed=0;return r;
     }),['mall',true],'Chance cards must pause automatic departure');
     await page.waitForFunction(()=>card===null);
@@ -74,7 +74,7 @@ const {chromium} = require(process.env.PW || 'playwright');
     assert.equal(await page.evaluate(()=>sim.place),'home','Return after rescue');
     // Use actual animation frames and the ordinary transition, too.
     await page.emulateMedia({reducedMotion:'no-preference'});
-    await page.evaluate(()=>{atShop('cinema','energy','windup');});
+    await page.evaluate(()=>{atShop('arcade','energy','windup');});
     await page.waitForFunction(()=>sim.place==='home'&&!wiping,null,{timeout:6000});
     const t=await page.evaluate(()=>realClock);
     await page.waitForTimeout(150);

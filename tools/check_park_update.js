@@ -19,8 +19,8 @@ const {chromium}=require(process.env.PW||'playwright');
         sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,100]));
         lifeFlags.cards={seen:[],last:1e9};moods.clear();arriveAt('park');speed=3;
       };
-      if(CARDS.length!==530||new Set(CARDS.map(c=>c.n)).size!==530)throw Error('Card IDs/count');
-      const cards=CARDS.filter(c=>c.service);
+      if(CARDS.length!==560||new Set(CARDS.map(c=>c.n)).size!==560)throw Error('Card IDs/count');
+      const cards=CARDS.filter(c=>c.at==='park'&&c.service);
       for(const c of cards)for(const key of ['a','b']){
         if(!c[key].label||c[key].out.length!==2)throw Error('Card choices');
         for(const o of c[key].out)if(!o.text||!o.say||!MOOD[o.mood.emo]||ML[o.id]?.name!==o.mood.name)throw Error('Card outcome/mood');

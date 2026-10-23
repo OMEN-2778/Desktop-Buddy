@@ -147,8 +147,7 @@ function parkCrossEdge() {
     sim.route = [[entry, next.feet]]; sim.s = 0; sim.target = 0;
     sim.strollX = target; sim.strollY = next.feet; sim.facing = dir;
     arriveAt('park');
-    log(`沿着公园小路，走到了 ${PARK_ZONES.indexOf(next)+1} 区·${next.name}。`);
-    showHint(`${PARK_ZONES.indexOf(next)+1} 区·${next.name}`);
+    log(`沿着公园小路，走到了${next.name}。`);
     if (sim.park.goal) parkRouteGoal(); else startAct('stroll');
   });
   return true;
@@ -159,13 +158,13 @@ function drawParkHover(ctx) {
 }
 function parkSetup() {
   parkVendor = null;
-  if (parkLayout().id !== 'grove') return;
+  if (parkLayout().id !== 'grove' || stormOutside()) return;
   parkVendor = makeNpc('clerk',{x:166,feet:85,layer:'stall'});
   parkVendor.look = doll.normalize({...parkVendor.look,gender:'m',style:'neat',topStyle:'shirt',top:'#337a78',bottomStyle:'trousers',acc:[]});
   parkVendor.ramps = doll.rampsOf(parkVendor.look); life.npcs.push(parkVendor);
 }
 function drawParkService(ctx, O) {
-  if (parkVendor) ctx.drawImage(npcCanvas(parkVendor,{expr:'happy',look:0,bob:0,sway:0,wave:null},'stand'),156,58);
+  if (parkVendor && !stormOutside()) ctx.drawImage(npcCanvas(parkVendor,{expr:'happy',look:0,bob:0,sway:0,wave:null},'stand'),156,58);
   ctx.drawImage(O.facilityFront,0,0);
   if (parkLayout().id === 'grove') {
     ctx.fillStyle = '#f7f6fb';

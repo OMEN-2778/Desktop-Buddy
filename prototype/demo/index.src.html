@@ -952,6 +952,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <button type="button" data-weather="" aria-pressed="true">自动</button>
         <button type="button" data-weather="clear" aria-pressed="false">晴</button>
         <button type="button" data-weather="rain" aria-pressed="false">下雨</button>
+        <button type="button" data-weather="storm" aria-pressed="false">雷雨</button>
         <button type="button" data-weather="snow" aria-pressed="false">下雪</button>
         <button type="button" id="nextSeason">跳到下个季节</button>
       </div>
@@ -1073,6 +1074,7 @@ async function loadAssets() {
   const deep = async v => typeof v === "string" ? loadImg(v) : Array.isArray(v) ? Promise.all(v.map(deep))
     : Object.fromEntries(await Promise.all(Object.entries(v).map(async ([k, x]) => [k, await deep(x)])));
   for (const [k, v] of Object.entries(D.outside)) IMG.out[k] = await deep(v.img);   // every picture of every place
+  IMG.storm = await deep(D.storm);
   IMG.dusk = {}; for (const [k,v] of Object.entries(D.dusk)) IMG.dusk[k]=await loadImg(v);
   IMG.win = {};
   for (const [k, v] of Object.entries(D.windows)) {
@@ -1121,6 +1123,7 @@ function buddyFeet() {
   const p = here();
   if (sim.mode === "down") return p;
   const lift = sim.place === "bar" ? barSeat(sim.bar?.seat)?.lift || 0
+    : mallVisitInside() && sim.mode !== "down" ? 4
     : parkEating() ? parkLayout().facility.lift
     : sim.place === "park" && sim.park?.seated ? parkLayout().bench.lift
     : sim.mode === "act" && (!PC_ACTS.includes(sim.act) || chairReady()) ? D.seatLifts[sim.act] || 0 : 0;
@@ -1194,7 +1197,7 @@ const EFFECT = {   // per game minute while doing it
   phone_call: { social: 2.2 }, phone_video: { social: 1.8, fun: 0.5 }, phone_feed: { social: 0.6, fun: 0.9 },
   phone_text: { social: 1.6 }, phone_game: { fun: 1.3 }, dance: { fun: 1.8, energy: -0.1, hygiene: -0.1 },
   park_toilet: { bladder: 22 }, park_eat: { hunger: 4, fun: .4 },
-  stroll: { fun: 0.5 }, bench: { fun: 0.35 }, mall: { fun: 0.6, social: 0.15 },
+  stroll: { fun: 0.5 }, bench: { fun: 0.35 }, mall: {},
 };
 // Pace (user: needs came back too fast): every activity but sleep takes
 // PACE times as long and fills needs PACE times slower, so a need takes a
@@ -1285,7 +1288,7 @@ function outingDest(h, why = outReason()) {
   const n = sim.needs, w = weather.kind, se = seasonOf(sim.t).i;
   if (h < 8.5 || h >= 22 || sim.t - (sim.lastOut ?? -1e9) < OUT_GAP) return null;
   if (n.hunger < 35 || n.energy < 35 || n.hygiene < 30 || n.bladder < 35 || sim.mode === "down") return null;
-  const bad = w === "rain" || w === "snow", hot = se === 1 && w === "clear" && h >= 11 && h < 16;
+  const bad = isRain(w) || w === "snow", hot = se === 1 && w === "clear" && h >= 11 && h < 16;
   const night = h >= 19, shop = h < 20.5 && !night;
   const wt = {
     front: bad ? 0 : why === "low" ? 2 : 2,
@@ -1387,6 +1390,8 @@ function finishAct() {
 
 // The player clicked a piece of furniture: drop what she's doing and go.
 function command(act, item = null) {
+  if (act === "mall_food" || act === "mall_film") { mallPlanVisit(act === "mall_food" ? "restaurant" : "cinema", item); return; }
+  if (sim.place === "mall" && act === "go_home" && mallS.visit) mallLeaveVisit(false,false);
   if (act === "park_food") { if (sim.place === "park") parkRequest("food", false, item?.id); return; }
   if (sim.place === "park" && act === "go_home" && sim.park) sim.park.goal = null;
   if (sim.place === "bar") {
@@ -1428,7 +1433,8 @@ function step(dtGame, dtReal) {
   for (const k of Object.keys(n)) {
     let d = -DECAY[k];
     if (sim.act === "sleep" && sim.mode === "act") d *= k === "energy" ? 0 : k === "bladder" ? 0.35 : 0.4;
-    if (eff[k] > 0 || (k === "bladder" && mallToiletInside())) d = 0;
+    if (eff[k] > 0 || (k === "bladder" && mallToiletInside()) || (sim.place === "mall" && ["fun","social"].includes(k))
+        || (mallVisitInside() && (k === "hunger" && mallS.visit.kind === "restaurant" || k === "energy" && mallSleeping()))) d = 0;
     n[k] = clamp(n[k] + (d + (eff[k] || 0)) * dtGame);
   }
   if (sim.mode === "act" && sim.act === "sleep" && !sim.nap) sim.sleptTonight += dtGame;
@@ -1461,7 +1467,7 @@ function step(dtGame, dtReal) {
   } else if (sim.mode === "act") {
     if (sim.talk && dtReal > 0) playTalk(dtReal);
     if (sim.place !== "home" && sim.act !== "go_home") {   // out: a need running red sends her home (user)
-      const red = redNeed();
+      const red = redNeed(sim.place === "mall" ? ["hunger","bladder","fun","social"] : []);
       if (red) { homeFor(red); sim.player = false; startAct("go_home"); return; }
       if (sim.act === "mall") mallStep(dtReal);
     }
@@ -1632,6 +1638,7 @@ function drawObjectHover(ctx, img, x = 0, y = 0) {
   drawHoverOutline(ctx, outlineCache.get(img), Math.round(x), Math.round(y));
 }
 function clickableAt(x, y) {
+  if (mallVisitInside()) return mallInteriorHit(x,y);
   if (sim.place === "bar") return barHit(x, y);
   if (sim.place === "park") return parkHit(x, y);
   const key = Math.floor(x) + "," + Math.floor(y);
@@ -1876,6 +1883,7 @@ function fit() {
 }
 
 function activityFrame(ms) {
+  if (mallVisitInside() && sim.mode !== "down") return mallRoomFrame(ms);
   // what Buddy looks like right now: frame params, pose, emote
   const a = sim.act, phase = Math.floor(ms / 600) % 2;
   if (reaction && realClock < reaction.until && sim.mode !== "down") {
@@ -2129,6 +2137,7 @@ function render() {
   } else if (fr.emote || down) bctx.drawImage(emoteCanvas(down ? "skull" : fr.emote), emoteAt[0], emoteAt[1] + (down ? Math.floor(realClock * 2) % 2 : 0));
   if (down) drawRevive(bctx);
   drawClickFx(bctx);
+  drawStorm(bctx);
   vctx.imageSmoothingEnabled = false;
   vctx.clearRect(0, 0, view.width, view.height);   // (the house has see-through edges: no leftovers from outside)
   vctx.drawImage(buf, 0, 0, view.width, view.height);
@@ -2139,12 +2148,12 @@ function render() {
 // shower; winter gets snow. Each day rolls its episodes once (lazily).
 const SEASON_DAYS = 14;
 const SEASONS = [
-  { name: "春", kind: "rain", p: 0.32 },
-  { name: "夏", kind: "rain", p: 0.28 },
-  { name: "秋", kind: "rain", p: 0.26 },
+  { name: "春", kind: "rain", p: 0.32, storm:0.25 },
+  { name: "夏", kind: "rain", p: 0.46, storm:0.72 },
+  { name: "秋", kind: "rain", p: 0.26, storm:0.28 },
   { name: "冬", kind: "snow", p: 0.45 },
 ];
-const WEATHER_NAME = { clear: "晴", rain: "小雨", snow: "下雪" };
+const WEATHER_NAME = { clear: "晴", rain: "小雨", storm: "雷雨", snow: "下雪" };
 function seasonOf(t) {
   const d = Math.floor(t / 1440);
   return { i: Math.floor(d / SEASON_DAYS) % 4, day: d % SEASON_DAYS + 1 };
@@ -2157,7 +2166,7 @@ function planDay(d) {
     for (const p of [s.p, s.p * 0.3]) {           // usually none, sometimes one, rarely two
       if (Math.random() >= p) break;
       const from = d * 1440 + Math.floor(Math.random() * 22 * 60);
-      eps.push({ from, to: from + 90 + Math.random() * 270, kind: s.kind });
+      eps.push({ from, to: from + 90 + Math.random() * 270, kind: s.storm && Math.random()<s.storm ? "storm" : s.kind });
     }
     weather.plan.set(d, eps);
   }
@@ -2177,6 +2186,7 @@ function updateWeather(dtGame) {
     const was = weather.kind;
     weather.kind = w;
     lifeWeather(was, w);
+    if(w === "storm"){ weather.nextLightning=sim.t+4; if(stormExposed()){log("雷雨来了，天色压低，街上的人纷纷躲进了室内。");if(stormOutside()){life.npcs=[];life.talkQ=null;clearNpcPills();}} }
     if (w === "snow") log("下雪了！窗外白白的一片。");
     else if (w === "clear") log(was === "snow" ? "雪停了。" : "雨停了。");
   }
@@ -2231,10 +2241,10 @@ function drawWeather(ctx, night) {
     if (w === "clear") continue;
     // grey sky + falling rain / drifting snow, only on the glass
     masked(ctx, m, m.glass, win.x, win.y, g => {
-      g.fillStyle = w === "rain" ? "rgba(66, 78, 100, 0.5)" : "rgba(196, 206, 222, 0.3)";
+      g.fillStyle = isRain(w) ? "rgba(66, 78, 100, 0.5)" : "rgba(196, 206, 222, 0.3)";
       g.fillRect(0, 0, m.w, m.h);
       const seed = id.length * 13 + win.x;
-      if (w === "rain") {
+      if (isRain(w)) {
         g.fillStyle = night ? "rgba(170, 190, 225, 0.75)" : "rgba(232, 240, 252, 0.85)";
         for (let i = 0; i < 22; i++) {
           const x0 = hash(seed + i) * (m.w + 6), sp = 26 + hash(seed + i * 3) * 10;
@@ -2250,6 +2260,7 @@ function drawWeather(ctx, night) {
         }
       }
     });
+    if(w === "storm")stormWindowFlash(ctx,win,m);
   }
 }
 
@@ -2449,7 +2460,7 @@ const emoWord = (key, level) => (T.words[key] ? T.words[key][level - 1] : MOOD[k
 
 // ---------- condition moodlets: checked a few times a second
 const lifeFlags = { bedHair: false, firstSnowYear: -1, windowSince: {}, watered: { water_living: 0, water_study: 0 } };
-function asleep() { return sim.mode === "act" && sim.act === "sleep"; }
+function asleep() { return sim.mode === "act" && sim.act === "sleep" || mallSleeping(); }
 function band(v, lo, hi) { return v < hi && v >= lo; }
 const COND = {
   hungry1: n => band(n.hunger, 15, 40), hungry3: n => n.hunger < 15,
@@ -2463,7 +2474,7 @@ const COND = {
   stuffy: () => Object.entries(windowState).some(([id, st]) => st === "drawn" && sim.t - (lifeFlags.windowSince[id] ?? sim.t) > 1440),
   lampGlow: () => nightness(hour()) > 0.5 && lamps.bed_lamp && !asleep() && roomAt(here()) === "bedroom",
   plantWilt: () => Object.values(lifeFlags.watered).some(t => sim.t - t > 4320),
-  rainy: () => weather.kind === "rain",
+  rainy: () => isRain(weather.kind),
   hot: () => seasonOf(sim.t).i === 1 && weather.kind === "clear" && hour() >= 12 && hour() < 16,
 };
 function updateConds() {
@@ -2599,8 +2610,7 @@ function lifeFinish(act) {
 }
 function lifeWeather(was, now) {
   const se = seasonOf(sim.t).i, h = hour(), year = Math.floor(sim.t / (1440 * SEASON_DAYS * 4));
-  if (was === "rain" && now !== "rain" && h >= 7 && h < 18 && Math.random() < 0.3) addMood("rainbow");
-  if (now === "rain" && se === 1 && Math.random() < 0.25) addMood("thunder", { words: !asleep() });
+  if (isRain(was) && !isRain(now) && h >= 7 && h < 18 && Math.random() < 0.3) addMood("rainbow");
   if (now === "snow" && lifeFlags.firstSnowYear !== year) { lifeFlags.firstSnowYear = year; addMood("firstSnow", { words: !asleep() }); }
 }
 function lifeSeason(i) { addMood(["spring", "summer", "autumn", "winter"][i], { words: false }); }
@@ -2649,7 +2659,7 @@ const EVENTS = [
 const WHEN = {
   morning: c => c.awake && c.h >= 6 && c.h < 10, day: c => c.awake && c.day, evening: c => c.awake && c.h >= 18 && c.h < 22,
   night: c => c.awake && (c.h >= 22 || c.h < 4), sleeping: c => c.sleeping,
-  rain: () => weather.kind === "rain", snow: () => weather.kind === "snow", clear: c => c.clear, windowOpen: c => c.open,
+  rain: () => isRain(weather.kind), snow: () => weather.kind === "snow", clear: c => c.clear, windowOpen: c => c.open,
   tv: c => c.act === "tv", computer: c => !!c.act && (c.act === "computer" || c.act.startsWith("pc_")), cooking: c => c.act === "cook",
   reading: c => c.act === "read", bath: c => c.act === "bath", walking: () => sim.mode === "walk", phone: c => !!c.act && c.act.startsWith("phone_"),
   spring: c => c.se.i === 0, summer: c => c.se.i === 1, autumn: c => c.se.i === 2, winter: c => c.se.i === 3,
@@ -2712,6 +2722,7 @@ function lifeCtx() {          // what the event / card conditions look at
 const eventLast = {};
 let lastHour = -1, lastFestivalDay = 0;
 function rollEvents() {
+  if (mallVisitInside()) return; // Rooms have their own context, dialogue and chance cards.
   const hNow = Math.floor(sim.t / 60);
   if (hNow === lastHour) return;
   lastHour = hNow;
@@ -2766,7 +2777,7 @@ function checkCollapse() {
 }
 function collapse(cause) {
   if (sim.act === "dress") closeWardrobe();
-  if (sim.place === "mall") { mallS.stop = null; mallS.goal = null; mallS.toilet = null; }
+  if (sim.place === "mall") { if(mallVisitInside())mallLeaveVisit(false,false);mallS.stop = null; mallS.goal = null; mallS.toilet = null; mallS.visit = null; }
   if (sim.place === "bar" && sim.bar) sim.bar.toilet = null;
   closeRing(); cancelRescue();
   const p = here();
@@ -2804,7 +2815,7 @@ function thought() {
   if (h >= 6 && h < 9) add(sc.wake); else if (h >= 11.5 && h < 13.5) add(sc.noon);
   else if (h >= 17 && h < 19) add(sc.dusk); else if (h >= 22.5 || h < 5) add(sc.late);
   if (h >= 21 || h < 5) add(sc.night);
-  add(weather.kind === "rain" ? sc.rain : weather.kind === "snow" ? sc.snow : sc.sunny);
+  add(isRain(weather.kind) ? sc.rain : weather.kind === "snow" ? sc.snow : sc.sunny);
   add([sc.spring, sc.summer, sc.autumn, sc.winter][se]);
   const choices = pool.filter(([t]) => t !== lastSaid);
   const [t, vars] = pick(choices.length ? choices : pool);
@@ -3148,6 +3159,7 @@ function syncUI() {
   skyEl.setAttribute("aria-label", `时间与天气：${skyText()}`);
   if (!skyTip.hidden) skyTip.textContent = skyText();
   const doing = sim.place === "mall" && mallS.toilet ? (mallToiletInside() ? "使用商场卫生间" : "寻找商场卫生间")
+    : sim.place === "mall" && mallS.visit ? mallDoing()
     : sim.place === "bar" ? (sim.bar.toilet ? (barToiletInside() ? "使用酒吧卫生间" : "走向右侧卫生间") : sim.mode === "walk" ? "走向座位" : sim.bar.drink ? `品尝${BAR_DRINKS[sim.bar.drink].name}` : sim.bar.seat ? "坐着听音乐" : "欣赏演出")
     : sim.mode === "walk" ? `走去${ACTS[sim.act].label}` : sim.mode === "act" ? ACTS[sim.act].label : "闲着";
   document.getElementById("doing").firstChild.textContent = `正在：${doing}`;
@@ -3446,7 +3458,7 @@ view.addEventListener("click", e => {
   if (buddyHit(x, y)) {
     if (wasOpen) return;                          // a second click on her closes the menu
     if (sim.mode === "act" && sim.act === "sleep") { log(`你戳了戳${nameOf()}，${ta()}咂咂嘴继续睡。`); return; }
-    openRing(sim.place === "bar" ? "bar" : sim.place === "park" && (sim.park?.seated || parkEating()) ? "park_seated" : AWAY.has(sim.place) ? "away" : "buddy");
+    openRing(mallVisitInside() ? "mall_room" : sim.place === "bar" ? "bar" : sim.place === "park" && (sim.park?.seated || parkEating()) ? "park_seated" : AWAY.has(sim.place) ? "away" : "buddy");
     return;
   }
   const id = clickableAt(x, y);
@@ -3473,6 +3485,7 @@ const RINGS = {
   // out at the park / mall / beach (user): clicking her offers the way home
   park_seated: [["name", null, "label"], ["chat", "聊聊天"], ["pat", "摸摸头"], ["park_stand", "站起来"], ["go_home", "回家"]],
   away: [["name", null, "label"], ["chat", "聊聊天"], ["pat", "摸摸头"], ["go_home", "回家"]],
+  mall_room: [["name", null, "label"], ["mall_leave", "返回商场"], ["go_home", "回家"]],
   video: [["talk:dad", "和爸爸"], ["talk:mom", "和妈妈"], ["talk:friend", "和朋友"], ["back", "返回", "back"]],
   forum: [["feed:yinfu", "刷音符"], ["feed:xiaohongben", "刷小红本"], ["feed:shudong", "逛树洞岛"], ["feed:lengzhishi", "逛冷知识研究所"], ["back", "返回", "back"]],
 };
@@ -3603,6 +3616,7 @@ document.addEventListener("pointerdown", e => { if (ringOf && !ringEl.contains(e
 document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) closeRing(); });
 let lastChat = -1e9;
 function ringPick(id) {
+  if (id === "mall_leave") { closeRing();mallLeaveVisit(false);return; }
   if (id === "park_stand") { parkStand(); return; }
   if (id.startsWith("bar_")) {
     closeRing();
@@ -3885,7 +3899,7 @@ function throughDoor(to) {
     showHint("现在酒吧还没开门哦！"); return;
   }
   sim.mode = "idle"; sim.act = null; sim.idleUntil = Infinity;
-  if (sim.place === "mall") { mallS.stop = null; mallS.goal = null; mallS.hover = null; mallS.pointer = null; mallS.toilet = null; mallS.emergency = null; }
+  if (sim.place === "mall") { mallS.stop = null; mallS.goal = null; mallS.hover = null; mallS.pointer = null; mallS.toilet = null; mallS.emergency = null; mallS.visit = null; mallS.foodFront = null; mallS.menuShop = null; }
   sim.windup = null; cancelRescue();
   hoverId = null; hoverBuddy = false; glow = null; walkMark = null;
   closeRing(); closePicker(); clearNpcPills();
@@ -3912,7 +3926,7 @@ function chooseOutside() {
   if (sim.place === "park" && parkNeedGoal()) {
     sim.park = { ...parkState(), goal: parkNeedGoal() }; return parkGoalAction();
   }
-  const red = redNeed();
+  const red = redNeed(sim.place === "mall" ? ["fun","social","hunger","bladder"] : []);
   if (red) { homeFor(red); return "go_home"; }   // a need ran red: home to sort it out (user)
   if (sim.outBack != null && (sim.t >= sim.outBack || hour() >= (sim.outWhy === "low" ? 23.5 : 22.5) || hour() < 5)) {
     const back = ((OUTING_TEXT.back || {})[sim.outWhy]) || ["玩够啦，回家吧", "有点累了，回家", "不早了，回家吧"];
@@ -3933,6 +3947,7 @@ function chooseOutside() {
 }
 // a click outside: the door -> home; anywhere else -> she walks there
 function outsideClick(id, x, y) {
+  if (mallVisitInside()) { mallInteriorClick(id);return; }
   if (sim.place === "bar") { barClick(id, x, y); return; }
   if (sim.place === "park") { parkClick(id, x, y); return; }
   if (id === "out_door") { useFurniture(id, true); command("go_home"); return; }
@@ -3975,7 +3990,7 @@ const SEASON_KEYS = ["spring", "summer", "autumn", "winter"];
 const life = { t: realClock, wet: 0, birds: [], flies: [], bits: [], nextBirds: 0 };
 function outsideLife(dt) {
   const O = OUT[sim.place], se = seasonOf(sim.t).i, h = hour(), day = h >= 7 && h < 18.5, w = weather.kind;
-  life.wet += ((w === "rain" ? 1 : 0) - life.wet) * Math.min(1, dt * (w === "rain" ? 0.8 : 0.08));   // dries slowly
+  life.wet += ((isRain(w) ? 1 : 0) - life.wet) * Math.min(1, dt * (isRain(w) ? 0.8 : 0.08));   // dries slowly
   const p = here();
   // sparrows: now and then a few fly in, hop and peck, and scatter when she's close
   if (day && w === "clear" && !life.birds.length && realClock > life.nextBirds) {
@@ -4040,7 +4055,7 @@ function drawOutsideLife(ctx) {
 }
 function drawOutsideWeather(ctx) {
   const w = weather.kind, L = OUT[sim.place];
-  if (w === "rain") {
+  if (isRain(w)) {
     ctx.fillStyle = "rgba(220, 232, 250, 0.7)";
     for (let i = 0; i < 80; i++) {
       const x0 = hash(i * 7.3) * (W + 30), sp = 60 + hash(i * 3.1) * 30;
@@ -4119,6 +4134,7 @@ function renderOutside() {
   drawYouMark(bctx, fr.emote);
   drawWalkMark(bctx);
   drawClickFx(bctx);
+  drawStorm(bctx);
   vctx.imageSmoothingEnabled = false;
   vctx.clearRect(0, 0, view.width, view.height);   // (the house has see-through edges: no leftovers from outside)
   vctx.drawImage(buf, 0, 0, view.width, view.height);
@@ -4198,7 +4214,7 @@ function arriveAt(place) {                       // fresh life for the new place
     life.ducks = [0, 1, 2].map(i => ({ x: cx - rx + 14 + Math.random() * (rx * 2 - 28), y: cy - 2 + (i % 2) * 5, dir: Math.random() < 0.5 ? -1 : 1, dip: 0, t: Math.random() * 5 }));
   }
   if (place === "mall") {
-    Object.assign(mallS, { x: Math.random() * OUT.mall.nearW, dist: 0, dir: -1, goal: null, stop: null, hover: null, pointer: null, toilet: null, emergency: null });
+    Object.assign(mallS, { x: Math.random() * OUT.mall.nearW, dist: 0, dir: -1, goal: null, stop: null, hover: null, pointer: null, toilet: null, emergency: null, visit:null, foodFront:null, menuShop:null });
     mallS.shoppers = [0, 1, 2, 3, 4, 5].map(i => ({ k: i % 5, x: Math.random() * OUT.mall.farW, dir: i % 2 ? 1 : -1, v: 5 + Math.random() * 5 }));
   }
   npcSetup(place);
@@ -4266,9 +4282,10 @@ function npcFrame(n) {
 const npcX = n => n.u != null ? onScreen(n.u) : n.x;
 const npcFeet = n => n.feet - (n.sit ? n.seatLift || 0 : 0);
 function drawNpcs(ctx, layer) {
+  if(stormOutside())return;
   for (const n of life.npcs || []) {
     if (n.layer !== layer || n.gone) continue;
-    if (sim.place === "mall" && n.item && mallCoveredByRestroom(MALL.items.find(it=>it.id===n.item))) continue;
+    if (sim.place === "mall" && n.item && mallCoveredByService(MALL.items.find(it=>it.id===n.item))) continue;
     const x = npcX(n);
     if (x < -20 || x > W + 20) continue;
     const [f, pose] = npcFrame(n);
@@ -4294,6 +4311,7 @@ const PLACE_NPC = {
   mall: { lanes: [[107, "back"], [114, "front"]], gap: [3, 8], roles: [["shopper", 0.75], ["kid", 0.25]], speed: [9, 15] },
 };
 function npcSetup(place) {
+  if(stormOutside()){life.npcs=[];clearNpcPills();return;}
   life.npcs = []; life.npcNext = realClock + 1 + Math.random() * 3; life.chatNext = realClock + 6 + Math.random() * 8;
   life.talkQ = null; life.npcTalked = new WeakSet();
   clearNpcPills();
@@ -4392,7 +4410,7 @@ function placeWhen(w) {
   const se = seasonOf(sim.t).i, h = hour(), k = weather.kind;
   switch (w) {
     case "spring": return se === 0; case "summer": return se === 1; case "autumn": return se === 2; case "winter": return se === 3;
-    case "rain": return k === "rain"; case "snow": return k === "snow";
+    case "rain": return isRain(k); case "snow": return k === "snow";
     case "night": return h >= 19.5 || h < 5.5; case "morning": return h >= 6 && h < 10; case "evening": return h >= 17 && h < 20;
     case "day": return h >= 9 && h < 17 && k === "clear";
     case "ship": return !!life.ship; case "boat": return !!life.boat;
@@ -4429,7 +4447,7 @@ function stepTalk() {
   if (q.i === q.lines.length) { sim.needs.social = clamp(sim.needs.social + 2); }
 }
 function placeChatter() {                       // now and then: a stranger's line, a word with one passing, or her own thought
-  if (mallToiletInside()) return;
+  if (mallToiletInside() || mallVisitInside() || stormOutside()) return;
   if (!PT() || sim.mode === "down" || life.talkQ || realClock < life.chatNext) return;
   const busy = !!(mallS.stop && sim.place === "mall");
   if (life.tagNext) {                           // a ship / a speedboat just came into view
@@ -4454,6 +4472,7 @@ function mallStallTalk(it) {                     // at a kiosk / 地摊: its sel
   else if (n) npcLine(n, n.role === "hawker" ? `hawk_${it.id}` : "clerk");
 }
 function npcTick(dt, run) {
+  if(stormOutside()){life.npcs=[];clearNpcPills();return;}
   if (run) stepNpcs(dt);
   stepTalk();
   if (run) placeChatter();
@@ -4463,12 +4482,13 @@ function npcTick(dt, run) {
 // mallS.x is the spot on the near strip right under her; walking left it
 // shrinks and the strips slide right: upstairs (far, hazed) at 0.45, the
 // hanging decorations at 0.75, our side of the corridor at full speed.
-const mallS = { x: 0, dist: 0, dir: -1, goal: null, stop: null, shoppers: [], seen: {}, hover: null, pointer: null, toilet: null, emergency: null };
+const mallS = { x: 0, dist: 0, dir: -1, goal: null, stop: null, shoppers: [], seen: {}, hover: null, pointer: null, toilet: null, emergency: null, visit:null, foodFront:null, menuShop:null };
 const MALL = OUT.mall;
 const wrapNear = d => ((d % MALL.nearW) + MALL.nearW * 1.5) % MALL.nearW - MALL.nearW / 2;   // nearest copy
 const onScreen = u => MALL.at + wrapNear(u - mallS.x);                   // a near-strip x on screen
 const itemX = it => onScreen(it.stop);                                   // where she'd stand for it
 function itemAt(x, y) {
+  if (mallVisitInside()) return null;
   if (sim.place !== "mall" || y > MALL.feet + 3) return null;
   let best = null;
   for (const it of mallItems()) {
@@ -4483,6 +4503,7 @@ function itemAt(x, y) {
 function mallGoTo(it) {
   if (mallS.toilet) { showHint("先用完卫生间，再继续逛吧。"); return; }
   if (it.id === "restroom") { mallSeekToilet(false,it); return; }
+  if (it.id === "cinema" || MALL_RESTAURANTS[it.id]) { mallChoose(it.id === "cinema" ? "cinema" : "restaurant",it);return; }
   const d = itemX(it) - MALL.at;
   clickFx(Math.round(itemX(it)), MALL.feet);
   mallS.stop = null;
@@ -4491,6 +4512,8 @@ function mallGoTo(it) {
   if (sim.act !== "mall" || sim.mode !== "act") command("mall");
 }
 function stopAt(it) {                            // shops: a look, in she goes, out again; stalls: a look
+  if (mallS.visit && mallS.visit.shop === it.id) { mallEnterVisit();return; }
+  if (it.id === "cinema" || MALL_RESTAURANTS[it.id]) { mallChoose(it.id === "cinema" ? "cinema" : "restaurant",it);return; }
   if (it.id === "restroom") { mallEnterToilet(it); return; }
   const shop = it.kind === "shop", inside = shop ? STALL[it.id].inside : 0;
   mallS.goal = null;
@@ -4506,7 +4529,7 @@ function stallVisit(it) {                        // she turns round with what sh
   addMood(`stall_${it.id}`, { words: false });
   speak(pick(s.say), true);
 }
-const mallInside = () => mallToiletInside() || !!(sim.place === "mall" && mallS.stop && mallS.stop.inAt != null && sim.t >= mallS.stop.inAt && sim.t < mallS.stop.outAt);
+const mallInside = () => mallToiletInside() || mallVisitInside() || !!(sim.place === "mall" && mallS.stop && mallS.stop.inAt != null && sim.t >= mallS.stop.inAt && sim.t < mallS.stop.outAt);
 function mallStep(dtReal) {
   if (!mallS.toilet && mallS.emergency && Math.abs(itemX(mallS.emergency)-MALL.at)>W/2+80) mallS.emergency=null;
   if (reaction && realClock < reaction.until) return;      // she stops to wave back
@@ -4526,7 +4549,7 @@ function mallStep(dtReal) {
   const before = MALL.items.map(it => itemX(it) - MALL.at);
   mallS.x += mallS.dir * v; mallS.dist += v;
   if (!mallS.goal) MALL.items.forEach((it, i) => {          // now and then she stops at one by herself
-    if (it.id === "restroom" || mallCoveredByRestroom(it)) return;
+    if (it.id === "restroom" || MALL_RESTAURANTS[it.id] || it.id === "cinema" || mallCoveredByService(it)) return;
     const now = itemX(it) - MALL.at;
     if (Math.sign(now) !== Math.sign(before[i]) && Math.abs(now) < 4 && sim.t - (mallS.seen[it.id] ?? -1e9) > 150 && Math.random() < (it.kind === "shop" ? 0.12 : 0.25)) stopAt(it);
   });
@@ -4601,6 +4624,7 @@ function drawYouMark(ctx, emote) {
 }
 function finishOut(fr, emoteAt) {
   const down = sim.mode === "down";
+  drawStorm(bctx);
   drawYouMark(bctx, fr.emote);
   if (fr.emote || down) bctx.drawImage(emoteCanvas(down ? "skull" : fr.emote), emoteAt[0], emoteAt[1] + (down ? Math.floor(realClock * 2) % 2 : 0));
   if (down) drawRevive(bctx);
@@ -4691,7 +4715,7 @@ function renderPark(dt) {
   }
   bctx.drawImage(O.props, 0, 0); // Buildings cover distant clouds and planes.
   if (life.wet > 0.02) { bctx.globalAlpha = life.wet; bctx.drawImage(O.wet, 0, 0); bctx.globalAlpha = 1; }
-  if (run) life.wet += ((w === "rain" ? 1 : 0) - life.wet) * Math.min(1, dt * (w === "rain" ? 0.8 : 0.08));
+  if (run) life.wet += ((isRain(w) ? 1 : 0) - life.wet) * Math.min(1, dt * (isRain(w) ? 0.8 : 0.08));
   for (const d of life.ducks) {                  // ducks paddle about the pond
     const [cx, , rx] = L.pond;
     if (run) {
@@ -4831,7 +4855,7 @@ function renderBeach(dt) {
   }
   life.gulls = life.gulls.filter(g => !g.gone);
   if (life.wet > 0.02) { bctx.globalAlpha = life.wet; bctx.drawImage(O.wet, 0, 0); bctx.globalAlpha = 1; }
-  if (run) life.wet += ((w === "rain" ? 1 : 0) - life.wet) * Math.min(1, dt * (w === "rain" ? 0.8 : 0.08));
+  if (run) life.wet += ((isRain(w) ? 1 : 0) - life.wet) * Math.min(1, dt * (isRain(w) ? 0.8 : 0.08));
   if (weather.snowCover > 0.02) { bctx.globalAlpha = Math.min(1, weather.snowCover); bctx.drawImage(O.snow, 0, 0); bctx.globalAlpha = 1; }
   npcTick(dt, run);
   drawNpcs(bctx, "back");
@@ -4847,6 +4871,7 @@ function renderBeach(dt) {
 // ---------------------------------------------------------------- 商场
 const mod = (a, n) => ((a % n) + n) % n;
 function renderMall(dt) {
+  if (mallVisitInside()) { renderMallRoom();return; }
   if (mallS.pointer) mallS.hover = buddyHit(...mallS.pointer) ? null : itemAt(...mallS.pointer);
   const L = MALL, O = IMG.out.mall, se = SEASON_KEYS[seasonOf(sim.t).i], f = outdoorNightness(hour()), run = speed && !cardHolds() && !wiping;
   bctx.clearRect(0, 0, W, H);
@@ -4855,7 +4880,7 @@ function renderMall(dt) {
   tile(O.far, offF, L.farW);
   for(let x=offF-L.farW;x<W;x+=L.farW) drawDuskSky(bctx,O.skyNight,8,x);
   if (f > 0) { bctx.globalAlpha = Math.min(1, f * 1.2); tile(O.skyNight, offF, L.farW); bctx.globalAlpha = 1; }
-  if (weather.kind === "rain") {                 // rain on the skylight
+  if (isRain(weather.kind)) {                 // rain on the skylight
     bctx.fillStyle = "rgba(220, 232, 250, 0.6)";
     for (let i = 0; i < 24; i++) bctx.fillRect(Math.floor(hash(i * 3.1) * W), Math.floor((realClock * 9 + hash(i * 7.7) * 8) % 8), 1, 2);
   } else if (weather.kind === "snow") {
@@ -4875,7 +4900,7 @@ function renderMall(dt) {
   drawMallRestroom(bctx);
   npcTick(dt, run);
   drawNpcs(bctx, "counter");                     // kiosk staff behind their counters
-  for (const it of L.items) if (O.props[it.id] && !mallCoveredByRestroom(it)) {
+  for (const it of L.items) if (O.props[it.id] && !mallCoveredByService(it)) {
     const x0 = mod(it.px - mallS.x + L.at, L.nearW);
     for (const x of [x0, x0 - L.nearW]) if (x > -60 && x < W) bctx.drawImage(O.props[it.id], Math.round(x), it.top);
   }
@@ -4944,6 +4969,8 @@ function playTalk(dt) {
 /*__BAR_CARDS_JS__*/
 /*__SLEEP_CARDS_JS__*/
 /*__PARK_CARDS_JS__*/
+/*__MALL_CARDS_JS__*/
+/*__STORM_CARDS_JS__*/
 for (const cd of CARDS) for (const k of ["a", "b"]) cd[k].out.forEach((o, i) => { if (o.mood) ML[o.id = `card${cd.n}${k}${i}`] = { ...o.mood }; });
 const CARD_GAP = 330, CARD_CHANCE = 0.3;         // game minutes between cards, odds per hour after that
 const CARD_GAP_OUT = 60, CARD_CHANCE_OUT = 0.6;   // out and about they come much more often (user)
@@ -4964,16 +4991,17 @@ let card = null;            // { cd, vars, phase: ask | wait | result | closing,
 let swallowUntil = 0;       // the click that closed a result does nothing else
 const cardWhen = new Map();
 function cardFits(cd, c) {
+  if(cd.weather && cd.weather !== weather.kind)return false;
   if (!cd.when) return true;
   if (!cardWhen.has(cd)) { const any = cd.when.split("|").map(whenOk); cardWhen.set(cd, c => any.some(f => f(c))); }
   return cardWhen.get(cd)(c);
 }
-function rollCard(c, service = sim.place === "park" && parkEating() ? "food" : null) {
+function rollCard(c, service = sim.place === "park" && parkEating() ? "food" : mallVisitInside() ? mallS.visit.kind : null) {
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   const out = sim.place !== "home";               // outside: that place's own cards (cd.at)
-  if (!prefs.guided || guideOn || card || !c.awake || parkInsideToilet() || (sim.place === "mall" && mallS.toilet) || (sim.place === "bar" && sim.bar?.toilet) || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside())
+  if (!prefs.guided || guideOn || card || !c.awake || parkInsideToilet() || (sim.place === "mall" && mallS.toilet) || (sim.place === "bar" && sim.bar?.toilet) || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside() && !mallVisitInside())
     || sim.t - st.last < (out ? CARD_GAP_OUT : CARD_GAP) || Math.random() >= (out ? CARD_CHANCE_OUT : CARD_CHANCE)) return false;
-  const any = CARDS.filter(cd => !cd.on && (cd.at || "home") === sim.place
+  const any = CARDS.filter(cd => !cd.on && (cd.at === "storm" ? stormOutside() : (cd.at || "home") === sim.place)
     && (service ? cd.service === service : !cd.service));
   let fresh = any.filter(cd => !st.seen.includes(cd.n));
   if (!fresh.length) {
@@ -5028,6 +5056,7 @@ function walkMoments(a, b) {
 // what the card can mention: the dish she's cooking / eating, the book, the show...
 function cardVars() {
   const v = { ...(sim.item && sim.item.vars) };
+  if (mallVisitInside()) Object.assign(v,mallVisitVars());
   if (sim.act === "eat" && sim.meal && sim.meal.vars) Object.assign(v, sim.meal.vars);
   return v;
 }
@@ -5410,7 +5439,7 @@ document.addEventListener("keydown", e => {
 // a browser keeps it in localStorage. With 自动保存 on it is saved every
 // 5 minutes, when the page is hidden or closed, and after a look change;
 // off, only 保存 writes it. Game time waits while the game is closed.
-const SAVE_VERSION = 4, SAVE_KEY = "buddy-save";
+const SAVE_VERSION = 5, SAVE_KEY = "buddy-save";
 const store = TAURI ? {
   load: async () => { const t = await TAURI.core.invoke("load_save"); return t ? JSON.parse(t) : null; },
   save: async obj => TAURI.core.invoke("write_save", { data: JSON.stringify(obj) }),
@@ -5434,7 +5463,7 @@ function snapshot() {
     moods: [...moods].filter(([id]) => ML[id] && !id.startsWith("test_")).map(([id, m]) => [id, m.until, m.t]),
     flags: lifeFlags, events: eventLast, lastFestivalDay, namedAs,
     house: { lamps, windows: windowState },
-    weather: { plan: [...weather.plan], snowCover: weather.snowCover, season: weather.season, skySeed:weather.skySeed },
+    weather: { plan: [...weather.plan], snowCover: weather.snowCover, season: weather.season, skySeed:weather.skySeed, nextLightning:weather.nextLightning, lastStormReaction:weather.lastStormReaction, lastStormEvent:weather.lastStormEvent },
     diary: [...logEl.children].map(li => li.classList.contains("day") ? ["day", li.textContent]
       : ["", li.querySelector("time").textContent, li.querySelector("span").textContent, ...(li._talk ? [li._talk] : [])]),
   };
@@ -5452,6 +5481,7 @@ function migrate(sv) {
   if (sv.version < 4) {
     sv = { ...sv, version: 4, sim: { ...sv.sim, mall: null, bar: sv.sim.bar ? { ...sv.sim.bar, toilet: null } : null } };
   }
+  if (sv.version < 5) sv = { ...sv, version:5, sim:{ ...sv.sim, mall:sv.sim.mall ? { ...sv.sim.mall, visit:null, foodFront:null } : null } };
   return sv;
 }
 function restore(sv) {
@@ -5502,6 +5532,8 @@ function restore(sv) {
   namedAs = sv.namedAs || look.name;
   Object.assign(lamps, sv.house?.lamps || {});
   Object.assign(windowState, sv.house?.windows || {});
+  for(const k of ["nextLightning","lastStormReaction","lastStormEvent"])weather[k]=Number.isFinite(sv.weather?.[k])?sv.weather[k]:null;
+  stormFX.left=0;
   weather.skySeed=Number.isInteger(sv.weather?.skySeed) ? sv.weather.skySeed>>>0
     : hashOf(`${sv.look?.name || 'Buddy'}:${sv.sim?.t || 0}`); // Legacy saves also keep the same evening on reload.
   if (sv.weather) {
@@ -5752,6 +5784,8 @@ if (TAURI) {
 }
 
 /*__RESTROOMS_JS__*/
+/*__MALL_LIFE_JS__*/
+/*__STORM_JS__*/
 /*__BAR_JS__*/
 /*__PARK_FOOD_JS__*/
 /*__PARK_JS__*/
@@ -5764,6 +5798,7 @@ function frame(now) {
   realClock += dt;
   const fast = sim.mode === "act" && sim.act === "sleep" ? 8 : 1, run = cardHolds() || wiping ? 0 : speed;   // a chance card (or a scene change) stops the clock
   step(dt * run * fast, dt * (run ? 1 : 0));
+  tickStorm(run ? dt : 0);
   updateDoors(run ? dt : 0);
   render();
   renderSky();

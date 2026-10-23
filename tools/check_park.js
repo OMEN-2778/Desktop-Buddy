@@ -78,7 +78,7 @@ const { chromium } = require(process.env.PW || 'playwright');
       }, zone);
       assert.equal(r.seasons, 4); assert.equal(r.differentNight, true);
       assert.equal(r.zone, zone); assert.equal(r.seated, true); assert.equal(r.pose, 'sit');
-      assert.equal(r.version, 4); assert.equal(r.ducks > 0, r.pond);
+      assert.equal(r.version, 5); assert.equal(r.ducks > 0, r.pond);
       await page.locator('#view').screenshot({ path: `/workspace/artifacts/park-${zone}-play.png` });
     }
     await page.evaluate(async () => { speed = 0; await saveGame(); saveSettings(); });
@@ -119,6 +119,6 @@ const { chromium } = require(process.env.PW || 'playwright');
     await page.waitForFunction(() => sim.place === 'home' && !wiping);
     assert.equal(await page.evaluate(() => sim.place), 'home', 'Low energy must still send a seated Buddy home');
     assert.deepEqual(errors, []);
-    console.log('PASS: click-to-walk; bench/stand and seat alignment; all 8 connecting edges/end limits; animated wipe; 5 maps x 4 seasons/weather/night; v1 migration/v4 seat saves; invalid zones; revival; low-needs home');
+    console.log('PASS: click-to-walk; bench/stand and seat alignment; all 8 connecting edges/end limits; animated wipe; 5 maps x 4 seasons/weather/night; v1 migration/v5 seat saves; invalid zones; revival; low-needs home');
   } finally { await browser.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });

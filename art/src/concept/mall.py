@@ -336,13 +336,13 @@ def stall(s, kind, x):
 # a hover outline round them; shops get a rectangle.
 
 # (id, name, kind, width): kind shop = she goes in; kiosk / mat = she stops at it
-UNITS = [("cinema", "电影院", "shop", 112), ("tea", "奶茶", "kiosk", 54), ("boutique", "服装店", "shop", 82),
+UNITS = [("cinema", "电影院", "shop", 112), ("diner", "四季家常饭馆", "shop", 96), ("tea", "奶茶", "kiosk", 54), ("boutique", "服装店", "shop", 82),
          ("craft", "手作地摊", "mat", 54), ("market", "超市", "shop", 126), ("ice", "冰淇淋", "kiosk", 54),
          ("bakery", "面包店", "shop", 82), ("oldbooks", "旧书地摊", "mat", 54), ("arcade", "电玩城", "shop", 94),
-         ("restroom", "卫生间", "shop", 74),
+         ("restroom", "卫生间", "shop", 74), ("bistro", "玻璃花园西餐厅", "shop", 96),
          ("balloon", "气球", "kiosk", 54), ("pets", "宠物店", "shop", 86), ("flower", "鲜花", "kiosk", 54),
          ("sneakers", "球鞋店", "shop", 82), ("candy", "棉花糖", "kiosk", 54), ("books", "书店", "shop", 82),
-         ("blindbox", "盲盒地摊", "mat", 54)]
+         ("blindbox", "盲盒地摊", "mat", 54), ("noodle", "风铃日式食堂", "shop", 96)]
 NEAR_W = sum(u[3] for u in UNITS)
 FASCIA, SHOP_TOP = 30, 37
 SHOPS = {   # glyph, wall, sign, window goods
@@ -618,7 +618,11 @@ def near():
     fascia(s)
     x, doors, props = 0, {}, []
     for i, (uid, _, kind, w) in enumerate(UNITS):
-        if uid == "restroom":
+        if uid in ("diner", "bistro", "noodle"):
+            from mall_rooms import restaurant_front
+            restaurant_front(uid,x,w,s)
+            doors[uid] = x+74
+        elif uid == "restroom":
             doors[uid] = restroom(s,x,w)
         elif uid in SHOPS:
             doors[uid] = big_shop(s, x, w, SHOPS[uid], rnd)

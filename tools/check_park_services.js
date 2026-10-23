@@ -89,7 +89,7 @@ const { chromium } = require(process.env.PW || 'playwright');
       },phase);
       await page.reload();await page.waitForFunction(()=>typeof booted!=='undefined'&&booted);
       const r=await page.evaluate(()=>({goal:sim.park.goal,zone:sim.park.zone,act:sim.act,mode:sim.mode,version:snapshot().version}));
-      assert.equal(r.version,4);assert.equal(r.goal,phase==='toilet'?'toilet':'food');
+      assert.equal(r.version,5);assert.equal(r.goal,phase==='toilet'?'toilet':'food');
       if(phase!=='walking')assert.equal(r.act,phase==='toilet'?'park_toilet':'park_eat');
       // Test helpers are intentionally not persisted in the game.
       await page.evaluate(()=>{
