@@ -4,12 +4,16 @@ import sky_icons
 
 
 def bolt(frame=0):
-    s=Sprite(342,118)
-    x=68+frame*77
-    points=[(x,0),(x-6,10),(x+3,14),(x-8,27),(x,29),(x-12,45)]
+    s=Sprite(48,64)
+    paths=[[(24,0),(18,10),(27,14),(16,27),(24,29),(12,54)],
+           [(24,0),(30,12),(21,19),(28,30),(17,37),(20,61)],
+           [(24,0),(17,9),(22,18),(13,28),(23,32),(15,58)]]
+    points=paths[frame]
     for (a,b),(c,d) in zip(points,points[1:]):
         s.line(a,b,c,d,P.blue[3]).line(a+1,b,c+1,d,P.snow[3])
-    s.line(x-3,23,x+12,30,P.snow[2]).line(x+12,30,x+8,38,P.snow[2])
+    x,y=points[3]
+    s.line(x,y,x+13,y+6,P.blue[3]).line(x+13,y+6,x+10,y+16,P.blue[3])
+    s.line(x+1,y,x+14,y+6,P.snow[2]).line(x+14,y+6,x+11,y+16,P.snow[2])
     return s
 
 

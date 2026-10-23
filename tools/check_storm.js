@@ -25,20 +25,10 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const {ch
  await p.reload();await p.waitForFunction(()=>booted);
  const timing=await p.evaluate(()=>{
   sim.place='home';weather.kind='storm';closeGuide();speed=0;
-  const random=Math.random,groups=[];
-  try{for(const roll of [0,.9]){
-   Math.random=()=>roll;lightningStrike();const length=stormFX.duration;
-   let count=0,start=0,wasLit=false;const holds=[],values=new Set();
-   for(let t=0;t<=length+.02;t+=.01){
-    stormFX.left=length-t;const alpha=stormFlash(),lit=alpha>0;values.add(alpha);
-    if(lit&&!wasLit){count++;start=t;}
-    if(!lit&&wasLit)holds.push(Math.round((t-start)*1000));
-    wasLit=lit;
-   }
-   groups.push({count,holds,values:[...values].sort(),length});
-  }}finally{Math.random=random;}
-  lightningStrike();stormFX.left=stormFX.duration-.12;
-  const left=stormFX.left;tickStorm(0);if(stormFX.left!==left)throw Error('Pause advanced a flash group');
+  lightningStrike();const indoorDuration=stormFX.duration,indoor=[];
+  for(const t of [0,.1,.2,.4,.6,.7,.8]){stormFX.left=stormFX.duration-t;indoor.push(stormFlash());}
+  lightningStrike();stormFX.left=stormFX.duration/2;
+  const left=stormFX.left;tickStorm(0);if(stormFX.left!==left)throw Error('Pause advanced lightning');
   const c=document.createElement('canvas');c.width=W;c.height=H;const ctx=c.getContext('2d');
   const reset=()=>{ctx.clearRect(0,0,W,H);ctx.fillStyle='#262a36';ctx.fillRect(0,0,W,H);};
   const sample=(x,y)=>[...ctx.getImageData(Math.floor(x),Math.floor(y),1,1).data];
@@ -56,18 +46,26 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const {ch
   const other=Object.values(D.rooms).find(r=>r!==room),outside=sample(other[0]+other[2]/2,other[1]+other[3]/2);
   windowState[id]='drawn';reset();drawStorm(ctx);const curtained=sample(x,y);
   for(const key of Object.keys(windowState))if(!(key in oldWindows))delete windowState[key];Object.assign(windowState,oldWindows);
+  sim.place='park';sim.park={zone:'central',seated:false};
+  const positions=[];for(let i=0;i<30;i++){lightningStrike();positions.push(stormFX.x);}
+  const outdoor=[];for(const t of [.02,.07,.1,.17,.2,.35,.6,.8]){
+   stormFX.left=stormFX.duration-t;outdoor.push({t,flash:stormFlash(),...stormBolt()});
+  }
   sim.place='front';const old=realClock;realClock=0;let lines=0;const starts=[];
   const rain={fillRect(){},beginPath(){},moveTo(x,y){starts.push([x,y]);},lineTo(){},stroke(){lines++;}};
   drawOutsideWeather(rain);const first=starts[0];realClock=.1;starts.length=0;drawOutsideWeather(rain);const travel=starts[0][1]-first[1];realClock=old;
-  return {groups,ambient,near,far,outside,curtained,lines,travel};
+  return {indoorDuration,indoor,positions,outdoor,ambient,near,far,outside,curtained,lines,travel};
  });
- assert.deepEqual(timing.groups.map(g=>g.count),[2,3],'Both two- and three-pulse groups must occur');
- for(const group of timing.groups){
-  assert.deepEqual(group.values,[0,.8],'Pulses keep hard edges and an 80% white overlay');
-  assert.ok(group.holds.every(ms=>ms>=250&&ms<=430),'Each pulse is visibly longer than the old 100 ms flash');
-  assert.ok(group.length>=1.1,'Keep a readable gap between pulses');
- }
- assert.ok(timing.ambient.slice(0,3).every(v=>v>200&&v<240),'An 80% flash keeps scene detail visible');
+ assert.equal(timing.indoorDuration,.8);
+ assert.equal(timing.indoor[0],0);assert.equal(timing.indoor.at(-1),0);
+ assert.ok(timing.indoor[1]>0&&timing.indoor[1]<timing.indoor[2]&&timing.indoor[2]<timing.indoor[3]);
+ assert.equal(timing.indoor[3],1);assert.ok(timing.indoor[4]>timing.indoor[5]);
+ assert.ok(timing.ambient.slice(0,3).every(v=>v<60),'Indoor flash must not whiten the whole house');
+ assert.ok(new Set(timing.positions).size>20&&Math.max(...timing.positions)-Math.min(...timing.positions)>150,'Random strike origins across the sky');
+ assert.deepEqual(timing.outdoor.map(v=>v.flash),[0,0,.8,.8,0,0,0,0]);
+ assert.ok(timing.outdoor[0].growth<timing.outdoor[1].growth&&timing.outdoor[2].growth===1,'Bolt travels down before flashing');
+ assert.ok(timing.outdoor[4].alpha>timing.outdoor[5].alpha&&timing.outdoor[5].alpha>timing.outdoor[6].alpha&&timing.outdoor[6].alpha>0,'Residual bolt fades after the white flash');
+ assert.equal(timing.outdoor.at(-1).alpha,0);
  assert.ok(timing.near[0]>timing.far[0]+5,'Window surroundings must be brighter than the far side of the room');
  assert.deepEqual(timing.curtained,timing.ambient,'Curtains block the additional window spill');
  assert.deepEqual(timing.outside,timing.ambient,'Window light must not cross the room walls or floor slab');
@@ -75,9 +73,14 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const {ch
  await p.evaluate(()=>{
   closeGuide();closeRing();closePicker();speed=0;sim.place='home';sim.mode='idle';sim.act=null;sim.idleUntil=Infinity;
   sim.route=[[D.spots.front_door[1],FLOOR_Y[0]]];sim.s=0;weather.kind='storm';weather.force='storm';
-  for(const id of Object.keys(windowState))windowState[id]='closed';lightningStrike();stormFX.left=stormFX.duration-.12;render();
+  for(const id of Object.keys(windowState))windowState[id]='closed';lightningStrike();stormFX.left=stormFX.duration/2;render();
  });
  await p.locator('#view').screenshot({path:'/workspace/artifacts/storm/window-spill.png'});
  assert.deepEqual(errors,[]);
- console.log('PASS: 2/3 hard-edged flashes per group at 80%, 260–420 ms holds, dark gaps, pause; stronger window spill confined to rooms and blocked by curtains; heavy rain unchanged');
+ for(const [name,time] of [['strike',.07],['flash',.13],['afterimage',.35]]){
+  await p.evaluate(time=>{sim.place='beach';sim.route=[[OUT.beach.doorX,OUT.beach.feet]];sim.s=0;arriveAt('beach');weather.kind='storm';lightningStrike();stormFX.x=170;stormFX.left=stormFX.duration-time;render();},time);
+  await p.locator('#view').screenshot({path:`/workspace/artifacts/storm/outdoor-${name}.png`});
+ }
+ assert.deepEqual(errors,[]);
+ console.log('PASS: smooth 800 ms indoor window light; random downward bolt, single 90 ms flash at 80%, fading afterimage; room clipping, curtains, pause and heavy rain');
  }finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1});

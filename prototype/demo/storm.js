@@ -2,7 +2,7 @@
 function isRain(kind=weather.kind){return kind==='rain'||kind==='storm';}
 const stormOutside=()=>weather.kind==='storm'&&['front','park','beach'].includes(sim.place);
 const stormExposed=()=>weather.kind==='storm'&&(sim.place==='home'||stormOutside());
-const stormFX={left:0,duration:0,bolt:0,pulses:[]};
+const stormFX={left:0,duration:0,bolt:0,x:0};
 for(const group of ['negative','positive','outdoor'])STORM_TEXT[group].forEach((t,i)=>ML[`storm_${group}_${i}`]={name:t[0],emo:t[1],pts:group==='positive'?2:1,min:75});
 function stormReaction(outdoor=false){
   if(!stormExposed()||asleep()||sim.mode==='down')return;
@@ -18,9 +18,9 @@ function stormReaction(outdoor=false){
   if(positive)sim.needs.fun=clamp(sim.needs.fun+3);
 }
 function lightningStrike(){
-  stormFX.pulses=reduceMotionUI ? [[0,.55]] : Math.random()<.5
-    ? [[0,.26],[.62,.98]] : [[0,.26],[.62,.98],[1.34,1.76]];
-  stormFX.duration=stormFX.pulses.at(-1)[1]+.16;stormFX.left=stormFX.duration;stormFX.bolt=Math.floor(Math.random()*3);
+  stormFX.duration=reduceMotionUI ? 1.4 : .8;
+  stormFX.left=stormFX.duration;stormFX.bolt=Math.floor(Math.random()*3);
+  stormFX.x=24+Math.random()*(W-48);
   weather.nextLightning=sim.t+50+Math.random()*45;
   if(stormExposed()&&sim.t-(weather.lastStormReaction??-1e9)>=90){stormReaction(stormOutside());weather.lastStormReaction=sim.t;}
 }
@@ -40,8 +40,15 @@ function tickStorm(dt){
 }
 function stormFlash(){
   if(!stormExposed()||stormFX.left<=0)return 0;
+  const t=1-stormFX.left/stormFX.duration;
+  if(sim.place==='home'||reduceMotionUI)return Math.pow(Math.sin(Math.PI*t),reduceMotionUI?2:.6)*(reduceMotionUI?.32:1);
   const elapsed=stormFX.duration-stormFX.left;
-  return stormFX.pulses.some(([start,end])=>elapsed>=start&&elapsed<end) ? (reduceMotionUI ? .35 : .8) : 0;
+  return elapsed>=.09&&elapsed<.18 ? .8 : 0;
+}
+function stormBolt(){
+  if(!stormOutside()||stormFX.left<=0||reduceMotionUI)return {growth:0,alpha:0};
+  const elapsed=stormFX.duration-stormFX.left;
+  return {growth:Math.min(1,elapsed/.09),alpha:elapsed<.18?1:Math.pow(Math.max(0,1-(elapsed-.18)/.62),1.5)*.7};
 }
 function stormWindowFlash(ctx,win,m){
   const flash=stormFlash();if(!flash)return;
@@ -52,8 +59,8 @@ function drawStorm(ctx){
   const home=sim.place==='home',flash=stormFlash();
   ctx.save();ctx.globalCompositeOperation='source-atop';ctx.fillStyle=`rgba(22,38,65,${home ? .12 : .28})`;ctx.fillRect(0,0,W,H);
   if(flash){
-    // Hold each hard-edged pulse long enough to read, with dark gaps between pulses.
-    ctx.fillStyle=`rgba(255,255,255,${flash})`;ctx.fillRect(0,0,W,H);
+    // At home, light comes through windows instead of whitening the whole room.
+    if(!home){ctx.fillStyle=`rgba(255,255,255,${flash})`;ctx.fillRect(0,0,W,H);}
     if(home)for(const[id,win]of Object.entries(WMASK)){
       if(windowState[id]==='drawn')continue;
       const m=windowState[id]==='open'&&win.open?win.open:win.closed;
@@ -68,12 +75,16 @@ function drawStorm(ctx){
       light.addColorStop(1,'rgba(240,247,255,0)');
       ctx.fillStyle=light;ctx.fillRect(...room);ctx.restore();
     }
-  }else if(!home&&stormFX.left>0&&!reduceMotionUI){
+  }
+  const bolt=stormBolt();
+  if(bolt.alpha>0&&bolt.growth>0){
     const se=SEASON_KEYS[seasonOf(sim.t).i];
     const mask=sim.place==='park'?parkImages().seasons[se]?.skyMask:IMG.out[sim.place].seasons[se]?.skyMask;
     if(mask){
-      const c=duskBuffer(W);c.drawImage(IMG.storm.bolts[stormFX.bolt],0,0);
-      c.globalCompositeOperation='destination-in';c.drawImage(mask,0,0);c.globalCompositeOperation='source-over';ctx.drawImage(duskCanvas,0,0);
+      const c=duskBuffer(W),image=IMG.storm.bolts[stormFX.bolt],height=Math.max(1,Math.ceil(image.height*bolt.growth));
+      c.drawImage(image,0,0,image.width,height,Math.round(stormFX.x-image.width/2),0,image.width,height);
+      c.globalCompositeOperation='destination-in';c.drawImage(mask,0,0);c.globalCompositeOperation='source-over';
+      ctx.globalAlpha=bolt.alpha;ctx.drawImage(duskCanvas,0,0);
     }
   }
   ctx.restore();
