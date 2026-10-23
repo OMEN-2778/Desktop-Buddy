@@ -45,7 +45,7 @@ function mallPlanVisit(kind,item=null,auto=false){
   if(mallVisitInside()){mallLeaveVisit(false,false);}
   const dir=mallS.dir;mallClearInteraction();
   mallS.visit={kind,phase:'search',shop:it.id,dynamic:!!it.dynamic,dish:kind==='restaurant'?chosen.name:null,
-    film:kind==='cinema'?chosen.id:null,elapsed:0,served:0,sleeping:false,napped:false,nextEvent:8,nextCard:12,beat:-1,resumeDir:dir};
+    film:kind==='cinema'?chosen.id:null,elapsed:0,served:0,sleeping:false,napped:false,nextEvent:8,nextCard:4,beat:-1,resumeDir:dir};
   mallS.goal={x:mallS.x+(itemX(it)-MALL.at),it};sim.mode='act';sim.act='mall';sim.actEnd=Infinity;
   log(kind==='restaurant'?`${auto?'肚子饿了，先在商场找餐厅':'选好菜品'}，去${MALL_RESTAURANTS[it.id].name}吃${chosen.name}。`:`选了《${chosen.name}》，朝电影院走去。`);
   speak(kind==='restaurant'?pick(['先坐下来吃顿热饭，不用赶回家。','点一份'+chosen.name+'，慢慢吃。','逛累了，去餐厅照顾一下肚子。']):'今天就看《'+chosen.name+'》，把手机调成静音。',true);

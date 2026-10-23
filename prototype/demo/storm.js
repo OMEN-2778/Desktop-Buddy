@@ -2,7 +2,7 @@
 function isRain(kind=weather.kind){return kind==='rain'||kind==='storm';}
 const stormOutside=()=>weather.kind==='storm'&&['front','park','beach'].includes(sim.place);
 const stormExposed=()=>weather.kind==='storm'&&(sim.place==='home'||stormOutside());
-const stormFX={left:0,duration:1.1,bolt:0};
+const stormFX={left:0,duration:.22,bolt:0};
 for(const group of ['negative','positive','outdoor'])STORM_TEXT[group].forEach((t,i)=>ML[`storm_${group}_${i}`]={name:t[0],emo:t[1],pts:group==='positive'?2:1,min:75});
 function stormReaction(outdoor=false){
   if(!stormExposed()||asleep()||sim.mode==='down')return;
@@ -18,7 +18,7 @@ function stormReaction(outdoor=false){
   if(positive)sim.needs.fun=clamp(sim.needs.fun+3);
 }
 function lightningStrike(){
-  stormFX.duration=reduceMotionUI?2:1.1;stormFX.left=stormFX.duration;stormFX.bolt=Math.floor(Math.random()*3);
+  stormFX.duration=reduceMotionUI?.35:.22;stormFX.left=stormFX.duration;stormFX.bolt=Math.floor(Math.random()*3);
   weather.nextLightning=sim.t+50+Math.random()*45;
   if(stormExposed()&&sim.t-(weather.lastStormReaction??-1e9)>=90){stormReaction(stormOutside());weather.lastStormReaction=sim.t;}
 }
@@ -38,8 +38,8 @@ function tickStorm(dt){
 }
 function stormFlash(){
   if(!stormExposed()||stormFX.left<=0)return 0;
-  const t=1-stormFX.left/stormFX.duration;
-  return Math.pow(Math.sin(Math.PI*t),reduceMotionUI?2:.6)*(reduceMotionUI?.32:1);
+  const elapsed=stormFX.duration-stormFX.left;
+  return reduceMotionUI ? .35 : elapsed<.10 ? 1 : 0;
 }
 function stormWindowFlash(ctx,win,m){
   const flash=stormFlash();if(!flash)return;
@@ -48,24 +48,15 @@ function stormWindowFlash(ctx,win,m){
 function drawStorm(ctx){
   if(!stormExposed())return;
   const home=sim.place==='home',flash=stormFlash();
-  ctx.save();ctx.globalCompositeOperation='source-atop';ctx.fillStyle=`rgba(22,38,65,${home?.12:.28})`;ctx.fillRect(0,0,W,H);
-  if(home){
-    if(flash){
-      // Window spill lights furniture and Buddy as well as the empty room.
-      for(const[id,win]of Object.entries(WMASK)){
-        if(windowState[id]==='drawn')continue;
-        const gradient=ctx.createRadialGradient(win.x+12,win.y+12,1,win.x+12,win.y+12,65);
-        gradient.addColorStop(0,`rgba(223,236,255,${flash*.5})`);gradient.addColorStop(1,'rgba(223,236,255,0)');
-        ctx.fillStyle=gradient;ctx.fillRect(0,0,W,H);
-      }
-    }
-  }else if(flash){
-    ctx.fillStyle=`rgba(228,239,255,${flash*.36})`;ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.globalCompositeOperation='source-atop';ctx.fillStyle=`rgba(22,38,65,${home ? .12 : .28})`;ctx.fillRect(0,0,W,H);
+  if(flash){
+    // Hard cut to white, hold 100 ms, hard cut back: no ramp or spatial gradient.
+    ctx.fillStyle=`rgba(255,255,255,${flash})`;ctx.fillRect(0,0,W,H);
+  }else if(!home&&stormFX.left>0&&!reduceMotionUI){
     const se=SEASON_KEYS[seasonOf(sim.t).i];
     const mask=sim.place==='park'?parkImages().seasons[se]?.skyMask:IMG.out[sim.place].seasons[se]?.skyMask;
     if(mask){
-      const c=duskBuffer(W);c.fillStyle=`rgba(247,250,255,${flash*.7})`;c.fillRect(0,0,W,H);
-      if(!reduceMotionUI){c.globalAlpha=flash;c.drawImage(IMG.storm.bolts[stormFX.bolt],0,0);c.globalAlpha=1;}
+      const c=duskBuffer(W);c.drawImage(IMG.storm.bolts[stormFX.bolt],0,0);
       c.globalCompositeOperation='destination-in';c.drawImage(mask,0,0);c.globalCompositeOperation='source-over';ctx.drawImage(duskCanvas,0,0);
     }
   }

@@ -13,7 +13,7 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const {ch
  lightningStrike();stormFX.left=stormFX.duration/2;render();if(buf.toDataURL()===dark)throw Error('Missing house flash');
  for(let i=0;i<100;i++){stormReaction(false);if([...moods.keys()].filter(id=>id.startsWith('storm_')).length!==1)throw Error('Weather mood stacking');}
  const pos=(lifeFlags.stormSeen||[]).filter(id=>id.startsWith('positive')).length;if(!pos)throw Error('No positive responses');
- for(const place of ['mall','bar']){sim.t=1200;sim.place=place;sim.route=[[OUT[place].doorX,OUT[place].feet]];sim.s=0;sim.mode='idle';sim.act=null;sim.bar=null;arriveAt(place);moods.clear();stormReaction();if([...moods.keys()].some(id=>id.startsWith('storm_'))||stormExposed())throw Error('Indoor storm effects');render();}
+ for(const place of ['mall','bar']){sim.t=1200;sim.place=place;sim.route=[[OUT[place].doorX,OUT[place].feet]];sim.s=0;sim.mode='idle';sim.act=null;sim.bar=null;arriveAt(place);moods.clear();stormReaction();updateConds();if(moods.has('rainy')||[...moods.keys()].some(id=>id.startsWith('storm_'))||stormExposed())throw Error('Indoor storm effects');render();}
  sim.place='home';sim.route=[[D.spots.front_door[1],FLOOR_Y[0]]];sim.s=0;arriveAt('home');weather.nextLightning=sim.t+12;const next=weather.nextLightning;stormFX.left=0;tickStorm(0);if(weather.nextLightning!==next||stormFX.left)throw Error('Pause');
  const saved=snapshot();if(saved.weather.nextLightning!==next)throw Error('Storm persistence');
  return {seasonStorms:counts,maps,reactions:STORM_TEXT.negative.length+STORM_TEXT.positive.length+STORM_TEXT.outdoor.length,cards:CARDS.filter(c=>c.at==='storm').length};
@@ -21,4 +21,17 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const {ch
  fs.mkdirSync('/workspace/artifacts/storm',{recursive:true});
  for(const place of ['home','park','beach']){await p.evaluate(place=>{sim.place=place;sim.mode='idle';sim.act=null;sim.park=place==='park'?{zone:'central',seated:false}:null;sim.route=[[place==='home'?D.spots.front_door[1]:OUT[place].doorX,place==='home'?FLOOR_Y[0]:OUT[place].feet]];sim.s=0;arriveAt(place);weather.kind='storm';weather.force='storm';lightningStrike();stormFX.left=stormFX.duration/2;render();},place);await p.locator('#view').screenshot({path:`/workspace/artifacts/storm/${place}.png`});}
  assert.deepEqual(errors,[]);console.log('PASS: '+JSON.stringify(stats)+'; window/room lightning, no exposed citizens, indoor immunity, non-stacking mixed emotions, pause and saved schedule');
+ await p.emulateMedia({reducedMotion:'no-preference'});
+ await p.reload();await p.waitForFunction(()=>booted);
+ assert.deepEqual(await p.evaluate(()=>{
+  sim.place='home';weather.kind='storm';lightningStrike();const values=[];
+  for(const elapsed of [0,.02,.08,.099,.101,.15,.22]){stormFX.left=stormFX.duration-elapsed;values.push(stormFlash());}
+  stormFX.left=stormFX.duration-.03;
+  const c=document.createElement('canvas');c.width=W;c.height=H;const ctx=c.getContext('2d');ctx.fillStyle='#262a36';ctx.fillRect(0,0,W,H);drawStorm(ctx);
+  const white=[...ctx.getImageData(50,50,1,1).data];
+  sim.place='front';const old=realClock;realClock=0;let lines=0;const starts=[];
+  const rain={fillRect(){},beginPath(){},moveTo(x,y){starts.push([x,y]);},lineTo(){},stroke(){lines++;}};
+  drawOutsideWeather(rain);const first=starts[0];realClock=.1;starts.length=0;drawOutsideWeather(rain);const travel=starts[0][1]-first[1];realClock=old;
+  return [values,white,lines,travel];
+ }),[[1,1,1,1,0,0,0],[255,255,255,255],480,21],'Hard 100 ms full-white pulse, no fade; 240 rain streaks moving at 210+ px/s');
  }finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1});

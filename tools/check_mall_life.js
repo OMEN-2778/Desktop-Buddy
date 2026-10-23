@@ -27,6 +27,12 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const {ch
   mallTest();mallS.menuShop='diner';mallPlanVisit('restaurant');mallS.x=mallS.goal.x;stopAt(mallS.goal.it);sim.needs.bladder=19;step(.3,.1);if(!mallS.toilet||mallS.visit)throw Error('WC priority');
   speed=0;return {films:16,restaurants:3,dishes:PICK.mall_food.groups().flatMap(g=>g.items).length,cards:CARDS.filter(c=>c.at==='mall'&&c.service).length};
  });
+ assert.equal(await p.evaluate(()=>{
+  mallTest();mallS.menuShop='diner';mallPlanVisit('restaurant');mallS.x=mallS.goal.x;stopAt(mallS.goal.it);lifeFlags.cards.last=-1e9;
+  const random=Math.random;try{Math.random=()=>0;mallTickVisit(4,0);}finally{Math.random=random;}
+  const service=card?.cd.service;chooseCard('a',true);speed=0;return service;
+ }),'restaurant','Dining cards must appear before the short meal ends');
+ await p.waitForFunction(()=>card===null);
  fs.mkdirSync('/workspace/artifacts/mall-life',{recursive:true});
  for(const kind of ['diner','bistro','noodle','cinema']){
   await p.evaluate(kind=>{mallTest();mallS.menuShop=kind;mallPlanVisit(kind==='cinema'?'cinema':'restaurant',kind==='cinema'?{id:'star'}:null);mallS.x=mallS.goal.x;stopAt(mallS.goal.it);speed=0;saveSettings();render();},kind);
