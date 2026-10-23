@@ -1,7 +1,7 @@
 """Small icons for the game's own UI: settings gear and the contacts glyph.
-13x13, metal ramp, lit from the top-left (upper-left half one shade
-lighter), eight teeth and a round hole in the middle. Shown at 2
-screen pixels per icon pixel inside a round pixel button."""
+The gear is 13x13, metal ramp, lit from the top-left, with eight teeth
+and a round hole. Contacts uses a 16x16 two-person silhouette with
+slate-blue foreground shading. Both display at an integer 2x scale."""
 
 from pixelkit import P, Sprite
 
@@ -89,22 +89,29 @@ def icon(name: str) -> Sprite:
 
 
 def people() -> Sprite:
-    """Two residents, 13x13 like the settings gear; lit upper-left."""
-    return Sprite.from_grid("\n".join([
-        ".............",
-        "........HHH..",
-        "..HHH..HMMM..",
-        ".HMMM..MMMM..",
-        ".MMMM...MM...",
-        ".MMMM........",
-        "..MM....HHH..",
-        ".......HMMMM.",
-        ".HHHHH.MMMMM.",
-        "HMMMMMM.MMMM.",
-        "MMMMMMMM.MMM.",
-        "MMMMMMMM.....",
-        ".............",
-    ]), {"H": P.metal[3], "M": P.metal[1]})
+    """Two separate busts at 16x16: a slate-blue foreground and softer rear figure."""
+    rows = [
+        "................",
+        "..........LLL...",
+        ".........LMMML..",
+        "...OOO...LMMML..",
+        "..OHBBO..LMMML..",
+        "..OBBBO...MMM...",
+        "..OBBBO....M....",
+        "...OOO....MMM...",
+        "....B....LMMML..",
+        "..OOBOO.LMMMMML.",
+        ".OHHBBBO.LMMML..",
+        "OHBBBBBBO.LMML..",
+        "OBBBBBBBO..MM...",
+        "OBBBBBBBO.......",
+        ".OOOOOOO........",
+        "................",
+    ]
+    return Sprite.from_grid("\n".join(rows), {
+        "O": P.blue[1], "B": P.blue[2], "H": P.blue[3],
+        "L": P.metal[2], "M": P.metal[3],
+    })
 
 
 def build():

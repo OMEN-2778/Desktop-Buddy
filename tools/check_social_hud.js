@@ -41,7 +41,7 @@ const {chromium}=require('playwright');
   const shape=await page.locator(selector).first().evaluate((el,pseudo)=>{const s=getComputedStyle(el,pseudo);return {clip:s.clipPath,radius:s.borderRadius};},pseudo);
   assert.ok(shape.clip.startsWith('polygon('),selector+' uses stepped pixel geometry');assert.equal(shape.radius,'0px');
  }
- assert.equal(await page.locator('#networkTrigger img').evaluate(img=>img.naturalWidth),13,'Use the palette-only pixel people icon');
+ assert.equal(await page.locator('#networkTrigger img').evaluate(img=>img.naturalWidth),16,'Use the palette-only pixel people icon');
  for(const selector of ['#networkTrigger','.contact-card'])assert.equal(await page.locator(selector).first().evaluate(el=>getComputedStyle(el).boxShadow),'none','Pixel frames must not inherit rectangular button shadows');
  assert.deepEqual(await page.locator('.contact-card').evaluateAll(els=>els.map(e=>e.dataset.id)),['dad','mom','abu']);
  assert.deepEqual(await page.locator('.contact-copy strong').allTextContents(),['爸爸','妈妈','阿布']);
