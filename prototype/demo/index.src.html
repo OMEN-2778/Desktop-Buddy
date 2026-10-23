@@ -5,8 +5,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
 <style>
 /* Layout: the page is just the house, centred like a widget on a desktop.
-   Everything else hides until asked for: the needs are four dots beside the
-   house that stretch into bars when the pointer comes near. */
+   Needs and time share a compact horizontal row; detail opens on demand. */
 :root {
   --bg: #e6e3ee;
   --dither: #dcd8e6;
@@ -71,80 +70,6 @@ body {
 }
 .widget { position: relative; }
 #view { touch-action: none; display: block; image-rendering: pixelated; image-rendering: crisp-edges; cursor: pointer; }
-
-/* ---------- needs: dots that stretch into bars ----------
-   Sizes come from JS (fit): --u is one house pixel on screen, --bh the dot /
-   bar height, --bar-w the open length; the column is exactly as tall as the
-   house and sits just left of it. Bars only ever grow to the left. */
-.widget { display: flex; align-items: flex-end; gap: var(--g, 12px); padding-left: calc(var(--bar-w, 200px) - var(--bh, 24px)); }
-.needs {
-  position: relative;
-  flex: none;
-  height: var(--house-h, 236px);   /* flush with the house, not with the studio above it */
-  width: var(--bh, 24px);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;  /* first dot flush with the top, last with the bottom */
-  align-items: flex-end;           /* right-anchored: bars grow to the left */
-  outline: none;
-}
-.needs::before {                   /* invisible hover zone around the dots */
-  content: ""; position: absolute; inset: -14px -10px -14px -14px;
-}
-.needs.open::before { left: calc(var(--bh, 24px) - var(--bar-w, 200px) - 14px); }
-.need {
-  position: relative;
-  flex: none;
-  width: var(--bh, 24px);          /* JS springs this between the dot and the open bar */
-  height: var(--bh, 24px);
-  background: var(--ring);
-  clip-path: var(--clip-track);
-}
-.need .fill {
-  position: absolute;
-  /* 2px white ring; once open (--p springs 0 -> 1) the fill starts right of
-     the icon slot, so the icon never hides the fill's start or its maximum */
-  --room: calc(100% - var(--u) * 4 - var(--slot, 30px) * var(--p, 0));
-  top: calc(var(--u) * 2); bottom: calc(var(--u) * 2);
-  left: calc(var(--u) * 2 + var(--slot, 30px) * var(--p, 0));
-  width: min(var(--room), var(--fmin) + (var(--room) - var(--fmin)) * var(--v, 1) * var(--p, 0));
-  background-color: var(--c, var(--need-ok));
-  background-image: var(--stripes);
-  background-size: calc(var(--u) * 8) calc(var(--u) * 8);
-  image-rendering: pixelated;
-  clip-path: var(--clip-fill);
-  animation: crawl 3.2s steps(8) infinite;
-  transition: background-color .3s;
-}
-.need .fill::before {              /* a 1px gloss line along the top */
-  content: ""; position: absolute; top: var(--u); left: calc(var(--u) * 2); right: calc(var(--u) * 2);
-  height: var(--u); background: rgba(255, 255, 255, .38);
-}
-.need.low .fill { animation: crawl 3.2s steps(8) infinite, pulse 1.4s ease-in-out infinite; }
-@keyframes crawl { from { background-position: 0 0; } to { background-position: calc(var(--u) * -8) 0; } }
-@keyframes pulse { 50% { filter: brightness(1.18) saturate(1.1); } }
-.need img {
-  position: absolute;
-  left: calc(var(--u) * 3);
-  top: 50%;
-  width: var(--icon, 24px);
-  height: var(--icon, 24px);
-  transform: translateY(-50%) scale(.2);
-  image-rendering: pixelated;
-  opacity: 0;
-  pointer-events: none;
-}
-.needs.open .need img {
-  animation: pop .5s cubic-bezier(.3, 1.9, .5, 1) both;
-  animation-delay: calc(var(--i, 0) * 55ms + 200ms);
-}
-@keyframes pop {
-  from { opacity: 0; transform: translateY(-50%) scale(.2) rotate(-12deg); }
-  to   { opacity: 1; transform: translateY(-50%) scale(1) rotate(0); }
-}
-.needs:focus-visible::after {
-  content: ""; position: absolute; inset: -6px; border: 2px dashed var(--focus); pointer-events: none;
-}
 
 /* ---------- 造型室: opens UPWARD above the gear row, as wide as the house ----------
    The house and its UI never move (user): the slot hangs above the mood row
@@ -881,19 +806,12 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
   .need .fill, .need.low .fill { animation: none; transition: none; }
   .needs.open .need img { animation: none; opacity: 1; transform: translateY(-50%); }
 }
+/*__SOCIAL_HUD_CSS__*/
 </style>
 
 <input type="file" id="importSave" accept=".json,application/json" hidden>
 <main class="desk">
   <div class="widget" id="widget">
-    <div class="needs" id="needs" tabindex="0" role="button" aria-expanded="false" aria-label="她的状态（饱腹、精力、清洁、如厕、社交、开心）">
-      <div class="need" style="--i:0" data-k="hunger" role="meter" aria-label="饱腹" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="hunger"></div>
-      <div class="need" style="--i:1" data-k="energy" role="meter" aria-label="精力" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="energy"></div>
-      <div class="need" style="--i:2" data-k="hygiene" role="meter" aria-label="清洁" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="hygiene"></div>
-      <div class="need" style="--i:3" data-k="bladder" role="meter" aria-label="如厕" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="bladder"></div>
-      <div class="need" style="--i:4" data-k="social" role="meter" aria-label="社交" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="social"></div>
-      <div class="need" style="--i:5" data-k="fun" role="meter" aria-label="开心" aria-valuemin="0" aria-valuemax="100"><span class="fill"></span><img alt="" data-icon="fun"></div>
-    </div>
     <div class="house-col">
       <div class="studio-slot" id="studioSlot"><div class="studio-clip"><section id="studio" hidden></section></div></div>
       <div class="studio-slot guide-slot" id="guideSlot"><div class="studio-clip"><section class="studio guide" id="guide" hidden role="dialog" aria-label="新手教程"></section></div></div>
@@ -906,12 +824,33 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
           <div class="diary-pop" id="diaryPop" hidden><ol id="diaryList" aria-label="最近发生的事"></ol></div>
           <button type="button" class="diary-box" id="diaryBox" aria-expanded="false" aria-controls="diaryPop" title="看看最近发生的事"><b>日记</b><span></span></button>
         </div>
+        <button type="button" class="network-trigger" id="networkTrigger" aria-label="人脉" aria-expanded="false" aria-controls="contactsPanel" title="人脉"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 20v-3a7 7 0 0 1 14 0v3Z"/><path d="M17 4a4 4 0 0 1 0 8M18 14a6 6 0 0 1 4 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <section class="contacts-panel" id="contactsPanel" aria-label="人脉，父母在前，其余按亲密度排列" aria-hidden="true" inert><div class="contacts-list" id="contactsList"></div></section>
+        <div class="contact-actions" id="contactActions" role="menu" aria-label="联系这位亲友" aria-hidden="true" inert></div>
         <div class="mood-face" id="moodFace" tabindex="0" role="button" aria-label="情绪" aria-expanded="false" aria-controls="moodTip">
           <canvas id="mood" width="78" height="78"></canvas>
         </div>
         <div class="mood-talk" id="moodTalk">
           <div class="pop say" id="popSay" aria-live="polite" hidden><i class="bg" aria-hidden="true"></i><i class="dot d1" aria-hidden="true"></i><i class="dot d2" aria-hidden="true"></i><span></span></div>
+          <section class="incoming-call" id="incomingCall" role="dialog" aria-label="来电" aria-live="assertive" hidden>
+            <div class="caller-avatar"><i></i><i></i><canvas width="40" height="40" aria-hidden="true"></canvas></div>
+            <div class="caller-copy"><strong></strong><span>打来电话，要接吗？</span></div>
+            <button type="button" class="call-answer">接听</button><button type="button" class="call-decline">拒绝</button>
+            <i class="call-countdown" aria-hidden="true"></i>
+          </section>
           <div class="mood-list" id="moodTip" role="list" aria-label="她现在的心情" hidden></div>
+        </div>
+      </div>
+      <div class="status-row">
+      <div class="needs" id="needs" tabindex="0" role="button" aria-expanded="false" aria-controls="needsPanel" aria-label="查看六项需求">
+        <div class="needs-summary" aria-hidden="true"><i data-summary="hunger"></i><i data-summary="energy"></i><i data-summary="hygiene"></i><i data-summary="bladder"></i><i data-summary="social"></i><i data-summary="fun"></i></div>
+        <div class="needs-panel" id="needsPanel" aria-hidden="true" inert>
+      <div class="need" style="--i:0" data-k="hunger" role="meter" aria-label="饱腹" aria-valuemin="0" aria-valuemax="100"><span class="need-well"><span class="fill"></span></span><img alt="" data-icon="hunger"><span class="need-label">饱腹</span></div>
+      <div class="need" style="--i:1" data-k="energy" role="meter" aria-label="精力" aria-valuemin="0" aria-valuemax="100"><span class="need-well"><span class="fill"></span></span><img alt="" data-icon="energy"><span class="need-label">精力</span></div>
+      <div class="need" style="--i:2" data-k="hygiene" role="meter" aria-label="清洁" aria-valuemin="0" aria-valuemax="100"><span class="need-well"><span class="fill"></span></span><img alt="" data-icon="hygiene"><span class="need-label">清洁</span></div>
+      <div class="need" style="--i:3" data-k="bladder" role="meter" aria-label="如厕" aria-valuemin="0" aria-valuemax="100"><span class="need-well"><span class="fill"></span></span><img alt="" data-icon="bladder"><span class="need-label">如厕</span></div>
+      <div class="need" style="--i:4" data-k="social" role="meter" aria-label="社交" aria-valuemin="0" aria-valuemax="100"><span class="need-well"><span class="fill"></span></span><img alt="" data-icon="social"><span class="need-label">社交</span></div>
+      <div class="need" style="--i:5" data-k="fun" role="meter" aria-label="开心" aria-valuemin="0" aria-valuemax="100"><span class="need-well"><span class="fill"></span></span><img alt="" data-icon="fun"><span class="need-label">开心</span></div>
         </div>
       </div>
       <div class="skybar" id="skybar" role="img" aria-label="时间与天气">
@@ -919,6 +858,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <div class="sky-hit" id="skyHit"></div>
         <div class="sky-tip" id="skyTip" hidden></div>
         <div class="sky-fest" id="skyFest" hidden></div>
+      </div>
       </div>
       <section class="picker" id="picker" hidden aria-label="选择"><div class="pk-head"><h3></h3><button type="button" class="rand">随便<span class="long">来一个</span></button><button type="button" class="x" aria-label="关闭">✕</button></div><div class="pk-body"></div></section>
       <section class="card" id="card" hidden role="dialog" aria-label="机会卡"><h3></h3><p></p>
@@ -946,6 +886,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
         <select id="moodPick" aria-label="加一条测试心情"><option value="">加一条测试心情……</option></select>
         <button type="button" id="testDown">晕倒测试</button>
         <button type="button" id="testCard">机会卡测试</button>
+        <button type="button" id="testIncoming">来电测试</button>
       </div>
       <div class="label">天气（测试用）</div>
       <div class="row" role="group" aria-label="天气">
@@ -1417,6 +1358,7 @@ function command(act, item = null) {
 
 const WALK = 28 * 2 / 3;   // house pixels per real second at 1x (user: two thirds of the old 28)
 function step(dtGame, dtReal) {
+  if(phoneHolds())return;
   if (sim.place === "bar") { stepBar(dtGame, dtReal); return; }
   if (sim.place === "mall" && (wiping || cardHolds() || !(dtGame > 0 || dtReal > 0))) return;
   sim.t += dtGame;
@@ -1716,19 +1658,6 @@ const buf = document.createElement("canvas"); buf.width = W; buf.height = H;
 const bctx = buf.getContext("2d", { willReadFrequently: true });
 let scale = 3, devPx = 3, realClock = 0, reaction = null;   // CSS px and screen px per house pixel (set by fit)
 
-// Pixel-circle outline for a pill n UI pixels tall (caps are half circles).
-function pillClip(n, u) {
-  const R = n / 2, inset = [];
-  for (let r = 0; r < n; r++) {
-    const dy = r + 0.5 - R;
-    inset.push(Math.max(0, Math.round(R - Math.sqrt(Math.max(0, R * R - dy * dy)))));
-  }
-  const pts = [];
-  for (let r = 0; r < n; r++) pts.push(`calc(100% - ${inset[r] * u}px) ${r * u}px`, `calc(100% - ${inset[r] * u}px) ${(r + 1) * u}px`);
-  for (let r = n - 1; r >= 0; r--) pts.push(`${inset[r] * u}px ${(r + 1) * u}px`, `${inset[r] * u}px ${r * u}px`);
-  return `polygon(${pts.join(",")})`;
-}
-
 // The speech bubble as one pixel shape, H px tall: a body with round corners
 // (nR steps of p px on the right, nL on the left, so the left side keeps a
 // straight run for the tail) and a stepped tail T px long, 2h steps tall,
@@ -1771,30 +1700,17 @@ function roundClip(n, p) {
   return `polygon(${pts.join(",")})`;
 }
 
-// 8x8 UI-pixel tile of faint diagonal stripes; it crawls along the fill.
-function stripePattern(u) {
-  const c = document.createElement("canvas");
-  c.width = c.height = 8 * u;
-  const x = c.getContext("2d");
-  x.fillStyle = "rgba(255,255,255,0.22)";
-  for (let py = 0; py < 8; py++) for (let px = 0; px < 8; px++) if ((px + py) % 8 < 3) x.fillRect(px * u, py * u, u, u);
-  return c.toDataURL();
-}
-let needGeo = { u: 2, bh: 28, barW: 200 };
-
 function fit() {
-  // The widget is [room for the bars][dots][house]; the bars always open to
-  // the left into their own room, so they never cover the house.
+  // Needs and time share the width of the house; hover panels do not move it.
   const desk = document.querySelector(".desk");
   const cs = getComputedStyle(desk);
   const avail = desk.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-  const BAR_MIN = 150, BAR_MAX = 300;
   // N = screen (device) pixels per house pixel; s = CSS px per house pixel
   const dpr = window.devicePixelRatio || 1;
   let N;
   if (prefs.scale !== "auto") N = prefs.scale / 25;
   else {
-    const maxS = Math.min(4, (avail - 12 - BAR_MIN) / W);    // as big as the page allows, at most 4 CSS px
+    const maxS = Math.min(4, avail / W);    // as big as the page allows, at most 4 CSS px
     N = Math.floor(maxS * dpr);
     if (N < 1 || N / dpr < maxS * 0.75) N = Math.max(0.4, maxS) * dpr;   // phones: bigger beats whole pixels
   }
@@ -1805,33 +1721,15 @@ function fit() {
   view.style.width = wPx + "px"; view.style.height = hPx + "px";
   // UI pixel = house pixel (at least 2px so the dots stay round)
   const u = Math.max(2, Math.round(s));
-  let n = Math.max(12, Math.round(hPx * 0.11 / u));          // dot height in UI pixels
-  while (n > 5 && n * u * 6 + 5 * 2 * u > hPx) n--;          // six (and a little air) must fit in the house height
-  const bh = n * u, g = 6 * u;
-  const barW = prefs.scale !== "auto" ? Math.round(BAR_MAX * s / 4 / u) * u     // a set size: everything scales together
-    : Math.round(Math.max(BAR_MIN, Math.min(BAR_MAX, avail - wPx - g, wPx * 0.42)) / u) * u;
   const widget = document.getElementById("widget");
   widget.style.setProperty("--u", u + "px");
   widget.style.setProperty("--house-w", wPx + "px");
   widget.style.setProperty("--house-h", hPx + "px");
-  widget.style.setProperty("--bh", bh + "px");
-  widget.style.setProperty("--g", g + "px");
-  widget.style.setProperty("--bar-w", barW + "px");
-  // 10x10 chibi icons at one icon pixel per house pixel (smaller if the bar is thin)
-  const icon = 10 * Math.max(1, Math.min(u, Math.floor((bh - 4 * u) / 10)));
-  widget.style.setProperty("--icon", icon + "px");
-  widget.style.setProperty("--slot", icon + 2 * u + "px");           // icon + a pixel of air each side
-  widget.style.setProperty("--clip-track", pillClip(n, u));
-  widget.style.setProperty("--clip-fill", pillClip(n - 4, u));
-  widget.style.setProperty("--fmin", (n - 4) * u + "px");
-  widget.style.setProperty("--stripes", `url(${stripePattern(u)})`);
-  needGeo = { u, bh, barW };
-  sizeSky(wPx, hPx, u);
-  // the 造型室 is exactly as wide as the house; on phones the house is too
-  // small for it, so it also spans the needs column to the house's left
+  sizeSky((wPx - 6) / 2, hPx, u);
+  // The studio shares the house width, including on small screens.
   const narrowHouse = wPx < 520;
-  widget.style.setProperty("--studio-w", (narrowHouse ? wPx + g + barW : wPx) + "px");
-  widget.style.setProperty("--studio-dx", (narrowHouse ? g + barW : 0) + "px");
+  widget.style.setProperty("--studio-w", wPx + "px");
+  widget.style.setProperty("--studio-dx", "0px");
   widget.style.setProperty("--pop-wide", narrowHouse ? "1" : "0");
   widget.classList.toggle("narrow", narrowHouse);
   // text and round corners grow with the house: k = 1 at 100% (phones in auto: 0.75)
@@ -1874,7 +1772,6 @@ function fit() {
   di.style.setProperty("--diary-fs", (sayFs - 4) + "px");
   document.documentElement.style.setProperty("--row-h", 52 + "px");   // the gear + diary row: as tall as the emoji's canvas
   di.style.setProperty("--diary-max", Math.round(Math.max(150, Math.min(320, hPx * 1.1))) + "px");
-  if (typeof kickNeeds === "function") kickNeeds();
   if (typeof fitSay === "function") { fitSay(); fitDiary(); }   // a new size: refit both lines
   if (typeof guideOn !== "undefined" && guideOn) sizeGuide();
   if (TAURI || wardrobeOpen || diaryOn || (typeof guideOn !== "undefined" && guideOn)) { studio.refit(); makeRoom(); }
@@ -2507,6 +2404,7 @@ function pickItem(act) {
   if (act === "pc_forum") return chatItem("forum", pick(Object.keys(CHATS.forum)));
   if (act === "phone_call") return chatItem("call", weighted([["mom", 3], ["friend", 2.5], ["dad", 1.5]]), "call");
   if (act === "phone_video") return chatItem("video", "friend", "phone");
+  if (act === "phone_text") return chatItem("text", "friend", "phone");
   if (act === "cook") {   // hungry: she goes for something filling
     const all = T.cuisines.flatMap(c => c.dishes.map(d => [c, d]));
     const hungry = sim.needs.hunger < 50, w = ([, d]) => (hungry ? Math.max(1, (d.fill || 40) - 25) ** 2 : 1);
@@ -2591,6 +2489,7 @@ function lifeFinish(act) {
       if (sim.item && sim.item.talk) {                // a conversation (user): its own diary line and mood
         const tk = sim.item.talk;
         log(fill(tk.end, sim.item.vars), null, sim.talk && sim.talk.said || null);
+        if(sim.item.contactId)finishContactTalk(sim.item.contactId,tk.kind);
         if (tk.id) addMood(tk.id, { vars: sim.item.vars, diary: false, words: false });
         else addMood(weighted(T.outcomes[act]), { vars: sim.item.vars });
         if (sim.forced) addMood(sim.forced);           // mom rang (an event): that feeling too
@@ -2638,8 +2537,8 @@ const EVENTS = [
   ["spill", c => ["computer", "pc_video", "pc_forum", "pc_code"].includes(c.act), 0.05, 5760],
   ["parcel", c => c.awake && c.h >= 10 && c.h < 18, 0.03, 2880, () => {
     const vars = {}; lifeEvent("parcel", vars); addMood(Math.random() < 0.75 ? "parcelGood" : "parcelOdd", { words: false }); }],
-  ["momCall", c => c.h >= 17 && c.h < 21 && free(), 0.1, 5 * 1440, () => { lifeEvent("momCall"); sim.queue = []; sim.chosen = { act: "phone_call", item: chatItem("call", "mom", "call") }; startAct("phone_call", true); sim.forced = "momCall"; }],
-  ["friendVideo", c => c.act === "computer" && c.h >= 19 && c.h < 23, 0.25, 4 * 1440, () => { lifeEvent("friendVideo"); startAct("pc_video", true); sim.forced = "friendVideo"; }],
+  ["momCall", c => c.h >= 17 && c.h < 21 && free(), 0.1, 5 * 1440, () => requestIncomingCall("mom")],
+  ["friendVideo", c => c.act === "computer" && c.h >= 19 && c.h < 23, 0.25, 4 * 1440, () => requestIncomingCall("abu","video")],
   ["bill", c => c.awake && c.se.day % 7 === 0 && c.h >= 10, 1, 6 * 1440],
   ["magazine", c => c.awake && c.se.day === 10 && c.h >= 9, 1, 10 * 1440],
   ["postcard", c => c.awake && c.se.day === 5 && c.h >= 10, 1, 10 * 1440],
@@ -3072,7 +2971,7 @@ function popBubble(el, ms) {
     el._t2 = setTimeout(() => { el.hidden = true; }, 380);
   }, ms);
 }
-let nextSay = 6, lastSaid = "", sayBusy = 0;
+let nextSay = 6, lastSaid = "", sayBusy = 0, sayShownAt = -Infinity;
 const sayQueue = [];
 // her words wait their turn: one bubble at a time, at most a few queued
 function speak(text, now = false) {
@@ -3124,6 +3023,8 @@ function fitDiary() {
   liftDiary();
 }
 function showSay(text, who = "") {
+  if(phoneHolds()){if(sayQueue.length<2)sayQueue.push(text);return;}
+  sayShownAt=performance.now();
   text = spaced(text);
   lastSaid = text;
   const span = popSay.querySelector("span");
@@ -3142,8 +3043,9 @@ function updateMood() {
     if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); }
     showFace(); if (listOpen) fillMoodTip(); return;
   }
-  if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); rollEvents(); checkCollapse(); }
+  if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); if(!phoneHolds())rollEvents(); checkCollapse(); }
   showFace();
+  if(phoneHolds()||remoteSocial)return;
   if (listOpen) { fillMoodTip(); return; }          // her words wait until you're done looking
   if (realClock >= sayBusy && sayQueue.length) showSay(sayQueue.shift());
   else if (realClock >= nextSay && !asleep() && sim.mode !== "down" && !sim.talk) speak(thought());
@@ -3169,68 +3071,28 @@ function syncUI() {
   for (const [k, v] of Object.entries(sim.needs)) {
     const el = needsEl.querySelector(`[data-k="${k}"]`);
     el.style.setProperty("--c", needColor(v));
+    needsEl.querySelector(`[data-summary="${k}"]`).style.backgroundColor=needColor(v);
     el.classList.toggle("low", v < 20);
     el.style.setProperty("--v", (v / 100).toFixed(3));
     el.setAttribute("aria-valuenow", Math.round(v));
   }
 }
 
-// Open when the pointer comes near the dots (or on focus / tap); close shortly after it leaves.
-// Each bar is a damped spring (overshoots, then settles), snapped to whole UI
-// pixels every frame; bars pop out one after another, then their fill springs up.
+// The compact track and its popover share a hover region; CSS transitions can reverse mid-flight.
 const reduceMotionUI = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const springs = [...needsEl.querySelectorAll(".need")].map((el, i) => ({ el, i, x: 0, v: 0, target: 0, start: 0, p: 0, pv: 0, ptarget: 0, pstart: 0 }));
-let springRaf = 0, springLast = 0;
-function springStep(now) {
-  const dt = springLast ? Math.min(0.033, (now - springLast) / 1000) : 0.016;
-  springLast = now;
-  const { u, bh, barW } = needGeo;
-  let active = false;
-  for (const s of springs) {
-    if (reduceMotionUI) { s.x = s.target; s.p = s.ptarget; s.v = s.pv = 0; }
-    if (now >= s.start) {
-      const opening = s.target === 1;
-      const k = opening ? 330 : 420, c = opening ? 17 : 30;      // bouncy out, firmer back
-      s.v += (-k * (s.x - s.target) - c * s.v) * dt;
-      s.x = Math.min(1.12, s.x + s.v * dt);
-    }
-    if (now >= s.pstart) {
-      s.pv += (-260 * (s.p - s.ptarget) - 15 * s.pv) * dt;
-      s.p += s.pv * dt;
-    }
-    const moving = now < s.start || now < s.pstart ||
-      Math.abs(s.x - s.target) > 0.002 || Math.abs(s.v) > 0.02 || Math.abs(s.p - s.ptarget) > 0.002 || Math.abs(s.pv) > 0.02;
-    if (moving) active = true; else { s.x = s.target; s.p = s.ptarget; s.v = s.pv = 0; }
-    const w = bh + (barW - bh) * s.x;
-    s.el.style.width = Math.max(bh, Math.round(w / u) * u) + "px";
-    s.el.style.setProperty("--p", Math.max(0, s.p).toFixed(3));
-  }
-  springRaf = active ? requestAnimationFrame(springStep) : 0;
-  if (!active) springLast = 0;
-}
-function kickNeeds() { if (!springRaf) springRaf = requestAnimationFrame(springStep); }
-
 let closeT = null;
 function setNeedsOpen(open) {
   clearTimeout(closeT);
-  if (needsEl.classList.contains("open") === open) return;
-  needsEl.classList.toggle("open", open);
-  needsEl.setAttribute("aria-expanded", String(open));
-  const now = performance.now();
-  for (const s of springs) {
-    s.target = open ? 1 : 0;
-    s.ptarget = open ? 1 : 0;
-    s.start = now + (open ? s.i * 55 : (springs.length - 1 - s.i) * 35);
-    s.pstart = open ? s.start + 140 : now;
-  }
-  kickNeeds();
+  needsEl.classList.toggle("open",open);needsEl.setAttribute("aria-expanded",String(open));
+  const panel=document.getElementById("needsPanel");panel.inert=!open;panel.setAttribute("aria-hidden",String(!open));
 }
-needsEl.addEventListener("pointerenter", e => { if (e.pointerType === "mouse") setNeedsOpen(true); });
-needsEl.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") closeT = setTimeout(() => setNeedsOpen(false), 250); });
-needsEl.addEventListener("click", e => { if (e.pointerType !== "mouse") setNeedsOpen(!needsEl.classList.contains("open")); });
-needsEl.addEventListener("focus", () => { if (needsEl.matches(":focus-visible")) setNeedsOpen(true); });  // keyboard only
-needsEl.addEventListener("blur", () => setNeedsOpen(false));
-needsEl.addEventListener("keydown", e => { if (e.key === "Escape") needsEl.blur(); });
+needsEl.addEventListener("pointerenter",e=>{if(e.pointerType==='mouse')setNeedsOpen(true);});
+needsEl.addEventListener("pointerleave",e=>{if(e.pointerType==='mouse')closeT=setTimeout(()=>setNeedsOpen(false),220);});
+needsEl.addEventListener("click",e=>{if(e.pointerType!=='mouse')setNeedsOpen(!needsEl.classList.contains('open'));});
+needsEl.addEventListener("focus",()=>{if(needsEl.matches(':focus-visible'))setNeedsOpen(true);});
+needsEl.addEventListener("blur",()=>setNeedsOpen(false));
+needsEl.addEventListener("keydown",e=>{if(e.key==='Escape')setNeedsOpen(false);if(e.key==='Enter'||e.key===' '){e.preventDefault();setNeedsOpen(!needsEl.classList.contains('open'));}});
+document.addEventListener('pointerdown',e=>{if(!needsEl.contains(e.target))setNeedsOpen(false);});
 
 // ================================================================ settings
 // The gear right above the mood emoji; each setting is a row of pills
@@ -4940,16 +4802,16 @@ const CHAT_ACT = { pc_video: "video", pc_forum: "forum", phone_call: "call", pho
 for (const [kind, groups] of Object.entries(CHATS)) for (const [who, g] of Object.entries(groups))
   g.talks.forEach((t, i) => { if (t.mood) ML[t.id = `chat_${kind === "call" ? "call_" : ""}${who}_${i}`] = { ...t.mood }; });
 // phone calls (user: 50 per person, voice only) are CHATS.call; a video call on the phone is a video chat
-function chatItem(kind, who, via = "pc") {
+function chatItem(kind, who, via = "pc", contactId = null) {
   const g = CHATS[kind][who], seen = ((lifeFlags.talkSeen ||= {})[kind === "call" ? "call_" + who : who] ||= []);
   let fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i));
   if (!fresh.length) { seen.splice(0, seen.length - 3); fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i)); }
-  const i = pick(fresh), t = g.talks[i], vars = { 朋友: pick(T.fill.朋友) };
+  const i = pick(fresh), t = g.talks[i], contact=contactFor(who,contactId), vars = { 朋友: contact?contactName(contact):pick(T.fill.朋友) };
   seen.push(i);
-  const name = fill(g.name, vars);
-  return { vars, talk: { ...t, kind, who, name,
-    start: kind === "call" ? `拿起手机给${name}打电话。` : via === "phone" ? `拿起手机和${name}视频。` : kind === "video" ? `打开电脑，和${name}视频聊天。` : `打开电脑，${g.verb}。`,
-    end: kind === "call" ? `和${name}打电话：${t.title}。` : kind === "video" ? `和${name}视频：${t.title}。` : `${g.verb}：${t.title}。` } };
+  const name = contact?contactName(contact):fill(g.name, vars);
+  return { vars, contactId:contact?.id, talk: { ...t, kind, who, name,
+    start: kind === "text" ? `拿起手机给${name}发消息。` : kind === "call" ? `拿起手机给${name}打电话。` : via === "phone" ? `拿起手机和${name}视频。` : kind === "video" ? `打开电脑，和${name}视频聊天。` : `打开电脑，${g.verb}。`,
+    end: kind === "text" ? `和${name}发消息：${t.title}。` : kind === "call" ? `和${name}打电话：${t.title}。` : kind === "video" ? `和${name}视频：${t.title}。` : `${g.verb}：${t.title}。` } };
 }
 function playTalk(dt) {
   if (!sim.item || !sim.item.talk || !CHAT_ACT[sim.act]) { sim.talk = null; return; }   // she was sent off to do something else
@@ -4993,7 +4855,7 @@ for (let i = 0; i < 20; i++) {                   // sparks around the moodlet pi
   crBurst.append(sp);
 }
 // while a card or its result is up the house dims a little and time stands still (user)
-const cardHolds = () => !!(card && card.hold) || guideOn;   // (the guide stops the clock too)
+const cardHolds = () => !!(card && card.hold) || guideOn || phoneHolds();   // (the guide stops the clock too)
 const dimHouse = on => view.classList.toggle("dim", on);
 let quietUntil = 0;         // her card line isn't followed by a "new mood" thought
 let card = null;            // { cd, vars, phase: ask | wait | result | closing, k, o, auto, timer, lockUntil }
@@ -5470,6 +5332,7 @@ function snapshot() {
            park: sim.place === "park" ? parkState() : null,
            mall: sim.place === "mall" ? mallSnapshot() : null },
     moods: [...moods].filter(([id]) => ML[id] && !id.startsWith("test_")).map(([id, m]) => [id, m.until, m.t]),
+    social: socialSnapshot(),
     flags: lifeFlags, events: eventLast, lastFestivalDay, namedAs,
     house: { lamps, windows: windowState },
     weather: { plan: [...weather.plan], snowCover: weather.snowCover, season: weather.season, skySeed:weather.skySeed, nextLightning:weather.nextLightning, lastStormReaction:weather.lastStormReaction, lastStormEvent:weather.lastStormEvent },
@@ -5495,6 +5358,7 @@ function migrate(sv) {
 }
 function restore(sv) {
   setLook(sv.look);
+  restoreSocial(sv.social);
   applySettings(sv.settings);         // older saves carried the settings; the settings file wins (boot)
   const m = sv.sim;
   if (Number.isFinite(m.t)) sim.t = m.t;
@@ -5798,6 +5662,7 @@ if (TAURI) {
 /*__BAR_JS__*/
 /*__PARK_FOOD_JS__*/
 /*__PARK_JS__*/
+/*__SOCIAL_HUD_JS__*/
 
 // ================================================================ loop
 let last = performance.now(), uiT = 0;
@@ -5805,6 +5670,7 @@ function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   realClock += dt;
+  tickSocial(dt,now);
   const fast = sim.mode === "act" && sim.act === "sleep" ? 8 : 1, run = cardHolds() || wiping ? 0 : speed;   // a chance card (or a scene change) stops the clock
   step(dt * run * fast, dt * (run ? 1 : 0));
   tickStorm(run ? dt : 0);
@@ -5813,6 +5679,7 @@ function frame(now) {
   renderSky();
   renderMood();
   placeRing();
+  placeContactActions();
   placeNametag();
   uiT += dt;
   if (uiT > 0.25) { uiT = 0; syncUI(); updateMood(); }

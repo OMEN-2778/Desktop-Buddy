@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const {ch
 (async()=>{const b=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});try{
  const p=await b.newPage({viewport:{width:1280,height:900},reducedMotion:'reduce'}),errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.goto(process.argv[2]||'http://127.0.0.1:8778/');await p.waitForFunction(()=>typeof booted!=='undefined'&&booted);await p.waitForTimeout(1300);
- await p.evaluate(()=>{window.mallTest=()=>{closeGuide();prefs.guided=true;closePicker();closeRing();speed=3;sim.mode='act';sim.act='mall';sim.place='mall';sim.t=720;sim.down=null;sim.windup=null;sim.queue=[];sim.route=[[MALL.at,MALL.feet]];sim.s=0;sim.target=0;sim.graceUntil=Infinity;sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,100]));lifeFlags.cards={seen:[],last:1e9};moods.clear();weather.kind='clear';weather.force='clear';arriveAt('mall');};mallTest();});
+ await p.evaluate(()=>{window.mallTest=()=>{restoreSocial({...socialSnapshot(),nextCall:1e9});closeGuide();prefs.guided=true;closePicker();closeRing();speed=3;sim.mode='act';sim.act='mall';sim.place='mall';sim.t=720;sim.down=null;sim.windup=null;sim.queue=[];sim.route=[[MALL.at,MALL.feet]];sim.s=0;sim.target=0;sim.graceUntil=Infinity;sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,100]));lifeFlags.cards={seen:[],last:1e9};moods.clear();weather.kind='clear';weather.force='clear';arriveAt('mall');};mallTest();});
  const result=await p.evaluate(()=>{
   if(MALL_LIFE.films.length!==16||MALL_LIFE.restaurants.length!==3)throw Error('Catalog');
   if(PICK.mall_food.groups().flatMap(g=>g.items).length!==PICK.cook.groups().flatMap(g=>g.items).length)throw Error('Kitchen menu');
@@ -47,7 +47,7 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const {ch
   const exitAt=await p.evaluate(()=>{const r=view.getBoundingClientRect();return[r.left+320*r.width/W,r.top+54*r.height/H];});
   await p.mouse.click(...exitAt);
   assert.equal(await p.evaluate(()=>mallVisitInside()),false,'Projected side door must remain clickable');
-  await p.evaluate(()=>{window.mallTest=()=>{closeGuide();closePicker();closeRing();speed=3;sim.mode='act';sim.act='mall';sim.place='mall';sim.t=720;sim.down=null;sim.windup=null;sim.queue=[];sim.route=[[MALL.at,MALL.feet]];sim.s=0;sim.target=0;sim.graceUntil=Infinity;sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,100]));lifeFlags.cards={seen:[],last:1e9};moods.clear();weather.kind='clear';weather.force='clear';arriveAt('mall');};});
+  await p.evaluate(()=>{window.mallTest=()=>{restoreSocial({...socialSnapshot(),nextCall:1e9});closeGuide();closePicker();closeRing();speed=3;sim.mode='act';sim.act='mall';sim.place='mall';sim.t=720;sim.down=null;sim.windup=null;sim.queue=[];sim.route=[[MALL.at,MALL.feet]];sim.s=0;sim.target=0;sim.graceUntil=Infinity;sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,100]));lifeFlags.cards={seen:[],last:1e9};moods.clear();weather.kind='clear';weather.force='clear';arriveAt('mall');};});
  }
  await p.evaluate(()=>{command('go_home');realClock=sim.windup.at+.1;step(0,.1);speed=0;});assert.equal(await p.evaluate(()=>sim.place),'home');
  assert.deepEqual(errors,[]);console.log('PASS: '+JSON.stringify(result)+'; forward food search, gradual seated eating, all film sleep/recovery/completion, WC priority, frozen fun/social, 4 interior reloads, manual home');

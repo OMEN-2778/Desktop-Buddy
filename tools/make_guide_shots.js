@@ -4,7 +4,8 @@
 //   PYTHONPATH=tools python3 tools/make_demo.py          # the page to shoot
 //   PW=$(npm root -g)/playwright node tools/make_guide_shots.js
 //   PYTHONPATH=tools python3 tools/make_demo.py          # ...and again, to embed them
-// ONLY=overview,needs reshoots just those.
+// ONLY=overview,needs reshoots just those. BUDDY_PREVIEW_URL=http://127.0.0.1:8781/
+// uses an existing local server when the browser blocks file:// navigation.
 //
 // Writes art/out/guide/<id>.webp (lossless) and art/out/guide/guide.json
 // ({id: {w, h, marks: [[x, y, w, h] as fractions of the picture]}}). The
@@ -34,7 +35,7 @@ const SHOTS = [
     clip: ["#view"], pad: 4,
     marks: [() => box(ringEl.querySelector(".ring-label")), () => btn("玩手机"), () => btn("改名字")] },
   { id: "needs", setup: () => { at("sofa"); Object.assign(sim.needs, { hunger: 14, energy: 66, hygiene: 82, bladder: 38, social: 55, fun: 91 }); setNeedsOpen(true); }, wait: 1400,
-    clip: [() => bar(0), () => bar(5), "#needs"], pad: 12, extendRight: 120,
+    clip: ["#needsPanel"], pad: 12,
     marks: [() => bar(0), () => bar(1), () => bar(2), () => bar(3), () => bar(4), () => bar(5)] },
   { id: "mood", setup: () => {
       at("sofa");
@@ -43,6 +44,9 @@ const SHOTS = [
     }, wait: 1100,
     clip: ["#moodrow", "#moodTip"], pad: 12,
     marks: ["#moodFace", () => box(moodTip.children[0]), () => box(moodTip.children[1])] },
+  { id: "contacts", setup: () => { at("sofa"); setContactsOpen(true); }, wait: 700,
+    clip: ["#networkTrigger", "#contactsPanel"], pad: 14,
+    marks: ["#networkTrigger", "#contactsList", '.contact-card[data-id="abu"]'] },
   { id: "card", setup: () => { at("sofa"); showCard(CARDS.find(c => c.n === 4)); }, wait: 1400,
     clip: ["#view"], pad: 4,
     marks: [() => box(cardEl.querySelector("h3")), ".cd-opt[data-k=a]", ".cd-opt[data-k=b]"] },
@@ -76,8 +80,8 @@ const HELPERS = () => {
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "guide-"));
-  const proxy = process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY } : undefined;
-  const browser = await chromium.launch({ proxy });
+  const proxy = !process.env.BUDDY_PREVIEW_URL && process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY } : undefined;
+  const browser = await chromium.launch({ proxy, executablePath: process.env.CHROMIUM_PATH || "/usr/bin/chromium", args: ["--no-sandbox"] });
   const ctx = await browser.newContext({ viewport: { width: 1500, height: 1300 }, deviceScaleFactor: DPR, ignoreHTTPSErrors: true });
   const only = process.env.ONLY ? process.env.ONLY.split(",") : null, file = path.join(OUT, "guide.json");
   const errors = [], meta = only && fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : {};
@@ -88,7 +92,7 @@ const HELPERS = () => {
       localStorage.clear();
       localStorage.setItem("buddy-settings", JSON.stringify({ speed: 3, scale: sc, onTop: false, autosave: false, guided: true }));
     }, SCALE);
-    await pg.goto("file://" + PAGE);
+    await pg.goto(process.env.BUDDY_PREVIEW_URL || "file://" + PAGE);
     await pg.waitForFunction(() => typeof booted !== "undefined" && booted, null, { timeout: 20000 });
     await pg.evaluate(() => document.fonts.ready);
     await pg.evaluate(HELPERS);
