@@ -74,6 +74,81 @@ def plant(s, x, y):
     box(s, x - 4, y - 4, 9, 9, P.clay, top=1)
 
 
+def booth(s):
+    # Booth for two; generous space around the small table.
+    soft(s, 16, 66, 51, 15, P.teal)
+    s.vline(40, 68, 78, P.teal[1])
+    soft(s, 14, 78, 55, 7, P.teal)
+    s.rect(17, 85, 49, 4, P.walnut[0])
+    s.rect(18, 89, 3, 4, P.walnut[0]).rect(62, 89, 3, 4, P.walnut[0])
+    for x in (23, 48):
+        soft(s, x, 69, 12, 8, P.teal)
+        s.set(x + 6, 73, P.teal[0])
+
+
+def counter_body(s):
+    # Empty counter; no people are baked into the scene.
+    s.rect(85, 60, 144, 8, P.walnut[1])
+    s.hline(88, 225, 61, P.oak[3])
+    box(s, 84, 68, 145, 21, P.walnut, top=3)
+    for x in [89, 124, 159, 194]:
+        s.frame(x, 75, 29, 10, P.walnut[0])
+        s.hline(x + 1, x + 27, 76, P.walnut[3])
+    s.hline(87, 225, 88, P.oak[2])
+    s.hline(88, 225, 90, P.mustard[1])
+    glass(s, 107, 63)
+    glass(s, 192, 63)
+    bottle(s, 213, 58, P.sage, 8)
+    s.rect(139, 64, 7, 3, P.porcelain[2]).hline(139, 145, 64, P.porcelain[3])
+
+
+def stage(s):
+    # Small elevated jazz stage; curtain, live sign, amplifier, microphone.
+    s.rect(245, 19, 77, 59, P.walnut[0]).rect(248, 22, 71, 53, P.lilac[0])
+    for x in range(249, 319, 8):
+        s.rect(x, 23, 3, 48, P.lilac[1])
+    s.rect(248, 21, 72, 4, P.lilac[2])
+    s.rect(248, 24, 8, 42, P.lilac[2]).rect(312, 24, 7, 42, P.lilac[2])
+    s.rect(273, 26, 27, 9, P.walnut[0])
+    text(s, "LIVE", 278, 28, P.lilac[4])
+    s.rect(241, 75, 85, 8, P.walnut[0]).rect(242, 75, 82, 3, P.oak[3])
+    s.rect(242, 78, 82, 3, P.walnut[1]).hline(243, 323, 81, P.oak[2])
+    box(s, 305, 60, 12, 15, P.steel, top=1)
+    s.rect(308, 64, 6, 7, P.steel[0])
+    s.set(313, 62, P.mustard[3])
+    s.ellipse(291, 74, 6, 1, P.steel[0])
+    s.vline(291, 51, 74, P.steel[1]).line(291, 51, 296, 48, P.steel[2])
+    s.rect(295, 47, 4, 2, P.steel[0]).hline(296, 298, 47, P.oat[3])
+    # A guitar on its stand, with separate neck, strings and bridge.
+    s.ellipse(260, 69, 4, 5, P.oak[0]).ellipse(260, 65, 3, 3, P.oak[2])
+    s.ellipse(260, 70, 3, 3, P.oak[2])
+    s.rect(259, 54, 2, 13, P.walnut[1]).rect(258, 51, 4, 5, P.oak[2])
+    s.vline(260, 53, 71, P.oat[3]).ellipse(260, 66, 1, 1, P.walnut[0]).hline(
+        258, 262, 72, P.walnut[0]
+    )
+
+
+def counter_taps(s):
+    # Brass taps, a polished shaker, napkins and restrained floor grain.
+    for x in (126, 130):
+        s.vline(x, 58, 64, P.mustard[1]).hline(x, x + 2, 58, P.mustard[3])
+    s.rect(174, 60, 4, 6, P.steel[2]).vline(174, 60, 65, P.steel[4])
+
+
+def counter_trim(s):
+    # Satin rail and polished counter reflections, kept to single pixels.
+    s.hline(96,219,91,P.steel[0]).hline(97,218,90,P.steel[3])
+    for xx in (102,211): s.vline(xx,88,93,P.steel[1])
+    s.hline(91,219,68,P.porcelain[2]).hline(94,215,69,P.porcelain[3])
+    s.hline(99,113,70,P.steel[4]).hline(178,196,70,P.steel[3])
+
+
+def stool(s, x):
+    s.vline(x - 3, 87, 100, P.steel[0]).vline(x + 3, 87, 100, P.steel[0])
+    s.hline(x - 4, x + 4, 96, P.oak[2])
+    soft(s, x - 6, 85, 13, 5, P.teal)
+
+
 def scene(night=False):
     s = Sprite(W, H)
     # Cutaway outline, ceiling, plaster and quiet vertical wooden panelling.
@@ -110,15 +185,7 @@ def scene(night=False):
     s.rect(16, 20, 5, 34, P.clay[1]).vline(17, 21, 52, P.clay[3])
     s.rect(59, 20, 5, 34, P.clay[1]).vline(60, 21, 52, P.clay[2])
     box(s, 13, 55, 54, 4, P.walnut, top=1)
-    # Booth for two; generous space around the small table.
-    soft(s, 16, 66, 51, 15, P.teal)
-    s.vline(40, 68, 78, P.teal[1])
-    soft(s, 14, 78, 55, 7, P.teal)
-    s.rect(17, 85, 49, 4, P.walnut[0])
-    s.rect(18, 89, 3, 4, P.walnut[0]).rect(62, 89, 3, 4, P.walnut[0])
-    for x in (23, 48):
-        soft(s, x, 69, 12, 8, P.teal)
-        s.set(x + 6, 73, P.teal[0])
+    booth(s)
     # A framed record and a tiny handwritten specials board.
     box(s, 70, 24, 13, 16, P.walnut, top=1)
     s.ellipse(76, 31, 4, 4, P.steel[0]).ellipse(76, 31, 1, 1, P.mustard[2])
@@ -162,47 +229,11 @@ def scene(night=False):
         s.vline(x + 2, 47, 50, P.oat[2]).hline(x, x + 4, 51, P.oat[2])
     lamp(s, 111)
     lamp(s, 202)
-    # Empty counter; no people are baked into the scene.
-    s.rect(85, 60, 144, 8, P.walnut[1])
-    s.hline(88, 225, 61, P.oak[3])
-    box(s, 84, 68, 145, 21, P.walnut, top=3)
-    for x in [89, 124, 159, 194]:
-        s.frame(x, 75, 29, 10, P.walnut[0])
-        s.hline(x + 1, x + 27, 76, P.walnut[3])
-    s.hline(87, 225, 88, P.oak[2])
-    s.hline(88, 225, 90, P.mustard[1])
-    glass(s, 107, 63)
-    glass(s, 192, 63)
-    bottle(s, 213, 58, P.sage, 8)
-    s.rect(139, 64, 7, 3, P.porcelain[2]).hline(139, 145, 64, P.porcelain[3])
+    counter_body(s)
     for x in [105, 145, 185, 216]:
         s.ellipse(x, 102, 7, 2, P.walnut[0])
-        s.vline(x - 3, 87, 100, P.steel[0]).vline(x + 3, 87, 100, P.steel[0])
-        s.hline(x - 4, x + 4, 96, P.oak[2])
-        soft(s, x - 6, 85, 13, 5, P.teal)
-    # Small elevated jazz stage; curtain, live sign, amplifier, microphone.
-    s.rect(245, 19, 77, 59, P.walnut[0]).rect(248, 22, 71, 53, P.lilac[0])
-    for x in range(249, 319, 8):
-        s.rect(x, 23, 3, 48, P.lilac[1])
-    s.rect(248, 21, 72, 4, P.lilac[2])
-    s.rect(248, 24, 8, 42, P.lilac[2]).rect(312, 24, 7, 42, P.lilac[2])
-    s.rect(273, 26, 27, 9, P.walnut[0])
-    text(s, "LIVE", 278, 28, P.lilac[4])
-    s.rect(241, 75, 85, 8, P.walnut[0]).rect(242, 75, 82, 3, P.oak[3])
-    s.rect(242, 78, 82, 3, P.walnut[1]).hline(243, 323, 81, P.oak[2])
-    box(s, 305, 60, 12, 15, P.steel, top=1)
-    s.rect(308, 64, 6, 7, P.steel[0])
-    s.set(313, 62, P.mustard[3])
-    s.ellipse(291, 74, 6, 1, P.steel[0])
-    s.vline(291, 51, 74, P.steel[1]).line(291, 51, 296, 48, P.steel[2])
-    s.rect(295, 47, 4, 2, P.steel[0]).hline(296, 298, 47, P.oat[3])
-    # A guitar on its stand, with separate neck, strings and bridge.
-    s.ellipse(260, 69, 4, 5, P.oak[0]).ellipse(260, 65, 3, 3, P.oak[2])
-    s.ellipse(260, 70, 3, 3, P.oak[2])
-    s.rect(259, 54, 2, 13, P.walnut[1]).rect(258, 51, 4, 5, P.oak[2])
-    s.vline(260, 53, 71, P.oat[3]).ellipse(260, 66, 1, 1, P.walnut[0]).hline(
-        258, 262, 72, P.walnut[0]
-    )
+        stool(s, x)
+    stage(s)
     # Front tables, candlelight, and pots frame the walking strip.
     for x, y in [(43, 93), (276, 96)]:
         s.ellipse(x, y + 12, 12, 2, P.walnut[0])
@@ -217,17 +248,10 @@ def scene(night=False):
         glass(s, x + 7, y - 6)
     plant(s, 77, 91)
     plant(s, 328, 91)
-    # Brass taps, a polished shaker, napkins and restrained floor grain.
-    for x in (126, 130):
-        s.vline(x, 58, 64, P.mustard[1]).hline(x, x + 2, 58, P.mustard[3])
-    s.rect(174, 60, 4, 6, P.steel[2]).vline(174, 60, 65, P.steel[4])
+    counter_taps(s)
     for x, y in ((19, 98), (83, 107), (161, 97), (222, 109), (302, 88)):
         s.hline(x, x + 7, y, P.walnut[1])
-    # Satin rail and polished counter reflections, kept to single pixels.
-    s.hline(96,219,91,P.steel[0]).hline(97,218,90,P.steel[3])
-    for xx in (102,211): s.vline(xx,88,93,P.steel[1])
-    s.hline(91,219,68,P.porcelain[2]).hline(94,215,69,P.porcelain[3])
-    s.hline(99,113,70,P.steel[4]).hline(178,196,70,P.steel[3])
+    counter_trim(s)
     return s
 
 
@@ -266,3 +290,18 @@ def drink_icon(color, kind="cocktail"):
         s.ellipse(15, 5, 2, 2, P.leaf[3])
     s.vline(6, 7, 10, P.porcelain[3])
     return s
+
+
+def interaction_sprites():
+    """Reuse scene drawing on transparency: no floor, cast shadows or NPCs."""
+    out = {}
+    for key, draw in [("bar_counter", lambda s: (counter_body(s), counter_taps(s), counter_trim(s))),
+                      ("bar_stage", stage), ("bar_seat:booth_l", booth), ("bar_seat:booth_r", booth)]:
+        s = Sprite(W, H)
+        draw(s)
+        out[key] = s
+    for i, x in enumerate((105, 145, 185, 216)):
+        s = Sprite(W, H)
+        stool(s, x)
+        out[f"bar_seat:stool_{i}"] = s
+    return out

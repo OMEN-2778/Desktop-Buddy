@@ -19,9 +19,10 @@ def poly(s, points, color):
             s.hline(min(xs), max(xs), y, color)
 
 
-def restroom(s):
+def restroom(s, shadow=True):
     # Ground contact and three ascending stone steps.
-    s.ellipse(275, 94, 50, 5, P.grass[0])
+    if shadow:
+        s.ellipse(275, 94, 50, 5, P.grass[0])
     poly(s, [(227,90),(307,90),(320,85),(320,91),(307,97),(227,97)], P.pave[1])
     for y, left, right in ((90,235,308),(93,231,312),(96,227,316)):
         s.hline(left, right, y, P.pave[4]).hline(left, right, y + 1, P.pave[2])
@@ -91,8 +92,9 @@ def oden_front(s):
     s.rect(199,68,3,7,P.walnut[1]).vline(199,66,70,P.oak[3]).vline(201,65,69,P.oak[3])
 
 
-def oden(s):
-    s.ellipse(176,97,63,6,P.grass[0])
+def oden(s, shadow=True):
+    if shadow:
+        s.ellipse(176,97,63,6,P.grass[0])
     poly(s,[(112,92),(210,92),(228,85),(230,94),(211,101),(110,101)],P.pave[1])
     poly(s,[(110,95),(211,95),(230,88),(230,91),(211,99),(110,99)],P.pave[3])
     # Back wall and side display create an enclosed, warm little workspace.

@@ -130,11 +130,8 @@ function parkCrossEdge() {
   return true;
 }
 function drawParkHover(ctx) {
-  if (!['park_bench','park_wc','park_food'].includes(hoverId)) return;
-  const r = hoverId === 'park_bench' ? parkLayout().bench.hit : parkLayout().facility?.hit;
-  if (!r) return;
-  const [x,y,w,h] = r;
-  ctx.strokeStyle = '#efc452'; ctx.lineWidth = 1; ctx.strokeRect(x+.5,y+.5,w-1,h-1);
+  const img = parkImages().hover[hoverId];
+  if (img) drawObjectHover(ctx, img);
 }
 function parkSetup() {
   parkVendor = null;

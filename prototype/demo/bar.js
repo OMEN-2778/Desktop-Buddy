@@ -259,11 +259,7 @@ function renderBar() {
   // Tiny emissive pixels stay bright while the room itself stays intimate.
   bctx.fillStyle = '#f7f6fb';
   for (const [x, y] of [[111, 32], [202, 32], [43, 84], [276, 87]]) bctx.fillRect(x, y, 1, 1);
-  if (hoverId) {
-    const s = hoverId.startsWith('bar_seat:') ? barSeat(hoverId.slice(9)) : null;
-    const r = s?.hit || (hoverId === 'bar_counter' ? [85, 67, 143, 5] : hoverId === 'bar_stage' ? [243, 75, 81, 4] : null);
-    if (r) { bctx.strokeStyle = '#efc452'; bctx.lineWidth = 1; bctx.strokeRect(r[0] + .5, r[1] + .5, r[2] - 1, r[3] - 1); }
-  }
+  drawObjectHover(bctx, O.hover[hoverId]);
   if (sim.mode === "down") drawRevive(bctx);
   vctx.imageSmoothingEnabled = false;
   vctx.clearRect(0, 0, view.width, view.height);

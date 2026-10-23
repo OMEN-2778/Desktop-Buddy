@@ -1592,30 +1592,47 @@ const CLICK_NAME = {
   bed_lamp: "台灯", desk_lamp: "台灯", floor_lamp: "落地灯", win_bed: "窗户", win_study: "窗户", win_living: "窗户",
 };
 const CLICK = {};   // id -> { x, y, w, h, mask:Set, rings:[ring1, ring2, ring3], sparks }
+// Every scene derives its outline from an isolated sprite, never a hit rectangle.
+function outlineShape(img, ox = 0, oy = 0) {
+  const w = img.width, h = img.height;
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+  const cx = cv.getContext("2d"); cx.drawImage(img, 0, 0);
+  const a = cx.getImageData(0, 0, w, h).data;
+  const inside = new Set();
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (a[(y * w + x) * 4 + 3]) inside.add((ox + x) + "," + (oy + y));
+  const rings = [];
+  let grown = new Set(inside);
+  for (let k = 0; k < 3; k++) {   // dilate one pixel at a time: the glow's rings
+    const ring = [], seen = new Set();
+    for (const key of grown) {
+      const [x, y] = key.split(",").map(Number);
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nk = (x + dx) + "," + (y + dy);
+        if (!grown.has(nk) && !seen.has(nk)) { seen.add(nk); ring.push([x + dx, y + dy]); }
+      }
+    }
+    for (const k of seen) grown.add(k);
+    rings.push(ring);
+  }
+  return { w, h, area: inside.size, inside, near: new Set([...inside, ...rings[0].map(p => p[0] + "," + p[1])]), rings };
+}
 function buildClickables() {
   for (const [id, c] of Object.entries(D.clickables)) {
-    const img = IMG.click[id], w = img.width, h = img.height;
-    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
-    const cx = cv.getContext("2d"); cx.drawImage(img, 0, 0);
-    const a = cx.getImageData(0, 0, w, h).data;
-    const inside = new Set();
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (a[(y * w + x) * 4 + 3]) inside.add((c.x + x) + "," + (c.y + y));
-    const rings = [];
-    let grown = new Set(inside);
-    for (let k = 0; k < 3; k++) {   // dilate one pixel at a time: the glow's rings
-      const ring = [], seen = new Set();
-      for (const key of grown) {
-        const [x, y] = key.split(",").map(Number);
-        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-          const nk = (x + dx) + "," + (y + dy);
-          if (!grown.has(nk) && !seen.has(nk)) { seen.add(nk); ring.push([x + dx, y + dy]); }
-        }
-      }
-      for (const k of seen) grown.add(k);
-      rings.push(ring);
-    }
-    CLICK[id] = { x: c.x, y: c.y, w, h, area: inside.size, inside, near: new Set([...inside, ...rings[0].map(p => p[0] + "," + p[1])]), rings };
+    CLICK[id] = { x: c.x, y: c.y, ...outlineShape(IMG.click[id], c.x, c.y) };
   }
+}
+const outlineCache = new WeakMap();
+function drawHoverOutline(ctx, shape, ox = 0, oy = 0) {
+  const shimmer = reduceMotionUI ? 0 : Math.floor(realClock * 6);
+  for (const [x, y] of shape.rings[0]) {
+    const bright = (x + ox + y + oy + shimmer) % 4 === 0;
+    px(ctx, x + ox, y + oy, bright ? 1 : 0.7, bright ? GLOW_PALE : GLOW);
+  }
+}
+function drawObjectHover(ctx, img, x = 0, y = 0) {
+  if (!img) return;
+  if (!outlineCache.has(img)) outlineCache.set(img, outlineShape(img));
+  drawHoverOutline(ctx, outlineCache.get(img), Math.round(x), Math.round(y));
 }
 function clickableAt(x, y) {
   if (sim.place === "bar") return barHit(x, y);
@@ -1651,8 +1668,7 @@ const GLOW = "255,196,64", GLOW_SOFT = "255,226,150", GLOW_PALE = "255,243,205";
 function px(ctx, x, y, a, c = GLOW) { ctx.fillStyle = `rgba(${c},${a})`; ctx.fillRect(x, y, 1, 1); }
 function drawClickFx(ctx) {
   if (hoverId && CLICK[hoverId] && !(glow && glow.id === hoverId && realClock - glow.t0 < 0.9)) {
-    const shimmer = Math.floor(realClock * 6);   // marching highlight around the piece
-    for (const [x, y] of CLICK[hoverId].rings[0]) px(ctx, x, y, (x + y + shimmer) % 4 ? 0.7 : 1, (x + y + shimmer) % 4 ? GLOW : GLOW_PALE);
+    drawHoverOutline(ctx, CLICK[hoverId]);
   }
   if (glow && !CLICK[glow.id]) glow = null;
   if (glow) {
@@ -3386,9 +3402,11 @@ view.addEventListener("pointermove", e => {
   const [x, y] = canvasXY(e);
   hoverBuddy = e.pointerType === "mouse" && buddyHit(x, y);
   hoverId = buddyHit(x, y) ? null : clickableAt(x, y);
-  view.style.cursor = hoverId || buddyHit(x, y) || (sim.place !== "home" && OUT[sim.place].kind === "walk") || (mallS.hover = itemAt(x, y)) ? "pointer" : TAURI ? "grab" : "default";   // outside: anywhere is somewhere to walk   // the app: walls and floor move the window
+  mallS.pointer = sim.place === "mall" ? [x, y] : null;
+  mallS.hover = hoverBuddy ? null : itemAt(x, y);
+  view.style.cursor = hoverId || hoverBuddy || (sim.place !== "home" && OUT[sim.place].kind === "walk") || mallS.hover ? "pointer" : TAURI ? "grab" : "default";   // outside: anywhere is somewhere to walk   // the app: walls and floor move the window
 });
-view.addEventListener("pointerleave", () => { hoverId = null; holding = null; hoverBuddy = false; });
+view.addEventListener("pointerleave", () => { hoverId = null; mallS.hover = null; mallS.pointer = null; holding = null; hoverBuddy = false; });
 // her name over her head while the pointer rests on her (and no menu is open)
 function placeNametag() {
   const on = hoverBuddy && ringEl.hidden && sim.mode !== "down";
@@ -3868,7 +3886,7 @@ function throughDoor(to) {
     showHint("现在酒吧还没开门哦！"); return;
   }
   sim.mode = "idle"; sim.act = null; sim.idleUntil = Infinity;
-  if (sim.place === "mall") { mallS.stop = null; mallS.goal = null; mallS.hover = null; }
+  if (sim.place === "mall") { mallS.stop = null; mallS.goal = null; mallS.hover = null; mallS.pointer = null; }
   sim.windup = null; cancelRescue();
   hoverId = null; hoverBuddy = false; glow = null; walkMark = null;
   closeRing(); closePicker(); clearNpcPills();
@@ -4180,7 +4198,7 @@ function arriveAt(place) {                       // fresh life for the new place
     life.ducks = [0, 1, 2].map(i => ({ x: cx - rx + 14 + Math.random() * (rx * 2 - 28), y: cy - 2 + (i % 2) * 5, dir: Math.random() < 0.5 ? -1 : 1, dip: 0, t: Math.random() * 5 }));
   }
   if (place === "mall") {
-    Object.assign(mallS, { x: Math.random() * OUT.mall.nearW, dist: 0, dir: -1, goal: null, stop: null });
+    Object.assign(mallS, { x: Math.random() * OUT.mall.nearW, dist: 0, dir: -1, goal: null, stop: null, hover: null, pointer: null });
     mallS.shoppers = [0, 1, 2, 3, 4, 5].map(i => ({ k: i % 5, x: Math.random() * OUT.mall.farW, dir: i % 2 ? 1 : -1, v: 5 + Math.random() * 5 }));
   }
   npcSetup(place);
@@ -4442,7 +4460,7 @@ function npcTick(dt, run) {
 // mallS.x is the spot on the near strip right under her; walking left it
 // shrinks and the strips slide right: upstairs (far, hazed) at 0.45, the
 // hanging decorations at 0.75, our side of the corridor at full speed.
-const mallS = { x: 0, dist: 0, dir: -1, goal: null, stop: null, shoppers: [], seen: {}, hover: null };
+const mallS = { x: 0, dist: 0, dir: -1, goal: null, stop: null, shoppers: [], seen: {}, hover: null, pointer: null };
 const MALL = OUT.mall;
 const wrapNear = d => ((d % MALL.nearW) + MALL.nearW * 1.5) % MALL.nearW - MALL.nearW / 2;   // nearest copy
 const onScreen = u => MALL.at + wrapNear(u - mallS.x);                   // a near-strip x on screen
@@ -4512,31 +4530,13 @@ function mallFrame(ms) {
   const i = Math.floor(mallS.dist / 4) % 4;
   return { f: { look: mallS.dir, bob: i % 2 ? 0 : 1, sway: i % 2 }, pose: ["walkL", "stand", "walkR", "stand"][i], emote: null };
 }
-// a gold outline round what's under the pointer (user: the things to click should stand out)
-const propRing = {};
-function ringOf_(img) {
-  const w = img.width + 2, h = img.height + 2, c = document.createElement("canvas"); c.width = w; c.height = h;
-  const x = c.getContext("2d"); x.drawImage(img, 1, 1);
-  const a = x.getImageData(0, 0, w, h).data, out = x.createImageData(w, h), o = out.data;
-  const on = (i, j) => i >= 0 && j >= 0 && i < w && j < h && a[(j * w + i) * 4 + 3] > 0;
-  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++)
-    if (!on(i, j) && (on(i - 1, j) || on(i + 1, j) || on(i, j - 1) || on(i, j + 1))) { const k = (j * w + i) * 4; o[k] = 255; o[k + 1] = 214; o[k + 2] = 90; o[k + 3] = 255; }
-  x.clearRect(0, 0, w, h); x.putImageData(out, 0, 0);
-  return c;
-}
 function drawMallHover(ctx) {
   const it = mallS.hover;
-  if (!it) return;
-  ctx.globalAlpha = 0.65 + 0.35 * Math.sin(realClock * 6);
-  if (it.kind === "shop") {
-    const x = Math.round(onScreen(it.u));
-    ctx.strokeStyle = "#ffd65a"; ctx.lineWidth = 1;
-    ctx.strokeRect(x + 0.5, it.top + 0.5, it.w - 1, MALL.floor - it.top - 1);
-  } else {
-    const r = propRing[it.id] ||= ringOf_(IMG.out.mall.props[it.id]);
-    ctx.drawImage(r, Math.round(onScreen(it.px)) - 1, it.top - 1);
-  }
-  ctx.globalAlpha = 1;
+  if (!it || sim.place !== "mall") return;
+  const shop = it.kind === "shop";
+  const img = shop ? IMG.out.mall.hover[it.id] : IMG.out.mall.props[it.id];
+  const x = Math.round(mod((shop ? it.u : it.px) - mallS.x + MALL.at, MALL.nearW));
+  for (const at of [x, x - MALL.nearW]) drawObjectHover(ctx, img, at, it.top);
 }
 function benchFrame(ms) {                        // on the park bench: watching the ducks, humming now and then
   const k = Math.floor(ms / 2600) % 6;
@@ -4835,6 +4835,7 @@ function renderBeach(dt) {
 // ---------------------------------------------------------------- 商场
 const mod = (a, n) => ((a % n) + n) % n;
 function renderMall(dt) {
+  if (mallS.pointer) mallS.hover = buddyHit(...mallS.pointer) ? null : itemAt(...mallS.pointer);
   const L = MALL, O = IMG.out.mall, se = SEASON_KEYS[seasonOf(sim.t).i], f = nightness(hour()), run = speed && !cardHolds() && !wiping;
   bctx.clearRect(0, 0, W, H);
   const offF = mod(-mallS.x * 0.45, L.farW), offD = mod(L.at - mallS.x * 0.75, L.nearW), offN = mod(L.at - mallS.x, L.nearW);

@@ -460,6 +460,12 @@ flash + gold rings rippling out + four-point twinkles. Anything that lights
 up on its own (TV/monitor screens, flames, steam) is drawn after the night
 pass. Screen/effect art lives at the end of `_furniture.py` (`tv_screen`,
 `monitor_screen`, `cook_fx`, `meal_fx`, `water_fx`; review in `fx_sheet.py`).
+- **所有场景的交互高光（用户要求）**：新增或修改可互动物体时，必须导出该物体
+  独立的透明背景精灵，排除地面、投影和 NPC；悬停统一调用 `drawObjectHover`
+  （家居使用同源的 `outlineShape` / `drawHoverOutline`）。从真实不透明像素向外
+  扩张 1px 描边，统一金色与浅色闪纹；减少动态效果时保持静止。禁止以点击区域、
+  矩形框、横线或大块黄光代替轮廓。命中区域可保留便于点击的宽容范围。场景变化、
+  商场滚动和鼠标离开时不得留下旧高光；新增物体须纳入 `tools/check_hover.js` 检查。
 - Clicking Buddy opens a **ring menu** of pixel buttons around her (聊聊天 /
   摸摸头 / 玩手机 ▸ / 跳支舞 / 去睡觉; 玩手机 swaps in a second ring);
   clicking the computer opens one for 打游戏 / 视频聊天 / 逛论坛 / 写代码

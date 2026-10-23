@@ -148,19 +148,23 @@ def main():
 
     # the front door (user: it opens a ring of places to go) and, outside,
     # 家门口: the street side of the house (art/src/concept/front_yard.py)
-    ex, ew = Hs.ENTRY
-    ey = Hs.GR_FLOOR - 37
-    clickables["front_door"] = {"src": png(day.crop(ex - 1, ey - 1, ew + 2, 38)), "x": ex - 1, "y": ey - 1}
-    front = FY.scene("summer")
+    door = Sprite(Hs.W, Hs.H)
+    Hs.entry_door(door)
+    x0, y0, x1, y1 = door.bbox()
+    clickables["front_door"] = {"src": png(door.crop(x0, y0, x1 - x0, y1 - y0)), "x": x0, "y": y0}
     dx, dw = FY.DOOR
     dy = FY.BASE - 37
-    clickables["out_door"] = {"src": png(front.crop(dx - 2, dy - 8, dw + 4, 47)), "x": dx - 2, "y": dy - 8}
+    door = Sprite(FY.W, FY.H)
+    FY.door(door)
+    x0, y0, x1, y1 = door.bbox()
+    clickables["out_door"] = {"src": png(door.crop(x0, y0, x1 - x0, y1 - y0)), "x": x0, "y": y0}
     crown = {"maple": (19, 16), "cherry": (17, 15), "linden": (19, 16)}
     # places to go (user): 家门口, 公园 (five walkable areas), 商场 (she walks
     # on, the mall scrolls past), 海边. "img" holds every picture (the page
     # loads it as is), the rest is layout.
     clouds = [png(BC.cloud(i)) for i in range(3)]
     mall_items = MALL.items()
+    mall_near = MALL.near()[0]
     sparrows = [png(FY.sparrow(f)) for f in range(4)]
     flies = [png(FY.butterfly(f)) for f in range(4)]
     outside = {"front": {
@@ -175,7 +179,8 @@ def main():
         "kind": "walk", "feet": PK.FEET, "walk": [8, PK.W - 8], "doorX": PK.BENCH, "side": PK.PATH[0],
         "img": {"zones": {z["id"]: {
             "seasons": {se: {"bg": png(PX.background(z, se)), "trees": [png(PX.trees(z, se, f)) for f in (0, 1)], "foreground": png(PX.foreground(z, se))} for se in PK.SEASONS},
-            "snow": png(PX.snow(z)), "wet": png(PK.wet_layer()), "lit": png(PX.lit(z)), "bench": png(PX.bench_layer(z)), "facilityFront": png(PX.facility_front(z))
+            "snow": png(PX.snow(z)), "wet": png(PK.wet_layer()), "lit": png(PX.lit(z)), "bench": png(PX.bench_layer(z)), "facilityFront": png(PX.facility_front(z)),
+            "hover": {key: png(spr) for key, spr in PX.interaction_sprites(z).items()}
           } for z in PX.ZONES},
           "duck": [png(PK.duck(f)) for f in range(3)], "plane": png(PK.plane()), "sparrow": sparrows, "butterfly": flies, "cloud": clouds},
         "zones": [{"id": z["id"], "name": z["name"], "pond": z["pond"], "lamp": z["lamp"],
@@ -197,13 +202,15 @@ def main():
         "img": {"far": png(MALL.far()), "near": png(MALL.near()[0]), "rail": png(MALL.rail()), "skyNight": png(MALL.sky_night()),
                 "deco": {se: png(MALL.deco(se)) for se in MALL.SEASONS},
                 "shopper": [[png(MALL.shopper(k, f)) for f in (0, 1)] for k in range(5)],
-                "props": {it["id"]: png(it["sprite"]) for it in mall_items if "sprite" in it}},
+                "props": {it["id"]: png(it["sprite"]) for it in mall_items if "sprite" in it},
+                "hover": {it["id"]: png(mall_near.crop(it["u"], it["top"], it["w"], MALL.FLOOR - it["top"])) for it in mall_items if it["kind"] == "shop"}},
         "farW": MALL.FAR_W, "nearW": MALL.NEAR_W, "at": MALL.AT, "feet": MALL.FEET, "upWalk": MALL.UP_WALK,
         "fascia": MALL.FASCIA, "floor": MALL.FLOOR, "walk": [MALL.AT, MALL.AT], "doorX": MALL.AT,
         "items": [{k: v for k, v in it.items() if k != "sprite"} for it in mall_items]}}
 
     bar_text = json.loads((SRC.parent / "bar_text.json").read_text())
-    outside["bar"] = {"kind": "bar", "img": {"day": png(BAR.scene()), "night": png(BAR.scene(True)), "counter": png(BAR.counter()), "foreground": png(BAR.foreground())},
+    outside["bar"] = {"kind": "bar", "img": {"day": png(BAR.scene()), "night": png(BAR.scene(True)), "counter": png(BAR.counter()), "foreground": png(BAR.foreground()),
+                                             "hover": {key: png(spr) for key, spr in BAR.interaction_sprites().items()}},
                       "feet": 107, "walk": [18, 322], "doorX": 128}
 
     # window open states: day/night, three sway frames

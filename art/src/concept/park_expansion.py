@@ -341,6 +341,18 @@ def bench_layer(zone):
     return s
 
 
+def interaction_sprites(zone):
+    bench = bench_layer(zone)
+    bench.px[92:, :, 3] = 0  # Cast shadows are not part of the furniture silhouette.
+    out = {"park_bench": bench}
+    for zid, key, draw in [("lakeside", "park_wc", restroom), ("grove", "park_food", oden)]:
+        if zone["id"] == zid:
+            s = Sprite(W, H)
+            draw(s, shadow=False)
+            out[key] = s
+    return out
+
+
 def build():
     out = {}
     for zone in ZONES:
