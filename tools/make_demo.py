@@ -35,6 +35,7 @@ import mood_icons  # noqa: E402
 import front_yard as FY  # noqa: E402
 import park as PK  # noqa: E402
 import park_expansion as PX  # noqa: E402
+import park_food as PF  # noqa: E402
 import beach as BC  # noqa: E402
 import mall as MALL  # noqa: E402
 import bar as BAR  # noqa: E402
@@ -167,6 +168,7 @@ def main():
     mall_near = MALL.near()[0]
     sparrows = [png(FY.sparrow(f)) for f in range(4)]
     flies = [png(FY.butterfly(f)) for f in range(4)]
+    park_food = json.loads((SRC.parent / "park_food.json").read_text())
     outside = {"front": {
         "kind": "walk",
         "img": {"seasons": {se: {"bg": png(FY.background(se)), "trees": [png(FY.trees(se, f)) for f in (0, 1)]} for se in FY.SEASONS},
@@ -179,10 +181,11 @@ def main():
         "kind": "walk", "feet": PK.FEET, "walk": [8, PK.W - 8], "doorX": PK.BENCH, "side": PK.PATH[0],
         "img": {"zones": {z["id"]: {
             "seasons": {se: {"bg": png(PX.background(z, se)), "trees": [png(PX.trees(z, se, f)) for f in (0, 1)], "foreground": png(PX.foreground(z, se))} for se in PK.SEASONS},
-            "snow": png(PX.snow(z)), "wet": png(PK.wet_layer()), "lit": png(PX.lit(z)), "bench": png(PX.bench_layer(z)), "facilityFront": png(PX.facility_front(z)),
+            "snow": png(PX.snow(z)), "wet": png(PK.wet_layer()), "lit": png(PX.lit(z)), "bench": png(PX.bench_layer(z)), "facilityFront": png(PX.facility_front(z)), "props": png(PX.props(z,"summer")),
             "hover": {key: png(spr) for key, spr in PX.interaction_sprites(z).items()}
           } for z in PX.ZONES},
-          "duck": [png(PK.duck(f)) for f in range(3)], "plane": png(PK.plane()), "sparrow": sparrows, "butterfly": flies, "cloud": clouds},
+          "duck": [png(PK.duck(f)) for f in range(3)], "plane": png(PK.plane()), "sparrow": sparrows, "butterfly": flies, "cloud": clouds,
+          "food": {d["id"]: png(PF.dish(d["kind"])) for d in park_food["dishes"]}},
         "zones": [{"id": z["id"], "name": z["name"], "pond": z["pond"], "lamp": z["lamp"],
                    "trees": [[kind, x, cy, rx, ry] for kind, x, cy, _, rx, ry in z["trees"]],
                    "horizon": PK.HORIZON, "path": list(PK.PATH), "feet": PK.FEET, "side": PK.PATH[0],
@@ -352,6 +355,8 @@ def main():
     html = html.replace("/*__BAR_TEXT_JS__*/", "const BAR_TEXT = " + json.dumps(bar_text, ensure_ascii=False) + ";")
     html = html.replace("/*__BAR_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "bar_cards.json").read_text() + ");")
     html = html.replace("/*__SLEEP_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "sleep_cards.json").read_text() + ");")
+    html = html.replace("/*__PARK_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "park_cards.json").read_text() + ");")
+    html = html.replace("/*__PARK_FOOD_JS__*/", "const PARK_FOOD = " + json.dumps(park_food, ensure_ascii=False) + ";")
     html = html.replace("/*__PARK_JS__*/", (SRC.parent / "park.js").read_text())
     html = html.replace("/*__BAR_JS__*/", (SRC.parent / "bar.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))

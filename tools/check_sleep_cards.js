@@ -13,8 +13,8 @@ const { chromium } = require(process.env.PW || 'playwright');
     assert.equal(await page.evaluate(() => card), null, "Cards must wait until the first-run guide is dismissed");
     const count = await page.evaluate(() => {
       closeGuide(); speed = 0; sim.idleUntil = Infinity;
-      const all = CARDS.filter(cd => cd.n >= 451);
-      if (CARDS.length !== 500 || new Set(CARDS.map(cd => cd.n)).size !== 500) throw Error('Card IDs collide');
+      const all = CARDS.filter(cd => cd.n >= 451 && cd.n <= 500);
+      if (new Set(CARDS.map(cd => cd.n)).size !== CARDS.length) throw Error('Card IDs collide');
       if (all.length !== 50 || new Set(all.map(cd => cd.title)).size !== 50) throw Error('Card count/titles');
       const texts = [];
       for (const cd of all) for (const k of ['a', 'b']) {
@@ -68,6 +68,6 @@ const { chromium } = require(process.env.PW || 'playwright');
       } finally { Math.random = rnd; }
     }), [false, false]);
     assert.deepEqual(errors, []);
-    console.log('PASS: 50 unique cards / 200 outcomes; 500 unique IDs; valid moods; bed/dream/wake runtime hooks; sleep pause; choices; effects; resume; awake/outside exclusions');
+    console.log('PASS: 50 unique sleep cards / 200 outcomes; unique IDs; valid moods; bed/dream/wake runtime hooks; sleep pause; choices; effects; resume; awake/outside exclusions');
   } finally { await browser.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });

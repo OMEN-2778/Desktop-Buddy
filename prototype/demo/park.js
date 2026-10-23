@@ -3,9 +3,20 @@
 const PARK_ZONES = OUT.park.zones;
 const PARK_SERVICE = { toilet: { zone: 'lakeside', act: 'park_toilet', need: 'bladder' }, food: { zone: 'grove', act: 'park_eat', need: 'hunger' } };
 let parkVendor = null;
+let parkNextTalk = 0;
+const PARK_DISHES = Object.fromEntries(PARK_FOOD.dishes.map(d => [d.id, d]));
+const parkDish = () => PARK_DISHES[sim.park?.dish] || PARK_DISHES.oden;
+for (const d of PARK_FOOD.dishes) ML['park_food_' + d.id] = {name:d.mood,emo:d.emo,pts:2,min:180};
+PICK.park_food = {
+  title: '樱花日料摊 · 今天想吃什么',
+  groups: () => [...new Set(PARK_FOOD.dishes.map(d=>d.group))].map(name=>({name,
+    items:PARK_FOOD.dishes.filter(d=>d.group===name).map(d=>({title:d.name,
+      icon:D.outside.park.img.food[d.id],line:d.description,info:d.mood+' · '+MOOD[d.emo].name+' +2',item:{id:d.id}}))})),
+};
 function parkState(raw = sim.park) {
   return { zone: PARK_ZONES.some(z => z.id === raw?.zone) ? raw.zone : 'central', seated: raw?.seated === true,
-    goal: Object.hasOwn(PARK_SERVICE, raw?.goal) ? raw.goal : null };
+    goal: Object.hasOwn(PARK_SERVICE, raw?.goal) ? raw.goal : null,
+    dish: Object.hasOwn(PARK_DISHES,raw?.dish) ? raw.dish : null };
 }
 function parkLayout() { return PARK_ZONES.find(z => z.id === sim.park?.zone) || PARK_ZONES[2]; }
 function parkImages() { return { ...IMG.out.park, ...IMG.out.park.zones[parkLayout().id] }; }
@@ -45,11 +56,12 @@ function parkGoalAction() {
   return 'stroll';
 }
 function parkRouteGoal() { startAct(parkGoalAction()); }
-function parkRequest(goal, auto = false) {
+function parkRequest(goal, auto = false, dish = null) {
   if (sim.mode === 'down' || wiping || cardHolds()) return;
   closeRing(); sim.windup = null; sim.queue = []; sim.talk = null; sim.item = null; sim.player = !auto;
-  sim.park = { ...parkState(), goal, seated: false };
-  if (auto) speak(goal === 'toilet' ? '先去 2 区的公厕，不用急着回家。' : '有点饿了，去 5 区吃碗热关东煮。');
+  sim.park = { ...parkState(), goal, seated: false,
+    dish: goal === 'food' ? (PARK_DISHES[dish]?.id || (auto ? pick(PARK_FOOD.dishes).id : 'oden')) : null };
+  if (auto) speak(goal === 'toilet' ? '先去 2 区的公厕，不用急着回家。' : '有点饿了，去 5 区吃份'+parkDish().name+'。');
   parkRouteGoal();
 }
 function parkHandleNeeds(run) {
@@ -59,6 +71,7 @@ function parkHandleNeeds(run) {
   if (parkInsideToilet() || parkEating()) {
     if (run && parkEating() && sim.needs.bladder < 20) { parkRequest('toilet',true); return false; }
     if (run && sim.needs.energy < 15) { sim.park.goal = null; startAct('go_home'); return true; }
+    if (parkEating() && realClock >= parkNextTalk) parkFoodTalk();
     const service = PARK_SERVICE[parkInsideToilet() ? 'toilet' : 'food'];
     if (sim.t >= sim.actEnd || (sim.needs[service.need] >= 95 && sim.t >= sim.actEnd - ACTS[sim.act].dur + 2)) parkServiceFinish();
     return true;
@@ -79,24 +92,35 @@ function parkServiceArrive() {
   if (sim.act === 'park_toilet') {
     sim.park.goal = 'toilet'; log('走进 2 区的公厕，先解决一下如厕需求。'); speak('找到公厕啦，稍等一会儿。');
   } else {
-    sim.park.goal = 'food'; log('坐在 5 区樱花林的小摊前，点了一碗热关东煮。');
-    if (parkVendor) npcSay(parkVendor,pick(['萝卜炖透啦，小心烫。','热汤刚添好，慢慢吃。','竹轮、鸡蛋、白萝卜，都给你装好了。','坐稳，我把这碗热的端来。','今天也要好好吃饭呀。','樱花落进汤里之前，先吃一口吧。']));
-    speak(pick(['汤好香，先暖暖手。','白萝卜吸满了汤汁。','在树下吃点热的，正好。']));
+    sim.park.goal = 'food'; sim.park.dish = parkDish().id;
+    log('坐在 5 区樱花林的小摊前，点了一份'+parkDish().name+'。');
+    parkFoodTalk(); rollCard(lifeCtx(),'food');
   }
 }
 function parkServiceFinish() {
   const food = parkEating();
-  log(food ? '吃完一碗关东煮，汤暖暖的，肚子也舒服了。' : '从公厕出来，整个人轻松多了。');
-  addMood(food ? 'park_oden' : 'park_relief',{words:false});
+  log(food ? parkDish().finish : '从公厕出来，整个人轻松多了。');
+  addMood(food ? 'park_food_'+parkDish().id : 'park_relief',{words:false});
+  if (food) speak(parkDish().line);
   sim.park.goal = null; sim.park.seated = false;
   sim.mode = 'idle'; sim.act = null; sim.player = false; sim.idleUntil = sim.t + 3;
+  rollCard(lifeCtx(),food?'food':'toilet');
+}
+function parkFoodTalk() {
+  const seen = (lifeFlags.parkFoodTalk ||= []);
+  let fresh = PARK_FOOD.dialogues.map((_,i)=>i).filter(i=>!seen.includes(i));
+  if (!fresh.length) { seen.splice(0,Math.max(0,seen.length-3)); fresh=PARK_FOOD.dialogues.map((_,i)=>i).filter(i=>!seen.includes(i)); }
+  const i=pick(fresh); seen.push(i);
+  const [vendor,buddy]=PARK_FOOD.dialogues[i].map(s=>s.replaceAll('{料理}',parkDish().name));
+  if (parkVendor) npcSay(parkVendor,vendor);
+  speak(buddy,true); parkNextTalk=realClock+9+Math.random()*5;
 }
 ML.park_oden = {name:'樱花下的热关东煮',emo:'happy',pts:2,min:180};
 ML.park_relief = {name:'公园里也能安心逛',emo:'confident',pts:1,min:90};
 function parkClick(id, x, y) {
   if (card || guideOn || wiping || sim.mode === 'down') return;
   if (id === 'park_wc') { if (parkInsideToilet()) showHint('正在使用公厕，稍等一会儿。'); else parkRequest('toilet'); return; }
-  if (id === 'park_food') { if (parkEating()) showHint('正在慢慢吃关东煮。'); else parkRequest('food'); return; }
+  if (id === 'park_food') { if (parkEating()) showHint('正在慢慢吃'+parkDish().name+'。'); else openPicker('park_food',{x:177,y:72}); return; }
   sim.park.goal = null;
   if (id === 'park_bench') { command('bench'); return; }
   sim.strollX = Math.round(Math.max(8, Math.min(W - 8, x)));
@@ -162,22 +186,31 @@ function drawParkService(ctx, O) {
 function drawParkBowl(ctx) {
   if (!parkEating()) return;
   const p = buddyFeet(), x=Math.round(p.x+4),y=Math.round(p.y-11);
-  ctx.fillStyle='#f4f2ee';ctx.fillRect(x,y,7,3);ctx.fillRect(x+1,y+3,5,1);
-  ctx.fillStyle='#d9b98a';ctx.fillRect(x+1,y,5,1);
+  ctx.drawImage(IMG.out.park.food[parkDish().id],x-1,y-4,10,10);
 }
 
-function drawParkNightGlow(ctx, f) {
+const parkLightScene = document.createElement('canvas'), parkLightMask = document.createElement('canvas');
+parkLightScene.width=parkLightMask.width=W;parkLightScene.height=parkLightMask.height=H;
+function gradePark(ctx, f) {
   if (f <= 0) return;
+  const lit=parkLightScene.getContext('2d'),mask=parkLightMask.getContext('2d');
+  lit.globalCompositeOperation='copy';lit.drawImage(ctx.canvas,0,0);lit.globalCompositeOperation='source-over';
+  gradeOutside(ctx,f);
+  mask.clearRect(0,0,W,H);
+  const pool=(cx,cy,rx,ry,strength)=>{
+    mask.save();mask.translate(cx,cy);mask.scale(rx,ry);
+    const g=mask.createRadialGradient(0,0,0,0,0,1);
+    g.addColorStop(0,`rgba(255,255,255,${strength*f})`);
+    g.addColorStop(.45,`rgba(255,255,255,${strength*f*.65})`);g.addColorStop(1,'rgba(255,255,255,0)');
+    mask.fillStyle=g;mask.fillRect(-1,-1,2,2);mask.restore();
+  };
+  const x=parkLayout().lamp;
+  pool(x,48,13,11,.4);pool(x,76,26,34,.65);pool(x,94,48,17,.85);
   const zone = parkLayout().id;
-  const pools = zone === 'grove' ? [[117,60,20,20],[213,60,20,20],[166,79,43,22]]
-    : zone === 'lakeside' ? [[299,57,19,27]] : [];
-  ctx.save();
-  for (const [cx,cy,rx,ry] of pools) for (const k of [1,.72,.42]) {
-    ctx.fillStyle = `rgba(247,229,186,${f*.055})`;
-    for (let y=-Math.round(ry*k);y<=Math.round(ry*k);y++) {
-      const half=Math.round(rx*k*Math.sqrt(Math.max(0,1-(y/(ry*k))**2)));
-      ctx.fillRect(cx-half,cy+y,half*2+1,1);
-    }
-  }
-  ctx.restore();
+  const pools = zone === 'grove' ? [[117,60,22,25],[213,60,22,25],[166,86,45,24]]
+    : zone === 'lakeside' ? [[299,66,25,30]] : zone === 'gazebo' ? [[66,66,24,30],[136,66,24,30]] : [];
+  for (const [cx,cy,rx,ry] of pools) pool(cx,cy,rx,ry,.72);
+  lit.globalCompositeOperation='destination-in';lit.drawImage(parkLightMask,0,0);
+  lit.globalCompositeOperation='source-atop';lit.fillStyle='rgba(255,224,157,.11)';lit.fillRect(0,0,W,H);
+  lit.globalCompositeOperation='source-over';ctx.drawImage(parkLightScene,0,0);
 }

@@ -18,7 +18,7 @@ W, H = PK.W, PK.H
 PREVIEW_SCALE = 4
 ZONES = [
     {"id": "gazebo", "name": "湖边凉亭", "bench": 101, "lamp": 197,
-     "pond": (224, 72, 114, 15),
+     "pond": (238, 72, 106, 16),
      "trees": [("linden", 28, 33, 91, 25, 24), ("cherry", 310, 35, 92, 25, 23), ("maple", 259, 43, 64, 12, 10)]},
     {"id": "lakeside", "name": "湖畔公厕", "bench": 90, "lamp": 192,
      "pond": (91, 71, 100, 12),
@@ -45,6 +45,9 @@ def distant_grove(s, zone, season):
 
 
 def ground(s, zone, season):
+    if zone["id"] == "central":
+        PK.lawn(s, season)  # Keep the original perspective mowing stripes in area 3.
+        return
     r = PK.G[season]
     s.rect(0,PK.HORIZON,W,36,r[2])
     # Rounded banks and low slopes, rather than a uniformly striped plane.
@@ -128,6 +131,82 @@ def lake(s, season, geometry):
             y = cy + ry - 2
             s.vline(x + k * 2, y - 6 - k % 3, y, P.sage[1] if season == "winter" else P.green[2])
             s.set(x + k * 2 - 1, y - 3, P.mustard[2])
+
+
+def natural_lake_mask(geometry):
+    """An asymmetric bay, with small inlets and a shore continuing off screen."""
+    cx, cy, rx, ry = geometry
+    points = [(-1,-.1),(-.92,-.56),(-.64,-.61),(-.43,-.95),(-.06,-.8),
+              (.19,-1),(.49,-.92),(.7,-.6),(1.14,-.72),(1.18,.52),
+              (.73,.61),(.51,.97),(.14,.78),(-.12,1.04),(-.51,.9),(-.77,.56),(-.96,.4)]
+    s = Sprite(W,H)
+    poly(s,[(round(cx+x*rx),round(cy+y*ry)) for x,y in points],P.sea[2])
+    return s.px[...,3] > 0
+
+
+def natural_lake(s, season, geometry):
+    # 342x118; far shore is narrow/cool, near bank deep and grassy.
+    # Use real shoreline masks for water, reflected trees and snow protection.
+    cx, cy, rx, ry = geometry
+    mask = natural_lake_mask(geometry)
+    grown = mask.copy()
+    for width in range(3):
+        next_mask = grown.copy()
+        next_mask[1:] |= grown[:-1]; next_mask[:-1] |= grown[1:]
+        next_mask[:,1:] |= grown[:,:-1]; next_mask[:,:-1] |= grown[:,1:]
+        grown = next_mask
+    soil = grown & ~mask
+    water = P.snow if season == "winter" else P.sea
+    for y in range(H):
+        for x in range(W):
+            if mask[y,x]:
+                shade = 1 if y < cy-3 else 2
+                s.set(x,y,water[shade])
+            elif soil[y,x]:
+                # Moss and exposed earth break up the bank, with a lit near lip.
+                s.set(x,y,PK.G[season][2 if (x+y)%5 else 1])
+                if y+1<H and mask[y+1,x]: s.set(x,y,P.walnut[1])
+                if y>0 and mask[y-1,x]: s.set(x,y,PK.G[season][3])
+    rnd=random.Random(107)
+    # Soft, broken vertical reflections below the far-bank shrubs.
+    if season != "winter":
+        for x in range(max(0,cx-rx+6),W,19):
+            ys=np.flatnonzero(mask[:,x])
+            if not len(ys): continue
+            top=int(ys[0])
+            for d in range(2,10):
+                for dx in range(-max(1,4-d//3),max(1,4-d//3)+1):
+                    xx=x+dx+(d%3-1);yy=top+d
+                    if 0<=xx<W and yy<H and mask[yy,xx] and (xx+d)%3:
+                        s.set(xx,yy,P.sea[0] if d<6 else P.sea[1])
+    for _ in range(54):
+        x=rnd.randrange(max(0,cx-rx+4),W-9);y=rnd.randint(cy-ry+3,cy+ry-2)
+        for dx in range(rnd.randint(2,9)):
+            if mask[y,x+dx]: s.set(x+dx,y,water[rnd.choice((2,3,3))])
+    # Far shore tufts; irregular near-bank reeds and rounded stones.
+    for x in range(max(0,cx-rx+3),W-5,17):
+        ys=np.flatnonzero(mask[:,x])
+        if not len(ys): continue
+        top,bottom=int(ys[0]),int(ys[-1])
+        for dx in (-3,0,3):
+            s.line(x+dx,top-2,x+dx-1,top-5-rnd.randrange(3),P.sage[1])
+        if x%3==0:
+            for dx in (-3,0,2):
+                s.line(x+dx,bottom+2,x+dx-2,bottom-4-rnd.randrange(4),P.sage[1] if season=="winter" else P.green[2])
+                s.set(x+dx-2,bottom-5,P.mustard[2])
+        else:
+            s.ellipse(x,bottom+2,4,2,P.pave[1]).hline(x-2,x+1,bottom+1,P.pave[3])
+    if season == "winter":
+        for x in range(max(0,cx-rx+16),W-18,42):
+            for d in range(15):
+                xx=x+d;yy=cy-5+d//3
+                if mask[yy,xx]: s.set(xx,yy,P.snow[0])
+    else:
+        for x,y in [(cx-42,cy+8),(cx+24,cy+5),(cx+61,cy+9)]:
+            if 0<=x<W-5 and mask[y,x]:
+                s.ellipse(x,y,4,1,P.green[1]).hline(x-2,x,y-1,P.green[3])
+                if season in ("spring","summer"):
+                    s.set(x+1,y-2,P.blossom[3]).hline(x,x+2,y-1,P.blossom[4])
 
 
 def pavilion(s):
@@ -271,7 +350,7 @@ def background(zone, season):
     distant_grove(s, zone, season)
     ground(s, zone, season)
     if zone["pond"]:
-        lake(s, season, zone["pond"])
+        (lake if zone["id"] == "central" else natural_lake)(s, season, zone["pond"])
     access_path(s, zone)
     PK.path(s, season)
     cast_shadows(s, zone)
@@ -303,13 +382,14 @@ def snow(zone):
         solid.blit(PK.hedge("winter"), 0, 0)
     solid.blit(trees(zone, "winter", 0), 0, 0)
     mask = solid.px[..., 3] > 0
+    water = natural_lake_mask(zone["pond"]) if zone["pond"] and zone["id"] != "central" else None
     for y in range(PK.HORIZON, H):
         for x in range(W):
             if mask[y, x]:
                 continue
             if zone["pond"]:
                 cx, cy, rx, ry = zone["pond"]
-                if ((x - cx) / (rx + 4)) ** 2 + ((y - cy) / (ry + 2)) ** 2 < 1:
+                if (water is not None and water[y,x]) or (water is None and ((x - cx) / (rx + 4)) ** 2 + ((y - cy) / (ry + 2)) ** 2 < 1):
                     continue
             s.set(x, y, P.snow[1] if 100 <= y <= 104 else P.snow[3])
     ys, xs = np.nonzero(PK.tops(mask))

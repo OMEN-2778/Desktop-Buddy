@@ -202,12 +202,19 @@ piece side by side — review new pieces there at 6x).
   is a cherry grove centered on an oden yatai. Art details are in
   `_park_facilities.py`: visible roof/top/front/side planes, recessed doors,
   contact/cast shadows, stone steps, layered foliage and foreground framing.
-  Preserve this depth; do not return to a flat, uniformly striped lawn.
+  Preserve this depth. **用户明确要求 3 区恢复并保留 `PK.lawn` 的透视条纹草坪**；
+  其他区域保留起伏地形。凉亭后的湖用不对称自然岸线、深浅水色、倒影、芦苇与石岸，
+  不得再用一个规整椭圆代替。积雪必须遵守真实湖面遮罩。
   Below 40 bladder or 35 hunger, `parkHandleNeeds` walks Buddy through each
   adjacent map to use the WC/eat, with toilet first when both are low.
   `park_toilet` hides Buddy inside and shows progress; `park_eat` uses the
   actual sit pose at the stall with a bowl. Needs recover during service;
   save v3 keeps `.goal` and resumes services. Players can still go home.
+  日料摊提供 16 种可选料理与 50 组以上老板/主角对话，存档保留 `.dish`。
+  `park_cards.json` 的 501–520 为用餐卡、521–530 为公厕卡；仅在相应服务时机出现，
+  公厕卡在出门后触发，保持使用期间隐私。沿用现有卡片选择、暂停和情绪结果。
+  摊位前景先于所有路径行人绘制，老板单独位于柜台后。夜间先保存场景原色，
+  再通过路灯、地面光池与灯笼的渐变遮罩恢复局部亮度；不能只有灯泡发亮。
 
 - **海边** (`beach.py`) is a wooden dock (user: simple, no clutter): big
   sky, the sea, a faint far shore, the railing with a life ring, two lamps,

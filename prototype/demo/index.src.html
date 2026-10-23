@@ -1386,6 +1386,7 @@ function finishAct() {
 
 // The player clicked a piece of furniture: drop what she's doing and go.
 function command(act, item = null) {
+  if (act === "park_food") { if (sim.place === "park") parkRequest("food", false, item?.id); return; }
   if (sim.place === "park" && act === "go_home" && sim.park) sim.park.goal = null;
   if (sim.place === "bar") {
     if (act === "go_home") throughDoor("home");
@@ -4679,6 +4680,7 @@ function renderPark(dt) {
     else flipDraw(bctx, O.plane, Math.round(pl.x), Math.round(pl.y), pl.d, 9);
     if (pl.x < -60 || pl.x > W + 60) life.plane = null;
   }
+  bctx.drawImage(O.props, 0, 0); // Buildings cover distant clouds and planes.
   if (life.wet > 0.02) { bctx.globalAlpha = life.wet; bctx.drawImage(O.wet, 0, 0); bctx.globalAlpha = 1; }
   if (run) life.wet += ((w === "rain" ? 1 : 0) - life.wet) * Math.min(1, dt * (w === "rain" ? 0.8 : 0.08));
   for (const d of life.ducks) {                  // ducks paddle about the pond
@@ -4722,9 +4724,9 @@ function renderPark(dt) {
   life.flies = life.flies.filter(fl => !fl.gone);
   npcTick(dt, run);
   bctx.drawImage(O.bench, 0, 0);
-  drawNpcs(bctx, "back");
-  // The bench stands behind the open walking lane.
+  // The vendor stands behind the counter; all path pedestrians pass in front.
   drawParkService(bctx, O);
+  drawNpcs(bctx, "back");
   const fr = activityFrame(realClock * 1000);
   if (!parkInsideToilet() && !sim.park?.seated && !parkEating()) {
     const p=here(); bctx.fillStyle="rgba(58,34,39,.23)";
@@ -4748,8 +4750,7 @@ function renderPark(dt) {
   life.front = life.front.filter(b => !b.gone);
   bctx.drawImage(S.foreground, 0, 0);
   drawOutsideWeather(bctx);
-  gradeOutside(bctx, f);
-  drawParkNightGlow(bctx, f);
+  gradePark(bctx, f);
   drawLit(bctx, f, O.lit, [[treeImg, 0, 0], ...(dollAt ? [dollAt] : [])]);
   if (f > 0.5 && se === 1 && w === "clear") {    // fireflies on summer nights
     for (let i = 0; i < 9; i++) {
@@ -4929,6 +4930,7 @@ function playTalk(dt) {
 /*__PLACE_CARDS_JS__*/
 /*__BAR_CARDS_JS__*/
 /*__SLEEP_CARDS_JS__*/
+/*__PARK_CARDS_JS__*/
 for (const cd of CARDS) for (const k of ["a", "b"]) cd[k].out.forEach((o, i) => { if (o.mood) ML[o.id = `card${cd.n}${k}${i}`] = { ...o.mood }; });
 const CARD_GAP = 330, CARD_CHANCE = 0.3;         // game minutes between cards, odds per hour after that
 const CARD_GAP_OUT = 60, CARD_CHANCE_OUT = 0.6;   // out and about they come much more often (user)
@@ -4953,14 +4955,20 @@ function cardFits(cd, c) {
   if (!cardWhen.has(cd)) { const any = cd.when.split("|").map(whenOk); cardWhen.set(cd, c => any.some(f => f(c))); }
   return cardWhen.get(cd)(c);
 }
-function rollCard(c) {
+function rollCard(c, service = sim.place === "park" && parkEating() ? "food" : null) {
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   const out = sim.place !== "home";               // outside: that place's own cards (cd.at)
   if (!prefs.guided || guideOn || card || !c.awake || parkInsideToilet() || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside())
     || sim.t - st.last < (out ? CARD_GAP_OUT : CARD_GAP) || Math.random() >= (out ? CARD_CHANCE_OUT : CARD_CHANCE)) return false;
-  const any = CARDS.filter(cd => !cd.on && (cd.at || "home") === sim.place);
+  const any = CARDS.filter(cd => !cd.on && (cd.at || "home") === sim.place
+    && (service ? cd.service === service : !cd.service));
   let fresh = any.filter(cd => !st.seen.includes(cd.n));
-  if (!fresh.length) { st.seen = st.seen.filter(n => !any.some(cd => cd.n === n) || st.seen.lastIndexOf(n) >= st.seen.length - 20); fresh = any.filter(cd => !st.seen.includes(cd.n)); }   // all seen: start over, not the latest ones
+  if (!fresh.length) {
+    const keep = Math.min(20,Math.max(0,any.length-1));
+    const recent = new Set(keep ? st.seen.slice(-keep) : []);
+    st.seen = st.seen.filter(n => !any.some(cd => cd.n === n) || recent.has(n));
+    fresh = any.filter(cd => !st.seen.includes(cd.n));
+  }   // Even a small service deck must have an unseen card after cycling.
   const ok = fresh.filter(cd => cardFits(cd, c));
   if (!ok.length) return false;
   const w = cd => (cd.when ? 2 : 1);              // a fitting moment is used when it comes
@@ -5724,6 +5732,7 @@ if (TAURI) {
 }
 
 /*__BAR_JS__*/
+/*__PARK_FOOD_JS__*/
 /*__PARK_JS__*/
 
 // ================================================================ loop
