@@ -360,7 +360,7 @@ def main():
         "doll": mc.doll_data(),   # Buddy's role maps + dressing-room options (shared with the creator)
         "bg": {"day": png(day), "night": png(night)},
         "needIcons": {k: png(need_icons.icon(k)) for k in need_icons.GRIDS},
-        "uiIcons": {"gear": png(ui_icons.icon("gear"))},
+        "uiIcons": {name: png(ui_icons.icon(name)) for name in ("gear", "people")},
         "uiGlyphs": ui_icons.GLYPHS,
         # pick-a-thing panels: covers matched to titles by hash, dishes by look
         "items": {**{k: [png(c) for c in item_icons.covers(k)] for k in ("book", "tv", "game", "app")},

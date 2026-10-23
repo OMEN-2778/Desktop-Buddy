@@ -22,14 +22,27 @@ const {chromium}=require('playwright');
  await page.locator('#needs').hover();await page.waitForTimeout(90);
  const mid=await page.locator('#needsPanel').evaluate(el=>({opacity:+getComputedStyle(el).opacity,transform:getComputedStyle(el).transform}));
  assert.ok(mid.opacity>0&&mid.opacity<=1);assert.notEqual(mid.transform,'none','Popover is animating');
- await page.waitForTimeout(430);assert.equal(await page.locator('#needs').getAttribute('aria-expanded'),'true');
- await page.locator('#needsPanel').hover();await page.waitForTimeout(300);assert.equal(await page.locator('#needs').getAttribute('aria-expanded'),'true','Hover bridge retains the panel');
+ const early=await page.locator('.need-well').evaluateAll(es=>es.map(e=>+getComputedStyle(e).opacity));
+ assert.ok(early[0]>early[5]&&early[5]<.1,'Individual meters unfold one after another');
+ await page.waitForTimeout(1000);assert.equal(await page.locator('#needs').getAttribute('aria-expanded'),'true');
  assert.equal(await page.locator('#needsPanel .need').count(),6);
  assert.deepEqual(await page.locator('#view').boundingBox(),house,'Expanding needs does not move the game');
  await page.screenshot({path:'/workspace/artifacts/social-hud/needs.png'});
+ const panel=await page.locator('#needsPanel').boundingBox();await page.mouse.move(panel.x+panel.width/2,panel.y+30);await page.waitForTimeout(30);
+ assert.equal(await page.locator('#needs').getAttribute('aria-expanded'),'false','Leaving the compact track closes even over the expanded panel');
+ await page.waitForTimeout(70);const closing=await page.locator('.need-well').evaluateAll(es=>es.map(e=>+getComputedStyle(e).opacity));
+ assert.ok(closing[5]<closing[0],'Meters fold in reverse order');
+ await page.mouse.move(need.x+need.width/2,need.y+need.height/2);await page.waitForTimeout(60);
+ assert.equal(await page.locator('#needs').getAttribute('aria-expanded'),'true','Interrupted closing reverses on the original compact track');
  await page.mouse.move(20,20);await page.waitForTimeout(700);assert.equal(await page.locator('#needs').getAttribute('aria-expanded'),'false');
  await page.locator('#moodFace').hover();await page.waitForTimeout(500);await page.locator('#networkTrigger').hover();await page.waitForTimeout(500);
  assert.equal(await page.locator('#contactsPanel').getAttribute('aria-hidden'),'false');
+ for(const [selector,pseudo]of [['.needs-summary',null],['.needs-panel','::before'],['.contacts-panel','::before'],['.contact-card','::before'],['.affinity',null]]){
+  const shape=await page.locator(selector).first().evaluate((el,pseudo)=>{const s=getComputedStyle(el,pseudo);return {clip:s.clipPath,radius:s.borderRadius};},pseudo);
+  assert.ok(shape.clip.startsWith('polygon('),selector+' uses stepped pixel geometry');assert.equal(shape.radius,'0px');
+ }
+ assert.equal(await page.locator('#networkTrigger img').evaluate(img=>img.naturalWidth),13,'Use the palette-only pixel people icon');
+ for(const selector of ['#networkTrigger','.contact-card'])assert.equal(await page.locator(selector).first().evaluate(el=>getComputedStyle(el).boxShadow),'none','Pixel frames must not inherit rectangular button shadows');
  assert.deepEqual(await page.locator('.contact-card').evaluateAll(els=>els.map(e=>e.dataset.id)),['dad','mom','abu']);
  assert.deepEqual(await page.locator('.contact-copy strong').allTextContents(),['爸爸','妈妈','阿布']);
  assert.equal(await page.locator('.settings').evaluate(el=>getComputedStyle(el).visibility),'hidden');
@@ -98,6 +111,6 @@ const {chromium}=require('playwright');
  await page.evaluate(()=>{closeGuide();speed=0;setNeedsOpen(true);setContactsOpen(false);});
  assert.equal(await page.locator('#needsPanel').evaluate(el=>getComputedStyle(el).transitionDuration),'0s');
  assert.deepEqual(errors,[]);
- console.log('PASS: compact layout, reversible hover panels, stable parents-first contacts, action ring, targeted messages, capped affection, saved contacts, delayed incoming call, pause, distinct answer/decline, six-second timeout, legacy saves, mobile bounds and reduced motion.');
+ console.log('PASS: pixel frames and glyph, staggered expand/reverse collapse, track-only hover, interrupted reversal, compact layout, stable parents-first contacts, action ring, targeted messages, capped affection, saved contacts, delayed incoming call, pause, distinct answer/decline, six-second timeout, legacy saves, mobile bounds and reduced motion.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

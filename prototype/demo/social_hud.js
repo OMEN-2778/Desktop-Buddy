@@ -8,6 +8,17 @@ const socialState={contacts:DEFAULT_CONTACTS.map(c=>({...c,look:doll.normalize(c
 const networkTrigger=document.getElementById('networkTrigger'),contactsPanel=document.getElementById('contactsPanel');
 const contactsList=document.getElementById('contactsList'),contactActions=document.getElementById('contactActions');
 const incomingCall=document.getElementById('incomingCall');
+networkTrigger.querySelector('img').src=D.uiIcons.people;
+// Share the same stepped circles and two-pixel frames as diary/settings UI.
+function sizeSocialHud(){
+  const style=document.getElementById('widget').style,b=skyGeo.b,small=innerWidth<=600;
+  for(const [name,n,p]of [['panel',12,2],['card',8,2],['button',9,2],['circle',small?10:12,2],['avatar',small?6:8,2],['small',5,2],['meter',2,2],['track',4,b],['caller',small?7:9,2]]){
+    style.setProperty(`--hud-${name}-clip`,roundClip(n,p));
+    style.setProperty(`--hud-${name}-in`,roundClip(Math.max(1,n-1),p));
+  }
+  style.setProperty('--hud-track-in',roundClip(2,b));
+  style.setProperty('--hud-track-edge',2*b+'px');
+}
 let networkCloseT=0,contactsCloseT=0,selectedContact=null,contactsSig='',remoteSocial=null;
 const phoneCall={phase:'idle',contactId:null,kind:'call',deadline:0,timeout:0,exitTimer:0,returnFocus:null};
 function phoneHolds(){return ['ringing','accepting','declining'].includes(phoneCall.phase);}
@@ -65,7 +76,7 @@ function openContactActions(id){
   for(const [i,[action,label]]of actions.entries()){
     const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.action=action;b.setAttribute('role','menuitem');
     const a=-Math.PI/2+i*Math.PI/3;b.style.setProperty('--x',`${Math.cos(a)*112}px`);b.style.setProperty('--y',`${Math.sin(a)*72}px`);
-    if(['outing','visit','invite'].includes(action)){b.setAttribute('aria-disabled','true');b.classList.add('coming-soon');b.title='串门与同行将在下一步开放';}
+    if(['outing','visit','invite'].includes(action)){b.setAttribute('aria-disabled','true');b.classList.add('coming-soon');b.append(Object.assign(document.createElement('small'),{className:'contact-unavailable',textContent:'下一步开放'}));b.title='串门与同行将在下一步开放';}
     else if(['text','video'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
       b.setAttribute('aria-disabled','true');b.title=asleep()?'等主角醒来再联系':sim.mode==='down'?'先唤醒晕倒的主角':'正在忙，稍后再联系';b.setAttribute('aria-label',`${label}：${b.title}`);
     }

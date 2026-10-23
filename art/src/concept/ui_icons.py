@@ -1,4 +1,4 @@
-"""Small icons for the game's own UI (not the house): the settings gear.
+"""Small icons for the game's own UI: settings gear and the contacts glyph.
 13x13, metal ramp, lit from the top-left (upper-left half one shade
 lighter), eight teeth and a round hole in the middle. Shown at 2
 screen pixels per icon pixel inside a round pixel button."""
@@ -85,7 +85,26 @@ def glyph(name: str, color=P.ink[1]) -> Sprite:
 
 
 def icon(name: str) -> Sprite:
-    return {"gear": gear}[name]()
+    return {"gear": gear, "people": people}[name]()
+
+
+def people() -> Sprite:
+    """Two residents, 13x13 like the settings gear; lit upper-left."""
+    return Sprite.from_grid("\n".join([
+        ".............",
+        "........HHH..",
+        "..HHH..HMMM..",
+        ".HMMM..MMMM..",
+        ".MMMM...MM...",
+        ".MMMM........",
+        "..MM....HHH..",
+        ".......HMMMM.",
+        ".HHHHH.MMMMM.",
+        "HMMMMMM.MMMM.",
+        "MMMMMMMM.MMM.",
+        "MMMMMMMM.....",
+        ".............",
+    ]), {"H": P.metal[3], "M": P.metal[1]})
 
 
 def build():
@@ -95,4 +114,4 @@ def build():
     for g in GLYPHS:
         out.blit(glyph(g), x, 2)
         x += len(GLYPHS[g][0]) + 3
-    return {"ui_icons": out}
+    return {"ui_icons": out, "ui_people": people()}

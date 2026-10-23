@@ -824,8 +824,8 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
           <div class="diary-pop" id="diaryPop" hidden><ol id="diaryList" aria-label="最近发生的事"></ol></div>
           <button type="button" class="diary-box" id="diaryBox" aria-expanded="false" aria-controls="diaryPop" title="看看最近发生的事"><b>日记</b><span></span></button>
         </div>
-        <button type="button" class="network-trigger" id="networkTrigger" aria-label="人脉" aria-expanded="false" aria-controls="contactsPanel" title="人脉"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 20v-3a7 7 0 0 1 14 0v3Z"/><path d="M17 4a4 4 0 0 1 0 8M18 14a6 6 0 0 1 4 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-        <section class="contacts-panel" id="contactsPanel" aria-label="人脉，父母在前，其余按亲密度排列" aria-hidden="true" inert><div class="contacts-list" id="contactsList"></div></section>
+        <button type="button" class="network-trigger" id="networkTrigger" aria-label="人脉" aria-expanded="false" aria-controls="contactsPanel" title="人脉"><img alt="" width="26" height="26"></button>
+        <section class="contacts-panel" id="contactsPanel" aria-label="人脉，父母在前，其余按亲密度排列" aria-hidden="true" inert><i class="contacts-tail" aria-hidden="true"></i><div class="contacts-list" id="contactsList"></div></section>
         <div class="contact-actions" id="contactActions" role="menu" aria-label="联系这位亲友" aria-hidden="true" inert></div>
         <div class="mood-face" id="moodFace" tabindex="0" role="button" aria-label="情绪" aria-expanded="false" aria-controls="moodTip">
           <canvas id="mood" width="78" height="78"></canvas>
@@ -843,7 +843,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
       </div>
       <div class="status-row">
       <div class="needs" id="needs" tabindex="0" role="button" aria-expanded="false" aria-controls="needsPanel" aria-label="查看六项需求">
-        <div class="needs-summary" aria-hidden="true"><i data-summary="hunger"></i><i data-summary="energy"></i><i data-summary="hygiene"></i><i data-summary="bladder"></i><i data-summary="social"></i><i data-summary="fun"></i></div>
+        <div class="needs-summary" aria-hidden="true"><span class="needs-segments"><i data-summary="hunger"></i><i data-summary="energy"></i><i data-summary="hygiene"></i><i data-summary="bladder"></i><i data-summary="social"></i><i data-summary="fun"></i></span></div>
         <div class="needs-panel" id="needsPanel" aria-hidden="true" inert>
       <div class="need" style="--i:0" data-k="hunger" role="meter" aria-label="饱腹" aria-valuemin="0" aria-valuemax="100"><span class="need-well"><span class="fill"></span></span><img alt="" data-icon="hunger"><span class="need-label">饱腹</span></div>
       <div class="need" style="--i:1" data-k="energy" role="meter" aria-label="精力" aria-valuemin="0" aria-valuemax="100"><span class="need-well"><span class="fill"></span></span><img alt="" data-icon="energy"><span class="need-label">精力</span></div>
@@ -1772,6 +1772,7 @@ function fit() {
   di.style.setProperty("--diary-fs", (sayFs - 4) + "px");
   document.documentElement.style.setProperty("--row-h", 52 + "px");   // the gear + diary row: as tall as the emoji's canvas
   di.style.setProperty("--diary-max", Math.round(Math.max(150, Math.min(320, hPx * 1.1))) + "px");
+  sizeSocialHud();
   if (typeof fitSay === "function") { fitSay(); fitDiary(); }   // a new size: refit both lines
   if (typeof guideOn !== "undefined" && guideOn) sizeGuide();
   if (TAURI || wardrobeOpen || diaryOn || (typeof guideOn !== "undefined" && guideOn)) { studio.refit(); makeRoom(); }
@@ -3078,16 +3079,23 @@ function syncUI() {
   }
 }
 
-// The compact track and its popover share a hover region; CSS transitions can reverse mid-flight.
+// Only the compact track holds the mouse hover; the popover never enlarges that area.
 const reduceMotionUI = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-let closeT = null;
+let needsChangedAt=-Infinity;
 function setNeedsOpen(open) {
-  clearTimeout(closeT);
+  if(needsEl.classList.contains("open")===open)return;
+  const now=performance.now();needsEl.classList.toggle('retargeting',now-needsChangedAt<650);needsChangedAt=now;
   needsEl.classList.toggle("open",open);needsEl.setAttribute("aria-expanded",String(open));
   const panel=document.getElementById("needsPanel");panel.inert=!open;panel.setAttribute("aria-hidden",String(!open));
 }
-needsEl.addEventListener("pointerenter",e=>{if(e.pointerType==='mouse')setNeedsOpen(true);});
-needsEl.addEventListener("pointerleave",e=>{if(e.pointerType==='mouse')closeT=setTimeout(()=>setNeedsOpen(false),220);});
+function trackNeedsPointer(e){
+  if(e.pointerType!=='mouse')return;
+  const r=needsEl.getBoundingClientRect();
+  setNeedsOpen(e.clientX>=r.left&&e.clientX<r.right&&e.clientY>=r.top&&e.clientY<r.bottom);
+}
+needsEl.addEventListener("pointerenter",trackNeedsPointer);
+needsEl.addEventListener("pointermove",trackNeedsPointer);
+needsEl.addEventListener("pointerleave",e=>{if(e.pointerType==='mouse')setNeedsOpen(false);});
 needsEl.addEventListener("click",e=>{if(e.pointerType!=='mouse')setNeedsOpen(!needsEl.classList.contains('open'));});
 needsEl.addEventListener("focus",()=>{if(needsEl.matches(':focus-visible'))setNeedsOpen(true);});
 needsEl.addEventListener("blur",()=>setNeedsOpen(false));
