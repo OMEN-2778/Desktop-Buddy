@@ -1411,6 +1411,7 @@ function command(act, item = null) {
 const WALK = 28 * 2 / 3;   // house pixels per real second at 1x (user: two thirds of the old 28)
 function step(dtGame, dtReal) {
   if (sim.place === "bar") { stepBar(dtGame, dtReal); return; }
+  if (sim.place === "mall" && (wiping || cardHolds() || !(dtGame > 0 || dtReal > 0))) return;
   sim.t += dtGame;
   const day = Math.floor(sim.t / 1440) + 1;
   if (day !== sim.lastDay) { sim.lastDay = day; log(`—— 第 ${day} 天 · ${SEASONS[seasonOf(sim.t).i].name} ——`, "day"); }
@@ -1437,6 +1438,14 @@ function step(dtGame, dtReal) {
   }
   // behaviour
   if (sim.mode === "down") { sim.windup = null; return; }
+  // Shop visits and pending clicks must not delay an urgent trip home.
+  if (sim.place === "mall") {
+    const red = redNeed();
+    if (red) {
+      homeFor(red); sim.player = false; sim.queue = []; sim.chosen = null;
+      startAct("go_home"); return;
+    }
+  }
   if (parkHandleNeeds(dtGame > 0 || dtReal > 0)) return;
   if (sim.windup) {
     if (realClock >= sim.windup.at) { const a = sim.windup.act; sim.windup = null; startAct(a); }
@@ -2744,6 +2753,7 @@ function checkCollapse() {
 }
 function collapse(cause) {
   if (sim.act === "dress") closeWardrobe();
+  if (sim.place === "mall") { mallS.stop = null; mallS.goal = null; }
   closeRing(); cancelRescue();
   const p = here();
   sim.route = [[Math.round(p.x), sim.place !== "home" ? OUT[sim.place].feet : FLOOR_Y[storeyOfY(p.y)]]]; sim.s = 0;
@@ -3858,6 +3868,7 @@ function throughDoor(to) {
     showHint("现在酒吧还没开门哦！"); return;
   }
   sim.mode = "idle"; sim.act = null; sim.idleUntil = Infinity;
+  if (sim.place === "mall") { mallS.stop = null; mallS.goal = null; mallS.hover = null; }
   sim.windup = null; cancelRescue();
   hoverId = null; hoverBuddy = false; glow = null; walkMark = null;
   closeRing(); closePicker(); clearNpcPills();
