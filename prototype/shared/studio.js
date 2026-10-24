@@ -127,9 +127,14 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
     const th = opts.thumbH || 44;
     for (const btn of $$(".st-thumb")) {
       const [, , w, h] = cropOf(btn.dataset.key, btn.dataset.v);
-      const s = Math.max(1, Math.round(th / h));
+      const s = ['style','eyes'].includes(btn.dataset.key)?2:Math.max(1, Math.round(th / h));
       const c = btn.querySelector("canvas");
       c.style.width = w * s + "px"; c.style.height = h * s + "px";
+    }
+    for(const group of $$(".st-thumbs")){
+      const buttons=[...group.querySelectorAll('.st-thumb')],height=Math.max(...buttons.map(b=>parseFloat(b.querySelector('canvas').style.height)));
+      group.style.setProperty('--st-thumb-image-h',height+'px');
+      group.style.setProperty('--st-thumb-min-w',(Math.max(...buttons.map(b=>parseFloat(b.querySelector('canvas').style.width)))+8)+'px');
     }
   }
 

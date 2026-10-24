@@ -5210,6 +5210,7 @@ function openWardrobe() {
   if (wardrobeOpen) return;
   closeGuide();
   wardrobeOpen = true;
+  closeWardrobePersonality();
   studio.setLook(look);
   studioEl.hidden = false;
   studio.refit();
@@ -5221,7 +5222,7 @@ function openWardrobe() {
 function closeWardrobe() {
   if (!wardrobeOpen) return;
   wardrobeOpen = false;
-  if(socialSheet.classList.contains('personality-sheet')&&!socialSheet.hidden)closeSocialSheet();
+  closeWardrobePersonality();
   studioSlot.classList.remove("open");
   studio.stop();
   const hide = () => { if (!wardrobeOpen) { studioEl.hidden = true; makeRoom(); } };   // give the room back once it has folded away
