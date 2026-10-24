@@ -8,7 +8,7 @@ const BAR_DRINKS = Object.fromEntries(BAR_TEXT.drinks.map(d => [d.id, d]));
 let barScene = null;
 const barIsOpen = (h = hour()) => h >= 18 || h < 6;
 const barSeat = id => BAR_SEATS.find(s => s.id === id);
-const barOccupied = id => !!barScene?.guests.some(g => g.seat === id);
+const barOccupied = id => friendOutingActive()&&friendOutingState.barSeat===id||!!barScene?.guests.some(g => g.seat === id);
 const barToiletInside = () => sim.place === 'bar' && sim.bar?.toilet?.phase === 'inside' && sim.mode !== 'down';
 for (const d of BAR_TEXT.drinks) ML['bar_drink_' + d.id] = { name: d.mood, emo: d.emo, pts: d.pts, min: d.minutes };
 ML.bar_live = { name: '沉浸在现场里', emo: 'inspired', pts: 2, min: 120 };
@@ -221,7 +221,7 @@ function stepBar(dtGame, dtReal) {
         } else npcSay(c.guest, c.t.reply);
         barScene.chat = null;
       }
-    } else if (!npcInteraction && !sim.bar.toilet && (barScene.nextChat -= dtReal) <= 0) barChat(Math.random() < 0.5 ? 'player' : 'guest');
+    } else if (!friendOutingActive() && !npcInteraction && !sim.bar.toilet && (barScene.nextChat -= dtReal) <= 0) barChat(Math.random() < 0.5 ? 'player' : 'guest');
   }
   const h = Math.floor(sim.t / 60);
   if (h !== barScene.lastHour && dtGame) { barScene.lastHour = h; rollCard(lifeCtx()); }
@@ -290,6 +290,7 @@ function renderBar() {
     const [f, pose] = npcFrame(g);
     const image=npcCanvas(g,f,pose);bctx.drawImage(image,g.x-10,npcFeet(g)-DH+1);drawNpcHover(bctx,g,image,g.x-10,npcFeet(g)-DH+1);
   }
+  drawOutingFriend(bctx);
   const p = buddyFeet(), seated = !!sim.bar.seat;
   let f = { expr: Math.floor(t * 2) % 13 === 0 ? 'blink' : 'neutral', look: seated ? 0 : sim.facing, bob: 0, wave: null };
   let pose = seated ? 'sit' : 'stand';

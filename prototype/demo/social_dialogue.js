@@ -41,7 +41,7 @@ function homeGuestTalkPool(g,c){
   // Half the conversations come from the current setting, half from everyday
   // stories. No repeated title until that pool's fresh entries are exhausted.
   const persona=personalityConversationPool(c,'visit').map(t=>[t.title,...t.lines]);
-  const common=[...persona,...groups.common,...SOCIAL_TEXT.visitTalks,...(c.family?[]:SOCIAL_TEXT.conversations[socialLevel(c)])].filter(socialTalkFits);
+  const common=[...persona,...groups.common,...SOCIAL_TEXT.visitTalks,...(c.family?[]:SOCIAL_TEXT.conversations[socialLevel(c)])].filter(row=>socialTalkFits(row)&&(!(SOCIAL_DIALOGUE.visitCloseOnly||[]).includes(row[0])||!c.family&&c.affinity>=60));
   return Math.random()<.5?context.filter(socialTalkFits):common;
 }
 

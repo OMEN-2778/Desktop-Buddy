@@ -8,7 +8,7 @@ from _park_facilities import poly
 
 W,H=342,118
 RESTAURANTS={'diner':P.clay,'bistro':P.teal,'noodle':P.sage}
-DINING={'seat':{'x':171,'feet':99,'lift':4},'guest':{'x':83,'feet':85,'lift':4},'table':{'x':171,'y':94}}
+DINING={'seat':{'x':160,'feet':99,'lift':4},'companion':{'x':182,'feet':99,'lift':4},'guest':{'x':83,'feet':85,'lift':4},'table':{'x':171,'y':94}}
 
 
 def plant(s,x,y):
@@ -80,7 +80,7 @@ def restaurant_front(kind='diner',x=0,w=96,s=None):
 
 def dining_furniture(kind):
     s=Sprite(W,H);r=RESTAURANTS[kind]
-    for x,y in [(83,85),(171,99),(262,101)]:chair(s,x,y,r)
+    for x,y in [(83,85),(160,99),(182,99),(262,101)]:chair(s,x,y,r)
     for x,y in [(83,76),(171,94),(262,90)]:table(s,x,y,shadow_color=P.pave[1] if kind=='bistro' else P.oak[1])
     return s
 
@@ -167,6 +167,15 @@ def cinema():
     for x in [101,128,155,182,209,236]:cinema_seat(s,x,89,True)
     for x in [85,113,141,169,197,225,253]:cinema_seat(s,x,110)
     exit_door(s);s.hline(6,335,5,P.slate[3])
+    return s
+
+
+def cinema_foreground():
+    # Seat backs remain in the background. Only their lower upholstery and
+    # armrests overlap seated bodies; repainting a complete back hid the hero.
+    s=Sprite(W,H)
+    for x in [85,113,141,169,197,225,253]:cinema_seat(s,x,110)
+    s.px[:99,:,:]=0
     return s
 
 

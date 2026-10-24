@@ -60,7 +60,7 @@ function startParkAct(act) {
   const L = parkLayout(), p = here(), sitting = act === 'bench';
   sim.park = { ...parkState(), seated: false };
   const service = ['park_toilet','park_eat'].includes(act) ? L.facility : null;
-  const x = service ? service.x : sitting ? L.bench.x : Math.max(8, Math.min(W - 8, sim.strollX ?? p.x));
+  const x = service ? service.x : sitting ? L.bench.x-(friendOutingActive()?10:0) : Math.max(8, Math.min(W - 8, sim.strollX ?? p.x));
   const y = service ? service.feet : sitting ? L.bench.feet : sim.strollY ?? L.feet;
   sim.route = [[Math.round(p.x), Math.round(p.y)], [Math.round(p.x), L.feet], [Math.round(x), L.feet]];
   if (y !== L.feet) sim.route.push([Math.round(x), y]);
@@ -211,6 +211,7 @@ function drawParkBowl(ctx) {
   if (!parkEating()) return;
   const p = buddyFeet(), x=Math.round(p.x+4),y=Math.round(p.y-11);
   ctx.drawImage(IMG.out.park.food[parkDish().id],x-1,y-4,10,10);
+  if(friendOutingActive()&&friendOutingState.seated)ctx.drawImage(IMG.out.park.food[parkDish().id],204,y-4,10,10);
 }
 
 const parkLightScene = document.createElement('canvas'), parkLightMask = document.createElement('canvas');

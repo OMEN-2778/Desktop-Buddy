@@ -78,6 +78,6 @@ function tickPeerSpeech(now){
   if(peerSpeech.phase==='idle'&&peerSpeech.pending){const line=peerSpeech.pending;showPeerSay(line.text,line.who,line.speaker);return;}
   if(!['visible','preparing'].includes(peerSpeech.phase))return;
   if(asleep()||sim.mode==='down'){hidePeerSay();return;}
-  const talking=remoteSocial||socialState.guest?.talk||socialState.guest?.bedTalk||sim.talk&&sim.item?.talk;
+  const talking=friendOutingState?.talk||remoteSocial||socialState.guest?.talk||socialState.guest?.bedTalk||sim.talk&&sim.item?.talk;
   if(!talking&&peerSpeech.phase==='visible'&&now>=peerSpeech.until)hidePeerSay();
 }

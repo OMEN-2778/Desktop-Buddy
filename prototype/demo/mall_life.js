@@ -55,7 +55,7 @@ function mallRoomSetup(){
   clearNpcPills();life.npcs=[];
   if(mallS.visit.kind==='restaurant'){
     const guest=MALL.dining.guest;
-    life.npcs.push(makeNpc('clerk',{x:245,feet:64,layer:'back'}),makeNpc('guest',{x:guest.x,feet:guest.feet,seatLift:guest.lift,sit:true,layer:'back'}));
+    life.npcs.push(makeNpc('clerk',{x:245,feet:64,layer:'back'}));life.npcs.push(makeNpc('guest',{x:guest.x,feet:guest.feet,seatLift:guest.lift,sit:true,layer:'back'}));
   }else for(const x of [113,253])life.npcs.push(makeNpc('guest',{x,feet:106,sit:true,back:true,layer:'back'}));
 }
 function mallSetSeat(){
@@ -75,7 +75,7 @@ function mallEnterVisit(){
 }
 function mallVisitVars(){return {食物:mallDish()?.name||'热饭',电影:mallFilm()?.name||'电影'};}
 function mallVisitTalk(){
-  const st=mallS.visit;if(!st||st.sleeping)return;
+  const st=mallS.visit;if(!st||st.sleeping||friendOutingActive())return;
   const pool=MALL_LIFE[st.kind==='restaurant'?'restaurantTalks':'cinemaTalks'];
   const key='mallTalk_'+st.kind,seen=(lifeFlags[key]||=[]);let fresh=pool.map((_,i)=>i).filter(i=>!seen.includes(i));
   if(!fresh.length){seen.splice(0,seen.length);fresh=pool.map((_,i)=>i);}
@@ -85,7 +85,7 @@ function mallVisitTalk(){
   log(`在${st.kind==='restaurant'?'餐桌边':'放映厅里'}小声聊了两句：${lines[0]}`);
 }
 function mallVisitEvent(){
-  const st=mallS.visit;if(!st||st.sleeping)return;
+  const st=mallS.visit;if(!st||st.sleeping||friendOutingActive())return;
   const pool=MALL_LIFE.events[st.kind],seen=(st.events||=[]);let fresh=pool.map((_,i)=>i).filter(i=>!seen.includes(i));
   if(!fresh.length){seen.length=0;fresh=pool.map((_,i)=>i);}
   const i=pick(fresh),e=pool[i];seen.push(i);log(fill(e[0],mallVisitVars()));speak(e[1],true);
@@ -159,6 +159,7 @@ function renderMallRoom(){
     bctx.drawImage(O.front,0,0);const pic=dishPic(dishIcon(mallDish()));
     const table=MALL.dining.table;
     if(pic?.complete)bctx.drawImage(pic,table.x+9-Math.floor(pic.width/2),table.y+3-pic.height);
+    if(friendOutingActive()&&pic?.complete)bctx.drawImage(pic,table.x-12-Math.floor(pic.width/2),table.y+3-pic.height);
     if(!reduceMotionUI){bctx.fillStyle='rgba(247,246,251,.6)';for(const x of [table.x+6,table.x+12])bctx.fillRect(x,table.y-14-Math.floor(realClock*2+x)%4,1,2);}
   }else bctx.drawImage(O.front,0,0);
   drawObjectHover(bctx,O.hover[hoverId]);

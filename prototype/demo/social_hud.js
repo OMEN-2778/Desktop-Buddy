@@ -14,7 +14,7 @@ const LEGACY_CONTACT_SEEDS=[
   {id:'xiaoye',name:'小野',family:null,affinity:8,look:{...doll.PRESETS.m,style:'curly',hair:'#986b51',top:'#bfa27e'}}
 ];
 const DEFAULT_CONTACTS=LEGACY_CONTACT_SEEDS.slice(0,4);
-const SOCIAL_CHANNELS=['text','call','video','meet','visit','visit-chat'];
+const SOCIAL_CHANNELS=['text','call','video','meet','visit','visit-chat','outing'];
 const socialState={contacts:DEFAULT_CONTACTS.map(c=>({...c,look:doll.normalize(c.look)})),nextCall:null,rosterVersion:2};
 const networkTrigger=document.getElementById('networkTrigger'),contactsPanel=document.getElementById('contactsPanel');
 const contactsList=document.getElementById('contactsList'),contactActions=document.getElementById('contactActions');
@@ -101,11 +101,11 @@ function openContactActions(id){
   if(selectedContact===id){closeContactActions();return;}
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return;closeRing();selectedContact=id;contactActions.replaceChildren();
   const visitLabel=socialState.guest?.id===id?(socialState.guest.phase==='scheduled'?'取消邀请':'送客'):'来我家';
-  const actions=[['text','发消息'],['video','打视频'],['outing','出门玩'],['visit','拜访'],['invite',visitLabel],['memories','经历'],['cancel','算了']];
+  const actions=[['text','发消息'],['video','打视频'],['outing',friendOutingState?.id===id?'结束同行':'出门玩'],['visit','拜访'],['invite',visitLabel],['memories','经历'],['cancel','算了']];
   for(const [i,[action,label]]of actions.entries()){
     const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.action=action;b.setAttribute('role','menuitem');
     const a=-Math.PI/2+i*2*Math.PI/actions.length;b.style.setProperty('--x',`${Math.cos(a)*112}px`);b.style.setProperty('--y',`${Math.sin(a)*72}px`);
-    if(['outing','visit'].includes(action)){b.setAttribute('aria-disabled','true');b.classList.add('coming-soon');b.append(Object.assign(document.createElement('small'),{className:'contact-unavailable',textContent:'下一步开放'}));b.title='串门与同行将在下一步开放';}
+    if(action==='visit'){b.setAttribute('aria-disabled','true');b.classList.add('coming-soon');b.append(Object.assign(document.createElement('small'),{className:'contact-unavailable',textContent:'下一步开放'}));b.title='拜访朋友家将在后续开放';}
     else if(['text','video'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
       b.setAttribute('aria-disabled','true');b.title=asleep()?'等主角醒来再联系':sim.mode==='down'?'先唤醒晕倒的主角':'正在忙，稍后再联系';b.setAttribute('aria-label',`${label}：${b.title}`);
     }
@@ -124,7 +124,7 @@ function placeContactActions(){
 contactActions.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b||b.getAttribute('aria-disabled')==='true')return;
   const id=selectedContact;closeContactActions();if(b.dataset.action==='cancel')return;
-  setContactsOpen(false);if(b.dataset.action==='memories')showSocialMemories(id);else if(b.dataset.action==='invite'){if(socialState.guest?.id===id)endHomeVisit('主角和客人道别，约好下次再聚。');else inviteHome(id);}else startContactTalk(id,b.dataset.action);
+  setContactsOpen(false);if(b.dataset.action==='memories')showSocialMemories(id);else if(b.dataset.action==='invite'){if(socialState.guest?.id===id)endHomeVisit('主角和客人道别，约好下次再聚。');else inviteHome(id);}else if(b.dataset.action==='outing')openFriendOuting(id);else startContactTalk(id,b.dataset.action);
 });
 document.addEventListener('pointerdown',e=>{if(!contactsPanel.contains(e.target)&&!contactActions.contains(e.target)&&!networkTrigger.contains(e.target)&&!moodFace.contains(e.target))setContactsOpen(false);});
 document.addEventListener('keydown',e=>{
@@ -250,7 +250,7 @@ CHATS.text={};CHAT_ACT.phone_text='text';
 for(const who of ['dad','mom','friend'])CHATS.text[who]={name:who==='dad'?'爸爸':who==='mom'?'妈妈':'{朋友}',talks:TEXT_TALKS.map(([title,lines],i)=>{
  const id=`contact_text_${who}_${i}`;ML[id]={name:'互相惦记',emo:'happy',pts:1,min:90};return {title,lines,id};
 })};
-function socialBusy(){return socialState.guest?.talk||socialState.guest?.bedTalk||npcInteraction||life.talkQ||(sim.place==='bar'&&barScene?.chat)||remoteSocial||sim.talk||sim.chosen?.item?.talk||sim.windup&&CHAT_ACT[sim.windup.act];}
+function socialBusy(){return friendOutingState?.talk||socialState.guest?.talk||socialState.guest?.bedTalk||npcInteraction||life.talkQ||(sim.place==='bar'&&barScene?.chat)||remoteSocial||sim.talk||sim.chosen?.item?.talk||sim.windup&&CHAT_ACT[sim.windup.act];}
 function startContactTalk(id,kind='text',incoming=false){
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return false;
   if(sim.mode==='down'||asleep()||wiping||cardHolds()||socialBusy())return false;

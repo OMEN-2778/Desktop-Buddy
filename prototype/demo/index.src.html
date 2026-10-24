@@ -1226,7 +1226,7 @@ function render() {
   }
   drawChair(bctx);
   drawSleepoverBedding(bctx);
-  drawHomeGuest(bctx);
+  drawHomeGuest(bctx);drawOutingFriend(bctx);
   // Buddy
   const ms = realClock * 1000;
   const fr = activityFrame(ms);
@@ -2236,7 +2236,7 @@ const sayQueue = [];
 // her words wait their turn: one bubble at a time, at most a few queued
 function speak(text, now = false) {
   if (!text) return;
-  const npcReading=life.talkQ&&!life.talkQ.delivering,barReading=sim.place==='bar'&&barScene?.chat?.t.to==='player';
+  const npcReading=life.talkQ&&!life.talkQ.delivering||friendOutingState?.talk,barReading=sim.place==='bar'&&barScene?.chat?.t.to==='player';
   if(npcReading||barReading){if(sayQueue.length<2&&!sayQueue.includes(text))sayQueue.push(text);return;}
   if (now) { sayQueue.length = 0; showMoodTip(false); showSay(text); return; }
   if (realClock < sayBusy || listOpen) { if (sayQueue.length < 2 && !sayQueue.includes(text)) sayQueue.push(text); return; }
@@ -2308,7 +2308,7 @@ function updateMood() {
   }
   if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); if(!phoneHolds())rollEvents(); checkCollapse(); }
   showFace();
-  if(phoneHolds()||remoteSocial||npcInteraction||life.talkQ||socialState.guest?.talk||socialState.guest?.bedTalk)return;
+  if(phoneHolds()||remoteSocial||npcInteraction||life.talkQ||friendOutingState?.talk||socialState.guest?.talk||socialState.guest?.bedTalk)return;
   if (listOpen) { fillMoodTip(); return; }          // her words wait until you're done looking
   if (realClock >= sayBusy && sayQueue.length) showSay(sayQueue.shift());
   else if (realClock >= nextSay && !asleep() && sim.mode !== "down" && !sim.talk) speak(thought());
@@ -3054,6 +3054,7 @@ function throughDoor(to) {
     else if (to === "front") { log(outLog(to) || pick(["出门在家门口走走。", "推开门，到门口透透气。", "出了门，站在门口伸了个懒腰。"])); addMood("outdoors"); }
     else if (to !== "bar") { log(outLog(to) || pick(PLACE_LOG[to])); addMood(to); }
     arriveAt(to);
+    if(to==='home'&&friendOutingState?.startedAt!=null)finishFriendOuting();
   });
 }
 function chooseOutside() {
@@ -3428,6 +3429,7 @@ function npcFrame(n) {
 const npcX = n => n.u != null ? onScreen(n.u) : n.x;
 const npcFeet = n => n.feet - (n.sit ? n.seatLift || 0 : 0);
 function drawNpcs(ctx, layer) {
+  drawOutingFriend(ctx,layer);
   if(stormOutside())return;
   for (const n of life.npcs || []) {
     if (n.layer !== layer || n.gone) continue;
@@ -3580,7 +3582,7 @@ function npcLine(n, key = n.role) {
 function startTalk(n) { return startNpcTalk(n); }
 function stepTalk(dt) { advanceNpcTalk(dt); }
 function placeChatter() {                       // now and then: a stranger's line, a word with one passing, or her own thought
-  if (socialBusy() || mallToiletInside() || mallVisitInside() || stormOutside()) return;
+  if (friendOutingActive() || socialBusy() || mallToiletInside() || mallVisitInside() || stormOutside()) return;
   if (!PT() || sim.mode === "down" || life.talkQ || realClock < life.chatNext) return;
   const busy = !!(mallS.stop && sim.place === "mall");
   if (life.tagNext) {                           // a ship / a speedboat just came into view
@@ -3599,7 +3601,8 @@ function placeChatter() {                       // now and then: a stranger's li
   }
   if (!busy) { const t = pickLine(PT().say); if (t) speak(fill(t, kidVars())); }
 }
-function mallStallTalk(it) {                     // at a kiosk / 地摊: its seller has a word with her
+function mallStallTalk(it) {
+  if(friendOutingActive())return;                     // at a kiosk / 地摊: its seller has a word with her
   const n = (life.npcs || []).find(m => m.item === it.id && (m.role === "clerk" || m.role === "hawker"));
   if (n && !life.talkQ && Math.random() < 0.7) startTalk(n);
   else if (n) npcLine(n, n.role === "hawker" ? `hawk_${it.id}` : "clerk");
@@ -4131,6 +4134,7 @@ let card = null;            // { cd, vars, phase: ask | wait | result | closing,
 let swallowUntil = 0;       // the click that closed a result does nothing else
 const cardWhen = new Map();
 function cardFits(cd, c) {
+  if(!friendOutingCardFits(cd))return false;
   if(cd.service==='visit'&&!homeVisitActive())return false;
   if(cd.weather && cd.weather !== weather.kind)return false;
   if (!cd.when) return true;
@@ -4138,6 +4142,7 @@ function cardFits(cd, c) {
   return cardWhen.get(cd)(c);
 }
 function rollCard(c, service = homeVisitActive()&&sim.act==='host'?'visit':sim.place === "park" && parkEating() ? "food" : mallVisitInside() ? mallS.visit.kind : null) {
+  if(friendOutingActive())service='friend_outing';
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   const out = sim.place !== "home";               // outside: that place's own cards (cd.at)
   if (!prefs.guided || guideOn || card || !c.awake || parkInsideToilet() || (sim.place === "mall" && mallS.toilet) || (sim.place === "bar" && sim.bar?.toilet) || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside() && !mallVisitInside())
@@ -4198,6 +4203,7 @@ function walkMoments(a, b) {
 function cardVars() {
   const guest=socialState.guest,c=guest&&socialState.contacts.find(c=>c.id===guest.id);
   const v = { ...(sim.item && sim.item.vars),...(homeVisitActive()&&c?{朋友:contactName(c),visitorId:c.id}: {}) };
+  const companion=outingFriend();if(friendOutingActive()&&companion)Object.assign(v,{朋友:contactName(companion),outingFriendId:companion.id});
   if (mallVisitInside()) Object.assign(v,mallVisitVars());
   if (sim.act === "eat" && sim.meal && sim.meal.vars) Object.assign(v, sim.meal.vars);
   return v;
@@ -4255,6 +4261,7 @@ function cardDiary() {
   log(`「${fill(cd.title, vars)}」${auto ? `（${nameOf()}自己拿了主意）` : ""}${fill(cd[k].label, vars).replace(/[。.]$/, "")}——${fill(o.text, vars)}`);
 }
 function cardNeeds() {
+  applyFriendOutingCard();
   if(card.cd.service==='visit'){const c=socialState.contacts.find(c=>c.id===card.vars.visitorId);if(c){const old=contactRelation(c),before=c.affinity;c.affinity=clamp(c.affinity+(card.o.friendship||0));if(c.affinity>before){discoverPersonality(c,c.affinity-before);showFriendshipGain(c,c.affinity-before);}contactsSig='';addSocialMemory(c,fill(card.cd.title,card.vars),fill(card.o.text,card.vars));if(old!==contactRelation(c))log(`和${contactName(c)}的关系变成了${contactRelation(c)}。`);if(c.affinity<=0)removeSocialContact(c,'这次相处后，彼此选择不再联系。');}}
   for (const [n, v] of Object.entries(card.o.need || {})) if (n in sim.needs) sim.needs[n] = clamp(sim.needs[n] + v);
 }
@@ -4668,6 +4675,9 @@ function restore(sv) {
     arriveAt(sim.place);
     if (sim.place === "mall") restoreMall(m.mall);
   }
+  // Social identities are restored earlier; a companion must be reconciled only
+  // after the saved location and its seats have replaced the startup house.
+  restoreFriendOuting(sv.social?.friendOuting);
   moods.clear();
   for (const [id, until, t] of sv.moods || []) if (ML[id]) moods.set(id, { until, t });
   const savedNpcTopics=sv.flags?.npcChatSeen;
@@ -4964,6 +4974,7 @@ if (TAURI) {
 /*__SOCIAL_LIFE_JS__*/
 /*__PEER_DIALOGUE_JS__*/
 /*__NPC_SOCIAL_JS__*/
+/*__FRIEND_OUTINGS_JS__*/
 /*__NEED_CONSEQUENCES_JS__*/
 
 // ================================================================ loop
@@ -4977,6 +4988,7 @@ function frame(now) {
   tickSocialLife(dt);
   const fast = sim.mode === "act" && sim.act === "sleep" && !sleepoverChatAwake() ? 8 : 1, run = cardHolds() || wiping ? 0 : speed;   // a chance card (or a scene change) stops the clock
   step(dt * run * fast, dt * (run ? 1 : 0));
+  tickFriendOuting(run ? dt : 0);
   tickStorm(run ? dt : 0);
   updateDoors(run ? dt : 0);
   render();

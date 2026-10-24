@@ -22,9 +22,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=requ
     ok(!tk.lines.join('').includes('喂，我在，听得到你'),'Repeated fixed telephone prefix');
    }
    ok(CHATS.call.friend.talks.length>=100,'Friend voice topics did not double');
-   ok(SOCIAL_DIALOGUE.visit.common.length===200,'Common visitor count');
+   ok(SOCIAL_DIALOGUE.visit.common.length===300,'Common visitor count');
    for(const group of ['tv','meal','rain','snow'])ok(SOCIAL_DIALOGUE.visit[group].length===20,group+' count');
-   ok(new Set(Object.values(SOCIAL_DIALOGUE.visit).flat().map(r=>r[0])).size===320,'Repeated visitor titles');
+   ok(new Set(Object.values(SOCIAL_DIALOGUE.visit).flat().map(r=>r[0])).size===420,'Repeated visitor titles');
    const expectedHours={'深夜聊到发懵':3.5,'半夜听到敲门声':2.5,'夜猫子朋友的早安':20.5,'一句早安':8,'礼貌的晚安':23};
    for(const [title,h]of Object.entries(expectedHours)){sim.t=h*60;ok(socialTalkFits({title}),'Correct time rejected: '+title);sim.t=13*60;ok(!socialTalkFits({title}),'Wrong time accepted: '+title);}
    sim.t=10*60;c.affinity=70;c.contactCounts={call:5};
@@ -89,6 +89,6 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=requ
    sim.t=1380;showCard(cd);const night=getComputedStyle(cardEl.querySelector('h3')).color;clearTimeout(card.timer);card=null;cardEl.hidden=true;return{day,night};
   });assert.deepEqual(colors,{day:'rgb(255, 218, 161)',night:'rgb(189, 223, 255)'});
   assert.deepEqual(errors,[]);
-  console.log('PASS: roster migrations preserve desktop friends; 320 visit conversations; doubled calls; short first contacts; time filters; multi-day personality knowledge; calls preserve daily activity/urgent toilet; visitors converse during TV and follow to kitchen; green affection feedback; 4-scale cards; day/night title colors.');
+  console.log('PASS: roster migrations preserve desktop friends; 420 visit conversations; doubled calls; short first contacts; time filters; multi-day personality knowledge; calls preserve daily activity/urgent toilet; visitors converse during TV and follow to kitchen; green affection feedback; 4-scale cards; day/night title colors.');
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -94,7 +94,7 @@ function tickSocialDecay(){
   }if(moodrow.classList.contains('contacts-open'))fillContacts();
 }
 function socialCallDue(c){const gap=c.family?1440:c.affinity>90?600:c.affinity>=60?1080:c.affinity>=20?1800:3600;return sim.t-(c.lastIncoming??-Infinity)>=gap*personalityCallFactor(c);}
-function socialLifeSnapshot(){return {heroPersonality:{...heroPersonality},heroPersonalityChosen,namePoolVersion:2,worldStyleVersion:2,world:socialState.world,archive:socialState.archive,decayDay:socialState.decayDay,nextVisit:socialState.nextVisit,guest:socialState.guest?{...socialState.guest,npc:undefined}:null};}
+function socialLifeSnapshot(){return {friendOuting:friendOutingSnapshot(),heroPersonality:{...heroPersonality},heroPersonalityChosen,namePoolVersion:2,worldStyleVersion:2,world:socialState.world,archive:socialState.archive,decayDay:socialState.decayDay,nextVisit:socialState.nextVisit,guest:socialState.guest?{...socialState.guest,npc:undefined}:null};}
 function restoreSocialLife(data){
   const memories=value=>Array.isArray(value)?value.filter(m=>m&&Number.isFinite(m.t)&&typeof m.title==='string'&&typeof m.text==='string').map(m=>({t:m.t,title:m.title.slice(0,100),text:m.text.slice(0,2000)})):[];
   socialState.world=makeSocialWorld();
@@ -126,19 +126,20 @@ function restoreSocialLife(data){
   const guest=data?.guest;if(guest&&socialState.contacts.some(c=>c.id===guest.id)&&Number.isFinite(guest.until)){
     socialState.guest={id:guest.id,phase:['scheduled','entering','visiting','leaving'].includes(guest.phase)?guest.phase:'scheduled',at:Number.isFinite(guest.at)?guest.at:sim.t,until:guest.until,s:Number.isFinite(guest.s)?guest.s:0,next:0,said:[],count:0,activity:guest.activity||'chat'};
       restoreHomeVisitProgress(socialState.guest,guest);
-  }restorePersonalities(data);closeSocialSheet();
+  }restorePersonalities(data);restoreFriendOuting(data?.friendOuting);closeSocialSheet();
 }
 
 D.spots.host=[D.spots.sofa[0],D.spots.sofa[1]-6,'sit'];
 ACTS.host={spot:'host',label:'招待朋友',emote:'chat',dur:45,log:null};EFFECT.host={social:.3,fun:.2};D.seatLifts.host=4;
 const guestBubble=document.createElement('div');guestBubble.className='npcsay home-guest-say';guestBubble.hidden=true;document.getElementById('widget').append(guestBubble);
 function homeVisitActive(){return sim.place==='home'&&socialState.guest?.phase==='visiting';}
-function homeGuestPresent(){return sim.place==='home'&&['entering','visiting','leaving'].includes(socialState.guest?.phase);}
+function homeGuestPresent(){return sim.place==='home'&&(['entering','visiting','leaving'].includes(socialState.guest?.phase)||friendOutingWaiting());}
 function visitNotice(title,text){
   const sheet=openSocialSheet(title),p=document.createElement('p');p.textContent=text;socialContent(sheet).append(p);return sheet;
 }
 function inviteHome(id,proactive=false){
   const c=socialState.contacts.find(c=>c.id===id);if(!c){visitNotice('暂时不能邀请','这位朋友已经不在联系人名单里了。');return false;}
+  if(friendOutingState){visitNotice('已经约好出门','先结束同行，再邀请朋友来家里吧。');return false;}
   let reason='';
   if(sim.place!=='home')reason='先回到家里，再邀请朋友来坐坐吧。';
   else if(sim.mode==='down')reason='主角晕倒了，先长按唤醒，再邀请朋友吧。';
@@ -231,7 +232,7 @@ function tickSocialLife(dt){
   const day=Math.floor(sim.t/1440);if(socialState.decayDay===null){socialState.decayDay=day;for(const c of socialState.contacts){c.metAt??=sim.t;c.lastSeen??=sim.t;}}
   tickSocialDecay();tickHomeVisit(dt);
   if(!Number.isFinite(socialState.nextVisit))socialState.nextVisit=sim.t+1440;
-  if(sim.t<socialState.nextVisit||socialState.guest||!canReceiveCall()||sim.place!=='home'||hour()<10||hour()>=20)return;
+  if(friendOutingState||sim.t<socialState.nextVisit||socialState.guest||!canReceiveCall()||sim.place!=='home'||hour()<10||hour()>=20)return;
   socialState.nextVisit=sim.t+720+Math.random()*720;
   const eligible=sortedContacts().filter(c=>(c.family?familyMayOfferVisit(c):c.affinity>=20)&&sim.t-(c.lastVisitOffer??-Infinity)>2*1440*personalityCallFactor(c));
   if(eligible.length&&Math.random()<.4){const c=pick(eligible);c.lastVisitOffer=sim.t;requestIncomingCall(c.id,'visit');}

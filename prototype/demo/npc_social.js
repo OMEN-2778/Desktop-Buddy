@@ -8,6 +8,7 @@ function npcChatUrgent(){
   return n.energy<20||n.hygiene<20||n.bladder<(sim.place==='park'?40:20)||n.hunger<(sim.place==='park'?35:sim.place==='mall'?25:20);
 }
 function canClickNpc(n){
+  if(friendOutingActive())return false;
   if(!n||n.gone||sim.place==='home'||stormOutside()||mallInside()||parkInsideToilet()||barToiletInside())return false;
   if(sim.place==='mall'&&(mallS.toilet||mallS.visit)||sim.place==='bar'&&sim.bar?.toilet)return false;
   if(n.role==='fisher'||n.rod||n.role==='performer')return false;

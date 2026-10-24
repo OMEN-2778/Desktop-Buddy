@@ -1,0 +1,3118 @@
+[
+  {
+    "n": 3001,
+    "at": "park",
+    "service": "friend_outing",
+    "title": "长椅的半边",
+    "text": "长椅只空出一大半，{朋友}问挤一挤能不能坐。",
+    "a": {
+      "label": "先把两人的包收起来。",
+      "out": [
+        {
+          "text": "包挪到脚边，两个人总算能坐好。",
+          "say": "这下够了，别把腿伸路中间。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "长椅的半边",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "收包时主角差点把自己的水瓶踢倒。",
+          "say": "等下，先让我把瓶子拿稳。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "长椅的半边",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "再找一张空的。",
+      "out": [
+        {
+          "text": "没走多远就找到空长椅，两个人各挑一边坐下。",
+          "say": "这里宽多了，刚才那个别硬挤。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "长椅的半边",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "走过两张椅子又绕回来，原来的位置已经全空了。",
+          "say": "早知道刚才多等两分钟。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "长椅的半边",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3002,
+    "at": "park",
+    "service": "friend_outing",
+    "title": "云里有只鸭",
+    "text": "{朋友}指着云说像鸭子，主角怎么看都像个馒头。",
+    "a": {
+      "label": "指给对方看哪里像馒头。",
+      "out": [
+        {
+          "text": "顺着主角的手指，{朋友}也看出了馒头，两人越看越饿。",
+          "say": "别看了，再看该想吃饭了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "云里有只鸭",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角指了半天，那块云已经散开。",
+          "say": "刚才真是那样，不是我瞎说。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "云里有只鸭",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "先听听鸭子的说法。",
+      "out": [
+        {
+          "text": "{朋友}用手比画鸭嘴，主角终于看懂，笑出了声。",
+          "say": "哦，你看的是这一头啊。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "云里有只鸭",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "讲到一半两人都看错了云，只好重新找。",
+          "say": "咱俩说的是同一朵吗？",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "云里有只鸭",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "outingDay": true
+  },
+  {
+    "n": 3003,
+    "at": "park",
+    "service": "friend_outing",
+    "title": "拍照时的小飞虫",
+    "text": "两人刚站好准备拍照，一只小飞虫绕到镜头前。",
+    "a": {
+      "label": "等它飞走再拍。",
+      "out": [
+        {
+          "text": "飞虫绕一圈就走了，第二张照片拍得很清楚。",
+          "say": "好了，这回别动。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "拍照时的小飞虫",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "刚按下快门，两个人都在躲虫，照片里只剩半张脸。",
+          "say": "这张别删，实在有点好笑。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "拍照时的小飞虫",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "换个位置。",
+      "out": [
+        {
+          "text": "两人往旁边挪了几步，顺便找到更好的背景。",
+          "say": "这边反而好看点。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "拍照时的小飞虫",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "换了位置，却把刚才选好的角度忘了。",
+          "say": "刚才是从哪边拍的来着？",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "拍照时的小飞虫",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3004,
+    "at": "park",
+    "service": "friend_outing",
+    "title": "谁在数圈",
+    "text": "绕过同一张长椅时，两个人都说这已经是第三圈了，随后又开始怀疑。",
+    "a": {
+      "label": "回想刚才走过哪里。",
+      "out": [
+        {
+          "text": "对着路口回忆了一遍，两人终于把绕圈次数对上。",
+          "say": "那就没记错，再走一小段。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "谁在数圈",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "回忆时又绕了一小圈，数字彻底算不清了。",
+          "say": "行了，别数了，脚累了就回。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "谁在数圈",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "干脆不数。",
+      "out": [
+        {
+          "text": "两个人收起计步页面，开始留意路边的小东西。",
+          "say": "今天就不跟数字较劲了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "谁在数圈",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "不数圈以后，主角反而忍不住又看了一次步数。",
+          "say": "就看这一眼，真的。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "谁在数圈",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3005,
+    "at": "park",
+    "service": "friend_outing",
+    "title": "掉下来的纸巾",
+    "text": "一张纸巾从{朋友}包边滑下来，对方还没发现。",
+    "a": {
+      "label": "顺手捡起来。",
+      "out": [
+        {
+          "text": "纸巾没怎么脏，主角递回去，{朋友}连声道谢。",
+          "say": "塞里面一点，刚露出半截了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "掉下来的纸巾",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "捡起来才发现是旧纸巾，主角有点尴尬地找垃圾袋。",
+          "say": "我先收着，等会儿一起扔。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "掉下来的纸巾",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "喊一声提醒。",
+      "out": [
+        {
+          "text": "{朋友}立刻回身接住，差点就让纸被风吹走了。",
+          "say": "还好你手快。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "掉下来的纸巾",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角喊得太急，旁边一位路人也跟着回了头。",
+          "say": "不好意思，不是在叫您。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "掉下来的纸巾",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3006,
+    "at": "park",
+    "service": "friend_outing",
+    "title": "草坪像发型",
+    "text": "{朋友}说条纹草坪比主角的头发整齐，主角忍不住摸了摸头。",
+    "a": {
+      "label": "让朋友看看后面。",
+      "out": [
+        {
+          "text": "{朋友}帮忙把翘起的一撮按下，两人又看了一眼草坪。",
+          "say": "行，这下能比了吧。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "草坪像发型",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "越按越翘，那撮头发最后还是没服帖。",
+          "say": "算了，今天就让它这样。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "草坪像发型",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "也看看朋友的头发。",
+      "out": [
+        {
+          "text": "主角发现对方后面也有一撮翘着，两人都笑了。",
+          "say": "你还说我，你也有。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "草坪像发型",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角看了半天什么都没找到，只好承认没法反击。",
+          "say": "好吧，今天是你比较整齐。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "草坪像发型",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "outingZones": [
+      "central"
+    ]
+  },
+  {
+    "n": 3007,
+    "at": "park",
+    "service": "friend_outing",
+    "title": "水瓶放反了",
+    "text": "两人准备起身时，{朋友}发现主角把水瓶倒着塞在包边。",
+    "a": {
+      "label": "拿出来检查。",
+      "out": [
+        {
+          "text": "瓶盖拧得很紧，一滴也没漏，主角把水瓶放正。",
+          "say": "还好，差点以为包湿了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "水瓶放反了",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "手忙脚乱时盖子松了，水溅在自己手背上。",
+          "say": "哎，刚才本来没漏的。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "水瓶放反了",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "先帮朋友拿好东西。",
+      "out": [
+        {
+          "text": "两人一人拿包、一人整理，东西很快收好。",
+          "say": "好了，这回我看看再走。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "水瓶放反了",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "整理到最后才发现，两个人都没拿自己的手机。",
+          "say": "手机先拿上，别又漏一个。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "水瓶放反了",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3008,
+    "at": "park",
+    "service": "friend_outing",
+    "title": "湖边的合影",
+    "text": "湖边背景很好看，{朋友}提议合拍一张，但两人都不太会摆姿势。",
+    "a": {
+      "label": "就正常站着拍。",
+      "out": [
+        {
+          "text": "没有特意摆动作，两个人看着照片都觉得挺像平时。",
+          "say": "就这张吧，不用再折腾。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "湖边的合影",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "倒计时结束时，主角正转头问还剩几秒。",
+          "say": "好了，现在知道剩零秒了。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "湖边的合影",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "做个夸张的动作。",
+      "out": [
+        {
+          "text": "两人摆到一半先笑场，反倒留下了一张自然的照片。",
+          "say": "这张比咱俩认真摆的好。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "湖边的合影",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "动作做到一半，两人的胳膊碰在一起，谁也没摆成。",
+          "say": "你先别动，我往旁边一点。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "湖边的合影",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "outingZones": [
+      "gazebo",
+      "lakeside"
+    ]
+  },
+  {
+    "n": 3009,
+    "at": "park",
+    "service": "friend_outing",
+    "title": "小摊前的犹豫",
+    "text": "到了日料摊前，两人都想点不一样的，又怕吃不完。",
+    "a": {
+      "label": "各点一份小的。",
+      "out": [
+        {
+          "text": "两份分着尝过，主角和{朋友}都找到自己喜欢的味道。",
+          "say": "下次我就点这个了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "小摊前的犹豫",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "两份看着小，吃到后面却都有点撑。",
+          "say": "下回不能光看碗大小。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "小摊前的犹豫",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "先合着选一样。",
+      "out": [
+        {
+          "text": "两人总算选定，一边吃一边商量下次尝什么。",
+          "say": "先把今天这份吃完。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "小摊前的犹豫",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "一人说一种，最后还是拿不定主意，只好再看菜单。",
+          "say": "咱俩别同时说，先选你最想吃的。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "小摊前的犹豫",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "outingZones": [
+      "grove"
+    ]
+  },
+  {
+    "n": 3010,
+    "at": "park",
+    "service": "friend_outing",
+    "title": "鞋里那点东西",
+    "text": "{朋友}走两步就停，原来鞋里进了点沙。",
+    "a": {
+      "label": "找个位置坐着清理。",
+      "out": [
+        {
+          "text": "倒出那点沙以后，{朋友}走路总算不再别扭。",
+          "say": "舒服了吧，刚才看你一直偏着走。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "鞋里那点东西",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角帮忙拿东西时拿反了包，差点把里面东西倒出来。",
+          "say": "你先弄鞋，我把包口扣好。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "鞋里那点东西",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "站旁边帮忙挡一下。",
+      "out": [
+        {
+          "text": "两人避到路边，一个扶包，一个把鞋重新穿好。",
+          "say": "好了，慢点站起来。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "鞋里那点东西",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "刚清完，{朋友}又说另一只鞋也有，两人忍不住笑了。",
+          "say": "行，一次弄干净，别走两步又停。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "鞋里那点东西",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3011,
+    "at": "park",
+    "service": "friend_outing",
+    "title": "把笑话说反了",
+    "text": "主角讲了个笑话，{朋友}听完迟迟没笑，主角才发现漏了一句。",
+    "a": {
+      "label": "把漏的那句补上。",
+      "out": [
+        {
+          "text": "{朋友}终于反应过来，笑着说原来是这样。",
+          "say": "这回懂了吧，是我刚讲漏了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "把笑话说反了",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "补完以后还是不太好笑，主角自己先笑得停不下来。",
+          "say": "算了，你当看我笑吧。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "把笑话说反了",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "请朋友接个结尾。",
+      "out": [
+        {
+          "text": "{朋友}接了个意想不到的结尾，两人都觉得比原版有趣。",
+          "say": "行，下回我就讲你这个版本。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "把笑话说反了",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "结尾越接越远，两人最后谁也记不住原版。",
+          "say": "已经不是刚才那个故事了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "把笑话说反了",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3012,
+    "at": "park",
+    "service": "friend_outing",
+    "title": "风口换位置",
+    "text": "长椅一边风大，一边晒，两个人坐下以后都有点犹豫。",
+    "a": {
+      "label": "商量换一边试试。",
+      "out": [
+        {
+          "text": "换过后两人都觉得舒服点，决定先歇一会儿。",
+          "say": "这边好多了，刚才直吹脖子。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "风口换位置",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "换过又觉得不习惯，最后两人默默坐回原位。",
+          "say": "我还是坐刚才那儿吧。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "风口换位置",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "一起再找一张。",
+      "out": [
+        {
+          "text": "另一张在树荫里，两人坐下后都不急着走。",
+          "say": "早知道刚才就来这边。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "风口换位置",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "找了一圈，两个人一边走一边聊，反倒忘了要坐。",
+          "say": "等下，我们不是要找椅子吗？",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "风口换位置",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3013,
+    "at": "mall",
+    "service": "friend_outing",
+    "title": "清单上只有三样",
+    "text": "两人对着购物清单看，{朋友}却已经拿起第四样东西。",
+    "a": {
+      "label": "提醒一下清单。",
+      "out": [
+        {
+          "text": "{朋友}低头一看笑了，把不急用的东西放回去。",
+          "say": "这个下次再说，先找要用的。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "清单上只有三样",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角刚提醒完，自己又被旁边的小东西吸引。",
+          "say": "我就看一眼，不一定买。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "清单上只有三样",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "问问这个要放哪里。",
+      "out": [
+        {
+          "text": "{朋友}想了想家里的位置，主动打消了念头。",
+          "say": "对，先把家里那堆收了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "清单上只有三样",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "两人开始讨论怎么收纳，连清单上要买什么都忘了一会儿。",
+          "say": "先买完，收纳回去再研究。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "清单上只有三样",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "outingContexts": [
+      "mall"
+    ]
+  },
+  {
+    "n": 3014,
+    "at": "mall",
+    "service": "friend_outing",
+    "title": "同款不同色",
+    "text": "橱窗里挂着一件主角已经有的衣服，{朋友}却说这个颜色更好看。",
+    "a": {
+      "label": "拿近看看颜色。",
+      "out": [
+        {
+          "text": "两人换着角度看，终于弄清是灯光让颜色显得不同。",
+          "say": "原来灯一照差这么多。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "同款不同色",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "看得太认真，主角没发现自己一直拿反了衣服。",
+          "say": "我先把领子找到再说。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "同款不同色",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "先不买，拍张照片。",
+      "out": [
+        {
+          "text": "回看照片后两人都觉得没有现场那么特别，决定先放着。",
+          "say": "现在看也没那么想要了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "同款不同色",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "照片拍糊了，两人只好回头再确认一次。",
+          "say": "这照片留了跟没留一样。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "同款不同色",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "outingContexts": [
+      "mall"
+    ]
+  },
+  {
+    "n": 3015,
+    "at": "mall",
+    "service": "friend_outing",
+    "title": "两个人的菜单",
+    "text": "饭店门口摆着几份套餐，两个人想吃的刚好不一样。",
+    "a": {
+      "label": "各点自己想吃的。",
+      "out": [
+        {
+          "text": "坐下后两人互相尝了一口，结果都没选错。",
+          "say": "你的也不错，下回可以换。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "两个人的菜单",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角尝了一口朋友的，才发现自己好像更想吃那份。",
+          "say": "不是我的不好吃，就是你这个也想要。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "两个人的菜单",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "找个两人都能接受的。",
+      "out": [
+        {
+          "text": "商量几句后选定，两人终于不用在门口站着了。",
+          "say": "可算坐下了，刚腿都酸了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "两个人的菜单",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "挑到最后又回到第一家，两人相视一笑。",
+          "say": "咱俩这圈没少走。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "两个人的菜单",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "outingContexts": [
+      "restaurant"
+    ]
+  },
+  {
+    "n": 3016,
+    "at": "mall",
+    "service": "friend_outing",
+    "title": "袋子有点勒手",
+    "text": "{朋友}换了几次手，袋子看着不大，却拎得手心发红。",
+    "a": {
+      "label": "帮忙分担一件。",
+      "out": [
+        {
+          "text": "东西分开后两个人都轻松些，可以继续慢慢逛。",
+          "say": "你拿这个，我拿大的。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "袋子有点勒手",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角接过才发现比想的沉，脸上的表情没藏住。",
+          "say": "怎么能这么沉，你刚还说不重。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "袋子有点勒手",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "先找地方坐一下。",
+      "out": [
+        {
+          "text": "坐下放好东西，两人终于腾出手喝水。",
+          "say": "先歇会儿，东西又不会跑。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "袋子有点勒手",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "刚坐下就发现纸袋底有点软，两人赶紧检查里面有没有漏。",
+          "say": "等下，先别让它落地。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "袋子有点勒手",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "outingContexts": [
+      "mall"
+    ]
+  },
+  {
+    "n": 3017,
+    "at": "mall",
+    "service": "friend_outing",
+    "title": "影院门口的争论",
+    "text": "两人看电影简介，一个想看悬疑，一个想看轻松点的。",
+    "a": {
+      "label": "先听朋友想看的理由。",
+      "out": [
+        {
+          "text": "听完以后主角也有点兴趣，两人很快选好场次。",
+          "say": "行，这个还真有点想看。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "影院门口的争论",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "朋友说了半天，主角才发现对方讲的是另一张海报。",
+          "say": "你指哪张？我们可能没说同一部。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "影院门口的争论",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "挑一部都没看过的。",
+      "out": [
+        {
+          "text": "两人选了个新题材，带着一点好奇一起进场。",
+          "say": "先不看评价，自己看完再说。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "影院门口的争论",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "选完发现时间还早，两人只好先去旁边坐一会儿。",
+          "say": "行，票先收好，别又弄丢。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "影院门口的争论",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "outingContexts": [
+      "mall"
+    ]
+  },
+  {
+    "n": 3018,
+    "at": "mall",
+    "service": "friend_outing",
+    "title": "爆米花放哪里",
+    "text": "放映厅里，两个人都觉得爆米花放中间方便，但扶手上有点挤。",
+    "a": {
+      "label": "挪好水杯再放。",
+      "out": [
+        {
+          "text": "东西摆稳后，两人都能拿到，也没挡住旁边的人。",
+          "say": "这样行，小心别碰倒。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "爆米花放哪里",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角刚松手，爆米花桶就歪了一下，还好被接住。",
+          "say": "哎，先拿着，我把杯子再挪开。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "爆米花放哪里",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "轮流拿着。",
+      "out": [
+        {
+          "text": "两人约好谁吃谁拿，后来反倒没再惦记位置。",
+          "say": "你先拿，我要的时候叫你。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "爆米花放哪里",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "一人以为另一人接住了，两只手又同时缩回去。",
+          "say": "别一起松，我先拿稳。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "爆米花放哪里",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "outingContexts": [
+      "cinema"
+    ]
+  },
+  {
+    "n": 3019,
+    "at": "mall",
+    "service": "friend_outing",
+    "title": "扶梯前才想起",
+    "text": "走到扶梯前，{朋友}突然想不起要去哪一层。",
+    "a": {
+      "label": "先站旁边看导览。",
+      "out": [
+        {
+          "text": "对照店名后终于找对楼层，两人没再绕路。",
+          "say": "是这层，刚才差点又上去了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "扶梯前才想起",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "导览看了半天，主角发现两人一直看的是另一栋的图。",
+          "say": "这个图还分区啊，咱俩先找现在在哪。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "扶梯前才想起",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "先把记得的店名说出来。",
+      "out": [
+        {
+          "text": "主角记起店旁边卖什么，两人很快确定了位置。",
+          "say": "对，就面包店旁边那家。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "扶梯前才想起",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "两人记住的招牌颜色不一样，只好回头核对。",
+          "say": "不争了，走过去看看。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "扶梯前才想起",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "outingContexts": [
+      "mall"
+    ]
+  },
+  {
+    "n": 3020,
+    "at": "mall",
+    "service": "friend_outing",
+    "title": "优惠算不明白",
+    "text": "一个折扣牌写得很复杂，两个人算了两遍，结果还不一样。",
+    "a": {
+      "label": "拿手机算。",
+      "out": [
+        {
+          "text": "算清后发现只便宜一点，两人都不急着买了。",
+          "say": "就省这么点啊，那先不买。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "优惠算不明白",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角把原价输错一位，两人差点以为捡了大便宜。",
+          "say": "等下，我多按了个零。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "优惠算不明白",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "问店员最简单的买法。",
+      "out": [
+        {
+          "text": "店员一句话解释清楚，两人都笑着收起计算器。",
+          "say": "早问就好了，咱俩白算半天。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "优惠算不明白",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "问完才发现这件不参加活动，两人又看了一眼小字。",
+          "say": "小字都藏这儿呢。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "优惠算不明白",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "outingContexts": [
+      "mall"
+    ]
+  },
+  {
+    "n": 3021,
+    "at": "beach",
+    "service": "friend_outing",
+    "title": "看错的船",
+    "text": "主角盯着远处白点说是船，{朋友}说那是一只鸟。",
+    "a": {
+      "label": "再看一会儿。",
+      "out": [
+        {
+          "text": "白点忽然飞起来，两个人都笑了，主角只好认输。",
+          "say": "行，是鸟，这回你看得清。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "看错的船",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "盯了半天眼睛有点酸，白点却还是没动。",
+          "say": "算了，先歇一下眼睛。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "看错的船",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "拍下来放大看看。",
+      "out": [
+        {
+          "text": "照片放大后真的看见翅膀，问题终于有了答案。",
+          "say": "哦，刚才还真没看出来。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "看错的船",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "照片比肉眼更模糊，只剩一个白团。",
+          "say": "这放大跟没放大一样。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "看错的船",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3022,
+    "at": "beach",
+    "service": "friend_outing",
+    "title": "帽子差点飞了",
+    "text": "风突然变大，{朋友}的帽子边被吹了起来。",
+    "a": {
+      "label": "提醒按住帽子。",
+      "out": [
+        {
+          "text": "{朋友}及时按住，随后干脆摘下来塞进包里。",
+          "say": "收着吧，真掉了不好捡。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "帽子差点飞了",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角提醒得太大声，{朋友}一紧张又摸错了手里的东西。",
+          "say": "别慌，就头上那个。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "帽子差点飞了",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "帮忙拿好其他东西。",
+      "out": [
+        {
+          "text": "两人腾出手把帽子收好，终于不用一直迎着风折腾。",
+          "say": "好了，这下手也空出来了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "帽子差点飞了",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "整理时主角自己的衣领又被吹翻，两人忙完一个又一个。",
+          "say": "今天这风真不让人消停。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "帽子差点飞了",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3023,
+    "at": "beach",
+    "service": "friend_outing",
+    "title": "浪花抢镜",
+    "text": "两人想等一阵大浪拍合照，偏偏按下快门时浪已经退了。",
+    "a": {
+      "label": "再等一阵。",
+      "out": [
+        {
+          "text": "下一阵来得正好，两个人这回都没眨眼。",
+          "say": "好了，这张能用了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "浪花抢镜",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "浪来了，主角却忘了按快门，两个人看着手机一起叹气。",
+          "say": "怪我，光顾着看了。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "浪花抢镜",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "拍张不用等浪的。",
+      "out": [
+        {
+          "text": "两个人自然站好，照片里海面平静，也挺好看。",
+          "say": "就这张，别追着浪拍了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "浪花抢镜",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "刚拍完身后又来一阵大浪，两人忍不住回头。",
+          "say": "它怎么偏偏现在来。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "浪花抢镜",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3024,
+    "at": "beach",
+    "service": "friend_outing",
+    "title": "海风里的话",
+    "text": "{朋友}说了句话，主角只听清最后两个字。",
+    "a": {
+      "label": "靠近一点再问。",
+      "out": [
+        {
+          "text": "这回总算听全，两人不用再迎着风喊。",
+          "say": "哦，是这件事，你接着说。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "海风里的话",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角重复自己听到的版本，把朋友都逗笑了。",
+          "say": "那你原来到底说的什么啊。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "海风里的话",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "先换到背风处。",
+      "out": [
+        {
+          "text": "挪了位置以后说话轻松多了，手也没那么冷。",
+          "say": "这里好多了，刚才真听不清。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "海风里的话",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "两人一边挪一边说，结果又各自漏听了一句。",
+          "say": "先站定，站定再说。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "海风里的话",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3025,
+    "at": "beach",
+    "service": "friend_outing",
+    "title": "水面亮点",
+    "text": "水面反光太亮，{朋友}一直眯着眼睛，又舍不得移开视线。",
+    "a": {
+      "label": "提醒换个方向看。",
+      "out": [
+        {
+          "text": "两人往侧面站一点，眼睛舒服了，也能看清船。",
+          "say": "这边不晃眼，站这儿吧。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "水面亮点",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角自己也跟着眯眼，半天才想起还在帮朋友找位置。",
+          "say": "我也看不清了，先转一下头。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "水面亮点",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "先闭眼歇一会儿。",
+      "out": [
+        {
+          "text": "睁眼以后两人都没那么累，决定再慢慢看一会儿。",
+          "say": "好多了，刚才盯太久。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "水面亮点",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "{朋友}闭眼后忘了刚才看的是哪艘船，又找了一阵。",
+          "say": "就右边那艘，已经过去一点了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "水面亮点",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "outingDay": true
+  },
+  {
+    "n": 3026,
+    "at": "beach",
+    "service": "friend_outing",
+    "title": "谁先想回去",
+    "text": "两个人都说还能再站会儿，却不约而同地活动起酸了的腿。",
+    "a": {
+      "label": "坦白自己有点累。",
+      "out": [
+        {
+          "text": "{朋友}立刻点头，说自己也早想找地方歇了。",
+          "say": "那早说啊，咱俩还互相撑着。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "谁先想回去",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角刚说完累，朋友就指出主角已经换了好几次脚。",
+          "say": "行，被你看出来了。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "谁先想回去",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "一起慢慢往回走。",
+      "out": [
+        {
+          "text": "沿路还有能看的东西，两人边走边聊，不觉得可惜。",
+          "say": "回去路上也能看，别急。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "谁先想回去",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "走没多远两人又同时回头看船，谁也没先忍住。",
+          "say": "看最后一眼，这回真的。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "谁先想回去",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3027,
+    "at": "beach",
+    "service": "friend_outing",
+    "title": "海边的小愿望",
+    "text": "{朋友}问主角来海边会不会许愿，问完又有点不好意思。",
+    "a": {
+      "label": "说个很小的愿望。",
+      "out": [
+        {
+          "text": "主角说想明天好好吃顿饭，朋友立刻接上想吃什么。",
+          "say": "这个愿望倒是今天也能想。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "海边的小愿望",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角越想越像列菜单，两个人都被自己逗笑了。",
+          "say": "怎么全是吃的，换一个。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "海边的小愿望",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "先问朋友想许什么。",
+      "out": [
+        {
+          "text": "朋友说了一个不大的盼头，主角认真记了一下。",
+          "say": "好，到时候你告诉我成没成。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "海边的小愿望",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "朋友想了半天，说先不说，主角只好收回追问。",
+          "say": "行，留着，你想说了再说。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "海边的小愿望",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3028,
+    "at": "beach",
+    "service": "friend_outing",
+    "title": "回去的照片",
+    "text": "{朋友}说想选一张照片留着，翻来翻去总舍不得删。",
+    "a": {
+      "label": "帮忙挑两张。",
+      "out": [
+        {
+          "text": "两人很快挑出最喜欢的，主角把原图也发了过去。",
+          "say": "这两张留着，别压缩了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "回去的照片",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角最喜欢的那张刚好闭眼，朋友忍着笑问确定吗。",
+          "say": "等下，我刚没看自己。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "回去的照片",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "先都留着。",
+      "out": [
+        {
+          "text": "两个人收起手机，打算回去坐下来慢慢挑。",
+          "say": "现在看屏幕晃眼，回去再看。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "回去的照片",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "收手机时又顺手拍了一张地板，两人又多了一张要删的。",
+          "say": "这张不用挑，肯定能删。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "回去的照片",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3029,
+    "at": "bar",
+    "service": "friend_outing",
+    "title": "杯垫弄混了",
+    "text": "两人的饮料颜色接近，聊天时差点拿错杯子。",
+    "a": {
+      "label": "把杯垫换个方向。",
+      "out": [
+        {
+          "text": "两人各记住一个方向，后面没再拿错。",
+          "say": "这个角朝我，你的朝你。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "杯垫弄混了",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角刚摆好，自己又顺手转了回去。",
+          "say": "等下，我刚才定的是哪边？",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "杯垫弄混了",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "各自拿到手边。",
+      "out": [
+        {
+          "text": "杯子分开摆，两个位置终于不容易混。",
+          "say": "这样行，别挤一起了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "杯垫弄混了",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "为了放开杯子，两个人把东西挪得有点满，只好再收一回。",
+          "say": "先把包收起来，桌上才有地方。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "杯垫弄混了",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3030,
+    "at": "bar",
+    "service": "friend_outing",
+    "title": "点歌的字",
+    "text": "{朋友}想写张点歌条，歌名写到一半突然忘了一个字。",
+    "a": {
+      "label": "帮忙找歌名。",
+      "out": [
+        {
+          "text": "翻到正确歌名后，朋友认认真真写完了纸条。",
+          "say": "就这个字，别再写岔了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "点歌的字",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角也记错了，两人差点递出一个完全不同的名字。",
+          "say": "先别递，我再查一次。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "点歌的字",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "先问酒保。",
+      "out": [
+        {
+          "text": "酒保听朋友哼了两句就知道了，主角松了口气。",
+          "say": "人家比咱俩记得牢多了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "点歌的字",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "朋友一紧张哼跑调，自己先笑得唱不下去。",
+          "say": "你先别笑，把后面补上。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "点歌的字",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3031,
+    "at": "bar",
+    "service": "friend_outing",
+    "title": "一口有点酸",
+    "text": "{朋友}尝了一口饮料，表情突然皱起来，又想装作没事。",
+    "a": {
+      "label": "小声问是不是太酸。",
+      "out": [
+        {
+          "text": "朋友承认有点酸，问过酒保后调整了一下，终于能慢慢喝。",
+          "say": "早说就好，别硬撑着。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "一口有点酸",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角模仿那个表情太像，朋友又笑又想回嘴。",
+          "say": "好好，我不学了，你先喝水。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "一口有点酸",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "递杯水过去。",
+      "out": [
+        {
+          "text": "喝口水缓过来以后，两人继续聊刚才的话题。",
+          "say": "现在好点没？",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "一口有点酸",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "朋友拿水时差点又拿到原来那杯，两个人赶紧停住。",
+          "say": "左边这个，别又喝错了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "一口有点酸",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3032,
+    "at": "bar",
+    "service": "friend_outing",
+    "title": "鼓点跟丢了",
+    "text": "两人一起跟着音乐打拍子，主角到换拍处突然慢了一下。",
+    "a": {
+      "label": "继续随便跟。",
+      "out": [
+        {
+          "text": "朋友也没跟稳，两人索性只听，不再认真对拍。",
+          "say": "行了，咱俩都差不多。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "鼓点跟丢了",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "越想跟上越乱，主角只好把手先收回来。",
+          "say": "不拍了，手忙不过来。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "鼓点跟丢了",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "看看朋友怎么跟。",
+      "out": [
+        {
+          "text": "朋友指了指重拍，主角这回总算听出规律。",
+          "say": "哦，原来从这里数。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "鼓点跟丢了",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "朋友示范到一半自己也错，两人一起笑出声。",
+          "say": "你刚是不是也跟丢了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "鼓点跟丢了",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3033,
+    "at": "bar",
+    "service": "friend_outing",
+    "title": "隔着音乐的笑话",
+    "text": "{朋友}说了个笑话，音乐刚好盖住最关键的一句。",
+    "a": {
+      "label": "请朋友再说一遍。",
+      "out": [
+        {
+          "text": "这回听完整，两人总算在同一个地方笑了。",
+          "say": "原来是这个，前面我没听清。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "隔着音乐的笑话",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "朋友重讲时把结尾提前说了，自己愣了片刻。",
+          "say": "没事，我猜到你讲反了。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "隔着音乐的笑话",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "换个轻松话题。",
+      "out": [
+        {
+          "text": "两人开始聊吃的，不用惦记刚才丢了哪一句。",
+          "say": "先说晚点想吃什么吧。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "隔着音乐的笑话",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "新话题里又碰上相同的词，主角这才突然懂了旧笑话。",
+          "say": "哎，刚才那个我现在明白了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "隔着音乐的笑话",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3034,
+    "at": "bar",
+    "service": "friend_outing",
+    "title": "先不再点了",
+    "text": "两人看着空了大半的杯子，都拿不准要不要再来一杯。",
+    "a": {
+      "label": "先喝水歇一会儿。",
+      "out": [
+        {
+          "text": "添水以后发现也不想再点，两人安心听完一段歌。",
+          "say": "先这样，别点了才发现喝不下。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "先不再点了",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "主角说不点，手却习惯性翻回菜单，朋友忍不住笑。",
+          "say": "看看也不算点，对吧。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "先不再点了",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "商量一下待多久。",
+      "out": [
+        {
+          "text": "确定还坐一会儿后，两人决定先把手边的喝完。",
+          "say": "喝完再说，不用赶着续。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "先不再点了",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "两人各说一个时间，才发现自己看错了钟。",
+          "say": "等下，咱俩说的是同一个时间吗？",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "先不再点了",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3035,
+    "at": "bar",
+    "service": "friend_outing",
+    "title": "灯下的照片",
+    "text": "朋友想给两人拍张照片，但灯光让脸色和杯子颜色都变了。",
+    "a": {
+      "label": "换个角度。",
+      "out": [
+        {
+          "text": "挪开反光后照片清楚不少，两人都觉得这张可以留。",
+          "say": "这张好点，刚才那个太黄了。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "灯下的照片",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "试了几次以后，主角才发现镜头上有指印。",
+          "say": "先擦镜头，怪不得都糊着。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "灯下的照片",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "不折腾了，先听歌。",
+      "out": [
+        {
+          "text": "手机收起来，两个人正好没错过刚开始的前奏。",
+          "say": "哎，这首我好像听过。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "灯下的照片",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "朋友刚收手机，又忍不住想拍舞台，只好先翻出来。",
+          "say": "你先拍完，这回别拍我闭眼。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "灯下的照片",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3036,
+    "at": "bar",
+    "service": "friend_outing",
+    "title": "走前那首歌",
+    "text": "主角已经准备起身，{朋友}却说想把这首听完。",
+    "a": {
+      "label": "再坐几分钟。",
+      "out": [
+        {
+          "text": "两人听完才收拾东西，出门时还在小声哼那段旋律。",
+          "say": "唱完了，走吧，别又等下一首。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "走前那首歌",
+            "emo": "happy",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "下一首前奏刚响，两人又同时停了一下。",
+          "say": "不行，这样永远走不了了。",
+          "friendship": 0,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "走前那首歌",
+            "emo": "embarrassed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "先把东西收好。",
+      "out": [
+        {
+          "text": "包和手机都收好了，歌曲结束时两人很顺当地一起起身。",
+          "say": "这次没落东西吧。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "走前那首歌",
+            "emo": "playful",
+            "pts": 2,
+            "min": 120
+          }
+        },
+        {
+          "text": "收拾时朋友才发现围巾压在身后，找了半天虚惊一场。",
+          "say": "你先别急，刚才还在呢。",
+          "friendship": 1,
+          "need": {
+            "fun": 3,
+            "social": 2
+          },
+          "mood": {
+            "name": "走前那首歌",
+            "emo": "dazed",
+            "pts": 2,
+            "min": 120
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3037,
+    "at": "front",
+    "service": "friend_outing",
+    "title": "门口再摸一次口袋",
+    "text": "刚走出门，{朋友}忽然停下来，把两个口袋都拍了一遍。",
+    "a": {
+      "label": "陪着检查一下",
+      "out": [
+        {
+          "text": "手机、钥匙都在，只是检查时的表情太严肃，两人忍不住笑了。",
+          "say": "东西没丢，气势倒是挺像丢了。",
+          "friendship": 1,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "门口再摸一次口袋",
+            "emo": "playful",
+            "pts": 1,
+            "min": 90
+          }
+        },
+        {
+          "text": "查完各自的口袋，总算放心地继续往前走。",
+          "say": "齐了，这回真可以走了。",
+          "friendship": 1,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "门口再摸一次口袋",
+            "emo": "fine",
+            "pts": 1,
+            "min": 90
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "在旁边等一等",
+      "out": [
+        {
+          "text": "{朋友}自己确认好东西，抬头发现主角还老老实实站着。",
+          "say": "不急，找齐了咱再走。",
+          "friendship": 1,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "门口再摸一次口袋",
+            "emo": "fine",
+            "pts": 1,
+            "min": 90
+          }
+        },
+        {
+          "text": "钥匙原来就在手里。这场检查比预计结束得早。",
+          "say": "行，钥匙比咱俩都明白。",
+          "friendship": 0,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "门口再摸一次口袋",
+            "emo": "playful",
+            "pts": 1,
+            "min": 90
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3038,
+    "at": "front",
+    "service": "friend_outing",
+    "title": "门口那张合照",
+    "text": "{朋友}指着门口一块空地，说这里拍张合照应该还行。",
+    "a": {
+      "label": "站近一点，拍张随意的",
+      "out": [
+        {
+          "text": "两个人都没怎么摆姿势，拍出来反倒自然。",
+          "say": "这张就行，别再重拍十遍了。",
+          "friendship": 1,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "门口那张合照",
+            "emo": "happy",
+            "pts": 1,
+            "min": 90
+          }
+        },
+        {
+          "text": "刚按下去，一阵风把两人的头发都吹乱了。",
+          "say": "留着吧，看着就知道今天有风。",
+          "friendship": 1,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "门口那张合照",
+            "emo": "playful",
+            "pts": 1,
+            "min": 90
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "让朋友先拍一张",
+      "out": [
+        {
+          "text": "主角帮忙看着构图，{朋友}总算找到一个不僵硬的站姿。",
+          "say": "对，就这样，不用看得像证件照。",
+          "friendship": 1,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "门口那张合照",
+            "emo": "confident",
+            "pts": 1,
+            "min": 90
+          }
+        },
+        {
+          "text": "拍了两张都闭着眼，最后两个人一起笑了。",
+          "say": "你这闭眼率挺稳定啊。",
+          "friendship": 1,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "门口那张合照",
+            "emo": "playful",
+            "pts": 1,
+            "min": 90
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3039,
+    "at": "front",
+    "service": "friend_outing",
+    "title": "不赶时间的小路",
+    "text": "{朋友}说旁边那段路也能绕回来，想问要不要多走一小段。",
+    "a": {
+      "label": "走走看，不急着赶路",
+      "out": [
+        {
+          "text": "两个人慢慢绕过去，多看见了一盆开得很好的花。",
+          "say": "哎，这盆花刚才真没留意。",
+          "friendship": 1,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "不赶时间的小路",
+            "emo": "inspired",
+            "pts": 1,
+            "min": 90
+          }
+        },
+        {
+          "text": "路比想象中短，还没聊完就绕了回来。",
+          "say": "挺好，腿没累，话还没说完。",
+          "friendship": 1,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "不赶时间的小路",
+            "emo": "fine",
+            "pts": 1,
+            "min": 90
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "先在这边歇一下",
+      "out": [
+        {
+          "text": "两人在路边等人群走过，顺便把刚才没说完的话接上。",
+          "say": "刚才你讲到哪儿了？我还听着呢。",
+          "friendship": 1,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "不赶时间的小路",
+            "emo": "fine",
+            "pts": 1,
+            "min": 90
+          }
+        },
+        {
+          "text": "谁也没急着开口，站着吹了一小会儿风。",
+          "say": "先歇一下，今天没什么要赶的。",
+          "friendship": 0,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "不赶时间的小路",
+            "emo": "fine",
+            "pts": 1,
+            "min": 90
+          }
+        }
+      ]
+    }
+  },
+  {
+    "n": 3040,
+    "at": "front",
+    "service": "friend_outing",
+    "title": "出门前的零食",
+    "text": "{朋友}从包里摸出一小包饼干，问主角要不要先尝一块。",
+    "a": {
+      "label": "拿一块尝尝",
+      "out": [
+        {
+          "text": "饼干有点碎，两人用手心接着，吃得比平时认真。",
+          "say": "我接着，你慢点倒。",
+          "friendship": 1,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "出门前的零食",
+            "emo": "happy",
+            "pts": 1,
+            "min": 90
+          }
+        },
+        {
+          "text": "味道和包装看起来完全不同，两人一起翻到背面找口味。",
+          "say": "哦，难怪，咱俩都认错了。",
+          "friendship": 1,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "出门前的零食",
+            "emo": "playful",
+            "pts": 1,
+            "min": 90
+          }
+        }
+      ]
+    },
+    "b": {
+      "label": "现在不吃，等饿了再说",
+      "out": [
+        {
+          "text": "{朋友}把袋口夹好装回包里，说一会儿想吃再拿。",
+          "say": "好，先存着，咱继续走。",
+          "friendship": 1,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "出门前的零食",
+            "emo": "fine",
+            "pts": 1,
+            "min": 90
+          }
+        },
+        {
+          "text": "两人一致决定把零食留到后面，刚出门先活动一下。",
+          "say": "现在不饿，等会儿再问问肚子。",
+          "friendship": 0,
+          "needs": {
+            "fun": 2,
+            "social": 2
+          },
+          "mood": {
+            "name": "出门前的零食",
+            "emo": "fine",
+            "pts": 1,
+            "min": 90
+          }
+        }
+      ]
+    }
+  }
+]

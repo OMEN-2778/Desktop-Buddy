@@ -233,7 +233,7 @@ def main():
     for kind in [*MR.RESTAURANTS,"cinema"]:
         front=Sprite(MR.W,MR.H)
         if kind=="cinema":
-            MR.cinema_seat(front,197,110)
+            front=MR.cinema_foreground()
         else:
             MR.table(front,MR.DINING['table']['x'],MR.DINING['table']['y'],False)
             front.rect(212,61,85,14,P.walnut[1]).rect(214,63,81,10,MR.RESTAURANTS[kind][1]).rect(210,58,89,4,P.ash[3]).hline(210,298,58,P.ash[4])
@@ -414,6 +414,7 @@ def main():
     html = html.replace("/*__SOCIAL_LIFE_JS__*/", "const SOCIAL_TEXT = " + (SRC.parent / "social_text.json").read_text() + ";\nconst SOCIAL_DIALOGUE = " + (SRC.parent / "social_dialogue.json").read_text() + ";\n" + (SRC.parent / "social_dialogue.js").read_text() + "\n" + (SRC.parent / "social_life.js").read_text() + "\nconst HOME_VISIT_TEXT = " + (SRC.parent / "home_visit_text.json").read_text() + ";\n" + (SRC.parent / "home_visits.js").read_text())
     html = html.replace("/*__SOCIAL_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "social_cards.json").read_text() + ");")
     html = html.replace("/*__PEER_DIALOGUE_JS__*/", (SRC.parent / "peer_dialogue.js").read_text())
+    html = html.replace("/*__FRIEND_OUTINGS_JS__*/", "const FRIEND_OUTING_TEXT = " + (SRC.parent / "friend_outing_text.json").read_text() + ";\nCARDS.push(..." + (SRC.parent / "friend_outing_cards.json").read_text() + ");\n" + (SRC.parent / "friend_outings.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 
