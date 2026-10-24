@@ -56,8 +56,8 @@ They stop and face Buddy until the conversation finishes, then resume walking.
 A complete exchange introduces the person and records a shared memory; repeat
 friendship gains use the daily cap. Urgent needs and leaving take priority.
 Park/mall merchants and fishers retain their existing service interactions.
-`npc_talk.json` adds 270 four-line exchanges across the yard, five park scenes,
-the mall corridor, dock and bar, with child-specific text and saved topic history.
+`npc_talk.json` adds 540 four-line exchanges across the yard, five park scenes,
+the mall corridor, dock and bar, with child-specific text, four gender pairings and saved topic history.
 
 
 Park areas are displayed by place name, without numeric labels in dialogue,

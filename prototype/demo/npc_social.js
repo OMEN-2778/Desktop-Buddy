@@ -100,8 +100,9 @@ function chooseNpcTalk(n){
   const rows=NPC_TALK_TEXT[scene]?.[n.kid?'kid':'adult'];
   if(!rows?.length)return null;
   const seen=(lifeFlags.npcChatSeen||={}),ids=Array.isArray(seen[scene])?seen[scene]:[];
-  let pool=rows.map((row,i)=>({row,id:(n.kid?'kid_':'adult_')+i})).filter(t=>!ids.includes(t.id));
-  if(!pool.length){seen[scene]=ids.slice(-3);pool=rows.map((row,i)=>({row,id:(n.kid?'kid_':'adult_')+i})).filter(t=>!seen[scene].includes(t.id));}
+  const candidates=rows.map((row,i)=>({row,id:(n.kid?'kid_':'adult_')+i})).filter(t=>!c||c.affinity<20||!/(认识|陌生|第一句|开场|新招呼)/.test(t.row[0]));
+  let pool=candidates.filter(t=>!ids.includes(t.id));
+  if(!pool.length){seen[scene]=ids.slice(-3);pool=candidates.filter(t=>!seen[scene].includes(t.id));}
   const chosen=pick(pool),[title,...lines]=chosen.row;
   return{title,lines,id:chosen.id,scene};
 }
@@ -114,6 +115,18 @@ function startNpcTalk(n,manual=false){
   if(manual)log(`走近${npcTalkName(n)}，在${sim.place==='park'?parkLayout().name:({front:'家门口',mall:'商场长廊',beach:'码头',bar:'酒吧'})[sim.place]}打了声招呼。`);
   return true;
 }
+// Keys are protagonist gender first, NPC gender second. Gender changes wording,
+// not interests, affinity rewards or access to a topic.
+function npcTalkLine(line,n){
+  const pair=(look.gender==='m'?'m':'f')+(n.look.gender==='m'?'m':'f');
+  return typeof line==='string'?line:line[pair]||line.base||'';
+}
+function npcTalkVars(n){
+  const contact=socialState.contacts.find(c=>c.id===n.personId),known=contact&&contact.affinity>=20&&!contact.forgotten;
+  return {...kidVars(),主角:nameOf(),朋友:npcTalkName(n),
+    对方称呼:n.kid?'小朋友':known?contactName(contact):n.look.gender==='m'?'小哥':'姑娘',
+    主角称呼:n.kid?(look.gender==='m'?'哥哥':'姐姐'):known?nameOf():look.gender==='m'?'小哥':'姑娘'};
+}
 function advanceNpcTalk(dt){
   const q=life.talkQ;if(!q||!dt)return;
   if(q.n.gone||!(life.npcs||[]).includes(q.n)||q.scene!==npcSceneKey()){stopNpcTalk();return;}
@@ -125,7 +138,7 @@ function advanceNpcTalk(dt){
     if(contact){contact.lastTopic=q.title;addSocialMemory(contact,'路上聊起'+q.title,`在${sim.place==='park'?parkLayout().name:({front:'家门口',mall:'商场长廊',beach:'码头',bar:'酒吧'})[sim.place]}聊起「${q.title}」。`);}
     stopNpcTalk();life.chatNext=realClock+12+Math.random()*12;return;
   }
-  const raw=q.lines[q.i++],other=raw.startsWith('>'),text=fill((other?raw.slice(1):raw).trim(),{...kidVars(),主角:nameOf(),朋友:npcTalkName(q.n)});
+  const raw=npcTalkLine(q.lines[q.i++],q.n),other=raw.startsWith('>'),text=fill((other?raw.slice(1):raw).trim(),npcTalkVars(q.n));
   if(other)npcSay(q.n,text);else speak(text,true);
   q.said.push([other?npcTalkName(q.n)+'：':nameOf()+'：',text]);
   q.wait=Math.max(3,Math.min(6,2.3+text.length*.13));
