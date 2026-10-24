@@ -40,7 +40,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=requ
    const before=JSON.stringify({route:sim.route,act:sim.act,mode:sim.mode,end:sim.actEnd});
    speed=1;ok(startContactTalk(loaded.id,'call'),'Call did not start');
    ok(before===JSON.stringify({route:sim.route,act:sim.act,mode:sim.mode,end:sim.actEnd}),'Call hijacked current activity');
-   sim.needs.bladder=10;step(1,1);ok(sim.act==='toilet','Phone prevents urgent toilet');tickSocial(1,performance.now());ok(!remoteSocial,'Private activity did not end call cleanly');
+   sim.needs.bladder=10;step(1,1);ok(sim.act==='toilet','Phone prevents urgent toilet');tickSocial(1,performance.now());ok(remoteSocial&&remoteSocial.pausedFor==='上厕所','Private activity did not pause call');remoteSocial=null;
    speed=0;sim.act=null;sim.mode='idle';sim.windup=null;sim.talk=null;sim.needs.bladder=80;
    sim.route=[[D.spots.sofa[1],FLOOR_Y[D.spots.sofa[0]]]];sim.s=0;
    const g=socialState.guest={id:loaded.id,phase:'visiting',s:1,at:sim.t,until:sim.t+500,next:0,count:0,said:[]};

@@ -306,6 +306,11 @@ function finishIncomingCall(accepted,automatic=false){
 incomingCall.querySelector('.call-answer').addEventListener('click',()=>finishIncomingCall(true));
 incomingCall.querySelector('.call-decline').addEventListener('click',()=>finishIncomingCall(false));
 document.getElementById('testIncoming').addEventListener('click',()=>{if(!requestIncomingCall('abu'))log(asleep()?'先等主角醒来，再试试来电通知。':'现在正在忙，等当前活动结束再试试来电。');});
+function contactPrivacyBreak(){
+  if(sim.act==='bath')return '洗澡';
+  if(['toilet','park_toilet'].includes(sim.act)||mallToiletInside()||barToiletInside()||parkInsideToilet())return '上厕所';
+  return null;
+}
 function tickSocial(dt,now){
   // Real time has one source, independent of the simulation's speed and frame clock.
   const callNow=performance.now();
@@ -321,8 +326,16 @@ function tickSocial(dt,now){
     else if(eligible.length)requestIncomingCall(pick(eligible).id);socialState.nextCall=sim.t+180+Math.random()*300;
   }
   if(remoteSocial&&speed&&!cardHolds()&&!wiping){
-    const session=remoteSocial;session.wait-=dt;if(session.wait>0)return;
-    if(asleep()||sim.mode==='down'||['bath','toilet'].includes(sim.act)||sim.talk){log(`和${session.item.talk.name}的联系暂时中断，等方便时再聊。`,null,session.said);remoteSocial=null;return;}
+    const session=remoteSocial;
+    if(asleep()||sim.mode==='down'){log(`和${session.item.talk.name}的联系暂时中断，等方便时再聊。`,null,session.said);remoteSocial=null;return;}
+    const privacy=contactPrivacyBreak();
+    if(privacy){
+      if(!session.pausedFor){session.pausedFor=privacy;hidePeerSay();showSay(privacy==='洗澡'?'我先洗个澡，等会儿接着聊。':'我先去一下卫生间，等会儿接着说。');log(`和${session.item.talk.name}的聊天暂时停一下，先${privacy}。`);}
+      return;
+    }
+    if(session.pausedFor){session.pausedFor=null;session.resumeWait=2.6;showSay('回来啦，咱们接着聊。');log(`回来后，接着和${session.item.talk.name}聊刚才的话题。`);return;}
+    if(session.resumeWait>0){session.resumeWait=Math.max(0,session.resumeWait-dt);return;}
+    session.wait-=dt;if(session.wait>0)return;
     const tk=session.item.talk;
     if(session.i>=tk.lines.length){
       log(fill(tk.end,session.item.vars),null,session.said);if(tk.id)addMood(tk.id,{vars:session.item.vars,diary:false,words:false});finishContactTalk(session.item.contactId,tk.kind);remoteSocial=null;return;

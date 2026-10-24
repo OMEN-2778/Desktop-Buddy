@@ -4081,6 +4081,7 @@ function chatItem(kind, who, via = "pc", contactId = null) {
 }
 function playTalk(dt) {
   if (!sim.item || !sim.item.talk || !CHAT_ACT[sim.act]) { sim.talk = null; return; }   // she was sent off to do something else
+  if(remoteSocial)return; // Keep activity dialogue queued while a contact owns the speech channel.
   const tk = sim.item.talk, st = sim.talk;
   if (st.i >= tk.lines.length || (st.wait -= dt) > 0) return;
   const raw = tk.lines[st.i++], mark = raw[0], text = fill((mark === ">" || mark === "#" ? raw.slice(1) : raw).trim(), sim.item.vars);
