@@ -43,13 +43,13 @@ function personalityConversationPool(c,context='call'){
 function personalityLines(c,context='meet'){return pick(personalityConversationPool(c,context)).lines.slice(0,2);}
 // Routine exchanges start with their own subject, not a personality biography.
 function personalityTalk(lines){return [...lines];}
-function personalityVisitReason(c){const k=personalityKind(c,'care');if(k==='balanced')return ['想找你坐坐','在家吗？我想过去待会儿，方便不？','来呗','今天有点忙，下回吧'];return k==='thoughtful'?['想先约个方便的时间','想过去坐坐，你现在忙不忙？不方便咱就改天。','茶杯准备好了，欢迎来坐','今天有点忙，咱们另约时间']:['临时起意的散步终点','我出来溜达，突然想去你家坐会儿。你在家吧？','沙发批准了，过来吧','沙发今天休假，改天吧'];}
+function personalityVisitReason(c){const k=personalityKind(c,'care');if(k==='balanced')return ['想找你坐坐','在家吗？我想过去待会儿，方便不？','来呗','今天有点忙，下回吧'];return k==='thoughtful'?['想先约个方便的时间','想过去坐坐，你现在忙不忙？不方便咱就改天。',"来吧，我给你倒水",'今天有点忙，咱们另约时间']:['临时起意的散步终点','我出来溜达，突然想去你家坐会儿。你在家吧？',"来吧，刚好有空","今天不方便，改天来吧"];}
 function showPersonality(id=null,selection=null){
  const c=id?socialState.contacts.find(c=>c.id===id):null;if(id&&!c)return;
  if(!c&&!wardrobeOpen){showHint('请在更衣室里修改性格。');return;}
  if(phoneHolds()||socialBusy()||card||wiping){showHint('先忙完眼前的事，再看看性格吧。');return;}
  const sheet=c?openSocialSheet(`${contactName(c)} · 性格`):openWardrobePersonality();sheet.classList.add('personality-sheet');const content=c?socialContent(sheet):sheet;
- const intro=document.createElement('p');intro.className='personality-intro';intro.textContent=c?'性格会在相处中慢慢显露。话少不等于疏远，热情也有安静的时候。':'性格影响自主行为和表达；你手动安排的事始终优先。可以以后再调整。';content.append(intro);
+ const intro=document.createElement('p');intro.className='personality-intro';intro.textContent=c?"再多相处一阵，才能知道对方平时是什么样的人。":'性格影响自主行为和表达；你手动安排的事始终优先。可以以后再调整。';content.append(intro);
  const draft={...(selection||heroPersonality)},form=document.createElement('div');form.className='personality-axes';
  for(const axis of PERSONALITY_AXES){
   if(c){const known=c.family||c.personalitySeen?.includes(axis[0]),fact=document.createElement('div'),label=document.createElement('strong'),value=document.createElement('span'),description=document.createElement('small');fact.className='personality-fact';label.textContent=axis[1];value.textContent=known?personalityLabel(axis,personalityOf(c)[axis[0]]):'还不太了解';description.textContent=known?(Math.abs(personalityOf(c)[axis[0]])<=25?'会依照当时的情境调整自己的节奏。':axis[personalityOf(c)[axis[0]]<0?4:5]):'再聊聊，或一起经历一些事吧。';value.title=description.textContent;fact.append(label,value,description);form.append(fact);continue;}

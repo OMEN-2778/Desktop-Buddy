@@ -267,8 +267,8 @@ function showVisitOffer(c,reason=null){
   actions.querySelector('button').focus({preventScroll:true});
 }
 function showFarewellOffer(c){
-  const sheet=openSocialSheet(`${contactName(c)} · 想聊聊`),p=document.createElement('p');p.textContent=`${contactName(c)}：我们好像很久没好好说过话了。我有点不知道，还该不该再联系你。`;socialContent(sheet).append(p);const choices=document.createElement('div');choices.className='social-choices';sheet.append(choices);
-  for(const [label,keep]of [['认真聊聊',true],['好好告别',false]]){const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=()=>{closeSocialSheet();if(keep){c.affinity=Math.max(8,c.affinity+5);c.lastContact=sim.t;c.farewellPending=false;contactsSig='';const text=`接住了${contactName(c)}的告别电话，坦诚说开后，决定重新认真联系。`;log(text);addSocialMemory(c,'差一点走散',text);}else removeSocialContact(c,'通完告别电话，两个人决定把这段联系留在过去。');};choices.append(button);}
+  const sheet=openSocialSheet(`${contactName(c)} · 想聊聊`),p=document.createElement('p');p.textContent=`${contactName(c)}：好久没联系了。你是不是不想再跟我来往了？`;socialContent(sheet).append(p);const choices=document.createElement('div');choices.className='social-choices';sheet.append(choices);
+  for(const [label,keep]of [['认真聊聊',true],['好好告别',false]]){const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=()=>{closeSocialSheet();if(keep){c.affinity=Math.max(8,c.affinity+5);c.lastContact=sim.t;c.farewellPending=false;contactsSig='';const text=`和${contactName(c)}通了电话，把之前没说清的事讲开，约好以后有空再联系。`;log(text);addSocialMemory(c,'差一点走散',text);}else removeSocialContact(c,'通完告别电话，两个人没有再约下次。');};choices.append(button);}
 }
 for(const c of socialState.contacts){c.metAt??=sim.t;c.lastSeen??=sim.t;c.memories||=[];}
 

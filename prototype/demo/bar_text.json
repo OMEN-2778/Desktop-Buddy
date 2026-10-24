@@ -464,503 +464,503 @@
   "talks": [
     {
       "to": "player",
-      "bartender": "第一次来？靠窗的位置能看见最后一点晚霞。",
-      "reply": "那我把今天慢慢坐完。"
+      "bartender": "第一次来？菜单在手边。",
+      "reply": "嗯，我先看看。"
     },
     {
       "to": "player",
-      "bartender": "今天想喝熟悉的，还是给自己一点意外？",
-      "reply": "意外先装小杯吧。"
+      "bartender": "今天想喝什么口味？",
+      "reply": "别太苦的，有推荐吗？"
     },
     {
       "to": "player",
-      "bartender": "你不用想好要说什么，坐着也算来过。",
-      "reply": "那我先把脑袋放空。"
+      "bartender": "先坐，想好了叫我。",
+      "reply": "好，我慢慢看。"
     },
     {
       "to": "player",
-      "bartender": "这杯薄荷拍醒了，香气才肯上班。",
-      "reply": "我也需要被轻轻拍醒。"
+      "bartender": "薄荷要拍两下，香味才出来。",
+      "reply": "怪不得闻着比刚才香。"
     },
     {
       "to": "player",
-      "bartender": "冰块响的时候，通常没有人在催你。",
-      "reply": "这声音比闹钟友好多了。"
+      "bartender": "杯子放稳点，里面冰还不少。",
+      "reply": "好，刚差点碰倒。"
     },
     {
       "to": "player",
-      "bartender": "窗外刚停雨，空气都像洗过杯子。",
-      "reply": "连心情也想擦干净。"
+      "bartender": "你外套放旁边空位吧，别一直抱着。",
+      "reply": "谢谢，我正觉得有点碍手。"
     },
     {
       "to": "player",
-      "bartender": "今天的歌适合点头，不适合赶路。",
-      "reply": "那我暂时不赶了。"
+      "bartender": "今天音量还合适吗？",
+      "reply": "合适，这边说话还能听见。"
     },
     {
       "to": "player",
-      "bartender": "不喝酒也能坐前排，柠檬水同样有杯垫。",
-      "reply": "那给我的柠檬水一个好位置。"
+      "bartender": "无酒精的也在菜单里，后面那页。",
+      "reply": "找到了，我看看这个。"
     },
     {
       "to": "player",
-      "bartender": "苦味慢一点喝，后面会有一点甜。",
-      "reply": "像今天终于快结束了。"
+      "bartender": "先小口尝，有点苦。",
+      "reply": "嗯，后面倒没那么苦。"
     },
     {
       "to": "player",
-      "bartender": "这张吧凳有点高，梦想倒是不用踮脚。",
-      "reply": "我先保证下来的时候体面。"
+      "bartender": "凳子高，下来时看着点。",
+      "reply": "好，我先把脚放稳。"
     },
     {
       "to": "player",
-      "bartender": "想吃点什么？我这儿的坚果不会问工作。",
-      "reply": "那它比我的亲戚懂事。"
+      "bartender": "要点坚果吗？有小碟的。",
+      "reply": "来一点，别太多。"
     },
     {
       "to": "player",
-      "bartender": "你点的不是最贵的，是今晚刚好想喝的。",
-      "reply": "听起来我很会照顾自己。"
+      "bartender": "这杯就够了，不一定非得点贵的。",
+      "reply": "嗯，我就想尝尝这个。"
     },
     {
       "to": "player",
-      "bartender": "有人在这儿想明白事情，也有人只是忘了雨伞。",
-      "reply": "我希望今晚只发生后者。"
+      "bartender": "雨伞走的时候别忘了，我这儿攒了好几把。",
+      "reply": "好，我放包旁边。"
     },
     {
       "to": "player",
-      "bartender": "今天的驻唱喜欢把最后一句留给窗外。",
-      "reply": "我替窗外鼓个掌。"
+      "bartender": "喜欢听歌的话，可以往前一点坐。",
+      "reply": "我先在这儿听听。"
     },
     {
       "to": "player",
-      "bartender": "杯口的盐不是规矩，觉得太咸就换一边。",
-      "reply": "原来生活也可以转个方向。"
+      "bartender": "杯口盐觉得太多，就换另一边喝。",
+      "reply": "哦，刚那一口确实有点咸。"
     },
     {
       "to": "player",
-      "bartender": "别急着评价第一口，第二口有时候会改口。",
-      "reply": "那我也再给今天一次机会。"
+      "bartender": "先尝尝，再决定要不要调整。",
+      "reply": "好，我再喝一小口。"
     },
     {
       "to": "player",
-      "bartender": "你看起来像刚把一整天从肩上卸下来。",
-      "reply": "先放这儿，离开再决定带不带。"
+      "bartender": "刚坐下，先歇歇吧。",
+      "reply": "嗯，走得有点累。"
     },
     {
       "to": "player",
-      "bartender": "这盏灯不够亮，所以大家都可以放松一点。",
-      "reply": "我的黑眼圈表示赞同。"
+      "bartender": "这里亮度够不够？菜单看得清吗？",
+      "reply": "看得清，靠近一点就行。"
     },
     {
       "to": "player",
-      "bartender": "想聊聊，还是想安静？这两种我都招待。",
-      "reply": "先安静一会儿，再看看。"
+      "bartender": "想聊聊还是先自己坐会儿？",
+      "reply": "先坐一会儿，等下找你。"
     },
     {
       "to": "player",
-      "bartender": "有人说这杯像日落，我觉得比较像准时下班。",
-      "reply": "这个形容更让我心动。"
+      "bartender": "这杯颜色挺好，很多人先看颜色才点。",
+      "reply": "我也是，名字还没看。"
     },
     {
       "to": "player",
-      "bartender": "果皮别扔，拧一下，整杯都会醒。",
-      "reply": "好小一件事，好大的香气。"
+      "bartender": "橙皮拧一下，闻闻看。",
+      "reply": "哦，这下味儿出来了。"
     },
     {
       "to": "player",
-      "bartender": "你的杯垫歪了，不过世界暂时还没塌。",
-      "reply": "那就让它再歪一会儿。"
+      "bartender": "杯垫往里点，别蹭到桌边。",
+      "reply": "好，我挪一下。"
     },
     {
       "to": "player",
-      "bartender": "喜欢这首？歌单就在唱片旁边。",
-      "reply": "我要把今晚装进口袋。"
+      "bartender": "这首的名字在歌单上。",
+      "reply": "谢谢，我记一下。"
     },
     {
       "to": "player",
-      "bartender": "这杯有点酸，适合假装皱眉很有故事。",
-      "reply": "我不用假装，我真的酸到了。"
+      "bartender": "这个偏酸，能接受吗？",
+      "reply": "先尝一下吧，太酸我再说。"
     },
     {
       "to": "player",
-      "bartender": "酒吧里最常见的失物，其实是时间。",
-      "reply": "我的半小时刚才还在这儿。"
+      "bartender": "你杯里冰都化了，要添点吗？",
+      "reply": "好，添一点就行。"
     },
     {
       "to": "player",
-      "bartender": "你刚刚跟拍了，节奏还挺准。",
-      "reply": "别夸，我一被注意就忘了拍子。"
+      "bartender": "刚才你打拍子挺准。",
+      "reply": "你一说，我反而跟不上了。"
     },
     {
       "to": "player",
-      "bartender": "如果想把烦恼寄存，吧台下面没有编号。",
-      "reply": "那我就不来领了。"
+      "bartender": "要添水叫我，壶在这边。",
+      "reply": "好，先给我半杯。"
     },
     {
       "to": "player",
-      "bartender": "这杯气泡升得慢，像在认真挑方向。",
-      "reply": "连气泡都比我有主见。"
+      "bartender": "气泡还不少，慢点喝。",
+      "reply": "嗯，刚差点呛到。"
     },
     {
       "to": "player",
-      "bartender": "今天的月亮出来得早，像提前订了座。",
-      "reply": "窗边那个位置让给它吧。"
+      "bartender": "窗边还有位置，想换过去吗？",
+      "reply": "不用，这边也挺好。"
     },
     {
       "to": "player",
-      "bartender": "橙皮、木头和音乐，今天的香味就这些。",
-      "reply": "已经足够像一个好晚上了。"
+      "bartender": "橙皮味会明显一点。",
+      "reply": "闻到了，我还挺喜欢。"
     },
     {
       "to": "player",
-      "bartender": "你可以点一杯水，然后听完整场。",
-      "reply": "谢谢，我正好只想听歌。"
+      "bartender": "只点水也行，不着急再点。",
+      "reply": "谢谢，我先听会儿歌。"
     },
     {
       "to": "player",
-      "bartender": "别担心点错，没有人第一次就认识整本酒单。",
-      "reply": "我刚把内格罗尼当成了人名。"
+      "bartender": "名字不熟没事，先说你想喝什么口味。",
+      "reply": "那来点甜的，别太烈。"
     },
     {
       "to": "player",
-      "bartender": "想听个秘密？我擦这个杯子已经第三遍了。",
-      "reply": "它应该快知道自己的前世了。"
+      "bartender": "这个杯子我擦第三遍了，老觉得有水印。",
+      "reply": "换个角度看看，好像是灯照的。"
     },
     {
       "to": "player",
-      "bartender": "今天的灯光是暖色，坏心情也会显得温柔一点。",
-      "reply": "那我再借它照一会儿。"
+      "bartender": "这边灯偏暖，拍照颜色可能不太准。",
+      "reply": "难怪刚才拍出来差一点。"
     },
     {
       "to": "player",
-      "bartender": "你刚进门时还皱着眉，现在松开一点了。",
-      "reply": "可能是我的眉毛也找到座位了。"
+      "bartender": "你刚才是不是在找什么？",
+      "reply": "找手机，原来压在包下面。"
     },
     {
       "to": "player",
-      "bartender": "如果这杯太烈，告诉我，换一杯没关系。",
-      "reply": "我决定对自己的舌头诚实。"
+      "bartender": "太烈的话跟我说，别勉强。",
+      "reply": "是有点，我喝慢点。"
     },
     {
       "to": "player",
-      "bartender": "有时候果汁比酒更能把人从周一里捞出来。",
-      "reply": "来杯有周末味的。"
+      "bartender": "不想喝酒就点果汁。",
+      "reply": "好，那先看看果汁。"
     },
     {
       "to": "player",
-      "bartender": "听见摇壶了吗？这不是赶工，是今晚的打击乐。",
-      "reply": "那我刚才点的是伴奏。"
+      "bartender": "摇壶有点响，我这就好。",
+      "reply": "没事，我刚还在看你怎么摇。"
     },
     {
       "to": "player",
-      "bartender": "你坐这里刚好，能看见歌手换气。",
-      "reply": "突然觉得每个音都很努力。"
+      "bartender": "想看舞台的话，这边无遮挡。",
+      "reply": "好，我坐过来一点。"
     },
     {
       "to": "player",
-      "bartender": "今天不问明天几点起，我们只看现在几点。",
-      "reply": "这是我今晚最喜欢的问题。"
+      "bartender": "你一会儿急着走吗？",
+      "reply": "不急，先坐会儿。"
     },
     {
       "to": "player",
-      "bartender": "这杯颜色像海，杯底可没有救生员。",
-      "reply": "放心，我只打算用吸管旅行。"
+      "bartender": "这杯的颜色是配料调出来的。",
+      "reply": "我刚还以为是灯光。"
     },
     {
       "to": "player",
-      "bartender": "杯子上的雾一会儿就散，人也一样。",
-      "reply": "那我等等自己。"
+      "bartender": "杯子外面都是水，给你换张干杯垫。",
+      "reply": "谢谢，刚才手都湿了。"
     },
     {
       "to": "player",
-      "bartender": "想点歌的话，写在这张纸上，字丑也没关系。",
-      "reply": "我先确定歌手认得出我的字。"
+      "bartender": "点歌写纸上，我帮你递过去。",
+      "reply": "好，我把歌名写清楚。"
     },
     {
       "to": "player",
-      "bartender": "你不用用一杯酒证明什么，喜欢就够了。",
-      "reply": "那我承认我喜欢甜的。"
+      "bartender": "甜口还是清爽一点？",
+      "reply": "甜一点吧，别太腻。"
     },
     {
       "to": "player",
-      "bartender": "最安静的客人，有时笑起来最响。",
-      "reply": "你先别给我安排人设。"
+      "bartender": "你刚才笑什么呢？",
+      "reply": "想起前面那句话了。"
     },
     {
       "to": "player",
-      "bartender": "这会儿风吹进来一点，要不要换个位置？",
-      "reply": "不用，像有人替我翻了一页。"
+      "bartender": "这里有点风，要换个位置吗？",
+      "reply": "不用，还挺舒服。"
     },
     {
       "to": "player",
-      "bartender": "你看，窗户已经从晚霞换成城市灯了。",
-      "reply": "我们真的坐过一个傍晚。"
+      "bartender": "坐一会儿就容易忘时间。",
+      "reply": "是啊，我刚才才看了一眼钟。"
     },
     {
       "to": "player",
-      "bartender": "这杯喝完别急，出口一直在那里。",
-      "reply": "我想等这首歌唱完。"
+      "bartender": "这杯喝完还想坐就坐会儿。",
+      "reply": "我想等这首放完。"
     },
     {
       "to": "player",
-      "bartender": "如果今晚能留下一件小事，你想留什么？",
-      "reply": "这一刻没有待办事项。"
+      "bartender": "今天没带电脑啊？",
+      "reply": "嗯，想歇一歇，不拿出来了。"
     },
     {
       "to": "player",
-      "bartender": "回去路上慢一点，下次还能坐这个位置。",
-      "reply": "好，今晚就到这里。"
+      "bartender": "回去路上慢点，东西拿齐。",
+      "reply": "好，我再看一眼座位。"
     },
     {
       "to": "guest",
-      "bartender": "你上次忘的围巾，我替它听了三场歌。",
-      "reply": "它的音乐品味现在比我好了。"
+      "bartender": "上次落的围巾还在，等下给你拿。",
+      "reply": "谢谢，我还以为丢了。"
     },
     {
       "to": "guest",
-      "bartender": "老位置留着，不过今天换了杯垫。",
-      "reply": "人没换就行，杯垫随它。"
+      "bartender": "老位置空着，杯垫刚换干的。",
+      "reply": "好，我就坐那儿。"
     },
     {
       "to": "guest",
-      "bartender": "你们那桌谁点的无酒精？",
-      "reply": "唱最大声的那个。"
+      "bartender": "你们谁点的无酒精？",
+      "reply": "我朋友，他在那边招手。"
     },
     {
       "to": "guest",
-      "bartender": "别跟冰块讲道理，它只会慢慢融化。",
-      "reply": "比我同事好沟通。"
+      "bartender": "冰有点多，要捞一点吗？",
+      "reply": "要，不然我都喝不着。"
     },
     {
       "to": "guest",
-      "bartender": "今天怎么一个人来了？",
-      "reply": "另一个还在跟导航吵架。"
+      "bartender": "今天一个人来？",
+      "reply": "朋友还没到，说快了。"
     },
     {
       "to": "guest",
-      "bartender": "你点的歌到了，准备好装作不在意了吗？",
-      "reply": "我耳朵已经坐直了。"
+      "bartender": "你点的歌一会儿放。",
+      "reply": "好，我先不走了。"
     },
     {
       "to": "guest",
-      "bartender": "这次还加柠檬吗？",
-      "reply": "加吧，给我的表情一个理由。"
+      "bartender": "还加柠檬吗？",
+      "reply": "加一片就行，上次有点酸。"
     },
     {
       "to": "guest",
-      "bartender": "你朋友刚才说这一轮他请。",
-      "reply": "请把这句话刻在杯垫上。"
+      "bartender": "你朋友说这轮他请。",
+      "reply": "真说了？那我过去谢谢他。"
     },
     {
       "to": "guest",
-      "bartender": "新鞋不错，不过舞台木板可不认牌子。",
-      "reply": "它能认出我踩错的拍子吗？"
+      "bartender": "新鞋挺好看，穿着舒服吗？",
+      "reply": "刚穿，有点磨脚。"
     },
     {
       "to": "guest",
-      "bartender": "你桌上的手机亮了三次。",
-      "reply": "今天它才是来社交的。"
+      "bartender": "手机亮好几回了，别漏了消息。",
+      "reply": "看到了，都是群里聊天。"
     },
     {
       "to": "guest",
-      "bartender": "这杯慢慢喝，聊到哪里都有人接着。",
-      "reply": "我们刚聊到小时候的暑假。"
+      "bartender": "这杯慢慢喝，别一下灌完。",
+      "reply": "好，我们还得聊一会儿。"
     },
     {
       "to": "guest",
-      "bartender": "刚才的掌声，是给歌还是给自己下班？",
-      "reply": "可以一份掌声用两次吗？"
+      "bartender": "刚才那段你也听见了？",
+      "reply": "听见了，后面接得挺好。"
     },
     {
       "to": "guest",
-      "bartender": "你把菜单看反了。",
-      "reply": "难怪今天的酒都这么有设计感。"
+      "bartender": "菜单看反了。",
+      "reply": "怪不得我看半天没看懂。"
     },
     {
       "to": "guest",
-      "bartender": "我记得你不喜欢太甜。",
-      "reply": "今天的我想跟昨天商量一下。"
+      "bartender": "还按上回的口味吗？",
+      "reply": "这回想换个甜一点的。"
     },
     {
       "to": "guest",
-      "bartender": "你们聊得开心，我就不推销新杯子了。",
-      "reply": "杯子也有试用期吗？"
+      "bartender": "先聊，想再点叫我。",
+      "reply": "好，我们先把这段说完。"
     },
     {
       "to": "guest",
-      "bartender": "雨伞放门边，不会给它点酒。",
-      "reply": "那它终于可以清醒地等我。"
+      "bartender": "伞放门边就行，别挡过道。",
+      "reply": "放好了，走时提醒我拿。"
     },
     {
       "to": "guest",
-      "bartender": "桌号是三，不是三杯起点。",
-      "reply": "谢谢，我刚在替钱包紧张。"
+      "bartender": "这是桌号，不是起点数量。",
+      "reply": "哦，我还以为最少得点三杯。"
     },
     {
       "to": "guest",
-      "bartender": "你朋友已经坐在那儿招手半分钟了。",
-      "reply": "我以为他在配合舞台打拍子。"
+      "bartender": "你朋友那边招手呢。",
+      "reply": "哎，看见了，我刚一直看舞台。"
     },
     {
       "to": "guest",
-      "bartender": "这首老歌你们都会？",
-      "reply": "会副歌也算会吧。"
+      "bartender": "这首你们都会唱？",
+      "reply": "会一点，副歌熟。"
     },
     {
       "to": "guest",
-      "bartender": "今天的花是客人送的，不是中奖。",
-      "reply": "那瓶子也算收到花了。"
+      "bartender": "花是前面那桌带来的。",
+      "reply": "我还以为你们新摆的，挺好看。"
     },
     {
       "to": "guest",
-      "bartender": "慢一点碰杯，杯子比友情脆。",
-      "reply": "友情可以再续，杯子我赔不起。"
+      "bartender": "碰杯轻一点，薄杯口容易裂。",
+      "reply": "知道，我刚差点使劲了。"
     },
     {
       "to": "guest",
-      "bartender": "你那张彩票别压在杯底，湿了就没悬念了。",
-      "reply": "本来也没中，给它降降温。"
+      "bartender": "纸别垫杯底，湿了就看不清字了。",
+      "reply": "好，我收起来。"
     },
     {
       "to": "guest",
-      "bartender": "你笑起来，隔壁桌都开始笑了。",
-      "reply": "我先声明，我讲的是冷笑话。"
+      "bartender": "你们这边笑得挺热闹。",
+      "reply": "他刚把笑话讲反了。"
     },
     {
       "to": "guest",
-      "bartender": "今天想试新品？",
-      "reply": "只要它不用自我介绍十分钟。"
+      "bartender": "想试新品吗？",
+      "reply": "说说什么味儿，我先听听。"
     },
     {
       "to": "guest",
-      "bartender": "把椅子往里挪一点，给路过的人留首歌的宽度。",
-      "reply": "好，今晚大家都有路可走。"
+      "bartender": "椅子往里一点，后面要过人。",
+      "reply": "好，这样够吗？"
     },
     {
       "to": "guest",
-      "bartender": "你点的那杯会有点苦。",
-      "reply": "我带了甜点来和它谈判。"
+      "bartender": "这杯会有点苦。",
+      "reply": "没事，我先尝一口。"
     },
     {
       "to": "guest",
-      "bartender": "这么认真看舞台，是认识那位歌手？",
-      "reply": "不认识，但刚才那句唱到我了。"
+      "bartender": "你认识台上那个吗？",
+      "reply": "不认识，就觉得刚才唱得好。"
     },
     {
       "to": "guest",
-      "bartender": "你们从晚霞聊到月亮了。",
-      "reply": "还差一个话题就聊到早餐。"
+      "bartender": "你们坐挺久了，要添水吗？",
+      "reply": "要，谢谢，聊着都忘了喝。"
     },
     {
       "to": "guest",
-      "bartender": "这里的钟没有坏，只是你没看它。",
-      "reply": "这算它今晚最成功的工作。"
+      "bartender": "看看时间，别耽误车。",
+      "reply": "嗯，我这就看一眼。"
     },
     {
       "to": "guest",
-      "bartender": "你刚才悄悄换了朋友的吸管颜色。",
-      "reply": "他已经研究五分钟了。"
+      "bartender": "吸管别混了，右边是你朋友的。",
+      "reply": "好，我用左边这个。"
     },
     {
       "to": "guest",
-      "bartender": "今天没带电脑？",
-      "reply": "我让它自己在家反省。"
+      "bartender": "今天没把电脑拿来？",
+      "reply": "没有，省得又忍不住打开。"
     },
     {
       "to": "guest",
-      "bartender": "那张凳子会轻轻晃一下。",
-      "reply": "跟我现在的职业规划一样。"
+      "bartender": "这凳子有点晃，我给你换张。",
+      "reply": "好，我刚还以为是地不平。"
     },
     {
       "to": "guest",
-      "bartender": "舞者今天换了一支曲子。",
-      "reply": "我还没学会上一支的第一步。"
+      "bartender": "舞台今天换了曲子。",
+      "reply": "我还真听出来不太一样。"
     },
     {
       "to": "guest",
-      "bartender": "你们桌上缺水吗？",
-      "reply": "缺一个能讲完笑话的人。"
+      "bartender": "桌上还要水吗？",
+      "reply": "要，我们这壶快空了。"
     },
     {
       "to": "guest",
-      "bartender": "要再来一点冰吗？",
-      "reply": "给我们的争论也来一点。"
+      "bartender": "要加冰吗？",
+      "reply": "加一点，刚才聊着都化了。"
     },
     {
       "to": "guest",
-      "bartender": "最后一颗樱桃通常最受关注。",
-      "reply": "我们已经决定猜拳了。"
+      "bartender": "最后那颗樱桃你们谁吃？",
+      "reply": "还没定，准备猜拳呢。"
     },
     {
       "to": "guest",
-      "bartender": "你上回推荐的电影，我看完了。",
-      "reply": "是不是后劲比这杯还大？"
+      "bartender": "上次你说那部电影，我看完了。",
+      "reply": "怎么样？后面没猜到吧？"
     },
     {
       "to": "guest",
-      "bartender": "今晚的演出比平常轻一点。",
-      "reply": "适合把声音借给别人。"
+      "bartender": "今天这几首声音轻一点。",
+      "reply": "嗯，坐这儿聊天挺合适。"
     },
     {
       "to": "guest",
-      "bartender": "你们刚才一起沉默了好久。",
-      "reply": "挺好的，不用每分钟都负责有趣。"
+      "bartender": "你们刚才怎么都不说话了？",
+      "reply": "听歌呢，那一段不想错过。"
     },
     {
       "to": "guest",
-      "bartender": "这杯是你的，那杯是你朋友的。",
-      "reply": "差点把他的失恋也喝了。"
+      "bartender": "这杯你的，那杯你朋友的。",
+      "reply": "还好你提醒，差点拿错。"
     },
     {
       "to": "guest",
-      "bartender": "你又在收集杯垫？",
-      "reply": "每个地方总得留一点平的纪念品。"
+      "bartender": "又想留一张杯垫？",
+      "reply": "可以吗？这张上面图案挺好看。"
     },
     {
       "to": "guest",
-      "bartender": "今天窗外星星少，里面的人倒挺亮。",
-      "reply": "这句你留着印菜单吧。"
+      "bartender": "今天人不太多。",
+      "reply": "挺好，刚才还怕没位置。"
     },
     {
       "to": "guest",
-      "bartender": "你那套开场白，上周用过了。",
-      "reply": "我以为这里不保存聊天记录。"
+      "bartender": "这个开场白你上周说过了。",
+      "reply": "是吗？我真忘了。"
     },
     {
       "to": "guest",
-      "bartender": "这次来得早，灯刚调好。",
-      "reply": "那我们负责测试氛围。"
+      "bartender": "来得挺早啊。",
+      "reply": "刚好办完事，顺路过来。"
     },
     {
       "to": "guest",
-      "bartender": "杯沿的那片橙子不是装饰考试。",
-      "reply": "太好了，我可以吃它。"
+      "bartender": "橙片可以吃，不只是摆着的。",
+      "reply": "那我尝一下。"
     },
     {
       "to": "guest",
-      "bartender": "有人问你们是不是乐队。",
-      "reply": "是，我们叫节拍失踪案。"
+      "bartender": "有人以为你们认识台上乐队。",
+      "reply": "不认识啊，可能看我们一直跟着哼。"
     },
     {
       "to": "guest",
-      "bartender": "你给朋友留的座位快变成衣帽间了。",
-      "reply": "他每次都带一整天过来。"
+      "bartender": "你留的座位堆满东西了。",
+      "reply": "我收一下，朋友马上到。"
     },
     {
       "to": "guest",
-      "bartender": "门外风大，先把围巾系好再走。",
-      "reply": "这句比今天的酒还暖。"
+      "bartender": "门外风大，围巾系好再出去。",
+      "reply": "好，刚才放包里了。"
     },
     {
       "to": "guest",
-      "bartender": "差不多要收尾了，最后一首一起听？",
-      "reply": "听完再把明天还给明天。"
+      "bartender": "最后一首了，听完再走？",
+      "reply": "行，坐都坐这么久了。"
     },
     {
       "to": "guest",
-      "bartender": "今晚开心吗？",
-      "reply": "开心，而且是不用拍照证明的那种。"
+      "bartender": "今天坐得还行吗？",
+      "reply": "挺好的，下回再来。"
     }
   ]
 }

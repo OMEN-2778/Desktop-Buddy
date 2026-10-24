@@ -981,7 +981,7 @@ const CARDS = [
   { n: 121, title: "油烟机的独白", on: "cook", when: "",
     text: "抽油烟机开到最大档，声音大到{名字}听不清自己在想什么。{食物}还在锅里。",
     a: { label: "关小一档。", out: [
-      { text: "世界安静了，{食物}的滋滋声重新清晰起来，很治愈。", say: "这声音好治愈~", mood: { name: "滋滋声好听", emo: "happy", pts: 2, min: 150 } },
+      { text: "世界安静了，{食物}的滋滋声重新清晰起来，很治愈。", say: "听着还挺舒服。", mood: { name: "滋滋声好听", emo: "happy", pts: 2, min: 150 } },
       { text: "刚关小，油烟就飘到了眼前。{名字}眯着眼，又把它调了回去。", say: "咳咳……还是你大声吧。", mood: { name: "被油烟呛到", emo: "uncomfortable", pts: 2, min: 120 } } ] },
     b: { label: "跟着它的节奏哼歌。", out: [
       { text: "油烟机成了很好的伴奏。{名字}唱得很尽兴，{食物}也做好了。", say: "今晚的演唱会，圆满！", mood: { name: "厨房演唱会", emo: "energized", pts: 3, min: 150 } },
