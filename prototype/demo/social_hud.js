@@ -35,6 +35,7 @@ function sizeSocialHud(){
   contactsPanel.classList.toggle('stacked',metrics.stackedContacts);
   incomingCall.classList.toggle('compact',metrics.callStacked);
   style.setProperty('--contact-avatar-clip',roundClip(compact?5:8,2));
+  style.setProperty('--needs-fill-clip',roundClip(7,1));
   style.setProperty('--hud-track-in',roundClip(2,b));
   style.setProperty('--hud-track-edge',2*b+'px');
 }

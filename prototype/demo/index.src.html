@@ -1880,7 +1880,7 @@ function rollEvents() {
 
 // ---------- collapse: never dangerous. She lies on the floor under a skull
 // bubble until you hold her for 5 seconds; then every need gets +10.
-const EXTREME = ["angry", "sad", "scared", "embarrassed", "tense", "uncomfortable", "playful"];
+const EXTREME = ["angry", "sad", "scared", "embarrassed", "tense", "uncomfortable"];
 function checkCollapse() {
   if (sim.mode === "down" || asleep() || sim.t < (sim.graceUntil || 0)) return;
   const n = sim.needs, e = emotion();
@@ -1888,6 +1888,7 @@ function checkCollapse() {
   if (cause) collapse(cause);
 }
 function collapse(cause) {
+  if (!["hunger","energy",...EXTREME].includes(cause)) return false;
   stopNpcTalk("得先休息一下");
   if (sim.act === "dress") closeWardrobe();
   if (sim.place === "mall") { if(mallVisitInside())mallLeaveVisit(false,false);mallS.stop = null; mallS.goal = null; mallS.toilet = null; mallS.visit = null; }
@@ -4589,10 +4590,10 @@ function restore(sv) {
   if (m.mode === "act" && ACTS[m.act] && m.act !== "dress" && m.act !== "npc_chat") {
     sim.mode = "act"; sim.act = m.act; sim.actEnd = m.actEnd;
     if (D.spots[ACTS[m.act].spot]) [storey, x] = D.spots[ACTS[m.act].spot];       // back at her spot
-  } else if (m.mode === "down" && m.down) {
-    sim.mode = "down"; sim.act = null; sim.down = m.down;
+  } else if (m.mode === "down" && m.down && (["hunger","energy",...EXTREME].includes(m.down.cause) || sim.needs.hunger<=0 || sim.needs.energy<=0)) {
+    sim.mode = "down"; sim.act = null; sim.down = {...m.down,cause:sim.needs.hunger<=0?"hunger":sim.needs.energy<=0?"energy":m.down.cause};
   } else {
-    sim.mode = "idle"; sim.act = null; sim.idleUntil = sim.t + 1;          // she was walking: she'll decide again
+    sim.mode = "idle"; sim.act = null; sim.down = null; sim.idleUntil = sim.t + 1;          // she was walking: she'll decide again
   }
   sim.route = [[x, FLOOR_Y[storey] ?? FLOOR_Y[1]]]; sim.s = 0; sim.target = 0; sim.crossing = [];
   sim.place = OUT[m.place] ? m.place : "home";

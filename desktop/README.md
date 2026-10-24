@@ -89,3 +89,9 @@ Downloads are tried from GitHub, then through public GitHub mirrors
 latest.json) since GitHub is often slow or cut off in mainland China; the
 signature check makes the source irrelevant to safety. Problems are logged
 to `update.log` in the config folder (Windows: `%APPDATA%\com.desktopbuddy.app`).
+
+The Windows release workflow builds the game page from the current source on
+Linux first, then passes that exact page to the Windows signing/build job.
+Committing a generated demo page is unnecessary for a manual release; use the
+Desktop app workflow on the intended branch. This keeps browser and EXE content
+in sync and prevents an old checked-in page from entering a new release.
