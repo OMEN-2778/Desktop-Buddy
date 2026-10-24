@@ -107,7 +107,7 @@ function chooseNpcTalk(n){
   return{title,lines,id:chosen.id,scene};
 }
 function startNpcTalk(n,manual=false){
-  if(!n||n.gone||life.talkQ||!manual&&npcInteraction)return false;
+  if(!n||n.gone||life.talkQ||!manual&&(socialBusy()||phoneHolds()||asleep()||sim.mode==='down'))return false;
   let talk=canClickNpc(n)?chooseNpcTalk(n):null;
   if(!talk){const lines=pick((PT()?.talk||{})[n.role]||[]);if(!lines)return false;talk={lines,title:'路上的闲聊',scene:npcSceneKey(),id:null};}
   life.talkQ={...talk,n,manual,i:0,wait:0,said:[],originalDir:npcInteraction?.originalDir??n.dir};
@@ -127,9 +127,19 @@ function npcTalkVars(n){
     对方称呼:n.kid?'小朋友':known?contactName(contact):n.look.gender==='m'?'小哥':'姑娘',
     主角称呼:n.kid?(look.gender==='m'?'哥哥':'姐姐'):known?nameOf():look.gender==='m'?'小哥':'姑娘'};
 }
+function npcHasSpeech(n){
+  const q=life.talkQ;
+  return n.sayUntil>realClock||q?.n===n&&q.lastOther&&q.wait>0;
+}
+function npcKeepsBuddyLine(){
+  const q=life.talkQ;
+  return !!(q&&!q.lastOther&&q.wait>0&&q.lastText&&lastSaid===spaced(q.lastText));
+}
 function advanceNpcTalk(dt){
   const q=life.talkQ;if(!q||!dt)return;
   if(q.n.gone||!(life.npcs||[]).includes(q.n)||q.scene!==npcSceneKey()){stopNpcTalk();return;}
+  // An automatic exchange is over if Buddy walks away or starts another activity.
+  if(!q.manual&&(Math.abs(npcX(q.n)-here().x)>52||remoteSocial||sim.talk||asleep()||sim.mode==='down'||mallInside()||parkInsideToilet()||barToiletInside())){stopNpcTalk();return;}
   q.wait-=dt;if(q.wait>0)return;
   if(q.i>=q.lines.length){
     if(q.id){const ids=(lifeFlags.npcChatSeen||={})[q.scene]||=[];if(!ids.includes(q.id))ids.push(q.id);}
@@ -139,7 +149,8 @@ function advanceNpcTalk(dt){
     stopNpcTalk();life.chatNext=realClock+12+Math.random()*12;return;
   }
   const raw=npcTalkLine(q.lines[q.i++],q.n),other=raw.startsWith('>'),text=fill((other?raw.slice(1):raw).trim(),npcTalkVars(q.n));
-  if(other)npcSay(q.n,text);else speak(text,true);
+  q.lastOther=other;q.lastText=text;
+  if(other)npcSay(q.n,text);else{q.delivering=true;try{speak(text,true);}finally{q.delivering=false;}}
   q.said.push([other?npcTalkName(q.n)+'：':nameOf()+'：',text]);
   q.wait=Math.max(3,Math.min(6,2.3+text.length*.13));
 }

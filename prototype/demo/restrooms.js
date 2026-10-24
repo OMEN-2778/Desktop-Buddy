@@ -12,6 +12,7 @@ function mallCoveredByService(it) {
 }
 function mallSeekToilet(auto=false,requested=null) {
   if(mallS.toilet||sim.mode==='down'||wiping||cardHolds())return;
+  stopNpcTalk('先去一下卫生间');
   const wasInside=mallInside(),dir=mallS.dir===1?1:-1;
   if(mallVisitInside())mallLeaveVisit(false,false);
   mallS.visit=null;

@@ -72,6 +72,7 @@ function barToiletRoute() {
 }
 function barUseToilet(auto=false) {
   if(sim.bar?.toilet||sim.mode==='down'||wiping||cardHolds())return;
+  stopNpcTalk('先照顾一下自己');
   closePicker();closeRing();hoverBuddy=false;sim.windup=null;
   sim.bar.toilet={phase:'walk',left:PUBLIC_WC_TIME,resumeSeat:sim.bar.seat};barScene.chat=null;
   barToiletRoute();
@@ -152,6 +153,7 @@ function stepBar(dtGame, dtReal) {
   if (day !== sim.lastDay) { sim.lastDay = day; log(`—— 第 ${day} 天 · ${SEASONS[seasonOf(sim.t).i].name} ——`, 'day'); }
   updateWeather(dtGame);
   if (!barIsOpen() && !wiping && !card && !guideOn) {
+    stopNpcTalk('酒吧打烊了');barScene.chat=null;
     speak('天亮啦，酒吧打烊了，回家休息吧。', true);
     throughDoor('home'); return;
   }

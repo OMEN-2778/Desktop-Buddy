@@ -14,6 +14,7 @@ PICK.mall_food={title:'商场餐厅 · 坐下来吃点什么',groups:()=>PICK.co
 PICK.mall_film={title:'电影院 · 今天看哪部电影',groups:()=>[...new Set(MALL_LIFE.films.map(f=>f.genre))].map(name=>({name,
   items:MALL_LIFE.films.filter(f=>f.genre===name).map(f=>({title:f.name,line:f.beats[0],info:`${f.duration}分钟`,icon:D.mallPosters[f.id],item:{id:f.id}}))}))};
 function mallClearInteraction(){
+  stopNpcTalk('先完成眼前的事');
   closeRing();closePicker();hoverId=null;hoverBuddy=false;glow=null;walkMark=null;
   sim.windup=null;sim.queue=[];sim.chosen=null;sim.talk=null;life.talkQ=null;reaction=null;
   mallS.stop=null;mallS.goal=null;mallS.hover=null;mallS.pointer=null;clearNpcPills();

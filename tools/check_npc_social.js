@@ -20,6 +20,7 @@ const dir='/workspace/artifacts/npc-social';fs.mkdirSync(dir,{recursive:true});
    render();return {id:n.personId,x:npcX(n),at:here().x,known:socialState.contacts.some(c=>c.id===n.personId)};
   };
   window.npcTestPoint=()=>{const n=testNpc,[f,pose]=npcFrame(n),cv=npcCanvas(n,f,pose,n.back),shape=outlineShape(cv);const points=[...shape.inside].map(s=>s.split(',').map(Number)).sort((a,b)=>(Math.abs(a[0]-10)+Math.abs(a[1]-8))-(Math.abs(b[0]-10)+Math.abs(b[1]-8)));return {x:Math.round(npcX(n)-DW/2)+points[0][0],y:Math.round(npcFeet(n)-DH+1)+points[0][1]};};
+  window.npcTestBeside=()=>{const n=testNpc;if(sim.place==='mall')mallS.x+=npcX(n)-MALL.at-16;else{sim.route=[[npcX(n)-16,OUT[sim.place].feet]];sim.s=sim.target=0;}};
   for(const [key,groups]of Object.entries(NPC_TALK_TEXT)){
    const entries=[...groups.adult,...groups.kid];if(entries.length!==60||new Set(entries.map(e=>JSON.stringify(e))).size!==60)throw Error('Scene text count/duplicates '+key);
    for(const e of entries)for(const pair of ['mm','mf','fm','ff']){const line=v=>typeof v==='string'?v:v[pair];if(e.length!==5||e.slice(1).some(v=>!line(v))||!line(e[2]).startsWith('>')||!line(e[4]).startsWith('>'))throw Error('Dialogue turns '+key+'/'+pair);}
@@ -51,12 +52,12 @@ const dir='/workspace/artifacts/npc-social';fs.mkdirSync(dir,{recursive:true});
  await page.evaluate(()=>{const original=look;for(const scene of Object.keys(NPC_TALK_TEXT)){
    const spoken=[];for(const [heroGender,npcGender]of [['m','m'],['m','f'],['f','m'],['f','f']]){
     npcTestAt(scene);setLook({...look,gender:heroGender});testNpc.look=doll.normalize({...testNpc.look,gender:npcGender});
-    const row=NPC_TALK_TEXT[scene].adult[scene==='bar'?30:24];startNpcTalk(testNpc);
+    const row=NPC_TALK_TEXT[scene].adult[scene==='bar'?30:24];npcTestBeside();startNpcTalk(testNpc);
     life.talkQ.lines=row.slice(1);life.talkQ.title=row[0];while(life.talkQ&&life.talkQ.i<life.talkQ.lines.length){life.talkQ.wait=0;advanceNpcTalk(.01);}
     const text=life.talkQ.said.map(v=>v[1]).join(' / ');if(/[{}]/.test(text))throw Error('Unresolved gender text '+scene);spoken.push(text);stopNpcTalk();
    }if(new Set(spoken).size!==4)throw Error('Gender pairs have identical dialogue '+scene);
   }
-  for(const gender of ['m','f']){npcTestAt('park_central','kid');setLook({...look,gender});const row=NPC_TALK_TEXT.park_central.kid[6];startNpcTalk(testNpc);life.talkQ.lines=row.slice(1);while(life.talkQ.i<2){life.talkQ.wait=0;advanceNpcTalk(.01);}const text=life.talkQ.said[1][1];if(!text.includes(gender==='m'?'哥哥':'姐姐'))throw Error('Child address mismatches protagonist');stopNpcTalk();}
+  for(const gender of ['m','f']){npcTestAt('park_central','kid');setLook({...look,gender});const row=NPC_TALK_TEXT.park_central.kid[6];npcTestBeside();startNpcTalk(testNpc);life.talkQ.lines=row.slice(1);while(life.talkQ.i<2){life.talkQ.wait=0;advanceNpcTalk(.01);}const text=life.talkQ.said[1][1];if(!text.includes(gender==='m'?'哥哥':'姐姐'))throw Error('Child address mismatches protagonist');stopNpcTalk();}
   setLook(original);
  });
  // Familiar faces gain affection only on completion, within the existing daily cap.

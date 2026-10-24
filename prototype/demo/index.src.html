@@ -2985,17 +2985,21 @@ function popBubble(el, ms) {
   el.hidden = false;
   el.classList.remove("out");
   el.style.animation = "none"; void el.offsetWidth; el.style.animation = "";   // replay the pop
-  el._t = setTimeout(() => {
+  const hide=()=>{
+    if(el===popSay&&npcKeepsBuddyLine()){el._t=setTimeout(hide,150);return;}
     el.classList.add("out");
     if (el === popSay && sayGrow) { sayGrow = 0; liftDiary(); }   // the diary slides back down
     el._t2 = setTimeout(() => { el.hidden = true; }, 380);
-  }, ms);
+  };
+  el._t=setTimeout(hide,ms);
 }
 let nextSay = 6, lastSaid = "", sayBusy = 0, sayShownAt = -Infinity;
 const sayQueue = [];
 // her words wait their turn: one bubble at a time, at most a few queued
 function speak(text, now = false) {
   if (!text) return;
+  const npcReading=life.talkQ&&!life.talkQ.delivering,barReading=sim.place==='bar'&&barScene?.chat?.t.to==='player';
+  if(npcReading||barReading){if(sayQueue.length<2&&!sayQueue.includes(text))sayQueue.push(text);return;}
   if (now) { sayQueue.length = 0; showMoodTip(false); showSay(text); return; }
   if (realClock < sayBusy || listOpen) { if (sayQueue.length < 2 && !sayQueue.includes(text)) sayQueue.push(text); return; }
   showSay(text);
@@ -3063,11 +3067,13 @@ let lifeT = -1;
 function updateMood() {
   if (sim.place === "bar") {
     if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); }
-    showFace(); if (listOpen) fillMoodTip(); return;
+    showFace(); if (listOpen) fillMoodTip();
+    else if(!socialBusy()&&!phoneHolds()&&realClock>=sayBusy&&sayQueue.length)showSay(sayQueue.shift());
+    return;
   }
   if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); if(!phoneHolds())rollEvents(); checkCollapse(); }
   showFace();
-  if(phoneHolds()||remoteSocial||npcInteraction)return;
+  if(phoneHolds()||remoteSocial||npcInteraction||life.talkQ)return;
   if (listOpen) { fillMoodTip(); return; }          // her words wait until you're done looking
   if (realClock >= sayBusy && sayQueue.length) showSay(sayQueue.shift());
   else if (realClock >= nextSay && !asleep() && sim.mode !== "down" && !sim.talk) speak(thought());
@@ -3084,7 +3090,8 @@ function syncUI() {
   document.getElementById("clock").textContent = `第 ${day} 天 · ${SEASONS[se.i].name} ${se.day}/${SEASON_DAYS} · ${fmt(sim.t)} · ${part} · ${WEATHER_NAME[weather.kind]}`;
   skyEl.setAttribute("aria-label", `时间与天气：${skyText()}`);
   if (!skyTip.hidden) skyTip.textContent = skyText();
-  const doing = sim.place === "mall" && mallS.toilet ? (mallToiletInside() ? "使用商场卫生间" : "寻找商场卫生间")
+  const doing = npcInteraction ? (npcInteraction.phase === "approach" ? "走近"+npcTalkName(npcInteraction.n) : "和"+npcTalkName(npcInteraction.n)+"聊天")
+    : sim.place === "mall" && mallS.toilet ? (mallToiletInside() ? "使用商场卫生间" : "寻找商场卫生间")
     : sim.place === "mall" && mallS.visit ? mallDoing()
     : sim.place === "bar" ? (sim.bar.toilet ? (barToiletInside() ? "使用酒吧卫生间" : "走向右侧卫生间") : sim.mode === "walk" ? "走向座位" : sim.bar.drink ? `品尝${BAR_DRINKS[sim.bar.drink].name}` : sim.bar.seat ? "坐着听音乐" : "欣赏演出")
     : sim.mode === "walk" ? `走去${ACTS[sim.act].label}` : sim.mode === "act" ? ACTS[sim.act].label : "闲着";
@@ -4107,7 +4114,10 @@ function redNeed(exclude = []) {
   const low = Object.entries(sim.needs).filter(([k, v]) => v < 20 && !exclude.includes(k)).sort((a, b) => a[1] - b[1]);
   return low.length ? low[0][0] : null;
 }
-function homeFor(k) { speak(pick([`${NEED_NAMES[k]}不太行了，回家吧`, "该回家了", "先回家一趟"])); }
+function homeFor(k) {
+  stopNpcTalk("先照顾自己");if(sim.place==="bar"&&barScene)barScene.chat=null;
+  speak(pick([`${NEED_NAMES[k]}不太行了，回家吧`, "该回家了", "先回家一趟"]),true);
+}
 function arriveAt(place) {
   stopNpcTalk("",false);npcPointer=null;hoverNpc=null;                       // fresh life for the new place
   if (place === "bar") { initBar(); return; }
@@ -4178,7 +4188,7 @@ function npcFrame(n) {
     const i = Math.floor(n.dist / 4) % 4;
     return [{ expr: "neutral", look: n.dir, bob: i % 2 ? 0 : 1, sway: i % 2 }, ["walkL", "stand", "walkR", "stand"][i]];
   }
-  const ms = realClock * 1000 + n.ph, talking = n.sayUntil > realClock;
+  const ms = realClock * 1000 + n.ph, talking = npcHasSpeech(n);
   const f = { expr: talking ? "happy" : Math.floor(ms / 2900) % 5 === 0 ? "blink" : "neutral", bob: Math.floor(ms / 1300) % 2,
     look: n.back ? 0 : npcInteraction?.n===n ? n.dir : [0, 1, 0, -1][Math.floor(ms / 3100) % 4] };
   if (talking && n.role === "hawker") f.wave = Math.floor(ms / 260) % 2;
@@ -4288,9 +4298,9 @@ const npcPillEls = new Map();
 function clearNpcPills() { for (const el of npcPillEls.values()) el.remove(); npcPillEls.clear(); }
 function placeNpcPills() {
   const host = ringEl.parentElement;
-  for (const [n, el] of npcPillEls) if (n.sayUntil <= realClock || n.gone || !(life.npcs || []).includes(n) || sim.place === "home") { el.remove(); npcPillEls.delete(n); }
+  for (const [n, el] of npcPillEls) if (!npcHasSpeech(n) || n.gone || !(life.npcs || []).includes(n) || sim.place === "home") { el.remove(); npcPillEls.delete(n); }
   for (const n of life.npcs || []) {
-    if (n.sayUntil <= realClock) continue;
+    if (n.gone || sim.place === "home" || !npcHasSpeech(n)) continue;
     let el = npcPillEls.get(n);
     if (!el) { el = document.createElement("div"); el.className = "npcsay"; el.textContent = n.sayText; host.appendChild(el); npcPillEls.set(n, el); }
     if (sim.place === "bar") { el.style.maxWidth = Math.max(120, view.offsetWidth * .4) + "px"; el.style.whiteSpace = "normal"; el.style.textAlign = "center"; }
@@ -4339,7 +4349,7 @@ function npcLine(n, key = n.role) {
 function startTalk(n) { return startNpcTalk(n); }
 function stepTalk(dt) { advanceNpcTalk(dt); }
 function placeChatter() {                       // now and then: a stranger's line, a word with one passing, or her own thought
-  if (npcInteraction || mallToiletInside() || mallVisitInside() || stormOutside()) return;
+  if (socialBusy() || mallToiletInside() || mallVisitInside() || stormOutside()) return;
   if (!PT() || sim.mode === "down" || life.talkQ || realClock < life.chatNext) return;
   const busy = !!(mallS.stop && sim.place === "mall");
   if (life.tagNext) {                           // a ship / a speedboat just came into view
@@ -5378,6 +5388,8 @@ function migrate(sv) {
 }
 function restore(sv) {
   stopNpcTalk("",false);npcPointer=null;hoverNpc=null;
+  sayQueue.length=0;clearTimeout(popSay._t);clearTimeout(popSay._t2);popSay.hidden=true;
+  sayGrow=0;sayBusy=0;lastSaid="";sayShownAt=-Infinity;nextSay=realClock+14;liftDiary();
   setLook(sv.look);
   restoreSocial(sv.social);
   applySettings(sv.settings);         // older saves carried the settings; the settings file wins (boot)
@@ -5420,7 +5432,9 @@ function restore(sv) {
   }
   moods.clear();
   for (const [id, until, t] of sv.moods || []) if (ML[id]) moods.set(id, { until, t });
+  const savedNpcTopics=sv.flags?.npcChatSeen;
   Object.assign(lifeFlags, sv.flags || {});
+  lifeFlags.npcChatSeen=savedNpcTopics||{};
   Object.assign(eventLast, sv.events || {});
   lastFestivalDay = sv.lastFestivalDay || 0;
   namedAs = sv.namedAs || look.name;
