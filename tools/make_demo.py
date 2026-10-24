@@ -310,6 +310,7 @@ def main():
         "phone": {"frames": [png(F.phone_held(False, f)) for f in range(2)]},
         "phone_call": {"frames": [png(F.phone_held(True))]},
         "chair": {"frames": [png(F.office_chair_front())]},   # conjured at the computer, placed by the page
+        **{key: {"frames": [png(sprite)]} for key, sprite in Hs.visit_furniture.build().items()},
         "sleep_z": {"frames": [png(F.sleep_z_fx(f)) for f in range(12)]},   # over her pillow, placed by the page
     }
 
@@ -331,6 +332,7 @@ def main():
         "bath": (1, bt + 16, "bath"),
         "mirror": (1, bt + 56, "stand"),
         "computer": (1, st + 26, "sit"),      # the conjured chair (26 wide) stays clear of the monitor
+        "guest_study": (1, st + 70, "sit"),
         "toilet": (1, bt + 39, "sit"),
         "vanity": (1, bt + 56, "stand"),
         "towel": (1, bt + 38, "stand"),
@@ -374,6 +376,8 @@ def main():
         "weatherMasks": weather_masks,
         "doors": doors, "leaves": leaves, "overlays": overlays,
         "sleepLying": [bed_x + Hs.SLEEP_HEAD[0], bed_y + Hs.SLEEP_HEAD[1]],
+        "sleepover": {"bed": [bed_x, floors[1] - 39],
+                      "sofa": [A["sofa"][0] + 3, floors[0] - 20]},
         "clickables": clickables, "outside": outside,
         "trip": {k.split("_")[1]: png(v) for k, v in trip_icons.build().items()}, "windows": windows, "screens": screens, "fx": fx,
         "bathHead": [tub_x + 5, tub_y + 6],
@@ -407,7 +411,7 @@ def main():
     html = html.replace("/*__PERSONALITY_JS__*/", (SRC.parent / "personality.js").read_text())
     html = html.replace("/*__SOCIAL_HUD_JS__*/", (SRC.parent / "social_hud.js").read_text())
     html = html.replace("/*__STORM_JS__*/", "const STORM_TEXT = " + (SRC.parent / "storm_text.json").read_text() + ";\n" + (SRC.parent / "storm.js").read_text())
-    html = html.replace("/*__SOCIAL_LIFE_JS__*/", "const SOCIAL_TEXT = " + (SRC.parent / "social_text.json").read_text() + ";\nconst SOCIAL_DIALOGUE = " + (SRC.parent / "social_dialogue.json").read_text() + ";\n" + (SRC.parent / "social_dialogue.js").read_text() + "\n" + (SRC.parent / "social_life.js").read_text())
+    html = html.replace("/*__SOCIAL_LIFE_JS__*/", "const SOCIAL_TEXT = " + (SRC.parent / "social_text.json").read_text() + ";\nconst SOCIAL_DIALOGUE = " + (SRC.parent / "social_dialogue.json").read_text() + ";\n" + (SRC.parent / "social_dialogue.js").read_text() + "\n" + (SRC.parent / "social_life.js").read_text() + "\nconst HOME_VISIT_TEXT = " + (SRC.parent / "home_visit_text.json").read_text() + ";\n" + (SRC.parent / "home_visits.js").read_text())
     html = html.replace("/*__SOCIAL_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "social_cards.json").read_text() + ");")
     html = html.replace("/*__PEER_DIALOGUE_JS__*/", (SRC.parent / "peer_dialogue.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))

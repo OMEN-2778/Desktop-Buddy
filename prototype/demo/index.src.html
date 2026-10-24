@@ -90,6 +90,15 @@
         <button type="button" id="testCard">机会卡测试</button>
         <button type="button" id="testIncoming">来电测试</button>
       </div>
+      <div class="label">睡眠画面（测试用）</div>
+      <div class="row" id="sleepPreviewControls">
+        <button type="button" data-sleep-preview="shared">双人同床</button>
+        <button type="button" data-sleep-preview="hero-sofa">主角睡沙发</button>
+        <button type="button" data-sleep-preview="guest-sofa">朋友睡沙发</button>
+        <button type="button" data-sleep-preview="chat">同床聊天</button>
+        <button type="button" id="exitSleepPreview">退出测试、恢复原状</button>
+      </div>
+      <p class="note" id="sleepPreviewNote" hidden>当前是睡眠测试画面，不写入存档。可以恢复时间继续观察，退出测试后恢复原来的进度。</p>
       <div class="label">天气（测试用）</div>
       <div class="row" role="group" aria-label="天气">
         <button type="button" data-weather="" aria-pressed="true">自动</button>
@@ -493,7 +502,7 @@ function startAct(name, quiet = false) {
     return;
   }
   // spot null: right where she is (stepping off the stairs first)
-  const [st, x] = a.spot ? D.spots[a.spot] : [storeyOfY(p.y), Math.round(p.x)];
+  const [st, x] = a.spot ? (name==="sleep"?heroSleepTarget():D.spots[a.spot]) : [storeyOfY(p.y), Math.round(p.x)];
   sim.route = planRoute(Math.round(p.x), Math.round(p.y), x, FLOOR_Y[st]);
   sim.s = 0; sim.target = routeLength(sim.route); sim.crossing = doorsOn(sim.route);
   sim.mode = "walk";
@@ -515,13 +524,14 @@ function arrive() {
   if (sim.act === "sleep") {
     const h = hour();
     sim.nap = !(h >= 21 || h < 6);
-    if (!sim.nap && lamps.bed_lamp) { lamps.bed_lamp = false; log("关掉台灯，钻进被窝。"); }
+    if (!sim.nap && !heroSleepingOnSofa() && lamps.bed_lamp) { lamps.bed_lamp = false; log("关掉台灯，钻进被窝。"); }
   }
   if (sim.act === "dress" && sim.player) openWardrobe();
   sim.actEnd = sim.t + (sim.act === "sleep" ? 900 : a.dur * (0.8 + Math.random() * 0.4));
   sim.recent = [sim.act, ...sim.recent].slice(0, 3);
   lifeArrive(sim.act);
-  cardMoment(sim.act === "sleep" ? (sim.nap ? null : "bed") : sim.act === "dress" && sim.player ? null : ACT_MOMENT(sim.act));
+  if(sim.act==="sleep")onSleepoverBedArrival();
+  if(!sleepoverSharedBed())cardMoment(sim.act === "sleep" ? (sim.nap ? null : "bed") : sim.act === "dress" && sim.player ? null : ACT_MOMENT(sim.act));
 }
 function finishAct() {
   const a = ACTS[sim.act];
@@ -529,6 +539,7 @@ function finishAct() {
   lifeFinish(sim.act);
   if (sim.act === "sleep" && !sim.upAtNight) log(sim.nap ? "睡了个午觉，精神多了。" : "醒了，伸了个大大的懒腰。");
   sim.upAtNight = false;
+  if(sim.act==="sleep")sim.sleepPlace=null;
   if (sim.act === "eat") log("吃饱了，好满足～");
   if (sim.act === "bath") log("洗得香喷喷的。");
   if (a.then) { startAct(a.then); return; }
@@ -541,6 +552,8 @@ function finishAct() {
 
 // The player clicked a piece of furniture: drop what she's doing and go.
 function command(act, item = null) {
+  if(act==='guest_seat'&&socialState.guest?.phase==='visiting'&&roomAt(homeGuestPoint(socialState.guest))==='study'&&Math.abs(homeGuestPoint(socialState.guest).x-D.spots.guest_study[1])<2){showHint('朋友正坐着呢，先给对方留个座。');return;}
+  if(act==='sleep'&&sleepoverChatAwake()){finishBedConversation(socialState.guest,true);return;}
   stopNpcTalk("先忙眼前的事");
   if (act === "mall_food" || act === "mall_film") { mallPlanVisit(act === "mall_food" ? "restaurant" : "cinema", item); return; }
   if (sim.place === "mall" && act === "go_home" && mallS.visit) mallLeaveVisit(false,false);
@@ -590,7 +603,7 @@ function step(dtGame, dtReal) {
         || (mallVisitInside() && (k === "hunger" && mallS.visit.kind === "restaurant" || k === "energy" && mallSleeping()))) d = 0;
     n[k] = clamp(n[k] + (d + (eff[k] || 0)) * dtGame);
   }
-  if (sim.mode === "act" && sim.act === "sleep" && !sim.nap) sim.sleptTonight += dtGame;
+  if (sim.mode === "act" && sim.act === "sleep" && !sim.nap && !sleepoverChatAwake()) sim.sleptTonight += dtGame;
   applyNeedConsequences();
   // behaviour
   if (sim.mode === "down") { sim.windup = null; return; }
@@ -739,7 +752,7 @@ const WINDOW_NEXT = { closed: "drawn", drawn: "open", open: "closed" };
 const CLICK_ACT = {
   bed: "sleep", wardrobe: "dress", bathtub: "bath", toilet: "toilet", vanity: "wash", towel: "towel",
   bookshelf: "read", computer: "computer", sofa: "tv", tv: "tv", stove: "cook", table: "eat", fridge: "snack",
-  plant_living: "water_living", plant_study: "water_study", art: "art",
+  plant_living: "water_living", plant_study: "water_study", art: "art", guest_chair: "guest_seat",
 };
 const CLICK_NAME = {
   bed_lamp: "台灯", desk_lamp: "台灯", floor_lamp: "落地灯", win_bed: "窗户", win_study: "窗户", win_living: "窗户",
@@ -994,7 +1007,7 @@ function baseActivityFrame(ms) {
   // what Buddy looks like right now: frame params, pose, emote
   const a = sim.act, phase = Math.floor(ms / 600) % 2;
   if (reaction && realClock < reaction.until && sim.mode !== "down") {
-    const seated = sim.mode === "act" && (["bench", "eat", "tv", "host", "toilet", "park_eat"].includes(a) || PC_ACTS.includes(a) && chairReady());
+    const seated = sim.mode === "act" && (["bench", "eat", "tv", "host", "guest_seat", "toilet", "park_eat"].includes(a) || PC_ACTS.includes(a) && chairReady());
     return { f: { expr: "happy", wave: reaction.wave === false ? null : Math.floor(ms / 180) % 2, bob: Math.floor(ms / 300) % 2 }, pose: seated ? "sit" : "stand", emote: reaction.emote };
   }
   if (sim.mode === "walk") {
@@ -1029,7 +1042,7 @@ function baseActivityFrame(ms) {
         const i = Math.floor(ms / 260) % 4;
         return { f: { expr: "happy", wave: i % 2, bob: i % 2, sway: i % 2, look: i < 2 ? -1 : 1 }, pose: ["walkL", "stand", "walkR", "stand"][i], emote: showEm ? em : null };
       }
-      case "host": case "tv": return { f: { expr: Math.floor(ms / 2000) % 3 === 0 ? "happy" : "neutral", look: 1 }, pose: "sit", emote: showEm ? em : null };
+      case "guest_seat": case "host": case "tv": return { f: { expr: Math.floor(ms / 2000) % 3 === 0 ? "happy" : "neutral", look: 1 }, pose: "sit", emote: showEm ? em : null };
       case "read": return { f: { expr: "neutral", look: -1, bob: Math.floor(ms / 1800) % 2 }, pose: "stand", emote: showEm ? em : null };
       case "window": return { f: { expr: Math.floor(ms / 2500) % 4 === 3 ? "blink" : "neutral", look: 1 }, pose: "stand", emote: null };
       default: return { f: { expr: "happy", bob: phase }, pose: "stand", emote: showEm ? em : null };
@@ -1174,6 +1187,7 @@ function dishPic(src) { if (!dishPics.has(src)) { const i = new Image(); i.src =
 function frameOf(list, fps) { return list[Math.floor(realClock * fps) % list.length]; }
 
 function render() {
+  syncParkNavigation();
   updateNpcHover();
   if (sim.place !== "home") { renderOutside(); return; }
   const h = hour(), f = nightness(h);
@@ -1205,6 +1219,7 @@ function render() {
     if (act === "computer" || (act && act.startsWith("pc_"))) lit.push("monitor");
   }
   drawChair(bctx);
+  drawSleepoverBedding(bctx);
   drawHomeGuest(bctx);
   // Buddy
   const ms = realClock * 1000;
@@ -1217,6 +1232,8 @@ function render() {
     const x = Math.round(p.x - body.width / 2), y = Math.round(p.y) - 17;
     bctx.drawImage(body, x, y);
     emoteAt = [x + 10, y - 13];
+  } else if (sleeping && drawHeroSleepover(bctx,full)) {
+    emoteAt=heroSleepingOnSofa()?[D.sleepover.sofa[0]+8,D.sleepover.sofa[1]-12]:[D.sleepLying[0]+10,D.sleepLying[1]-14];
   } else if (sleeping) {
     const [lx, ly] = D.sleepLying;
     bctx.drawImage(lyingHead({ ...full, expr: "sleepy", look: 0, bob: 0, sway: 0, wave: null }), lx, ly);
@@ -1256,7 +1273,7 @@ function render() {
   }
   if (act === "water_living" || act === "water_study") bctx.drawImage(frameOf(IMG.fx[act], 6), D.fx[act].x, D.fx[act].y);
   const down = sim.mode === "down";
-  if (sleeping) {
+  if (sleeping && !sleepoverChatAwake()) {
     // Zs drift up from the pillow; now and then a dream bubble instead (user:
     // not the same dark zzz bubble all night)
     const cyc = Math.floor(realClock / 26), inDream = realClock % 26 > 19;
@@ -1591,7 +1608,7 @@ const emoWord = (key, level) => (T.words[key] ? T.words[key][level - 1] : MOOD[k
 
 // ---------- condition moodlets: checked a few times a second
 const lifeFlags = { bedHair: false, firstSnowYear: -1, needRulesVersion:1, windowSince: {}, watered: { water_living: 0, water_study: 0 } };
-function asleep() { return sim.mode === "act" && sim.act === "sleep" || mallSleeping(); }
+function asleep() { return sim.mode === "act" && sim.act === "sleep" && !sleepoverChatAwake() || mallSleeping(); }
 function band(v, lo, hi) { return v < hi && v >= lo; }
 const COND = {
   hungry1: n => band(n.hunger, 15, 40), hungry3: n => n.hunger < 15,
@@ -2285,7 +2302,7 @@ function updateMood() {
   }
   if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); if(!phoneHolds())rollEvents(); checkCollapse(); }
   showFace();
-  if(phoneHolds()||remoteSocial||npcInteraction||life.talkQ)return;
+  if(phoneHolds()||remoteSocial||npcInteraction||life.talkQ||socialState.guest?.talk||socialState.guest?.bedTalk)return;
   if (listOpen) { fillMoodTip(); return; }          // her words wait until you're done looking
   if (realClock >= sayBusy && sayQueue.length) showSay(sayQueue.shift());
   else if (realClock >= nextSay && !asleep() && sim.mode !== "down" && !sim.talk) speak(thought());
@@ -2308,7 +2325,7 @@ function syncUI() {
     : sim.place === "bar" ? (sim.bar.toilet ? (barToiletInside() ? "使用酒吧卫生间" : "走向右侧卫生间") : sim.mode === "walk" ? "走向座位" : sim.bar.drink ? `品尝${BAR_DRINKS[sim.bar.drink].name}` : sim.bar.seat ? "坐着听音乐" : "欣赏演出")
     : sim.mode === "walk" ? `走去${ACTS[sim.act].label}` : sim.mode === "act" ? ACTS[sim.act].label : "闲着";
   document.getElementById("doing").firstChild.textContent = `正在：${doing}`;
-  document.getElementById("ff").textContent = sim.mode === "act" && sim.act === "sleep" && speed ? "（夜里自动快进）" : "";
+  document.getElementById("ff").textContent = sim.mode === "act" && sim.act === "sleep" && !sleepoverChatAwake() && speed ? "（夜里自动快进）" : "";
   for (const [k, v] of Object.entries(sim.needs)) {
     const el = needsEl.querySelector(`[data-k="${k}"]`);
     el.style.setProperty("--c", needColor(v));
@@ -4048,7 +4065,8 @@ function chatItem(kind, who, via = "pc", contactId = null) {
   const seen=((lifeFlags.talkSeen ||= {})[level?`${kind}_${contact.id}_${level}${g.talks[0]?.early?"_early":""}`:kind+'_'+who] ||= []);
   let fresh = eligible.map(({i})=>i).filter(i => !seen.includes(i));
   if (!fresh.length) { seen.splice(0, seen.length - 3); fresh = eligible.map(({i})=>i).filter(i => !seen.includes(i)); }
-  const i = pick(fresh.length?fresh:eligible.map(({i})=>i)), baseTalk = g.talks[i]||{title:"问个好",lines:[">没有急事，就是想问问你最近怎么样。","挺好的，你也照顾好自己。"]}, t = contact&&kind!=="forum"&&!baseTalk.early?{...baseTalk,lines:personalityTalk(baseTalk.lines,contact,kind)}:baseTalk, vars = { 主角:nameOf(),朋友: contact?contactName(contact):pick(T.fill.朋友) };
+  const candidates=fresh.length?fresh:eligible.map(({i})=>i),personal=candidates.filter(i=>g.talks[i].personalityTopic),ordinary=candidates.filter(i=>!g.talks[i].personalityTopic);
+  const i = pick(personal.length&&Math.random()<.12?personal:ordinary.length?ordinary:candidates), baseTalk = g.talks[i]||{title:"问个好",lines:[">没有急事，就是想问问你最近怎么样。","挺好的，你也照顾好自己。"]}, t = contact&&kind!=="forum"&&!baseTalk.early?{...baseTalk,lines:personalityTalk(baseTalk.lines,contact,kind)}:baseTalk, vars = { 主角:nameOf(),朋友: contact?contactName(contact):pick(T.fill.朋友) };
   seen.push(i);if(contact)contact.lastTopic=t.title;
   const name = contact?contactName(contact):fill(g.name, vars);
   return { vars, contactId:contact?.id, talk: { ...t, kind, who, name,
@@ -4569,7 +4587,7 @@ function snapshot() {
     settings: { speed, scale: prefs.scale, onTop: prefs.onTop },
     sim: { t: sim.t, needs: sim.needs, mode: sim.mode, act: sim.act, actEnd: sim.actEnd, nap: !!sim.nap,
            at: [Math.round(p.x), storeyOfY(p.y)], facing: sim.facing, queue: sim.windup ? [sim.windup.act] : sim.queue, recent: sim.recent,
-           lastDay: sim.lastDay, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
+           lastDay: sim.lastDay, sleepPlace:sim.sleepPlace||null, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
            graceUntil: sim.graceUntil, insomnia: !!sim.insomnia, place: sim.place, lastOut: sim.lastOut ?? null, outBack: sim.outBack ?? null, outWhy: sim.outWhy ?? null, bar: sim.place === "bar" ? sim.bar : null,
            park: sim.place === "park" ? parkState() : null,
            mall: sim.place === "mall" ? mallSnapshot() : null },
@@ -4610,11 +4628,12 @@ function restore(sv) {
   for (const k of Object.keys(sim.needs)) if (Number.isFinite(m.needs?.[k])) sim.needs[k] = clamp(m.needs[k]);
   for (const k of ["facing", "lastDay", "sleptTonight", "graceUntil"]) if (Number.isFinite(m[k])) sim[k] = m[k];
   sim.queue = (m.queue || []).filter(a => ACTS[a]); sim.recent = (m.recent || []).filter(a => ACTS[a]);
+  sim.sleepPlace=m.sleepPlace==='sofa'?'sofa':null;
   sim.meal = m.meal || null; sim.insomnia = !!m.insomnia; sim.nap = !!m.nap;
   let [x, storey] = Array.isArray(m.at) ? m.at : [D.spots.bed[1], 1];
   if (m.mode === "act" && ACTS[m.act] && m.act !== "dress" && m.act !== "npc_chat") {
     sim.mode = "act"; sim.act = m.act; sim.actEnd = m.actEnd;
-    if (D.spots[ACTS[m.act].spot]) [storey, x] = D.spots[ACTS[m.act].spot];       // back at her spot
+    if (D.spots[ACTS[m.act].spot]) [storey, x] = m.act==="sleep"&&m.sleepPlace==="sofa"?D.spots.sofa:D.spots[ACTS[m.act].spot];       // back at her spot
   } else if (m.mode === "down" && m.down && (["hunger","energy",...EXTREME].includes(m.down.cause) || sim.needs.hunger<=0 || sim.needs.energy<=0)) {
     sim.mode = "down"; sim.act = null; sim.down = {...m.down,cause:sim.needs.hunger<=0?"hunger":sim.needs.energy<=0?"energy":m.down.cause};
   } else {
@@ -4673,7 +4692,7 @@ function restore(sv) {
   syncDiary();
 }
 async function saveGame() {
-  if (!booted || saving) return false;
+  if (!booted || saving || visitSleepPreview) return false;
   saving = true;
   try {
     await store.save(snapshot());
@@ -4689,10 +4708,10 @@ async function saveGame() {
 const autoSave = () => (prefs.autosave ? saveGame() : Promise.resolve(false));
 setInterval(autoSave, 5 * 60 * 1000);
 document.addEventListener("visibilitychange", () => { if (document.hidden) autoSave(); });
-window.addEventListener("pagehide", () => { if (!TAURI && booted && prefs.autosave) try { localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot())); } catch (e) { /* full */ } });
+window.addEventListener("pagehide", () => { if (!TAURI && booted && prefs.autosave && !visitSleepPreview) try { localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot())); } catch (e) { /* full */ } });
 async function exportSave() {
   const d = new Date(), stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
-  const filename = `${look.name}-存档-${stamp}.json`, text = JSON.stringify(snapshot(), null, 1);
+  const filename = `${look.name}-存档-${stamp}.json`, text = JSON.stringify(visitSleepPreview?visitSleepPreview.snapshot:snapshot(), null, 1);
   if (TAURI) {                                    // the desktop app: a save dialog, the copy goes where you pick
     const at = await TAURI.core.invoke("export_save", { name: filename, data: text }).catch(() => undefined);
     if (at) flashLabel("存档", "已导出"); else if (at === undefined) flashLabel("存档", "没导出");
@@ -4949,7 +4968,7 @@ function frame(now) {
   tickPeerSpeech(now);
   tickSocial(dt,now);
   tickSocialLife(dt);
-  const fast = sim.mode === "act" && sim.act === "sleep" ? 8 : 1, run = cardHolds() || wiping ? 0 : speed;   // a chance card (or a scene change) stops the clock
+  const fast = sim.mode === "act" && sim.act === "sleep" && !sleepoverChatAwake() ? 8 : 1, run = cardHolds() || wiping ? 0 : speed;   // a chance card (or a scene change) stops the clock
   step(dt * run * fast, dt * (run ? 1 : 0));
   tickStorm(run ? dt : 0);
   updateDoors(run ? dt : 0);

@@ -10,6 +10,25 @@ function parkDiaryText(text) {
 const PARK_SERVICE = { toilet: { zone: 'lakeside', act: 'park_toilet', need: 'bladder' }, food: { zone: 'grove', act: 'park_eat', need: 'hunger' } };
 let parkVendor = null;
 let parkNextTalk = 0;
+const parkNavigation=document.createElement('nav');parkNavigation.className='park-navigation';parkNavigation.hidden=true;parkNavigation.setAttribute('aria-label','公园方向');document.getElementById('widget').append(parkNavigation);
+for(const dir of [-1,1]){
+  const button=document.createElement('button');button.type='button';button.className='park-arrow';button.dataset.dir=dir;
+  button.innerHTML='<svg viewBox="0 0 9 9" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h2v2h2v2h2v1H7v2H5v2H3V6H0V3h3z"/></svg>';
+  button.onclick=()=>parkWalkDirection(dir);parkNavigation.append(button);
+}
+let parkNavigationSize='';
+function syncParkNavigation(){
+  const on=booted&&sim.place==='park'&&!wiping&&!parkInsideToilet()&&!cardHolds()&&sim.mode!=='down';parkNavigation.hidden=!on;if(!on)return;
+  const index=PARK_ZONES.findIndex(z=>z.id===parkLayout().id);
+  for(const button of parkNavigation.children){const dir=+button.dataset.dir,next=PARK_ZONES[index+dir];button.hidden=!next;if(next){button.title='前往'+next.name;button.setAttribute('aria-label',button.title);}}
+  const size=[view.offsetWidth,view.offsetHeight,view.offsetLeft,view.offsetTop].join(':');
+  if(size!==parkNavigationSize){parkNavigationSize=size;overHouse(parkNavigation);}
+}
+function parkWalkDirection(dir){
+  const index=PARK_ZONES.findIndex(z=>z.id===parkLayout().id);
+  if(sim.place!=='park'||!PARK_ZONES[index+dir]||cardHolds()||wiping||sim.mode==='down'||parkInsideToilet())return false;
+  parkClick(null,dir<0?8:W-8,parkLayout().feet);return true;
+}
 const PARK_DISHES = Object.fromEntries(PARK_FOOD.dishes.map(d => [d.id, d]));
 const parkDish = () => PARK_DISHES[sim.park?.dish] || PARK_DISHES.oden;
 for (const d of PARK_FOOD.dishes) ML['park_food_' + d.id] = {name:d.mood,emo:d.emo,pts:2,min:180};

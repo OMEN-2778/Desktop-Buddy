@@ -23,7 +23,7 @@ sleep or collapse ends an ongoing remote session cleanly. Autonomous phone
 choices start a session, then choose an ordinary daily activity alongside it.
 
 Visitors can talk whenever both people share a room. They follow between the
-living room, kitchen and study; bathrooms and the bedroom stay private.
+living room, kitchen, study and bedroom; bathrooms stay private.
 They walk real routes and stairs, rather than teleporting between rooms.
 TV/meals keep their activities, with guest speech in the upper counterpart HUD
 and protagonist speech in the lower HUD. Hunger interrupts the host action.
@@ -79,3 +79,6 @@ node tools/check_npc_social.js http://127.0.0.1:8786/
 node tools/check_ui_layout.js
 UI_THEME=dark UI_DPR=1.25 UI_DESKTOP_SHELL=1 node tools/check_ui_layout.js
 ```
+
+Overnight stays, family travel, the study guest chair, spoken-dialogue policy and
+non-saving console previews are described in [HOME_VISITS.md](HOME_VISITS.md).

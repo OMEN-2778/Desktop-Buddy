@@ -25,7 +25,7 @@ for(const [level,entries]of Object.entries(SOCIAL_DIALOGUE.relationship)){
 }
 
 function homeGuestCanTalk(g){
-  return sim.place==='home'&&g.phase==='visiting'&&!asleep()&&sim.mode!=='down'
+  return sim.place==='home'&&g.phase==='visiting'&&!g.sleeping&&!asleep()&&sim.mode!=='down'
     &&!['bath','toilet','sleep'].includes(sim.act)&&!remoteSocial&&!sim.talk
     &&roomAt(here())===roomAt(homeGuestPoint(g))&&roomAt(here())!=='stairs';
 }
@@ -40,27 +40,23 @@ function homeGuestTalkPool(g,c){
   context.push(...groups[period]);
   // Half the conversations come from the current setting, half from everyday
   // stories. No repeated title until that pool's fresh entries are exhausted.
-  const common=[...groups.common,...SOCIAL_TEXT.visitTalks,...(c.family?[]:SOCIAL_TEXT.conversations[socialLevel(c)])].filter(socialTalkFits);
+  const persona=personalityConversationPool(c,'visit').map(t=>[t.title,...t.lines]);
+  const common=[...persona,...groups.common,...SOCIAL_TEXT.visitTalks,...(c.family?[]:SOCIAL_TEXT.conversations[socialLevel(c)])].filter(socialTalkFits);
   return Math.random()<.5?context.filter(socialTalkFits):common;
 }
 
 function moveHomeGuest(g,dt){
-  if(g.phase!=='visiting')return;
-  const room=roomAt(here());
-  // Guests follow between shared rooms, leaving bathing and the bedroom private.
-  const spot=room==='kitchen'?'eat':room==='study'?'computer':'sofa';
-  const [floor,x]=D.spots[spot]||D.spots.sofa;
-  const target={x:x+(spot==='sofa'?13:spot==='eat'?15:-16),y:FLOOR_Y[floor]};
-  const current=homeGuestPoint(g);
+  if(g.phase!=='visiting'||g.sleeping)return;
+  const target=homeGuestDestination(g),current=homeGuestPoint(g);
   if(!g.destination||g.destination.x!==target.x||g.destination.y!==target.y){
-    g.destination=target;g.walkRoute=planRoute(current.x,current.y,target.x,target.y);g.walkS=0;
-    g.walkLength=routeLength(g.walkRoute);
+    g.destination=target;g.walkRoute=planRoute(current.x,current.y,target.x,target.y);g.walkS=0;g.walkLength=routeLength(g.walkRoute);
     if(roomAt(current)!==roomAt(target))g.talk=null;
   }
-  if(g.walkS<g.walkLength){
-    g.walkS=Math.min(g.walkLength,g.walkS+WALK*.85*Math.min(speed,4)*dt);
-    g.position=routePos(g.walkRoute,g.walkS);
-  }else g.position={...target,dy:0};
+  if(g.walkS<g.walkLength){g.walkS=Math.min(g.walkLength,g.walkS+WALK*.85*Math.min(speed,4)*dt);g.position=routePos(g.walkRoute,g.walkS);}
+  else g.position={...target,dy:0};
+  if(g.roamRoom&&g.roamStage==='walking'&&g.walkS>=g.walkLength){g.roamStage='resting';g.roamUntil=sim.t+5+Math.random()*5;}
 }
 
 for(const [kind,entries]of Object.entries(SOCIAL_DIALOGUE.early))entries.forEach((t,i)=>{ML['social_early_'+kind+'_'+i]={name:'慢慢认识',emo:'happy',pts:1,min:60};});
+
+for(const [kind,stages]of Object.entries(SOCIAL_DIALOGUE.everydayPersonality))for(const [stage,talks]of stages.entries())for(const [i,talk]of talks.entries())for(const context of ['call','text','video','meet','visit'])ML[`persona_${context}_${kind}_${stage}_${i}`]={name:'随口聊聊',emo:'happy',pts:1,min:90};

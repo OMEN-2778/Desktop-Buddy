@@ -105,6 +105,24 @@
 /* Shared, scrollable diary surface for memories and personal invitations. */
 .social-sheet { z-index:90; overscroll-behavior:contain; color:var(--ink); box-shadow:inset 2px 2px 0 var(--bevel-hi),inset -2px -2px 0 var(--bevel-lo); animation:social-sheet-in .3s cubic-bezier(.2,.8,.2,1); position:absolute; left:var(--pick-left); top:var(--pick-top); width:var(--pick-w); height:var(--pick-h); max-height:none; transform:none; display:flex; flex-direction:column; overflow:hidden; clip-path:none; background:color-mix(in srgb,var(--panel) 86%,transparent); border:2px solid var(--edge); font-size:var(--ui-font-body); gap:var(--ui-gap); padding:var(--ui-padding); }
 .social-sheet[hidden],.home-guest-say[hidden] { display:none; }
+.social-sheet.overnight-sheet { background:color-mix(in srgb,var(--panel) 92%,transparent); border-color:#8599bc; justify-content:center; align-items:center; gap:4px; }
+.social-sheet.overnight-sheet h3 { margin:0; width:100%; text-align:center; overflow-wrap:anywhere; flex:0 1 auto; min-height:0; overflow:auto; }
+.overnight-avatar { flex:none; width:clamp(28px,calc(var(--house-w)*.06),56px); height:clamp(28px,calc(var(--house-w)*.06),56px); image-rendering:pixelated; clip-path:var(--hud-avatar-clip); background:var(--panel-2); }
+.overnight-badge { position:absolute; top:var(--ui-padding); left:var(--ui-padding); font-size:var(--ui-font-caption); color:var(--muted); }
+.overnight-actions { width:100%; display:grid; grid-template-columns:repeat(var(--night-choices,2),minmax(0,1fr)); gap:6px; flex:none; margin-top:2px; }
+.overnight-sheet .overnight-actions button { min-width:0; min-height:28px; margin:0; padding:4px; background:var(--accent-soft); }
+.overnight-actions button[data-choice="decline"] { background:var(--panel-2); }
+.park-navigation { position:absolute; left:var(--pick-left); top:var(--pick-top); width:var(--pick-w); height:var(--pick-h); pointer-events:none; z-index:16; }
+.park-navigation[hidden],.park-arrow[hidden] { display:none; }
+.park-arrow { position:absolute; top:57%; left:6px; width:clamp(30px,calc(var(--house-w)*.045),44px); height:clamp(30px,calc(var(--house-w)*.045),44px); min-height:0; padding:7px; margin:0; border:2px solid #514b60; background:#f7f6f0e8; color:#655d73; pointer-events:auto; clip-path:polygon(4px 0,calc(100% - 4px) 0,calc(100% - 4px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 4px) calc(100% - 2px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 2px),0 calc(100% - 2px),0 2px,4px 2px); box-shadow:inset 0 2px #ffffff,inset 0 -2px #b9b7c7; animation:park-point-left 2.2s ease-in-out infinite; }
+.park-arrow[data-dir="1"] { left:auto; right:6px; animation-name:park-point-right; }
+.park-arrow svg { display:block; width:100%; height:100%; }
+.park-arrow[data-dir="-1"] svg { transform:scaleX(-1); }
+.park-arrow:hover { background:#e1eddd; color:#3e5946; }
+.park-arrow:focus-visible { outline:2px solid #75bfa0; outline-offset:2px; }
+@keyframes park-point-left { 0%,70%,100% { translate:0 0; } 35% { translate:-2px 0; } }
+@keyframes park-point-right { 0%,70%,100% { translate:0 0; } 35% { translate:2px 0; } }
+@media (prefers-reduced-motion:reduce) { .park-arrow { animation:none; } }
 .social-sheet h3 { flex:none; margin:0 45px 0 0; line-height:1.3; font-size:var(--ui-font-heading); }
 .social-sheet p { white-space:pre-wrap; margin:0; line-height:1.5; font-size:var(--ui-font-body); }
 .social-sheet button { color:var(--ink); background:var(--panel-2); border:2px solid var(--bevel-lo); border-radius:0; clip-path:var(--hud-small-clip); font-family:inherit; flex:none; margin:0; padding:clamp(3px,calc(7px * var(--cs)),9px); cursor:pointer; font-size:var(--ui-font-control); }

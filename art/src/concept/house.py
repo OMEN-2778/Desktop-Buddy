@@ -19,6 +19,7 @@ from pixelkit import Anim, P, Sprite, rgba
 
 import _furniture as F
 import doll
+import visit_furniture
 
 PREVIEW_SCALE = 4
 
@@ -364,6 +365,8 @@ def furnish(s, night=False, buddy=doll.GIRL, lamps=None):
     place(s, F.pendant(on=False), x + 42, top)
     ANCHORS["pendant"] = (x + 42, top)
     # no chair here: she conjures one (F.office_chair_front) when she sits at the computer (user)
+    reg("guest_chair", visit_furniture.study_chair(), x + 61,
+        on_floor(s, visit_furniture.study_chair(), x + 61, 1, 0))
     pl = F.plant()
     ANCHORS["plant_study"] = (x + 82, reg("plant_study", pl, x + 82, on_floor(s, pl, x + 82, 1, 1)))
 

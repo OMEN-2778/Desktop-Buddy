@@ -137,24 +137,120 @@ document.addEventListener('keydown',e=>{
 });
 
 const TEXT_TALKS=[
- ['今天吃什么',['今天又开始纠结吃什么了。','>先吃点热乎的，别拿饼干糊弄。','那我认真吃饭，你也要。','>收到，互相监督。']],
- ['分享一朵云',['路上有朵云长得像小猫。','>快发来，我看看它是不是在打哈欠。','它已经飘走了，下次一定拍到。','>那就留到下次分享给我。']],
- ['晚一点也没关系',['今天的事情做得有点慢。','>慢慢来，做好一件也很好。','听你这么说，松了一口气。','>累了就歇一下，我又不会跑。']],
- ['路过花店',['刚路过花店，突然想到你。','>那我今天也算收到花了。','挑了一束看起来很有精神的。','>和你好像，隔着屏幕都热闹起来了。']],
- ['天气提醒',['外面要变天了，出门记得带伞。','>这次我真的放包里了。','上次你也是这么说的。','>这次发照片为证！']],
- ['发来一张照片',['>你看，这是我今天发现的小角落。','看着好舒服，好想在那里坐一下午。','>先替你留个位置。','那我就当我们已经一起休息过了。']],
- ['一句早安',['早上好，今天也好好过。','>收到你的早安，起床都轻快了一点。','别忘了吃早餐。','>你也是，晚点再聊。']],
- ['突然想起',['>刚才听见一首老歌，突然想起你。','是哪一首？我也去听听。','>发给你啦，副歌特别好听。','听到了，这下今天有背景音乐了。']],
- ['一件小好事',['今天有一件小事特别顺利。','>快说，我准备好替你高兴了。','原来小事也值得专门分享。','>当然，快乐又没有大小门槛。']],
- ['无事也联系',['也没什么特别的事，就是想聊两句。','>这就够啦，又不用每次都有大新闻。','那我安心打扰一小会儿。','>不算打扰，我也刚好想起你。']],
- ['注意休息',['>最近有好好休息吗？','今天准备早点放下手机。','>那我们互道晚安，不许偷偷熬夜。','约定好了，明天再聊。']],
- ['笑话交换',['给你讲个刚听来的冷笑话。','>等等，我先准备一件外套。','这么配合，我反倒不好意思讲了。','>你笑了就算任务完成。']]
+  [
+    "今天吃什么",
+    [
+      "吃啥呢？我又不知道吃什么了。",
+      ">我也在想。你冰箱里还有东西没？",
+      "有，得翻翻。",
+      ">先看看吧，别又拿饼干凑一顿。"
+    ]
+  ],
+  [
+    "分享一朵云",
+    [
+      "我刚看到朵云，挺像一只猫。",
+      ">照片呢？",
+      "没拍，刚拿出手机就散了。",
+      ">哈哈，下回手快点。"
+    ]
+  ],
+  [
+    "晚一点也没关系",
+    [
+      "我今天这点事磨蹭半天了。",
+      ">现在做到哪儿了？",
+      "还剩一点。",
+      ">那先弄完这点，别一边做一边骂自己。"
+    ]
+  ],
+  [
+    "路过花店",
+    [
+      "刚路过花店，看到一束挺好看的。",
+      ">买了吗？",
+      "没，站门口看了会儿。",
+      ">拍张我看看呗。"
+    ]
+  ],
+  [
+    "天气提醒",
+    [
+      "你出门没？记得带伞啊。",
+      ">还没，伞我找找。",
+      "别又放门口忘拿。",
+      ">看到了，这回真装包里了。"
+    ]
+  ],
+  [
+    "发来一张照片",
+    [
+      ">看，我刚拍的。",
+      "这在哪儿？看着挺舒服。",
+      ">路上随便拐进去的一个地方。",
+      "把位置发我呗，下次我也看看。"
+    ]
+  ],
+  [
+    "一句早安",
+    [
+      "早啊，起来没？",
+      ">醒了，还没起来。",
+      "哈哈，我也刚醒。",
+      ">那先不聊了，我去找点吃的。"
+    ]
+  ],
+  [
+    "突然想起",
+    [
+      ">刚听到一首歌，你应该也听过。",
+      "哪首？发我。",
+      ">发了，副歌那段。",
+      "哦这首，我刚才还没想起来。"
+    ]
+  ],
+  [
+    "一件小好事",
+    [
+      "今天有件事居然一次就弄好了。",
+      ">什么事呀？",
+      "我还以为得来回跑几趟。",
+      ">那挺好，省下的时间歇会儿呗。"
+    ]
+  ],
+  [
+    "无事也联系",
+    [
+      "在干嘛？",
+      ">没啥，随便看看手机。",
+      "我也没什么事，就问问。",
+      ">嗯，刚好聊两句。"
+    ]
+  ],
+  [
+    "注意休息",
+    [
+      ">你是不是还没睡？",
+      "嗯，再看一点就睡。",
+      ">你这句我都见好几回了。",
+      "好好好，我放下了，你也早点睡。"
+    ]
+  ],
+  [
+    "笑话交换",
+    [
+      "我刚看到个冷笑话。",
+      ">多冷？",
+      "我发你，你自己看。",
+      ">……行，确实有点冷。"
+    ]
+  ]
 ];
 CHATS.text={};CHAT_ACT.phone_text='text';
 for(const who of ['dad','mom','friend'])CHATS.text[who]={name:who==='dad'?'爸爸':who==='mom'?'妈妈':'{朋友}',talks:TEXT_TALKS.map(([title,lines],i)=>{
  const id=`contact_text_${who}_${i}`;ML[id]={name:'互相惦记',emo:'happy',pts:1,min:90};return {title,lines,id};
 })};
-function socialBusy(){return socialState.guest?.talk||npcInteraction||life.talkQ||(sim.place==='bar'&&barScene?.chat)||remoteSocial||sim.talk||sim.chosen?.item?.talk||sim.windup&&CHAT_ACT[sim.windup.act];}
+function socialBusy(){return socialState.guest?.talk||socialState.guest?.bedTalk||npcInteraction||life.talkQ||(sim.place==='bar'&&barScene?.chat)||remoteSocial||sim.talk||sim.chosen?.item?.talk||sim.windup&&CHAT_ACT[sim.windup.act];}
 function startContactTalk(id,kind='text',incoming=false){
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return false;
   if(sim.mode==='down'||asleep()||wiping||cardHolds()||socialBusy())return false;
@@ -235,7 +331,7 @@ function tickSocial(dt,now){
     showSay(text,who,socialState.contacts.find(c=>c.id===session.item.contactId));session.said.push([who,text]);session.wait=Math.min(4.6,Math.max(2.6,1.4+(who+text).length*.13));
   }
 }
-function socialSnapshot(){return {...socialLifeSnapshot(),rosterVersion:socialState.rosterVersion,contacts:socialState.contacts.map(c=>({personality:{...personalityOf(c)},personalityBond:{gain:c.personalityBond?.gain||0,days:[...(c.personalityBond?.days||[])]},contactCounts:Object.fromEntries(SOCIAL_CHANNELS.map(k=>[k,c.contactCounts?.[k]||0])),personalityTalks:c.personalityTalks||0,personalitySeen:c.personalitySeen||[],personalityTextSeen:c.personalityTextSeen||{},id:c.id,name:c.name,family:c.family||null,affinity:c.affinity,look:doll.normalize(c.look),lastContact:c.lastContact??null,gainDay:c.gainDay??null,dailyGain:c.dailyGain||0,memories:c.memories||[],metAt:c.metAt??null,lastSeen:c.lastSeen??null,forgotten:!!c.forgotten,lastIncoming:c.lastIncoming??null,rejectDay:c.rejectDay??null,rejectLoss:c.rejectLoss||0,farewellTried:!!c.farewellTried,farewellPending:!!c.farewellPending,lastVisitOffer:c.lastVisitOffer??null})),nextCall:socialState.nextCall};}
+function socialSnapshot(){return {...socialLifeSnapshot(),rosterVersion:socialState.rosterVersion,contacts:socialState.contacts.map(c=>({personality:{...personalityOf(c)},personalityBond:{gain:c.personalityBond?.gain||0,days:[...(c.personalityBond?.days||[])]},parentVisitRoll:c.parentVisitRoll||null,parentLastVisit:c.parentLastVisit??null,bedTalkSeen:c.bedTalkSeen||[],contactCounts:Object.fromEntries(SOCIAL_CHANNELS.map(k=>[k,c.contactCounts?.[k]||0])),personalityTalks:c.personalityTalks||0,personalitySeen:c.personalitySeen||[],personalityTextSeen:c.personalityTextSeen||{},id:c.id,name:c.name,family:c.family||null,affinity:c.affinity,look:doll.normalize(c.look),lastContact:c.lastContact??null,gainDay:c.gainDay??null,dailyGain:c.dailyGain||0,memories:c.memories||[],metAt:c.metAt??null,lastSeen:c.lastSeen??null,forgotten:!!c.forgotten,lastIncoming:c.lastIncoming??null,rejectDay:c.rejectDay??null,rejectLoss:c.rejectLoss||0,farewellTried:!!c.farewellTried,farewellPending:!!c.farewellPending,lastVisitOffer:c.lastVisitOffer??null})),nextCall:socialState.nextCall};}
 function restoreSocial(data,sourceIsDesktop=!!TAURI){
   hidePeerSay(true);
   clearTimeout(phoneCall.timeout);clearTimeout(phoneCall.exitTimer);phoneCall.phase='idle';phoneCall.contactId=null;incomingCall.hidden=true;moodTalk.classList.remove('phone-active');remoteSocial=null;
