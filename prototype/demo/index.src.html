@@ -678,10 +678,10 @@ body {
    bursts out — a flash of its colour, a shock ring, pixel sparks, a big
    wobbly pop, a shine across it and a glow that pulses — then sits there
    until the result closes and flies into the emoji */
-.cr-moodwrap { position: relative; display: flex; justify-content: center; }
+.cr-moodwrap { position: relative; flex:0 0 auto; display: flex; justify-content: center; }
 .cr-moodwrap[hidden] { display: none; }
 .card-res .mp.cr-mood {
-  --left: 100%; font-size: calc(var(--mp-fs, 15px) * var(--cs, 1) * 1.12); padding: .45em 1.1em;
+  --left: 100%; font-size: clamp(12px, calc(17px * var(--cs, 1)), 23px); padding: .45em 1.1em;
   transform: scale(0); opacity: 0; transition: none;
   filter: drop-shadow(3px 3px 0 rgba(27, 19, 34, .6)) drop-shadow(0 0 0 transparent);
 }
@@ -1370,7 +1370,7 @@ function command(act, item = null) {
 
 const WALK = 28 * 2 / 3;   // house pixels per real second at 1x (user: two thirds of the old 28)
 function step(dtGame, dtReal) {
-  if(phoneHolds())return;
+  if(phoneHolds()||wardrobeOpen)return;
   if (sim.place === "bar") { stepBar(dtGame, dtReal); return; }
   if (sim.place === "mall" && (wiping || cardHolds() || !(dtGame > 0 || dtReal > 0))) return;
   sim.t += dtGame;
@@ -3520,7 +3520,6 @@ document.addEventListener("pointerdown", e => { if (ringOf && !ringEl.contains(e
 document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) closeRing(); });
 let lastChat = -1e9;
 function ringPick(id) {
-  if (id === "personality") { closeRing();showPersonality();return; }
   if (id === "mall_leave") { closeRing();mallLeaveVisit(false);return; }
   if (id === "park_stand") { parkStand(); return; }
   if (id.startsWith("bar_")) {
@@ -4892,7 +4891,7 @@ for (let i = 0; i < 20; i++) {                   // sparks around the moodlet pi
   crBurst.append(sp);
 }
 // while a card or its result is up the house dims a little and time stands still (user)
-const cardHolds = () => !!(card && card.hold) || guideOn || phoneHolds() || socialDialogHolds();   // (the guide stops the clock too)
+const cardHolds = () => !!(card && card.hold) || guideOn || wardrobeOpen || phoneHolds() || socialDialogHolds();   // (the guide stops the clock too)
 const dimHouse = on => view.classList.toggle("dim", on);
 let quietUntil = 0;         // her card line isn't followed by a "new mood" thought
 let card = null;            // { cd, vars, phase: ask | wait | result | closing, k, o, auto, timer, lockUntil }
@@ -5222,6 +5221,7 @@ function openWardrobe() {
 function closeWardrobe() {
   if (!wardrobeOpen) return;
   wardrobeOpen = false;
+  if(socialSheet.classList.contains('personality-sheet')&&!socialSheet.hidden)closeSocialSheet();
   studioSlot.classList.remove("open");
   studio.stop();
   const hide = () => { if (!wardrobeOpen) { studioEl.hidden = true; makeRoom(); } };   // give the room back once it has folded away
@@ -5745,6 +5745,7 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
   else if (shared && typeof shared === "object" && sharedAt > sv.savedAt) setLook({ ...shared, name: shared.name || look.name });
   namedAs = namedAs || nameOf();
   studio = BuddyStudio(studioEl, doll, D.doll, { look, previewScale: 3, thumbH: 40, onChange: changeLook, onClose: closeWardrobe });
+  installWardrobePersonality();
   fit();
   if (TAURI && !st && !sv) {      // first run of the desktop app: the biggest size that leaves most of the screen free
     const w = document.getElementById("widget"), k = prefs.scale / 100;

@@ -37,6 +37,7 @@ function personalityTalk(lines,c,context){return [...personalityLines(c,context)
 function personalityVisitReason(c){const k=personalityKind(c,'care');if(k==='balanced')return ['想找你坐坐','今天有空吗？想去你家聊聊天，方便的话我就过来。','欢迎来坐坐','今天有点忙，改天再聚'];return k==='thoughtful'?['想先约个方便的时间','我想来坐一会儿，先问问你现在方便吗？不方便我们就改天，不着急。','茶杯准备好了，欢迎来坐','今天有点忙，咱们另约时间']:['临时起意的散步终点','本来只打算出门走走，走着走着想找你聊聊。我能把终点改成你家沙发吗？','沙发批准了，过来吧','沙发今天休假，改天吧'];}
 function showPersonality(id=null,selection=null){
  const c=id?socialState.contacts.find(c=>c.id===id):null;if(id&&!c)return;
+ if(!c&&!wardrobeOpen){showHint('请在更衣室里修改性格。');return;}
  if(phoneHolds()||socialBusy()||card||wiping){showHint('先忙完眼前的事，再看看性格吧。');return;}
  const sheet=openSocialSheet(c?`${contactName(c)} · 性格`:'我的性格');sheet.classList.add('personality-sheet');
  const intro=document.createElement('p');intro.className='personality-intro';intro.textContent=c?'性格会在相处中慢慢显露。话少不等于疏远，热情也有安静的时候。':'性格影响自主行为和表达；你手动安排的事始终优先。可以以后再调整。';sheet.append(intro);
@@ -47,7 +48,7 @@ function showPersonality(id=null,selection=null){
  }sheet.append(form);
  if(!c){const actions=document.createElement('div');actions.className='personality-actions';sheet.append(actions);for(const [label,action]of [['随机一组',()=>{showPersonality(null,seededPersonality('hero-'+Math.random()));}],['确定性格',()=>{for(const [key]of PERSONALITY_AXES){const checked=sheet.querySelector(`input[name="personality-${key}"]:checked`);draft[key]=Number(checked.value);}heroPersonality=normalizePersonality(draft);heroPersonalityChosen=true;closeSocialSheet();log(`认识自己：${personalityTraits(null).join('、')}。这些倾向会影响生活，但每次选择仍握在自己手里。`);autoSave();}]]){const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=action;actions.append(button);}}
 }
-for(const key of ['buddy','away','bar','park_seated','mall_room'])RINGS[key].push(['personality','性格']);
+function installWardrobePersonality(){const button=document.createElement('button');button.type='button';button.className='st-personality';button.textContent='性格';button.onclick=()=>showPersonality();studioEl.querySelector('.st-tools').prepend(button);}
 
 const PERSONALITY_TEXT={
   "slow": {
