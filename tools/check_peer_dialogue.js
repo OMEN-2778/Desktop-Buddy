@@ -24,10 +24,10 @@ const assert=require('node:assert/strict');const {chromium}=require('playwright'
   await page.evaluate(()=>playTalk(10));assert.equal(await page.locator('#popSay span').textContent(),'好，我也想听你讲讲今天的事。');assert.ok((await page.locator('#peerBubble span').textContent()).includes('妈妈这边'));
  }
  await page.evaluate(()=>{const key=Object.keys(CHATS.forum)[0],item=chatItem('forum',key);item.talk.lines=['#今天有人分享了一段旋律。','>这段旋律让我想起了小时候。'];sim.item=item;sim.act='pc_forum';sim.talk={i:0,wait:0,said:[]};playTalk(10);});
- assert.ok((await page.locator('#peerHud').getAttribute('aria-label')).includes('【'));await page.evaluate(()=>playTalk(10));assert.ok((await page.locator('#peerBubble span').textContent()).startsWith('评论：'));assert.equal(await page.evaluate(()=>peerSpeech.pending.speaker.anonymous),true);
+ await page.waitForFunction(()=>peerHud.getAttribute('aria-label').includes('【'));await page.evaluate(()=>playTalk(10));await page.waitForFunction(()=>peerText.textContent.startsWith('评论：'));assert.ok((await page.locator('#peerBubble span').textContent()).startsWith('评论：'));assert.equal(await page.evaluate(()=>peerSpeech.pending.speaker.anonymous),true);
  // Outdoor calls use the same upper row; scene NPC bubbles retain their own renderer.
  await page.evaluate(()=>{sim.talk=null;sim.item=null;sim.mode='idle';sim.act=null;sim.chosen=null;sim.windup=null;sim.place='front';sim.route=[[OUT.front.doorX,OUT.front.feet]];sim.s=0;sim.target=0;arriveAt('front');if(!startContactTalk('dad','call'))throw Error('Remote call');remoteSocial.item.talk.lines=['>今天过得怎么样？爸爸想听你说说。'];remoteSocial.wait=0;speed=1;tickSocial(1,performance.now());speed=0;});
- assert.ok((await page.locator('#peerBubble span').textContent()).startsWith('爸爸：'));
+ await page.waitForFunction(()=>peerText.textContent.startsWith('爸爸：'));assert.ok((await page.locator('#peerBubble span').textContent()).startsWith('爸爸：'));
  await page.evaluate(()=>{const previous=peerText.textContent,n=makeNpc('walker',{x:90,feet:OUT.front.feet});life.npcs.push(n);npcSay(n,'场景里的小气泡保持原样。');placeNpcPills();if(peerText.textContent!==previous)throw Error('NPC bubble replaced the HUD');});
  assert.ok(await page.locator('.npcsay').count()>0);
  await page.evaluate(()=>{remoteSocial=null;sim.talk=null;sim.item=null;sim.mode='idle';sim.act=null;sim.place='home';sim.route=[[D.spots.sofa[1],FLOOR_Y[0]]];sim.s=0;clearNpcPills();showSay('我还在听着呢。');showSay('我也很高兴今天能和你慢慢说上这么多话，下一次看到漂亮的晚霞，我还会记得拍下来给你看。','阿布：',contactFor('friend','abu'));});

@@ -121,6 +121,16 @@ def people() -> Sprite:
     return out
 
 
+def need_stripes() -> Sprite:
+    """8px repeating diagonal made of solid stair steps; CSS supplies faint opacity."""
+    s = Sprite(8, 8)
+    for y in range(8):
+        for x in range(8):
+            if (x + y) % 8 < 3:
+                s.set(x, y, P.linen[3])
+    return s
+
+
 def relief_plate(size=14, radius=6, kind="green") -> Sprite:
     """Palette-only bevel hugging the pixel contour, never rectangular black strips.
 
@@ -157,7 +167,7 @@ def build():
     for g in GLYPHS:
         out.blit(glyph(g), x, 2)
         x += len(GLYPHS[g][0]) + 3
-    return {"ui_icons": out, "ui_people": people(),
+    return {"ui_icons": out, "ui_people": people(), "ui_need_stripes": need_stripes(),
             "ui_relief_badge": relief_plate(22, 11),
             "ui_relief_badge_small": relief_plate(19, 9),
             "ui_relief_answer": relief_plate(),

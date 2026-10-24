@@ -85,7 +85,7 @@ html.desktop .desk { padding-left:76px; }
 .incoming-call button:hover::after { filter:brightness(1.05); }
 .incoming-call button:active { transform:translateY(1px) scale(.97); }
 .incoming-call button:active::after { filter:brightness(.95); }
-.call-countdown { position:absolute; bottom:0; inset-inline:12px; height:2px; background:#c8e1d3; transform-origin:left; animation:call-time 6s linear both; }
+.call-countdown { position:absolute; bottom:0; inset-inline:12px; height:2px; background:#c8e1d3; transform-origin:left; transform:scaleX(var(--call-remaining,1)); }
 .mood-talk.phone-active .pop,.mood-talk.phone-active .mood-list { visibility:hidden; }
 .incoming-call.accepting { animation:call-accept .36s var(--hud-settle) both; }
 .incoming-call.declining { animation:call-decline .28s cubic-bezier(.45,0,.8,.2) both; }
@@ -93,13 +93,12 @@ html.desktop .desk { padding-left:76px; }
 @keyframes call-arrive { from { opacity:0; transform:translateY(5px) scale(.94); } to { opacity:1; transform:none; } }
 @keyframes caller-wiggle { 0%,50%,100% { transform:rotate(0); } 8% { transform:rotate(-13deg); } 17% { transform:rotate(11deg); } 27% { transform:rotate(-7deg); } 38% { transform:rotate(3deg); } }
 @keyframes caller-wave { from { transform:scale(1); opacity:.65; } to { transform:scale(1.7); opacity:0; } }
-@keyframes call-time { to { transform:scaleX(0); } }
 @keyframes call-accept { 30% { transform:scale(1.015); opacity:1; } to { transform:translateX(-12px) scale(.94); opacity:0; } }
 @keyframes call-decline { to { transform:translateY(10px) scale(.96); opacity:0; } }
 @media (max-width:600px) { .desk { padding-left:64px; padding-right:14px; } .network-trigger { width:42px; height:42px; top:5px; padding:5px; } .moodrow.network-ready .network-trigger,.moodrow.contacts-open .network-trigger { transform:translateX(-50px); } .contact-card { grid-template-columns:26px minmax(0,1fr); gap:4px; padding:7px; } .contact-card canvas { width:26px; height:26px; } .contact-copy strong { font-size:11px; } .contact-copy small { font-size:10px; } .contacts-panel { padding:8px; } .contacts-list { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; } .needs-panel { gap:4px; padding-inline:6px; } .need-label { font-size:9px; } .incoming-call { gap:4px; padding-inline:4px; } .caller-avatar,.caller-avatar canvas { width:28px; height:28px; } .caller-copy strong { font-size:11px; } .caller-copy span { font-size:10px; } .incoming-call button { padding:7px 6px; font-size:10px; } .contact-actions button { font-size:12px; padding:6px 12px; } }
 @media (prefers-reduced-motion:reduce) { .needs-panel,.needs-summary,.need-well,.need img,.need-label,.network-trigger,.contacts-panel,.contact-card,.contact-actions,.contact-actions button,.network-trigger img,.incoming-call button,.need .fill { transition:none !important; } .incoming-call,.caller-avatar canvas,.caller-avatar i { animation:none; } .incoming-call.accepting,.incoming-call.declining { animation:none; opacity:0; } .caller-avatar i { display:none; } }
 /* Shared, scrollable diary surface for memories and personal invitations. */
-.social-sheet { position:fixed; z-index:90; left:50%; top:50%; transform:translate(-50%,-50%); width:min(520px,calc(100vw - 24px)); max-height:min(560px,calc(100dvh - 32px)); overflow-y:auto; overscroll-behavior:contain; padding:22px; color:var(--ink); background:var(--panel); border:4px solid var(--edge); box-shadow:inset 2px 2px 0 var(--bevel-hi),inset -2px -2px 0 var(--bevel-lo); clip-path:var(--hud-panel-clip); animation:social-sheet-in .3s var(--hud-spring); }
+.social-sheet { z-index:90; overscroll-behavior:contain; color:var(--ink); box-shadow:inset 2px 2px 0 var(--bevel-hi),inset -2px -2px 0 var(--bevel-lo); animation:social-sheet-in .3s cubic-bezier(.2,.8,.2,1); }
 .social-sheet[hidden],.home-guest-say[hidden] { display:none; }
 .social-sheet h3 { margin:0 52px 16px 0; font-size:18px; }
 .social-sheet p { font-size:14px; line-height:1.8; white-space:pre-wrap; }
@@ -112,5 +111,29 @@ html.desktop .desk { padding-left:76px; }
 .home-guest-say { z-index:18; max-width:min(240px,65vw); white-space:normal; text-align:center; overflow-wrap:anywhere; pointer-events:none; }
 .contact-copy strong { font-size:clamp(11px,1.5vw,16px); }
 .contact-copy small { font-size:10px; }
-@keyframes social-sheet-in { from { opacity:0; translate:0 8px; scale:.95; } to { opacity:1; translate:0 0; scale:1; } }
+@keyframes social-sheet-in { from { opacity:0; scale:.96; } to { opacity:1; scale:1; } }
 @media(prefers-reduced-motion:reduce) { .social-sheet { animation:none; } }
+
+/* Each fill retains its own colour; faint pixel stripes drift inside it. */
+.need .fill::after { content:""; position:absolute; inset:0; background-image:var(--need-stripes); background-size:16px 16px; opacity:.16; image-rendering:pixelated; animation:need-stripes 1.6s steps(8) infinite paused; }
+.needs.open .need .fill::after { animation-play-state:running; }
+@keyframes need-stripes { to { background-position:0 -16px; } }
+@media(prefers-reduced-motion:reduce) { .need .fill::after { animation:none; } }
+/* Every social surface occupies exactly the house, with internal scrolling. */
+.social-sheet { position:absolute; left:var(--pick-left); top:var(--pick-top); width:var(--pick-w); height:var(--pick-h); max-height:none; transform:none; display:flex; flex-direction:column; gap:clamp(3px,calc(8px * var(--cs)),10px); padding:clamp(6px,calc(14px * var(--cs)),18px); overflow:hidden; clip-path:none; background:color-mix(in srgb,var(--panel) 86%,transparent); border:2px solid var(--edge); }
+.social-sheet h3 { flex:none; margin:0 45px 0 0; font-size:clamp(12px,calc(20px * var(--cs)),22px); line-height:1.3; }
+.social-sheet>p,.social-memories { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+.social-sheet p { margin:0; font-size:clamp(10px,calc(15px * var(--cs)),17px); line-height:1.5; }
+.social-sheet button { flex:none; margin:0; padding:clamp(3px,calc(7px * var(--cs)),9px); font-size:clamp(10px,calc(14px * var(--cs)),16px); cursor:pointer; }
+.social-sheet .social-sheet-close { right:6px; top:4px; }
+.social-memories li { padding:8px 0; }
+.social-sheet.visit-offer { --visit-green:#8bcba0; display:grid; grid-template-columns:clamp(28px,calc(48px * var(--cs)),56px) minmax(0,1fr) auto; grid-template-rows:minmax(0,1fr) auto; gap:clamp(4px,calc(12px * var(--cs)),16px); padding:clamp(8px,calc(20px * var(--cs)),22px); border:2px solid #f7f6fb; box-shadow:inset 0 0 0 clamp(3px,calc(6px * var(--cs)),6px) var(--visit-green); background:rgba(247,246,251,.86); color:#30283d; }
+.visit-portrait { width:100%; aspect-ratio:1; image-rendering:pixelated; align-self:start; background:#edf2f3; clip-path:var(--hud-avatar-clip); }
+.visit-copy { min-width:0; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+.visit-copy h3 { margin:0 0 4px; font-size:clamp(12px,calc(22px * var(--cs)),26px); }
+.visit-copy p { font-size:clamp(10px,calc(15px * var(--cs)),17px); }
+.visit-offer .visit-ignore { align-self:start; padding:clamp(4px,calc(8px * var(--cs)),10px) clamp(6px,calc(16px * var(--cs)),20px); background:#e3e5e9; border-color:#e3e5e9; }
+.visit-actions { grid-column:1/-1; display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,calc(24px * var(--cs)),30px); }
+.visit-actions button { min-width:0; font-weight:700; background:var(--visit-green); border:2px solid #79b98e; box-shadow:inset 0 2px 0 #ffffff33,inset 0 -2px 0 #28342715; line-height:1.25; }
+.visit-actions .visit-decline { background:#ee747b; border-color:#d96971; }
+.visit-clock { position:absolute; left:8px; right:8px; bottom:3px; height:2px; background:#5caa79; transform-origin:left; transform:scaleX(var(--visit-remaining,1)); }

@@ -109,7 +109,24 @@ function BuddyDoll(DATA) {
       "小芋",
       "椰椰",
       "桃子",
-      "小杏"
+      "小杏",
+      "糖糕",
+      "泡泡",
+      "奶芙",
+      "软糖",
+      "团子",
+      "小椰",
+      "小铃",
+      "莓莓",
+      "小饼",
+      "布蕾",
+      "花卷",
+      "奶泡",
+      "橘子",
+      "小柚糖",
+      "小云朵",
+      "阿棉",
+      "芋圆"
     ],
     [
       "林知夏",
@@ -174,56 +191,39 @@ function BuddyDoll(DATA) {
       "苏星禾"
     ],
     [
-      "中村葵",
-      "中村凛",
-      "中村美咲",
-      "中村结衣",
-      "中村千夏",
-      "佐藤葵",
-      "佐藤凛",
       "佐藤美咲",
-      "佐藤结衣",
-      "佐藤千夏",
-      "铃木葵",
-      "铃木凛",
-      "铃木美咲",
-      "铃木结衣",
-      "铃木千夏",
-      "高桥葵",
-      "高桥凛",
-      "高桥美咲",
-      "高桥结衣",
-      "高桥千夏",
-      "田中葵",
-      "田中凛",
-      "田中美咲",
-      "田中结衣",
-      "田中千夏",
-      "伊藤葵",
-      "伊藤凛",
-      "伊藤美咲",
-      "伊藤结衣",
-      "伊藤千夏",
-      "山本葵",
-      "山本凛",
-      "山本美咲",
-      "山本结衣",
-      "山本千夏",
-      "小林葵",
-      "小林凛",
-      "小林美咲",
-      "小林结衣",
-      "小林千夏",
-      "松本葵",
-      "松本凛",
-      "松本美咲",
-      "松本结衣",
-      "松本千夏",
-      "渡边葵",
-      "渡边凛",
-      "渡边美咲",
-      "渡边结衣",
-      "渡边千夏"
+      "铃木优奈",
+      "高桥千鹤",
+      "田中绘里",
+      "渡边琴音",
+      "伊藤爱",
+      "山本纱织",
+      "中村真央",
+      "小林遥",
+      "加藤杏",
+      "吉田凛",
+      "山田由衣",
+      "佐佐木枫",
+      "山口葵",
+      "松本奈奈",
+      "井上诗织",
+      "木村玲",
+      "林明日香",
+      "清水雪乃",
+      "山崎惠",
+      "森彩夏",
+      "池田茜",
+      "桥本花音",
+      "石川沙纪",
+      "中岛咲良",
+      "前田理香",
+      "藤田美绪",
+      "小川奈央",
+      "冈田奏",
+      "长谷川菫",
+      "村上结月",
+      "近藤萌",
+      "石井穗香"
     ],
     [
       "艾米",
@@ -319,7 +319,24 @@ function BuddyDoll(DATA) {
       "阿良",
       "小原",
       "阿青",
-      "阿灿"
+      "阿灿",
+      "豆包",
+      "小麦",
+      "阿乐",
+      "饼干",
+      "阿圆",
+      "毛豆",
+      "小可",
+      "栗栗",
+      "小熊",
+      "汤圆",
+      "阿冬",
+      "可乐",
+      "小豆",
+      "阿栗",
+      "大福",
+      "阿团",
+      "小年糕"
     ],
     [
       "林知远",
@@ -384,56 +401,39 @@ function BuddyDoll(DATA) {
       "苏书衡"
     ],
     [
-      "中村武",
-      "中村莲",
-      "中村翔太",
-      "中村悠真",
-      "中村健",
-      "佐藤武",
-      "佐藤莲",
-      "佐藤翔太",
-      "佐藤悠真",
       "佐藤健",
-      "铃木武",
-      "铃木莲",
-      "铃木翔太",
-      "铃木悠真",
-      "铃木健",
-      "高桥武",
-      "高桥莲",
-      "高桥翔太",
+      "铃木大辅",
       "高桥悠真",
-      "高桥健",
-      "田中武",
-      "田中莲",
-      "田中翔太",
-      "田中悠真",
-      "田中健",
-      "伊藤武",
-      "伊藤莲",
-      "伊藤翔太",
-      "伊藤悠真",
-      "伊藤健",
-      "山本武",
-      "山本莲",
-      "山本翔太",
-      "山本悠真",
-      "山本健",
-      "小林武",
-      "小林莲",
-      "小林翔太",
-      "小林悠真",
-      "小林健",
-      "松本武",
-      "松本莲",
-      "松本翔太",
-      "松本悠真",
-      "松本健",
-      "渡边武",
-      "渡边莲",
-      "渡边翔太",
-      "渡边悠真",
-      "渡边健"
+      "田中直树",
+      "渡边翔",
+      "伊藤隼人",
+      "山本诚",
+      "中村武",
+      "小林拓海",
+      "加藤润",
+      "吉田雄介",
+      "山田律",
+      "佐佐木亮",
+      "山口和也",
+      "松本勇",
+      "井上哲",
+      "木村光",
+      "林一郎",
+      "清水莲",
+      "山崎阳介",
+      "森龙二",
+      "池田宽",
+      "桥本启",
+      "石川聪",
+      "中岛司",
+      "前田正人",
+      "藤田悠斗",
+      "小川航",
+      "冈田博",
+      "长谷川彻",
+      "村上修",
+      "近藤彰",
+      "石井谦"
     ],
     [
       "查尔斯",
@@ -504,7 +504,8 @@ function BuddyDoll(DATA) {
     if (!has(o.top, out.topStyle)) out.topStyle = p.topStyle;
     if (!has(o.bottom, out.bottomStyle)) out.bottomStyle = p.bottomStyle;
     if (!has(o.socks, out.socks)) out.socks = p.socks;
-    out.acc = Array.isArray(out.acc) ? out.acc.filter(a => has(o.acc, a)) : [];
+    out.acc = [];
+    for(const a of Array.isArray(l?.acc)?l.acc:p.acc){if(!has(o.acc,a)||out.acc.includes(a))continue;out.acc=toggleAcc(out.acc,a);}
     for (const r of ROLES) if (!/^#[0-9a-f]{6}$/i.test(out[r] || "")) out[r] = p[r];
     for (const r of ROLES) out[r] = out[r].toLowerCase();
     return out;
@@ -513,7 +514,7 @@ function BuddyDoll(DATA) {
   function toggleAcc(list, a) {
     if (list.includes(a)) return list.filter(x => x !== a);
     const ew = DATA.eyewear;
-    return [...list.filter(x => !(ew.includes(a) && ew.includes(x))), a];
+    return [...list.filter(x => !(ew.includes(a) && ew.includes(x)) && !((DATA.hats||[]).includes(a) && DATA.hats.includes(x))), a];
   }
 
   // ---------------------------------------------------------- layers
@@ -523,7 +524,7 @@ function BuddyDoll(DATA) {
     const keys = [];
     const add = k => { if (DATA.layers[k]) keys.push(k); };
     const pose = DATA.pose[look.bottomStyle];
-    const hat = acc.has("beanie") ? 1 : 0;      // hair above the beanie's cuff is clipped away
+    const hat = DATA.hats.some(a => acc.has(a)) ? 1 : 0;      // hair above the beanie's cuff is clipped away
     add(`back/${look.style}/${f.bob}/${f.sway % 2}/${hat}`);
     add(`base/${arm ? 1 : 0}`);
     if (look.socks !== "none") add(`socks/${look.socks}`);
@@ -533,7 +534,7 @@ function BuddyDoll(DATA) {
     add(`bib/${look.bottomStyle}`);
     if (acc.has("scarf")) add("acc/scarf/0");
     add(`head/${look.style}/${f.bob}/${hat}`);
-    if (!acc.has("beanie")) add(`ahoge/${look.style}/${f.sway % 2}/${f.bob}`);
+    if (!hat) add(`ahoge/${look.style}/${f.sway % 2}/${f.bob}`);
     const eyes = f.expr === "neutral" ? look.eyes : "-";
     const brows = look.gender === "m" && DATA.eyewear.some(a => acc.has(a)) ? 1 : 0;
     add(`face/${look.gender}/${eyes}/${f.expr}/${f.look}/${f.bob}/${brows}`);

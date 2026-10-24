@@ -5,7 +5,7 @@ function makeSocialWorld(){
   for(let i=world.length;i<200;i++){
     const gender=i%2?'m':'f',pool=doll.NAMES[gender].filter(n=>!names.has(n)),name=take(pool);names.add(name);
     let lk,key;do{const colors=D.doll.swatches,options=D.doll.options;
-      lk=doll.normalize({...doll.PRESETS[gender],name,gender,style:take(options.style)[0],eyes:take(options.eyes)[0],topStyle:take(options.top)[0],bottomStyle:take(options.bottom)[0],socks:take(options.socks)[0],acc:random()<.35?[take(options.acc)[0]]:[],hair:take(colors.hair)[1],skin:take(colors.skin)[1],top:take(colors.cloth)[1],bottom:take(colors.cloth)[1],eye:take(colors.eye)[1]});
+      lk=doll.normalize({...doll.PRESETS[gender],name,gender,style:take(options.style.filter(o=>D.doll.shortStyles.includes(o[0])===(gender==='m')))[0],eyes:take(options.eyes)[0],topStyle:take(options.top)[0],bottomStyle:take(options.bottom)[0],socks:take(options.socks)[0],acc:random()<.35?[take(options.acc)[0]]:[],hair:take(colors.hair)[1],skin:take(colors.skin)[1],top:take(colors.cloth)[1],bottom:take(colors.cloth)[1],eye:take(colors.eye)[1]});
       key=JSON.stringify({...lk,name:undefined});
     }while(looks.has(key));looks.add(key);world.push({id:'person_'+i,name,look:lk,child:i%9===0});
   }return world;
@@ -13,14 +13,18 @@ function makeSocialWorld(){
 socialState.world=makeSocialWorld();socialState.archive={};socialState.decayDay=Math.floor(sim.t/1440);socialState.nextVisit=sim.t+1440;socialState.guest=null;
 const socialSheet=document.createElement('section');socialSheet.className='social-sheet';socialSheet.hidden=true;socialSheet.setAttribute('role','dialog');socialSheet.setAttribute('aria-modal','true');socialSheet.setAttribute('aria-labelledby','socialSheetTitle');document.getElementById('widget').append(socialSheet);
 let sheetReturnFocus=null;
+const visitOffer={id:null,reason:null,deadline:0,timer:0,frame:0};
+function cancelVisitOffer(){clearTimeout(visitOffer.timer);cancelAnimationFrame(visitOffer.frame);Object.assign(visitOffer,{id:null,reason:null,deadline:0,timer:0,frame:0});}
+function fitSocialSheet(){overHouse(socialSheet);socialSheet.style.setProperty('--cs',Math.max(.35,Math.min(1.35,view.offsetHeight/280,view.offsetWidth/500)));}
 function socialDialogHolds(){return !socialSheet.hidden;}
-function closeSocialSheet(){socialSheet.hidden=true;if(sheetReturnFocus?.isConnected&&!sheetReturnFocus.closest('[inert]'))sheetReturnFocus.focus({preventScroll:true});}
+function closeSocialSheet(){cancelVisitOffer();socialSheet.hidden=true;if(sheetReturnFocus?.isConnected&&!sheetReturnFocus.closest('[inert]'))sheetReturnFocus.focus({preventScroll:true});}
 function openSocialSheet(title){
+  cancelVisitOffer();socialSheet.className='social-sheet';fitSocialSheet();
   sheetReturnFocus=document.activeElement;setContactsOpen(false);closeRing();closePicker();setDiaryOpen(false);setSettingsOpen(false);socialSheet.replaceChildren();
   const heading=document.createElement('h3');heading.id='socialSheetTitle';heading.textContent=title;socialSheet.append(heading);
   const close=document.createElement('button');close.type='button';close.className='social-sheet-close';close.textContent='关闭';close.onclick=closeSocialSheet;socialSheet.append(close);socialSheet.hidden=false;close.focus({preventScroll:true});return socialSheet;
 }
-socialSheet.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();closeSocialSheet();}if(e.key==='Tab'){const buttons=[...socialSheet.querySelectorAll('button')],i=buttons.indexOf(document.activeElement);if(e.shiftKey&&i===0){e.preventDefault();buttons.at(-1).focus();}else if(!e.shiftKey&&i===buttons.length-1){e.preventDefault();buttons[0].focus();}}});
+socialSheet.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();e.preventDefault();if(!visitOffer.id)closeSocialSheet();}if(e.key==='Tab'){const buttons=[...socialSheet.querySelectorAll('button')],i=buttons.indexOf(document.activeElement);if(e.shiftKey&&i===0){e.preventDefault();buttons.at(-1).focus();}else if(!e.shiftKey&&i===buttons.length-1){e.preventDefault();buttons[0].focus();}}});
 function addSocialMemory(c,title,text){
   c.memories||=[];const last=c.memories.at(-1);if(last&&last.title===title&&Math.abs(last.t-sim.t)<60)return;
   c.memories.push({t:sim.t,title,text});
@@ -85,12 +89,27 @@ function tickSocialDecay(){
   }if(moodrow.classList.contains('contacts-open'))fillContacts();
 }
 function socialCallDue(c){const gap=c.family?1440:c.affinity>90?600:c.affinity>=60?1080:c.affinity>=20?1800:3600;return sim.t-(c.lastIncoming??-Infinity)>=gap;}
-function socialLifeSnapshot(){return {world:socialState.world,archive:socialState.archive,decayDay:socialState.decayDay,nextVisit:socialState.nextVisit,guest:socialState.guest?{...socialState.guest,npc:undefined}:null};}
+function socialLifeSnapshot(){return {namePoolVersion:2,worldStyleVersion:2,world:socialState.world,archive:socialState.archive,decayDay:socialState.decayDay,nextVisit:socialState.nextVisit,guest:socialState.guest?{...socialState.guest,npc:undefined}:null};}
 function restoreSocialLife(data){
   const memories=value=>Array.isArray(value)?value.filter(m=>m&&Number.isFinite(m.t)&&typeof m.title==='string'&&typeof m.text==='string').map(m=>({t:m.t,title:m.title.slice(0,100),text:m.text.slice(0,2000)})):[];
   socialState.world=makeSocialWorld();
   const worldData=new Map((Array.isArray(data?.world)?data.world:[]).filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string').map(p=>[p.id,p]));
-  for(const p of socialState.world){const saved=worldData.get(p.id)||socialState.contacts.find(c=>c.id===p.id);if(saved){p.name=doll.cleanName(saved.name)||p.name;p.look=doll.normalize(saved.look);}}
+  // Existing friends and archived memories keep their identities; only unmet people
+  // receive the revised pool once when an older save is opened.
+  const known=new Map([...Object.values(data?.archive||{}),...socialState.contacts].map(c=>[c.id,c]));
+  const used=new Set([...known.values()].map(c=>c.name));
+  for(const p of socialState.world){
+    const saved=worldData.get(p.id)||known.get(p.id),keep=data?.namePoolVersion===2||known.has(p.id);
+    if(saved){const fresh=p.look;p.look=doll.normalize(saved.look);
+      if(data?.worldStyleVersion!==2&&!known.has(p.id))p.look=doll.normalize({...p.look,style:fresh.style,acc:fresh.acc});
+    }
+    if(keep&&saved){p.name=doll.cleanName(known.get(p.id)?.name||saved.name)||p.name;used.add(p.name);}
+  }
+  for(const p of socialState.world){if(data?.namePoolVersion===2||known.has(p.id))continue;
+    const pool=doll.NAMES[p.look.gender].filter(n=>!used.has(n));
+    if(used.has(p.name)||!doll.NAMES[p.look.gender].includes(p.name))p.name=pool[0]||p.name;
+    used.add(p.name);p.look.name=p.name;
+  }
   socialState.archive={};for(const [id,c]of Object.entries(data?.archive||{})){if(!socialState.world.some(p=>p.id===id)||!c||typeof c!=='object')continue;socialState.archive[id]={id,name:socialState.world.find(p=>p.id===id).name,memories:memories(c.memories)};}
   for(const c of socialState.contacts){const saved=(Array.isArray(data?.contacts)?data.contacts:[]).find(p=>p&&p.id===c.id)||{};c.memories=memories(saved.memories);for(const key of ['metAt','lastSeen','lastIncoming','rejectDay','rejectLoss','lastVisitOffer'])c[key]=Number.isFinite(saved[key])?saved[key]:key==='rejectLoss'?0:null;
     c.child=!!socialState.world.find(p=>p.id===c.id)?.child;c.forgotten=!c.family&&!!saved.forgotten;c.farewellTried=!!saved.farewellTried;c.farewellPending=!!saved.farewellPending;
@@ -184,9 +203,35 @@ function tickSocialLife(dt){
   const eligible=sortedContacts().filter(c=>(c.family||c.affinity>=20)&&sim.t-(c.lastVisitOffer??-Infinity)>2*1440);
   if(eligible.length&&Math.random()<.4){const c=pick(eligible);c.lastVisitOffer=sim.t;requestIncomingCall(c.id,'visit');}
 }
-function showVisitOffer(c){
-  const sheet=openSocialSheet(`${contactName(c)}想来坐坐`),p=document.createElement('p');p.textContent=`${contactName(c)}：今天有空吗？想去你家聊聊天，方便的话我就过来。`;sheet.append(p);
-  for(const [label,accept]of [['欢迎来坐坐',true],['今天不方便',false]]){const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=()=>{closeSocialSheet();if(accept)inviteHome(c.id,true);else{socialRejected(c,'的来访邀请被婉拒了');log(`告诉${contactName(c)}今天不方便，改天再约。`);}};sheet.append(button);}
+function resolveVisitOffer(action,automatic=false){
+  if(!visitOffer.id)return;
+  const c=socialState.contacts.find(p=>p.id===visitOffer.id),reason=visitOffer.reason;
+  closeSocialSheet();if(!c)return;
+  if(action==='accept'){
+    log(`${automatic?'稍想了一下，':'回应了'}${contactName(c)}「${reason[0]}」的来访请求：${reason[2]}。`);inviteHome(c.id,true);
+  }else if(action==='decline'){
+    log(`${automatic?'稍想了一下，礼貌婉拒了':'礼貌婉拒了'}${contactName(c)}「${reason[0]}」的来访请求：${reason[3]}。`);
+    showSay('没关系，我们下次再约。',''+contactName(c)+'：',c);
+  }else if(action==='ignore'&&!automatic){
+    log(`暂时没有回应${contactName(c)}「${reason[0]}」的来访请求。`);
+    if(!c.family&&Math.random()<.3)socialRejected(c,'的来访请求一直没有得到回应');
+  }
+}
+function showVisitOffer(c,reason=null){
+  // Most visits are simply about company, with a smaller variety of funny excuses.
+  reason||=Math.random()<.72?SOCIAL_TEXT.visitReasons[0]:pick(SOCIAL_TEXT.visitReasons.slice(1));
+  const sheet=openSocialSheet(`${contactName(c)} · ${reason[0]}`);sheet.classList.add('visit-offer');sheet.querySelector('.social-sheet-close').remove();
+  const heading=sheet.querySelector('h3'),copy=document.createElement('div'),portrait=document.createElement('canvas'),p=document.createElement('p'),ignore=document.createElement('button'),actions=document.createElement('div'),clock=document.createElement('i');
+  copy.className='visit-copy';p.textContent='：'+reason[1];copy.append(heading,p);
+  portrait.width=portrait.height=40;portrait.className='visit-portrait';portrait.setAttribute('aria-label',contactName(c)+'的头像');drawContactAvatar(portrait,c);
+  ignore.type='button';ignore.className='visit-ignore';ignore.textContent='无视';ignore.onclick=()=>resolveVisitOffer('ignore');
+  actions.className='visit-actions';
+  for(const [label,action]of [[reason[2],'accept'],[reason[3],'decline']]){const button=document.createElement('button');button.type='button';button.className='visit-'+action;button.textContent=label;button.onclick=()=>resolveVisitOffer(action);actions.append(button);}
+  clock.className='visit-clock';clock.setAttribute('aria-hidden','true');sheet.append(portrait,copy,ignore,actions,clock);
+  Object.assign(visitOffer,{id:c.id,reason,deadline:performance.now()+6000});sheet.style.setProperty('--visit-remaining',1);
+  const progress=()=>{if(!visitOffer.id)return;sheet.style.setProperty('--visit-remaining',Math.max(0,(visitOffer.deadline-performance.now())/6000));visitOffer.frame=requestAnimationFrame(progress);};progress();
+  visitOffer.timer=setTimeout(()=>resolveVisitOffer(Math.random()<.6?'accept':'decline',true),6000);
+  actions.querySelector('button').focus({preventScroll:true});
 }
 function showFarewellOffer(c){
   const sheet=openSocialSheet(`${contactName(c)}想和你说几句话`),p=document.createElement('p');p.textContent=`${contactName(c)}：我们好像很久没好好说过话了。我有点不知道，还该不该再联系你。`;sheet.append(p);

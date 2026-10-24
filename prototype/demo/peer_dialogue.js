@@ -1,6 +1,6 @@
 // The diary yields its row before another speaker enters; Buddy keeps her own row.
 const peerHud=document.getElementById('peerHud'),peerBubble=document.getElementById('peerBubble'),peerText=peerBubble.querySelector('span'),peerAvatar=peerHud.querySelector('canvas');
-const peerSpeech={phase:'idle',entry:0,exit:0,pending:null,until:0,speakerId:null};
+const peerSpeech={phase:'idle',entry:0,exit:0,pending:null,until:0,speakerId:null,lineTimer:0,currentText:null};
 function peerDiaryReserved(){return peerSpeech.phase!=='idle';}
 function peerSpeaker(who,speaker){
   const label=String(who).replace(/[：:]\s*$/,'');
@@ -29,6 +29,7 @@ function fitPeerSpeech(){
   peerHud.style.height=height+'px';
 }
 function renderPeerLine(line){
+  peerSpeech.currentText=line.text;peerText.classList.remove('line-out');
   const speaker=line.speaker,name=speaker.anonymous?speaker.name:contactName(speaker);
   peerText.replaceChildren(Object.assign(document.createElement('em'),{className:'who',textContent:name+'：'}),document.createTextNode(spaced(line.text)));
   peerHud.setAttribute('aria-label',name+'的对话');peerAvatar.setAttribute('aria-label',name+'的头像');peerAvatar.title=name;
@@ -46,7 +47,14 @@ function showPeerSay(text,who,speaker=null){
   const line={text,who,speaker:peerSpeaker(who,speaker)};peerSpeech.pending=line;
   if(phoneHolds())return; // Keep identity while an incoming call owns the speech area.
   clearTimeout(peerSpeech.exit);peerSpeech.exit=0;
-  if(peerSpeech.phase==='visible'){renderPeerLine(line);sayShownAt=performance.now();return;}
+  if(peerSpeech.phase==='visible'){
+    sayShownAt=performance.now();peerSpeech.until=sayShownAt+5200;
+    clearTimeout(peerSpeech.lineTimer);
+    if(reduceMotionUI||peerSpeech.currentText===line.text){renderPeerLine(line);sayShownAt=performance.now();return;}
+    peerText.classList.add('line-out');
+    peerSpeech.lineTimer=setTimeout(()=>{peerSpeech.lineTimer=0;if(peerSpeech.phase!=='visible'||!peerSpeech.pending)return;renderPeerLine(peerSpeech.pending);sayShownAt=performance.now();},130);
+    return;
+  }
   if(peerSpeech.phase==='preparing')return;
   const wasLeaving=peerSpeech.phase==='leaving';
   peerSpeech.phase='preparing';setDiaryOpen(false);diaryEl.classList.add('peer-away');diaryEl.inert=true;
@@ -55,6 +63,7 @@ function showPeerSay(text,who,speaker=null){
   peerSpeech.entry=setTimeout(revealPeerLine,reduceMotionUI||wasLeaving?0:240);
 }
 function hidePeerSay(immediate=false){
+  clearTimeout(peerSpeech.lineTimer);peerSpeech.lineTimer=0;peerSpeech.currentText=null;peerText.classList.remove('line-out');
   clearTimeout(peerSpeech.entry);clearTimeout(peerSpeech.exit);peerSpeech.entry=peerSpeech.exit=0;peerSpeech.pending=null;
   if(peerSpeech.phase==='idle'){peerHud.hidden=true;return;}
   peerSpeech.phase='leaving';peerHud.classList.remove('on');peerHud.classList.add('leaving');peerHud.setAttribute('aria-hidden','true');

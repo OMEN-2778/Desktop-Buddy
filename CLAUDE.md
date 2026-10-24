@@ -6,7 +6,10 @@ going out) and the player nudges her by clicking furniture and her.
 "The screen is just the house": UI stays hidden until asked for, calm colours,
 Buddy is the most colourful thing. Browser demo + Tauri app for Windows.
 
-The owner writes Chinese: answer in Chinese, briefly. They are short on
+The owner writes Chinese: answer in Chinese, briefly.
+UI targets desktop: the owner does not plan a mobile version. Focus on desktop
+layouts and mouse interaction; do not spend work on phone-specific adaptation
+or mobile checks unless explicitly requested. They are short on
 usage quota: keep replies and work lean (small cropped screenshots, targeted
 tests, no unasked extras).
 

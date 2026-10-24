@@ -119,7 +119,7 @@ OhHhhhhhhhhhhhhhhhkO
 ..OkLLLLLLLLLLLLkO
 ..OkLLLLLLLLLLLLkO
 .qSqLLLLLLLLLLLLqSq
-..qkLLLLLLLLLLLLkq
+..qqLLLLLLLLLLLLqq
 ...qSLLLLLLLLLLSq
 ....qqSLLLLLLSqq
 """),
@@ -180,8 +180,107 @@ HEADS["hime"] = rows(_TOP + _CROWN + _BANGS + """
 ..Ohhk........khO
 ...OOO.......OOO
 """)
-SHORT_STYLES = ["messy", "afro", "neat", "buzz", "mid", "curly", "crop"]
-LONG_STYLES = ["long", "bob", "buns", "pony", "twin", "hime"]
+# Added silhouettes remain on the 20x28 grid, lit from the upper left.
+# Front hair ends at brow level; waves/braids continue in separate side layers.
+HEADS.update({
+    "split_spike": rows("""
+.
+.......OO....O
+.....OOHHO.OOhO
+....OHHYHOkHHhkO
+...OHHYhhkHHhhhkO
+..OHHHhhkLLkhhhhkO
+..OhHhkLLLLLkhhhkO
+..OhhkLLLLLLLkhhkO
+..OhkLLLLLLLLLkhkO
+..OhLLLLLLLLLLLLkO
+""" + _FACE),
+    "part37": rows(_TOP + """
+......OOOOOOOO
+....OOHHkHHhhhOO
+...OHHYkHYYhhhhkO
+..OHHhkHHhhhhhhhkO
+..OhHkHHhhhhhhhhkO
+..OhkHHhhhhhhhhhkO
+..OkLLhhhhhhhhhhkO
+..OhLLLLLhhhLhhhkO
+""" + _FACE),
+    "hedgehog": rows("""
+.......O....O
+....O.OHO..OhO.O
+...OHOHYhOOhHhOhO
+..OHYHHYhhHHhhhhhO
+.OHHHhhkhhhhkhhhhkO
+..OhHhhhhhhhhhhhkkO
+..OhhhhhhhhhhhhhkO
+..OhhkLhhLhhLLhhkO
+..OhkLLLLLLLLLLLkO
+..OhLLLLLLLLLLLLkO
+""" + _FACE),
+    "quiff": rows("""
+.........OOOO
+......OOOHHYHO
+....OOHHYYHhhkO
+...OHHYYhhhhhhkOO
+..OHHYhhhhhhhhhhkO
+..OhHhhhhhhhhhhhkO
+..OhhhhhhhhhhhhhkO
+..OhkkkkkkkkkhhhkO
+..OhLLLLLLLLLLkhkO
+..OhLLLLLLLLLLLLkO
+""" + _FACE),
+    "flat_top": rows("""
+.
+.
+.
+.....OOOOOOOOOO
+...OOHHHHHHHhhhOO
+..OhHhhhhhhhhhhhkO
+..OhhhhhhhhhhhhhkO
+..OhkkkkkkkkkkkkkO
+..OqLLLLLLLLLLLLqO
+..qqLLLLLLLLLLLLqq
+..qqLLLLLLLLLLLLqq
+.qSqLLLLLLLLLLLLqSq
+..qqLLLLLLLLLLLLqq
+...qSLLLLLLLLLLSq
+....qqSLLLLLLSqq
+"""),
+    "wave_short": rows(_TOP + _CROWN + """
+..OhHhhhLhhLhhhhkO
+.OhhkLLLhLLLLLhhkO
+""" + _FACE),
+    "wave_long": rows(_TOP + _CROWN + """
+..OhHhhhLLhhhhhhkO
+.OhhkLLLLLLhhLhhkO
+""" + _FACE),
+    "mullet": rows(_TOP + _CROWN + """
+.OhHhhLhhLhhhLhhkO
+..OhkLLLLLhLLLLhkO
+""" + _FACE),
+    "updo": rows("""
+.......OOOOOO
+......OHYYHhhO
+.....OHYHhhhhkO
+....OOHHhhhhhOO
+...OHHYYhhhhhhhkO
+..OHHYhhhhhhhhhhkO
+..OhHhhhkkhhhhhhkO
+..OhhhkkLLkkhhhhkO
+..OhhkLLLLLLkhhhkO
+..OhkLLLLLLLLkhhkO
+""" + _FACE),
+    "twist": rows(_TOP + _CROWN + """
+..OhHHhhhhhhhhhhkO
+..OhLLhhhhhhhLLhkO
+""" + _FACE),
+    "braid": rows(_TOP + _CROWN + """
+..OhHhkkhhhhhkkhkO
+..OhhLLLLhhLLLLhkO
+""" + _FACE),
+})
+SHORT_STYLES = ["messy", "afro", "neat", "buzz", "mid", "curly", "crop", "split_spike", "part37", "hedgehog", "quiff", "flat_top"]
+LONG_STYLES = ["long", "bob", "buns", "pony", "twin", "hime", "wave_short", "wave_long", "mullet", "updo", "twist", "braid"]
 
 AHOGE = [  # two sway positions
     rows("""
@@ -271,6 +370,21 @@ def draw_back_hair(s: Sprite, d: "Doll", bob: int = 0, sway: int = 0):
         shape.rect(4, 19, 3, 1, h[2]).rect(13, 19, 3, 1, h[2])  # tapered tips
         shape.vline(3, 9, 17, h[3])             # lit strand on the left
         shape.rect(15, 8, 2, 11, h[1]).rect(13, 19, 3, 1, h[1])  # shadow side
+    elif style in ("wave_short", "wave_long", "mullet"):
+        bottom = {"wave_short": 16, "wave_long": 22, "mullet": 19}[style]
+        shape.rect(3, 7, 14, bottom - 7, h[2])
+        for y in range(8, bottom, 4):
+            for cx in (3, 16):
+                shape.ellipse(cx, y, 2, 2, h[2])
+                shape.vline(cx - 1, y - 1, y, h[3] if cx == 3 else h[1])
+                shape.set(cx + 1, y + 1, h[1])
+        shape.vline(14, 10, bottom - 2, h[1])
+        shape.hline(5, 7, bottom - 1, h[1]).hline(12, 14, bottom - 1, h[1])
+    elif style == "twist":
+        shape.ellipse(15, 12, 3, 3, h[2])
+        shape.line(13, 11, 16, 10, h[3]).line(14, 13, 17, 12, h[1])
+    elif style == "braid":
+        shape.rect(3, 8, 14, 7, h[1])
     elif style == "bob":
         shape.rect(3, 8, 14, 8, h[1])           # the inside of the bob, behind the neck
     elif style == "buns":
@@ -283,7 +397,26 @@ def draw_back_hair(s: Sprite, d: "Doll", bob: int = 0, sway: int = 0):
     s.blit(out, 0, bob)
 
 
-HEAD_EXTRA = {"curly": draw_curly, "twin": draw_tails, "pony": draw_tails}
+def draw_side_hair(s: Sprite, d: "Doll", dy: int = 0):
+    """Side waves and woven plaits must stay in front of the shoulder layers."""
+    h = d.hair
+    if d.hair_style == "braid":
+        for x in (2, 16):
+            for y in range(12, 22, 2):
+                s.rect(x, y + dy, 2, 2, h[0]).set(x, y + dy, h[3]).set(x + 1, y + 1 + dy, h[1])
+                s.set(x + (y // 2 % 2), y + 1 + dy, h[2])
+            s.hline(x, x + 1, 22 + dy, P.coral[2]).set(x, 23 + dy, h[1])
+    else:
+        bottom = 17 if d.hair_style == "wave_short" else 22
+        shape = Sprite(W,H)
+        for x in (2, 17):
+            for y in range(11, bottom, 4):
+                shape.ellipse(x, y, 1.5, 2, h[2])
+                shape.set(x - 1, y - 1, h[3] if x == 2 else h[2]).set(x + 1, y + 1, h[1])
+        s.blit(shape.outline(h[0],grow=True).crop(1,1,W,H),0,dy)
+
+
+HEAD_EXTRA = {"curly": draw_curly, "twin": draw_tails, "pony": draw_tails, "wave_short": draw_side_hair, "wave_long": draw_side_hair, "braid": draw_side_hair}
 
 
 # ------------------------------------------------------------------ body
@@ -625,9 +758,10 @@ def draw_face(s: Sprite, d: "Doll", expr: str, look: int = 0, dy: int = 0):
 # ------------------------------------------------------------------ accessories
 # Any number can be worn at once, except one pair of eyewear. Fixed colors.
 
-ACCESSORIES = ["glasses", "sunglasses", "bow", "star", "headphones", "beanie", "scarf"]
-EYEWEAR = ("glasses", "sunglasses")
-HEAD_ACC_ORDER = ["beanie", "star", "bow", "headphones", "glasses", "sunglasses"]
+ACCESSORIES = ["glasses", "sunglasses", "bow", "star", "headphones", "beanie", "scarf", "half_glasses", "flat_glasses", "ribbon", "bow_small", "flower_clip", "heart_clip", "barrette", "cap"]
+EYEWEAR = ("glasses", "sunglasses", "half_glasses", "flat_glasses")
+HATS = ("beanie", "cap")
+HEAD_ACC_ORDER = ["beanie", "cap", "star", "bow", "ribbon", "bow_small", "flower_clip", "heart_clip", "barrette", "headphones", *EYEWEAR]
 
 
 def _grid(src, legend):
@@ -642,6 +776,34 @@ def draw_accessory(s: Sprite, d: "Doll", name: str, dy: int = 0):
             s.hline(x + 1, x + 2, y, f).hline(x + 1, x + 2, y + 4, f)
             s.vline(x, y + 1, y + 3, f).vline(x + 3, y + 1, y + 3, f)
         s.hline(9, 10, EYE_Y + dy, f)
+    elif name in ("half_glasses", "flat_glasses"):
+        f, light = P.metal[1], P.metal[3]
+        y = EYE_Y + dy
+        for x in (5, 11):
+            s.hline(x, x + 3, y - 1, f).vline(x, y, y + 1, f).vline(x + 3, y, y + 1, f)
+            if name == "flat_glasses":
+                s.hline(x, x + 3, y + 2, f)
+            s.set(x + 1, y - 1, light)
+        s.hline(9, 10, y, f)
+    elif name in ("ribbon", "bow_small"):
+        c = P.blue if name == "ribbon" else P.coral
+        grid = "oo...oo\noHHoCCo\noHCoCSo\nooCKCoo\n..oCo\n..oCo" if name == "ribbon" else "oo..oo\noHoCCo\noHKKCo\noo..oo"
+        s.blit(_grid(grid, {"o":c[0],"H":c[3],"C":c[2],"S":c[1],"K":c[4]}), 1 if name == "ribbon" else 13, 3 + dy)
+    elif name == "flower_clip":
+        c = P.coral
+        s.blit(_grid(".oHo.\noHCHo\nHCYCH\noHCHo\n.oHo.",{"o":c[0],"H":c[3],"C":c[2],"Y":P.mustard[3]}),14,4+dy)
+    elif name == "heart_clip":
+        c=P.coral
+        s.blit(_grid(".o.o.\noHoCo\noHCCo\n.oCo.\n..o..",{"o":c[0],"H":c[3],"C":c[2]}),1,5+dy)
+    elif name == "barrette":
+        c=P.mustard
+        s.blit(_grid(".ooooo\noHHHSo\n.ooooo",{"o":c[0],"H":c[3],"S":c[1]}),13,6+dy)
+    elif name == "cap":
+        c=P.blue;hat=Sprite(W,H)
+        _shade_dome(hat,9.5,5,7.5,4.8,range(1,7),c)
+        hat.hline(3,16,6,c[1]).hline(3,18,7,c[2]).hline(5,18,8,c[0])
+        hat.hline(4,16,7,c[3]).rect(9,3,2,2,P.linen[3]).set(9,2,c[1])
+        s.blit(hat.outline(c[0],grow=True).crop(1,1,W,H),0,dy)
     elif name == "sunglasses":
         y = EYE_Y + dy
         for x in (5, 11):
@@ -750,7 +912,7 @@ def draw_headphones(s: Sprite, d: "Doll", dy: int = 0):
     """A curved band that hugs the top of the hair (or the hat), ending in
     rounded, shaded cups over the ears. Cups take the top's color."""
     m, t = P.metal, d.top
-    shape = "hat" if "beanie" in d.accessories else d.hair_style
+    shape = "hat" if any(a in d.accessories for a in HATS) else d.hair_style
     if shape not in _BOX_CACHE:
         _BOX_CACHE[shape] = head_outline_box(shape)
     top, left, right = _BOX_CACHE[shape]
@@ -974,13 +1136,13 @@ class Doll:
         lg = self.legend()
         arm = wave is not None
         acc = set(self.accessories)
-        hat = int("beanie" in acc)
+        hat = int(any(a in acc for a in HATS))
 
         def grid_at(src, y):
             return lambda s: s.blit(Sprite.from_grid("\n".join(src), lg), 0, y)
 
         out = []
-        if self.hair_style in ("long", "bob", "buns", "hime"):
+        if self.hair_style in ("long", "bob", "buns", "hime", "wave_short", "wave_long", "mullet", "twist", "braid"):
             back = lambda s: draw_back_hair(s, self, bob, sway % 2)
             out.append((f"back/{self.hair_style}/{bob}/{sway % 2}/{hat}", under_hat(back, bob) if hat else back))
         base = lower_arm_removed(BASE, 15, "q") if arm else BASE
@@ -1000,7 +1162,7 @@ class Doll:
         extra = HEAD_EXTRA.get(self.hair_style)
         head = lambda s: (grid_at(HEADS[self.hair_style], bob)(s), extra and extra(s, self, bob))
         out.append((f"head/{self.hair_style}/{bob}/{hat}", under_hat(head, bob) if hat else head))
-        if self.hair_style == "messy" and "beanie" not in acc:
+        if self.hair_style == "messy" and not hat:
             out.append((f"ahoge/messy/{sway % 2}/{bob}", grid_at(AHOGE[sway % 2], bob)))
         eyes = self.eye_shape if expr == "neutral" else "-"
         brows = int(self.gender == "m" and self.brows_hidden)
@@ -1062,7 +1224,7 @@ VARIANTS = [
 # Option lists with the names the dressing room shows (order = UI order).
 OPTIONS = {
     "style": [("messy", "呆毛短发"), ("afro", "爆炸头"), ("neat", "侧分"), ("buzz", "寸头"), ("mid", "中分"), ("curly", "卷毛"),
-              ("long", "长直发"), ("bob", "波波头"), ("buns", "丸子头"), ("pony", "侧马尾"), ("twin", "双马尾"), ("crop", "碎刘海"), ("hime", "姬发")],
+              ("long", "长直发"), ("bob", "波波头"), ("buns", "丸子头"), ("pony", "侧马尾"), ("twin", "双马尾"), ("crop", "碎刘海"), ("hime", "姬发"), ("split_spike", "微分前刺"), ("part37", "三七分"), ("hedgehog", "刺猬头"), ("quiff", "飞机头"), ("flat_top", "平头"), ("wave_short", "短波浪卷"), ("wave_long", "长波浪卷"), ("mullet", "鲻鱼头"), ("updo", "盘发"), ("twist", "挽发"), ("braid", "编发")],
     "eyes": [("round", "圆眼"), ("bean", "豆豆眼"), ("sparkle", "闪亮眼"), ("droopy", "下垂眼"),
              ("cat", "猫眼"), ("smile", "眯眯眼"), ("almond", "杏仁眼"), ("sleepy", "半月眼")],
     "top": [("hoodie", "卫衣"), ("jacket", "夹克"), ("sweater", "翻领毛衣"), ("tee", "T恤"),
@@ -1071,7 +1233,7 @@ OPTIONS = {
                ("mini", "A字短裙"), ("pleated", "百褶裙"), ("maxi", "长裙")],
     "socks": [("none", "不穿"), ("short", "短袜"), ("long", "长袜")],
     "acc": [("glasses", "眼镜"), ("sunglasses", "墨镜"), ("bow", "蝴蝶结"), ("star", "星星发夹"),
-            ("headphones", "耳机"), ("beanie", "毛线帽"), ("scarf", "围巾")],
+            ("headphones", "耳机"), ("beanie", "毛线帽"), ("scarf", "围巾"), ("half_glasses", "半框眼镜"), ("flat_glasses", "扁框眼镜"), ("ribbon", "缎带蝴蝶结"), ("bow_small", "小蝴蝶结"), ("flower_clip", "花朵发夹"), ("heart_clip", "爱心发夹"), ("barrette", "一字发夹"), ("cap", "鸭舌帽")],
 }
 
 

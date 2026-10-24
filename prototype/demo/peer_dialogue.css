@@ -19,3 +19,6 @@
 .moodrow.contacts-open>.peer-hud { visibility:hidden; }
 .moodrow.setting .peer-hud { opacity:0; transition:opacity .18s; }
 @media(prefers-reduced-motion:reduce) { .peer-hud,.peer-hud *,.diary { transition:none !important; } }
+
+.peer-bubble>span { opacity:1; translate:0 0; transition:opacity .18s ease-out,translate .18s ease-out; }
+.peer-bubble>span.line-out { opacity:0; translate:0 -2px; transition-duration:.13s; }

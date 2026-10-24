@@ -121,6 +121,7 @@ def doll_data() -> dict:
         "pose": {k: {"shoes": sh, "legStart": ls, "sitDrop": list(sd)} for k, (sh, ls, sd) in doll.BOTTOM_POSE.items()},
         "headAcc": doll.HEAD_ACC_ORDER,
         "eyewear": list(doll.EYEWEAR),
+        "hats": list(doll.HATS),
         "swatches": {**SWATCHES, "eye": [["棕", RAMPS["hair_brown"][2]], ["黑", RAMPS["hair_black"][2]],
                                          ["蓝", RAMPS["blue"][2]], ["绿", RAMPS["green"][2]], ["紫", "#7a5aa6"],
                                          ["琥珀", RAMPS["mustard"][2]], ["粉", "#c75f81"]]},

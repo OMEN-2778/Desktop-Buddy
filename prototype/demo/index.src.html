@@ -626,15 +626,10 @@ body {
 @keyframes cardIn {
   0% { transform: scale(.04); opacity: 0; animation-timing-function: cubic-bezier(.2, .7, .4, 1); }
   12% { opacity: 1; }
-  48% { transform: scale(1.045); animation-timing-function: ease-in-out; }
+  48% { transform: scale(1); animation-timing-function: ease-in-out; }
   70% { transform: scale(.982); animation-timing-function: ease-in-out; }
-  86% { transform: scale(1.008); }
+  86% { transform: scale(.998); }
   100% { transform: none; opacity: 1; }
-}
-/* bigger than a tiny house: it hangs over other things, so it gets a backing */
-.card.big {
-  background: rgba(27, 19, 34, .86);
-  box-shadow: 0 -2px 0 0 #f7f6fb, 0 2px 0 0 #f7f6fb, -2px 0 0 0 #f7f6fb, 2px 0 0 0 #f7f6fb, 5px 5px 0 0 var(--shadow);
 }
 .card h3 { margin: 0; font-size: calc(26px * var(--cs, 1)); line-height: 1.25; font-weight: 700; letter-spacing: .05em; text-shadow: var(--outline); }
 .card p { margin: 0; max-width: 36em; font-size: calc(16px * var(--cs, 1)); line-height: 1.55; font-weight: 700; text-shadow: var(--outline); }
@@ -807,6 +802,17 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
   .needs.open .need img { animation: none; opacity: 1; transform: translateY(-50%); }
 }
 /*__SOCIAL_HUD_CSS__*/
+
+/* Bounds are the house itself, including during opening and result bursts. */
+.card { display:grid; grid-template-rows:auto minmax(0,1fr) auto; align-items:center; justify-items:center; gap:clamp(3px,calc(8px * var(--cs)),10px); padding:clamp(4px,calc(12px * var(--cs)),16px); border:2px solid #f7f6fb; background:rgba(27,19,34,.86); box-shadow:inset 2px 2px 0 #ffffff22; }
+.card h3 { font-size:clamp(12px,calc(26px * var(--cs)),30px); text-shadow:1px 1px #1b1322; }
+.card p { width:100%; min-height:0; max-height:100%; overflow-y:auto; overscroll-behavior:contain; font-size:clamp(10px,calc(16px * var(--cs)),18px); text-shadow:1px 1px #1b1322; }
+.card .cd-opts { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.card .cd-opt { width:100%; min-width:0; padding:clamp(4px,calc(8px * var(--cs)),10px); font-size:clamp(10px,calc(16px * var(--cs)),18px); overflow-wrap:anywhere; }
+.card-res { overflow:hidden; padding:clamp(4px,calc(10px * var(--cs)),14px); }
+.card-res.closing { overflow:visible; }
+.card-res.closing .cr-burst { display:none; }
+.card-res .cr-box { flex:0 1 auto; min-height:0; max-height:80%; max-width:100%; overflow-y:auto; padding:clamp(5px,calc(12px * var(--cs)),16px); font-size:clamp(10px,calc(16px * var(--cs)),18px); filter:none; }
 </style>
 
 <input type="file" id="importSave" accept=".json,application/json" hidden>
@@ -854,7 +860,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
       <div class="need" style="--i:2" data-k="hygiene" role="meter" aria-label="清洁" aria-valuemin="0" aria-valuemax="100"><span class="need-well"><span class="fill"></span></span><img alt="" data-icon="hygiene"><span class="need-label">清洁</span></div>
       <div class="need" style="--i:3" data-k="bladder" role="meter" aria-label="如厕" aria-valuemin="0" aria-valuemax="100"><span class="need-well"><span class="fill"></span></span><img alt="" data-icon="bladder"><span class="need-label">如厕</span></div>
       <div class="need" style="--i:4" data-k="social" role="meter" aria-label="社交" aria-valuemin="0" aria-valuemax="100"><span class="need-well"><span class="fill"></span></span><img alt="" data-icon="social"><span class="need-label">社交</span></div>
-      <div class="need" style="--i:5" data-k="fun" role="meter" aria-label="开心" aria-valuemin="0" aria-valuemax="100"><span class="need-well"><span class="fill"></span></span><img alt="" data-icon="fun"><span class="need-label">开心</span></div>
+      <div class="need" style="--i:5" data-k="fun" role="meter" aria-label="娱乐" aria-valuemin="0" aria-valuemax="100"><span class="need-well"><span class="fill"></span></span><img alt="" data-icon="fun"><span class="need-label">娱乐</span></div>
         </div>
       </div>
       <div class="skybar" id="skybar" role="img" aria-label="时间与天气">
@@ -955,7 +961,7 @@ function syncNames() {
   const n = nameOf();
   document.title = spaced(`${n}的小屋`);
   const set = (id, attr, text) => { const el = document.getElementById(id); if (el) el.setAttribute(attr, spaced(text)); };
-  set("needs", "aria-label", `${n}的状态（饱腹、精力、清洁、如厕、社交、开心）`);
+  set("needs", "aria-label", `${n}的状态（饱腹、精力、清洁、如厕、社交、娱乐）`);
   set("moodTip", "aria-label", `${n}现在的心情`);
   set("ring", "aria-label", `和${n}互动`);
   set("view", "aria-label", `小屋剖面，${n}在里面生活。点家具让${ta()}去做事，点衣柜打开造型室，点${ta()}弹出互动菜单。`);
@@ -1152,7 +1158,7 @@ for (const [k, a] of Object.entries(ACTS)) if (k !== "sleep") a.dur *= PACE;
 for (const [k, e] of Object.entries(EFFECT)) if (k !== "sleep") for (const n in e) if (e[n] > 0) e[n] /= PACE;
 // per game minute. Social runs dry in two days (user); the bladder in ~5 hours
 const DECAY = { hunger: 0.115, energy: 0.065, hygiene: 0.045, bladder: 0.3, social: 100 / 2880, fun: 0.11 };
-const NEED_NAMES = { hunger: "饱腹", energy: "精力", hygiene: "清洁", bladder: "如厕", social: "社交", fun: "开心" };
+const NEED_NAMES = { hunger: "饱腹", energy: "精力", hygiene: "清洁", bladder: "如厕", social: "社交", fun: "娱乐" };
 
 const sim = {
   t: 6 * 60 + 52,                           // game minutes since day 1, 00:00
@@ -1778,6 +1784,8 @@ function fit() {
   document.documentElement.style.setProperty("--row-h", 52 + "px");   // the gear + diary row: as tall as the emoji's canvas
   di.style.setProperty("--diary-max", Math.round(Math.max(150, Math.min(320, hPx * 1.1))) + "px");
   sizeSocialHud();
+  if(typeof fitSocialSheet === "function")fitSocialSheet();
+  if(typeof card !== "undefined" && card){placeCard(cardEl);placeCard(cardRes);}
   if (typeof fitSay === "function") { fitSay(); fitDiary(); if(typeof fitPeerSpeech === "function")fitPeerSpeech(); }   // a new size: refit both lines
   if (typeof guideOn !== "undefined" && guideOn) sizeGuide();
   if (TAURI || wardrobeOpen || diaryOn || (typeof guideOn !== "undefined" && guideOn)) { studio.refit(); makeRoom(); }
@@ -4955,19 +4963,10 @@ function cardVars() {
   return v;
 }
 
-// over the house like the pick-a-thing panel; a very small house (a phone
-// page) is too small for a card, so then it is a bit bigger, centred on it
+// Cards always fit the house; small windows scroll the text inside the frame.
 function placeCard(el) {
-  overHouse(el);
-  const w = view.offsetWidth, h = view.offsetHeight, W = Math.max(w, Math.min(360, innerWidth - 24)), H = Math.max(h, 210);
-  el.classList.toggle("big", W > w || H > h);
-  if (W > w || H > h) {
-    const vl = view.getBoundingClientRect().left, x = Math.max(12, Math.min(innerWidth - 12 - W, vl - (W - w) / 2));   // on screen
-    const vt = view.getBoundingClientRect().top, y = Math.max(8, Math.min(innerHeight - 8 - H, vt - (H - h) / 2));
-    el.style.setProperty("--pick-left", view.offsetLeft + x - vl + "px"); el.style.setProperty("--pick-top", view.offsetTop + y - vt + "px");
-    el.style.setProperty("--pick-w", W + "px"); el.style.setProperty("--pick-h", H + "px");
-  }
-  el.style.setProperty("--cs", Math.max(0.6, Math.min(1.35, H / 280)).toFixed(3));
+  overHouse(el);el.classList.remove('big');
+  el.style.setProperty('--cs',Math.max(.35,Math.min(1.35,view.offsetHeight/280,view.offsetWidth/500)).toFixed(3));
 }
 // where an element sits on the page by layout, ignoring transforms: a card
 // that is about to grow is still scaled down to a dot, so its bounding box

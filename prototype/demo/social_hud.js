@@ -18,6 +18,7 @@ const networkTrigger=document.getElementById('networkTrigger'),contactsPanel=doc
 const contactsList=document.getElementById('contactsList'),contactActions=document.getElementById('contactActions');
 const incomingCall=document.getElementById('incomingCall');
 networkTrigger.querySelector('img').src=D.uiIcons.people;
+needsEl.style.setProperty('--need-stripes',`url("${D.uiIcons.stripes}")`);
 for(const [selector,key]of [['.call-answer','answer'],['.call-decline','decline']])incomingCall.querySelector(selector).style.setProperty('--hud-relief-img',`url(${D.uiRelief[key]})`);
 // Share the same stepped circles and two-pixel frames as diary/settings UI.
 function sizeSocialHud(){
@@ -169,13 +170,14 @@ function requestIncomingCall(id,kind='call'){
   if(phoneCall.phase!=='idle'||!socialState.contacts.some(c=>c.id===id)||!canReceiveCall())return false;
   phoneCall.phase='waiting';phoneCall.contactId=id;phoneCall.kind=kind;return true;
 }
-function showIncomingCall(now){
+function showIncomingCall(){
+  const now=performance.now();
   const c=socialState.contacts.find(c=>c.id===phoneCall.contactId);if(!c){phoneCall.phase='idle';return;}
   hidePeerSay(true);setContactsOpen(false);setNeedsOpen(false);showMoodTip(false);closeRing();closePicker();
   incomingCall.querySelector('strong').textContent=c.family||c.affinity<20?contactName(c):contactRelation(c)+contactName(c);
   incomingCall.querySelector('.caller-copy span').textContent=phoneCall.kind==='video'?'打来视频':'打来电话';
   drawContactAvatar(incomingCall.querySelector('canvas'),c);incomingCall.classList.remove('accepting','declining');incomingCall.hidden=false;
-  moodTalk.classList.add('phone-active');phoneCall.phase='ringing';phoneCall.deadline=now+6000;
+  moodTalk.classList.add('phone-active');phoneCall.phase='ringing';phoneCall.deadline=now+6000;incomingCall.style.setProperty('--call-remaining',1);
   phoneCall.returnFocus=document.activeElement;incomingCall.querySelector('.call-answer').focus({preventScroll:true});
   phoneCall.timeout=setTimeout(()=>finishIncomingCall(false,true),6000);
   c.lastIncoming=sim.t;socialState.nextCall=sim.t+180+Math.random()*300;
@@ -184,7 +186,7 @@ function finishIncomingCall(accepted,automatic=false){
   if(phoneCall.phase!=='ringing')return;clearTimeout(phoneCall.timeout);
   const id=phoneCall.contactId,kind=phoneCall.kind,c=socialState.contacts.find(c=>c.id===id);
   phoneCall.phase=accepted?'accepting':'declining';incomingCall.classList.add(phoneCall.phase);
-  if(!accepted&&c){socialRejected(c,kind==='visit'?'没能约上这次来访':'的来电没能接通');}
+  if(!accepted&&c&&kind!=='visit'){socialRejected(c,'的来电没能接通');}
   if(!accepted&&c)log(automatic?`没来得及接听${contactName(c)}的来电，铃声在六秒后停了。`:`暂时婉拒了${contactName(c)}的来电，晚点再联系。`);
   phoneCall.exitTimer=setTimeout(()=>{
     phoneCall.phase='idle';phoneCall.contactId=null;incomingCall.hidden=true;moodTalk.classList.remove('phone-active');
@@ -200,12 +202,14 @@ incomingCall.querySelector('.call-answer').addEventListener('click',()=>finishIn
 incomingCall.querySelector('.call-decline').addEventListener('click',()=>finishIncomingCall(false));
 document.getElementById('testIncoming').addEventListener('click',()=>{if(!requestIncomingCall('abu'))log(asleep()?'先等主角醒来，再试试来电通知。':'现在正在忙，等当前活动结束再试试来电。');});
 function tickSocial(dt,now){
-  if(phoneCall.phase==='ringing'){if(now>=phoneCall.deadline)finishIncomingCall(false,true);return;}
+  // Real time has one source, independent of the simulation's speed and frame clock.
+  const callNow=performance.now();
+  if(phoneCall.phase==='ringing'){incomingCall.style.setProperty('--call-remaining',Math.max(0,(phoneCall.deadline-callNow)/6000));if(callNow>=phoneCall.deadline)finishIncomingCall(false,true);return;}
   if(phoneHolds())return;
   if(!Number.isFinite(socialState.nextCall))socialState.nextCall=sim.t+210;
   if(phoneCall.phase==='waiting'){
     if(asleep()||sim.mode==='down'||!socialState.contacts.some(c=>c.id===phoneCall.contactId)){phoneCall.phase='idle';socialState.nextCall=sim.t+120;return;}
-    if(canReceiveCall()&&now-sayShownAt>=2000)showIncomingCall(now);
+    if(canReceiveCall()&&callNow-sayShownAt>=2000)showIncomingCall();
   }else if(speed&&sim.t>=socialState.nextCall&&hour()>=9&&hour()<21&&canReceiveCall()){
     const farewell=socialState.contacts.find(c=>c.farewellPending),eligible=sortedContacts().filter(socialCallDue);
     if(farewell){farewell.farewellPending=false;requestIncomingCall(farewell.id,'farewell');}
