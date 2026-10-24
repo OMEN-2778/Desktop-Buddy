@@ -6,7 +6,11 @@
 
 ## 下载整理表
 
-[Excel、完整 ZIP 与可搜索 HTML](https://github.com/OMEN-2778/Desktop-Buddy/releases/tag/text-catalog-2026-10-25)
+- [Excel 总表与修改对照](downloads/Desktop-Buddy-text-catalog.xlsx)
+- [完整 ZIP 整理包](downloads/Desktop-Buddy-texts.zip)
+- [可搜索 HTML](downloads/Desktop-Buddy-text-search.html)
+
+下载文件时，打开文件页面后点右上方的 **Download raw file（下载原始文件）**。也可以使用下方的在线阅读目录，无需下载。
 
 ## 机会卡
 
