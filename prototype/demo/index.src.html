@@ -420,6 +420,7 @@ function choose() {
   for (const [a, v] of Object.entries(EMO_PULL[emotion().key] || {})) if (a !== "go_out" || canOut) score[a] += v;
   if(remoteSocial||homeVisitActive())for(const act of ["phone_call","phone_video","phone_text","pc_video"])score[act]=0;
   if(homeVisitActive()){score.host=20+(100-n.social)*.6;score.go_out=0;}
+  if(homeGuestPresent())score.go_out=0;
   for (const a of sim.recent) score[a] *= 0.3;   // don't repeat the last few things
   const best = Object.entries(score).sort((a, b) => b[1] - a[1])[0][0];
   if (best === "go_out") setOuting(h);
@@ -441,6 +442,7 @@ function outReason() {
   return LOW_EMO.has(e) ? "low" : HIGH_EMO.has(e) ? "happy" : sim.needs.social < 40 ? "lonely" : "bored";
 }
 function outingDest(h, why = outReason()) {
+  if(homeGuestPresent())return null;
   const n = sim.needs, w = weather.kind, se = seasonOf(sim.t).i;
   if (h < 8.5 || h >= 22 || sim.t - (sim.lastOut ?? -1e9) < OUT_GAP) return null;
   if (n.hunger < 35 || n.energy < 35 || n.hygiene < 30 || n.bladder < 35 || sim.mode === "down") return null;
@@ -485,6 +487,9 @@ function startAct(name, quiet = false) {
   }
   if (sim.place !== "home" && !OUT_ACTS.has(name) && ACTS[name].spot) { sim.queue.unshift(name); name = "go_home"; }   // indoor things: home first
   if (sim.place === "home" && OUT_ACTS.has(name) && name !== "go_out") name = "go_out";
+  if(name==='go_out'&&!sim.player&&homeGuestPresent()){
+    sim.dest=null;sim.outBack=null;sim.outWhy=null;name=choose();
+  }
   const a = ACTS[name];
   sim.act = name;
   const p = here();
@@ -517,6 +522,7 @@ function arrive() {
     sim.mode = "act"; sim.actEnd = Infinity; sim.park.seated = true;
     log("在" + parkLayout().name + "的长椅上坐下歇一会儿。"); return;
   }
+  if(sim.act==='go_out'&&!sim.player&&homeGuestPresent()){startAct('go_out');return;}
   if (sim.act === "go_out" || sim.act === "go_home") { throughDoor(sim.act === "go_out" ? sim.dest || "front" : "home"); return; }
   const a = ACTS[sim.act];
   sim.mode = "act";

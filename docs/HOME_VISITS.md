@@ -30,3 +30,5 @@
 安装的 [`humanizer`](../.claude/skills/humanizer/SKILL.md) 来自 blader/humanizer，MIT 许可。游戏专用的 [`everyday-dialogue`](../.claude/skills/everyday-dialogue/SKILL.md) 规定中文口语、亲疏程度、时效和角色身份。
 
 电话、消息和普通见面不再固定插入“性格自述”。性格通过完整的小事对话表现，在不同了解阶段使用不同话题。消息短篇、电话/视频故事及关系阶段对白已润色；相同话题在单个池中去重，时效条件仍有效。避免给每段强加温情总结、笑话包袱或机械语气词。
+
+来访期间主角不自主出门：从客人进门到走出家门（entering/visiting/leaving）都禁止自主选出门；已经开始、尚未跨门的自主出门会重新选择室内活动。手动出门保留；客人尚未到家不限制出门；客人真正离开后恢复自主外出。吃饭、洗澡、如厕、睡觉照常。验证见 `tools/check_guest_stay_home.js`。
