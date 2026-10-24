@@ -43,8 +43,9 @@ function showSocialMemories(id){
   }content.append(list);
 }
 function worldNpcIdentity(role){
-  if(role==='bartender')return socialState.world.find(c=>c.id==='person_10');
+  if(role==='bartender'&&friendOutingState?.id!=='person_10')return socialState.world.find(c=>c.id==='person_10');
   const occupied=new Set((life.npcs||[]).map(n=>n.personId));if(typeof barScene!=='undefined'&&barScene){for(const n of [barScene.bartender,...(barScene.guests||[])])if(n)occupied.add(n.personId);}
+  if(friendOutingState)occupied.add(friendOutingState.id);
   const pool=socialState.world.filter(c=>c.child===(role==='kid')&&!occupied.has(c.id)&&!(c.look.style===look.style&&c.look.hair===look.hair));return pick(pool.length?pool:socialState.world);
 }
 function meetWorldNpc(n){
@@ -126,7 +127,7 @@ function restoreSocialLife(data){
   const guest=data?.guest;if(guest&&socialState.contacts.some(c=>c.id===guest.id)&&Number.isFinite(guest.until)){
     socialState.guest={id:guest.id,phase:['scheduled','entering','visiting','leaving'].includes(guest.phase)?guest.phase:'scheduled',at:Number.isFinite(guest.at)?guest.at:sim.t,until:guest.until,s:Number.isFinite(guest.s)?guest.s:0,next:0,said:[],count:0,activity:guest.activity||'chat'};
       restoreHomeVisitProgress(socialState.guest,guest);
-  }restorePersonalities(data);restoreFriendOuting(data?.friendOuting);closeSocialSheet();
+  }restorePersonalities(data);restoreFriendOuting(data?.friendOuting,false);closeSocialSheet();
 }
 
 D.spots.host=[D.spots.sofa[0],D.spots.sofa[1]-6,'sit'];

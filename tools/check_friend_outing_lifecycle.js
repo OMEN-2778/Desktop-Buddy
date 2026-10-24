@@ -35,6 +35,18 @@ const {chromium}=require('playwright');
    if(SOCIAL_DIALOGUE.visit.common.length!==300)throw Error('Home dialogue count');
    return {outing:Object.values(pools).reduce((n,p)=>n+p.length,0),home:SOCIAL_DIALOGUE.visit.common.length,cards:CARDS.filter(c=>c.service==='friend_outing').length};
   });assert.deepEqual(catalog,{outing:1300,home:300,cards:40});
+  // A companion cannot also be randomly spawned as a passerby or bartender.
+  await page.evaluate(()=>{
+   resetCompanion('park');const original=friendOutingState.id;
+   friendOutingState.id='person_10';
+   for(let i=0;i<600;i++)for(const role of ['adult','shopper','clerk','bar_guest','bartender'])if(worldNpcIdentity(role).id==='person_10')throw Error('Companion duplicate '+role);
+   friendOutingState.id=original;
+   const person=socialState.world.find(c=>c.id==='person_10');
+   if(!socialState.contacts.some(c=>c.id===person.id))socialState.contacts.push({...person,affinity:65,memories:[]});
+   resetCompanion('bar');friendOutingState.id=person.id;
+   const saved=snapshot();sim.place='home';restore(saved);
+   if(outingFriend()?.id!==person.id||life.npcs.some(n=>n.personId===person.id)||barScene.bartender.personId===person.id)throw Error('Reload spawned the companion twice');
+  });
   // Entry goes through the same search / door / wipe as solo dining.
   for(const shop of ['diner','bistro','noodle','cinema']){
    await page.evaluate(shop=>{resetCompanion('mall');mallS.menuShop=shop;mallPlanVisit(shop==='cinema'?'cinema':'restaurant',shop==='cinema'?{id:'star'}:null);mallS.x=mallS.goal.x;stopAt(mallS.goal.it);},shop);

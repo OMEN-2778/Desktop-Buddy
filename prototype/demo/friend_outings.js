@@ -45,13 +45,15 @@ function finishFriendOuting(reason='一起走到家门口，挥手道别。'){
   if(c){const text=`和${contactName(c)}去${FRIEND_OUTING_PLACES[st.dest]}玩，${reason}`;log(text,null,st.said?.length?st.said:undefined);if(st.startedAt!=null){finishContactTalk(c.id,'outing');addSocialMemory(c,'一起去'+FRIEND_OUTING_PLACES[st.dest],text);}}
   friendOutingState=null;hidePeerSay();contactsSig='';if(c&&st.startedAt!=null)showSay('那我先回去啦，下次再约。',contactName(c)+'：',c);
 }
-function restoreFriendOuting(raw){
+function restoreFriendOuting(raw,locationReady=true){
   friendOutingState=null;if(!raw||!socialState.contacts.some(c=>c.id===raw.id)||!FRIEND_OUTING_PLACES[raw.dest])return;
   const phase=['waiting','departing','active','returning'].includes(raw.phase)?raw.phase:null;if(!phase)return;
   friendOutingState={id:raw.id,dest:raw.dest,phase,at:Number.isFinite(raw.at)?raw.at:sim.t,bookedAt:Number.isFinite(raw.bookedAt)?raw.bookedAt:sim.t,startedAt:Number.isFinite(raw.startedAt)?raw.startedAt:null,nextTalk:realClock+8,seen:Array.isArray(raw.seen)?raw.seen.filter(s=>typeof s==='string').slice(-600):[],count:Number.isFinite(raw.count)?raw.count:0,said:[],distance:0};
-  if(['active','returning'].includes(phase)&&sim.place==='home')friendOutingState=null;
-  if(friendOutingState&&phase==='departing'&&sim.place==='home'){friendOutingState.phase='waiting';friendOutingState.at=sim.t;friendOutingState.startedAt=null;}
-  if(friendOutingState&&sim.place==='park'&&sim.park?.seated){sim.route=[[parkLayout().bench.x-10,parkLayout().bench.feet]];sim.s=0;sim.target=0;}
+  if(locationReady){
+    if(['active','returning'].includes(phase)&&sim.place==='home')friendOutingState=null;
+    if(friendOutingState&&phase==='departing'&&sim.place==='home'){friendOutingState.phase='waiting';friendOutingState.at=sim.t;friendOutingState.startedAt=null;}
+    if(friendOutingState&&sim.place==='park'&&sim.park?.seated){sim.route=[[parkLayout().bench.x-10,parkLayout().bench.feet]];sim.s=0;sim.target=0;}
+  }
 }
 function friendOutingSnapshot(){const s=friendOutingState;return s?{id:s.id,dest:s.dest,phase:s.phase,at:s.at,bookedAt:s.bookedAt,startedAt:s.startedAt,seen:s.seen,count:s.count}:null;}
 function companionContext(){return sim.place+':'+(sim.place==='park'?parkLayout().id:mallVisitInside()?mallS.visit.kind:'');}
