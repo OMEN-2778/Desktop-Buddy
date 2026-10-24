@@ -193,7 +193,7 @@ function drawSleepingGuest(ctx,g,c){
   if(!g.sleeping||!c)return false;
   if(g.overnight.berth==='shared'&&sim.mode==='act'&&sim.act==='sleep')return true;
   if(g.overnight.berth==='guest-sofa')drawSofaSleeper(ctx,guestLyingCanvas(g,c,'sleepy'));
-  else if(g.overnight.berth==='shared'){const [x,y]=D.sleepover.bed;ctx.drawImage(guestLyingCanvas(g,c,'sleepy',true),x+3,y+19);ctx.drawImage(IMG.fx.shared_cover[0],x,y);}
+  else if(g.overnight.berth==='shared'){const [x,y]=D.sleepover.bed;ctx.drawImage(guestLyingCanvas(g,c,'sleepy',true),x+1,y+1);ctx.drawImage(IMG.fx.shared_cover[0],x,y);}
   else{ctx.drawImage(guestLyingCanvas(g,c,'sleepy',true),...D.sleepLying);drawOverlay(ctx,'sleep_cover');}
   return true;
 }
@@ -202,6 +202,8 @@ function drawHeroSleepover(ctx,full){
   const g=socialState.guest,c=cForGuest(g);
   if(!sleepoverSharedBed()||!c)return false;
   const [x,y]=D.sleepover.bed,expr=sleepoverChatAwake()?'neutral':'sleepy';
-  ctx.drawImage(lyingHead({...full,expr,look:0,bob:0,sway:0,wave:null}),x+3,y+1);
-  if(g.sleeping)ctx.drawImage(guestLyingCanvas(g,c,expr,true),x+3,y+19);ctx.drawImage(IMG.fx.shared_cover[0],x,y);return true;
+  // Draw the far sleeper first; the near head overlaps it and sits 3px right.
+  if(g.sleeping)ctx.drawImage(guestLyingCanvas(g,c,expr,true),x+1,y+1);
+  ctx.drawImage(lyingHead({...full,expr,look:0,bob:0,sway:0,wave:null}),x+4,y+9);
+  ctx.drawImage(IMG.fx.shared_cover[0],x,y);return true;
 }

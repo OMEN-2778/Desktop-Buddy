@@ -1,8 +1,8 @@
 """Guest furniture: oak frames, sage/oat upholstery, light from upper left.
 
 The study chair is 18x25, with the seat at y=18 and feet on row 24.
-Shared bedding is 42x40: two pillow lanes, the same width as the normal bed,
-so the nightstand and wardrobe keep their original clearances.
+Shared bedding uses a 42x40 canvas with a 32px-tall bed: overlapping pillows
+and quilts give the two sleepers depth rather than separate stacked lanes.
 """
 from pixelkit import P, Sprite
 
@@ -25,21 +25,21 @@ def study_chair():
 def shared_bed():
     s = Sprite(42, 40)
     wood, sheet = P.oak, P.porcelain
-    s.rect(0, 0, 5, 38, wood[0]).rect(1, 1, 3, 36, wood[2])
-    s.vline(1, 1, 36, wood[4]).set(0, 0, None).set(4, 0, None)
-    s.rect(4, 2, 38, 34, sheet[0]).rect(5, 3, 36, 32, sheet[2])
-    s.hline(5, 40, 3, sheet[3]).vline(5, 4, 33, sheet[3])
-    for y in (3, 21):
-        s.rect(5, y, 12, 14, sheet[0]).rect(6, y+1, 10, 12, sheet[3])
-        s.vline(15, y+3, y+11, sheet[2])
-    s.rect(4, 35, 38, 3, wood[0]).hline(5, 40, 35, wood[3])
-    s.rect(6, 38, 2, 2, wood[0]).rect(38, 38, 2, 2, wood[0])
+    s.rect(0, 0, 5, 30, wood[0]).rect(1, 1, 3, 28, wood[2])
+    s.vline(1, 1, 28, wood[4]).set(0, 0, None).set(4, 0, None)
+    s.rect(4, 2, 38, 26, sheet[0]).rect(5, 3, 36, 24, sheet[2])
+    s.hline(5, 40, 3, sheet[3]).vline(5, 4, 25, sheet[3])
+    for x, y in ((3, 3), (6, 11)):
+        s.rect(x, y, 12, 14, sheet[0]).rect(x+1, y+1, 10, 12, sheet[3])
+        s.vline(x+10, y+3, y+11, sheet[2])
+    s.rect(4, 27, 38, 3, wood[0]).hline(5, 40, 27, wood[3])
+    s.rect(6, 30, 2, 2, wood[0]).rect(38, 30, 2, 2, wood[0])
     return s
 
 
 def shared_cover():
     s = Sprite(42, 40)
-    for y, ramp in ((1, P.oat), (19, P.sage)):
+    for y, ramp in ((1, P.oat), (9, P.sage)):
         for x in range(18, 42):
             top = y + (0 if x < 30 else (x-30)//3)
             s.vline(x, top, y+17, ramp[0])

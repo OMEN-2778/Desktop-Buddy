@@ -376,7 +376,7 @@ def main():
         "weatherMasks": weather_masks,
         "doors": doors, "leaves": leaves, "overlays": overlays,
         "sleepLying": [bed_x + Hs.SLEEP_HEAD[0], bed_y + Hs.SLEEP_HEAD[1]],
-        "sleepover": {"bed": [bed_x, floors[1] - 39],
+        "sleepover": {"bed": [bed_x, floors[1] - 31],
                       "sofa": [A["sofa"][0] + 3, floors[0] - 20]},
         "clickables": clickables, "outside": outside,
         "trip": {k.split("_")[1]: png(v) for k, v in trip_icons.build().items()}, "windows": windows, "screens": screens, "fx": fx,
