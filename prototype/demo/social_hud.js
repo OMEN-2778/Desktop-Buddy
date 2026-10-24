@@ -22,18 +22,18 @@ needsEl.style.setProperty('--need-stripes',`url("${D.uiIcons.stripes}")`);
 for(const [selector,key]of [['.call-answer','answer'],['.call-decline','decline']])incomingCall.querySelector(selector).style.setProperty('--hud-relief-img',`url(${D.uiRelief[key]})`);
 // Share the same stepped circles and two-pixel frames as diary/settings UI.
 function sizeSocialHud(){
-  const style=document.getElementById('widget').style,b=skyGeo.b,small=innerWidth<=600;
+  const style=document.getElementById('widget').style,b=skyGeo.b,small=false;
   style.setProperty('--hud-badge-img',`url(${D.uiRelief[small?'badgeSmall':'badge']})`);
   for(const [name,n,p]of [['panel',12,2],['card',8,2],['button',9,2],['call-button',7,2],['circle',small?10:12,2],['avatar',small?6:8,2],['small',5,2],['meter',2,2],['track',4,b],['caller',small?7:9,2]]){
     style.setProperty(`--hud-${name}-clip`,roundClip(n,p));
     style.setProperty(`--hud-${name}-in`,roundClip(Math.max(1,n-1),p));
   }
   // Follow the game's actual width, including desktop display scaling.
-  const houseWidth=view.getBoundingClientRect().width,compact=houseWidth<420;
+  const houseWidth=view.getBoundingClientRect().width,metrics=uiMetrics(houseWidth,view.offsetHeight),compact=metrics.contactCompact;
   contactsPanel.classList.toggle('compact',compact);
-  contactsPanel.classList.toggle('two-columns',houseWidth<300);
-  contactsPanel.classList.toggle('stacked',houseWidth<220);
-  style.setProperty('--contact-name-fs',Math.max(11,Math.min(16,Math.floor(houseWidth/45)))+'px');
+  contactsPanel.classList.toggle('two-columns',metrics.contactColumns===2);
+  contactsPanel.classList.toggle('stacked',metrics.stackedContacts);
+  incomingCall.classList.toggle('compact',metrics.callStacked);
   style.setProperty('--contact-avatar-clip',roundClip(compact?5:8,2));
   style.setProperty('--hud-track-in',roundClip(2,b));
   style.setProperty('--hud-track-edge',2*b+'px');

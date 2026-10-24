@@ -39,13 +39,14 @@ function showPersonality(id=null,selection=null){
  const c=id?socialState.contacts.find(c=>c.id===id):null;if(id&&!c)return;
  if(!c&&!wardrobeOpen){showHint('请在更衣室里修改性格。');return;}
  if(phoneHolds()||socialBusy()||card||wiping){showHint('先忙完眼前的事，再看看性格吧。');return;}
- const sheet=c?openSocialSheet(`${contactName(c)} · 性格`):openWardrobePersonality();sheet.classList.add('personality-sheet');
- const intro=document.createElement('p');intro.className='personality-intro';intro.textContent=c?'性格会在相处中慢慢显露。话少不等于疏远，热情也有安静的时候。':'性格影响自主行为和表达；你手动安排的事始终优先。可以以后再调整。';sheet.append(intro);
+ const sheet=c?openSocialSheet(`${contactName(c)} · 性格`):openWardrobePersonality();sheet.classList.add('personality-sheet');const content=c?socialContent(sheet):sheet;
+ const intro=document.createElement('p');intro.className='personality-intro';intro.textContent=c?'性格会在相处中慢慢显露。话少不等于疏远，热情也有安静的时候。':'性格影响自主行为和表达；你手动安排的事始终优先。可以以后再调整。';content.append(intro);
  const draft={...(selection||heroPersonality)},form=document.createElement('div');form.className='personality-axes';
- for(const axis of PERSONALITY_AXES){const row=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent=axis[1];row.append(legend);
-  if(c){const known=c.family||c.personalitySeen?.includes(axis[0]),p=document.createElement('p');p.textContent=known?personalityLabel(axis,personalityOf(c)[axis[0]])+' · '+(Math.abs(personalityOf(c)[axis[0]])<=25?'会依照当时的情境调整自己的节奏。':axis[personalityOf(c)[axis[0]]<0?4:5]):'还不太了解 · 再聊聊，或一起经历一些事吧。';row.append(p);}
-  else for(const [value,label]of [[-75,axis[2]],[0,{social:'随和',care:'灵活',sensitivity:'平和'}[axis[0]]],[75,axis[3]]]){const labelEl=document.createElement('label'),input=document.createElement('input');input.type='radio';input.name='personality-'+axis[0];input.value=value;input.checked=value===(draft[axis[0]]< -25?-75:draft[axis[0]]>25?75:0);input.onchange=()=>draft[axis[0]]=value;labelEl.append(input,document.createTextNode(label));row.append(labelEl);}form.append(row);
- }sheet.append(form);
+ for(const axis of PERSONALITY_AXES){
+  if(c){const known=c.family||c.personalitySeen?.includes(axis[0]),fact=document.createElement('div'),label=document.createElement('strong'),value=document.createElement('span'),description=document.createElement('small');fact.className='personality-fact';label.textContent=axis[1];value.textContent=known?personalityLabel(axis,personalityOf(c)[axis[0]]):'还不太了解';description.textContent=known?(Math.abs(personalityOf(c)[axis[0]])<=25?'会依照当时的情境调整自己的节奏。':axis[personalityOf(c)[axis[0]]<0?4:5]):'再聊聊，或一起经历一些事吧。';value.title=description.textContent;fact.append(label,value,description);form.append(fact);continue;}
+  const row=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent=axis[1];row.append(legend);
+  for(const [value,label]of [[-75,axis[2]],[0,{social:'随和',care:'灵活',sensitivity:'平和'}[axis[0]]],[75,axis[3]]]){const labelEl=document.createElement('label'),input=document.createElement('input');input.type='radio';input.name='personality-'+axis[0];input.value=value;input.checked=value===(draft[axis[0]]< -25?-75:draft[axis[0]]>25?75:0);input.onchange=()=>draft[axis[0]]=value;labelEl.append(input,document.createTextNode(label));row.append(labelEl);}form.append(row);
+ }if(c){content.prepend(form);}else content.append(form);
  if(!c){const actions=document.createElement('div');actions.className='personality-actions';sheet.append(actions);for(const [label,action]of [['随机一组',()=>{showPersonality(null,seededPersonality('hero-'+Math.random()));}],['确定性格',()=>{for(const [key]of PERSONALITY_AXES){const checked=sheet.querySelector(`input[name="personality-${key}"]:checked`);draft[key]=Number(checked.value);}heroPersonality=normalizePersonality(draft);heroPersonalityChosen=true;closeWardrobePersonality();log(`认识自己：${personalityTraits(null).join('、')}。这些倾向会影响生活，但每次选择仍握在自己手里。`);autoSave();}]]){const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=action;actions.append(button);}}
  if(!c)makeRoom();
 }

@@ -9,7 +9,7 @@ const out='/workspace/artifacts/contact-fit';fs.mkdirSync(out,{recursive:true});
   await page.evaluate(()=>{closeGuide();closePicker();speed=0;sim.mode='idle';sim.act=null;sim.windup=null;sim.idleUntil=Infinity;cardMoment=()=>false;rollCard=()=>false;rollEvents=()=>false;socialState.nextCall=socialState.nextVisit=1e9;
    const names=['中村美咲','陈小明','亚历山大','乔安娜','阿辰','林小雨','糖糖','王小可','木子','亚历山德拉'];socialState.contacts.filter(c=>!c.family).forEach((c,i)=>c.name=names[i]);contactsSig='';
   });
-  for(const scalePct of [25,50,100]){
+  for(const scalePct of [25,50,75,100]){
    await page.evaluate(v=>{setContactsOpen(false);setScale(v);},scalePct);const before=await page.locator('#view').boundingBox();await page.evaluate(()=>setContactsOpen(true));await page.waitForTimeout(120);
    const report=await page.evaluate(()=>({house:view.getBoundingClientRect().width,panel:contactsPanel.getBoundingClientRect().width,cols:getComputedStyle(contactsList).gridTemplateColumns.split(' ').length,
     entries:[...contactsList.querySelectorAll('.contact-card')].map(card=>{const name=card.querySelector('strong'),relation=card.querySelector('small'),avatar=card.querySelector('canvas');return {name:name.textContent,title:name.title,width:name.clientWidth,needed:name.scrollWidth,font:parseFloat(getComputedStyle(name).fontSize),relationFits:relation.scrollWidth<=relation.clientWidth,avatar:avatar.getBoundingClientRect().width,card:card.getBoundingClientRect().width,copyHeight:card.querySelector('.contact-copy').getBoundingClientRect().height};})}));

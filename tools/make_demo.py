@@ -387,7 +387,7 @@ def main():
         "storm": {"bolts":[png(STORM.bolt(i)) for i in range(3)]},
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    html = mc.inline_shared(SRC.read_text()).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", chats_js()).replace("/*__PLACES_JS__*/", places_js()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text()).replace("/*__GUIDE_JS__*/", (SRC.parent / "guide_text.js").read_text())
+    html = mc.inline_shared(SRC.read_text().replace("/*__UI_CSS__*/", (SRC.parent / "ui.css").read_text())).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", chats_js()).replace("/*__PLACES_JS__*/", places_js()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text()).replace("/*__GUIDE_JS__*/", (SRC.parent / "guide_text.js").read_text())
     html = html.replace("/*__BAR_TEXT_JS__*/", "const BAR_TEXT = " + json.dumps(bar_text, ensure_ascii=False) + ";")
     html = html.replace("/*__BAR_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "bar_cards.json").read_text() + ");")
     html = html.replace("/*__SLEEP_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "sleep_cards.json").read_text() + ");")
@@ -402,6 +402,7 @@ def main():
     html = html.replace("/*__MALL_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "mall_cards.json").read_text() + ");")
     html = html.replace("/*__STORM_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "storm_cards.json").read_text() + ");")
     html = html.replace("/*__SOCIAL_HUD_CSS__*/", (SRC.parent / "social_hud.css").read_text()+"\n"+(SRC.parent / "peer_dialogue.css").read_text())
+    html = html.replace("/*__UI_LAYOUT_JS__*/", (SRC.parent / "ui_layout.js").read_text())
     html = html.replace("/*__PERSONALITY_JS__*/", (SRC.parent / "personality.js").read_text())
     html = html.replace("/*__SOCIAL_HUD_JS__*/", (SRC.parent / "social_hud.js").read_text())
     html = html.replace("/*__STORM_JS__*/", "const STORM_TEXT = " + (SRC.parent / "storm_text.json").read_text() + ";\n" + (SRC.parent / "storm.js").read_text())

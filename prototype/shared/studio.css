@@ -3,18 +3,10 @@
    right. Every tab panel sits in the same grid cell, so the window keeps the
    height of the tallest tab and nothing below it jumps when tabs change.
    The host page supplies the color tokens; --sp is one UI pixel. */
-.studio {
-  --sp: 3px;
-  background: var(--panel);
-  color: var(--ink);
-  font-size: 13px;
-  line-height: 1.4;
-  box-shadow:
+.studio { --sp: 3px; background: var(--panel); color: var(--ink); font-size: 13px; line-height: 1.4; box-shadow:
     0 calc(-1 * var(--sp)) 0 0 var(--edge), 0 var(--sp) 0 0 var(--edge),
     calc(-1 * var(--sp)) 0 0 0 var(--edge), var(--sp) 0 0 0 var(--edge),
-    calc(var(--sp) * 2) calc(var(--sp) * 2) 0 0 var(--shadow);
-  min-width: 0;
-}
+    calc(var(--sp) * 2) calc(var(--sp) * 2) 0 0 var(--shadow); min-width: 0; --st-option-clip:polygon(4px 0,calc(100% - 4px) 0,calc(100% - 4px) 2px,calc(100% - 2px) 2px,calc(100% - 2px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 2px) calc(100% - 4px),calc(100% - 2px) calc(100% - 2px),calc(100% - 4px) calc(100% - 2px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 2px),2px calc(100% - 2px),2px calc(100% - 4px),0 calc(100% - 4px),0 4px,2px 4px,2px 2px,4px 2px); --st-option-in:polygon(2px 0,calc(100% - 2px) 0,calc(100% - 2px) 1px,calc(100% - 1px) 1px,calc(100% - 1px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 1px) calc(100% - 2px),calc(100% - 1px) calc(100% - 1px),calc(100% - 2px) calc(100% - 1px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 1px),1px calc(100% - 1px),1px calc(100% - 2px),0 calc(100% - 2px),0 2px,1px 2px,1px 1px,2px 1px); }
 .studio button {
   font: inherit; color: var(--ink); background: var(--panel-2);
   border: 0; margin: var(--sp); padding: 3px 10px; cursor: pointer;
@@ -69,22 +61,17 @@
 .st-main { display: grid; gap: 10px; min-width: 0; }
 .st-tabs { display: flex; flex-wrap: wrap; gap: 2px 4px; border-bottom: var(--sp) solid var(--edge); padding-bottom: 6px; }
 .studio .st-tabs button { padding: 2px 12px; font-weight: 700; letter-spacing: .1em; }
-.studio .st-tabs button[aria-selected="true"] {
-  background: var(--accent); color: var(--accent-ink); transform: translateY(var(--sp));
-  box-shadow:
-    inset 0 var(--sp) 0 0 var(--accent-lo),
-    0 calc(-1 * var(--sp)) 0 0 var(--edge), calc(-1 * var(--sp)) 0 0 0 var(--edge), var(--sp) 0 0 0 var(--edge);
-}
+.studio .st-tabs button[aria-selected="true"] { color: var(--accent-ink); transform: translateY(var(--sp)); --st-option-fill:var(--accent); background:none; box-shadow:none; }
 .st-panels { display: grid; }
 .st-panel { grid-area: 1 / 1; display: grid; gap: 8px; align-content: start; visibility: hidden; min-width: 0; }
 .st-panel.on { visibility: visible; }
 .st-group { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); gap: 6px; align-items: center; }
 .st-label { color: var(--muted); font-weight: 700; font-size: 12px; letter-spacing: .08em; }
 .st-chips { display: flex; flex-wrap: wrap; gap: 2px 4px; }
-.st-thumbs { display: flex; flex-wrap: wrap; gap: 2px 4px; }
-.studio .st-thumb { display: grid; justify-items: center; align-content: end; gap: 2px; padding: 4px 4px 2px; min-width: 50px; }
+.st-thumbs { flex-wrap: wrap; display:grid; grid-template-columns:repeat(auto-fill,minmax(var(--st-thumb-min-w,68px),1fr)); gap:8px; }
+.studio .st-thumb { display: grid; justify-items: center; gap: 2px; width:100%; min-width:0; margin:0; grid-template-rows:var(--st-thumb-image-h) 15px; align-content:center; align-items:center; padding:4px; }
 .st-thumb canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
-.st-thumb span { font-size: 11px; line-height: 1.3; white-space: nowrap; }
+.st-thumb span { white-space: nowrap; width:100%; min-width:0; text-align:center; line-height:15px; font-size:var(--ui-font-caption,11px); }
 .studio button.st-thumb[aria-pressed="true"] { background: var(--accent-soft, #cfdcf2); color: var(--ink); }
 .studio button.st-thumb[aria-pressed="true"] span { font-weight: 700; }
 .st-swatches { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px; align-items: center; }
@@ -114,9 +101,7 @@
 @media (prefers-reduced-motion: reduce) { .studio button { transform: none !important; } }
 
 /* Equal tracks prevent names and selected weights from shifting thumbnail rows. */
-.st-thumbs { display:grid; grid-template-columns:repeat(auto-fill,minmax(var(--st-thumb-min-w,68px),1fr)); gap:8px; }
-.studio .st-thumb { width:100%; min-width:0; margin:0; grid-template-rows:var(--st-thumb-image-h) 15px; align-content:center; align-items:center; padding:4px; }
-.st-thumb span { width:100%; min-width:0; text-align:center; font-size:11px; line-height:15px; }
+
 .studio .st-panel:is([data-tab="hair"],[data-tab="face"]) .st-thumbs { grid-template-columns:repeat(auto-fill,minmax(52px,1fr)); gap:6px; }
 .studio .st-panel:is([data-tab="hair"],[data-tab="face"]) .st-thumb { padding:2px; gap:1px; }
 /* In-game header: preview/name on the left, personality on the right. */
@@ -126,19 +111,16 @@
 .st-summary .st-namerow { width:100%; min-width:0; gap:4px; }
 .st-summary .st-nameinput { flex:1; width:0; font-size:12px; padding:3px 4px; }
 .st-summary .st-dice { flex:none; padding:3px; }
-.st-summary .st-label { font-size:11px; letter-spacing:0; }
+.st-summary .st-label { font-size:var(--ui-font-caption,12px); letter-spacing:0; }
 
 .studio .st-panel[data-tab="acc"] .st-thumbs { grid-template-columns:repeat(auto-fill,minmax(68px,1fr)); }
 
 /* One small stepped pixel corner for every wardrobe option and tab. */
-.studio {
- --st-option-clip:polygon(4px 0,calc(100% - 4px) 0,calc(100% - 4px) 2px,calc(100% - 2px) 2px,calc(100% - 2px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 2px) calc(100% - 4px),calc(100% - 2px) calc(100% - 2px),calc(100% - 4px) calc(100% - 2px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 2px),2px calc(100% - 2px),2px calc(100% - 4px),0 calc(100% - 4px),0 4px,2px 4px,2px 2px,4px 2px);
- --st-option-in:polygon(2px 0,calc(100% - 2px) 0,calc(100% - 2px) 1px,calc(100% - 1px) 1px,calc(100% - 1px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 1px) calc(100% - 2px),calc(100% - 1px) calc(100% - 1px),calc(100% - 2px) calc(100% - 1px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 1px),1px calc(100% - 1px),1px calc(100% - 2px),0 calc(100% - 2px),0 2px,1px 2px,1px 1px,2px 1px);
-}
+
 .studio .st-panel button.st-thumb,.studio .st-tabs button,.studio .st-chips button { position:relative; isolation:isolate; border:0; border-radius:0; box-shadow:none; background:none; clip-path:var(--st-option-clip); }
 .studio :is(.st-thumb,.st-tabs button,.st-chips button)::before,.studio :is(.st-thumb,.st-tabs button,.st-chips button)::after { content:""; position:absolute; pointer-events:none; }
 .studio :is(.st-thumb,.st-tabs button,.st-chips button)::before { inset:0; z-index:-2; background:var(--edge); clip-path:var(--st-option-clip); }
 .studio :is(.st-thumb,.st-tabs button,.st-chips button)::after { inset:2px; z-index:-1; background:var(--st-option-fill,var(--panel-2)); clip-path:var(--st-option-in); box-shadow:inset 0 2px 0 var(--bevel-hi),inset 0 -2px 0 var(--bevel-lo); }
 .studio .st-panel button.st-thumb[aria-pressed="true"],.studio .st-chips button[aria-pressed="true"] { --st-option-fill:var(--accent-soft,#cfdcf2); color:var(--ink); background:none; box-shadow:none; }
-.studio .st-tabs button[aria-selected="true"] { --st-option-fill:var(--accent); background:none; box-shadow:none; }
+
 .studio .st-panel button.st-thumb:hover,.studio .st-tabs button:hover,.studio .st-chips button:hover { filter:brightness(1.04); background:none; }

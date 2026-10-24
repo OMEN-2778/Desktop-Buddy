@@ -21,12 +21,7 @@ function fitPeerSpeech(){
   // Anchor the growing row above the house, with room for Buddy's wrapped text.
   const [outline,inner]=sayClip(48,0,12,12,2,0);peerHud.style.setProperty('--peer-clip',outline);peerHud.style.setProperty('--peer-inner',inner);
   let height=48+fitText(peerBubble,peerText,SAY_FS(),0,48,'--peer-clip','--peer-inner');
-  if(peerBubble.classList.contains('two')){
-    Object.assign(peerText.style,{fontSize:Math.max(12,Math.round(SAY_FS()*.85))+'px',display:'block',webkitLineClamp:'unset',webkitBoxOrient:'',whiteSpace:'normal'});
-    height=Math.max(48,Math.ceil((peerText.scrollHeight+16)/4)*4);
-    const [outer,fill]=sayClip(height,0,12,12,2,0);peerBubble.style.setProperty('--peer-clip',outer);peerBubble.style.setProperty('--peer-inner',fill);peerBubble.style.height=height+'px';
-  }
-  peerHud.style.height=height+'px';
+  peerHud.style.height=height+'px';liftDiary();
 }
 function renderPeerLine(line){
   peerSpeech.currentText=line.text;peerText.classList.remove('line-out');

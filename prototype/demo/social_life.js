@@ -15,7 +15,7 @@ const socialSheet=document.createElement('section');socialSheet.className='socia
 let sheetReturnFocus=null;
 const visitOffer={id:null,reason:null,deadline:0,timer:0,frame:0};
 function cancelVisitOffer(){clearTimeout(visitOffer.timer);cancelAnimationFrame(visitOffer.frame);Object.assign(visitOffer,{id:null,reason:null,deadline:0,timer:0,frame:0});}
-function fitSocialSheet(){overHouse(socialSheet);socialSheet.classList.toggle('personality-small',view.offsetHeight<240);socialSheet.style.setProperty('--cs',Math.max(.35,Math.min(1.35,view.offsetHeight/280,view.offsetWidth/500)));}
+function fitSocialSheet(){overHouse(socialSheet);socialSheet.style.setProperty('--cs',Math.max(.35,Math.min(1.35,view.offsetHeight/280,view.offsetWidth/500)));}
 function socialDialogHolds(){return !socialSheet.hidden;}
 function closeSocialSheet(){cancelVisitOffer();socialSheet.hidden=true;if(sheetReturnFocus?.isConnected&&!sheetReturnFocus.closest('[inert]'))sheetReturnFocus.focus({preventScroll:true});}
 function openSocialSheet(title){
@@ -25,21 +25,22 @@ function openSocialSheet(title){
   const close=document.createElement('button');close.type='button';close.className='social-sheet-close';close.textContent='关闭';close.onclick=closeSocialSheet;socialSheet.append(close);socialSheet.hidden=false;close.focus({preventScroll:true});return socialSheet;
 }
 socialSheet.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();e.preventDefault();if(!visitOffer.id)closeSocialSheet();}if(e.key==='Tab'){const buttons=[...socialSheet.querySelectorAll('button')],i=buttons.indexOf(document.activeElement);if(e.shiftKey&&i===0){e.preventDefault();buttons.at(-1).focus();}else if(!e.shiftKey&&i===buttons.length-1){e.preventDefault();buttons[0].focus();}}});
+function socialContent(sheet){const content=document.createElement('div');content.className='social-sheet-content';sheet.append(content);return content;}
 function addSocialMemory(c,title,text){
   c.memories||=[];const last=c.memories.at(-1);if(last&&last.title===title&&Math.abs(last.t-sim.t)<60)return;
   c.memories.push({t:sim.t,title,text});
 }
 function showSocialMemories(id){
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return;
-  const sheet=openSocialSheet(`和${contactName(c)}的经历`),list=document.createElement('ol');list.className='social-memories';
-  const profile=document.createElement('button');profile.type='button';profile.textContent='了解对方 · 性格';profile.onclick=()=>showPersonality(c.id);sheet.append(profile);
-  const summary=document.createElement('p');summary.textContent=c.family?personalityTraits(c).join(' · '):c.personalitySeen?.length?PERSONALITY_AXES.filter(a=>c.personalitySeen.includes(a[0])).map(a=>personalityLabel(a,personalityOf(c)[a[0]])).join(' · '):'还不太了解：聊聊天，慢慢认识彼此。';sheet.append(summary);
-  if(!c.memories?.length){const p=document.createElement('p');p.textContent='共同的故事还没写下。下一次认真聊天，或者一起度过一段时光，就从这里开始。';sheet.append(p);}
+  const sheet=openSocialSheet(`和${contactName(c)}的经历`),list=document.createElement('ol'),content=socialContent(sheet);list.className='social-memories';
+  const profile=document.createElement('button');profile.type='button';profile.textContent='性格';profile.title='了解对方 · 性格';profile.className='social-heading-action';profile.onclick=()=>showPersonality(c.id);sheet.classList.add('with-heading-action');sheet.append(profile);
+  const summary=document.createElement('p');summary.textContent=c.family?personalityTraits(c).join(' · '):c.personalitySeen?.length?PERSONALITY_AXES.filter(a=>c.personalitySeen.includes(a[0])).map(a=>personalityLabel(a,personalityOf(c)[a[0]])).join(' · '):'还不太了解：聊聊天，慢慢认识彼此。';content.append(summary);
+  if(!c.memories?.length){const p=document.createElement('p');p.textContent='共同的故事还没写下。下一次认真聊天，或者一起度过一段时光，就从这里开始。';content.append(p);}
   for(const memory of [...(c.memories||[])].reverse()){
     const row=document.createElement('li'),time=document.createElement('time'),title=document.createElement('strong'),text=document.createElement('p');
     time.textContent=`第 ${Math.floor(memory.t/1440)+1} 天 · ${String(Math.floor(memory.t/60)%24).padStart(2,'0')}:${String(Math.floor(memory.t)%60).padStart(2,'0')}`;
     title.textContent=memory.title;text.textContent=memory.text;row.append(time,title,text);list.append(row);
-  }sheet.append(list);
+  }content.append(list);
 }
 function worldNpcIdentity(role){
   if(role==='bartender')return socialState.world.find(c=>c.id==='person_10');
@@ -128,7 +129,7 @@ ACTS.host={spot:'host',label:'招待朋友',emote:'chat',dur:600,log:null};EFFEC
 const guestBubble=document.createElement('div');guestBubble.className='npcsay home-guest-say';guestBubble.hidden=true;document.getElementById('widget').append(guestBubble);
 function homeVisitActive(){return sim.place==='home'&&socialState.guest?.phase==='visiting';}
 function visitNotice(title,text){
-  const sheet=openSocialSheet(title),p=document.createElement('p');p.textContent=text;sheet.append(p);return sheet;
+  const sheet=openSocialSheet(title),p=document.createElement('p');p.textContent=text;socialContent(sheet).append(p);return sheet;
 }
 function inviteHome(id,proactive=false){
   const c=socialState.contacts.find(c=>c.id===id);if(!c){visitNotice('暂时不能邀请','这位朋友已经不在联系人名单里了。');return false;}
@@ -236,8 +237,8 @@ function showVisitOffer(c,reason=null){
   actions.querySelector('button').focus({preventScroll:true});
 }
 function showFarewellOffer(c){
-  const sheet=openSocialSheet(`${contactName(c)}想和你说几句话`),p=document.createElement('p');p.textContent=`${contactName(c)}：我们好像很久没好好说过话了。我有点不知道，还该不该再联系你。`;sheet.append(p);
-  for(const [label,keep]of [['认真聊聊，留住这段关系',true],['好好告别',false]]){const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=()=>{closeSocialSheet();if(keep){c.affinity=Math.max(8,c.affinity+5);c.lastContact=sim.t;c.farewellPending=false;contactsSig='';const text=`接住了${contactName(c)}的告别电话，坦诚说开后，决定重新认真联系。`;log(text);addSocialMemory(c,'差一点走散',text);}else removeSocialContact(c,'通完告别电话，两个人决定把这段联系留在过去。');};sheet.append(button);}
+  const sheet=openSocialSheet(`${contactName(c)} · 想聊聊`),p=document.createElement('p');p.textContent=`${contactName(c)}：我们好像很久没好好说过话了。我有点不知道，还该不该再联系你。`;socialContent(sheet).append(p);const choices=document.createElement('div');choices.className='social-choices';sheet.append(choices);
+  for(const [label,keep]of [['认真聊聊',true],['好好告别',false]]){const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=()=>{closeSocialSheet();if(keep){c.affinity=Math.max(8,c.affinity+5);c.lastContact=sim.t;c.farewellPending=false;contactsSig='';const text=`接住了${contactName(c)}的告别电话，坦诚说开后，决定重新认真联系。`;log(text);addSocialMemory(c,'差一点走散',text);}else removeSocialContact(c,'通完告别电话，两个人决定把这段联系留在过去。');};choices.append(button);}
 }
 for(const c of socialState.contacts){c.metAt??=sim.t;c.lastSeen??=sim.t;c.memories||=[];}
 
