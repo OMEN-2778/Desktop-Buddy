@@ -1,5 +1,5 @@
 // Stable contacts are saved separately from transient hover / ringing state.
-const DEFAULT_CONTACTS=[
+const LEGACY_CONTACT_SEEDS=[
   {id:'dad',name:'爸爸',family:'dad',affinity:94,look:{...doll.PRESETS.m,style:'neat',hair:'#8c8e9a',top:'#8a9dae'}},
   {id:'mom',name:'妈妈',family:'mom',affinity:96,look:{...doll.PRESETS.f,style:'buns',hair:'#706172',top:'#bb8fa4',acc:[]}},
   {id:'abu',name:'阿布',family:null,affinity:65,look:{...doll.PRESETS.m,style:'curly',hair:'#655070',top:'#7aa88a'}},
@@ -13,7 +13,9 @@ const DEFAULT_CONTACTS=[
   {id:'ningning',name:'宁宁',family:null,affinity:14,look:{...doll.PRESETS.f,style:'buns',hair:'#6a5063',top:'#a1bfcc'}},
   {id:'xiaoye',name:'小野',family:null,affinity:8,look:{...doll.PRESETS.m,style:'curly',hair:'#986b51',top:'#bfa27e'}}
 ];
-const socialState={contacts:DEFAULT_CONTACTS.map(c=>({...c,look:doll.normalize(c.look)})),nextCall:null,rosterVersion:1};
+const DEFAULT_CONTACTS=LEGACY_CONTACT_SEEDS.slice(0,4);
+const SOCIAL_CHANNELS=['text','call','video','meet','visit','visit-chat'];
+const socialState={contacts:DEFAULT_CONTACTS.map(c=>({...c,look:doll.normalize(c.look)})),nextCall:null,rosterVersion:2};
 const networkTrigger=document.getElementById('networkTrigger'),contactsPanel=document.getElementById('contactsPanel');
 const contactsList=document.getElementById('contactsList'),contactActions=document.getElementById('contactActions');
 const incomingCall=document.getElementById('incomingCall');
@@ -24,7 +26,7 @@ for(const [selector,key]of [['.call-answer','answer'],['.call-decline','decline'
 function sizeSocialHud(){
   const style=document.getElementById('widget').style,b=skyGeo.b,small=false;
   style.setProperty('--hud-badge-img',`url(${D.uiRelief[small?'badgeSmall':'badge']})`);
-  for(const [name,n,p]of [['panel',12,2],['card',8,2],['button',9,2],['call-button',7,2],['circle',small?10:12,2],['avatar',small?6:8,2],['small',5,2],['meter',2,2],['track',4,b],['caller',small?7:9,2]]){
+  for(const [name,n,p]of [['panel',12,2],['card',8,2],['button',9,2],['call-button',7,2],['circle',small?10:12,2],['avatar',small?6:8,2],['small',5,2],['trait',2,1],['meter',2,2],['track',4,b],['caller',small?7:9,2]]){
     style.setProperty(`--hud-${name}-clip`,roundClip(n,p));
     style.setProperty(`--hud-${name}-in`,roundClip(Math.max(1,n-1),p));
   }
@@ -54,7 +56,7 @@ function drawContactAvatar(canvas,c){
   ctx.fillStyle='#eef3f1';ctx.fillRect(0,0,40,40);ctx.drawImage(body,0,0,DW,17,0,2,40,34);
 }
 function fillContacts(){
-  const contacts=sortedContacts(),sig=JSON.stringify(contacts.map(c=>[c.id,c.name,c.family,c.affinity,c.look,!!c.forgotten]));if(sig===contactsSig)return;
+  const contacts=sortedContacts(),sig=JSON.stringify(contacts.map(c=>[c.id,c.name,c.family,c.affinity,c.look,!!c.forgotten,knownPersonalityTraits(c)]));if(sig===contactsSig)return;
   contactsSig=sig;const scrollTop=contactsList.scrollTop;contactsList.replaceChildren();
   for(const c of contacts){
     const card=document.createElement('button');card.type='button';card.className='contact-card';card.dataset.id=c.id;
@@ -63,7 +65,10 @@ function fillContacts(){
     const copy=document.createElement('span');copy.className='contact-copy';
     copy.append(Object.assign(document.createElement('strong'),{textContent:contactName(c),title:contactName(c)}),Object.assign(document.createElement('small'),{textContent:contactRelation(c)}));
     const meter=document.createElement('span');meter.className='affinity';meter.title=`好感 ${Math.round(c.affinity)} / 100`;meter.style.setProperty('--affinity',c.affinity);meter.append(document.createElement('i'));
-    card.append(avatar,copy,meter);contactsList.append(card);
+    const traits=document.createElement('span');traits.className='contact-traits';
+    for(const label of knownPersonalityTraits(c)){const chip=document.createElement('span');chip.textContent=label;traits.append(chip);}
+    traits.hidden=!traits.childElementCount;
+    card.append(avatar,copy,traits,meter);contactsList.append(card);
   }
   contactsList.scrollTop=scrollTop;
 }
@@ -149,30 +154,25 @@ CHATS.text={};CHAT_ACT.phone_text='text';
 for(const who of ['dad','mom','friend'])CHATS.text[who]={name:who==='dad'?'爸爸':who==='mom'?'妈妈':'{朋友}',talks:TEXT_TALKS.map(([title,lines],i)=>{
  const id=`contact_text_${who}_${i}`;ML[id]={name:'互相惦记',emo:'happy',pts:1,min:90};return {title,lines,id};
 })};
-function socialBusy(){return npcInteraction||life.talkQ||(sim.place==='bar'&&barScene?.chat)||remoteSocial||sim.talk||sim.chosen?.item?.talk||sim.windup&&CHAT_ACT[sim.windup.act];}
+function socialBusy(){return socialState.guest?.talk||npcInteraction||life.talkQ||(sim.place==='bar'&&barScene?.chat)||remoteSocial||sim.talk||sim.chosen?.item?.talk||sim.windup&&CHAT_ACT[sim.windup.act];}
 function startContactTalk(id,kind='text',incoming=false){
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return false;
   if(sim.mode==='down'||asleep()||wiping||cardHolds()||socialBusy())return false;
   const who=c.family||'friend',item=chatItem(kind,who,kind==='video'?'phone':'call',id);
   if(incoming)item.talk.start=`接听了${contactName(c)}的${kind==='video'?'视频':'电话'}。`;
-  const act=kind==='video'?'phone_video':kind==='call'?'phone_call':'phone_text';
-  if(sim.place==='home')command(act,item);
-  else{
-    // Phone conversations can accompany an outdoor stroll without trapping mall/bar activity state.
-    remoteSocial={item,i:0,wait:.5,said:[]};log(item.talk.start);
-  }
+  // This session accompanies daily life; it owns no route, action or needs lock.
+  remoteSocial={item,i:0,wait:.5,said:[]};log(item.talk.start);
   return true;
 }
 function finishContactTalk(id,kind){
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return;
-  discoverPersonality(c);
   const day=Math.floor(sim.t/1440);if(c.gainDay!==day){c.gainDay=day;c.dailyGain=0;}
-  const previous=contactRelation(c),gain=Math.min(kind==='meet'?1:kind==='text'?2:4,Math.max(0,6-(c.dailyGain||0)));
-  c.affinity=clamp(c.affinity+gain);c.dailyGain=(c.dailyGain||0)+gain;c.lastContact=sim.t;
+  const before=c.affinity;const previous=contactRelation(c),gain=Math.min(['meet','visit-chat'].includes(kind)?1:kind==='text'?2:4,Math.max(0,6-(c.dailyGain||0)));
+  c.affinity=clamp(c.affinity+gain);c.dailyGain=(c.dailyGain||0)+gain;c.lastContact=sim.t;c.contactCounts||={};c.contactCounts[kind]=(c.contactCounts[kind]||0)+1;discoverPersonality(c,c.affinity-before);if(c.affinity>before)showFriendshipGain(c,c.affinity-before);
   if(kind==='video'||kind==='meet'||kind==='visit'){c.forgotten=false;c.lastSeen=sim.t;}
   if(previous!==contactRelation(c)){const message=`和${contactName(c)}从${previous}成为了${contactRelation(c)}。`;log(message);addSocialMemory(c,'关系更近了一步',message);}
   if(['text','call','video'].includes(kind))addSocialMemory(c,{text:'互发消息',call:'通了电话',video:'视频见面'}[kind],`和${contactName(c)}聊起「${c.lastTopic||'彼此的近况'}」。`);
-  sim.needs.social=clamp(sim.needs.social+(kind==='text'?5:10));contactsSig='';if(moodrow.classList.contains('contacts-open'))fillContacts();
+  sim.needs.social=clamp(sim.needs.social+(kind==='text'?5:10));applyNeedConsequences();contactsSig='';if(moodrow.classList.contains('contacts-open'))fillContacts();
 }
 function canReceiveCall(){return !asleep()&&sim.mode!=='down'&&!wiping&&!guideOn&&!card&&!wardrobeOpen&&!socialBusy()&&!socialDialogHolds()&&!homeVisitActive();}
 function requestIncomingCall(id,kind='call'){
@@ -226,7 +226,7 @@ function tickSocial(dt,now){
   }
   if(remoteSocial&&speed&&!cardHolds()&&!wiping){
     const session=remoteSocial;session.wait-=dt;if(session.wait>0)return;
-    if(asleep()||sim.mode==='down'||sim.talk){log(`和${session.item.talk.name}的联系暂时中断，等方便时再聊。`,null,session.said);remoteSocial=null;return;}
+    if(asleep()||sim.mode==='down'||['bath','toilet'].includes(sim.act)||sim.talk){log(`和${session.item.talk.name}的联系暂时中断，等方便时再聊。`,null,session.said);remoteSocial=null;return;}
     const tk=session.item.talk;
     if(session.i>=tk.lines.length){
       log(fill(tk.end,session.item.vars),null,session.said);if(tk.id)addMood(tk.id,{vars:session.item.vars,diary:false,words:false});finishContactTalk(session.item.contactId,tk.kind);remoteSocial=null;return;
@@ -235,18 +235,20 @@ function tickSocial(dt,now){
     showSay(text,who,socialState.contacts.find(c=>c.id===session.item.contactId));session.said.push([who,text]);session.wait=Math.min(4.6,Math.max(2.6,1.4+(who+text).length*.13));
   }
 }
-function socialSnapshot(){return {...socialLifeSnapshot(),rosterVersion:socialState.rosterVersion,contacts:socialState.contacts.map(c=>({personality:{...personalityOf(c)},personalityTalks:c.personalityTalks||0,personalitySeen:c.personalitySeen||[],personalityTextSeen:c.personalityTextSeen||{},id:c.id,name:c.name,family:c.family||null,affinity:c.affinity,look:doll.normalize(c.look),lastContact:c.lastContact??null,gainDay:c.gainDay??null,dailyGain:c.dailyGain||0,memories:c.memories||[],metAt:c.metAt??null,lastSeen:c.lastSeen??null,forgotten:!!c.forgotten,lastIncoming:c.lastIncoming??null,rejectDay:c.rejectDay??null,rejectLoss:c.rejectLoss||0,farewellTried:!!c.farewellTried,farewellPending:!!c.farewellPending,lastVisitOffer:c.lastVisitOffer??null})),nextCall:socialState.nextCall};}
-function restoreSocial(data){
+function socialSnapshot(){return {...socialLifeSnapshot(),rosterVersion:socialState.rosterVersion,contacts:socialState.contacts.map(c=>({personality:{...personalityOf(c)},personalityBond:{gain:c.personalityBond?.gain||0,days:[...(c.personalityBond?.days||[])]},contactCounts:Object.fromEntries(SOCIAL_CHANNELS.map(k=>[k,c.contactCounts?.[k]||0])),personalityTalks:c.personalityTalks||0,personalitySeen:c.personalitySeen||[],personalityTextSeen:c.personalityTextSeen||{},id:c.id,name:c.name,family:c.family||null,affinity:c.affinity,look:doll.normalize(c.look),lastContact:c.lastContact??null,gainDay:c.gainDay??null,dailyGain:c.dailyGain||0,memories:c.memories||[],metAt:c.metAt??null,lastSeen:c.lastSeen??null,forgotten:!!c.forgotten,lastIncoming:c.lastIncoming??null,rejectDay:c.rejectDay??null,rejectLoss:c.rejectLoss||0,farewellTried:!!c.farewellTried,farewellPending:!!c.farewellPending,lastVisitOffer:c.lastVisitOffer??null})),nextCall:socialState.nextCall};}
+function restoreSocial(data,sourceIsDesktop=!!TAURI){
   hidePeerSay(true);
   clearTimeout(phoneCall.timeout);clearTimeout(phoneCall.exitTimer);phoneCall.phase='idle';phoneCall.contactId=null;incomingCall.hidden=true;moodTalk.classList.remove('phone-active');remoteSocial=null;
-  const list=Array.isArray(data?.contacts)?data.contacts:DEFAULT_CONTACTS;
+  const stored=Array.isArray(data?.contacts)?data.contacts:DEFAULT_CONTACTS;
+  // Retire the browser testing roster once. Existing desktop saves keep every contact.
+  const list=!sourceIsDesktop&&(data?.rosterVersion||0)<2?stored.filter(c=>DEFAULT_CONTACTS.some(p=>p.id===c?.id)):stored;
   const seen=new Set();socialState.contacts=[];
   for(const c of list){
     if(!c||typeof c.id!=='string'||!/^[-a-zA-Z0-9_]{1,64}$/.test(c.id)||seen.has(c.id)||typeof c.name!=='string'||!c.name.trim())continue;
     seen.add(c.id);socialState.contacts.push({id:c.id,name:c.name.slice(0,24),family:c.id==='dad'?'dad':c.id==='mom'?'mom':null,affinity:Number.isFinite(c.affinity)?clamp(c.affinity):50,look:doll.normalize(c.look||doll.PRESETS.m),lastContact:Number.isFinite(c.lastContact)?c.lastContact:null,gainDay:Number.isInteger(c.gainDay)?c.gainDay:null,dailyGain:Number.isFinite(c.dailyGain)?Math.max(0,Math.min(6,c.dailyGain)):0});
   }
-  // Add the scrolling-test roster once, without changing existing identities or affection.
-  const additions=data?.rosterVersion>=1?DEFAULT_CONTACTS.slice(0,2):DEFAULT_CONTACTS;
+  // New saves start with two friends; never re-add a friend removed by later gameplay.
+  const additions=data?.rosterVersion>=2?DEFAULT_CONTACTS.slice(0,2):DEFAULT_CONTACTS;
   for(const c of additions)if(!seen.has(c.id))socialState.contacts.push({...c,look:doll.normalize(c.look)});
-  socialState.rosterVersion=1;socialState.nextCall=Number.isFinite(data?.nextCall)?data.nextCall:null;contactsSig='';selectedContact=null;restoreSocialLife(data);
+  socialState.rosterVersion=2;socialState.nextCall=Number.isFinite(data?.nextCall)?data.nextCall:null;contactsSig='';selectedContact=null;restoreSocialLife(data);
 }

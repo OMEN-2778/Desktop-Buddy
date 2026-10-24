@@ -12,13 +12,24 @@ function restorePersonalities(data){
  heroPersonality=normalizePersonality(data?.heroPersonality||{social:0,care:0,sensitivity:0});heroPersonalityChosen=data?.heroPersonalityChosen===true;
  const saved=new Map((Array.isArray(data?.world)?data.world:[]).filter(p=>p&&typeof p.id==='string').map(p=>[p.id,p]));
  for(const p of socialState.world)p.personality=normalizePersonality(saved.get(p.id)?.personality,p.id);
- for(const c of socialState.contacts){const old=(data?.contacts||[]).find?.(p=>p?.id===c.id);c.personality=normalizePersonality(old?.personality||socialState.world.find(p=>p.id===c.id)?.personality,c.id);c.personalityTalks=Number.isFinite(old?.personalityTalks)?Math.max(0,Math.min(1000,Math.floor(old.personalityTalks))):0;c.personalityTextSeen={};for(const [key,indices]of Object.entries(old?.personalityTextSeen||{}))if(Array.isArray(indices))c.personalityTextSeen[key]=indices.filter(i=>Number.isInteger(i)&&i>=0&&i<2).slice(-2);c.personalitySeen=Array.isArray(old?.personalitySeen)?[...new Set(old.personalitySeen.filter(k=>PERSONALITY_AXES.some(a=>a[0]===k)))]:[];}
+ for(const c of socialState.contacts){const old=(data?.contacts||[]).find?.(p=>p?.id===c.id);c.personality=normalizePersonality(old?.personality||socialState.world.find(p=>p.id===c.id)?.personality,c.id);c.personalityTalks=Number.isFinite(old?.personalityTalks)?Math.max(0,Math.min(1000,Math.floor(old.personalityTalks))):0;c.personalityBond={gain:Number.isFinite(old?.personalityBond?.gain)?Math.max(0,Math.min(1000,old.personalityBond.gain)):0,days:Array.isArray(old?.personalityBond?.days)?[...new Set(old.personalityBond.days.filter(Number.isInteger))].slice(-180):[]};c.personalityTextSeen={};for(const [key,indices]of Object.entries(old?.personalityTextSeen||{}))if(Array.isArray(indices))c.personalityTextSeen[key]=indices.filter(i=>Number.isInteger(i)&&i>=0&&i<1000).slice(-4);c.personalitySeen=Array.isArray(old?.personalitySeen)?[...new Set(old.personalitySeen.filter(k=>PERSONALITY_AXES.some(a=>a[0]===k)))]:[];}
 }
-function discoverPersonality(c){
+const PERSONALITY_DISCOVERY=[{gain:6,days:2,affinity:30},{gain:14,days:4,affinity:60},{gain:24,days:7,affinity:80}];
+function knownPersonalityTraits(c){return PERSONALITY_AXES.filter(a=>c.family||c.personalitySeen?.includes(a[0])).map(a=>personalityLabel(a,personalityOf(c)[a[0]]));}
+function personalityUnderstanding(c,axis){
+ if(c.family)return 2;if(!c.personalitySeen?.includes(axis))return 0;
+ const bond=c.personalityBond;return bond?.gain>=30&&bond?.days?.length>=10?2:1;
+}
+function discoverPersonality(c,gain=0){
  if(!c)return;c.personalityTalks=Math.min(1000,(c.personalityTalks||0)+1);c.personalitySeen||=[];
- const count=c.family?3:Math.min(3,Math.floor(c.personalityTalks/2));
+ const bond=c.personalityBond||={gain:0,days:[]},day=Math.floor(sim.t/1440);
+ bond.gain=Math.min(1000,bond.gain+Math.max(0,gain));if(!bond.days.includes(day))bond.days.push(day);bond.days=bond.days.slice(-180);
+ const count=c.family?3:PERSONALITY_DISCOVERY.filter(step=>bond.gain>=step.gain&&bond.days.length>=step.days&&c.affinity>=step.affinity).length;
  const axes=[...PERSONALITY_AXES].sort((a,b)=>Math.abs(personalityOf(c)[b[0]])-Math.abs(personalityOf(c)[a[0]]));
- for(const axis of axes.slice(0,count))if(!c.personalitySeen.includes(axis[0])){c.personalitySeen.push(axis[0]);const label=personalityLabel(axis,personalityOf(c)[axis[0]]),text=`相处下来，发现${contactName(c)}${({慢热:'需要一点熟悉的时间，话少也会认真听',外向:'总能主动找到话题',随性:'喜欢临时起意，也愿意留点空白',周到:'会提前商量，留意别人的方便',沉稳:'习惯先稳住心情，再慢慢处理',敏感:'会留意细微变化，也容易被小事打动',随和:'会在热闹和安静之间找自己的节奏',灵活:'既能提前安排，也能顺势而为',平和:'能感受情绪，也愿意慢慢消化'})[label]}。`;log(text);addSocialMemory(c,'更了解彼此 · '+label,text);}
+ for(const axis of axes.slice(0,count))if(!c.personalitySeen.includes(axis[0])){
+  c.personalitySeen.push(axis[0]);const label=personalityLabel(axis,personalityOf(c)[axis[0]]),examples=SOCIAL_DIALOGUE.discovery[label];
+  const text=`相处下来，发现${contactName(c)}${pick(examples)}。`;log(text);addSocialMemory(c,'更了解彼此 · '+label,text);contactsSig='';
+ }
 }
 function personalityCallFactor(c){return 1-personalityOf(c).social*.004;}
 function personalityDecay(c){return 1+personalityOf(c).social*.0025;}
@@ -26,10 +37,10 @@ function personalityMoodDuration(m){const s=heroPersonality.sensitivity/100;retu
 function personalityChoices(score){const p=heroPersonality;for(const key of ['phone_text','phone_call','phone_video','pc_video'])score[key]*=1+p.social*.002;score.read*=1-p.social*.0015;score.go_out*=1+p.social*.0015;for(const key of ['wash','water_living','water_study'])score[key]*=1+p.care*.002;}
 function personalityLines(c,context='meet'){
  const p=personalityOf(c),weights=PERSONALITY_AXES.map(([key])=>[key,25+Math.abs(p[key])]),total=weights.reduce((sum,[,w])=>sum+w,0);let roll=Math.random()*total,axis=weights.at(-1)[0];for(const [key,w]of weights){roll-=w;if(roll<=0){axis=key;break;}}
- const kind=personalityKind(c,axis),pool=PERSONALITY_TEXT[kind][context]||PERSONALITY_TEXT[kind].meet;
- const seen=(c.personalityTextSeen||={}),key=kind+'_'+context,indices=Array.isArray(seen[key])?seen[key]:[],fresh=pool.map((_,i)=>i).filter(i=>!indices.includes(i)),i=pick(fresh.length?fresh:pool.map((_,i)=>i));seen[key]=[...indices.slice(-1),i];
- const level=c.family?'close':socialLevel(c),familiar=level==='familiar';
- const other=pool[i][familiar?0:1];
+ const kind=personalityKind(c,axis),legacy=PERSONALITY_TEXT[kind][context]||PERSONALITY_TEXT[kind].meet,extra=SOCIAL_DIALOGUE.personality[kind],prefix=SOCIAL_DIALOGUE.personalityContext[context]||'';
+ const pool=[...legacy.map((pair,i)=>[...pair,extra[i%extra.length][2]]),...extra.map(row=>row.map(line=>prefix+line))];
+ const seen=(c.personalityTextSeen||={}),key=kind+'_'+context,indices=Array.isArray(seen[key])?seen[key]:[],fresh=pool.map((_,i)=>i).filter(i=>!indices.includes(i)),i=pick(fresh.length?fresh:pool.map((_,i)=>i));seen[key]=[...indices.slice(-4),i];
+ const other=pool[i][personalityUnderstanding(c,axis)];
  const reply=pick(PERSONALITY_REPLIES[personalityKind(null)]);
  return ['>'+other,reply];
 }
@@ -115,7 +126,7 @@ const PERSONALITY_TEXT={
     ],
     "visit": [
       [
-        "第一次来有点拘谨，我坐这里可以吗？",
+        "来做客有点拘谨，我坐这里可以吗？",
         "还是你家这个位置自在，我已经不用端坐了。"
       ],
       [
@@ -393,7 +404,13 @@ const PERSONALITY_REPLIES={
   ],
   "outgoing": [
     "我也有件小事想说，等你讲完轮到我。",
-    "你这么一说，我的话匣子也打开了。",
+    "你先说，我听着呢。",
+    "这件事还真有点意思。",
+    "后来怎么样了？",
+    "嗯，我大概能想象到。",
+    "我也碰到过差不多的事。",
+    "等你讲完，我也有件小事想说。",
+    "不用急，慢慢讲。",
     "收到！今天又多了一件能一起聊的事。"
   ],
   "casual": [

@@ -349,7 +349,8 @@ const PACE = 2;
 for (const [k, a] of Object.entries(ACTS)) if (k !== "sleep") a.dur *= PACE;
 for (const [k, e] of Object.entries(EFFECT)) if (k !== "sleep") for (const n in e) if (e[n] > 0) e[n] /= PACE;
 // per game minute. Social runs dry in two days (user); the bladder in ~5 hours
-const DECAY = { hunger: 0.115, energy: 0.065, hygiene: 0.045, bladder: 0.3, social: 100 / 2880, fun: 0.11 };
+// Baseline needs drain 10% more slowly; activity recovery and urgency thresholds stay meaningful.
+const DECAY = { hunger: 0.1035, energy: 0.0585, hygiene: 0.0405, bladder: 0.27, social: 90 / 2880, fun: 0.099 };
 const NEED_NAMES = { hunger: "饱腹", energy: "精力", hygiene: "清洁", bladder: "如厕", social: "社交", fun: "娱乐" };
 
 const sim = {
@@ -408,6 +409,8 @@ function choose() {
   personalityChoices(score);
   // how she feels tips the scales (Sims-style)
   for (const [a, v] of Object.entries(EMO_PULL[emotion().key] || {})) if (a !== "go_out" || canOut) score[a] += v;
+  if(remoteSocial||homeVisitActive())for(const act of ["phone_call","phone_video","phone_text","pc_video"])score[act]=0;
+  if(homeVisitActive()){score.host=20+(100-n.social)*.6;score.go_out=0;}
   for (const a of sim.recent) score[a] *= 0.3;   // don't repeat the last few things
   const best = Object.entries(score).sort((a, b) => b[1] - a[1])[0][0];
   if (best === "go_out") setOuting(h);
@@ -467,6 +470,10 @@ const EMO_PULL = {
   embarrassed: { bath: 15, go_out: 10 }, uncomfortable: { go_out: 15 }, dazed: { window: 10, go_out: 10 },
 };
 function startAct(name, quiet = false) {
+  if(['phone_call','phone_video','phone_text'].includes(name)){
+    if(!remoteSocial){const item=sim.chosen?.act===name?sim.chosen.item:pickItem(name);remoteSocial={item,i:0,wait:.5,said:[]};log(item.talk.start);}
+    sim.chosen=null;sim.player=false;name=choose();
+  }
   if (sim.place !== "home" && !OUT_ACTS.has(name) && ACTS[name].spot) { sim.queue.unshift(name); name = "go_home"; }   // indoor things: home first
   if (sim.place === "home" && OUT_ACTS.has(name) && name !== "go_out") name = "go_out";
   const a = ACTS[name];
@@ -584,12 +591,7 @@ function step(dtGame, dtReal) {
     n[k] = clamp(n[k] + (d + (eff[k] || 0)) * dtGame);
   }
   if (sim.mode === "act" && sim.act === "sleep" && !sim.nap) sim.sleptTonight += dtGame;
-  // couldn't hold it: no harm done, just embarrassing (and a bath)
-  if (n.bladder <= 0 && sim.mode !== "down" && !mallToiletInside() && !["toilet","park_toilet"].includes(sim.act)) {
-    n.bladder = 100; n.hygiene = Math.max(0, n.hygiene - 40);
-    addMood("accident");
-    if (!asleep()) { sim.queue = []; startAct("bath"); }
-  }
+  applyNeedConsequences();
   // behaviour
   if (sim.mode === "down") { sim.windup = null; return; }
   if(tickNpcInteraction(dtReal))return;
@@ -987,7 +989,7 @@ function fit() {
   if (TAURI) { fitWindow(); requestAnimationFrame(fitWindow); }   // the app window starts hidden: no frames until it's sized
 }
 
-function activityFrame(ms) {
+function baseActivityFrame(ms) {
   if (mallVisitInside() && sim.mode !== "down") return mallRoomFrame(ms);
   // what Buddy looks like right now: frame params, pose, emote
   const a = sim.act, phase = Math.floor(ms / 600) % 2;
@@ -1039,6 +1041,24 @@ function activityFrame(ms) {
   for (const s of seq) { if (t < s.ms) { fr = s; break; } t -= s.ms; }
   const em = fr.emote === "cheer" ? doll.cheer(look) : fr.emote;
   return { f: { ...fr }, pose: "stand", emote: em && fr.wave == null ? em : null };
+}
+
+// Emotion changes the face without changing clothes, pose or the chosen eye type.
+function activityFrame(ms){
+  const frame=baseActivityFrame(ms);
+  if(sim.mode==='down'||asleep()||frame.back)return frame;
+  const key=emotion().key,pulse=Math.floor(ms/1800)%4;
+  const faces={angry:'angry',embarrassed:'embarrassed',dazed:'dazed',focused:'focused',bored:'unimpressed',sad:'unimpressed',tense:'confused',scared:'confused',uncomfortable:'unimpressed'};
+  const bubbles={angry:'anger',embarrassed:'sweat',dazed:'swirl',focused:'focus',bored:'dots',sad:'dots',tense:'question',scared:'question',uncomfortable:'sweat'};
+  if(faces[key]){frame.f.expr=pulse===3?'blink':faces[key];if(pulse===1)frame.emote=bubbles[key];}
+  else if(['read','pc_code','cook'].includes(sim.act)&&pulse===1){frame.f.expr='focused';frame.emote='focus';}
+  else if(sim.act==='window'&&pulse===1)frame.emote=isRain(weather.kind)?'rain':weather.kind==='snow'?'snow':'leaf';
+  else if(remoteSocial&&pulse===1){const c=socialState.contacts.find(c=>c.id===remoteSocial.item.contactId);frame.f.expr=c&&!c.family&&c.affinity<20?'embarrassed':'happy';frame.emote=c&&!c.family&&c.affinity<20?'question':'friend';}
+  else if(reaction&&realClock<reaction.until&&reaction.emote==='bang'){frame.f.expr='confused';frame.emote='question';}
+  else if(sim.act==='art'&&pulse===1)frame.emote='idea';
+  else if(sim.act==='host'&&pulse===1)frame.emote=Math.floor(ms/7200)%2?'friend':'coffee';
+  else if(sim.act==='phone_feed'&&pulse===1){frame.f.expr='unimpressed';frame.emote='dots';}
+  return frame;
 }
 
 function lyingHead(f) {   // the sleepy head turned 90 degrees: lying on the pillow
@@ -1550,15 +1570,16 @@ function addMood(id, { vars = {}, diary = true, words = true } = {}) {
   const m = ML[id];
   if (!m) return;
   const had = moods.has(id);
-  moods.set(id, { until: m.min ? sim.t + personalityMoodDuration(m) : null, t: sim.t, vars: had ? moods.get(id).vars : vars });
+  moods.set(id, { until: m.min ? sim.t + (m.fixedDuration?m.min:personalityMoodDuration(m)) : null, t: sim.t, vars: had ? moods.get(id).vars : vars });
   if (had) return;                 // refreshed quietly
   if (diary && m.diary) log(fill(one(m.diary), vars));
   if (words && m.say) speak(fill(pick(m.say), vars));
 }
-function emotion() {
+function emotion(forCollapse=false) {
   const sum = {}, last = {};
   for (const [id, m] of moods) {
     const d = ML[id];
+    if(forCollapse&&d.noCollapse)continue;
     sum[d.emo] = (sum[d.emo] || 0) + d.pts;
     last[d.emo] = Math.max(last[d.emo] ?? -1, m.t);
   }
@@ -1569,15 +1590,15 @@ function emotion() {
 const emoWord = (key, level) => (T.words[key] ? T.words[key][level - 1] : MOOD[key].name);
 
 // ---------- condition moodlets: checked a few times a second
-const lifeFlags = { bedHair: false, firstSnowYear: -1, windowSince: {}, watered: { water_living: 0, water_study: 0 } };
+const lifeFlags = { bedHair: false, firstSnowYear: -1, needRulesVersion:1, windowSince: {}, watered: { water_living: 0, water_study: 0 } };
 function asleep() { return sim.mode === "act" && sim.act === "sleep" || mallSleeping(); }
 function band(v, lo, hi) { return v < hi && v >= lo; }
 const COND = {
   hungry1: n => band(n.hunger, 15, 40), hungry3: n => n.hunger < 15,
   tired1: n => band(n.energy, 12, 35) && !asleep(), tired3: n => n.energy < 12 && !asleep(),
-  dirty2: n => band(n.hygiene, 12, 30), dirty3: n => n.hygiene < 12,
-  bored2: n => band(n.fun, 12, 30), bored3: n => n.fun < 12,
-  lonely1: n => band(n.social, 12, 35), lonely3: n => n.social < 12,
+  dirty2: n => band(n.hygiene, 12, 30), dirty3: n => n.hygiene > 0 && n.hygiene < 12,
+  bored2: n => band(n.fun, 12, 30), bored3: n => n.fun > 0 && n.fun < 12,
+  lonely1: n => band(n.social, 12, 35), lonely3: n => n.social > 0 && n.social < 12,
   bladder1: n => band(n.bladder, 12, 35), bladder3: n => n.bladder < 12,
   fresh: n => Object.values(n).every(v => v > 80),
   bedHair: () => lifeFlags.bedHair && !asleep(),
@@ -1588,6 +1609,7 @@ const COND = {
   hot: () => seasonOf(sim.t).i === 1 && weather.kind === "clear" && hour() >= 12 && hour() < 16,
 };
 function updateConds() {
+  applyNeedConsequences();
   for (const [id, m] of moods) if (m.until !== null && sim.t >= m.until) moods.delete(id);
   if (sim.mode === "down") return;
   for (const [id, test] of Object.entries(COND)) {
@@ -1883,7 +1905,7 @@ function rollEvents() {
 const EXTREME = ["angry", "sad", "scared", "embarrassed", "tense", "uncomfortable"];
 function checkCollapse() {
   if (sim.mode === "down" || asleep() || sim.t < (sim.graceUntil || 0)) return;
-  const n = sim.needs, e = emotion();
+  const n = sim.needs, e = emotion(true);
   const cause = n.hunger <= 0 ? "hunger" : n.energy <= 0 ? "energy" : e.pts >= 8 && EXTREME.includes(e.key) ? e.key : null;
   if (cause) collapse(cause);
 }
@@ -3374,8 +3396,9 @@ function npcFrame(n) {
     return [{ expr: "neutral", look: n.dir, bob: i % 2 ? 0 : 1, sway: i % 2 }, ["walkL", "stand", "walkR", "stand"][i]];
   }
   const ms = realClock * 1000 + n.ph, talking = npcHasSpeech(n);
-  const f = { expr: talking ? "happy" : Math.floor(ms / 2900) % 5 === 0 ? "blink" : "neutral", bob: Math.floor(ms / 1300) % 2,
+  const f = { expr: talking ? (socialState.contacts.find(c=>c.id===n.personId)?.affinity>=20?"happy":Math.floor(ms/1800)%2?"embarrassed":"neutral") : Math.floor(ms / 2900) % 5 === 0 ? "blink" : "neutral", bob: Math.floor(ms / 1300) % 2,
     look: n.back ? 0 : npcInteraction?.n===n ? n.dir : [0, 1, 0, -1][Math.floor(ms / 3100) % 4] };
+  if(talking&&sim.needs.hygiene<=0&&realClock-(n.dirtyReplyAt??-Infinity)<6)f.expr='unimpressed';
   if (talking && n.role === "hawker") f.wave = Math.floor(ms / 260) % 2;
   return [f, n.sit ? "sit" : "stand"];
 }
@@ -4021,10 +4044,11 @@ for (const [kind, groups] of Object.entries(CHATS)) for (const [who, g] of Objec
 function chatItem(kind, who, via = "pc", contactId = null) {
   const contact=contactFor(who,contactId),level=contact&&!contact.family?socialLevel(contact):null;
   const g=level?{...CHATS[kind][who],talks:socialTalkPool(kind,contact)}:CHATS[kind][who];
-  const seen=((lifeFlags.talkSeen ||= {})[level?`${kind}_${contact.id}_${level}`:kind+'_'+who] ||= []);
-  let fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i));
-  if (!fresh.length) { seen.splice(0, seen.length - 3); fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i)); }
-  const i = pick(fresh), baseTalk = g.talks[i], t = contact&&kind!=="forum"?{...baseTalk,lines:personalityTalk(baseTalk.lines,contact,kind)}:baseTalk, vars = { 主角:nameOf(),朋友: contact?contactName(contact):pick(T.fill.朋友) };
+  const eligible=g.talks.map((talk,i)=>({talk,i})).filter(({talk})=>socialTalkFits(talk));
+  const seen=((lifeFlags.talkSeen ||= {})[level?`${kind}_${contact.id}_${level}${g.talks[0]?.early?"_early":""}`:kind+'_'+who] ||= []);
+  let fresh = eligible.map(({i})=>i).filter(i => !seen.includes(i));
+  if (!fresh.length) { seen.splice(0, seen.length - 3); fresh = eligible.map(({i})=>i).filter(i => !seen.includes(i)); }
+  const i = pick(fresh.length?fresh:eligible.map(({i})=>i)), baseTalk = g.talks[i]||{title:"问个好",lines:[">没有急事，就是想问问你最近怎么样。","挺好的，你也照顾好自己。"]}, t = contact&&kind!=="forum"&&!baseTalk.early?{...baseTalk,lines:personalityTalk(baseTalk.lines,contact,kind)}:baseTalk, vars = { 主角:nameOf(),朋友: contact?contactName(contact):pick(T.fill.朋友) };
   seen.push(i);if(contact)contact.lastTopic=t.title;
   const name = contact?contactName(contact):fill(g.name, vars);
   return { vars, contactId:contact?.id, talk: { ...t, kind, who, name,
@@ -4177,6 +4201,7 @@ function showCard(cd) {
   card = { cd, vars: cardVars(), phase: "ask", hold: true };
   dimHouse(true);
   const title=cardEl.querySelector("h3");title.textContent=fill(cd.title,card.vars);title.title=title.textContent;
+  cardEl.style.setProperty("--card-title-color",hour()>=19||hour()<6?"#bddfff":"#ffdaa1");
   cardEl.querySelector("p").textContent = spaced(fill(cd.text, card.vars));
   for (const b of cardOpts) { b.textContent = spaced(fill(cd[b.dataset.k].label, card.vars)).replace(/[。.]$/, ""); b.classList.remove("chosen"); }
   placeCard(cardEl);
@@ -4205,7 +4230,7 @@ function cardDiary() {
   log(`「${fill(cd.title, vars)}」${auto ? `（${nameOf()}自己拿了主意）` : ""}${fill(cd[k].label, vars).replace(/[。.]$/, "")}——${fill(o.text, vars)}`);
 }
 function cardNeeds() {
-  if(card.cd.service==='visit'){const c=socialState.contacts.find(c=>c.id===card.vars.visitorId);if(c){const old=contactRelation(c);c.affinity=clamp(c.affinity+(card.o.friendship||0));contactsSig='';addSocialMemory(c,fill(card.cd.title,card.vars),fill(card.o.text,card.vars));if(old!==contactRelation(c))log(`和${contactName(c)}的关系变成了${contactRelation(c)}。`);if(c.affinity<=0)removeSocialContact(c,'这次相处后，彼此选择不再联系。');}}
+  if(card.cd.service==='visit'){const c=socialState.contacts.find(c=>c.id===card.vars.visitorId);if(c){const old=contactRelation(c),before=c.affinity;c.affinity=clamp(c.affinity+(card.o.friendship||0));if(c.affinity>before){discoverPersonality(c,c.affinity-before);showFriendshipGain(c,c.affinity-before);}contactsSig='';addSocialMemory(c,fill(card.cd.title,card.vars),fill(card.o.text,card.vars));if(old!==contactRelation(c))log(`和${contactName(c)}的关系变成了${contactRelation(c)}。`);if(c.affinity<=0)removeSocialContact(c,'这次相处后，彼此选择不再联系。');}}
   for (const [n, v] of Object.entries(card.o.need || {})) if (n in sim.needs) sim.needs[n] = clamp(sim.needs[n] + v);
 }
 function showResult() {
@@ -4621,6 +4646,8 @@ function restore(sv) {
   for (const [id, until, t] of sv.moods || []) if (ML[id]) moods.set(id, { until, t });
   const savedNpcTopics=sv.flags?.npcChatSeen;
   Object.assign(lifeFlags, sv.flags || {});
+  if((sv.flags?.needRulesVersion||0)<1&&moods.has("accident")){const m=moods.get("accident");m.until=(Number.isFinite(m.t)?m.t:sim.t)+36*60;}
+  lifeFlags.needRulesVersion=1;
   lifeFlags.npcChatSeen=savedNpcTopics||{};
   Object.assign(eventLast, sv.events || {});
   lastFestivalDay = sv.lastFestivalDay || 0;
@@ -4911,6 +4938,7 @@ if (TAURI) {
 /*__SOCIAL_LIFE_JS__*/
 /*__PEER_DIALOGUE_JS__*/
 /*__NPC_SOCIAL_JS__*/
+/*__NEED_CONSEQUENCES_JS__*/
 
 // ================================================================ loop
 let last = performance.now(), uiT = 0;

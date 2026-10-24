@@ -710,13 +710,40 @@ def draw_face(s: Sprite, d: "Doll", expr: str, look: int = 0, dy: int = 0):
     mouth, mouth_in = P.coral[1], P.coral[3]
     y0 = EYE_Y + dy
     blush = P.blush[0]
-    shape = d.eye_shape if expr == "neutral" else "round"
+    # New expressions keep the selected eye silhouette; lids/brows and mouth
+    # carry the emotion. Pixel light stays at the upper left, as on the head.
+    shaped = expr in ("neutral", "confused", "unimpressed", "dazed", "focused", "angry", "embarrassed")
+    shape = d.eye_shape if shaped else "round"
     for i, ex in enumerate(EYE_X):
         x = ex + look
-        if expr in ("neutral", "surprised"):
-            draw_eye(s, d, shape, i, x, y0)
+        if shaped or expr == "surprised":
+            draw_eye(s, d, shape, i, x, y0 - (1 if expr == "confused" and i == 1 else 0))
             if expr == "surprised":
                 s.set(x - 1 + 3 * i, y0 - 1, d.hair[1])
+            elif expr == "unimpressed":
+                for xx in range(x - 1, x + 3):
+                    s.set(xx, y0, None)
+                s.hline(x, x + 1, y0 + 1, ink)
+            elif expr == "angry":
+                # Inward-pointing lids remain visible below the fringe, even
+                # on the normally smiling eyes; no permanently happy anger.
+                for xx in range(x - 1, x + 3):
+                    for yy in range(y0, y0 + 3):
+                        s.set(xx, yy, None)
+                s.set(x, y0 + i, ink).set(x + 1, y0 + 1 - i, ink)
+                s.hline(x, x + 1, y0 + 2, d.eye[2])
+            elif expr == "focused":
+                for xx in range(x - 1, x + 3):
+                    for yy in range(y0, y0 + 3):
+                        s.set(xx, yy, None)
+                s.hline(x, x + 1, y0, ink).set(x, y0 + 1, P.linen[3])
+                s.set(x + 1, y0 + 1, ink).hline(x, x + 1, y0 + 2, d.eye[2])
+            elif expr == "dazed":
+                for xx in range(x - 1, x + 3):
+                    for yy in range(y0, y0 + 3):
+                        s.set(xx, yy, None)
+                s.hline(x - 1, x + 1, y0, ink).set(x + 1, y0 + 1, ink)
+                s.hline(x - 1, x, y0 + 2, ink).set(x - 1, y0 + 1, ink)
         elif expr == "happy":
             s.hline(x, x + 1, y0 + 1, ink).set(x - 1, y0 + 2, ink).set(x + 2, y0 + 2, ink)
         elif expr in ("blink", "sleepy"):
@@ -726,9 +753,18 @@ def draw_face(s: Sprite, d: "Doll", expr: str, look: int = 0, dy: int = 0):
         elif expr == "flustered":  # > <
             a, b = (x, x + 1) if i == 0 else (x + 1, x)
             s.set(a, y0, ink).set(b, y0 + 1, ink).set(a, y0 + 2, ink)
-        if d.gender == "f" and expr in ("neutral", "surprised") and shape in LASHES:  # lash flick
+        if d.gender == "f" and (shaped or expr == "surprised") and expr not in ("dazed", "unimpressed") and shape in LASHES:
             s.set(x - 1 if i == 0 else x + 2, y0, ink)
-    if d.gender == "m" and expr != "sleepy" and not d.brows_hidden:  # thick brows; frames replace them
+    if expr in ("confused", "focused", "angry", "embarrassed"):
+        for i, ex in enumerate(EYE_X):
+            x = ex + look
+            if expr == "angry":
+                s.set(x, y0 - 1 + i, d.hair[0]).set(x + 1, y0 - i, d.hair[0])
+            elif expr in ("confused", "embarrassed"):
+                s.hline(x, x + 1, y0 - 2 + i, d.hair[1])
+            else:
+                s.hline(x, x + 1, y0 - 1, ink)
+    elif d.gender == "m" and expr != "sleepy" and not d.brows_hidden:  # thick brows; frames replace them
         for i, ex in enumerate(EYE_X):
             x = ex + look
             if expr == "flustered":  # worried tilt
@@ -742,6 +778,20 @@ def draw_face(s: Sprite, d: "Doll", expr: str, look: int = 0, dy: int = 0):
     my = y0 + 3
     if expr == "happy":
         s.set(8, my, mouth).hline(9, 10, my, mouth_in).set(11, my, mouth)
+    elif expr == "confused":
+        s.set(9, my + 1, mouth).set(10, my, mouth)
+    elif expr == "unimpressed":
+        s.hline(8, 11, my, mouth)
+    elif expr == "dazed":
+        s.set(8, my, mouth).set(9, my + 1, mouth).set(10, my, mouth)
+    elif expr == "focused":
+        s.hline(9, 10, my, mouth)
+    elif expr == "angry":
+        s.set(8, my + 1, mouth).hline(9, 10, my, mouth).set(11, my + 1, mouth)
+    elif expr == "embarrassed":
+        s.hline(9, 10, my + 1, mouth)
+        s.hline(4, 6, my, P.blush[0]).hline(13, 15, my, P.blush[0])
+        s.set(16, 6 + dy, P.glass[3]).set(16, 7 + dy, P.glass[2])
     elif expr == "surprised":
         s.hline(9, 10, my, mouth).hline(9, 10, my + 1, mouth)
     elif expr == "flustered":
@@ -1063,9 +1113,121 @@ oLLLLLLLo
 .oLooooo.
 .oo......
 """
+EMOTES.update({
+    "question": """
+..ooo..
+.oSLSo.
+....So.
+...So..
+...o...
+.......
+...o...
+""",
+    "dots": """
+.......
+.......
+.o.o.o.
+.......
+.......
+""",
+    "swirl": """
+.oooo..
+oLLLSo.
+o.ooSo.
+o.o.So.
+o.SSSo.
+.oooo..
+.......
+""",
+    "focus": """
+.o...o.
+oo...oo
+...o...
+..oLo..
+...o...
+oo...oo
+.o...o.
+""",
+    "anger": """
+.o...o.
+.o...o.
+..o.o..
+.......
+..o.o..
+.o...o.
+.o...o.
+""",
+    "sweat": """
+...o...
+..oLo..
+..oLSo.
+.oLLSo.
+.oLSSo.
+..ooo..
+.......
+""",
+    "idea": """
+..ooo..
+.oLLLo.
+oLLSSSo
+.oSSSo.
+..oSo..
+..ooo..
+...o...
+""",
+    "friend": """
+.oo.oo.
+oLLoLSo
+oLLLSSo
+.oLSSo.
+..oSo..
+...o...
+.......
+""",
+    "coffee": """
+..o.o..
+.......
+.ooooo.
+.oLLSoo
+.oLSSoo
+..ooo..
+.ooooo.
+""",
+    "rain": """
+..ooo..
+.oLLSo.
+oLLLSSo
+.ooooo.
+.......
+.S.S.S.
+o.o.o..
+""",
+    "snow": """
+o..o..o
+.o.o.o.
+..ooo..
+oooLooo
+..ooo..
+.o.o.o.
+o..o..o
+""",
+    "leaf": """
+....oo.
+..ooLSo
+.oLLSSo
+oLLSooo
+oSSo...
+.oo....
+o......
+""",
+})
 EMOTE_COLORS = {"note": P.blue, "heart": P.coral, "bang": P.mustard, "star": P.mustard,
                 "bowl": P.clay, "book": P.sage, "game": P.blue, "soap": P.sky_soft, "zzz": P.blue,
-                "skull": P.linen, "chat": P.coral}
+                "skull": P.linen, "chat": P.coral,
+                "question": P.blue, "dots": P.blue, "swirl": P.blue, "focus": P.blue,
+                "anger": P.coral, "sweat": P.sky_soft, "idea": P.mustard,
+                "friend": P.sage, "coffee": P.clay, "rain": P.blue,
+                "snow": P.sky_soft, "leaf": P.sage}
 # per-emote extra legend entries (R = accent button, O = second page shade)
 EMOTE_EXTRA = {"bowl": {"L": P.linen[1]}, "book": {"L": P.linen[3], "O": P.linen[1]},
                "game": {"L": P.linen[3], "R": P.coral[2]}, "soap": {"o": P.blue[1], "L": P.linen[3]},
@@ -1164,7 +1326,7 @@ class Doll:
         out.append((f"head/{self.hair_style}/{bob}/{hat}", under_hat(head, bob) if hat else head))
         if self.hair_style == "messy" and not hat:
             out.append((f"ahoge/messy/{sway % 2}/{bob}", grid_at(AHOGE[sway % 2], bob)))
-        eyes = self.eye_shape if expr == "neutral" else "-"
+        eyes = self.eye_shape if expr in ("neutral", "confused", "unimpressed", "dazed", "focused", "angry", "embarrassed") else "-"
         brows = int(self.gender == "m" and self.brows_hidden)
         out.append((f"face/{self.gender}/{eyes}/{expr}/{look}/{bob}/{brows}",
                     lambda s: draw_face(s, self, expr, look, bob)))
@@ -1266,7 +1428,7 @@ def idle_life(d: Doll) -> Anim:
     return Anim(frames, [ms for *_, ms in IDLE_SEQ])
 
 
-EXPRS = ["neutral", "happy", "surprised", "sleepy", "flustered", "blink"]
+EXPRS = ["neutral", "happy", "surprised", "sleepy", "flustered", "blink", "confused", "unimpressed", "dazed", "focused", "angry", "embarrassed"]
 
 
 def strip(sprites, gap=4):

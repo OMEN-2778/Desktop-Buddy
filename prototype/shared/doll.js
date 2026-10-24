@@ -535,7 +535,7 @@ function BuddyDoll(DATA) {
     if (acc.has("scarf")) add("acc/scarf/0");
     add(`head/${look.style}/${f.bob}/${hat}`);
     if (!hat) add(`ahoge/${look.style}/${f.sway % 2}/${f.bob}`);
-    const eyes = f.expr === "neutral" ? look.eyes : "-";
+    const eyes = ["neutral","confused","unimpressed","dazed","focused","angry","embarrassed"].includes(f.expr) ? look.eyes : "-";
     const brows = look.gender === "m" && DATA.eyewear.some(a => acc.has(a)) ? 1 : 0;
     add(`face/${look.gender}/${eyes}/${f.expr}/${f.look}/${f.bob}/${brows}`);
     for (const a of DATA.headAcc) {

@@ -50,6 +50,7 @@ function stopNpcTalk(reason='',resetBuddy=true){
 }
 function requestNpcTalk(n){
   if(!canClickNpc(n)||wiping||cardHolds()||sim.mode==='down')return false;
+  if(npcRefusesDirty(n,true))return false;
   if(npcInteraction?.n===n)return true;
   if(socialBusy()&&!npcInteraction){showHint('先聊完眼前的话，再打招呼吧。');return false;}
   if(npcChatUrgent()){showHint('先照顾好自己，等会儿再聊吧。');return false;}
@@ -96,6 +97,11 @@ function tickNpcInteraction(dtReal){
 }
 function chooseNpcTalk(n){
   const c=socialState.contacts.find(c=>c.id===n.personId),scene=npcSceneKey();
+  if(!n.kid&&(!c||c.affinity<20)&&SOCIAL_DIALOGUE.earlyMeet[scene]){
+    const rows=SOCIAL_DIALOGUE.earlyMeet[scene],key=scene+'_early_'+n.personId,history=lifeFlags.npcChatSeen||={};
+    const seen=Array.isArray(history[key])?history[key]:(history[key]=[]),row=nextGuestText(rows,seen);
+    return {title:row[0],lines:row.slice(1),early:true,id:'adult_early_'+scene+'_'+rows.indexOf(row),scene};
+  }
   if(c&&!n.kid&&Math.random()<.25){const t=pick(socialTalkPool('meet',c));return{title:t.title,lines:t.lines,id:null,scene};}
   const rows=NPC_TALK_TEXT[scene]?.[n.kid?'kid':'adult'];
   if(!rows?.length)return null;
@@ -108,9 +114,10 @@ function chooseNpcTalk(n){
 }
 function startNpcTalk(n,manual=false){
   if(!n||n.gone||life.talkQ||!manual&&(socialBusy()||phoneHolds()||asleep()||sim.mode==='down'))return false;
+  if(npcRefusesDirty(n,manual))return false;
   let talk=canClickNpc(n)?chooseNpcTalk(n):null;
   if(!talk){const lines=pick((PT()?.talk||{})[n.role]||[]);if(!lines)return false;talk={lines,title:'路上的闲聊',scene:npcSceneKey(),id:null};}
-  talk={...talk,lines:personalityTalk(talk.lines,personalityContact(n),'meet')};
+  talk={...talk,lines:talk.early?talk.lines:personalityTalk(talk.lines,personalityContact(n),'meet')};
   life.talkQ={...talk,n,manual,i:0,wait:0,said:[],originalDir:npcInteraction?.originalDir??n.dir};
   (life.npcTalked||=new WeakSet()).add(n);n.paused=true;
   if(manual)log(`走近${npcTalkName(n)}，在${sim.place==='park'?parkLayout().name:({front:'家门口',mall:'商场长廊',beach:'码头',bar:'酒吧'})[sim.place]}打了声招呼。`);
@@ -141,6 +148,7 @@ function advanceNpcTalk(dt){
   if(q.n.gone||!(life.npcs||[]).includes(q.n)||q.scene!==npcSceneKey()){stopNpcTalk();return;}
   // An automatic exchange is over if Buddy walks away or starts another activity.
   if(!q.manual&&(Math.abs(npcX(q.n)-here().x)>52||remoteSocial||sim.talk||asleep()||sim.mode==='down'||mallInside()||parkInsideToilet()||barToiletInside())){stopNpcTalk();return;}
+  if(sim.needs.hygiene<=0){const n=q.n;stopNpcTalk('先去洗干净');npcRefusesDirty(n,true);return;}
   q.wait-=dt;if(q.wait>0)return;
   if(q.i>=q.lines.length){
     if(q.id){const ids=(lifeFlags.npcChatSeen||={})[q.scene]||=[];if(!ids.includes(q.id))ids.push(q.id);}

@@ -47,7 +47,7 @@
 .moodrow.contacts-open .contacts-panel { opacity:1; visibility:visible; pointer-events:auto; transform:none; transition-delay:0s; }
 .moodrow.contacts-open>.settings,.moodrow.contacts-open>.diary,.moodrow.contacts-open>.mood-face,.moodrow.contacts-open>.mood-talk { visibility:hidden; pointer-events:none; }
 .contacts-list { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); grid-auto-rows:100%; gap:8px; height:100%; overflow-x:hidden; overflow-y:auto; touch-action:pan-y; scrollbar-gutter:stable; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:var(--bevel-lo) transparent; }
-.contact-card { position:relative; --hud-outline:var(--hud-card-clip); --hud-inner:var(--hud-card-in); --hud-frame:var(--bevel-lo); --hud-surface:var(--panel-2); display:grid; grid-template-columns:34px minmax(0,1fr); grid-template-rows:minmax(0,1fr) 10px; align-items:center; gap:5px 8px; height:100%; min-width:0; margin:0; padding:10px; color:var(--ink); text-align:left; transition:transform .25s var(--hud-settle); }
+.contact-card { position:relative; --hud-outline:var(--hud-card-clip); --hud-inner:var(--hud-card-in); --hud-frame:var(--bevel-lo); --hud-surface:var(--panel-2); display:grid; grid-template-columns:34px minmax(0,1fr); grid-template-rows:minmax(32px,1fr) auto 10px; align-items:center; gap:3px 8px; height:100%; min-width:0; margin:0; padding:8px; color:var(--ink); text-align:left; transition:transform .25s var(--hud-settle); }
 .contact-card:hover,.contact-card[aria-expanded="true"] { --hud-frame:var(--accent); --hud-surface:var(--accent-soft); }
 .contact-card:active { transform:scale(.98); }
 .contact-card canvas { width:34px; height:34px; clip-path:var(--contact-avatar-clip,var(--hud-avatar-clip)); image-rendering:pixelated; background:var(--panel); }
@@ -55,7 +55,10 @@
 .contact-copy { min-width:0; display:flex; flex-direction:column; gap:2px; }
 .contact-copy strong { font-size:var(--contact-name-fs,16px); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .contact-copy small { color:var(--muted); font-size:var(--ui-font-caption); white-space:normal; overflow-wrap:anywhere; }
-.affinity { grid-column:1/-1; height:10px; padding:2px; background:var(--ring); clip-path:var(--hud-meter-clip); overflow:hidden; }
+.contact-traits { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:2px; align-items:center; min-width:0; }
+.contact-traits[hidden] { display:none; }
+.contact-traits span { padding:1px 1px; background:var(--ring); color:var(--muted); font-size:12px; line-height:16px; white-space:nowrap; clip-path:var(--hud-trait-clip); }
+.affinity { grid-column:1/-1; grid-row:3; height:10px; padding:2px; background:var(--ring); clip-path:var(--hud-meter-clip); overflow:hidden; }
 .affinity i { display:block; height:100%; width:calc(var(--affinity)*1%); background:var(--need-ok); clip-path:var(--hud-meter-in); box-shadow:inset 0 2px 0 #ffffff55; }
 .contact-actions { position:fixed; z-index:60; width:0; height:0; opacity:0; visibility:hidden; transition:opacity .15s,visibility 0s .25s; }
 .contact-actions.on { visibility:visible; opacity:1; transition-delay:0s; }
@@ -119,9 +122,9 @@
 .contacts-panel.compact .contact-copy strong { letter-spacing:0; font-size:var(--contact-name-fs); }
 .contacts-panel.compact .contact-copy small { font-size:var(--ui-font-caption); }
 .contacts-panel.two-columns .contacts-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
-.contacts-panel.stacked .contact-card { grid-template-columns:minmax(0,1fr); grid-template-rows:20px minmax(0,1fr) 10px; justify-items:center; gap:3px; }
+.contacts-panel.stacked .contact-card { grid-template-columns:minmax(0,1fr); grid-template-rows:20px minmax(0,1fr) auto 10px; justify-items:center; gap:3px; }
 .contacts-panel.stacked .contact-copy { width:100%; align-items:center; }
-.contacts-panel.stacked .affinity { width:100%; }
+.contacts-panel.stacked .affinity { grid-row:4; width:100%; }
 
 @keyframes social-sheet-in { from { opacity:0; scale:.96; } to { opacity:1; scale:1; } }
 @media(prefers-reduced-motion:reduce) { .social-sheet { animation:none; } }

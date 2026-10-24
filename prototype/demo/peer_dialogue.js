@@ -1,6 +1,13 @@
 // The diary yields its row before another speaker enters; Buddy keeps her own row.
 const peerHud=document.getElementById('peerHud'),peerBubble=document.getElementById('peerBubble'),peerText=peerBubble.querySelector('span'),peerAvatar=peerHud.querySelector('canvas');
 const peerSpeech={phase:'idle',entry:0,exit:0,pending:null,until:0,speakerId:null,lineTimer:0,currentText:null};
+function showFriendshipGain(c,gain){
+  if(!(gain>0)||peerSpeech.speakerId!==c.id||peerHud.hidden)return;
+  peerSpeech.until=Math.max(peerSpeech.until,performance.now()+1600);
+  const plus=document.createElement('span');plus.className='friendship-gain';
+  plus.setAttribute('role','status');plus.setAttribute('aria-label',`与${contactName(c)}的友谊增加 ${Number(gain.toFixed(2))}`);
+  plus.textContent='+';peerHud.append(plus);setTimeout(()=>plus.remove(),1500);
+}
 function peerDiaryReserved(){return peerSpeech.phase!=='idle';}
 function peerSpeaker(who,speaker){
   const label=String(who).replace(/[：:]\s*$/,'');
@@ -71,6 +78,6 @@ function tickPeerSpeech(now){
   if(peerSpeech.phase==='idle'&&peerSpeech.pending){const line=peerSpeech.pending;showPeerSay(line.text,line.who,line.speaker);return;}
   if(!['visible','preparing'].includes(peerSpeech.phase))return;
   if(asleep()||sim.mode==='down'){hidePeerSay();return;}
-  const talking=remoteSocial||sim.talk&&sim.item?.talk;
+  const talking=remoteSocial||socialState.guest?.talk||sim.talk&&sim.item?.talk;
   if(!talking&&peerSpeech.phase==='visible'&&now>=peerSpeech.until)hidePeerSay();
 }

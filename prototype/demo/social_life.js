@@ -1,7 +1,7 @@
 // A world's people keep their identity; only acquaintances appear in the HUD.
 function makeSocialWorld(){
   let seed=2778;const random=()=>((seed=Math.imul(seed,1664525)+1013904223>>>0)/4294967296),take=a=>a[Math.floor(random()*a.length)];
-  const names=new Set(DEFAULT_CONTACTS.map(c=>c.name)),looks=new Set(),world=DEFAULT_CONTACTS.filter(c=>!c.family).map(c=>({id:c.id,name:c.name,look:doll.normalize(c.look),child:false}));
+  const names=new Set(LEGACY_CONTACT_SEEDS.map(c=>c.name)),looks=new Set(),world=LEGACY_CONTACT_SEEDS.filter(c=>!c.family).map(c=>({id:c.id,name:c.name,look:doll.normalize(c.look),child:false}));
   for(let i=world.length;i<200;i++){
     const gender=i%2?'m':'f',pool=doll.NAMES[gender].filter(n=>!names.has(n)),name=take(pool);names.add(name);
     let lk,key;do{const colors=D.doll.swatches,options=D.doll.options;
@@ -57,8 +57,9 @@ function meetWorldNpc(n){
 }
 function socialLevel(c){return c.affinity>90?'best':c.affinity>=60?'close':c.affinity>=20?'friend':'familiar';}
 function socialTalkPool(kind,c){
+  if(!c.family&&(c.affinity<20||c.affinity<45&&(c.contactCounts?.[kind]||0)<2)&&SOCIAL_DIALOGUE.early[kind])return SOCIAL_DIALOGUE.early[kind].map((t,i)=>({...t,early:true,id:'social_early_'+kind+'_'+i}));
   const level=socialLevel(c),entries=SOCIAL_TEXT.conversations[level];
-  const conversations=entries.map(([title,...lines],i)=>({title,lines:[...(kind==='video'?['>看得清吗？我把镜头挪过来一点。']:kind==='call'?['>喂，我在，听得到你。']:[]),...lines],id:'social_'+level+'_'+i}));
+  const conversations=entries.map(([title,...lines],i)=>({title,lines:[...lines],id:'social_'+level+'_'+i}));
   if(level!=='familiar')conversations.push(...(CHATS[kind]?.friend?.talks||[]));
   return conversations;
 }
@@ -115,6 +116,7 @@ function restoreSocialLife(data){
   }
   socialState.archive={};for(const [id,c]of Object.entries(data?.archive||{})){if(!socialState.world.some(p=>p.id===id)||!c||typeof c!=='object')continue;socialState.archive[id]={id,name:socialState.world.find(p=>p.id===id).name,memories:memories(c.memories)};}
   for(const c of socialState.contacts){const saved=(Array.isArray(data?.contacts)?data.contacts:[]).find(p=>p&&p.id===c.id)||{};c.memories=memories(saved.memories);for(const key of ['metAt','lastSeen','lastIncoming','rejectDay','rejectLoss','lastVisitOffer'])c[key]=Number.isFinite(saved[key])?saved[key]:key==='rejectLoss'?0:null;
+    c.contactCounts={};for(const key of SOCIAL_CHANNELS)c.contactCounts[key]=Number.isFinite(saved.contactCounts?.[key])?Math.max(0,Math.min(10000,Math.floor(saved.contactCounts[key]))):0;
     c.child=!!socialState.world.find(p=>p.id===c.id)?.child;c.forgotten=!c.family&&!!saved.forgotten;c.farewellTried=!!saved.farewellTried;c.farewellPending=!!saved.farewellPending;
   }
   socialState.decayDay=Number.isInteger(data?.decayDay)?data.decayDay:null;
@@ -125,7 +127,7 @@ function restoreSocialLife(data){
 }
 
 D.spots.host=[D.spots.sofa[0],D.spots.sofa[1]-6,'sit'];
-ACTS.host={spot:'host',label:'招待朋友',emote:'chat',dur:600,log:null};EFFECT.host={social:.3,fun:.2};D.seatLifts.host=4;
+ACTS.host={spot:'host',label:'招待朋友',emote:'chat',dur:45,log:null};EFFECT.host={social:.3,fun:.2};D.seatLifts.host=4;
 const guestBubble=document.createElement('div');guestBubble.className='npcsay home-guest-say';guestBubble.hidden=true;document.getElementById('widget').append(guestBubble);
 function homeVisitActive(){return sim.place==='home'&&socialState.guest?.phase==='visiting';}
 function visitNotice(title,text){
@@ -155,20 +157,38 @@ function endHomeVisit(reason='今天聊得很开心，下次再来。',completed
   if(g.phase==='scheduled'){const text=`和${c?contactName(c):'朋友'}约好了改天再来。`;log(text);showSay(text);socialState.guest=null;return;}
   if(g.phase==='leaving')return;
   if(c){const text=`${contactName(c)}来家里做客，${g.count?`一起聊起了${g.count}件小事，`:''}${reason}`;log(text,null,g.said?.length?g.said:undefined);addSocialMemory(c,'来家里做客',text);if(completed)finishContactTalk(c.id,'visit');}
+  const from=homeGuestPoint(g);g.exitRoute=planRoute(from.x,from.y,D.spots.front_door[1],FLOOR_Y[D.spots.front_door[0]]);g.exitS=0;g.exitLength=routeLength(g.exitRoute);
   g.phase='leaving';g.talk=null;guestBubble.hidden=true;
   if(sim.act==='host'){sim.act=null;sim.mode='idle';sim.idleUntil=sim.t+1;sim.queue=[];}
 }
-function homeGuestSay(text,c){guestBubble.textContent=text;guestBubble.hidden=false;guestBubble.dataset.until=realClock+4.5;guestBubble.setAttribute('aria-label',`${contactName(c)}：${text}`);}
+function homeGuestSay(text,c){guestBubble.hidden=true;showSay(text,contactName(c)+'：',c);}
 function guestNpc(g){const c=socialState.contacts.find(c=>c.id===g.id);if(!c)return null;
   if(!g.npc||g.npc.look!==c.look)g.npc={look:c.look,ramps:doll.rampsOf(c.look),cache:new Map(),kid:!!c.child};return g.npc;}
-function homeGuestPoint(g){const from=D.spots.front_door[1],to=D.spots.sofa[1]+13;return {x:from+(to-from)*g.s,y:FLOOR_Y[0]};}
+function homeGuestPoint(g){if(g.phase==='leaving'&&g.exitRoute)return routePos(g.exitRoute,g.exitS);if(g.phase==='visiting'&&g.position)return g.position;const from=D.spots.front_door[1],to=D.spots.sofa[1]+13;return {x:from+(to-from)*g.s,y:FLOOR_Y[0]};}
 function drawHomeGuest(ctx){
   const g=socialState.guest;if(!g||g.phase==='scheduled'||sim.place!=='home')return;const n=guestNpc(g);if(!n)return;
-  const p=homeGuestPoint(g),sit=g.phase==='visiting',moving=!sit,fr={expr:sit?'happy':'neutral',look:sit?-1:0,bob:moving?Math.floor(realClock*5)%2:0,sway:Math.floor(realClock*3)%2,wave:null};
-  ctx.drawImage(npcCanvas(n,fr,sit?'sit':'stand',false),Math.round(p.x-DW/2),Math.round(p.y-DH+1-(sit?4:0)));
+  const p=homeGuestPoint(g),moving=g.phase!=='visiting'||g.walkS<g.walkLength;
+  const sit=!moving&&['living','kitchen'].includes(roomAt(p)),fr={expr:sit?'happy':'neutral',look:p.dy?0:Math.sign(here().x-p.x),bob:moving?Math.floor(realClock*5)%2:0,sway:Math.floor(realClock*3)%2,wave:null};
+  if(sit&&roomAt(p)==='kitchen'){
+    // A second seat at the table, drawn behind the guest's seated lower body.
+    const x=Math.round(p.x),y=Math.round(p.y);ctx.fillStyle='#5d3831';ctx.fillRect(x-6,y-7,2,8);ctx.fillRect(x+4,y-7,2,8);
+    ctx.fillStyle='#87573e';ctx.fillRect(x-7,y-9,14,3);ctx.fillStyle='#b0674f';ctx.fillRect(x-6,y-9,12,1);
+  }
+  const pose=sit?'sit':moving?['walkL','stand','walkR','stand'][Math.floor(realClock*6)%4]:'stand';
+  ctx.drawImage(npcCanvas(n,fr,pose,!!(moving&&p.dy<0)),Math.round(p.x-DW/2),Math.round(p.y-DH+1-(sit?4:0)));
   if(!guestBubble.hidden){guestBubble.style.left=view.offsetLeft+p.x*scale+'px';guestBubble.style.top=view.offsetTop+(p.y-DH-8)*scale+'px';}
 }
-function nextGuestText(pool,seen){let fresh=pool.map((_,i)=>i).filter(i=>!seen.includes(i));if(!fresh.length){seen.splice(0,Math.max(0,seen.length-3));fresh=pool.map((_,i)=>i).filter(i=>!seen.includes(i));}const i=pick(fresh);seen.push(i);return pool[i];}
+function nextGuestText(pool,seen){
+  let fresh=pool.filter(row=>!seen.includes(row[0]));
+  if(!fresh.length){
+    const titles=new Set(pool.map(row=>row[0])),recent=seen.filter(title=>titles.has(title)).slice(-Math.min(3,pool.length-1));
+    // Recycling a small seasonal pool must not erase the larger everyday history.
+    for(let i=seen.length-1;i>=0;i--)if(titles.has(seen[i])&&!recent.includes(seen[i]))seen.splice(i,1);
+    fresh=pool.filter(row=>!seen.includes(row[0]));
+  }
+  const row=pick(fresh.length?fresh:pool);seen.push(row[0]);return row;
+}
+
 function tickHomeVisit(dt){
   const g=socialState.guest;if(!g)return;const c=socialState.contacts.find(c=>c.id===g.id);if(!c){socialState.guest=null;guestBubble.hidden=true;return;}
   if(!guestBubble.hidden&&realClock>Number(guestBubble.dataset.until))guestBubble.hidden=true;
@@ -179,22 +199,25 @@ function tickHomeVisit(dt){
   }
   if(g.phase==='entering'||g.phase==='leaving'){
     if(sim.place!=='home'){socialState.guest=null;guestBubble.hidden=true;return;}
+    if(g.phase==='leaving'&&g.exitRoute){g.exitS=Math.min(g.exitLength,g.exitS+WALK*Math.min(speed,4)*dt);if(g.exitS>=g.exitLength){socialState.guest=null;guestBubble.hidden=true;}return;}
     const distance=Math.max(1,Math.abs(D.spots.front_door[1]-D.spots.sofa[1]-13)),direction=g.phase==='entering'?1:-1;
     g.s=Math.max(0,Math.min(1,g.s+direction*WALK*Math.min(speed,4)*dt/distance));
     if(g.phase==='leaving'&&g.s<=0){socialState.guest=null;guestBubble.hidden=true;return;}
-    if(g.phase==='entering'&&g.s>=1){g.phase='visiting';g.next=realClock+3;if(!['bath','toilet','cook','eat','sleep'].includes(sim.act)&&!sim.windup)command('host');}return;
+    if(g.phase==='entering'&&g.s>=1){g.phase='visiting';g.next=realClock+3;if(sim.mode==='idle'&&!sim.windup)command('host');}return;
   }
   if(sim.place!=='home'||asleep()||sim.mode==='down'||sim.needs.energy<20||sim.needs.hunger<12||hour()>=22){endHomeVisit(sim.place!=='home'?'主角要出门，约好下次再聚。':'先好好照顾自己，我们下次再聊。');return;}
   if(sim.t>=g.until){endHomeVisit();return;}
-  if(sim.mode==='idle'&&!sim.windup&&sim.needs.bladder>25&&sim.needs.hunger>30)command('host');
-  if(sim.act!=='host'||sim.mode!=='act')return;
+  moveHomeGuest(g,dt);
+  if(sim.act==='host'&&sim.needs.hunger<35){sim.player=false;startAct('cook');}
+  else if(sim.act==='host'&&sim.needs.hygiene<20){sim.player=false;startAct('bath');}
+  if(!homeGuestCanTalk(g)){if(g.talk)g.talk.wait=Math.max(.5,g.talk.wait);return;}
   if(g.talk){const tk=g.talk;tk.wait-=dt;if(tk.wait>0)return;
-    if(tk.i>=tk.lines.length){g.count++;discoverPersonality(c);log(`和${contactName(c)}在家聊起「${tk.title}」。`,null,tk.said);addSocialMemory(c,tk.title,`${contactName(c)}来家里时，${tk.said.map(([,s])=>s).join(' ')}`);g.talk=null;g.next=realClock+8+Math.random()*8;return;}
+    if(tk.i>=tk.lines.length){g.count++;finishContactTalk(c.id,'visit-chat');log(`和${contactName(c)}在家聊起「${tk.title}」。`,null,tk.said);addSocialMemory(c,tk.title,`${contactName(c)}来家里时，${tk.said.map(([,s])=>s).join(' ')}`);g.talk=null;g.next=realClock+4+Math.random()*6;return;}
     const raw=tk.lines[tk.i++],other=raw.startsWith('>'),text=fill(raw.replace(/^>/,''),{主角:nameOf(),朋友:contactName(c)});if(other)homeGuestSay(text,c);else showSay(text);tk.said.push([other?contactName(c)+'：':'',text]);g.said.push([other?contactName(c)+'：':'',text]);tk.wait=3+text.length*.04;return;
   }
   if(realClock<g.next)return;g.usedTalks||=[];g.usedEvents||=[];
-  if(Math.random()<.35){const [title,text,say,emo]=nextGuestText(SOCIAL_TEXT.visitEvents,g.usedEvents),vars={朋友:contactName(c)};log(fill(text,vars));showSay(say);addMood('home_guest_event_'+SOCIAL_TEXT.visitEvents.findIndex(row=>row[0]===title),{diary:false,words:false});addSocialMemory(c,title,fill(text,vars));g.next=realClock+14;}
-  else {const [title,...lines]=nextGuestText([...SOCIAL_TEXT.visitTalks,...(c.family?[]:SOCIAL_TEXT.conversations[socialLevel(c)])],g.usedTalks);g.talk={title,lines:personalityTalk(lines,c,'visit'),i:0,wait:.4,said:[]};}
+  if(Math.random()<.35){const [title,text,say,emo]=nextGuestText(SOCIAL_TEXT.visitEvents.filter(socialTalkFits),g.usedEvents),vars={朋友:contactName(c)};log(fill(text,vars));showSay(say);addMood('home_guest_event_'+SOCIAL_TEXT.visitEvents.findIndex(row=>row[0]===title),{diary:false,words:false});addSocialMemory(c,title,fill(text,vars));g.next=realClock+14;}
+  else {const [title,...lines]=nextGuestText(homeGuestTalkPool(g,c),g.usedTalks);g.talk={title,lines:personalityTalk(lines,c,'visit'),i:0,wait:.4,said:[]};}
 }
 function tickSocialLife(dt){
   if(socialDialogHolds()||phoneHolds()||!speed||cardHolds()||wiping)return;
