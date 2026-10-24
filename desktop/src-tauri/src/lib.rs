@@ -38,6 +38,8 @@
 //! place, then it restarts; only an install the user can't write to runs the
 //! installer instead.
 
+mod window_motion;
+
 use std::{
     fs,
     path::PathBuf,
@@ -220,9 +222,11 @@ fn open_save_dir(app: AppHandle) -> Result<(), String> {
 /// It isn't resizable by the user; some platforms ignore set_size on a
 /// non-resizable window, so it's unlocked for the moment of the resize.
 static SHOWN: AtomicBool = AtomicBool::new(false);
+static DRAGGING: AtomicBool = AtomicBool::new(false);
 
 #[tauri::command]
 fn fit_window(window: WebviewWindow, width: f64, height: f64, dx: Option<f64>, dy: Option<f64>) -> Result<(f64, f64), String> {
+    if DRAGGING.load(Ordering::SeqCst) { return Ok((0.0, 0.0)); }
     // dy > 0: the page made room above the house (造型室, diary list), dx > 0
     // to its left (the pick-a-thing panel) — move the window up / left as
     // much so the house stays put on screen, but not past the screen's edge;
@@ -273,9 +277,51 @@ fn fit_window(window: WebviewWindow, width: f64, height: f64, dx: Option<f64>, d
     done.map(|_| (moved_x, moved_y)).map_err(|e| e.to_string())
 }
 
+// Native caption dragging clamps an oversized transparent window to the work
+// area. Our popup headroom can make the window taller than the screen, so use
+// physical cursor deltas on Windows. No DPI conversion or work-area clamp here.
+#[cfg(target_os = "windows")]
+#[link(name = "user32")]
+extern "system" {
+    fn GetAsyncKeyState(key: i32) -> i16;
+    fn GetSystemMetrics(index: i32) -> i32;
+}
+
+#[cfg(target_os = "windows")]
+fn drag_with_cursor(window: WebviewWindow) -> Result<(), String> {
+    let origin = window.outer_position().map_err(|e| e.to_string())?;
+    let cursor = window.app_handle().cursor_position().map_err(|e| e.to_string())?;
+    window.set_ignore_cursor_events(false).map_err(|e| e.to_string())?;
+    // SM_SWAPBUTTON: respect the user's primary mouse button.
+    let primary = unsafe { if GetSystemMetrics(23) != 0 { 2 } else { 1 } };
+    let mut previous = (origin.x, origin.y);
+    while unsafe { GetAsyncKeyState(primary) } < 0 {
+        // Escape cancels the drag, matching the native move operation.
+        if unsafe { GetAsyncKeyState(0x1b) } < 0 {
+            return window.set_position(origin).map_err(|e| e.to_string());
+        }
+        let now = window.app_handle().cursor_position().map_err(|e| e.to_string())?;
+        let next = window_motion::drag_position((origin.x, origin.y), (cursor.x, cursor.y), (now.x, now.y));
+        if next != previous {
+            window.set_position(PhysicalPosition::new(next.0, next.1)).map_err(|e| e.to_string())?;
+            previous = next;
+        }
+        thread::sleep(Duration::from_millis(8));
+    }
+    Ok(())
+}
+
 #[tauri::command]
-fn start_drag(window: WebviewWindow) -> Result<(), String> {
-    window.start_dragging().map_err(|e| e.to_string())
+async fn start_drag(window: WebviewWindow) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        if DRAGGING.swap(true, Ordering::SeqCst) { return Ok(()); }
+        let result = tauri::async_runtime::spawn_blocking(move || drag_with_cursor(window)).await;
+        DRAGGING.store(false, Ordering::SeqCst);
+        result.map_err(|e| e.to_string())?
+    }
+    #[cfg(not(target_os = "windows"))]
+    { window.start_dragging().map_err(|e| e.to_string()) }
 }
 
 #[tauri::command]

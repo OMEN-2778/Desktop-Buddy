@@ -4704,8 +4704,10 @@ async function resetSave() {
 
 // ---------- the desktop window: sized to the game, tray menu events
 let lastWin = "", lastTop = null, lastLeft = null, lifted = 0, shifted = 0;
+let desktopDragging = false, desktopFitPending = false;
 function fitWindow() {
   if (!TAURI) return;
+  if (desktopDragging) { desktopFitPending = true; return; }
   const w = document.getElementById("widget"), desk = document.querySelector(".desk"), cs = getComputedStyle(desk);
   // the game, plus the settings menu while it is open (it may reach past the house)
   const r = w.getBoundingClientRect();
@@ -4737,7 +4739,25 @@ function fitWindow() {
 // click-through on over nothing, off over the game.
 // what shows nothing: the page, the layout boxes, the room kept above the house
 const HOLLOW = "html, body, .desk, .widget, .house-col, .moodrow, .mood-talk, .mood-list, .skybar, .studio-slot, .studio-clip, .settings, .set-pop, .set-row, .set-items, .set-labels, .diary, .ring";
-function dragWindow() { TAURI.core.invoke("start_drag").catch(e => TAURI.core.invoke("log_js", { message: `start_drag: ${e}` })); }
+async function dragWindow() {
+  if (desktopDragging) return;
+  desktopDragging = true;
+  try { await TAURI.core.invoke("start_drag"); }
+  catch (e) { TAURI.core.invoke("log_js", { message: `start_drag: ${e}` }); }
+  finally {
+    desktopDragging = false;
+    TAURI.core.invoke("set_click_through", { on: false }).catch(() => {});
+    window.dispatchEvent(new Event("buddy-drag-ended"));
+    if (desktopFitPending) {
+      desktopFitPending = false;
+      // A monitor/DPI/layout change during a drag must resize without snapping
+      // the newly chosen screen position back to an old layout anchor.
+      const mr = moodrow.getBoundingClientRect();
+      lastTop = mr.top; lastLeft = mr.left; lastWin = "";
+      requestAnimationFrame(fitWindow);
+    }
+  }
+}
 if (TAURI) {
   const desk = document.querySelector(".desk"), widgetEl = document.getElementById("widget");
   document.addEventListener("mousedown", e => { if (e.button === 0 && (e.target === skyHit || e.target.matches(HOLLOW))) { e.preventDefault(); dragWindow(); } });
@@ -4745,9 +4765,9 @@ if (TAURI) {
   document.addEventListener("pointerdown", () => { held = true; }, true);
   window.addEventListener("pointerup", () => { held = false; }, true);
   setInterval(async () => {
-    if (held) return;                                   // never in the middle of a press or a drag
+    if (held || desktopDragging) return;                // never in the middle of a press or a drag
     const p = await TAURI.core.invoke("cursor_in_window").catch(() => null);
-    if (!p) return;
+    if (!p || held || desktopDragging) return;
     const el = document.elementFromPoint(p[0], p[1]);
     moodHover(p[0], p[1]);                              // click-through hides the mouse from the page
     const hollow = (!el || el.matches(HOLLOW)) && !(listOpen && inMoodZone(p[0], p[1]));
@@ -4763,6 +4783,7 @@ if (TAURI) {
     if (press && (e.buttons & 1) && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 3) { press = null; dragWindow(); }
   });
   window.addEventListener("pointerup", () => { press = null; });
+  window.addEventListener("buddy-drag-ended", () => { held = false; press = null; through = false; });
 }
 if (TAURI) {
   const ro = new ResizeObserver(fitWindow);
@@ -4832,7 +4853,7 @@ async function downloadUpdate(shown) {
   if (shown) applyUpdate(); else waitForQuiet();
 }
 // a moment when the restart can't get in the way: nothing open, no clicks for 20 s
-const busyNow = () => !!(card || pickOn || wardrobeOpen || guideOn || ringOf || diaryOn || listOpen
+const busyNow = () => !!(desktopDragging || card || pickOn || wardrobeOpen || guideOn || ringOf || diaryOn || listOpen
   || setGear.getAttribute("aria-expanded") === "true" || wiping || sim.mode === "down");
 function waitForQuiet() {
   if (upd.state !== "ready") return;

@@ -95,3 +95,12 @@ Linux first, then passes that exact page to the Windows signing/build job.
 Committing a generated demo page is unnecessary for a manual release; use the
 Desktop app workflow on the intended branch. This keeps browser and EXE content
 in sync and prevents an old checked-in page from entering a new release.
+
+On Windows, window dragging uses physical cursor deltas rather than native
+caption dragging: the transparent space above the game can make the window
+taller than the work area, which otherwise locks vertical movement. Negative
+window coordinates are intentional. Frontend layout changes wait until the
+drag ends and then resize without repositioning the window. Regression checks:
+`node tools/check_window_drag.js` and
+`rustc --test desktop/src-tauri/src/window_motion.rs -o window-motion-tests.exe`
+(run the resulting test executable). The Windows workflow runs both checks.

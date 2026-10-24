@@ -71,6 +71,13 @@ jobs:
         working-directory: desktop
         run: npm ci
 
+      - name: Check window dragging
+        shell: bash
+        run: |
+          node tools/check_window_drag.js
+          rustc --test desktop/src-tauri/src/window_motion.rs -o window-motion-tests.exe
+          ./window-motion-tests.exe
+
       - name: Version
         working-directory: desktop
         shell: bash
