@@ -1213,6 +1213,7 @@ function choose() {
     go_out: canOut ? (100 - n.fun) * 0.7 + (100 - n.social) * 0.5 + r() * 25 + 2 - (h >= 19 && outReason() !== "low" ? 25 : 0) : 0,
     towel: 3 + r() * 6, window: 7 + r() * 14, water_living: 5 + r() * 10, water_study: 4 + r() * 10, art: 4 + r() * 12, dress: 4 + r() * 10,
   };
+  personalityChoices(score);
   // how she feels tips the scales (Sims-style)
   for (const [a, v] of Object.entries(EMO_PULL[emotion().key] || {})) if (a !== "go_out" || canOut) score[a] += v;
   for (const a of sim.recent) score[a] *= 0.3;   // don't repeat the last few things
@@ -2358,7 +2359,7 @@ function addMood(id, { vars = {}, diary = true, words = true } = {}) {
   const m = ML[id];
   if (!m) return;
   const had = moods.has(id);
-  moods.set(id, { until: m.min ? sim.t + m.min : null, t: sim.t, vars: had ? moods.get(id).vars : vars });
+  moods.set(id, { until: m.min ? sim.t + personalityMoodDuration(m) : null, t: sim.t, vars: had ? moods.get(id).vars : vars });
   if (had) return;                 // refreshed quietly
   if (diary && m.diary) log(fill(one(m.diary), vars));
   if (words && m.say) speak(fill(pick(m.say), vars));
@@ -3519,6 +3520,7 @@ document.addEventListener("pointerdown", e => { if (ringOf && !ringEl.contains(e
 document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) closeRing(); });
 let lastChat = -1e9;
 function ringPick(id) {
+  if (id === "personality") { closeRing();showPersonality();return; }
   if (id === "mall_leave") { closeRing();mallLeaveVisit(false);return; }
   if (id === "park_stand") { parkStand(); return; }
   if (id.startsWith("bar_")) {
@@ -4360,7 +4362,7 @@ function placeChatter() {                       // now and then: a stranger's li
   const p = here(), near = (life.npcs || []).filter(n => !n.gone && Math.abs(npcX(n) - p.x) < 34 && !life.npcTalked.has(n));
   const seen = (life.npcs || []).filter(n => { const x = npcX(n); return x > 10 && x < W - 10 && n.sayUntil < realClock; });
   const r = Math.random();
-  if (near.length && r < 0.45 && startTalk(pick(near))) return;
+  if (near.length && r < 0.45) { const n=pick(near);if(Math.random()<(.65+personalityOf(personalityContact(n)).social*.003)&&startTalk(n))return; }
   if (seen.length && r < 0.8) {
     const n = pick(seen);
     npcLine(n, n.role === "hawker" ? `hawk_${n.item}` : n.role);
@@ -4839,7 +4841,7 @@ function chatItem(kind, who, via = "pc", contactId = null) {
   const seen=((lifeFlags.talkSeen ||= {})[level?`${kind}_${contact.id}_${level}`:kind+'_'+who] ||= []);
   let fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i));
   if (!fresh.length) { seen.splice(0, seen.length - 3); fresh = g.talks.map((_, i) => i).filter(i => !seen.includes(i)); }
-  const i = pick(fresh), t = g.talks[i], vars = { 主角:nameOf(),朋友: contact?contactName(contact):pick(T.fill.朋友) };
+  const i = pick(fresh), baseTalk = g.talks[i], t = contact&&kind!=="forum"?{...baseTalk,lines:personalityTalk(baseTalk.lines,contact,kind)}:baseTalk, vars = { 主角:nameOf(),朋友: contact?contactName(contact):pick(T.fill.朋友) };
   seen.push(i);if(contact)contact.lastTopic=t.title;
   const name = contact?contactName(contact):fill(g.name, vars);
   return { vars, contactId:contact?.id, talk: { ...t, kind, who, name,
@@ -5697,6 +5699,7 @@ if (TAURI) {
 /*__BAR_JS__*/
 /*__PARK_FOOD_JS__*/
 /*__PARK_JS__*/
+/*__PERSONALITY_JS__*/
 /*__SOCIAL_HUD_JS__*/
 /*__SOCIAL_LIFE_JS__*/
 /*__PEER_DIALOGUE_JS__*/

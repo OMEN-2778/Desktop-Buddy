@@ -12,10 +12,10 @@ const assert=require('node:assert/strict');require('node:fs').mkdirSync('/worksp
   const count=socialState.contacts.length;meetWorldNpc(npc);if(socialState.contacts.length!==count)throw Error('Duplicate acquaintance');
   if(!c.memories.length)throw Error('First meeting memory');
   c.affinity=12;c.metAt=0;c.lastContact=0;c.lastSeen=0;c.farewellTried=true;socialState.decayDay=0;sim.t=9*1440;tickSocialDecay();
-  if(c.affinity!==7||!c.forgotten)throw Error('Grace period / game-day decay / forgotten appearance');
+  if(Math.abs(c.affinity-(12-5*personalityDecay(c)))>1e-8||!c.forgotten)throw Error('Grace period / game-day decay / forgotten appearance');
   const before=c.affinity;socialRejected(c,'没能联系上');socialRejected(c,'没能联系上');socialRejected(c,'没能联系上');if(c.affinity!==before-2)throw Error('Daily refusal loss cap');
   const dad=contactFor('dad'),dadBefore=dad.affinity;socialRejected(dad,'未接');if(dad.affinity!==dadBefore||dad.forgotten)throw Error('Parent protection');
-  c.affinity=1;c.lastContact=0;socialState.decayDay=9;sim.t=10*1440;tickSocialDecay();if(socialState.contacts.includes(c)||!socialState.archive[c.id])throw Error('Zero removes and archives identity');
+  c.affinity=.5;c.lastContact=0;socialState.decayDay=9;sim.t=10*1440;tickSocialDecay();if(socialState.contacts.includes(c)||!socialState.archive[c.id])throw Error('Zero removes and archives identity');
   const again=meetWorldNpc(npc);if(again.id!==c.id||again.memories.length<=c.memories.length)throw Error('Re-encounter preserves memories');
   const saved=socialSnapshot();restoreSocial(saved);if(socialState.decayDay!==saved.decayDay)throw Error('Offline reload applies decay');
   if(socialState.contacts.filter(c=>c.family).length!==2)throw Error('Parents were removed');

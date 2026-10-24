@@ -146,3 +146,33 @@ html.desktop .desk { padding-left:76px; }
 .visit-actions button { min-width:0; font-weight:700; background:var(--visit-green); border:2px solid #79b98e; box-shadow:inset 0 2px 0 #ffffff33,inset 0 -2px 0 #28342715; line-height:1.25; }
 .visit-actions .visit-decline { background:#ee747b; border-color:#d96971; }
 .visit-clock { position:absolute; left:8px; right:8px; bottom:3px; height:2px; background:#5caa79; transform-origin:left; transform:scaleX(var(--visit-remaining,1)); }
+
+/* Personality uses the same house-bound pixel diary sheet at every desktop zoom. */
+.personality-sheet { font-size:clamp(9px,calc(13px * var(--cs)),16px); }
+.personality-sheet h3 { margin-bottom:.6em; font-size:1.3em; }
+.personality-sheet .personality-intro { font-size:1em; line-height:1.5; margin:.5em 0; }
+.personality-axes { display:grid; gap:.5em; }
+.personality-axes fieldset { min-width:0; margin:0; padding:.4em .6em; border:2px solid var(--bevel-lo); background:var(--panel-2); }
+.personality-axes legend { font-size:1em; padding:0 .4em; }
+.personality-axes label { display:inline-flex; align-items:center; gap:.25em; margin-right:.8em; cursor:pointer; }
+.personality-axes input { margin:0; accent-color:var(--accent); width:1em; height:1em; }
+.personality-axes p { font-size:1em; line-height:1.6; margin:.2em 0; }
+.personality-sheet > button:not(.social-sheet-close) { font-size:1em; padding:.4em .7em; margin:.5em .4em 0 0; }
+
+.personality-sheet .personality-intro { flex:none; }
+.personality-axes { flex:1; min-height:0; overflow-y:auto; align-content:start; }
+.personality-actions { flex:none; display:flex; gap:8px; }
+.personality-actions button { flex:1; font-size:1em; }
+.personality-axes input { font:inherit; flex:none; appearance:none; border:2px solid var(--bevel-lo); background:var(--panel); border-radius:0; }
+.personality-axes input:checked { background:var(--accent); box-shadow:inset 0 0 0 1px var(--panel); }
+.personality-axes input:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.personality-sheet.personality-small { gap:3px; padding:4px; }
+.personality-small .personality-intro { display:none; }
+.personality-small .personality-axes { gap:3px; }
+.personality-small .personality-axes fieldset { padding:3px; }
+.personality-small .personality-axes legend { float:left; margin-right:8px; padding:0; }
+.personality-small .personality-axes label { margin-right:5px; }
+.personality-small .personality-actions button { padding:2px; }
+.personality-small .personality-axes { font-size:9px; line-height:1.1; }
+.personality-small .personality-axes fieldset { padding:0 3px; }
+.personality-small .personality-axes label { line-height:1.1; }

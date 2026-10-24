@@ -8,14 +8,14 @@ function makeSocialWorld(){
       lk=doll.normalize({...doll.PRESETS[gender],name,gender,style:take(options.style.filter(o=>D.doll.shortStyles.includes(o[0])===(gender==='m')))[0],eyes:take(options.eyes)[0],topStyle:take(options.top)[0],bottomStyle:take(options.bottom)[0],socks:take(options.socks)[0],acc:random()<.35?[take(options.acc)[0]]:[],hair:take(colors.hair)[1],skin:take(colors.skin)[1],top:take(colors.cloth)[1],bottom:take(colors.cloth)[1],eye:take(colors.eye)[1]});
       key=JSON.stringify({...lk,name:undefined});
     }while(looks.has(key));looks.add(key);world.push({id:'person_'+i,name,look:lk,child:i%9===0});
-  }return world;
+  }for(const p of world)p.personality=seededPersonality(p.id);return world;
 }
 socialState.world=makeSocialWorld();socialState.archive={};socialState.decayDay=Math.floor(sim.t/1440);socialState.nextVisit=sim.t+1440;socialState.guest=null;
 const socialSheet=document.createElement('section');socialSheet.className='social-sheet';socialSheet.hidden=true;socialSheet.setAttribute('role','dialog');socialSheet.setAttribute('aria-modal','true');socialSheet.setAttribute('aria-labelledby','socialSheetTitle');document.getElementById('widget').append(socialSheet);
 let sheetReturnFocus=null;
 const visitOffer={id:null,reason:null,deadline:0,timer:0,frame:0};
 function cancelVisitOffer(){clearTimeout(visitOffer.timer);cancelAnimationFrame(visitOffer.frame);Object.assign(visitOffer,{id:null,reason:null,deadline:0,timer:0,frame:0});}
-function fitSocialSheet(){overHouse(socialSheet);socialSheet.style.setProperty('--cs',Math.max(.35,Math.min(1.35,view.offsetHeight/280,view.offsetWidth/500)));}
+function fitSocialSheet(){overHouse(socialSheet);socialSheet.classList.toggle('personality-small',view.offsetHeight<240);socialSheet.style.setProperty('--cs',Math.max(.35,Math.min(1.35,view.offsetHeight/280,view.offsetWidth/500)));}
 function socialDialogHolds(){return !socialSheet.hidden;}
 function closeSocialSheet(){cancelVisitOffer();socialSheet.hidden=true;if(sheetReturnFocus?.isConnected&&!sheetReturnFocus.closest('[inert]'))sheetReturnFocus.focus({preventScroll:true});}
 function openSocialSheet(title){
@@ -32,6 +32,8 @@ function addSocialMemory(c,title,text){
 function showSocialMemories(id){
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return;
   const sheet=openSocialSheet(`和${contactName(c)}的经历`),list=document.createElement('ol');list.className='social-memories';
+  const profile=document.createElement('button');profile.type='button';profile.textContent='了解对方 · 性格';profile.onclick=()=>showPersonality(c.id);sheet.append(profile);
+  const summary=document.createElement('p');summary.textContent=c.family?personalityTraits(c).join(' · '):c.personalitySeen?.length?PERSONALITY_AXES.filter(a=>c.personalitySeen.includes(a[0])).map(a=>personalityLabel(a,personalityOf(c)[a[0]])).join(' · '):'还不太了解：聊聊天，慢慢认识彼此。';sheet.append(summary);
   if(!c.memories?.length){const p=document.createElement('p');p.textContent='共同的故事还没写下。下一次认真聊天，或者一起度过一段时光，就从这里开始。';sheet.append(p);}
   for(const memory of [...(c.memories||[])].reverse()){
     const row=document.createElement('li'),time=document.createElement('time'),title=document.createElement('strong'),text=document.createElement('p');
@@ -48,7 +50,7 @@ function meetWorldNpc(n){
   const person=socialState.world.find(c=>c.id===n.personId);if(!person)return null;
   let c=socialState.contacts.find(c=>c.id===person.id);
   if(!c){c={...person,family:null,affinity:8,lastContact:sim.t,lastSeen:sim.t,metAt:sim.t,memories:[...(socialState.archive[person.id]?.memories||[])]};const returning=!!socialState.archive[person.id];socialState.contacts.push(c);delete socialState.archive[person.id];
-    const text=`在${({park:'公园',bar:'酒吧',mall:'商场',front:'街边',beach:'码头'})[sim.place]||'路上'}和${c.name}聊了几句，${returning?'重新':'第一次'}交换了联系方式。`;log(text);addSocialMemory(c,returning?'再次遇见':'第一次认识',text);
+    const text=`在${({park:'公园',bar:'酒吧',mall:'商场',front:'街边',beach:'码头'})[sim.place]||'路上'}和${c.name}聊了几句，${returning?'重新':'第一次'}交换了联系方式。`;log(text);addSocialMemory(c,returning?'再次遇见':'第一次认识',text);discoverPersonality(c);
   }else{c.lastSeen=sim.t;c.forgotten=false;finishContactTalk(c.id,'meet');}
   contactsSig='';return c;
 }
@@ -80,7 +82,7 @@ function tickSocialDecay(){
   for(const c of [...socialState.contacts]){
     if(c.family)continue;
     const lastDay=Math.floor((c.lastContact??c.metAt??sim.t)/1440),days=Math.max(0,day-Math.max(previous,lastDay+4));
-    if(!days)continue;const old=contactRelation(c);c.affinity=Math.max(0,c.affinity-days);contactsSig='';
+    if(!days)continue;const old=contactRelation(c);c.affinity=Math.max(0,c.affinity-days*personalityDecay(c));contactsSig='';
     if(c.affinity<10&&sim.t-(c.lastSeen??c.metAt??sim.t)>7*1440)c.forgotten=true;
     if(c.affinity<=5&&!c.farewellTried){c.farewellTried=true;if(Math.random()<.12)c.farewellPending=true;}
     if(c.farewellPending&&c.affinity<=0)c.affinity=1;
@@ -88,8 +90,8 @@ function tickSocialDecay(){
     else if(old!==contactRelation(c)){const text=`这些天没和${c.name}联系，从${old}慢慢变成了${contactRelation(c)}。`;log(text);addSocialMemory(c,'关系渐渐疏远',text);}
   }if(moodrow.classList.contains('contacts-open'))fillContacts();
 }
-function socialCallDue(c){const gap=c.family?1440:c.affinity>90?600:c.affinity>=60?1080:c.affinity>=20?1800:3600;return sim.t-(c.lastIncoming??-Infinity)>=gap;}
-function socialLifeSnapshot(){return {namePoolVersion:2,worldStyleVersion:2,world:socialState.world,archive:socialState.archive,decayDay:socialState.decayDay,nextVisit:socialState.nextVisit,guest:socialState.guest?{...socialState.guest,npc:undefined}:null};}
+function socialCallDue(c){const gap=c.family?1440:c.affinity>90?600:c.affinity>=60?1080:c.affinity>=20?1800:3600;return sim.t-(c.lastIncoming??-Infinity)>=gap*personalityCallFactor(c);}
+function socialLifeSnapshot(){return {heroPersonality:{...heroPersonality},heroPersonalityChosen,namePoolVersion:2,worldStyleVersion:2,world:socialState.world,archive:socialState.archive,decayDay:socialState.decayDay,nextVisit:socialState.nextVisit,guest:socialState.guest?{...socialState.guest,npc:undefined}:null};}
 function restoreSocialLife(data){
   const memories=value=>Array.isArray(value)?value.filter(m=>m&&Number.isFinite(m.t)&&typeof m.title==='string'&&typeof m.text==='string').map(m=>({t:m.t,title:m.title.slice(0,100),text:m.text.slice(0,2000)})):[];
   socialState.world=makeSocialWorld();
@@ -118,7 +120,7 @@ function restoreSocialLife(data){
   socialState.nextVisit=Number.isFinite(data?.nextVisit)?data.nextVisit:null;socialState.guest=null;
   const guest=data?.guest;if(guest&&socialState.contacts.some(c=>c.id===guest.id)&&Number.isFinite(guest.until)){
     socialState.guest={id:guest.id,phase:['scheduled','entering','visiting','leaving'].includes(guest.phase)?guest.phase:'scheduled',at:Number.isFinite(guest.at)?guest.at:sim.t,until:guest.until,s:Number.isFinite(guest.s)?guest.s:0,next:0,said:[],count:0,activity:guest.activity||'chat'};
-  }closeSocialSheet();
+  }restorePersonalities(data);closeSocialSheet();
 }
 
 D.spots.host=[D.spots.sofa[0],D.spots.sofa[1]-6,'sit'];
@@ -141,7 +143,7 @@ function inviteHome(id,proactive=false){
   else if(sim.needs.energy<20||sim.needs.hunger<20)reason='主角有点饿或累了，先吃点东西、休息好，再招待朋友吧。';
   else if(!c.family&&c.affinity<20)reason=`${c.name}：我们先多聊聊天，熟悉一点再登门吧。`;
   if(reason){log(reason);visitNotice('暂时不能邀请',reason);return false;}
-  const minutes=12+Math.floor(Math.random()*14),at=sim.t+minutes;
+  const minutes=personalityOf(c).care>25?18:12+Math.floor(Math.random()*14),at=sim.t+minutes;
   socialState.guest={id,phase:'scheduled',at,until:at+150,s:0,next:0,said:[],count:0,usedTalks:[],usedEvents:[],activity:'chat',proactive};
   socialState.nextVisit=sim.t+1440;log(`${contactName(c)}答应来家里坐坐，预计 ${minutes} 个游戏分钟后到达。`);showSay(`好呀，我大约 ${minutes} 个游戏分钟后到！`,contactName(c)+'：',c);
   if(!speed){const sheet=visitNotice('邀请成功 · 等待出发',`${contactName(c)}答应来啦，预计 ${minutes} 个游戏分钟后到达。当前游戏已暂停，恢复时间后朋友才会过来。`),resume=document.createElement('button');resume.type='button';resume.textContent='恢复时间，等朋友来';resume.onclick=()=>{closeSocialSheet();speed=1;syncUI();};sheet.append(resume);}
@@ -186,12 +188,12 @@ function tickHomeVisit(dt){
   if(sim.mode==='idle'&&!sim.windup&&sim.needs.bladder>25&&sim.needs.hunger>30)command('host');
   if(sim.act!=='host'||sim.mode!=='act')return;
   if(g.talk){const tk=g.talk;tk.wait-=dt;if(tk.wait>0)return;
-    if(tk.i>=tk.lines.length){g.count++;log(`和${contactName(c)}在家聊起「${tk.title}」。`,null,tk.said);addSocialMemory(c,tk.title,`${contactName(c)}来家里时，${tk.said.map(([,s])=>s).join(' ')}`);g.talk=null;g.next=realClock+8+Math.random()*8;return;}
+    if(tk.i>=tk.lines.length){g.count++;discoverPersonality(c);log(`和${contactName(c)}在家聊起「${tk.title}」。`,null,tk.said);addSocialMemory(c,tk.title,`${contactName(c)}来家里时，${tk.said.map(([,s])=>s).join(' ')}`);g.talk=null;g.next=realClock+8+Math.random()*8;return;}
     const raw=tk.lines[tk.i++],other=raw.startsWith('>'),text=fill(raw.replace(/^>/,''),{主角:nameOf(),朋友:contactName(c)});if(other)homeGuestSay(text,c);else showSay(text);tk.said.push([other?contactName(c)+'：':'',text]);g.said.push([other?contactName(c)+'：':'',text]);tk.wait=3+text.length*.04;return;
   }
   if(realClock<g.next)return;g.usedTalks||=[];g.usedEvents||=[];
   if(Math.random()<.35){const [title,text,say,emo]=nextGuestText(SOCIAL_TEXT.visitEvents,g.usedEvents),vars={朋友:contactName(c)};log(fill(text,vars));showSay(say);addMood('home_guest_event_'+SOCIAL_TEXT.visitEvents.findIndex(row=>row[0]===title),{diary:false,words:false});addSocialMemory(c,title,fill(text,vars));g.next=realClock+14;}
-  else {const [title,...lines]=nextGuestText([...SOCIAL_TEXT.visitTalks,...(c.family?[]:SOCIAL_TEXT.conversations[socialLevel(c)])],g.usedTalks);g.talk={title,lines,i:0,wait:.4,said:[]};}
+  else {const [title,...lines]=nextGuestText([...SOCIAL_TEXT.visitTalks,...(c.family?[]:SOCIAL_TEXT.conversations[socialLevel(c)])],g.usedTalks);g.talk={title,lines:personalityTalk(lines,c,'visit'),i:0,wait:.4,said:[]};}
 }
 function tickSocialLife(dt){
   if(socialDialogHolds()||phoneHolds()||!speed||cardHolds()||wiping)return;
@@ -200,7 +202,7 @@ function tickSocialLife(dt){
   if(!Number.isFinite(socialState.nextVisit))socialState.nextVisit=sim.t+1440;
   if(sim.t<socialState.nextVisit||socialState.guest||!canReceiveCall()||sim.place!=='home'||hour()<10||hour()>=20)return;
   socialState.nextVisit=sim.t+720+Math.random()*720;
-  const eligible=sortedContacts().filter(c=>(c.family||c.affinity>=20)&&sim.t-(c.lastVisitOffer??-Infinity)>2*1440);
+  const eligible=sortedContacts().filter(c=>(c.family||c.affinity>=20)&&sim.t-(c.lastVisitOffer??-Infinity)>2*1440*personalityCallFactor(c));
   if(eligible.length&&Math.random()<.4){const c=pick(eligible);c.lastVisitOffer=sim.t;requestIncomingCall(c.id,'visit');}
 }
 function resolveVisitOffer(action,automatic=false){
@@ -219,7 +221,7 @@ function resolveVisitOffer(action,automatic=false){
 }
 function showVisitOffer(c,reason=null){
   // Most visits are simply about company, with a smaller variety of funny excuses.
-  reason||=Math.random()<.72?SOCIAL_TEXT.visitReasons[0]:pick(SOCIAL_TEXT.visitReasons.slice(1));
+  reason||=Math.random()<.45?personalityVisitReason(c):Math.random()<.72?SOCIAL_TEXT.visitReasons[0]:pick(SOCIAL_TEXT.visitReasons.slice(1));
   const sheet=openSocialSheet(`${contactName(c)} · ${reason[0]}`);sheet.classList.add('visit-offer');sheet.querySelector('.social-sheet-close').remove();
   const heading=sheet.querySelector('h3'),copy=document.createElement('div'),portrait=document.createElement('canvas'),p=document.createElement('p'),ignore=document.createElement('button'),actions=document.createElement('div'),clock=document.createElement('i');
   copy.className='visit-copy';p.textContent='：'+reason[1];copy.append(heading,p);
@@ -238,3 +240,5 @@ function showFarewellOffer(c){
   for(const [label,keep]of [['认真聊聊，留住这段关系',true],['好好告别',false]]){const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=()=>{closeSocialSheet();if(keep){c.affinity=Math.max(8,c.affinity+5);c.lastContact=sim.t;c.farewellPending=false;contactsSig='';const text=`接住了${contactName(c)}的告别电话，坦诚说开后，决定重新认真联系。`;log(text);addSocialMemory(c,'差一点走散',text);}else removeSocialContact(c,'通完告别电话，两个人决定把这段联系留在过去。');};sheet.append(button);}
 }
 for(const c of socialState.contacts){c.metAt??=sim.t;c.lastSeen??=sim.t;c.memories||=[];}
+
+restorePersonalities(null);
