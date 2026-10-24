@@ -1,6 +1,12 @@
 // Five connected park areas; public services share the same walking routes,
 // scene wipes, needs, moods and save file as the rest of the game.
 const PARK_ZONES = OUT.park.zones;
+// Older diaries used map numbers. Keep their stories, displaying only place names.
+function parkDiaryText(text) {
+  const names=['湖边凉亭','湖畔','公园中央','野餐草坪','樱花林'];
+  return String(text).replace(/(?:第\s*)?[1-5一二三四五１２３４５]\s*(?:号\s*)?区\s*(?=湖边凉亭|湖畔|公园中央|野餐草坪|樱花林)/g,'')
+    .replace(/(?:第\s*)?([1-5一二三四五１２３４５])\s*(?:号\s*)?区/g,(_,n)=>names['12345一二三四五１２３４５'.indexOf(n)%5]);
+}
 const PARK_SERVICE = { toilet: { zone: 'lakeside', act: 'park_toilet', need: 'bladder' }, food: { zone: 'grove', act: 'park_eat', need: 'hunger' } };
 let parkVendor = null;
 let parkNextTalk = 0;
@@ -61,7 +67,7 @@ function parkRequest(goal, auto = false, dish = null) {
   closeRing(); sim.windup = null; sim.queue = []; sim.talk = null; sim.item = null; sim.player = !auto;
   sim.park = { ...parkState(), goal, seated: false,
     dish: goal === 'food' ? (PARK_DISHES[dish]?.id || (auto ? pick(PARK_FOOD.dishes).id : 'oden')) : null };
-  if (auto) speak(goal === 'toilet' ? '先去 2 区的公厕，不用急着回家。' : '有点饿了，去 5 区吃份'+parkDish().name+'。');
+  if (auto) speak(goal === 'toilet' ? '先去湖畔公厕，不用急着回家。' : '有点饿了，去樱花林的小摊吃份'+parkDish().name+'。');
   parkRouteGoal();
 }
 function parkHandleNeeds(run) {
@@ -90,10 +96,10 @@ function parkHandleNeeds(run) {
 function parkServiceArrive() {
   sim.mode = 'act'; sim.actEnd = sim.t + ACTS[sim.act].dur; sim.park.seated = false;
   if (sim.act === 'park_toilet') {
-    sim.park.goal = 'toilet'; log('走进 2 区的公厕，先解决一下如厕需求。'); speak('找到公厕啦，稍等一会儿。');
+    sim.park.goal = 'toilet'; log('走进湖畔公厕，先解决一下如厕需求。'); speak('找到公厕啦，稍等一会儿。');
   } else {
     sim.park.goal = 'food'; sim.park.dish = parkDish().id;
-    log('坐在 5 区樱花林的小摊前，点了一份'+parkDish().name+'。');
+    log('坐在樱花林的小摊前，点了一份'+parkDish().name+'。');
     parkFoodTalk(); rollCard(lifeCtx(),'food');
   }
 }

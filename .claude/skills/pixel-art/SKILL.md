@@ -199,7 +199,8 @@ piece side by side — review new pieces there at 6x).
 - **公园扩展（2026-10-23）**: `park_expansion.py` draws five independent
   342x118 areas: 湖边凉亭 ↔ 湖畔公厕 ↔ 公园中央 ↔ 野餐草坪 ↔ 樱花林·关东煮.
   User explicitly allows a transition, with no seamless artwork requirement.
-  用户取消了转场头顶的 1/2/3/4/5 区提示；不要恢复编号气泡，日记只写地点名。
+  用户禁止游戏内出现公园区域编号：台词、日记、机会卡、教程和转场提示都只写地点名，
+  不得恢复“1 区/二区/第三区”等称呼。旧存档日记及聊天记录也将编号换成地点名。
   `prototype/demo/park.js` keeps `sim.place="park"`, saves `sim.park.zone`
   and `.seated`, uses short `wipe` transitions at the path's left/right edges.
   Click the path to walk freely, click the bench to approach and sit (true

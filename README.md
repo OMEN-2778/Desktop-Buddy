@@ -51,8 +51,9 @@ to sit, or click Buddy → 站起来 to leave the seat. Walking to either edge
 uses a short scene wipe to the neighboring area; the two outer ends stop.
 Park saves retain the area and seat, with earlier saves migrated automatically.
 
-Park areas are numbered 1–5 from left to right. Area 2 has a working public
-restroom; area 5 is a cherry grove with an oden stall. While in the park, Buddy
+Park areas are displayed by place name, without numeric labels in dialogue,
+diaries, chance cards or the guide. The lakeside has a working public
+restroom; the cherry grove has an oden stall. While in the park, Buddy
 walks through neighboring areas to the restroom below 40 bladder, or to the
 stall below 35 hunger, prioritizing the restroom when both are low. Needs
 recover gradually during use/eating. Facilities can also be clicked directly.

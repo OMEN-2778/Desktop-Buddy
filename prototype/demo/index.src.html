@@ -5442,7 +5442,7 @@ function restore(sv) {
   for (const e of sv.diary || []) {
     const li = document.createElement("li");
     if (e[0] === "day") { li.className = "day"; li.textContent = e[1]; }
-    else { li.innerHTML = "<time></time><span></span>"; li.firstChild.textContent = e[1]; li.lastChild.textContent = e[2]; if (Array.isArray(e[3])) li._talk = e[3]; }
+    else { li.innerHTML = "<time></time><span></span>"; li.firstChild.textContent = e[1]; li.lastChild.textContent = parkDiaryText(e[2]); if (Array.isArray(e[3])) li._talk = e[3].map(([who,text])=>[who,parkDiaryText(text)]); }
     logEl.appendChild(li);
   }
   syncDiary();
