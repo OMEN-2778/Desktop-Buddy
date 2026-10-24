@@ -29,7 +29,7 @@ def shared_bed():
     s.vline(1, 1, 28, wood[4]).set(0, 0, None).set(4, 0, None)
     s.rect(4, 2, 38, 26, sheet[0]).rect(5, 3, 36, 24, sheet[2])
     s.hline(5, 40, 3, sheet[3]).vline(5, 4, 25, sheet[3])
-    for x, y in ((3, 3), (6, 11)):
+    for x, y in ((3, 11), (6, 11)):
         s.rect(x, y, 12, 14, sheet[0]).rect(x+1, y+1, 10, 12, sheet[3])
         s.vline(x+10, y+3, y+11, sheet[2])
     s.rect(4, 27, 38, 3, wood[0]).hline(5, 40, 27, wood[3])
@@ -39,7 +39,7 @@ def shared_bed():
 
 def shared_cover():
     s = Sprite(42, 40)
-    for y, ramp in ((1, P.oat), (9, P.sage)):
+    for y, ramp in ((9, P.sage),):
         for x in range(18, 42):
             top = y + (0 if x < 30 else (x-30)//3)
             s.vline(x, top, y+17, ramp[0])
