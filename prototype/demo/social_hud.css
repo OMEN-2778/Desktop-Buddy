@@ -55,6 +55,7 @@ html.desktop .desk { padding-left:76px; }
 .contact-card:hover,.contact-card[aria-expanded="true"] { --hud-frame:var(--accent); --hud-surface:var(--accent-soft); }
 .contact-card:active { transform:scale(.98); }
 .contact-card canvas { width:34px; height:34px; clip-path:var(--contact-avatar-clip,var(--hud-avatar-clip)); image-rendering:pixelated; background:var(--panel); }
+.contact-card > canvas,.contact-card > .contact-copy { translate:2px 0; }
 .contact-copy { min-width:0; display:flex; flex-direction:column; gap:2px; }
 .contact-copy strong { font-size:var(--contact-name-fs,16px); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .contact-copy small { font-size:10px; color:var(--muted); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
