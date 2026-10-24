@@ -54,10 +54,10 @@ html.desktop .desk { padding-left:76px; }
 .contact-card { position:relative; --hud-outline:var(--hud-card-clip); --hud-inner:var(--hud-card-in); --hud-frame:var(--bevel-lo); --hud-surface:var(--panel-2); display:grid; grid-template-columns:34px minmax(0,1fr); grid-template-rows:minmax(0,1fr) 10px; align-items:center; gap:5px 8px; height:100%; min-width:0; margin:0; padding:10px; color:var(--ink); text-align:left; transition:transform .25s var(--hud-settle); }
 .contact-card:hover,.contact-card[aria-expanded="true"] { --hud-frame:var(--accent); --hud-surface:var(--accent-soft); }
 .contact-card:active { transform:scale(.98); }
-.contact-card canvas { width:34px; height:34px; clip-path:var(--hud-avatar-clip); image-rendering:pixelated; background:var(--panel); }
+.contact-card canvas { width:34px; height:34px; clip-path:var(--contact-avatar-clip,var(--hud-avatar-clip)); image-rendering:pixelated; background:var(--panel); }
 .contact-copy { min-width:0; display:flex; flex-direction:column; gap:2px; }
-.contact-copy strong { font-size:clamp(12px,1.6vw,17px); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-.contact-copy small { font-size:11px; color:var(--muted); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.contact-copy strong { font-size:var(--contact-name-fs,16px); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.contact-copy small { font-size:10px; color:var(--muted); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .affinity { grid-column:1/-1; height:10px; padding:2px; background:var(--ring); clip-path:var(--hud-meter-clip); overflow:hidden; }
 .affinity i { display:block; height:100%; width:calc(var(--affinity)*1%); background:var(--need-ok); clip-path:var(--hud-meter-in); box-shadow:inset 0 2px 0 #ffffff55; }
 .contact-actions { position:fixed; z-index:60; width:0; height:0; opacity:0; visibility:hidden; transition:opacity .15s,visibility 0s .25s; }
@@ -109,8 +109,16 @@ html.desktop .desk { padding-left:76px; }
 .social-memories time { display:block; color:var(--muted); font-size:11px; margin-bottom:6px; }
 .social-memories strong { font-size:15px; }
 .home-guest-say { z-index:18; max-width:min(240px,65vw); white-space:normal; text-align:center; overflow-wrap:anywhere; pointer-events:none; }
-.contact-copy strong { font-size:clamp(11px,1.5vw,16px); }
-.contact-copy small { font-size:10px; }
+/* Compact desktop zoom keeps four CJK characters readable inside the same panel. */
+.contacts-panel.compact .contact-card { grid-template-columns:20px minmax(0,1fr); gap:4px; padding:6px; }
+.contacts-panel.compact .contact-card canvas { width:20px; height:20px; }
+.contacts-panel.compact .contact-copy strong { font-size:var(--contact-name-fs,11px); letter-spacing:0; }
+.contacts-panel.compact .contact-copy small { font-size:9px; }
+.contacts-panel.two-columns .contacts-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.contacts-panel.stacked .contact-card { grid-template-columns:minmax(0,1fr); grid-template-rows:20px minmax(0,1fr) 10px; justify-items:center; gap:3px; }
+.contacts-panel.stacked .contact-copy { width:100%; align-items:center; }
+.contacts-panel.stacked .affinity { width:100%; }
+
 @keyframes social-sheet-in { from { opacity:0; scale:.96; } to { opacity:1; scale:1; } }
 @media(prefers-reduced-motion:reduce) { .social-sheet { animation:none; } }
 

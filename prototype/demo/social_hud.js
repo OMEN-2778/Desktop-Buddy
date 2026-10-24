@@ -28,6 +28,13 @@ function sizeSocialHud(){
     style.setProperty(`--hud-${name}-clip`,roundClip(n,p));
     style.setProperty(`--hud-${name}-in`,roundClip(Math.max(1,n-1),p));
   }
+  // Follow the game's actual width, including desktop display scaling.
+  const houseWidth=view.getBoundingClientRect().width,compact=houseWidth<420;
+  contactsPanel.classList.toggle('compact',compact);
+  contactsPanel.classList.toggle('two-columns',houseWidth<300);
+  contactsPanel.classList.toggle('stacked',houseWidth<220);
+  style.setProperty('--contact-name-fs',Math.max(11,Math.min(16,Math.floor(houseWidth/45)))+'px');
+  style.setProperty('--contact-avatar-clip',roundClip(compact?5:8,2));
   style.setProperty('--hud-track-in',roundClip(2,b));
   style.setProperty('--hud-track-edge',2*b+'px');
 }
@@ -41,7 +48,7 @@ function contactFor(who,id=null){return socialState.contacts.find(c=>c.id===id)|
 function drawContactAvatar(canvas,c){
   if(c.forgotten&&!c.family){const ctx=canvas.getContext('2d');ctx.clearRect(0,0,40,40);ctx.fillStyle='#e4e1ec';ctx.fillRect(0,0,40,40);ctx.fillStyle='#666078';for(const [y,row]of ['01110','11011','00011','00110','00100','00000','00100'].entries())for(let x=0;x<row.length;x++)if(row[x]==='1')ctx.fillRect(10+x*4,6+y*4,4,4);return;}
   const lk=doll.normalize(c.look||doll.PRESETS[c.family==='mom'?'f':'m']);
-  const body=doll.toCanvas(doll.pixels(lk,{expr:'happy',look:0,bob:0,sway:0},doll.rampsOf(lk)),DW,DH);
+  const body=doll.toCanvas(doll.pixels(lk,{expr:'neutral',look:0,bob:0,sway:0},doll.rampsOf(lk)),DW,DH);
   const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,40,40);
   ctx.fillStyle='#eef3f1';ctx.fillRect(0,0,40,40);ctx.drawImage(body,0,0,DW,17,0,2,40,34);
 }
@@ -53,7 +60,7 @@ function fillContacts(){
     card.setAttribute('aria-label',`${contactName(c)}，${contactRelation(c)}，好感 ${Math.round(c.affinity)}`);card.setAttribute('aria-expanded',String(selectedContact===c.id));
     const avatar=document.createElement('canvas');avatar.width=avatar.height=40;avatar.setAttribute('aria-hidden','true');drawContactAvatar(avatar,c);
     const copy=document.createElement('span');copy.className='contact-copy';
-    copy.append(Object.assign(document.createElement('strong'),{textContent:contactName(c)}),Object.assign(document.createElement('small'),{textContent:contactRelation(c)}));
+    copy.append(Object.assign(document.createElement('strong'),{textContent:contactName(c),title:contactName(c)}),Object.assign(document.createElement('small'),{textContent:contactRelation(c)}));
     const meter=document.createElement('span');meter.className='affinity';meter.title=`好感 ${Math.round(c.affinity)} / 100`;meter.style.setProperty('--affinity',c.affinity);meter.append(document.createElement('i'));
     card.append(avatar,copy,meter);contactsList.append(card);
   }
