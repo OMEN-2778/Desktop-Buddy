@@ -316,7 +316,7 @@ piece side by side — review new pieces there at 6x).
   sitting on their stools, shoppers both ways (world coords `u`); dock: rare
   walkers, sometimes an angler at the railing (back to us, rod + float that
   bobs on a bite). They talk in `.npcsay` pills (same pixel pill as the
-  ring, clamped inside the house). Not clickable yet.
+  ring, clamped inside the house). Eligible passersby can now be clicked to talk.
 - **Place lines** (`prototype/demo/places_text.js`, built from JSON by the
   helper in the scratchpad; hundreds per place): `say` = her musings
   (`when` tag: season / rain / snow / night / morning / evening / day, the
@@ -903,3 +903,25 @@ check_social_polish.js 检查。
 **后续平台范围（用户最新决定）**：只面向电脑端，优先桌面布局、鼠标与键盘交互；
 不再专门进行手机 UI 适配或手机测试。已有移动端规则仅作历史记录，不是新增工作的要求。
 电脑窗口缩放时，来访弹窗和机会卡仍必须严格位于小屋内。
+
+### 点击 NPC 主动搭话（2026-10-24）
+
+鼠标沿 NPC 实际纸娃娃透明精灵取 1px 外轮廓高光，仍调用 drawObjectHover；不要画
+矩形框或大片黄光。前排优先命中，移动、转场和移出画布及时清理。点击直接搭话，
+不加菜单：NPC 先停步等候，主角实际走到旁边，双方朝向彼此，聊完恢复原行走方向。
+商场走廊使用世界坐标和原滚屏，不瞬移、不穿进店铺。酒吧客人和酒保复用此交互；
+舞台演员保留演出/观看交互。公园与商场售货员（clerk/hawker/item）和钓鱼者
+（fisher/rod）不开放主动搭话，也不画人物高光，原有摊位购物/自动对话保留。
+
+NPC 继续使用场景内小气泡，主角说话使用原下排框，不切成上排朋友框。
+完整聊完且最后一句读完才认识/增加好感、写下共同经历；每天好感最多 +6，途中取消、
+紧急需求、离场、目标消失、晕倒都不算完成。暂停、机会卡、弹窗冻结对话推进。
+不让社交覆盖公园公厕/餐饮与商场找厕所/餐厅；回家和主角自理始终优先。
+聊天中的临时 NPC 引用不存档，读档恢复正常活动，不留 npc_chat 空壳。
+
+npc_social.js 统一处理命中、接近、交谈、结束与清理；npc_talk.json 新增 270 组，
+家门口、公园五处、商场长廊、码头、酒吧每处 30 组，共 1080 句。
+小孩使用专属内容；熟人混入现有关系等级对话。按具体地点优先抽未见内容，
+lifeFlags.npcChatSeen 保存已完成的话题；不重复消费半途取消的内容。
+check_npc_social.js 验证实际画布点击、移动/停步/恢复、排除对象、暂停、自理、
+存档、好感上限和不同景点；check_hover.js 同时检查人物与物体的像素轮廓。

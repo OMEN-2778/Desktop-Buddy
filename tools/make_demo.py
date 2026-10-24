@@ -393,6 +393,7 @@ def main():
     html = html.replace("/*__SLEEP_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "sleep_cards.json").read_text() + ");")
     html = html.replace("/*__PARK_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "park_cards.json").read_text() + ");")
     html = html.replace("/*__PARK_FOOD_JS__*/", "const PARK_FOOD = " + json.dumps(park_food, ensure_ascii=False) + ";")
+    html = html.replace("/*__NPC_SOCIAL_JS__*/", "const NPC_TALK_TEXT = " + (SRC.parent / "npc_talk.json").read_text() + ";\n" + (SRC.parent / "npc_social.js").read_text())
     html = html.replace("/*__PARK_JS__*/", (SRC.parent / "park.js").read_text())
     html = html.replace("/*__BAR_JS__*/", (SRC.parent / "bar.js").read_text())
     html = html.replace("/*__DUSK_JS__*/", (SRC.parent / "dusk.js").read_text())

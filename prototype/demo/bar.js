@@ -93,6 +93,7 @@ function barWalk(seatId, x) {
   if(sim.bar.toilet){showHint('先用完卫生间，再继续吧。');return;}
   const seat = barSeat(seatId);
   if (seat && barOccupied(seat.id)) { speak('这个位置已经有人啦，换一张椅子吧。', true); return; }
+  stopNpcTalk('先忙眼前的事');
   const p = here(), tx = seat ? seat.x : Math.round(Math.max(18, Math.min(322, x)));
   sim.bar.seat = null; sim.bar.targetSeat = seat?.id || null; sim.bar.watching = false;
   sim.route = [[Math.round(p.x), Math.round(p.y)], [tx, 107]];
@@ -129,7 +130,7 @@ function barWatch() {
   speak(barScene.show.kind === 'singer' ? '这首歌，想认真听到最后。' : '这个节拍，脚尖已经跟上啦。', true);
 }
 function barChat(to, target = null) {
-  if (!barScene || card || guideOn || pickOn || barScene.chat || sim.bar?.toilet) return;
+  if (!barScene || npcInteraction || card || guideOn || pickOn || barScene.chat || sim.bar?.toilet) return;
   const pool = BAR_TEXT.talks.map((t, i) => ({ ...t, id: i })).filter(t => t.to === to);
   const seen = (lifeFlags.barTalkSeen ||= []);
   let fresh = pool.filter(t => !seen.includes(t.id));
@@ -161,9 +162,10 @@ function stepBar(dtGame, dtReal) {
   if(sim.needs.bladder<20&&!sim.bar.toilet&&!danger)barUseToilet(true);
   const low = redNeed(['bladder']);
   if (low && (!sim.bar.toilet||danger) && !wiping && !card && !pickOn && !guideOn) { homeFor(low); throughDoor('home'); return; }
+  const chatting=tickNpcInteraction(dtReal);
   barScene.clock += dtReal;
   barScene.shaker = Math.max(0, barScene.shaker - dtReal);
-  if (sim.mode === 'walk' && dtReal) {
+  if (!chatting && sim.mode === 'walk' && dtReal) {
     const v = WALK * Math.min(speed, 4) * dtReal;
     const a = here(); sim.s = Math.min(sim.target, sim.s + v); sim.walkDist += v;
     sim.facing = Math.sign(here().x - a.x) || sim.facing;
@@ -198,7 +200,7 @@ function stepBar(dtGame, dtReal) {
     if (barScene.nextGuest <= 0) {
       const available = BAR_SEATS.filter(s => s.id !== sim.bar.seat && s.id !== sim.bar.targetSeat && s.id !== sim.bar.toilet?.resumeSeat && !barOccupied(s.id));
       const s = pick(available);
-      if (s && !barScene.chat) {
+      if (s && !barScene.chat && !npcInteraction) {
         barScene.guests.shift();
         barScene.guests.push(makeNpc('bar_guest', { x: s.x, feet: s.feet, seat: s.id, seatLift: s.lift, sit: true, layer: 'front' }));
         life.npcs = [barScene.bartender, ...barScene.guests, barScene.performer];
@@ -216,7 +218,7 @@ function stepBar(dtGame, dtReal) {
         } else npcSay(c.guest, c.t.reply);
         barScene.chat = null;
       }
-    } else if (!sim.bar.toilet && (barScene.nextChat -= dtReal) <= 0) barChat(Math.random() < 0.5 ? 'player' : 'guest');
+    } else if (!npcInteraction && !sim.bar.toilet && (barScene.nextChat -= dtReal) <= 0) barChat(Math.random() < 0.5 ? 'player' : 'guest');
   }
   const h = Math.floor(sim.t / 60);
   if (h !== barScene.lastHour && dtGame) { barScene.lastHour = h; rollCard(lifeCtx()); }
@@ -268,7 +270,8 @@ function renderBar() {
   const bn = barScene.bartender;
   const bf = { expr: Math.floor(t * 2) % 11 === 0 ? 'blink' : 'neutral', look: Math.sin(t / 5) > 0 ? -1 : 1, bob: 0,
     wave: barScene.shaker > 0 ? Math.floor(t * 5) % 2 : null };
-  bctx.drawImage(npcCanvas(bn, bf, 'stand'), bn.x - 10, bn.feet - DH + 1);
+  if(npcInteraction?.n===bn)bf.look=bn.dir;
+  const bartenderImage=npcCanvas(bn,bf,'stand');bctx.drawImage(bartenderImage,bn.x-10,bn.feet-DH+1);drawNpcHover(bctx,bn,bartenderImage,bn.x-10,bn.feet-DH+1);
   bctx.drawImage(O.counter, 0, 0);
   const sh = barScene.show, n = barScene.performer;
   if (sh.phase === 'perform') {
@@ -282,7 +285,7 @@ function renderBar() {
   }
   for (const g of barScene.guests) {
     const [f, pose] = npcFrame(g);
-    bctx.drawImage(npcCanvas(g, f, pose), g.x - 10, npcFeet(g) - DH + 1);
+    const image=npcCanvas(g,f,pose);bctx.drawImage(image,g.x-10,npcFeet(g)-DH+1);drawNpcHover(bctx,g,image,g.x-10,npcFeet(g)-DH+1);
   }
   const p = buddyFeet(), seated = !!sim.bar.seat;
   let f = { expr: Math.floor(t * 2) % 13 === 0 ? 'blink' : 'neutral', look: seated ? 0 : sim.facing, bob: 0, wave: null };

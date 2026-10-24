@@ -64,7 +64,7 @@ function parkGoalAction() {
 function parkRouteGoal() { startAct(parkGoalAction()); }
 function parkRequest(goal, auto = false, dish = null) {
   if (sim.mode === 'down' || wiping || cardHolds()) return;
-  closeRing(); sim.windup = null; sim.queue = []; sim.talk = null; sim.item = null; sim.player = !auto;
+  stopNpcTalk("先照顾一下自己");closeRing(); sim.windup = null; sim.queue = []; sim.talk = null; sim.item = null; sim.player = !auto;
   sim.park = { ...parkState(), goal, seated: false,
     dish: goal === 'food' ? (PARK_DISHES[dish]?.id || (auto ? pick(PARK_FOOD.dishes).id : 'oden')) : null };
   if (auto) speak(goal === 'toilet' ? '先去湖畔公厕，不用急着回家。' : '有点饿了，去樱花林的小摊吃份'+parkDish().name+'。');

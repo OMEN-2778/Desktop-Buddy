@@ -51,6 +51,15 @@ to sit, or click Buddy → 站起来 to leave the seat. Walking to either edge
 uses a short scene wipe to the neighboring area; the two outer ends stop.
 Park saves retain the area and seat, with earlier saves migrated automatically.
 
+Hover a passerby for an alpha-derived outline, then click to walk over and chat.
+They stop and face Buddy until the conversation finishes, then resume walking.
+A complete exchange introduces the person and records a shared memory; repeat
+friendship gains use the daily cap. Urgent needs and leaving take priority.
+Park/mall merchants and fishers retain their existing service interactions.
+`npc_talk.json` adds 270 four-line exchanges across the yard, five park scenes,
+the mall corridor, dock and bar, with child-specific text and saved topic history.
+
+
 Park areas are displayed by place name, without numeric labels in dialogue,
 diaries, chance cards or the guide. The lakeside has a working public
 restroom; the cherry grove has an oden stall. While in the park, Buddy

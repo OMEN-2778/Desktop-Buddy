@@ -1341,6 +1341,7 @@ function finishAct() {
 
 // The player clicked a piece of furniture: drop what she's doing and go.
 function command(act, item = null) {
+  stopNpcTalk("先忙眼前的事");
   if (act === "mall_food" || act === "mall_film") { mallPlanVisit(act === "mall_food" ? "restaurant" : "cinema", item); return; }
   if (sim.place === "mall" && act === "go_home" && mallS.visit) mallLeaveVisit(false,false);
   if (act === "park_food") { if (sim.place === "park") parkRequest("food", false, item?.id); return; }
@@ -1398,6 +1399,7 @@ function step(dtGame, dtReal) {
   }
   // behaviour
   if (sim.mode === "down") { sim.windup = null; return; }
+  if(tickNpcInteraction(dtReal))return;
   // Shop visits and pending clicks must not delay finding a WC or an urgent trip home.
   if (sim.place === "mall" && mallHandleNeeds(dtGame,dtReal)) return;
   if (parkHandleNeeds(dtGame > 0 || dtReal > 0)) return;
@@ -1826,6 +1828,7 @@ function activityFrame(ms) {
         if (!chairReady()) return { f: { expr: "happy", wave: 1 }, pose: "stand", emote: null };   // a wave of the hand: the chair pops in, then she sits
         return { f: { expr: Math.floor(ms / 3000) % 3 === 2 ? "happy" : "neutral", look: Math.floor(ms / 1500) % 2 ? 1 : 0 }, pose: "sit", emote: showEm ? em : null };
       case "phone_call": return { f: { expr: Math.floor(ms / 1800) % 3 === 1 ? "happy" : "neutral", bob: phase, look: Math.floor(ms / 2600) % 2 ? -1 : 0 }, pose: "stand", emote: showEm ? em : null };
+      case "npc_chat": return {f:{expr:"happy",look:sim.facing,bob:phase},pose:"stand",emote:showEm?em:null};
       case "phone_video": case "phone_feed": case "phone_text": case "phone_game":
         return { f: { expr: Math.floor(ms / 2200) % 3 === 2 ? "happy" : Math.floor(ms / 3100) % 5 === 4 ? "blink" : "neutral", look: 1 }, pose: "stand", emote: showEm ? em : null };
       case "dance": {
@@ -1959,6 +1962,7 @@ function dishPic(src) { if (!dishPics.has(src)) { const i = new Image(); i.src =
 function frameOf(list, fps) { return list[Math.floor(realClock * fps) % list.length]; }
 
 function render() {
+  updateNpcHover();
   if (sim.place !== "home") { renderOutside(); return; }
   const h = hour(), f = nightness(h);
   bctx.clearRect(0, 0, W, H);
@@ -2692,6 +2696,7 @@ function checkCollapse() {
   if (cause) collapse(cause);
 }
 function collapse(cause) {
+  stopNpcTalk("得先休息一下");
   if (sim.act === "dress") closeWardrobe();
   if (sim.place === "mall") { if(mallVisitInside())mallLeaveVisit(false,false);mallS.stop = null; mallS.goal = null; mallS.toilet = null; mallS.visit = null; }
   if (sim.place === "bar" && sim.bar) sim.bar.toilet = null;
@@ -3062,7 +3067,7 @@ function updateMood() {
   }
   if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); if(!phoneHolds())rollEvents(); checkCollapse(); }
   showFace();
-  if(phoneHolds()||remoteSocial)return;
+  if(phoneHolds()||remoteSocial||npcInteraction)return;
   if (listOpen) { fillMoodTip(); return; }          // her words wait until you're done looking
   if (realClock >= sayBusy && sayQueue.length) showSay(sayQueue.shift());
   else if (realClock >= nextSay && !asleep() && sim.mode !== "down" && !sim.talk) speak(thought());
@@ -3299,13 +3304,14 @@ const nametag = document.getElementById("nametag");
 let hoverBuddy = false;
 view.addEventListener("pointermove", e => {
   const [x, y] = canvasXY(e);
+  npcPointer={x,y,scene:npcSceneKey()};updateNpcHover();
   hoverBuddy = e.pointerType === "mouse" && buddyHit(x, y);
-  hoverId = buddyHit(x, y) ? null : clickableAt(x, y);
+  hoverId = buddyHit(x, y)||hoverNpc ? null : clickableAt(x, y);
   mallS.pointer = sim.place === "mall" ? [x, y] : null;
-  mallS.hover = hoverBuddy ? null : itemAt(x, y);
-  view.style.cursor = hoverId || hoverBuddy || (sim.place !== "home" && OUT[sim.place].kind === "walk") || mallS.hover ? "pointer" : TAURI ? "grab" : "default";   // outside: anywhere is somewhere to walk   // the app: walls and floor move the window
+  mallS.hover = hoverBuddy||hoverNpc ? null : itemAt(x, y);
+  view.style.cursor = hoverId || hoverBuddy || hoverNpc || (sim.place !== "home" && OUT[sim.place].kind === "walk") || mallS.hover ? "pointer" : TAURI ? "grab" : "default";   // outside: anywhere is somewhere to walk   // the app: walls and floor move the window
 });
-view.addEventListener("pointerleave", () => { hoverId = null; mallS.hover = null; mallS.pointer = null; holding = null; hoverBuddy = false; });
+view.addEventListener("pointerleave", () => { npcPointer=null;hoverNpc=null;hoverId = null; mallS.hover = null; mallS.pointer = null; holding = null; hoverBuddy = false; });
 // her name over her head while the pointer rests on her (and no menu is open)
 function placeNametag() {
   const on = hoverBuddy && ringEl.hidden && sim.mode !== "down";
@@ -3349,6 +3355,8 @@ view.addEventListener("click", e => {
     openRing(mallVisitInside() ? "mall_room" : sim.place === "bar" ? "bar" : sim.place === "park" && (sim.park?.seated || parkEating()) ? "park_seated" : AWAY.has(sim.place) ? "away" : "buddy");
     return;
   }
+  const person=npcAt(x,y);if(person){requestNpcTalk(person);return;}
+  if(sim.place!=="home")stopNpcTalk("先忙眼前的事");
   const id = clickableAt(x, y);
   if (id === "computer") { useFurniture(id, true); openRing("computer"); return; }
   if (id === "front_door") { useFurniture(id, true); openRing("door", "door"); return; }
@@ -3786,6 +3794,7 @@ function throughDoor(to) {
     sim.mode = "idle"; sim.act = null; sim.dest = null; sim.idleUntil = sim.t + 5;
     showHint("现在酒吧还没开门哦！"); return;
   }
+  stopNpcTalk("该动身了");npcPointer=null;hoverNpc=null;
   sim.mode = "idle"; sim.act = null; sim.idleUntil = Infinity;
   if (sim.place === "mall") { mallS.stop = null; mallS.goal = null; mallS.hover = null; mallS.pointer = null; mallS.toilet = null; mallS.emergency = null; mallS.visit = null; mallS.foodFront = null; mallS.menuShop = null; }
   sim.windup = null; cancelRescue();
@@ -4099,7 +4108,8 @@ function redNeed(exclude = []) {
   return low.length ? low[0][0] : null;
 }
 function homeFor(k) { speak(pick([`${NEED_NAMES[k]}不太行了，回家吧`, "该回家了", "先回家一趟"])); }
-function arriveAt(place) {                       // fresh life for the new place
+function arriveAt(place) {
+  stopNpcTalk("",false);npcPointer=null;hoverNpc=null;                       // fresh life for the new place
   if (place === "bar") { initBar(); return; }
   if (place === "home") { life.npcs = []; life.talkQ = null; clearNpcPills(); return; }
   life.birds = []; life.flies = []; life.bits = []; life.ducks = []; life.gulls = []; life.ship = null; life.boat = null; life.plane = null; life.front = [];
@@ -4118,7 +4128,7 @@ function arriveAt(place) {                       // fresh life for the new place
 
 
 // ================================================================ strangers (NPCs) and what's said out there
-// User: people pass through every place (not clickable yet), each a random
+// People pass through every place; eligible passersby can be clicked to talk. Each has a random
 // look from the 造型室's options — never both her hairstyle and her hair
 // colour — kids among them (the same head on a shorter body). Front and
 // park: grown-ups and kids along the sidewalk / path; the mall: kiosk staff
@@ -4170,7 +4180,7 @@ function npcFrame(n) {
   }
   const ms = realClock * 1000 + n.ph, talking = n.sayUntil > realClock;
   const f = { expr: talking ? "happy" : Math.floor(ms / 2900) % 5 === 0 ? "blink" : "neutral", bob: Math.floor(ms / 1300) % 2,
-    look: n.back ? 0 : [0, 1, 0, -1][Math.floor(ms / 3100) % 4] };
+    look: n.back ? 0 : npcInteraction?.n===n ? n.dir : [0, 1, 0, -1][Math.floor(ms / 3100) % 4] };
   if (talking && n.role === "hawker") f.wave = Math.floor(ms / 260) % 2;
   return [f, n.sit ? "sit" : "stand"];
 }
@@ -4184,7 +4194,8 @@ function drawNpcs(ctx, layer) {
     const x = npcX(n);
     if (x < -20 || x > W + 20) continue;
     const [f, pose] = npcFrame(n);
-    ctx.drawImage(npcCanvas(n, f, pose, n.back), Math.round(x - DW / 2), Math.round(npcFeet(n) - DH + 1));
+    const image=npcCanvas(n,f,pose,n.back),ox=Math.round(x-DW/2),oy=Math.round(npcFeet(n)-DH+1);
+    ctx.drawImage(image,ox,oy);drawNpcHover(ctx,n,image,ox,oy);
     if (n.rod) drawRod(ctx, n, x);
   }
 }
@@ -4254,7 +4265,7 @@ function stepNpcs(dt) {
   }
   for (const n of life.npcs) {
     if (n.v) {
-      n.paused = n.sayUntil > realClock && life.talkQ && life.talkQ.n === n;     // stops for a word with her
+      n.paused = npcInteraction?.n===n || life.talkQ?.n===n;     // stops for a word with her
       if (!n.paused) {
         const d = n.dir * n.v * dt;
         if (n.u != null) n.u += d; else n.x += d;
@@ -4325,25 +4336,10 @@ function npcLine(n, key = n.role) {
   const t = pickLine((PT().npc || {})[key]);
   if (t) npcSay(n, fill(t, kidVars()));
 }
-function startTalk(n) {
-  const contact=socialState.contacts.find(c=>c.id===n.personId);
-  const list = contact?socialTalkPool('meet',contact).map(t=>t.lines):(PT().talk || {})[n.role];
-  if (!list || !list.length) return false;
-  life.talkQ = { n, lines: pick(list), i: 0, next: realClock };
-  life.npcTalked.add(n);
-  return true;
-}
-function stepTalk() {
-  const q = life.talkQ;
-  if (!q || realClock < q.next) return;
-  if (q.i >= q.lines.length || q.n.gone) { life.talkQ = null; return; }
-  const raw = q.lines[q.i++], other = raw[0] === ">", text = fill((other ? raw.slice(1) : raw).trim(),{...kidVars(),主角:nameOf(),朋友:socialState.contacts.find(c=>c.id===q.n.personId)?.name||''});
-  if (other) npcSay(q.n, text); else speak(text, true);
-  q.next = realClock + Math.min(4.2, 1.8 + text.length * 0.12);
-  if (q.i === q.lines.length) { sim.needs.social = clamp(sim.needs.social + 2);meetWorldNpc(q.n); }
-}
+function startTalk(n) { return startNpcTalk(n); }
+function stepTalk(dt) { advanceNpcTalk(dt); }
 function placeChatter() {                       // now and then: a stranger's line, a word with one passing, or her own thought
-  if (mallToiletInside() || mallVisitInside() || stormOutside()) return;
+  if (npcInteraction || mallToiletInside() || mallVisitInside() || stormOutside()) return;
   if (!PT() || sim.mode === "down" || life.talkQ || realClock < life.chatNext) return;
   const busy = !!(mallS.stop && sim.place === "mall");
   if (life.tagNext) {                           // a ship / a speedboat just came into view
@@ -4370,7 +4366,7 @@ function mallStallTalk(it) {                     // at a kiosk / 地摊: its sel
 function npcTick(dt, run) {
   if(stormOutside()){life.npcs=[];clearNpcPills();return;}
   if (run) stepNpcs(dt);
-  stepTalk();
+  if(run)stepTalk(dt);
   if (run) placeChatter();
 }
 
@@ -5381,6 +5377,7 @@ function migrate(sv) {
   return sv;
 }
 function restore(sv) {
+  stopNpcTalk("",false);npcPointer=null;hoverNpc=null;
   setLook(sv.look);
   restoreSocial(sv.social);
   applySettings(sv.settings);         // older saves carried the settings; the settings file wins (boot)
@@ -5391,7 +5388,7 @@ function restore(sv) {
   sim.queue = (m.queue || []).filter(a => ACTS[a]); sim.recent = (m.recent || []).filter(a => ACTS[a]);
   sim.meal = m.meal || null; sim.insomnia = !!m.insomnia; sim.nap = !!m.nap;
   let [x, storey] = Array.isArray(m.at) ? m.at : [D.spots.bed[1], 1];
-  if (m.mode === "act" && ACTS[m.act] && m.act !== "dress") {
+  if (m.mode === "act" && ACTS[m.act] && m.act !== "dress" && m.act !== "npc_chat") {
     sim.mode = "act"; sim.act = m.act; sim.actEnd = m.actEnd;
     if (D.spots[ACTS[m.act].spot]) [storey, x] = D.spots[ACTS[m.act].spot];       // back at her spot
   } else if (m.mode === "down" && m.down) {
@@ -5559,7 +5556,7 @@ if (TAURI) {
   view.addEventListener("pointerdown", e => {
     if (e.button !== 0 || e.pointerType !== "mouse" || sim.mode === "down") return;
     const [x, y] = canvasXY(e);
-    press = !buddyHit(x, y) && !clickableAt(x, y) ? { x: e.clientX, y: e.clientY } : null;
+    press = !buddyHit(x, y) && !npcAt(x,y) && !clickableAt(x, y) ? { x: e.clientX, y: e.clientY } : null;
   });
   view.addEventListener("pointermove", e => {
     if (press && (e.buttons & 1) && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 3) { press = null; dragWindow(); }
@@ -5689,6 +5686,7 @@ if (TAURI) {
 /*__SOCIAL_HUD_JS__*/
 /*__SOCIAL_LIFE_JS__*/
 /*__PEER_DIALOGUE_JS__*/
+/*__NPC_SOCIAL_JS__*/
 
 // ================================================================ loop
 let last = performance.now(), uiT = 0;
