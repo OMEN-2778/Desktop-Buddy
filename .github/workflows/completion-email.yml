@@ -1,0 +1,19 @@
+name: Completion email
+on:
+  push:
+    branches: [claude/awesome-einstein-wtzgsw]
+    paths: ['.github/notify-ready.json']
+permissions:
+  contents: read
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Send the completed update notification
+        env:
+          QQ_SMTP_AUTH_CODE: ${{ secrets.QQ_SMTP_AUTH_CODE }}
+        run: python .github/scripts/send_completion_email.py
