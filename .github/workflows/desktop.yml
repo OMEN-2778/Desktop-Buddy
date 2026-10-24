@@ -14,6 +14,7 @@ on:
   push:
     paths:
       - "desktop/**"
+      - "tools/check_window_drag.js"
       - "prototype/demo/index.html"
       - ".github/workflows/desktop.yml"
   workflow_dispatch:

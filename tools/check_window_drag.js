@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
-const source = fs.readFileSync(path.join(__dirname, '../prototype/demo/index.src.html'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../prototype/demo/index.src.html'), 'utf8').replace(/\r\n?/g, '\n');
 const start = source.indexOf('let lastWin = ""');
 const end = source.indexOf('if (TAURI) {\n  const ro = new ResizeObserver', start);
 assert.ok(start > 0 && end > start, 'Desktop bridge source not found');
