@@ -192,7 +192,7 @@ function tickFriendHomeTalk(dt){
  if(realClock<v.next||sim.mode==='walk')return;
  const h=visitingHouse(),off=(W-h.w)/2,r=friendVisitRoom(h,here().x-off,here().y),present=v.family.filter(a=>a.room===r.id);
  if(present.length&&Math.random()<.4){
-  const member=pick(present),pool=FRIEND_VISIT_TEXT.family[member.relation]||FRIEND_VISIT_TEXT.family['哥哥'],[title,text]=nextFriendVisitText(pool,v.familySeen);
+  const member=pick(present),pool=FRIEND_VISIT_TEXT.family[member.relation]||FRIEND_VISIT_TEXT.family['哥哥'],[title,raw]=nextFriendVisitText(pool,v.familySeen),text=fill(raw,{TA:doll.normalize(c.look).gender==='m'?'他':'她'});
   showSay(text,member.speaker.name+'：',member.speaker);log(`${member.speaker.name}：${text}`);v.next=realClock+10;return;
  }
  if(Math.abs(v.host.y-here().y)>3){v.next=realClock+3;return;}
