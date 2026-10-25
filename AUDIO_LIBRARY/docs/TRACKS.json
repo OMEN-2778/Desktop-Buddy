@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "bgmCount": 16,
+  "sfxCount": 7,
+  "frontDoorPolicy": "reuse home tracks by season and day/night",
+  "tracks": [
+    {"scene":"home","id":"spring-day","title":"春日·白天","bpm":80,"durationSeconds":96,"file":"BGM/home/spring-day.mp3","usage":"居家与家门口；春季白天"},
+    {"scene":"home","id":"spring-night","title":"春日·夜晚","bpm":80,"durationSeconds":96,"file":"BGM/home/spring-night.mp3","usage":"居家与家门口；春季夜晚"},
+    {"scene":"home","id":"summer-day","title":"夏日·白天","bpm":88,"durationSeconds":87.3,"file":"BGM/home/summer-day.mp3","usage":"居家与家门口；夏季白天"},
+    {"scene":"home","id":"summer-night","title":"夏日·夜晚","bpm":88,"durationSeconds":87.3,"file":"BGM/home/summer-night.mp3","usage":"居家与家门口；夏季夜晚"},
+    {"scene":"home","id":"autumn-day","title":"秋日·白天","bpm":72,"durationSeconds":106.7,"file":"BGM/home/autumn-day.mp3","usage":"居家与家门口；秋季白天"},
+    {"scene":"home","id":"autumn-night","title":"秋日·夜晚","bpm":72,"durationSeconds":106.7,"file":"BGM/home/autumn-night.mp3","usage":"居家与家门口；秋季夜晚"},
+    {"scene":"home","id":"winter-day","title":"冬日·白天","bpm":60,"durationSeconds":128,"file":"BGM/home/winter-day.mp3","usage":"居家与家门口；冬季白天"},
+    {"scene":"home","id":"winter-night","title":"冬日·夜晚","bpm":60,"durationSeconds":128,"file":"BGM/home/winter-night.mp3","usage":"居家与家门口；冬季夜晚"},
+    {"scene":"park","id":"park-spring","title":"春日公园","bpm":92,"durationSeconds":62.6,"file":"BGM/park/park-spring.mp3","usage":"公园；春季"},
+    {"scene":"park","id":"park-summer","title":"夏日公园","bpm":108,"durationSeconds":53.3,"file":"BGM/park/park-summer.mp3","usage":"公园；夏季"},
+    {"scene":"park","id":"park-autumn","title":"秋日公园","bpm":76,"durationSeconds":75.8,"file":"BGM/park/park-autumn.mp3","usage":"公园；秋季"},
+    {"scene":"park","id":"park-winter","title":"冬日公园","bpm":64,"durationSeconds":90,"file":"BGM/park/park-winter.mp3","usage":"公园；冬季"},
+    {"scene":"mall","id":"mall-crowd-rush","title":"人潮高光","bpm":122,"durationSeconds":63,"file":"BGM/mall/mall-crowd-rush.mp3","usage":"商场主曲"},
+    {"scene":"bar","id":"bar-amber-bass","title":"琥珀低音","bpm":72,"durationSeconds":53.3,"file":"BGM/bar/bar-amber-bass.mp3","usage":"酒吧；低频爵士主曲"},
+    {"scene":"bar","id":"bar-daylight-cup","title":"杯中日光","bpm":92,"durationSeconds":83.5,"file":"BGM/bar/bar-daylight-cup.mp3","usage":"酒吧；日光中庭主题改编"},
+    {"scene":"harbor","id":"harbor-mist-return","title":"雾港归帆","bpm":68,"durationSeconds":84.7,"file":"BGM/harbor/harbor-mist-return.mp3","usage":"海边码头；海洋叙事"}
+  ]
+}
