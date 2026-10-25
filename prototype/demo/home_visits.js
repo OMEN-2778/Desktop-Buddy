@@ -6,6 +6,7 @@ const cForGuest=g=>socialState.contacts.find(c=>c.id===g?.id);
 let visitSleepPreview=null;
 function previewSleepScene(choice){
   if(!booted)return false;
+  if(friendVisit){showHint('先结束做客，再打开睡眠测试。');return false;}
   if(card||phoneHolds()||wardrobeOpen||guideOn){showHint('先处理或关闭眼前的窗口，再打开睡眠测试。');return false;}
   if(!visitSleepPreview){
     visitSleepPreview={snapshot:JSON.parse(JSON.stringify(snapshot())),autosave:prefs.autosave,weatherForce:weather.force,weatherKind:weather.kind};

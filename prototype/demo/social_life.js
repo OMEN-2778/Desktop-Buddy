@@ -15,7 +15,7 @@ const socialSheet=document.createElement('section');socialSheet.className='socia
 let sheetReturnFocus=null;
 const visitOffer={id:null,reason:null,deadline:0,timer:0,frame:0};
 function cancelVisitOffer(){clearTimeout(visitOffer.timer);cancelAnimationFrame(visitOffer.frame);Object.assign(visitOffer,{id:null,reason:null,deadline:0,timer:0,frame:0});}
-function fitSocialSheet(){overHouse(socialSheet);socialSheet.style.setProperty('--cs',Math.max(.35,Math.min(1.35,view.offsetHeight/280,view.offsetWidth/500)));}
+function fitSocialSheet(){socialSheet.classList.toggle('friend-stay-tiny',view.offsetHeight<100);overHouse(socialSheet);socialSheet.style.setProperty('--cs',Math.max(.35,Math.min(1.35,view.offsetHeight/280,view.offsetWidth/500)));}
 function socialDialogHolds(){return !socialSheet.hidden;}
 function closeSocialSheet(){cancelVisitOffer();socialSheet.hidden=true;if(sheetReturnFocus?.isConnected&&!sheetReturnFocus.closest('[inert]'))sheetReturnFocus.focus({preventScroll:true});}
 function openSocialSheet(title){
@@ -95,8 +95,9 @@ function tickSocialDecay(){
   }if(moodrow.classList.contains('contacts-open'))fillContacts();
 }
 function socialCallDue(c){const gap=c.family?1440:c.affinity>90?600:c.affinity>=60?1080:c.affinity>=20?1800:3600;return sim.t-(c.lastIncoming??-Infinity)>=gap*personalityCallFactor(c);}
-function socialLifeSnapshot(){return {friendOuting:friendOutingSnapshot(),heroPersonality:{...heroPersonality},heroPersonalityChosen,namePoolVersion:2,worldStyleVersion:2,world:socialState.world,archive:socialState.archive,decayDay:socialState.decayDay,nextVisit:socialState.nextVisit,guest:socialState.guest?{...socialState.guest,npc:undefined}:null};}
+function socialLifeSnapshot(){return {homeSeed:friendHomeSeed,homes:friendHomes,friendVisit:friendVisitSnapshot(),friendOuting:friendOutingSnapshot(),heroPersonality:{...heroPersonality},heroPersonalityChosen,namePoolVersion:2,worldStyleVersion:2,world:socialState.world,archive:socialState.archive,decayDay:socialState.decayDay,nextVisit:socialState.nextVisit,guest:socialState.guest?{...socialState.guest,npc:undefined}:null};}
 function restoreSocialLife(data){
+  restoreFriendHomes(data);
   const memories=value=>Array.isArray(value)?value.filter(m=>m&&Number.isFinite(m.t)&&typeof m.title==='string'&&typeof m.text==='string').map(m=>({t:m.t,title:m.title.slice(0,100),text:m.text.slice(0,2000)})):[];
   socialState.world=makeSocialWorld();
   const worldData=new Map((Array.isArray(data?.world)?data.world:[]).filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string').map(p=>[p.id,p]));
@@ -140,6 +141,7 @@ function visitNotice(title,text){
 }
 function inviteHome(id,proactive=false){
   const c=socialState.contacts.find(c=>c.id===id);if(!c){visitNotice('暂时不能邀请','这位朋友已经不在联系人名单里了。');return false;}
+  if(friendVisit){visitNotice("正在做客","先回到自己家，再邀请朋友吧。");return false;}
   if(friendOutingState){visitNotice('已经约好出门','先结束同行，再邀请朋友来家里吧。');return false;}
   let reason='';
   if(sim.place!=='home')reason='先回到家里，再邀请朋友来坐坐吧。';
@@ -236,7 +238,7 @@ function tickSocialLife(dt){
   const day=Math.floor(sim.t/1440);if(socialState.decayDay===null){socialState.decayDay=day;for(const c of socialState.contacts){c.metAt??=sim.t;c.lastSeen??=sim.t;}}
   tickSocialDecay();tickHomeVisit(dt);
   if(!Number.isFinite(socialState.nextVisit))socialState.nextVisit=sim.t+1440;
-  if(friendOutingState||sim.t<socialState.nextVisit||socialState.guest||!canReceiveCall()||sim.place!=='home'||hour()<10||hour()>=20)return;
+  if(friendVisit||friendOutingState||sim.t<socialState.nextVisit||socialState.guest||!canReceiveCall()||sim.place!=='home'||hour()<10||hour()>=20)return;
   socialState.nextVisit=sim.t+720+Math.random()*720;
   const eligible=sortedContacts().filter(c=>(c.family?familyMayOfferVisit(c):c.affinity>=20)&&sim.t-(c.lastVisitOffer??-Infinity)>2*1440*personalityCallFactor(c));
   if(eligible.length&&Math.random()<.4){const c=pick(eligible);c.lastVisitOffer=sim.t;requestIncomingCall(c.id,'visit');}

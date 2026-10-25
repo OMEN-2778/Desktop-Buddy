@@ -207,3 +207,19 @@
 .wardrobe-personality .personality-actions { margin-top:6px; gap:6px; }
 .studio .wardrobe-personality button { margin:0; box-shadow:none; border:1px solid var(--bevel-lo); font-size:12px; line-height:1.4; padding:3px 4px; }
 .studio .wardrobe-personality .personality-cancel { position:absolute; right:4px; top:4px; font-size:var(--ui-font-caption); padding:1px 3px; }
+/* Visiting invitations keep the same pixel contour and modest bevel. */
+.incoming-call.friend-home-invite .call-answer { --hud-surface:#dfb65f; }
+.incoming-call.friend-home-invite .call-decline { --hud-surface:#92b3d0; }
+.friend-stay-sheet { overflow-y:auto; display:block; }
+.friend-stay-sheet .social-sheet-content { display:flex; overflow:visible; min-height:56px; margin:8px 0; align-items:center; gap:12px; }
+.friend-stay-avatar { width:40px; height:40px; flex:none; image-rendering:pixelated; clip-path:var(--hud-avatar-clip); }
+.friend-stay-sheet > h3 { margin-right:42px; }
+.friend-stay-sheet > button:last-child { align-self:stretch; }
+/* A one-storey studio is only 62px tall at 25%. Keep the answer readable
+   beside a small portrait; the close button acknowledges this result. */
+.friend-stay-sheet.friend-stay-tiny { overflow:hidden; padding:5px; }
+.friend-stay-sheet.friend-stay-tiny > h3 { margin:0 32px 0 32px; font-size:14px; line-height:18px; }
+.friend-stay-sheet.friend-stay-tiny .friend-stay-avatar { position:absolute; left:5px; top:5px; width:26px; height:26px; }
+.friend-stay-sheet.friend-stay-tiny .social-sheet-content { display:block; padding-left:32px; height:calc(100% - 20px); min-height:0; overflow-y:auto; margin:2px 0 0; }
+.friend-stay-sheet.friend-stay-tiny .social-sheet-content > p { margin:0; font-size:13px; line-height:17px; }
+.friend-stay-sheet.friend-stay-tiny > button:last-child { display:none; }

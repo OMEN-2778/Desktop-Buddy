@@ -19,6 +19,7 @@ function animateHousePreviewLayout(old,oldBottom,oldHeight){
 }
 function openFriendHousePreview(id){
  if(!Object.hasOwn(D.friendHouses,id))return false;
+ if(friendVisit){showHint('先结束拜访，再查看房屋预览吧。');return false;}
  if(wiping||phoneHolds()||card){showHint('先处理完眼前的事情，再看看房屋吧。');return false;}
  const old=housePreviewRects(),r=view.getBoundingClientRect();
  friendHouseAnimations.forEach(a=>a.cancel());friendHouseAnimations=[];

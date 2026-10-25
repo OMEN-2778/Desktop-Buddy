@@ -373,7 +373,7 @@ def main():
         "uiIcons": {**{name: png(ui_icons.icon(name)) for name in ("gear", "people")}, "stripes": png(ui_icons.need_stripes())},
         "uiRelief": {"badge": png(ui_icons.relief_plate(22, 11)),
                      "badgeSmall": png(ui_icons.relief_plate(19, 9)),
-                     "answer": png(ui_icons.relief_plate()), "decline": png(ui_icons.relief_plate(kind="red"))},
+                     "answer": png(ui_icons.relief_plate()), "decline": png(ui_icons.relief_plate(kind="red")), "invite":png(ui_icons.relief_plate(kind="gold")), "later":png(ui_icons.relief_plate(kind="blue"))},
         "uiGlyphs": ui_icons.GLYPHS,
         # pick-a-thing panels: covers matched to titles by hash, dishes by look
         "items": {**{k: [png(c) for c in item_icons.covers(k)] for k in ("book", "tv", "game", "app")},
@@ -422,6 +422,7 @@ def main():
     html = html.replace("/*__SOCIAL_LIFE_JS__*/", "const SOCIAL_TEXT = " + (SRC.parent / "social_text.json").read_text() + ";\nconst SOCIAL_DIALOGUE = " + (SRC.parent / "social_dialogue.json").read_text() + ";\n" + (SRC.parent / "social_dialogue.js").read_text() + "\n" + (SRC.parent / "social_life.js").read_text() + "\nconst HOME_VISIT_TEXT = " + (SRC.parent / "home_visit_text.json").read_text() + ";\n" + (SRC.parent / "home_visits.js").read_text())
     html = html.replace("/*__SOCIAL_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "social_cards.json").read_text() + ");")
     html = html.replace("/*__PEER_DIALOGUE_JS__*/", (SRC.parent / "peer_dialogue.js").read_text())
+    html = html.replace("/*__FRIEND_VISITS_JS__*/", "const FRIEND_VISIT_TEXT = " + (SRC.parent / "friend_visit_text.json").read_text() + ";\n" + (SRC.parent / "friend_visits.js").read_text())
     html = html.replace("/*__FRIEND_HOUSES_JS__*/", (SRC.parent / "friend_houses.js").read_text())
     html = html.replace("/*__TV_PLAYBACK_JS__*/", (SRC.parent / "tv_playback.js").read_text())
     html = html.replace("/*__FRIEND_OUTINGS_JS__*/", "const FRIEND_OUTING_TEXT = " + (SRC.parent / "friend_outing_text.json").read_text() + ";\nCARDS.push(..." + (SRC.parent / "friend_outing_cards.json").read_text() + ");\n" + (SRC.parent / "friend_outings.js").read_text())

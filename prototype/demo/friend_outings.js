@@ -5,6 +5,7 @@ const outingFriend=()=>friendOutingState&&socialState.contacts.find(c=>c.id===fr
 const friendOutingActive=()=>!!friendOutingState&&['active','returning'].includes(friendOutingState.phase)&&sim.place!=='home';
 const friendOutingWaiting=()=>!!friendOutingState&&['waiting','departing'].includes(friendOutingState.phase);
 function openFriendOuting(id){
+  if(friendVisit){visitNotice("正在做客","先结束这次拜访，再约朋友一起出门吧。");return;}
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return;
   if(friendOutingState){
     if(friendOutingState.id!==id){visitNotice('已经约了人','先结束这次同行，再约其他朋友吧。');return;}

@@ -139,6 +139,8 @@ def relief_plate(size=14, radius=6, kind="green") -> Sprite:
     """
     shadow, face, light = (
         (P.coral[2], P.coral[3], P.coral[4]) if kind == "red"
+        else (P.mustard[2],P.mustard[3],P.mustard[4]) if kind == "gold"
+        else (P.blue[2],P.blue[3],P.blue[4]) if kind == "blue"
         else (P.green[3], P.green[4], P.sage[4])
     )
     mask = [[False] * size for _ in range(size)]

@@ -105,8 +105,7 @@ function openContactActions(id){
   for(const [i,[action,label]]of actions.entries()){
     const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.action=action;b.setAttribute('role','menuitem');
     const a=-Math.PI/2+i*2*Math.PI/actions.length;b.style.setProperty('--x',`${Math.cos(a)*112}px`);b.style.setProperty('--y',`${Math.sin(a)*72}px`);
-    if(action==='visit'){b.setAttribute('aria-disabled','true');b.classList.add('coming-soon');b.append(Object.assign(document.createElement('small'),{className:'contact-unavailable',textContent:'下一步开放'}));b.title='拜访朋友家将在后续开放';}
-    else if(['text','video'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
+    if(['text','video'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
       b.setAttribute('aria-disabled','true');b.title=asleep()?'等主角醒来再联系':sim.mode==='down'?'先唤醒晕倒的主角':'正在忙，稍后再联系';b.setAttribute('aria-label',`${label}：${b.title}`);
     }
     contactActions.append(b);
@@ -124,7 +123,7 @@ function placeContactActions(){
 contactActions.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b||b.getAttribute('aria-disabled')==='true')return;
   const id=selectedContact;closeContactActions();if(b.dataset.action==='cancel')return;
-  setContactsOpen(false);if(b.dataset.action==='memories')showSocialMemories(id);else if(b.dataset.action==='invite'){if(socialState.guest?.id===id)endHomeVisit('主角和客人道别，约好下次再聚。');else inviteHome(id);}else if(b.dataset.action==='outing')openFriendOuting(id);else startContactTalk(id,b.dataset.action);
+  setContactsOpen(false);if(b.dataset.action==='memories')showSocialMemories(id);else if(b.dataset.action==='invite'){if(socialState.guest?.id===id)endHomeVisit('主角和客人道别，约好下次再聚。');else inviteHome(id);}else if(b.dataset.action==='visit')requestFriendVisit(id);else if(b.dataset.action==='outing')openFriendOuting(id);else startContactTalk(id,b.dataset.action);
 });
 document.addEventListener('pointerdown',e=>{if(!contactsPanel.contains(e.target)&&!contactActions.contains(e.target)&&!networkTrigger.contains(e.target)&&!moodFace.contains(e.target))setContactsOpen(false);});
 document.addEventListener('keydown',e=>{
@@ -250,7 +249,7 @@ CHATS.text={};CHAT_ACT.phone_text='text';
 for(const who of ['dad','mom','friend'])CHATS.text[who]={name:who==='dad'?'爸爸':who==='mom'?'妈妈':'{朋友}',talks:TEXT_TALKS.map(([title,lines],i)=>{
  const id=`contact_text_${who}_${i}`;ML[id]={name:'互相惦记',emo:'happy',pts:1,min:90};return {title,lines,id};
 })};
-function socialBusy(){return friendOutingState?.talk||socialState.guest?.talk||socialState.guest?.bedTalk||npcInteraction||life.talkQ||(sim.place==='bar'&&barScene?.chat)||remoteSocial||sim.talk||sim.chosen?.item?.talk||sim.windup&&CHAT_ACT[sim.windup.act];}
+function socialBusy(){return friendVisit?.talk||friendOutingState?.talk||socialState.guest?.talk||socialState.guest?.bedTalk||npcInteraction||life.talkQ||(sim.place==='bar'&&barScene?.chat)||remoteSocial||sim.talk||sim.chosen?.item?.talk||sim.windup&&CHAT_ACT[sim.windup.act];}
 function startContactTalk(id,kind='text',incoming=false){
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return false;
   if(sim.mode==='down'||asleep()||wiping||cardHolds()||socialBusy())return false;
@@ -270,9 +269,9 @@ function finishContactTalk(id,kind){
   if(['text','call','video'].includes(kind))addSocialMemory(c,{text:'互发消息',call:'通了电话',video:'视频见面'}[kind],`和${contactName(c)}聊起「${c.lastTopic||'彼此的近况'}」。`);
   sim.needs.social=clamp(sim.needs.social+(kind==='text'?5:10));applyNeedConsequences();contactsSig='';if(moodrow.classList.contains('contacts-open'))fillContacts();
 }
-function canReceiveCall(){return !friendHousePreview&&ringOf!=='outing'&&!asleep()&&sim.mode!=='down'&&!wiping&&!guideOn&&!card&&!wardrobeOpen&&!socialBusy()&&!socialDialogHolds()&&!homeVisitActive();}
+function canReceiveCall(){return !friendVisit&&!friendHousePreview&&ringOf!=='outing'&&!asleep()&&sim.mode!=='down'&&!wiping&&!guideOn&&!card&&!wardrobeOpen&&!socialBusy()&&!socialDialogHolds()&&!homeVisitActive();}
 function contactWithHero(id){
-  return friendOutingState?.id===id&&friendOutingState.phase!=='waiting'||socialState.guest?.id===id&&['entering','visiting','leaving'].includes(socialState.guest.phase);
+  return atFriendHome()&&friendVisit.id===id||friendOutingState?.id===id&&friendOutingState.phase!=='waiting'||socialState.guest?.id===id&&['entering','visiting','leaving'].includes(socialState.guest.phase);
 }
 function requestIncomingCall(id,kind='call'){
   if(contactWithHero(id))return false;
@@ -284,7 +283,10 @@ function showIncomingCall(){
   const c=socialState.contacts.find(c=>c.id===phoneCall.contactId);if(!c||contactWithHero(c.id)){phoneCall.phase='idle';return;}
   hidePeerSay(true);setContactsOpen(false);setNeedsOpen(false);showMoodTip(false);closeRing();closePicker();
   incomingCall.querySelector('strong').textContent=c.family||c.affinity<20?contactName(c):contactRelation(c)+contactName(c);
-  incomingCall.querySelector('.caller-copy span').textContent=phoneCall.kind==='video'?'打来视频':'打来电话';
+  incomingCall.classList.toggle('friend-home-invite',phoneCall.kind==='friend_home');
+  incomingCall.querySelector('.call-answer').textContent=phoneCall.kind==='friend_home'?'去你家':'接听';incomingCall.querySelector('.call-decline').textContent=phoneCall.kind==='friend_home'?'下次吧':'拒绝';
+  for(const [selector,key]of [['.call-answer',phoneCall.kind==='friend_home'?'invite':'answer'],['.call-decline',phoneCall.kind==='friend_home'?'later':'decline']])incomingCall.querySelector(selector).style.setProperty('--hud-relief-img',`url(${D.uiRelief[key]})`);
+  incomingCall.querySelector('.caller-copy span').textContent=phoneCall.kind==='friend_home'?pick(FRIEND_VISIT_TEXT.invitations):phoneCall.kind==='video'?'打来视频':'打来电话';
   drawContactAvatar(incomingCall.querySelector('canvas'),c);incomingCall.classList.remove('accepting','declining');incomingCall.hidden=false;
   moodTalk.classList.add('phone-active');phoneCall.phase='ringing';phoneCall.deadline=now+6000;incomingCall.style.setProperty('--call-remaining',1);
   phoneCall.returnFocus=document.activeElement;incomingCall.querySelector('.call-answer').focus({preventScroll:true});
@@ -295,13 +297,14 @@ function finishIncomingCall(accepted,automatic=false){
   if(phoneCall.phase!=='ringing')return;clearTimeout(phoneCall.timeout);
   const id=phoneCall.contactId,kind=phoneCall.kind,c=socialState.contacts.find(c=>c.id===id);
   phoneCall.phase=accepted?'accepting':'declining';incomingCall.classList.add(phoneCall.phase);
-  if(!accepted&&c&&kind!=='visit'){socialRejected(c,'的来电没能接通');}
+  if(!accepted&&c&&!['visit','friend_home'].includes(kind)){socialRejected(c,'的来电没能接通');}
   if(!accepted&&c)log(automatic?`没来得及接听${contactName(c)}的来电，铃声在六秒后停了。`:`暂时婉拒了${contactName(c)}的来电，晚点再联系。`);
   phoneCall.exitTimer=setTimeout(()=>{
     phoneCall.phase='idle';phoneCall.contactId=null;incomingCall.hidden=true;moodTalk.classList.remove('phone-active');
     if(phoneCall.returnFocus?.isConnected&&!phoneCall.returnFocus.closest('[inert]'))phoneCall.returnFocus.focus({preventScroll:true});
     if(accepted){
-      if(kind==='visit'){if(c)showVisitOffer(c);}
+      if(kind==='friend_home'){if(c)finishFriendVisitInvitation(c);}
+      else if(kind==='visit'){if(c)showVisitOffer(c);}
       else if(kind==='farewell'){if(c)showFarewellOffer(c);}
       else if(!startContactTalk(id,kind,true)&&c){log(`记下了${contactName(c)}的来电，等忙完再回拨。`);}
     }else if(!popSay.hidden&&performance.now()-sayShownAt<5200){popBubble(popSay,Math.max(600,5200-(performance.now()-sayShownAt)));}
@@ -328,7 +331,7 @@ function tickSocial(dt,now){
   }else if(speed&&sim.t>=socialState.nextCall&&hour()>=9&&hour()<21&&canReceiveCall()){
     const farewell=socialState.contacts.find(c=>c.farewellPending&&!contactWithHero(c.id)),eligible=sortedContacts().filter(c=>!contactWithHero(c.id)&&socialCallDue(c));
     if(farewell){farewell.farewellPending=false;requestIncomingCall(farewell.id,'farewell');}
-    else if(eligible.length)requestIncomingCall(pick(eligible).id);socialState.nextCall=sim.t+180+Math.random()*300;
+    else if(eligible.length){const c=pick(eligible);requestIncomingCall(c.id,canOfferFriendVisit(c)&&Math.random()<.3?'friend_home':'call');}socialState.nextCall=sim.t+180+Math.random()*300;
   }
   if(remoteSocial&&speed&&!cardHolds()&&!wiping){
     const session=remoteSocial;

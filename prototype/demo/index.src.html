@@ -89,6 +89,7 @@
         <button type="button" id="testDown">晕倒测试</button>
         <button type="button" id="testCard">机会卡测试</button>
         <button type="button" id="testIncoming">来电测试</button>
+        <button type="button" id="testFriendHomeInvite">好友邀约测试</button>
       </div>
       <div class="label">睡眠画面（测试用）</div>
       <div class="row" id="sleepPreviewControls">
@@ -100,7 +101,7 @@
       </div>
       <div class="label">朋友房屋样式预览</div>
       <section id="friendHousePreviewControls" aria-label="朋友房屋样式预览">
-        <select id="friendHouseSelect" aria-label="选择朋友房屋"><option value="">选择房屋样式（10种）</option></select>
+        <select id="friendHouseSelect" aria-label="选择朋友房屋"><option value="">选择房屋样式（30种）</option></select>
         <button type="button" id="friendHousePrev">上一间</button><button type="button" id="friendHouseNext">下一间</button><button type="button" id="friendHouseExit">退出预览</button>
         <label><input type="checkbox" id="friendHouseNight">夜景</label><label><input type="checkbox" id="friendHouseFigures" checked>人物比例</label>
         <p id="friendHouseNote" class="note">预览不会启动做客、改变进度或写入存档。</p>
@@ -281,6 +282,7 @@ function routePos(r, s) {   // -> { x, y, dy }: dy < 0 while climbing, > 0 comin
 }
 const here = () => routePos(sim.route, sim.s);
 function buddyFeet() {
+  if(atFriendHome())return here();
   const p = here();
   if (sim.mode === "down") return p;
   const lift = sim.place === "bar" ? barSeat(sim.bar?.seat)?.lift || 0
@@ -304,6 +306,7 @@ function doorsOn(r) {
   return out;
 }
 function roomAt(p) {
+  if(atFriendHome()){const h=visitingHouse();return friendVisitRoom(h,p.x-(W-h.w)/2,p.y).role;}
   if (sim.place !== "home") return "outside";
   if (p.dy) return "stairs";
   const storey = storeyOfY(p.y);
@@ -490,6 +493,7 @@ const EMO_PULL = {
   embarrassed: { bath: 15, go_out: 10 }, uncomfortable: { go_out: 15 }, dazed: { window: 10, go_out: 10 },
 };
 function startAct(name, quiet = false) {
+  if(atFriendHome()){friendVisitCommand(name);return;}
   if(['phone_call','phone_video','phone_text'].includes(name)){
     if(!remoteSocial){const item=sim.chosen?.act===name?sim.chosen.item:pickItem(name);remoteSocial={item,i:0,wait:.5,said:[]};log(item.talk.start);}
     sim.chosen=null;sim.player=false;name=choose();
@@ -567,6 +571,7 @@ function finishAct() {
 
 // The player clicked a piece of furniture: drop what she's doing and go.
 function command(act, item = null) {
+  if(atFriendHome()){friendVisitCommand(act);return;}
   if(act==='guest_seat'&&socialState.guest?.phase==='visiting'&&roomAt(homeGuestPoint(socialState.guest))==='study'&&Math.abs(homeGuestPoint(socialState.guest).x-D.spots.guest_study[1])<2){showHint('朋友正坐着呢，先给对方留个座。');return;}
   if(act==='sleep'&&sleepoverChatAwake()){finishBedConversation(socialState.guest,true);return;}
   stopNpcTalk("先忙眼前的事");
@@ -597,6 +602,7 @@ function command(act, item = null) {
 
 const WALK = 28 * 2 / 3;   // house pixels per real second at 1x (user: two thirds of the old 28)
 function step(dtGame, dtReal) {
+  if(stepFriendHome(dtGame,dtReal))return;
   if(friendHousePreview)return;
   if(phoneHolds()||wardrobeOpen)return;
   if (sim.place === "bar") { stepBar(dtGame, dtReal); return; }
@@ -818,6 +824,7 @@ function drawObjectHover(ctx, img, x = 0, y = 0) {
   drawHoverOutline(ctx, outlineCache.get(img), Math.round(x), Math.round(y));
 }
 function clickableAt(x, y) {
+  if(atFriendHome())return null;
   if (mallVisitInside()) return mallInteriorHit(x,y);
   if (sim.place === "bar") return barHit(x, y);
   if (sim.place === "park") return parkHit(x, y);
@@ -954,9 +961,9 @@ function fit() {
   }
   const s = N / dpr;
   scale = s; devPx = N;
-  const hPx = H * s, wPx = W * s;
-  view.width = Math.round(W * N); view.height = Math.round((friendHousePreview?D.friendHouses[friendHousePreview.id].h:H) * N);   // drawn in screen pixels
-  view.style.width = wPx + "px"; view.style.height = (friendHousePreview?D.friendHouses[friendHousePreview.id].h*s:hPx) + "px";
+  const hPx = sceneHouseHeight() * s, wPx = W * s;
+  view.width = Math.round(W * N); view.height = Math.round(sceneHouseHeight() * N);   // drawn in screen pixels
+  view.style.width = wPx + "px"; view.style.height = (sceneHouseHeight()*s) + "px";
   // UI pixel = house pixel (at least 2px so the dots stay round)
   const u = Math.max(2, Math.round(s));
   const widget = document.getElementById("widget");
@@ -1206,6 +1213,7 @@ function frameOf(list, fps) { return list[Math.floor(realClock * fps) % list.len
 /*__TV_PLAYBACK_JS__*/
 
 function render() {
+  if(renderFriendHome())return;
   if(renderFriendHousePreview())return;
   syncParkNavigation();
   updateNpcHover();
@@ -1894,6 +1902,7 @@ function lifeCtx() {          // what the event / card conditions look at
 const eventLast = {};
 let lastHour = -1, lastFestivalDay = 0;
 function rollEvents() {
+  if(atFriendHome())return;
   if (mallVisitInside()) return; // Rooms have their own context, dialogue and chance cards.
   const hNow = Math.floor(sim.t / 60);
   if (hNow === lastHour) return;
@@ -1955,7 +1964,7 @@ function collapse(cause) {
   if (sim.place === "bar" && sim.bar) sim.bar.toilet = null;
   closeRing(); cancelRescue();
   const p = here();
-  sim.route = [[Math.round(p.x), sim.place !== "home" ? OUT[sim.place].feet : FLOOR_Y[storeyOfY(p.y)]]]; sim.s = 0;
+  sim.route = [[Math.round(p.x), atFriendHome()?p.y:sim.place !== "home" ? OUT[sim.place].feet : FLOOR_Y[storeyOfY(p.y)]]]; sim.s = 0;
   sim.mode = "down"; sim.act = null; sim.queue = []; sim.down = { cause, t: sim.t };
   log(fill(one(T.collapse[cause])));
   speak("……", true);
@@ -2316,6 +2325,7 @@ function showSay(text, who = "", speaker = null) {
 let lifeT = -1;
 function updateMood() {
   if(friendHousePreview)return;
+  if(atFriendHome()){updateConds();showFace();if(listOpen)fillMoodTip();return;}
   if (sim.place === "bar") {
     if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); }
     showFace(); if (listOpen) fillMoodTip();
@@ -2341,7 +2351,7 @@ function syncUI() {
   document.getElementById("clock").textContent = `第 ${day} 天 · ${SEASONS[se.i].name} ${se.day}/${SEASON_DAYS} · ${fmt(sim.t)} · ${part} · ${WEATHER_NAME[weather.kind]}`;
   skyEl.setAttribute("aria-label", `时间与天气：${skyText()}`);
   if (!skyTip.hidden) skyTip.textContent = skyText();
-  const doing = npcInteraction ? (npcInteraction.phase === "approach" ? "走近"+npcTalkName(npcInteraction.n) : "和"+npcTalkName(npcInteraction.n)+"聊天")
+  const doing = atFriendHome()?friendVisitDoing():npcInteraction ? (npcInteraction.phase === "approach" ? "走近"+npcTalkName(npcInteraction.n) : "和"+npcTalkName(npcInteraction.n)+"聊天")
     : sim.place === "mall" && mallS.toilet ? (mallToiletInside() ? "使用商场卫生间" : "寻找商场卫生间")
     : sim.place === "mall" && mallS.visit ? mallDoing()
     : sim.place === "bar" ? (sim.bar.toilet ? (barToiletInside() ? "使用酒吧卫生间" : "走向右侧卫生间") : sim.mode === "walk" ? "走向座位" : sim.bar.drink ? `品尝${BAR_DRINKS[sim.bar.drink].name}` : sim.bar.seat ? "坐着听音乐" : "欣赏演出")
@@ -2541,9 +2551,10 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && setGear.ge
 
 function canvasXY(e) {
   const r = view.getBoundingClientRect();
-  return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height];
+  return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * sceneHouseHeight() / r.height];
 }
 function buddyHit(x, y) {
+  if(atFriendHome()){const p=here();return Math.abs(x-p.x)<10&&y>p.y-DH&&y<p.y+3;}
   if (parkInsideToilet() || barToiletInside() || mallToiletInside()) return false;
   if (sim.mode === "down") { const p = here(); return Math.abs(x - p.x) < 15 && y >= p.y - 17 && y <= p.y + 3; }
   if (sim.mode === "act" && sim.act === "sleep") {
@@ -2557,6 +2568,7 @@ const nametag = document.getElementById("nametag");
 let hoverBuddy = false;
 view.addEventListener("pointermove", e => {
   const [x, y] = canvasXY(e);
+  if(atFriendHome()){hoverBuddy=buddyHit(x,y);const hit=friendVisitHit(x,y);view.style.cursor=hit&&hit.kind!=="family"?"pointer":"default";return;}
   npcPointer={x,y,scene:npcSceneKey()};updateNpcHover();
   hoverBuddy = e.pointerType === "mouse" && buddyHit(x, y);
   hoverId = buddyHit(x, y)||hoverNpc ? null : clickableAt(x, y);
@@ -2571,7 +2583,7 @@ function placeNametag() {
   nametag.classList.toggle("on", on);
   if (!on) return;
   if (nametag.textContent !== nameOf()) nametag.textContent = nameOf();
-  const asleepNow = sim.mode === "act" && sim.act === "sleep";
+  const asleepNow = !atFriendHome() && sim.mode === "act" && sim.act === "sleep";
   const p = asleepNow ? { x: D.sleepLying[0] + 8, y: D.sleepLying[1] + 2 }
     : sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] - 2 } : { x: buddyFeet().x, y: buddyFeet().y - DH - 1 };
   const k = scale;
@@ -2602,6 +2614,7 @@ view.addEventListener("click", e => {
   const wasOpen = !!ringOf;
   closeRing();
   if (sim.mode === "down") return;
+  if(friendVisitClick(x,y))return;
   if (buddyHit(x, y)) {
     if (wasOpen) return;                          // a second click on her closes the menu
     if (sim.mode === "act" && sim.act === "sleep") { log(`你戳了戳${nameOf()}，${ta()}咂咂嘴继续睡。`); return; }
@@ -2640,6 +2653,7 @@ const RINGS = {
 };
 let ringOf = null, ringAt = null;
 function ringCenter() {
+  if(ringAt==="friend_host"&&atFriendHome())return {x:friendVisit.host.x,y:friendVisit.host.y-13};
   if (ringAt === "computer" || ringAt === "door") { const c = CLICK[ringAt === "door" ? "front_door" : "computer"]; return { x: c.x + c.w / 2, y: c.y + c.h / 2 }; }
   const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : buddyFeet();
   return { x: p.x, y: p.y - 13 };
@@ -2766,6 +2780,7 @@ document.addEventListener("pointerdown", e => { if (ringOf && !ringEl.contains(e
 document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) closeRing(); });
 let lastChat = -1e9;
 function ringPick(id) {
+  if(id.startsWith("fv:")){closeRing();if(id==="fv:stay")requestFriendStay();else friendVisitAction(id.slice(3));return;}
   if(id.startsWith('outing:')){const c=socialState.contacts.find(c=>c.id===ringEl.dataset.contactId),place=id.slice(7);closeRing();if(c)scheduleFriendOuting(c,place);return;}
   if (id === "mall_leave") { closeRing();mallLeaveVisit(false);return; }
   if (id === "park_stand") { parkStand(); return; }
@@ -3000,10 +3015,11 @@ function avatarHead() {                          // her face in a white round ba
 }
 function tripFrame(now) {
   const r = tripRun, ms = now - r.t0, x = tripCtx, to = TRIP_COL[r.to] ? r.to : "home", edge = tint(TRIP_COL[to], -0.2);
-  const rowH = Math.ceil(H / STRIPS), span = (t, i) => easeCubic((t - i * STAGGER) / (T_IN - (STRIPS - 1) * STAGGER));
+  const tripHeight=sceneHouseHeight();if(tripCv.height!==tripHeight)tripCv.height=tripHeight;
+  const rowH = Math.ceil(tripHeight / STRIPS), span = (t, i) => easeCubic((t - i * STAGGER) / (T_IN - (STRIPS - 1) * STAGGER));
   const drift = Math.floor(ms / 90) % 16;        // the pattern drifts down-right, a pixel at a time
   overHouse(tripCv);                             // follow the house if the page shifts underneath
-  x.clearRect(0, 0, W, H);
+  x.clearRect(0, 0, W, tripHeight);
   x.save(); x.translate(drift, drift); x.fillStyle = tripPattern(to);
   const fill = (x0, y0, w, h) => tripCtx.fillRect(x0 - drift, y0 - drift, w, h);
   if (ms < T_IN) {
@@ -3012,7 +3028,7 @@ function tripFrame(now) {
     x.restore(); x.fillStyle = edge;             // a crisp leading edge on each strip
     ends.forEach((w, i) => { if (w > 0 && w < W) x.fillRect(w - 2, i * rowH, 2, rowH); });
   } else if (ms < T_IN + T_LOAD) {
-    fill(0, 0, W, H); x.restore();
+    fill(0, 0, W, tripHeight); x.restore();
     drawTripLoad(x, (ms - T_IN) / T_LOAD, r);
     if (!r.swapped) { r.swapped = true; r.swap(); render(); }    // the new scene waits behind the strips
   } else if (ms < T_IN + T_LOAD + T_OUT) {
@@ -3028,7 +3044,7 @@ function tripFrame(now) {
   requestAnimationFrame(tripFrame);
 }
 function drawTripLoad(x, p, r) {
-  const icon = IMG.trip[TRIP_ICON[r.to] || "home"], cy = Math.round(H / 2);
+  const icon = r.destinationIcon || IMG.trip[TRIP_ICON[r.to] || "home"], cy = Math.round(tripCv.height / 2);
   const ix = Math.round(W / 2 - 70), iy = cy - Math.round(icon.height / 2);
   const start = Math.round(W / 2 + 56), end = ix + icon.width + 16, k = easeCubic(Math.min(1, p / 0.85));
   const ax = Math.round(start + (end - start) * k);
@@ -3044,6 +3060,8 @@ function drawTripLoad(x, p, r) {
   x.drawImage(r.head, ax - 12, cy - 13 - hop);
 }
 function throughDoor(to) {
+  if(to==="friend_home"){enterFriendHome();return;}
+  if(atFriendHome()){leaveFriendHome();return;}
   if (wiping) return;
   if (to === "bar" && !barIsOpen()) {
     sim.mode = "idle"; sim.act = null; sim.dest = null; sim.idleUntil = sim.t + 5;
@@ -4160,6 +4178,7 @@ function cardFits(cd, c) {
   return cardWhen.get(cd)(c);
 }
 function rollCard(c, service = homeVisitActive()&&sim.act==='host'?'visit':sim.place === "park" && parkEating() ? "food" : mallVisitInside() ? mallS.visit.kind : null) {
+  if(atFriendHome())return false;
   if(friendOutingActive())service='friend_outing';
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   const out = sim.place !== "home";               // outside: that place's own cards (cd.at)
@@ -4696,6 +4715,7 @@ function restore(sv) {
   // Social identities are restored earlier; a companion must be reconciled only
   // after the saved location and its seats have replaced the startup house.
   restoreFriendOuting(sv.social?.friendOuting);
+  restoreFriendVisit(sv.social?.friendVisit);
   moods.clear();
   for (const [id, until, t] of sv.moods || []) if (ML[id]) moods.set(id, { until, t });
   const savedNpcTopics=sv.flags?.npcChatSeen;
@@ -4994,6 +5014,7 @@ if (TAURI) {
 /*__NPC_SOCIAL_JS__*/
 /*__FRIEND_OUTINGS_JS__*/
 /*__FRIEND_HOUSES_JS__*/
+/*__FRIEND_VISITS_JS__*/
 /*__NEED_CONSEQUENCES_JS__*/
 
 // ================================================================ loop
@@ -5005,6 +5026,7 @@ function frame(now) {
   tickPeerSpeech(now);
   tickSocial(dt,now);
   tickSocialLife(dt);
+  tickFriendVisitTravel();
   const fast = sim.mode === "act" && sim.act === "sleep" && !sleepoverChatAwake() ? 8 : 1, run = cardHolds() || wiping ? 0 : speed;   // a chance card (or a scene change) stops the clock
   step(dt * run * fast, dt * (run ? 1 : 0));
   tickFriendOuting(run ? dt : 0);
