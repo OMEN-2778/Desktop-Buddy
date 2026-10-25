@@ -1,0 +1,65 @@
+[
+  {
+    "id": "cat-meow-cc0",
+    "source": "SFX/cat-meow-cc0.mp3",
+    "file": "SFX/processed/cat-meow-cc0.mp3",
+    "offset": 0,
+    "duration": 1.54,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "cat-purr-meow-cc0",
+    "source": "SFX/cat-purr-meow-cc0.mp3",
+    "file": "SFX/processed/cat-purr-meow-cc0.mp3",
+    "offset": 0,
+    "duration": 3.0,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "rain-soft-loop-cc0",
+    "source": "SFX/rain-soft-loop-cc0.mp3",
+    "file": "SFX/processed/rain-soft-loop-cc0.mp3",
+    "offset": 3,
+    "duration": 15.5,
+    "loop": true,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "rain-heavy-window-cc0",
+    "source": "SFX/rain-heavy-window-cc0.mp3",
+    "file": "SFX/processed/rain-heavy-window-cc0.mp3",
+    "offset": 8,
+    "duration": 15.5,
+    "loop": true,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "thunder-heavy-no-rain-cc0",
+    "source": "SFX/thunder-heavy-no-rain-cc0.mp3",
+    "file": "SFX/processed/thunder-heavy-no-rain-cc0.mp3",
+    "offset": 0.85,
+    "duration": 7.0,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "crowd-indoor-walla-cc0",
+    "source": "SFX/crowd-indoor-walla-cc0.mp3",
+    "file": "SFX/processed/crowd-indoor-walla-cc0.mp3",
+    "offset": 10,
+    "duration": 15.5,
+    "loop": true,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "crowd-small-laugh-cc0",
+    "source": "SFX/crowd-small-laugh-cc0.mp3",
+    "file": "SFX/processed/crowd-small-laugh-cc0.mp3",
+    "offset": 0,
+    "duration": 2.7,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  }
+]

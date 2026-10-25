@@ -140,7 +140,7 @@ if (TAURI) {
   window.addEventListener("unhandledrejection", e => report(`unhandled: ${e.reason && (e.reason.stack || e.reason)}`));
 }
 // 界面大小 (% or "auto" = fit the page), 置顶游戏, 自动保存 (every 5 minutes, or never)
-const prefs = { scale: TAURI ? 100 : "auto", onTop: false, autosave: true, guided: false, autoUpdate: true };   // guided: the guide has been seen
+const prefs = { scale: TAURI ? 100 : "auto", onTop: false, bgm: false, sfx: false, autosave: true, guided: false, autoUpdate: true };   // guided: the guide has been seen
 let appVersion = "";
 // 界面大小 counts SCREEN pixels: 25% = one game pixel is one pixel of the
 // monitor (at any Windows display scaling), 100% = 4 of them; every step is
@@ -689,6 +689,7 @@ function updateDoors(dtReal) {
     if (st.t < 0.06) continue;
     st.t = 0;
     const i = ANGLES.indexOf(st.angle);
+    if(near && i===0 && sim.place==="home")gameAudio.sound("door",.18,{gap:.8});
     if (near && i < 3) st.angle = ANGLES[i + 1];
     else if (!near && i > 0) st.angle = ANGLES[i - 1];
   }
@@ -838,8 +839,10 @@ let hoverId = null, glow = null, poof = null;
 function useFurniture(id, glowOnly = false) {
   glow = { id, t0: realClock, sparks: Array.from({ length: 6 }, () => ({ p: CLICK[id].rings[1][Math.floor(Math.random() * CLICK[id].rings[1].length)], d: Math.random() * 0.35 })) };
   if (glowOnly) return;
-  if (id in lamps) { lamps[id] = !lamps[id]; log(`${lamps[id] ? "打开" : "关掉"}了${CLICK_NAME[id]}。`); return; }
+  gameAudio.sound("ui-click",.45);
+  if (id in lamps) { gameAudio.sound("switch",.6); lamps[id] = !lamps[id]; log(`${lamps[id] ? "打开" : "关掉"}了${CLICK_NAME[id]}。`); return; }
   if (id in windowState) {
+    gameAudio.sound("fabric",.5);
     const st = windowState[id] = WINDOW_NEXT[windowState[id]];
     lifeFlags.windowSince[id] = sim.t;
     if (st === "open") addMood(seasonOf(sim.t).i === 3 ? "chilly" : "freshAir", { diary: false });
@@ -1798,6 +1801,7 @@ function lifeSeason(i) { addMood(["spring", "summer", "autumn", "winter"][i], { 
 
 // ---------- events: rolled once a game hour, each with its own cooldown
 function lifeEvent(id, vars = {}) {
+  if(id==="catVisit")gameAudio.sound("cat-meow-cc0",.4,{gap:10});
   const e = T.events[id];
   if (!e) return;
   if (e.diary) log(fill(one(e.diary), vars));
@@ -2437,6 +2441,10 @@ const SETTINGS = [
       ];
       return out;
     } },
+  ...[['背景音乐','bgm'],['音效','sfx']].map(([label,channel])=>({label,role:'radiogroup',items:()=>[[true,'开'],[false,'关']].map(([value,name])=>{
+    const b=pill(name,{pressed:prefs[channel]===value,title:channel==='bgm'?'场景背景音乐':'按钮、来电、互动和环境声音',onClick:()=>gameAudio.setEnabled(channel,value)});
+    b.dataset.audioChannel=channel;return b;
+  })})),
   { label: "置顶游戏", role: "radiogroup", items: () => [[true, "开"], [false, "关"]].map(([v, name]) =>
       pill(name, { pressed: prefs.onTop === v, disabled: !TAURI, title: TAURI ? "" : "桌面版里才能用",
         onClick: b => { setOnTop(v); b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); } })) },
@@ -2520,7 +2528,7 @@ const settingsStore = TAURI ? {
   save: async o => localStorage.setItem("buddy-settings", JSON.stringify(o)),
 };
 function saveSettings() {
-  settingsStore.save({ speed, scale: prefs.scale, onTop: prefs.onTop, autosave: prefs.autosave, guided: prefs.guided, autoUpdate: prefs.autoUpdate }).catch(() => {});
+  settingsStore.save({ speed, scale: prefs.scale, onTop: prefs.onTop, bgm: prefs.bgm, sfx: prefs.sfx, autosave: prefs.autosave, guided: prefs.guided, autoUpdate: prefs.autoUpdate }).catch(() => {});
 }
 function applySettings(st) {
   if (!st || typeof st !== "object") return;
@@ -2530,6 +2538,8 @@ function applySettings(st) {
   if (typeof st.autosave === "boolean") prefs.autosave = st.autosave;
   if (typeof st.guided === "boolean") prefs.guided = st.guided;
   if (typeof st.autoUpdate === "boolean") prefs.autoUpdate = st.autoUpdate;
+  for(const key of ["bgm","sfx"])if(typeof st[key]==="boolean")prefs[key]=st[key];
+  gameAudio.sync();
 }
 function setSettingsOpen(open) {
   setGear.setAttribute("aria-expanded", String(open));
@@ -2899,6 +2909,7 @@ function openPicker(act, from = null) {
   fitPicker();
   if (from) { pickerEl.style.setProperty("--from-x", from.x * scale + "px"); pickerEl.style.setProperty("--from-y", from.y * scale + "px"); }
   else { pickerEl.style.removeProperty("--from-x"); pickerEl.style.removeProperty("--from-y"); }
+  if(["cook","snack","friend_snack"].includes(act))gameAudio.sound("drawer",.45);
   pickerEl.hidden = false;
   pickerEl.classList.remove("on"); void pickerEl.offsetWidth; pickerEl.classList.add("on");
   makeRoom();
@@ -2946,6 +2957,7 @@ function wipe(swap) {
   if (wiping || reduceMotionUI) { swap(); return; }
   wiping = true;
   overHouse(wipeEl);
+  gameAudio.sound("door",.45,{gap:1});
   wipeEl.hidden = false; wipeEl.className = "wipe"; void wipeEl.offsetWidth;
   wipeEl.classList.add("shut");                                   // bars close in from both sides
   setTimeout(() => {
@@ -3133,7 +3145,7 @@ function outsideClick(id, x, y) {
 }
 // a little marker where you clicked on the sidewalk
 let walkMark = null;
-function clickFx(x, y) { walkMark = { x, y, t0: realClock }; }
+function clickFx(x, y) { gameAudio.sound("ui-click",.4); walkMark = { x, y, t0: realClock }; }
 function drawWalkMark(ctx) {
   if (!walkMark) return;
   const t = (realClock - walkMark.t0) / 0.5;
@@ -4636,7 +4648,7 @@ function snapshot() {
   return {
     version: SAVE_VERSION, savedAt: Date.now(),
     look,
-    settings: { speed, scale: prefs.scale, onTop: prefs.onTop },
+    settings: { speed, scale: prefs.scale, onTop: prefs.onTop, bgm: prefs.bgm, sfx: prefs.sfx },
     sim: { t: sim.t, needs: sim.needs, mode: sim.mode, act: sim.act, actEnd: sim.actEnd, nap: !!sim.nap,
            at: [Math.round(p.x), storeyOfY(p.y)], facing: sim.facing, queue: sim.windup ? [sim.windup.act] : sim.queue, recent: sim.recent,
            lastDay: sim.lastDay, sleepPlace:sim.sleepPlace||null, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
@@ -4795,6 +4807,10 @@ document.getElementById("importSave").addEventListener("change", async e => {
   if (!sv) { flashLabel("存档", "读不出来"); return; }
   booted = false;                                   // nothing may save over it before the reload
   await store.save(sv);
+  // Imported audio choices belong to this save; the separate settings file
+  // otherwise overrides them at boot. Legacy saves start with both off.
+  const current=await settingsStore.load().catch(()=>null);
+  await settingsStore.save({...current,bgm:sv.settings?.bgm===true,sfx:sv.settings?.sfx===true});
   location.reload();
 });
 async function resetSave() {
@@ -5017,6 +5033,7 @@ if (TAURI) {
 /*__FRIEND_HOUSES_JS__*/
 /*__FRIEND_VISITS_JS__*/
 /*__NEED_CONSEQUENCES_JS__*/
+/*__GAME_AUDIO_JS__*/
 
 // ================================================================ loop
 let last = performance.now(), uiT = 0;
@@ -5035,6 +5052,7 @@ function frame(now) {
   updateDoors(run ? dt : 0);
   render();
   renderSky();
+  gameAudio.tick();
   renderMood();
   placeRing();
   placeContactActions();

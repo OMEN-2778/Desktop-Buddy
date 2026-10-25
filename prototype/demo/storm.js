@@ -19,6 +19,7 @@ function stormReaction(outdoor=false){
   if(positive)sim.needs.fun=clamp(sim.needs.fun+3);
 }
 function lightningStrike(){
+  gameAudio.thunder();
   stormFX.duration=reduceMotionUI ? 1.4 : .8;
   stormFX.left=stormFX.duration;stormFX.bolt=Math.floor(Math.random()*3);
   stormFX.x=24+Math.random()*(W-48);

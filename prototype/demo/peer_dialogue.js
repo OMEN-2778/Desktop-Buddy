@@ -31,6 +31,7 @@ function fitPeerSpeech(){
   peerHud.style.height=height+'px';liftDiary();
 }
 function renderPeerLine(line){
+  if(line.text!==peerSpeech.currentText)gameAudio.sound("ui-message",.35,{gap:2});
   peerSpeech.currentText=line.text;peerText.classList.remove('line-out');
   const speaker=line.speaker,name=speaker.anonymous?speaker.name:contactName(speaker);
   peerText.replaceChildren(Object.assign(document.createElement('em'),{className:'who',textContent:name+'：'}),document.createTextNode(spaced(line.text)));

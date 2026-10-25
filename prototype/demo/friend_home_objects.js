@@ -85,6 +85,7 @@ function finishFriendHouseAction(){
 function interactFriendFurniture(f){
  const v=friendVisit,kind=f.kind,action=FRIEND_OBJECT_ACTION[kind]||'inspect';
  if(action==='lamp'){
+  gameAudio.sound('switch',.6);
   v.lamps||={};v.lamps[f.id]=!v.lamps[f.id];showSay(v.lamps[f.id]?'把灯打开了，窗边暖和了点。':'把这盏灯关上了。');return true;
  }
  if(['snack','cook','read'].includes(action)){

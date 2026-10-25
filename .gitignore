@@ -1,3 +1,6 @@
 art/preview/
 __pycache__/
 *.pyc
+
+# Audio copies generated for the raw browser demo
+prototype/demo/audio/

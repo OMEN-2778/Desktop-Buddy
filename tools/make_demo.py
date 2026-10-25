@@ -466,6 +466,22 @@ def main():
     html = html.replace("/*__FRIEND_HOUSES_JS__*/", (SRC.parent / "friend_houses.js").read_text())
     html = html.replace("/*__TV_PLAYBACK_JS__*/", (SRC.parent / "tv_playback.js").read_text())
     html = html.replace("/*__FRIEND_OUTINGS_JS__*/", "const FRIEND_OUTING_TEXT = " + (SRC.parent / "friend_outing_text.json").read_text() + ";\nCARDS.push(..." + (SRC.parent / "friend_outing_cards.json").read_text() + ");\n" + (SRC.parent / "friend_outings.js").read_text())
+    # Audio stays outside the HTML: stream music on demand, keep scene boot small.
+    # Copy the same files into the raw demo and desktop bundle (copy-web.mjs).
+    import shutil, hashlib
+    audio_root = ROOT / "AUDIO_LIBRARY"
+    audio_files = sorted(str(f.relative_to(audio_root)) for group in ("BGM", "SFX/game", "SFX/processed") for f in (audio_root / group).rglob("*.mp3"))
+    if len([f for f in audio_files if f.startswith("BGM/")]) != 16:
+        raise RuntimeError("Missing BGM: run python3 AUDIO_LIBRARY/tools/build_audio.py")
+    if not (audio_root / "SFX/game/ui-click.mp3").is_file():
+        raise RuntimeError("Missing game sounds: run python3 AUDIO_LIBRARY/tools/build_game_sfx.py")
+    for name in audio_files:
+        target = SRC.parent / "audio" / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(audio_root / name, target)
+    audio_version = hashlib.sha256(b"".join(hashlib.sha256((audio_root / name).read_bytes()).digest() for name in audio_files)).hexdigest()[:12]
+    audio_js = (SRC.parent / "audio.js").read_text().replace("/*__AUDIO_FILES__*/null", json.dumps(audio_files)).replace("/*__AUDIO_VERSION__*/null", json.dumps(audio_version))
+    html = html.replace("/*__GAME_AUDIO_JS__*/", audio_js)
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 

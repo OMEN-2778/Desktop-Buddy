@@ -7,6 +7,8 @@ on:
       - 'prototype/**'
       - 'art/src/**'
       - 'tools/**'
+      - 'AUDIO_LIBRARY/**'
+      - 'desktop/scripts/copy-web.mjs'
       - '.github/workflows/preview.yml'
   workflow_dispatch:
 

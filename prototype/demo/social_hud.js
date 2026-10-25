@@ -296,6 +296,7 @@ function showIncomingCall(){
 function finishIncomingCall(accepted,automatic=false){
   if(phoneCall.phase!=='ringing')return;clearTimeout(phoneCall.timeout);
   const id=phoneCall.contactId,kind=phoneCall.kind,c=socialState.contacts.find(c=>c.id===id);
+  gameAudio.phoneEnd(accepted);
   phoneCall.phase=accepted?'accepting':'declining';incomingCall.classList.add(phoneCall.phase);
   if(!accepted&&c&&!['visit','friend_home'].includes(kind)){socialRejected(c,'的来电没能接通');}
   if(!accepted&&c)log(automatic?`没来得及接听${contactName(c)}的来电，铃声在六秒后停了。`:`暂时婉拒了${contactName(c)}的来电，晚点再联系。`);

@@ -208,6 +208,7 @@ function tickHomeVisit(dt){
   if(g.phase==='scheduled'){
     if(sim.t<g.at)return;
     if(sim.place!=='home'||asleep()||sim.mode==='down'||sim.needs.energy<20||sim.needs.hunger<10){if(sim.t>g.until)endHomeVisit('改天再来。',false);return;}
+    gameAudio.sound('bell',.6);
     g.phase='entering';g.s=0;g.until=sim.t+(g.familyTrip?300:150);g.arrivedAt=sim.t;if(g.familyTrip)c.parentLastVisit=sim.t;c.lastSeen=sim.t;c.forgotten=false;contactsSig='';log(`${contactName(c)}到了，换好鞋走进客厅。`);showSay(`你来啦，进来坐！`);
   }
   if(g.phase==='entering'||g.phase==='leaving'){

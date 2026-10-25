@@ -111,6 +111,7 @@ function barOrder(item) {
   if (!seat && !free) { speak('吧台坐满啦，等一个空位吧。', true); return; }
   sim.bar.drink = d.id; sim.bar.remaining = d.duration;
   if (!seat) barWalk(free.id, free.x);
+  gameAudio.sound('pour',.5);
   barScene.shaker = 2.8;
   npcSay(barScene.bartender, d.serve);
   log(`${nameOf()}点了一杯${d.name}。`);

@@ -90,20 +90,24 @@ def main():
     missing = [name for name in CC0_SFX if not (SFX / name).is_file()]
     if missing:
         raise RuntimeError(f"Missing SFX: {missing}")
+    run(["python3", LIB / "tools" / "build_game_sfx.py"])
+    run(["python3", LIB / "tools" / "prepare_game_samples.py"])
     report = {
         "bgm_count": len(OUTPUTS),
-        "sfx_count": len(CC0_SFX),
+        "source_sfx_count": len(CC0_SFX),
+        "game_sfx_count": len(list((SFX / "game").glob("*.mp3"))),
+        "playback_sfx_count": len(list((SFX / "game").glob("*.mp3"))) + len(CC0_SFX),
         "bgm": sorted(str(path.relative_to(LIB)) for path in BGM.rglob("*.mp3")),
-        "sfx": sorted(path.name for path in SFX.glob("*.mp3")),
+        "sfx": sorted(str(path.relative_to(LIB)) for path in SFX.rglob("*.mp3")),
     }
     (LIB / "docs" / "BUILD_MANIFEST.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     lines = []
-    for path in sorted([*BGM.rglob("*.mp3"), *SFX.glob("*.mp3")]):
+    for path in sorted([*BGM.rglob("*.mp3"), *SFX.rglob("*.mp3")]):
         digest = hashlib.sha256(path.read_bytes()).hexdigest()
         lines.append(f"{digest}  {path.relative_to(LIB)}")
     (LIB / "checksums.sha256").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"OK: {len(OUTPUTS)} BGM + {len(CC0_SFX)} CC0 SFX", flush=True)
+    print(f"OK: {len(OUTPUTS)} BGM + {len(CC0_SFX)} CC0 SFX + game sounds", flush=True)
 
 if __name__ == "__main__":
     main()
