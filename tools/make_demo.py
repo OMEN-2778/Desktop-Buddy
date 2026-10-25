@@ -362,8 +362,10 @@ def main():
     friend_houses = {}
     for plan in FH.PLANS:
         meta, bg, front = FH.draw_plan(plan)
-        _, night, _ = FH.draw_plan(plan, night=True)
-        friend_houses[meta['id']] = {**meta, 'day':png(bg), 'night':png(night), 'front':png(front)}
+        _, house_night, _ = FH.draw_plan(plan, night=True)
+        friend_houses[meta['id']] = {**meta, 'day':png(bg), 'night':png(house_night), 'front':png(front)}
+    assert (day.w, day.h) == (Hs.W, Hs.H), "Main day background size changed"
+    assert (night.w, night.h) == (Hs.W, Hs.H), "Main night background was replaced"
     data = {
         "friendHouses":friend_houses,
         "W": Hs.W, "H": Hs.H,
