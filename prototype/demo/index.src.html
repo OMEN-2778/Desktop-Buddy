@@ -98,6 +98,13 @@
         <button type="button" data-sleep-preview="chat">同床聊天</button>
         <button type="button" id="exitSleepPreview">退出测试、恢复原状</button>
       </div>
+      <div class="label">朋友房屋样式预览</div>
+      <section id="friendHousePreviewControls" aria-label="朋友房屋样式预览">
+        <select id="friendHouseSelect" aria-label="选择朋友房屋"><option value="">选择房屋样式（10种）</option></select>
+        <button type="button" id="friendHousePrev">上一间</button><button type="button" id="friendHouseNext">下一间</button><button type="button" id="friendHouseExit">退出预览</button>
+        <label><input type="checkbox" id="friendHouseNight">夜景</label><label><input type="checkbox" id="friendHouseFigures" checked>人物比例</label>
+        <p id="friendHouseNote" class="note">预览不会启动做客、改变进度或写入存档。</p>
+      </section>
       <p class="note" id="sleepPreviewNote" hidden>当前是睡眠测试画面，不写入存档。可以恢复时间继续观察，退出测试后恢复原来的进度。</p>
       <div class="label">天气（测试用）</div>
       <div class="row" role="group" aria-label="天气">
@@ -233,6 +240,8 @@ async function loadAssets() {
     IMG.win[k] = {};
     for (const key of ["day0", "day1", "day2", "night0", "night1", "night2", "drawn"]) IMG.win[k][key] = await loadImg(v[key]);
   }
+  IMG.friendHouses={};
+  await Promise.all(Object.entries(D.friendHouses).map(async([id,h])=>{const [day,night,front]=await Promise.all([loadImg(h.day),loadImg(h.night),loadImg(h.front)]);IMG.friendHouses[id]={day,night,front};}));
   IMG.tv = {}; for (const [c, fr] of Object.entries(D.screens.tv.channels)) IMG.tv[c] = await Promise.all(fr.map(loadImg));
   IMG.mon = {}; for (const [g, fr] of Object.entries(D.screens.monitor.games)) IMG.mon[g] = await Promise.all(fr.map(loadImg));
   IMG.app = {}; for (const [g, fr] of Object.entries(D.screens.monitor.apps)) IMG.app[g] = await Promise.all(fr.map(loadImg));
@@ -588,6 +597,7 @@ function command(act, item = null) {
 
 const WALK = 28 * 2 / 3;   // house pixels per real second at 1x (user: two thirds of the old 28)
 function step(dtGame, dtReal) {
+  if(friendHousePreview)return;
   if(phoneHolds()||wardrobeOpen)return;
   if (sim.place === "bar") { stepBar(dtGame, dtReal); return; }
   if (sim.place === "mall" && (wiping || cardHolds() || !(dtGame > 0 || dtReal > 0))) return;
@@ -690,6 +700,7 @@ function drawDoors(ctx) {
 
 // ================================================================ lighting
 const W = D.W, H = D.H;
+let friendHousePreview=null;
 const EMISSIVE = new Set(D.emissive.map(h => parseInt(h.slice(1), 16)));
 const LIGHT_G = {};
 for (const [id, [lx, ly, r, , room]] of Object.entries(D.lights)) {
@@ -944,8 +955,8 @@ function fit() {
   const s = N / dpr;
   scale = s; devPx = N;
   const hPx = H * s, wPx = W * s;
-  view.width = Math.round(W * N); view.height = Math.round(H * N);   // drawn in screen pixels
-  view.style.width = wPx + "px"; view.style.height = hPx + "px";
+  view.width = Math.round(W * N); view.height = Math.round((friendHousePreview?D.friendHouses[friendHousePreview.id].h:H) * N);   // drawn in screen pixels
+  view.style.width = wPx + "px"; view.style.height = (friendHousePreview?D.friendHouses[friendHousePreview.id].h*s:hPx) + "px";
   // UI pixel = house pixel (at least 2px so the dots stay round)
   const u = Math.max(2, Math.round(s));
   const widget = document.getElementById("widget");
@@ -1003,7 +1014,7 @@ function fit() {
   if(typeof card !== "undefined" && card){placeCard(cardEl);placeCard(cardRes);}
   if (typeof fitSay === "function") { fitSay(); fitDiary(); if(typeof fitPeerSpeech === "function")fitPeerSpeech(); }   // a new size: refit both lines
   if (typeof guideOn !== "undefined" && guideOn) sizeGuide();
-  if (TAURI || wardrobeOpen || diaryOn || (typeof guideOn !== "undefined" && guideOn)) { studio.refit(); makeRoom(); }
+  if (TAURI || friendHousePreview || wardrobeOpen || diaryOn || (typeof guideOn !== "undefined" && guideOn)) { studio.refit(); makeRoom(); }
   if (pickOn) fitPicker();                          // (fit runs only after the page has loaded)   // what's open above the house got a new size
   if (TAURI) { fitWindow(); requestAnimationFrame(fitWindow); }   // the app window starts hidden: no frames until it's sized
 }
@@ -1195,6 +1206,7 @@ function frameOf(list, fps) { return list[Math.floor(realClock * fps) % list.len
 /*__TV_PLAYBACK_JS__*/
 
 function render() {
+  if(renderFriendHousePreview())return;
   syncParkNavigation();
   updateNpcHover();
   if (sim.place !== "home") { renderOutside(); return; }
@@ -2303,6 +2315,7 @@ function showSay(text, who = "", speaker = null) {
 }
 let lifeT = -1;
 function updateMood() {
+  if(friendHousePreview)return;
   if (sim.place === "bar") {
     if (lifeT !== Math.floor(sim.t)) { lifeT = Math.floor(sim.t); updateConds(); }
     showFace(); if (listOpen) fillMoodTip();
@@ -4132,7 +4145,7 @@ for (let i = 0; i < 20; i++) {                   // sparks around the moodlet pi
   crBurst.append(sp);
 }
 // while a card or its result is up the house dims a little and time stands still (user)
-const cardHolds = () => !!(card && card.hold) || guideOn || wardrobeOpen || phoneHolds() || socialDialogHolds() || ringOf==="outing";   // (the guide stops the clock too)
+const cardHolds = () => !!(card && card.hold) || guideOn || wardrobeOpen || phoneHolds() || socialDialogHolds() || !!friendHousePreview || ringOf==="outing";   // (the guide stops the clock too)
 const dimHouse = on => view.classList.toggle("dim", on);
 let quietUntil = 0;         // her card line isn't followed by a "new mood" thought
 let card = null;            // { cd, vars, phase: ask | wait | result | closing, k, o, auto, timer, lockUntil }
@@ -4714,7 +4727,7 @@ function restore(sv) {
   syncDiary();
 }
 async function saveGame() {
-  if (!booted || saving || visitSleepPreview) return false;
+  if (!booted || saving || visitSleepPreview || friendHousePreview) return false;
   saving = true;
   try {
     await store.save(snapshot());
@@ -4980,6 +4993,7 @@ if (TAURI) {
 /*__PEER_DIALOGUE_JS__*/
 /*__NPC_SOCIAL_JS__*/
 /*__FRIEND_OUTINGS_JS__*/
+/*__FRIEND_HOUSES_JS__*/
 /*__NEED_CONSEQUENCES_JS__*/
 
 // ================================================================ loop
@@ -5050,7 +5064,9 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
   render();
   requestAnimationFrame(frame);
   if (!st) saveSettings();
+  const houseLink=!TAURI&&new URLSearchParams(location.search).get('house-preview');
+  if(houseLink&&Object.hasOwn(D.friendHouses,houseLink))openFriendHousePreview(houseLink);
   if (!sv) autoSave();
-  if (!prefs.guided) setTimeout(openGuide, 1200);   // first time: the guide opens by itself
+  if (!prefs.guided&&!friendHousePreview) setTimeout(()=>{if(!friendHousePreview)openGuide();}, 1200);   // first time: the guide opens by itself
 })();
 </script>

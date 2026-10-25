@@ -270,7 +270,7 @@ function finishContactTalk(id,kind){
   if(['text','call','video'].includes(kind))addSocialMemory(c,{text:'互发消息',call:'通了电话',video:'视频见面'}[kind],`和${contactName(c)}聊起「${c.lastTopic||'彼此的近况'}」。`);
   sim.needs.social=clamp(sim.needs.social+(kind==='text'?5:10));applyNeedConsequences();contactsSig='';if(moodrow.classList.contains('contacts-open'))fillContacts();
 }
-function canReceiveCall(){return ringOf!=='outing'&&!asleep()&&sim.mode!=='down'&&!wiping&&!guideOn&&!card&&!wardrobeOpen&&!socialBusy()&&!socialDialogHolds()&&!homeVisitActive();}
+function canReceiveCall(){return !friendHousePreview&&ringOf!=='outing'&&!asleep()&&sim.mode!=='down'&&!wiping&&!guideOn&&!card&&!wardrobeOpen&&!socialBusy()&&!socialDialogHolds()&&!homeVisitActive();}
 function contactWithHero(id){
   return friendOutingState?.id===id&&friendOutingState.phase!=='waiting'||socialState.guest?.id===id&&['entering','visiting','leaving'].includes(socialState.guest.phase);
 }
@@ -316,6 +316,7 @@ function contactPrivacyBreak(){
   return null;
 }
 function tickSocial(dt,now){
+  if(friendHousePreview)return;
   // Real time has one source, independent of the simulation's speed and frame clock.
   const callNow=performance.now();
   if(phoneCall.phase==='ringing'){incomingCall.style.setProperty('--call-remaining',Math.max(0,(phoneCall.deadline-callNow)/6000));if(callNow>=phoneCall.deadline)finishIncomingCall(false,true);return;}

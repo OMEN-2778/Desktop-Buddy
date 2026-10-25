@@ -713,3 +713,16 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
 .log li.day { grid-template-columns: 1fr; color: var(--muted); font-size: 12px; letter-spacing: .1em; }
 
 /*__SOCIAL_HUD_CSS__*/
+
+/* Separate preview controls stay below the cutaway, never over its rooms. */
+#friendHousePreviewControls { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+#friendHousePreviewControls select { max-width:100%; min-width:0; }
+#friendHousePreviewControls p { flex-basis:100%; margin:0; }
+#friendHousePreviewControls.friend-house-active { width:var(--house-w); box-sizing:border-box; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); padding:8px; gap:6px; border:2px solid var(--edge); background:var(--panel); margin-top:8px; }
+.friend-house-active > select,.friend-house-active > p { grid-column:1/-1; }
+.friend-house-active > button,.friend-house-active > select { font:inherit; font-size:var(--ui-font-control); color:var(--ink); background:var(--panel-2); border:2px solid var(--bevel-lo); border-radius:0; clip-path:var(--hud-small-clip); min-width:0; min-height:30px; padding:4px; }
+.friend-house-active > label { font-size:var(--ui-font-caption); white-space:nowrap; }
+.house-preview #moodrow,.house-preview .status-row,.house-preview #diary { pointer-events:none; }
+
+.house-preview .npcsay,.house-preview .park-navigation,.house-preview #nametag { visibility:hidden; }
+.house-preview #settings { pointer-events:auto; }

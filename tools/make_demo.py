@@ -41,6 +41,7 @@ import beach as BC  # noqa: E402
 import mall as MALL  # noqa: E402
 import mall_rooms as MR  # noqa: E402
 import tv_programs as TV  # noqa: E402
+import friend_houses as FH  # noqa: E402
 import storm as STORM  # noqa: E402
 import bar as BAR  # noqa: E402
 import make_creator as mc  # noqa: E402
@@ -358,7 +359,13 @@ def main():
         "monitor": (mx + 8, my + 5, 18, (0.75, 0.9, 1.05), "study"),
     }
 
+    friend_houses = {}
+    for plan in FH.PLANS:
+        meta, bg, front = FH.draw_plan(plan)
+        _, night, _ = FH.draw_plan(plan, night=True)
+        friend_houses[meta['id']] = {**meta, 'day':png(bg), 'night':png(night), 'front':png(front)}
     data = {
+        "friendHouses":friend_houses,
         "W": Hs.W, "H": Hs.H,
         "doll": mc.doll_data(),   # Buddy's role maps + dressing-room options (shared with the creator)
         "bg": {"day": png(day), "night": png(night)},
@@ -415,6 +422,7 @@ def main():
     html = html.replace("/*__SOCIAL_LIFE_JS__*/", "const SOCIAL_TEXT = " + (SRC.parent / "social_text.json").read_text() + ";\nconst SOCIAL_DIALOGUE = " + (SRC.parent / "social_dialogue.json").read_text() + ";\n" + (SRC.parent / "social_dialogue.js").read_text() + "\n" + (SRC.parent / "social_life.js").read_text() + "\nconst HOME_VISIT_TEXT = " + (SRC.parent / "home_visit_text.json").read_text() + ";\n" + (SRC.parent / "home_visits.js").read_text())
     html = html.replace("/*__SOCIAL_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "social_cards.json").read_text() + ");")
     html = html.replace("/*__PEER_DIALOGUE_JS__*/", (SRC.parent / "peer_dialogue.js").read_text())
+    html = html.replace("/*__FRIEND_HOUSES_JS__*/", (SRC.parent / "friend_houses.js").read_text())
     html = html.replace("/*__TV_PLAYBACK_JS__*/", (SRC.parent / "tv_playback.js").read_text())
     html = html.replace("/*__FRIEND_OUTINGS_JS__*/", "const FRIEND_OUTING_TEXT = " + (SRC.parent / "friend_outing_text.json").read_text() + ";\nCARDS.push(..." + (SRC.parent / "friend_outing_cards.json").read_text() + ");\n" + (SRC.parent / "friend_outings.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
