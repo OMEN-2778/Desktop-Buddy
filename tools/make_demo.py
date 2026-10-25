@@ -40,6 +40,7 @@ import park_food as PF  # noqa: E402
 import beach as BC  # noqa: E402
 import mall as MALL  # noqa: E402
 import mall_rooms as MR  # noqa: E402
+import tv_programs as TV  # noqa: E402
 import storm as STORM  # noqa: E402
 import bar as BAR  # noqa: E402
 import make_creator as mc  # noqa: E402
@@ -296,7 +297,7 @@ def main():
     hx, hy = A["hob"]
     tx, ty = A["dining_table"]
     screens = {
-        "tv": {"x": tvx + 1, "y": tvy + 1, "channels": {c: [png(F.tv_screen(c, f)) for f in range(4)] for c in F.TV_CHANNELS}},
+        "tv": {"x": tvx + 1, "y": tvy + 1, "channels": {c: [png(TV.frame(c, f)) for f in range(TV.FRAMES)] for c in TV.PROGRAMS}},
         "monitor": {"x": mx + 1, "y": my + 1, "games": {g: [png(F.monitor_screen(g, f)) for f in range(4)] for g in F.GAMES},
                     "apps": {g: [png(F.monitor_screen(g, f)) for f in range(4)] for g in F.APPS}},
     }
@@ -414,6 +415,7 @@ def main():
     html = html.replace("/*__SOCIAL_LIFE_JS__*/", "const SOCIAL_TEXT = " + (SRC.parent / "social_text.json").read_text() + ";\nconst SOCIAL_DIALOGUE = " + (SRC.parent / "social_dialogue.json").read_text() + ";\n" + (SRC.parent / "social_dialogue.js").read_text() + "\n" + (SRC.parent / "social_life.js").read_text() + "\nconst HOME_VISIT_TEXT = " + (SRC.parent / "home_visit_text.json").read_text() + ";\n" + (SRC.parent / "home_visits.js").read_text())
     html = html.replace("/*__SOCIAL_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "social_cards.json").read_text() + ");")
     html = html.replace("/*__PEER_DIALOGUE_JS__*/", (SRC.parent / "peer_dialogue.js").read_text())
+    html = html.replace("/*__TV_PLAYBACK_JS__*/", (SRC.parent / "tv_playback.js").read_text())
     html = html.replace("/*__FRIEND_OUTINGS_JS__*/", "const FRIEND_OUTING_TEXT = " + (SRC.parent / "friend_outing_text.json").read_text() + ";\nCARDS.push(..." + (SRC.parent / "friend_outing_cards.json").read_text() + ");\n" + (SRC.parent / "friend_outings.js").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")

@@ -1192,6 +1192,8 @@ const dishPics = new Map();
 function dishPic(src) { if (!dishPics.has(src)) { const i = new Image(); i.src = src; dishPics.set(src, i); } return dishPics.get(src); }
 function frameOf(list, fps) { return list[Math.floor(realClock * fps) % list.length]; }
 
+/*__TV_PLAYBACK_JS__*/
+
 function render() {
   syncParkNavigation();
   updateNpcHover();
@@ -1224,9 +1226,12 @@ function render() {
     if (act === "tv") lit.push("tv");
     if (act === "computer" || (act && act.startsWith("pc_"))) lit.push("monitor");
   }
-  drawChair(bctx);
-  drawSleepoverBedding(bctx);
-  drawHomeGuest(bctx);drawOutingFriend(bctx);
+  // One foreground layer serves both normal composition and screen occlusion.
+  homeActorsCtx.clearRect(0,0,W,H);
+  homeActorsCtx.globalAlpha=1;homeActorsCtx.globalCompositeOperation='source-over';
+  drawChair(homeActorsCtx);
+  drawSleepoverBedding(homeActorsCtx);
+  drawHomeGuest(homeActorsCtx);drawOutingFriend(homeActorsCtx);
   // Buddy
   const ms = realClock * 1000;
   const fr = activityFrame(ms);
@@ -1236,36 +1241,34 @@ function render() {
     // lying on her side on the floor, a skull bubble over her (no harm done)
     const p = here(), body = lyingBody({ ...full, expr: "sleepy", look: 0, bob: 0, sway: 0, wave: null });
     const x = Math.round(p.x - body.width / 2), y = Math.round(p.y) - 17;
-    bctx.drawImage(body, x, y);
+    homeActorsCtx.drawImage(body, x, y);
     emoteAt = [x + 10, y - 13];
-  } else if (sleeping && drawHeroSleepover(bctx,full)) {
+  } else if (sleeping && drawHeroSleepover(homeActorsCtx,full)) {
     emoteAt=heroSleepingOnSofa()?[D.sleepover.sofa[0]+8,D.sleepover.sofa[1]-12]:[D.sleepLying[0]+10,D.sleepLying[1]-14];
   } else if (sleeping) {
     const [lx, ly] = D.sleepLying;
-    bctx.drawImage(lyingHead({ ...full, expr: "sleepy", look: 0, bob: 0, sway: 0, wave: null }), lx, ly);
-    drawOverlay(bctx, "sleep_cover");
+    homeActorsCtx.drawImage(lyingHead({ ...full, expr: "sleepy", look: 0, bob: 0, sway: 0, wave: null }), lx, ly);
+    drawOverlay(homeActorsCtx, "sleep_cover");
     emoteAt = [lx + 10, ly - 14];
   } else if (act === "bath") {
-    bctx.drawImage(dollCanvas({ ...full, look: 0, wave: null }, "stand", 14), D.bathHead[0], D.bathHead[1]);
-    drawOverlay(bctx, "tub_front"); drawOverlay(bctx, "bubbles");
+    homeActorsCtx.drawImage(dollCanvas({ ...full, look: 0, wave: null }, "stand", 14), D.bathHead[0], D.bathHead[1]);
+    drawOverlay(homeActorsCtx, "tub_front"); drawOverlay(homeActorsCtx, "bubbles");
     emoteAt = [D.bathHead[0] + 13, D.bathHead[1] - 15];
   } else {
     const p = buddyFeet();
     const x = Math.round(p.x - DW / 2), y = Math.round(p.y - DH + 1);
-    bctx.drawImage(fr.back ? backCanvas(full, fr.pose) : dollCanvas(full, fr.pose), x, y);
-    if (act === "tv"||act === "host") drawOverlay(bctx, "coffee_table");
+    homeActorsCtx.drawImage(fr.back ? backCanvas(full, fr.pose) : dollCanvas(full, fr.pose), x, y);
+    if (act === "tv"||act === "host") drawOverlay(homeActorsCtx, "coffee_table");
     if (act && act.startsWith("phone_")) {          // her phone: at the ear on a call, in her hands otherwise
-      if (act === "phone_call") bctx.drawImage(IMG.fx.phone_call[0], x + 16, y + 8 + full.bob);
-      else bctx.drawImage(frameOf(IMG.fx.phone, 2), x + 8, y + 17);
+      if (act === "phone_call") homeActorsCtx.drawImage(IMG.fx.phone_call[0], x + 16, y + 8 + full.bob);
+      else homeActorsCtx.drawImage(frameOf(IMG.fx.phone, 2), x + 8, y + 17);
     }
     emoteAt = [x + 13, y - 15];
   }
+  bctx.drawImage(homeActors,0,0);
   grade(bctx, f, lit);
   // things that glow on their own: screens, flames, steam
-  if (act === "tv") {
-    const ch = IMG.tv[sim.item?.screen] ? sim.item.screen : Object.keys(IMG.tv)[Math.floor(realClock / 6) % 4];
-    bctx.drawImage(frameOf(IMG.tv[ch], 4), D.screens.tv.x, D.screens.tv.y);
-  }
+  if(act==='tv')drawTvPicture(bctx);else tvPlayback.playing=false;
   if (act === "computer") {
     const g = IMG.mon[sim.item?.screen] ? sim.item.screen : Object.keys(IMG.mon)[Math.floor(realClock / 8) % 3];
     bctx.drawImage(frameOf(IMG.mon[g], 5), D.screens.monitor.x, D.screens.monitor.y);
