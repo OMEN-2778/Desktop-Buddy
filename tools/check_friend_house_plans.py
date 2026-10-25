@@ -1,4 +1,4 @@
-"""Geometry for all future visits: ten connected plans, bounded native sprites."""
+"""Geometry for all future visits: thirty connected plans, bounded native sprites."""
 import sys
 from pathlib import Path
 sys.path[:0]=[str(Path(__file__).resolve().parents[1]/'art/src/concept')]
@@ -10,7 +10,8 @@ for plan in F.PLANS:
  assert bg.w==front.w==d['w'] and bg.h==front.h==d['h']
  assert bg.px.tobytes()!=night.px.tobytes(),d['id']
  assert all(0<=r['x'] and r['x']+r['w']<=d['w'] and 0<=r['floor']<d['h'] for r in d['rooms'])
- for f in d['furniture']:assert 0<=f['x'] and f['x']+f['w']<=d['w'] and 0<=f['y'] and f['y']+f['h']<=d['h'],(d['id'],f)
+ for f in d['furniture']:
+  assert any(r['y']<=f['y'] and f['y']+f['h']<=r['floor']+6 and r['x']<=f['x'] and f['x']+f['w']<=r['x']+r['w'] for r in d['rooms']),(d['id'],f)
  rooms={r['id']:r for r in d['rooms']};seen={next(iter(rooms))}
  for _ in rooms:
   for link in d['links']:
@@ -21,6 +22,14 @@ for plan in F.PLANS:
  assert any(r['role']=='bath' for r in d['rooms'])
  assert any(r['storey']==0 and r['x']<=d['entry'][0]<=r['x']+r['w'] and r['floor']==d['entry'][1] for r in d['rooms'])
  layouts.add(tuple((r['role'],r['x'],r['y'],r['w']) for r in d['rooms']))
-assert len(layouts)==10
+assert len(layouts)==30
 assert {r['role']for r in F.draw_plan(F.PLANS[0])[0]['rooms']}=={'bed','bath'}
-print('PASS: 10 distinct connected plans, widths148–342, heights62/120/178, bounded furniture and entrances, day/night windows, smallest bedroom+bath only.')
+print('PASS: 30 distinct connected plans, widths148–342, heights62/120/178, bounded furniture and entrances, day/night windows, smallest bedroom+bath only.')
+
+import friend_furniture as FF
+assets=FF.build()
+assert len(assets)==40 and len({s.px.tobytes() for s in assets.values()})==40
+for k,s in assets.items():assert (s.w,s.h)==FF.SIZES[k]
+assert len({F.draw_plan(p)[0]['theme']for p in F.PLANS})>=10
+assert all(any(r['role']in ('bed','tatami')for r in F.draw_plan(p)[0]['rooms'])for p in F.PLANS)
+print('PASS: 40 distinct native-size furniture and plant forms; all homes include a bedroom and bathroom.')

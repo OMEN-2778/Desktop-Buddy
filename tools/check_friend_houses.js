@@ -3,7 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=requ
 (async()=>{const b=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});try{
  const p=await b.newPage({viewport:{width:1700,height:1400},reducedMotion:'reduce'}),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto(process.argv[2]||'http://127.0.0.1:8786/');await p.waitForFunction(()=>booted);await p.waitForTimeout(1400);fs.mkdirSync('/workspace/artifacts/friend-houses',{recursive:true});
  await p.evaluate(()=>{closeGuide();closePicker();closeSocialSheet();closeRing();cardMoment=rollCard=rollEvents=()=>false;sim.place='home';sim.mode='idle';sim.act=null;sim.windup=null;sim.talk=null;sim.chosen=null;sim.idleUntil=Infinity;speed=0;socialState.nextCall=socialState.nextVisit=1e9;document.querySelector('.console').open=true;});
- assert.equal(await p.locator('#friendHouseSelect option').count(),11);
+ assert.equal(await p.locator('#friendHouseSelect option').count(),31);
  await p.locator('#friendHouseSelect').selectOption('cream');
  assert.equal(await p.evaluate(()=>friendHousePreview?.id==='cream'&&cardHolds()),true);
  await p.locator('#setGear').click();assert.equal(await p.locator('#setPop').isVisible(),true,'Preview disables zoom/settings');await p.evaluate(()=>setSettingsOpen(false));
@@ -32,7 +32,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=requ
   }
  }
  // Next/previous wrap; Escape restores dimensions and all simulation data.
- await p.locator('#friendHouseNext').click();assert.equal(await p.evaluate(()=>friendHousePreview.id),'cream');await p.locator('#friendHousePrev').click();assert.equal(await p.evaluate(()=>friendHousePreview.id),'library');
+ await p.locator('#friendHouseNext').click();assert.equal(await p.evaluate(()=>friendHousePreview.id),'cream');await p.locator('#friendHousePrev').click();assert.equal(await p.evaluate(()=>friendHousePreview.id),'walnut');
  const saved=await p.evaluate(()=>JSON.stringify({sim:snapshot().sim,social:socialSnapshot()}));
  await p.keyboard.press('Escape');assert.equal(await p.evaluate(()=>friendHousePreview===null&&view.height===Math.round(H*devPx)&&view.style.pointerEvents===''),true);
  assert.equal(await p.evaluate(()=>JSON.stringify({sim:snapshot().sim,social:socialSnapshot()})),saved);

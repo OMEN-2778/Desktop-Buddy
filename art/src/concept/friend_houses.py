@@ -1,13 +1,15 @@
-"""Ten distinct, future-visitable cutaway homes; widths <= the hero's342px.
+"""Thirty distinct, future-visitable cutaway homes; widths <= the hero's342px.
 
 45px walls,58px storeys, top-left light. Shared furniture keeps the game's
 scale; each plan explicitly supplies its own partitions/stair column. Frames,
 skirting, foreground tables, doors and walk points are exported separately
 from the decorative art so later visits need not infer a layout from pixels.
 """
-from pixelkit import P, Sprite, rgba
+from pixelkit import P, Sprite
 import _furniture as F
 import house as H
+import friend_furniture as FF
+from zlib import crc32
 
 PREVIEW_SCALE=4
 # Rooms: role, left edge, width. Floors are listed from top to ground.
@@ -42,6 +44,26 @@ PLANS=[
   [('library',6,178),('atelier',188,104),('stair',296,40)],
   [('bed',6,104),('guest_bed',114,116),('bath',234,58),('stair',296,40)],
   [('living',6,144),('kitchen',154,138),('entry_stair',296,40)]]),
+ ('peach','蜜桃窗边屋',240,'卧室、卫浴、开放厨房，独立布局与协调陈设。','cream',[[('bed', 6, 82), ('bath', 92, 38), ('kitchenette', 134, 100)]]),
+ ('fern','蕨叶茶舍',342,'茶室、卫浴、开放厨房，独立布局与协调陈设。','garden',[[('tatami', 6, 92), ('tea', 102, 84), ('bath', 190, 42), ('kitchenette', 236, 100)]]),
+ ('linen','亚麻长廊屋',340,'卧室、起居室、卫浴、开放厨房，独立布局与协调陈设。','oak',[[('bed', 6, 76), ('living', 86, 96), ('bath', 186, 38), ('kitchenette', 228, 106)]]),
+ ('cobalt','海盐小套间',268,'卧室、卫浴、开放厨房，独立布局与协调陈设。','slate',[[('bed', 6, 88), ('bath', 98, 44), ('kitchenette', 146, 116)]]),
+ ('amber','琥珀茶香屋',200,'卧室、卫浴、茶室，独立布局与协调陈设。','retro',[[('bed', 6, 96), ('bath', 106, 44), ('stair', 154, 40)], [('tea', 6, 144), ('entry_stair', 154, 40)]]),
+ ('willow','柳影小楼',202,'楼梯靠左，窗边卧室与下层客厅、小厨房。','mint',[[('stair', 6, 40), ('bed', 50, 96), ('bath', 150, 46)], [('entry_stair', 6, 40), ('living', 50, 72), ('kitchen', 126, 70)]]),
+ ('loft','斜阳画家屋',286,'画室、卧室、卫浴、起居室、厨房，独立布局与协调陈设。','cream',[[('atelier', 6, 90), ('stair', 100, 40), ('bed', 144, 88), ('bath', 236, 44)], [('living', 6, 90), ('entry_stair', 100, 40), ('kitchen', 144, 136)]]),
+ ('moss','苔绿阅读屋',334,'顶层阅读区，楼下并排布置客厅、餐厅与厨房。','garden',[[('library', 6, 132), ('bed', 142, 94), ('bath', 240, 44), ('stair', 288, 40)], [('living', 6, 132), ('dining', 142, 66), ('kitchen', 212, 72), ('entry_stair', 288, 40)]]),
+ ('maple','枫木双卧宅',320,'卧室、客卧、卫浴、厨房、起居室，独立布局与协调陈设。','oak',[[('bed', 6, 96), ('guest_bed', 106, 96), ('bath', 206, 64), ('stair', 274, 40)], [('kitchen', 6, 96), ('living', 106, 164), ('entry_stair', 274, 40)]]),
+ ('petal','碎花玻璃屋',338,'花房、卫浴、卧室、起居室、厨房，独立布局与协调陈设。','retro',[[('sunroom', 30, 118), ('stair', 152, 40), ('bath', 196, 44), ('bed', 244, 88)], [('living', 6, 142), ('entry_stair', 152, 40), ('kitchen', 196, 136)]]),
+ ('cove','海湾琴房',332,'琴房、卧室、卫浴、厨房、餐厅、起居室，独立布局与协调陈设。','town',[[('music', 6, 136), ('stair', 146, 40), ('bed', 190, 88), ('bath', 282, 44)], [('kitchen', 6, 88), ('dining', 98, 44), ('entry_stair', 146, 40), ('living', 190, 136)]]),
+ ('cedar','雪松窄楼',186,'书阁、卧室、卫浴、开放厨房，独立布局与协调陈设。','library',[[('stair', 6, 40), ('library', 50, 130)], [('stair', 6, 40), ('bed', 50, 82), ('bath', 136, 44)], [('entry_stair', 6, 40), ('kitchenette', 50, 130)]]),
+ ('jade','青瓷叠院',256,'茶室、花房、卧室、卫浴、起居室、厨房，独立布局与协调陈设。','japan',[[('tea', 6, 100), ('stair', 110, 40), ('sunroom', 154, 96)], [('bed', 6, 100), ('stair', 110, 40), ('bath', 154, 96)], [('living', 6, 100), ('entry_stair', 110, 40), ('kitchen', 154, 96)]]),
+ ('ink','墨蓝创作楼',300,'画室、书房、卧室、卫浴、洗衣间、起居室、厨房，独立布局与协调陈设。','slate',[[('atelier', 22, 118), ('stair', 144, 40), ('study', 188, 106)], [('bed', 6, 134), ('stair', 144, 40), ('bath', 188, 44), ('laundry', 236, 58)], [('living', 6, 134), ('entry_stair', 144, 40), ('kitchen', 188, 106)]]),
+ ('briar','蔷薇双层阁',300,'卧室、卫浴、书房、厨房、起居室、花房，独立布局与协调陈设。','cream',[[('bed', 6, 108), ('bath', 118, 54), ('stair', 176, 40), ('study', 220, 74)], [('kitchen', 6, 82), ('living', 92, 80), ('entry_stair', 176, 40), ('sunroom', 220, 74)]]),
+ ('vinyl','唱片收藏楼',332,'琴房、书阁、卧室、卫浴、书房、起居室、厨房，独立布局与协调陈设。','music',[[('music', 6, 138), ('library', 148, 134), ('stair', 286, 40)], [('bed', 6, 138), ('bath', 148, 68), ('study', 220, 62), ('stair', 286, 40)], [('living', 6, 138), ('kitchen', 148, 134), ('entry_stair', 286, 40)]]),
+ ('sage','鼠尾草客舍',290,'卧室、客卧、卫浴、起居室、餐厅、厨房，独立布局与协调陈设。','mint',[[('stair', 6, 40), ('bed', 50, 90), ('guest_bed', 144, 92), ('bath', 240, 44)], [('entry_stair', 6, 40), ('living', 50, 90), ('dining', 144, 62), ('kitchen', 210, 74)]]),
+ ('honey','蜂蜜顶楼',328,'花房、书阁、卧室、卫浴、书房、厨房、起居室，独立布局与协调陈设。','retro',[[('sunroom', 50, 92), ('stair', 146, 40), ('library', 190, 132)], [('bed', 6, 136), ('stair', 146, 40), ('bath', 190, 54), ('study', 248, 74)], [('kitchen', 6, 136), ('entry_stair', 146, 40), ('living', 190, 132)]]),
+ ('olive','橄榄慢生活屋',212,'窄面三层小楼，中层书房与洗衣间，下层客厅和厨房。','garden',[[('bed', 6, 108), ('bath', 118, 44), ('stair', 166, 40)], [('study', 6, 108), ('laundry', 118, 44), ('stair', 166, 40)], [('living', 6, 82), ('kitchen', 92, 70), ('entry_stair', 166, 40)]]),
+ ('walnut','胡桃大书屋',342,'书阁、画室、卧室、卫浴、客卧、起居室、厨房、餐厅，独立布局与协调陈设。','library',[[('library', 6, 142), ('stair', 152, 40), ('atelier', 196, 140)], [('bed', 6, 88), ('bath', 98, 50), ('stair', 152, 40), ('guest_bed', 196, 140)], [('living', 6, 142), ('entry_stair', 152, 40), ('kitchen', 196, 80), ('dining', 280, 56)]]),
 ]
 THEMES={
  'cream':(P.plaster_bed,P.oat,'plain'), 'mint':(P.plaster_kitchen,P.sage,'stripe'),
@@ -51,42 +73,13 @@ THEMES={
  'music':(P.plaster_living,P.clay,'panel'), 'library':(P.plaster_bed,P.walnut,'wood')}
 
 
-def shower():
- s=Sprite(12,34);s.rect(0,0,12,34,P.steel[0]).rect(1,1,10,32,P.glass[1])
- s.rect(2,2,8,29,P.glass[2]).vline(2,2,30,P.glass[3]).vline(9,1,31,P.steel[3])
- s.line(4,5,7,5,P.steel[4]).vline(4,5,16,P.steel[2]).rect(7,18,1,3,P.steel[4])
- s.rect(1,31,10,2,P.porcelain[3]).hline(3,6,29,P.glass[3]);return s
-
-
-def tiny_basin():
- s=Sprite(8,17);s.rect(0,0,8,8,P.walnut[1]).rect(1,1,6,6,P.glass[2]).line(2,5,5,2,P.glass[3])
- s.rect(0,11,8,5,P.oat[2]).hline(0,7,10,P.porcelain[3]).rect(3,8,2,2,P.steel[3]).rect(2,11,4,2,P.porcelain[1]);return s
-
-
-def low_bed(ramp):
- s=Sprite(48,17);s.rect(0,11,48,6,P.teal[0]).rect(1,11,46,4,P.sage[2])
- for x in range(2,47,5):s.vline(x,12,14,P.sage[1])
- s.rect(4,7,38,5,P.porcelain[2]).rect(5,7,9,4,P.porcelain[3]).rect(15,5,28,8,ramp[1]).rect(16,5,26,6,ramp[3]).hline(17,40,5,ramp[4]);return s
-
-
-def plant_box(w):
- s=Sprite(w,23);s.rect(0,17,w,6,P.walnut[0]).rect(1,18,w-2,4,P.walnut[2]).hline(1,w-2,17,P.oak[3])
- for x in range(5,w-2,9):
-  s.vline(x,5,17,P.leaf[0]).ellipse(x-2,10,3,2,P.sage[2]).ellipse(x+2,6,3,3,P.leaf[2]).set(x+1,4,P.sage[3])
- return s
-
-
-def instrument():
- s=Sprite(15,27);s.rect(7,0,2,17,P.walnut[0]).vline(8,2,17,P.oak[3]);s.ellipse(7,20,6,6,P.clay[0]).ellipse(7,20,5,5,P.clay[2]).ellipse(8,17,4,4,P.clay[3]);s.ellipse(7,20,2,2,P.walnut[0]).vline(8,17,23,P.oat[3]);return s
-
-
 def draw_plan(plan,night=False):
  id,name,w,description,theme,rows=plan;h=len(rows)*58+4
- wall,accent,pattern=THEMES[theme];s=Sprite(w,h);front=Sprite(w,h);rooms=[];placed=[];seats=[];entry=None
+ wall,accent,pattern=THEMES[theme];accent=P.oat if theme=='library' else accent;timber=P.walnut if theme in ('retro','music','library') else P.ash if theme in ('mint','slate','garden') else P.oak;s=Sprite(w,h);front=Sprite(w,h);rooms=[];placed=[];seats=[];entry=None
  def put(sprite,x,bottom,role,foreground=False):
   target=front if foreground else s;y=bottom-sprite.h
   assert x>=0 and x+sprite.w<=w and y>=0 and bottom<=h,(id,role,x,y,sprite.w,sprite.h)
-  target.blit(sprite,x,y);placed.append({'kind':role,'x':x,'y':y,'w':sprite.w,'h':sprite.h,'front':foreground})
+  target.blit(sprite,x,y);placed.append({'asset':getattr(sprite,'house_asset',None),'kind':role,'x':x,'y':y,'w':sprite.w,'h':sprite.h,'front':foreground})
  for level,row in enumerate(rows):
   top=level*58+5;fl=top+45
   for role,x,rw in row:
@@ -104,6 +97,9 @@ def draw_plan(plan,night=False):
      for xx in range(x+7,x+rw-4,13):
       s.set(xx,yy,rr[1]).set(xx-1,yy-1,rr[3]).set(xx+1,yy+1,rr[3])
    rooms.append({'id':f'{level}:{x}','role':role,'x':x,'y':top,'w':rw,'floor':fl,'storey':len(rows)-level-1})
+   def decor(group):
+    key=FF.GROUPS[group][crc32(f'{id}/{level}/{x}/{group}'.encode())%len(FF.GROUPS[group])]
+    sprite=FF.asset(key,accent,timber);sprite.house_asset=key;return sprite
    # Leave original furniture at its real pixel scale; never squash it to fit.
    if role in ('stair','entry_stair'):
     if role=='entry_stair':
@@ -117,53 +113,53 @@ def draw_plan(plan,night=False):
      s.hline(x,x+rw-24,fl-10,P.walnut[1])
      for xx in range(x+1,x+rw-22,5):s.vline(xx,fl-9,fl,P.walnut[1])
    elif role=='bath':
-    if rw>=60:put(F.bathtub(),x+3,fl+1,'tub');put(F.toilet(),x+rw-17,fl+1,'toilet');put(F.vanity() if rw>=72 else tiny_basin(),x+rw-(37 if rw>=72 else 27),fl,'basin');put(F.towel(),x+rw-18,top+17,'towel')
+    if rw>=60:put(F.bathtub(),x+3,fl+1,'tub');put(F.toilet(),x+rw-17,fl+1,'toilet');put(F.vanity() if rw>=72 else FF.asset('mirror_basin',accent,timber),x+rw-(37 if rw>=72 else 27),fl,'basin');put(F.towel(),x+rw-18,top+17,'towel')
     else:
-     put(shower(),x+1,fl,'shower');put(F.toilet(),x+rw-14,fl+1,'toilet');put(tiny_basin(),x+14,fl-5,'basin')
+     put(FF.asset('rain_shower',accent,timber),x+1,fl,'shower');put(F.toilet(),x+rw-14,fl+1,'toilet');put(FF.asset('mirror_basin',accent,timber),x+14,fl-5,'basin')
    elif role in ('bed','guest_bed','tatami'):
-    bed=low_bed(accent) if role=='tatami' else F.bed().recolor({rgba(F.CLAY[i]):accent[i] for i in range(5)})
+    bed=FF.asset('layered_futon',accent,timber) if role=='tatami' else decor('bed')
     put(bed,x+5,fl+2,'bed');put(F.window(sky='night' if night else 'day',curtains=accent),x+5,top+32,'window')
-    if rw>=82:put(F.wardrobe(),x+rw-25,fl+1,'wardrobe')
+    if rw>=82:put(decor('wardrobe'),x+rw-25,fl+1,'wardrobe')
     elif rw>=64:put(F.nightstand(),x+rw-16,fl+1,'nightstand');put(F.lamp(),x+rw-13,fl-10,'lamp')
     if rw>=96:put(F.art_print(13,11,'hills'),x+39,top+17,'art')
    elif role in ('living','tea'):
     put(F.window(sky='night' if night else 'day',curtains=accent),x+8,top+31,'window')
     if role=='tea':
-     s.rect(x+7,fl-2,62,5,P.sage[1]);s.rect(x+9,fl-2,58,3,P.sage[3]);put(F.coffee_table(),x+24,fl+3,'tea_table',True);seats.extend([[x+17,fl],[x+60,fl]])
+     s.rect(x+7,fl-2,62,5,P.sage[1]);s.rect(x+9,fl-2,58,3,P.sage[3]);put(decor('coffee'),x+24,fl+3,'tea_table',True);seats.extend([[x+17,fl],[x+60,fl]])
      put(F.art_print(13,20,'hills'),x+rw-44,top+25,'scroll')
     else:
-     sofa=F.sofa().recolor({rgba(F.OAT[i]):accent[i] for i in range(5)})
+     sofa=decor('sofa')
      put(sofa,x+5,fl+1,'sofa');seats.extend([[x+17,fl-3],[x+34,fl-3]])
-     put(F.coffee_table(),x+16,fl+5,'coffee_table',True)
-     if rw>=90:put(F.media_console(),x+rw-35,fl+1,'media');put(F.tv(),x+rw-32,fl-10,'tv')
-     if rw>=120:put(F.plant(),x+rw-55,fl+1,'plant')
+     put(decor('coffee'),x+16,fl+5,'coffee_table',True)
+     if rw>=90:put(decor('media'),x+rw-35,fl+1,'media');put(F.tv(),x+rw-32,fl-10,'tv')
+     if rw>=104:put(decor('lamp'),x+50,fl,'floor_lamp')
+     if rw>=120:put(decor('plant'),x+rw-55,fl+1,'plant')
    elif role in ('kitchen','kitchenette'):
     if rw>=70:
      put(F.kitchen_base(),x+2,fl+1,'kitchen');put(F.wall_cabinets(),x+2,top+18,'cabinets');put(F.fridge(),x+rw-16,fl+1,'fridge')
      if rw>=112:
-      put(F.chair(),x+rw-53,fl+3,'chair');put(F.dining_table(),x+rw-42,fl+4,'table',True);seats.append([x+rw-48,fl-4])
+      put(decor('chair'),x+rw-53,fl+3,'chair');put(F.dining_table(),x+rw-42,fl+4,'table',True);seats.append([x+rw-48,fl-4])
     if role=='kitchenette':put(F.door_leaf(),x+rw-36,fl,'entry');entry=[x+rw-30,fl]
    elif role=='dining':
-    put(F.art_print(18,13,'sun'),x+rw//2-9,top+22,'art');put(F.chair(),x+5,fl+2,'chair');put(F.chair('left'),x+rw-18,fl+2,'chair');put(F.dining_table(),x+rw//2-11,fl+4,'table',True);seats.extend([[x+10,fl-4],[x+rw-12,fl-4]])
+    put(F.art_print(18,13,'sun'),x+rw//2-9,top+22,'art');put(decor('chair'),x+5,fl+2,'chair');put(F.chair('left'),x+rw-18,fl+2,'chair');put(F.dining_table(),x+rw//2-11,fl+4,'table',True);seats.extend([[x+10,fl-4],[x+rw-12,fl-4]])
    elif role in ('study','library','atelier'):
-    put(F.desk(),x+4,fl+1,'desk');put(F.monitor(),x+13,fl-12,'monitor');put(F.office_chair(),x+17,fl+3,'chair');put(F.art_print(16,12,'hills'),x+6,top+18,'art')
-    for xx in range(x+50,x+rw-23,25):put(F.bookshelf(),xx,fl+1,'bookcase')
+    put(decor('desk'),x+4,fl+1,'desk');put(F.monitor(),x+13,fl-12,'monitor');put(F.office_chair(),x+17,fl+3,'chair');put(F.art_print(16,12,'hills'),x+6,top+18,'art')
+    if rw>=90:put(decor('small_plant'),x+38,fl-13,'desktop_plant')
+    for xx in range(x+50,x+rw-(60 if role=='library' and rw>=140 else 23),25):put(decor('shelf'),xx,fl+1,'bookcase')
     if role=='library':
      s.rect(x+47,top+3,rw-61,7,P.walnut[0]).rect(x+48,top+4,rw-63,5,P.sky_night[1] if night else P.glass[2]).hline(x+49,x+rw-17,top+4,P.glass[3])
      for xx in range(x+62,x+rw-15,20):s.vline(xx,top+4,top+8,P.walnut[1])
-    if role=='library' and rw>=140:put(F.sofa(),x+rw-52,fl+1,'reading_sofa');seats.append([x+rw-36,fl-3])
+    if role=='library' and rw>=140:put(decor('sofa'),x+rw-52,fl+1,'reading_sofa');seats.append([x+rw-36,fl-3])
     if role=='atelier':
      xx=x+rw-34;s.line(xx,fl+1,xx+12,top+11,P.walnut[1]).line(xx+24,fl+1,xx+12,top+11,P.walnut[1]);put(F.art_print(23,21,'hills'),xx+1,fl-7,'easel')
    elif role=='sunroom':
     for xx in range(x+3,x+rw-34,33):put(F.window(sky='night' if night else 'day',curtains=P.sage),xx,top+34,'glass')
-    put(plant_box(rw-10),x+5,fl+2,'planter');put(F.plant(),x+rw-23,fl,'plant')
+    put(FF.planter(rw-10,FF.GROUPS['planter'][crc32(id.encode())%2],accent,timber),x+5,fl+2,'planter');put(decor('plant'),x+rw-23,fl,'plant')
    elif role=='music':
     for xx in range(x+5,x+rw-5,8):s.rect(xx,top+4,3,18,P.clay[1]).vline(xx,top+4,top+21,P.clay[2])
-    put(instrument(),x+13,fl,'guitar');s.rect(x+45,fl-21,45,3,P.steel[0])
-    for xx in range(x+46,x+89,4):s.rect(xx,fl-20,3,2,P.porcelain[3])
-    s.line(x+47,fl-17,x+82,fl,P.steel[1]).line(x+85,fl-17,x+50,fl,P.steel[1]);put(F.sofa(),x+rw-50,fl+1,'sofa');seats.append([x+rw-34,fl-3])
+    put(FF.asset('acoustic_guitar',accent,timber),x+13,fl,'guitar');put(FF.asset('stage_keyboard',accent,timber),x+45,fl,'keyboard');put(decor('sofa'),x+rw-50,fl+1,'sofa');seats.append([x+rw-34,fl-3])
    elif role=='laundry':
-    s.rect(x+4,fl-25,22,25,P.steel[0]).rect(x+5,fl-24,20,23,P.porcelain[2]).ellipse(x+15,fl-11,7,7,P.steel[2]).ellipse(x+15,fl-11,5,5,P.glass[1]).set(x+22,fl-22,P.teal[2]);put(F.towel(),x+rw-18,fl-17,'towel')
+    put(FF.asset('front_washer',accent,timber),x+4,fl,'washer');put(F.towel(),x+rw-18,fl-17,'towel')
   # Open door cuts occupy shared partitions, making the floor's circulation readable.
   for (role,x,rw),(next_role,nx,_) in zip(row,row[1:]):
    if nx==x+rw+4:
