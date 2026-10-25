@@ -5058,14 +5058,16 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
     log(`—— 回来啦 · 第 ${Math.floor(sim.t / 1440) + 1} 天 ——`, "day");
   }
   if (TAURI) TAURI.core.invoke("set_on_top", { on: prefs.onTop }).catch(() => {});
+  const houseLink=!TAURI&&new URLSearchParams(location.search).get('house-preview');
+  const houseRequested=houseLink&&Object.hasOwn(D.friendHouses,houseLink);
   booted = true;
-  updateMood();
+  // A direct art-preview link must not roll an ordinary life event first.
+  if(houseRequested)showFace();else updateMood();
   syncUI();
   render();
   requestAnimationFrame(frame);
   if (!st) saveSettings();
-  const houseLink=!TAURI&&new URLSearchParams(location.search).get('house-preview');
-  if(houseLink&&Object.hasOwn(D.friendHouses,houseLink))openFriendHousePreview(houseLink);
+  if(houseRequested)openFriendHousePreview(houseLink);
   if (!sv) autoSave();
   if (!prefs.guided&&!friendHousePreview) setTimeout(()=>{if(!friendHousePreview)openGuide();}, 1200);   // first time: the guide opens by itself
 })();
