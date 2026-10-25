@@ -6,7 +6,7 @@ const GAME_AUDIO_INLINE = /*__AUDIO_INLINE__*/null;
 const gameAudio = (() => {
   let ctx=null, musicBus=null, effectsBus=null, limiter=null, meter=null, unlocked=false;
   let muted=false, epoch=0, musicKey='', nextMusicRetry=0, currentMusic=null, lastTick=-Infinity;
-  let actionKey='', previousPlace='', nextFoley=0, nextStep=0, nextAccent=0;
+  let actionKey='', previousPlace='', nextFoley=0, nextAccent=0;
   const cache=new Map(), pending=new Map(), loops=new Map(), voices=new Set(), tracks=new Set(), cooldown=new Map(), failed=new Map();
   const stats={played:0,loads:0,errors:[],last:[],music:''};
   // Both raw demo and packaged app use their own sibling audio directory.
@@ -184,7 +184,6 @@ const gameAudio = (() => {
       else if((sim.place==='bar'&&!sim.bar?.toilet||sim.place==='mall'&&!mallInside())&&life.npcs?.length>1)sound('crowd-small-laugh-cc0',.12,{gap:30});
     }
     if(playing&&ACTION_REPEAT[act]&&time>=nextFoley){const [id,interval]=ACTION_REPEAT[act];sound(id,.35,{vary:true});nextFoley=time+interval+Math.random()*2;}
-    if(playing&&sim.mode==='walk'&&time>=nextStep){sound(['front','park','beach'].includes(sim.place)?'step-outdoor':'step-indoor',.26,{vary:true});nextStep=time+.46+Math.random()*.12;}
   }
   // Observe logical expansion, not every animation frame. One opening gets one
   // sound; filling a list or moving the pointer inside an open panel is silent.
