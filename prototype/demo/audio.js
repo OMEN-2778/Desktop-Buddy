@@ -3,6 +3,7 @@
 const GAME_AUDIO_FILES = /*__AUDIO_FILES__*/null;
 const GAME_AUDIO_VERSION = /*__AUDIO_VERSION__*/null;
 const GAME_AUDIO_INLINE = /*__AUDIO_INLINE__*/null;
+const RECORDED_FOLEY={water:'real-water-running-cc0',pour:'real-pour-water-cc0',watering:'real-pour-water-cc0',page:'real-page-turn-cc0',keyboard:'real-keyboard-typing-cc0',cutlery:'real-cutlery-cc0',drink:'real-drink-cc0',flush:'real-toilet-flush-cc0',cook:'real-cooking-fry-cc0'};
 const gameAudio = (() => {
   let ctx=null, musicBus=null, effectsBus=null, limiter=null, meter=null, unlocked=false;
   let muted=false, epoch=0, musicKey='', nextMusicRetry=0, currentMusic=null, lastTick=-Infinity;
@@ -11,7 +12,7 @@ const gameAudio = (() => {
   const stats={played:0,loads:0,errors:[],last:[],music:''};
   // Both raw demo and packaged app use their own sibling audio directory.
   const url=path=>new URL('audio/'+path+'?v='+GAME_AUDIO_VERSION,document.baseURI).href;
-  const sfx=id=>id.endsWith('-cc0')?'SFX/processed/'+id+'.mp3':'SFX/game/'+id+'.mp3';
+  const sfx=id=>{id=RECORDED_FOLEY[id]||id;return id.endsWith('-cc0')?'SFX/processed/'+id+'.mp3':'SFX/game/'+id+'.mp3';};
   const ready=()=>unlocked&&ctx?.state==='running'&&!muted;
   const now=()=>performance.now()/1000;
   function ramp(node,value,seconds=.15){const at=ctx.currentTime;node.gain.cancelScheduledValues(at);node.gain.setValueAtTime(node.gain.value,at);node.gain.linearRampToValueAtTime(value,at+seconds);}
@@ -24,7 +25,7 @@ const gameAudio = (() => {
         ctx=new AC();musicBus=ctx.createGain();effectsBus=ctx.createGain();limiter=ctx.createDynamicsCompressor();
         limiter.threshold.value=-12;limiter.knee.value=12;limiter.ratio.value=5;limiter.attack.value=.004;limiter.release.value=.2;
         musicBus.connect(limiter);effectsBus.connect(limiter);meter=ctx.createAnalyser();meter.fftSize=512;limiter.connect(meter);meter.connect(ctx.destination);
-        musicBus.gain.value=prefs.bgm?.32:0;effectsBus.gain.value=prefs.sfx?.75:0;
+        musicBus.gain.value=prefs.bgm?prefs.bgmVolume/100*.53:0;effectsBus.gain.value=prefs.sfx?prefs.sfxVolume/100:0;
       }
       unlocked=true;muted=document.hidden;ctx.resume().then(()=>{if(!muted)sync();}).catch(()=>{});
     }catch(e){report('AudioContext',e);}
@@ -111,14 +112,16 @@ const gameAudio = (() => {
     // A slow previous request must not start playing after a later scene change.
     for(const other of tracks)if(other!==t&&other!==currentMusic)disposeTrack(other,.05);
   }
-  function setEnabled(channel,value){
-    if(!['bgm','sfx'].includes(channel))return;
-    prefs[channel]=!!value;if(value)wake();sync();saveSettings();buildSettings();
-    if(channel==='sfx'&&value)sound('ui-click',.75);
+  function setVolume(channel,value){
+    if(!['bgm','sfx'].includes(channel)||!Number.isFinite(value))return;
+    prefs[channel+'Volume']=Math.round(Math.max(0,Math.min(100,value)));
+    prefs[channel]=prefs[channel+'Volume']>0;
+    if(prefs[channel])wake();sync();saveSettings();
   }
+  function setEnabled(channel,value){setVolume(channel,value?(prefs[channel+'Volume']||60):0);buildSettings();}
   function sync(){
     if(!ctx)return;
-    ramp(musicBus,prefs.bgm&&!muted?.32:0,.08);ramp(effectsBus,prefs.sfx&&!muted?.75:0,.05);
+    ramp(musicBus,prefs.bgm&&!muted?prefs.bgmVolume/100*.53:0,.08);ramp(effectsBus,prefs.sfx&&!muted?prefs.sfxVolume/100:0,.05);
     if(!prefs.bgm||muted)stopMusic();if(!prefs.sfx||muted)stopEffects();
     if(ready()){
       if(prefs.sfx)for(const id of ['ui-click','ui-open','ui-close','ui-card','ui-result','ui-message','phone-ring','phone-answer','phone-decline'])buffer(sfx(id));
@@ -146,12 +149,12 @@ const gameAudio = (() => {
     const wet=weather.kind==='rain'||weather.kind==='storm';
     if((outside||home)&&wet)a.rain=[weather.kind==='storm'?'rain-heavy-window-cc0':'rain-soft-loop-cc0',outside?.32:.10];
     if(outside){
-      a.air=['wind',weather.kind==='storm'?.32:.12];
+      a.air=[place==='park'?'park-wind-cc0':'wind',weather.kind==='storm'?.20:.09];
       if(place==='beach'){a.water=['waves',.30];if(!wet&&!night)a.birds=['gulls',.38];}
       else if(!wet&&weather.kind!=='snow'){
-        if(!night)a.birds=['birds',place==='park'?.42:.22];
-        else if(se!=='winter')a.birds=['insects',.30];
-        if(place==='park')a.leaves=['leaves',.3];
+        if(!night)a.birds=[place==='park'?'park-birds-cc0':'birds',place==='park'?.23:.22];
+        else if(se!=='winter'&&place!=='park')a.birds=['insects',.30];
+        if(place==='park')a.leaves=['park-leaves-cc0',.11];
       }
       if(!wet&&life.npcs?.length>1)a.people=['crowd-indoor-walla-cc0',.045];
     }
@@ -218,6 +221,6 @@ const gameAudio = (() => {
   function phoneEnd(accepted){const ring=loops.get('ring');if(ring){loops.delete('ring');stopVoice(ring.voice,.015);}sound(accepted?'phone-answer':'phone-decline',.65);}
   function outputLevel(){if(!meter)return 0;const a=new Float32Array(512);meter.getFloatTimeDomainData(a);return Math.sqrt(a.reduce((sum,v)=>sum+v*v,0)/a.length);}
   installUI();
-  return {setEnabled,wake,sync,tick,sound,thunder,phoneEnd,activity,ambience,chooseMusic,
+  return {setVolume,setEnabled,wake,sync,tick,sound,thunder,phoneEnd,activity,ambience,chooseMusic,
     debug:()=>({unlocked,level:outputLevel(),state:ctx?.state||'locked',music:stats.music,desiredMusic:chooseMusic(),loops:[...loops.keys()],voices:voices.size,tracks:tracks.size,cache:cache.size,musicTime:currentMusic?.el.currentTime||0,musicRate:currentMusic?.el.playbackRate||1,musicVolume:musicBus?.gain.value||0,effectsVolume:effectsBus?.gain.value||0,loopPaths:[...loops.values()].map(e=>e.path),stats:JSON.parse(JSON.stringify(stats))})};
 })();

@@ -8,6 +8,17 @@ ROOT=Path(__file__).resolve().parents[1]
 SR=24000
 # source id: offset, length, target RMS, loop
 CUTS={
+ 'real-water-running-cc0':(2,14,.045,True),
+ 'real-pour-water-cc0':(0,3,.06,False),
+ 'real-page-turn-cc0':(0,1.5,.04,False),
+ 'real-keyboard-typing-cc0':(0,2,.045,False),
+ 'real-cutlery-cc0':(0,1.8,.045,False),
+ 'real-drink-cc0':(0,1.8,.045,False),
+ 'real-toilet-flush-cc0':(0,5,.06,False),
+ 'real-cooking-fry-cc0':(2,14,.04,True),
+ 'park-wind-cc0':(0,20,.07,True),
+ 'park-birds-cc0':(0,24,.09,True),
+ 'park-leaves-cc0':(0,18,.06,True),
  'cat-meow-cc0':(0,1.54,.12,False),
  'cat-purr-meow-cc0':(0,4,.09,False),
  'rain-soft-loop-cc0':(3,16,.12,True),
@@ -37,5 +48,5 @@ def main():
    subprocess.run(['ffmpeg','-y','-v','error','-i',str(wav),'-codec:a','libmp3lame','-b:a','96k',str(out/(name+'.mp3'))],check=True)
   report.append({'id':name,'source':'SFX/'+name+'.mp3','file':'SFX/processed/'+name+'.mp3','offset':start,'duration':round(len(a)/SR,3),'loop':loop,'license':'CC0 — see LICENSES.md'})
  (ROOT/'docs'/'PLAYBACK_SAMPLES.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
- print('Prepared 7 level-matched playback samples')
+ print(f'Prepared {len(report)} level-matched playback samples')
 if __name__=='__main__':main()

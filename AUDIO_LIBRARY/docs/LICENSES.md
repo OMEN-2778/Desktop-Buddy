@@ -46,3 +46,28 @@ https://cdn.freesound.org/previews/{ID前三位}/{ID}_{上传者数字ID}-hq.mp3
 `SFX/game/` 的 37 个音效由 `tools/build_game_sfx.py` 确定性合成，使用正弦波、滤波噪声和包络，不引用第三方录音；沿用游戏源码授权。
 
 `SFX/processed/` 为上文 7 个 CC0 音效的游戏播放副本（单声道、裁剪、音量平衡、短循环接缝处理），仍使用原有 CC0 授权，原录音和作者来源均保留。具体裁剪记录见 `PLAYBACK_SAMPLES.json`。
+
+## 公园实录环境（2026-10-25）
+
+已逐页核验以下三份录音为 CC0 1.0（https://creativecommons.org/publicdomain/zero/1.0/）。下载官方 HQ MP3，保留原件；播放副本只做裁剪、音量平衡及接缝处理，不合成自然声音。
+
+|文件|作品及作者|原始页|
+|---|---|---|
+|park-wind-cc0.mp3|Wind through trees (loop)，NomadApe|https://freesound.org/people/NomadApe/sounds/444921/|
+|park-birds-cc0.mp3|Park Birds [Clean].wav，Shankfosho|https://freesound.org/people/Shankfosho/sounds/688301/|
+|park-leaves-cc0.mp3|large leaves rustle in the wind sound effect，Garuda1982|https://freesound.org/people/Garuda1982/sounds/575645/|
+
+## 生活拟音实录替换
+
+以下素材各自的 Freesound 详情页或对应搜索结果条目均明确标为 Creative Commons 0；不是仅凭搜索条件推定。下载源和逐项记录另见 `REAL_FOLEY_SOURCES.json`。原件保留，游戏使用裁剪和平衡音量后的副本。
+
+|文件|作品／作者|来源与授权|
+|---|---|---|
+|real-water-running-cc0|Tap Water 1／OwlStorm|https://freesound.org/people/OwlStorm/sounds/212177/ · CC0 1.0|
+|real-pour-water-cc0|R23-22-Water Poured from Bottle.wav／craigsmith|https://freesound.org/people/craigsmith/sounds/482857/ · CC0 1.0|
+|real-page-turn-cc0|Book page turning.wav／eZZin|https://freesound.org/people/eZZin/sounds/641757/ · CC0 1.0|
+|real-keyboard-typing-cc0|Typing on a keyboard／SamsterBirdies|https://freesound.org/people/SamsterBirdies/sounds/489424/ · CC0 1.0|
+|real-cutlery-cc0|cutlery utensil spoon fork knife down plate nice detail roomy.wav／kyles|https://freesound.org/people/kyles/sounds/450783/ · CC0 1.0|
+|real-drink-cc0|Coffee Sips.wav／sidequesting|https://freesound.org/people/sidequesting/sounds/530247/ · CC0 1.0|
+|real-toilet-flush-cc0|Flush_toilet.wav／martingunchev|https://freesound.org/people/martingunchev/sounds/346061/ · CC0 1.0|
+|real-cooking-fry-cc0|frying_pan_sizzle.WAV／beehawk5|https://freesound.org/people/beehawk5/sounds/620441/ · CC0 1.0|

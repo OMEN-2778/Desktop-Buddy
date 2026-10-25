@@ -41,6 +41,9 @@ OUTPUTS = {
 }
 
 CC0_SFX = {
+    "park-wind-cc0.mp3":"https://cdn.freesound.org/previews/444/444921_8439257-hq.mp3",
+    "park-birds-cc0.mp3":"https://cdn.freesound.org/previews/688/688301_14970017-hq.mp3",
+    "park-leaves-cc0.mp3":"https://cdn.freesound.org/previews/575/575645_2061858-hq.mp3",
     "cat-meow-cc0.mp3": "https://cdn.freesound.org/previews/110/110011_1537422-hq.mp3",
     "cat-purr-meow-cc0.mp3": "https://cdn.freesound.org/previews/412/412016_3652520-hq.mp3",
     "rain-soft-loop-cc0.mp3": "https://cdn.freesound.org/previews/595/595717_2530992-hq.mp3",
@@ -49,6 +52,9 @@ CC0_SFX = {
     "crowd-indoor-walla-cc0.mp3": "https://cdn.freesound.org/previews/529/529802_2905988-hq.mp3",
     "crowd-small-laugh-cc0.mp3": "https://cdn.freesound.org/previews/324/324894_2104797-hq.mp3",
 }
+
+for source in json.loads((LIB / "docs" / "REAL_FOLEY_SOURCES.json").read_text()):
+    CC0_SFX[source["id"] + ".mp3"] = source["download"]
 
 def run(command, cwd=None):
     print("+", " ".join(map(str, command)), flush=True)

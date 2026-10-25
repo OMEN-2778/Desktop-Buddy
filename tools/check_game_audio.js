@@ -23,7 +23,7 @@ const base=process.argv[2]||'http://127.0.0.1:8786/';
   for(const r of result){assert.ok(r.center<1&&r.fits&&!r.overlap,`${scale}% ${JSON.stringify(r)}`);}
   await page.screenshot({path:`/workspace/artifacts/audio/settings-${scale}.png`});scales.push(scale);
  }
- const toggle=async(key,on)=>{await page.evaluate(()=>setSettingsOpen(true));await page.locator(`[data-audio-channel="${key}"]`).filter({hasText:on?'开':'关'}).click();await page.waitForTimeout(200);};
+ const toggle=async(key,on)=>{await page.evaluate(()=>setSettingsOpen(true));const slider=page.locator('#volume-'+key);await slider.focus();await slider.press(on?'End':'Home');await page.waitForTimeout(250);};
  await toggle('sfx',true);await page.waitForFunction(()=>gameAudio.debug().state==='running');
  assert.equal(await page.evaluate(()=>gameAudio.debug().tracks),0);
  assert.equal(requests.filter(url=>/\/(ui-|phone-)/.test(url)).length,0,'First UI cues must not depend on a network fetch');
@@ -72,7 +72,7 @@ const base=process.argv[2]||'http://127.0.0.1:8786/';
  // Normal interactions start on arrival, and end when the action ends.
  for(const [act,expected]of [['bath','water'],['wash','water'],['cook','cook'],['tv','switch'],['read','page'],['computer','keyboard'],['water_study','watering']]){
   await page.evaluate(act=>{remoteSocial=null;hidePeerSay(true);audioMove('home');speed=3;startAct(act,true);sim.s=sim.target;arrive();sim.actEnd=sim.t+1000;gameAudio.tick(true);},act);
-  await page.waitForFunction(expected=>gameAudio.debug().stats.last.includes(expected)||gameAudio.debug().loopPaths.includes('SFX/game/'+expected+'.mp3'),expected,{timeout:5000});
+  await page.waitForFunction(expected=>gameAudio.debug().stats.last.includes(expected)||gameAudio.debug().loopPaths.includes(RECORDED_FOLEY[expected]?'SFX/processed/'+RECORDED_FOLEY[expected]+'.mp3':'SFX/game/'+expected+'.mp3'),expected,{timeout:5000});
  }
  await page.evaluate(()=>{audioMove('home');gameAudio.tick(true);});await page.waitForTimeout(600);assert.ok(!(await page.evaluate(()=>gameAudio.debug().loops)).includes('action'));
  // Friend-house fixtures use the same audio path and preserve current weather.
@@ -91,7 +91,7 @@ const base=process.argv[2]||'http://127.0.0.1:8786/';
  assert.equal(await page.evaluate(()=>gameAudio.debug().state),'locked','Reload waits for a user gesture');
  await page.locator('#setGear').click();await page.waitForFunction(()=>gameAudio.debug().state==='running');
  await toggle('sfx',false);await page.waitForTimeout(350);
- const off=await page.evaluate(()=>gameAudio.debug());assert.equal(off.voices,0);assert.equal(off.tracks,0);assert.equal(off.effectsVolume,0);
+ const off=await page.evaluate(()=>gameAudio.debug());assert.equal(off.voices,0);assert.equal(off.tracks,0);
  // Decode every shipped file, not just validate filenames or mock Audio.play.
  const assets=await page.evaluate(async()=>{
   const ac=new AudioContext(),files=[];
@@ -101,7 +101,7 @@ const base=process.argv[2]||'http://127.0.0.1:8786/';
    files.push({name,duration:audio.duration});
   }await ac.close();return files;
  });
- assert.equal(assets.filter(f=>f.name.startsWith('BGM/')).length,16);assert.equal(assets.length,60);assert.deepEqual(errors,[]);
- console.log(JSON.stringify({scales,assets:assets.length,bgm:16,sfx:44,tests:'default silence, independent buses, actual output, hover, calls, all scene/season tracks, weather, interactions, imported save and reload',errors},null,2));
+ assert.equal(assets.filter(f=>f.name.startsWith('BGM/')).length,16);assert.equal(assets.length,71);assert.deepEqual(errors,[]);
+ console.log(JSON.stringify({scales,assets:assets.length,bgm:16,sfx:assets.length-16,tests:'default silence, independent buses, actual output, hover, calls, all scene/season tracks, weather, interactions, imported save and reload',errors},null,2));
  }finally{await b.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

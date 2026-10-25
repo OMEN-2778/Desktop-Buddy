@@ -140,7 +140,7 @@ if (TAURI) {
   window.addEventListener("unhandledrejection", e => report(`unhandled: ${e.reason && (e.reason.stack || e.reason)}`));
 }
 // 界面大小 (% or "auto" = fit the page), 置顶游戏, 自动保存 (every 5 minutes, or never)
-const prefs = { scale: TAURI ? 100 : "auto", onTop: false, bgm: false, sfx: false, autosave: true, guided: false, autoUpdate: true };   // guided: the guide has been seen
+const prefs = { scale: TAURI ? 100 : "auto", onTop: false, bgm: false, sfx: false, bgmVolume:0, sfxVolume:0, autosave: true, guided: false, autoUpdate: true };   // guided: the guide has been seen
 let appVersion = "";
 // 界面大小 counts SCREEN pixels: 25% = one game pixel is one pixel of the
 // monitor (at any Windows display scaling), 100% = 4 of them; every step is
@@ -2441,10 +2441,16 @@ const SETTINGS = [
       ];
       return out;
     } },
-  ...[['背景音乐','bgm'],['音效','sfx']].map(([label,channel])=>({label,role:'radiogroup',items:()=>[[true,'开'],[false,'关']].map(([value,name])=>{
-    const b=pill(name,{pressed:prefs[channel]===value,title:channel==='bgm'?'场景背景音乐':'按钮、来电、互动和环境声音',onClick:()=>gameAudio.setEnabled(channel,value)});
-    b.dataset.audioChannel=channel;return b;
-  })})),
+  ...[['背景音乐','bgm'],['音效','sfx']].map(([label,channel])=>({label,role:'group',items:()=>{
+    const box=document.createElement('div');box.className='audio-volume';
+    const slider=document.createElement('input');slider.type='range';slider.min=0;slider.max=100;slider.step=1;
+    slider.value=prefs[channel+'Volume'];slider.dataset.audioChannel=channel;slider.setAttribute('aria-label',label+'音量');
+    const value=document.createElement('output');value.htmlFor=slider.id='volume-'+channel;
+    const show=()=>{value.textContent=slider.value+'%';slider.style.setProperty('--volume',slider.value+'%');slider.setAttribute('aria-valuetext',slider.value==='0'?'关闭':slider.value+'%');};
+    slider.addEventListener('input',()=>{gameAudio.setVolume(channel,Number(slider.value));show();});
+    slider.addEventListener('change',()=>{if(channel==='sfx')gameAudio.sound('ui-click',.65);});
+    show();box.append(slider,value);return [box];
+  }})),
   { label: "置顶游戏", role: "radiogroup", items: () => [[true, "开"], [false, "关"]].map(([v, name]) =>
       pill(name, { pressed: prefs.onTop === v, disabled: !TAURI, title: TAURI ? "" : "桌面版里才能用",
         onClick: b => { setOnTop(v); b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); } })) },
@@ -2528,7 +2534,7 @@ const settingsStore = TAURI ? {
   save: async o => localStorage.setItem("buddy-settings", JSON.stringify(o)),
 };
 function saveSettings() {
-  settingsStore.save({ speed, scale: prefs.scale, onTop: prefs.onTop, bgm: prefs.bgm, sfx: prefs.sfx, autosave: prefs.autosave, guided: prefs.guided, autoUpdate: prefs.autoUpdate }).catch(() => {});
+  settingsStore.save({ speed, scale: prefs.scale, onTop: prefs.onTop, bgm: prefs.bgm, sfx: prefs.sfx, bgmVolume:prefs.bgmVolume, sfxVolume:prefs.sfxVolume, autosave: prefs.autosave, guided: prefs.guided, autoUpdate: prefs.autoUpdate }).catch(() => {});
 }
 function applySettings(st) {
   if (!st || typeof st !== "object") return;
@@ -2538,7 +2544,11 @@ function applySettings(st) {
   if (typeof st.autosave === "boolean") prefs.autosave = st.autosave;
   if (typeof st.guided === "boolean") prefs.guided = st.guided;
   if (typeof st.autoUpdate === "boolean") prefs.autoUpdate = st.autoUpdate;
-  for(const key of ["bgm","sfx"])if(typeof st[key]==="boolean")prefs[key]=st[key];
+  for(const key of ["bgm","sfx"]){
+    const v=st[key+'Volume'];
+    if(Number.isFinite(v)){prefs[key+'Volume']=Math.round(Math.max(0,Math.min(100,v)));prefs[key]=prefs[key+'Volume']>0;}
+    else if(typeof st[key]==="boolean"){prefs[key]=st[key];prefs[key+'Volume']=st[key]?60:0;}
+  }
   gameAudio.sync();
 }
 function setSettingsOpen(open) {
@@ -4648,7 +4658,7 @@ function snapshot() {
   return {
     version: SAVE_VERSION, savedAt: Date.now(),
     look,
-    settings: { speed, scale: prefs.scale, onTop: prefs.onTop, bgm: prefs.bgm, sfx: prefs.sfx },
+    settings: { speed, scale: prefs.scale, onTop: prefs.onTop, bgm: prefs.bgm, sfx: prefs.sfx, bgmVolume:prefs.bgmVolume, sfxVolume:prefs.sfxVolume },
     sim: { t: sim.t, needs: sim.needs, mode: sim.mode, act: sim.act, actEnd: sim.actEnd, nap: !!sim.nap,
            at: [Math.round(p.x), storeyOfY(p.y)], facing: sim.facing, queue: sim.windup ? [sim.windup.act] : sim.queue, recent: sim.recent,
            lastDay: sim.lastDay, sleepPlace:sim.sleepPlace||null, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
@@ -4810,7 +4820,7 @@ document.getElementById("importSave").addEventListener("change", async e => {
   // Imported audio choices belong to this save; the separate settings file
   // otherwise overrides them at boot. Legacy saves start with both off.
   const current=await settingsStore.load().catch(()=>null);
-  await settingsStore.save({...current,bgm:sv.settings?.bgm===true,sfx:sv.settings?.sfx===true});
+  await settingsStore.save({...current,bgm:sv.settings?.bgm===true,sfx:sv.settings?.sfx===true,bgmVolume:sv.settings?.bgmVolume??(sv.settings?.bgm?60:0),sfxVolume:sv.settings?.sfxVolume??(sv.settings?.sfx?60:0)});
   location.reload();
 });
 async function resetSave() {

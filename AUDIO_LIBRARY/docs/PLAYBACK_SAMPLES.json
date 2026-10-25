@@ -1,5 +1,104 @@
 [
   {
+    "id": "real-water-running-cc0",
+    "source": "SFX/real-water-running-cc0.mp3",
+    "file": "SFX/processed/real-water-running-cc0.mp3",
+    "offset": 2,
+    "duration": 9.212,
+    "loop": true,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-pour-water-cc0",
+    "source": "SFX/real-pour-water-cc0.mp3",
+    "file": "SFX/processed/real-pour-water-cc0.mp3",
+    "offset": 0,
+    "duration": 3.0,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-page-turn-cc0",
+    "source": "SFX/real-page-turn-cc0.mp3",
+    "file": "SFX/processed/real-page-turn-cc0.mp3",
+    "offset": 0,
+    "duration": 1.5,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-keyboard-typing-cc0",
+    "source": "SFX/real-keyboard-typing-cc0.mp3",
+    "file": "SFX/processed/real-keyboard-typing-cc0.mp3",
+    "offset": 0,
+    "duration": 2.0,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-cutlery-cc0",
+    "source": "SFX/real-cutlery-cc0.mp3",
+    "file": "SFX/processed/real-cutlery-cc0.mp3",
+    "offset": 0,
+    "duration": 1.8,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-drink-cc0",
+    "source": "SFX/real-drink-cc0.mp3",
+    "file": "SFX/processed/real-drink-cc0.mp3",
+    "offset": 0,
+    "duration": 1.8,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-toilet-flush-cc0",
+    "source": "SFX/real-toilet-flush-cc0.mp3",
+    "file": "SFX/processed/real-toilet-flush-cc0.mp3",
+    "offset": 0,
+    "duration": 5.0,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-cooking-fry-cc0",
+    "source": "SFX/real-cooking-fry-cc0.mp3",
+    "file": "SFX/processed/real-cooking-fry-cc0.mp3",
+    "offset": 2,
+    "duration": 3.273,
+    "loop": true,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "park-wind-cc0",
+    "source": "SFX/park-wind-cc0.mp3",
+    "file": "SFX/processed/park-wind-cc0.mp3",
+    "offset": 0,
+    "duration": 19.5,
+    "loop": true,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "park-birds-cc0",
+    "source": "SFX/park-birds-cc0.mp3",
+    "file": "SFX/processed/park-birds-cc0.mp3",
+    "offset": 0,
+    "duration": 6.2,
+    "loop": true,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "park-leaves-cc0",
+    "source": "SFX/park-leaves-cc0.mp3",
+    "file": "SFX/processed/park-leaves-cc0.mp3",
+    "offset": 0,
+    "duration": 17.5,
+    "loop": true,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
     "id": "cat-meow-cc0",
     "source": "SFX/cat-meow-cc0.mp3",
     "file": "SFX/processed/cat-meow-cc0.mp3",
