@@ -138,7 +138,7 @@ const gameAudio = (() => {
     }
     return sim.mode==='act'?sim.act||'':'';
   }
-  const ACTION_SOUND={bath:'water',wash:'water',pet:'cat-purr-meow-cc0',toilet:'seat',park_toilet:'seat',eat:'cutlery',park_eat:'cutlery',snack:'drawer',friend_snack:'drawer',cook:'cook',tv:'switch',computer:'keyboard',pc_code:'keyboard',pc_forum:'keyboard',pc_video:'switch',read:'page',towel:'fabric',dress:'fabric',sleep:'fabric',nap:'fabric',bench:'seat',sit:'seat',drink:'drink',water:'watering',water_living:'watering',water_study:'watering',music:'music',laundry:'switch',art:'page',window:'fabric',inspect:'ui-click',fish:'splash',fishing:'splash',dance:'music',phone_game:'switch',phone_feed:'ui-message'};
+  const ACTION_SOUND={pet:'cat-purr-meow-cc0',toilet:'seat',park_toilet:'seat',eat:'cutlery',park_eat:'cutlery',snack:'drawer',friend_snack:'drawer',tv:'switch',computer:'keyboard',pc_code:'keyboard',pc_forum:'keyboard',pc_video:'switch',read:'page',towel:'fabric',dress:'fabric',sleep:'fabric',nap:'fabric',bench:'seat',sit:'seat',drink:'drink',water:'watering',water_living:'watering',water_study:'watering',music:'music',laundry:'switch',art:'page',window:'fabric',inspect:'ui-click',fish:'splash',fishing:'splash',dance:'music',phone_game:'switch',phone_feed:'ui-message'};
   const ACTION_LOOP={bath:['water',.24],wash:['water',.20],cook:['cook',.23],laundry:['washer',.35],tv:['tv',.25],pc_video:['tv',.2],dance:['music',.3],cinema:['cinema',.35]};
   const ACTION_REPEAT={computer:['keyboard',3],pc_code:['keyboard',2.3],pc_forum:['keyboard',4],read:['page',12],eat:['cutlery',6],park_eat:['cutlery',6],drink:['drink',9],water:['watering',5],water_living:['watering',5],water_study:['watering',5],music:['music',5]};
   function ambience(){
@@ -173,7 +173,7 @@ const gameAudio = (() => {
     const key=sim.place+':'+act;
     if(playing&&key!==actionKey){
       const old=actionKey.split(':').at(-1);
-      if((old==='toilet'||old==='park_toilet')&&previousPlace===sim.place)sound('flush',.4,{gap:3});
+      if((old==='toilet'||old==='park_toilet')&&previousPlace===sim.place)sound('flush',.12,{gap:3});
       if(ACTION_SOUND[act])sound(ACTION_SOUND[act],.5,{vary:true});
       actionKey=key;nextFoley=time+3;
     }

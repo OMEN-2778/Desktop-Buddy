@@ -33,7 +33,7 @@ const base=process.argv[2]||'http://127.0.0.1:8786/';
  assert.equal(await page.evaluate(()=>gameAudio.debug().stats.played),count,'Already open hover panel must stay quiet');
  await page.evaluate(()=>setNeedsOpen(false));await page.waitForTimeout(250);assert.ok((await page.evaluate(()=>gameAudio.debug().stats.last)).includes('ui-close'));
  await toggle('bgm',true);await page.waitForFunction(()=>gameAudio.debug().musicTime>.3);assert.ok(await page.evaluate(()=>gameAudio.debug().level>0),'Real output must be audible');
- await toggle('sfx',false);await page.waitForFunction(()=>gameAudio.debug().effectsVolume<.00001);assert.ok(await page.evaluate(()=>gameAudio.debug().musicTime>0));
+ await toggle('sfx',false);await page.waitForFunction(()=>!prefs.sfx&&gameAudio.debug().voices===0);assert.ok(await page.evaluate(()=>gameAudio.debug().musicTime>0));
  await toggle('bgm',false);await page.waitForTimeout(200);assert.equal(await page.evaluate(()=>gameAudio.debug().tracks),0);
  await toggle('sfx',true);await toggle('bgm',true);
  await page.evaluate(()=>{
@@ -72,7 +72,7 @@ const base=process.argv[2]||'http://127.0.0.1:8786/';
  // Normal interactions start on arrival, and end when the action ends.
  for(const [act,expected]of [['bath','water'],['wash','water'],['cook','cook'],['tv','switch'],['read','page'],['computer','keyboard'],['water_study','watering']]){
   await page.evaluate(act=>{remoteSocial=null;hidePeerSay(true);audioMove('home');speed=3;startAct(act,true);sim.s=sim.target;arrive();sim.actEnd=sim.t+1000;gameAudio.tick(true);},act);
-  await page.waitForFunction(expected=>gameAudio.debug().stats.last.includes(expected),expected,{timeout:5000});
+  await page.waitForFunction(expected=>gameAudio.debug().stats.last.includes(expected)||gameAudio.debug().loopPaths.includes('SFX/game/'+expected+'.mp3'),expected,{timeout:5000});
  }
  await page.evaluate(()=>{audioMove('home');gameAudio.tick(true);});await page.waitForTimeout(600);assert.ok(!(await page.evaluate(()=>gameAudio.debug().loops)).includes('action'));
  // Friend-house fixtures use the same audio path and preserve current weather.
@@ -86,7 +86,7 @@ const base=process.argv[2]||'http://127.0.0.1:8786/';
  const saved=await page.evaluate(()=>{audioMove('home');return snapshot();});assert.deepEqual([saved.settings.bgm,saved.settings.sfx],[false,true]);
  await toggle('bgm',true);await toggle('sfx',false);
  await page.locator('#importSave').setInputFiles({name:'audio-save.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(saved))});
- await page.waitForFunction(()=>booted&&prefs.bgm===false&&prefs.sfx===true);
+ await page.waitForFunction(()=>typeof booted!=='undefined'&&booted&&prefs.bgm===false&&prefs.sfx===true);
  assert.deepEqual(await page.evaluate(()=>[prefs.bgm,prefs.sfx]),[false,true]);
  assert.equal(await page.evaluate(()=>gameAudio.debug().state),'locked','Reload waits for a user gesture');
  await page.locator('#setGear').click();await page.waitForFunction(()=>gameAudio.debug().state==='running');
