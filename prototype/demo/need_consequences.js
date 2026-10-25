@@ -14,7 +14,7 @@ Object.assign(ML,{
 Object.assign(ML.accident,{name:'难为情',pts:5,min:36*60,fixedDuration:true,noCollapse:true,
  diary:["没来得及上厕所，衣服全弄脏了，想起来就尴尬。这股难为情要持续三十六小时，先去洗澡换衣服。","还是没憋住，得赶紧洗澡换衣服。这件事大概要尴尬三十六小时，暂时不想提。"],
  say:['先洗干净，别的等会儿再说。','这件事我得缓好久……','谁也别提，我会慢慢恢复的。','已经发生了，先照顾好自己。']});
-function usingToiletNow(){return mallToiletInside()||barToiletInside()||parkInsideToilet()||sim.mode==='act'&&sim.act==='toilet';}
+function usingToiletNow(){return atFriendHome()&&sim.mode==='act'&&friendVisit.action==='toilet'||mallToiletInside()||barToiletInside()||parkInsideToilet()||sim.mode==='act'&&sim.act==='toilet';}
 function applyNeedConsequences(){
  const n=sim.needs;
  if(n.bladder<=0&&sim.mode!=='down'&&!usingToiletNow()){

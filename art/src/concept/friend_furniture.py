@@ -25,7 +25,7 @@ SIZES={**{k:(16,30) for k in GROUPS['plant']},**{k:(12,16) for k in GROUPS['smal
  **{k:(20,32)for k in GROUPS['shelf']},**{k:(34,13)for k in GROUPS['desk']},
  **{k:(32,10)for k in GROUPS['media']},**{k:(22,34)for k in GROUPS['wardrobe']},
  **{k:(9,16)for k in GROUPS['chair']},**{k:(12,28)for k in GROUPS['lamp']},
- 'rain_shower':(12,34),'mirror_basin':(8,17),'front_washer':(22,25),
+ 'rain_shower':(20,34),'mirror_basin':(8,17),'front_washer':(22,25),
  'acoustic_guitar':(15,27),'stage_keyboard':(45,23),'mixed_herb_box':(28,23),'flower_trough':(28,23)}
 NAMES=dict(zip([k for a in GROUPS.values() for k in a],[
 '龟背竹','琴叶榕','波士顿蕨','散尾葵','橡皮树','盆栽柑橘','多肉拼盆','小盆景','柱形仙人掌','花束陶瓶',
@@ -192,9 +192,9 @@ def asset(key,accent=None,timber=None):
    for xx in [3,5,7,9]:s.vline(xx,2,7,P.oat[3] if xx<6 else P.oat[2])
   else:s.line(3,26,3,6,P.steel[1]).line(3,6,7,2,P.steel[2]).hline(7,10,2,P.steel[3]);s.ellipse(9,6,3,3,a[0]).hline(7,11,8,P.oat[3])
  elif key=='rain_shower':
-  wood(s,0,0,12,34,P.steel);s.rect(1,1,10,31,P.glass[1]).vline(2,2,29,P.glass[3]).line(3,7,8,3,P.glass[3])
-  s.vline(4,6,24,P.steel[3]).hline(4,8,5,P.steel[4]).rect(7,6,3,1,P.steel[2]).set(4,19,P.steel[0]);s.vline(9,17,21,P.steel[4])
-  s.rect(1,30,10,3,P.porcelain[2]).hline(2,9,30,P.porcelain[3]).hline(5,7,32,P.steel[2])
+  wood(s,0,0,20,34,P.steel);s.rect(1,1,18,31,P.glass[1]).vline(2,2,29,P.glass[3]).line(3,8,10,2,P.glass[3])
+  s.vline(5,6,24,P.steel[3]).hline(5,12,5,P.steel[4]).rect(10,6,5,1,P.steel[2]).set(5,19,P.steel[0]);s.vline(17,17,21,P.steel[4])
+  s.rect(1,30,18,3,P.porcelain[2]).hline(2,17,30,P.porcelain[3]).hline(8,11,32,P.steel[2])
  elif key=='mirror_basin':
   wood(s,0,0,8,8,r);s.rect(1,1,6,6,P.glass[1]).line(1,5,5,1,P.glass[3]);s.rect(1,10,6,6,r[1]).hline(0,7,10,P.porcelain[3]).hline(1,6,11,P.porcelain[1]).rect(3,8,2,2,P.steel[3]).hline(3,4,14,P.steel[3]).vline(1,12,15,r[3])
  elif key=='front_washer':

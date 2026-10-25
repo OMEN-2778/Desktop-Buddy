@@ -1,7 +1,7 @@
 // Thunderstorms only affect home and exposed outdoor maps; never mall/bar interiors.
 function isRain(kind=weather.kind){return kind==='rain'||kind==='storm';}
 const stormOutside=()=>weather.kind==='storm'&&['front','park','beach'].includes(sim.place);
-const stormExposed=()=>weather.kind==='storm'&&(sim.place==='home'||stormOutside());
+const stormExposed=()=>weather.kind==='storm'&&(sim.place==='home'||atFriendHome()||stormOutside());
 const stormFX={left:0,duration:0,bolt:0,x:0};
 for(const group of ['negative','positive','outdoor'])STORM_TEXT[group].forEach((t,i)=>ML[`storm_${group}_${i}`]={name:t[0],emo:t[1],pts:group==='positive'?2:1,min:75});
 function stormReaction(outdoor=false){
@@ -42,7 +42,7 @@ function tickStorm(dt){
 function stormFlash(){
   if(!stormExposed()||stormFX.left<=0)return 0;
   const t=1-stormFX.left/stormFX.duration;
-  if(sim.place==='home'||reduceMotionUI)return Math.pow(Math.sin(Math.PI*t),reduceMotionUI?2:.6)*(reduceMotionUI?.32:1);
+  if(sim.place==='home'||atFriendHome()||reduceMotionUI)return Math.pow(Math.sin(Math.PI*t),reduceMotionUI?2:.6)*(reduceMotionUI?.32:1);
   const elapsed=stormFX.duration-stormFX.left;
   return elapsed>=.09&&elapsed<.18 ? .8 : 0;
 }
@@ -55,19 +55,19 @@ function stormWindowFlash(ctx,win,m){
   const flash=stormFlash();if(!flash)return;
   masked(ctx,m,m.glass,win.x,win.y,g=>{g.fillStyle=`rgba(247,250,255,${flash})`;g.fillRect(0,0,m.w,m.h);});
 }
-function drawStorm(ctx){
+function drawStorm(ctx,interior=null){
   if(!stormExposed())return;
-  const home=sim.place==='home',flash=stormFlash();
-  ctx.save();ctx.globalCompositeOperation='source-atop';ctx.fillStyle=`rgba(22,38,65,${home ? .12 : .28})`;ctx.fillRect(0,0,W,H);
+  const home=sim.place==='home'||!!interior,flash=stormFlash(),windows=interior?.windows||WMASK,states=interior?.states||windowState,rooms=interior?.rooms||Object.values(D.rooms),height=interior?.height||H;
+  ctx.save();ctx.globalCompositeOperation='source-atop';ctx.fillStyle=`rgba(22,38,65,${home ? .12 : .28})`;ctx.fillRect(0,0,W,height);
   if(flash){
     // At home, light comes through windows instead of whitening the whole room.
-    if(!home){ctx.fillStyle=`rgba(255,255,255,${flash})`;ctx.fillRect(0,0,W,H);}
-    if(home)for(const[id,win]of Object.entries(WMASK)){
-      if(windowState[id]==='drawn')continue;
-      const m=windowState[id]==='open'&&win.open?win.open:win.closed;
+    if(!home){ctx.fillStyle=`rgba(255,255,255,${flash})`;ctx.fillRect(0,0,W,height);}
+    if(home)for(const[id,win]of Object.entries(windows)){
+      if(states[id]==='drawn')continue;
+      const m=states[id]==='open'&&win.open?win.open:win.closed;
       if(!m)continue;
       const x=win.x+m.w/2,y=win.y+m.h/2;
-      const room=Object.values(D.rooms).find(([rx,ry,rw,rh])=>x>=rx&&x<rx+rw&&y>=ry&&y<ry+rh);
+      const room=rooms.find(([rx,ry,rw,rh])=>x>=rx&&x<rx+rw&&y>=ry&&y<ry+rh);
       if(!room)continue;
       ctx.save();ctx.beginPath();ctx.rect(...room);ctx.clip();
       const light=ctx.createRadialGradient(x,y,2,x,y,Math.max(45,m.w*1.6));

@@ -37,7 +37,7 @@ function friendVisitSnapshot(){
  if(friendVisit?.phase==='departing')return {id:friendVisit.id,phase:'departing'};
  if(!atFriendHome())return null;
  const p=here(),v=friendVisit;
- return {id:v.id,houseId:v.houseId,phase:'inside',arrived:v.arrived,until:v.until,position:[p.x,p.y],stay:!!v.stay,askedDay:v.askedDay??null,action:v.action==='sleep'?'sleep':null,bedIndex:v.bedIndex??null,seen:v.seen.slice(-100),familySeen:v.familySeen.slice(-100),present:v.present||[],count:v.count};
+ return {id:v.id,houseId:v.houseId,phase:'inside',arrived:v.arrived,until:v.until,position:[p.x,p.y],stay:!!v.stay,askedDay:v.askedDay??null,action:sim.mode==='act'?v.action:null,objectId:v.objectId||null,seatId:v.seatId||null,lamps:v.lamps||{},mealItem:v.mealItem||null,bedIndex:v.bedIndex??null,seen:v.seen.slice(-100),familySeen:v.familySeen.slice(-100),present:v.present||[],count:v.count};
 }
 function restoreFriendVisit(raw){
  if(sim.place!=='friend_home'){
@@ -59,7 +59,10 @@ function restoreFriendVisit(raw){
  sim.route=[[Math.max(off+r.x+5,Math.min(off+r.x+r.w-5,p[0])),r.floor]];sim.s=sim.target=0;sim.mode=savedDown?'down':'idle';sim.act=savedDown?null:'friend_visit';sim.windup=null;sim.down=savedDown;
  friendVisit.present=Array.isArray(raw.present)?raw.present.filter(r=>home.relations.includes(r)):null;
  initFriendHomeActors();
- if(!savedDown&&raw.action==='sleep'&&friendVisit.stay)friendVisitAction('sleep');
+ friendVisit.lamps=Object.fromEntries(Object.entries(raw.lamps||{}).filter(([id,on])=>h.furniture.some(f=>f.id===id&&['lamp','floor_lamp'].includes(f.kind))&&typeof on==='boolean'));
+ if(!savedDown&&typeof raw.action==='string'&&Object.hasOwn(FRIEND_VISIT_ACTS,raw.action)&&!(raw.action==='sleep'&&!friendVisit.stay)){
+  const object=h.furniture.find(f=>f.id===raw.objectId);startFriendHouseAction(raw.action,object,raw.mealItem&&typeof raw.mealItem==='object'?raw.mealItem:null);
+ }
  if(booted){fit();makeRoom();}
 }
 function friendVisitRoom(h,x,y){return h.rooms.reduce((best,r)=>{
@@ -108,10 +111,19 @@ function relayoutFriendVisit(change){
  change();fit();makeRoom();render();animateHousePreviewLayout(old,r.bottom,r.height);fitWindow();
 }
 function friendDestinationIcon(c){
- const canvas=document.createElement('canvas');canvas.width=canvas.height=40;drawContactAvatar(canvas,c);const x=canvas.getContext('2d');x.imageSmoothingEnabled=false;
- const pixels=x.getImageData(0,0,40,40);for(let y=0;y<40;y++)for(let i=0;i<40;i++)if(Math.hypot(i-19.5,y-19.5)>19.5)pixels.data[(y*40+i)*4+3]=0;x.putImageData(pixels,0,0);
- x.fillStyle='#334861';x.fillRect(23,25,16,14);x.fillStyle='#f2ead9';x.fillRect(25,28,12,10);x.fillStyle='#547fa8';x.fillRect(29,32,4,6);
- for(let row=0;row<7;row++){x.fillStyle=row===0?'#eef5fc':'#395c86';x.fillRect(22+row,29-row,18-row*2,1);}x.fillStyle='#e9cb7e';x.fillRect(26,31,2,3);return canvas;
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=25;const x=canvas.getContext('2d');x.imageSmoothingEnabled=false;
+ x.fillStyle='#f7f6fb';x.fillRect(0,0,25,25);x.drawImage(npcCanvas(visitActor(c),{expr:'neutral',look:0,bob:0,sway:0,wave:null},'stand'),2,4);
+ const pixels=x.getImageData(0,0,25,25);for(let y=0;y<25;y++)for(let i=0;i<25;i++){
+  const distance=Math.hypot(i-12,y-12),p=(y*25+i)*4;
+  if(distance>12)pixels.data[p+3]=0;
+  else if(distance>11){pixels.data[p]=51;pixels.data[p+1]=37;pixels.data[p+2]=59;pixels.data[p+3]=255;}
+ }x.putImageData(pixels,0,0);
+ x.fillStyle='#334861';x.fillRect(15,17,10,8);x.fillStyle='#f2ead9';x.fillRect(16,18,8,6);x.fillStyle='#547fa8';x.fillRect(19,20,3,4);
+ for(let row=0;row<4;row++){x.fillStyle=row===3?'#eef5fc':'#395c86';x.fillRect(14+row,18-row,11-row*2,1);}x.fillStyle='#e9cb7e';x.fillRect(17,20,1,2);return canvas;
+}
+function friendHouseWindows(){
+ const h=visitingHouse(),off=(W-h.w)/2;
+ return Object.fromEntries(IMG.friendHouses[friendVisit.houseId].windows.map((w,i)=>['friend_window_'+i,{...w,x:w.x+off}]));
 }
 function enterFriendHome(){
  const v=friendVisit,c=visitingFriend();if(!v||!c||v.phase!=='departing')return;
@@ -128,7 +140,7 @@ function enterFriendHome(){
 }
 function leaveFriendHome(reason='玩得差不多了，和朋友说声下次再来。'){
  if(!atFriendHome()||wiping)return false;
- const c=visitingFriend();closeRing();closeSocialSheet();friendVisit.talk=null;hidePeerSay(true);
+ const c=visitingFriend();closeRing();closePicker();closeSocialSheet();friendVisit.talk=null;hidePeerSay(true);
  log(reason);if(c){addSocialMemory(c,'到家里做客',`去了${contactName(c)}家。${reason}`);finishContactTalk(c.id,'visit');}
  trip('home',()=>{relayoutFriendVisit(()=>{
   friendVisit=null;sim.place='home';sim.route=[[D.spots.front_door[1],FLOOR_Y[0]]];sim.s=sim.target=0;sim.mode='idle';sim.act=null;sim.windup=null;sim.queue=[];sim.chosen=null;sim.player=false;sim.idleUntil=sim.t+2;sim.outBack=null;sim.outWhy=null;
@@ -139,29 +151,13 @@ function friendVisitWalk(target,action='walk',duration=20,seat=false){
  sim.route=friendVisitRoute(here(),target);sim.s=0;sim.target=routeLength(sim.route);sim.mode='walk';sim.act='friend_visit';sim.windup=null;
  v.action=action;v.duration=duration;v.seated=seat;v.end=null;v.talk=null;
 }
-function friendVisitAction(action,selected=null){
- if(!atFriendHome())return false;
- if(action==='leave'){leaveFriendHome();return true;}
- const h=visitingHouse(),v=friendVisit,off=(W-h.w)/2;let f=null,seat=false,duration=25;
- if(action==='sleep'){
-  if(!v.stay){showHint('先点击朋友，问问今晚能不能借住吧。');return false;}
-  // A spare bedroom may be occupied by family; use the sofa first. Otherwise
-  // the host offers their own bed and takes a floor mattress offscreen.
-  f=h.furniture.find(f=>f.kind==='sofa');if(!f)f=h.furniture.find(f=>f.kind==='bed');
-  duration=720;v.sleepFurniture=f;v.bedIndex=h.furniture.indexOf(f);
- }else if(action==='toilet'){f=h.furniture.find(f=>f.kind==='toilet');duration=12;}
- else if(action==='bath'){f=h.furniture.find(f=>['shower','tub'].includes(f.kind));duration=25;}
- else if(action==='eat'){f=h.furniture.find(f=>['table','tea_table','coffee_table'].includes(f.kind));duration=25;seat=!!f;}
- else if(action==='sit'){const candidates=h.seats.filter(p=>Math.abs(p[0]+off-v.host.x)>12||Math.abs(p[1]-v.host.y)>4);const p=selected?[...candidates].sort((a,b)=>Math.abs(a[1]-(selected.y+selected.h))*4+Math.abs(a[0]-selected.x-selected.w/2)-Math.abs(b[1]-(selected.y+selected.h))*4-Math.abs(b[0]-selected.x-selected.w/2))[0]:(candidates[1]||candidates[0]);if(p){friendVisitWalk({x:off+p[0],y:p[1]},action,30,true);return true;}}
- else if(action==='chat'){const a=v.host;friendVisitWalk({x:a.x+Math.min(16,W-a.x-12),y:a.y},action,40);return true;}
- if(!f&&['eat','sit'].includes(action)){const room=h.rooms.find(r=>!r.role.endsWith('stair')&&r.role!=='bath');friendVisitWalk({x:off+room.x+room.w/2,y:room.floor},action,duration,false);return true;}
- if(f){const room=friendVisitRoom(h,f.x+f.w/2,f.y+f.h);friendVisitWalk({x:off+f.x+f.w/2,y:room.floor},action,duration,seat);return true;}return false;
-}
-function friendVisitCommand(name){
+function friendVisitAction(action,selected=null){return startFriendHouseAction(action,selected);}
+function friendVisitCommand(name,item=null){
  if(!atFriendHome())return false;
  if(sim.mode==='down'){showHint('先长按主角五秒，把主角叫醒吧。');return true;}
+ const selected=friendHouseObject(friendVisit.pendingFurnitureId);friendVisit.pendingFurnitureId=null;
  if(name==='go_home'||name==='go_out')leaveFriendHome();
- else friendVisitAction(({sleep:'sleep',bed:'sleep',toilet:'toilet',bath:'bath',eat:'eat',chat:'chat',tv:'sit',read:'sit'})[name]||'sit');return true;
+ else startFriendHouseAction(({friend_snack:'eat',snack:'eat',sleep:'sleep',bed:'sleep',toilet:'toilet',bath:'bath',eat:'eat',cook:'cook',chat:'chat',tv:'tv',read:'read',computer:'computer'})[name]||'sit',selected,item);return true;
 }
 function requestFriendStay(){
  const v=friendVisit,c=visitingFriend();if(!atFriendHome()||!c||sim.mode==='down')return false;
@@ -216,12 +212,12 @@ function stepFriendHome(dtGame,dtReal){
  const v=friendVisit;sim.t+=dtGame;updateWeather(dtGame);
  const day=Math.floor(sim.t/1440)+1;if(day!==sim.lastDay){sim.lastDay=day;log(`—— 第 ${day} 天 · ${SEASONS[seasonOf(sim.t).i].name} ——`,'day');}
  const action=sim.mode==='act'?v.action:null,resting=action==='sleep';
- const effects={eat:{hunger:2.5,fun:.08},toilet:{bladder:8},bath:{hygiene:3},sit:{energy:.16,fun:.15,social:.1},chat:{social:.4,fun:.16},sleep:{energy:.16}}[action]||{};
+ const effects=FRIEND_HOME_EFFECTS[action]||{};
  for(const k in sim.needs){const d=effects[k]>0?0:-DECAY[k]*(resting?(k==='bladder'?.35:.4):1);sim.needs[k]=clamp(sim.needs[k]+(d+(effects[k]||0))*dtGame);}
  applyNeedConsequences();checkCollapse();if(sim.mode==='down')return true;
  // Address needs locally before they reach zero; do not send guests straight
  // back home just because the host's house has its own bathroom and snacks.
- const addressing=['toilet','eat','bath'].includes(v.action);
+ const addressing=['toilet','eat','bath','cook'].includes(v.action);
  if(!addressing){
   if(sim.needs.bladder<18)friendVisitAction('toilet');
   else if(sim.needs.hunger<20)friendVisitAction('eat');
@@ -233,11 +229,11 @@ function stepFriendHome(dtGame,dtReal){
  if(sim.needs.energy<18&&!v.stay&&(!addressing||sim.needs.energy<8)){leaveFriendHome('有点困了，先和朋友道别，回家好好睡一觉。');return true;}
  if(sim.mode==='walk'){
   const before=here();sim.s=Math.min(sim.target,sim.s+WALK*Math.min(speed,4)*dtReal*(before.dy?.7:1));sim.walkDist+=Math.abs(here().x-before.x);if(Math.abs(here().x-before.x)>.01)sim.facing=Math.sign(here().x-before.x);
-  if(sim.s>=sim.target){sim.mode='act';v.end=sim.t+(v.duration||25);if(v.action==='sleep'){sim.act='sleep';sim.actEnd=v.end;showSay(pick(FRIEND_VISIT_TEXT.goodnight),contactName(visitingFriend())+'：',visitingFriend());log('借住朋友家，洗漱后躺下休息。');}}
+  if(sim.s>=sim.target){sim.mode='act';v.end=sim.t+(v.duration||25);onFriendHouseActionStart();if(v.action==='sleep'){sim.act='sleep';sim.actEnd=v.end;showSay(pick(FRIEND_VISIT_TEXT.goodnight),contactName(visitingFriend())+'：',visitingFriend());log('借住朋友家，洗漱后躺下休息。');}}
  }else if(sim.mode==='act'){
   if(resting&&(hour()>=7&&hour()<18&&sim.needs.energy>=80||sim.t>=v.end)){
    sim.mode='idle';sim.act='friend_visit';v.action=null;v.sleepFurniture=null;log('在朋友家醒来，伸了个懒腰。');showSay(pick(FRIEND_VISIT_TEXT.morning),contactName(visitingFriend())+'：',visitingFriend());
-  }else if(!resting&&sim.t>=v.end){sim.mode='idle';sim.act='friend_visit';v.action=null;v.seated=false;sim.idleUntil=sim.t+5;}
+  }else if(!resting&&sim.t>=v.end){if(finishFriendHouseAction())return true;sim.mode='idle';sim.act='friend_visit';v.action=null;v.seated=false;sim.idleUntil=sim.t+5;}
  }else if(sim.t>=(sim.idleUntil||0)){
   if(v.stay&&(hour()>=22||hour()<6))friendVisitAction('sleep');
   else friendVisitAction(Math.random()<.6?'sit':'chat');
@@ -246,13 +242,13 @@ function stepFriendHome(dtGame,dtReal){
 }
 function friendVisitDoing(){return `${contactName(visitingFriend())}家 · ${FRIEND_VISIT_ACTS[friendVisit.action]||'做客'}`;}
 function friendVisitHit(x,y){
- if(!atFriendHome())return null;const v=friendVisit,h=visitingHouse(),off=(W-h.w)/2;
+ if(!atFriendHome()||!IMG.friendHouses?.[friendVisit.houseId]?.objects)return null;const v=friendVisit,h=visitingHouse(),off=(W-h.w)/2;
+ const foreground=friendFurnitureAt(x,y,true);if(foreground)return foreground;
  if(Math.abs(x-v.host.x)<10&&y>v.host.y-DH&&y<v.host.y+3)return {kind:'host'};
  if(v.family.some(a=>Math.abs(x-a.x)<10&&y>a.y-DH&&y<a.y+3))return {kind:'family'};
  if(buddyHit(x,y))return {kind:'hero'};
- if(Math.abs(x-off-h.entry[0])<10&&Math.abs(y-h.entry[1]+16)<20)return {kind:'door'};
- const f=h.furniture.filter(f=>x>=off+f.x&&x<off+f.x+f.w&&y>=f.y&&y<f.y+f.h).sort((a,b)=>a.w*a.h-b.w*b.h)[0];
- return f?{kind:'furniture',f}:null;
+ if(!h.furniture.some(f=>f.kind==='entry')&&Math.abs(x-off-h.entry[0])<10&&Math.abs(y-h.entry[1]+16)<20)return {kind:'door'};
+ return friendFurnitureAt(x,y);
 }
 function friendVisitClick(x,y){
  if(!atFriendHome())return false;const hit=friendVisitHit(x,y),v=friendVisit;
@@ -262,17 +258,15 @@ function friendVisitClick(x,y){
  if(hit?.kind==='hero'){RINGS.friend_guest=[['fv:eat','吃点东西'],['fv:toilet','借用卫生间'],['fv:leave','回家']];openRing('friend_guest');return true;}
  if(hit?.kind==='family')return true;
  if(hit?.kind==='door'){leaveFriendHome();return true;}
- if(hit?.kind==='furniture'){
-  const kind=hit.f.kind,action=['toilet'].includes(kind)?'toilet':['shower','tub','basin'].includes(kind)?'bath':kind==='bed'?'sleep':['table','tea_table'].includes(kind)?'eat':['sofa','chair','coffee_table','reading_sofa'].includes(kind)?'sit':null;
-  if(action){friendVisitAction(action,hit.f);return true;}
- }
+ if(hit?.kind==='furniture'){interactFriendFurniture(hit.f);return true;}
  const h=visitingHouse(),off=(W-h.w)/2,r=friendVisitRoom(h,x-off,y);
- if(y>=r.y&&y<=r.floor+6)friendVisitWalk({x:Math.max(off+r.x+9,Math.min(off+r.x+r.w-9,x)),y:r.floor});return true;
+ if(y>=r.y&&y<=r.floor+6){v.objectId=v.seatId=null;friendVisitWalk({x:Math.max(off+r.x+9,Math.min(off+r.x+r.w-9,x)),y:r.floor});}return true;
 }
 function renderFriendHome(){
  if(!atFriendHome())return false;const v=friendVisit,h=visitingHouse(),imgs=IMG.friendHouses[v.houseId],off=(W-h.w)/2;
  vctx.save();vctx.setTransform(1,0,0,1,0,0);vctx.clearRect(0,0,view.width,view.height);vctx.scale(devPx,devPx);vctx.imageSmoothingEnabled=false;
  vctx.drawImage(imgs.day,off,0);const night=nightness(hour());if(night>0){vctx.globalAlpha=night;vctx.drawImage(imgs.night,off,0);vctx.globalAlpha=1;}
+ const windows=friendHouseWindows();drawWeather(vctx,night>.5,windows,{},true);drawFriendHomeLamps(vctx);drawFriendHomeScreens(vctx);drawFriendFurnitureHover(vctx);
  const f={expr:Math.floor(realClock/3)%5===0?'blink':'neutral',look:0,bob:0,sway:0,wave:null};
  const actors=[v.host,...v.family].map(a=>({...a,draw:()=>{
   if(asleep()){
@@ -290,10 +284,11 @@ function renderFriendHome(){
  const p=here();actors.push({y:p.y+1,draw:()=>{
   if(sim.mode==='down'){vctx.drawImage(lyingBody({...f,expr:'dazed'}),Math.round(p.x-12),Math.round(p.y-15));return;}
   if(asleep()&&v.sleepFurniture){const bed=v.sleepFurniture;vctx.drawImage(lyingBody({...f,expr:'sleepy'}),Math.round(off+bed.x+5),bed.y-5);vctx.drawImage(IMG.fx.sofa_blanket[0],Math.round(off+bed.x+16),bed.y+2);return;}
-  if(sim.mode==='act'&&['toilet','bath'].includes(v.action))return;
+  if(drawFriendFixtureUser(vctx,f))return;
   const pose=sim.mode==='walk'?(Math.floor(realClock*6)%2?'walkL':'walkR'):v.seated&&sim.mode==='act'?'sit':'stand';vctx.drawImage(dollCanvas(f,pose),Math.round(p.x-DW/2),Math.round(p.y-DH+1));
  }});
- actors.sort((a,b)=>a.y-b.y).forEach(a=>a.draw());vctx.drawImage(imgs.front,off,0);
+ actors.sort((a,b)=>a.y-b.y).forEach(a=>a.draw());vctx.drawImage(imgs.front,off,0);drawFriendActionForeground(vctx,f);
+ drawStorm(vctx,{windows,states:{},height:h.h,rooms:h.rooms.map(r=>[off+r.x,r.y,r.w,r.floor-r.y+6])});
  if(sim.mode==='down'&&holding){const elapsed=realClock-holding.t0;drawRescue(vctx,p,elapsed);if(elapsed>=REVIVE_S)revive();}
  vctx.restore();return true;
 }

@@ -359,11 +359,49 @@ def main():
         "monitor": (mx + 8, my + 5, 18, (0.75, 0.9, 1.05), "study"),
     }
 
-    friend_houses = {}
-    for plan in FH.PLANS:
-        meta, bg, front = FH.draw_plan(plan)
-        _, house_night, _ = FH.draw_plan(plan, night=True)
-        friend_houses[meta['id']] = {**meta, 'day':png(bg), 'night':png(house_night), 'front':png(front)}
+    def pack_friend_houses():
+        friend_houses = {}
+        for plan in FH.PLANS:
+            objects = {}
+            meta, bg, front = FH.draw_plan(plan, collect=objects)
+            _, house_night, _ = FH.draw_plan(plan, night=True)
+            house_windows = []
+            for object_index, obj in enumerate(meta['furniture']):
+                if obj['kind'] not in ('window', 'glass', 'sky_glass'):
+                    continue
+                x, y, w, h = (obj[k] for k in ('x', 'y', 'w', 'h'))
+                sky_mask, ground_mask = Sprite(w, h), Sprite(w, h)
+                if obj['kind'] == 'sky_glass':
+                    sky_pixels = {rgba(P.glass[2]), rgba(P.glass[3])}
+                    source = bg.crop(x, y, w, h)
+                else:
+                    source = objects[obj['id']]
+                    sky_pixels = sky_cols
+                occluders = [(other, objects[other['id']])
+                             for i, other in enumerate(meta['furniture'])
+                             if (i > object_index or other['front']) and other.get('id') in objects
+                             and other['x'] < x+w and other['x']+other['w'] > x
+                             and other['y'] < y+h and other['y']+other['h'] > y]
+                # Only visible glass survives: a wardrobe or leaf painted in front
+                # of a window must not acquire rain, snow or a bright sky tint.
+                for yy in range(h):
+                    for xx in range(w):
+                        color = tuple(bg.px[y+yy, x+xx])
+                        if any(0 <= x+xx-other['x'] < sprite.w and 0 <= y+yy-other['y'] < sprite.h
+                               and sprite.px[y+yy-other['y'], x+xx-other['x'], 3]
+                               for other, sprite in occluders):
+                            continue
+                        if color != tuple(source.px[yy, xx]):
+                            continue
+                        if color in sky_pixels:
+                            sky_mask.set(xx, yy, '#ffffff')
+                        elif obj['kind'] != 'sky_glass' and color in ground_cols:
+                            ground_mask.set(xx, yy, '#ffffff')
+                house_windows.append({'x':x, 'y':y, 'w':w, 'h':h, 'sky':png(sky_mask), 'ground':png(ground_mask)})
+            friend_houses[meta['id']] = {**meta, 'day':png(bg), 'night':png(house_night), 'front':png(front), 'weatherWindows':house_windows, 'objects':{key:png(sprite) for key,sprite in objects.items()}}
+        return friend_houses
+
+    friend_houses = pack_friend_houses()
     assert (day.w, day.h) == (Hs.W, Hs.H), "Main day background size changed"
     assert (night.w, night.h) == (Hs.W, Hs.H), "Main night background was replaced"
     data = {
@@ -424,7 +462,7 @@ def main():
     html = html.replace("/*__SOCIAL_LIFE_JS__*/", "const SOCIAL_TEXT = " + (SRC.parent / "social_text.json").read_text() + ";\nconst SOCIAL_DIALOGUE = " + (SRC.parent / "social_dialogue.json").read_text() + ";\n" + (SRC.parent / "social_dialogue.js").read_text() + "\n" + (SRC.parent / "social_life.js").read_text() + "\nconst HOME_VISIT_TEXT = " + (SRC.parent / "home_visit_text.json").read_text() + ";\n" + (SRC.parent / "home_visits.js").read_text())
     html = html.replace("/*__SOCIAL_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "social_cards.json").read_text() + ");")
     html = html.replace("/*__PEER_DIALOGUE_JS__*/", (SRC.parent / "peer_dialogue.js").read_text())
-    html = html.replace("/*__FRIEND_VISITS_JS__*/", "const FRIEND_VISIT_TEXT = " + (SRC.parent / "friend_visit_text.json").read_text() + ";\n" + (SRC.parent / "friend_visits.js").read_text())
+    html = html.replace("/*__FRIEND_VISITS_JS__*/", "const FRIEND_VISIT_TEXT = " + (SRC.parent / "friend_visit_text.json").read_text() + ";\n" + (SRC.parent / "friend_visits.js").read_text()+"\n"+(SRC.parent / "friend_home_objects.js").read_text())
     html = html.replace("/*__FRIEND_HOUSES_JS__*/", (SRC.parent / "friend_houses.js").read_text())
     html = html.replace("/*__TV_PLAYBACK_JS__*/", (SRC.parent / "tv_playback.js").read_text())
     html = html.replace("/*__FRIEND_OUTINGS_JS__*/", "const FRIEND_OUTING_TEXT = " + (SRC.parent / "friend_outing_text.json").read_text() + ";\nCARDS.push(..." + (SRC.parent / "friend_outing_cards.json").read_text() + ");\n" + (SRC.parent / "friend_outings.js").read_text())

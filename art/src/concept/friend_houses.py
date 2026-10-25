@@ -73,13 +73,15 @@ THEMES={
  'music':(P.plaster_living,P.clay,'panel'), 'library':(P.plaster_bed,P.walnut,'wood')}
 
 
-def draw_plan(plan,night=False):
+def draw_plan(plan,night=False,collect=None):
  id,name,w,description,theme,rows=plan;h=len(rows)*58+4
  wall,accent,pattern=THEMES[theme];accent=P.oat if theme=='library' else accent;timber=P.walnut if theme in ('retro','music','library') else P.ash if theme in ('mint','slate','garden') else P.oak;s=Sprite(w,h);front=Sprite(w,h);rooms=[];placed=[];seats=[];entry=None
  def put(sprite,x,bottom,role,foreground=False):
   target=front if foreground else s;y=bottom-sprite.h
   assert x>=0 and x+sprite.w<=w and y>=0 and bottom<=h,(id,role,x,y,sprite.w,sprite.h)
-  target.blit(sprite,x,y);placed.append({'asset':getattr(sprite,'house_asset',None),'kind':role,'x':x,'y':y,'w':sprite.w,'h':sprite.h,'front':foreground})
+  target.blit(sprite,x,y);key='f'+str(len(placed));
+  if collect is not None:collect[key]=sprite
+  placed.append({'id':key,'room':rooms[-1]['id'],'asset':getattr(sprite,'house_asset',None),'kind':role,'x':x,'y':y,'w':sprite.w,'h':sprite.h,'front':foreground})
  for level,row in enumerate(rows):
   top=level*58+5;fl=top+45
   for role,x,rw in row:
@@ -115,7 +117,7 @@ def draw_plan(plan,night=False):
    elif role=='bath':
     if rw>=60:put(F.bathtub(),x+3,fl+1,'tub');put(F.toilet(),x+rw-17,fl+1,'toilet');put(F.vanity() if rw>=72 else FF.asset('mirror_basin',accent,timber),x+rw-(37 if rw>=72 else 27),fl,'basin');put(F.towel(),x+rw-18,top+17,'towel')
     else:
-     put(FF.asset('rain_shower',accent,timber),x+1,fl,'shower');put(F.toilet(),x+rw-14,fl+1,'toilet');put(FF.asset('mirror_basin',accent,timber),x+14,fl-5,'basin')
+     put(FF.asset('rain_shower',accent,timber),x+1,fl,'shower');put(F.toilet(),x+rw-14,fl+1,'toilet');put(FF.asset('mirror_basin',accent,timber),x+rw-11,top+22,'basin')
    elif role in ('bed','guest_bed','tatami'):
     bed=FF.asset('layered_futon',accent,timber) if role=='tatami' else decor('bed')
     put(bed,x+5,fl+2,'bed');put(F.window(sky='night' if night else 'day',curtains=accent),x+5,top+32,'window')
@@ -149,6 +151,7 @@ def draw_plan(plan,night=False):
     if role=='library':
      s.rect(x+47,top+3,rw-61,7,P.walnut[0]).rect(x+48,top+4,rw-63,5,P.sky_night[1] if night else P.glass[2]).hline(x+49,x+rw-17,top+4,P.glass[3])
      for xx in range(x+62,x+rw-15,20):s.vline(xx,top+4,top+8,P.walnut[1])
+     placed.append({'kind':'sky_glass','x':x+48,'y':top+4,'w':rw-63,'h':5,'front':False})
     if role=='library' and rw>=140:put(decor('sofa'),x+rw-52,fl+1,'reading_sofa');seats.append([x+rw-36,fl-3])
     if role=='atelier':
      xx=x+rw-34;s.line(xx,fl+1,xx+12,top+11,P.walnut[1]).line(xx+24,fl+1,xx+12,top+11,P.walnut[1]);put(F.art_print(23,21,'hills'),xx+1,fl-7,'easel')
@@ -168,6 +171,8 @@ def draw_plan(plan,night=False):
   ground=[r for r in rooms if r['storey']==0 and r['role'] not in ('bath','stair')][-1];entry=[ground['x']+(60 if id=='cream' else ground['w']-12),ground['floor']]
   # A narrow entrance visible behind the final room's furnishings.
   dx=entry[0]-6;s.rect(dx,ground['y']+11,13,34,P.walnut[0]).rect(dx+1,ground['y']+12,11,32,P.oat[2]).set(dx+10,ground['floor']-14,P.mustard[3])
+  key='f'+str(len(placed));placed.append({'id':key,'kind':'entry','room':ground['id'],'x':dx,'y':ground['y']+11,'w':13,'h':34,'front':False})
+  if collect is not None:collect[key]=s.crop(dx,ground['y']+11,13,34)
  links=[]
  for a in rooms:
   for b in rooms:

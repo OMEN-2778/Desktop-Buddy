@@ -242,7 +242,7 @@ async function loadAssets() {
     for (const key of ["day0", "day1", "day2", "night0", "night1", "night2", "drawn"]) IMG.win[k][key] = await loadImg(v[key]);
   }
   IMG.friendHouses={};
-  await Promise.all(Object.entries(D.friendHouses).map(async([id,h])=>{const [day,night,front]=await Promise.all([loadImg(h.day),loadImg(h.night),loadImg(h.front)]);IMG.friendHouses[id]={day,night,front};}));
+  await Promise.all(Object.entries(D.friendHouses).map(async([id,h])=>{const [day,night,front]=await Promise.all([loadImg(h.day),loadImg(h.night),loadImg(h.front)]);const windows=await Promise.all((h.weatherWindows||[]).map(async w=>{const [sky,ground]=await Promise.all([loadImg(w.sky),loadImg(w.ground)]);return {x:w.x,y:w.y,closed:{sky,ground,glass:maskCanvas([sky,ground],w.w,w.h),w:w.w,h:w.h}};}));const objects=Object.fromEntries(await Promise.all(Object.entries(h.objects||{}).map(async([id,src])=>[id,await loadImg(src)])));IMG.friendHouses[id]={day,night,front,windows,objects};}));
   IMG.tv = {}; for (const [c, fr] of Object.entries(D.screens.tv.channels)) IMG.tv[c] = await Promise.all(fr.map(loadImg));
   IMG.mon = {}; for (const [g, fr] of Object.entries(D.screens.monitor.games)) IMG.mon[g] = await Promise.all(fr.map(loadImg));
   IMG.app = {}; for (const [g, fr] of Object.entries(D.screens.monitor.apps)) IMG.app[g] = await Promise.all(fr.map(loadImg));
@@ -571,7 +571,7 @@ function finishAct() {
 
 // The player clicked a piece of furniture: drop what she's doing and go.
 function command(act, item = null) {
-  if(atFriendHome()){friendVisitCommand(act);return;}
+  if(atFriendHome()){friendVisitCommand(act,item);return;}
   if(act==='guest_seat'&&socialState.guest?.phase==='visiting'&&roomAt(homeGuestPoint(socialState.guest))==='study'&&Math.abs(homeGuestPoint(socialState.guest).x-D.spots.guest_study[1])<2){showHint('朋友正坐着呢，先给对方留个座。');return;}
   if(act==='sleep'&&sleepoverChatAwake()){finishBedConversation(socialState.guest,true);return;}
   stopNpcTalk("先忙眼前的事");
@@ -1398,12 +1398,12 @@ function masked(ctx, m, mask, x, y, paint) {   // paint(local ctx), keep only th
   ctx.drawImage(wtmp, x, y);
 }
 function hash(n) { const s = Math.sin(n * 127.1) * 43758.5453; return s - Math.floor(s); }
-function drawWeather(ctx, night) {
+function drawWeather(ctx, night, windows = WMASK, states = windowState, twilight = false) {
   const se = weather.season, w = weather.kind;
   const tint = se === 2 ? "rgba(214, 140, 52, 0.62)" : se === 1 ? "rgba(46, 104, 52, 0.22)" : null;
-  for (const [id, win] of Object.entries(WMASK)) {
-    if (windowState[id] === "drawn") continue;              // curtains shut: no view
-    const m = windowState[id] === "open" && win.open ? win.open : win.closed;
+  for (const [id, win] of Object.entries(windows)) {
+    if (states[id] === "drawn") continue;              // curtains shut: no view
+    const m = states[id] === "open" && win.open ? win.open : win.closed;
     if (!m) continue;
     // the season on the hill
     if (tint || weather.snowCover > 0) {
@@ -1412,6 +1412,7 @@ function drawWeather(ctx, night) {
         if (weather.snowCover > 0) { g.fillStyle = `rgba(244, 247, 252, ${0.9 * weather.snowCover})`; g.fillRect(0, 0, m.w, m.h); }
       });
     }
+    if(twilight){const dusk=duskState();if(dusk.strength)masked(ctx,m,m.sky,win.x,win.y,g=>{g.globalAlpha=dusk.strength;g.drawImage(IMG.dusk[dusk.mode],0,0,m.w,m.h);g.globalAlpha=1;});}
     if (w === "clear") continue;
     // grey sky + falling rain / drifting snow, only on the glass
     masked(ctx, m, m.glass, win.x, win.y, g => {
@@ -2568,7 +2569,7 @@ const nametag = document.getElementById("nametag");
 let hoverBuddy = false;
 view.addEventListener("pointermove", e => {
   const [x, y] = canvasXY(e);
-  if(atFriendHome()){hoverBuddy=buddyHit(x,y);const hit=friendVisitHit(x,y);view.style.cursor=hit&&hit.kind!=="family"?"pointer":"default";return;}
+  if(atFriendHome()){hoverBuddy=buddyHit(x,y);const hit=friendVisitHit(x,y);friendVisit.hover=hit;view.style.cursor=hit&&hit.kind!=="family"?"pointer":"default";return;}
   npcPointer={x,y,scene:npcSceneKey()};updateNpcHover();
   hoverBuddy = e.pointerType === "mouse" && buddyHit(x, y);
   hoverId = buddyHit(x, y)||hoverNpc ? null : clickableAt(x, y);
@@ -2576,7 +2577,7 @@ view.addEventListener("pointermove", e => {
   mallS.hover = hoverBuddy||hoverNpc ? null : itemAt(x, y);
   view.style.cursor = hoverId || hoverBuddy || hoverNpc || (sim.place !== "home" && OUT[sim.place].kind === "walk") || mallS.hover ? "pointer" : TAURI ? "grab" : "default";   // outside: anywhere is somewhere to walk   // the app: walls and floor move the window
 });
-view.addEventListener("pointerleave", () => { npcPointer=null;hoverNpc=null;hoverId = null; mallS.hover = null; mallS.pointer = null; holding = null; hoverBuddy = false; });
+view.addEventListener("pointerleave", () => { if(friendVisit)friendVisit.hover=null;npcPointer=null;hoverNpc=null;hoverId = null; mallS.hover = null; mallS.pointer = null; holding = null; hoverBuddy = false; });
 // her name over her head while the pointer rests on her (and no menu is open)
 function placeNametag() {
   const on = hoverBuddy && ringEl.hidden && sim.mode !== "down";

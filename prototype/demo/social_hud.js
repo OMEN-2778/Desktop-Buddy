@@ -314,6 +314,7 @@ incomingCall.querySelector('.call-answer').addEventListener('click',()=>finishIn
 incomingCall.querySelector('.call-decline').addEventListener('click',()=>finishIncomingCall(false));
 document.getElementById('testIncoming').addEventListener('click',()=>{if(!requestIncomingCall('abu'))log(asleep()?'先等主角醒来，再试试来电通知。':'现在正在忙，等当前活动结束再试试来电。');});
 function contactPrivacyBreak(){
+  if(atFriendHome()&&sim.mode==='act'&&['bath','toilet'].includes(friendVisit.action))return friendVisit.action==='bath'?'洗澡':'上厕所';
   if(sim.act==='bath')return '洗澡';
   if(['toilet','park_toilet'].includes(sim.act)||mallToiletInside()||barToiletInside()||parkInsideToilet())return '上厕所';
   return null;
