@@ -2,6 +2,7 @@
 // and unlocked by a real user gesture. Both preference bits also travel in saves.
 const GAME_AUDIO_FILES = /*__AUDIO_FILES__*/null;
 const GAME_AUDIO_VERSION = /*__AUDIO_VERSION__*/null;
+const GAME_AUDIO_INLINE = /*__AUDIO_INLINE__*/null;
 const gameAudio = (() => {
   let ctx=null, musicBus=null, effectsBus=null, limiter=null, meter=null, unlocked=false;
   let muted=false, epoch=0, musicKey='', nextMusicRetry=0, currentMusic=null, lastTick=-Infinity;
@@ -34,8 +35,11 @@ const gameAudio = (() => {
     if(!pending.has(path)){
       stats.loads++;
       pending.set(path,(async()=>{
-        try{const response=await fetch(url(path));if(!response.ok)throw new Error('HTTP '+response.status);
-          const b=await ctx.decodeAudioData(await response.arrayBuffer());cache.set(path,b);return b;
+        try{
+          let bytes;
+          if(GAME_AUDIO_INLINE[path])bytes=Uint8Array.from(atob(GAME_AUDIO_INLINE[path]),c=>c.charCodeAt(0)).buffer;
+          else{const response=await fetch(url(path));if(!response.ok)throw new Error('HTTP '+response.status);bytes=await response.arrayBuffer();}
+          const b=await ctx.decodeAudioData(bytes);cache.set(path,b);return b;
         }catch(e){report(path,e);return null;}finally{pending.delete(path);}
       })());
     }

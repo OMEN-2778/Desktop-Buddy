@@ -26,6 +26,7 @@ const base=process.argv[2]||'http://127.0.0.1:8786/';
  const toggle=async(key,on)=>{await page.evaluate(()=>setSettingsOpen(true));await page.locator(`[data-audio-channel="${key}"]`).filter({hasText:on?'开':'关'}).click();await page.waitForTimeout(200);};
  await toggle('sfx',true);await page.waitForFunction(()=>gameAudio.debug().state==='running');
  assert.equal(await page.evaluate(()=>gameAudio.debug().tracks),0);
+ assert.equal(requests.filter(url=>/\/(ui-|phone-)/.test(url)).length,0,'First UI cues must not depend on a network fetch');
  await page.evaluate(()=>{setSettingsOpen(false);setNeedsOpen(true);});await page.waitForTimeout(300);
  assert.ok((await page.evaluate(()=>gameAudio.debug().stats.last)).includes('ui-open'));
  const count=await page.evaluate(()=>gameAudio.debug().stats.played);await page.evaluate(()=>setNeedsOpen(true));await page.waitForTimeout(250);
@@ -58,7 +59,7 @@ const base=process.argv[2]||'http://127.0.0.1:8786/';
  await page.evaluate(()=>{weather.kind=weather.force='storm';audioMove('park');gameAudio.tick(true);});await page.waitForTimeout(700);
  assert.ok((await page.evaluate(()=>gameAudio.debug().loops)).includes('rain'));
  assert.ok(!(await page.evaluate(()=>gameAudio.debug().loops)).some(k=>['birds','people'].includes(k)));
- await page.evaluate(()=>lightningStrike());await page.waitForTimeout(300);assert.ok((await page.evaluate(()=>gameAudio.debug().stats.last)).includes('thunder-heavy-no-rain-cc0'));
+ await page.evaluate(()=>lightningStrike());await page.waitForFunction(()=>gameAudio.debug().stats.last.includes('thunder-heavy-no-rain-cc0'),null,{timeout:5000});
  for(const place of ['mall','bar']){await page.evaluate(place=>audioMove(place),place);await page.waitForTimeout(150);assert.ok(!(await page.evaluate(()=>gameAudio.debug().loops)).includes('rain'));}
  await page.evaluate(()=>{weather.kind=weather.force='clear';audioMove('home');speed=6;phoneCall.contactId='abu';phoneCall.kind='call';showIncomingCall();gameAudio.tick(true);});
  await page.waitForFunction(()=>gameAudio.debug().loops.includes('ring'));
@@ -71,7 +72,7 @@ const base=process.argv[2]||'http://127.0.0.1:8786/';
  // Normal interactions start on arrival, and end when the action ends.
  for(const [act,expected]of [['bath','water'],['wash','water'],['cook','cook'],['tv','switch'],['read','page'],['computer','keyboard'],['water_study','watering']]){
   await page.evaluate(act=>{remoteSocial=null;hidePeerSay(true);audioMove('home');speed=3;startAct(act,true);sim.s=sim.target;arrive();sim.actEnd=sim.t+1000;gameAudio.tick(true);},act);
-  await page.waitForTimeout(350);assert.ok((await page.evaluate(()=>gameAudio.debug().stats.last)).includes(expected),'Action '+act);
+  await page.waitForFunction(expected=>gameAudio.debug().stats.last.includes(expected),expected,{timeout:5000});
  }
  await page.evaluate(()=>{audioMove('home');gameAudio.tick(true);});await page.waitForTimeout(600);assert.ok(!(await page.evaluate(()=>gameAudio.debug().loops)).includes('action'));
  // Friend-house fixtures use the same audio path and preserve current weather.

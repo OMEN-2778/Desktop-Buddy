@@ -481,7 +481,11 @@ def main():
         shutil.copy2(audio_root / name, target)
     audio_version = hashlib.sha256(b"".join(hashlib.sha256((audio_root / name).read_bytes()).digest() for name in audio_files)).hexdigest()[:12]
     audio_js = (SRC.parent / "audio.js").read_text().replace("/*__AUDIO_FILES__*/null", json.dumps(audio_files)).replace("/*__AUDIO_VERSION__*/null", json.dumps(audio_version))
-    html = html.replace("/*__GAME_AUDIO_JS__*/", audio_js)
+    # First hover/click/ring must not wait for a new network request. Only these
+    # tiny cues travel inline; music and longer Foley remain streamed on demand.
+    immediate = {"ui-click", "ui-open", "ui-close", "ui-card", "ui-result", "ui-message", "phone-ring", "phone-answer", "phone-decline", "bell"}
+    inline_audio = {name: base64.b64encode((audio_root / name).read_bytes()).decode("ascii") for name in audio_files if name.startswith("SFX/game/") and Path(name).stem in immediate}
+    html = html.replace("/*__GAME_AUDIO_JS__*/", audio_js.replace("/*__AUDIO_INLINE__*/null", json.dumps(inline_audio)))
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 
