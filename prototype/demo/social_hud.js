@@ -270,14 +270,18 @@ function finishContactTalk(id,kind){
   if(['text','call','video'].includes(kind))addSocialMemory(c,{text:'互发消息',call:'通了电话',video:'视频见面'}[kind],`和${contactName(c)}聊起「${c.lastTopic||'彼此的近况'}」。`);
   sim.needs.social=clamp(sim.needs.social+(kind==='text'?5:10));applyNeedConsequences();contactsSig='';if(moodrow.classList.contains('contacts-open'))fillContacts();
 }
-function canReceiveCall(){return !asleep()&&sim.mode!=='down'&&!wiping&&!guideOn&&!card&&!wardrobeOpen&&!socialBusy()&&!socialDialogHolds()&&!homeVisitActive();}
+function canReceiveCall(){return ringOf!=='outing'&&!asleep()&&sim.mode!=='down'&&!wiping&&!guideOn&&!card&&!wardrobeOpen&&!socialBusy()&&!socialDialogHolds()&&!homeVisitActive();}
+function contactWithHero(id){
+  return friendOutingState?.id===id&&friendOutingState.phase!=='waiting'||socialState.guest?.id===id&&['entering','visiting','leaving'].includes(socialState.guest.phase);
+}
 function requestIncomingCall(id,kind='call'){
+  if(contactWithHero(id))return false;
   if(phoneCall.phase!=='idle'||!socialState.contacts.some(c=>c.id===id)||!canReceiveCall())return false;
   phoneCall.phase='waiting';phoneCall.contactId=id;phoneCall.kind=kind;return true;
 }
 function showIncomingCall(){
   const now=performance.now();
-  const c=socialState.contacts.find(c=>c.id===phoneCall.contactId);if(!c){phoneCall.phase='idle';return;}
+  const c=socialState.contacts.find(c=>c.id===phoneCall.contactId);if(!c||contactWithHero(c.id)){phoneCall.phase='idle';return;}
   hidePeerSay(true);setContactsOpen(false);setNeedsOpen(false);showMoodTip(false);closeRing();closePicker();
   incomingCall.querySelector('strong').textContent=c.family||c.affinity<20?contactName(c):contactRelation(c)+contactName(c);
   incomingCall.querySelector('.caller-copy span').textContent=phoneCall.kind==='video'?'打来视频':'打来电话';
@@ -318,10 +322,10 @@ function tickSocial(dt,now){
   if(phoneHolds())return;
   if(!Number.isFinite(socialState.nextCall))socialState.nextCall=sim.t+210;
   if(phoneCall.phase==='waiting'){
-    if(asleep()||sim.mode==='down'||!socialState.contacts.some(c=>c.id===phoneCall.contactId)){phoneCall.phase='idle';socialState.nextCall=sim.t+120;return;}
+    if(contactWithHero(phoneCall.contactId)||asleep()||sim.mode==='down'||!socialState.contacts.some(c=>c.id===phoneCall.contactId)){phoneCall.phase='idle';socialState.nextCall=sim.t+120;return;}
     if(canReceiveCall()&&callNow-sayShownAt>=2000)showIncomingCall();
   }else if(speed&&sim.t>=socialState.nextCall&&hour()>=9&&hour()<21&&canReceiveCall()){
-    const farewell=socialState.contacts.find(c=>c.farewellPending),eligible=sortedContacts().filter(socialCallDue);
+    const farewell=socialState.contacts.find(c=>c.farewellPending&&!contactWithHero(c.id)),eligible=sortedContacts().filter(c=>!contactWithHero(c.id)&&socialCallDue(c));
     if(farewell){farewell.farewellPending=false;requestIncomingCall(farewell.id,'farewell');}
     else if(eligible.length)requestIncomingCall(pick(eligible).id);socialState.nextCall=sim.t+180+Math.random()*300;
   }

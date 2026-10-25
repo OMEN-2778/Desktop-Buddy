@@ -20,13 +20,13 @@ function openFriendOuting(id){
   else if(socialState.guest&&!(socialState.guest.id===id&&socialState.guest.phase==='visiting'&&!socialState.guest.overnight?.accepted))reason='先安排好家里的客人，再约出门吧。';
   else if(sim.needs.energy<30||sim.needs.hunger<30||sim.needs.hygiene<20)reason='先吃点东西、休息或洗漱好，再出门玩吧。';
   if(reason){visitNotice('暂时不能约出门',reason);return;}
-  const sheet=openSocialSheet('和'+contactName(c)+'一起出门');
-  const choices=document.createElement('div');choices.className='social-choices outing-destinations';socialContent(sheet).append(choices);
-  for(const [place,label]of Object.entries(FRIEND_OUTING_PLACES)){
-    const b=document.createElement('button');b.textContent=label;b.dataset.outingPlace=place;
-    b.disabled=place==='bar'&&!barIsOpen()||['front','park','beach'].includes(place)&&weather.kind==='storm';
-    if(b.disabled)b.title=place==='bar'?'现在酒吧还没开门哦！':'雷雨太大，先选室内吧';
-    b.onclick=()=>{closeSocialSheet();scheduleFriendOuting(c,place);};choices.append(b);
+  closeSocialSheet();setContactsOpen(false);closePicker();setDiaryOpen(false);
+  RINGS.outing=Object.entries(FRIEND_OUTING_PLACES).map(([place,label])=>['outing:'+place,place==='front'?'去门口':place==='beach'?'去海边':'去'+label]);
+  openRing('outing','door');ringEl.dataset.contactId=id;ringEl.setAttribute('aria-label','和'+contactName(c)+'去哪里玩');
+  for(const button of ringEl.querySelectorAll('button')){
+    const place=button.dataset.outingPlace;
+    button.disabled=place==='bar'&&!barIsOpen()||['front','park','beach'].includes(place)&&weather.kind==='storm';
+    if(button.disabled)button.title=place==='bar'?'现在酒吧还没开门哦！':'雷雨太大，先选室内吧';
   }
 }
 function scheduleFriendOuting(c,place){
@@ -89,9 +89,20 @@ function tickFriendOuting(dt){
   if(st.phase==='departing'&&sim.place==='home'&&(asleep()||sim.mode==='down')){finishFriendOuting('临时需要休息，约好改天再出发。');return;}
   if(st.phase==='departing'){if(sim.place==='home')return;st.phase='active';st.startedAt=sim.t;st.nextTalk=realClock+7;c.lastSeen=sim.t;c.lastContact=sim.t;c.forgotten=false;contactsSig='';}
   if(sim.place==='home'){finishFriendOuting();return;}
-  const target=companionPosition(),pos=st.position;if(target&&pos){
+  const current=companionPosition(),pos=st.position;
+  if(current&&pos){
+    // Keep a short, scene-local motion history: start, turn and stop a beat later.
+    const scrolling=sim.place==='mall'&&!mallInside();
+    const scrollDistance=scrolling?Math.abs(mallS.dist-(st.mallDist??mallS.dist)):0;st.mallDist=mallS.dist;
+    if(st.followScene!==st.scene){st.followScene=st.scene;st.followClock=0;st.followTrail=[];}
+    st.followClock+=dt;st.followTrail.push({...current,t:st.followClock,scrollDistance,scrollDir:mallS.dir});
+    const cutoff=st.followClock-.24;
+    while(st.followTrail.length>1&&st.followTrail[1].t<=cutoff)st.followTrail.shift();
+    const target=st.followTrail[0];
     const dx=target.x-pos.x,dy=target.y-pos.y,dist=Math.hypot(dx,dy),amount=Math.min(dist,WALK*(1+Math.min(1,dist/35))*.91*dt*Math.min(speed,4));
-    if(dist>0){pos.x+=dx/dist*amount;pos.y+=dy/dist*amount;st.distance+=amount;}const scrolling=sim.place==='mall'&&!mallInside()&&Math.abs(mallS.dist-(st.mallDist??mallS.dist))>.01;if(scrolling)st.distance+=Math.abs(mallS.dist-st.mallDist);st.mallDist=mallS.dist;st.moving=dist>2||scrolling;st.dir=scrolling?mallS.dir:dx>0?1:dx<0?-1:0;st.seated=target.seated&&!st.moving;
+    if(dist>0){pos.x+=dx/dist*amount;pos.y+=dy/dist*amount;st.distance+=amount;}
+    const scrollMoving=target.scrollDistance>.01;st.distance+=target.scrollDistance;
+    st.moving=dist>2||scrollMoving;st.dir=scrollMoving?target.scrollDir:dx>0?1:dx<0?-1:0;st.seated=target.seated&&!st.moving;
   }
   if(st.phase==='active'&&stormOutside()){st.phase='returning';st.talk=null;log(`雷雨下大了，和${contactName(c)}商量先回家。`);command('go_home');return;}
   if(st.phase==='returning'||asleep()||sim.mode==='down'||contactPrivacyBreak()||mallSleeping()||remoteSocial||sim.talk||life.talkQ||barScene?.chat){st.talk=null;return;}

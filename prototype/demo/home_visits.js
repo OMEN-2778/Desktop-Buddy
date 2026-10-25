@@ -38,9 +38,9 @@ function exitSleepScenePreview(){
 for(const button of document.querySelectorAll('[data-sleep-preview]'))button.onclick=()=>previewSleepScene(button.dataset.sleepPreview);
 document.getElementById('exitSleepPreview').onclick=exitSleepScenePreview;
 function parentVisitPlan(c,proactive){
-  const period=Math.floor(sim.t/(7*1440));
-  if(!proactive&&c.parentVisitRoll?.period!==period)c.parentVisitRoll={period,available:Math.random()<.03};
-  if(!proactive&&!c.parentVisitRoll.available){
+  const period=Math.floor(sim.t/(7*1440)),resting=hour()<8||hour()>=21;
+  if(!proactive&&!resting&&c.parentVisitRoll?.period!==period)c.parentVisitRoll={period,available:Math.random()<.03};
+  if(!proactive&&(resting||!c.parentVisitRoll?.available)){
     const text=pick(HOME_VISIT_TEXT.parents[c.family].decline);
     showSay(text,contactName(c)+'：',c);log(`约${contactName(c)}来家里坐坐，但两座城市隔着路程，这次没能成行。`,null,[[contactName(c)+'：',text]]);
     addSocialMemory(c,'隔着城市的邀请',text);return null;

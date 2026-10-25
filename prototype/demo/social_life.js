@@ -146,12 +146,15 @@ function inviteHome(id,proactive=false){
   else if(sim.mode==='down')reason='主角晕倒了，先长按唤醒，再邀请朋友吧。';
   else if(asleep())reason='主角正在睡觉，醒来后再邀请朋友吧。';
   else if(socialState.guest){const other=socialState.contacts.find(p=>p.id===socialState.guest.id);reason=`${other?contactName(other):'另一位客人'}${socialState.guest.phase==='scheduled'?'已经在路上了':'还没有离开'}，等这次来访结束再邀请吧。`;}
-  else if(hour()<8||hour()>=21)reason='现在是休息时间，请在早上 8 点到晚上 9 点之间邀请朋友。';
   else if(socialBusy())reason='主角正在聊天，聊完这一次后再邀请朋友吧。';
   else if(wiping||cardHolds())reason='先处理完眼前的事情，再邀请朋友吧。';
   else if(sim.needs.energy<20||sim.needs.hunger<20)reason='主角有点饿或累了，先吃点东西、休息好，再招待朋友吧。';
   else if(!c.family&&c.affinity<20)reason=`${c.name}：我们先多聊聊天，熟悉一点再登门吧。`;
   if(reason){log(reason);visitNotice('暂时不能邀请',reason);return false;}
+  if(!c.family&&(hour()<8||hour()>=21)){
+    const period=hour()>=5&&hour()<8?'early':'late',text=pick(HOME_VISIT_TEXT.inviteRest[period]);
+    showSay(text,contactName(c)+'：',c);log(`约${contactName(c)}来家里坐坐，对方这会儿不方便，改天再约。`,null,[[contactName(c)+'：',text]]);return false;
+  }
   const trip=c.family?parentVisitPlan(c,proactive):null;if(c.family&&!trip)return false;
   const minutes=trip?trip.minutes:personalityOf(c).care>25?18:12+Math.floor(Math.random()*14),at=sim.t+minutes;
   socialState.guest={id,phase:'scheduled',at,until:at+150,s:0,next:0,said:[],count:0,usedTalks:[],usedEvents:[],activity:'chat',proactive,familyTrip:!!trip};

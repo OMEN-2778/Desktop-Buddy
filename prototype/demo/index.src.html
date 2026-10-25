@@ -2673,6 +2673,7 @@ function openRing(which, at = which === "computer" ? "computer" : "buddy") {
     const b = document.createElement(cls === "label" ? "span" : "button");
     if (cls === "label") { b.className = "ring-label"; b.textContent = nameOf(); }   // her name tops the ring
     else { b.type = "button"; b.textContent = label; b.setAttribute("role", "menuitem"); if (cls) b.className = cls; }
+    if(which==="outing")b.dataset.outingPlace=id.slice(7);
     b.style.setProperty("--k", i);
     if (cls !== "label") b.addEventListener("click", ev => { ev.stopPropagation(); ringPick(id); });
     ringEl.appendChild(b);
@@ -2685,7 +2686,7 @@ function openRing(which, at = which === "computer" ? "computer" : "buddy") {
   ringEl.classList.add("on");
   if (reduceMotionUI) ringEl.classList.add("on");
 }
-function closeRing() { ringEl.hidden = true; ringEl.classList.remove("on"); ringOf = null; }
+function closeRing() { delete ringEl.dataset.contactId;ringEl.removeAttribute('aria-label');ringEl.hidden = true; ringEl.classList.remove("on"); ringOf = null; }
 // renaming from the ring: a name box, a die and OK, in a row over her head
 const DIE = [".########.", "#........#", "#.##..##.#", "#.##..##.#", "#........#",
              "#........#", "#.##..##.#", "#.##..##.#", "#........#", ".########."];
@@ -2749,6 +2750,7 @@ document.addEventListener("pointerdown", e => { if (ringOf && !ringEl.contains(e
 document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) closeRing(); });
 let lastChat = -1e9;
 function ringPick(id) {
+  if(id.startsWith('outing:')){const c=socialState.contacts.find(c=>c.id===ringEl.dataset.contactId),place=id.slice(7);closeRing();if(c)scheduleFriendOuting(c,place);return;}
   if (id === "mall_leave") { closeRing();mallLeaveVisit(false);return; }
   if (id === "park_stand") { parkStand(); return; }
   if (id.startsWith("bar_")) {
@@ -4127,7 +4129,7 @@ for (let i = 0; i < 20; i++) {                   // sparks around the moodlet pi
   crBurst.append(sp);
 }
 // while a card or its result is up the house dims a little and time stands still (user)
-const cardHolds = () => !!(card && card.hold) || guideOn || wardrobeOpen || phoneHolds() || socialDialogHolds();   // (the guide stops the clock too)
+const cardHolds = () => !!(card && card.hold) || guideOn || wardrobeOpen || phoneHolds() || socialDialogHolds() || ringOf==="outing";   // (the guide stops the clock too)
 const dimHouse = on => view.classList.toggle("dim", on);
 let quietUntil = 0;         // her card line isn't followed by a "new mood" thought
 let card = null;            // { cd, vars, phase: ask | wait | result | closing, k, o, auto, timer, lockUntil }
