@@ -101,7 +101,7 @@ const base=process.argv[2]||'http://127.0.0.1:8786/';
    files.push({name,duration:audio.duration});
   }await ac.close();return files;
  });
- assert.equal(assets.filter(f=>f.name.startsWith('BGM/')).length,16);assert.equal(assets.length,71);assert.deepEqual(errors,[]);
+ assert.equal(assets.filter(f=>f.name.startsWith('BGM/')).length,16);assert.equal(assets.length,104);assert.deepEqual(errors,[]);
  console.log(JSON.stringify({scales,assets:assets.length,bgm:16,sfx:assets.length-16,tests:'default silence, independent buses, actual output, hover, calls, all scene/season tracks, weather, interactions, imported save and reload',errors},null,2));
  }finally{await b.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

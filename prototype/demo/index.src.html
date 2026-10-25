@@ -2473,7 +2473,7 @@ const SETTINGS = [
   { label: "更新", role: "group", spans: () => [8, 4], items: () => [
       pill(prefs.autoUpdate ? "有新版本自动更新" : "有新版本只提醒", { pressed: prefs.autoUpdate, disabled: !TAURI,
         title: !TAURI ? "桌面版里才能用" : prefs.autoUpdate ? "在后台下载好，趁你没在操作时自动重启换上（再按一下改成只提醒）" : "有新版本时提醒你，点了才更新（再按一下改成自动）",
-        onClick: () => { prefs.autoUpdate = !prefs.autoUpdate; saveSettings(); buildSettings(); if (prefs.autoUpdate && upd.state === "offered") { upd.state = "idle"; hideUpdate(); checkUpdate(); } } }),
+        onClick: () => setAutoUpdate(!prefs.autoUpdate) }),
       pill("检查更新", { disabled: !TAURI, title: !TAURI ? "桌面版里才能用" : appVersion ? `现在是 ${appVersion}` : "",
         onClick: () => { setSettingsOpen(false); updLater = false; checkUpdate(true); } }),
     ] },
@@ -2919,7 +2919,7 @@ function openPicker(act, from = null) {
   fitPicker();
   if (from) { pickerEl.style.setProperty("--from-x", from.x * scale + "px"); pickerEl.style.setProperty("--from-y", from.y * scale + "px"); }
   else { pickerEl.style.removeProperty("--from-x"); pickerEl.style.removeProperty("--from-y"); }
-  if(["cook","snack","friend_snack"].includes(act))gameAudio.sound("drawer",.45);
+  if(["snack","friend_snack"].includes(act))gameAudio.sound("real-fridge-cc0",.20);
   pickerEl.hidden = false;
   pickerEl.classList.remove("on"); void pickerEl.offsetWidth; pickerEl.classList.add("on");
   makeRoom();
@@ -3710,6 +3710,7 @@ function stopAt(it) {                            // shops: a look, in she goes, 
   if (mallS.visit && mallS.visit.shop === it.id) { mallEnterVisit();return; }
   if (it.id === "cinema" || MALL_RESTAURANTS[it.id]) { mallChoose(it.id === "cinema" ? "cinema" : "restaurant",it);return; }
   if (it.id === "restroom") { mallEnterToilet(it); return; }
+  if(it.kind==="shop")gameAudio.sound("real-auto-door-cc0",.15,{spatial:{x:171,y:100}});
   const shop = it.kind === "shop", inside = shop ? STALL[it.id].inside : 0;
   mallS.goal = null;
   mallS.stop = { it, inAt: shop ? sim.t + 3 : null, outAt: sim.t + (shop ? 3 + inside : 9), until: sim.t + (shop ? 9 + inside : 16), turned: false };
@@ -3717,7 +3718,8 @@ function stopAt(it) {                            // shops: a look, in she goes, 
   if (it.kind !== "shop") mallStallTalk(it);
   else { const c = (life.npcs || []).find(m => m.item === it.id && m.role === "clerk"); if (c) npcLine(c); }
 }
-function stallVisit(it) {                        // she turns round with what she got
+function stallVisit(it) {
+  gameAudio.sound("real-checkout-cc0",.10,{gap:5});                        // she turns round with what she got
   const s = STALL[it.id], vars = { 电影: pick(FILMS) };
   log(fill(pick(s.log), vars));
   for (const [k, v] of Object.entries(s.needs)) sim.needs[k] = clamp(sim.needs[k] + v);
@@ -4691,6 +4693,7 @@ function migrate(sv) {
   return sv;
 }
 function restore(sv) {
+  gameAudio.resetEmotion();
   stopNpcTalk("",false);npcPointer=null;hoverNpc=null;
   sayQueue.length=0;clearTimeout(popSay._t);clearTimeout(popSay._t2);popSay.hidden=true;
   sayGrow=0;sayBusy=0;lastSaid="";sayShownAt=-Infinity;nextSay=realClock+14;liftDiary();
@@ -4920,112 +4923,7 @@ if (TAURI) {
   TAURI.event.listen("on-top-changed", e => { prefs.onTop = !!e.payload; saveSettings(); buildSettings(); });
 }
 
-// ================================================================ updates (desktop app)
-// Every CI build is a GitHub release (user: no more sending the .exe
-// around). A while after start, and every 6 hours, the app asks GitHub for a
-// newer one. With 自动更新 (设置 → 更新, on by default) it downloads it
-// quietly and, once nothing is open and you've left it alone for a bit,
-// saves, swaps itself and restarts where the window was (user: seamless);
-// then says which version it is now. With 只提醒, a bar above the diary box
-// offers 更新 / 以后. 检查更新 (settings, tray) asks right away and, if
-// there's one, updates at once.
-const updEl = document.getElementById("update"), updText = updEl.querySelector("span");
-let upd = { state: "idle", version: null, shown: false }, updLater = false, lastInput = Date.now();
-for (const ev of ["pointerdown", "keydown", "wheel"]) document.addEventListener(ev, () => { lastInput = Date.now(); }, true);
-// above the diary box, flush with the house's right edge (user: off the house)
-function placeUpdate() {
-  const box = updEl.parentElement.getBoundingClientRect(), d = diaryBox.getBoundingClientRect();
-  updEl.style.top = Math.round(d.top - box.top - updEl.offsetHeight - 14) + "px";
-  updEl.style.right = updEl.parentElement.clientWidth - view.offsetLeft - view.offsetWidth + "px";
-}
-function showUpdate(text, { go = null, later = true } = {}) {
-  updText.textContent = text; updEl.title = "";
-  updEl.querySelector(".up-go").hidden = !go;
-  updEl.querySelector(".up-go").textContent = go || "";
-  updEl.querySelector(".up-later").hidden = !later;
-  if (updEl.hidden) { updEl.hidden = false; void updEl.offsetWidth; }
-  placeUpdate();                                        // (it needs its own height first)
-  updEl.classList.add("on");
-}
-function hideUpdate(after = 0) { setTimeout(() => { updEl.classList.remove("on"); setTimeout(() => { if (!updEl.classList.contains("on")) updEl.hidden = true; }, 300); }, after); }
-// asked: from 检查更新 (says what it finds, and updates right away)
-async function checkUpdate(asked = false) {
-  if (!TAURI) return;
-  if (upd.state === "ready") { if (asked) applyUpdate(); return; }
-  if (upd.state !== "idle" && upd.state !== "offered") return;   // already on it
-  if (!asked && updLater) return;
-  if (asked) showUpdate("正在检查更新……", { later: false });
-  let u = null;
-  try { u = await TAURI.core.invoke("check_update"); }
-  catch (e) { if (asked) { showUpdate("没连上 GitHub，稍后再试"); hideUpdate(4000); } return; }
-  if (!u) { if (asked) { showUpdate("已经是最新版啦"); hideUpdate(3000); } return; }
-  upd.version = u.version;
-  if (asked) downloadUpdate(true);
-  else if (prefs.autoUpdate) downloadUpdate(false);          // quietly, in the background
-  else { upd.state = "offered"; showUpdate(`有新版本 ${u.version}`, { go: "更新" }); }
-}
-// shown: progress on the bar (asked for); quietly otherwise
-async function downloadUpdate(shown) {
-  upd.state = "downloading"; upd.shown = shown;
-  if (shown) showUpdate("下载中……", { later: false });
-  let v = null;
-  try { v = await TAURI.core.invoke("download_update"); }
-  catch (e) {
-    upd.state = "idle"; updEl.style.removeProperty("--p");
-    TAURI.core.invoke("log_js", { message: `update: ${e}` });
-    if (shown) updFailed(e);
-    return;
-  }
-  if (!v) { upd.state = "idle"; if (shown) hideUpdate(); return; }
-  upd.state = "ready"; upd.version = v;
-  if (shown) applyUpdate(); else waitForQuiet();
-}
-// a moment when the restart can't get in the way: nothing open, no clicks for 20 s
-const busyNow = () => !!(desktopDragging || card || pickOn || wardrobeOpen || guideOn || ringOf || diaryOn || listOpen
-  || setGear.getAttribute("aria-expanded") === "true" || wiping || sim.mode === "down");
-function waitForQuiet() {
-  if (upd.state !== "ready") return;
-  if (busyNow() || Date.now() - lastInput < 20000) { setTimeout(waitForQuiet, 5000); return; }
-  applyUpdate();
-}
-async function applyUpdate() {
-  if (upd.state !== "ready") return;
-  upd.state = "applying";
-  showUpdate(`更新到 ${upd.version}，马上回来……`, { later: false });
-  await saveGame();                                     // always, even with 自动保存 off: it must come back as it was
-  try { localStorage.setItem("buddy-updated", upd.version); } catch (e) { /* only for the note after */ }
-  await new Promise(r => setTimeout(r, 1200));
-  try { await TAURI.core.invoke("apply_update"); }      // swaps the exe and restarts (or runs the installer)
-  catch (e) { upd.state = "ready"; updFailed(e); TAURI.core.invoke("log_js", { message: `apply: ${e}` }); }
-}
-// say why (user: it kept failing with no reason); the whole message on hover
-function updFailed(e) {
-  const msg = String(e || "").replace(/^Error:\s*/, "");
-  const head = /^[\u4e00-\u9fff]/.test(msg) ? msg : msg ? `更新失败：${msg}` : "更新失败了";   // the app's own reasons start in Chinese
-  showUpdate(head.length > 18 ? head.slice(0, 18) + "…" : head, { go: "重试" });
-  updEl.title = msg ? `${msg}\n（详细记录在 update.log）` : "";
-}
-updEl.querySelector(".up-go").addEventListener("click", () => { if (upd.state === "ready") applyUpdate(); else { updLater = false; checkUpdate(true); } });
-updEl.querySelector(".up-later").addEventListener("click", () => { updLater = true; if (upd.state === "offered") upd.state = "idle"; hideUpdate(); });
-if (TAURI) {
-  TAURI.event.listen("check-update", () => { updLater = false; checkUpdate(true); });
-  TAURI.event.listen("update-progress", e => {
-    const { done, total, source } = e.payload || {};
-    if (!upd.shown) return;
-    if (source && !/^https:\/\/github\.com\//.test(source)) { updText.textContent = "换个线路下载……"; updEl.style.setProperty("--p", "0%"); return; }
-    if (!total) return;
-    const p = Math.min(100, Math.round(done / total * 100));
-    updEl.style.setProperty("--p", p + "%");
-    updText.textContent = `下载中 ${p}%`;
-  });
-  TAURI.core.invoke("app_version").then(v => { appVersion = v || ""; }).catch(() => {});
-  // just updated: say so
-  let was = null;
-  try { was = localStorage.getItem("buddy-updated"); localStorage.removeItem("buddy-updated"); } catch (e) { /* none */ }
-  if (was) setTimeout(() => { showUpdate(`已更新到 ${was}`, { later: false }); hideUpdate(4000); }, 1500);
-  setTimeout(checkUpdate, 8000);
-  setInterval(checkUpdate, 6 * 3600 * 1000);
-}
+/*__UPDATES_JS__*/
 
 /*__RESTROOMS_JS__*/
 /*__MALL_LIFE_JS__*/
@@ -5112,6 +5010,7 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
   const houseLink=!TAURI&&new URLSearchParams(location.search).get('house-preview');
   const houseRequested=houseLink&&Object.hasOwn(D.friendHouses,houseLink);
   booted = true;
+  startUpdateChecks();
   // A direct art-preview link must not roll an ordinary life event first.
   if(houseRequested)showFace();else updateMood();
   syncUI();

@@ -1,0 +1,297 @@
+[
+  {
+    "id": "happy",
+    "file": "SFX/game/emotion-happy.mp3",
+    "instrument": "marimba",
+    "beatSeconds": 0.18,
+    "midiNotes": [
+      72,
+      76,
+      79,
+      84
+    ],
+    "drumBeats": [
+      0,
+      2
+    ],
+    "duration": 1.27,
+    "design": "明亮的大三和弦向上跳进，木琴轻快落点",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "confident",
+    "file": "SFX/game/emotion-confident.mp3",
+    "instrument": "brass",
+    "beatSeconds": 0.21,
+    "midiNotes": [
+      55,
+      62,
+      67,
+      71
+    ],
+    "drumBeats": [
+      0,
+      2
+    ],
+    "duration": 1.39,
+    "design": "低音起步后稳步向上，短铜管与坚定低鼓",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "energized",
+    "file": "SFX/game/emotion-energized.mp3",
+    "instrument": "pluck",
+    "beatSeconds": 0.13,
+    "midiNotes": [
+      60,
+      67,
+      72,
+      76,
+      79
+    ],
+    "drumBeats": [
+      0,
+      1,
+      3
+    ],
+    "duration": 1.2,
+    "design": "紧凑拨弦与三下弹性鼓点，快速上扬",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "flirty",
+    "file": "SFX/game/emotion-flirty.mp3",
+    "instrument": "rhodes",
+    "beatSeconds": 0.26,
+    "midiNotes": [
+      69,
+      72,
+      76,
+      74
+    ],
+    "drumBeats": [],
+    "duration": 1.59,
+    "design": "柔和电钢琴，小三度与大七色彩，最后轻轻回落",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "focused",
+    "file": "SFX/game/emotion-focused.mp3",
+    "instrument": "mallet",
+    "beatSeconds": 0.2,
+    "midiNotes": [
+      60,
+      67,
+      60,
+      67
+    ],
+    "drumBeats": [],
+    "duration": 1.35,
+    "design": "整齐、干净的双音往返，克制且有秩序",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "inspired",
+    "file": "SFX/game/emotion-inspired.mp3",
+    "instrument": "bell",
+    "beatSeconds": 0.2,
+    "midiNotes": [
+      60,
+      67,
+      74,
+      78,
+      83
+    ],
+    "drumBeats": [],
+    "duration": 1.55,
+    "design": "玻璃钟从低处展开到高处，略带明亮的开放和弦",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "playful",
+    "file": "SFX/game/emotion-playful.mp3",
+    "instrument": "marimba",
+    "beatSeconds": 0.14,
+    "midiNotes": [
+      72,
+      79,
+      74,
+      81,
+      72
+    ],
+    "drumBeats": [
+      1,
+      4
+    ],
+    "duration": 1.25,
+    "design": "木琴错落跳进，落回起点，轻巧而顽皮",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "fine",
+    "file": "SFX/game/emotion-fine.mp3",
+    "instrument": "rhodes",
+    "beatSeconds": 0.3,
+    "midiNotes": [
+      60,
+      64,
+      67
+    ],
+    "drumBeats": [],
+    "duration": 1.45,
+    "design": "温暖、舒展的三音，轻轻收束回平静",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "bored",
+    "file": "SFX/game/emotion-bored.mp3",
+    "instrument": "muted",
+    "beatSeconds": 0.38,
+    "midiNotes": [
+      60,
+      60,
+      59
+    ],
+    "drumBeats": [],
+    "duration": 1.69,
+    "design": "暗色低音慢慢重复，最后下沉半音",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "embarrassed",
+    "file": "SFX/game/emotion-embarrassed.mp3",
+    "instrument": "pluck",
+    "beatSeconds": 0.17,
+    "midiNotes": [
+      74,
+      75,
+      69
+    ],
+    "drumBeats": [],
+    "duration": 1.06,
+    "design": "小小半音打结后匆匆滑落，像话说到一半缩回去",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "uncomfortable",
+    "file": "SFX/game/emotion-uncomfortable.mp3",
+    "instrument": "bassoon",
+    "beatSeconds": 0.27,
+    "midiNotes": [
+      50,
+      51,
+      48
+    ],
+    "drumBeats": [
+      0
+    ],
+    "duration": 1.36,
+    "design": "低木管相邻半音不太稳定，缓慢下行",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "tense",
+    "file": "SFX/game/emotion-tense.mp3",
+    "instrument": "muted",
+    "beatSeconds": 0.15,
+    "midiNotes": [
+      62,
+      63,
+      62,
+      63,
+      65
+    ],
+    "drumBeats": [
+      0,
+      2,
+      4
+    ],
+    "duration": 1.3,
+    "design": "紧挨的半音反复与压低的鼓点，短促紧绷",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "angry",
+    "file": "SFX/game/emotion-angry.mp3",
+    "instrument": "brass",
+    "beatSeconds": 0.14,
+    "midiNotes": [
+      43,
+      43,
+      46,
+      42
+    ],
+    "drumBeats": [
+      0,
+      1,
+      3
+    ],
+    "duration": 1.11,
+    "design": "低铜管与三记闷鼓，短促有棱角，不用爆炸噪声",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "sad",
+    "file": "SFX/game/emotion-sad.mp3",
+    "instrument": "piano",
+    "beatSeconds": 0.34,
+    "midiNotes": [
+      72,
+      69,
+      65,
+      62
+    ],
+    "drumBeats": [],
+    "duration": 1.91,
+    "design": "柔软钢琴缓慢下行，最后留一点尾音",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "dazed",
+    "file": "SFX/game/emotion-dazed.mp3",
+    "instrument": "wobble",
+    "beatSeconds": 0.24,
+    "midiNotes": [
+      67,
+      68,
+      63,
+      66
+    ],
+    "drumBeats": [],
+    "duration": 1.51,
+    "design": "轻微游移的电钟与意外音程，摇晃而没有定准",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "scared",
+    "file": "SFX/game/emotion-scared.mp3",
+    "instrument": "strings",
+    "beatSeconds": 0.16,
+    "midiNotes": [
+      69,
+      70,
+      81,
+      78
+    ],
+    "drumBeats": [
+      0
+    ],
+    "duration": 1.19,
+    "design": "细弱弦乐半音抬升后悬住，一下低鼓，不作惊吓音效",
+    "license": "Original synthesis; same license as game source"
+  },
+  {
+    "id": "asleep",
+    "file": "SFX/game/emotion-asleep.mp3",
+    "instrument": "rhodes",
+    "beatSeconds": 0.45,
+    "midiNotes": [
+      67,
+      60
+    ],
+    "drumBeats": [],
+    "duration": 1.45,
+    "design": "两声很轻的下行摇篮音，不加鼓点",
+    "license": "Original synthesis; same license as game source"
+  }
+]

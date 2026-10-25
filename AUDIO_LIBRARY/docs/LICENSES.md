@@ -71,3 +71,30 @@ https://cdn.freesound.org/previews/{ID前三位}/{ID}_{上传者数字ID}-hq.mp3
 |real-drink-cc0|Coffee Sips.wav／sidequesting|https://freesound.org/people/sidequesting/sounds/530247/ · CC0 1.0|
 |real-toilet-flush-cc0|Flush_toilet.wav／martingunchev|https://freesound.org/people/martingunchev/sounds/346061/ · CC0 1.0|
 |real-cooking-fry-cc0|frying_pan_sizzle.WAV／beehawk5|https://freesound.org/people/beehawk5/sounds/620441/ · CC0 1.0|
+
+## 环境层与生活细节扩展
+
+以下新增素材已核对 Freesound 对应条目的 Creative Commons 0 标记。优先下载官方 HQ 预览，不可用时使用同一作品的官方 LQ 预览；实际下载 URL 保存在 `REAL_FOLEY_SOURCES.json`。音量、起点和循环参数记录在 `PLAYBACK_SAMPLES.json`，使用处理副本，保留原件。
+
+|文件|作者／作品|来源|
+|---|---|---|
+|real-door-cc0|kyles／door wood interior solid bathroom open close.flac|https://freesound.org/people/kyles/sounds/637492/ · CC0 1.0|
+|real-fabric-cc0|Sonicquinn／Fabric-Sofa-Rubbing-Movements_Mono_192000.wav|https://freesound.org/people/Sonicquinn/sounds/435830/ · CC0 1.0|
+|real-chair-cc0|cupido-1／drag chair moving|https://freesound.org/people/cupido-1/sounds/616824/ · CC0 1.0|
+|real-cup-cc0|danielle.k.tiflin1201／Placing Cup On Table.wav|https://freesound.org/people/danielle.k.tiflin1201/sounds/595764/ · CC0 1.0|
+|real-ice-cc0|nifigasebesharik／Ice cubes in a red wine glass (mic outside the glass)|https://freesound.org/people/nifigasebesharik/sounds/784070/ · CC0 1.0|
+|real-shaker-cc0|KenRT／Cocktail Shaker.wav|https://freesound.org/people/KenRT/sounds/319995/ · CC0 1.0|
+|real-lake-cc0|Anya_Media／Lake waves.wav|https://freesound.org/people/Anya_Media/sounds/523392/ · CC0 1.0|
+|real-boat-cc0|Walter_Odington／ship_creak.mp3|https://freesound.org/people/Walter_Odington/sounds/31574/ · CC0 1.0|
+|real-horn-cc0|Danjocross／Long Distant Foghorn.aiff|https://freesound.org/people/Danjocross/sounds/507471/ · CC0 1.0|
+|real-night-cc0|Defelozedd94／Crickets At Night - Raw sound|https://freesound.org/people/Defelozedd94/sounds/522299/ · CC0 1.0|
+|real-fridge-cc0|babuhr／Fridge door1.wav|https://freesound.org/people/babuhr/sounds/513340/ · CC0 1.0|
+|real-auto-door-cc0|Kyodon／automatic door.wav|https://freesound.org/people/Kyodon/sounds/153423/ · CC0 1.0|
+|real-sea-cc0|kkenny101／Gentle Ocean Waves Loop|https://freesound.org/people/kkenny101/sounds/852826/ · CC0 1.0|
+|real-gulls-cc0|steaq／Seagull single call|https://freesound.org/people/steaq/sounds/263786/ · CC0 1.0|
+|real-boil-cc0|kyles／water boiling in pot hollow1.flac|https://freesound.org/people/kyles/sounds/637935/ · CC0 1.0|
+|real-checkout-cc0|videofueralle／cash register beep sound.wav|https://freesound.org/people/videofueralle/sounds/455397/ · CC0 1.0|
+
+## 原创情绪短旋律
+
+`SFX/game/emotion-*.mp3` 共 17 段，由 `tools/build_emotion_cues.py` 独立编写 MIDI 音列、节奏、音色和鼓点后合成，未使用其他游戏录音或旋律。素材使用游戏源码相同授权；设计与音列见 `docs/EMOTION_CUES.json`。

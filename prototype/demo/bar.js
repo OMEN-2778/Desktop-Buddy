@@ -111,12 +111,15 @@ function barOrder(item) {
   if (!seat && !free) { speak('吧台坐满啦，等一个空位吧。', true); return; }
   sim.bar.drink = d.id; sim.bar.remaining = d.duration;
   if (!seat) barWalk(free.id, free.x);
-  gameAudio.sound('pour',.5);
+  const audioSpot={x:155,y:100,radius:110};
+  gameAudio.sound('real-ice-cc0',.20,{spatial:audioSpot});
+  setTimeout(()=>gameAudio.sound('real-shaker-cc0',.22,{spatial:audioSpot,valid:()=>sim.place==='bar'&&!barToiletInside()}),350);
   barScene.shaker = 2.8;
   npcSay(barScene.bartender, d.serve);
   log(`${nameOf()}点了一杯${d.name}。`);
 }
 function barFinishDrink() {
+  gameAudio.sound('real-cup-cc0',.18,{spatial:{x:here().x,y:here().y}});
   const d = BAR_DRINKS[sim.bar.drink];
   if (!d) return;
   sim.bar.drink = null; sim.bar.remaining = 0; sim.bar.rounds++;

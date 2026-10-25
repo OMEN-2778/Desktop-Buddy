@@ -31,7 +31,8 @@ function fitPeerSpeech(){
   peerHud.style.height=height+'px';liftDiary();
 }
 function renderPeerLine(line){
-  if(line.text!==peerSpeech.currentText)gameAudio.sound("ui-message",.35,{gap:2});
+  const cueNow=performance.now(),sinceCue=cueNow-(peerSpeech.cueAt??-Infinity);
+  if(sinceCue>30000||peerSpeech.cueSpeaker!==line.speaker.id&&sinceCue>3000){gameAudio.sound("ui-message",.20,{gap:3});peerSpeech.cueAt=cueNow;peerSpeech.cueSpeaker=line.speaker.id;}
   peerSpeech.currentText=line.text;peerText.classList.remove('line-out');
   const speaker=line.speaker,name=speaker.anonymous?speaker.name:contactName(speaker);
   peerText.replaceChildren(Object.assign(document.createElement('em'),{className:'who',textContent:name+'：'}),document.createTextNode(spaced(line.text)));

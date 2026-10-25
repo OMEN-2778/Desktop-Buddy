@@ -68,6 +68,7 @@ function mallEnterVisit(){
   mallClearInteraction();
   wipe(()=>{
     if(sim.place!=='mall'||mallS.visit!==st)return;
+    gameAudio.sound('real-auto-door-cc0',.15);
     st.phase='inside';st.startHunger=sim.needs.hunger;mallSetSeat();mallRoomSetup();
     log(st.kind==='restaurant'?`走进${MALL_RESTAURANTS[st.shop].name}，在软椅上坐好，热腾腾的${st.dish}端上了桌。`:`检票后走进放映厅，在红色软椅上坐好，大银幕开始放映《${mallFilm().name}》。`);
     mallVisitTalk();

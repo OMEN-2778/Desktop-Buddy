@@ -440,6 +440,7 @@ def main():
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     html = mc.inline_shared(SRC.read_text().replace("/*__UI_CSS__*/", (SRC.parent / "ui.css").read_text())).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", chats_js()).replace("/*__PLACES_JS__*/", places_js()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text()).replace("/*__GUIDE_JS__*/", (SRC.parent / "guide_text.js").read_text())
+    html = html.replace("/*__UPDATES_JS__*/", (SRC.parent / "updates.js").read_text())
     html = html.replace("/*__BAR_TEXT_JS__*/", "const BAR_TEXT = " + json.dumps(bar_text, ensure_ascii=False) + ";")
     html = html.replace("/*__BAR_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "bar_cards.json").read_text() + ");")
     html = html.replace("/*__SLEEP_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "sleep_cards.json").read_text() + ");")
@@ -480,11 +481,11 @@ def main():
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(audio_root / name, target)
     audio_version = hashlib.sha256(b"".join(hashlib.sha256((audio_root / name).read_bytes()).digest() for name in audio_files)).hexdigest()[:12]
-    audio_js = (SRC.parent / "audio.js").read_text().replace("/*__AUDIO_FILES__*/null", json.dumps(audio_files)).replace("/*__AUDIO_VERSION__*/null", json.dumps(audio_version))
+    audio_js = ((SRC.parent / "audio_scene.js").read_text() + "\n" + (SRC.parent / "audio.js").read_text()).replace("/*__AUDIO_FILES__*/null", json.dumps(audio_files)).replace("/*__AUDIO_VERSION__*/null", json.dumps(audio_version))
     # First hover/click/ring must not wait for a new network request. Only these
     # tiny cues travel inline; music and longer Foley remain streamed on demand.
     immediate = {"ui-click", "ui-open", "ui-close", "ui-card", "ui-result", "ui-message", "phone-ring", "phone-answer", "phone-decline", "bell"}
-    inline_audio = {name: base64.b64encode((audio_root / name).read_bytes()).decode("ascii") for name in audio_files if name.startswith("SFX/game/") and Path(name).stem in immediate}
+    inline_audio = {name: base64.b64encode((audio_root / name).read_bytes()).decode("ascii") for name in audio_files if name.startswith("SFX/game/") and (Path(name).stem in immediate or Path(name).stem.startswith("emotion-"))}
     html = html.replace("/*__GAME_AUDIO_JS__*/", audio_js.replace("/*__AUDIO_INLINE__*/null", json.dumps(inline_audio)))
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")

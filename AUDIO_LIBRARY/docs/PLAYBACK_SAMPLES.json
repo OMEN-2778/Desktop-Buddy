@@ -1,5 +1,149 @@
 [
   {
+    "id": "real-door-cc0",
+    "source": "SFX/real-door-cc0.mp3",
+    "file": "SFX/processed/real-door-cc0.mp3",
+    "offset": 0,
+    "duration": 1.4,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-fabric-cc0",
+    "source": "SFX/real-fabric-cc0.mp3",
+    "file": "SFX/processed/real-fabric-cc0.mp3",
+    "offset": 0,
+    "duration": 1.2,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-chair-cc0",
+    "source": "SFX/real-chair-cc0.mp3",
+    "file": "SFX/processed/real-chair-cc0.mp3",
+    "offset": 0,
+    "duration": 1.1,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-cup-cc0",
+    "source": "SFX/real-cup-cc0.mp3",
+    "file": "SFX/processed/real-cup-cc0.mp3",
+    "offset": 0,
+    "duration": 1.2,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-ice-cc0",
+    "source": "SFX/real-ice-cc0.mp3",
+    "file": "SFX/processed/real-ice-cc0.mp3",
+    "offset": 0,
+    "duration": 1.8,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-shaker-cc0",
+    "source": "SFX/real-shaker-cc0.mp3",
+    "file": "SFX/processed/real-shaker-cc0.mp3",
+    "offset": 0,
+    "duration": 2.4,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-lake-cc0",
+    "source": "SFX/real-lake-cc0.mp3",
+    "file": "SFX/processed/real-lake-cc0.mp3",
+    "offset": 2,
+    "duration": 19.5,
+    "loop": true,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-boat-cc0",
+    "source": "SFX/real-boat-cc0.mp3",
+    "file": "SFX/processed/real-boat-cc0.mp3",
+    "offset": 0,
+    "duration": 2.5,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-horn-cc0",
+    "source": "SFX/real-horn-cc0.mp3",
+    "file": "SFX/processed/real-horn-cc0.mp3",
+    "offset": 0,
+    "duration": 4.0,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-night-cc0",
+    "source": "SFX/real-night-cc0.mp3",
+    "file": "SFX/processed/real-night-cc0.mp3",
+    "offset": 2,
+    "duration": 19.5,
+    "loop": true,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-fridge-cc0",
+    "source": "SFX/real-fridge-cc0.mp3",
+    "file": "SFX/processed/real-fridge-cc0.mp3",
+    "offset": 0,
+    "duration": 2.2,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-auto-door-cc0",
+    "source": "SFX/real-auto-door-cc0.mp3",
+    "file": "SFX/processed/real-auto-door-cc0.mp3",
+    "offset": 0,
+    "duration": 2.6,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-sea-cc0",
+    "source": "SFX/real-sea-cc0.mp3",
+    "file": "SFX/processed/real-sea-cc0.mp3",
+    "offset": 2,
+    "duration": 19.27,
+    "loop": true,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-gulls-cc0",
+    "source": "SFX/real-gulls-cc0.mp3",
+    "file": "SFX/processed/real-gulls-cc0.mp3",
+    "offset": 0,
+    "duration": 0.395,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-boil-cc0",
+    "source": "SFX/real-boil-cc0.mp3",
+    "file": "SFX/processed/real-boil-cc0.mp3",
+    "offset": 2,
+    "duration": 15.5,
+    "loop": true,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
+    "id": "real-checkout-cc0",
+    "source": "SFX/real-checkout-cc0.mp3",
+    "file": "SFX/processed/real-checkout-cc0.mp3",
+    "offset": 0,
+    "duration": 1.1,
+    "loop": false,
+    "license": "CC0 — see LICENSES.md"
+  },
+  {
     "id": "real-water-running-cc0",
     "source": "SFX/real-water-running-cc0.mp3",
     "file": "SFX/processed/real-water-running-cc0.mp3",

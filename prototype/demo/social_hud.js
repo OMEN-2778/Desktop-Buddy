@@ -288,7 +288,7 @@ function showIncomingCall(){
   for(const [selector,key]of [['.call-answer',phoneCall.kind==='friend_home'?'invite':'answer'],['.call-decline',phoneCall.kind==='friend_home'?'later':'decline']])incomingCall.querySelector(selector).style.setProperty('--hud-relief-img',`url(${D.uiRelief[key]})`);
   incomingCall.querySelector('.caller-copy span').textContent=phoneCall.kind==='friend_home'?pick(FRIEND_VISIT_TEXT.invitations):phoneCall.kind==='video'?'打来视频':'打来电话';
   drawContactAvatar(incomingCall.querySelector('canvas'),c);incomingCall.classList.remove('accepting','declining');incomingCall.hidden=false;
-  moodTalk.classList.add('phone-active');phoneCall.phase='ringing';phoneCall.deadline=now+6000;incomingCall.style.setProperty('--call-remaining',1);
+  moodTalk.classList.add('phone-active');phoneCall.phase='ringing';gameAudio.tick(true);phoneCall.deadline=now+6000;incomingCall.style.setProperty('--call-remaining',1);
   phoneCall.returnFocus=document.activeElement;incomingCall.querySelector('.call-answer').focus({preventScroll:true});
   phoneCall.timeout=setTimeout(()=>finishIncomingCall(false,true),6000);
   c.lastIncoming=sim.t;socialState.nextCall=sim.t+180+Math.random()*300;

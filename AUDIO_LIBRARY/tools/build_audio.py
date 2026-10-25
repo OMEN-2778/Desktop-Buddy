@@ -98,6 +98,7 @@ def main():
         raise RuntimeError(f"Missing SFX: {missing}")
     run(["python3", LIB / "tools" / "build_game_sfx.py"])
     run(["python3", LIB / "tools" / "prepare_game_samples.py"])
+    run(["python3", LIB / "tools" / "build_emotion_cues.py"])
     report = {
         "bgm_count": len(OUTPUTS),
         "source_sfx_count": len(CC0_SFX),

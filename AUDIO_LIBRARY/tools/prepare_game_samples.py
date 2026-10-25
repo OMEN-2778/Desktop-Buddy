@@ -8,6 +8,23 @@ ROOT=Path(__file__).resolve().parents[1]
 SR=24000
 # source id: offset, length, target RMS, loop
 CUTS={
+ 'real-door-cc0':(0, 1.4, 0.035, False),
+ 'real-fabric-cc0':(0, 1.2, 0.03, False),
+ 'real-chair-cc0':(0, 1.1, 0.025, False),
+ 'real-cup-cc0':(0, 1.2, 0.035, False),
+ 'real-ice-cc0':(0, 1.8, 0.04, False),
+ 'real-shaker-cc0':(0, 2.4, 0.04, False),
+ 'real-lake-cc0':(2, 20, 0.065, True),
+ 'real-boat-cc0':(0, 2.5, 0.035, False),
+ 'real-horn-cc0':(0, 4, 0.04, False),
+ 'real-night-cc0':(2, 20, 0.04, True),
+ 'real-fridge-cc0':(0, 2.2, 0.035, False),
+ 'real-auto-door-cc0':(0, 2.6, 0.035, False),
+ 'real-sea-cc0':(2, 20, 0.065, True),
+ 'real-gulls-cc0':(0, 2, 0.04, False),
+ 'real-boil-cc0':(2, 16, 0.035, True),
+ 'real-checkout-cc0':(0, 1.1, 0.025, False),
+
  'real-water-running-cc0':(2,14,.045,True),
  'real-pour-water-cc0':(0,3,.06,False),
  'real-page-turn-cc0':(0,1.5,.04,False),
@@ -32,8 +49,17 @@ def main():
  report=[]
  for name,(start,length,target,loop) in CUTS.items():
   source=ROOT/'SFX'/(name+'.mp3')
-  data=subprocess.check_output(['ffmpeg','-v','error','-ss',str(start),'-i',str(source),'-t',str(length),'-f','f32le','-ac','1','-ar',str(SR),'pipe:1'])
-  a=np.frombuffer(data,dtype=np.float32).copy();a-=a.mean();rms=float(np.sqrt(np.mean(a*a)))
+  trim_onset=name in {'real-fabric-cc0', 'real-boat-cc0', 'real-cup-cc0', 'real-chair-cc0', 'real-checkout-cc0', 'real-horn-cc0', 'real-auto-door-cc0', 'real-gulls-cc0', 'real-door-cc0', 'real-fridge-cc0', 'real-shaker-cc0', 'real-ice-cc0'}
+  capture_length=length+4 if trim_onset else length
+  data=subprocess.check_output(['ffmpeg','-v','error','-ss',str(start),'-i',str(source),'-t',str(capture_length),'-f','f32le','-ac','1','-ar',str(SR),'pipe:1'])
+  a=np.frombuffer(data,dtype=np.float32).copy()
+  if trim_onset and len(a):
+   width=int(.025*SR);rms_windows=np.array([np.sqrt(np.mean(a[i:i+width]**2)) for i in range(0,len(a),width)])
+   active=np.flatnonzero(rms_windows>max(.0005,float(rms_windows.max())*.12))
+   at=max(0,int(active[0])*width-int(.035*SR)) if len(active) else 0
+   a=a[at:at+int(length*SR)]
+  if not len(a):raise ValueError('Empty recording '+name)
+  a-=a.mean();rms=float(np.sqrt(np.mean(a*a)))
   a*=min(6,target/max(rms,.001));peak=float(abs(a).max())
   if peak>.78:a*=.78/peak
   if loop:
