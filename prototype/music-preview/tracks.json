@@ -2,13 +2,13 @@
   {
     "id": "spring-summer-day",
     "label": "春夏 · 白天",
-    "title": "海风拐了个弯",
     "file": "audio/seaside-impression.mp3",
     "midi": "audio/seaside-impression.mid",
     "duration": 107.857,
     "peak": 0.78,
     "rms_db": -20.44,
     "notes": 1262,
+    "title": "海风拐了个弯",
     "bpm": 84,
     "meter": "6/8",
     "key": "D 大调",
@@ -61,42 +61,45 @@
     ]
   },
   {
-    "duration": 135.909,
-    "peak": 0.5039,
+    "duration": 121.757,
+    "peak": 0.5472,
     "rms_db": -22.0,
-    "notes": 679,
+    "notes": 600,
     "id": "spring-summer-night",
     "label": "春夏 · 黑夜",
     "title": "末班船以后",
     "file": "audio/spring-summer-night.mp3",
     "midi": "audio/spring-summer-night.mid",
-    "bpm": 66,
-    "meter": "6/8"
+    "bpm": 74,
+    "meter": "6/8",
+    "revision": 2
   },
   {
-    "duration": 125.0,
-    "peak": 0.6421,
+    "duration": 132.059,
+    "peak": 0.5678,
     "rms_db": -21.0,
-    "notes": 870,
+    "notes": 603,
     "id": "autumn-winter-day",
     "label": "秋冬 · 白天",
     "title": "旧码头的风",
     "file": "audio/autumn-winter-day.mp3",
     "midi": "audio/autumn-winter-day.mid",
-    "bpm": 72,
-    "meter": "3/4"
+    "bpm": 68,
+    "meter": "6/8",
+    "revision": 2
   },
   {
-    "duration": 149.0,
-    "peak": 0.5409,
+    "duration": 144.355,
+    "peak": 0.4733,
     "rms_db": -22.0,
-    "notes": 578,
+    "notes": 600,
     "id": "autumn-winter-night",
     "label": "秋冬 · 黑夜",
     "title": "灯塔还亮着",
     "file": "audio/autumn-winter-night.mp3",
     "midi": "audio/autumn-winter-night.mid",
-    "bpm": 60,
-    "meter": "6/8"
+    "bpm": 62,
+    "meter": "6/8",
+    "revision": 2
   }
 ]
