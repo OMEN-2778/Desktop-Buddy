@@ -198,7 +198,7 @@ const gameAudio = (() => {
   // Observe logical expansion, not every animation frame. One opening gets one
   // sound; filling a list or moving the pointer inside an open panel is silent.
   function installUI(){
-    const hiddenIds=['picker','card','cardRes','ring','diaryPop','moodTip','skyTip','studio','guide','update','petPanel'];
+    const hiddenIds=['picker','card','cardRes','ring','diaryPop','moodTip','skyTip','studio','guide','update','petPanel','petMini'];
     const roots=hiddenIds.map(id=>({el:document.getElementById(id),active:el=>!el.hidden}));
     for(const id of ['needs','setGear','networkTrigger'])roots.push({el:document.getElementById(id),active:el=>el.getAttribute('aria-expanded')==='true'});
     for(const id of ['contactsPanel','contactActions'])roots.push({el:document.getElementById(id),active:el=>el.getAttribute('aria-hidden')==='false'});

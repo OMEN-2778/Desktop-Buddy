@@ -20,7 +20,7 @@ petPanel.innerHTML='<header><h3></h3><button type="button" class="pet-close" ari
 document.getElementById('widget').append(petPanel);petPanel.querySelector('.pet-close').onclick=closePetPanel;
 function petNode(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
 function petButton(text,fn,cls){const b=petNode('button',text,cls);b.type='button';b.onclick=()=>{gameAudio.sound('ui-click',.35);fn();};return b;}
-function fitPetPanel(){if(petPanel.hidden)return;overHouse(petPanel);petPanel.dataset.compact=String(view.offsetWidth<520);}
+function fitPetPanel(){fitPetMini();if(petPanel.hidden)return;overHouse(petPanel);petPanel.dataset.compact=String(view.offsetWidth<520);}
 function closePetPanel(){petPanel.hidden=true;petPanelPage=null;petSelection=null;for(const id of petImages.keys())if(id!==petState.pet?.breed){petImages.delete(id);petImageLoads.delete(id);}}
 function petSheet(title,page){closeRing();closePicker();setContactsOpen(false);petPanelPage=page;petPanel.dataset.page=page;petPanel.querySelector('h3').textContent=title;petPanel.hidden=false;const body=petPanel.querySelector('.pet-panel-body');body.replaceChildren();fitPetPanel();petPanel.focus({preventScroll:true});return body;}
 function petRefusal(){const reason=PetRules.refusal(petState,sim.t);if(!reason)return false;const body=petSheet('收容所的回复','notice');body.append(petNode('p',reason==='ban'?`这次走失后，我们想先给你和小家伙一点时间。请在 ${Math.ceil((petState.banUntil-sim.t)/1440)} 天后再来申请领养。`:petState.pet.status==='pending'?'送养安排已经记下啦，小家伙还在路上。每个家庭只能领养一只宠物哦。':'家里已经有一位毛茸茸的成员啦，每个家庭只能领养一只宠物。'));body.append(petButton('我知道了',closePetPanel));return true;}
@@ -36,15 +36,13 @@ function petNaming(offer){
  const dice=petButton('',()=>{const pool=PET_TEXT.petNames.filter(name=>name!==input.value);input.value=pool[Math.floor(PetRules.random(petState)*pool.length)];error.hidden=true;input.focus();},'pet-die');
  dice.setAttribute('aria-label','随机起个宠物名字');dice.title='随机起个宠物名字';
  dice.innerHTML=`<svg width="20" height="20" viewBox="0 0 10 10" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">${DIE.flatMap((row,y)=>[...row].map((c,x)=>c==='#'?`<rect x="${x}" y="${y}" width="1" height="1"/>`:'')).join('')}</svg>`;
- nameRow.append(input,dice);const error=petNode('p','','pet-error');error.hidden=true;error.setAttribute('role','alert');body.append(nameRow,error);
+ const field=petNode('label',undefined,'pet-name-field');field.append(input);nameRow.append(field,dice);const error=petNode('p','','pet-error');error.hidden=true;error.setAttribute('role','alert');body.append(nameRow,error);
  const submit=()=>{if(petRefusal())return;if(!PetRules.adopt(petState,offer,input.value,sim.t)){error.hidden=false;error.textContent='给小家伙起个名字吧（最多 8 个字）';return;}ensurePetImage(offer.breed);log(`感谢您的领养，「${petName()}」大概一天后就会送到您家！`);speak('得把家里收拾一下，等新室友报到！',true);closePetPanel();autoSave();};
  input.oninput=()=>{input.value=[...input.value].slice(0,8).join('');error.hidden=true;};input.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')submit();};body.append(petButton('就叫这个！',submit,'pet-positive'));requestAnimationFrame(()=>input.focus());
 }
 function paintPetPortrait(canvas,id){
  if(!petImages.has(id)){ensurePetImage(id).then(()=>paintPetPortrait(canvas,id));return;}const ctx=canvas.getContext('2d'),b=petBreed(id),clip=petClips.get(id)?.get('idle:right'),img=petImages.get(id);ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);if(img&&clip)ctx.drawImage(img,0,clip.row*28,32,28,0,0,canvas.width,canvas.height);}
-function openPetCare(){const p=petState.pet,body=petSheet(p?`${p.name} · ${petTraits(p)}`:'宠物用品','care');if(p){const status={pending:'还在送养路上，约一天后到家',home:'在家',away:'走失中，正在等消息',lost:'暂时没有找到它'}[p.status];body.append(petNode('p',status));if(p.status==='home'){const needs=petNode('div',undefined,'pet-needs');for(const [key,label] of [['hunger','饱腹'],['energy','精力'],['company','陪伴']]){const line=petNode('label',label+' '+Math.round(p.needs[key]));const meter=document.createElement('meter');meter.min=0;meter.max=100;meter.value=p.needs[key];line.append(meter);needs.append(line);}body.append(needs);const actions=petNode('div',undefined,'pet-options');for(const [id,label] of [['pat','摸摸'],['play','陪它玩'],['groom','梳梳毛'],['train','练个小动作'],['talk','跟它说说话'],['call','叫过来']])actions.append(petButton(label,()=>petInteract(id)));body.append(actions);}}
- body.append(petNode('p',`自动喂食机：${Math.floor(petState.feeder)} / 900`),petButton('添满粮食',()=>{if(!petIsHome()){showHint('回家后再添粮吧');return;}petState.feeder=900;log(petText('refill'));autoSave();openPetCare();}));
-}
+
 function petPoint(){const p=petState.pet;if(!p)return {x:155,y:FLOOR_Y[0]};if(p.motion?.route)return routePos(p.motion.route,p.motion.s);return p.position||{x:155,y:FLOOR_Y[0]};}
 function petWalkTo(x,y,after='idle',duration=20){const p=petState.pet,from=petPoint();p.motion={route:planRoute(from.x,from.y,x,y),s:0,after,duration};p.activityNow='walk';}
 function petStartAction(action,duration){const p=petState.pet;p.animTime=0;p.activityNow=action;if(action==='eat')p.direction='left';p.actionUntil=sim.t+duration;p.motion=null;}
@@ -80,17 +78,17 @@ function tickPets(from,to){if(!(to>from)||friendHousePreview||visitSleepPreview)
 }
 function petClip(){const p=petState.pet;if(!p)return null;const id=p.activityNow||'idle',direction=p.direction||'right';return petClips.get(p.breed)?.get(id+':'+direction)||petClips.get(p.breed)?.get('idle:right');}
 function petSpriteFrame(){const c=petClip(),p=petState.pet;return c?Math.floor((p?.animTime||0)*1000/c.ms)%c.frames:0;}
-function drawPetKit(ctx){if(!petState.installed||!petIsHome())return;const mat=petFurnitureImages.pet_mat,feeder=petFurnitureImages.pet_feeder;if(mat)ctx.drawImage(mat,142,FLOOR_Y[0]-5);if(feeder)ctx.drawImage(feeder,91,FLOOR_Y[0]-21);if(petHover==='feeder'&&feeder)drawObjectHover(ctx,feeder,91,FLOOR_Y[0]-21);if(petHover==='mat'&&mat)drawObjectHover(ctx,mat,142,FLOOR_Y[0]-5);}
-function drawPetActor(ctx){if(!petCanSee())return;const p=petState.pet,clip=petClip(),img=petImages.get(p.breed),point=petPoint();if(!clip||!img)return;const x=Math.round(point.x-16),y=Math.round(point.y-25),frame=petSpriteFrame();ctx.drawImage(img,frame*32,clip.row*28,32,28,x,y,32,28);
- if(petHover==='pet'){const key=p.breed+':'+clip.row+':'+frame;let c=petFrameCache.get(key);if(!c){c=document.createElement('canvas');c.width=32;c.height=28;c.getContext('2d').drawImage(img,frame*32,clip.row*28,32,28,0,0,32,28);petFrameCache.set(key,c);if(petFrameCache.size>96)petFrameCache.delete(petFrameCache.keys().next().value);}drawObjectHover(ctx,c,x,y);}
-}
+function drawPetKit(ctx){if(!petState.installed||!petIsHome())return;const mat=petMatImage(),feeder=petFurnitureImages.pet_feeder;if(mat)ctx.drawImage(mat,142,FLOOR_Y[0]-5);if(feeder)ctx.drawImage(feeder,91,FLOOR_Y[0]-21);if(petHover==='feeder'&&feeder)drawObjectHover(ctx,feeder,91,FLOOR_Y[0]-21);if(petHover==='mat'&&mat)drawObjectHover(ctx,mat,142,FLOOR_Y[0]-5);}
 const petFrameCache=new Map();
-function petHit(x,y){if(!petIsHome())return null;if(petCanSee()){const p=petPoint();if(Math.abs(x-p.x)<13&&y>p.y-22&&y<=p.y+1)return 'pet';}if(!petState.installed)return null;for(const [id,img,ox,oy] of [['feeder',petFurnitureImages.pet_feeder,91,FLOOR_Y[0]-21],['mat',petFurnitureImages.pet_mat,142,FLOOR_Y[0]-5]]){if(img){if(!outlineCache.has(img))outlineCache.set(img,outlineShape(img));if(outlineCache.get(img).near.has(Math.floor(x-ox)+','+Math.floor(y-oy)))return id;}}return null;}
+function petFrameCanvas(){const p=petState.pet,c=petClip(),img=p&&petImages.get(p.breed);if(!c||!img)return null;const frame=petSpriteFrame(),key=p.breed+':'+c.row+':'+frame;let canvas=petFrameCache.get(key);if(!canvas){canvas=document.createElement('canvas');canvas.width=32;canvas.height=28;canvas.getContext('2d').drawImage(img,frame*32,c.row*28,32,28,0,0,32,28);petFrameCache.set(key,canvas);if(petFrameCache.size>96)petFrameCache.delete(petFrameCache.keys().next().value);}return canvas;}
+function drawPetActor(ctx){if(!petCanSee())return;const img=petFrameCanvas(),point=petPoint();if(!img)return;const x=Math.round(point.x-16),y=Math.round(point.y-25);ctx.drawImage(img,x,y);if(petHover==='pet')drawObjectHover(ctx,img,x,y);}
+function petHit(x,y){if(!petIsHome())return null;const shapes=[];if(petCanSee()){const p=petPoint();shapes.push(['pet',petFrameCanvas(),Math.round(p.x-16),Math.round(p.y-25)]);}if(petState.installed)shapes.push(['feeder',petFurnitureImages.pet_feeder,91,FLOOR_Y[0]-21],['mat',petMatImage(),142,FLOOR_Y[0]-5]);for(const [id,img,ox,oy]of shapes)if(img){if(!outlineCache.has(img))outlineCache.set(img,outlineShape(img));if(outlineCache.get(img).near.has(Math.floor(x-ox)+','+Math.floor(y-oy)))return id;}return null;}
+
 const petImageLoads=new Map();
 function ensurePetImage(id){if(petImages.has(id))return Promise.resolve(petImages.get(id));if(!petImageLoads.has(id))petImageLoads.set(id,loadImg(petBreed(id).image).then(img=>{petImages.set(id,img);return img;}));return petImageLoads.get(id);}
 async function loadPets(){if(petState.pet)await ensurePetImage(petState.pet.breed);await Promise.all(Object.entries(D.pets.furniture).map(async([id,src])=>petFurnitureImages[id]=await loadImg(src)));}
 function petSnapshot(){const data=JSON.parse(JSON.stringify(petState));if(data.pet){const p=petPoint();data.pet.position={x:p.x,y:p.y};data.pet.motion=null;data.pet.interaction=null;data.pet.reservedUntil=0;}return data;}
-function restorePets(raw){petState=PetRules.restore(raw,D.pets.breeds);if(petState.pet){const p=petState.pet;if(p.position){p.position.x=Math.max(18,Math.min(324,p.position.x));p.position.y=FLOOR_Y[storeyOfY(p.position.y)];}p.actionUntil=0;ensurePetImage(p.breed);}closePetPanel();petHover=null;}
+function restorePets(raw){petState=PetRules.restore(raw,D.pets.breeds);if(petState.pet){const p=petState.pet;if(p.position){p.position.x=Math.max(18,Math.min(324,p.position.x));p.position.y=FLOOR_Y[storeyOfY(p.position.y)];}p.actionUntil=0;ensurePetImage(p.breed);}closePetPanel();closePetMini();petHover=null;}
 RINGS.computer.push(['pet_adopt','领养宠物']);RINGS.phone.splice(RINGS.phone.length-1,0,['pet_adopt','领养宠物']);
 window.addEventListener('resize',fitPetPanel);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!petPanel.hidden){e.preventDefault();closePetPanel();}});
 
@@ -127,3 +125,21 @@ function tickGuestPet(g,c){const p=petState.pet;if(!petCanSee()||g.sleeping||asl
  g.petNext=sim.t+40+PetRules.random(petState)*40;g.petVisit={target:{x:Math.max(23,Math.min(318,point.x+(point.x>160?-18:18))),y:point.y},until:sim.t+40,action:PetRules.random(petState)<.5?'nuzzle':'play',started:false};
  p.position={x:point.x,y:point.y};petStartAction('look',40);p.reservedUntil=sim.t+40;
 }
+
+// Small object popovers carry only the task at hand; personality is shown
+// in the adoption list only. In daily life it is expressed by the actor.
+const petMini=petNode('section',undefined,'pet-mini');petMini.id='petMini';petMini.hidden=true;petMini.setAttribute('role','dialog');document.getElementById('widget').append(petMini);
+const petMatImage=()=>petFurnitureImages['pet_mat_'+petState.matColor]||petFurnitureImages.pet_mat;
+function feederDescription(amount){return '看起来还剩'+(amount>600?'很多':amount>=400?'一些':amount>=100?'不多':amount>=10?'一点点':'两粒');}
+function closePetMini(){petMini.hidden=true;}
+function openPetMini(kind,label){closePetPanel();closeRing();petMini.dataset.kind=kind;petMini.setAttribute('aria-label',label);petMini.replaceChildren();petMini.hidden=false;return petMini;}
+function openPetFeeder(){if(!petState.installed||!petIsHome())return;const panel=openPetMini('feeder','自动喂食机');panel.append(petNode('span',feederDescription(petState.feeder)),petButton('加满！',()=>{petState.feeder=900;log(petText('refill'));autoSave();fitPetMini();},'pet-refill'));fitPetMini();}
+function openPetMatColors(){if(!petState.installed||!petIsHome())return;const panel=openPetMini('mat','睡垫颜色');panel.append(petNode('strong','睡垫颜色'));const colors=petNode('div',undefined,'pet-mat-colors');for(const color of D.pets.matColors){const b=petButton('',()=>{petState.matColor=color.id;for(const button of colors.children)button.setAttribute('aria-pressed',String(button.dataset.color===color.id));autoSave();render();});b.dataset.color=color.id;b.setAttribute('aria-label',color.name);b.setAttribute('aria-pressed',String(petState.matColor===color.id));const swatch=petNode('i');swatch.style.backgroundColor=color.color;swatch.setAttribute('aria-hidden','true');b.append(swatch,petNode('span',color.name));colors.append(b);}panel.append(colors);fitPetMini();}
+function fitPetMini(){if(petMini.hidden)return;if(!petIsHome()){closePetMini();return;}if(petMini.dataset.kind==='feeder'){const label=petMini.querySelector('span'),text=feederDescription(petState.feeder);if(label.textContent!==text)label.textContent=text;}
+ const mat=petMini.dataset.kind==='mat',x=mat?155:103,padding=4,w=view.offsetWidth;petMini.style.maxWidth=Math.max(0,w-padding*2)+'px';const pw=petMini.offsetWidth,ph=petMini.offsetHeight;
+ petMini.style.left=view.offsetLeft+Math.max(padding,Math.min(w-pw-padding,x*scale-pw/2))+'px';petMini.style.top=view.offsetTop+Math.max(padding,Math.min(view.offsetHeight-ph-padding,(FLOOR_Y[0]-28)*scale-ph))+'px';
+}
+function openPetInteractions(){if(!petCanSee())return;closePetPanel();closePetMini();openRing('pet','pet');}
+RINGS.pet=[['name',null,'label'],['pet:pat','摸摸'],['pet:play','陪它玩'],['pet:groom','梳梳毛'],['pet:train','练个小动作'],['pet:talk','跟它说说话'],['pet:call','叫过来']];
+document.addEventListener('pointerdown',e=>{if(!petMini.hidden&&!petMini.contains(e.target))closePetMini();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePetMini();});

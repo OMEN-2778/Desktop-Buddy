@@ -12,11 +12,13 @@ def feeder():
  for x in (13,16,18):s.set(x,18,P.oat[3])
  return s
 
-def mat():
+def mat(ramp=P.sage):
  s=Sprite(26,9)
- s.ellipse(13,5,12,3,P.sage[0]).ellipse(12,4,12,3,P.sage[2]).ellipse(12,3,11,2,P.sage[3]).ellipse(12,4,8,1,P.sage[1])
- s.hline(6,17,1,P.sage[4]).hline(7,18,6,P.sage[2])
- for x in (4,9,14,19):s.set(x,3,P.sage[2])
+ s.ellipse(13,5,12,3,ramp[0]).ellipse(12,4,12,3,ramp[2]).ellipse(12,3,11,2,ramp[3]).ellipse(12,4,8,1,ramp[1])
+ s.hline(6,17,1,ramp[-1]).hline(7,18,6,ramp[2])
+ for x in (4,9,14,19):s.set(x,3,ramp[2])
  return s
 
-def build():return {'pet_feeder':feeder(),'pet_mat':mat()}
+MAT_COLORS={'sage':('鼠尾草',P.sage),'blue':('雾蓝',P.sky_soft),'rose':('浅玫瑰',P.wall_blush),'cream':('奶油',P.wall_butter),'lilac':('灰紫',P.linen),'clay':('陶土',P.clay)}
+
+def build():return {'pet_feeder':feeder(),'pet_mat':mat(),**{'pet_mat_'+key:mat(ramp) for key,(_,ramp) in MAT_COLORS.items()}}

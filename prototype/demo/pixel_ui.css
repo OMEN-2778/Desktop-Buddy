@@ -1,0 +1,31 @@
+/* One set of original palette-only nine-slice frames. Corners contain only
+   square pixels; no browser border-radius or clipped rectangular border. */
+:is(#petPanel,#petPanel button,.pet-name-field,.pet-mini,.pet-mini button,.audio-volume output,.audio-slider,.update,.update button){isolation:isolate;border:0;border-radius:0;background:none;box-shadow:none;clip-path:none;color:var(--ink);image-rendering:pixelated}
+:is(#petPanel button,.pet-name-field,.pet-mini button,.audio-volume output,.audio-slider,.update button){position:relative}
+:where(#petPanel,#petPanel button,.pet-name-field,.pet-mini,.pet-mini button,.audio-volume output,.audio-slider,.update,.update button)::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;border:8px solid transparent;border-image:var(--pixel-control) 8 fill / 8px;image-rendering:pixelated}
+#petPanel::before{border-width:12px;border-image:var(--pixel-panel) 12 fill / 12px}
+#petPanel .pet-positive::before,.pet-mat-colors button[aria-pressed=true]::before{border-image-source:var(--pixel-positive)}
+.pet-name-field::before{border-image-source:var(--pixel-input)}
+.pet-mini::before,.update::before{border-width:19px;border-image:var(--pixel-pill) 19 fill / 19px}
+.pet-mini[data-kind=mat]::before{border-width:12px;border-image:var(--pixel-panel) 12 fill / 12px}
+.pet-mini .pet-refill::before{border-width:19px;border-image:var(--pixel-gold-pill) 19 fill / 19px}
+#petPanel,.pet-mini,.update{filter:drop-shadow(2px 2px 0 var(--shadow))}
+.update{padding:7px 12px;overflow:visible}
+.update .up-go::before{border-image-source:var(--pixel-positive)}
+.update button{padding:4px 10px}
+.update .up-bar{left:12px;bottom:3px;max-width:calc(100% - 24px)}
+.audio-volume{grid-template-columns:minmax(0,1fr) 48px;gap:8px;min-height:34px}
+.audio-volume output{padding:5px 2px;min-height:32px}
+.audio-slider{height:32px;min-width:0}
+.audio-slider::before{inset:8px 0;border-image-source:var(--pixel-track)}
+.audio-fill{position:absolute;left:5px;right:5px;top:14px;height:4px;background:linear-gradient(to right,var(--accent) var(--volume),var(--panel-2) var(--volume));pointer-events:none}
+.audio-volume input{display:block;appearance:none;-webkit-appearance:none;width:100%;height:32px;min-width:0;margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;cursor:pointer;image-rendering:pixelated}
+.audio-volume input::-webkit-slider-runnable-track{height:32px;background:transparent;border:0}
+.audio-volume input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:14px;height:24px;margin-top:4px;border:0;border-radius:0;box-shadow:none;background:var(--pixel-thumb) center/14px 24px no-repeat;image-rendering:pixelated}
+.audio-volume input::-moz-range-track{height:32px;background:transparent;border:0}
+.audio-volume input::-moz-range-thumb{width:14px;height:24px;border:0;border-radius:0;box-shadow:none;background:var(--pixel-thumb) center/14px 24px no-repeat;image-rendering:pixelated}
+.audio-volume input::-moz-range-progress{background:transparent}
+/* These small legacy labels also use stepped geometry. */
+.gd-n,.diary-pop .talk-btn{border-radius:0;clip-path:var(--hud-small-clip)}
+
+#petPanel .pet-positive,.pet-mat-colors button[aria-pressed=true],.pet-mini .pet-refill,.update .up-go{color:#22182a}

@@ -1,7 +1,7 @@
 // Pure, game-minute pet state. No wall-clock catch-up and no save-file side effects.
 const PetRules = (()=>{
  const DAY=1440,MAX=100,clamp=n=>Math.max(0,Math.min(MAX,n));
- const fresh=(seed=Date.now())=>({version:1,seed:seed>>>0,week:-1,offers:[],pet:null,feeder:0,installed:false,banUntil:0,sadUntil:0});
+ const fresh=(seed=Date.now())=>({version:1,seed:seed>>>0,week:-1,offers:[],pet:null,feeder:0,installed:false,matColor:'sage',banUntil:0,sadUntil:0});
  function random(s){s.seed=(Math.imul(s.seed,1664525)+1013904223)>>>0;return s.seed/4294967296;}
  function weekly(s,t,breeds){const week=Math.floor(t/(7*DAY));if(s.week===week&&s.offers.length===12)return s.offers;s.week=week;s.offers=[];
   for(const species of ['cat','dog']){const list=breeds.filter(b=>b.species===species);for(let i=0;i<6;i++){const breed=list[Math.floor(random(s)*list.length)];s.offers.push({id:`${week}-${species}-${i}`,breed:breed.id,activity:random(s)<.5?'lazy':'active',attachment:random(s)<.5?'independent':'clingy'});}}return s.offers;
@@ -12,7 +12,7 @@ const PetRules = (()=>{
  }
  function restore(raw,breeds){const s=fresh();if(!raw||raw.version!==1)return s;const ids=new Set(breeds.map(b=>b.id)),number=(n,d=0)=>Number.isFinite(n)?Math.max(0,n):d;
   s.seed=Number.isInteger(raw.seed)?raw.seed>>>0:s.seed;s.week=Number.isInteger(raw.week)?raw.week:-1;s.offers=(Array.isArray(raw.offers)?raw.offers:[]).filter(o=>ids.has(o?.breed)&&['lazy','active'].includes(o.activity)&&['independent','clingy'].includes(o.attachment)).slice(0,12);if(s.offers.length!==12)s.week=-1;
-  for(const k of ['feeder','banUntil','sadUntil'])s[k]=number(raw[k]);s.feeder=Math.min(900,s.feeder);s.installed=!!raw.installed;
+  for(const k of ['feeder','banUntil','sadUntil'])s[k]=number(raw[k]);s.feeder=Math.min(900,s.feeder);s.installed=!!raw.installed;s.matColor=['sage','blue','rose','cream','lilac','clay'].includes(raw.matColor)?raw.matColor:'sage';
   const p=raw.pet;if(p&&ids.has(p.breed)&&['pending','home','away','lost'].includes(p.status)){
    s.pet={...p,name:[...String(p.name||'团子')].slice(0,8).join(''),needs:{},low:{},warned:p.warned&&typeof p.warned==='object'?p.warned:{},motion:null,activityNow:'idle',nextEvent:number(p.nextEvent)};
    for(const k of ['hunger','energy','company']){s.pet.needs[k]=clamp(number(p.needs?.[k],100));s.pet.low[k]=number(p.low?.[k]);}

@@ -174,3 +174,28 @@ def build():
             "ui_relief_badge_small": relief_plate(19, 9),
             "ui_relief_answer": relief_plate(),
             "ui_relief_decline": relief_plate(kind="red")}
+
+
+def pixel_surface(kind='panel', dark=False):
+    """Nine-slice UI surface: square 2px steps and an unbroken 2px outline.
+
+    Light comes from top-left. No CSS radius or antialiased corner is needed.
+    Panel slice=12, pill=19, other controls=8; thumb is used at native size.
+    """
+    w,h,r = (32,32,10) if kind=='panel' else (40,40,18) if kind in ('pill','gold-pill') else (14,24,4) if kind=='thumb' else (24,24,6)
+    face,hi,lo=(P.hair_black[1],P.hair_black[2],P.hair_black[0]) if dark else (P.linen[3],P.linen[3],P.linen[1])
+    if kind in ('control','thumb'):face,hi,lo=(P.hair_black[2],P.hair_black[3],P.hair_black[1]) if dark else (P.linen[2],P.linen[3],P.linen[1])
+    if kind=='positive':face,hi,lo=P.sage[3],P.sage[4],P.sage[1]
+    if kind in ('gold','gold-pill'):face,hi,lo=P.birch[3],P.birch[4],P.birch[1]
+    if kind=='track':face,hi,lo=(P.hair_black[1],P.hair_black[2],P.hair_black[0]) if dark else (P.linen[2],P.linen[3],P.linen[1])
+    mask=set()
+    for y in range(h):
+        row=min(y,h-1-y)
+        inset=0 if row>=r else int(math.ceil((r-math.sqrt(max(0,r*r-(r-row-.5)**2)))/2)*2)
+        for x in range(inset,w-inset):mask.add((x,y))
+    s=Sprite(w,h)
+    for x,y in mask:
+        edge=any((x+dx,y+dy) not in mask for dx,dy in ((2,0),(-2,0),(0,2),(0,-2)))
+        color=P.ink[0] if edge else hi if (x-3,y) not in mask or (x,y-3) not in mask else lo if (x+3,y) not in mask or (x,y+3) not in mask else face
+        s.set(x,y,color)
+    return s

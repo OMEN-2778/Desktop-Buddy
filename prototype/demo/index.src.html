@@ -6,6 +6,7 @@
 <style>
 /*__UI_CSS__*/
 /*__PETS_CSS__*/
+/*__PIXEL_UI_CSS__*/
 </style>
 
 <input type="file" id="importSave" accept=".json,application/json" hidden>
@@ -2462,13 +2463,14 @@ const SETTINGS = [
     } },
   ...[['背景音乐','bgm'],['音效','sfx']].map(([label,channel])=>({label,role:'group',items:()=>{
     const box=document.createElement('div');box.className='audio-volume';
+    const track=document.createElement('div');track.className='audio-slider';const fill=document.createElement('i');fill.className='audio-fill';fill.setAttribute('aria-hidden','true');
     const slider=document.createElement('input');slider.type='range';slider.min=0;slider.max=100;slider.step=1;
     slider.value=prefs[channel+'Volume'];slider.dataset.audioChannel=channel;slider.setAttribute('aria-label',label+'音量');
     const value=document.createElement('output');value.htmlFor=slider.id='volume-'+channel;
-    const show=()=>{value.textContent=slider.value+'%';slider.style.setProperty('--volume',slider.value+'%');slider.setAttribute('aria-valuetext',slider.value==='0'?'关闭':slider.value+'%');};
+    const show=()=>{value.textContent=slider.value+'%';slider.style.setProperty('--volume',slider.value+'%');track.style.setProperty('--volume',slider.value+'%');slider.setAttribute('aria-valuetext',slider.value==='0'?'关闭':slider.value+'%');};
     slider.addEventListener('input',()=>{gameAudio.setVolume(channel,Number(slider.value));show();});
     slider.addEventListener('change',()=>{if(channel==='sfx')gameAudio.sound('ui-click',.65);});
-    show();box.append(slider,value);return [box];
+    show();track.append(fill,slider);box.append(track,value);return [box];
   }})),
   { label: "置顶游戏", role: "radiogroup", items: () => [[true, "开"], [false, "关"]].map(([v, name]) =>
       pill(name, { pressed: prefs.onTop === v, disabled: !TAURI, title: TAURI ? "" : "桌面版里才能用",
@@ -2656,7 +2658,7 @@ view.addEventListener("click", e => {
   const wasOpen = !!ringOf;
   closeRing();
   if (sim.mode === "down") return;
-  if(petHit(x,y)){openPetCare();return;}
+  const petTarget=petHit(x,y);if(petTarget){if(petTarget==='feeder')openPetFeeder();else if(petTarget==='mat')openPetMatColors();else openPetInteractions();return;}
   if(friendVisitClick(x,y))return;
   if (buddyHit(x, y)) {
     if (wasOpen) return;                          // a second click on her closes the menu
@@ -2696,6 +2698,7 @@ const RINGS = {
 };
 let ringOf = null, ringAt = null;
 function ringCenter() {
+  if(ringAt==='pet'){const p=petPoint();return {x:p.x,y:p.y-13};}
   if(ringAt==="friend_host"&&atFriendHome())return {x:friendVisit.host.x,y:friendVisit.host.y-13};
   if (ringAt === "computer" || ringAt === "door") { const c = CLICK[ringAt === "door" ? "front_door" : "computer"]; return { x: c.x + c.w / 2, y: c.y + c.h / 2 }; }
   const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : buddyFeet();
@@ -2744,7 +2747,7 @@ function openRing(which, at = which === "computer" ? "computer" : "buddy") {
   ringEl.innerHTML = "";
   items.forEach(([id, label, cls], i) => {
     const b = document.createElement(cls === "label" ? "span" : "button");
-    if (cls === "label") { b.className = "ring-label"; b.textContent = nameOf(); }   // her name tops the ring
+    if (cls === "label") { b.className = "ring-label"; b.textContent = which==='pet'?petName():nameOf(); }   // her name tops the ring
     else { b.type = "button"; b.textContent = label; b.setAttribute("role", "menuitem"); if (cls) b.className = cls; }
     if(which==="outing")b.dataset.outingPlace=id.slice(7);
     b.style.setProperty("--k", i);
@@ -2823,6 +2826,7 @@ document.addEventListener("pointerdown", e => { if (ringOf && !ringEl.contains(e
 document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) closeRing(); });
 let lastChat = -1e9;
 function ringPick(id) {
+  if(id.startsWith('pet:')){closeRing();petInteract(id.slice(4));return;}
   if(id==='pet_adopt'){closeRing();openPetAdoption();return;}
   if(id.startsWith("fv:")){closeRing();if(id==="fv:stay")requestFriendStay();else friendVisitAction(id.slice(3));return;}
   if(id.startsWith('outing:')){const c=socialState.contacts.find(c=>c.id===ringEl.dataset.contactId),place=id.slice(7);closeRing();if(c)scheduleFriendOuting(c,place);return;}
@@ -4966,6 +4970,7 @@ if (TAURI) {
 /*__FRIEND_HOUSES_JS__*/
 /*__FRIEND_VISITS_JS__*/
 /*__NEED_CONSEQUENCES_JS__*/
+/*__PIXEL_UI_JS__*/
 /*__PETS_JS__*/
 /*__GAME_AUDIO_JS__*/
 

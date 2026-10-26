@@ -38,7 +38,7 @@ def runtime_data():
                 for frame in range(count):atlas.paste(pets.render(breed,action,frame,direction).to_image(),(frame*pets.W,row*pets.H))
                 clips.append(dict(id=action,name=label,direction=direction,row=row,frames=count,ms=duration))
         rows.append(dict(id=breed.id,name=breed.name,species=breed.species,image=data_url(atlas),clips=clips))
-    data=dict(breeds=rows,furniture={k:data_url(v.to_image()) for k,v in pet_furniture.build().items()})
+    data=dict(breeds=rows,matColors=[dict(id=key,name=label,color=ramp[2]) for key,(label,ramp) in pet_furniture.MAT_COLORS.items()],furniture={k:data_url(v.to_image()) for k,v in pet_furniture.build().items()})
     cache.parent.mkdir(parents=True,exist_ok=True)
     cache.write_text(json.dumps(dict(signature=signature,data=data),ensure_ascii=False))
     return data

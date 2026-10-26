@@ -1,18 +1,49 @@
-#petPanel{position:absolute;z-index:32;left:var(--pick-left);top:var(--pick-top);width:var(--pick-w);height:var(--pick-h);box-sizing:border-box;padding:8px;background:rgba(247,246,251,.97);color:#302638;box-shadow:0 0 0 2px #423747,inset 0 0 0 2px #c1b8c8;clip-path:polygon(4px 0,calc(100% - 4px) 0,calc(100% - 4px) 2px,100% 2px,100% calc(100% - 4px),calc(100% - 2px) calc(100% - 4px),calc(100% - 2px) 100%,4px 100%,4px calc(100% - 2px),0 calc(100% - 2px),0 4px,4px 4px);display:flex;flex-direction:column;gap:6px;animation:pet-sheet-in .32s cubic-bezier(.2,.8,.2,1.12);overflow:hidden;font-size:var(--ui-font-body,14px)}
-#petPanel[hidden]{display:none}#petPanel header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;min-height:25px}#petPanel h3{font-size:var(--ui-font-heading,18px);margin:0;line-height:1.25;overflow-wrap:anywhere}#petPanel button,#petPanel input{font:inherit;color:inherit;box-sizing:border-box;border:2px solid #6e6179;border-radius:3px;background:#e7e1ef;box-shadow:inset 2px 2px #faf7ff,inset -2px -2px #b3a7c1;padding:5px 9px}#petPanel button{cursor:pointer}#petPanel button:hover{background:#f4ecdb}#petPanel button:focus-visible,#petPanel input:focus-visible{outline:2px solid #4d6a96;outline-offset:-4px}#petPanel .pet-positive{background:#c3d9b7}#petPanel .pet-close{padding:0;width:26px;height:25px;flex:none}#petPanel p{margin:0 0 9px;line-height:1.5;overflow-wrap:anywhere}#petPanel .pet-panel-body{overflow:auto;min-height:0;flex:1;overscroll-behavior:contain;padding:1px 3px 4px 1px;scrollbar-width:thin;scrollbar-color:#b6a7c4 #ebe6ef}#petPanel .pet-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}#petPanel[data-compact=true] .pet-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}#petPanel .pet-offer{padding:3px;display:flex;flex-direction:column;align-items:center;min-width:0;gap:2px}#petPanel .pet-offer canvas{width:64px;height:56px;image-rendering:pixelated;flex:none}#petPanel .pet-offer strong,#petPanel .pet-offer span{text-align:center;line-height:1.4;overflow-wrap:anywhere;max-width:100%}#petPanel .pet-offer span{font-size:12px}#petPanel .pet-options{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}#petPanel input{width:min(100%,260px);background:#fffcf4;margin-bottom:8px}#petPanel .pet-error{color:#9c414f}#petPanel .pet-needs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}#petPanel .pet-needs label{display:flex;flex-direction:column;gap:3px;flex:1;min-width:85px}#petPanel meter{width:100%;height:14px}#petPanel .pet-list-note{font-size:12px;color:#6e6179}
-@keyframes pet-sheet-in{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){#petPanel{animation:none}}
-#petPanel[data-compact=true]{padding:6px;gap:4px}#petPanel[data-compact=true] header{min-height:22px}#petPanel[data-compact=true] .pet-close{height:22px;width:24px}#petPanel[data-compact=true] .pet-list-note{display:block;margin-bottom:4px}#petPanel[data-compact=true] .pet-offer canvas{width:32px;height:28px}#petPanel[data-compact=true] .pet-offer strong{font-size:12px}
-#petPanel meter::-webkit-meter-bar{background:#ddd6e4;border:1px solid #b1a4bc;border-radius:2px}#petPanel meter::-webkit-meter-optimum-value{background:#91bb94;border-radius:1px}
-
-/* Responsibility confirmation has its own centered hierarchy; other pet pages keep their layout. */
+#petPanel{position:absolute;z-index:32;left:var(--pick-left);top:var(--pick-top);width:var(--pick-w);height:var(--pick-h);box-sizing:border-box;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden;font-size:var(--ui-font-body,14px);animation:pet-sheet-in .32s cubic-bezier(.2,.8,.2,1.12)}
+#petPanel[hidden],.pet-mini[hidden]{display:none}
+#petPanel header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;min-height:25px}
+#petPanel h3{font-size:var(--ui-font-heading,18px);margin:0;line-height:1.25;overflow-wrap:anywhere}
+#petPanel button,#petPanel input,.pet-mini button{font:inherit;color:inherit;box-sizing:border-box;padding:6px 10px}
+#petPanel button,.pet-mini button{cursor:pointer}
+#petPanel button:hover,.pet-mini button:hover{filter:brightness(1.05)}
+#petPanel button:focus-visible,.pet-mini button:focus-visible{outline:2px dashed var(--focus);outline-offset:-4px}
+#petPanel .pet-close{padding:0;width:26px;height:26px;flex:none}
+#petPanel p{margin:0 0 9px;line-height:1.5;overflow-wrap:anywhere}
+#petPanel .pet-panel-body{overflow:auto;min-height:0;flex:1;overscroll-behavior:contain;padding:1px 3px 4px 1px;scrollbar-width:thin;scrollbar-color:var(--bevel-lo) var(--panel-2)}
+#petPanel .pet-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#petPanel .pet-offer{padding:6px;display:flex;flex-direction:column;align-items:center;min-width:0;gap:2px}
+#petPanel .pet-offer canvas{width:64px;height:56px;image-rendering:pixelated;flex:none}
+#petPanel .pet-offer strong,#petPanel .pet-offer span{text-align:center;line-height:1.4;overflow-wrap:anywhere;max-width:100%}
+#petPanel .pet-offer span{font-size:12px}
+#petPanel .pet-options{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+#petPanel .pet-error{color:#b94b4b}
+#petPanel .pet-list-note{font-size:12px;color:var(--muted)}
+#petPanel[data-compact=true]{padding:8px;gap:4px}
+#petPanel[data-compact=true] header{min-height:24px}
+#petPanel[data-compact=true] .pet-close{height:24px;width:24px}
+#petPanel[data-compact=true] .pet-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+#petPanel[data-compact=true] .pet-list-note{display:block;margin-bottom:4px}
+#petPanel[data-compact=true] .pet-offer canvas{width:32px;height:28px}
+#petPanel[data-compact=true] .pet-offer strong{font-size:12px}
 #petPanel:is([data-page=confirm],[data-page=name]) header{display:grid;grid-template-columns:26px minmax(0,1fr) 26px;gap:4px}
 #petPanel:is([data-page=confirm],[data-page=name]) h3{grid-column:2;text-align:center;font-size:clamp(20px,calc(var(--ui-font-heading,18px) + 4px),26px);line-height:1.3}
 #petPanel:is([data-page=confirm],[data-page=name]) .pet-close{grid-column:3}
 #petPanel:is([data-page=confirm],[data-page=name]) .pet-panel-body{display:flex;flex-direction:column;align-items:center;justify-content:safe center;text-align:center}
 #petPanel:is([data-page=confirm],[data-page=name]) .pet-panel-body>*{flex-shrink:0;max-width:100%}
 #petPanel:is([data-page=confirm],[data-page=name]) .pet-options{width:100%;justify-content:center}
-
 #petPanel .pet-name-row{display:flex;align-items:center;justify-content:center;gap:8px;width:min(100%,310px);margin:8px 0 12px}
-#petPanel .pet-name-row input{width:auto;flex:1;min-width:0;margin:0;text-align:center}
+#petPanel .pet-name-field{position:relative;flex:1;min-width:0;padding:2px}
+#petPanel .pet-name-row input{width:100%;min-width:0;margin:0;text-align:center;border:0;background:transparent;outline:0;box-shadow:none;border-radius:0}
+#petPanel .pet-name-field:focus-within{outline:2px dashed var(--focus);outline-offset:-4px}
 #petPanel .pet-die{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;padding:4px}
 #petPanel .pet-die svg{display:block;image-rendering:pixelated}
+.pet-mini{position:absolute;z-index:33;padding:8px 10px;display:flex;align-items:center;gap:10px;font-size:var(--ui-font-body);max-width:calc(var(--house-w) - 8px)}
+.pet-mini[data-kind=feeder]{min-height:56px}
+.pet-mini[data-kind=feeder]>span{white-space:nowrap;padding-inline:5px}
+.pet-mini .pet-refill{height:40px;padding:6px 16px;font-weight:700;white-space:nowrap;flex:none}
+.pet-mini[data-kind=mat]{width:236px;display:flex;flex-direction:column;gap:4px;font-size:12px;padding:8px}
+.pet-mini[data-kind=mat]>strong{line-height:16px}
+.pet-mat-colors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;width:100%}
+.pet-mat-colors button{display:flex;align-items:center;justify-content:center;gap:4px;min-height:28px;padding:4px 6px;font-size:12px}
+.pet-mat-colors i{width:10px;height:10px;flex:none;box-shadow:0 0 0 1px var(--bevel-lo)}
+@keyframes pet-sheet-in{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){#petPanel{animation:none}}
