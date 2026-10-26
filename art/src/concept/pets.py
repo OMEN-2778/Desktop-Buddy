@@ -6,7 +6,7 @@ Dogs vary torso, legs, muzzle, ear and tail geometry. No random drawing.
 """
 from dataclasses import dataclass
 
-from pixelkit import P, Sprite, rgba
+from pixelkit import P, Sprite
 
 W, H, FEET = 32, 28, 25
 PREVIEW_SCALE = 6
@@ -14,6 +14,7 @@ FUR = {
     'white': (P.cut[0], P.oat[1], P.linen[2], P.linen[3], P.linen[3]),
     'cream': tuple(P.oat),
     'ginger': (P.clay[0], P.clay[1], P.clay[2], P.clay[3], P.birch[3]),
+    'cat_ginger': (P.hair_brown[0], P.hair_brown[1], P.hair_brown[3], P.birch[2], P.birch[3]),
     'gold': tuple(P.birch) + (P.birch[-1],),
     'brown': tuple(P.hair_brown),
     'black': tuple(P.hair_black),
@@ -96,21 +97,26 @@ def coat(b, part, dx, dy, rx, ry):
     """Color-only markings in local part coordinates; never mutate silhouettes."""
     base = b.color
     p = b.pattern
-    if p == 'tabby' and ((part == 'body' and dy < 1 and (dx + rx) % 4 < 1)
-                         or (part == 'head' and dy < -1 and abs(dx) % 3 == 0)):
-        return FUR[base], -1
+    if p == 'tabby':
+        if part=='body':
+            # Broken, curved ribs following the flank, not straight zebra bars.
+            offset={-4:0,-3:-1,-2:-1,-1:0,0:1,1:1,2:0,3:-1}.get(dy,0)
+            centers=(-4,0,4) if dy<1 else (-3,3)
+            if -ry<dy<ry-1 and any(abs(dx-c-offset)<=(1 if dy in (-2,0) else 0) for c in centers):return FUR['cat_ginger' if base=='ginger' else base],-1
+        elif part=='head' and (dy in (-4,-3) and abs(dx) in (1,3) or dy==-2 and abs(dx)==2):return FUR['cat_ginger' if base=='ginger' else base],-1
     if p == 'calico':
-        if (part == 'body' and dx < -1 and dy < 2) or (part == 'head' and dx < 0 and dy < 1):
+        if (part=='body' and (dx+3)**2/14+(dy+1)**2/7<1) or (part=='head' and (dx+3)**2/9+(dy+1)**2/12<1):
             base = 'ginger'
-        elif (part == 'body' and dx > 2 and dy < 0) or (part == 'head' and dx > 1 and dy < 0):
+        elif (part=='body' and (dx-4)**2/8+(dy+1)**2/6<1) or (part=='head' and (dx-3)**2/5+(dy+3)**2/8<1):
             base = 'black'
     elif p == 'cow' and ((part == 'body' and (dx + 2) ** 2 + (dy + 1) ** 2 < 12)
                          or (part == 'head' and dx < 0 and dy < 1)):
         base = 'black'
-    elif p == 'tortie' and ((dx - 2) ** 2 + (dy + 1) ** 2 < 7 or dx < -2 and dy > 0):
-        base = 'ginger'
-    elif p == 'point' and (part in ('ear', 'tail', 'paw') or part == 'head' and dy > -1 and abs(dx) < rx):
-        base = 'chocolate'
+    elif p=='tortie':
+        patches=((-4,-2,4),(-1,1,2),(2,-2,2),(4,1,3)) if part=='body' else ((-3,-2,3),(1,0,2),(3,-4,3))
+        if any((dx-x)**2+(dy-y)**2<r for x,y,r in patches):base='ginger'
+    elif p=='point':
+        if part in ('ear','tail','paw') or part=='head' and (dy<-4 or (dx-1)**2/15+dy**2/12<1):base='chocolate'
     elif p == 'bicolor':
         if part in ('ear', 'tail') or part == 'head' and abs(dx) > max(0, dy + 2):
             base = 'blue'
@@ -126,29 +132,89 @@ def coat(b, part, dx, dy, rx, ry):
         base = 'gold'
     if p == 'gradient' and dy > 0:
         base = 'white'
-    return FUR[base], 0
+    return FUR['cat_ginger' if b.species=='cat' and base=='ginger' else base], 0
 
 
 def fur_blob(s, b, cx, cy, rx, ry, part='body'):
     cx, cy, rx, ry = map(int, (cx, cy, rx, ry))
     mask = Sprite(W, H).ellipse(cx, cy, rx, ry, P.linen[3])
-    for y in range(max(0, cy-ry), min(H, cy+ry+1)):
-        for x in range(max(0, cx-rx), min(W, cx+rx+1)):
-            if not mask.px[y, x, 3]:
-                continue
-            ramp, shift = coat(b, part, x-cx, y-cy, rx, ry)
-            edge = any(not (0 <= xx < W and 0 <= yy < H and mask.px[yy, xx, 3])
-                       for xx, yy in ((x-1,y),(x+1,y),(x,y-1),(x,y+1)))
-            shade = 0 if edge else max(1, min(4, (3 if y < cy-1 and x < cx+2 else 1 if y > cy+ry//2 or x > cx+rx//2 else 2) + shift))
-            s.set(x, y, ramp[shade])
+    return paint_fur(s,b,mask,cx,cy,rx,ry,part)
+
+
+def paint_fur(s,b,mask,cx,cy,rx,ry,part='body'):
+    for y,x in zip(*mask.px[:,:,3].nonzero()):
+        x,y=int(x),int(y)
+        ramp,shift=coat(b,part,x-cx,y-cy,rx,ry)
+        edge=any(not (0<=xx<W and 0<=yy<H and mask.px[yy,xx,3])
+                 for xx,yy in ((x-1,y),(x+1,y),(x,y-1),(x,y+1)))
+        shade=0 if edge else max(1,min(4,(3 if y<cy-1 and x<cx+2 else 1 if y>cy+ry//2 or x>cx+rx//2 else 2)+shift))
+        s.set(x,y,ramp[shade])
     return s
 
 
 def limb(s, b, x, y, length, dx=0, part='paw'):
     ramp, _ = coat(b, part, 0, 1, 1, 2)
-    s.line(x, y, x+dx, y+length, ramp[0])
-    s.line(x+1, y, x+dx+1, y+length, ramp[2])
-    s.hline(x+dx, x+dx+2, y+length, ramp[0]).set(x+dx+1,y+length-1,ramp[3])
+    width=3 if b.species=='cat' else 5 if b.body>=7 else 4
+    # A fleshy upper leg and a rounded paw, rather than two straight pixels.
+    for i in range(abs(length)+1):
+        yy=y+(i if length>=0 else -i)
+        xx=x+round(dx*i/max(1,abs(length)))
+        s.hline(xx,xx+width-1,yy,ramp[0])
+        s.hline(xx+1,xx+width-2,yy,ramp[2])
+        s.set(xx+1,yy,ramp[3])
+    px,py=x+dx-1,y+length
+    paw=width+1
+    s.hline(px+1,px+paw-2,py-2,ramp[0])
+    s.hline(px,px+paw-1,py-1,ramp[0])
+    s.hline(px+1,px+paw-2,py-1,ramp[3])
+    s.hline(px+1,px+paw-2,py,ramp[1])
+    s.set(px+2,py-1,ramp[1])
+
+
+def torso(s,b,cx,cy,rx,ry,hx,hy,head_y):
+    """One connected body/neck mask; every head pose is rooted at its shoulder."""
+    mask=Sprite(W,H).ellipse(cx,cy,rx,ry,P.linen[3])
+    radius=2 if b.species=='cat' or b.body<7 else 3
+    start=(cx+rx-2,cy-1);end=(hx-2,hy+head_y-radius)
+    steps=max(abs(end[0]-start[0]),abs(end[1]-start[1]),1)
+    for i in range(steps+1):
+        x=round(start[0]+(end[0]-start[0])*i/steps)
+        y=round(start[1]+(end[1]-start[1])*i/steps)
+        mask.ellipse(x,y,radius,radius,P.linen[3])
+    paint_fur(s,b,mask,cx,cy,rx,ry)
+
+
+def cat_head(s,b,cx,cy,action,frame,front=False,back=False):
+    """Broad feline cheeks, inset ears, short muzzle, iris and split toe-scale detail."""
+    mask=Sprite(W,H)
+    spans=((-3,2),(-4,3),(-5,4),(-5,5),(-5,5),(-4,5),(-4,4),(-3,3),(-1,2))
+    for j,(left,right) in enumerate(spans):mask.hline(cx+left,cx+right,cy-4+j,P.linen[3])
+    for side in (-1,1):
+        ex=cx+(3 if side>0 else -4)
+        for row in range(4):
+            left=ex if side<0 else ex-row
+            mask.hline(left,left+row,cy-7+row,P.linen[3])
+    paint_fur(s,b,mask,cx,cy,5,4,'head')
+    if back:return
+    # Ear interiors remain inside the fur silhouette for every coat.
+    for ex in (cx-4,cx+3):
+        s.set(ex,cy-5,P.clay[3]).set(ex,cy-4,P.blush[0])
+    closed=action=='sleep' or action=='blink' and frame in (1,2) or action=='wake' and frame<2
+    eyes=(cx-2,cx+2)
+    iris=P.blue[3] if b.pattern in ('point','bicolor') else P.mustard[3]
+    for i,x in enumerate(eyes):
+        if closed:s.hline(x-1,x,cy-1,P.ink[0])
+        else:
+            s.rect(x-1,cy-2,2,2,P.ink[0])
+            s.set(x-1,cy-2,iris).set(x,cy-2,P.linen[3])
+    nose=cx if front else cx+2
+    ramp,_=coat(b,'head',nose-cx,2,5,4)
+    s.hline(nose-1,nose+2,cy+1,ramp[3])
+    s.hline(nose-1,nose+1,cy+2,ramp[3])
+    s.set(nose,cy,P.blush[0]).set(nose,cy+1,P.clay[1])
+    s.set(nose-1,cy+2,P.ink[0]).set(nose+1,cy+2,P.ink[0])
+    s.set(cx-4,cy+1,ramp[1]).set(cx+4,cy+1,ramp[1])
+    if action in ('drink','groom') and frame%2:s.set(nose,cy+2,P.blush[0])
 
 
 def tail(s, b, x, y, frame, action, front=False):
@@ -157,9 +223,14 @@ def tail(s, b, x, y, frame, action, front=False):
     if b.species == 'cat':
         s.line(x,y,x-3,y-3+wag,ramp[0]).line(x-3,y-3+wag,x-3,y-6+wag,ramp[0])
         s.line(x+1,y,x-2,y-3+wag,ramp[2]).vline(x-2,y-5+wag,y-3+wag,ramp[3])
+        if b.pattern in ('tabby','tortie'):
+            for yy in (y-5+wag,y-2+wag):
+                for xx,color in ((x-2,ramp[1]),(x-3,ramp[0])):
+                    if s.inside(xx,yy) and s.px[yy,xx,3]:s.set(xx,yy,color)
     elif b.tail == 'stub':
         fur_blob(s,b,x-1,y-1+(wag%2),2,1,'tail')
     elif b.tail in ('curl','puff'):
+        s.line(x,y,x-2,y-3+wag,ramp[0]).line(x+1,y,x-1,y-3+wag,ramp[2])
         fur_blob(s,b,x-2,y-3+wag,3 if b.tail=='curl' else 2,2,'tail')
         if b.tail=='curl':s.set(x-2,y-3+wag,ramp[1]).set(x-1,y-3+wag,ramp[1])
     else:
@@ -199,6 +270,7 @@ def render(b, action='idle', frame=0, direction='right'):
     if action=='wake':low=t<.65
     if sit_amount:
         cx+=2;cy+=round(sit_amount*2);rx-=round(sit_amount*2);hy-=round(sit_amount)
+        cy=min(cy,FEET-ry)
     if low:
         cy=FEET-ry;hy=FEET-(4 if cat else head);leg=1
     if action in ('eat','drink','sniff'):hx+=1;hy=FEET-(4 if cat else head)-(frame%2)
@@ -215,20 +287,24 @@ def render(b, action='idle', frame=0, direction='right'):
     if action=='look':hx+=(0,0,1,1,0,-1)[frame%6]
     if action=='shake':cx+=(-1,1,-1,1,0,0)[frame%6];hx+=(-1,1,-1,1,0,0)[frame%6]
     if action=='nuzzle':hx+=(-1,0,1,1,0,-1)[frame%6]
+    if action=='sleep' or action=='wake' and t<.4:
+        hx=19;hy=FEET-(4 if cat else head)
     s=Sprite(W,H)
     if direction in ('front','back'):
         return render_vertical(b,action,frame,direction,cy,hy,leg,jump,seated,low)
     if action=='roll':
         fur_blob(s,b,15,21,7,3)
         for x in (11,18):limb(s,b,x,20,-3-(frame%2),1)
-        fur_blob(s,b,24,21,head,3,'head');tail(s,b,8,22,frame,action)
-        s.hline(24,25,21,P.ink[0]);s.set(27,22,P.blush[0])
+        if cat:cat_head(s,b,24,21,action,frame)
+        else:
+            fur_blob(s,b,24,21,head,3,'head');s.hline(24,25,21,P.ink[0]);s.set(27,22,P.blush[0])
+        tail(s,b,8,22,frame,action)
         return Sprite(W,H,px=s.px[:,::-1].copy()) if direction=='left' else s
     tail(s,b,max(6,cx-rx+1),cy,frame,action)
     stride=(0,1,2,0,-1,-2)[frame%6] if action in ('walk','run','pounce') else 0
     for x,shift in ((cx-rx+3,-stride),(cx+rx-2,stride)):
         limb(s,b,x-1,cy+ry-1,max(1,FEET-jump-(cy+ry-1)),shift)
-    fur_blob(s,b,cx,cy,rx,ry)
+    torso(s,b,cx,cy,rx,ry,hx,hy,4 if cat else head)
     if b.ear=='round' or b.id=='samoyed':
         for x in (cx-rx+2,cx+rx-2):fur_blob(s,b,x,cy-ry+1,2,2)
     if low:
@@ -239,30 +315,29 @@ def render(b, action='idle', frame=0, direction='right'):
     else:
         for x,shift in ((cx-rx+2,stride),(cx+rx-1,-stride)):
             limb(s,b,x,cy+ry-1,max(1,FEET-jump-(cy+ry-1)),shift)
-    if action=='sleep' or action=='wake' and t<.4:
-        hx=19;hy=FEET-(4 if cat else head)
-    head_y=4 if cat else head
-    ear(s,b,hx-3 if cat else hx-2,hy-head_y-2)
-    fur_blob(s,b,hx,hy,head,head_y,'head')
-    ear(s,b,hx+2 if cat else hx+1,hy-head_y-2)
-    if b.ear=='round':fur_blob(s,b,hx-2,hy-head+1,2,2,'head')
-    if b.ear=='flop':fur_blob(s,b,hx-3,hy,2,4,'ear')
-    # A protruding canine muzzle, versus the same small muzzle on every cat.
-    muzzle=2 if b.ear=='round' else 3
-    if not cat:fur_blob(s,b,hx+3,hy+2,muzzle,2,'muzzle')
-    eye_x=hx+1;closed=action=='sleep' or action=='blink' and frame in (1,2) or action=='wake' and t<.4
-    if closed:s.hline(eye_x,eye_x+1,hy,P.ink[0])
-    else:
-        s.vline(eye_x,hy-1,hy,P.ink[0])
-        s.set(eye_x,hy-1,P.blue[3] if b.pattern in ('point','bicolor') else P.mustard[3] if cat else P.ink[0])
-    nose_x=hx+head-1 if cat else hx+4 if b.ear=='round' else hx+5
-    s.set(nose_x,hy+1,P.clay[3] if cat else P.ink[0]).set(nose_x-1,hy+2,P.ink[0])
     if cat:
-        s.set(hx+3,hy+2,P.oat[1]).set(hx+2,hy+3,P.oat[1])
-    if action in ('pant','bark','happy') and not cat:
-        s.rect(hx+3,hy+3,2,1+(frame%2),P.ink[0]).set(hx+4,hy+4,P.blush[0])
-    if action in ('drink','groom') and frame%2:
-        s.set(nose_x-1,hy+3,P.blush[0])
+        cat_head(s,b,hx,hy,action,frame)
+    else:
+        head_y=head
+        ear(s,b,hx-2,hy-head_y-2)
+        fur_blob(s,b,hx,hy,head,head_y,'head')
+        ear(s,b,hx+1,hy-head_y-2)
+        if b.ear=='round':fur_blob(s,b,hx-2,hy-head+1,2,2,'head')
+        if b.ear=='flop':fur_blob(s,b,hx-3,hy,2,4,'ear')
+        # Keep the approved canine head and muzzle proportions.
+        muzzle=2 if b.ear=='round' else 3
+        fur_blob(s,b,hx+3,hy+2,muzzle,2,'muzzle')
+        eye_x=hx+1;closed=action=='sleep' or action=='blink' and frame in (1,2) or action=='wake' and t<.4
+        if closed:s.hline(eye_x,eye_x+1,hy,P.ink[0])
+        else:
+            s.vline(eye_x,hy-1,hy,P.ink[0])
+            s.set(eye_x,hy-1,P.ink[0])
+        nose_x=hx+4 if b.ear=='round' else hx+5
+        s.set(nose_x,hy+1,P.ink[0]).set(nose_x-1,hy+2,P.ink[0])
+        if action in ('pant','bark','happy'):
+            s.rect(hx+3,hy+3,2,1+(frame%2),P.ink[0]).set(hx+4,hy+4,P.blush[0])
+        if action in ('drink','groom') and frame%2:
+            s.set(nose_x-1,hy+3,P.blush[0])
     if action in ('groom','scratch'):
         px=hx+2 if action=='groom' else hx-5
         limb(s,b,px,hy+3,-2-(frame%2),1)
@@ -273,7 +348,6 @@ def render(b, action='idle', frame=0, direction='right'):
         # Tail wraps across the paws, independently of the breathing head.
         ramp,_=coat(b,'tail',0,0,3,2)
         s.line(cx-rx+1,FEET-2,cx+4,FEET-1,ramp[0]).hline(cx-rx+2,cx+3,FEET-2,ramp[2])
-        if frame%2:s.set(hx-1,hy-head+1,FUR[b.color][3])
     if direction=='left':return Sprite(W,H,px=s.px[:,::-1].copy())
     return s
 
@@ -295,14 +369,19 @@ def render_vertical(b,action,frame,direction,cy,hy,leg,jump,seated,low):
     hy=min(FEET-(4 if cat else head),hy)
     tail(s,b,16,cy-1,frame,action,True)
     stride=(0,1,0,-1,0,1)[frame%6] if action in ('walk','run','pounce') else 0
-    for i,x in enumerate((cx-3,cx+2)):
+    spread=4 if cat or b.body<7 else 5
+    for i,x in enumerate((cx-spread,cx+spread-2)):
         start=cy+body_y-1
         limb(s,b,x,start,max(0,FEET-jump-start)-max(0,stride if i else -stride))
     if action in ('sleep','rest') and frame==2:body_y+=1;cy-=1
     fur_blob(s,b,cx,cy,rx,body_y)
     if action=='roll':
         for x in (cx-3,cx+2):limb(s,b,x,20,-4,0)
-    head_y=4 if cat else head
+    if cat:
+        cat_head(s,b,cx,hy,action,frame,front=True,back=direction=='back')
+        if action in ('groom','knead','scratch'):limb(s,b,cx-3,hy+4,-1-frame%2,1)
+        return s
+    head_y=head
     ear(s,b,cx-head+1,hy-head_y-2)
     ear(s,b,cx+head-2,hy-head_y-2,1)
     fur_blob(s,b,cx,hy,head,head_y,'head')

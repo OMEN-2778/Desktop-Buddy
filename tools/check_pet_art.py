@@ -11,6 +11,16 @@ allowed={rgba(c) for ramp in RAMPS.values() for c in ramp}
 assert len(pets.BREEDS)==24 and len({b.id for b in pets.BREEDS})==24
 assert len([b for b in pets.BREEDS if b.species=='cat'])==12
 assert len(pets.actions('cat'))==25 and len(pets.actions('dog'))==26
+def connected(mask):
+ remaining=set(zip(*mask.nonzero()));todo=[remaining.pop()]
+ while todo:
+  y,x=todo.pop()
+  for dy in (-1,0,1):
+   for dx in (-1,0,1):
+    p=(y+dy,x+dx)
+    if p in remaining:remaining.remove(p);todo.append(p)
+ return not remaining
+
 cat_masks={};dog_masks=set();frames=0;problems=[]
 for b in pets.BREEDS:
  for action,(_,n,ms) in pets.actions(b.species).items():
@@ -24,14 +34,18 @@ for b in pets.BREEDS:
     mask=s.px[:,:,3]>0
     assert mask.any()
     if mask[0,:].any() or mask[-1,:].any() or mask[:,0].any() or mask[:,-1].any():problems.append(('edge',b.id,action,direction,frame))
+    if mask[pets.FEET+1:,:].any():problems.append(('below floor',b.id,action,direction,frame))
     for color in s.colors():assert rgba(color) in allowed,(b.id,color)
     if b.species=='cat':
      key=(action,direction,frame)
      if key in cat_masks:assert np.array_equal(mask,cat_masks[key]),('cat rig changed',b.id,key)
-     else:cat_masks[key]=mask
+     else:
+      cat_masks[key]=mask
+      if not connected(mask):problems.append(('disconnected cat anatomy',b.id,key))
+    elif not connected(mask):problems.append(('disconnected dog anatomy',b.id,action,direction,frame))
     if direction=='right':side.append(s.px.tobytes())
     if b.species=='dog' and action=='idle' and frame==0 and direction=='right':dog_masks.add(mask.tobytes())
   if len(set(side))<2:problems.append(('static action',b.id,action))
 assert len(dog_masks)>=10,('too few dog silhouettes',len(dog_masks))
 assert not problems,problems[:35]
-print(f'PASS: {frames} frames; 24 appearances; shared cat geometry; {len(dog_masks)} dog silhouettes; all actions move; transparent palette-only sprites; no frame-edge clipping')
+print(f'PASS: {frames} frames; 24 appearances; shared cat geometry; {len(dog_masks)} dog silhouettes; all actions move; transparent palette-only sprites; no frame-edge clipping or disconnected heads/limbs')
