@@ -191,36 +191,37 @@ def torso(s,b,cx,cy,rx,ry,hx,hy,head_y):
 
 
 def cat_head(s,b,cx,cy,action,frame,front=False,back=False):
-    """Broad feline cheeks, inset ears, short muzzle, iris and split toe-scale detail."""
+    """Soft cheeks and small bean eyes, inspired by the user's pixel-cat references."""
     mask=Sprite(W,H)
-    spans=((-3,2),(-4,3),(-5,4),(-5,5),(-5,5),(-4,5),(-4,4),(-3,3),(-1,2))
+    spans=((-3,3),(-4,4),(-5,5),(-5,5),(-5,5),(-5,5),(-4,4),(-3,3),(-2,2))
     for j,(left,right) in enumerate(spans):mask.hline(cx+left,cx+right,cy-4+j,P.linen[3])
     for side in (-1,1):
         ex=cx+(3 if side>0 else -4)
-        for row in range(4):
+        for row in range(3):
             left=ex if side<0 else ex-row
-            mask.hline(left,left+row,cy-7+row,P.linen[3])
+            mask.hline(left,left+row,cy-6+row,P.linen[3])
     paint_fur(s,b,mask,cx,cy,5,4,'head')
     if back:return
     # Ear interiors remain inside the fur silhouette for every coat.
     for ex in (cx-4,cx+3):
-        s.set(ex,cy-5,P.clay[3]).set(ex,cy-4,P.blush[0])
+        s.set(ex,cy-4,P.blush[0])
     closed=action=='sleep' or action=='blink' and frame in (1,2) or action=='wake' and frame<2
+    contented=action in ('stretch','happy','nuzzle') and frame in (1,2,3,4)
     eyes=(cx-2,cx+2)
-    iris=P.blue[3] if b.pattern in ('point','bicolor') else P.mustard[3]
-    for i,x in enumerate(eyes):
+    eye_color=P.blue[3] if b.pattern in ('point','bicolor') else P.mustard[3] if b.color=='black' else P.ink[0]
+    for x in eyes:
         if closed:s.hline(x-1,x,cy-1,P.ink[0])
+        elif contented:
+            s.set(x,cy-1,P.ink[0]).set(x-1,cy,P.ink[0]).set(x+1,cy,P.ink[0])
         else:
-            s.rect(x-1,cy-2,2,2,P.ink[0])
-            s.set(x-1,cy-2,iris).set(x,cy-2,P.linen[3])
-    nose=cx if front else cx+2
+            if b.color=='black':s.set(x,cy,eye_color)
+            else:s.vline(x,cy-1,cy,eye_color)
+    nose=cx if front else cx+1
     ramp,_=coat(b,'head',nose-cx,2,5,4)
-    s.hline(nose-1,nose+2,cy+1,ramp[3])
-    s.hline(nose-1,nose+1,cy+2,ramp[3])
-    s.set(nose,cy,P.blush[0]).set(nose,cy+1,P.clay[1])
-    s.set(nose-1,cy+2,P.ink[0]).set(nose+1,cy+2,P.ink[0])
+    s.set(nose,cy+1,P.clay[3]).set(nose,cy+2,ramp[1])
+    s.set(nose-1,cy+3,ramp[1]).set(nose+1,cy+3,ramp[1])
     s.set(cx-4,cy+1,ramp[1]).set(cx+4,cy+1,ramp[1])
-    if action in ('drink','groom') and frame%2:s.set(nose,cy+2,P.blush[0])
+    if action in ('drink','groom','happy') and frame%2:s.set(nose,cy+3,P.blush[0])
 
 
 def tail(s, b, x, y, frame, action, front=False):
