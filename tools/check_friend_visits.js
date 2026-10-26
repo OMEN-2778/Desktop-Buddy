@@ -34,9 +34,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=requ
  // Save a sleeping guest in a tall home; restore without losing house or location.
  const saved=await p.evaluate(()=>{const s=JSON.parse(JSON.stringify(snapshot()));restore(s);return {house:friendVisit?.houseId,stay:friendVisit?.stay,place:sim.place};});assert.deepEqual(saved,{house:'maple',stay:true,place:'friend_home'});
  await p.evaluate(()=>{sim.t=friendVisit.until;speed=1;stepFriendHome(.1,.1);speed=0;});assert.equal(await p.evaluate(()=>sim.place),'home');
- // Incoming invitation has dedicated copy, orange/blue buttons, and a fixed six seconds.
+ // Incoming invitation has dedicated copy, orange/blue buttons, and a fixed ten seconds.
  await p.evaluate(()=>{closeSocialSheet();sim.mode='idle';sim.act=null;sim.windup=null;sim.talk=null;remoteSocial=null;sim.t=12*60;sim.route=[[D.spots.bed[1],FLOOR_Y[1]]];sim.s=sim.target=0;requestIncomingCall('abu','friend_home');showIncomingCall();speed=6});
- assert.equal(await p.locator('.call-answer').textContent(),'去你家');assert.equal(await p.locator('.call-decline').textContent(),'下次吧');assert.equal(await p.evaluate(()=>phoneCall.deadline-performance.now()>5000),true);
+ assert.equal(await p.locator('.call-answer').textContent(),'去你家');assert.equal(await p.locator('.call-decline').textContent(),'下次吧');assert.equal(await p.evaluate(()=>phoneCall.deadline-performance.now()>9000),true);
  await p.evaluate(()=>speed=0);await p.locator('.call-answer').click();await p.waitForTimeout(500);assert.equal(await p.evaluate(()=>friendVisit?.phase),'departing');
  await p.evaluate(()=>{speed=1;if(sim.windup)sim.windup.at=realClock;for(let i=0;i<800&&sim.place==='home';i++)step(.1,.1);speed=0;});assert.equal(await p.evaluate(()=>sim.place),'friend_home');
  // Current host cannot call themselves; other home visits / outings are blocked.

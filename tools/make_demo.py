@@ -462,6 +462,7 @@ def main():
     html = html.replace("/*__SOCIAL_HUD_CSS__*/", (SRC.parent / "social_hud.css").read_text()+"\n"+(SRC.parent / "peer_dialogue.css").read_text())
     html = html.replace("/*__UI_LAYOUT_JS__*/", (SRC.parent / "ui_layout.js").read_text())
     html = html.replace("/*__NEED_CONSEQUENCES_JS__*/", (SRC.parent / "need_consequences.js").read_text())
+    html = html.replace("/*__MEALS_JS__*/", (SRC.parent / "meals.js").read_text())
     html = html.replace("/*__PERSONALITY_JS__*/", (SRC.parent / "personality.js").read_text())
     gossip_messages = json.loads((SRC.parent / "dialogue/gossip_channels.json").read_text())["messages"]
     social_hud_js = (SRC.parent / "social_hud.js").read_text().replace("CHATS.text={};", "TEXT_TALKS.push(..." + json.dumps(gossip_messages, ensure_ascii=False) + ");\nCHATS.text={};")

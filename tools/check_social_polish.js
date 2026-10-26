@@ -38,13 +38,13 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');requ
  assert.ok((await page.locator('#peerBubble span').textContent()).includes('最后一句'));assert.equal(await page.locator('#peerBubble>span').evaluate(e=>+getComputedStyle(e).opacity),1);
  await page.evaluate(()=>{peerSpeech.until=performance.now()+10;showSay('读完新台词再收起','阿布：',contactFor('friend','abu'));tickPeerSpeech(performance.now()+20);if(peerSpeech.phase!=='visible')throw Error('Old expiry cancelled a new line');});await page.waitForTimeout(350);
  if(process.env.ONLY!=='layout'){
- // Each real call lasts six seconds, including speed changes and unrelated frame clocks.
+ // Each real call lasts ten seconds, including speed changes and unrelated frame clocks.
  for(const initialSpeed of [1,3,8]){
   await prepare();const start=await page.evaluate(v=>{speed=v;sayShownAt=-Infinity;requestIncomingCall('abu');tickSocial(0,performance.now());window.clockStart=performance.now();window.clockSim=sim.t;tickSocial(9999,performance.now()+1e9);return {t:clockSim,at:clockStart};},initialSpeed);
   assert.equal(await page.evaluate(()=>phoneCall.phase),'ringing');
   await page.waitForTimeout(3000);await page.evaluate(()=>speed=speed===3?1:3);
-  await page.waitForTimeout(2400);assert.equal(await page.evaluate(()=>phoneCall.phase),'ringing','No early timeout at '+initialSpeed+'x');assert.equal(await page.evaluate(()=>sim.t),start.t);
-  await page.waitForFunction(()=>phoneCall.phase!=='ringing',null,{timeout:1800});const elapsed=await page.evaluate(()=>performance.now()-clockStart);assert.ok(elapsed>=5950&&elapsed<7300,elapsed);
+  await page.waitForTimeout(6400);assert.equal(await page.evaluate(()=>phoneCall.phase),'ringing','No early timeout at '+initialSpeed+'x');assert.equal(await page.evaluate(()=>sim.t),start.t);
+  await page.waitForFunction(()=>phoneCall.phase!=='ringing',null,{timeout:1800});const elapsed=await page.evaluate(()=>performance.now()-clockStart);assert.ok(elapsed>=9950&&elapsed<11300,elapsed);
   await page.waitForTimeout(450);
  }
  // Manual polite decline and protected parent ignore; only explicit ignore may cost 1.

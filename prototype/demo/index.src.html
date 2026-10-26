@@ -385,6 +385,8 @@ const sim = {
 };
 let speed = 3;
 
+/*__MEALS_JS__*/
+
 const hour = () => (sim.t % 1440) / 60;
 const clamp = v => Math.max(0, Math.min(100, v));
 const fmt = t => { const m = Math.floor(t % 1440); return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); };
@@ -438,7 +440,7 @@ function choose() {
   for (const a of sim.recent) score[a] *= 0.3;   // don't repeat the last few things
   const best = Object.entries(score).sort((a, b) => b[1] - a[1])[0][0];
   if (best === "go_out") setOuting(h);
-  return best;
+  return ['cook','snack'].includes(best)&&homeMeal()?'eat':best;
 }
 // She goes out by herself now and then (user), by day or at night: bored,
 // in a good mood, lonely, or sad / tense and wanting some quiet (the dock,
@@ -496,6 +498,10 @@ const EMO_PULL = {
 };
 function startAct(name, quiet = false) {
   if(atFriendHome()){friendVisitCommand(name);return;}
+  if(sim.place==='home'){
+    if(name==='cook'&&!sim.player&&homeMeal()){name='eat';sim.chosen=null;}
+    else if(name==='eat'&&!homeMeal())name='cook';
+  }
   if(['phone_call','phone_video','phone_text'].includes(name)){
     if(!remoteSocial){const item=sim.chosen?.act===name?sim.chosen.item:pickItem(name);remoteSocial={item,i:0,wait:.5,said:[]};log(item.talk.start);}
     sim.chosen=null;sim.player=false;name=choose();
@@ -556,14 +562,16 @@ function arrive() {
 }
 function finishAct() {
   const a = ACTS[sim.act];
+  const resumedMeal=sim.act==='eat'&&!!sim.meal?.resumed;
   sim.player = false;
   lifeFinish(sim.act);
   if (sim.act === "sleep" && !sim.upAtNight) log(sim.nap ? "睡了个午觉，精神多了。" : "醒了，伸了个大大的懒腰。");
   sim.upAtNight = false;
   if(sim.act==="sleep")sim.sleepPlace=null;
-  if (sim.act === "eat") log("吃饱了，好满足～");
+  if (sim.act === "eat") log(sim.needs.hunger<50?'盘子吃空了，肚子还没饱。':'吃饱了，好满足～');
   if (sim.act === "bath") log("洗得香喷喷的。");
   if (a.then) { startAct(a.then); return; }
+  if(resumedMeal&&sim.needs.hunger<50){startAct('cook');return;}
   const woke = sim.act === "sleep" && !sim.nap;
   sim.mode = "idle";
   sim.act = null;
@@ -613,12 +621,14 @@ function step(dtGame, dtReal) {
   const day = Math.floor(sim.t / 1440) + 1;
   if (day !== sim.lastDay) { sim.lastDay = day; log(`—— 第 ${day} 天 · ${SEASONS[seasonOf(sim.t).i].name} ——`, "day"); }
   updateWeather(dtGame);
+  if(!homeMeal()&&sim.place==='home'&&sim.mode==='act'&&sim.act==='eat'){
+    sim.mode='idle';sim.act=null;sim.item=null;sim.idleUntil=sim.t+1;
+  }
   // needs
   const n = sim.needs;
   let eff = sim.mode === "act" ? (EFFECT[sim.act] || {}) : {};
-  if (sim.mode === "act" && sim.act === "eat" && sim.meal?.quality) {   // a burnt meal fills less, a great one cheers her up
-    const q = sim.meal.quality;
-    eff = { ...eff, hunger: sim.meal.rate ?? eff.hunger * ({ burnt: 0.6, plain: 1, good: 1.1, great: 1.2 }[q] || 1), ...(q === "great" ? { fun: 0.3 } : {}) };
+  if (sim.mode === "act" && sim.act === "eat") {
+    eff = homeMealEffect(dtGame);
   }
   for (const k of Object.keys(n)) {
     let d = -DECAY[k];
@@ -666,7 +676,7 @@ function step(dtGame, dtReal) {
     // longer activities: she breaks off for the toilet before it's too late
     if (!done && !["sleep", "toilet", "dress", "park_toilet", "park_eat"].includes(sim.act) && n.bladder < 15) {
       const next = ACTS[sim.act].then;               // (a cooked meal still gets eaten after)
-      sim.player = false; lifeFinish(sim.act); sim.act = null;
+      sim.player = false;if(sim.act!=='eat')lifeFinish(sim.act);sim.act = null;
       startAct("toilet"); sim.queue = next ? [next] : [];
       return;
     }
@@ -854,7 +864,8 @@ function useFurniture(id, glowOnly = false) {
     cardMoment(st === "open" ? "openWindow" : "closeWindow");
     return;
   }
-  if (id === "stove" || id === "fridge" || id === "table") { openPicker("cook", pickFrom(id)); return; }   // all three: pick a dish to cook (user)
+  if(id==='table'&&homeMeal()){command('eat');return;}
+  if (id === "stove" || id === "fridge" || id === "table") { openPicker("cook", pickFrom(id)); return; }
   if (PICK[CLICK_ACT[id]]) { openPicker(CLICK_ACT[id], pickFrom(id)); return; }   // books, shows: choose in the panel
   if (CLICK_ACT[id]) command(CLICK_ACT[id]);
 }
@@ -1300,7 +1311,7 @@ function render() {
   }
   if (act && act.startsWith("pc_")) bctx.drawImage(frameOf(IMG.app[act.slice(3)], act === "pc_video" ? 2 : 3), D.screens.monitor.x, D.screens.monitor.y);
   if (act === "cook") bctx.drawImage(frameOf(IMG.fx.cook, 8), D.fx.cook.x, D.fx.cook.y);
-  if (act === "eat") {   // the dish she cooked is the one on the table (user); a plain bowl otherwise
+  if (homeMeal()) {   // Keep the same dish visible while the player does other things.
     const pic = sim.meal && sim.meal.pic && dishPic(sim.meal.pic);
     if (pic && pic.complete) bctx.drawImage(pic, D.fx.meal.x + 3 - (pic.width >> 1), D.fx.meal.y + 13 - pic.height + 1);
     else bctx.drawImage(frameOf(IMG.fx.meal, 4), D.fx.meal.x, D.fx.meal.y);
@@ -1708,11 +1719,7 @@ function lifeArrive(act) {
   sim.talk = sim.item && sim.item.talk ? { i: 0, wait: 1 } : null;
   const dish = sim.item && sim.item.dish;
   if (act === "cook" && dish && dish.time) sim.actEnd = sim.t + dish.time;          // each dish its own cooking time
-  if (act === "eat" && sim.meal && sim.meal.fill) {                                  // and fills her by its own amount
-    const q = { burnt: 0.6, plain: 1, good: 1.1, great: 1.2 }[sim.meal.quality] || 1;
-    sim.meal.rate = sim.meal.fill * q / Math.max(10, sim.actEnd - sim.t);
-  }
-  if (act === "eat") sim.meal = { ...(sim.meal || {}), full: sim.needs.hunger > 95 };
+  if (act === "eat") beginHomeMeal();
   if (act === "sleep" && !sim.nap && emotion().key === "tense" && Math.random() < 0.3) sim.insomnia = true;
 }
 function lifeFinish(act) {
@@ -1725,7 +1732,7 @@ function lifeFinish(act) {
       const burnt = 0.1 + (foggy ? 0.1 : 0) - (sharp ? 0.04 : 0), great = 0.14 + (sharp ? 0.1 : 0);
       const quality = r < burnt ? "burnt" : r < burnt + great ? "great" : r < 0.62 ? "good" : "plain";
       const d = it.dish || {};
-      sim.meal = { vars, cooked: true, quality, spicy: !!c.spicy, sweet: !!c.sweet, fill: d.fill, moods: d.moods, plus: d.plus,
+      sim.meal = { vars, cooked: true, createdAt:sim.t, quality, spicy: !!c.spicy, sweet: !!c.sweet, fill: d.fill, moods: d.moods, plus: d.plus,
                    pic: d.look ? dishIcon(d) : null };            // what goes on the table
       const seen = (lifeFlags.cuisines ||= []);
       if (!seen.includes(c.name)) { seen.push(c.name); if (seen.length > 1) addMood("mealNewDish", { vars }); }
@@ -4709,7 +4716,7 @@ function restore(sv) {
   for (const k of ["facing", "lastDay", "sleptTonight", "graceUntil"]) if (Number.isFinite(m[k])) sim[k] = m[k];
   sim.queue = (m.queue || []).filter(a => ACTS[a]); sim.recent = (m.recent || []).filter(a => ACTS[a]);
   sim.sleepPlace=m.sleepPlace==='sofa'?'sofa':null;
-  sim.meal = m.meal || null; sim.insomnia = !!m.insomnia; sim.nap = !!m.nap;
+  sim.meal = restoreHomeMeal(m.meal,m); sim.insomnia = !!m.insomnia; sim.nap = !!m.nap;
   let [x, storey] = Array.isArray(m.at) ? m.at : [D.spots.bed[1], 1];
   if (m.mode === "act" && ACTS[m.act] && m.act !== "dress" && m.act !== "npc_chat") {
     sim.mode = "act"; sim.act = m.act; sim.actEnd = m.actEnd;

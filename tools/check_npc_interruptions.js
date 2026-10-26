@@ -59,9 +59,9 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
  await check('An urgent trip home interrupts bartender dialogue and speaks immediately',async()=>{
   const r=await page.evaluate(()=>{interruptionAt('bar');barChat('player');showSay('我先听酒保说完。');sim.needs.energy=10;stepBar(0,.01);return {place:sim.place,q:!!life.talkQ,text:popSay.querySelector('span').textContent};});assert.equal(r.place,'home');assert.equal(r.q,false);assert.ok(r.text.includes('回家'),r.text);
  });
- await check('Calls resume after NPC conversations and keep six real seconds at 3x speed',async()=>{
+ await check('Calls resume after NPC conversations and keep ten real seconds at 3x speed',async()=>{
   const before=await page.evaluate(()=>{interruptionAt();startNpcTalk(auditNpc);while(life.talkQ){life.talkQ.wait=0;advanceNpcTalk(.01);}sayShownAt=-Infinity;if(!requestIncomingCall('dad'))throw Error('Call channel remained locked');speed=9;tickSocial(0,performance.now());window.auditCallAt=performance.now();return sim.t;});
-  await page.waitForTimeout(5400);assert.equal(await page.evaluate(()=>phoneCall.phase),'ringing');assert.equal(await page.evaluate(()=>sim.t),before);await page.waitForFunction(()=>phoneCall.phase!=='ringing',null,{timeout:1800});assert.ok(await page.evaluate(()=>performance.now()-auditCallAt)>=5950);
+  await page.waitForTimeout(9400);assert.equal(await page.evaluate(()=>phoneCall.phase),'ringing');assert.equal(await page.evaluate(()=>sim.t),before);await page.waitForFunction(()=>phoneCall.phase!=='ringing',null,{timeout:1800});assert.ok(await page.evaluate(()=>performance.now()-auditCallAt)>=9950);
  });
  assert.deepEqual(errors,[]);if(failures.length)throw Error(failures.join('\n'));console.log('PASS: NPC concurrency, distance, pause visibility, deferred speech and old-save reset.');
  }finally{await browser.close();}})().catch(e=>{console.error(e.message);process.exitCode=1;});

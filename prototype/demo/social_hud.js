@@ -42,6 +42,7 @@ function sizeSocialHud(){
   style.setProperty('--hud-track-edge',2*b+'px');
 }
 let networkCloseT=0,contactsCloseT=0,selectedContact=null,contactsSig='',remoteSocial=null;
+const INCOMING_RING_MS=10000;
 const phoneCall={phase:'idle',contactId:null,kind:'call',deadline:0,timeout:0,exitTimer:0,returnFocus:null};
 function phoneHolds(){return ['ringing','accepting','declining'].includes(phoneCall.phase);}
 function contactName(c){return c.family==='dad'?'爸爸':c.family==='mom'?'妈妈':c.name;}
@@ -292,9 +293,9 @@ function showIncomingCall(){
   for(const [selector,key]of [['.call-answer',phoneCall.kind==='friend_home'?'invite':'answer'],['.call-decline',phoneCall.kind==='friend_home'?'later':'decline']])incomingCall.querySelector(selector).style.setProperty('--hud-relief-img',`url(${D.uiRelief[key]})`);
   incomingCall.querySelector('.caller-copy span').textContent=phoneCall.kind==='friend_home'?pick(FRIEND_VISIT_TEXT.invitations):phoneCall.kind==='video'?'打来视频':'打来电话';
   drawContactAvatar(incomingCall.querySelector('canvas'),c);incomingCall.classList.remove('accepting','declining');incomingCall.hidden=false;
-  moodTalk.classList.add('phone-active');phoneCall.phase='ringing';gameAudio.tick(true);phoneCall.deadline=now+6000;incomingCall.style.setProperty('--call-remaining',1);
+  moodTalk.classList.add('phone-active');phoneCall.phase='ringing';gameAudio.tick(true);phoneCall.deadline=now+INCOMING_RING_MS;incomingCall.style.setProperty('--call-remaining',1);
   phoneCall.returnFocus=document.activeElement;incomingCall.querySelector('.call-answer').focus({preventScroll:true});
-  phoneCall.timeout=setTimeout(()=>finishIncomingCall(false,true),6000);
+  phoneCall.timeout=setTimeout(()=>finishIncomingCall(false,true),INCOMING_RING_MS);
   c.lastIncoming=sim.t;socialState.nextCall=sim.t+180+Math.random()*300;
 }
 function finishIncomingCall(accepted,automatic=false){
@@ -303,7 +304,7 @@ function finishIncomingCall(accepted,automatic=false){
   gameAudio.phoneEnd(accepted);
   phoneCall.phase=accepted?'accepting':'declining';incomingCall.classList.add(phoneCall.phase);
   if(!accepted&&c&&!['visit','friend_home'].includes(kind)){socialRejected(c,'的来电没能接通');}
-  if(!accepted&&c)log(automatic?`没来得及接听${contactName(c)}的来电，铃声在六秒后停了。`:`暂时婉拒了${contactName(c)}的来电，晚点再联系。`);
+  if(!accepted&&c)log(automatic?`没来得及接听${contactName(c)}的来电。`:`暂时婉拒了${contactName(c)}的来电，晚点再联系。`);
   phoneCall.exitTimer=setTimeout(()=>{
     phoneCall.phase='idle';phoneCall.contactId=null;incomingCall.hidden=true;moodTalk.classList.remove('phone-active');
     if(phoneCall.returnFocus?.isConnected&&!phoneCall.returnFocus.closest('[inert]'))phoneCall.returnFocus.focus({preventScroll:true});
@@ -328,7 +329,7 @@ function tickSocial(dt,now){
   if(friendHousePreview)return;
   // Real time has one source, independent of the simulation's speed and frame clock.
   const callNow=performance.now();
-  if(phoneCall.phase==='ringing'){incomingCall.style.setProperty('--call-remaining',Math.max(0,(phoneCall.deadline-callNow)/6000));if(callNow>=phoneCall.deadline)finishIncomingCall(false,true);return;}
+  if(phoneCall.phase==='ringing'){incomingCall.style.setProperty('--call-remaining',Math.max(0,(phoneCall.deadline-callNow)/INCOMING_RING_MS));if(callNow>=phoneCall.deadline)finishIncomingCall(false,true);return;}
   if(phoneHolds())return;
   if(!Number.isFinite(socialState.nextCall))socialState.nextCall=sim.t+210;
   if(phoneCall.phase==='waiting'){
