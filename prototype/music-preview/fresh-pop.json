@@ -1,0 +1,47 @@
+[
+  {
+    "id": "fresh-sunny",
+    "title": "晴天开场",
+    "style": "明亮流行舞曲",
+    "bpm": 128,
+    "duration": 125.0,
+    "file": "audio/fresh-sunny.mp3",
+    "midi": "audio/fresh-sunny.mid",
+    "rms_db": -21.6,
+    "peak": 0.5822,
+    "pitched_parts": 15,
+    "chorus_at": 45.0,
+    "middle_at": 75.0,
+    "preview_only": true
+  },
+  {
+    "id": "fresh-detour",
+    "title": "绕个小弯",
+    "style": "轻盈 UK Garage",
+    "bpm": 132,
+    "duration": 121.364,
+    "file": "audio/fresh-detour.mp3",
+    "midi": "audio/fresh-detour.mid",
+    "rms_db": -21.8,
+    "peak": 0.6292,
+    "pitched_parts": 15,
+    "chorus_at": 43.636,
+    "middle_at": 72.727,
+    "preview_only": true
+  },
+  {
+    "id": "fresh-friday",
+    "title": "周五不关灯",
+    "style": "俏皮电子放克",
+    "bpm": 110,
+    "duration": 144.636,
+    "file": "audio/fresh-friday.mp3",
+    "midi": "audio/fresh-friday.mid",
+    "rms_db": -22.72,
+    "peak": 0.4798,
+    "pitched_parts": 15,
+    "chorus_at": 52.364,
+    "middle_at": 87.273,
+    "preview_only": true
+  }
+]
