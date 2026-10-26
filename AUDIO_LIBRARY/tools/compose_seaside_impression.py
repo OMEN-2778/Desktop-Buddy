@@ -173,10 +173,14 @@ def vlq(n):
  return bytes(out)
 
 
-def save_midi(events,path,meter=(6,3),key=2):
+def save_midi(events,path,meter=(6,3),key=2,key_changes=()):
  tracks=[]
  meta=b'\x00\xff\x51\x03'+int(60_000_000/BPM).to_bytes(3,'big')+b'\x00\xff\x58\x04'+bytes([*meter,24,8])
- meta+=b'\x00\xff\x59\x02'+bytes([key,0])+b'\x00\xff\x2f\x00';tracks.append(meta)
+ meta+=b'\x00\xff\x59\x02'+bytes([key,0]);previous=0
+ for time,new_key in sorted(key_changes):
+  at=round(time*BPM/60*PPQ)
+  meta+=vlq(at-previous)+b'\xff\x59\x02'+bytes([new_key&255,0]);previous=at
+ meta+=b'\x00\xff\x2f\x00';tracks.append(meta)
  for ch in PROGRAMS:
   previous=0;track=bytearray()
   for time,data in events:
