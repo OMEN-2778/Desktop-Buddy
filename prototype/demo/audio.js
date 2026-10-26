@@ -6,7 +6,7 @@ const GAME_AUDIO_INLINE = /*__AUDIO_INLINE__*/null;
 const RECORDED_FOLEY={door:'real-door-cc0',fabric:'real-fabric-cc0',seat:'real-chair-cc0',drawer:'real-fridge-cc0',water:'real-water-running-cc0',pour:'real-pour-water-cc0',watering:'real-pour-water-cc0',page:'real-page-turn-cc0',keyboard:'real-keyboard-typing-cc0',cutlery:'real-cutlery-cc0',drink:'real-drink-cc0',flush:'real-toilet-flush-cc0',cook:'real-cooking-fry-cc0'};
 const gameAudio = (() => {
   let ctx=null, musicBus=null, effectsBus=null, effectsGate=null, effectsMeter=null, meter=null, ambientBus=null, actionBus=null, unlocked=false;
-  let muted=false, epoch=0, musicKey='', nextMusicRetry=0, currentMusic=null, lastTick=-Infinity;
+  let muted=false, epoch=0, musicKey='', nextMusicRetry=0, currentMusic=null, requestedMusic=null, retryMusicKey='', lastTick=-Infinity;
   let actionKey='', previousPlace='', nextFoley=0, nextAccent=0;
   const cache=new Map(), pending=new Map(), loops=new Map(), voices=new Set(), tracks=new Set(), cooldown=new Map(), failed=new Map();
   const emotionCue={current:null,candidate:null,at:0,until:0};
@@ -87,10 +87,10 @@ const gameAudio = (() => {
   }
   function stopEffects(){epoch++;for(const v of voices)stopVoice(v,.035);loops.clear();cooldown.clear();actionKey='';emotionCue.until=0;}
   function disposeTrack(t,fade=1.2){
-    if(!t||t.retiring)return;t.retiring=true;ramp(t.gain,0,fade);
+    if(!t||t.retiring)return;t.retiring=true;clearTimeout(t.loadTimer);ramp(t.gain,0,fade);
     t.timer=setTimeout(()=>{t.el.pause();t.el.removeAttribute('src');t.el.load();t.node.disconnect();t.gain.disconnect();tracks.delete(t);},fade*1000+50);
   }
-  function stopMusic(){musicKey='';stats.music='';nextMusicRetry=0;currentMusic=null;for(const t of tracks)disposeTrack(t,.08);}
+  function stopMusic(){musicKey='';stats.music='';nextMusicRetry=0;retryMusicKey='';currentMusic=requestedMusic=null;for(const t of tracks)disposeTrack(t,.08);}
   function chooseMusic(){
     const place=sim.place,season=SEASON_KEYS[seasonOf(sim.t).i],night=hour()<6||hour()>=18;
     if(place==='park')return 'BGM/park/park-'+season+'.mp3';
@@ -101,20 +101,34 @@ const gameAudio = (() => {
   }
   function updateMusic(){
     if(!prefs.bgm||!ready())return;
-    const path=chooseMusic();if(path===musicKey||now()<nextMusicRetry)return;
+    const path=chooseMusic();
+    if(path===musicKey&&requestedMusic&&!requestedMusic.retiring)return;
     if(!GAME_AUDIO_FILES.includes(path))return;
-    musicKey=path;const el=new Audio();el.preload='none';el.loop=true;
+    // Leave the old scene now, even when the next file is slow or unavailable.
+    // Only scene changes touch these gains; dialogs and effects never duck BGM.
+    for(const other of tracks)disposeTrack(other,.18);
+    currentMusic=null;stats.music='';
+    if(path===retryMusicKey&&now()<nextMusicRetry)return;
+    musicKey=path;
+    const el=new Audio();el.preload='auto';el.loop=true;
     const gain=ctx.createGain(),node=ctx.createMediaElementSource(el);gain.gain.value=0;node.connect(gain);gain.connect(musicBus);
-    const t={el,node,gain,retiring:false};tracks.add(t);el.src=url(path);
-    const fail=e=>{if(t.retiring)return;report(path,e);if(musicKey===path){musicKey='';nextMusicRetry=now()+30;}if(currentMusic===t)currentMusic=null;disposeTrack(t,.05);};
+    const t={el,node,gain,path,retiring:false};tracks.add(t);requestedMusic=t;
+    const fail=e=>{
+      if(t.retiring||requestedMusic!==t)return;
+      report(path,e);musicKey='';retryMusicKey=path;nextMusicRetry=now()+30;
+      requestedMusic=null;if(currentMusic===t)currentMusic=null;stats.music='';disposeTrack(t,.05);
+    };
     el.addEventListener('error',()=>fail(el.error?.message||'audio loading failed'),{once:true});
+    t.loadTimer=setTimeout(()=>fail('audio loading timed out'),12000);
+    el.src=url(path);
     el.play().then(()=>{
-      if(!prefs.bgm||!ready()||musicKey!==path||t.retiring){disposeTrack(t,.05);return;}
-      if(currentMusic)disposeTrack(currentMusic);currentMusic=t;stats.music=path;ramp(gain,1,1.2);
+      clearTimeout(t.loadTimer);
+      // Identity matters for rapid A → B → A trips, not just the filename.
+      if(!prefs.bgm||!ready()||requestedMusic!==t||chooseMusic()!==path||t.retiring){disposeTrack(t,.05);return;}
+      retryMusicKey='';nextMusicRetry=0;currentMusic=t;stats.music=path;ramp(gain,1,.35);
     }).catch(fail);
-    // A slow previous request must not start playing after a later scene change.
-    for(const other of tracks)if(other!==t&&other!==currentMusic)disposeTrack(other,.05);
   }
+
   function setVolume(channel,value){
     if(!['bgm','sfx'].includes(channel)||!Number.isFinite(value))return;
     prefs[channel+'Volume']=Math.round(Math.max(0,Math.min(100,value)));
@@ -230,5 +244,5 @@ const gameAudio = (() => {
   function resetEmotion(){stopTag('emotion');emotionCue.current=emotionCue.candidate=null;emotionCue.until=0;}
   installUI();
   return {setVolume,setEnabled,resetEmotion,wake,sync,tick,sound,thunder,phoneEnd,activity,ambience,chooseMusic,
-    debug:()=>({unlocked,level:outputLevel(),effectsLevel:outputLevel(effectsMeter),effectsGate:effectsGate?.gain.value||0,state:ctx?.state||'locked',music:stats.music,desiredMusic:chooseMusic(),loops:[...loops.keys()],voices:voices.size,tracks:tracks.size,cache:cache.size,musicTime:currentMusic?.el.currentTime||0,musicRate:currentMusic?.el.playbackRate||1,musicPath:"independent",musicTrackGain:currentMusic?.gain.gain.value||0,musicVolume:musicBus?.gain.value||0,effectsVolume:effectsBus?.gain.value||0,loopPaths:[...loops.values()].map(e=>e.path),focus:audioFocus(),emotion:emotionCue.current,emotionVoices:[...voices].filter(v=>v.tag==='emotion'&&!v.stopped).length,loopDetails:[...loops.entries()].map(([key,e])=>({key,path:e.path,volume:e.volume,spatial:e.spatial,filter:e.voice?.filter.frequency.value,pan:e.voice?.pan.pan.value})),stats:JSON.parse(JSON.stringify(stats))})};
+    debug:()=>({unlocked,level:outputLevel(),effectsLevel:outputLevel(effectsMeter),effectsGate:effectsGate?.gain.value||0,state:ctx?.state||'locked',music:stats.music,desiredMusic:chooseMusic(),pendingMusic:requestedMusic&&!requestedMusic.retiring&&currentMusic!==requestedMusic?requestedMusic.path:'',musicTracks:[...tracks].map(t=>({path:t.path,retiring:t.retiring,paused:t.el.paused,gain:t.gain.gain.value})),loops:[...loops.keys()],voices:voices.size,tracks:tracks.size,cache:cache.size,musicTime:currentMusic?.el.currentTime||0,musicRate:currentMusic?.el.playbackRate||1,musicPath:"independent",musicTrackGain:currentMusic?.gain.gain.value||0,musicVolume:musicBus?.gain.value||0,effectsVolume:effectsBus?.gain.value||0,loopPaths:[...loops.values()].map(e=>e.path),focus:audioFocus(),emotion:emotionCue.current,emotionVoices:[...voices].filter(v=>v.tag==='emotion'&&!v.stopped).length,loopDetails:[...loops.entries()].map(([key,e])=>({key,path:e.path,volume:e.volume,spatial:e.spatial,filter:e.voice?.filter.frequency.value,pan:e.voice?.pan.pan.value})),stats:JSON.parse(JSON.stringify(stats))})};
 })();
