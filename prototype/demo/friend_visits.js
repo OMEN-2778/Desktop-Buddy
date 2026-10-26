@@ -141,6 +141,7 @@ function friendHouseWindows(){
 function enterFriendHome(nextVisit=friendVisit){
  const v=nextVisit,c=v&&socialState.contacts.find(c=>c.id===v.id);if(!v||!c||v.phase!=='departing')return;
  if(friendVisitRestReply(c)){if(friendVisit===v)friendVisit=null;sim.dest=null;sim.mode='idle';sim.act=null;sim.idleUntil=sim.t+1;return;}
+ onPetSceneChanged("friend_home");
  closeRing();closePicker();sim.windup=null;sim.queue=[];sim.talk=null;sim.chosen=null;remoteSocial=null;sim.mode='idle';sim.act=null;
  if(sim.place==='mall'){mallS.stop=mallS.goal=mallS.hover=mallS.pointer=mallS.toilet=mallS.emergency=mallS.visit=mallS.foodFront=mallS.menuShop=null;}
  hoverId=null;glow=null;walkMark=null;
