@@ -4,6 +4,7 @@ Run from the repository root. Requires Python, numpy, scipy, ffmpeg and curl.
 """
 from pathlib import Path
 import hashlib, json, shutil, subprocess, tempfile
+from soften_winter_bgm import soften
 
 ROOT = Path(__file__).resolve().parents[2]
 LIB = ROOT / "AUDIO_LIBRARY"
@@ -80,7 +81,10 @@ def main():
                 raise FileNotFoundError(f"Expected generated file: {source}")
             target = BGM / destination
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, target)
+            if destination in {'home/winter-day.mp3', 'home/winter-night.mp3'}:
+                soften(source, target)
+            else:
+                shutil.copy2(source, target)
 
     # These are Freesound's public HQ preview encodes, not login-only original files.
     # The corresponding sound pages and CC0 terms are recorded in docs/LICENSES.md.

@@ -109,3 +109,7 @@ https://cdn.freesound.org/previews/{ID前三位}/{ID}_{上传者数字ID}-hq.mp3
 |park-cicadas-cc0.mp3|Cicada - calm／LinaManjarrez|https://freesound.org/people/LinaManjarrez/sounds/562838/ · CC0 1.0；录音说明为夜间蝉鸣，游戏副本调低音量并处理接缝|
 
 公园停止播放风声、树叶声、湖水与煮锅底声，晴天白天使用鸟鸣，夜晚使用蝉鸣；雨雪天气仍按天气处理。家中活动与环境音采用固定的较低音量，不触发 BGM 或 UI 的自动音量避让。
+
+## 冬季家中 BGM 轻声处理（2026-10-26）
+
+冬季白天与夜间仍使用原作曲、旋律、节奏与 128 秒循环，只做固定均衡与电平处理：去除极低频隆隆声，压低低音铺底和中低频持续嗡鸣；立体声整体 RMS 分别降低约 6.1 dB、7.7 dB，50 Hz 约降低 14.9 dB。没有加入动态压缩或事件音量避让。处理脚本为 `tools/soften_winter_bgm.py`，总构建脚本会在原始作曲渲染后应用一次，保证重建后不会恢复原音量。

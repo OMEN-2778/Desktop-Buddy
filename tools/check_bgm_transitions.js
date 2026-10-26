@@ -72,7 +72,11 @@ const {chromium}=require('playwright');
   await page.evaluate(()=>{sim.place='mall';gameAudio.tick(true);});await page.waitForTimeout(300);
   d=await page.evaluate(()=>gameAudio.debug());assert.equal(d.music,'');assert.equal(d.tracks,0);
   await page.evaluate(()=>{sim.place='home';gameAudio.tick(true);});await ready();
+  for(const h of [12,22]){
+   await page.evaluate(h=>{sim.place='home';sim.mode='idle';sim.act=null;sim.windup=null;sim.queue=[];sim.chosen=null;sim.dest=null;sim.idleUntil=Infinity;sim.outBack=null;sim.t=3*SEASON_DAYS*1440+h*60;gameAudio.tick(true);},h);await ready();
+   assert.equal(await page.evaluate(()=>gameAudio.debug().music),'BGM/home/winter-'+(h===12?'day':'night')+'.mp3');
+  }
   assert.deepEqual(errors,[]);
-  console.log('PASS: real scene round trips; slow loads silence old scene; A-B-A promise race; failed-track retry isolation; no stale BGM during backoff');
+  console.log('PASS: real scene round trips; slow loads silence old scene; A-B-A promise race; failed-track retry isolation; no stale BGM during backoff; winter day/night playback');
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
