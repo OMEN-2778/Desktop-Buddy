@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#264a62">
+<title>海风拐了个弯 · 海边音乐试听</title>
+<style>
+:root{color-scheme:light;--ink:#244459;--muted:#617b89;--paper:#fffdf5;--line:#aac1c6;--blue:#cee6ea;--gold:#f2cb85;--step:polygon(0 10px,5px 10px,5px 5px,10px 5px,10px 0,calc(100% - 10px) 0,calc(100% - 10px) 5px,calc(100% - 5px) 5px,calc(100% - 5px) 10px,100% 10px,100% calc(100% - 10px),calc(100% - 5px) calc(100% - 10px),calc(100% - 5px) calc(100% - 5px),calc(100% - 10px) calc(100% - 5px),calc(100% - 10px) 100%,10px 100%,10px calc(100% - 5px),5px calc(100% - 5px),5px calc(100% - 10px),0 calc(100% - 10px))}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#e6eee8;background-image:linear-gradient(45deg,#dce7e140 25%,transparent 25%,transparent 75%,#dce7e140 75%),linear-gradient(45deg,#dce7e140 25%,transparent 25%,transparent 75%,#dce7e140 75%);background-size:12px 12px;background-position:0 0,6px 6px}button,input,a{font:inherit}button,a,input{touch-action:manipulation}button,a{color:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #267fa4;outline-offset:4px}main{width:min(1060px,calc(100% - 48px));margin:40px auto 52px}.mast{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700;letter-spacing:2px;margin:0 2px 24px}.mast span:last-child{color:var(--muted);letter-spacing:0}.paper{background:var(--paper);clip-path:var(--step);padding:27px;border-top:4px solid #fff;border-bottom:4px solid #b6c9c7}.intro{display:flex;justify-content:space-between;gap:25px;align-items:end;margin-bottom:24px}h1{font-size:40px;line-height:1.35;letter-spacing:2px;margin:0 0 10px}.intro p{font-size:16px;line-height:1.8;margin:0;color:var(--muted)}.badge{white-space:nowrap;background:#e5ede6;padding:9px 15px;font-size:13px;font-weight:700;clip-path:var(--step)}.art{position:relative;overflow:hidden;clip-path:var(--step);background:#9fcbd0}.art canvas{display:block;width:100%;height:auto;image-rendering:pixelated;aspect-ratio:320/100}.art .caption{position:absolute;left:20px;bottom:14px;background:#fff9e9e8;padding:7px 12px;font-size:12px;clip-path:var(--step)}.player{display:grid;grid-template-columns:76px 1fr 164px;gap:22px;align-items:center;margin:25px 0 22px}.play{width:76px;height:66px;background:var(--gold);border:0;clip-path:var(--step);font-size:18px;font-weight:800;box-shadow:inset 0 -5px #c49e64}.play:hover{background:#f8d69b}.progress-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:7px;font-size:13px}.progress-top strong{font-size:15px}.time{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}input[type=range]{appearance:none;-webkit-appearance:none;background:#d9e7e6;height:10px;border:2px solid #9fb9bd;cursor:pointer;width:100%;margin:8px 0;accent-color:#39829a}input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:13px;height:22px;background:#fffaf0;border:3px solid #356078;box-shadow:0 2px #a8bec4}input[type=range]::-moz-range-thumb{width:9px;height:16px;border-radius:0;background:#fffaf0;border:3px solid #356078}.volume label{display:flex;justify-content:space-between;font-size:13px}.volume output{font-variant-numeric:tabular-nums;min-width:45px;text-align:center;background:#e7efea;clip-path:var(--step);padding:3px 8px;margin-top:-3px}.tags{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.tags span{font-size:12px;color:#506d7d;background:#edf2e9;padding:6px 12px;clip-path:var(--step)}.below{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;margin-top:20px}h2{font-size:19px;margin:0 0 17px}p.note{color:var(--muted);font-size:14px;line-height:1.9;margin:16px 0 0}.sections{display:grid;gap:7px}.section{border:0;background:#eef3ec;display:flex;text-align:left;gap:14px;padding:10px 13px;align-items:center;clip-path:var(--step)}.section .stamp{font-size:12px;font-variant-numeric:tabular-nums;color:#6c8793;min-width:36px}.section strong{display:block;font-size:14px}.section small{display:block;font-size:12px;color:var(--muted);margin-top:4px}.section.active{background:#cde4e8}.section:hover{background:#dcebef}.instruments{display:flex;gap:9px;flex-wrap:wrap}.instruments span{background:#e8eee3;font-size:13px;padding:8px 12px;clip-path:var(--step)}.links{display:flex;gap:12px;margin-top:23px;flex-wrap:wrap}.links a{text-decoration:none;font-size:14px;font-weight:700;padding:11px 17px;background:#d3e6ea;clip-path:var(--step)}.links a:hover{background:#b6d8e2}.links a:last-child{background:#f2e4c7}footer{display:flex;justify-content:space-between;gap:20px;color:var(--muted);font-size:12px;line-height:1.8;margin:20px 3px 0}footer a{text-decoration:underline;text-underline-offset:3px}#status{min-height:22px;font-size:13px;color:var(--muted);margin:0}#status.error{color:#ae4937}
+@media(max-width:720px){main{width:calc(100% - 28px);margin-top:22px}.paper{padding:20px}.intro{display:block}h1{font-size:29px}.badge{display:inline-block;margin-top:13px}.player{grid-template-columns:64px 1fr;gap:15px}.play{width:64px;height:60px}.volume{grid-column:2}.below{grid-template-columns:1fr}.art .caption{font-size:10px;bottom:7px;left:10px}footer{display:block}.mast{font-size:11px;letter-spacing:1px}}
+</style>
+<main>
+ <div class="mast"><span>DESKTOP BUDDY · MUSIC ROOM</span><span>海边印象 / 试作 01</span></div>
+ <section class="paper">
+  <div class="intro"><div><h1>海风拐了个弯</h1><p>一首新的海边小曲，先听听看</p></div><span class="badge">独立试听 · 尚未加入游戏</span></div>
+  <div class="art"><canvas id="coast" width="320" height="100" aria-label="海边小路、灯塔与层层海浪的原创像素画" role="img"></canvas><span class="caption">不用赶路，在这儿待一会儿</span></div>
+  <audio id="audio" preload="metadata" src="./audio/seaside-impression.mp3?v=1"></audio>
+  <div class="player">
+   <button class="play" id="play" aria-label="播放音乐">播放</button>
+   <div><div class="progress-top"><strong id="now">走到海边</strong><span class="time"><span id="elapsed">00:00</span> / <span id="duration">01:48</span></span></div><input type="range" id="seek" aria-label="播放进度" min="0" max="108" value="0" step="0.1"></div>
+   <div class="volume"><label for="volume">试听音量 <output id="volumeValue">50%</output></label><input type="range" id="volume" min="0" max="100" value="50" aria-label="试听音量"></div>
+  </div>
+  <p id="status" role="status">点击播放即可试听，音量从 50% 开始</p>
+  <div class="tags"><span>6/8 拍</span><span>84 BPM</span><span>D 大调</span><span>11 种乐器</span><span>全新旋律与编配</span></div>
+ </section>
+ <div class="below">
+  <section class="paper"><h2>从哪一段开始听？</h2><div class="sections" id="sections"></div></section>
+  <section class="paper"><h2>这次的小乐队</h2><div class="instruments" id="instruments"></div><p class="note">吉他和钢琴铺底，长笛、单簧管轮流接旋律。中段留给大提琴与拨弦，后面再慢慢展开，没有一直压着的低音铺底。</p><div class="links"><a href="./audio/seaside-impression.mp3" download="海风拐了个弯.mp3">下载 MP3</a><a href="./audio/seaside-impression.mid" download="海风拐了个弯.mid">下载 MIDI</a></div><p class="note">这里只放音乐，不载入游戏。听完再决定要不要用作海边 BGM。</p></section>
+ </div>
+ <footer><span>原创旋律、和声及编配 · 2026.10<br>采样音色：GeneralUser GS / S. Christian Collins</span><a href="./CREDITS.md">制作与音色来源</a></footer>
+</main>
+<script>
+const audio=document.getElementById('audio'),play=document.getElementById('play'),seek=document.getElementById('seek'),volume=document.getElementById('volume'),status=document.getElementById('status');
+let track=null;audio.volume=.5;
+const fmt=t=>String(Math.floor(t/60)).padStart(2,'0')+':'+String(Math.floor(t%60)).padStart(2,'0');
+function sync(){
+ const duration=Number.isFinite(audio.duration)?audio.duration:108;seek.max=duration;seek.value=audio.currentTime;
+ document.getElementById('elapsed').textContent=fmt(audio.currentTime);document.getElementById('duration').textContent=fmt(duration);
+ play.textContent=audio.paused?'播放':'暂停';play.setAttribute('aria-label',audio.paused?'播放音乐':'暂停音乐');
+ if(track){const current=track.sections.findLast(s=>s.at<=audio.currentTime)||track.sections[0];document.getElementById('now').textContent=current.title;document.querySelectorAll('.section').forEach(b=>{const active=+b.dataset.at===current.at;b.classList.toggle('active',active);b.setAttribute('aria-current',active?'true':'false');});}
+}
+async function start(){try{if(audio.error)audio.load();await audio.play();status.classList.remove('error');status.textContent='正在试听 · 可以点下面的段落跳转';}catch(e){status.classList.add('error');status.textContent='暂时没播出来，请再点一次，或下载 MP3 试听';}sync();}
+play.onclick=()=>{if(audio.paused)start();else audio.pause();};
+seek.oninput=()=>{audio.currentTime=+seek.value;sync();};
+volume.oninput=()=>{audio.volume=+volume.value/100;document.getElementById('volumeValue').textContent=volume.value+'%';};
+for(const event of ['timeupdate','loadedmetadata','play','pause','seeked','ended'])audio.addEventListener(event,sync);
+audio.addEventListener('error',()=>{status.classList.add('error');status.textContent='音频加载失败，可重试或直接下载 MP3';});
+fetch('./track.json').then(r=>{if(!r.ok)throw Error(r.status);return r.json();}).then(data=>{
+ track=data;for(const section of data.sections){const b=document.createElement('button');b.className='section';b.dataset.at=section.at;b.innerHTML='<span class="stamp">'+fmt(section.at)+'</span><span><strong>'+section.title+'</strong><small>'+section.detail+'</small></span>';b.onclick=()=>{audio.currentTime=section.at;start();};document.getElementById('sections').appendChild(b);}
+ for(const name of data.instruments){const span=document.createElement('span');span.textContent=name;document.getElementById('instruments').appendChild(span);}sync();
+}).catch(()=>{status.textContent='音乐可正常播放，段落介绍暂时没加载出来';});
+const canvas=document.getElementById('coast'),x=canvas.getContext('2d');x.imageSmoothingEnabled=false;
+function rect(color,a,b,w,h){x.fillStyle=color;x.fillRect(Math.round(a),Math.round(b),w,h);}
+function draw(time){
+ const t=matchMedia('(prefers-reduced-motion: reduce)').matches?0:time/1000;
+ rect('#abd3d7',0,0,320,100);rect('#c3dfe0',0,23,320,22);rect('#f5dcad',249,9,11,11);rect('#f5dcad',247,12,15,6);
+ for(const [a,b,w]of [[25,13,28],[70,20,17],[182,9,29]]){rect('#e8f0df',a,b,w,3);rect('#e8f0df',a+5,b-3,w-10,3);}
+ rect('#779e9d',17,41,48,3);rect('#779e9d',29,38,21,3);rect('#9cb6aa',203,40,56,4);rect('#9cb6aa',218,36,25,4);
+ rect('#6eaab4',0,44,320,56);rect('#7cb7bc',0,48,320,10);rect('#5796a8',0,70,320,30);
+ for(let i=0;i<17;i++){const a=(i*29+t*(i%2?2:-1.2)+340)%340-10,b=48+(i*11)%48;rect(i%3?'#a6d0cb':'#dbe5ce',a,b,7+i%6,1);}
+ for(let row=0;row<15;row++){const a=13+row*4+Math.sin(t*.6+row*.3)*2;rect('#e1cd9e',0,57+row*3,a,3);rect('#eff0d2',a,57+row*3,3,2);}
+ for(let i=0;i<10;i++)rect('#c0b58a',4+i*6,86+i%3*3,2,1);
+ rect('#7f9f81',0,55,14,24);rect('#79977b',0,74,20,13);rect('#527e73',0,54,9,21);
+ rect('#e9ddbe',291,30,9,32);rect('#e9ddbe',293,27,5,4);rect('#bf766b',289,28,13,4);rect('#658893',293,33,5,5);rect('#9b6c62',291,48,9,5);rect('#435e6a',294,55,3,7);rect('#81978b',282,62,32,4);rect('#8ea493',288,59,17,3);
+ rect('#7d715f',64,78,2,13);rect('#7d715f',82,78,2,13);rect('#947f62',62,78,24,3);rect('#b39a73',62,73,24,3);rect('#786753',65,85,18,2);
+ const boat=175+Math.sin(t*.25)*4;rect('#e5d2a6',boat,61,15,2);rect('#e5d2a6',boat+2,63,11,2);rect('#536d76',boat+6,45,1,16);rect('#f8edcf',boat+7,47,2,12);rect('#f8edcf',boat+9,51,3,8);rect('#f8edcf',boat+12,55,2,4);
+ for(const [a,b]of [[120,23],[135,28],[100,18]]){const y=b+Math.round(Math.sin(t+a)*.7);rect('#5f858d',a,y,2,1);rect('#5f858d',a+2,y+1,2,1);rect('#5f858d',a+4,y,2,1);}
+ requestAnimationFrame(draw);
+}requestAnimationFrame(draw);
+</script>
+</html>
