@@ -65,6 +65,15 @@ _BANGS = """
 
 _TOP = ".\n.\n"  # rows 0-1 left free for ahoge / buns
 
+# A narrower crown lets the waves open out towards the shoulders.
+_WAVE_CROWN = """.......OOOOOO
+.....OOHHhhhOO
+....OHHYhhhhhkO
+....OHYhhhhhhkO
+...OhHhhhhhhhhkO
+...OhhhhkhhhhhkO
+"""
+
 HEADS = {
     # --- short styles
     # messy: round crown, choppy fringe; ahoge drawn separately so it can sway
@@ -246,13 +255,13 @@ HEADS.update({
 ...qSLLLLLLLLLLSq
 ....qqSLLLLLLSqq
 """),
-    "wave_short": rows(_TOP + _CROWN + """
-..OhHhhhLhhLhhhhkO
-.OhhkLLLhLLLLLhhkO
+    "wave_short": rows(_TOP + _WAVE_CROWN + """
+...OHhhLhhLhhhkO
+..OhkLLLhLLLLhhkO
 """ + _FACE),
-    "wave_long": rows(_TOP + _CROWN + """
-..OhHhhhLLhhhhhhkO
-.OhhkLLLLLLhhLhhkO
+    "wave_long": rows(_TOP + _WAVE_CROWN + """
+...OHhhhLLhhhhkO
+..OhkLLLLLhhLhhkO
 """ + _FACE),
     "mullet": rows(_TOP + _CROWN + """
 .OhHhhLhhLhhhLhhkO
@@ -358,6 +367,12 @@ def under_hat(draw, dy: int):
     return run
 
 
+WAVE_EDGES = {
+    "wave_short": (4, 3, 3, 2, 2, 1, 1, 0, 0, 1, 2),  # rows 7..17
+    "wave_long": (4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 0, 0, 1, 0, 1, 2),  # rows 7..22
+}
+
+
 def draw_back_hair(s: Sprite, d: "Doll", bob: int = 0, sway: int = 0):
     """Hair that sits behind the body/head."""
     h = d.hair
@@ -370,8 +385,20 @@ def draw_back_hair(s: Sprite, d: "Doll", bob: int = 0, sway: int = 0):
         shape.rect(4, 19, 3, 1, h[2]).rect(13, 19, 3, 1, h[2])  # tapered tips
         shape.vline(3, 9, 17, h[3])             # lit strand on the left
         shape.rect(15, 8, 2, 11, h[1]).rect(13, 19, 3, 1, h[1])  # shadow side
-    elif style in ("wave_short", "wave_long", "mullet"):
-        bottom = {"wave_short": 16, "wave_long": 22, "mullet": 19}[style]
+    elif style in WAVE_EDGES:
+        for y, left in enumerate(WAVE_EDGES[style], 7):
+            right = W - 1 - left
+            shape.hline(left, right, y, h[2])
+            # Alternating S-shaped locks, rather than straight vertical stripes.
+            phase = (y - 7) % 4
+            shape.set(left + (1 if phase < 2 else 2), y, h[3])
+            shape.set(right - (1 if phase < 2 else 2), y, h[1])
+            if phase == 2:
+                shape.set(left + 3, y, h[1]).set(right - 3, y, h[3])
+            if phase == 0 and y > 10:
+                shape.set(left + 2, y, h[4])
+    elif style == "mullet":
+        bottom = 19
         shape.rect(3, 7, 14, bottom - 7, h[2])
         for y in range(8, bottom, 4):
             for cx in (3, 16):
@@ -407,12 +434,18 @@ def draw_side_hair(s: Sprite, d: "Doll", dy: int = 0):
                 s.set(x + (y // 2 % 2), y + 1 + dy, h[2])
             s.hline(x, x + 1, 22 + dy, P.coral[2]).set(x, 23 + dy, h[1])
     else:
-        bottom = 17 if d.hair_style == "wave_short" else 22
         shape = Sprite(W,H)
-        for x in (2, 17):
-            for y in range(11, bottom, 4):
-                shape.ellipse(x, y, 1.5, 2, h[2])
-                shape.set(x - 1, y - 1, h[3] if x == 2 else h[2]).set(x + 1, y + 1, h[1])
+        for y, left in enumerate(WAVE_EDGES[d.hair_style], 7):
+            if y < 10:
+                continue
+            phase = (y - 7) % 4
+            for side in (0, 1):
+                right = W - 1 - left
+                x0, x1 = (left, min(left + 2, 3)) if not side else (max(right - 2, 16), right)
+                shape.hline(x0, x1, y, h[2])
+                shape.set(x0 if not side else x1, y, h[3] if phase < 2 and not side else h[1])
+                if x1 > x0:
+                    shape.set(x1 if not side else x0, y, h[1] if phase >= 2 else h[2])
         s.blit(shape.outline(h[0],grow=True).crop(1,1,W,H),0,dy)
 
 
