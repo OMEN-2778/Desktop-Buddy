@@ -41,6 +41,9 @@ jobs:
         run: |
           PYTHONPATH=tools python tools/make_demo.py
           node desktop/scripts/copy-web.mjs
+          PYTHONPATH=tools python tools/make_pet_preview.py
+          mkdir -p desktop/dist/pets
+          cp prototype/pets/index.html desktop/dist/pets/index.html
           touch desktop/dist/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

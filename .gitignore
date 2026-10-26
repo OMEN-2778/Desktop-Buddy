@@ -4,3 +4,7 @@ __pycache__/
 
 # Audio copies generated for the raw browser demo
 prototype/demo/audio/
+
+# Standalone pet art viewer, generated from its template and Python rigs.
+prototype/pets/index.html
+prototype/pets/assets/
