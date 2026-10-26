@@ -3,11 +3,11 @@
 const GAME_AUDIO_FILES = /*__AUDIO_FILES__*/null;
 const GAME_AUDIO_VERSION = /*__AUDIO_VERSION__*/null;
 const GAME_AUDIO_INLINE = /*__AUDIO_INLINE__*/null;
-const RECORDED_FOLEY={door:'real-door-cc0',fabric:'real-fabric-cc0',seat:'real-chair-cc0',drawer:'real-fridge-cc0',water:'real-water-running-cc0',pour:'real-pour-water-cc0',watering:'real-pour-water-cc0',page:'real-page-turn-cc0',keyboard:'real-keyboard-typing-cc0',cutlery:'real-cutlery-cc0',drink:'real-drink-cc0',flush:'real-toilet-flush-cc0',cook:'real-cooking-fry-cc0'};
+const RECORDED_FOLEY={door:'real-door-cc0',fabric:'real-fabric-cc0',seat:'real-chair-cc0',drawer:'real-fridge-cc0',water:'real-water-running-cc0',pour:'real-pour-water-cc0',watering:'real-pour-water-cc0',page:'real-page-turn-cc0',keyboard:'real-keyboard-typing-cc0',cutlery:'real-cutlery-cc0',drink:'real-drink-cc0',flush:'real-toilet-flush-cc0',cook:'real-cooking-stir-cc0'};
 const gameAudio = (() => {
   let ctx=null, musicBus=null, effectsBus=null, effectsGate=null, effectsMeter=null, meter=null, ambientBus=null, actionBus=null, unlocked=false;
   let muted=false, epoch=0, musicKey='', nextMusicRetry=0, currentMusic=null, requestedMusic=null, retryMusicKey='', lastTick=-Infinity;
-  let actionKey='', previousPlace='', nextFoley=0, nextAccent=0;
+  let sceneMixKey='', actionKey='', previousPlace='', nextFoley=0, nextAccent=0;
   const cache=new Map(), pending=new Map(), loops=new Map(), voices=new Set(), tracks=new Set(), cooldown=new Map(), failed=new Map();
   const emotionCue={current:null,candidate:null,at:0,until:0};
   const stats={played:0,loads:0,errors:[],last:[],music:''};
@@ -24,7 +24,7 @@ const gameAudio = (() => {
       if(!ctx){
         const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
         ctx=new AC();musicBus=ctx.createGain();effectsBus=ctx.createGain();effectsGate=ctx.createGain();effectsMeter=ctx.createAnalyser();effectsMeter.fftSize=512;
-        ambientBus=ctx.createGain();actionBus=ctx.createGain();ambientBus.connect(effectsBus);actionBus.connect(effectsBus);effectsBus.connect(effectsGate);effectsGate.connect(effectsMeter);meter=ctx.createAnalyser();meter.fftSize=512;musicBus.connect(meter);effectsMeter.connect(meter);meter.connect(ctx.destination);
+        ambientBus=ctx.createGain();actionBus=ctx.createGain();actionBus.gain.value=.4;ambientBus.gain.value=.55;ambientBus.connect(effectsBus);actionBus.connect(effectsBus);effectsBus.connect(effectsGate);effectsGate.connect(effectsMeter);meter=ctx.createAnalyser();meter.fftSize=512;musicBus.connect(meter);effectsMeter.connect(meter);meter.connect(ctx.destination);
         musicBus.gain.value=prefs.bgm?prefs.bgmVolume/100*.53:0;effectsBus.gain.value=prefs.sfx?prefs.sfxVolume/100:0;effectsGate.gain.value=prefs.sfx?1:0;
       }
       unlocked=true;muted=document.hidden;ctx.resume().then(()=>{if(!muted)sync();}).catch(()=>{});
@@ -165,12 +165,20 @@ const gameAudio = (() => {
     return sim.mode==='act'?sim.act||'':'';
   }
   const ACTION_SOUND={pet:'cat-purr-meow-cc0',toilet:'seat',park_toilet:'seat',eat:'cutlery',park_eat:'cutlery',snack:'drawer',friend_snack:'drawer',tv:'switch',computer:'keyboard',pc_code:'keyboard',pc_forum:'keyboard',pc_video:'switch',read:'page',towel:'fabric',dress:'fabric',sleep:'fabric',nap:'fabric',bench:'seat',sit:'seat',drink:'drink',water:'watering',water_living:'watering',water_study:'watering',music:'music',laundry:'switch',art:'page',window:'fabric',inspect:'ui-click',fish:'splash',fishing:'splash',dance:'music',phone_game:'switch',phone_feed:'ui-message'};
-  const ACTION_LOOP={bath:['water',.24],wash:['water',.20],cook:['cook',.23],laundry:['washer',.35],tv:['tv',.25],pc_video:['tv',.2],dance:['music',.3],cinema:['cinema',.35]};
+  const ACTION_LOOP={bath:['water',.24],wash:['water',.20],cook:['cook',.20],laundry:['washer',.35],tv:['tv',.25],pc_video:['tv',.2],dance:['music',.3],cinema:['cinema',.35]};
   const ACTION_REPEAT={computer:['keyboard',3],pc_code:['keyboard',2.3],pc_forum:['keyboard',4],read:['page',12],eat:['cutlery',6],park_eat:['cutlery',6],drink:['drink',9],water:['watering',5],water_living:['watering',5],water_study:['watering',5],music:['music',5]};
   function placeVoice(v,fade=.3){
     const pos=audioSpatial(v.spatial),value=v.volume*pos.gain;
     if(v.target===undefined||Math.abs(value-v.target)>.001){ramp(v.gain,value,fade);v.target=value;}
     v.pan.pan.setTargetAtTime(pos.pan,ctx.currentTime,.12);v.filter.frequency.setTargetAtTime(pos.cutoff,ctx.currentTime,.15);
+  }
+  function updateSceneMix(){
+    const key=sim.place==='home'||atFriendHome()?'home':'outside';
+    if(key===sceneMixKey)return;sceneMixKey=key;
+    // Stable scene balance: UI stays crisp above quiet household activity.
+    // No calls, emotions or dialogs change these levels or the music bus.
+    ramp(actionBus,key==='home'?.4:.7,.15);
+    ramp(ambientBus,key==='home'?.55:1,.15);
   }
   function ambience(){return Object.fromEntries(Object.entries(audioSceneBeds()).filter(([,v])=>v));}
   function trackEmotion(time){
@@ -186,7 +194,7 @@ const gameAudio = (() => {
   }
   function tick(force=false){
     const time=now();if(!force&&time-lastTick<.10)return;lastTick=time;trackEmotion(time);
-    if(!ready())return;updateMusic();if(!prefs.sfx)return;
+    if(!ready())return;updateMusic();updateSceneMix();if(!prefs.sfx)return;
     if(weather.kind==='storm'&&stormExposed())buffer(sfx('thunder-heavy-no-rain-cc0'));
     const desired=ambience(),act=activity(),playing=speed>0&&!cardHolds()&&!wiping;
     if(phoneCall.phase==='ringing')desired.ring=['phone-ring',.30];
@@ -244,5 +252,5 @@ const gameAudio = (() => {
   function resetEmotion(){stopTag('emotion');emotionCue.current=emotionCue.candidate=null;emotionCue.until=0;}
   installUI();
   return {setVolume,setEnabled,resetEmotion,wake,sync,tick,sound,thunder,phoneEnd,activity,ambience,chooseMusic,
-    debug:()=>({unlocked,level:outputLevel(),effectsLevel:outputLevel(effectsMeter),effectsGate:effectsGate?.gain.value||0,state:ctx?.state||'locked',music:stats.music,desiredMusic:chooseMusic(),pendingMusic:requestedMusic&&!requestedMusic.retiring&&currentMusic!==requestedMusic?requestedMusic.path:'',musicTracks:[...tracks].map(t=>({path:t.path,retiring:t.retiring,paused:t.el.paused,gain:t.gain.gain.value})),loops:[...loops.keys()],voices:voices.size,tracks:tracks.size,cache:cache.size,musicTime:currentMusic?.el.currentTime||0,musicRate:currentMusic?.el.playbackRate||1,musicPath:"independent",musicTrackGain:currentMusic?.gain.gain.value||0,musicVolume:musicBus?.gain.value||0,effectsVolume:effectsBus?.gain.value||0,loopPaths:[...loops.values()].map(e=>e.path),focus:audioFocus(),emotion:emotionCue.current,emotionVoices:[...voices].filter(v=>v.tag==='emotion'&&!v.stopped).length,loopDetails:[...loops.entries()].map(([key,e])=>({key,path:e.path,volume:e.volume,spatial:e.spatial,filter:e.voice?.filter.frequency.value,pan:e.voice?.pan.pan.value})),stats:JSON.parse(JSON.stringify(stats))})};
+    debug:()=>({unlocked,level:outputLevel(),effectsLevel:outputLevel(effectsMeter),effectsGate:effectsGate?.gain.value||0,state:ctx?.state||'locked',music:stats.music,desiredMusic:chooseMusic(),pendingMusic:requestedMusic&&!requestedMusic.retiring&&currentMusic!==requestedMusic?requestedMusic.path:'',musicTracks:[...tracks].map(t=>({path:t.path,retiring:t.retiring,paused:t.el.paused,gain:t.gain.gain.value})),loops:[...loops.keys()],voices:voices.size,tracks:tracks.size,cache:cache.size,musicTime:currentMusic?.el.currentTime||0,musicRate:currentMusic?.el.playbackRate||1,musicPath:"independent",musicTrackGain:currentMusic?.gain.gain.value||0,musicVolume:musicBus?.gain.value||0,effectsVolume:effectsBus?.gain.value||0,actionVolume:actionBus?.gain.value||0,ambientVolume:ambientBus?.gain.value||0,loopPaths:[...loops.values()].map(e=>e.path),focus:audioFocus(),emotion:emotionCue.current,emotionVoices:[...voices].filter(v=>v.tag==='emotion'&&!v.stopped).length,loopDetails:[...loops.entries()].map(([key,e])=>({key,path:e.path,volume:e.volume,spatial:e.spatial,filter:e.voice?.filter.frequency.value,pan:e.voice?.pan.pan.value})),stats:JSON.parse(JSON.stringify(stats))})};
 })();

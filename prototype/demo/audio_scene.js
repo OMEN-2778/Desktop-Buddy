@@ -53,19 +53,16 @@ function audioSceneBeds(){
  }
  if(['front','park','beach'].includes(place)){
   if(wet)beds.rain=[weather.kind==='storm'?'rain-heavy-window-cc0':'rain-soft-loop-cc0',.28];
-  beds.air=['park-wind-cc0',(weather.kind==='storm'?.15:.07)*breeze];
+  if(place!=='park')beds.air=['park-wind-cc0',(weather.kind==='storm'?.15:.07)*breeze];
   if(place==='beach'){
    beds.water=['real-sea-cc0',.25,{x:160,y:45,radius:190}];
 
   }else if(!wet&&weather.kind!=='snow'){
-   if(!night&&time%39<20)beds.birds=['park-birds-cc0',place==='park'?.18:.10,{x:65,y:35,radius:190}];
-   if(night&&seasonOf(sim.t).i!==3)beds.night=['real-night-cc0',.09];
-   if(place==='park')beds.leaves=['park-leaves-cc0',.08*breeze,{x:270,y:35,radius:180}];
+   if(!night&&(place==='park'||time%39<20))beds.birds=['park-birds-cc0',place==='park'?.18:.10,{x:65,y:35,radius:190}];
+   if(night&&place==='park')beds.night=['park-cicadas-cc0',.10];
+   else if(night&&seasonOf(sim.t).i!==3)beds.night=['real-night-cc0',.09];
   }
   if(place==='park'){
-   const L=parkLayout();
-   if(L.pond)beds.lake=['real-lake-cc0',.18,{x:L.pond[0],y:L.pond[1],radius:95}];
-   if(L.facility?.kind==='food'&&!parkInsideToilet())beds.pot=['real-boil-cc0',.15,{x:L.facility.x,y:L.facility.feet,radius:65}];
    if(parkInsideToilet())return {rain:wet?[weather.kind==='storm'?'rain-heavy-window-cc0':'rain-soft-loop-cc0',.035,{cutoff:850}]:null};
   }
   if(!wet&&life.npcs?.length>1)beds.people=['crowd-indoor-walla-cc0',.035,{x:235,y:p.y,radius:130}];
@@ -84,6 +81,4 @@ function audioSceneAccent(){
  if(place==='beach')gameAudio.sound(Math.random()<.2?'real-horn-cc0':Math.random()<.5?'real-boat-cc0':'real-gulls-cc0',.10,{gap:35,spatial:{x:285,y:45,radius:150,cutoff:1800},ambient:true});
  if(place==='bar'&&!barToiletInside())gameAudio.sound(Math.random()<.5?'real-cup-cc0':'real-ice-cc0',.12,{gap:20,spatial:{x:155,y:100,radius:100},ambient:true});
  if(place==='mall'&&!mallInside())gameAudio.sound('real-checkout-cc0',.08,{gap:30,spatial:{x:250,y:p.y,radius:110},ambient:true});
- if(place==='park'&&parkLayout().id==='gazebo')gameAudio.sound('real-boat-cc0',.05,{gap:40,spatial:{x:105,y:80,radius:65,cutoff:1000},ambient:true});
- if(place==='park'&&parkLayout().id==='grove'&&!isRain())gameAudio.sound('cutlery',.12,{gap:25,spatial:{x:parkLayout().facility.x,y:parkLayout().facility.feet,radius:65},ambient:true});
 }

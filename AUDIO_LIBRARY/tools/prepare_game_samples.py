@@ -33,6 +33,8 @@ CUTS={
  'real-drink-cc0':(0,1.8,.045,False),
  'real-toilet-flush-cc0':(0,5,.06,False),
  'real-cooking-fry-cc0':(2,14,.04,True),
+ 'real-cooking-stir-cc0':(1,24,.035,True),
+ 'park-cicadas-cc0':(0,10,.04,True),
  'park-wind-cc0':(0,20,.07,True),
  'park-birds-cc0':(0,24,.09,True),
  'park-leaves-cc0':(0,18,.06,True),

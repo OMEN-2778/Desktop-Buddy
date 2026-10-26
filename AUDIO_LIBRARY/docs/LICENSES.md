@@ -98,3 +98,14 @@ https://cdn.freesound.org/previews/{ID前三位}/{ID}_{上传者数字ID}-hq.mp3
 ## 原创情绪短旋律
 
 `SFX/game/emotion-*.mp3` 共 17 段，由 `tools/build_emotion_cues.py` 独立编写 MIDI 音列、节奏、音色和鼓点后合成，未使用其他游戏录音或旋律。素材使用游戏源码相同授权；设计与音列见 `docs/EMOTION_CUES.json`。
+
+## 翻炒与公园夜间蝉鸣替换（2026-10-26）
+
+以下两份素材已在作品详情页逐项核实为 Creative Commons 0，保留官方预览下载地址于 `REAL_FOLEY_SOURCES.json`。
+
+|文件|作品／作者|来源与处理|
+|---|---|---|
+|real-cooking-stir-cc0.mp3|Cooking Stir Fry - 1.wav／SpaceJoe|https://freesound.org/people/SpaceJoe/sounds/504971/ · CC0 1.0；仅保留官方 HQ 预览前 30 秒作为源片段，播放副本再做裁剪与轻声循环|
+|park-cicadas-cc0.mp3|Cicada - calm／LinaManjarrez|https://freesound.org/people/LinaManjarrez/sounds/562838/ · CC0 1.0；录音说明为夜间蝉鸣，游戏副本调低音量并处理接缝|
+
+公园停止播放风声、树叶声、湖水与煮锅底声，晴天白天使用鸟鸣，夜晚使用蝉鸣；雨雪天气仍按天气处理。家中活动与环境音采用固定的较低音量，不触发 BGM 或 UI 的自动音量避让。

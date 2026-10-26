@@ -212,5 +212,24 @@
     "download": "https://cdn.freesound.org/previews/455/455397_1130120-hq.mp3",
     "license": "CC0-1.0",
     "verification": "Freesound result for sound 455397 explicitly labels License: Creative Commons 0"
+  },
+  {
+    "id": "real-cooking-stir-cc0",
+    "title": "Cooking Stir Fry - 1.wav",
+    "author": "SpaceJoe",
+    "page": "https://freesound.org/people/SpaceJoe/sounds/504971/",
+    "download": "https://cdn.freesound.org/previews/504/504971_6150892-hq.mp3",
+    "license": "CC0-1.0",
+    "verification": "Asset page explicitly labels Creative Commons 0; checked 2026-10-26",
+    "source_excerpt": "First 30 seconds of the official HQ preview, re-encoded at 128 kbps; no full-length recording bundled"
+  },
+  {
+    "id": "park-cicadas-cc0",
+    "title": "Cicada - calm",
+    "author": "LinaManjarrez",
+    "page": "https://freesound.org/people/LinaManjarrez/sounds/562838/",
+    "download": "https://cdn.freesound.org/previews/562/562838_12494184-hq.mp3",
+    "license": "CC0-1.0",
+    "verification": "Asset page explicitly labels Creative Commons 0; checked 2026-10-26"
   }
 ]
