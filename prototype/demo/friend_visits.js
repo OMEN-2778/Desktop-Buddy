@@ -97,6 +97,7 @@ function initFriendHomeActors(){
 }
 function requestFriendVisit(id,incoming=false){
  const c=socialState.contacts.find(c=>c.id===id);if(!c)return false;
+ if(c.family){showHint('老家离这里太远了。');return false;}
  if(friendVisit){if(atFriendHome()&&c.id===friendVisit.id){showHint('已经在这位朋友家啦。');return false;}visitNotice('先安排好这次做客','先回家或结束当前行程，再拜访其他人吧。');return false;}
  let reason=friendHousePreview?'先退出房屋预览，再出发吧。':socialState.guest?'家里还有客人，先陪完客人再出门吧。':friendOutingState?'已经约好一起出门，先结束同行吧。':asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy()?'先忙完眼前的事情，再去做客吧。':c.child?'小朋友还不能自己安排接待，先和家里人说好吧。':sim.needs.hunger<20||sim.needs.energy<25||sim.needs.hygiene<=0?'先吃点东西、休息或洗漱好，再出门做客吧。':!c.family&&(hour()<8||hour()>=22)?'这个点不太方便来啦，咱们白天再约吧。':null;
  if(reason){if(c&&!friendHousePreview)showSay(reason,contactName(c)+'：',c);else showHint(reason);return false;}
@@ -294,7 +295,7 @@ function renderFriendHome(){
 }
 function canOfferFriendVisit(c){return !!c&&!c.child&&!c.family&&c.affinity>=20&&!friendVisit&&!socialState.guest&&!friendOutingState&&hour()>=9&&hour()<20;}
 function finishFriendVisitInvitation(c){
- if(!c)return;log(`${contactName(c)}打电话邀请我去家里坐坐。`);if(!requestFriendVisit(c.id,true))showSay('没事，那下次方便了再过来吧。',contactName(c)+'：',c);
+ if(!c||c.family)return;log(`${contactName(c)}打电话邀请我去家里坐坐。`);if(!requestFriendVisit(c.id,true))showSay('没事，那下次方便了再过来吧。',contactName(c)+'：',c);
 }
 
 function tickFriendVisitTravel(){

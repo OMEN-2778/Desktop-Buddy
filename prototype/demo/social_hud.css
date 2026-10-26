@@ -66,6 +66,8 @@
 .contact-actions.on button { transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) scale(1); opacity:1; }
 .contact-actions button:hover { --hud-surface:var(--panel-2); }
 .contact-actions button[aria-disabled="true"] { --hud-frame:var(--bevel-lo); color:var(--muted); cursor:help; }
+.contact-actions button.parent-visit { --hud-surface:var(--panel-2); min-width:138px; cursor:default; }
+.contact-actions button.parent-visit small { display:block; margin-top:3px; font-size:11px; line-height:1.5; font-weight:400; }
 .contact-unavailable { display:block; font-weight:400; line-height:1.1; font-size:var(--ui-font-caption); }
 .incoming-call { --hud-surface:#332c42; --hud-frame:#757187; position:absolute; inset:0 0 0 var(--tail,18px); z-index:30; display:flex; align-items:center; padding:4px 6px; color:#f7f6fb; transform-origin:8% 50%; animation:call-arrive .5s var(--hud-spring) both; gap:6px; }
 .incoming-call[hidden] { display:none; }

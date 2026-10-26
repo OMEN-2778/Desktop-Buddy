@@ -105,6 +105,10 @@ function openContactActions(id){
   for(const [i,[action,label]]of actions.entries()){
     const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.action=action;b.setAttribute('role','menuitem');
     const a=-Math.PI/2+i*2*Math.PI/actions.length;b.style.setProperty('--x',`${Math.cos(a)*112}px`);b.style.setProperty('--y',`${Math.sin(a)*72}px`);
+    if(action==='visit'&&c.family){
+      b.classList.add('parent-visit');b.style.setProperty('--x','72px');b.setAttribute('aria-disabled','true');b.title='老家离这里太远了。';b.setAttribute('aria-label',`${label}：${b.title}`);
+      b.append(Object.assign(document.createElement('small'),{textContent:b.title}));
+    }
     if(['text','video'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
       b.setAttribute('aria-disabled','true');b.title=asleep()?'等主角醒来再联系':sim.mode==='down'?'先唤醒晕倒的主角':'正在忙，稍后再联系';b.setAttribute('aria-label',`${label}：${b.title}`);
     }
