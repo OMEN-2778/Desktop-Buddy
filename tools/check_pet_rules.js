@@ -22,5 +22,6 @@ s=create();s.pet.status='home';s.pet.needs.hunger=0;P.tick(s,0,120,{});s.pet.nee
 const saved=copy(s),restored=P.restore(saved,breeds);assert.equal(restored.pet.arrivalAt,saved.pet.arrivalAt);assert.equal(restored.pet.low.hunger,saved.pet.low.hunger);assert.equal(restored.sadUntil,saved.sadUntil);
 // Fixed rolls exercise both return outcomes, rather than relying on statistical luck.
 const outcomes=new Set();for(let seed=1;seed<100;seed++){s=create(seed);P.escape(s,2000,()=>{});const yes=s.pet.willReturn;outcomes.add(yes);s=P.restore(copy(s),breeds);P.tick(s,2000,4880,{},()=>{});assert.equal(s.pet.status,yes?'home':'lost');}assert.equal(outcomes.size,2);
+s.pet.affinity=77;assert.equal(P.restore(copy(s),breeds).pet.affinity,77);const old=copy(s);delete old.pet.affinity;assert.equal(P.restore(old,breeds).pet.affinity,30);
 s.matColor='rose';assert.equal(P.restore(copy(s),breeds).matColor,'rose');assert.equal(P.restore({...copy(s),matColor:'bad'},breeds).matColor,'sage');
 console.log('PASS 12 weekly offers; singleton adoption; 24h delivery; 30h fullness; exact feeder accounting; sleep recovery; each neglect cause; 24h threshold; 48h fixed return; 7d ban; offline freeze; saved roll; both outcomes');

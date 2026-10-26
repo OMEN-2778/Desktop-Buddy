@@ -21,4 +21,9 @@ def mat(ramp=P.sage):
 
 MAT_COLORS={'sage':('鼠尾草',P.sage),'blue':('雾蓝',P.sky_soft),'rose':('浅玫瑰',P.wall_blush),'cream':('奶油',P.wall_butter),'lilac':('灰紫',P.linen),'clay':('陶土',P.clay)}
 
-def build():return {'pet_feeder':feeder(),'pet_mat':mat(),**{'pet_mat_'+key:mat(ramp) for key,(_,ramp) in MAT_COLORS.items()}}
+def toy_ball():
+ s=Sprite(7,7)
+ s.ellipse(3,3,3,3,P.coral[0]).ellipse(3,3,2,2,P.coral[2]).hline(2,4,2,P.coral[3]).set(2,1,P.linen[3]).set(1,2,P.linen[3]).hline(3,4,5,P.coral[1])
+ return s
+
+def build():return {'pet_toy':toy_ball(),'pet_feeder':feeder(),'pet_mat':mat(),**{'pet_mat_'+key:mat(ramp) for key,(_,ramp) in MAT_COLORS.items()}}

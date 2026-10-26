@@ -182,11 +182,12 @@ def pixel_surface(kind='panel', dark=False):
     Light comes from top-left. No CSS radius or antialiased corner is needed.
     Panel slice=12, pill=19, other controls=8; thumb is used at native size.
     """
-    w,h,r = (32,32,10) if kind=='panel' else (40,40,18) if kind in ('pill','gold-pill') else (14,24,4) if kind=='thumb' else (24,24,6)
+    w,h,r = (32,32,10) if kind=='panel' else (40,40,18) if kind in ('pill','gold-pill','blue-pill') else (14,24,4) if kind=='thumb' else (24,24,6)
     face,hi,lo=(P.hair_black[1],P.hair_black[2],P.hair_black[0]) if dark else (P.linen[3],P.linen[3],P.linen[1])
     if kind in ('control','thumb'):face,hi,lo=(P.hair_black[2],P.hair_black[3],P.hair_black[1]) if dark else (P.linen[2],P.linen[3],P.linen[1])
     if kind=='positive':face,hi,lo=P.sage[3],P.sage[4],P.sage[1]
     if kind in ('gold','gold-pill'):face,hi,lo=P.birch[3],P.birch[4],P.birch[1]
+    if kind=='blue-pill':face,hi,lo=P.sky_soft[2],P.sky_soft[3],P.sky_soft[0]
     if kind=='track':face,hi,lo=(P.hair_black[1],P.hair_black[2],P.hair_black[0]) if dark else (P.linen[2],P.linen[3],P.linen[1])
     mask=set()
     for y in range(h):

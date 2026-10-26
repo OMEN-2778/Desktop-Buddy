@@ -426,7 +426,7 @@ def main():
                   "dish": {k: [png(d) for d in v] for k, v in item_icons.dishes().items()}},
         "skyIcons": {**{k: [png(f) for f in sky_icons.frames(k)] for k in sky_icons.NAMES},"storm":[png(STORM.icon(i)) for i in range(4)]},
         "pets": PETS.runtime_data(),
-        "pixelUi": {theme:{kind:png(ui_icons.pixel_surface(kind,theme=="dark")) for kind in ("panel","control","positive","gold","gold-pill","input","track","pill","thumb")} for theme in ("light","dark")},
+        "pixelUi": {theme:{kind:png(ui_icons.pixel_surface(kind,theme=="dark")) for kind in ("panel","control","positive","gold","gold-pill","blue-pill","input","track","pill","thumb")} for theme in ("light","dark")},
         "moodIcons": {k: [png(f) for f in mood_icons.frames(k)] for k in mood_icons.NAMES},
         "moods": [list(m) for m in mood_icons.EMOTIONS],
         "weatherMasks": weather_masks,
@@ -501,6 +501,9 @@ def main():
     html = html.replace("/*__PIXEL_UI_JS__*/", (SRC.parent / "pixel_ui.js").read_text())
     html = html.replace("/*__PETS_JS__*/", (SRC.parent / "pets_state.js").read_text()+"\nconst PET_TEXT = "+(SRC.parent / "pets_text.json").read_text()+";\n"+(SRC.parent / "pets.js").read_text())
     html = html.replace("/*__PIXEL_UI_CSS__*/", (SRC.parent / "pixel_ui.css").read_text())
+    html = html.replace("/*__PET_ACTIVITIES_JS__*/", (SRC.parent / "pet_activities.js").read_text())
+    html = html.replace("/*__PET_HUD_JS__*/", (SRC.parent / "pet_hud.js").read_text())
+    html = html.replace("/*__PET_HUD_CSS__*/", (SRC.parent / "pet_hud.css").read_text())
     html = html.replace("/*__PETS_CSS__*/", (SRC.parent / "pets.css").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")

@@ -8,7 +8,7 @@ const PetRules = (()=>{
  }
  function refusal(s,t){if(s.banUntil>t)return 'ban';if(s.pet&&s.pet.status!=='lost')return 'occupied';return null;}
  function adopt(s,offer,name,t){if(refusal(s,t)||!s.offers.some(o=>o.id===offer?.id))return false;name=[...String(name).trim()].slice(0,8).join('');if(!name)return false;
-  const o=s.offers.find(o=>o.id===offer.id);s.pet={...o,name,status:'pending',arrivalAt:t+DAY,needs:{hunger:100,energy:100,company:100},low:{hunger:0,energy:0,company:0},warned:{},motion:null,activityNow:'idle',nextEvent:t+DAY+120};s.installed=true;s.feeder=900;return true;
+  const o=s.offers.find(o=>o.id===offer.id);s.pet={...o,name,status:'pending',arrivalAt:t+DAY,affinity:30,needs:{hunger:100,energy:100,company:100},low:{hunger:0,energy:0,company:0},warned:{},motion:null,activityNow:'idle',nextEvent:t+DAY+120};s.installed=true;s.feeder=900;return true;
  }
  function restore(raw,breeds){const s=fresh();if(!raw||raw.version!==1)return s;const ids=new Set(breeds.map(b=>b.id)),number=(n,d=0)=>Number.isFinite(n)?Math.max(0,n):d;
   s.seed=Number.isInteger(raw.seed)?raw.seed>>>0:s.seed;s.week=Number.isInteger(raw.week)?raw.week:-1;s.offers=(Array.isArray(raw.offers)?raw.offers:[]).filter(o=>ids.has(o?.breed)&&['lazy','active'].includes(o.activity)&&['independent','clingy'].includes(o.attachment)).slice(0,12);if(s.offers.length!==12)s.week=-1;
@@ -16,10 +16,10 @@ const PetRules = (()=>{
   const p=raw.pet;if(p&&ids.has(p.breed)&&['pending','home','away','lost'].includes(p.status)){
    s.pet={...p,name:[...String(p.name||'团子')].slice(0,8).join(''),needs:{},low:{},warned:p.warned&&typeof p.warned==='object'?p.warned:{},motion:null,activityNow:'idle',nextEvent:number(p.nextEvent)};
    for(const k of ['hunger','energy','company']){s.pet.needs[k]=clamp(number(p.needs?.[k],100));s.pet.low[k]=number(p.low?.[k]);}
-   for(const k of ['arrivalAt','returnAt','escapedAt'])s.pet[k]=number(p[k]);s.pet.position=p.position&&Number.isFinite(p.position.x)&&Number.isFinite(p.position.y)?{x:p.position.x,y:p.position.y}:null;s.pet.interaction=null;s.pet.reservedUntil=0;s.pet.willReturn=p.willReturn===true;s.pet.activity=p.activity==='active'?'active':'lazy';s.pet.attachment=p.attachment==='clingy'?'clingy':'independent';
+   for(const k of ['arrivalAt','returnAt','escapedAt'])s.pet[k]=number(p[k]);s.pet.position=p.position&&Number.isFinite(p.position.x)&&Number.isFinite(p.position.y)?{x:p.position.x,y:p.position.y}:null;s.pet.interaction=null;s.pet.reservedUntil=0;s.pet.affinity=clamp(number(p.affinity,30));s.pet.carried=p.carried===true;s.pet.walk=p.walk&&['front','park','beach'].includes(p.walk.dest)&&['departing','active'].includes(p.walk.phase)?{dest:p.walk.dest,phase:p.walk.phase,startedAt:number(p.walk.startedAt),until:number(p.walk.until),position:null}:null;s.pet.willReturn=p.willReturn===true;s.pet.activity=p.activity==='active'?'active':'lazy';s.pet.attachment=p.attachment==='clingy'?'clingy':'independent';
   }return s;
  }
- function escape(s,t,emit){const p=s.pet;p.status='away';p.escapedAt=t;p.returnAt=t+2*DAY;p.willReturn=random(s)<.5;p.motion=null;s.banUntil=t+7*DAY;s.sadUntil=t+2*DAY;emit('escape',p);}
+ function escape(s,t,emit){const p=s.pet;p.status='away';p.walk=null;p.carried=false;p.escapedAt=t;p.returnAt=t+2*DAY;p.willReturn=random(s)<.5;p.motion=null;s.banUntil=t+7*DAY;s.sadUntil=t+2*DAY;emit('escape',p);}
  function tick(s,from,to,context,emit=()=>{}){if(!(to>from)||!s.pet)return;
   // One-minute integration keeps fast sleep and ordinary speed equivalent.
   for(let t=from;t<to;){const end=Math.min(to,t+1),dt=end-t,p=s.pet;t=end;

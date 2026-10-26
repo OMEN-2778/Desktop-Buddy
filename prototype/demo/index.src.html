@@ -6,6 +6,7 @@
 <style>
 /*__UI_CSS__*/
 /*__PETS_CSS__*/
+/*__PET_HUD_CSS__*/
 /*__PIXEL_UI_CSS__*/
 </style>
 
@@ -500,6 +501,7 @@ const EMO_PULL = {
   embarrassed: { bath: 15, go_out: 10 }, uncomfortable: { go_out: 15 }, dazed: { window: 10, go_out: 10 },
 };
 function startAct(name, quiet = false) {
+  if(petState.pet?.carried&&!name.startsWith("pet_")&&!["tv","host"].includes(name))dropCarriedPet();
   if(name.startsWith("pet_")&&!preparePetHumanAction(name))return;
   if(atFriendHome()){friendVisitCommand(name);return;}
   if(sim.place==='home'){
@@ -1311,6 +1313,7 @@ function render() {
     }
     emoteAt = [x + 13, y - 15];
   }
+  drawPetActor(homeActorsCtx,true);
   bctx.drawImage(homeActors,0,0);
   grade(bctx, f, lit);
   // things that glow on their own: screens, flames, steam
@@ -2698,7 +2701,6 @@ const RINGS = {
 };
 let ringOf = null, ringAt = null;
 function ringCenter() {
-  if(ringAt==='pet'){const p=petPoint();return {x:p.x,y:p.y-13};}
   if(ringAt==="friend_host"&&atFriendHome())return {x:friendVisit.host.x,y:friendVisit.host.y-13};
   if (ringAt === "computer" || ringAt === "door") { const c = CLICK[ringAt === "door" ? "front_door" : "computer"]; return { x: c.x + c.w / 2, y: c.y + c.h / 2 }; }
   const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : buddyFeet();
@@ -2747,7 +2749,7 @@ function openRing(which, at = which === "computer" ? "computer" : "buddy") {
   ringEl.innerHTML = "";
   items.forEach(([id, label, cls], i) => {
     const b = document.createElement(cls === "label" ? "span" : "button");
-    if (cls === "label") { b.className = "ring-label"; b.textContent = which==='pet'?petName():nameOf(); }   // her name tops the ring
+    if (cls === "label") { b.className = "ring-label"; b.textContent = nameOf(); }   // her name tops the ring
     else { b.type = "button"; b.textContent = label; b.setAttribute("role", "menuitem"); if (cls) b.className = cls; }
     if(which==="outing")b.dataset.outingPlace=id.slice(7);
     b.style.setProperty("--k", i);
@@ -2826,7 +2828,6 @@ document.addEventListener("pointerdown", e => { if (ringOf && !ringEl.contains(e
 document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) closeRing(); });
 let lastChat = -1e9;
 function ringPick(id) {
-  if(id.startsWith('pet:')){closeRing();petInteract(id.slice(4));return;}
   if(id==='pet_adopt'){closeRing();openPetAdoption();return;}
   if(id.startsWith("fv:")){closeRing();if(id==="fv:stay")requestFriendStay();else friendVisitAction(id.slice(3));return;}
   if(id.startsWith('outing:')){const c=socialState.contacts.find(c=>c.id===ringEl.dataset.contactId),place=id.slice(7);closeRing();if(c)scheduleFriendOuting(c,place);return;}
@@ -3140,6 +3141,7 @@ function throughDoor(to) {
     else if (to === "front") { log(outLog(to) || pick(["出门在家门口走走。", "推开门，到门口透透气。", "出了门，站在门口伸了个懒腰。"])); addMood("outdoors"); }
     else if (to !== "bar") { log(outLog(to) || pick(PLACE_LOG[to])); addMood(to); }
     arriveAt(to);
+    onPetSceneChanged(to);
     if(to==='home'&&friendOutingState?.startedAt!=null)finishFriendOuting();
   });
 }
@@ -3516,6 +3518,7 @@ const npcX = n => n.u != null ? onScreen(n.u) : n.x;
 const npcFeet = n => n.feet - (n.sit ? n.seatLift || 0 : 0);
 function drawNpcs(ctx, layer) {
   drawOutingFriend(ctx,layer);
+  drawPetOutside(ctx,layer);
   if(stormOutside())return;
   for (const n of life.npcs || []) {
     if (n.layer !== layer || n.gone) continue;
@@ -4800,6 +4803,7 @@ function restore(sv) {
     logEl.appendChild(li);
   }
   syncDiary();
+  restorePetActivityLocation();
 }
 async function saveGame() {
   if (!booted || saving || visitSleepPreview || friendHousePreview) return false;
@@ -4972,6 +4976,8 @@ if (TAURI) {
 /*__NEED_CONSEQUENCES_JS__*/
 /*__PIXEL_UI_JS__*/
 /*__PETS_JS__*/
+/*__PET_ACTIVITIES_JS__*/
+/*__PET_HUD_JS__*/
 /*__GAME_AUDIO_JS__*/
 
 // ================================================================ loop
