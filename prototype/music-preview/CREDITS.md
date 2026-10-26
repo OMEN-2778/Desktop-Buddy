@@ -65,3 +65,11 @@ GeneralUser GS 2.0.3，S. Christian Collins：https://www.schristiancollins.com/
 - 《扶梯主题 · Bossa Nova》：120 BPM，尼龙吉他、钢琴、长笛、原声贝斯、刷鼓与轻拉丁打击乐
 
 后两首工程为 `AUDIO_LIBRARY/tools/compose_escalator_variants.py`，主题读取自 `compose_mall_ensemble.py` 中第二首的原创主题。音色沿用上述 GeneralUser GS 音乐录音许可，电子鼓由本项目合成，不使用歌手的录音、声音或现成歌曲旋律。所有新增版本目前只用于试听。
+
+## 商场候选《霓虹扶梯》（2026-10-27）
+
+按用户指定组合本项目已有的原创素材：《扶梯向上》的主旋律、《逛到打烊》1:00–1:15 的八小节对答段，以及《霓虹错拍 · 扶梯主题电子版》的电子编配。源八小节在 128 BPM 下恰好为 60–75 秒，移至 108 BPM 后位于候选曲约 1:11.1–1:28.9。
+
+Bridge 从原 A 调统一移到主段的降 E 调；保留原有两组乐句的音高走向，按电子音色调整音区、时值与切分位置，加入轻微延迟回应。鼓点在 bridge 前半段呈半拍感，后半段恢复较密节拍，并在回到主段前留出呼吸。主体旋律和已有十首试听录音保留。
+
+工程：`AUDIO_LIBRARY/tools/compose_mall_candidate.py`；复用已有电子鼓合成与许可音色。这里只发布试听候选，没有替换游戏资源，待用户听过后再决定。MIDI 为有音高声部，电子鼓通过源工程重建。

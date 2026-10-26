@@ -88,7 +88,7 @@ def compose():
  return sorted(engine.EVENTS,key=lambda item:item[0])
 
 
-def percussion(length):
+def percussion(length,bridge_halftime_end=40):
  rng=np.random.default_rng(108261027);audio=np.zeros((length,2),np.float32)
  def add(signal,beat,gain,pan=0):
   at=round(beat*BEAT*SR);end=min(length,at+len(signal));signal=signal[:end-at]*gain
@@ -104,7 +104,7 @@ def percussion(length):
  t=np.arange(round(.035*SR))/SR;hat=noise(.035,6500,15000)*np.exp(-t*125)
  t=np.arange(round(.045*SR))/SR;click=np.sin(2*np.pi*(1600+800*np.exp(-t*70))*t)*np.exp(-t*140)
  for bar in range(BARS):
-  base=bar*4;chorus=16<=bar<32 or 52<=bar<60;bridge=32<=bar<40;outro=bar>=60
+  base=bar*4;chorus=16<=bar<32 or 52<=bar<60;bridge=32<=bar<bridge_halftime_end;outro=bar>=60
   # Full-bar holes at transitions make the groove lean forward on re-entry.
   if bar in [15,39,51]:
    add(click,base+.75,.022,-.5);add(hat,base+3.5,.055,.4);continue

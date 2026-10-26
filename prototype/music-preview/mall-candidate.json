@@ -1,0 +1,20 @@
+{
+  "id": "mall-neon-combined",
+  "title": "霓虹扶梯 · 商场候选版",
+  "bpm": 108,
+  "meter": "4/4",
+  "key": "E-flat major",
+  "duration": 147.222,
+  "file": "audio/mall-neon-combined.mp3",
+  "midi": "audio/mall-neon-combined.mid",
+  "rms_db": -20.5,
+  "peak": 0.7057,
+  "bridge_start": 71.111,
+  "bridge_end": 88.889,
+  "sources": {
+    "main": "mall-escalator",
+    "bridge": "mall-until-closing, 60–75 seconds",
+    "arrangement": "mall-neon-skip"
+  },
+  "preview_only": true
+}
