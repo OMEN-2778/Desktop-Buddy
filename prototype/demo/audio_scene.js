@@ -22,15 +22,23 @@ function audioWindowExposure(){
  const state=id?windowState[id]:'closed';
  return state==='open'?{gain:.65,cutoff:11000}:state==='drawn'?{gain:.12,cutoff:750}:{gain:.24,cutoff:1400};
 }
-function audioFocus(){
- const ringing=phoneCall.phase==='ringing',dialog=phoneHolds()||remoteSocial||!!npcInteraction||!!sim.talk||!socialSheet.hidden||!cardEl.hidden;
- const cinema=mallVisitInside()&&mallS.visit.kind==='cinema',screen=gameAudio.activity()==='tv';
- return {music:ringing?.28:cinema?.22:dialog?.60:screen?.65:1,ambient:ringing?.22:cinema?.15:dialog?.45:1,action:ringing?.25:dialog?.65:1};
+// Fixed unity gains are deliberate: no automatic volume ducking.
+function audioFocus(){return {music:1,ambient:1,action:1};}
+function audioTvBed(){
+ const clip=tvPlayback.clip||'host';
+ if(['cook'].includes(clip))return ['real-cooking-fry-cc0',.60];
+ if(['lake','waterfall','fish','boat'].includes(clip))return ['real-lake-cc0',.50];
+ if(['beach','harbor'].includes(clip))return ['real-sea-cc0',.50];
+ if(['hills','forest','flowers','snow_peak','desert'].includes(clip))return ['park-birds-cc0',.38];
+ if(clip==='cat')return ['cat-purr-meow-cc0',.28];
+ if(['singer','dance','space','balloons'].includes(clip))return ['music',.65];
+ return ['crowd-indoor-walla-cc0',.40];
 }
 function audioActionSource(){
  if(atFriendHome()){
   const f=friendHouseObject(friendVisit.objectId);if(f){const r=friendObjectRoom(f);return{x:(W-visitingHouse().w)/2+f.x+f.w/2,y:r.floor,room:f.room};}
  }
+ if(sim.place==='home'&&gameAudio.activity()==='tv')return {x:D.screens.tv.x+12,y:FLOOR_Y[0],room:'living',radius:130,cutoff:6000};
  const p=here();return {x:p.x,y:p.y,room:audioRoom(p)};
 }
 function audioSceneBeds(){

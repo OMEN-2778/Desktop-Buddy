@@ -1,0 +1,337 @@
+{
+  "newStoryTopics": 650,
+  "addedConversationEntries": 1024,
+  "pools": [
+    {
+      "pool": "phone.extra.call",
+      "before": 50,
+      "added": 50,
+      "after": 100
+    },
+    {
+      "pool": "phone.extra.video",
+      "before": 50,
+      "added": 50,
+      "after": 100
+    },
+    {
+      "pool": "relationship.base.familiar",
+      "before": 16,
+      "added": 16,
+      "after": 32
+    },
+    {
+      "pool": "relationship.extra.familiar",
+      "before": 16,
+      "added": 16,
+      "after": 32
+    },
+    {
+      "pool": "relationship.base.friend",
+      "before": 16,
+      "added": 16,
+      "after": 32
+    },
+    {
+      "pool": "relationship.extra.friend",
+      "before": 16,
+      "added": 16,
+      "after": 32
+    },
+    {
+      "pool": "relationship.base.close",
+      "before": 16,
+      "added": 16,
+      "after": 32
+    },
+    {
+      "pool": "relationship.extra.close",
+      "before": 16,
+      "added": 16,
+      "after": 32
+    },
+    {
+      "pool": "relationship.base.best",
+      "before": 16,
+      "added": 16,
+      "after": 32
+    },
+    {
+      "pool": "relationship.extra.best",
+      "before": 16,
+      "added": 16,
+      "after": 32
+    },
+    {
+      "pool": "early.text",
+      "before": 20,
+      "added": 20,
+      "after": 40
+    },
+    {
+      "pool": "early.call",
+      "before": 20,
+      "added": 20,
+      "after": 40
+    },
+    {
+      "pool": "early.video",
+      "before": 20,
+      "added": 20,
+      "after": 40
+    },
+    {
+      "pool": "home.common",
+      "before": 300,
+      "added": 300,
+      "after": 600
+    },
+    {
+      "pool": "home.tv",
+      "before": 20,
+      "added": 20,
+      "after": 40
+    },
+    {
+      "pool": "home.meal",
+      "before": 20,
+      "added": 20,
+      "after": 40
+    },
+    {
+      "pool": "home.rain",
+      "before": 20,
+      "added": 20,
+      "after": 40
+    },
+    {
+      "pool": "home.snow",
+      "before": 20,
+      "added": 20,
+      "after": 40
+    },
+    {
+      "pool": "home.spring",
+      "before": 5,
+      "added": 5,
+      "after": 10
+    },
+    {
+      "pool": "home.summer",
+      "before": 5,
+      "added": 5,
+      "after": 10
+    },
+    {
+      "pool": "home.autumn",
+      "before": 5,
+      "added": 5,
+      "after": 10
+    },
+    {
+      "pool": "home.winter",
+      "before": 5,
+      "added": 5,
+      "after": 10
+    },
+    {
+      "pool": "home.morning",
+      "before": 4,
+      "added": 4,
+      "after": 8
+    },
+    {
+      "pool": "home.noon",
+      "before": 4,
+      "added": 4,
+      "after": 8
+    },
+    {
+      "pool": "home.afternoon",
+      "before": 4,
+      "added": 4,
+      "after": 8
+    },
+    {
+      "pool": "home.evening",
+      "before": 4,
+      "added": 4,
+      "after": 8
+    },
+    {
+      "pool": "home.night",
+      "before": 4,
+      "added": 4,
+      "after": 8
+    },
+    {
+      "pool": "home.legacy",
+      "before": 40,
+      "added": 40,
+      "after": 80
+    },
+    {
+      "pool": "personality.slow.0",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.slow.1",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.slow.2",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.outgoing.0",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.outgoing.1",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.outgoing.2",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.casual.0",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.casual.1",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.casual.2",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.thoughtful.0",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.thoughtful.1",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.thoughtful.2",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.steady.0",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.steady.1",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.steady.2",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.sensitive.0",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.sensitive.1",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.sensitive.2",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.balanced.0",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.balanced.1",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "personality.balanced.2",
+      "before": 2,
+      "added": 2,
+      "after": 4
+    },
+    {
+      "pool": "sleepover.bed",
+      "before": 80,
+      "added": 80,
+      "after": 160
+    },
+    {
+      "pool": "friendHome.early",
+      "before": 12,
+      "added": 12,
+      "after": 24
+    },
+    {
+      "pool": "friendHome.common",
+      "before": 50,
+      "added": 50,
+      "after": 100
+    },
+    {
+      "pool": "callFriend",
+      "before": 50,
+      "added": 50,
+      "after": 100
+    },
+    {
+      "pool": "videoFriend",
+      "before": 30,
+      "added": 30,
+      "after": 60
+    },
+    {
+      "pool": "messages",
+      "before": 12,
+      "added": 12,
+      "after": 24
+    }
+  ],
+  "scope": "friend messages, voice/video calls, relationship stages, personality conversations, home visits and sleepover chats; invitation/event narration/outdoor introductions unchanged"
+}

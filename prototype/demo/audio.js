@@ -5,7 +5,7 @@ const GAME_AUDIO_VERSION = /*__AUDIO_VERSION__*/null;
 const GAME_AUDIO_INLINE = /*__AUDIO_INLINE__*/null;
 const RECORDED_FOLEY={door:'real-door-cc0',fabric:'real-fabric-cc0',seat:'real-chair-cc0',drawer:'real-fridge-cc0',water:'real-water-running-cc0',pour:'real-pour-water-cc0',watering:'real-pour-water-cc0',page:'real-page-turn-cc0',keyboard:'real-keyboard-typing-cc0',cutlery:'real-cutlery-cc0',drink:'real-drink-cc0',flush:'real-toilet-flush-cc0',cook:'real-cooking-fry-cc0'};
 const gameAudio = (() => {
-  let ctx=null, musicBus=null, effectsBus=null, limiter=null, meter=null, musicDuck=null, ambientBus=null, actionBus=null, unlocked=false;
+  let ctx=null, musicBus=null, effectsBus=null, effectsGate=null, effectsMeter=null, meter=null, ambientBus=null, actionBus=null, unlocked=false;
   let muted=false, epoch=0, musicKey='', nextMusicRetry=0, currentMusic=null, lastTick=-Infinity;
   let actionKey='', previousPlace='', nextFoley=0, nextAccent=0;
   const cache=new Map(), pending=new Map(), loops=new Map(), voices=new Set(), tracks=new Set(), cooldown=new Map(), failed=new Map();
@@ -23,10 +23,9 @@ const gameAudio = (() => {
     try{
       if(!ctx){
         const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
-        ctx=new AC();musicBus=ctx.createGain();effectsBus=ctx.createGain();limiter=ctx.createDynamicsCompressor();
-        limiter.threshold.value=-12;limiter.knee.value=12;limiter.ratio.value=5;limiter.attack.value=.004;limiter.release.value=.2;
-        musicDuck=ctx.createGain();ambientBus=ctx.createGain();actionBus=ctx.createGain();musicBus.connect(musicDuck);musicDuck.connect(limiter);ambientBus.connect(effectsBus);actionBus.connect(effectsBus);effectsBus.connect(limiter);meter=ctx.createAnalyser();meter.fftSize=512;limiter.connect(meter);meter.connect(ctx.destination);
-        musicBus.gain.value=prefs.bgm?prefs.bgmVolume/100*.53:0;effectsBus.gain.value=prefs.sfx?prefs.sfxVolume/100:0;
+        ctx=new AC();musicBus=ctx.createGain();effectsBus=ctx.createGain();effectsGate=ctx.createGain();effectsMeter=ctx.createAnalyser();effectsMeter.fftSize=512;
+        ambientBus=ctx.createGain();actionBus=ctx.createGain();ambientBus.connect(effectsBus);actionBus.connect(effectsBus);effectsBus.connect(effectsGate);effectsGate.connect(effectsMeter);meter=ctx.createAnalyser();meter.fftSize=512;musicBus.connect(meter);effectsMeter.connect(meter);meter.connect(ctx.destination);
+        musicBus.gain.value=prefs.bgm?prefs.bgmVolume/100*.53:0;effectsBus.gain.value=prefs.sfx?prefs.sfxVolume/100:0;effectsGate.gain.value=prefs.sfx?1:0;
       }
       unlocked=true;muted=document.hidden;ctx.resume().then(()=>{if(!muted)sync();}).catch(()=>{});
     }catch(e){report('AudioContext',e);}
@@ -125,7 +124,12 @@ const gameAudio = (() => {
   function setEnabled(channel,value){setVolume(channel,value?(prefs[channel+'Volume']||60):0);buildSettings();}
   function sync(){
     if(!ctx)return;
-    ramp(musicBus,prefs.bgm&&!muted?prefs.bgmVolume/100*.53:0,.08);ramp(effectsBus,prefs.sfx&&!muted?prefs.sfxVolume/100:0,.05);
+    // A final binary gate makes zero absolute, even with delayed loads or
+    // previously scheduled fades. No compressor or event-driven ducking.
+    effectsGate.gain.cancelScheduledValues(ctx.currentTime);
+    effectsGate.gain.setValueAtTime(prefs.sfx&&!muted?1:0,ctx.currentTime);
+    if(!prefs.sfx||muted){effectsBus.gain.cancelScheduledValues(ctx.currentTime);effectsBus.gain.setValueAtTime(0,ctx.currentTime);}
+    ramp(musicBus,prefs.bgm&&!muted?prefs.bgmVolume/100*.53:0,.08);if(prefs.sfx&&!muted)ramp(effectsBus,prefs.sfxVolume/100,.05);
     if(!prefs.bgm||muted)stopMusic();if(!prefs.sfx||muted)stopEffects();
     if(ready()){
       if(prefs.sfx)for(const id of ['ui-click','ui-open','ui-close','ui-card','ui-result','ui-message','phone-ring','phone-answer','phone-decline'])buffer(sfx(id));
@@ -154,7 +158,6 @@ const gameAudio = (() => {
     if(v.target===undefined||Math.abs(value-v.target)>.001){ramp(v.gain,value,fade);v.target=value;}
     v.pan.pan.setTargetAtTime(pos.pan,ctx.currentTime,.12);v.filter.frequency.setTargetAtTime(pos.cutoff,ctx.currentTime,.15);
   }
-  function mixFocus(){const f=audioFocus();ramp(musicDuck,Math.min(f.music,emotionCue.until>now()?.65:1),.35);ramp(ambientBus,f.ambient,.25);ramp(actionBus,f.action,.2);}
   function ambience(){return Object.fromEntries(Object.entries(audioSceneBeds()).filter(([,v])=>v));}
   function trackEmotion(time){
     const key=asleep()?'asleep':emotion().key;
@@ -169,11 +172,11 @@ const gameAudio = (() => {
   }
   function tick(force=false){
     const time=now();if(!force&&time-lastTick<.10)return;lastTick=time;trackEmotion(time);
-    if(!ready())return;mixFocus();updateMusic();if(!prefs.sfx)return;
+    if(!ready())return;updateMusic();if(!prefs.sfx)return;
     if(weather.kind==='storm'&&stormExposed())buffer(sfx('thunder-heavy-no-rain-cc0'));
     const desired=ambience(),act=activity(),playing=speed>0&&!cardHolds()&&!wiping;
     if(phoneCall.phase==='ringing')desired.ring=['phone-ring',.30];
-    if(playing&&ACTION_LOOP[act])desired.action=[...ACTION_LOOP[act],audioActionSource()];
+    if((playing||act==='tv')&&ACTION_LOOP[act])desired.action=[...(act==='tv'?audioTvBed():ACTION_LOOP[act]),audioActionSource()];
     for(const [key,[id,volume,spatial]]of Object.entries(desired))setLoop(key,id,volume,spatial);
     for(const [key,entry]of loops)if(!desired[key]){loops.delete(key);stopVoice(entry.voice,key==='ring'?.025:.45);}
     // Keep state current while paused so opening a dialog doesn't restart Foley.
@@ -223,9 +226,9 @@ const gameAudio = (() => {
   }
   function thunder(){if(stormExposed()){const exposed=stormOutside(),w=audioWindowExposure();sound('thunder-heavy-no-rain-cc0',exposed?.40:.30*w.gain,{gap:2,maxAge:1.5,spatial:{cutoff:exposed?16000:w.cutoff},ambient:true});}}
   function phoneEnd(accepted){const ring=loops.get('ring');if(ring){loops.delete('ring');stopVoice(ring.voice,.015);}sound(accepted?'phone-answer':'phone-decline',.35);}
-  function outputLevel(){if(!meter)return 0;const a=new Float32Array(512);meter.getFloatTimeDomainData(a);return Math.sqrt(a.reduce((sum,v)=>sum+v*v,0)/a.length);}
+  function outputLevel(node=meter){if(!node)return 0;const a=new Float32Array(512);node.getFloatTimeDomainData(a);return Math.sqrt(a.reduce((sum,v)=>sum+v*v,0)/a.length);}
   function resetEmotion(){stopTag('emotion');emotionCue.current=emotionCue.candidate=null;emotionCue.until=0;}
   installUI();
   return {setVolume,setEnabled,resetEmotion,wake,sync,tick,sound,thunder,phoneEnd,activity,ambience,chooseMusic,
-    debug:()=>({unlocked,level:outputLevel(),state:ctx?.state||'locked',music:stats.music,desiredMusic:chooseMusic(),loops:[...loops.keys()],voices:voices.size,tracks:tracks.size,cache:cache.size,musicTime:currentMusic?.el.currentTime||0,musicRate:currentMusic?.el.playbackRate||1,musicVolume:musicBus?.gain.value||0,effectsVolume:effectsBus?.gain.value||0,loopPaths:[...loops.values()].map(e=>e.path),focus:audioFocus(),emotion:emotionCue.current,emotionVoices:[...voices].filter(v=>v.tag==='emotion'&&!v.stopped).length,loopDetails:[...loops.entries()].map(([key,e])=>({key,path:e.path,volume:e.volume,spatial:e.spatial,filter:e.voice?.filter.frequency.value,pan:e.voice?.pan.pan.value})),stats:JSON.parse(JSON.stringify(stats))})};
+    debug:()=>({unlocked,level:outputLevel(),effectsLevel:outputLevel(effectsMeter),effectsGate:effectsGate?.gain.value||0,state:ctx?.state||'locked',music:stats.music,desiredMusic:chooseMusic(),loops:[...loops.keys()],voices:voices.size,tracks:tracks.size,cache:cache.size,musicTime:currentMusic?.el.currentTime||0,musicRate:currentMusic?.el.playbackRate||1,musicPath:"independent",musicTrackGain:currentMusic?.gain.gain.value||0,musicVolume:musicBus?.gain.value||0,effectsVolume:effectsBus?.gain.value||0,loopPaths:[...loops.values()].map(e=>e.path),focus:audioFocus(),emotion:emotionCue.current,emotionVoices:[...voices].filter(v=>v.tag==='emotion'&&!v.stopped).length,loopDetails:[...loops.entries()].map(([key,e])=>({key,path:e.path,volume:e.volume,spatial:e.spatial,filter:e.voice?.filter.frequency.value,pan:e.voice?.pan.pan.value})),stats:JSON.parse(JSON.stringify(stats))})};
 })();

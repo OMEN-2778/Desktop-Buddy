@@ -100,6 +100,11 @@ def chats_js():
         for who, nm in (("dad", "爸爸"), ("mom", "妈妈"), ("friend", "{朋友}"))) + "\n};\n"
     for k in ("yinfu", "xiaohongben", "shudong", "lengzhishi"):
         out += f"CHATS.forum.{k}.talks.push(...{talks(k)}\n);\n"
+    gossip = json.loads((SRC.parent / "dialogue/gossip_channels.json").read_text())
+    for kind, key in (("call", "callFriend"), ("video", "videoFriend")):
+        extra = [{**t, "mood": {"name": "听到件趣事", "emo": t.get("emo", "playful"), "pts": 1, "min": 60}} for t in gossip[key]]
+        out += f"\nCHATS.{kind}.friend.talks.push(..." + json.dumps(extra, ensure_ascii=False) + ");\n"
+
     return out
 
 
@@ -458,7 +463,9 @@ def main():
     html = html.replace("/*__UI_LAYOUT_JS__*/", (SRC.parent / "ui_layout.js").read_text())
     html = html.replace("/*__NEED_CONSEQUENCES_JS__*/", (SRC.parent / "need_consequences.js").read_text())
     html = html.replace("/*__PERSONALITY_JS__*/", (SRC.parent / "personality.js").read_text())
-    html = html.replace("/*__SOCIAL_HUD_JS__*/", (SRC.parent / "social_hud.js").read_text())
+    gossip_messages = json.loads((SRC.parent / "dialogue/gossip_channels.json").read_text())["messages"]
+    social_hud_js = (SRC.parent / "social_hud.js").read_text().replace("CHATS.text={};", "TEXT_TALKS.push(..." + json.dumps(gossip_messages, ensure_ascii=False) + ");\nCHATS.text={};")
+    html = html.replace("/*__SOCIAL_HUD_JS__*/", social_hud_js)
     html = html.replace("/*__STORM_JS__*/", "const STORM_TEXT = " + (SRC.parent / "storm_text.json").read_text() + ";\n" + (SRC.parent / "storm.js").read_text())
     html = html.replace("/*__SOCIAL_LIFE_JS__*/", "const SOCIAL_TEXT = " + (SRC.parent / "social_text.json").read_text() + ";\nconst SOCIAL_DIALOGUE = " + (SRC.parent / "social_dialogue.json").read_text() + ";\n" + (SRC.parent / "social_dialogue.js").read_text() + "\n" + (SRC.parent / "social_life.js").read_text() + "\nconst HOME_VISIT_TEXT = " + (SRC.parent / "home_visit_text.json").read_text() + ";\n" + (SRC.parent / "home_visits.js").read_text())
     html = html.replace("/*__SOCIAL_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "social_cards.json").read_text() + ");")

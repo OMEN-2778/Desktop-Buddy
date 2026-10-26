@@ -48,6 +48,7 @@ function revealPeerLine(){
 }
 function showPeerSay(text,who,speaker=null){
   if(!text)return;
+  text=spokenText(text);
   const line={text,who,speaker:peerSpeaker(who,speaker)};peerSpeech.pending=line;
   if(phoneHolds())return; // Keep identity while an incoming call owns the speech area.
   clearTimeout(peerSpeech.exit);peerSpeech.exit=0;

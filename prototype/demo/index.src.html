@@ -166,6 +166,8 @@ const nameOf = () => look.name, ta = () => doll.pronoun(look);
 // Chinese running text gets a space where it meets Latin letters or digits
 // ("和 Buddy 聊天", "Buddy 的小屋"): applied to every line the page writes
 const spaced = t => t.replace(/([\u3400-\u9fff])([A-Za-z0-9])/g, "$1 $2").replace(/([A-Za-z0-9])([\u3400-\u9fff])/g, "$1 $2");
+// Spoken punctuation is a presentation rule; diary prose keeps its full stops.
+const spokenText = t => String(t ?? '').trimEnd().replace(/[。．]+(?=[”’」』]*$)/u,'').replace(/(?<!\.)\.(?=[”’」』]*$)/u,'');
 function syncNames() {
   const n = nameOf();
   document.title = spaced(`${n}的小屋`);
@@ -2312,6 +2314,7 @@ function fitDiary() {
   liftDiary();
 }
 function showSay(text, who = "", speaker = null) {
+  text=spokenText(text);
   if(who){showPeerSay(text,who,speaker);return;}
   if(phoneHolds()){if(sayQueue.length<2)sayQueue.push(text);return;}
   sayShownAt=performance.now();
@@ -3603,7 +3606,7 @@ function placeNpcPills() {
   }
 }
 function npcSay(n, text) {
-  n.sayText = spaced(text);
+  n.sayText = spaced(spokenText(text));
   n.sayUntil = realClock + Math.min(5, 2.2 + text.length * 0.13);
   const el = npcPillEls.get(n);
   if (el) { el.remove(); npcPillEls.delete(n); }
