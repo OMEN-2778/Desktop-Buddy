@@ -13,8 +13,7 @@ function openFriendOuting(id){
     const b=document.createElement('button');b.textContent=friendOutingWaiting()?'取消约定':'一起回去';b.onclick=()=>{closeSocialSheet();if(friendOutingWaiting())finishFriendOuting('出发前改了时间，约好下回再去。');else{friendOutingState.phase='returning';friendOutingState.talk=null;command('go_home');}};sheet.append(b);return;
   }
   let reason='';
-  if(sim.place!=='home')reason='先回家，再和朋友约出门的地方吧。';
-  else if(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())reason='先忙完眼前的事，再约朋友出门吧。';
+  if(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())reason='先忙完眼前的事，再约朋友出门吧。';
   else if(c.child)reason='小朋友暂时不能单独约出门。';
   else if(c.family&&!(socialState.guest?.id===id&&socialState.guest.phase==='visiting'))reason='爸爸妈妈住在另一座城市，等他们来探望时再一起出去吧。';
   else if(!c.family&&c.affinity<20)reason=`${contactName(c)}：咱们先多聊几次吧，出门玩等熟一点再约。`;
@@ -39,7 +38,7 @@ function scheduleFriendOuting(c,place){
   const minutes=already?0:10+Math.floor(Math.random()*11);
   friendOutingState={id:c.id,dest:place,phase:'waiting',at:sim.t+minutes,bookedAt:sim.t,nextTalk:realClock+7,seen:[],count:0,said:[],distance:0};
   log(`约${contactName(c)}一起去${FRIEND_OUTING_PLACES[place]}，${minutes?`大约 ${minutes} 分钟后碰面。`:'在门口一起出发。'}`);
-  showSay(minutes?`好啊，我大概 ${minutes} 分钟到，咱们一起去。`:'行，我拿上东西，咱们走吧。',contactName(c)+'：',c);return true;
+  showSay(minutes?(sim.place==='home'?`好啊，我大概 ${minutes} 分钟到，咱们一起去。`:`好呀，大概 ${minutes} 分钟到，我过去找你，碰面了再一起逛！`):'行，我拿上东西，咱们走吧。',contactName(c)+'：',c);return true;
 }
 function finishFriendOuting(reason='一起走到家门口，挥手道别。'){
   const st=friendOutingState,c=outingFriend();if(!st)return;
@@ -79,12 +78,19 @@ function tickFriendOuting(dt){
   const st=friendOutingState,c=outingFriend();if(!st)return;if(!c){friendOutingState=null;return;}
   if(!speed||cardHolds()||wiping)return;
   if(st.phase==='waiting'){
-    if(sim.place!=='home'){finishFriendOuting('没能按时碰面，约好改天再去。');return;}
     if(sim.t<st.at)return;
     if(asleep()||sim.mode==='down'||redNeed(['fun','social'])){finishFriendOuting('临时身体不舒服，这次先取消。');return;}
-    if(['bath','toilet'].includes(sim.act)||wardrobeOpen||remoteSocial||sim.talk)return;
+    if(contactPrivacyBreak()||wardrobeOpen||remoteSocial||sim.talk||socialDialogHolds())return;
     if(['front','park','beach'].includes(st.dest)&&weather.kind==='storm'){finishFriendOuting('雷雨来了，商量改天再去。');return;}
     if(st.dest==='bar'&&!barIsOpen()){finishFriendOuting('酒吧还没开门，先改天再约。');return;}
+    if(sim.place!=='home'){
+      st.phase='active';st.startedAt=sim.t;st.nextTalk=realClock+7;c.lastSeen=sim.t;c.lastContact=sim.t;c.forgotten=false;contactsSig='';
+      sim.outWhy='friend';sim.lastOut=sim.t;sim.outBack=sim.t+180;
+      log(`${contactName(c)}按约定赶来碰面，接下来一起去${FRIEND_OUTING_PLACES[st.dest]}。`);showSay('找到你啦！等很久没？',contactName(c)+'：',c);
+      if(sim.place!==st.dest){sim.queue=[];throughDoor(st.dest);}
+      else if(sim.act==='go_home'){sim.windup=null;sim.queue=[];sim.player=false;sim.mode='idle';sim.act=null;sim.idleUntil=sim.t+2;}
+      return;
+    }
     st.phase='departing';sim.dest=st.dest;sim.outWhy='friend';sim.lastOut=sim.t;sim.outBack=sim.t+180;log(`${contactName(c)}到了，一起向门口走去。`);showSay('走吧，东西带齐了。',contactName(c)+'：',c);command('go_out');return;
   }
   if(st.phase==='departing'&&sim.place==='home'&&(asleep()||sim.mode==='down')){finishFriendOuting('临时需要休息，约好改天再出发。');return;}

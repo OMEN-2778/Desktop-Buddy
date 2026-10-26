@@ -43,11 +43,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=requ
  assert.equal(await p.evaluate(()=>requestIncomingCall(friendVisit.id)),false);
  assert.equal(await p.evaluate(()=>inviteHome('rain')),false);await p.evaluate(()=>closeSocialSheet());
  // Smaller homes never spawn a family and refusal leads home at the deadline.
- await p.evaluate(()=>{visitEnter('cream');const c=visitingFriend();const old=friendHomes[c.id];delete friendHomes[c.id];friendHomes[c.id]={houseId:'cream',relations:[]};initFriendHomeActors();sim.t=22.6*60;speed=1;stepFriendHome(.1,.1);speed=0;});assert.equal(await p.evaluate(()=>sim.place),'home');
+ await p.evaluate(()=>{visitEnter('cream');const c=visitingFriend();const old=friendHomes[c.id];delete friendHomes[c.id];friendHomes[c.id]={houseId:'cream',relations:[]};initFriendHomeActors();sim.t=23.1*60;speed=1;stepFriendHome(.1,.1);speed=0;});assert.equal(await p.evaluate(()=>sim.place),'home');
  // Exhaustion still collapses on the current floor and survives a save.
  await p.evaluate(()=>{visitEnter('maple');sim.graceUntil=0;sim.needs.energy=0;speed=1;stepFriendHome(.1,.1);speed=0;});
  assert.equal(await p.evaluate(()=>sim.mode),'down');
  const collapsed=await p.evaluate(()=>{const y=here().y,s=JSON.parse(JSON.stringify(snapshot()));restore(s);return {mode:sim.mode,y:here().y,oldY:y};});assert.equal(collapsed.mode,'down');assert.equal(collapsed.y,collapsed.oldY);
  assert.equal(await p.evaluate(()=>Object.values(FRIEND_VISIT_TEXT.family).flat().length),144);
- assert.deepEqual(errors,[]);console.log('PASS: 30 real homes, graph routing, fixed saved addresses, needs, residents, active/deferred travel, invite call, six-second deadline, overnight request/refusal/sleep/reload/morning return.');
+ assert.deepEqual(errors,[]);console.log('PASS: 30 real homes, graph routing, fixed saved addresses, needs, residents, active/deferred travel, invite call, ten-second deadline, overnight request/refusal/sleep/reload/morning return.');
  }finally{await b.close()}})().catch(e=>{console.error(e);process.exitCode=1});

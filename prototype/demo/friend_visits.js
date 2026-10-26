@@ -95,14 +95,26 @@ function initFriendHomeActors(){
   return {relation,speaker,npc:visitActor(speaker),x:off+room.x+Math.max(12,room.w-22-i*18),y:room.floor,room:room.id,next:sim.t+35+i*20};
  });
 }
+function friendVisitRestReply(c){
+ const h=hour();if(h>=8&&h<23)return false;
+ const lines=h>=23||h<5?['我已经钻被窝啦，今天先不招待你了，明天来呗','眼睛都快睁不开了……咱明天再见吧','刚关灯呢，今天让我先睡，改天来坐坐','我这边准备睡啦，你也早点休息，明天再约']
+  :['我还没起呢……等我睡醒再来吧','这么早呀？我还裹着被子呢，晚点再约嘛','还没洗漱，家里也没收拾好，等白天再来呗'];
+ showSay(pick(lines),contactName(c)+'：',c);log(`想去${contactName(c)}家坐坐，对方正在休息，约好晚点再联系。`);return true;
+}
 function requestFriendVisit(id,incoming=false){
  const c=socialState.contacts.find(c=>c.id===id);if(!c)return false;
  if(c.family){showHint('老家离这里太远了。');return false;}
- if(friendVisit){if(atFriendHome()&&c.id===friendVisit.id){showHint('已经在这位朋友家啦。');return false;}visitNotice('先安排好这次做客','先回家或结束当前行程，再拜访其他人吧。');return false;}
- let reason=friendHousePreview?'先退出房屋预览，再出发吧。':socialState.guest?'家里还有客人，先陪完客人再出门吧。':friendOutingState?'已经约好一起出门，先结束同行吧。':asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy()?'先忙完眼前的事情，再去做客吧。':c.child?'小朋友还不能自己安排接待，先和家里人说好吧。':sim.needs.hunger<20||sim.needs.energy<25||sim.needs.hygiene<=0?'先吃点东西、休息或洗漱好，再出门做客吧。':!c.family&&(hour()<8||hour()>=22)?'这个点不太方便来啦，咱们白天再约吧。':null;
+ if(friendVisit&&(!atFriendHome()||c.id===friendVisit.id)){showHint(atFriendHome()?'已经在这位朋友家啦。':'正在去朋友家的路上，稍等一下吧。');return false;}
+ let reason=friendHousePreview?'先退出房屋预览，再出发吧。':socialState.guest?'家里还有客人，先陪完客人再出门吧。':friendOutingState?'已经约好一起出门，先结束同行吧。':asleep()||sim.mode==='down'||wiping||cardHolds()?'先忙完眼前的事情，再去做客吧。':c.child?'小朋友还不能自己安排接待，先和家里人说好吧。':null;
  if(reason){if(c&&!friendHousePreview)showSay(reason,contactName(c)+'：',c);else showHint(reason);return false;}
+ if(friendVisitRestReply(c))return false;
  const home=friendHomeFor(c);closeSocialSheet();setContactsOpen(false);closeRing();closePicker();hidePeerSay(true);stopNpcTalk();
- friendVisit={id,houseId:home.houseId,phase:'departing',incoming};
+ const nextVisit={id,houseId:home.houseId,phase:'departing',incoming};
+ if(atFriendHome()){
+  const previous=visitingFriend();finishContactTalk(previous.id,'visit');addSocialMemory(previous,'去家里做客','坐了一会儿，和朋友道别后去了下一位朋友家。');
+  log(`和${contactName(previous)}道别，接着去${contactName(c)}家坐坐。`);enterFriendHome(nextVisit);return true;
+ }
+ friendVisit=nextVisit;
  log(`准备去${contactName(c)}家做客。`);showSay(incoming?'好，我收拾一下就出门。':'去你家坐会儿，给我留个位置啊。');
  if(sim.place==='home'){sim.dest='friend_home';command('go_out');}else enterFriendHome();
  return true;
@@ -126,13 +138,16 @@ function friendHouseWindows(){
  const h=visitingHouse(),off=(W-h.w)/2;
  return Object.fromEntries(IMG.friendHouses[friendVisit.houseId].windows.map((w,i)=>['friend_window_'+i,{...w,x:w.x+off}]));
 }
-function enterFriendHome(){
- const v=friendVisit,c=visitingFriend();if(!v||!c||v.phase!=='departing')return;
+function enterFriendHome(nextVisit=friendVisit){
+ const v=nextVisit,c=v&&socialState.contacts.find(c=>c.id===v.id);if(!v||!c||v.phase!=='departing')return;
+ if(friendVisitRestReply(c)){if(friendVisit===v)friendVisit=null;sim.dest=null;sim.mode='idle';sim.act=null;sim.idleUntil=sim.t+1;return;}
  closeRing();closePicker();sim.windup=null;sim.queue=[];sim.talk=null;sim.chosen=null;remoteSocial=null;sim.mode='idle';sim.act=null;
+ if(sim.place==='mall'){mallS.stop=mallS.goal=mallS.hover=mallS.pointer=mallS.toilet=mallS.emergency=mallS.visit=mallS.foodFront=mallS.menuShop=null;}
+ hoverId=null;glow=null;walkMark=null;
  const icon=friendDestinationIcon(c);
  trip('friend_home',()=>{
   relayoutFriendVisit(()=>{
-   sim.place='friend_home';sim.park=null;sim.bar=null;barScene=null;sim.crossing=[];sim.sleepPlace=null;v.phase='inside';v.arrived=sim.t;v.until=Math.min(sim.t+240,Math.floor(sim.t/1440)*1440+22.5*60);v.stay=false;v.seen=[];v.familySeen=[];v.count=0;v.next=realClock+7;v.action=null;
+   friendVisit=v;sim.place='friend_home';sim.park=null;sim.bar=null;barScene=null;sim.crossing=[];sim.sleepPlace=null;v.phase='inside';v.arrived=sim.t;v.until=Math.min(sim.t+240,Math.floor(sim.t/1440)*1440+23*60);v.stay=false;v.seen=[];v.familySeen=[];v.count=0;v.next=realClock+7;v.action=null;
    const h=visitingHouse();sim.route=[[(W-h.w)/2+h.entry[0],h.entry[1]]];sim.s=sim.target=0;sim.mode='idle';sim.act='friend_visit';sim.idleUntil=sim.t+2;initFriendHomeActors();
   });
   life.npcs=[];life.talkQ=null;clearNpcPills();log(`到了${contactName(c)}家，${visitingHouse().name}里收拾得挺舒服。`);addSocialMemory(c,'去家里做客',`认真看了看${contactName(c)}家的陈设，坐下聊了会儿。`);showSay(pick(FRIEND_VISIT_TEXT.welcome),contactName(c)+'：',c);c.lastSeen=c.lastContact=sim.t;c.forgotten=false;contactsSig='';
@@ -224,7 +239,7 @@ function stepFriendHome(dtGame,dtReal){
   else if(sim.needs.hunger<20)friendVisitAction('eat');
   else if(sim.needs.hygiene<12)friendVisitAction('bath');
  }
- if((!v.stay&&(sim.t>=v.until||hour()>=22.5||hour()<5))||(v.stay&&sim.t>=v.until)){
+ if((!v.stay&&(sim.t>=v.until||hour()>=23||hour()<5))||(v.stay&&sim.t>=v.until)){
   leaveFriendHome(v.stay?'在朋友家住了一晚，上午和朋友道别回家。':'时间不早了，和朋友道别，准备回家。');return true;
  }
  if(sim.needs.energy<18&&!v.stay&&(!addressing||sim.needs.energy<8)){leaveFriendHome('有点困了，先和朋友道别，回家好好睡一觉。');return true;}

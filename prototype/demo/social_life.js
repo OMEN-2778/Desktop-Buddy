@@ -135,17 +135,16 @@ D.spots.host=[D.spots.sofa[0],D.spots.sofa[1]-6,'sit'];
 ACTS.host={spot:'host',label:'招待朋友',emote:'chat',dur:45,log:null};EFFECT.host={social:.3,fun:.2};D.seatLifts.host=4;
 const guestBubble=document.createElement('div');guestBubble.className='npcsay home-guest-say';guestBubble.hidden=true;document.getElementById('widget').append(guestBubble);
 function homeVisitActive(){return sim.place==='home'&&socialState.guest?.phase==='visiting';}
-function homeGuestPresent(){return sim.place==='home'&&(['entering','visiting','leaving'].includes(socialState.guest?.phase)||friendOutingWaiting());}
+function homeGuestPresent(){return sim.place==='home'&&(['scheduled','entering','visiting','leaving'].includes(socialState.guest?.phase)||friendOutingWaiting());}
 function visitNotice(title,text){
   const sheet=openSocialSheet(title),p=document.createElement('p');p.textContent=text;socialContent(sheet).append(p);return sheet;
 }
 function inviteHome(id,proactive=false){
   const c=socialState.contacts.find(c=>c.id===id);if(!c){visitNotice('暂时不能邀请','这位朋友已经不在联系人名单里了。');return false;}
-  if(friendVisit){visitNotice("正在做客","先回到自己家，再邀请朋友吧。");return false;}
+  if(friendVisit&&!atFriendHome()){visitNotice("正在做客","先安排好这次行程，再邀请朋友吧。");return false;}
   if(friendOutingState){visitNotice('已经约好出门','先结束同行，再邀请朋友来家里吧。');return false;}
   let reason='';
-  if(sim.place!=='home')reason='先回到家里，再邀请朋友来坐坐吧。';
-  else if(sim.mode==='down')reason='主角晕倒了，先长按唤醒，再邀请朋友吧。';
+  if(sim.mode==='down')reason='主角晕倒了，先长按唤醒，再邀请朋友吧。';
   else if(asleep())reason='主角正在睡觉，醒来后再邀请朋友吧。';
   else if(socialState.guest){const other=socialState.contacts.find(p=>p.id===socialState.guest.id);reason=`${other?contactName(other):'另一位客人'}${socialState.guest.phase==='scheduled'?'已经在路上了':'还没有离开'}，等这次来访结束再邀请吧。`;}
   else if(socialBusy())reason='主角正在聊天，聊完这一次后再邀请朋友吧。';
@@ -161,6 +160,11 @@ function inviteHome(id,proactive=false){
   const minutes=trip?trip.minutes:personalityOf(c).care>25?18:12+Math.floor(Math.random()*14),at=sim.t+minutes;
   socialState.guest={id,phase:'scheduled',at,until:at+150,s:0,next:0,said:[],count:0,usedTalks:[],usedEvents:[],activity:'chat',proactive,familyTrip:!!trip};
   socialState.nextVisit=sim.t+1440;log(`${contactName(c)}答应来家里坐坐，预计 ${minutes} 分钟后到达。`);showSay(trip?trip.reply:`好呀，我大概 ${minutes} 分钟后到！`,contactName(c)+'：',c);
+  if(sim.place!=='home'){
+    log('约了朋友来家里，先动身回家等对方。');
+    if(atFriendHome())leaveFriendHome('和朋友说好到自己家坐坐，先回家准备。');
+    else{stopNpcTalk('',false);sim.dest=null;sim.queue=[];command('go_home');}
+  }
   if(!speed){const sheet=visitNotice('邀请成功 · 等待出发',`${contactName(c)}答应来啦，预计 ${minutes} 分钟后到达。当前已暂停，恢复时间后朋友才会过来。`),resume=document.createElement('button');resume.type='button';resume.textContent='恢复时间，等朋友来';resume.onclick=()=>{closeSocialSheet();speed=1;syncUI();};sheet.append(resume);}
   return true;
 }
