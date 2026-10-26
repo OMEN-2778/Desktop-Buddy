@@ -173,10 +173,10 @@ def vlq(n):
  return bytes(out)
 
 
-def save_midi(events,path):
+def save_midi(events,path,meter=(6,3),key=2):
  tracks=[]
- meta=b'\x00\xff\x51\x03'+int(60_000_000/BPM).to_bytes(3,'big')+b'\x00\xff\x58\x04\x06\x03\x18\x08'
- meta+=b'\x00\xff\x59\x02\x02\x00\x00\xff\x2f\x00';tracks.append(meta)
+ meta=b'\x00\xff\x51\x03'+int(60_000_000/BPM).to_bytes(3,'big')+b'\x00\xff\x58\x04'+bytes([*meter,24,8])
+ meta+=b'\x00\xff\x59\x02'+bytes([key,0])+b'\x00\xff\x2f\x00';tracks.append(meta)
  for ch in PROGRAMS:
   previous=0;track=bytearray()
   for time,data in events:
@@ -186,7 +186,7 @@ def save_midi(events,path):
  path.write_bytes(b'MThd'+struct.pack('>IHHH',6,1,len(tracks),PPQ)+b''.join(b'MTrk'+struct.pack('>I',len(t))+t for t in tracks))
 
 
-def render(events,font,out):
+def render(events,font,out,title='海风拐了个弯',target_db=-20,reverb=.2,room=.48):
  lib=C.CDLL(ctypes.util.find_library('fluidsynth'))
  def api(name,result,args):
   f=getattr(lib,name);f.restype=result;f.argtypes=args;return f
@@ -195,8 +195,8 @@ def render(events,font,out):
  setnum=api('fluid_settings_setnum',integer,[ptr,string,C.c_double])
  setint=api('fluid_settings_setint',integer,[ptr,string,integer])
  setnum(settings,b'synth.sample-rate',SR);setnum(settings,b'synth.gain',.7)
- setnum(settings,b'synth.reverb.room-size',.48);setnum(settings,b'synth.reverb.damp',.5)
- setnum(settings,b'synth.reverb.width',80);setnum(settings,b'synth.reverb.level',.2)
+ setnum(settings,b'synth.reverb.room-size',room);setnum(settings,b'synth.reverb.damp',.5)
+ setnum(settings,b'synth.reverb.width',80);setnum(settings,b'synth.reverb.level',reverb)
  setnum(settings,b'synth.chorus.level',.12);setint(settings,b'synth.polyphony',256)
  synth=api('new_fluid_synth',ptr,[ptr])(settings)
  load=api('fluid_synth_sfload',integer,[ptr,string,integer]);assert load(synth,str(font).encode(),1)>=0
@@ -217,12 +217,12 @@ def render(events,font,out):
  audio=np.column_stack([left,right]);audio-=audio.mean(axis=0)
  # Fixed mastering gain only, leaving the phrasing and dynamics intact.
  rms=float(np.sqrt(np.mean(audio*audio)));peak=float(np.max(np.abs(audio)))
- gain=min(10**(-20/20)/max(rms,1e-8),.78/max(peak,1e-8));audio*=gain
+ gain=min(10**(target_db/20)/max(rms,1e-8),.78/max(peak,1e-8));audio*=gain
  n=int(2.3*SR);audio[-n:]*=np.linspace(1,0,n)[:,None]
  assert np.isfinite(audio).all() and np.max(np.abs(audio))<.79
  with tempfile.TemporaryDirectory(prefix='buddy-seaside-') as tmp:
   wave=Path(tmp)/'mix.wav';wavfile.write(wave,SR,(audio*32767).astype(np.int16))
-  subprocess.run(['ffmpeg','-y','-v','error','-i',str(wave),'-codec:a','libmp3lame','-b:a','192k','-metadata','title=海风拐了个弯','-metadata','artist=Desktop Buddy 音乐试作',str(out)],check=True)
+  subprocess.run(['ffmpeg','-y','-v','error','-i',str(wave),'-codec:a','libmp3lame','-b:a','192k','-metadata','title='+title,'-metadata','artist=Desktop Buddy 音乐试作',str(out)],check=True)
  return {'duration':round(duration,3),'peak':round(float(np.max(np.abs(audio))),4),'rms_db':round(20*np.log10(float(np.sqrt(np.mean(audio*audio)))),2),'notes':sum((d[0]&240)==144 for _,d in events)}
 
 
