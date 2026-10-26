@@ -1,0 +1,26 @@
+[
+  {
+    "duration": 139.737,
+    "peak": 0.7205,
+    "rms_db": -20.5,
+    "notes": 4340,
+    "id": "mall-theme-funk",
+    "title": "扶梯主题 · 放克合奏",
+    "bpm": 114,
+    "file": "audio/mall-theme-funk.mp3",
+    "midi": "audio/mall-theme-funk.mid",
+    "theme": "mall-escalator chorus, approximately 32.5 seconds onward"
+  },
+  {
+    "duration": 133.0,
+    "peak": 0.5941,
+    "rms_db": -20.5,
+    "notes": 2920,
+    "id": "mall-theme-bossa",
+    "title": "扶梯主题 · Bossa Nova",
+    "bpm": 120,
+    "file": "audio/mall-theme-bossa.mp3",
+    "midi": "audio/mall-theme-bossa.mid",
+    "theme": "mall-escalator chorus, approximately 32.5 seconds onward"
+  }
+]

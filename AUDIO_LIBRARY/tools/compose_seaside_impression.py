@@ -222,7 +222,10 @@ def render(events,font,out,title='海风拐了个弯',target_db=-20,reverb=.2,ro
  assert np.isfinite(audio).all() and np.max(np.abs(audio))<.79
  with tempfile.TemporaryDirectory(prefix='buddy-seaside-') as tmp:
   wave=Path(tmp)/'mix.wav';wavfile.write(wave,SR,(audio*32767).astype(np.int16))
-  subprocess.run(['ffmpeg','-y','-v','error','-i',str(wave),'-codec:a','libmp3lame','-b:a','192k','-metadata','title='+title,'-metadata','artist=Desktop Buddy 音乐试作',str(out)],check=True)
+  if Path(out).suffix.lower()=='.wav':
+   wavfile.write(out,SR,(audio*32767).astype(np.int16))
+  else:
+   subprocess.run(['ffmpeg','-y','-v','error','-i',str(wave),'-codec:a','libmp3lame','-b:a','192k','-metadata','title='+title,'-metadata','artist=Desktop Buddy 音乐试作',str(out)],check=True)
  return {'duration':round(duration,3),'peak':round(float(np.max(np.abs(audio))),4),'rms_db':round(20*np.log10(float(np.sqrt(np.mean(audio*audio)))),2),'notes':sum((d[0]&240)==144 for _,d in events)}
 
 
