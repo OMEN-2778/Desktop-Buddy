@@ -1,8 +1,7 @@
-"""Build the desktop app's icons from art/src/concept/app_icon.py.
+"""Build all app icons from the same pixel house as the home transition.
 
-The 32x32 pixel icon is scaled up by whole pixels to 1024x1024 and handed to
-`tauri icon`, which writes every size and format (png, ico, icns) into
-desktop/src-tauri/icons; the 32x32 png is then replaced by the exact pixels.
+Tauri supplies the platform file set; PNG and Windows ICO sizes are then
+written with nearest-neighbor sampling to keep the pixel outlines sharp.
 
     PYTHONPATH=tools python3 tools/make_desktop_icons.py
 """
@@ -28,10 +27,17 @@ def main():
     px = Image.fromarray(app_icon.icon().px, "RGBA")
     with tempfile.TemporaryDirectory() as tmp:
         big = Path(tmp) / "icon-1024.png"
-        px.resize((1024, 1024), Image.NEAREST).save(big)
+        px.resize((px.width * 32, px.height * 32), Image.Resampling.NEAREST).save(big)
         subprocess.run(["npx", "--no-install", "tauri", "icon", str(big), "-o", str(ICONS)],
                        cwd=ROOT / "desktop", check=True)
-    px.save(ICONS / "32x32.png")
+    for path in ICONS.glob("*.png"):
+        with Image.open(path) as generated:
+            size = generated.size
+        px.resize(size, Image.Resampling.NEAREST).save(path)
+    sizes = [16, 24, 32, 48, 64, 128, 256]
+    frames = [px.resize((size, size), Image.Resampling.NEAREST) for size in sizes]
+    frames[-1].save(ICONS / "icon.ico", format="ICO",
+                    sizes=[(size, size) for size in sizes], append_images=frames[:-1])
     for extra in ("android", "ios"):                 # desktop only
         for p in sorted((ICONS / extra).glob("**/*"), reverse=True) if (ICONS / extra).exists() else []:
             p.unlink() if p.is_file() else p.rmdir()
