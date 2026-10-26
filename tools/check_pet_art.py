@@ -21,11 +21,28 @@ def connected(mask):
     if p in remaining:remaining.remove(p);todo.append(p)
  return not remaining
 
+# Toe direction is a separate anatomical invariant from connectivity. A right-
+# facing paw must project beyond the front of its ankle, never behind its heel.
+for b in pets.BREEDS:
+ for length in (8,-8):
+  for dx in (-2,0,2):
+   sprite=pets.Sprite(32,28);pets.limb(sprite,b,10,10 if length>0 else 18,length,dx)
+   py=(10 if length>0 else 18)+length
+   width=3 if b.species=='cat' else 5 if b.body>=7 else 4
+   xs=sprite.px[py-2:py+1,:,3].nonzero()[1]
+   assert xs.min()>=10+dx,('paw projects behind heel',b.id,length,dx)
+   assert xs.max()>10+dx+width-1,('toes do not project forward',b.id,length,dx)
+ for view in ('front','back'):
+  sprite=pets.Sprite(32,28);pets.limb(sprite,b,10,10,8,view=view)
+  xs=sprite.px[17,:,3].nonzero()[0]
+  width=3 if b.species=='cat' else 5 if b.body>=7 else 4
+  assert xs.min()+xs.max()==20+width-1,('frontal paw not centred',b.id,view)
+
 cat_masks={};dog_masks=set();frames=0;problems=[]
 for b in pets.BREEDS:
  for action,(_,n,ms) in pets.actions(b.species).items():
   assert n>=4 and ms>0
-  side=[]
+  side=[];right_frames=[]
   for direction in pets.DIRECTIONS:
    for frame in range(n):
     s=pets.render(b,action,frame,direction);frames+=1
@@ -43,9 +60,11 @@ for b in pets.BREEDS:
       cat_masks[key]=mask
       if not connected(mask):problems.append(('disconnected cat anatomy',b.id,key))
     elif not connected(mask):problems.append(('disconnected dog anatomy',b.id,action,direction,frame))
-    if direction=='right':side.append(s.px.tobytes())
+    if direction=='right':
+     side.append(s.px.tobytes());right_frames.append(s.px)
+    elif direction=='left':assert np.array_equal(s.px,right_frames[frame][:,::-1]),('facing mismatch',b.id,action,frame)
     if b.species=='dog' and action=='idle' and frame==0 and direction=='right':dog_masks.add(mask.tobytes())
   if len(set(side))<2:problems.append(('static action',b.id,action))
 assert len(dog_masks)>=10,('too few dog silhouettes',len(dog_masks))
 assert not problems,problems[:35]
-print(f'PASS: {frames} frames; 24 appearances; shared cat geometry; {len(dog_masks)} dog silhouettes; all actions move; transparent palette-only sprites; no frame-edge clipping or disconnected heads/limbs')
+print(f'PASS: {frames} frames; 24 appearances; shared cat geometry; {len(dog_masks)} dog silhouettes; all actions move; transparent palette-only sprites; forward-facing toes, mirrored left/right anatomy, centred front/back paws; no clipping or disconnected heads/limbs')

@@ -152,7 +152,7 @@ def paint_fur(s,b,mask,cx,cy,rx,ry,part='body'):
     return s
 
 
-def limb(s, b, x, y, length, dx=0, part='paw'):
+def limb(s, b, x, y, length, dx=0, part='paw', view='side'):
     ramp, _ = coat(b, part, 0, 1, 1, 2)
     width=3 if b.species=='cat' else 5 if b.body>=7 else 4
     # A fleshy upper leg and a rounded paw, rather than two straight pixels.
@@ -162,13 +162,19 @@ def limb(s, b, x, y, length, dx=0, part='paw'):
         s.hline(xx,xx+width-1,yy,ramp[0])
         s.hline(xx+1,xx+width-2,yy,ramp[2])
         s.set(xx+1,yy,ramp[3])
-    px,py=x+dx-1,y+length
-    paw=width+1
+    # Side sprites face right before mirroring: toes project FORWARD from the
+    # ankle. Front/back paws are centred; rear views must not show toe clefts.
+    py=y+length
+    px=x+dx+1 if view=='side' else x+dx-1
+    paw=width+1 if view=='side' else width+2
     s.hline(px+1,px+paw-2,py-2,ramp[0])
     s.hline(px,px+paw-1,py-1,ramp[0])
     s.hline(px+1,px+paw-2,py-1,ramp[3])
     s.hline(px+1,px+paw-2,py,ramp[1])
-    s.set(px+2,py-1,ramp[1])
+    if view=='side':s.set(px+paw-2,py-1,ramp[1])
+    elif view=='front':
+        s.set(px+2,py-1,ramp[1])
+        if width>=4:s.set(px+paw-3,py-1,ramp[1])
 
 
 def torso(s,b,cx,cy,rx,ry,hx,hy,head_y):
@@ -339,8 +345,8 @@ def render(b, action='idle', frame=0, direction='right'):
         if action in ('drink','groom') and frame%2:
             s.set(nose_x-1,hy+3,P.blush[0])
     if action in ('groom','scratch'):
-        px=hx+2 if action=='groom' else hx-5
-        limb(s,b,px,hy+3,-2-(frame%2),1)
+        px=hx-1 if action=='groom' else hx-5
+        limb(s,b,px,hy+4 if action=='groom' else hy+3,-2-(frame%2),1)
         if action=='scratch':s.line(cx-2,FEET-2,px,hy+2,FUR[b.color][1])
     if action=='knead':
         for i,x in enumerate((cx+3,cx+6)):limb(s,b,x,FEET-3,2 if frame%2==i else 0,1)
@@ -372,14 +378,14 @@ def render_vertical(b,action,frame,direction,cy,hy,leg,jump,seated,low):
     spread=4 if cat or b.body<7 else 5
     for i,x in enumerate((cx-spread,cx+spread-2)):
         start=cy+body_y-1
-        limb(s,b,x,start,max(0,FEET-jump-start)-max(0,stride if i else -stride))
+        limb(s,b,x,start,max(0,FEET-jump-start)-max(0,stride if i else -stride),view=direction)
     if action in ('sleep','rest') and frame==2:body_y+=1;cy-=1
     fur_blob(s,b,cx,cy,rx,body_y)
     if action=='roll':
-        for x in (cx-3,cx+2):limb(s,b,x,20,-4,0)
+        for x in (cx-3,cx+2):limb(s,b,x,20,-4,0,view=direction)
     if cat:
         cat_head(s,b,cx,hy,action,frame,front=True,back=direction=='back')
-        if action in ('groom','knead','scratch'):limb(s,b,cx-3,hy+4,-1-frame%2,1)
+        if action in ('groom','knead','scratch'):limb(s,b,cx-3,hy+4,-1-frame%2,1,view=direction)
         return s
     head_y=head
     ear(s,b,cx-head+1,hy-head_y-2)
@@ -388,7 +394,7 @@ def render_vertical(b,action,frame,direction,cy,hy,leg,jump,seated,low):
     if b.ear in ('flop','round'):
         for x in (cx-head,cx+head):fur_blob(s,b,x,hy+1,2,3 if b.ear=='flop' else 2,'ear')
     if direction=='back':
-        if action=='scratch':limb(s,b,cx+5,hy+3,-2-frame%2)
+        if action=='scratch':limb(s,b,cx+5,hy+3,-2-frame%2,view=direction)
         return s
     if not cat:fur_blob(s,b,cx,hy+2,3,2,'muzzle')
     closed=action=='sleep' or action=='blink' and frame in (1,2)
@@ -402,5 +408,5 @@ def render_vertical(b,action,frame,direction,cy,hy,leg,jump,seated,low):
     else:s.set(cx,hy+3,P.ink[0])
     if action in ('drink','pant','bark','groom') and frame%2:s.set(cx,hy+3,P.blush[0])
     if action in ('groom','knead','scratch'):
-        limb(s,b,cx-3,hy+4,-1-frame%2,1)
+        limb(s,b,cx-3,hy+4,-1-frame%2,1,view=direction)
     return s
