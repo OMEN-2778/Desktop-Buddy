@@ -65,6 +65,7 @@ function visitRoomTarget(room){
   return {x:D.spots.sofa[1]+13,y:FLOOR_Y[0]};
 }
 function homeGuestDestination(g){
+  if(g.petVisit&&sim.t<g.petVisit.until&&!g.sleeping)return g.petVisit.target;
   const o=g.overnight;
   if(o?.accepted&&o.berth&&!o.morning&&(hour()>=21||hour()<6||sim.act==='sleep')){
     return o.berth==='guest-sofa'?{x:D.spots.sofa[1]+9,y:FLOOR_Y[0]}:{x:D.spots.bed[1]+10,y:FLOOR_Y[1]};

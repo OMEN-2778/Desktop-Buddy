@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
 <style>
 /*__UI_CSS__*/
+/*__PETS_CSS__*/
 </style>
 
 <input type="file" id="importSave" accept=".json,application/json" hidden>
@@ -431,6 +432,7 @@ function choose() {
     go_out: canOut ? (100 - n.fun) * 0.7 + (100 - n.social) * 0.5 + r() * 25 + 2 - (h >= 19 && outReason() !== "low" ? 25 : 0) : 0,
     towel: 3 + r() * 6, window: 7 + r() * 14, water_living: 5 + r() * 10, water_study: 4 + r() * 10, art: 4 + r() * 12, dress: 4 + r() * 10,
   };
+  petChoiceScores(score);
   personalityChoices(score);
   // how she feels tips the scales (Sims-style)
   for (const [a, v] of Object.entries(EMO_PULL[emotion().key] || {})) if (a !== "go_out" || canOut) score[a] += v;
@@ -497,6 +499,7 @@ const EMO_PULL = {
   embarrassed: { bath: 15, go_out: 10 }, uncomfortable: { go_out: 15 }, dazed: { window: 10, go_out: 10 },
 };
 function startAct(name, quiet = false) {
+  if(name.startsWith("pet_")&&!preparePetHumanAction(name))return;
   if(atFriendHome()){friendVisitCommand(name);return;}
   if(sim.place==='home'){
     if(name==='cook'&&!sim.player&&homeMeal()){name='eat';sim.chosen=null;}
@@ -547,6 +550,7 @@ function arrive() {
   if (sim.act === "go_out" || sim.act === "go_home") { throughDoor(sim.act === "go_out" ? sim.dest || "front" : "home"); return; }
   const a = ACTS[sim.act];
   sim.mode = "act";
+  if(sim.act.startsWith("pet_"))onPetHumanArrive(sim.act);
   if (sim.pendingLog) { log(sim.pendingLog); sim.pendingLog = null; }
   if (sim.act === "sleep") {
     const h = hour();
@@ -631,7 +635,7 @@ function step(dtGame, dtReal) {
     eff = homeMealEffect(dtGame);
   }
   for (const k of Object.keys(n)) {
-    let d = -DECAY[k];
+    let d = -DECAY[k] * (k==='fun'?petFunMultiplier():1);
     if (sim.act === "sleep" && sim.mode === "act") d *= k === "energy" ? 0 : k === "bladder" ? 0.35 : 0.4;
     if (eff[k] > 0 || (k === "bladder" && mallToiletInside()) || (sim.place === "mall" && ["fun","social"].includes(k))
         || (mallVisitInside() && (k === "hunger" && mallS.visit.kind === "restaurant" || k === "energy" && mallSleeping()))) d = 0;
@@ -695,7 +699,8 @@ function updateDoors(dtReal) {
     const st = doorState[d.id];
     const near = sim.mode === "walk" && !p.dy && d.storey === storey
       && sim.crossing.some(([id, x]) => id === d.id && Math.abs(p.x - x) < 16)
-      || sim.place==='home'&&d.storey===0&&socialState.guest&&['entering','leaving'].includes(socialState.guest.phase)&&Math.abs(homeGuestPoint(socialState.guest).x-d.x-2)<16;
+      || sim.place==='home'&&d.storey===0&&socialState.guest&&['entering','leaving'].includes(socialState.guest.phase)&&Math.abs(homeGuestPoint(socialState.guest).x-d.x-2)<16
+      || petCanSee()&&petState.pet.motion&&d.storey===storeyOfY(petPoint().y)&&Math.abs(petPoint().x-d.x-2)<16;
     if (near && st.angle === 0) st.side = sim.facing > 0 ? "r" : "l";
     st.t += dtReal * Math.min(speed, 4);
     if (st.t < 0.06) continue;
@@ -1039,6 +1044,7 @@ function fit() {
   if (typeof guideOn !== "undefined" && guideOn) sizeGuide();
   if (TAURI || friendHousePreview || wardrobeOpen || diaryOn || (typeof guideOn !== "undefined" && guideOn)) { studio.refit(); makeRoom(); }
   if (pickOn) fitPicker();                          // (fit runs only after the page has loaded)   // what's open above the house got a new size
+  fitPetPanel();
   if (TAURI) { fitWindow(); requestAnimationFrame(fitWindow); }   // the app window starts hidden: no frames until it's sized
 }
 
@@ -1046,6 +1052,7 @@ function baseActivityFrame(ms) {
   if (mallVisitInside() && sim.mode !== "down") return mallRoomFrame(ms);
   // what Buddy looks like right now: frame params, pose, emote
   const a = sim.act, phase = Math.floor(ms / 600) % 2;
+  if(sim.mode==='act'&&a?.startsWith('pet_'))return {f:{expr:phase?'happy':'neutral',look:sim.facing,wave:phase,bob:phase},pose:['pet_pat','pet_groom','pet_train'].includes(a)?'sit':'stand',emote:Math.floor(ms/2200)%3===0?'heart':null};
   if (reaction && realClock < reaction.until && sim.mode !== "down") {
     const seated = sim.mode === "act" && (["bench", "eat", "tv", "host", "guest_seat", "toilet", "park_eat"].includes(a) || PC_ACTS.includes(a) && chairReady());
     return { f: { expr: "happy", wave: reaction.wave === false ? null : Math.floor(ms / 180) % 2, bob: Math.floor(ms / 300) % 2 }, pose: seated ? "sit" : "stand", emote: reaction.emote };
@@ -1250,6 +1257,7 @@ function render() {
   drawWeather(bctx, f > 0.5);   // on the glass only, behind everything that stands in front of a window
   drawOverlay(bctx, "plant_study"); drawOverlay(bctx, "plant_living");   // the potted trees stay in front of windows and curtains (user)
   drawDoors(bctx);
+  drawPetKit(bctx);
   const room = roomAt(here()), acting = sim.mode === "act", act = acting ? sim.act : null;
   const sleeping = act === "sleep";
   for (const [id, on] of Object.entries(lamps)) if (on) drawOverlay(bctx, id);
@@ -1268,6 +1276,7 @@ function render() {
   drawChair(homeActorsCtx);
   drawSleepoverBedding(homeActorsCtx);
   drawHomeGuest(homeActorsCtx);drawOutingFriend(homeActorsCtx);
+  drawPetActor(homeActorsCtx);
   // Buddy
   const ms = realClock * 1000;
   const fr = activityFrame(ms);
@@ -2600,6 +2609,8 @@ let hoverBuddy = false;
 view.addEventListener("pointermove", e => {
   const [x, y] = canvasXY(e);
   if(atFriendHome()){hoverBuddy=buddyHit(x,y);const hit=friendVisitHit(x,y);friendVisit.hover=hit;view.style.cursor=hit&&hit.kind!=="family"?"pointer":"default";return;}
+  petHover=petHit(x,y);
+  if(petHover){hoverBuddy=false;hoverId=null;view.style.cursor="pointer";return;}
   npcPointer={x,y,scene:npcSceneKey()};updateNpcHover();
   hoverBuddy = e.pointerType === "mouse" && buddyHit(x, y);
   hoverId = buddyHit(x, y)||hoverNpc ? null : clickableAt(x, y);
@@ -2607,7 +2618,7 @@ view.addEventListener("pointermove", e => {
   mallS.hover = hoverBuddy||hoverNpc ? null : itemAt(x, y);
   view.style.cursor = hoverId || hoverBuddy || hoverNpc || (sim.place !== "home" && OUT[sim.place].kind === "walk") || mallS.hover ? "pointer" : TAURI ? "grab" : "default";   // outside: anywhere is somewhere to walk   // the app: walls and floor move the window
 });
-view.addEventListener("pointerleave", () => { if(friendVisit)friendVisit.hover=null;npcPointer=null;hoverNpc=null;hoverId = null; mallS.hover = null; mallS.pointer = null; holding = null; hoverBuddy = false; });
+view.addEventListener("pointerleave", () => { petHover=null; if(friendVisit)friendVisit.hover=null;npcPointer=null;hoverNpc=null;hoverId = null; mallS.hover = null; mallS.pointer = null; holding = null; hoverBuddy = false; });
 // her name over her head while the pointer rests on her (and no menu is open)
 function placeNametag() {
   const on = hoverBuddy && ringEl.hidden && sim.mode !== "down";
@@ -2645,6 +2656,7 @@ view.addEventListener("click", e => {
   const wasOpen = !!ringOf;
   closeRing();
   if (sim.mode === "down") return;
+  if(petHit(x,y)){openPetCare();return;}
   if(friendVisitClick(x,y))return;
   if (buddyHit(x, y)) {
     if (wasOpen) return;                          // a second click on her closes the menu
@@ -2811,6 +2823,7 @@ document.addEventListener("pointerdown", e => { if (ringOf && !ringEl.contains(e
 document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) closeRing(); });
 let lastChat = -1e9;
 function ringPick(id) {
+  if(id==='pet_adopt'){closeRing();openPetAdoption();return;}
   if(id.startsWith("fv:")){closeRing();if(id==="fv:stay")requestFriendStay();else friendVisitAction(id.slice(3));return;}
   if(id.startsWith('outing:')){const c=socialState.contacts.find(c=>c.id===ringEl.dataset.contactId),place=id.slice(7);closeRing();if(c)scheduleFriendOuting(c,place);return;}
   if (id === "mall_leave") { closeRing();mallLeaveVisit(false);return; }
@@ -4198,7 +4211,7 @@ for (let i = 0; i < 20; i++) {                   // sparks around the moodlet pi
   crBurst.append(sp);
 }
 // while a card or its result is up the house dims a little and time stands still (user)
-const cardHolds = () => !!(card && card.hold) || guideOn || wardrobeOpen || phoneHolds() || socialDialogHolds() || !!friendHousePreview || ringOf==="outing";   // (the guide stops the clock too)
+const cardHolds = () => !petPanel.hidden || !!(card && card.hold) || guideOn || wardrobeOpen || phoneHolds() || socialDialogHolds() || !!friendHousePreview || ringOf==="outing";   // (the guide stops the clock too)
 const dimHouse = on => view.classList.toggle("dim", on);
 let quietUntil = 0;         // her card line isn't followed by a "new mood" thought
 let card = null;            // { cd, vars, phase: ask | wait | result | closing, k, o, auto, timer, lockUntil }
@@ -4678,6 +4691,7 @@ function snapshot() {
            park: sim.place === "park" ? parkState() : null,
            mall: sim.place === "mall" ? mallSnapshot() : null },
     moods: [...moods].filter(([id]) => ML[id] && !id.startsWith("test_")).map(([id, m]) => [id, m.until, m.t]),
+    pets: petSnapshot(),
     social: socialSnapshot(),
     flags: lifeFlags, events: eventLast, lastFestivalDay, namedAs,
     house: { lamps, windows: windowState },
@@ -4710,6 +4724,7 @@ function restore(sv) {
   setLook(sv.look);
   restoreSocial(sv.social);
   applySettings(sv.settings);         // older saves carried the settings; the settings file wins (boot)
+  restorePets(sv.pets);
   const m = sv.sim;
   if (Number.isFinite(m.t)) sim.t = m.t;
   for (const k of Object.keys(sim.needs)) if (Number.isFinite(m.needs?.[k])) sim.needs[k] = clamp(m.needs[k]);
@@ -4918,7 +4933,7 @@ if (TAURI) {
   view.addEventListener("pointerdown", e => {
     if (e.button !== 0 || e.pointerType !== "mouse" || sim.mode === "down") return;
     const [x, y] = canvasXY(e);
-    press = !buddyHit(x, y) && !npcAt(x,y) && !clickableAt(x, y) ? { x: e.clientX, y: e.clientY } : null;
+    press = !buddyHit(x, y) && !npcAt(x,y) && !petHit(x,y) && !clickableAt(x, y) ? { x: e.clientX, y: e.clientY } : null;
   });
   view.addEventListener("pointermove", e => {
     if (press && (e.buttons & 1) && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 3) { press = null; dragWindow(); }
@@ -4951,6 +4966,7 @@ if (TAURI) {
 /*__FRIEND_HOUSES_JS__*/
 /*__FRIEND_VISITS_JS__*/
 /*__NEED_CONSEQUENCES_JS__*/
+/*__PETS_JS__*/
 /*__GAME_AUDIO_JS__*/
 
 // ================================================================ loop
@@ -4964,11 +4980,14 @@ function frame(now) {
   tickSocialLife(dt);
   tickFriendVisitTravel();
   const fast = sim.mode === "act" && sim.act === "sleep" && !sleepoverChatAwake() ? 8 : 1, run = cardHolds() || wiping ? 0 : speed;   // a chance card (or a scene change) stops the clock
+  const petFrom=sim.t;
   step(dt * run * fast, dt * (run ? 1 : 0));
+  tickPets(petFrom,sim.t);
   tickFriendOuting(run ? dt : 0);
   tickStorm(run ? dt : 0);
   updateDoors(run ? dt : 0);
   render();
+  fitPetPanel();
   renderSky();
   gameAudio.tick();
   renderMood();
@@ -5006,6 +5025,7 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
   }
   window.addEventListener("resize", fit);
   await loadAssets();
+  await loadPets();
   await loadSkyIcons();
   await loadMoodIcons();
   await loadWeatherMasks();

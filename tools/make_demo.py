@@ -41,6 +41,7 @@ import beach as BC  # noqa: E402
 import mall as MALL  # noqa: E402
 import mall_rooms as MR  # noqa: E402
 import tv_programs as TV  # noqa: E402
+import make_pet_preview as PETS
 import friend_houses as FH  # noqa: E402
 import storm as STORM  # noqa: E402
 import bar as BAR  # noqa: E402
@@ -424,6 +425,7 @@ def main():
         "items": {**{k: [png(c) for c in item_icons.covers(k)] for k in ("book", "tv", "game", "app")},
                   "dish": {k: [png(d) for d in v] for k, v in item_icons.dishes().items()}},
         "skyIcons": {**{k: [png(f) for f in sky_icons.frames(k)] for k in sky_icons.NAMES},"storm":[png(STORM.icon(i)) for i in range(4)]},
+        "pets": PETS.runtime_data(),
         "moodIcons": {k: [png(f) for f in mood_icons.frames(k)] for k in mood_icons.NAMES},
         "moods": [list(m) for m in mood_icons.EMOTIONS],
         "weatherMasks": weather_masks,
@@ -495,6 +497,8 @@ def main():
     immediate = {"ui-click", "ui-open", "ui-close", "ui-card", "ui-result", "ui-message", "phone-ring", "phone-answer", "phone-decline", "bell"}
     inline_audio = {name: base64.b64encode((audio_root / name).read_bytes()).decode("ascii") for name in audio_files if name.startswith("SFX/game/") and (Path(name).stem in immediate or Path(name).stem.startswith("emotion-"))}
     html = html.replace("/*__GAME_AUDIO_JS__*/", audio_js.replace("/*__AUDIO_INLINE__*/null", json.dumps(inline_audio)))
+    html = html.replace("/*__PETS_JS__*/", (SRC.parent / "pets_state.js").read_text()+"\nconst PET_TEXT = "+(SRC.parent / "pets_text.json").read_text()+";\n"+(SRC.parent / "pets.js").read_text())
+    html = html.replace("/*__PETS_CSS__*/", (SRC.parent / "pets.css").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
 

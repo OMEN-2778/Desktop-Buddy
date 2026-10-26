@@ -162,7 +162,7 @@ function stepBar(dtGame, dtReal) {
     throughDoor('home'); return;
   }
   const wasInside=barToiletInside();
-  for (const k of Object.keys(sim.needs)) if(k!=='bladder'||!wasInside) sim.needs[k] = clamp(sim.needs[k] - DECAY[k] * dtGame * (k === 'fun' ? 0.35 : 1));
+  for (const k of Object.keys(sim.needs)) if(k!=='bladder'||!wasInside) sim.needs[k] = clamp(sim.needs[k] - DECAY[k] * (k==='fun'?petFunMultiplier():1) * dtGame * (k === 'fun' ? 0.35 : 1));
   applyNeedConsequences();
   if(sim.mode==='down')return;
   const danger=sim.needs.hunger<5||sim.needs.energy<5;

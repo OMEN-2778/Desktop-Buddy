@@ -185,13 +185,14 @@ function drawHomeGuest(ctx){
   const g=socialState.guest;if(!g||g.phase==='scheduled'||sim.place!=='home')return;const n=guestNpc(g);if(!n)return;
   if(drawSleepingGuest(ctx,g,cForGuest(g)))return;
   const p=homeGuestPoint(g),moving=g.phase!=='visiting'||g.walkS<g.walkLength;
-  const sit=!moving&&(['living','kitchen'].includes(roomAt(p))||roomAt(p)==='study'&&Math.abs(p.x-D.spots.guest_study[1])<2),fr={expr:sit?'happy':'neutral',look:p.dy?0:Math.sign(here().x-p.x),bob:moving?Math.floor(realClock*5)%2:0,sway:Math.floor(realClock*3)%2,wave:null};
+  const sit=!g.petVisit&&!moving&&(['living','kitchen'].includes(roomAt(p))||roomAt(p)==='study'&&Math.abs(p.x-D.spots.guest_study[1])<2),fr={expr:sit?'happy':'neutral',look:p.dy?0:Math.sign(here().x-p.x),bob:moving?Math.floor(realClock*5)%2:0,sway:Math.floor(realClock*3)%2,wave:null};
   if(sit&&roomAt(p)==='kitchen'){
     // A second seat at the table, drawn behind the guest's seated lower body.
     const x=Math.round(p.x),y=Math.round(p.y);ctx.fillStyle='#5d3831';ctx.fillRect(x-6,y-7,2,8);ctx.fillRect(x+4,y-7,2,8);
     ctx.fillStyle='#87573e';ctx.fillRect(x-7,y-9,14,3);ctx.fillStyle='#b0674f';ctx.fillRect(x-6,y-9,12,1);
   }
-  const pose=sit?'sit':moving?['walkL','stand','walkR','stand'][Math.floor(realClock*6)%4]:'stand';
+  if(g.petVisit?.started){fr.expr='happy';fr.wave=Math.floor(realClock*2)%2;}
+  const pose=g.petVisit?.started?'sit':sit?'sit':moving?['walkL','stand','walkR','stand'][Math.floor(realClock*6)%4]:'stand';
   ctx.drawImage(npcCanvas(n,fr,pose,!!(moving&&p.dy<0)),Math.round(p.x-DW/2),Math.round(p.y-DH+1-(sit?4:0)));
   if(!guestBubble.hidden){guestBubble.style.left=view.offsetLeft+p.x*scale+'px';guestBubble.style.top=view.offsetTop+(p.y-DH-8)*scale+'px';}
 }
@@ -228,6 +229,7 @@ function tickHomeVisit(dt){
   if(sim.place!=='home'||(!g.overnight?.accepted&&(asleep()||sim.needs.energy<20||sim.needs.hunger<12||hour()>=22))||sim.mode==='down'){endHomeVisit(sim.place!=='home'?'主角要出门，约好下次再聚。':'先好好照顾自己，我们下次再聊。');return;}
   if(sim.t>=g.until){endHomeVisit();return;}
   moveHomeGuest(g,dt);
+  tickGuestPet(g,c);
   if(sim.act==='host'&&sim.needs.hunger<35){sim.player=false;startAct('cook');}
   else if(sim.act==='host'&&sim.needs.hygiene<20){sim.player=false;startAct('bath');}
   if(!homeGuestCanTalk(g)){if(g.talk)g.talk.wait=Math.max(.5,g.talk.wait);return;}

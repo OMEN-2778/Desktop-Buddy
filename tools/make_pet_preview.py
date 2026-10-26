@@ -1,5 +1,6 @@
 """Build the isolated pet art viewer; does not alter the game or its saves."""
 from __future__ import annotations
+import hashlib
 import base64
 import io
 import json
@@ -18,6 +19,29 @@ REVIEW=ROOT/'docs/design/pets'
 
 def data_url(image):
     buf=io.BytesIO();image.save(buf,format='PNG');return 'data:image/png;base64,'+base64.b64encode(buf.getvalue()).decode()
+
+def runtime_data():
+    """Generate the same canonical atlases for the game, without viewer artifacts."""
+    import pet_furniture
+    inputs=[Path(pets.__file__),Path(pet_furniture.__file__),ROOT/'tools/pixelkit/core.py',ROOT/'tools/pixelkit/palette.py']
+    signature=hashlib.sha256(b''.join(p.read_bytes() for p in inputs)).hexdigest()
+    cache=OUT/'assets/runtime.json'
+    if cache.exists():
+        saved=json.loads(cache.read_text())
+        if saved.get('signature')==signature:return saved['data']
+    rows=[]
+    for breed in pets.BREEDS:
+        clips=[]; atlas=Image.new("RGBA",(8*pets.W,len(pets.actions(breed.species))*4*pets.H))
+        for action,(label,count,duration) in pets.actions(breed.species).items():
+            for direction in pets.DIRECTIONS:
+                row=len(clips)
+                for frame in range(count):atlas.paste(pets.render(breed,action,frame,direction).to_image(),(frame*pets.W,row*pets.H))
+                clips.append(dict(id=action,name=label,direction=direction,row=row,frames=count,ms=duration))
+        rows.append(dict(id=breed.id,name=breed.name,species=breed.species,image=data_url(atlas),clips=clips))
+    data=dict(breeds=rows,furniture={k:data_url(v.to_image()) for k,v in pet_furniture.build().items()})
+    cache.parent.mkdir(parents=True,exist_ok=True)
+    cache.write_text(json.dumps(dict(signature=signature,data=data),ensure_ascii=False))
+    return data
 
 def build(review=False):
     OUT.mkdir(parents=True,exist_ok=True)
@@ -62,7 +86,8 @@ def build(review=False):
     with zipfile.ZipFile(REVIEW/'pet-art-preview.zip','w',zipfile.ZIP_DEFLATED) as z:
         z.writestr('pet-preview.html',html)
         z.writestr('README.txt','双击 pet-preview.html 查看全部品种和动作，无需联网。\nassets 中是透明 PNG 动作图集和 manifest.json。\n这只是素材试作，不含领养、需求或宠物 AI。\n')
-        for path in sorted(assets.iterdir()):z.write(path,'assets/'+path.name)
+        for path in sorted(assets.iterdir()):
+            if path.suffix=='.png' or path.name=='manifest.json':z.write(path,'assets/'+path.name)
         z.write(REVIEW/'pet-breeds.png','pet-breeds.png')
     return manifest
 

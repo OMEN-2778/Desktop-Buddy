@@ -229,7 +229,7 @@ function stepFriendHome(dtGame,dtReal){
  const day=Math.floor(sim.t/1440)+1;if(day!==sim.lastDay){sim.lastDay=day;log(`—— 第 ${day} 天 · ${SEASONS[seasonOf(sim.t).i].name} ——`,'day');}
  const action=sim.mode==='act'?v.action:null,resting=action==='sleep';
  const effects=FRIEND_HOME_EFFECTS[action]||{};
- for(const k in sim.needs){const d=effects[k]>0?0:-DECAY[k]*(resting?(k==='bladder'?.35:.4):1);sim.needs[k]=clamp(sim.needs[k]+(d+(effects[k]||0))*dtGame);}
+ for(const k in sim.needs){const d=effects[k]>0?0:-DECAY[k]*(k==='fun'?petFunMultiplier():1)*(resting?(k==='bladder'?.35:.4):1);sim.needs[k]=clamp(sim.needs[k]+(d+(effects[k]||0))*dtGame);}
  applyNeedConsequences();checkCollapse();if(sim.mode==='down')return true;
  // Address needs locally before they reach zero; do not send guests straight
  // back home just because the host's house has its own bathroom and snacks.
