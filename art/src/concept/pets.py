@@ -195,16 +195,17 @@ def cat_head(s,b,cx,cy,action,frame,front=False,back=False):
     mask=Sprite(W,H)
     spans=((-3,3),(-4,4),(-5,5),(-5,5),(-5,5),(-5,5),(-4,4),(-3,3),(-2,2))
     for j,(left,right) in enumerate(spans):mask.hline(cx+left,cx+right,cy-4+j,P.linen[3])
+    # Two-pixel softened tips, broad outward roots: no isolated upright spikes.
     for side in (-1,1):
-        ex=cx+(3 if side>0 else -4)
-        for row in range(3):
-            left=ex if side<0 else ex-row
-            mask.hline(left,left+row,cy-6+row,P.linen[3])
+        for dy,left,right in ((-5,-5,-4),(-4,-5,-2),(-3,-5,-1)):
+            if side>0:left,right=-right,-left
+            mask.hline(cx+left,cx+right,cy+dy,P.linen[3])
     paint_fur(s,b,mask,cx,cy,5,4,'head')
     if back:return
     # Ear interiors remain inside the fur silhouette for every coat.
-    for ex in (cx-4,cx+3):
-        s.set(ex,cy-4,P.blush[0])
+    for side in (-1,1):
+        s.set(cx+side*4,cy-4,P.clay[3])
+        s.hline(cx+side*4,cx+side*3,cy-3,P.blush[0])
     closed=action=='sleep' or action=='blink' and frame in (1,2) or action=='wake' and frame<2
     contented=action in ('stretch','happy','nuzzle') and frame in (1,2,3,4)
     eyes=(cx-2,cx+2)
