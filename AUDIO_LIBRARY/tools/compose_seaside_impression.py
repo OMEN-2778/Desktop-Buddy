@@ -186,7 +186,7 @@ def save_midi(events,path,meter=(6,3),key=2):
  path.write_bytes(b'MThd'+struct.pack('>IHHH',6,1,len(tracks),PPQ)+b''.join(b'MTrk'+struct.pack('>I',len(t))+t for t in tracks))
 
 
-def render(events,font,out,title='海风拐了个弯',target_db=-20,reverb=.2,room=.48):
+def render(events,font,out,title='海风拐了个弯',target_db=-20,reverb=.2,room=.48,bars=48):
  lib=C.CDLL(ctypes.util.find_library('fluidsynth'))
  def api(name,result,args):
   f=getattr(lib,name);f.restype=result;f.argtypes=args;return f
@@ -203,7 +203,7 @@ def render(events,font,out,title='海风拐了个弯',target_db=-20,reverb=.2,ro
  noteon=api('fluid_synth_noteon',integer,[ptr,integer,integer,integer]);noteoff=api('fluid_synth_noteoff',integer,[ptr,integer,integer])
  cc=api('fluid_synth_cc',integer,[ptr,integer,integer,integer]);program=api('fluid_synth_program_change',integer,[ptr,integer,integer])
  write=api('fluid_synth_write_float',integer,[ptr,integer,ptr,integer,integer,ptr,integer,integer])
- duration=48*BAR+5;frames=int(duration*SR);left=np.zeros(frames,np.float32);right=np.zeros_like(left);at=0
+ duration=bars*BAR+5;frames=int(duration*SR);left=np.zeros(frames,np.float32);right=np.zeros_like(left);at=0
  for time,data in events:
   end=min(frames,round(time*SR));length=end-at
   if length>0:write(synth,length,left.ctypes.data,at,1,right.ctypes.data,at,1);at=end

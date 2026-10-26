@@ -2,12 +2,33 @@
 <html lang="zh-CN">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>码头 BGM 试听</title>
+<title>BGM 试听</title>
 <style>
 body{max-width:680px;margin:32px auto;padding:0 18px;color:#243342;background:#fafafa;font:16px/1.6 system-ui,"Microsoft YaHei",sans-serif}h1{font-size:24px;margin-bottom:4px}p,footer{color:#68737d;font-size:14px}article{padding:18px 0;border-top:1px solid #dce0e4}h2{font-size:18px;margin:0 0 6px}article p{margin:0 0 10px}audio{display:block;width:100%;margin-bottom:8px}a{color:#285e8b;font-size:14px}footer{border-top:1px solid #dce0e4;padding-top:15px}#error{color:#a23f34}button,a:focus-visible{outline-offset:3px}
 </style>
-<h1>码头 BGM 试听</h1>
-<p>三首新曲已重写主旋律与留白（第二版）。默认音量 50%，播放下一首时会暂停上一首。</p>
+<h1>BGM 试听</h1>
+<p>默认音量 50%，播放下一首时会暂停上一首。</p>
+<h2 id="mall">商场 · 三首新试作</h2>
+<p>每首 17 种乐器音色，另有鼓组与拉丁打击乐。</p>
+<article data-track="mall-weekend">
+<h2>周末人潮</h2>
+<p>124 BPM · 放克流行 · 约 2 分 09 秒</p>
+<audio controls preload="none" aria-label="周末人潮试听" src="./audio/mall-weekend.mp3?v=1"></audio>
+<a href="./audio/mall-weekend.mp3?v=1" download="商场-周末人潮.mp3">下载 MP3</a>
+</article>
+<article data-track="mall-escalator">
+<h2>扶梯向上</h2>
+<p>118 BPM · 明亮迪斯科 · 约 2 分 15 秒</p>
+<audio controls preload="none" aria-label="扶梯向上试听" src="./audio/mall-escalator.mp3?v=1"></audio>
+<a href="./audio/mall-escalator.mp3?v=1" download="商场-扶梯向上.mp3">下载 MP3</a>
+</article>
+<article data-track="mall-until-closing">
+<h2>逛到打烊</h2>
+<p>128 BPM · 拉丁放克 · 约 2 分 05 秒</p>
+<audio controls preload="none" aria-label="逛到打烊试听" src="./audio/mall-until-closing.mp3?v=1"></audio>
+<a href="./audio/mall-until-closing.mp3?v=1" download="商场-逛到打烊.mp3">下载 MP3</a>
+</article>
+<h2 id="harbor">码头</h2>
 <article data-track="spring-summer-day">
 <h2>春夏 · 白天｜海风拐了个弯</h2>
 <p>之前认可的版本，保留原样</p>
@@ -33,7 +54,7 @@ body{max-width:680px;margin:32px auto;padding:0 18px;color:#243342;background:#f
 <a href="./audio/autumn-winter-night.mp3?v=2" download="秋冬黑夜-灯塔还亮着.mp3">下载 MP3</a>
 </article>
 <p id="error" role="status"></p>
-<footer>独立试听，三首新曲尚未加入游戏。<a href="./CREDITS.md">制作与音色来源</a></footer>
+<footer>独立试听，新曲尚未加入游戏。<a href="./CREDITS.md">制作与音色来源</a></footer>
 <script>
 const players=[...document.querySelectorAll('audio')];
 for(const player of players){

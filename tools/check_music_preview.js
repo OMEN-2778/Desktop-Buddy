@@ -6,12 +6,13 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
   const p=await browser.newPage({ignoreHTTPSErrors:true}),errors=[],bad=[];
   p.on('pageerror',e=>errors.push(e.message));p.on('response',r=>{if(r.status()>=400)bad.push(r.url()+':'+r.status());});
   await p.goto(process.argv[2]||'http://127.0.0.1:8788/music/');
-  assert.equal(await p.title(),'码头 BGM 试听');
-  assert.equal(await p.locator('audio').count(),4);
+  assert.equal(await p.title(),'BGM 试听');
+  assert.equal(await p.locator('audio').count(),7);
+  assert.equal(await p.locator('article[data-track^="mall-"]').count(),3);
   assert.equal(await p.locator('canvas,img,svg').count(),0,'Listening page must have no illustrations');
   assert.ok(await p.evaluate(()=>players.every(a=>a.paused&&a.volume===.5&&a.preload==='none')));
   await p.locator('h1').click();
-  for(let i=0;i<4;i++){
+  for(let i=0;i<7;i++){
    await p.evaluate(i=>players[i].play(),i);
    await p.waitForFunction(i=>players[i].currentTime>.1&&!players[i].paused,i);
    const state=await p.evaluate(i=>({duration:players[i].duration,others:players.every((a,j)=>j===i||a.paused),volume:players[i].volume}),i);
@@ -27,6 +28,6 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
   }
   assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   assert.deepEqual(errors,[]);assert.deepEqual(bad,[]);
-  console.log('PASS: 4 tracks play/seek/download; one plays at a time; 50% default and absolute zero; no illustrations, autoplay, page or network errors');
+  console.log('PASS: 7 tracks play/seek/download; one plays at a time; 50% default and absolute zero; no illustrations, autoplay, page or network errors');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
