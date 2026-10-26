@@ -36,7 +36,8 @@ def note(ch,pitch,beat,length,velocity):
  engine.note(ch,pitch,beat*4,length*4,velocity)
 
 
-def compose():
+def compose(harmony_overrides=None,melody_overrides=None):
+ harmony_overrides=harmony_overrides or {};melody_overrides=melody_overrides or {}
  engine.BPM=BPM;engine.EIGHTH=BEAT/4;engine.BAR=BAR;engine.EVENTS=[]
  engine.RNG=np.random.default_rng(261026108)
  engine.PROGRAMS={0:4,1:90,2:28,3:8,4:38,5:89,6:62,7:81,8:80,10:11,11:87,12:50,14:5}
@@ -46,7 +47,7 @@ def compose():
   engine.event(0,[0xC0+ch,program])
   for cc,value in [(7,volumes[ch]),(10,pans[ch]),(91,12 if ch in [4,11] else 31),(93,15 if ch in [0,5,14] else 0)]:engine.event(0,[0xB0+ch,cc,value])
  for bar,name in enumerate(PROG):
-  root,tones=HARMONY[name];base=bar*4;intro=bar<4;bridge=32<=bar<40;chorus=16<=bar<32 or 52<=bar<60;outro=bar>=60
+  root,tones=harmony_overrides.get(bar,HARMONY[name]);base=bar*4;intro=bar<4;bridge=32<=bar<40;chorus=16<=bar<32 or 52<=bar<60;outro=bar>=60
   # Short bass pulses, with gaps around the clap and a small offbeat pickup.
   for offset,length in [(0,.5),(1.75,.28),(2.5,.35),(3.25,.25)]:
    if bridge and offset in [1.75,3.25]:continue
@@ -76,7 +77,7 @@ def compose():
    for offset,pitch,length in [(1,tones[2],1.25),(3,tones[1],.6)]:note(14,pitch,base+offset,length,51)
   elif 4<=bar<60:
    lead=8 if chorus else 7
-   for offset,pitch,length in theme(bar):
+   for offset,pitch,length in melody_overrides.get(bar,theme(bar)):
     pitch-=12
     note(lead,pitch,base+offset,length,61 if chorus else 56)
     if chorus and length>=.75:note(14,pitch-12,base+offset+.025,length*.8,35)
@@ -88,9 +89,10 @@ def compose():
  return sorted(engine.EVENTS,key=lambda item:item[0])
 
 
-def percussion(length,bridge_halftime_end=40):
+def percussion(length,bridge_halftime_end=40,section_gain=None,holes=(15,39,51)):
  rng=np.random.default_rng(108261027);audio=np.zeros((length,2),np.float32)
- def add(signal,beat,gain,pan=0):
+ def add(signal,beat,gain,pan=0,kind='click'):
+  if section_gain is not None:gain*=section_gain(beat,kind)
   at=round(beat*BEAT*SR);end=min(length,at+len(signal));signal=signal[:end-at]*gain
   audio[at:end,0]+=signal*np.sqrt((1-pan)/2);audio[at:end,1]+=signal*np.sqrt((1+pan)/2)
  def noise(seconds,lo,hi):
@@ -106,22 +108,22 @@ def percussion(length,bridge_halftime_end=40):
  for bar in range(BARS):
   base=bar*4;chorus=16<=bar<32 or 52<=bar<60;bridge=32<=bar<bridge_halftime_end;outro=bar>=60
   # Full-bar holes at transitions make the groove lean forward on re-entry.
-  if bar in [15,39,51]:
-   add(click,base+.75,.022,-.5);add(hat,base+3.5,.055,.4);continue
+  if bar in holes:
+   add(click,base+.75,.022,-.5);add(hat,base+3.5,.055,.4,kind='hat');continue
   kicks=[0,1.75,2.5,3.25] if bar%2==0 else [0,.75,2.5,3.5]
   if bridge:kicks=[0,2.75]
   if outro:kicks=[0,2.5]
-  for offset in kicks:add(kick,base+offset,.20 if chorus else .16)
+  for offset in kicks:add(kick,base+offset,.20 if chorus else .16,kind='kick')
   for offset in ([2] if bridge else [1,3]):
-   add(clap,base+offset+.014,.18 if chorus else .14,.04)
-   if chorus:add(clap,base+offset+.032,.045,-.25)
+   add(clap,base+offset+.014,.18 if chorus else .14,.04,kind='clap')
+   if chorus:add(clap,base+offset+.032,.045,-.25,kind='clap')
   for i in range(16):
    if i%2==0 or chorus and i in [3,7,11,15]:
     swing=.035 if i%2 else 0
-    add(hat,base+i/4+swing,.045 if i%2 else .07,(-.45 if i%4==0 else .4))
+    add(hat,base+i/4+swing,.045 if i%2 else .07,(-.45 if i%4==0 else .4),kind='hat')
   for offset,pan in [(.75,-.65),(2.25,.65),(3.75,-.25)]:add(click,base+offset,.025,pan)
   if bar%8==7 and not outro:
-   for j,offset in enumerate([3.25,3.5,3.625,3.75,3.875]):add(hat,base+offset,.025+j*.006,-.5+j*.2)
+   for j,offset in enumerate([3.25,3.5,3.625,3.75,3.875]):add(hat,base+offset,.025+j*.006,-.5+j*.2,kind='hat')
  return audio
 
 
