@@ -1,7 +1,8 @@
 // Three independent, stable traits. Appearance and gender never determine them.
 const PERSONALITY_AXES=[['social','社交方式','慢热','外向','先熟悉，再慢慢打开话匣子。','愿意主动认识人、分享身边的新鲜事。'],['care','处事方式','随性','周到','喜欢留点空白，偶尔临时起意。','喜欢提前商量，留意彼此是否方便。'],['sensitivity','情绪反应','沉稳','敏感','情绪起伏较小，愿意慢慢消化。','容易察觉细微变化，也更容易被小事打动。']];
+const PARENT_PERSONALITIES={dad:{social:-60,care:-60,sensitivity:-60},mom:{social:60,care:60,sensitivity:0}};
 function seededPersonality(id){let h=2166136261;for(const ch of String(id))h=Math.imul(h^ch.charCodeAt(0),16777619)>>>0;const p={};for(const [key]of PERSONALITY_AXES){h=(Math.imul(h,1664525)+1013904223)>>>0;p[key]=Math.round(h/4294967295*200-100);}return p;}
-function normalizePersonality(value,id='hero'){const fallback=seededPersonality(id),p={};for(const [key]of PERSONALITY_AXES)p[key]=Number.isFinite(value?.[key])?Math.max(-100,Math.min(100,Math.round(value[key]))):fallback[key];return p;}
+function normalizePersonality(value,id='hero'){if(Object.hasOwn(PARENT_PERSONALITIES,id))return {...PARENT_PERSONALITIES[id]};const fallback=seededPersonality(id),p={};for(const [key]of PERSONALITY_AXES)p[key]=Number.isFinite(value?.[key])?Math.max(-100,Math.min(100,Math.round(value[key]))):fallback[key];return p;}
 let heroPersonality={social:0,care:0,sensitivity:0},heroPersonalityChosen=false;
 function personalityOf(c){return c?normalizePersonality(c.personality,c.id||c.personId||'passerby'):heroPersonality;}
 function personalityLabel(axis,value){return value< -25?axis[2]:value>25?axis[3]:{social:'随和',care:'灵活',sensitivity:'平和'}[axis[0]];}
