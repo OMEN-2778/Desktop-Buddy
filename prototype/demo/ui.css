@@ -765,12 +765,21 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 .fb-pill.fb-say { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #3b4150; font-weight: 500; background: rgba(255, 255, 255, .7); }
 .fb-pill.go { animation: fbTap .4s var(--spring); }
 .fest-bar.in { animation: fbBarIn .7s var(--ios) both; }
-.fest-bar.in .fb-name { animation: fbNameIn .7s .08s var(--ios) both; }
-.fest-bar.in .fb-pill { animation: fbPillIn .6s calc(.16s + var(--i) * .07s) var(--ios) both; }
+.fest-bar.in .fb-orb { animation: fbNameIn .7s .1s var(--ios) both; }
+.fest-bar.idle .fb-orb svg { animation: fbOrbBob 1.8s steps(2, jump-none) infinite; }
 .fest-bar.idle .fb-deco { animation: fbDrift 14s ease-in-out infinite alternate; }
 .fest-bar.idle .fb-sheen::after { animation: fbSheen 7s 1.2s var(--ios) infinite; }
 .fest-bar.out { animation: fbBarOut .45s .12s cubic-bezier(.4, 0, 1, 1) both; }
-.fest-bar.out .fb-pill { animation: fbPillOut .3s calc((var(--n) - var(--i)) * .04s) cubic-bezier(.4, 0, 1, 1) both; }
+/* folded: a round badge; open: unrolls sideways, the name and pills slide in one by one */
+.fest-bar { overflow: hidden; transition: width .55s var(--ios); }
+.fb-orb { flex: none; width: 30px; height: 30px; display: grid; place-items: center; background: var(--fb-deep); clip-path: var(--fb-pill-clip, var(--clip-btn)); cursor: pointer; }
+.fb-orb svg { width: 18px; height: 18px; fill: #fff; }
+.fest-bar .fb-name, .fest-bar .fb-pill { opacity: 0; transform: translateX(-10px); pointer-events: none;
+  transition: opacity .15s, transform .2s var(--ios), background-color .2s steps(2); }
+.fest-bar.open .fb-name, .fest-bar.open .fb-pill { opacity: 1; transform: none; pointer-events: auto;
+  transition: opacity .3s calc(.1s + var(--i, -1) * .05s + .05s), transform .45s calc(.1s + var(--i, -1) * .05s + .05s) var(--spring), background-color .2s steps(2); }
+.fest-bar.open button.fb-pill:hover { transform: translateY(-2px); transition-delay: 0s; }
+@keyframes fbOrbBob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2px; } }
 @keyframes fbBarIn { from { opacity: 0; transform: translateY(-14px) scale(.94); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
 @keyframes fbNameIn { from { opacity: 0; transform: scale(.7); filter: blur(4px); } to { opacity: 1; transform: none; filter: blur(0); } }
 @keyframes fbPillIn { from { opacity: 0; transform: translateX(18px) scale(.9); filter: blur(5px); } to { opacity: 1; transform: none; filter: blur(0); } }

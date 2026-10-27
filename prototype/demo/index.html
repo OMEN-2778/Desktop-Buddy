@@ -1152,12 +1152,21 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 .fb-pill.fb-say { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #3b4150; font-weight: 500; background: rgba(255, 255, 255, .7); }
 .fb-pill.go { animation: fbTap .4s var(--spring); }
 .fest-bar.in { animation: fbBarIn .7s var(--ios) both; }
-.fest-bar.in .fb-name { animation: fbNameIn .7s .08s var(--ios) both; }
-.fest-bar.in .fb-pill { animation: fbPillIn .6s calc(.16s + var(--i) * .07s) var(--ios) both; }
+.fest-bar.in .fb-orb { animation: fbNameIn .7s .1s var(--ios) both; }
+.fest-bar.idle .fb-orb svg { animation: fbOrbBob 1.8s steps(2, jump-none) infinite; }
 .fest-bar.idle .fb-deco { animation: fbDrift 14s ease-in-out infinite alternate; }
 .fest-bar.idle .fb-sheen::after { animation: fbSheen 7s 1.2s var(--ios) infinite; }
 .fest-bar.out { animation: fbBarOut .45s .12s cubic-bezier(.4, 0, 1, 1) both; }
-.fest-bar.out .fb-pill { animation: fbPillOut .3s calc((var(--n) - var(--i)) * .04s) cubic-bezier(.4, 0, 1, 1) both; }
+/* folded: a round badge; open: unrolls sideways, the name and pills slide in one by one */
+.fest-bar { overflow: hidden; transition: width .55s var(--ios); }
+.fb-orb { flex: none; width: 30px; height: 30px; display: grid; place-items: center; background: var(--fb-deep); clip-path: var(--fb-pill-clip, var(--clip-btn)); cursor: pointer; }
+.fb-orb svg { width: 18px; height: 18px; fill: #fff; }
+.fest-bar .fb-name, .fest-bar .fb-pill { opacity: 0; transform: translateX(-10px); pointer-events: none;
+  transition: opacity .15s, transform .2s var(--ios), background-color .2s steps(2); }
+.fest-bar.open .fb-name, .fest-bar.open .fb-pill { opacity: 1; transform: none; pointer-events: auto;
+  transition: opacity .3s calc(.1s + var(--i, -1) * .05s + .05s), transform .45s calc(.1s + var(--i, -1) * .05s + .05s) var(--spring), background-color .2s steps(2); }
+.fest-bar.open button.fb-pill:hover { transform: translateY(-2px); transition-delay: 0s; }
+@keyframes fbOrbBob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2px; } }
 @keyframes fbBarIn { from { opacity: 0; transform: translateY(-14px) scale(.94); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
 @keyframes fbNameIn { from { opacity: 0; transform: scale(.7); filter: blur(4px); } to { opacity: 1; transform: none; filter: blur(0); } }
 @keyframes fbPillIn { from { opacity: 0; transform: translateX(18px) scale(.9); filter: blur(5px); } to { opacity: 1; transform: none; filter: blur(0); } }
@@ -1365,7 +1374,7 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
       <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她弹出互动菜单。"></canvas>
       <div class="ring" id="ring" role="menu" aria-label="和她互动" hidden></div>
       <div class="nametag" id="nametag" aria-hidden="true"></div>
-      <div class="fest-bar" id="festBanner" hidden role="toolbar" aria-label="今日节日"><span class="fb-deco" aria-hidden="true"></span><span class="fb-sheen" aria-hidden="true"></span><span class="fb-name"></span><span class="fb-acts"></span></div>
+      <div class="fest-bar" id="festBanner" hidden role="toolbar" aria-label="今日节日"><span class="fb-deco" aria-hidden="true"></span><span class="fb-sheen" aria-hidden="true"></span><span class="fb-orb" aria-hidden="true"></span><span class="fb-name"></span><span class="fb-acts"></span></div>
       <div class="update" id="update" role="status" hidden><span></span><button type="button" class="up-go">更新</button><button type="button" class="up-later">以后</button><i class="up-bar"></i></div>
     </div>
   </div>
@@ -40203,7 +40212,7 @@ function fbPlace() {
   if (!updEl.hidden) top -= updEl.offsetHeight + 6;              // the update pill keeps its own row
   fbEl.style.top = Math.round(top) + "px";
   fbEl.style.left = view.offsetLeft + "px";
-  fbEl.style.width = view.offsetWidth + "px";
+  fbEl.style.width = (fbOpen ? fbFullWidth() : fbEl.offsetHeight) + "px";
   const h = fbEl.offsetHeight;                                   // pixel-stepped round ends, sized to the bar and its pills
   if (h && h !== fbEl._clipH) {
     fbEl._clipH = h;
@@ -40211,6 +40220,25 @@ function fbPlace() {
     fbEl.style.setProperty("--fb-pill-clip", roundClip(Math.max(3, Math.floor((h - 12) / 4)), 2));
   }
 }
+// folded it is a round badge with the festival's motif; pointing at it (or focusing
+// it) unrolls it sideways into the full capsule (user: at small sizes the pills fell off)
+let fbOpen = false, fbFoldTimer = 0;
+function fbFullWidth() {
+  const room = Math.max(fbEl.offsetHeight, document.documentElement.clientWidth - fbEl.getBoundingClientRect().left - 8);
+  const kids = [fbEl.querySelector(".fb-orb"), fbEl.querySelector(".fb-name"), ...fbEl.querySelectorAll(".fb-pill")];
+  const natural = kids.reduce((w, k) => w + (k ? k.scrollWidth : 0), 0) + 6 * (kids.length - 1) + 12 + 4;
+  return Math.min(room, Math.max(view.offsetWidth, natural));
+}
+function fbSetOpen(open) {
+  clearTimeout(fbFoldTimer);
+  if (open === fbOpen) return;
+  fbOpen = open; fbEl.classList.toggle("open", open); fbPlace();
+}
+fbEl.addEventListener("pointerenter", () => fbSetOpen(true));
+fbEl.addEventListener("pointerleave", () => { clearTimeout(fbFoldTimer); fbFoldTimer = setTimeout(() => fbSetOpen(false), 450); });
+fbEl.addEventListener("focusin", () => fbSetOpen(true));
+fbEl.addEventListener("focusout", e => { if (!fbEl.contains(e.relatedTarget)) fbSetOpen(false); });
+fbEl.addEventListener("click", e => { if (e.target.closest(".fb-orb")) fbSetOpen(!fbOpen); });   // touch: tap the badge
 function fbFollow() {
   if (fbEl.hidden) return;
   fbPlace();
@@ -40221,6 +40249,10 @@ function fbShow(f) {
   const [a, b, line, ...acts] = FEST_BAR[f.name] || ["#e1725b", "#f6a487", pick(f.say || ["节日快乐"])];
   fbEl.style.setProperty("--fb-a", a); fbEl.style.setProperty("--fb-b", b);
   fbEl.querySelector(".fb-name").textContent = f.chip || f.name;
+  const motif = (FB_MOTIFS[f.name] || ["star"])[0];
+  fbEl.querySelector(".fb-orb").innerHTML = `<svg viewBox="0 0 24 24" shape-rendering="crispEdges"><path d="${FB_SHAPES[motif]}"/></svg>`;
+  fbEl.querySelector(".fb-orb").title = f.name;
+  fbOpen = false;
   fbDeco(f.name);
   const box = fbEl.querySelector(".fb-acts"), n = acts.length + 1;
   box.innerHTML = "";

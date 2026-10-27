@@ -104,7 +104,7 @@ function fbPlace() {
   if (!updEl.hidden) top -= updEl.offsetHeight + 6;              // the update pill keeps its own row
   fbEl.style.top = Math.round(top) + "px";
   fbEl.style.left = view.offsetLeft + "px";
-  fbEl.style.width = view.offsetWidth + "px";
+  fbEl.style.width = (fbOpen ? fbFullWidth() : fbEl.offsetHeight) + "px";
   const h = fbEl.offsetHeight;                                   // pixel-stepped round ends, sized to the bar and its pills
   if (h && h !== fbEl._clipH) {
     fbEl._clipH = h;
@@ -112,6 +112,25 @@ function fbPlace() {
     fbEl.style.setProperty("--fb-pill-clip", roundClip(Math.max(3, Math.floor((h - 12) / 4)), 2));
   }
 }
+// folded it is a round badge with the festival's motif; pointing at it (or focusing
+// it) unrolls it sideways into the full capsule (user: at small sizes the pills fell off)
+let fbOpen = false, fbFoldTimer = 0;
+function fbFullWidth() {
+  const room = Math.max(fbEl.offsetHeight, document.documentElement.clientWidth - fbEl.getBoundingClientRect().left - 8);
+  const kids = [fbEl.querySelector(".fb-orb"), fbEl.querySelector(".fb-name"), ...fbEl.querySelectorAll(".fb-pill")];
+  const natural = kids.reduce((w, k) => w + (k ? k.scrollWidth : 0), 0) + 6 * (kids.length - 1) + 12 + 4;
+  return Math.min(room, Math.max(view.offsetWidth, natural));
+}
+function fbSetOpen(open) {
+  clearTimeout(fbFoldTimer);
+  if (open === fbOpen) return;
+  fbOpen = open; fbEl.classList.toggle("open", open); fbPlace();
+}
+fbEl.addEventListener("pointerenter", () => fbSetOpen(true));
+fbEl.addEventListener("pointerleave", () => { clearTimeout(fbFoldTimer); fbFoldTimer = setTimeout(() => fbSetOpen(false), 450); });
+fbEl.addEventListener("focusin", () => fbSetOpen(true));
+fbEl.addEventListener("focusout", e => { if (!fbEl.contains(e.relatedTarget)) fbSetOpen(false); });
+fbEl.addEventListener("click", e => { if (e.target.closest(".fb-orb")) fbSetOpen(!fbOpen); });   // touch: tap the badge
 function fbFollow() {
   if (fbEl.hidden) return;
   fbPlace();
@@ -122,6 +141,10 @@ function fbShow(f) {
   const [a, b, line, ...acts] = FEST_BAR[f.name] || ["#e1725b", "#f6a487", pick(f.say || ["节日快乐"])];
   fbEl.style.setProperty("--fb-a", a); fbEl.style.setProperty("--fb-b", b);
   fbEl.querySelector(".fb-name").textContent = f.chip || f.name;
+  const motif = (FB_MOTIFS[f.name] || ["star"])[0];
+  fbEl.querySelector(".fb-orb").innerHTML = `<svg viewBox="0 0 24 24" shape-rendering="crispEdges"><path d="${FB_SHAPES[motif]}"/></svg>`;
+  fbEl.querySelector(".fb-orb").title = f.name;
+  fbOpen = false;
   fbDeco(f.name);
   const box = fbEl.querySelector(".fb-acts"), n = acts.length + 1;
   box.innerHTML = "";
