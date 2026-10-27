@@ -1,0 +1,17 @@
+[
+  {
+    "id": "disco-mirror-intense",
+    "title": "镜球正在升温 · 舞厅强化版",
+    "style": "高能迪斯科与电子放克",
+    "bpm": 132,
+    "duration": 121.364,
+    "file": "audio/disco-mirror-intense.mp3",
+    "midi": "audio/disco-mirror-intense.mid",
+    "rms_db": -22.03,
+    "peak": 0.5697,
+    "pitched_parts": 15,
+    "chorus_at": 43.636,
+    "middle_at": 72.727,
+    "preview_only": true
+  }
+]
