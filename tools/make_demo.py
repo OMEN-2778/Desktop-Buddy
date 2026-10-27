@@ -471,7 +471,8 @@ def main():
     html = html.replace("/*__UPDATES_JS__*/", (SRC.parent / "updates.js").read_text())
     html = html.replace("/*__BAR_TEXT_JS__*/", "const BAR_TEXT = " + json.dumps(bar_text, ensure_ascii=False) + ";")
     html = html.replace("/*__BAR_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "bar_cards.json").read_text() + ");")
-    html = html.replace("/*__SLEEP_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "sleep_cards.json").read_text() + ");")
+    more_cards = "".join("\nCARDS.push(..." + f.read_text() + ");" for f in sorted(SRC.parent.glob("cards_more_*.json")))   # more bed / dream / wake / bath cards
+    html = html.replace("/*__SLEEP_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "sleep_cards.json").read_text() + ");" + more_cards)
     html = html.replace("/*__PARK_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "park_cards.json").read_text() + ");")
     html = html.replace("/*__PARK_FOOD_JS__*/", "const PARK_FOOD = " + json.dumps(park_food, ensure_ascii=False) + ";")
     html = html.replace("/*__NPC_SOCIAL_JS__*/", "const NPC_TALK_TEXT = " + (SRC.parent / "npc_talk.json").read_text() + ";\n" + (SRC.parent / "npc_social.js").read_text())
