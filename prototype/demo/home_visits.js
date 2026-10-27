@@ -50,7 +50,7 @@ function parentVisitPlan(c,proactive){
     showSay('刚回去没几天呢，来回跑也得缓缓呀。咱先打电话聊，下回再去看你。',contactName(c)+'：',c);return null;
   }
   let at=sim.t+120+Math.floor(Math.random()*121);
-  if(at%1440>=20*60)at=(Math.floor(at/1440)+1)*1440+10*60;
+  if(at%1440>=20*60||at%1440<10*60)at=(Math.floor(at/1440)+(at%1440>=20*60?1:0))*1440+10*60;   // never at night: the next morning at 10
   const when=(Math.floor(at/1440)>Math.floor(sim.t/1440)?'明天':'今天')+fmt(at);
   c.parentVisitRoll={period,available:false};
   return {minutes:Math.ceil(at-sim.t),reply:fill(pick(HOME_VISIT_TEXT.parents[c.family].accept),{到达时间:when})};

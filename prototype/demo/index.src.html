@@ -3433,6 +3433,8 @@ function redNeed(exclude = []) {
   const low = Object.entries(sim.needs).filter(([k, v]) => v < 20 && !exclude.includes(k)).sort((a, b) => a[1] - b[1]);
   return low.length ? low[0][0] : null;
 }
+// on her way out the front door (the player can still send her elsewhere before she gets there)
+const headingOut = () => !!(wiping || tripRun || sim.act === "go_out" || (sim.windup && sim.windup.act === "go_out") || sim.queue.includes("go_out"));
 function homeFor(k) {
   stopNpcTalk("先照顾自己");if(sim.place==="bar"&&barScene)barScene.chat=null;
   speak(pick([`${NEED_NAMES[k]}不太行了，回家吧`, "该回家了", "先回家一趟"]),true);
@@ -3728,6 +3730,7 @@ function itemAt(x, y) {
 function mallGoTo(it) {
   if (mallS.toilet) { showHint("先用完卫生间，再继续逛吧。"); return; }
   if (it.id === "restroom") { mallSeekToilet(false,it); return; }
+  if (mallS.visit && mallS.visit.phase === "search") mallS.visit = null;   // the player picked somewhere else: drop the search, or she'd look for it forever
   if (it.id === "cinema" || MALL_RESTAURANTS[it.id]) { mallChoose(it.id === "cinema" ? "cinema" : "restaurant",it);return; }
   const d = itemX(it) - MALL.at;
   clickFx(Math.round(itemX(it)), MALL.feet);

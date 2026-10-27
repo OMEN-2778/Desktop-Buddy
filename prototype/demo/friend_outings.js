@@ -94,6 +94,7 @@ function tickFriendOuting(dt){
     st.phase='departing';sim.dest=st.dest;sim.outWhy='friend';sim.lastOut=sim.t;sim.outBack=sim.t+180;log(`${contactName(c)}到了，一起向门口走去。`);showSay('走吧，东西带齐了。',contactName(c)+'：',c);command('go_out');return;
   }
   if(st.phase==='departing'&&sim.place==='home'&&(asleep()||sim.mode==='down')){finishFriendOuting('临时需要休息，约好改天再出发。');return;}
+  if(st.phase==='departing'&&sim.place==='home'&&!headingOut()){sim.dest=null;sim.outBack=null;sim.outWhy=null;finishFriendOuting('临时改了主意，这次先不出门了。');return;}   // sent elsewhere before the door
   if(st.phase==='departing'){if(sim.place==='home')return;st.phase='active';st.startedAt=sim.t;st.nextTalk=realClock+7;c.lastSeen=sim.t;c.lastContact=sim.t;c.forgotten=false;contactsSig='';}
   if(sim.place==='home'){finishFriendOuting();return;}
   const current=companionPosition(),pos=st.position;

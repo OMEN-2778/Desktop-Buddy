@@ -316,7 +316,7 @@ function finishFriendVisitInvitation(c){
 
 function tickFriendVisitTravel(){
  if(friendVisit?.phase!=='departing'||wiping||cardHolds())return;
- if(!visitingFriend()||sim.mode==='down'||asleep()||sim.dest!=='friend_home'){
+ if(!visitingFriend()||sim.mode==='down'||asleep()||sim.dest!=='friend_home'||(sim.place==='home'&&!headingOut())){
   friendVisit=null;if(sim.dest==='friend_home')sim.dest=null;log('这次拜访先改天，等方便了再联系。');
  }
 }

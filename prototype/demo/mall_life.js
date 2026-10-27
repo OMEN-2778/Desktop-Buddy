@@ -96,9 +96,9 @@ function mallVisitEvent(){
 function mallLeaveVisit(completed=false,transition=true){
   const st=mallS.visit;if(!st)return;
   if(st.kind==='cinema'){
-    sim.needs.fun=100;
+    if(completed)sim.needs.fun=100;
     if(completed){addMood('mall_film_'+st.film,{words:false});speak(mallFilm().reaction,true);}
-    log(`从《${mallFilm().name}》的放映厅出来，${st.napped?'还在座位上补了一觉，':'心里装着银幕上的故事，'}娱乐值满满。`);
+    log(`从《${mallFilm().name}》的放映厅出来，${st.napped?'还在座位上补了一觉，':completed?'心里装着银幕上的故事，':'电影没看完，'}${completed?'娱乐值满满':'有点意犹未尽'}。`);
   }else if(completed){
     const d=mallDish();addMood('mall_dinner',{words:false});
     if(d?.moods?.length){const mood=weighted(d.moods);if(ML[mood])addMood(mood,{words:false});}

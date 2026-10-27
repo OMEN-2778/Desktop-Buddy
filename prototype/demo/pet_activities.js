@@ -21,6 +21,7 @@ function tickPetActivities(from,to){const p=petState.pet,dt=to-from;if(!p||p.sta
  const w=p.walk;if(!w)return;
  // Friend-home travel has its own transition, outside throughDoor's callback.
  if(w.phase==='active'&&!petWalkActive()){if(petIsHome())onPetSceneChanged('home');else{p.walk=null;p.carried=false;p.position={x:155,y:FLOOR_Y[0]};petStartAction('rest',20);}return;}
+ if(w.phase==='departing'&&petIsHome()&&!headingOut()){p.walk=null;if(sim.outWhy==='pet'){sim.outWhy=null;sim.outBack=null;sim.dest=null;}petStartAction('rest',5);return;}   // sent elsewhere before the door
  if(w.phase==='departing'&&petIsHome()){
   const h=here(),goal={x:Math.max(18,Math.min(W-18,h.x-(sim.facing||1)*18)),y:FLOOR_Y[storeyOfY(h.y)]},pos=w.position||p.position||goal;
   if(!w.route||Math.hypot(goal.x-w.goal.x,goal.y-w.goal.y)>14){w.route=planRoute(pos.x,pos.y,goal.x,goal.y);w.s=0;w.goal=goal;}
