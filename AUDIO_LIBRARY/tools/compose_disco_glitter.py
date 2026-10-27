@@ -72,27 +72,28 @@ HOOK = [
  [(0, 76, .5), (.5, 73, .5), (1, 76, .5), (1.5, 79, .5), (2, 81, 1), (3, 79, .5), (3.5, 76, .5)],
  [(0, 74, 2.5)],
 ]
-# Verse (user: the first rewrite was 俗, scale-run noodling). Now a song-like call and
-# response over moving harmony: one 3+3+2 syncopated cell (dotted 8th, dotted 8th, held
-# note) that starts on colour tones (9th, 11th, maj7), sequenced from chord to chord,
-# breaths at phrase ends, a chromatic G# lead-in and one high maj7 climax.
-_V1 = [(0, 76, .75), (.75, 77, .75), (1.5, 81, 1.25), (2.75, 79, .25), (3, 77, .5), (3.5, 76, .5)]
-_V2 = [(0, 74, .75), (.75, 77, .75), (1.5, 74, .5), (2, 72, .5), (2.5, 69, 1.5)]
-_V3 = [(0, 76, .75), (.75, 79, .75), (1.5, 84, 1.25), (2.75, 82, .25), (3, 81, .5), (3.5, 79, .5)]
+# Verse v4 (user: 更前卫, write like a pop producer). A topline, not a solo: short
+# rhythmic calls on repeated notes with rests, a falsetto-style octave leap, a synth
+# voice-chop answering every other bar, gated stutters, a half-time first half
+# (clap on 3, syncopated bass) that snaps into four-on-the-floor for the second.
+_C1 = [(.5, 69, .25), (.75, 69, .25), (1.25, 72, .25), (1.5, 69, .5), (2.25, 74, .5), (2.75, 72, .25), (3, 69, .75)]
+_C3 = [(.5, 72, .25), (.75, 72, .25), (1.25, 76, .25), (1.5, 72, .5), (2.25, 79, .5), (2.75, 76, .25), (3, 74, .75)]
 VERSE_LINE = [
- _V1, _V2, _V3,
- [(0, 76, .75), (.75, 72, .75), (1.5, 76, .5), (2, 77, .5), (2.5, 76, 1.5)],
- [(0, 77, .75), (.75, 79, .75), (1.5, 82, 1.25), (2.75, 81, .25), (3, 79, .5), (3.5, 77, .5)],
- [(0, 76, .75), (.75, 79, .75), (1.5, 76, .5), (2, 72, .5), (2.5, 70, .5), (3, 72, 1)],
- [(0, 81, .5), (.5, 84, .5), (1, 88, 1.5), (2.5, 86, .25), (2.75, 84, .25), (3, 81, .75), (3.75, 80, .25)],
- [(0, 81, .75), (.75, 85, .75), (1.5, 88, 1)],
- _V1, _V2, _V3,
- [(0, 76, .75), (.75, 79, .75), (1.5, 84, 1), (2.5, 81, .5), (3, 79, .5), (3.5, 76, .5)],
- [(0, 77, .75), (.75, 82, .75), (1.5, 86, 1.25), (2.75, 84, .25), (3, 82, .5), (3.5, 81, .5)],
- [(0, 79, .75), (.75, 81, .75), (1.5, 85, 1), (2.5, 88, .5), (3, 85, .5), (3.5, 81, .5)],
- [(0, 86, 1.5), (1.5, 84, .25), (1.75, 82, .25), (2, 81, 1), (3, 77, .5), (3.5, 74, .5)],
- [(0, 76, .75), (.75, 73, .75), (1.5, 76, .5), (2, 79, 1.5)],
+ _C1, [(3.5, 67, .25), (3.75, 69, .25)],
+ _C3, [(3.5, 72, .25), (3.75, 74, .25)],
+ [(.5, 74, .25), (.75, 74, .25), (1.25, 77, .25), (1.5, 74, .25), (1.75, 86, .75), (2.75, 84, .25), (3, 81, .75)],
+ [(2.5, 79, .25), (2.75, 76, .25), (3, 72, .5)],
+ [(.5, 76, .25), (.75, 77, .25), (1, 81, .25), (1.25, 84, .5), (2, 81, .25), (2.25, 84, .25), (2.5, 88, 1)],
+ [],
+ _C1, [(3.5, 67, .25), (3.75, 69, .25)],
+ _C3, [(3.5, 72, .25), (3.75, 74, .25)],
+ [(.5, 74, .25), (.75, 74, .25), (1.25, 77, .25), (1.5, 74, .25), (1.75, 86, .75), (2.75, 84, .25), (3, 82, .75)],
+ [(.5, 76, .25), (.75, 76, .25), (1.25, 79, .25), (1.5, 76, .5), (2.25, 81, .5), (2.75, 79, .25), (3, 76, .75)],
+ [(.5, 77, .25), (.75, 77, .25), (1.25, 81, .25), (1.5, 77, .25), (1.75, 89, .75), (2.75, 86, .25), (3, 82, .75)],
+ [],
 ]
+STUTTER = {7: (85, 0, 1.5), 15: (81, 1, 2.75)}   # verse bar: (pitch, from beat, to beat), gated 32nds
+CHOP = [(0, 3), (.25, 3), (.75, 2), (1.25, 1), (1.5, 3), (2, 0), (2.5, 2), (2.75, 1)]   # (beat, chord tone)
 PRE_TOPS = [(74, 77), (76, 79), (76, 81), (77, 81), (79, 82), (79, 84), (81, 86), (85, 88)]
 SCALE = [62, 64, 65, 67, 69, 70, 72]   # D natural minor (B flat), for string runs
 
@@ -121,7 +122,10 @@ def compose():
   chorus = ch1 or last; i8 = bar % 8; lvl = 1 if chorus else .85 if pre else .78
   # bass: the octave bounce, ghost 16ths, a walk into the next chord
   if not brk or bar >= BREAK[0] + 4:
-   for s in range(8):
+   if verse and bar < VERSE[0] + 8:                 # half-time verse: syncopated, slap-like
+    for off, iv, ln in ((0, 0, .45), (.75, 12, .18), (1.5, 0, .22), (2, 12, .18), (2.5, 0, .4), (3.25, 7, .18), (3.5, 12, .3)):
+     note(3, root + iv, b + off, ln, 90 if iv == 0 else 76); note(4, root + iv, b + off, ln, 58)
+   for s in range(8 if not (verse and bar < VERSE[0] + 8) else 0):
     if brk and s % 2: continue
     p = root + (12 if s % 2 else 0)
     if s == 7 and i8 % 2 == 1: p = root + 10
@@ -146,11 +150,21 @@ def compose():
      chord(2, [tones[1] + 12, tones[2] + 12, tones[3] + 12], b + s * .25, .09, (84 if acc else 56) * lvl, .004)
   # verse lead and its second-time strings answer
   if verse:
-   for off, p, ln in VERSE_LINE[bar - VERSE[0]]: note(0, p + k, b + off, ln * .92, 94 if ln < .5 else 88)
+   v = bar - VERSE[0]
+   if v == 0: EV.append((b * BEAT - .01, bytes([0xC0 + 13, 54])))       # choir becomes a synth voice for chops
+   for off, p, ln in VERSE_LINE[v]: note(0, p + k, b + off, ln * .92, 96 if ln < .5 else 88)
+   if v in STUTTER:
+    p, x0, x1 = STUTTER[v]
+    for q in np.arange(x0, x1, .125): note(0, p, b + q, .07, 70 + 20 * (q - x0) / (x1 - x0), 0)
+   if v % 2 or v in STUTTER:
+    for off, t in CHOP:
+     if v in STUTTER and STUTTER[v][1] <= off < STUTTER[v][2]: continue
+     note(13, tones[t] + 24, b + off, .16, 84 if off % 1 == 0 else 70, .002)
    if bar >= VERSE[0] + 8:
     chord(5, [tones[2] + 12, tones[3] + 12], b, 3.8, 52)
     if i8 == 7: run_up(5, b + 3, 86, 8, 70)
   # pre-chorus: rising string line, pad, lead in syncopation, arp kicks in
+  if bar == PRE[0]: EV.append((b * BEAT - .01, bytes([0xC0 + 13, 52])))
   if pre:
    lo, hi = PRE_TOPS[i8]
    chord(5, [lo, hi], b, 3.9, 62 + i8 * 3)
@@ -258,14 +272,14 @@ def drums(n):
   chorus = ch1 or last; end8 = bar % 8 == 7
   if not brk and not (intro and bar < 2):
    for q in range(4):
-    if (pre or brk) and bar % 8 == 7 and q == 3: continue        # one beat of air before the drop
+    if ((pre or brk) and bar % 8 == 7 or bar == VERSE[1] - 1) and q == 3: continue   # one beat of air before the drop
     add(kick, b + q, .9 if chorus else .8); kicks.append(b + q)
   if brk and bar >= BREAK[0] + 6:                                # kick returns in quarter then eighth pulses
    for q in np.arange(0, 4, 1 if bar == BREAK[0] + 6 else .5): add(kick, b + q, .45 + .1 * q); kicks.append(b + q)
   if brk:
    for q in (1, 3): add(snap, b + q, .35, -.2)
   elif not intro or bar >= 4:
-   for q in (1, 3):
+   for q in ((2,) if verse and bar < VERSE[0] + 8 else (1, 3)):
     add(clap, b + q, .55 if chorus else .45, .05)
     add(snare, b + q, .22 if chorus else .14)
   # hats: 16ths with groove velocity, open hat on every off-beat
