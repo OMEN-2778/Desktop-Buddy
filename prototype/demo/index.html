@@ -1124,43 +1124,38 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
 .audio-volume input::-moz-range-thumb { width:10px; height:20px; border:2px solid var(--edge); border-radius:6px; background:var(--panel); box-shadow:inset 0 2px var(--bevel-hi),inset 0 -3px var(--bevel-lo); }
 .audio-volume input:focus-visible { outline:2px dashed var(--focus); outline-offset:5px; }
 
-/* ---------- the festival bar (user, iOS-smooth): a long rounded pill above the
-   diary, as wide as the house, in the festival's own colours fading to white;
-   the festival's name on the left, then one button per thing to do today (she
-   goes there by herself) and a line about the day. Springs in with a blur,
-   the pills follow one by one; idles with a slow drifting gradient and a sheen;
-   folds away in reverse when the day is over. ---------- */
+/* ---------- the festival bar (user): a long bar above the diary, as wide as the house,
+   pixel-stepped round ends (no soft shadow), in the festival's own colours fading to white,
+   motifs drifting behind; the name on the left, one button per thing to do, a line about
+   the day. Rides on the diary: when the diary row lifts or its list opens, it moves up too.
+   Springs in, pills follow one by one; idles with a drifting gradient; folds away in reverse. ---------- */
 .fest-bar { --ios: cubic-bezier(.32, .72, 0, 1); --spring: cubic-bezier(.34, 1.56, .64, 1); --fb-deep: color-mix(in srgb, var(--fb-a) 80%, #10131f);
   position: absolute; z-index: 39; display: flex; align-items: center; gap: 6px; box-sizing: border-box;
-  padding: 4px; border-radius: 999px; color: #1f2430; font-weight: 600; isolation: isolate;
-  background: linear-gradient(90deg, var(--fb-a) 0%, var(--fb-b) 42%, #f4f8ff 82%, #fff 100%);
-  background-size: 125% 100%; background-position: 0% 0;
-  box-shadow: 0 0 0 3px #fff, 0 8px 22px -8px color-mix(in srgb, var(--fb-a) 70%, transparent), 0 2px 6px rgba(20, 20, 40, .12); }
+  padding: 6px; color: #1f2430; font-weight: 600; isolation: isolate; }
 .fest-bar[hidden] { display: none; }
-.fest-bar .fb-sheen { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; z-index: -1; }
+.fest-bar::before { content: ""; position: absolute; inset: 0; z-index: -3; background: #fff; clip-path: var(--fb-clip, var(--clip-btn)); }   /* the white rim */
+.fest-bar .fb-deco { position: absolute; inset: 3px; z-index: -2; overflow: hidden; pointer-events: none; clip-path: var(--fb-clip, var(--clip-btn));
+  background: linear-gradient(90deg, var(--fb-a) 0%, var(--fb-b) 42%, #f4f8ff 82%, #fff 100%); background-size: 125% 100%; background-position: 0% 0; }
+.fest-bar .fb-sheen { position: absolute; inset: 3px; overflow: hidden; pointer-events: none; z-index: -1; clip-path: var(--fb-clip, var(--clip-btn)); }
 .fest-bar .fb-sheen::after { content: ""; position: absolute; top: 0; bottom: 0; width: 30%; left: -40%;
   background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); }
-.fb-name { flex: none; display: flex; align-items: center; height: 100%; min-height: 30px; padding: 0 18px; border-radius: 999px; box-sizing: border-box;
-  background: var(--fb-deep); color: #fff; font-weight: 700; letter-spacing: .08em; font-size: var(--ui-font-body);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25); }
+.fb-name { flex: none; display: flex; align-items: center; height: 100%; min-height: 30px; padding: 0 18px; box-sizing: border-box;
+  background: var(--fb-deep); color: #fff; font-weight: 700; letter-spacing: .08em; font-size: var(--ui-font-body); clip-path: var(--fb-pill-clip, var(--clip-btn)); }
 .fb-acts { display: flex; gap: 6px; margin-left: auto; min-width: 0; align-items: center; }
-.fb-pill { flex: none; display: inline-flex; align-items: center; box-sizing: border-box; height: 30px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-size: var(--ui-font-control); color: #1f2430;
-  background: color-mix(in srgb, var(--fb-a) 18%, rgba(255, 255, 255, .72)); backdrop-filter: blur(6px);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .55); white-space: nowrap;
-  transition: transform .45s var(--spring), background-color .3s ease, box-shadow .3s ease; }
+.fb-pill { flex: none; display: inline-flex; align-items: center; box-sizing: border-box; height: 30px; padding: 0 14px; border: 0; font: inherit; font-size: var(--ui-font-control); color: #1f2430;
+  background: color-mix(in srgb, var(--fb-a) 22%, #fff); clip-path: var(--fb-pill-clip, var(--clip-btn)); white-space: nowrap;
+  transition: transform .45s var(--spring), background-color .2s steps(2); }
 button.fb-pill { cursor: pointer; }
-button.fb-pill:hover { transform: translateY(-1px) scale(1.05); background: color-mix(in srgb, var(--fb-a) 28%, #fff); box-shadow: inset 0 0 0 1px #fff, 0 4px 10px -4px color-mix(in srgb, var(--fb-a) 80%, transparent); }
-button.fb-pill:active { transform: scale(.94); transition-duration: .12s; }
-button.fb-pill:focus-visible { outline: 2px solid var(--fb-deep); outline-offset: 2px; }
-.fb-pill.fb-say { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #3b4150; font-weight: 500;
-  background: rgba(255, 255, 255, .6); }
-.fb-pill.go { animation: fbTap .5s var(--spring); }
+button.fb-pill:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--fb-a) 38%, #fff); }
+button.fb-pill:active { transform: translateY(1px); transition-duration: .08s; }
+button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offset: -4px; }
+.fb-pill.fb-say { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #3b4150; font-weight: 500; background: rgba(255, 255, 255, .7); }
+.fb-pill.go { animation: fbTap .4s var(--spring); }
 .fest-bar.in { animation: fbBarIn .7s var(--ios) both; }
 .fest-bar.in .fb-name { animation: fbNameIn .7s .08s var(--ios) both; }
 .fest-bar.in .fb-pill { animation: fbPillIn .6s calc(.16s + var(--i) * .07s) var(--ios) both; }
-.fest-bar.idle { animation: fbDrift 14s ease-in-out infinite alternate; }
+.fest-bar.idle .fb-deco { animation: fbDrift 14s ease-in-out infinite alternate; }
 .fest-bar.idle .fb-sheen::after { animation: fbSheen 7s 1.2s var(--ios) infinite; }
-.fest-bar.idle .fb-name { animation: fbGlow 3.6s ease-in-out infinite; }
 .fest-bar.out { animation: fbBarOut .45s .12s cubic-bezier(.4, 0, 1, 1) both; }
 .fest-bar.out .fb-pill { animation: fbPillOut .3s calc((var(--n) - var(--i)) * .04s) cubic-bezier(.4, 0, 1, 1) both; }
 @keyframes fbBarIn { from { opacity: 0; transform: translateY(-14px) scale(.94); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
@@ -1172,10 +1167,9 @@ button.fb-pill:focus-visible { outline: 2px solid var(--fb-deep); outline-offset
 @keyframes fbSheen { 0%, 60% { left: -40%; } 100% { left: 120%; } }
 @keyframes fbGlow { 0%, 100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 0 0 0 color-mix(in srgb, var(--fb-a) 0%, transparent); }
   50% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 0 12px 1px color-mix(in srgb, var(--fb-a) 55%, transparent); } }
-@keyframes fbTap { 0% { transform: scale(1); } 35% { transform: scale(.92); } 100% { transform: scale(1); } }
+@keyframes fbTap { 0% { transform: none; } 35% { transform: translateY(2px); } 100% { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .fest-bar, .fest-bar * { animation: none !important; transition: none !important; } }
 /* the motifs: two copies of a scattered strip drifting left forever, each shape bobbing a little */
-.fest-bar .fb-deco { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; z-index: -1; }
 .fb-deco-strip { position: absolute; top: 0; bottom: 0; left: 0; width: 200%; display: flex; animation: fbDecoRun 60s linear infinite; }
 .fb-deco-run { position: relative; flex: 0 0 50%; height: 100%; }
 .fb-deco svg { position: absolute; fill: #fff; opacity: .4; transform: rotate(var(--r)); animation: fbDecoBob var(--t) var(--d) ease-in-out infinite alternate; }
@@ -1233,33 +1227,43 @@ button.fb-pill:focus-visible { outline: 2px solid var(--fb-deep); outline-offset
 @keyframes pet-sheet-in{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){#petPanel{animation:none}}
 
-.pet-hud{position:fixed;z-index:2147483000;display:flex;align-items:flex-start;gap:var(--pet-gap,6px);width:max-content;color:var(--ink);font-size:var(--pet-fs,12px);pointer-events:none;opacity:0;transform:scale(.12);transform-origin:var(--pet-origin-x,50%) var(--pet-origin-y,100%);transition:opacity .2s ease,transform .32s cubic-bezier(.2,1.18,.3,1)}
-.pet-hud[hidden]{display:none}.pet-hud.on{opacity:1;transform:none}.pet-hud[inert]{pointer-events:none}
-.pet-hud.on>:not([hidden]){pointer-events:auto}
-.pet-status-card{position:relative;isolation:isolate;flex:none;width:var(--pet-card-w,124px);height:calc(var(--pet-row-h,32px)*5 + var(--pet-gap,6px)*4);display:flex;flex-direction:column;padding:8px;gap:8px;filter:drop-shadow(2px 2px 0 var(--shadow))}
-.pet-status-card::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;border:19px solid transparent;border-image:var(--pixel-pill) 19 fill /19px;image-rendering:pixelated}
-.pet-hud button{position:relative;isolation:isolate;font:inherit;font-weight:600;color:inherit;cursor:pointer;border:0;border-radius:0;background:none;box-shadow:none;min-width:0;padding:5px 8px;line-height:1.2;image-rendering:pixelated}
-.pet-hud-actions button::before,.pet-hud-submenu button::before{content:'';position:absolute;inset:0;z-index:-1;border:15px solid transparent;border-image:var(--pixel-pill) 19 fill /15px;image-rendering:pixelated;pointer-events:none}
-.pet-hud-submenu button::before{border-image-source:var(--pixel-blue-pill)}
-.pet-hud .pet-name-button{width:100%;padding:3px 1px;min-height:24px;overflow-wrap:anywhere}
-.pet-hud button:focus-visible{outline:2px dashed var(--focus);outline-offset:-4px}.pet-hud button:hover{filter:brightness(1.08)}
-.pet-hud-actions,.pet-hud-submenu{display:flex;flex-direction:column;gap:var(--pet-gap,6px);flex:none;width:var(--pet-action-w,94px)}
-.pet-hud-actions button,.pet-hud-submenu button{height:var(--pet-row-h,32px);flex:none;white-space:nowrap;filter:drop-shadow(1px 2px 0 var(--shadow))}
-.pet-hud-submenu[data-kind=treat]{padding-top:calc(var(--pet-row-h,32px) + var(--pet-gap,6px))}
-.pet-hud-submenu[hidden]{display:none}.pet-hud-actions button[aria-expanded=true]{color:var(--accent)}
-.pet-hud-submenu:not([hidden]){animation:pet-submenu-in .24s cubic-bezier(.2,1.18,.3,1) both;transform-origin:left center}
-.pet-hud-submenu.closing:not([hidden]){animation:pet-submenu-out .2s ease-in both;pointer-events:none}
-@keyframes pet-submenu-in{from{opacity:0;transform:translateX(-12px) scale(.82)}to{opacity:1;transform:none}}
-@keyframes pet-submenu-out{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-12px) scale(.82)}}
-.pet-stat-bars{display:flex;flex:1;align-items:stretch;justify-content:space-around;gap:6px;min-height:0}
-.pet-stat{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;min-width:0;gap:6px}
-.pet-stat-well{position:relative;flex:1;width:14px;min-height:30px}
-.pet-stat-fill{position:absolute;inset:auto 0 0;height:max(14px,calc(var(--v)*100%));clip-path:var(--pet-bar-clip);box-shadow:inset 2px 2px #ffffff55,inset -2px -2px #22182a22;transition:height .35s cubic-bezier(.2,1.2,.3,1),background-color .2s}
-.pet-stat-fill::after{content:'';position:absolute;inset:0;background:var(--need-stripes);background-size:16px 16px;opacity:.16;image-rendering:pixelated;animation:need-stripes 1.6s steps(8) infinite}
-.pet-stat-icon{display:grid;place-items:center;width:22px;height:22px;background:var(--panel-2);clip-path:var(--pet-icon-clip)}
-.pet-stat-icon img,.pet-stat-icon canvas{display:block;image-rendering:pixelated;width:18px;height:18px}
-@media(prefers-reduced-motion:reduce){.pet-hud,.pet-stat-fill{transition:none}.pet-stat-fill::after,.pet-hud-submenu:not([hidden]){animation:none}}
-.pet-hud-submenu button{color:#22182a}
+/* the pet's status card (user: redone like the needs panel): a framed light panel, the
+   pet's name in a dark title pill sitting on its top edge, four bars that spring up
+   one after another, icons and labels under them. It pops from the pet with a spring
+   and follows it; the actions are the shared ring around the pet. */
+.pet-card { position: fixed; z-index: 2147483000; isolation: isolate; display: flex; flex-direction: column; align-items: center;
+  height: var(--pc-h, 108px); padding: 18px 8px 8px; box-sizing: border-box; color: var(--ink); font-size: var(--pc-fs, 12px);
+  filter: drop-shadow(2px 2px 0 var(--shadow)); transform-origin: var(--pc-ox, 50%) 115%; opacity: 0; transform: translateY(10px) scale(.6); }
+.pet-card.below { transform-origin: var(--pc-ox, 50%) -15%; }
+.pet-card[hidden] { display: none; }
+.pet-card::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--hud-frame, var(--edge)); clip-path: var(--hud-panel-clip); }
+.pet-card::after { content: ""; position: absolute; inset: 2px; z-index: -1; background: var(--panel); clip-path: var(--hud-panel-in); box-shadow: inset 0 2px 0 var(--bevel-hi), inset 0 -2px 0 var(--bevel-lo); }
+.pet-card.on { opacity: 1; transform: none; transition: transform .5s var(--hud-spring, cubic-bezier(.3, 1.5, .5, 1)), opacity .16s; }
+.pet-card.off { opacity: 0; transform: translateY(8px) scale(.7); transition: transform .24s cubic-bezier(.5, 0, .9, .4), opacity .2s .04s; }
+.pc-name { position: absolute; top: -12px; left: 50%; translate: -50% 0; isolation: isolate; border: 0; background: none; cursor: pointer;
+  font: inherit; font-weight: 700; letter-spacing: .06em; color: #f7f6fb; padding: 4px 14px; white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis;
+  transform: scale(.4); opacity: 0; transition: transform .3s var(--hud-spring, cubic-bezier(.3, 1.6, .5, 1)), opacity .14s; }
+.pc-name::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--title, #33253b); clip-path: var(--clip-btn); }
+.pet-card.on .pc-name { transform: none; opacity: 1; transition-delay: .12s; }
+.pc-name:hover { filter: brightness(1.15); } .pc-name:active { transform: scale(.94); }
+.pc-name:focus-visible { outline: 2px dashed var(--focus); outline-offset: 2px; }
+.pc-stats { display: flex; flex: 1; align-items: stretch; gap: 2px; min-height: 0; }
+.pc-stat { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: var(--pc-col, 34px); gap: 3px; }
+.pc-well { position: relative; flex: 1; width: 14px; min-height: 0; transform: translateY(6px) scaleY(.08); transform-origin: 50% 100%; opacity: 0; }
+.pet-card.on .pc-well { transform: none; opacity: 1; transition: transform .86s cubic-bezier(.12, 2.2, .25, 1), opacity .18s; transition-delay: calc(90ms + var(--i) * 60ms); }
+.pc-fill { position: absolute; inset: auto 0 0; height: max(14px, calc(var(--v) * 100%)); background: var(--c); clip-path: var(--pc-bar-clip);
+  box-shadow: inset 2px 2px 0 #ffffff55, inset -2px -2px 0 #22182a22; transition: height .45s var(--hud-spring, cubic-bezier(.3, 1.4, .5, 1)), background-color .25s; }
+@supports (height: round(down, 50%, 2px)) { .pc-fill { height: max(14px, round(down, calc(var(--v) * 100%), 2px)); } }
+.pc-fill::after { content: ""; position: absolute; inset: 0; background: var(--need-stripes); background-size: 16px 16px; opacity: .16; image-rendering: pixelated; animation: need-stripes 1.6s steps(8) infinite; }
+.pc-stat.low .pc-fill { animation: pcLow 1s steps(2) infinite; }
+.pc-val { position: absolute; left: 50%; bottom: calc(max(14px, var(--v, 0) * 100%) + 2px); translate: -50% 0; font-size: .85em; font-weight: 700; opacity: 0; transition: opacity .15s; pointer-events: none; }
+.pc-stat:hover .pc-val { opacity: 1; }
+.pc-icon { display: block; width: 22px; height: 22px; padding: 3px; box-sizing: border-box; background: var(--panel-2); clip-path: var(--hud-small-clip); image-rendering: pixelated; }
+.pc-icon, .pc-label { opacity: 0; transform: translateY(5px) scale(.9); }
+.pc-label { line-height: 1.1; font-weight: 500; white-space: nowrap; font-size: var(--ui-font-label, 12px); }
+.pet-card.on .pc-icon, .pet-card.on .pc-label { opacity: 1; transform: none; transition: transform .42s var(--hud-spring, cubic-bezier(.3, 1.5, .5, 1)), opacity .18s; transition-delay: calc(150ms + var(--i) * 60ms); }
+@keyframes pcLow { 50% { filter: brightness(1.25); } }
+@media (prefers-reduced-motion: reduce) { .pet-card, .pet-card *, .pet-card::before { transition: none !important; animation: none !important; } }
 
 /* One set of original palette-only nine-slice frames. Corners contain only
    square pixels; no browser border-radius or clipped rectangular border. */
@@ -11609,6 +11613,7 @@ const RINGS = {
 let ringOf = null, ringAt = null;
 function ringCenter() {
   if(ringAt==="friend_host"&&atFriendHome())return {x:friendVisit.host.x,y:friendVisit.host.y-13};
+  if (ringAt === "pet" && petState.pet) { const p = petPoint(); return { x: p.x, y: p.y - 7 }; }
   if (ringAt === "computer" || ringAt === "door") { const c = CLICK[ringAt === "door" ? "front_door" : "computer"]; return { x: c.x + c.w / 2, y: c.y + c.h / 2 }; }
   const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : buddyFeet();
   return { x: p.x, y: p.y - 13 };
@@ -11656,7 +11661,7 @@ function openRing(which, at = which === "computer" ? "computer" : "buddy") {
   ringEl.innerHTML = "";
   items.forEach(([id, label, cls], i) => {
     const b = document.createElement(cls === "label" ? "span" : "button");
-    if (cls === "label") { b.className = "ring-label"; b.textContent = nameOf(); }   // her name tops the ring
+    if (cls === "label") { b.className = "ring-label"; b.textContent = at === "pet" && petState.pet ? petState.pet.name : nameOf(); }   // her name tops the ring
     else { b.type = "button"; b.textContent = label; b.setAttribute("role", "menuitem"); if (cls) b.className = cls; }
     if(which==="outing")b.dataset.outingPlace=id.slice(7);
     b.style.setProperty("--k", i);
@@ -11735,6 +11740,7 @@ document.addEventListener("pointerdown", e => { if (ringOf && !ringEl.contains(e
 document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) closeRing(); });
 let lastChat = -1e9;
 function ringPick(id) {
+  if (id.startsWith("pet:")) { petRingPick(id.slice(4)); return; }
   if(id==='pet_adopt'){closeRing();openPetAdoption();return;}
   if(id.startsWith("fv:")){closeRing();if(id==="fv:stay")requestFriendStay();else friendVisitAction(id.slice(3));return;}
   if(id.startsWith('outing:')){const c=socialState.contacts.find(c=>c.id===ringEl.dataset.contactId),place=id.slice(7);closeRing();if(c)scheduleFriendOuting(c,place);return;}
@@ -33035,7 +33041,8 @@ function makeRoom() {
   if (diaryOn) need = Math.max(need, mTop - diaryBox.getBoundingClientRect().top + 8 + diaryPop.offsetHeight);
   if (!setPop.hidden) need = Math.max(need, mTop - setPop.getBoundingClientRect().top + 8);
   const fb = document.getElementById("festBanner");   // the festival banner rides above the diary
-  if (!fb.hidden) need = Math.max(need, mTop - diaryBox.getBoundingClientRect().top + fb.offsetHeight + 14 + 8 + (document.getElementById("update").hidden ? 0 : document.getElementById("update").offsetHeight + 8));
+  const fbUnder = Math.min(diaryBox.getBoundingClientRect().top, !diaryPop.hidden && diaryPop.offsetHeight ? diaryPop.getBoundingClientRect().top : Infinity, !setPop.hidden && setPop.offsetHeight ? setPop.getBoundingClientRect().top : Infinity);
+  if (!fb.hidden) need = Math.max(need, mTop - fbUnder + fb.offsetHeight + 6 + 8 + (document.getElementById("update").hidden ? 0 : document.getElementById("update").offsetHeight + 8));
   // the app keeps room above the house for all of these all the time (and
   // lets clicks through it): opening one never moves the window (user: it flashed)
   if (TAURI) need = Math.max(need, APP_HEADROOM);
@@ -40165,7 +40172,7 @@ function fbDeco(name) {
     for (let i = 0; i < 18; i++) {
       const x = (i / 18) * 100 + Math.random() * 4, y = 8 + ((i * 37) % 70), sz = 18 + ((i * 7) % 4) * 4 + Math.random() * 4;
       const light = x > 55, k = kinds[i % kinds.length];
-      h += `<svg viewBox="0 0 24 24" style="left:${x.toFixed(1)}%;top:${y}%;width:${sz.toFixed(0)}px;height:${sz.toFixed(0)}px;--r:${(Math.random() * 30 - 15).toFixed(0)}deg;--d:${(Math.random() * -6).toFixed(1)}s;--t:${(4 + Math.random() * 3).toFixed(1)}s" class="${light ? "tint" : ""}"><path d="${FB_SHAPES[k]}"/></svg>`;
+      h += `<svg viewBox="0 0 24 24" shape-rendering="crispEdges" style="left:${x.toFixed(1)}%;top:${y}%;width:${sz.toFixed(0)}px;height:${sz.toFixed(0)}px;--r:${(Math.random() * 30 - 15).toFixed(0)}deg;--d:${(Math.random() * -6).toFixed(1)}s;--t:${(4 + Math.random() * 3).toFixed(1)}s" class="${light ? "tint" : ""}"><path d="${FB_SHAPES[k]}"/></svg>`;
     }
     return `<span class="fb-deco-run">${h}</span>`;
   };
@@ -40174,11 +40181,27 @@ function fbDeco(name) {
 let fbName = null, fbTimer = 0;
 function fbPlace() {
   const box = fbEl.parentElement.getBoundingClientRect(), d = diaryBox.getBoundingClientRect();
-  let top = d.top - box.top - fbEl.offsetHeight - 14;
-  if (!updEl.hidden) top -= updEl.offsetHeight + 8;              // the update pill keeps its own row
+  let above = d.top;                                             // rides on whatever is highest below it: the diary row, its open list
+  if (!diaryPop.hidden && diaryPop.offsetHeight) above = Math.min(above, diaryPop.getBoundingClientRect().top);
+  if (!setPop.hidden && setPop.offsetHeight) above = Math.min(above, setPop.getBoundingClientRect().top);   // the settings rows too
+
+  let top = above - box.top - fbEl.offsetHeight - 6;
+  if (!updEl.hidden) top -= updEl.offsetHeight + 6;              // the update pill keeps its own row
   fbEl.style.top = Math.round(top) + "px";
   fbEl.style.left = view.offsetLeft + "px";
   fbEl.style.width = view.offsetWidth + "px";
+  const h = fbEl.offsetHeight;                                   // pixel-stepped round ends, sized to the bar and its pills
+  if (h && h !== fbEl._clipH) {
+    fbEl._clipH = h;
+    fbEl.style.setProperty("--fb-clip", roundClip(Math.max(3, Math.floor(h / 4)), 2));
+    fbEl.style.setProperty("--fb-pill-clip", roundClip(Math.max(3, Math.floor((h - 12) / 4)), 2));
+  }
+}
+function fbFollow() {
+  if (fbEl.hidden) return;
+  fbPlace();
+  if (fbEl.getBoundingClientRect().top < 4 && performance.now() - (fbEl._room || 0) > 250) { fbEl._room = performance.now(); makeRoom(); }   // pushed off the top: ask for room
+  requestAnimationFrame(fbFollow);
 }
 function fbShow(f) {
   const [a, b, line, ...acts] = FEST_BAR[f.name] || ["#e1725b", "#f6a487", pick(f.say || ["节日快乐"])];
@@ -40201,6 +40224,7 @@ function fbShow(f) {
   fbEl.hidden = false; fbEl.className = "fest-bar"; void fbEl.offsetWidth;
   fbPlace(); makeRoom(); fbPlace();
   fbEl.classList.add("in");
+  requestAnimationFrame(fbFollow);
   fbTimer = setTimeout(() => { fbEl.classList.remove("in"); fbEl.classList.add("idle"); }, 1100);
 }
 function fbHide() {
@@ -40217,7 +40241,6 @@ function fbTick() {
     if (f) setTimeout(() => { if (fbName === f.name) fbShow(f); }, was ? 700 : 0);
   }
   if (!fbEl.hidden && fbEl.offsetHeight !== fbEl._h) { fbEl._h = fbEl.offsetHeight; makeRoom(); }
-  if (!fbEl.hidden) fbPlace();
 }
 setInterval(fbTick, 400);
 
@@ -79319,41 +79342,82 @@ function pauseForPet(){if(!petWalkActive())return;stopNpcTalk('陪小家伙玩�
 
 function petNotice(text){closePetHud();showHint(text);}
 
-// A body-level layer keeps the whole pet toolbar above the time/needs HUD.
-const petHud=document.createElement('section');petHud.id='petHud';petHud.className='pet-hud';petHud.hidden=true;petHud.inert=true;petHud.setAttribute('aria-label','宠物状态与互动');
-const petHudState={open:false,submenu:null,anchor:null,closeTimer:0,submenuTimer:0};
-const petCard=petNode('div',undefined,'pet-status-card'),petNameButton=petButton('',()=>{closePetHud();petNaming(null,true);},'pet-name-button');petNameButton.setAttribute('aria-label','给宠物改名');petCard.append(petNameButton);
-const petStats=petNode('div',undefined,'pet-stat-bars'),petStatNodes=new Map();
-for(const [key,label,icon]of [['hunger','饱腹','hunger'],['energy','精力','energy'],['company','陪伴','smile'],['affinity','亲密',null]]){
- const column=petNode('div',undefined,'pet-stat');column.dataset.stat=key;column.setAttribute('role','meter');column.setAttribute('aria-label',label);column.setAttribute('aria-valuemin','0');column.setAttribute('aria-valuemax','100');
- const well=petNode('span',undefined,'pet-stat-well'),fill=petNode('i',undefined,'pet-stat-fill');well.append(fill);const disc=petNode('span',undefined,'pet-stat-icon');
- if(icon==='smile'){const canvas=petNode('canvas');canvas.width=20;canvas.height=20;const ctx=canvas.getContext('2d');ctx.fillStyle='#d49438';ctx.fillRect(5,2,10,16);ctx.fillRect(2,5,16,10);ctx.fillStyle='#ffdc78';ctx.fillRect(5,4,10,12);ctx.fillRect(4,6,12,8);ctx.fillStyle='#503540';ctx.fillRect(6,7,2,2);ctx.fillRect(12,7,2,2);ctx.fillRect(6,11,2,2);ctx.fillRect(8,13,4,2);ctx.fillRect(12,11,2,2);disc.append(canvas);}
- else if(icon){const image=petNode('img');image.alt='';image.src=D.needIcons[icon];disc.append(image);}else{const canvas=petNode('canvas');canvas.width=20;canvas.height=20;const ctx=canvas.getContext('2d'),img=emoteCanvas('heart');ctx.imageSmoothingEnabled=false;ctx.drawImage(img,0,0,img.width,img.height,0,0,20,20);disc.append(canvas);}
- column.append(well,disc);petStats.append(column);petStatNodes.set(key,{column,fill,label});
+// Clicking the pet (user: redone to match the rest of the UI): the same ring
+// of round pixel buttons that pops around Buddy pops around the pet (its name
+// on top; 遛猫 ▸ / 喂零食 ▸ swap in a second ring with 返回), and above it a
+// status card styled like the needs panel: four bars springing up one after
+// another (饱腹 / 精力 / 陪伴 / 亲密), the pet's name in a title pill on top
+// (click it to rename). Both follow the pet while open.
+const petHud=document.createElement('section');petHud.id='petHud';petHud.className='pet-card';petHud.hidden=true;petHud.setAttribute('aria-label','宠物状态');
+const petHudState={open:false,closeTimer:0,raf:0};
+const petNameButton=petButton('',()=>{closePetHud();petNaming(null,true);},'pc-name');petNameButton.setAttribute('aria-label','给宠物改名');
+const petStats=petNode('div',undefined,'pc-stats'),petStatNodes=new Map();
+[['hunger','饱腹','hunger'],['energy','精力','energy'],['company','陪伴','smile'],['affinity','亲密',null]].forEach(([key,label,icon],i)=>{
+ const column=petNode('div',undefined,'pc-stat');column.style.setProperty('--i',i);column.dataset.stat=key;column.setAttribute('role','meter');column.setAttribute('aria-label',label);column.setAttribute('aria-valuemin','0');column.setAttribute('aria-valuemax','100');
+ const well=petNode('span',undefined,'pc-well'),fill=petNode('i',undefined,'pc-fill'),val=petNode('b',undefined,'pc-val');well.append(fill,val);
+ let pic;
+ if(icon==='smile'){pic=petNode('canvas');pic.width=20;pic.height=20;const ctx=pic.getContext('2d');ctx.fillStyle='#d49438';ctx.fillRect(5,2,10,16);ctx.fillRect(2,5,16,10);ctx.fillStyle='#ffdc78';ctx.fillRect(5,4,10,12);ctx.fillRect(4,6,12,8);ctx.fillStyle='#503540';ctx.fillRect(6,7,2,2);ctx.fillRect(12,7,2,2);ctx.fillRect(6,11,2,2);ctx.fillRect(8,13,4,2);ctx.fillRect(12,11,2,2);}
+ else if(icon){pic=petNode('img');pic.alt='';pic.src=D.needIcons[icon];}
+ else{pic=petNode('canvas');pic.width=20;pic.height=20;const ctx=pic.getContext('2d'),img=emoteCanvas('heart');ctx.imageSmoothingEnabled=false;ctx.drawImage(img,0,0,img.width,img.height,0,0,20,20);}
+ pic.classList.add('pc-icon');const name=petNode('span',label,'pc-label');
+ column.append(well,pic,name);petStats.append(column);petStatNodes.set(key,{column,fill,val,label});
+});
+petHud.append(petNameButton,petStats);document.body.append(petHud);
+petHud.style.setProperty('--pc-bar-clip',roundClip(7,1));petHud.style.setProperty('--need-stripes',`url("${D.uiIcons.stripes}")`);
+function petRings(){
+ const p=petState.pet,cat=petBreed(p.breed).species==='cat';
+ RINGS.pet=[['pet:walk',(cat?'遛猫':'遛狗')+' ▸','more'],['pet:treat','喂零食 ▸','more'],['pet:play','逗逗它'],['pet:hold',p.carried?'放下来':'抱起来'],['pet:groom','梳毛'],['pet:name','改名字']];
+ RINGS.pet_walk=[['pet:go:front','去门口'],['pet:go:park','去公园'],['pet:go:beach','去码头'],['pet:back','返回','back']];
+ RINGS.pet_treat=[...PET_TREATS.map(t=>['pet:treat:'+t.id,t.name]),['pet:back','返回','back']];
 }
-petCard.append(petStats);const petActions=petNode('div',undefined,'pet-hud-actions'),petSubmenu=petNode('div',undefined,'pet-hud-submenu');petSubmenu.hidden=true;petSubmenu.setAttribute('role','group');
-const petHudButtons={};
-for(const [id,label,fn]of [['walk','遛猫',()=>togglePetSubmenu('walk')],['treat','喂零食',()=>togglePetSubmenu('treat')],['play','逗逗它',()=>petInteract('play')],['hold','抱起来',()=>petInteract('hold')],['groom','梳毛',()=>petInteract('groom')]]){
- const button=petButton(label,fn);button.dataset.petAction=id;petHudButtons[id]=button;if(['walk','treat'].includes(id)){button.setAttribute('aria-expanded','false');button.setAttribute('aria-controls','petSubmenu');}petActions.append(button);
+function openPetHud(){
+ if(!petCanSee()||wiping||phoneHolds()||card||wardrobeOpen)return;
+ closePetMini();closePetPanel();setNeedsOpen(false);clearTimeout(petHudState.closeTimer);
+ petRings();openRing('pet','pet');
+ const ws=getComputedStyle(document.getElementById('widget'));   // the HUD's clip shapes and colours live on the widget
+ for(const k of ['--hud-panel-clip','--hud-panel-in','--hud-small-clip','--clip-btn','--title','--hud-frame','--panel','--panel-2','--edge','--bevel-hi','--bevel-lo','--shadow','--ink','--need-ok','--need-warn','--need-low','--ui-font-label','--focus']){const v=ws.getPropertyValue(k);if(v)petHud.style.setProperty(k,v);}
+ petHudState.open=true;petHud.hidden=false;petHud.classList.remove('on','off');fitPetHud();
+ void petHud.offsetWidth;petHud.classList.add('on');
+ cancelAnimationFrame(petHudState.raf);const follow=()=>{if(!petHudState.open)return;fitPetHud();petHudState.raf=requestAnimationFrame(follow);};petHudState.raf=requestAnimationFrame(follow);
 }
-petSubmenu.id='petSubmenu';petHud.append(petCard,petActions,petSubmenu);document.body.append(petHud);
-petHud.style.setProperty('--pet-bar-clip',roundClip(7,1));petHud.style.setProperty('--pet-icon-clip',roundClip(5,2));petHud.style.setProperty('--need-stripes',`url("${D.uiIcons.stripes}")`);
-function openPetHud(){if(!petCanSee()||wiping||phoneHolds()||card||wardrobeOpen)return;closeRing();closePetMini();closePetPanel();setNeedsOpen(false);clearTimeout(petHudState.closeTimer);clearTimeout(petHudState.submenuTimer);petHudState.open=true;petHudState.submenu=null;petHudState.anchor={...petPoint()};petHud.hidden=false;petHud.inert=false;petSubmenu.hidden=true;petSubmenu.classList.remove('closing');for(const id of ['walk','treat'])petHudButtons[id].setAttribute('aria-expanded','false');fitPetHud();requestAnimationFrame(()=>{if(petHudState.open)petHud.classList.add('on');});}
-function closePetHud(){if(!petHudState.open)return;petHudState.open=false;petHud.classList.remove('on');petHud.inert=true;clearTimeout(petHudState.closeTimer);petHudState.closeTimer=setTimeout(()=>{if(!petHudState.open)petHud.hidden=true;},reduceMotionUI?0:330);}
-function togglePetSubmenu(kind){const open=petHudState.submenu!==kind;petHudState.submenu=open?kind:null;clearTimeout(petHudState.submenuTimer);for(const id of ['walk','treat'])petHudButtons[id].setAttribute('aria-expanded',String(open&&id===kind));if(!open){petSubmenu.classList.add('closing');petHudState.submenuTimer=setTimeout(()=>{if(!petHudState.submenu){petSubmenu.hidden=true;petSubmenu.classList.remove('closing');fitPetHud();}},reduceMotionUI?0:200);return;}petSubmenu.classList.remove('closing');petSubmenu.replaceChildren();petSubmenu.hidden=false;petSubmenu.dataset.kind=kind;petSubmenu.setAttribute('aria-label',kind==='walk'?'遛宠物去哪里':'选择宠物零食');
- const options=kind==='walk'?[['front','去门口'],['park','去公园'],['beach','去码头']]:PET_TREATS.map(t=>[t.id,t.name]);
- for(const [id,label]of options){const b=petButton(label,()=>kind==='walk'?beginPetWalk(id):offerPetTreat(id));b.dataset.petChoice=id;petSubmenu.append(b);}fitPetHud();
+function closePetHud(){
+ if(!petHudState.open)return;petHudState.open=false;cancelAnimationFrame(petHudState.raf);
+ if(typeof ringAt!=='undefined'&&ringAt==='pet'&&ringOf)closeRing();
+ petHud.classList.remove('on');petHud.classList.add('off');clearTimeout(petHudState.closeTimer);
+ petHudState.closeTimer=setTimeout(()=>{if(!petHudState.open){petHud.hidden=true;petHud.classList.remove('off');}},reduceMotionUI?0:260);
 }
-function fitPetHud(){if(!petHudState.open)return;if(!petCanSee()||wiping||phoneHolds()||card||wardrobeOpen||!petPanel.hidden){closePetHud();return;}
- const p=petState.pet,viewRect=view.getBoundingClientRect(),growth=Math.max(0,Math.min(1,(viewRect.width-342)/1026));
- petHud.style.setProperty('--pet-fs',Math.round(12+growth*4)+'px');petHud.style.setProperty('--pet-card-w',Math.round(124+growth*28)+'px');petHud.style.setProperty('--pet-action-w',Math.round(94+growth*24)+'px');petHud.style.setProperty('--pet-row-h',Math.round(32+growth*4)+'px');petHud.style.setProperty('--pet-gap',Math.round(6+growth*2)+'px');
- petNameButton.textContent=p.name;petNameButton.title='点击给'+p.name+'改名';petHudButtons.walk.textContent=petBreed(p.breed).species==='cat'?'遛猫':'遛狗';petHudButtons.hold.textContent=p.carried?'放下来':'抱起来';
- for(const [key,{column,fill,label}]of petStatNodes){const value=Math.round(key==='affinity'?(p.affinity??30):p.needs[key]);column.setAttribute('aria-valuenow',value);column.title=label+' '+value;fill.style.setProperty('--v',value/100);fill.style.backgroundColor=key==='affinity'?'#e9a1c0':value<20?'var(--need-low)':value<40?'var(--need-warn)':'var(--need-ok)';}
- const width=petHud.offsetWidth,height=petHud.offsetHeight,anchor=petHudState.anchor||petPoint();const left=Math.max(viewRect.left+4,Math.min(viewRect.right-width-4,viewRect.left+anchor.x*scale-width/2));const top=Math.max(8,Math.min(innerHeight-height-8,viewRect.top+(anchor.y-24)*scale-height-12));
- petHud.style.left=Math.round(left)+'px';petHud.style.top=Math.round(top)+'px';
- petHud.style.setProperty('--pet-origin-x',Math.round(viewRect.left+anchor.x*scale-left)+'px');petHud.style.setProperty('--pet-origin-y',Math.round(viewRect.top+(anchor.y-12)*scale-top)+'px');
+// a pick on the pet's ring
+function petRingPick(k){
+ if(k==='walk'||k==='treat'){openRing('pet_'+k,'pet');return;}
+ if(k==='back'){petRings();openRing('pet','pet');
+ const ws=getComputedStyle(document.getElementById('widget'));   // the HUD's clip shapes and colours live on the widget
+ for(const k of ['--hud-panel-clip','--hud-panel-in','--hud-small-clip','--clip-btn','--title','--hud-frame','--panel','--panel-2','--edge','--bevel-hi','--bevel-lo','--shadow','--ink','--need-ok','--need-warn','--need-low','--ui-font-label','--focus']){const v=ws.getPropertyValue(k);if(v)petHud.style.setProperty(k,v);}return;}
+ if(k.startsWith('go:')){closePetHud();beginPetWalk(k.slice(3));return;}
+ if(k.startsWith('treat:')){closePetHud();offerPetTreat(k.slice(6));return;}
+ if(k==='name'){closePetHud();petNaming(null,true);return;}
+ petInteract(k);
 }
-document.addEventListener('pointerdown',e=>{if(petHudState.open&&!petHud.contains(e.target))closePetHud();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closePetHud();});
+function togglePetSubmenu(kind){if(!petHudState.open)openPetHud();petRingPick(kind);}   // (old name, kept for callers)
+function fitPetHud(){
+ if(!petHudState.open)return;
+ if(!petCanSee()||wiping||phoneHolds()||card||wardrobeOpen||!petPanel.hidden||!(ringAt==='pet'&&ringOf)){closePetHud();return;}
+ const p=petState.pet,v=view.getBoundingClientRect(),growth=Math.max(0,Math.min(1,(v.width-342)/1026));
+ petHud.style.setProperty('--pc-fs',Math.round(12+growth*3)+'px');petHud.style.setProperty('--pc-h',Math.round(108+growth*30)+'px');petHud.style.setProperty('--pc-col',Math.round(34+growth*8)+'px');
+ if(petNameButton.textContent!==p.name){petNameButton.textContent=p.name;petNameButton.title='点击给'+p.name+'改名';}
+ for(const [key,{column,fill,val,label}]of petStatNodes){
+  const value=Math.round(key==='affinity'?(p.affinity??30):p.needs[key]);
+  if(column.getAttribute('aria-valuenow')!==String(value)){column.setAttribute('aria-valuenow',value);column.title=label+' '+value;val.textContent=value;fill.style.setProperty('--v',value/100);
+   fill.style.setProperty('--c',key==='affinity'?'#e9a1c0':value<20?'var(--need-low)':value<40?'var(--need-warn)':'var(--need-ok)');column.classList.toggle('low',key!=='affinity'&&value<20);}
+ }
+ // above the ring's top button, centred on the pet, kept on screen
+ const btns=[...ringEl.children].map(b=>b.getBoundingClientRect()).filter(r=>r.width);if(!btns.length)return;
+ const ringTop=Math.min(...btns.map(r=>r.top)),pt=petPoint(),cx=v.left+pt.x*scale,w=petHud.offsetWidth,h=petHud.offsetHeight;
+ let top=ringTop-h-10,below=false;if(top<6){top=Math.max(...btns.map(r=>r.bottom))+10;below=true;}
+ const left=Math.max(6,Math.min(innerWidth-w-6,cx-w/2));
+ petHud.style.left=Math.round(left)+'px';petHud.style.top=Math.round(top)+'px';petHud.style.setProperty('--pc-ox',Math.round(cx-left)+'px');petHud.classList.toggle('below',below);
+}
+document.addEventListener('pointerdown',e=>{if(petHudState.open&&!petHud.contains(e.target)&&!ringEl.contains(e.target))closePetHud();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePetHud();});
 
 // Scene acoustics are independent of rendering and simulation speed.
 function audioRoom(p){
