@@ -120,7 +120,13 @@ async function applyUpdate() {
   try { localStorage.setItem("buddy-updated", upd.version); } catch (e) { /* only for the note after */ }
   await new Promise(r => setTimeout(r, 1200));
   try { await TAURI.core.invoke("apply_update"); }      // swaps the exe and restarts (or runs the installer)
-  catch (e) { upd.state = "ready"; updFailed(e); TAURI.core.invoke("log_js", { message: `apply: ${e}` }); }
+  catch (e) {
+    // installing takes the downloaded package; after a failed try it's gone, so 重试 downloads again
+    // (it used to stay "ready" and the retry said "nothing downloaded")
+    upd.state = "idle"; TAURI.core.invoke("log_js", { message: `apply: ${e}` });
+    if (/nothing downloaded/i.test(String(e))) { checkUpdate(true); return; }
+    updFailed(e);
+  }
 }
 // say why (user: it kept failing with no reason); the whole message on hover
 function updFailed(e) {
