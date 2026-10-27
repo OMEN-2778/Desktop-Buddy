@@ -5,7 +5,7 @@
 //   node tools/make_promo.js http://127.0.0.1:8786/ OUT_DIR
 const { chromium } = require('playwright'), fs = require('node:fs');
 const URL = process.argv[2] || 'http://127.0.0.1:8786/', OUT = process.argv[3] || 'promo';
-const VW = 900, VH = 760, FPS = 30;
+const VW = 1100, VH = 900, FPS = 30;
 fs.mkdirSync(OUT + '/frames', { recursive: true });
 (async () => {
   const b = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox'] });
@@ -16,7 +16,7 @@ fs.mkdirSync(OUT + '/frames', { recursive: true });
   for (let i = 0; i < 400 && !(await p.evaluate(() => typeof booted !== 'undefined' && booted)); i++) await p.clock.runFor(100);
   await p.evaluate(() => {
     document.documentElement.classList.add('desktop');
-    closeGuide(); prefs.guided = true; prefs.autosave = false; prefs.scale = 50; fit();
+    closeGuide(); prefs.guided = true; prefs.autosave = false; prefs.scale = 100; fit();
     cardMoment = rollCard = rollEvents = () => false; socialState.nextCall = socialState.nextVisit = 1e12;
     weather.force = 'clear'; weather.kind = 'clear'; sim.t = 9.5 * 60; speed = 1;
     for (const k in sim.needs) sim.needs[k] = 80;

@@ -114,12 +114,14 @@ def house_point(i, hx, hy):
     return LAYER[0] + vx + hx * k, LAYER[1] + vy + hy * k
 
 
-cap = T['captions']; start = [c[0] for c in cap]; show = T['show']; ttl = T.get('title', N - 60)
+cap = [[a, min(b, nxt[0] - 2) if nxt else b, t] for (a, b, t), nxt in zip(T['captions'], T['captions'][1:] + [None])]   # never two at once
+start = [c[0] for c in cap]
+show = T['show']; ttl = T.get('title', N - 60)
 keys = [   # frame, focus (desk | house px), zoom, yaw, pitch
     (0, 'desk', 1.0, 0, 0), (show - 2, 'desk', 1.0, 0, 0), (show + 26, (171, 60), 1.55, -6, 3),
     (start[1] + 20, (230, 70), 2.1, 5, 2), (start[1] + 100, (160, 50), 2.0, -4, 1),
     (start[2], (110, 70), 2.3, 0, -3), (start[2] + 110, (171, 60), 1.9, 4, 0),
-    (start[3] + 8, (290, 82), 3.0, -3, 2), (start[3] + 60, (290, 82), 3.1, 3, 0), (start[3] + 66, (30, 92), 3.0, 0, 0), (start[3] + 118, (34, 92), 3.2, 4, 0),
+    (start[3] + 8, (290, 82), 2.6, -3, 2), (start[3] + 60, (290, 82), 2.7, 3, 0), (start[3] + 66, (30, 92), 2.6, 0, 0), (start[3] + 118, (34, 92), 2.8, 4, 0),
     (start[4] + 2, (171, 60), 1.6, 8, 2), (start[4] + 140, (180, 70), 2.1, -5, 0),
     (start[5] + 2, (171, 60), 1.8, -8, 3), (start[5] + 60, (171, 72), 2.3, 6, 1), (start[5] + 118, (171, 66), 2.0, -6, 2),
     (start[6] + 2, (171, 60), 2.0, 0, 0), (ttl - 6, (171, 60), 2.1, 2, 0), (ttl + 30, 'desk', 1.0, 0, 0), (N, 'desk', 1.0, 0, 0),
