@@ -108,12 +108,12 @@ function petChoiceScores(score){const p=petState.pet;if(!petCanSee()||p.activity
  if(hungry)score.pet_feed=130;
  else{const id=['pet_pat','pet_play','pet_groom','pet_train','pet_talk'][Math.floor(PetRules.random(petState)*5)];score[id]=p.needs.company<50?90:sim.t>(p.nextHero??0)+60?62:32;}
 }
-function preparePetHumanAction(act){const p=petState.pet;if(!petCanSee()||p.activityNow==='sleep')return false;const point=petPoint();if(point.dy)return false;
+function preparePetHumanAction(act){if(act==='pet_feed'&&petState.installed){D.spots.pet_interact=[0,85];if(!petCanSee())return true;}const p=petState.pet;if(!petCanSee()||p.activityNow==='sleep')return false;const point=petPoint();if(point.dy)return false;
  if(p.carried)dropCarriedPet();
  const feed=act==='pet_feed';D.spots.pet_interact=[feed?0:storeyOfY(point.y),feed?85:Math.max(21,Math.min(320,point.x+(point.x>160?-17:17)))];
  p.position={x:point.x,y:point.y};p.playUntil=0;p.toyUntil=0;petStartAction('look',40);p.reservedUntil=sim.t+80;p.interaction=null;return true;
 }
-function onPetHumanArrive(act){const p=petState.pet;if(!petCanSee())return;const kind=act.slice(4);
+function onPetHumanArrive(act){const p=petState.pet;if(act==='pet_feed'&&!petCanSee()){petState.feeder=900;log(petText('refill'));autoSave();return;}if(!petCanSee())return;const kind=act.slice(4);
  if(kind==='hold'){p.carried=true;p.direction=(sim.facing||1)>0?'right':'left';p.motion=null;petStartAction('sit',12);p.needs.company=clamp(p.needs.company+12);gainPetAffinity(3,'hold');log(petText('hold'));speak(petText('hero_hold'));return;}
  if(kind==='treat'){servePetTreat(p.pendingTreat);delete p.pendingTreat;return;}p.nextHero=sim.t+75+PetRules.random(petState)*75;p.reservedUntil=sim.t+(ACTS[act]?.dur||15);
  if(kind==='feed'){petState.feeder=900;log(petText('refill'));petWalkTo(119,FLOOR_Y[0],'eat',30);speak(petText('hero_feed'));}
@@ -139,11 +139,11 @@ function tickGuestPet(g,c){const p=petState.pet;if(!petCanSee()||g.sleeping||asl
 const petMini=petNode('section',undefined,'pet-mini');petMini.id='petMini';petMini.hidden=true;petMini.setAttribute('role','dialog');document.getElementById('widget').append(petMini);
 const petMatImage=()=>petFurnitureImages['pet_mat_'+petState.matColor]||petFurnitureImages.pet_mat;
 function feederDescription(amount){return '看起来还剩'+(amount>600?'很多':amount>=400?'一些':amount>=100?'不多':amount>=10?'一点点':'两粒');}
-function closePetMini(){petMini.hidden=true;}
-function openPetMini(kind,label){closePetHud();closePetPanel();closeRing();petMini.dataset.kind=kind;petMini.setAttribute('aria-label',label);petMini.replaceChildren();petMini.hidden=false;return petMini;}
-function openPetFeeder(){if(!petState.installed||!petIsHome())return;const panel=openPetMini('feeder','自动喂食机');panel.append(petNode('span',feederDescription(petState.feeder)),petButton('加满！',()=>{petState.feeder=900;log(petText('refill'));autoSave();fitPetMini();},'pet-refill'));fitPetMini();}
+function closePetMini(){if(petMini.hidden||petMini.classList.contains('out'))return;petMini.classList.remove('in');petMini.classList.add('out');clearTimeout(petMini._t);petMini._t=setTimeout(()=>{petMini.hidden=true;petMini.classList.remove('out');},reduceMotionUI?0:220);}
+function openPetMini(kind,label){closePetHud();closePetPanel();closeRing();clearTimeout(petMini._t);petMini.classList.remove('out','in');petMini.dataset.kind=kind;petMini.setAttribute('aria-label',label);petMini.replaceChildren();petMini.hidden=false;void petMini.offsetWidth;petMini.classList.add('in');return petMini;}
+function openPetFeeder(){if(!petState.installed||!petIsHome())return;const panel=openPetMini('feeder','自动喂食机');panel.append(petNode('span',feederDescription(petState.feeder)),petButton('加满！',()=>{closePetMini();if(petState.feeder>=880){speak('已经是满的啦');return;}command('pet_feed');},'pet-refill'));fitPetMini();}
 function openPetMatColors(){if(!petState.installed||!petIsHome())return;const panel=openPetMini('mat','睡垫颜色');panel.append(petNode('strong','睡垫颜色'));const colors=petNode('div',undefined,'pet-mat-colors');for(const color of D.pets.matColors){const b=petButton('',()=>{petState.matColor=color.id;for(const button of colors.children)button.setAttribute('aria-pressed',String(button.dataset.color===color.id));autoSave();render();});b.dataset.color=color.id;b.setAttribute('aria-label',color.name);b.setAttribute('aria-pressed',String(petState.matColor===color.id));const swatch=petNode('i');swatch.style.backgroundColor=color.color;swatch.setAttribute('aria-hidden','true');b.append(swatch,petNode('span',color.name));colors.append(b);}panel.append(colors);fitPetMini();}
-function fitPetMini(){if(petMini.hidden)return;if(!petIsHome()){closePetMini();return;}if(petMini.dataset.kind==='feeder'){const label=petMini.querySelector('span'),text=feederDescription(petState.feeder);if(label.textContent!==text)label.textContent=text;}
+function fitPetMini(){if(petMini.hidden)return;if(petMini.dataset.kind==='feeder'){const h=petMini.offsetHeight,b=petMini.querySelector('.pet-refill');if(h&&h!==petMini._h){petMini._h=h;const n=Math.max(4,Math.floor(h/4)),pad=6;petMini.style.setProperty('--pm-o',roundClip(n,2));petMini.style.setProperty('--pm-o-in',roundClip(n-1,2));petMini.style.setProperty('--pm-i',roundClip(Math.max(3,n-pad/2),2));petMini.style.setProperty('--pm-i-in',roundClip(Math.max(2,n-pad/2-1),2));}}if(!petIsHome()){closePetMini();return;}if(petMini.dataset.kind==='feeder'){const label=petMini.querySelector('span'),text=feederDescription(petState.feeder);if(label.textContent!==text)label.textContent=text;}
  const mat=petMini.dataset.kind==='mat',x=mat?155:103,padding=4,w=view.offsetWidth;petMini.style.maxWidth=Math.max(0,w-padding*2)+'px';const pw=petMini.offsetWidth,ph=petMini.offsetHeight;
  petMini.style.left=view.offsetLeft+Math.max(padding,Math.min(w-pw-padding,x*scale-pw/2))+'px';petMini.style.top=view.offsetTop+Math.max(padding,Math.min(view.offsetHeight-ph-padding,(FLOOR_Y[0]-28)*scale-ph))+'px';
 }

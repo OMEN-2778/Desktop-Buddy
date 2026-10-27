@@ -47,3 +47,22 @@
 .pet-mat-colors i{width:10px;height:10px;flex:none;box-shadow:0 0 0 1px var(--bevel-lo)}
 @keyframes pet-sheet-in{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){#petPanel{animation:none}}
+/* the feeder popup (user): concentric pixel capsules — the 加满 button's round ends follow
+   the outer ones, a constant gap all round — springing out of the feeder and back */
+.pet-mini[data-kind=feeder]{min-height:0;height:44px;padding:6px 6px 6px 18px;gap:12px;filter:none;transform-origin:30% 120%}
+.pet-mini[data-kind=feeder]::before{inset:0;border:0;border-image:none;background:var(--edge);clip-path:var(--pm-o)}
+.pet-mini[data-kind=feeder]::after{content:'';position:absolute;inset:2px;z-index:-1;background:var(--panel);clip-path:var(--pm-o-in);box-shadow:inset 0 2px 0 var(--bevel-hi),inset 0 -2px 0 var(--bevel-lo)}
+.pet-mini[data-kind=feeder]>span{font-weight:600}
+.pet-mini[data-kind=feeder] .pet-refill{height:32px;padding:0 18px;margin:0;font-weight:700;box-shadow:none;transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.pet-mini[data-kind=feeder] .pet-refill::before{inset:0;border:0;border-image:none;background:var(--edge);clip-path:var(--pm-i)}
+.pet-mini[data-kind=feeder] .pet-refill::after{content:'';position:absolute;inset:2px;z-index:-1;background:#efc452;clip-path:var(--pm-i-in);box-shadow:inset 0 2px 0 #ffffff66,inset 0 -2px 0 #00000022}
+.pet-mini[data-kind=feeder] .pet-refill:hover{transform:translateY(-1px);filter:none}
+.pet-mini[data-kind=feeder] .pet-refill:active{transform:scale(.92);transition-duration:.08s}
+.pet-mini.in{animation:pmIn .45s var(--hud-spring,cubic-bezier(.2,1.3,.32,1)) both}
+.pet-mini.in>*{animation:pmKid .4s .1s var(--hud-spring,cubic-bezier(.2,1.3,.32,1)) both}
+.pet-mini.in>*+*{animation-delay:.17s}
+.pet-mini.out{animation:pmOut .22s cubic-bezier(.5,0,.9,.4) both;pointer-events:none}
+@keyframes pmIn{from{opacity:0;transform:translateY(8px) scale(.4)}to{opacity:1;transform:none}}
+@keyframes pmKid{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes pmOut{to{opacity:0;transform:translateY(6px) scale(.5)}}
+@media(prefers-reduced-motion:reduce){.pet-mini.in,.pet-mini.in>*,.pet-mini.out{animation:none}}
