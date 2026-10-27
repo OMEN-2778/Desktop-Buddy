@@ -128,11 +128,7 @@ function renderDisco(dt) {
     if (run && realClock > disco.djSay) { disco.djSay = realClock + 10 + Math.random() * 10; npcSay(disco.dj, pick(FEST_TEXT4.disco.dj)); if (!life.npcs.includes(disco.dj)) life.npcs.push(disco.dj); }
   }
   npcTick(dt, run);
-  drawNpcs(bctx, "back");
-  const fr = activityFrame(realClock * 1000);
-  const { emoteAt } = drawOutBuddy(bctx, fr);
-  drawNpcs(bctx, "front");
-  bctx.globalCompositeOperation = "lighter";
+  bctx.globalCompositeOperation = "lighter";      // lasers behind the dancers (they hit the floor, not faces)
   F2.lasers.forEach((lx, i) => {                   // lasers sweeping from the truss
     const n = 2 + (Math.floor(beat / 4) % 2) * 2;
     for (let k = 0; k < n; k++) {
@@ -142,6 +138,12 @@ function renderDisco(dt) {
       bctx.globalAlpha = 0.9; bctx.fillRect(Math.round(ex) - 1, Math.round(ey) - 1, 3, 2);   // where it lands
     }
   });
+  bctx.globalCompositeOperation = "source-over"; bctx.globalAlpha = 1;
+  drawNpcs(bctx, "back");
+  const fr = activityFrame(realClock * 1000);
+  const { emoteAt } = drawOutBuddy(bctx, fr);
+  drawNpcs(bctx, "front");
+  bctx.globalCompositeOperation = "lighter";
   for (const [bi, bx] of [112, 230].entries()) {   // two mirror balls: rays, then spots thrown round the room
     const by = 23;
     for (let k = 0; k < 8; k++) {
