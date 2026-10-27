@@ -50,7 +50,14 @@ function hideUpdate(after = 0) { setTimeout(() => { updEl.classList.remove("on")
 async function checkUpdate(asked = false) {
   if (!TAURI) return;
   if (upd.state === "ready") { if (asked) await applyUpdate(); else if(prefs.autoUpdate&&!updLater)waitForQuiet(); return; }
-  if (upd.state !== "idle" && upd.state !== "offered") return;   // already on it
+  if (upd.state !== "idle" && upd.state !== "offered") {        // already on it: when asked, say so (it used to stay silent)
+    if (asked) {
+      if (upd.state === "downloading") { upd.shown = true; showUpdate(upd.version ? `正在下载 ${upd.version}……` : "下载中……", { later: false }); }
+      else if (upd.state === "checking") showUpdate("正在检查更新……", { later: false });
+      else showUpdate("正在更新……", { later: false });
+    }
+    return;
+  }
   if (!asked && updLater && Date.now()<updDeferredUntil) return;
   updLater=false;lastUpdateCheck=Date.now();upd.state="checking";
   if (asked) showUpdate("正在检查更新……", { later: false });
@@ -80,7 +87,7 @@ async function downloadUpdate(shown) {
   if (!v) { upd.state = "idle"; if (shown) hideUpdate(); return; }
   updateFailures=0;clearTimeout(updateRetry);
   upd.state = "ready"; upd.version = v;
-  if (shown) await applyUpdate(); else waitForQuiet();
+  if (shown || upd.shown) await applyUpdate(); else waitForQuiet();   // (asked for while it was downloading quietly)
 }
 // a moment when the restart can't get in the way: nothing open, no clicks for 20 s
 const busyNow = () => !!(desktopDragging || card || pickOn || wardrobeOpen || guideOn || ringOf || diaryOn || listOpen
