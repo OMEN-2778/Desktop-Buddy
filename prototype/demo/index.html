@@ -79249,7 +79249,7 @@ let petState=PetRules.fresh(),petPanelPage=null,petSelection=null,petHover=null;
 const petImages=new Map(),petFurnitureImages={},petClips=new Map(D.pets.breeds.map(b=>[b.id,new Map(b.clips.map(c=>[c.id+':'+c.direction,c]))]));
 const petBreed=id=>D.pets.breeds.find(b=>b.id===id);
 const petName=()=>petState.pet?.name||'小家伙';
-const petText=key=>(PET_TEXT[key]||[''])[Math.floor(PetRules.random(petState)*(PET_TEXT[key]||['']).length)].replaceAll('{宠物}',petName());
+const petText=key=>{const sp=petState.pet?petBreed(petState.pet.breed).species:'';if(PET_TEXT[key+'_'+sp])key+='_'+sp;const list=PET_TEXT[key]||[''];return list[Math.floor(PetRules.random(petState)*list.length)].replaceAll('{宠物}',petName());};   // a _cat / _dog variant wins
 const petIsHome=()=>sim.place==='home'&&!atFriendHome()&&!friendHousePreview;
 const petCanSee=()=>petState.pet?.status==='home'&&(petIsHome()||petWalkActive());
 const petNearby=()=>petCanSee()&&(petWalkActive()||roomAt(here())===roomAt(petPoint()))&&!['bath','toilet'].includes(sim.act);
@@ -79332,7 +79332,7 @@ function petSpriteFrame(){const c=petClip(),p=petState.pet;return c?Math.floor((
 function drawPetKit(ctx){if(!petState.installed||!petIsHome())return;const mat=petMatImage(),feeder=petFurnitureImages.pet_feeder;if(mat)ctx.drawImage(mat,142,FLOOR_Y[0]-5);if(feeder)ctx.drawImage(feeder,91,FLOOR_Y[0]-21);if(petHover==='feeder'&&feeder)drawObjectHover(ctx,feeder,91,FLOOR_Y[0]-21);if(petHover==='mat'&&mat)drawObjectHover(ctx,mat,142,FLOOR_Y[0]-5);}
 const petFrameCache=new Map();
 function petFrameCanvas(){const p=petState.pet,c=petClip(),img=p&&petImages.get(p.breed);if(!c||!img)return null;const frame=petSpriteFrame(),key=p.breed+':'+c.row+':'+frame;let canvas=petFrameCache.get(key);if(!canvas){canvas=document.createElement('canvas');canvas.width=32;canvas.height=28;canvas.getContext('2d').drawImage(img,frame*32,c.row*28,32,28,0,0,32,28);petFrameCache.set(key,canvas);if(petFrameCache.size>96)petFrameCache.delete(petFrameCache.keys().next().value);}return canvas;}
-function drawPetActor(ctx,held=false){if(!petCanSee()||!!petState.pet.carried!==held)return;const img=petFrameCanvas(),point=petPoint();if(!img)return;if(!held)drawPetToy(ctx);const x=Math.round(point.x-16),y=Math.round(point.y-25);ctx.drawImage(img,x,y);if(petHover==='pet')drawObjectHover(ctx,img,x,y);}
+function drawPetActor(ctx,held=false){if(!petCanSee()||!!petState.pet.carried!==held)return;const img=petFrameCanvas(),point=petPoint();if(!img)return;if(!held)drawPetToy(ctx);const x=Math.round(point.x-16),y=Math.round(point.y-25);ctx.drawImage(img,x,y);drawPetHearts(ctx,point);if(petHover==='pet')drawObjectHover(ctx,img,x,y);}
 function petHit(x,y){if(!petIsHome()&&!petWalkActive())return null;const shapes=[];if(petCanSee()){const p=petPoint();shapes.push(['pet',petFrameCanvas(),Math.round(p.x-16),Math.round(p.y-25)]);}if(petState.installed&&petIsHome())shapes.push(['feeder',petFurnitureImages.pet_feeder,91,FLOOR_Y[0]-21],['mat',petMatImage(),142,FLOOR_Y[0]-5]);for(const [id,img,ox,oy]of shapes)if(img){if(!outlineCache.has(img))outlineCache.set(img,outlineShape(img));if(outlineCache.get(img).near.has(Math.floor(x-ox)+','+Math.floor(y-oy)))return id;}return null;}
 
 const petImageLoads=new Map();
@@ -79345,7 +79345,7 @@ window.addEventListener('resize',fitPetPanel);document.addEventListener('keydown
 
 // Human-side pet actions use the normal walking/action scheduler, so urgent
 // needs can interrupt them exactly like reading or TV. They never block a call.
-for(const [id,label,dur] of [['pat','摸摸宠物',10],['play','陪宠物玩',20],['groom','给宠物梳毛',16],['train','和宠物练个小动作',15],['talk','跟宠物说说话',10],['feed','检查并添粮',8],['hold','抱起宠物',12],['treat','给宠物喂零食',8]]){
+for(const [id,label,dur] of [['pat','摸摸宠物',10],['play','陪宠物玩',20],['groom','给宠物梳毛',16],['train','和宠物练个小动作',15],['talk','跟宠物说说话',10],['feed','检查并添粮',8],['hold','抱起宠物',12],['treat','给宠物喂零食',8],['belly','挠挠宠物的肚皮',10],['kiss','亲亲宠物',6],['photo','给宠物拍照',8],['toy','和宠物玩玩具',18]]){
  ACTS['pet_'+id]={spot:'pet_interact',label,emote:'heart',dur,log:null};EFFECT['pet_'+id]={fun:.25,social:.25};
 }
 D.spots.pet_interact=[0,112];
@@ -79360,10 +79360,10 @@ function preparePetHumanAction(act){if(act==='pet_feed'&&petState.installed){D.s
  p.position={x:point.x,y:point.y};p.playUntil=0;p.toyUntil=0;petStartAction('look',40);p.reservedUntil=sim.t+80;p.interaction=null;return true;
 }
 function onPetHumanArrive(act){const p=petState.pet;if(act==='pet_feed'&&!petCanSee()){petState.feeder=900;log(petText('refill'));autoSave();return;}if(!petCanSee())return;const kind=act.slice(4);
- if(kind==='hold'){p.carried=true;p.direction=(sim.facing||1)>0?'right':'left';p.motion=null;petStartAction('sit',12);p.needs.company=clamp(p.needs.company+12);gainPetAffinity(3,'hold');log(petText('hold'));speak(petText('hero_hold'));return;}
+ if(kind==='hold'){petHearts(2);p.carried=true;p.direction=(sim.facing||1)>0?'right':'left';p.motion=null;petStartAction('sit',12);p.needs.company=clamp(p.needs.company+12);gainPetAffinity(3,'hold');log(petText('hold'));speak(petText('hero_hold'));return;}
  if(kind==='treat'){servePetTreat(p.pendingTreat);delete p.pendingTreat;return;}p.nextHero=sim.t+75+PetRules.random(petState)*75;p.reservedUntil=sim.t+(ACTS[act]?.dur||15);
  if(kind==='feed'){petState.feeder=900;log(petText('refill'));petWalkTo(119,FLOOR_Y[0],'eat',30);speak(petText('hero_feed'));}
- else{if(kind==='play')startPetPlay();petStartAction(({pat:'nuzzle',play:petPlayAction(),groom:'sit',train:petBreed(p.breed).species==='dog'?'wag':'pounce',talk:'look'})[kind]||'happy',ACTS[act].dur);p.needs.company=clamp(p.needs.company+(kind==='play'?30:20));gainPetAffinity(kind==='play'?4:2,kind);log(petText(kind));speak(petText('hero_'+kind));addMood('pet_company',{diary:false,words:false});}
+ else{if(kind==='play')startPetPlay();petStartAction(({pat:'nuzzle',play:petPlayAction(),groom:'sit',train:petBreed(p.breed).species==='dog'?'wag':'pounce',talk:'look',belly:'roll',kiss:'content',photo:'curious',toy:petBreed(p.breed).species==='cat'?'pounce':'run'})[kind]||'happy',ACTS[act].dur);petHearts(kind==='photo'?0:2.5);if(kind==='photo')petFlash=realClock;if(kind==='toy')startPetPlay();p.needs.company=clamp(p.needs.company+(kind==='play'?30:20));gainPetAffinity(kind==='play'?4:2,kind);log(petText(kind));speak(petText('hero_'+kind));addMood('pet_company',{diary:false,words:false});}
 }
 function tickGuestPet(g,c){const p=petState.pet;if(!petCanSee()||g.sleeping||asleep()||sim.mode==='down'||remoteSocial||sim.talk||['bath','toilet'].includes(sim.act)){g.petVisit=null;return;}
  const visit=g.petVisit;
@@ -79475,7 +79475,9 @@ petHud.append(petNameButton,petStats);document.body.append(petHud);
 petHud.style.setProperty('--pc-bar-clip',roundClip(7,1));petHud.style.setProperty('--need-stripes',`url("${D.uiIcons.stripes}")`);
 function petRings(){
  const p=petState.pet,cat=petBreed(p.breed).species==='cat';
- RINGS.pet=[['pet:walk',(cat?'遛猫':'遛狗')+' ▸','more'],['pet:treat','喂零食 ▸','more'],['pet:play','逗逗它'],['pet:hold',p.carried?'放下来':'抱起来'],['pet:groom','梳毛'],['pet:name','改名字']];
+ RINGS.pet=[['pet:walk',(cat?'遛猫':'遛狗')+' ▸','more'],['pet:treat','喂零食 ▸','more'],['pet:close','亲近 ▸','more'],['pet:fun','玩耍 ▸','more'],['pet:groom','梳毛'],['pet:name','改名字']];
+ RINGS.pet_close=[['pet:pat','摸摸头'],['pet:belly','挠肚皮'],['pet:kiss','亲一口'],['pet:hold',p.carried?'放下来':'抱起来'],['pet:talk','聊聊天'],['pet:back','返回','back']];
+ RINGS.pet_fun=[['pet:play','逗逗它'],['pet:toy',cat?'逗猫棒':'扔球'],['pet:train','教它小动作'],['pet:photo','拍张照'],['pet:back','返回','back']];
  RINGS.pet_walk=[['pet:go:front','去门口'],['pet:go:park','去公园'],['pet:go:beach','去码头'],['pet:back','返回','back']];
  RINGS.pet_treat=[...PET_TREATS.map(t=>['pet:treat:'+t.id,t.name]),['pet:back','返回','back']];
 }
@@ -79497,7 +79499,7 @@ function closePetHud(){
 }
 // a pick on the pet's ring
 function petRingPick(k){
- if(k==='walk'||k==='treat'){openRing('pet_'+k,'pet');return;}
+ if(['walk','treat','close','fun'].includes(k)){openRing('pet_'+k,'pet');return;}
  if(k==='back'){petRings();openRing('pet','pet');
  const ws=getComputedStyle(document.getElementById('widget'));   // the HUD's clip shapes and colours live on the widget
  for(const k of ['--hud-panel-clip','--hud-panel-in','--hud-small-clip','--clip-btn','--title','--hud-frame','--panel','--panel-2','--edge','--bevel-hi','--bevel-lo','--shadow','--ink','--need-ok','--need-warn','--need-low','--ui-font-label','--focus']){const v=ws.getPropertyValue(k);if(v)petHud.style.setProperty(k,v);}return;}
@@ -79527,6 +79529,360 @@ function fitPetHud(){
 }
 document.addEventListener('pointerdown',e=>{if(petHudState.open&&!petHud.contains(e.target)&&!ringEl.contains(e.target))closePetHud();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePetHud();});
+
+Object.assign(PET_TEXT, {
+  "belly": [
+    "翻开{宠物}的肚皮挠了两下，它四脚朝天，一副任人处置的样子。",
+    "{宠物}自己躺倒露出肚子，手刚碰上去，就舒服得直哼哼。",
+    "肚子上的毛软得像刚晒过的被子，一摸就停不下来。",
+    "揉着揉着，{宠物}的后腿跟着节奏轻轻蹬了起来。",
+    "手刚抽走，{宠物}就翻回来，用眼神要求继续。",
+    "{宠物}摊成一张饼，肚皮朝天，对世界毫无防备。",
+    "摸肚子摸到一半，{宠物}突然翻身跑了，只留下一手的毛。",
+    "挠了挠{宠物}的肚皮，它闭着眼，表情像在做一场好梦。"
+  ],
+  "hero_belly": [
+    "这肚子，犯规了",
+    "哇，软乎乎的",
+    "翻过来翻过来",
+    "还要？行行行",
+    "你不设防的吗",
+    "一手的毛啊",
+    "别蹬，痒的是我",
+    "就摸一下，真的"
+  ],
+  "kiss": [
+    "在{宠物}的头顶亲了一下，它愣了半秒，然后甩了甩耳朵。",
+    "亲了亲{宠物}的脑门，小家伙一脸嫌弃，尾巴却动了动。",
+    "低头亲在{宠物}头上，毛茸茸的，有点太阳的味道。",
+    "{宠物}被亲了一口，立刻低头舔了舔毛，像要把痕迹抹掉。",
+    "趁{宠物}打盹，偷偷在它头上亲了一下，它没醒。",
+    "亲完{宠物}，鼻尖上沾了一小撮毛，痒得直想打喷嚏。",
+    "{宠物}被亲得一脸懵，过了一会儿才凑过来，要再来一次。",
+    "在{宠物}额头上亲了一下，它抬眼看了看，若无其事地继续睡。"
+  ],
+  "hero_kiss": [
+    "啵，盖个章",
+    "亲一口再走",
+    "嫌弃我？我看见了",
+    "你头顶好香",
+    "别躲，就一下",
+    "偷亲成功",
+    "毛进嘴里了，呸",
+    "这下归我了"
+  ],
+  "photo": [
+    "举起手机拍{宠物}，结果只拍到一团模糊的残影。",
+    "这张拍得正好，{宠物}端坐着，连光线都刚刚好。",
+    "按下快门的瞬间，{宠物}眨了眼，成了一张闭眼照。",
+    "照片里只有{宠物}的半个脑袋，另一半跑出了画框。",
+    "拍出来的{宠物}表情严肃，像在拍证件照。",
+    "连拍了十几张，能用的只有一张，还是屁股的特写。",
+    "{宠物}对着手机凑得太近，照片里只剩一个大鼻子。",
+    "难得拍到{宠物}打哈欠的瞬间，嘴张得能看见喉咙。"
+  ],
+  "hero_photo": [
+    "看这边，看这边",
+    "别动别动，笑一个",
+    "糊了？再来一张",
+    "你眨眼干嘛",
+    "这张能当头像",
+    "离太近了啦",
+    "完美，存起来",
+    "耳朵没入镜，重拍"
+  ],
+  "toy_cat": [
+    "逗猫棒一晃，{宠物}的屁股左右摆了摆，猛地扑了上去。",
+    "红点在墙上一路跑，{宠物}追到墙角，对着空气愣住了。",
+    "{宠物}盯着羽毛看了好久，才慢悠悠伸出一只爪子。",
+    "羽毛甩到半空，{宠物}一个跳跃接住，落地时自己也吓了一跳。",
+    "玩了一会儿，{宠物}趴下不动了，只有尾巴尖还在追着羽毛。",
+    "逗猫棒被{宠物}死死按在爪子底下，没有商量的余地。",
+    "激光点钻进沙发底，{宠物}趴在地上，认真地往里掏。",
+    "{宠物}扑空了，若无其事地舔起毛，假装刚才什么也没发生。"
+  ],
+  "hero_toy_cat": [
+    "来，抓得到吗",
+    "在那儿！上墙了",
+    "这回别让它跑了",
+    "哎，羽毛要被你吃了",
+    "别装不在意啊",
+    "红点又钻沙发底了",
+    "好了好了，让你赢",
+    "你屁股在扭诶"
+  ],
+  "toy_dog": [
+    "球一扔出去，{宠物}像弹簧一样蹿了出去，耳朵都飞起来了。",
+    "{宠物}叼着球跑回来，却站在两米外，不肯松口。",
+    "球滚进了沙发底，{宠物}趴下去，只剩尾巴在外面摇。",
+    "连扔了十几次，{宠物}每次都跑得一样认真。",
+    "{宠物}把球叼回来放在脚边，抬头等着再扔一次。",
+    "球弹到了墙上，{宠物}追到一半急刹，转了个圈才站稳。",
+    "假装扔了一下，{宠物}冲出去才发现球还在手里，回头看了过来。",
+    "玩到后来，{宠物}躺在球旁边喘气，嘴角还翘着。"
+  ],
+  "hero_toy_dog": [
+    "接好啦，去！",
+    "哇，跑得真快",
+    "松口，给我嘛",
+    "球进沙发底了吧",
+    "再来最后一次",
+    "这次扔远点哦",
+    "骗你的，球还在呢",
+    "喘成这样还要？"
+  ],
+  "trick_cat": [
+    "伸出手掌示意击掌，{宠物}盯了一会儿，轻轻拍了一下。",
+    "手里捏着零食教坐下，{宠物}站着，把零食看了个遍。",
+    "{宠物}忽然学会了击掌，爪子啪地一下，比谁都干脆。",
+    "教了半天坐下，{宠物}坐是坐了，但背对着。",
+    "{宠物}坐得端端正正，像是早就会了，只是懒得表演。",
+    "零食在手，{宠物}的爪子举得老高，却迟迟不肯落下来。",
+    "击掌成功，{宠物}转头走开，一脸“表演结束”。",
+    "{宠物}学会了坐下，条件是每一次都要给零食。"
+  ],
+  "trick_dog": [
+    "伸出手说握手，{宠物}想也不想，把爪子递了过来。",
+    "教转圈，{宠物}转了三圈，转晕了，晃着脑袋才站稳。",
+    "{宠物}握手握得太积极，两只爪子一起上了。",
+    "零食刚举起来，{宠物}就坐好了，眼睛一眨不眨。",
+    "{宠物}转圈转到追着自己的尾巴去了，完全忘了在练习。",
+    "这次握手，{宠物}主动把爪子搭上来，像是在谈生意。",
+    "教了一下午，{宠物}学会的第一件事是看零食在哪只手里。",
+    "{宠物}握完手，抬头看着，等待它应得的那一份奖励。"
+  ],
+  "hero_trick": [
+    "手，给我手",
+    "坐下，坐……好吧",
+    "好聪明，奖励奖励",
+    "击掌！啪",
+    "转个圈？转圈！",
+    "你是在假装听不懂",
+    "零食在这，别急",
+    "再来一次就好"
+  ],
+  "greet": [
+    "钥匙刚插进锁孔，门后就传来{宠物}急促的脚步声。",
+    "一推开门，{宠物}已经等在玄关，绕着脚边转了好几圈。",
+    "{宠物}听见电梯的声音，早早蹲在了门口。",
+    "才出门半小时，{宠物}迎接的架势像是分别了一年。",
+    "{宠物}冲到门边，又在鞋子旁来回踱步，不知先蹭哪只脚。",
+    "进门时，{宠物}一边闻着包上的味道，一边仔细查岗。",
+    "{宠物}在门口等着，见人回来，淡定地走过来，尾巴却暴露了一切。",
+    "开门就看见{宠物}，像是已经在这里等了很久。"
+  ],
+  "hero_greet": [
+    "我回来啦",
+    "慢点慢点，别绊倒",
+    "这么想我呀",
+    "才出去一会儿呢",
+    "包里没吃的啦",
+    "哇，欢迎仪式这么隆重",
+    "让我先脱鞋",
+    "好好好，也想你"
+  ],
+  "company": [
+    "在沙发上坐下没多久，{宠物}就挪过来，趴在了脚边。",
+    "{宠物}靠着小腿躺下，体温一阵阵透过袜子。",
+    "看着电视，{宠物}悄悄凑到旁边，蜷成了一小团。",
+    "翻书翻到一半，脚背上多了点重量，是{宠物}睡着了。",
+    "{宠物}挑了个紧挨着的位置躺下，一副“我只是路过”的样子。",
+    "沙发另一头原本是空的，现在被{宠物}占了一半。",
+    "{宠物}靠过来，什么也不干，就是要贴着人。",
+    "一动脚，{宠物}就睁眼看看，确认没事，又睡了回去。"
+  ],
+  "hero_company": [
+    "你也来看电视啊",
+    "脚边挺暖和的",
+    "别压我脚，麻了",
+    "位置让你一半",
+    "你看得懂吗",
+    "这集快完了，等我",
+    "行，今晚不动了",
+    "睡吧，我小声点"
+  ],
+  "keyboard_cat": [
+    "{宠物}从键盘上慢悠悠走过，屏幕上多了一整行乱码。",
+    "{宠物}一屁股坐在键盘上，文档里写满了一排字母。",
+    "正打着字，{宠物}踩过回车键，邮件就这么发了出去。",
+    "{宠物}趴在键盘上，暖暖的，鼠标指针却一直在乱跳。",
+    "屏幕突然全黑，是{宠物}踩到了某个快捷键。",
+    "{宠物}挡在显示器前，尾巴一甩，把整个桌面扫了一遍。",
+    "{宠物}盯着光标看了半天，伸爪按下去，文件夹飞走了。",
+    "想把{宠物}抱开，它却把键盘当成了自己的床。"
+  ],
+  "keyboard_dog": [
+    "{宠物}把下巴搁在膝盖上，抬眼望着，也不出声。",
+    "打字时，膝盖上忽然一沉，是{宠物}把头靠了过来。",
+    "{宠物}趴在椅子旁，下巴一直压着腿，呼出的气暖暖的。",
+    "一边敲键盘，一边伸手顺着{宠物}的头摸，它舒服得叹气。",
+    "{宠物}的下巴搁在膝盖上，眼睛随着鼠标指针来回转。",
+    "工作做到一半，{宠物}用鼻子顶了顶手，提醒该歇歇了。",
+    "{宠物}把脑袋放在腿上，沉甸甸的，赶也不舍得赶。",
+    "想站起来倒水，膝盖上的{宠物}抬头，满脸写着“别走”。"
+  ],
+  "hero_keyboard": [
+    "别踩，那是回车",
+    "我文档呢？",
+    "下巴压得有点重",
+    "等我把这段写完",
+    "你也想上班？",
+    "这封邮件发出去了",
+    "再摸一分钟就好",
+    "行吧，键盘借你"
+  ],
+  "beg": [
+    "锅里的香味刚飘出来，{宠物}就坐在了厨房门口。",
+    "{宠物}端坐在脚边，眼睛盯着手里的筷子，一动不动。",
+    "吃饭时，{宠物}蹲在桌边，视线随着勺子上上下下。",
+    "{宠物}站在灶台旁，努力装出一副“我不饿”的样子。",
+    "切菜的时候，{宠物}在脚边来回绕，像在监工。",
+    "{宠物}隔着一小段距离坐好，满脸写着“分一口吧”。",
+    "{宠物}盯得太认真，连尾巴扫地的声音都停了。",
+    "饭盒盖刚打开，{宠物}已经从客厅一路冲了过来。"
+  ],
+  "hero_beg": [
+    "不行，这个你不能吃",
+    "别盯了，我会心软",
+    "你有自己的饭啊",
+    "口水要掉下来了",
+    "就闻一下啊",
+    "我吃完才轮到你",
+    "这眼神是跟谁学的",
+    "好啦，一小口"
+  ],
+  "bedtime": [
+    "关灯没多久，床尾传来轻轻的响动，是{宠物}跳了上来。",
+    "{宠物}在床尾转了两圈，终于挑好位置，蜷成一团。",
+    "被子的脚边微微鼓了起来，{宠物}已经睡着了。",
+    "翻个身，脚碰到暖暖的一团，{宠物}没醒。",
+    "夜里{宠物}悄悄爬上床，靠着脚边闭上了眼。",
+    "{宠物}躺在床尾，呼吸声轻轻的，像一台小小的机器。",
+    "{宠物}先在床边站了好一会儿，确认没被赶，才跳上去。",
+    "熄灯后，{宠物}的呼噜声慢慢响起，屋子一下安静了。"
+  ],
+  "hero_bedtime": [
+    "晚安啦，睡吧",
+    "你的位置在那儿",
+    "别踩我脚啦",
+    "今晚也一起睡",
+    "往旁边挪挪",
+    "被子分你一角",
+    "嗯，别吵我哦",
+    "睡着了就别乱动"
+  ],
+  "bring_toy": [
+    "{宠物}叼着一个玩具走过来，咚地放在脚边，抬头等着。",
+    "脚边多了一个口水亮亮的玩具，{宠物}在旁边坐得笔直。",
+    "{宠物}把玩具推到脚背上，再抬头看一眼，意思很明白。",
+    "{宠物}拖来一个比自己脑袋还大的玩具，放下就坐好了。",
+    "玩具被{宠物}一路叼来，掉在拖鞋旁边，发出一声轻响。",
+    "{宠物}放下玩具，又叼起来，再放下，就是不肯走开。",
+    "低头一看，{宠物}正把玩具往脚边推，眼睛亮亮的。",
+    "{宠物}把玩具丢在面前，转身跑开几步，回头看人动不动。"
+  ],
+  "hero_bring_toy": [
+    "哇，又是这个",
+    "现在吗？好吧好吧",
+    "放这儿是要我捡？",
+    "你先放下，我看看",
+    "口水都沾上了",
+    "哪来这么多精力",
+    "行，玩五分钟",
+    "来，让你先赢"
+  ],
+  "bathroom": [
+    "浴室门刚关上，{宠物}就坐在门外，安静地等着。",
+    "门底下伸进来一只爪子，勾了两下，又缩了回去。",
+    "{宠物}在浴室门口来回踱步，时不时低低叫一声。",
+    "洗完澡一开门，{宠物}就坐在外面，像是从没离开过。",
+    "{宠物}用爪子扒着门，大概觉得里面一定有什么好玩的。",
+    "水声一响，{宠物}蹲在门口，一边听一边歪着头。"
+  ],
+  "hero_bathroom": [
+    "我就洗个澡，等一下",
+    "别挠门，会花的",
+    "门缝里那是你的爪子？",
+    "我在呢，马上出来",
+    "你在外面站岗啊",
+    "让我安静上个厕所"
+  ],
+  "follow": [
+    "从客厅走去厨房，{宠物}的小脚步跟在后面，一步不落。",
+    "一回头，{宠物}正好停住，假装在看别的地方。",
+    "换了个房间，{宠物}也跟着换了个地方趴下。",
+    "{宠物}一路跟到卧室门口，才坐下来歇歇。",
+    "走到哪里，{宠物}的影子就跟到哪里，像条小尾巴。",
+    "转身去拿东西，差点被身后的{宠物}绊了一下。"
+  ]
+});
+// ================================================================ the pet and her (user: 丰富互动)
+// Hearts float up from the pet when she makes a fuss of it; a phone flash for a photo.
+// And the pet seeks her out by itself: runs to the door when she comes home, lies by
+// her feet while she sits (TV, reading, the sofa), comes to the desk while she's at the
+// computer (a cat walks on the keyboard), sits staring in the kitchen while she cooks or
+// eats, waits outside the bathroom, curls up by the bed at night, brings her a toy when
+// it's lonely. Each now and then, never all at once. Texts: pets_text2.json.
+let petFlash = -9, petHeartsUntil = 0;
+for (const sp of ["cat", "dog"]) PET_TEXT["train_" + sp] = [...PET_TEXT.train, ...(PET_TEXT["trick_" + sp] || [])];   // 教它小动作:握手 / 转圈 / 击掌…
+PET_TEXT.hero_train = [...PET_TEXT.hero_train, ...(PET_TEXT.hero_trick || [])];
+function petHearts(sec) { if (sec > 0) petHeartsUntil = Math.max(petHeartsUntil, realClock + sec); }
+const PET_HEART = [".##.##.", "#######", "#######", ".#####.", "..###..", "...#..."];
+function drawPetHearts(ctx, point) {
+  const left = petHeartsUntil - realClock;
+  if (left > 0) {
+    for (let i = 0; i < 3; i++) {
+      const t = (realClock * 0.8 + i / 3) % 1, x = Math.round(point.x - 6 + i * 6 + Math.sin(realClock * 3 + i * 2) * 2), y = Math.round(point.y - 28 - t * 14);
+      ctx.globalAlpha = Math.min(1, left) * (1 - t);
+      PET_HEART.forEach((row, j) => [...row].forEach((ch, k) => { if (ch === "#") { ctx.fillStyle = j === 1 && k < 3 ? "#f6a487" : "#e1725b"; ctx.fillRect(x + k, y + j, 1, 1); } }));
+    }
+    ctx.globalAlpha = 1;
+  }
+  const f = realClock - petFlash;                  // the phone's flash
+  if (f >= 0 && f < 0.3) { ctx.fillStyle = `rgba(255, 255, 255, ${(0.75 * (1 - f / 0.3)).toFixed(3)})`; ctx.fillRect(0, 0, W, H); }
+}
+// ---------------------------------------------------------------- the pet comes to her
+const PET_BOND = { greet: 360, company: 240, keyboard: 300, beg: 240, bathroom: 360, bedtime: 720, bring_toy: 300 };   // game minutes between repeats
+let petBondPlace = "home", petBondNext = 0;
+function petBondFree() {
+  const p = petState.pet;
+  return petCanSee() && !p.carried && !p.motion && !p.interaction && !(p.reservedUntil > sim.t) && !petWalkActive() && sim.place === "home" && sim.mode !== "down";
+}
+function petBondGo(kind, x, y, action, dur, say = 0.4) {
+  const p = petState.pet;
+  p.bondAt ||= {};
+  if (sim.t - (p.bondAt["auto_" + kind] ?? -1e9) < PET_BOND[kind]) return false;
+  p.bondAt["auto_" + kind] = sim.t; petBondNext = sim.t + 45 + Math.random() * 45;
+  if (p.activityNow === "sleep") petStartAction("wake", 2);
+  petWalkTo(Math.max(20, Math.min(325, Math.round(x))), y, action, dur);
+  p.reservedUntil = sim.t + dur;
+  setTimeout(() => {                                // once it's on its way: the line and a little warmth
+    if (!petState.pet) return;
+    log(petText(kind));
+    if (Math.random() < say) speak(petText("hero_" + kind));
+    p.needs.company = clamp(p.needs.company + 10); sim.needs.social = clamp(sim.needs.social + 2);
+    gainPetAffinity(1, "auto_" + kind); petHearts(2);
+  }, 1800);
+  return true;
+}
+function petBondTick() {
+  if (!booted || !speed || !petState.pet) return;
+  const came = sim.place === "home" && petBondPlace !== "home";
+  petBondPlace = sim.place;
+  if (!petBondFree()) return;
+  const p = petState.pet, h = here(), y = FLOOR_Y[storeyOfY(h.y)], side = h.x > 170 ? -14 : 14, act = sim.mode === "act" ? sim.act : null;
+  if (came) { const [st, x] = D.spots.front_door; if (petBondGo("greet", x + 16, FLOOR_Y[st], "happy", 14, 0.7)) return; }
+  if (sim.t < petBondNext || Math.random() > 0.08) return;   // now and then, not all the time
+  const night = hour() >= 21 || hour() < 6;
+  if (act === "sleep" && !sim.nap && night) { petBondGo("bedtime", h.x + side * 1.4, y, "sleep", 240, 0); return; }
+  if (p.activityNow === "sleep" || p.needs.energy < 25) return;
+  if (["tv", "read", "guest_seat", "host"].includes(act)) { petBondGo("company", h.x + side, y, Math.random() < 0.5 ? "lie_down" : "rest", 40); return; }
+  if (["computer", "pc_code", "pc_forum", "pc_video"].includes(act)) { petBondGo("keyboard", h.x + side * 0.8, y, petBreed(p.breed).species === "cat" ? "knead" : "sit", 25, 0.6); return; }
+  if (["cook", "eat"].includes(act)) { petBondGo("beg", h.x + side * 1.2, y, "sit", 30); return; }
+  if (["bath", "toilet"].includes(act)) { petBondGo("bathroom", h.x + side * 2, y, "sit", 20); return; }
+  if (!act && p.needs.company < 55) { if (petBondGo("bring_toy", h.x + side, y, petPlayAction(), 20, 0.6)) startPetPlay(); }
+}
+setInterval(petBondTick, 1000);
 
 // Scene acoustics are independent of rendering and simulation speed.
 function audioRoom(p){

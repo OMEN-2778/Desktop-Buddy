@@ -526,7 +526,7 @@ def main():
     html = html.replace("/*__PETS_JS__*/", (SRC.parent / "pets_state.js").read_text()+"\nconst PET_TEXT = "+(SRC.parent / "pets_text.json").read_text()+";\n"+(SRC.parent / "pets.js").read_text())
     html = html.replace("/*__PIXEL_UI_CSS__*/", (SRC.parent / "pixel_ui.css").read_text())
     html = html.replace("/*__PET_ACTIVITIES_JS__*/", (SRC.parent / "pet_activities.js").read_text())
-    html = html.replace("/*__PET_HUD_JS__*/", (SRC.parent / "pet_hud.js").read_text())
+    html = html.replace("/*__PET_HUD_JS__*/", (SRC.parent / "pet_hud.js").read_text() + "\nObject.assign(PET_TEXT, " + (SRC.parent / "pets_text2.json").read_text() + ");\n" + (SRC.parent / "pet_bond.js").read_text())
     html = html.replace("/*__PET_HUD_CSS__*/", (SRC.parent / "pet_hud.css").read_text())
     html = html.replace("/*__PETS_CSS__*/", (SRC.parent / "pets.css").read_text())
     OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))

@@ -3,7 +3,7 @@ let petState=PetRules.fresh(),petPanelPage=null,petSelection=null,petHover=null;
 const petImages=new Map(),petFurnitureImages={},petClips=new Map(D.pets.breeds.map(b=>[b.id,new Map(b.clips.map(c=>[c.id+':'+c.direction,c]))]));
 const petBreed=id=>D.pets.breeds.find(b=>b.id===id);
 const petName=()=>petState.pet?.name||'小家伙';
-const petText=key=>(PET_TEXT[key]||[''])[Math.floor(PetRules.random(petState)*(PET_TEXT[key]||['']).length)].replaceAll('{宠物}',petName());
+const petText=key=>{const sp=petState.pet?petBreed(petState.pet.breed).species:'';if(PET_TEXT[key+'_'+sp])key+='_'+sp;const list=PET_TEXT[key]||[''];return list[Math.floor(PetRules.random(petState)*list.length)].replaceAll('{宠物}',petName());};   // a _cat / _dog variant wins
 const petIsHome=()=>sim.place==='home'&&!atFriendHome()&&!friendHousePreview;
 const petCanSee=()=>petState.pet?.status==='home'&&(petIsHome()||petWalkActive());
 const petNearby=()=>petCanSee()&&(petWalkActive()||roomAt(here())===roomAt(petPoint()))&&!['bath','toilet'].includes(sim.act);
@@ -86,7 +86,7 @@ function petSpriteFrame(){const c=petClip(),p=petState.pet;return c?Math.floor((
 function drawPetKit(ctx){if(!petState.installed||!petIsHome())return;const mat=petMatImage(),feeder=petFurnitureImages.pet_feeder;if(mat)ctx.drawImage(mat,142,FLOOR_Y[0]-5);if(feeder)ctx.drawImage(feeder,91,FLOOR_Y[0]-21);if(petHover==='feeder'&&feeder)drawObjectHover(ctx,feeder,91,FLOOR_Y[0]-21);if(petHover==='mat'&&mat)drawObjectHover(ctx,mat,142,FLOOR_Y[0]-5);}
 const petFrameCache=new Map();
 function petFrameCanvas(){const p=petState.pet,c=petClip(),img=p&&petImages.get(p.breed);if(!c||!img)return null;const frame=petSpriteFrame(),key=p.breed+':'+c.row+':'+frame;let canvas=petFrameCache.get(key);if(!canvas){canvas=document.createElement('canvas');canvas.width=32;canvas.height=28;canvas.getContext('2d').drawImage(img,frame*32,c.row*28,32,28,0,0,32,28);petFrameCache.set(key,canvas);if(petFrameCache.size>96)petFrameCache.delete(petFrameCache.keys().next().value);}return canvas;}
-function drawPetActor(ctx,held=false){if(!petCanSee()||!!petState.pet.carried!==held)return;const img=petFrameCanvas(),point=petPoint();if(!img)return;if(!held)drawPetToy(ctx);const x=Math.round(point.x-16),y=Math.round(point.y-25);ctx.drawImage(img,x,y);if(petHover==='pet')drawObjectHover(ctx,img,x,y);}
+function drawPetActor(ctx,held=false){if(!petCanSee()||!!petState.pet.carried!==held)return;const img=petFrameCanvas(),point=petPoint();if(!img)return;if(!held)drawPetToy(ctx);const x=Math.round(point.x-16),y=Math.round(point.y-25);ctx.drawImage(img,x,y);drawPetHearts(ctx,point);if(petHover==='pet')drawObjectHover(ctx,img,x,y);}
 function petHit(x,y){if(!petIsHome()&&!petWalkActive())return null;const shapes=[];if(petCanSee()){const p=petPoint();shapes.push(['pet',petFrameCanvas(),Math.round(p.x-16),Math.round(p.y-25)]);}if(petState.installed&&petIsHome())shapes.push(['feeder',petFurnitureImages.pet_feeder,91,FLOOR_Y[0]-21],['mat',petMatImage(),142,FLOOR_Y[0]-5]);for(const [id,img,ox,oy]of shapes)if(img){if(!outlineCache.has(img))outlineCache.set(img,outlineShape(img));if(outlineCache.get(img).near.has(Math.floor(x-ox)+','+Math.floor(y-oy)))return id;}return null;}
 
 const petImageLoads=new Map();
@@ -99,7 +99,7 @@ window.addEventListener('resize',fitPetPanel);document.addEventListener('keydown
 
 // Human-side pet actions use the normal walking/action scheduler, so urgent
 // needs can interrupt them exactly like reading or TV. They never block a call.
-for(const [id,label,dur] of [['pat','摸摸宠物',10],['play','陪宠物玩',20],['groom','给宠物梳毛',16],['train','和宠物练个小动作',15],['talk','跟宠物说说话',10],['feed','检查并添粮',8],['hold','抱起宠物',12],['treat','给宠物喂零食',8]]){
+for(const [id,label,dur] of [['pat','摸摸宠物',10],['play','陪宠物玩',20],['groom','给宠物梳毛',16],['train','和宠物练个小动作',15],['talk','跟宠物说说话',10],['feed','检查并添粮',8],['hold','抱起宠物',12],['treat','给宠物喂零食',8],['belly','挠挠宠物的肚皮',10],['kiss','亲亲宠物',6],['photo','给宠物拍照',8],['toy','和宠物玩玩具',18]]){
  ACTS['pet_'+id]={spot:'pet_interact',label,emote:'heart',dur,log:null};EFFECT['pet_'+id]={fun:.25,social:.25};
 }
 D.spots.pet_interact=[0,112];
@@ -114,10 +114,10 @@ function preparePetHumanAction(act){if(act==='pet_feed'&&petState.installed){D.s
  p.position={x:point.x,y:point.y};p.playUntil=0;p.toyUntil=0;petStartAction('look',40);p.reservedUntil=sim.t+80;p.interaction=null;return true;
 }
 function onPetHumanArrive(act){const p=petState.pet;if(act==='pet_feed'&&!petCanSee()){petState.feeder=900;log(petText('refill'));autoSave();return;}if(!petCanSee())return;const kind=act.slice(4);
- if(kind==='hold'){p.carried=true;p.direction=(sim.facing||1)>0?'right':'left';p.motion=null;petStartAction('sit',12);p.needs.company=clamp(p.needs.company+12);gainPetAffinity(3,'hold');log(petText('hold'));speak(petText('hero_hold'));return;}
+ if(kind==='hold'){petHearts(2);p.carried=true;p.direction=(sim.facing||1)>0?'right':'left';p.motion=null;petStartAction('sit',12);p.needs.company=clamp(p.needs.company+12);gainPetAffinity(3,'hold');log(petText('hold'));speak(petText('hero_hold'));return;}
  if(kind==='treat'){servePetTreat(p.pendingTreat);delete p.pendingTreat;return;}p.nextHero=sim.t+75+PetRules.random(petState)*75;p.reservedUntil=sim.t+(ACTS[act]?.dur||15);
  if(kind==='feed'){petState.feeder=900;log(petText('refill'));petWalkTo(119,FLOOR_Y[0],'eat',30);speak(petText('hero_feed'));}
- else{if(kind==='play')startPetPlay();petStartAction(({pat:'nuzzle',play:petPlayAction(),groom:'sit',train:petBreed(p.breed).species==='dog'?'wag':'pounce',talk:'look'})[kind]||'happy',ACTS[act].dur);p.needs.company=clamp(p.needs.company+(kind==='play'?30:20));gainPetAffinity(kind==='play'?4:2,kind);log(petText(kind));speak(petText('hero_'+kind));addMood('pet_company',{diary:false,words:false});}
+ else{if(kind==='play')startPetPlay();petStartAction(({pat:'nuzzle',play:petPlayAction(),groom:'sit',train:petBreed(p.breed).species==='dog'?'wag':'pounce',talk:'look',belly:'roll',kiss:'content',photo:'curious',toy:petBreed(p.breed).species==='cat'?'pounce':'run'})[kind]||'happy',ACTS[act].dur);petHearts(kind==='photo'?0:2.5);if(kind==='photo')petFlash=realClock;if(kind==='toy')startPetPlay();p.needs.company=clamp(p.needs.company+(kind==='play'?30:20));gainPetAffinity(kind==='play'?4:2,kind);log(petText(kind));speak(petText('hero_'+kind));addMood('pet_company',{diary:false,words:false});}
 }
 function tickGuestPet(g,c){const p=petState.pet;if(!petCanSee()||g.sleeping||asleep()||sim.mode==='down'||remoteSocial||sim.talk||['bath','toilet'].includes(sim.act)){g.petVisit=null;return;}
  const visit=g.petVisit;

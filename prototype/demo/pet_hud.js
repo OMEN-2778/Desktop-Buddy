@@ -22,7 +22,9 @@ petHud.append(petNameButton,petStats);document.body.append(petHud);
 petHud.style.setProperty('--pc-bar-clip',roundClip(7,1));petHud.style.setProperty('--need-stripes',`url("${D.uiIcons.stripes}")`);
 function petRings(){
  const p=petState.pet,cat=petBreed(p.breed).species==='cat';
- RINGS.pet=[['pet:walk',(cat?'遛猫':'遛狗')+' ▸','more'],['pet:treat','喂零食 ▸','more'],['pet:play','逗逗它'],['pet:hold',p.carried?'放下来':'抱起来'],['pet:groom','梳毛'],['pet:name','改名字']];
+ RINGS.pet=[['pet:walk',(cat?'遛猫':'遛狗')+' ▸','more'],['pet:treat','喂零食 ▸','more'],['pet:close','亲近 ▸','more'],['pet:fun','玩耍 ▸','more'],['pet:groom','梳毛'],['pet:name','改名字']];
+ RINGS.pet_close=[['pet:pat','摸摸头'],['pet:belly','挠肚皮'],['pet:kiss','亲一口'],['pet:hold',p.carried?'放下来':'抱起来'],['pet:talk','聊聊天'],['pet:back','返回','back']];
+ RINGS.pet_fun=[['pet:play','逗逗它'],['pet:toy',cat?'逗猫棒':'扔球'],['pet:train','教它小动作'],['pet:photo','拍张照'],['pet:back','返回','back']];
  RINGS.pet_walk=[['pet:go:front','去门口'],['pet:go:park','去公园'],['pet:go:beach','去码头'],['pet:back','返回','back']];
  RINGS.pet_treat=[...PET_TREATS.map(t=>['pet:treat:'+t.id,t.name]),['pet:back','返回','back']];
 }
@@ -44,7 +46,7 @@ function closePetHud(){
 }
 // a pick on the pet's ring
 function petRingPick(k){
- if(k==='walk'||k==='treat'){openRing('pet_'+k,'pet');return;}
+ if(['walk','treat','close','fun'].includes(k)){openRing('pet_'+k,'pet');return;}
  if(k==='back'){petRings();openRing('pet','pet');
  const ws=getComputedStyle(document.getElementById('widget'));   // the HUD's clip shapes and colours live on the widget
  for(const k of ['--hud-panel-clip','--hud-panel-in','--hud-small-clip','--clip-btn','--title','--hud-frame','--panel','--panel-2','--edge','--bevel-hi','--bevel-lo','--shadow','--ink','--need-ok','--need-warn','--need-low','--ui-font-label','--focus']){const v=ws.getPropertyValue(k);if(v)petHud.style.setProperty(k,v);}return;}
