@@ -1,0 +1,17 @@
+[
+  {
+    "id": "disco-mirror",
+    "title": "镜球正在升温",
+    "style": "现代迪斯科舞厅",
+    "bpm": 124,
+    "duration": 128.871,
+    "file": "audio/disco-mirror.mp3",
+    "midi": "audio/disco-mirror.mid",
+    "rms_db": -21.56,
+    "peak": 0.6348,
+    "pitched_parts": 15,
+    "chorus_at": 46.452,
+    "middle_at": 77.419,
+    "preview_only": true
+  }
+]
