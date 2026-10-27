@@ -98,7 +98,7 @@ const gameAudio = (() => {
     if(place==='mall')return 'BGM/mall/mall-neon-escalator.mp3';
     if(place==='bar')return 'BGM/bar/'+(night?'bar-amber-bass':'bar-daylight-cup')+'.mp3';
     if(place==='beach')return festival==='端午节'?'BGM/harbor/dragon-boat-'+(night?'night':'day')+'.mp3':'BGM/harbor/harbor-mist-return.mp3';
-    if(place==='disco')return 'BGM/disco/disco-mirror-night.mp3';
+    if(place==='disco')return 'BGM/disco/disco-glitter.mp3';
     return 'BGM/home/'+season+'-'+(night?'night':'day')+'.mp3';
   }
   function updateMusic(){
