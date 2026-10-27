@@ -1187,6 +1187,8 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 .fb-deco svg.tint { fill: var(--fb-a); opacity: .3; }
 @keyframes fbDecoRun { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes fbDecoBob { from { transform: translateY(-2px) rotate(var(--r)); } to { transform: translateY(2px) rotate(calc(var(--r) * -1)); } }
+/* (the generic button bevel, edge and margin showed as stray lines round the clipped circles) */
+.fest-bar .fb-pill, .fest-bar .fb-name { margin: 0; box-shadow: none; border: 0; filter: none; text-shadow: none; }
 
 #petPanel{position:absolute;z-index:32;left:var(--pick-left);top:var(--pick-top);width:var(--pick-w);height:var(--pick-h);box-sizing:border-box;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden;font-size:var(--ui-font-body,14px);animation:pet-sheet-in .32s cubic-bezier(.2,.8,.2,1.12)}
 #petPanel[hidden],.pet-mini[hidden]{display:none}
