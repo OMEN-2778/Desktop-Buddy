@@ -23,8 +23,11 @@ const discoOpen = () => discoWindow() || (!!lifeFlags.discoMember && seasonOf(si
 const disco = { dj: null, djSay: 0 };
 function discoSetup() {
   life.npcs = [];
-  const spots = [[58, 99, "back"], [96, 112, "front"], [128, 100, "back"], [214, 101, "back"], [246, 113, "front"], [282, 99, "back"], [312, 112, "front"]];
-  for (const [x, feet, layer] of spots) if (Math.random() < 0.85) life.npcs.push(makeNpc(Math.random() < 0.1 ? "kid" : "walker", { x, feet, layer, dance: true }));
+  const spots = [                                  // a packed floor (user: twice the dancers): back row, a middle row, front row
+    [30, 99, "back"], [58, 99, "back"], [128, 100, "back"], [214, 101, "back"], [282, 99, "back"], [326, 100, "back"],
+    [78, 106, "back"], [112, 106, "back"], [232, 106, "back"], [300, 106, "back"],
+    [18, 113, "front"], [96, 112, "front"], [140, 113, "front"], [246, 113, "front"], [312, 112, "front"]];
+  for (const [x, feet, layer] of spots) if (Math.random() < 0.9) life.npcs.push(makeNpc(Math.random() < 0.1 ? "kid" : "walker", { x, feet, layer, dance: true }));
   disco.dj = makeNpc("performer", { x: 171, feet: 76, layer: "dj" });
   disco.djSay = realClock + 4;
 }
