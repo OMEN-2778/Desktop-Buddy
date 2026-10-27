@@ -105,6 +105,13 @@ def note(ch, pitch, beat, length, vel, human=.006):
  EV.append((max(0, t) + max(.04, length * BEAT), bytes([0x80 + ch, int(pitch), 0])))
 def chord(ch, ps, beat, length, vel, spread=.012):
  for j, p in enumerate(ps): note(ch, p, beat + j * spread, length, vel)
+def third_below(p, name):
+ """The diatonic third under a melody note in D minor (C# over A7), for a harmony line."""
+ pcs = sorted({2, 4, 5, 7, 9, 10, 1 if name == 'A7' else 0})
+ if p % 12 not in pcs: return p - 3
+ for q in range(p - 1, p - 6, -1):
+  if q % 12 in pcs and sum(1 for r in range(q, p) if r % 12 in pcs) == 2: return q
+ return p - 3
 def run_up(ch, beat, top, steps, vel):            # a disco string swoop into the next bar
  notes = [p + 12 * o for o in (0, 1, 2) for p in SCALE]
  notes = [p for p in notes if p <= top][-steps:]
@@ -152,7 +159,11 @@ def compose():
   if verse:
    v = bar - VERSE[0]
    if v == 0: EV.append((b * BEAT - .01, bytes([0xC0 + 13, 54])))       # choir becomes a synth voice for chops
-   for off, p, ln in VERSE_LINE[v]: note(0, p + k, b + off, ln * .92, 96 if ln < .5 else 88)
+   for off, p, ln in VERSE_LINE[v]:           # lead (user: 更饱满): square + saw an octave under + brass/strings harmony
+    note(0, p + k, b + off, ln * .92, 96 if ln < .5 else 88)
+    note(7, p + k - 12, b + off, ln * .9, 70)
+    if ln >= .5 or bar >= VERSE[0] + 8: note(11, third_below(p, name) + k, b + off, ln * .9, 62)
+    if ln >= .75: note(5, p + k, b + off, ln, 50)
    if v in STUTTER:
     p, x0, x1 = STUTTER[v]
     for q in np.arange(x0, x1, .125): note(0, p, b + q, .07, 70 + 20 * (q - x0) / (x1 - x0), 0)
@@ -175,6 +186,9 @@ def compose():
   if chorus:
    for off, p, ln in HOOK[i8]:
     note(7, p + k, b + off, ln * .9, 96)
+    note(0, p + k, b + off, ln * .88, 76)                       # square doubles the hook
+    note(11, third_below(p, name) + k, b + off, ln * .9, 70)    # synth brass sings a third under
+    note(14, p + k + 24, b + off, min(ln, .5), 52)              # celesta glints two octaves up
     note(5, p + k + 12, b + off, ln * .95, 66)
     if last: note(13, p + k, b + off, ln, 58)
    chord(12, tones, b, 3.9, 50)
