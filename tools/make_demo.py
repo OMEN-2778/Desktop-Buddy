@@ -48,6 +48,7 @@ import bar as BAR  # noqa: E402
 import festival_props as FEST  # noqa: E402
 import festival_props2 as FEST2  # noqa: E402
 import giants_v2 as GIANTS2  # noqa: E402
+import festival_deco as DECO  # noqa: E402
 import make_creator as mc  # noqa: E402
 from pixelkit import P, Sprite, rgba  # noqa: E402
 
@@ -439,6 +440,10 @@ def main():
                       "drum": png(FEST2.drum()), "dragonStatue": png(FEST2.dragon_statue()), "dockLamps": png(FEST2.dock_lamps()),
                       "flags": [[png(FEST2.water_flag(k, f)) for f in (0, 1)] for k in range(4)], "screen": list(FEST2.SCREEN),
                       "lasers": list(FEST2.LASERS), "strips": list(FEST2.STRIP_Y)},
+        "deco": {"balloons": [png(DECO.balloon(k)) for k in range(7)], "heart": [png(DECO.balloon(k, "heart")) for k in (0, 4)], "ghost": png(DECO.balloon(0, "ghost")),
+                 "boards": [png(DECO.board(k)) for k in range(7)], "lollipops": [png(DECO.lollipop(k)) for k in (0, 2, 4)], "books": png(DECO.book_stack()),
+                 "roses": png(DECO.rose_pot()), "pumpkin": [png(DECO.pumpkin(True)), png(DECO.pumpkin(False))], "bat": [png(DECO.bat(f)) for f in (0, 1)],
+                 "tomb": [png(DECO.tombstone(v)) for v in (0, 1)], "skyLantern": png(DECO.sky_lantern()), "lantern": png(DECO.lantern_red())},
         "skyIcons": {**{k: [png(f) for f in sky_icons.frames(k)] for k in sky_icons.NAMES},"storm":[png(STORM.icon(i)) for i in range(4)]},
         "pets": PETS.runtime_data(),
         "pixelUi": {theme:{kind:png(ui_icons.pixel_surface(kind,theme=="dark")) for kind in ("panel","control","positive","gold","gold-pill","blue-pill","input","track","pill","thumb")} for theme in ("light","dark")},
@@ -471,7 +476,7 @@ def main():
     html = html.replace("/*__PARK_FOOD_JS__*/", "const PARK_FOOD = " + json.dumps(park_food, ensure_ascii=False) + ";")
     html = html.replace("/*__NPC_SOCIAL_JS__*/", "const NPC_TALK_TEXT = " + (SRC.parent / "npc_talk.json").read_text() + ";\n" + (SRC.parent / "npc_social.js").read_text())
     html = html.replace("/*__PARK_JS__*/", (SRC.parent / "park.js").read_text())
-    html = html.replace("/*__FESTIVAL_FUN_JS__*/", "const FEST_TEXT = " + (SRC.parent / "festival_text.json").read_text() + ";\nconst FEST_TEXT2 = " + (SRC.parent / "festival_text2.json").read_text() + ";\n" + (SRC.parent / "festival_fun.js").read_text() + "\n" + (SRC.parent / "festival_fun2.js").read_text() + "\nconst FEST_TEXT3 = " + (SRC.parent / "festival_text3.json").read_text() + ";\n" + (SRC.parent / "festival_fun3.js").read_text() + "\nconst FEST_TEXT4 = " + (SRC.parent / "festival_text4.json").read_text() + ";\n" + (SRC.parent / "festival_fun4.js").read_text() + "\n" + (SRC.parent / "disco.js").read_text() + "\n" + (SRC.parent / "fest_banner.js").read_text())
+    html = html.replace("/*__FESTIVAL_FUN_JS__*/", "const FEST_TEXT = " + (SRC.parent / "festival_text.json").read_text() + ";\nconst FEST_TEXT2 = " + (SRC.parent / "festival_text2.json").read_text() + ";\n" + (SRC.parent / "festival_fun.js").read_text() + "\n" + (SRC.parent / "festival_fun2.js").read_text() + "\nconst FEST_TEXT3 = " + (SRC.parent / "festival_text3.json").read_text() + ";\n" + (SRC.parent / "festival_fun3.js").read_text() + "\nconst FEST_TEXT4 = " + (SRC.parent / "festival_text4.json").read_text() + ";\n" + (SRC.parent / "festival_fun4.js").read_text() + "\n" + (SRC.parent / "disco.js").read_text() + "\n" + (SRC.parent / "fest_banner.js").read_text() + "\n" + (SRC.parent / "park_deco.js").read_text())
     html = html.replace("/*__BAR_JS__*/", (SRC.parent / "bar.js").read_text())
     html = html.replace("/*__DUSK_JS__*/", (SRC.parent / "dusk.js").read_text())
     html = html.replace("/*__RESTROOMS_JS__*/", (SRC.parent / "restrooms.js").read_text())

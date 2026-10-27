@@ -75,7 +75,7 @@
       <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她弹出互动菜单。"></canvas>
       <div class="ring" id="ring" role="menu" aria-label="和她互动" hidden></div>
       <div class="nametag" id="nametag" aria-hidden="true"></div>
-      <div class="fest-banner" id="festBanner" hidden role="status"><span class="fb-glow" aria-hidden="true"><i class="fb-shine"></i></span><canvas class="fb-icon" width="1" height="1" aria-hidden="true"></canvas><span class="fb-text"><b></b><span class="fb-tip"></span></span><i class="fb-spark s1" aria-hidden="true"></i><i class="fb-spark s2" aria-hidden="true"></i><i class="fb-spark s3" aria-hidden="true"></i><span class="fb-confetti" aria-hidden="true"></span></div>
+      <div class="fest-bar" id="festBanner" hidden role="toolbar" aria-label="今日节日"><span class="fb-deco" aria-hidden="true"></span><span class="fb-sheen" aria-hidden="true"></span><span class="fb-name"></span><span class="fb-acts"></span></div>
       <div class="update" id="update" role="status" hidden><span></span><button type="button" class="up-go">更新</button><button type="button" class="up-later">以后</button><i class="up-bar"></i></div>
     </div>
   </div>
@@ -4032,6 +4032,7 @@ function renderPark(dt) {
   drawFestStalls(bctx); drawSnowmen(bctx);
   drawRiddleTree(bctx);
   drawQixiPark(bctx, dt, run);
+  drawParkDeco(bctx, dt, run);
   drawNpcs(bctx, "back");
   const fr = activityFrame(realClock * 1000);
   if (!parkInsideToilet() && !sim.park?.seated && !parkEating()) {
@@ -4058,6 +4059,7 @@ function renderPark(dt) {
   bctx.drawImage(S.foreground, 0, 0);
   drawOutsideWeather(bctx);
   gradePark(bctx, f);
+  drawParkDecoNight(bctx, f, dt, run);
   drawLit(bctx, f, O.lit, [[treeImg, 0, 0], ...(dollAt ? [dollAt] : [])]);
   if (f > 0.5 && se === 1 && w === "clear") {    // fireflies on summer nights
     for (let i = 0; i < 9; i++) {
@@ -4550,7 +4552,7 @@ function makeRoom() {
   if (diaryOn) need = Math.max(need, mTop - diaryBox.getBoundingClientRect().top + 8 + diaryPop.offsetHeight);
   if (!setPop.hidden) need = Math.max(need, mTop - setPop.getBoundingClientRect().top + 8);
   const fb = document.getElementById("festBanner");   // the festival banner rides above the diary
-  if (!fb.hidden) need = Math.max(need, mTop - diaryBox.getBoundingClientRect().top + fb.offsetHeight + 14 + 8);
+  if (!fb.hidden) need = Math.max(need, mTop - diaryBox.getBoundingClientRect().top + fb.offsetHeight + 14 + 8 + (document.getElementById("update").hidden ? 0 : document.getElementById("update").offsetHeight + 8));
   // the app keeps room above the house for all of these all the time (and
   // lets clicks through it): opening one never moves the window (user: it flashed)
   if (TAURI) need = Math.max(need, APP_HEADROOM);

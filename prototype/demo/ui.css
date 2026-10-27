@@ -737,42 +737,61 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
 .audio-volume input::-moz-range-thumb { width:10px; height:20px; border:2px solid var(--edge); border-radius:6px; background:var(--panel); box-shadow:inset 0 2px var(--bevel-hi),inset 0 -3px var(--bevel-lo); }
 .audio-volume input:focus-visible { outline:2px dashed var(--focus); outline-offset:5px; }
 
-/* ---------- the festival banner (user): above the diary, left-aligned with the
-   house; drops in with a bounce and confetti, idles (icon bob, shine, sparkles),
-   hops away when the festival is over ---------- */
-.fest-banner { position: absolute; z-index: 39; display: flex; align-items: center; gap: 8px; padding: 5px 16px 5px 7px; color: #fff;
-  isolation: isolate; cursor: pointer; filter: drop-shadow(2px 2px 0 var(--shadow)); transform-origin: 18% 100%; max-width: var(--house-w); }
-.fest-banner[hidden] { display: none; }
-.fest-banner::before { content: ""; position: absolute; inset: -2px; z-index: -3; background: #fff; clip-path: var(--clip-btn); }
-.fest-banner::after { content: ""; position: absolute; inset: 0; z-index: -2; clip-path: var(--clip-btn);
-  background: linear-gradient(100deg, var(--fb-a, #e1725b) 0 55%, var(--fb-b, #f6a487)); }
-.fb-glow { position: absolute; inset: 0; z-index: -1; clip-path: var(--clip-btn); overflow: hidden; pointer-events: none; }
-.fb-shine { position: absolute; top: -20%; bottom: -20%; left: -30%; width: 18%; background: rgba(255, 255, 255, .35); transform: skewX(-20deg) translateX(-100%); }
-.fb-icon { image-rendering: pixelated; flex: none; filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, .25)); }
-.fb-text { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; text-shadow: 1px 1px 0 rgba(0, 0, 0, .25); }
-.fb-text b { font-size: var(--ui-font-body); letter-spacing: .12em; }
-.fb-tip { font-size: var(--ui-font-label, 12px); font-weight: 600; opacity: .95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fb-spark { position: absolute; width: 7px; height: 7px; pointer-events: none; opacity: 0;
-  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); background: #fff; }
-.fb-spark.s1 { top: -4px; right: 10px; } .fb-spark.s2 { bottom: -3px; right: 34%; width: 5px; height: 5px; } .fb-spark.s3 { top: 30%; left: -3px; width: 5px; height: 5px; }
-.fb-confetti { position: absolute; left: 22px; top: 50%; width: 0; height: 0; pointer-events: none; }
-.fb-confetti i { position: absolute; width: 3px; height: 3px; background: var(--c); opacity: 0; animation: fbConf .8s cubic-bezier(.2, .7, .3, 1) var(--d) forwards; }
-.fest-banner.in { animation: fbIn .55s cubic-bezier(.3, 1.4, .5, 1) both; }
-.fest-banner.in .fb-icon { animation: fbPop .5s .15s cubic-bezier(.3, 1.8, .5, 1) both; }
-.fest-banner.in .fb-text { animation: fbText .4s .22s ease-out both; }
-.fest-banner.idle .fb-icon { animation: fbBob 1.6s steps(2, jump-none) infinite; }
-.fest-banner.idle .fb-shine { animation: fbShine 5s 1s ease-in-out infinite; }
-.fest-banner.idle .fb-spark { animation: fbTwinkle 2.4s ease-in-out infinite; }
-.fest-banner.idle .fb-spark.s2 { animation-delay: .8s; } .fest-banner.idle .fb-spark.s3 { animation-delay: 1.6s; }
-.fest-banner.pop { animation: fbPopAll .35s cubic-bezier(.3, 1.6, .5, 1); }
-.fest-banner.out { animation: fbOut .3s ease-in both; }
-@keyframes fbIn { 0% { transform: translateY(-16px) scale(.35); opacity: 0; } 55% { transform: translateY(2px) scale(1.07); opacity: 1; } 78% { transform: scale(.97); } 100% { transform: none; opacity: 1; } }
-@keyframes fbPop { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
-@keyframes fbText { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
-@keyframes fbBob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2px; } }
-@keyframes fbShine { 0%, 70% { transform: skewX(-20deg) translateX(-100%); } 100% { transform: skewX(-20deg) translateX(900%); } }
-@keyframes fbTwinkle { 0%, 100% { opacity: 0; transform: scale(.3); } 45% { opacity: 1; transform: scale(1); } 60% { opacity: .8; transform: scale(.8); } }
-@keyframes fbConf { 0% { opacity: 1; transform: translate(0, 0); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 14px)); } }
-@keyframes fbPopAll { 0% { transform: scale(1); } 40% { transform: scale(1.08) translateY(-2px); } 100% { transform: none; } }
-@keyframes fbOut { 0% { transform: none; opacity: 1; } 35% { transform: translateY(2px) scale(1.04); } 100% { transform: translateY(-14px) scale(.4); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .fest-banner, .fest-banner * { animation: none !important; } }
+/* ---------- the festival bar (user, iOS-smooth): a long rounded pill above the
+   diary, as wide as the house, in the festival's own colours fading to white;
+   the festival's name on the left, then one button per thing to do today (she
+   goes there by herself) and a line about the day. Springs in with a blur,
+   the pills follow one by one; idles with a slow drifting gradient and a sheen;
+   folds away in reverse when the day is over. ---------- */
+.fest-bar { --ios: cubic-bezier(.32, .72, 0, 1); --spring: cubic-bezier(.34, 1.56, .64, 1); --fb-deep: color-mix(in srgb, var(--fb-a) 80%, #10131f);
+  position: absolute; z-index: 39; display: flex; align-items: center; gap: 6px; box-sizing: border-box;
+  padding: 4px; border-radius: 999px; color: #1f2430; font-weight: 600; isolation: isolate;
+  background: linear-gradient(90deg, var(--fb-a) 0%, var(--fb-b) 42%, #f4f8ff 82%, #fff 100%);
+  background-size: 125% 100%; background-position: 0% 0;
+  box-shadow: 0 0 0 3px #fff, 0 8px 22px -8px color-mix(in srgb, var(--fb-a) 70%, transparent), 0 2px 6px rgba(20, 20, 40, .12); }
+.fest-bar[hidden] { display: none; }
+.fest-bar .fb-sheen { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; z-index: -1; }
+.fest-bar .fb-sheen::after { content: ""; position: absolute; top: 0; bottom: 0; width: 30%; left: -40%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); }
+.fb-name { flex: none; display: flex; align-items: center; height: 100%; min-height: 30px; padding: 0 18px; border-radius: 999px; box-sizing: border-box;
+  background: var(--fb-deep); color: #fff; font-weight: 700; letter-spacing: .08em; font-size: var(--ui-font-body);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25); }
+.fb-acts { display: flex; gap: 6px; margin-left: auto; min-width: 0; align-items: center; }
+.fb-pill { flex: none; display: inline-flex; align-items: center; box-sizing: border-box; height: 30px; padding: 0 14px; border: 0; border-radius: 999px; font: inherit; font-size: var(--ui-font-control); color: #1f2430;
+  background: color-mix(in srgb, var(--fb-a) 18%, rgba(255, 255, 255, .72)); backdrop-filter: blur(6px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .55); white-space: nowrap;
+  transition: transform .45s var(--spring), background-color .3s ease, box-shadow .3s ease; }
+button.fb-pill { cursor: pointer; }
+button.fb-pill:hover { transform: translateY(-1px) scale(1.05); background: color-mix(in srgb, var(--fb-a) 28%, #fff); box-shadow: inset 0 0 0 1px #fff, 0 4px 10px -4px color-mix(in srgb, var(--fb-a) 80%, transparent); }
+button.fb-pill:active { transform: scale(.94); transition-duration: .12s; }
+button.fb-pill:focus-visible { outline: 2px solid var(--fb-deep); outline-offset: 2px; }
+.fb-pill.fb-say { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #3b4150; font-weight: 500;
+  background: rgba(255, 255, 255, .6); }
+.fb-pill.go { animation: fbTap .5s var(--spring); }
+.fest-bar.in { animation: fbBarIn .7s var(--ios) both; }
+.fest-bar.in .fb-name { animation: fbNameIn .7s .08s var(--ios) both; }
+.fest-bar.in .fb-pill { animation: fbPillIn .6s calc(.16s + var(--i) * .07s) var(--ios) both; }
+.fest-bar.idle { animation: fbDrift 14s ease-in-out infinite alternate; }
+.fest-bar.idle .fb-sheen::after { animation: fbSheen 7s 1.2s var(--ios) infinite; }
+.fest-bar.idle .fb-name { animation: fbGlow 3.6s ease-in-out infinite; }
+.fest-bar.out { animation: fbBarOut .45s .12s cubic-bezier(.4, 0, 1, 1) both; }
+.fest-bar.out .fb-pill { animation: fbPillOut .3s calc((var(--n) - var(--i)) * .04s) cubic-bezier(.4, 0, 1, 1) both; }
+@keyframes fbBarIn { from { opacity: 0; transform: translateY(-14px) scale(.94); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes fbNameIn { from { opacity: 0; transform: scale(.7); filter: blur(4px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes fbPillIn { from { opacity: 0; transform: translateX(18px) scale(.9); filter: blur(5px); } to { opacity: 1; transform: none; filter: blur(0); } }
+@keyframes fbPillOut { to { opacity: 0; transform: translateX(12px) scale(.9); filter: blur(4px); } }
+@keyframes fbBarOut { to { opacity: 0; transform: translateY(-10px) scale(.95); filter: blur(8px); } }
+@keyframes fbDrift { from { background-position: 0% 0; } to { background-position: 100% 0; } }
+@keyframes fbSheen { 0%, 60% { left: -40%; } 100% { left: 120%; } }
+@keyframes fbGlow { 0%, 100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 0 0 0 color-mix(in srgb, var(--fb-a) 0%, transparent); }
+  50% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 0 12px 1px color-mix(in srgb, var(--fb-a) 55%, transparent); } }
+@keyframes fbTap { 0% { transform: scale(1); } 35% { transform: scale(.92); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .fest-bar, .fest-bar * { animation: none !important; transition: none !important; } }
+/* the motifs: two copies of a scattered strip drifting left forever, each shape bobbing a little */
+.fest-bar .fb-deco { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; z-index: -1; }
+.fb-deco-strip { position: absolute; top: 0; bottom: 0; left: 0; width: 200%; display: flex; animation: fbDecoRun 60s linear infinite; }
+.fb-deco-run { position: relative; flex: 0 0 50%; height: 100%; }
+.fb-deco svg { position: absolute; fill: #fff; opacity: .4; transform: rotate(var(--r)); animation: fbDecoBob var(--t) var(--d) ease-in-out infinite alternate; }
+.fb-deco svg.tint { fill: var(--fb-a); opacity: .3; }
+@keyframes fbDecoRun { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes fbDecoBob { from { transform: translateY(-2px) rotate(var(--r)); } to { transform: translateY(2px) rotate(calc(var(--r) * -1)); } }
