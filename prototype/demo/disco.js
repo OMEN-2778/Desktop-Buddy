@@ -9,7 +9,9 @@ ML.disco = { name: "蹦迪", emo: "energized", pts: 2, min: 180, say: FEST_TEXT4
 ML.disco_dance = { name: "舞池里出了一身汗", emo: "happy", pts: 3, min: 240 };
 ML.street_dance = { name: "路人一起跳舞", emo: "playful", pts: 2, min: 180 };
 PLACE_LOG.disco = ["推开迪厅的门，音乐一下子涌了出来。", "来迪厅跳舞。", "走进迪厅，灯球转个不停。"];
-TRIP_COL.disco = "#9a7fd1"; TRIP_ICON.disco = "mall"; TRIP_MOTIF.disco = TRIP_MOTIF.mall;
+TRIP_COL.disco = "#8b5cd6"; TRIP_ICON.disco = "disco";       // purple, a mirror ball; little sparkles and notes drift by
+TRIP_MOTIF.disco = ["................", "...#............", "..###...........", ".#####..........", "..###...........", "...#............", "................", "................",
+                    "................", "...........##...", "...........#.#..", "...........#....", ".........###....", ".........##.....", "................", "................"];
 AWAY.add("disco");
 PLACE_TEXT.disco = { say: FEST_TEXT4.disco.dance.slice(), npc: { dancer: FEST_TEXT4.disco.npc.slice(), walker: FEST_TEXT4.disco.npc.slice() }, talk: {} };
 PLACE_NPC.disco = { lanes: [[100, "back"], [112, "front"]], gap: [90, 160], roles: [["walker", 1]], speed: [8, 12] };

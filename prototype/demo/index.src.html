@@ -1601,7 +1601,7 @@ function festivalToday() {
   return f ? (f.chip || f.name) : day === 30 ? "生日" : day === 14 || day === 56 ? "纪念日" : null;
 }
 function placeFestTag(x, half, w) {
-  const name = festivalToday();
+  const name = festToday() ? null : festivalToday();   // festivals have their own bar now (user); birthdays / anniversaries keep the tag
   if (!name) { skyFest.hidden = true; return; }
   if (skyFest.textContent !== name) skyFest.textContent = name;
   skyFest.hidden = false;

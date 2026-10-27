@@ -175,6 +175,49 @@ def mall():
     return sticker([part(back_bag, T[0]), part(front_bag, B[0]), part(handles, C[0]), part(heart, C[0]), part(sparkles, M[1])])
 
 
+# ---------------------------------------------------------------- 迪厅: a mirror ball, coloured glints, sparkles
+def disco():
+    Mt, M, L, Sb, Bl = P.metal, P.mustard, P.lilac, P.sea, P.blossom
+
+    def cord(s):
+        s.vline(16, 0, 3, Mt[3]).vline(17, 0, 3, Mt[2])
+        s.rect(14, 3, 5, 2, Mt[2]).hline(14, 18, 3, Mt[4])           # the cap
+
+    def ball(s):
+        cx, cy, r = 16.5, 15.5, 10.5
+        for y in range(5, 27):
+            for x in range(5, 29):
+                u, v = (x + 0.5 - cx) / r, (y + 0.5 - cy) / r
+                d = u * u + v * v
+                if d > 1:
+                    continue
+                w = math.sqrt(1 - d)
+                # facets follow the sphere: rows of tiles that narrow towards the edge
+                lat = math.asin(max(-1, min(1, v)))
+                lon = math.atan2(u, w)
+                row, col = int((lat + 1.6) / 0.32), int((lon + 1.6) / 0.36)
+                edge_v = ((lat + 1.6) / 0.32) % 1 < 0.22
+                edge_u = ((lon + 1.6) / 0.36) % 1 < 0.22
+                l = -(u * -0.6 + v * -0.8) * 0.8 + w * 0.4 + 0.15 + ((row * 7 + col * 3) % 5 - 2) * 0.08
+                c = Mt[5] if l > 0.75 else Mt[4] if l > 0.4 else Mt[3] if l > 0.05 else Mt[2] if l > -0.35 else Mt[1]
+                if edge_u or edge_v:
+                    c = Mt[max(1, Mt.index(c) - 2)]                 # grout between the tiles
+                s.set(x, y, c)
+        for x, y, c in ((10, 12, L[4]), (11, 12, L[3]), (22, 10, Sb[4]), (21, 19, Bl[3]), (14, 21, Sb[3]),
+                        (24, 15, L[3]), (18, 8, Bl[4]), (9, 17, Sb[4])):      # coloured lights caught in the tiles
+            s.set(x, y, c)
+        for x, y in ((11, 9), (12, 9), (11, 10), (12, 8), (13, 9)):          # the hot spot, top left
+            s.set(x, y, P.light[1])
+
+    def sparkles(s):
+        for cx, cy, r, R in ((4, 6, 2, M), (29, 4, 2, Bl), (30, 21, 1, Sb), (3, 22, 1, L)):
+            s.set(cx, cy, R[4])
+            for k in range(1, r + 1):
+                s.set(cx - k, cy, R[3]).set(cx + k, cy, R[3]).set(cx, cy - k, R[3]).set(cx, cy + k, R[3])
+
+    return sticker([part(cord, Mt[0]), part(ball, Mt[0]), part(sparkles, P.ink[1])])
+
+
 # ---------------------------------------------------------------- 家: a little house
 def home():
     R, Fw, Te, Gl, Br = P.coral, P.facade_white, P.teal, P.glass, P.brick
@@ -213,7 +256,7 @@ def home():
 
 
 def build():
-    return {"trip_park": park(), "trip_dock": dock(), "trip_mall": mall(), "trip_home": home()}
+    return {"trip_park": park(), "trip_dock": dock(), "trip_mall": mall(), "trip_home": home(), "trip_disco": disco()}
 
 
 PREVIEW_SCALE = 8
