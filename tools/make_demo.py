@@ -214,7 +214,7 @@ def main():
                    "horizon": PK.HORIZON, "path": list(PK.PATH), "feet": PK.FEET, "side": PK.PATH[0],
                    "facility": {"kind": "toilet", "x": 270, "feet": 97, "hit": [230,27,90,70]} if z["id"] == "lakeside"
                      else {"kind": "food", "x": 177, "feet": 103, "lift": 5, "hit": [111,31,118,70]} if z["id"] == "grove" else None,
-                   "bench": {"x": z["bench"], "feet": 92, "lift": 5, "hit": [z["bench"] - 23, 64, 47, 30]}}
+                   "bench": {"x": z["bench"], "feet": 92, "lift": 5, "hit": [z["bench"] - 18, 66, 36, 28]}}
                   for z in PX.ZONES]},
       "beach": {
         "kind": "walk",
@@ -228,7 +228,7 @@ def main():
         "img": {"far": png(MALL.far()), "near": png(MALL.near()[0]), "rail": png(MALL.rail()), "skyNight": png(MALL.sky_night()),
                 "deco": {se: png(MALL.deco(se)) for se in MALL.SEASONS},
                 "shopper": [[png(MALL.shopper(k, f)) for f in (0, 1)] for k in range(5)],
-                "props": {it["id"]: png(it["sprite"]) for it in mall_items if "sprite" in it},
+                "props": {**{it["id"]: png(it["sprite"]) for it in mall_items if "sprite" in it}, "lottery": png(MALL.prop_like("lottery", "balloon"))},
                 "restroom": png(MALL.restroom_sprite()),
                 "hover": {it["id"]: png(mall_near.crop(it["u"], it["top"], it["w"], MALL.FLOOR - it["top"])) for it in mall_items if it["kind"] == "shop"}},
         "farW": MALL.FAR_W, "nearW": MALL.NEAR_W, "at": MALL.AT, "feet": MALL.FEET, "upWalk": MALL.UP_WALK,
@@ -425,7 +425,8 @@ def main():
         # pick-a-thing panels: covers matched to titles by hash, dishes by look
         "items": {**{k: [png(c) for c in item_icons.covers(k)] for k in ("book", "tv", "game", "app")},
                   "dish": {k: [png(d) for d in v] for k, v in item_icons.dishes().items()}},
-        "festival": {"stalls": {k: png(FEST.stall(k)) for k in FEST.KINDS}, "quilts": [png(FEST.quilt_rack(v)) for v in range(4)]},
+        "festival": {"stalls": {k: png(FEST.stall(k)) for k in FEST.KINDS}, "quilts": [png(FEST.quilt_rack(v)) for v in range(4)],
+                     "lanternTree": png(FEST.lantern_tree()), "lantern": png(FEST.lantern()), "heartArch": png(FEST.heart_arch())},
         "skyIcons": {**{k: [png(f) for f in sky_icons.frames(k)] for k in sky_icons.NAMES},"storm":[png(STORM.icon(i)) for i in range(4)]},
         "pets": PETS.runtime_data(),
         "pixelUi": {theme:{kind:png(ui_icons.pixel_surface(kind,theme=="dark")) for kind in ("panel","control","positive","gold","gold-pill","blue-pill","input","track","pill","thumb")} for theme in ("light","dark")},
@@ -458,7 +459,7 @@ def main():
     html = html.replace("/*__PARK_FOOD_JS__*/", "const PARK_FOOD = " + json.dumps(park_food, ensure_ascii=False) + ";")
     html = html.replace("/*__NPC_SOCIAL_JS__*/", "const NPC_TALK_TEXT = " + (SRC.parent / "npc_talk.json").read_text() + ";\n" + (SRC.parent / "npc_social.js").read_text())
     html = html.replace("/*__PARK_JS__*/", (SRC.parent / "park.js").read_text())
-    html = html.replace("/*__FESTIVAL_FUN_JS__*/", "const FEST_TEXT = " + (SRC.parent / "festival_text.json").read_text() + ";\n" + (SRC.parent / "festival_fun.js").read_text())
+    html = html.replace("/*__FESTIVAL_FUN_JS__*/", "const FEST_TEXT = " + (SRC.parent / "festival_text.json").read_text() + ";\nconst FEST_TEXT2 = " + (SRC.parent / "festival_text2.json").read_text() + ";\n" + (SRC.parent / "festival_fun.js").read_text() + "\n" + (SRC.parent / "festival_fun2.js").read_text())
     html = html.replace("/*__BAR_JS__*/", (SRC.parent / "bar.js").read_text())
     html = html.replace("/*__DUSK_JS__*/", (SRC.parent / "dusk.js").read_text())
     html = html.replace("/*__RESTROOMS_JS__*/", (SRC.parent / "restrooms.js").read_text())

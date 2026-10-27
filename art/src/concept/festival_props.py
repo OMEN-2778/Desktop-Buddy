@@ -19,6 +19,7 @@ KINDS = {   # awning ramp, cloth, goods looks on the counter
     "zongzi": (P.green, P.linen, ["zongzi", "zongzi", "drink"]),
     "mooncake": (P.coral, P.mustard, ["mooncake", "mooncake", "drink"]),
     "book": (P.teal, P.linen, ["book", "book", "book"]),
+    "lottery": (P.coral, P.mustard, []),
 }
 
 
@@ -50,6 +51,13 @@ def stall(kind: str) -> Sprite:
         s.vline(x, top + 4, top + 12, cloth[2])
     s.rect(2, top - 2, SW - 4, 3, wood[1]).hline(2, SW - 3, top - 2, wood[3])
     s.rect(SW // 2 - 6, top + 4, 12, 4, aw[2]).hline(SW // 2 - 6, SW // 2 + 5, top + 4, aw[3])   # a little sign
+    if kind == "lottery":                              # 彩票: a ball sign and scratch cards
+        cx = SW // 2
+        s.ellipse(cx, top - 7, 5, 4, P.mustard[3]).ellipse(cx, top - 7, 5, 4, P.ink[1], fill=False)
+        for i, (bx, by) in enumerate(((cx - 2, top - 8), (cx + 2, top - 8), (cx, top - 5))):
+            s.ellipse(bx, by, 1.2, 1.2, (P.coral[3], P.teal[3], P.green[3])[i])
+        for i, tx in enumerate((4, 8, 25, 29)):
+            s.rect(tx, top - 6, 3, 5, P.linen[3]).rect(tx, top - 4, 3, 1, (P.mustard[3], P.metal[3])[i % 2])
     # goods on the counter: the dish icons, shrunk to their top half
     for k, look in enumerate(goods):
         icon = I.dish(look, k)
@@ -86,7 +94,70 @@ def quilt_rack(v: int = 0) -> Sprite:
     return s
 
 
+def lantern(k: int = 0) -> Sprite:
+    """One red lantern with a gold tassel and a white riddle slip (7x13)."""
+    s = Sprite(7, 13)
+    s.set(3, 0, P.mustard[2]).hline(2, 4, 1, P.mustard[2])
+    s.ellipse(3, 4, 3, 2.6, P.coral[2]).set(2, 3, P.coral[4]).hline(1, 5, 4, P.coral[1])
+    s.hline(2, 4, 7, P.mustard[2]).vline(3, 8, 9, P.mustard[3])
+    s.rect(2 + (k % 2), 10, 2, 3, P.porcelain[3])
+    return s
+
+
+def lantern_tree() -> Sprite:
+    """元宵节's 灯谜树: an old tree, bare-ish in early spring, every branch hung
+    with lanterns carrying riddle slips. 70x76, trunk foot at the bottom middle."""
+    s = Sprite(70, 76)
+    bark, leaf = P.walnut, P.green
+    cx, b = 35, 75
+    s.rect(cx - 4, 34, 8, b - 34, bark[2]).vline(cx - 4, 34, b, bark[3]).vline(cx + 3, 34, b, bark[1])
+    s.hline(cx - 7, cx + 6, b, bark[1])
+    for x0, y0, x1, y1 in ((cx, 36, cx - 24, 18), (cx, 38, cx + 24, 20), (cx, 30, cx - 10, 8), (cx, 30, cx + 12, 6)):
+        s.line(x0, y0, x1, y1, bark[2]).line(x0 + 1, y0, x1 + 1, y1, bark[1])
+    for ex, ey, rx, ry in ((cx, 19, 27, 14), (cx - 18, 25, 13, 9), (cx + 18, 25, 13, 9)):   # shaded underside
+        s.ellipse(ex, ey, rx, ry, leaf[1])
+    for ex, ey, rx, ry in ((cx, 17, 26, 12), (cx - 18, 23, 12, 7), (cx + 18, 23, 12, 7)):   # a light early-spring crown
+        s.ellipse(ex, ey, rx, ry, leaf[2])
+        s.dither(ex - rx + 2, ey - ry + 2, rx, ry, leaf[3], None, "checker")
+    for ex, ey in ((cx - 10, 10), (cx + 8, 8), (cx - 20, 20)):
+        s.ellipse(ex, ey, 5, 3, leaf[3])
+    for i, (lx, ly) in enumerate(((cx - 26, 28), (cx - 16, 32), (cx - 6, 30), (cx + 5, 31), (cx + 15, 33), (cx + 24, 28),
+                                   (cx - 21, 40), (cx + 20, 41), (cx - 12, 44), (cx + 11, 45))):
+        s.vline(lx + 3, ly - 6, ly, P.linen[1])
+        s.blit(lantern(i), lx, ly)
+    return s
+
+
+def heart_arch() -> Sprite:
+    """七夕 in the park: a flower arch whose top is a big heart, roses and
+    small lights on it. 40x46, standing on its bottom row."""
+    s = Sprite(40, 46)
+    wood = P.oak
+    for x in (5, 33):                                  # two posts wound with leaves
+        s.rect(x, 9, 3, 37, wood[2]).vline(x, 9, 45, wood[3])
+        for y in range(12, 44, 4):
+            s.set(x - 1 + (y // 4) % 2 * 4, y, P.green[3]).set(x + (y // 4) % 2 * 2, y + 1, P.green[2])
+    rows = ["..XXXXX.....XXXXX..", ".XXXXXXX...XXXXXXX.", "XXXXXXXXX.XXXXXXXXX", "XXXXXXXXXXXXXXXXXXX",
+            ".XXXXXXXXXXXXXXXXX.", "..XXXXXXXXXXXXXXX..", "...XXXXXXXXXXXXX...", ".....XXXXXXXXX.....",
+            ".......XXXXX.......", ".........X........."]
+    for y, row in enumerate(rows):                     # the heart, outlined, hollow in the middle
+        for x, ch in enumerate(row):
+            if ch != "X":
+                continue
+            px, py = 1 + x * 2, 1 + y * 2
+            inner = 2 < y < 7 and 4 < x < 15 and not (y == 3 and x in (9,))
+            if inner and (x + y) % 3:
+                continue
+            c = (P.blossom[3], P.coral[3], P.blossom[2], P.coral[2])[(x * 3 + y) % 4]
+            s.rect(px, py, 2, 2, c)
+            if (x + y) % 5 == 0:
+                s.set(px, py, P.light[1])
+    return s
+
+
 def build():
     out = {f"fest_stall_{k}": stall(k) for k in KINDS}
     out.update({f"quilt_rack_{v}": quilt_rack(v) for v in range(4)})
+    out["lantern_tree"] = lantern_tree()
+    out["heart_arch"] = heart_arch()
     return out

@@ -257,7 +257,7 @@ def stall(s, kind, x):
     """A kiosk cart, STALL_W wide, standing on the floor at FEET - 2."""
     b, x1 = FEET - 2, x + STALL_W - 1
     rnd = random.Random(kind)
-    body = {"tea": P.teal, "ice": P.blossom, "candy": P.lilac, "flower": P.oak, "balloon": P.hydrangea, "trinket": P.coral}[kind]
+    body = {"tea": P.teal, "ice": P.blossom, "candy": P.lilac, "flower": P.oak, "balloon": P.hydrangea, "trinket": P.coral, "lottery": P.coral}[kind]
     top = b - 18                                                       # counter top
     s.rect(x + 1, top, STALL_W - 2, b - top - 3, body[2])
     s.vline(x + 1, top, b - 4, body[3]).vline(x1 - 1, top, b - 4, body[1])
@@ -317,6 +317,19 @@ def stall(s, kind, x):
             s.ellipse(bx, by, 3, 3.6, R[2]).ellipse(bx - 1, by - 1, 1.2, 1.5, R[4]).set(bx, by + 4, R[1])
         for px in (x + 2, x1 - 2):                                     # (no canopy: no posts)
             s.vline(px, top - 18, top - 2, body[2])
+    elif kind == "lottery":                                            # 彩票站 (彩票日): a round sign of lucky balls, ticket strips
+        canopy(s, x - 1, x1 + 1, top - 22, P.coral)
+        cx = x + STALL_W // 2
+        s.ellipse(cx, top - 32, 7, 6, P.mustard[3]).ellipse(cx, top - 32, 7, 6, P.ink[1], fill=False)
+        for i, (bx, by) in enumerate(((cx - 3, top - 34), (cx + 2, top - 34), (cx - 1, top - 30), (cx + 4, top - 30))):
+            R = (P.coral, P.teal, P.hydrangea, P.green)[i]
+            s.ellipse(bx, by, 1.6, 1.6, R[3]).set(bx - 1, by - 1, R[4] if len(R) > 4 else R[3])
+        s.vline(cx, top - 26, top - 23, ST[2])
+        for i, tx in enumerate(range(x + 4, x1 - 4, 5)):              # scratch cards on a rack
+            s.rect(tx, top - 8, 4, 6, P.linen[3]).rect(tx, top - 6, 4, 2, (P.mustard[3], P.metal[3], P.coral[3])[i % 3])
+        s.rect(x + 10, top + 3, 18, 8, P.mustard[3]).frame(x + 10, top + 3, 18, 8, P.coral[1])
+        for k in range(3):
+            s.ellipse(x + 14 + k * 5, top + 7, 1.5, 1.5, (P.coral[2], P.teal[2], P.green[2])[k])
     elif kind == "trinket":                                            # 饰品: hair clips, a mirror, a rack of charms
         canopy(s, x - 1, x1 + 1, top - 22, P.coral)
         for i, cx in enumerate(range(x + 4, x1 - 8, 4)):
@@ -585,6 +598,14 @@ def prop(kind, w):
     s = Sprite(w, H)
     stall(s, kind, (w - STALL_W) // 2)
     return s
+
+
+def prop_like(kind, like):
+    """`kind`'s prop cropped to the same box as unit `like`'s, so the page can
+    draw it in that unit's place (彩票日: the balloon kiosk becomes a 彩票站)."""
+    w = next(u[3] for u in UNITS if u[0] == like) - 5
+    x0, y0, x1, y1 = prop(like, w).bbox()
+    return prop(kind, w).crop(x0, y0, x1 - x0, y1 - y0)
 
 
 def restroom(s,x=0,w=74):

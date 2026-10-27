@@ -793,6 +793,17 @@ edits; copy changes into life_text.js.
   `when: "fest:<name>"` (place say / npc / talk) and `FEST_TEXT.chatter` (a
   third of what she says at home that day). Next batches (灯谜, 彩票, 写信,
   大雪/雪人, 怪兽夜, 龙舟/马拉松, 迪斯科, 春节) are planned with the user.
+- **Festival activities, batch 2** (user): `festival_fun2.js` +
+  `festival_text2.json` (FEST_TEXT2). 元宵节: a 灯谜树 (`lantern_tree`) in the
+  park meadow with a crowd and a host; click → a riddle in the picker (46,
+  traditional + silly), right/wrong moods, seen ones skipped. 彩票日: 买彩票 in
+  the phone/computer rings (drawn at 20:00, 20%), 彩票站 stalls in the park
+  (gazebo, lakeside) and the mall's balloon cart (`prop_like`), scratch 30%,
+  max 5 a day; a win = `fest_lotto_win` +5 happy until midnight. 七夕: lights
+  strung across every park zone, a flower-heart arch (`heart_arch`), petals.
+  游戏马拉松 became 马拉松日 (a real race: fences and runners come in batch 6).
+- Park bench is a two-seater now (±17 px; seats at bench.x ± 9, user: the
+  old one was too big next to the stalls); the central bin moved to x 142.
 Moodlets add points to one emotion, the top sum wins (1-2 有点, 3-5, 6+ 非常),
 condition moodlets last while true. Events roll once a game hour with
 cooldowns; her words queue so bubbles never cut each other off. Social

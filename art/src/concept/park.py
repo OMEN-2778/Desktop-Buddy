@@ -33,7 +33,7 @@ PATH = (94, 107)         # gravel path rows
 FEET = 103               # walking lane; benches stand behind it
 BENCH = 171              # central bench x, behind the walking lane
 LAMP = 130
-BIN = 214
+BIN = 142                # between the lamp and the bench (user: it crowded the festival stall at 214)
 POND = (276, 75, 54, 10)  # cx, cy, rx, ry
 DUCKS = (POND[1] - 3,)   # the water line ducks swim on (page)
 TREES = [("linden", 150, 50, 66, 10, 8), ("cherry", 188, 48, 66, 11, 9), ("maple", 302, 47, 64, 10, 8),
@@ -278,20 +278,21 @@ def lamp(s):
 
 
 def bench(s, cx=BENCH, base=92):
-    """A park bench: oak slats on cast-iron ends, seen front-on."""
+    """A park bench for two (user: the old one was too big next to people and
+    the festival stalls): oak slats on cast-iron ends, seen front-on."""
     Wd, b = P.oak, base
-    x0, x1 = cx - 22, cx + 22
+    x0, x1 = cx - 17, cx + 17
     seat = b - 8
     for lx in (x0 + 2, x1 - 3):                                        # iron ends (legs, armrests)
         s.vline(lx, seat, b - 1, IRON[1]).vline(lx + 1, seat + 1, b - 1, IRON[0])
         s.hline(lx - 1, lx + 2, b - 1, IRON[1])
         s.vline(lx, seat - 7, seat, IRON[2])
         s.hline(lx - 1, lx + 2, seat - 7, IRON[3]).set(lx + 2, seat - 6, IRON[1])
-    for k, y in enumerate((b - 26, b - 22, b - 18)):                   # backrest slats
+    for k, y in enumerate((b - 24, b - 20, b - 16)):                   # backrest slats
         s.rect(x0 + 1, y, x1 - x0 - 1, 3, Wd[2]).hline(x0 + 1, x1 - 1, y, Wd[3]).hline(x0 + 1, x1 - 1, y + 2, Wd[1])
         s.set(x0 + 1, y + 1, Wd[1]).set(x1 - 1, y + 1, Wd[1])
     for lx in (x0 + 4, x1 - 5):                                        # backrest posts
-        s.vline(lx, b - 27, seat, IRON[1])
+        s.vline(lx, b - 25, seat, IRON[1])
     s.rect(x0, seat - 1, x1 - x0 + 1, 3, Wd[3]).hline(x0, x1, seat - 1, Wd[4]).hline(x0, x1, seat + 1, Wd[1])   # seat
     s.hline(x0 + 1, x1 - 1, seat + 2, Wd[0])
     s.dither(x0 + 3, b, x1 - x0 - 5, 1, GRAV[1], None, "checker")      # shadow on the gravel

@@ -595,6 +595,7 @@ function command(act, item = null) {
   if (act === "mall_food" || act === "mall_film") { mallPlanVisit(act === "mall_food" ? "restaurant" : "cinema", item); return; }
   if (sim.place === "mall" && act === "go_home" && mallS.visit) mallLeaveVisit(false,false);
   if (act === "fest_stall") { festBuy(item); return; }
+  if (act === "fest_riddle") { answerRiddle(item); return; }
   if (act === "park_food") { if (sim.place === "park") parkRequest("food", false, item?.id); return; }
   if (sim.place === "park" && act === "go_home" && sim.park) sim.park.goal = null;
   if (sim.place === "bar") {
@@ -649,6 +650,7 @@ function step(dtGame, dtReal) {
   applyNeedConsequences();
   // behaviour
   if (sim.mode === "down") { sim.windup = null; return; }
+  festTick2();
   if(tickNpcInteraction(dtReal))return;
   // Shop visits and pending clicks must not delay finding a WC or an urgent trip home.
   if (sim.place === "mall" && mallHandleNeeds(dtGame,dtReal)) return;
@@ -2751,7 +2753,7 @@ function layoutRing() {
 }
 function openRing(which, at = which === "computer" ? "computer" : "buddy") {
   ringOf = which; ringAt = at;
-  const items = RINGS[which];
+  const items = festRingItems(which, RINGS[which]);
   ringEl.innerHTML = "";
   items.forEach(([id, label, cls], i) => {
     const b = document.createElement(cls === "label" ? "span" : "button");
@@ -2848,6 +2850,7 @@ function ringPick(id) {
     return;
   }
   if (id === "phone") { openRing("phone", "buddy"); return; }
+  if (id === "lotto_online") { closeRing(); festLottoOnline(); return; }
   if (id === "call") { openRing("call", "buddy"); return; }
   if (id.startsWith("dial:")) { closeRing(); command("phone_call", chatItem("call", id.slice(5), "call")); return; }
   if (id === "rename") { openRename(); return; }
@@ -3461,7 +3464,7 @@ function arriveAt(place) {
     mallS.shoppers = [0, 1, 2, 3, 4, 5].map(i => ({ k: i % 5, x: Math.random() * OUT.mall.farW, dir: i % 2 ? 1 : -1, v: 5 + Math.random() * 5 }));
   }
   npcSetup(place);
-  if (place === "park") { parkSetup(); festParkSetup(); }
+  if (place === "park") { parkSetup(); festParkSetup(); festParkSetup2(); }
 }
 
 
@@ -3761,6 +3764,7 @@ function stopAt(it) {                            // shops: a look, in she goes, 
 }
 function stallVisit(it) {
   gameAudio.sound("real-checkout-cc0",.10,{gap:5});                        // she turns round with what she got
+  if (mallStallAs(it.id) === "lottery") { festScratch((life.npcs || []).find(m => m.item === it.id)); return; }
   const s = STALL[mallStallAs(it.id)], vars = { 电影: pick(FILMS) };
   log(fill(pick(s.log), vars));
   for (const [k, v] of Object.entries(s.needs)) sim.needs[k] = clamp(sim.needs[k] + v);
@@ -3999,6 +4003,8 @@ function renderPark(dt) {
   // The vendor stands behind the counter; all path pedestrians pass in front.
   drawParkService(bctx, O);
   drawFestStalls(bctx);
+  drawRiddleTree(bctx);
+  drawQixiPark(bctx, dt, run);
   drawNpcs(bctx, "back");
   const fr = activityFrame(realClock * 1000);
   if (!parkInsideToilet() && !sim.park?.seated && !parkEating()) {

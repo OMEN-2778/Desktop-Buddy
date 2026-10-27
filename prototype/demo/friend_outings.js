@@ -52,7 +52,7 @@ function restoreFriendOuting(raw,locationReady=true){
   if(locationReady){
     if(['active','returning'].includes(phase)&&sim.place==='home')friendOutingState=null;
     if(friendOutingState&&phase==='departing'&&sim.place==='home'){friendOutingState.phase='waiting';friendOutingState.at=sim.t;friendOutingState.startedAt=null;}
-    if(friendOutingState&&sim.place==='park'&&sim.park?.seated){sim.route=[[parkLayout().bench.x-10,parkLayout().bench.feet]];sim.s=0;sim.target=0;}
+    if(friendOutingState&&sim.place==='park'&&sim.park?.seated){sim.route=[[parkLayout().bench.x-9,parkLayout().bench.feet]];sim.s=0;sim.target=0;}
   }
 }
 function friendOutingSnapshot(){const s=friendOutingState;return s?{id:s.id,dest:s.dest,phase:s.phase,at:s.at,bookedAt:s.bookedAt,startedAt:s.startedAt,seen:s.seen,count:s.count}:null;}
@@ -65,7 +65,7 @@ function companionPosition(){
   if(parkInsideToilet()){x=parkLayout().facility.x+20;y=parkLayout().feet;}
   else if(barToiletInside()){x=277;y=107;}
   else if(room){if(mallS.visit.kind==='restaurant'){const seat=MALL.dining.companion;x=seat.x;y=seat.feet-seat.lift;}else{x=p.x-28;y=p.y;}}
-  else if(sim.place==='park'&&sim.park?.seated){x=parkLayout().bench.x+10;y=p.y;}
+  else if(sim.place==='park'&&sim.park?.seated){x=parkLayout().bench.x+9;y=p.y;}
   else if(parkEating()){x=201;y=p.y;}
   else if(sim.place==='bar'&&sim.bar?.seat){
     if(st.heroSeat!==sim.bar.seat||!barSeat(st.barSeat)){st.heroSeat=sim.bar.seat;const seats=BAR_SEATS.filter(seat=>seat.id!==sim.bar.seat&&!barScene?.guests.some(n=>n.seat===seat.id));st.barSeat=seats.sort((a,b)=>Math.abs(a.x-p.x)-Math.abs(b.x-p.x))[0]?.id||null;}

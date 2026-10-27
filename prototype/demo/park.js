@@ -49,6 +49,7 @@ function parkInsideToilet() { return sim.place === 'park' && sim.mode === 'act' 
 function parkEating() { return sim.place === 'park' && sim.mode === 'act' && sim.act === 'park_eat'; }
 function parkHit(x, y) {
   if (festStallAt(x, y)) return 'fest_stall';
+  if (riddleAt(x, y)) return 'fest_riddle';
   const L = parkLayout();
   for (const [id,r] of [['park_bench',L.bench.hit], [L.facility?.kind === 'toilet' ? 'park_wc' : 'park_food',L.facility?.hit]]) {
     if (!r) continue;
@@ -61,7 +62,7 @@ function startParkAct(act) {
   const L = parkLayout(), p = here(), sitting = act === 'bench';
   sim.park = { ...parkState(), seated: false };
   const service = ['park_toilet','park_eat'].includes(act) ? L.facility : null;
-  const x = service ? service.x : sitting ? L.bench.x-(friendOutingActive()?10:0) : Math.max(8, Math.min(W - 8, sim.strollX ?? p.x));
+  const x = service ? service.x : sitting ? L.bench.x-(friendOutingActive()?9:0) : Math.max(8, Math.min(W - 8, sim.strollX ?? p.x));
   const y = service ? service.feet : sitting ? L.bench.feet : sim.strollY ?? L.feet;
   sim.route = [[Math.round(p.x), Math.round(p.y)], [Math.round(p.x), L.feet], [Math.round(x), L.feet]];
   if (y !== L.feet) sim.route.push([Math.round(x), y]);
@@ -145,6 +146,7 @@ ML.park_oden = {name:'樱花下的热关东煮',emo:'happy',pts:2,min:180};
 ML.park_relief = {name:'公园里也能安心逛',emo:'confident',pts:1,min:90};
 function parkClick(id, x, y) {
   if (card || guideOn || wiping || sim.mode === 'down') return;
+  if (id === 'fest_riddle') { openRiddle(); return; }
   if (id === 'fest_stall') { const s = festStallAt(x, y); if (s) openFestStall(s); return; }
   if (id === 'park_wc') { if (parkInsideToilet()) showHint('正在使用公厕，稍等一会儿。'); else parkRequest('toilet'); return; }
   if (id === 'park_food') { if (parkEating()) showHint('正在慢慢吃'+parkDish().name+'。'); else openPicker('park_food',{x:177,y:72}); return; }

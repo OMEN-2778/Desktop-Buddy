@@ -6,7 +6,7 @@
 // 晒被子日 hangs quilts on racks along the street; and on the day she (and
 // the neighbours) talk about it. Texts: festival_text.json (FEST_TEXT).
 const FEST_KEY = { 元宵节: "yuanxiao", 端午节: "duanwu", 中秋节: "zhongqiu", 甜品节: "tianpin", 读书日: "dushu" };
-const FEST_STALL_KIND = { 甜品节: "dessert", 端午节: "zongzi", 中秋节: "mooncake", 读书日: "book" };
+const FEST_STALL_KIND = { 甜品节: "dessert", 端午节: "zongzi", 中秋节: "mooncake", 读书日: "book", 彩票日: "lottery" };
 function festToday() { const se = seasonOf(sim.t); return T.festivals.find(f => f.season === se.i && f.day === se.day) || null; }
 const festName = () => festToday()?.name || null;
 const festDay = () => Math.floor(sim.t / 1440);
@@ -60,13 +60,14 @@ function festDishItem() {
 
 // ---------------------------------------------------------------- park market stalls
 const FEST_SLOTS = { gazebo: [214], lakeside: [150], central: [92, 214], meadow: [60, 176], grove: [48] };
+const FEST_LOTTO_SLOTS = { gazebo: [214], lakeside: [150] };   // 彩票日: two 彩票站
 const FEST_STALL_TOP = 54;
 let festVendors = [];
 function festStallsHere() {
   const name = festName(), kind = FEST_STALL_KIND[name];
   if (!kind || sim.place !== "park" || stormOutside()) return [];
-  const all = Object.entries(FEST_SLOTS).flatMap(([z, xs]) => xs.map(x => [z, x]));
-  return all.map(([z, x], k) => ({ zone: z, x, k, kind, menu: FEST_TEXT.stalls[name][k % FEST_TEXT.stalls[name].length] }))
+  const all = Object.entries(kind === "lottery" ? FEST_LOTTO_SLOTS : FEST_SLOTS).flatMap(([z, xs]) => xs.map(x => [z, x])), menus = FEST_TEXT.stalls[name];
+  return all.map(([z, x], k) => ({ zone: z, x, k, kind, menu: menus ? menus[k % menus.length] : null }))
     .filter(s => s.zone === parkLayout().id);
 }
 function festParkSetup() {
@@ -89,6 +90,7 @@ function festStallAt(x, y) {
   return festStallsHere().find(s => x >= s.x - 18 && x < s.x + 18 && y >= FEST_STALL_TOP && y < FEST_STALL_TOP + 40) || null;
 }
 function openFestStall(s) {
+  if (s.kind === "lottery") { const v = festVendors[festStallsHere().indexOf(s)]; if (v) npcSay(v, pick(FEST_TEXT2.lottery.clerk)); festBuy({ k: s.k, i: -1 }); return; }
   const kindLook = it => (D.items.dish[it.look] || D.items.dish.cake);
   PICK.fest_stall = { title: `${s.menu.name} · ${festName()}限定`,
     groups: () => [{ name: s.menu.name, items: s.menu.items.map((it, i) => ({ title: it.name, line: it.line,
@@ -113,7 +115,9 @@ function festTick() {
   if (sim.place !== "park" || parkLayout().id !== b.zone || sim.mode === "down" || (sim.act !== "stroll" && !(sim.windup && sim.windup.act === "stroll"))) { sim.festBuy = null; return; }
   if (sim.mode === "walk" || Math.abs(here().x - b.x) > 4) return;
   sim.festBuy = null;
-  const s = festStallsHere().find(x => x.k === b.k), it = s?.menu.items[b.i];
+  const s = festStallsHere().find(x => x.k === b.k);
+  if (s?.kind === "lottery") { festScratch(festVendors[festStallsHere().indexOf(s)]); sim.mode = "idle"; sim.act = null; sim.idleUntil = sim.t + 6; return; }
+  const it = s?.menu.items[b.i];
   if (!it) return;
   const v = festVendors[festStallsHere().indexOf(s)];
   if (v) npcSay(v, pick(s.menu.hello));
@@ -135,7 +139,7 @@ function drawFestHold(ctx) {
 
 // ---------------------------------------------------------------- mall: 地摊 turn into book stalls on 读书日
 const FEST_BOOK_MATS = new Set(["craft", "blindbox"]);
-const mallStallAs = id => (festName() === "读书日" && FEST_BOOK_MATS.has(id) ? "oldbooks" : id);
+const mallStallAs = id => (festName() === "读书日" && FEST_BOOK_MATS.has(id) ? "oldbooks" : festName() === "彩票日" && id === "balloon" ? "lottery" : id);
 function festMallVisit(it) {                     // after stallVisit: books on 读书日 count as a 读书日 read
   if (festName() !== "读书日" || !["oldbooks", "books", "craft", "blindbox"].includes(it.id)) return;
   festGift(FEST_BOOKDAY, FEST_TEXT.bookDay);
