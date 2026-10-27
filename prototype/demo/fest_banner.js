@@ -66,6 +66,20 @@ const FB_SHAPES = {
   snowman: "M12 3a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zM12 10a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11z",
   ball: "M12 4a8 8 0 1 1 0 16 8 8 0 0 1 0-16zM11 0h2v4h-2z",
 };
+// the activity buttons are folded into round icons (user: at small sizes they fell off the bar)
+Object.assign(FB_SHAPES, {
+  tree: "M12 2a6 6 0 0 1 5 9 5 5 0 0 1-3 8h-1v3h-2v-3h-1a5 5 0 0 1-3-8 6 6 0 0 1 5-9z",
+  bag: "M8 7a4 4 0 0 1 8 0h3l1 14H4L5 7zM10 7h4a2 2 0 0 0-4 0z",
+  house: "M12 3l9 8h-2v10h-5v-6h-4v6H5V11H3z",
+  pot: "M3 9h18v2h-1v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-6H3zM8 4h2v4H8zM14 4h2v4h-2z",
+  boat: "M2 15h20l-3 5H5zM11 3h2v11h-2zM13 4l6 8h-6z",
+  bubble: "M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H11l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM7 9h2v2H7zM11 9h2v2h-2zM15 9h2v2h-2z",
+});
+function fbActIcon(label, kind, what) {
+  if (kind === "place") return { park: "tree", beach: "boat", mall: "bag", disco: "ball", front: "house" }[what] || "star";
+  if (kind === "act") return { cook: "pot", sleep: "zz", read: "book", dance: "note" }[what] || "star";
+  return /信/.test(label) ? "mail" : /彩票/.test(label) ? "ticket" : /面具/.test(label) ? "pumpkin" : "star";
+}
 const FB_MOTIFS = {
   元宵节: ["lantern", "moon", "star"], 赖床节: ["zz", "moon", "star"], 春分: ["flower", "star"], 写信日: ["mail", "heart", "star"],
   彩票日: ["ticket", "star", "candy"], 晒被子日: ["shirt", "star", "flower"], 甜品节: ["candy", "heart", "star"], 端午节: ["zongzi", "wave", "lantern"],
@@ -104,7 +118,7 @@ function fbPlace() {
   if (!updEl.hidden) top -= updEl.offsetHeight + 6;              // the update pill keeps its own row
   fbEl.style.top = Math.round(top) + "px";
   fbEl.style.left = view.offsetLeft + "px";
-  fbEl.style.width = (fbOpen ? fbFullWidth() : fbEl.offsetHeight) + "px";
+  fbEl.style.width = view.offsetWidth + "px";
   const h = fbEl.offsetHeight;                                   // pixel-stepped round ends, sized to the bar and its pills
   if (h && h !== fbEl._clipH) {
     fbEl._clipH = h;
@@ -112,25 +126,6 @@ function fbPlace() {
     fbEl.style.setProperty("--fb-pill-clip", roundClip(Math.max(3, Math.floor((h - 12) / 4)), 2));
   }
 }
-// folded it is a round badge with the festival's motif; pointing at it (or focusing
-// it) unrolls it sideways into the full capsule (user: at small sizes the pills fell off)
-let fbOpen = false, fbFoldTimer = 0;
-function fbFullWidth() {
-  const room = Math.max(fbEl.offsetHeight, document.documentElement.clientWidth - fbEl.getBoundingClientRect().left - 8);
-  const kids = [fbEl.querySelector(".fb-orb"), fbEl.querySelector(".fb-name"), ...fbEl.querySelectorAll(".fb-pill")];
-  const natural = kids.reduce((w, k) => w + (k ? k.scrollWidth : 0), 0) + 6 * (kids.length - 1) + 12 + 4;
-  return Math.min(room, Math.max(view.offsetWidth, natural));
-}
-function fbSetOpen(open) {
-  clearTimeout(fbFoldTimer);
-  if (open === fbOpen) return;
-  fbOpen = open; fbEl.classList.toggle("open", open); fbPlace();
-}
-fbEl.addEventListener("pointerenter", () => fbSetOpen(true));
-fbEl.addEventListener("pointerleave", () => { clearTimeout(fbFoldTimer); fbFoldTimer = setTimeout(() => fbSetOpen(false), 450); });
-fbEl.addEventListener("focusin", () => fbSetOpen(true));
-fbEl.addEventListener("focusout", e => { if (!fbEl.contains(e.relatedTarget)) fbSetOpen(false); });
-fbEl.addEventListener("click", e => { if (e.target.closest(".fb-orb")) fbSetOpen(!fbOpen); });   // touch: tap the badge
 function fbFollow() {
   if (fbEl.hidden) return;
   fbPlace();
@@ -141,22 +136,23 @@ function fbShow(f) {
   const [a, b, line, ...acts] = FEST_BAR[f.name] || ["#e1725b", "#f6a487", pick(f.say || ["节日快乐"])];
   fbEl.style.setProperty("--fb-a", a); fbEl.style.setProperty("--fb-b", b);
   fbEl.querySelector(".fb-name").textContent = f.chip || f.name;
-  const motif = (FB_MOTIFS[f.name] || ["star"])[0];
-  fbEl.querySelector(".fb-orb").innerHTML = `<svg viewBox="0 0 24 24" shape-rendering="crispEdges"><path d="${FB_SHAPES[motif]}"/></svg>`;
-  fbEl.querySelector(".fb-orb").title = f.name;
-  fbOpen = false;
+
   fbDeco(f.name);
   const box = fbEl.querySelector(".fb-acts"), n = acts.length + 1;
   box.innerHTML = "";
   acts.forEach(([label, kind, what], i) => {
     const btn = document.createElement("button");
-    btn.type = "button"; btn.className = "fb-pill"; btn.textContent = label; btn.style.setProperty("--i", i); btn.style.setProperty("--n", n);
+    btn.type = "button"; btn.className = "fb-pill fb-act"; btn.setAttribute("aria-label", label);
+    btn.innerHTML = `<svg viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true"><path d="${FB_SHAPES[fbActIcon(label, kind, what)] || FB_SHAPES.star}"/></svg><span class="fb-lab"></span>`;
+    btn.querySelector(".fb-lab").textContent = label; btn.style.setProperty("--i", i); btn.style.setProperty("--n", n);
     btn.title = kind === "place" ? `让${nameOf()}去${PLACE_NAME[what] || what}` : label;
     btn.addEventListener("click", e => { e.stopPropagation(); fbGo(kind, what, btn); });
     box.appendChild(btn);
   });
   const say = document.createElement("span");
-  say.className = "fb-pill fb-say"; say.textContent = line; say.style.setProperty("--i", acts.length); say.style.setProperty("--n", n);
+  say.className = "fb-pill fb-act fb-say"; say.tabIndex = 0; say.setAttribute("aria-label", line);   // folded too (user): a speech-bubble icon
+  say.innerHTML = `<svg viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true"><path d="${FB_SHAPES.bubble}"/></svg><span class="fb-lab"></span>`;
+  say.querySelector(".fb-lab").textContent = line; say.style.setProperty("--i", acts.length); say.style.setProperty("--n", n);
   box.appendChild(say);
   clearTimeout(fbTimer);
   fbEl.hidden = false; fbEl.className = "fest-bar"; void fbEl.offsetWidth;
