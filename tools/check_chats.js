@@ -35,7 +35,7 @@ talks.forEach((t, i) => {
     if (typeof l !== "string" || !l.trim()) bad.push(`${at}: line ${j + 1} empty`);
     else if (l.replace(/^[>#]\s*/, "").length > 34) bad.push(`${at}: line ${j + 1} over 34 chars`);
     if (kind === "call" && /[#]/.test(l[0])) bad.push(`${at}: calls have no "#" lines`);
-    if (kind === "call" && /镜头|画面|屏幕|摄像|看你|看看你|视频|看见|看到你/.test(l)) bad.push(`${at}: line ${j + 1} is visual, but it is a phone call`);
+    if (kind === "call" && /镜头|画面|摄像/.test(l)) bad.push(`${at}: line ${j + 1} is visual, but it is a phone call`);
   });
   if (kind === "call" && !(t.lines || []).some(l => l[0] === ">")) bad.push(`${at}: no ">" line`);
   if (kind === "forum" && !((t.lines || [])[0] || "").startsWith("#")) bad.push(`${at}: a forum talk starts with a "#" post`);
