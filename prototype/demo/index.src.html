@@ -5130,6 +5130,6 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
   if (!st) saveSettings();
   if(houseRequested)openFriendHousePreview(houseLink);
   if (!sv) autoSave();
-  if (!prefs.guided&&!friendHousePreview) setTimeout(()=>{if(!friendHousePreview)openGuide();}, 1200);   // first time: the guide opens by itself
+  if (!prefs.guided&&!friendHousePreview) setTimeout(()=>{if(!friendHousePreview&&!prefs.guided&&!guideOn)openGuide();}, 1200);   // first time: the guide opens by itself
 })();
 </script>
