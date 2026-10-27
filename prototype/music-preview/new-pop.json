@@ -1,0 +1,47 @@
+[
+  {
+    "id": "new-after-rain",
+    "title": "雨停之后出发",
+    "style": "明亮合成器流行",
+    "bpm": 122,
+    "duration": 130.902,
+    "file": "audio/new-after-rain.mp3",
+    "midi": "audio/new-after-rain.mid",
+    "rms_db": -21.68,
+    "peak": 0.608,
+    "pitched_parts": 15,
+    "chorus_at": 47.213,
+    "middle_at": 78.689,
+    "preview_only": true
+  },
+  {
+    "id": "new-lantern",
+    "title": "街角灯亮了",
+    "style": "轻盈爵士电子",
+    "bpm": 115,
+    "duration": 138.565,
+    "file": "audio/new-lantern.mp3",
+    "midi": "audio/new-lantern.mid",
+    "rms_db": -21.98,
+    "peak": 0.5232,
+    "pitched_parts": 15,
+    "chorus_at": 50.087,
+    "middle_at": 83.478,
+    "preview_only": true
+  },
+  {
+    "id": "new-arcade",
+    "title": "今晚再玩一局",
+    "style": "复古游戏电子流行",
+    "bpm": 125,
+    "duration": 127.88,
+    "file": "audio/new-arcade.mp3",
+    "midi": "audio/new-arcade.mid",
+    "rms_db": -22.07,
+    "peak": 0.497,
+    "pitched_parts": 15,
+    "chorus_at": 46.08,
+    "middle_at": 76.8,
+    "preview_only": true
+  }
+]
