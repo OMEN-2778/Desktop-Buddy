@@ -736,3 +736,43 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
 .audio-volume input::-webkit-slider-thumb { appearance:none; width:14px; height:24px; border:2px solid var(--edge); border-radius:6px; background:var(--panel); box-shadow:inset 0 2px var(--bevel-hi),inset 0 -3px var(--bevel-lo); }
 .audio-volume input::-moz-range-thumb { width:10px; height:20px; border:2px solid var(--edge); border-radius:6px; background:var(--panel); box-shadow:inset 0 2px var(--bevel-hi),inset 0 -3px var(--bevel-lo); }
 .audio-volume input:focus-visible { outline:2px dashed var(--focus); outline-offset:5px; }
+
+/* ---------- the festival banner (user): above the diary, left-aligned with the
+   house; drops in with a bounce and confetti, idles (icon bob, shine, sparkles),
+   hops away when the festival is over ---------- */
+.fest-banner { position: absolute; z-index: 39; display: flex; align-items: center; gap: 8px; padding: 5px 16px 5px 7px; color: #fff;
+  isolation: isolate; cursor: pointer; filter: drop-shadow(2px 2px 0 var(--shadow)); transform-origin: 18% 100%; max-width: var(--house-w); }
+.fest-banner[hidden] { display: none; }
+.fest-banner::before { content: ""; position: absolute; inset: -2px; z-index: -3; background: #fff; clip-path: var(--clip-btn); }
+.fest-banner::after { content: ""; position: absolute; inset: 0; z-index: -2; clip-path: var(--clip-btn);
+  background: linear-gradient(100deg, var(--fb-a, #e1725b) 0 55%, var(--fb-b, #f6a487)); }
+.fb-glow { position: absolute; inset: 0; z-index: -1; clip-path: var(--clip-btn); overflow: hidden; pointer-events: none; }
+.fb-shine { position: absolute; top: -20%; bottom: -20%; left: -30%; width: 18%; background: rgba(255, 255, 255, .35); transform: skewX(-20deg) translateX(-100%); }
+.fb-icon { image-rendering: pixelated; flex: none; filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, .25)); }
+.fb-text { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; text-shadow: 1px 1px 0 rgba(0, 0, 0, .25); }
+.fb-text b { font-size: var(--ui-font-body); letter-spacing: .12em; }
+.fb-tip { font-size: var(--ui-font-label, 12px); font-weight: 600; opacity: .95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fb-spark { position: absolute; width: 7px; height: 7px; pointer-events: none; opacity: 0;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); background: #fff; }
+.fb-spark.s1 { top: -4px; right: 10px; } .fb-spark.s2 { bottom: -3px; right: 34%; width: 5px; height: 5px; } .fb-spark.s3 { top: 30%; left: -3px; width: 5px; height: 5px; }
+.fb-confetti { position: absolute; left: 22px; top: 50%; width: 0; height: 0; pointer-events: none; }
+.fb-confetti i { position: absolute; width: 3px; height: 3px; background: var(--c); opacity: 0; animation: fbConf .8s cubic-bezier(.2, .7, .3, 1) var(--d) forwards; }
+.fest-banner.in { animation: fbIn .55s cubic-bezier(.3, 1.4, .5, 1) both; }
+.fest-banner.in .fb-icon { animation: fbPop .5s .15s cubic-bezier(.3, 1.8, .5, 1) both; }
+.fest-banner.in .fb-text { animation: fbText .4s .22s ease-out both; }
+.fest-banner.idle .fb-icon { animation: fbBob 1.6s steps(2, jump-none) infinite; }
+.fest-banner.idle .fb-shine { animation: fbShine 5s 1s ease-in-out infinite; }
+.fest-banner.idle .fb-spark { animation: fbTwinkle 2.4s ease-in-out infinite; }
+.fest-banner.idle .fb-spark.s2 { animation-delay: .8s; } .fest-banner.idle .fb-spark.s3 { animation-delay: 1.6s; }
+.fest-banner.pop { animation: fbPopAll .35s cubic-bezier(.3, 1.6, .5, 1); }
+.fest-banner.out { animation: fbOut .3s ease-in both; }
+@keyframes fbIn { 0% { transform: translateY(-16px) scale(.35); opacity: 0; } 55% { transform: translateY(2px) scale(1.07); opacity: 1; } 78% { transform: scale(.97); } 100% { transform: none; opacity: 1; } }
+@keyframes fbPop { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
+@keyframes fbText { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+@keyframes fbBob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2px; } }
+@keyframes fbShine { 0%, 70% { transform: skewX(-20deg) translateX(-100%); } 100% { transform: skewX(-20deg) translateX(900%); } }
+@keyframes fbTwinkle { 0%, 100% { opacity: 0; transform: scale(.3); } 45% { opacity: 1; transform: scale(1); } 60% { opacity: .8; transform: scale(.8); } }
+@keyframes fbConf { 0% { opacity: 1; transform: translate(0, 0); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 14px)); } }
+@keyframes fbPopAll { 0% { transform: scale(1); } 40% { transform: scale(1.08) translateY(-2px); } 100% { transform: none; } }
+@keyframes fbOut { 0% { transform: none; opacity: 1; } 35% { transform: translateY(2px) scale(1.04); } 100% { transform: translateY(-14px) scale(.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .fest-banner, .fest-banner * { animation: none !important; } }
