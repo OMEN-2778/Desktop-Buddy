@@ -31,21 +31,34 @@ function retryUpdateCheck(){
 }
 for (const ev of ["pointerdown", "keydown", "wheel"]) document.addEventListener(ev, () => { lastInput = Date.now(); }, true);
 // above the diary box, flush with the house's right edge (user: off the house)
+// on top of everything above the house (user): over the festival bar when it shows,
+// else over the diary / chat / settings stack; it follows them as they move
 function placeUpdate() {
-  const box = updEl.parentElement.getBoundingClientRect(), d = diaryBox.getBoundingClientRect();
-  updEl.style.top = Math.round(d.top - box.top - updEl.offsetHeight - 14) + "px";
+  const box = updEl.parentElement.getBoundingClientRect();
+  const fb = document.getElementById("festBanner"), under = fb && !fb.hidden ? fb.getBoundingClientRect().top : fbUnderTop();
+  updEl.style.top = Math.round(under - box.top - updEl.offsetHeight - 6) + "px";
   updEl.style.right = updEl.parentElement.clientWidth - view.offsetLeft - view.offsetWidth + "px";
+  const h = updEl.offsetHeight;                        // concentric pixel capsules, sized to it
+  if (h && h !== updEl._h) {
+    updEl._h = h; const n = Math.max(4, Math.floor(h / 4));
+    updEl.style.setProperty("--up-o", roundClip(n, 2)); updEl.style.setProperty("--up-o-in", roundClip(n - 1, 2));
+    updEl.style.setProperty("--up-i", roundClip(Math.max(3, n - 3), 2)); updEl.style.setProperty("--up-i-in", roundClip(Math.max(2, n - 4), 2));
+    makeRoom();
+  }
 }
+function followUpdate() { if (updEl.hidden) return; placeUpdate(); requestAnimationFrame(followUpdate); }
 function showUpdate(text, { go = null, later = true } = {}) {
   updText.textContent = text; updEl.title = "";
   updEl.querySelector(".up-go").hidden = !go;
   updEl.querySelector(".up-go").textContent = go || "";
   updEl.querySelector(".up-later").hidden = !later;
-  if (updEl.hidden) { updEl.hidden = false; void updEl.offsetWidth; }
+  const fresh = updEl.hidden;
+  if (fresh) { updEl.hidden = false; void updEl.offsetWidth; }
   placeUpdate();                                        // (it needs its own height first)
   updEl.classList.add("on");
+  if (fresh) { makeRoom(); requestAnimationFrame(followUpdate); }
 }
-function hideUpdate(after = 0) { setTimeout(() => { updEl.classList.remove("on"); setTimeout(() => { if (!updEl.classList.contains("on")) updEl.hidden = true; }, 300); }, after); }
+function hideUpdate(after = 0) { setTimeout(() => { updEl.classList.remove("on"); setTimeout(() => { if (!updEl.classList.contains("on")) { updEl.hidden = true; updEl.style.removeProperty("--p"); makeRoom(); } }, 300); }, after); }
 // asked: from 检查更新 (says what it finds, and updates right away)
 async function checkUpdate(asked = false) {
   if (!TAURI) return;
@@ -65,7 +78,7 @@ async function checkUpdate(asked = false) {
   try { u = await TAURI.core.invoke("check_update"); }
   catch (e) { upd.state="idle";updateFailures++;retryUpdateCheck();if (asked) { showUpdate("没连上 GitHub，稍后再试"); hideUpdate(4000); } return; }
   upd.state="idle";clearTimeout(updateRetry);
-  if (!u) { updateFailures=0;if (asked) { showUpdate("已经是最新版啦"); hideUpdate(3000); } return; }
+  if (!u) { updateFailures=0;if (asked) { showUpdate(appVersion ? `已是最新版 v${appVersion}` : "已经是最新版啦"); hideUpdate(3500); } return; }
   upd.version = u.version;
   if (asked) await downloadUpdate(true);
   else if (prefs.autoUpdate) await downloadUpdate(false);          // quietly, in the background

@@ -803,3 +803,28 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 /* (the generic button bevel, edge and margin showed as stray lines round the clipped circles) */
 .fest-bar .fb-pill, .fest-bar .fb-name { margin: 0; box-shadow: none; border: 0; filter: none; text-shadow: none; }
 .ring.over-hud { z-index: 60; }   /* above the needs/time strip, the festival bar and the update pill */
+
+/* ---------- the update pill (user, redone): a pixel capsule at the very top of the stack,
+   buttons as concentric capsules inside it, the download filling the whole capsule from
+   the left as a translucent band (stripes drifting through it); springs in and out ---------- */
+#update.update { padding: 5px 5px 5px 16px; gap: 6px; min-height: 40px; box-sizing: border-box; filter: none; overflow: visible; clip-path: none;
+  background: none; box-shadow: none; border: 0; font-weight: 700; color: var(--ink);
+  transform: translateY(8px) scale(.6); opacity: 0; transform-origin: 85% 100%; transition: transform .45s var(--hud-spring), opacity .18s; }
+#update.update.on { transform: none; opacity: 1; }
+#update.update::before { content: ""; position: absolute; inset: 0; z-index: -3; border: 0; border-image: none; background: var(--edge); clip-path: var(--up-o, var(--clip-btn)); }
+#update.update::after { content: ""; position: absolute; inset: 2px; z-index: -3; background: var(--panel); clip-path: var(--up-o-in, var(--clip-btn));
+  box-shadow: inset 0 2px 0 var(--bevel-hi), inset 0 -2px 0 var(--bevel-lo); }
+#update.update .up-bar { position: absolute; inset: 2px; left: 2px; bottom: 2px; width: auto; height: auto; max-width: none; z-index: -2; clip-path: var(--up-o-in, var(--clip-btn));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 30%, transparent) var(--p, 0%), transparent var(--p, 0%)); transition: none; }
+#update.update .up-bar::after { content: ""; position: absolute; inset: 0; width: var(--p, 0%); opacity: .5;
+  background: repeating-linear-gradient(-45deg, transparent 0 6px, rgba(255, 255, 255, .55) 6px 9px); background-size: 25px 25px; animation: upStripes 1s steps(5) infinite; }
+#update.update > span { padding-right: 4px; }
+#update.update button { position: relative; isolation: isolate; height: 30px; padding: 0 14px; margin: 0; border: 0; box-shadow: none; filter: none; background: none; color: var(--ink);
+  font-weight: 700; transition: transform .35s var(--hud-spring); }
+#update.update button::before { content: ""; position: absolute; inset: 0; z-index: -1; border: 0; border-image: none; background: var(--edge); clip-path: var(--up-i, var(--clip-btn)); }
+#update.update button::after { content: ""; position: absolute; inset: 2px; z-index: -1; background: var(--panel-2); clip-path: var(--up-i-in, var(--clip-btn)); box-shadow: inset 0 2px 0 #ffffff88, inset 0 -2px 0 #00000018; }
+#update.update .up-go::after { background: #efc452; }
+#update.update button:hover { transform: translateY(-1px); }
+#update.update button:active { transform: scale(.92); transition-duration: .08s; }
+@keyframes upStripes { to { background-position: 25px 0; } }
+@media (prefers-reduced-motion: reduce) { #update.update, #update.update .up-bar::after { transition: none; animation: none; } }

@@ -1191,6 +1191,31 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 .fest-bar .fb-pill, .fest-bar .fb-name { margin: 0; box-shadow: none; border: 0; filter: none; text-shadow: none; }
 .ring.over-hud { z-index: 60; }   /* above the needs/time strip, the festival bar and the update pill */
 
+/* ---------- the update pill (user, redone): a pixel capsule at the very top of the stack,
+   buttons as concentric capsules inside it, the download filling the whole capsule from
+   the left as a translucent band (stripes drifting through it); springs in and out ---------- */
+#update.update { padding: 5px 5px 5px 16px; gap: 6px; min-height: 40px; box-sizing: border-box; filter: none; overflow: visible; clip-path: none;
+  background: none; box-shadow: none; border: 0; font-weight: 700; color: var(--ink);
+  transform: translateY(8px) scale(.6); opacity: 0; transform-origin: 85% 100%; transition: transform .45s var(--hud-spring), opacity .18s; }
+#update.update.on { transform: none; opacity: 1; }
+#update.update::before { content: ""; position: absolute; inset: 0; z-index: -3; border: 0; border-image: none; background: var(--edge); clip-path: var(--up-o, var(--clip-btn)); }
+#update.update::after { content: ""; position: absolute; inset: 2px; z-index: -3; background: var(--panel); clip-path: var(--up-o-in, var(--clip-btn));
+  box-shadow: inset 0 2px 0 var(--bevel-hi), inset 0 -2px 0 var(--bevel-lo); }
+#update.update .up-bar { position: absolute; inset: 2px; left: 2px; bottom: 2px; width: auto; height: auto; max-width: none; z-index: -2; clip-path: var(--up-o-in, var(--clip-btn));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 30%, transparent) var(--p, 0%), transparent var(--p, 0%)); transition: none; }
+#update.update .up-bar::after { content: ""; position: absolute; inset: 0; width: var(--p, 0%); opacity: .5;
+  background: repeating-linear-gradient(-45deg, transparent 0 6px, rgba(255, 255, 255, .55) 6px 9px); background-size: 25px 25px; animation: upStripes 1s steps(5) infinite; }
+#update.update > span { padding-right: 4px; }
+#update.update button { position: relative; isolation: isolate; height: 30px; padding: 0 14px; margin: 0; border: 0; box-shadow: none; filter: none; background: none; color: var(--ink);
+  font-weight: 700; transition: transform .35s var(--hud-spring); }
+#update.update button::before { content: ""; position: absolute; inset: 0; z-index: -1; border: 0; border-image: none; background: var(--edge); clip-path: var(--up-i, var(--clip-btn)); }
+#update.update button::after { content: ""; position: absolute; inset: 2px; z-index: -1; background: var(--panel-2); clip-path: var(--up-i-in, var(--clip-btn)); box-shadow: inset 0 2px 0 #ffffff88, inset 0 -2px 0 #00000018; }
+#update.update .up-go::after { background: #efc452; }
+#update.update button:hover { transform: translateY(-1px); }
+#update.update button:active { transform: scale(.92); transition-duration: .08s; }
+@keyframes upStripes { to { background-position: 25px 0; } }
+@media (prefers-reduced-motion: reduce) { #update.update, #update.update .up-bar::after { transition: none; animation: none; } }
+
 #petPanel{position:absolute;z-index:32;left:var(--pick-left);top:var(--pick-top);width:var(--pick-w);height:var(--pick-h);box-sizing:border-box;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden;font-size:var(--ui-font-body,14px);animation:pet-sheet-in .32s cubic-bezier(.2,.8,.2,1.12)}
 #petPanel[hidden],.pet-mini[hidden]{display:none}
 #petPanel header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;min-height:25px}
@@ -33077,7 +33102,9 @@ function makeRoom() {
   if (!setPop.hidden) need = Math.max(need, mTop - setPop.getBoundingClientRect().top + 8);
   const fb = document.getElementById("festBanner");   // the festival banner rides above the diary
   const fbUnder = fbUnderTop();
-  if (!fb.hidden) need = Math.max(need, mTop - fbUnder + fb.offsetHeight + 6 + 8 + (document.getElementById("update").hidden ? 0 : document.getElementById("update").offsetHeight + 8));
+  const upEl = document.getElementById("update");   // the update pill rides on top of the festival bar
+  const stack = (fb.hidden ? 0 : fb.offsetHeight + 6) + (upEl.hidden ? 0 : upEl.offsetHeight + 6);
+  if (stack) need = Math.max(need, mTop - fbUnder + stack + 8);
   // the app keeps room above the house for all of these all the time (and
   // lets clicks through it): opening one never moves the window (user: it flashed)
   if (TAURI) need = Math.max(need, APP_HEADROOM);
@@ -33672,21 +33699,34 @@ function retryUpdateCheck(){
 }
 for (const ev of ["pointerdown", "keydown", "wheel"]) document.addEventListener(ev, () => { lastInput = Date.now(); }, true);
 // above the diary box, flush with the house's right edge (user: off the house)
+// on top of everything above the house (user): over the festival bar when it shows,
+// else over the diary / chat / settings stack; it follows them as they move
 function placeUpdate() {
-  const box = updEl.parentElement.getBoundingClientRect(), d = diaryBox.getBoundingClientRect();
-  updEl.style.top = Math.round(d.top - box.top - updEl.offsetHeight - 14) + "px";
+  const box = updEl.parentElement.getBoundingClientRect();
+  const fb = document.getElementById("festBanner"), under = fb && !fb.hidden ? fb.getBoundingClientRect().top : fbUnderTop();
+  updEl.style.top = Math.round(under - box.top - updEl.offsetHeight - 6) + "px";
   updEl.style.right = updEl.parentElement.clientWidth - view.offsetLeft - view.offsetWidth + "px";
+  const h = updEl.offsetHeight;                        // concentric pixel capsules, sized to it
+  if (h && h !== updEl._h) {
+    updEl._h = h; const n = Math.max(4, Math.floor(h / 4));
+    updEl.style.setProperty("--up-o", roundClip(n, 2)); updEl.style.setProperty("--up-o-in", roundClip(n - 1, 2));
+    updEl.style.setProperty("--up-i", roundClip(Math.max(3, n - 3), 2)); updEl.style.setProperty("--up-i-in", roundClip(Math.max(2, n - 4), 2));
+    makeRoom();
+  }
 }
+function followUpdate() { if (updEl.hidden) return; placeUpdate(); requestAnimationFrame(followUpdate); }
 function showUpdate(text, { go = null, later = true } = {}) {
   updText.textContent = text; updEl.title = "";
   updEl.querySelector(".up-go").hidden = !go;
   updEl.querySelector(".up-go").textContent = go || "";
   updEl.querySelector(".up-later").hidden = !later;
-  if (updEl.hidden) { updEl.hidden = false; void updEl.offsetWidth; }
+  const fresh = updEl.hidden;
+  if (fresh) { updEl.hidden = false; void updEl.offsetWidth; }
   placeUpdate();                                        // (it needs its own height first)
   updEl.classList.add("on");
+  if (fresh) { makeRoom(); requestAnimationFrame(followUpdate); }
 }
-function hideUpdate(after = 0) { setTimeout(() => { updEl.classList.remove("on"); setTimeout(() => { if (!updEl.classList.contains("on")) updEl.hidden = true; }, 300); }, after); }
+function hideUpdate(after = 0) { setTimeout(() => { updEl.classList.remove("on"); setTimeout(() => { if (!updEl.classList.contains("on")) { updEl.hidden = true; updEl.style.removeProperty("--p"); makeRoom(); } }, 300); }, after); }
 // asked: from 检查更新 (says what it finds, and updates right away)
 async function checkUpdate(asked = false) {
   if (!TAURI) return;
@@ -33706,7 +33746,7 @@ async function checkUpdate(asked = false) {
   try { u = await TAURI.core.invoke("check_update"); }
   catch (e) { upd.state="idle";updateFailures++;retryUpdateCheck();if (asked) { showUpdate("没连上 GitHub，稍后再试"); hideUpdate(4000); } return; }
   upd.state="idle";clearTimeout(updateRetry);
-  if (!u) { updateFailures=0;if (asked) { showUpdate("已经是最新版啦"); hideUpdate(3000); } return; }
+  if (!u) { updateFailures=0;if (asked) { showUpdate(appVersion ? `已是最新版 v${appVersion}` : "已经是最新版啦"); hideUpdate(3500); } return; }
   upd.version = u.version;
   if (asked) await downloadUpdate(true);
   else if (prefs.autoUpdate) await downloadUpdate(false);          // quietly, in the background
@@ -40251,7 +40291,6 @@ function fbUnderTop() {
 function fbPlace() {
   const box = fbEl.parentElement.getBoundingClientRect(), above = fbUnderTop();
   let top = above - box.top - fbEl.offsetHeight - 6;
-  if (!updEl.hidden) top -= updEl.offsetHeight + 6;              // the update pill keeps its own row
   fbEl.style.top = Math.round(top) + "px";
   fbEl.style.left = view.offsetLeft + "px";
   fbEl.style.width = view.offsetWidth + "px";

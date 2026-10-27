@@ -115,7 +115,6 @@ function fbUnderTop() {
 function fbPlace() {
   const box = fbEl.parentElement.getBoundingClientRect(), above = fbUnderTop();
   let top = above - box.top - fbEl.offsetHeight - 6;
-  if (!updEl.hidden) top -= updEl.offsetHeight + 6;              // the update pill keeps its own row
   fbEl.style.top = Math.round(top) + "px";
   fbEl.style.left = view.offsetLeft + "px";
   fbEl.style.width = view.offsetWidth + "px";

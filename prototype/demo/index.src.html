@@ -4557,7 +4557,9 @@ function makeRoom() {
   if (!setPop.hidden) need = Math.max(need, mTop - setPop.getBoundingClientRect().top + 8);
   const fb = document.getElementById("festBanner");   // the festival banner rides above the diary
   const fbUnder = fbUnderTop();
-  if (!fb.hidden) need = Math.max(need, mTop - fbUnder + fb.offsetHeight + 6 + 8 + (document.getElementById("update").hidden ? 0 : document.getElementById("update").offsetHeight + 8));
+  const upEl = document.getElementById("update");   // the update pill rides on top of the festival bar
+  const stack = (fb.hidden ? 0 : fb.offsetHeight + 6) + (upEl.hidden ? 0 : upEl.offsetHeight + 6);
+  if (stack) need = Math.max(need, mTop - fbUnder + stack + 8);
   // the app keeps room above the house for all of these all the time (and
   // lets clicks through it): opening one never moves the window (user: it flashed)
   if (TAURI) need = Math.max(need, APP_HEADROOM);
