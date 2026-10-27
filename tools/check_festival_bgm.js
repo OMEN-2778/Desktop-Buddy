@@ -6,7 +6,7 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright');
  await page.evaluate(()=>{closeGuide();prefs.guided=true;prefs.autosave=false;speed=0;life.clouds=[];sim.place='home';sim.mode='idle';sim.act=null;sim.t=720;setSettingsOpen(true);});
  await page.locator('#volume-bgm').focus();await page.locator('#volume-bgm').press('End');
  const cases=[
-  ['disco',14,7,12,'BGM/disco/disco-mirror.mp3'],
+  ['disco',14,7,12,'BGM/disco/disco-mirror-night.mp3'],
   ['beach',14,7,12,'BGM/harbor/dragon-boat-day.mp3'],
   ['beach',14,7,18,'BGM/harbor/dragon-boat-night.mp3'],
   ['beach',14,7,6,'BGM/harbor/dragon-boat-day.mp3'],

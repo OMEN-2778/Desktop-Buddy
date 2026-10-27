@@ -16,7 +16,8 @@
     {"scene":"park","id":"park-summer","title":"夏日公园","bpm":108,"durationSeconds":53.3,"file":"BGM/park/park-summer.mp3","usage":"公园；夏季"},
     {"scene":"park","id":"park-autumn","title":"秋日公园","bpm":76,"durationSeconds":75.8,"file":"BGM/park/park-autumn.mp3","usage":"公园；秋季"},
     {"scene":"park","id":"park-winter","title":"冬日公园","bpm":64,"durationSeconds":90,"file":"BGM/park/park-winter.mp3","usage":"公园；冬季"},
-    {"scene":"mall","id":"mall-crowd-rush","title":"人潮高光","bpm":122,"durationSeconds":63,"file":"BGM/mall/mall-crowd-rush.mp3","usage":"商场主曲"},
+    {"scene":"mall","id":"mall-neon-escalator","title":"霓虹扶梯 · 连贯编配版","durationSeconds":147,"file":"BGM/mall/mall-neon-escalator.mp3","usage":"商场主曲"},
+    {"scene":"disco","id":"disco-mirror-night","title":"镜球正在升温 · 深夜舞池版","bpm":132,"durationSeconds":121,"file":"BGM/disco/disco-mirror-night.mp3","usage":"迪厅主曲"},
     {"scene":"bar","id":"bar-amber-bass","title":"琥珀低音","bpm":72,"durationSeconds":53.3,"file":"BGM/bar/bar-amber-bass.mp3","usage":"酒吧；低频爵士主曲"},
     {"scene":"bar","id":"bar-daylight-cup","title":"杯中日光","bpm":92,"durationSeconds":83.5,"file":"BGM/bar/bar-daylight-cup.mp3","usage":"酒吧；日光中庭主题改编"},
     {"scene":"harbor","id":"harbor-mist-return","title":"雾港归帆","bpm":68,"durationSeconds":84.7,"file":"BGM/harbor/harbor-mist-return.mp3","usage":"海边码头；海洋叙事"}

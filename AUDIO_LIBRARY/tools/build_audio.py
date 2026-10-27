@@ -35,7 +35,6 @@ OUTPUTS = {
     "公园四季-夏天-巴萨诺瓦版.mp3": "park/park-summer.mp3",
     "公园四季-秋天-室内民谣版.mp3": "park/park-autumn.mp3",
     "公园四季-冬天-极简氛围版.mp3": "park/park-winter.mp3",
-    "商场-人潮高光.mp3": "mall/mall-crowd-rush.mp3",
     "酒吧-琥珀低音.mp3": "bar/bar-amber-bass.mp3",
     "酒吧-杯中日光.mp3": "bar/bar-daylight-cup.mp3",
     "海边码头-雾港归帆.mp3": "harbor/harbor-mist-return.mp3",

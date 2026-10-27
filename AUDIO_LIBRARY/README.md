@@ -35,7 +35,8 @@
 | 公园 | `park/park-summer.mp3` | 同主题巴萨诺瓦编曲 |
 | 公园 | `park/park-autumn.mp3` | 同主题室内民谣编曲 |
 | 公园 | `park/park-winter.mp3` | 同主题极简氛围编曲 |
-| 商场 | `mall/mall-crowd-rush.mp3` | 122 BPM 热闹舞曲流行；含用户确认的第 3、6 音改音 |
+| 商场 | `mall/mall-neon-escalator.mp3` | 霓虹扶梯 · 连贯编配版（试听页选定） |
+| 迪厅 | `disco/disco-mirror-night.mp3` | 镜球正在升温 · 深夜舞池版，132 BPM（试听页选定） |
 | 酒吧 | `bar/bar-amber-bass.mp3` | 72 BPM 低频爵士；upright bass、暖电钢琴、轻刷鼓 |
 | 酒吧 | `bar/bar-daylight-cup.mp3` | 《日光中庭》主题的 Swing 酒吧改编 |
 | 海边码头 | `harbor/harbor-mist-return.mp3` | 68 BPM 海洋叙事；大提琴、尼龙吉他、潮声与远处浮标钟 |
