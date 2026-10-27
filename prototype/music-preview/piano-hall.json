@@ -1,0 +1,10 @@
+{
+  "id": "piano-hall",
+  "title": "长廊尽头的光",
+  "style": "抒情独奏钢琴",
+  "bpm": 86,
+  "duration": 136.253,
+  "file": "audio/piano-hall.mp3",
+  "midi": "audio/piano-hall.mid",
+  "preview_only": true
+}

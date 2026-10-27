@@ -1,0 +1,17 @@
+[
+  {
+    "id": "disco-mirror-night",
+    "title": "镜球正在升温 · 深夜舞池版",
+    "style": "深夜迪斯科与电子放克",
+    "bpm": 132,
+    "duration": 121.364,
+    "file": "audio/disco-mirror-night.mp3",
+    "midi": "audio/disco-mirror-night.mid",
+    "rms_db": -22.24,
+    "peak": 0.6284,
+    "pitched_parts": 15,
+    "chorus_at": 43.636,
+    "middle_at": 72.727,
+    "preview_only": true
+  }
+]
