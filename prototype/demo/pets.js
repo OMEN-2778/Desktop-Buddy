@@ -43,7 +43,7 @@ function petNaming(offer,rename=false){
 function paintPetPortrait(canvas,id){
  if(!petImages.has(id)){ensurePetImage(id).then(()=>paintPetPortrait(canvas,id));return;}const ctx=canvas.getContext('2d'),b=petBreed(id),clip=petClips.get(id)?.get('idle:right'),img=petImages.get(id);ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);if(img&&clip)ctx.drawImage(img,0,clip.row*28,32,28,0,0,canvas.width,canvas.height);}
 
-function petPoint(){const p=petState.pet;if(!p)return {x:155,y:FLOOR_Y[0]};if(p.carried){const h=buddyFeet();return {x:h.x+(sim.facing||1)*9,y:h.y-6};}if(p.walk?.position)return p.walk.position;if(p.motion?.route)return routePos(p.motion.route,p.motion.s);return p.position||{x:155,y:FLOOR_Y[0]};}
+function petPoint(){const p=petState.pet;if(!p)return {x:155,y:FLOOR_Y[0]};if(p.carried){const h=buddyFeet();return {x:Math.round(h.x),y:Math.round(h.y)-4};}if(p.walk?.position)return p.walk.position;if(p.motion?.route)return routePos(p.motion.route,p.motion.s);return p.position||{x:155,y:FLOOR_Y[0]};}
 function petWalkTo(x,y,after='idle',duration=20){const p=petState.pet,from=petPoint();p.motion={route:planRoute(from.x,from.y,x,y),s:0,after,duration};p.activityNow='walk';}
 function petStartAction(action,duration){const p=petState.pet;p.animTime=0;p.activityNow=action;if(action==='eat')p.direction='left';p.actionUntil=sim.t+duration;p.motion=null;}
 function petInteract(kind){closePetHud();if(!petCanSee()){closePetPanel();showHint('回到家再陪小家伙玩吧');return;}const p=petState.pet;
@@ -86,7 +86,12 @@ function petSpriteFrame(){const c=petClip(),p=petState.pet;return c?Math.floor((
 function drawPetKit(ctx){if(!petState.installed||!petIsHome())return;const mat=petMatImage(),feeder=petFurnitureImages.pet_feeder;if(mat)ctx.drawImage(mat,142,FLOOR_Y[0]-5);if(feeder)ctx.drawImage(feeder,91,FLOOR_Y[0]-21);if(petHover==='feeder'&&feeder)drawObjectHover(ctx,feeder,91,FLOOR_Y[0]-21);if(petHover==='mat'&&mat)drawObjectHover(ctx,mat,142,FLOOR_Y[0]-5);}
 const petFrameCache=new Map();
 function petFrameCanvas(){const p=petState.pet,c=petClip(),img=p&&petImages.get(p.breed);if(!c||!img)return null;const frame=petSpriteFrame(),key=p.breed+':'+c.row+':'+frame;let canvas=petFrameCache.get(key);if(!canvas){canvas=document.createElement('canvas');canvas.width=32;canvas.height=28;canvas.getContext('2d').drawImage(img,frame*32,c.row*28,32,28,0,0,32,28);petFrameCache.set(key,canvas);if(petFrameCache.size>96)petFrameCache.delete(petFrameCache.keys().next().value);}return canvas;}
-function drawPetActor(ctx,held=false){if(!petCanSee()||!!petState.pet.carried!==held)return;const img=petFrameCanvas(),point=petPoint();if(!img)return;if(!held)drawPetToy(ctx);const x=Math.round(point.x-16),y=Math.round(point.y-25);ctx.drawImage(img,x,y);drawPetHearts(ctx,point);if(petHover==='pet')drawObjectHover(ctx,img,x,y);}
+function drawHoldingHands(ctx,point){   // her two hands cradling it from below (user: 抱的姿势要体面)
+ const left=Math.round(point.x-DW/2),d=dollCanvas({expr:'neutral',look:0,bob:0,sway:0,wave:null}).getContext('2d').getImageData(4,21,1,1).data;
+ const skin=d[3]?`rgb(${d[0]},${d[1]},${d[2]})`:'#f2c6a0';
+ for(const hx of [left+4,left+14]){ctx.fillStyle='#8a5a4a';ctx.fillRect(hx,point.y-2,2,3);ctx.fillStyle=skin;ctx.fillRect(hx,point.y-2,2,2);}
+}
+function drawPetActor(ctx,held=false){if(!petCanSee()||!!petState.pet.carried!==held)return;const img=petFrameCanvas(),point=petPoint();if(!img)return;if(!held)drawPetToy(ctx);const x=Math.round(point.x-16),y=Math.round(point.y-25);ctx.drawImage(img,x,y);if(held)drawHoldingHands(ctx,point);drawPetHearts(ctx,point);if(petHover==='pet')drawObjectHover(ctx,img,x,y);}
 function petHit(x,y){if(!petIsHome()&&!petWalkActive())return null;const shapes=[];if(petCanSee()){const p=petPoint();shapes.push(['pet',petFrameCanvas(),Math.round(p.x-16),Math.round(p.y-25)]);}if(petState.installed&&petIsHome())shapes.push(['feeder',petFurnitureImages.pet_feeder,91,FLOOR_Y[0]-21],['mat',petMatImage(),142,FLOOR_Y[0]-5]);for(const [id,img,ox,oy]of shapes)if(img){if(!outlineCache.has(img))outlineCache.set(img,outlineShape(img));if(outlineCache.get(img).near.has(Math.floor(x-ox)+','+Math.floor(y-oy)))return id;}return null;}
 
 const petImageLoads=new Map();
@@ -114,7 +119,7 @@ function preparePetHumanAction(act){if(act==='pet_feed'&&petState.installed){D.s
  p.position={x:point.x,y:point.y};p.playUntil=0;p.toyUntil=0;petStartAction('look',40);p.reservedUntil=sim.t+80;p.interaction=null;return true;
 }
 function onPetHumanArrive(act){const p=petState.pet;if(act==='pet_feed'&&!petCanSee()){petState.feeder=900;log(petText('refill'));autoSave();return;}if(!petCanSee())return;const kind=act.slice(4);
- if(kind==='hold'){petHearts(2);p.carried=true;p.direction=(sim.facing||1)>0?'right':'left';p.motion=null;petStartAction('sit',12);p.needs.company=clamp(p.needs.company+12);gainPetAffinity(3,'hold');log(petText('hold'));speak(petText('hero_hold'));return;}
+ if(kind==='hold'){petHearts(2);p.carried=true;p.direction=(sim.facing||1)>0?'right':'left';p.motion=null;petStartAction('rest',1e6);p.needs.company=clamp(p.needs.company+12);gainPetAffinity(3,'hold');log(petText('hold'));speak(petText('hero_hold'));return;}
  if(kind==='treat'){servePetTreat(p.pendingTreat);delete p.pendingTreat;return;}p.nextHero=sim.t+75+PetRules.random(petState)*75;p.reservedUntil=sim.t+(ACTS[act]?.dur||15);
  if(kind==='feed'){petState.feeder=900;log(petText('refill'));petWalkTo(119,FLOOR_Y[0],'eat',30);speak(petText('hero_feed'));}
  else{if(kind==='play')startPetPlay();petStartAction(({pat:'nuzzle',play:petPlayAction(),groom:'sit',train:petBreed(p.breed).species==='dog'?'wag':'pounce',talk:'look',belly:'roll',kiss:'content',photo:'curious',toy:petBreed(p.breed).species==='cat'?'pounce':'run'})[kind]||'happy',ACTS[act].dur);petHearts(kind==='photo'?0:2.5);if(kind==='photo')petFlash=realClock;if(kind==='toy')startPetPlay();p.needs.company=clamp(p.needs.company+(kind==='play'?30:20));gainPetAffinity(kind==='play'?4:2,kind);log(petText(kind));speak(petText('hero_'+kind));addMood('pet_company',{diary:false,words:false});}

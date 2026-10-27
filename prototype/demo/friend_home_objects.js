@@ -58,7 +58,6 @@ function startFriendHouseAction(action,selected=null,item=null){
  if(!object){showHint('这间屋里暂时没有能这样使用的家具。');return false;}
  const room=friendObjectRoom(object);
  target=seat?friendSeat(seat):{x:off+object.x+object.w/2,y:room.floor};
- if(action==='toilet')target.y=room.floor-7;
  friendVisitWalk(target,action,duration,!!seat||action==='toilet');
  v.objectId=object.id;v.seatId=seat?.id||null;v.mealItem=action==='eat'||action==='cook'?item||v.mealItem||null:null;
  v.sleepFurniture=action==='sleep'?object:null;v.bedIndex=action==='sleep'?h.furniture.indexOf(object):null;
@@ -124,6 +123,12 @@ function drawFriendHomeLamps(ctx){
   const light=ctx.createRadialGradient(x,y,1,x,y,28);light.addColorStop(0,'rgba(255,236,179,.52)');light.addColorStop(1,'rgba(255,224,169,0)');ctx.fillStyle=light;ctx.fillRect(off+r.x,r.y,r.w,r.floor-r.y+6);ctx.restore();
  }
 }
+function friendShowerGhost(f){
+ const c=document.createElement('canvas');c.width=DW+6;c.height=DH+6;const x=c.getContext('2d');
+ x.filter='blur(1.6px)';x.drawImage(dollCanvas({...f,expr:'neutral',wave:null},'stand'),3,3);x.filter='none';
+ x.globalCompositeOperation='source-atop';x.fillStyle='rgba(205,160,150,.8)';x.fillRect(0,0,c.width,c.height);   // one warm tone: no face, no clothes
+ return c;
+}
 function drawFriendFixtureUser(ctx,f){
  const v=friendVisit,o=friendHouseObject(v.objectId);if(sim.mode!=='act'||!o||!['toilet','bath'].includes(v.action))return false;
  const off=(W-visitingHouse().w)/2,room=friendObjectRoom(o),image=IMG.friendHouses[v.houseId].objects[o.id];
@@ -133,11 +138,12 @@ function drawFriendFixtureUser(ctx,f){
   ctx.drawImage(IMG.ov.bubbles,off+o.x,o.y+18);
   ctx.drawImage(image,0,21,o.w,o.h-21,off+o.x,o.y+21,o.w,o.h-21);
  }else if(o.kind==='shower'){
-  ctx.drawImage(dollCanvas({...f,expr:'neutral'},'stand',14),off+o.x-3,o.y+4);
-  ctx.fillStyle='rgba(176,211,218,.2)';ctx.fillRect(off+o.x+1,o.y+2,o.w-2,o.h-5);
+  // behind frosted glass only a soft, blurred silhouette shows (user: not a floating head)
+  const g=friendShowerGhost(f);ctx.globalAlpha=1;ctx.drawImage(g,Math.round(off+o.x+o.w/2-g.width/2),Math.round(o.y+o.h-g.height-3));ctx.globalAlpha=1;
+  ctx.fillStyle='rgba(206,228,234,.3)';ctx.fillRect(off+o.x+1,o.y+2,o.w-2,o.h-5);
   ctx.fillStyle='#d9eaf0';for(let i=0;i<4;i++)ctx.fillRect(off+o.x+3+i*4,o.y+10+(Math.floor(realClock*15)+i*5)%16,1,2);
  }else{
-  const p=here();ctx.drawImage(dollCanvas(f,'sit'),Math.round(p.x-DW/2),Math.round(p.y-DH+1));
+  const p=here();ctx.drawImage(dollCanvas(f,'sit'),Math.round(p.x-DW/2),Math.round(p.y-7-DH+1));   // feet stay on the floor; only the sitting pose sits up on the seat
   ctx.drawImage(image,0,9,o.w,o.h-9,off+o.x,o.y+9,o.w,o.h-9);
  }
  ctx.restore();return true;

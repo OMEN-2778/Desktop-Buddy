@@ -16,7 +16,7 @@ function onPetSceneChanged(to){const p=petState.pet;if(!p?.walk)return;
  p.walk.phase='active';p.walk.position={x:Math.max(18,Math.min(W-18,here().x-18)),y:OUT[to].feet};p.walk.nextTalk=sim.t+15;p.activityNow='walk';p.direction='right';p.motion=null;sim.outBack=p.walk.until;
 }
 function tickPetActivities(from,to){const p=petState.pet,dt=to-from;if(!p||p.status!=='home')return;
- if(p.carried){if((!petIsHome()&&!petWalkActive())||sim.mode==='down'||petIsHome()&&sim.mode==='act'&&!['pet_hold','tv','host'].includes(sim.act)||p.needs.hunger<25||p.needs.energy<15)dropCarriedPet();else{p.activityNow='sit';p.needs.company=clamp(p.needs.company+dt*.12);if(!p.walk)return;}}
+ if(p.carried){if((!petIsHome()&&!petWalkActive())||sim.mode==='down'||petIsHome()&&sim.mode==='act'&&!['pet_hold','tv','host'].includes(sim.act)||p.needs.hunger<25||p.needs.energy<15)dropCarriedPet();else{p.activityNow='rest';p.needs.company=clamp(p.needs.company+dt*.12);if(!p.walk)return;}}
  if(p.playUntil>to&&petIsHome()&&!p.carried&&p.playOrigin){const room=D.roomX[roomAt(p.playOrigin)];if(room){const target=p.playOrigin.x+Math.sin((to-p.playAt)*.7)*9;p.position={x:Math.max(room[1]+16,Math.min(room[2]-16,target)),y:p.playOrigin.y};p.direction=Math.cos((to-p.playAt)*.7)<0?'left':'right';}}
  const w=p.walk;if(!w)return;
  // Friend-home travel has its own transition, outside throughDoor's callback.
