@@ -17,7 +17,8 @@ FPS, N = T['fps'], T['frames']
 S = 2                                     # internal canvas is 2x the 1920x1080 output
 W, H = 1920, 1080
 FONT = '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc'
-LAYER = (W - T['vw'] - 24, H - 56 - T['vh'])   # the app window sits bottom-right, on the taskbar
+_v = T['view'][min(len(T['view']) - 1, T['show'] + 30)]
+LAYER = (int(W - 150 - _v[0] - _v[2]), int(H - 56 - 26 - _v[1] - _v[3]))   # the house sits bottom-right, just above the taskbar
 font = lambda px: ImageFont.truetype(FONT, int(px), index=2)   # index 2: SC
 
 
@@ -173,6 +174,13 @@ def tilt(img, yaw, pitch):
 
 
 # ---------------------------------------------------------------- frames → video
+def paste(im, layer, x, y):
+    """alpha_composite that tolerates a layer hanging off the top/left (room left above the house)."""
+    cx, cy = max(0, -x), max(0, -y)
+    if cx or cy: layer = layer.crop((cx, cy, layer.width, layer.height))
+    im.alpha_composite(layer, (x + cx, y + cy))
+
+
 def main():
     audio = OUT.with_suffix('.wav')
     make_audio(audio)
@@ -188,9 +196,9 @@ def main():
                 lw, lh = int(layer.width * sc), int(layer.height * sc)
                 small = layer.resize((max(1, lw), max(1, lh)), Image.LANCZOS)
                 small.putalpha(small.getchannel('A').point(lambda a: int(a * u)))
-                im.alpha_composite(small, (int((LAYER[0] * S + layer.width / 2) - lw / 2), int((LAYER[1] * S + layer.height) - lh)))
+                paste(im, small, int((LAYER[0] * S + layer.width / 2) - lw / 2), int((LAYER[1] * S + layer.height) - lh))
             else:
-                im.alpha_composite(layer, (LAYER[0] * S, LAYER[1] * S))
+                paste(im, layer, LAYER[0] * S, LAYER[1] * S)
         cx, cy = T['cursor'][i]
         if i >= T['desktopCursor']: cx, cy = cx + LAYER[0], cy + LAYER[1]
         clicked = next((i - c for c in T['clicks'] if 0 <= i - c < 9), None)
