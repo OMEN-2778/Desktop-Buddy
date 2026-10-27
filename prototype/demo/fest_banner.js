@@ -80,7 +80,7 @@ function fbDeco(name) {
     for (let i = 0; i < 18; i++) {
       const x = (i / 18) * 100 + Math.random() * 4, y = 8 + ((i * 37) % 70), sz = 18 + ((i * 7) % 4) * 4 + Math.random() * 4;
       const light = x > 55, k = kinds[i % kinds.length];
-      h += `<svg viewBox="0 0 24 24" style="left:${x.toFixed(1)}%;top:${y}%;width:${sz.toFixed(0)}px;height:${sz.toFixed(0)}px;--r:${(Math.random() * 30 - 15).toFixed(0)}deg;--d:${(Math.random() * -6).toFixed(1)}s;--t:${(4 + Math.random() * 3).toFixed(1)}s" class="${light ? "tint" : ""}"><path d="${FB_SHAPES[k]}"/></svg>`;
+      h += `<svg viewBox="0 0 24 24" shape-rendering="crispEdges" style="left:${x.toFixed(1)}%;top:${y}%;width:${sz.toFixed(0)}px;height:${sz.toFixed(0)}px;--r:${(Math.random() * 30 - 15).toFixed(0)}deg;--d:${(Math.random() * -6).toFixed(1)}s;--t:${(4 + Math.random() * 3).toFixed(1)}s" class="${light ? "tint" : ""}"><path d="${FB_SHAPES[k]}"/></svg>`;
     }
     return `<span class="fb-deco-run">${h}</span>`;
   };
@@ -89,11 +89,27 @@ function fbDeco(name) {
 let fbName = null, fbTimer = 0;
 function fbPlace() {
   const box = fbEl.parentElement.getBoundingClientRect(), d = diaryBox.getBoundingClientRect();
-  let top = d.top - box.top - fbEl.offsetHeight - 14;
-  if (!updEl.hidden) top -= updEl.offsetHeight + 8;              // the update pill keeps its own row
+  let above = d.top;                                             // rides on whatever is highest below it: the diary row, its open list
+  if (!diaryPop.hidden && diaryPop.offsetHeight) above = Math.min(above, diaryPop.getBoundingClientRect().top);
+  if (!setPop.hidden && setPop.offsetHeight) above = Math.min(above, setPop.getBoundingClientRect().top);   // the settings rows too
+
+  let top = above - box.top - fbEl.offsetHeight - 6;
+  if (!updEl.hidden) top -= updEl.offsetHeight + 6;              // the update pill keeps its own row
   fbEl.style.top = Math.round(top) + "px";
   fbEl.style.left = view.offsetLeft + "px";
   fbEl.style.width = view.offsetWidth + "px";
+  const h = fbEl.offsetHeight;                                   // pixel-stepped round ends, sized to the bar and its pills
+  if (h && h !== fbEl._clipH) {
+    fbEl._clipH = h;
+    fbEl.style.setProperty("--fb-clip", roundClip(Math.max(3, Math.floor(h / 4)), 2));
+    fbEl.style.setProperty("--fb-pill-clip", roundClip(Math.max(3, Math.floor((h - 12) / 4)), 2));
+  }
+}
+function fbFollow() {
+  if (fbEl.hidden) return;
+  fbPlace();
+  if (fbEl.getBoundingClientRect().top < 4 && performance.now() - (fbEl._room || 0) > 250) { fbEl._room = performance.now(); makeRoom(); }   // pushed off the top: ask for room
+  requestAnimationFrame(fbFollow);
 }
 function fbShow(f) {
   const [a, b, line, ...acts] = FEST_BAR[f.name] || ["#e1725b", "#f6a487", pick(f.say || ["节日快乐"])];
@@ -116,6 +132,7 @@ function fbShow(f) {
   fbEl.hidden = false; fbEl.className = "fest-bar"; void fbEl.offsetWidth;
   fbPlace(); makeRoom(); fbPlace();
   fbEl.classList.add("in");
+  requestAnimationFrame(fbFollow);
   fbTimer = setTimeout(() => { fbEl.classList.remove("in"); fbEl.classList.add("idle"); }, 1100);
 }
 function fbHide() {
@@ -132,6 +149,5 @@ function fbTick() {
     if (f) setTimeout(() => { if (fbName === f.name) fbShow(f); }, was ? 700 : 0);
   }
   if (!fbEl.hidden && fbEl.offsetHeight !== fbEl._h) { fbEl._h = fbEl.offsetHeight; makeRoom(); }
-  if (!fbEl.hidden) fbPlace();
 }
 setInterval(fbTick, 400);
