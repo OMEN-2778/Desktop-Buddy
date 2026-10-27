@@ -2999,7 +2999,12 @@ function closePicker() {
   setTimeout(() => { if (!pickOn) { pickerEl.hidden = true; makeRoom(); } }, reduceMotionUI ? 0 : 300);   // after it has shrunk back
 }
 pickerEl.querySelector(".x").addEventListener("click", closePicker);
-pickerEl.querySelector(".rand").addEventListener("click", () => { const a = pickOn; closePicker(); command(a); });
+pickerEl.querySelector(".rand").addEventListener("click", () => {
+  const a = pickOn, items = a.startsWith("fest_") ? PICK[a].groups().flatMap(g => g.items) : null;   // festival pickers need a real choice
+  closePicker();
+  if (items) { if (items.length) command(a, pick(items).item); }
+  else command(a);
+});
 document.addEventListener("pointerdown", e => { if (pickOn && !pickerEl.contains(e.target) && e.target !== view) closePicker(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && pickOn) closePicker(); });
 
