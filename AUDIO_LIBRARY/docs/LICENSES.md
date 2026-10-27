@@ -113,3 +113,34 @@ https://cdn.freesound.org/previews/{ID前三位}/{ID}_{上传者数字ID}-hq.mp3
 ## 冬季家中 BGM 轻声处理（2026-10-26）
 
 冬季白天与夜间仍使用原作曲、旋律、节奏与 128 秒循环，只做固定均衡与电平处理：去除极低频隆隆声，压低低音铺底和中低频持续嗡鸣；立体声整体 RMS 分别降低约 6.1 dB、7.7 dB，50 Hz 约降低 14.9 dB。没有加入动态压缩或事件音量避让。处理脚本为 `tools/soften_winter_bgm.py`，总构建脚本会在原始作曲渲染后应用一次，保证重建后不会恢复原音量。
+
+
+## 第三方音效：BigSoundBank（CC0）
+
+2026-10-27 加入。来源 BigSoundBank.com（Joseph SARDIN），站点许可页写明作品以 **CC0 1.0 Universal**（及 WTFPL）发布：可复制、分发、改编，包括商业用途，无需署名，无需许可。按作者建议可在制作人员名单写 "Additional sounds: Joseph SARDIN - BigSoundBank.com"。
+
+下载与剪辑脚本：`tools/import_bigsoundbank.py`（取最平稳的一段做无缝循环，按音量切出单声猫叫/狗叫、雷声）。来源清单：`docs/BIGSOUNDBANK.json`。
+
+| 本地文件 | 原始录音（BigSoundBank 编号与标题） | 原始页面 | 用途 |
+|---|---|---|---|
+| `rain-light-dense-cc0.mp3` | #0820 Rain and thunder in a tent | https://bigsoundbank.com/sound-0820.html | 小雨循环（连续、密集） |
+| `rain-storm-heavy-cc0.mp3` | #1294 Big rain on car roof；#1019 Summer Rain on Terrace | https://bigsoundbank.com/sound-1294.html | 雷雨/暴雨循环（更响） |
+| `thunder-roll-1-cc0.mp3` | #1296 Thunder and Rain on Car Windshield | https://bigsoundbank.com/sound-1296.html | 雷声（与原有强雷轮换） |
+| `thunder-roll-2-cc0.mp3` | #0595 Thunderclap | https://bigsoundbank.com/sound-0595.html | 雷声（与原有强雷轮换） |
+| `thunder-roll-3-cc0.mp3` | #0595 Thunderclap | https://bigsoundbank.com/sound-0595.html | 雷声（与原有强雷轮换） |
+| `cat-meow-1-cc0.mp3` | #0098 Small mewing of a cat | https://bigsoundbank.com/sound-0098.html | 猫叫（宠物猫、门前猫） |
+| `cat-meow-2-cc0.mp3` | #0098 Small mewing of a cat | https://bigsoundbank.com/sound-0098.html | 猫叫（宠物猫、门前猫） |
+| `cat-meow-3-cc0.mp3` | #0098 Small mewing of a cat | https://bigsoundbank.com/sound-0098.html | 猫叫（宠物猫、门前猫） |
+| `cat-meow-4-cc0.mp3` | #0372 Mewing kitten 2 months | https://bigsoundbank.com/sound-0372.html | 猫叫（宠物猫、门前猫） |
+| `cat-meow-5-cc0.mp3` | #0372 Mewing kitten 2 months | https://bigsoundbank.com/sound-0372.html | 猫叫（宠物猫、门前猫） |
+| `cat-meow-6-cc0.mp3` | #0903 Meow | https://bigsoundbank.com/sound-0903.html | 猫叫（宠物猫、门前猫） |
+| `cat-meow-7-cc0.mp3` | #0903 Meow | https://bigsoundbank.com/sound-0903.html | 猫叫（宠物猫、门前猫） |
+| `cat-purr-loop-cc0.mp3` | #0436 Cat Purr | https://bigsoundbank.com/sound-0436.html | 宠物猫呼噜 |
+| `dog-bark-1-cc0.mp3` | #0682 Barking of a Spitz | https://bigsoundbank.com/sound-0682.html | 狗叫（宠物狗） |
+| `dog-bark-2-cc0.mp3` | #0612 Small dog barking | https://bigsoundbank.com/sound-0612.html | 狗叫（宠物狗） |
+| `dog-bark-3-cc0.mp3` | #0612 Small dog barking | https://bigsoundbank.com/sound-0612.html | 狗叫（宠物狗） |
+| `dog-bark-4-cc0.mp3` | #0612 Small dog barking | https://bigsoundbank.com/sound-0612.html | 狗叫（宠物狗） |
+| `dog-bark-5-cc0.mp3` | #0868 2 dogs barking | https://bigsoundbank.com/sound-0868.html | 狗叫（宠物狗） |
+| `dog-bark-6-cc0.mp3` | #0868 2 dogs barking | https://bigsoundbank.com/sound-0868.html | 狗叫（宠物狗） |
+| `dog-bark-7-cc0.mp3` | #0868 2 dogs barking | https://bigsoundbank.com/sound-0868.html | 狗叫（宠物狗） |
+| `dog-pant-cc0.mp3` | #1547 Dogs Breathing | https://bigsoundbank.com/sound-1547.html | 宠物狗喘气 |

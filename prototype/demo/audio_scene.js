@@ -47,12 +47,12 @@ function audioSceneBeds(){
  // Gentle movement in the bed, with quiet intervals instead of constant layers.
  const breeze=.75+.25*Math.sin(time/7),exposure=audioWindowExposure();
  if(place==='home'||atFriendHome()){
-  if(wet)beds.rain=[weather.kind==='storm'?'rain-heavy-window-cc0':'rain-soft-loop-cc0',.28*exposure.gain,{cutoff:exposure.cutoff}];
+  if(wet)beds.rain=[weather.kind==='storm'?'rain-storm-heavy-cc0':'rain-light-dense-cc0',(weather.kind==='storm'?.40:.30)*exposure.gain,{cutoff:exposure.cutoff}];
   else if(!night&&exposure.gain>.3)beds.birds=['park-birds-cc0',.12*exposure.gain,{cutoff:exposure.cutoff}];
   return beds;
  }
  if(['front','park','beach'].includes(place)){
-  if(wet)beds.rain=[weather.kind==='storm'?'rain-heavy-window-cc0':'rain-soft-loop-cc0',.28];
+  if(wet)beds.rain=[weather.kind==='storm'?'rain-storm-heavy-cc0':'rain-light-dense-cc0',weather.kind==='storm'?.40:.30];
   if(place!=='park')beds.air=['park-wind-cc0',(weather.kind==='storm'?.15:.07)*breeze];
   if(place==='beach'){
    beds.water=['real-sea-cc0',.25,{x:160,y:45,radius:190}];
@@ -63,7 +63,7 @@ function audioSceneBeds(){
    else if(night&&seasonOf(sim.t).i!==3)beds.night=['real-night-cc0',.09];
   }
   if(place==='park'){
-   if(parkInsideToilet())return {rain:wet?[weather.kind==='storm'?'rain-heavy-window-cc0':'rain-soft-loop-cc0',.035,{cutoff:850}]:null};
+   if(parkInsideToilet())return {rain:wet?[weather.kind==='storm'?'rain-storm-heavy-cc0':'rain-light-dense-cc0',.035,{cutoff:850}]:null};
   }
   if(!wet&&life.npcs?.length>1)beds.people=['crowd-indoor-walla-cc0',.035,{x:235,y:p.y,radius:130}];
  }else if(place==='mall'){

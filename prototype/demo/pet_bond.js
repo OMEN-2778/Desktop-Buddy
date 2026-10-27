@@ -65,3 +65,20 @@ function petBondTick() {
   if (!act && p.needs.company < 55) { if (petBondGo("bring_toy", h.x + side, y, petPlayAction(), 20, 0.6)) startPetPlay(); }
 }
 setInterval(petBondTick, 1000);
+// ---------------------------------------------------------------- the pet's voice (user: 猫狗的叫声太少)
+// Real recordings (BigSoundBank, CC0): a cat purrs while it's fussed over or kneading and
+// meows when curious, happy, startled or waking; a dog barks when happy, startled or
+// greeting her and pants after playing. Seven takes each, so it never sounds like a loop.
+const PET_CALLS = { cat: { purr: ["nuzzle", "content", "knead"], call: ["curious", "happy", "surprised", "wake", "look", "beg"] },
+  dog: { purr: ["play", "pounce", "roll"], call: ["happy", "surprised", "wake", "wag", "curious", "beg"] } };
+const petCall = sp => sp === "cat" ? `cat-meow-${1 + Math.floor(Math.random() * 7)}-cc0` : `dog-bark-${1 + Math.floor(Math.random() * 7)}-cc0`;
+const petStartActionQuiet = petStartAction;
+petStartAction = function (action, duration) {
+  petStartActionQuiet(action, duration);
+  const p = petState.pet;
+  if (!p || !petCanSee()) return;
+  const sp = petBreed(p.breed).species, C = PET_CALLS[sp];
+  if (!C || (action === "look" || action === "curious") && Math.random() < 0.6) return;
+  if (C.purr.includes(action)) gameAudio.sound(sp === "cat" ? "cat-purr-loop-cc0" : "dog-pant-cc0", 0.2, { vary: true, gap: 8, tag: "pet-voice" });
+  else if (C.call.includes(action)) gameAudio.sound(petCall(sp), sp === "cat" ? 0.2 : 0.17, { vary: true, gap: 5, tag: "pet-voice" });
+};

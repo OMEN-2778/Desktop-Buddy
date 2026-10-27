@@ -1,0 +1,84 @@
+{
+ "license": "CC0 1.0 (BigSoundBank, Joseph SARDIN)",
+ "sources": {
+  "0820": "Rain and thunder in a tent",
+  "1294": "Big rain on car roof",
+  "1019": "Summer Rain on Terrace",
+  "1296": "Thunder and Rain on Car Windshield",
+  "0595": "Thunderclap",
+  "0098": "Small mewing of a cat",
+  "0372": "Mewing kitten 2 months",
+  "0903": "Meow",
+  "0436": "Cat Purr",
+  "0682": "Barking of a Spitz",
+  "0612": "Small dog barking",
+  "0868": "2 dogs barking",
+  "1547": "Dogs Breathing"
+ },
+ "files": {
+  "rain-light-dense-cc0.mp3": [
+   "0820"
+  ],
+  "rain-storm-heavy-cc0.mp3": [
+   "1294",
+   "1019"
+  ],
+  "thunder-roll-1-cc0.mp3": [
+   "1296"
+  ],
+  "thunder-roll-2-cc0.mp3": [
+   "0595"
+  ],
+  "thunder-roll-3-cc0.mp3": [
+   "0595"
+  ],
+  "cat-meow-1-cc0.mp3": [
+   "0098"
+  ],
+  "cat-meow-2-cc0.mp3": [
+   "0098"
+  ],
+  "cat-meow-3-cc0.mp3": [
+   "0098"
+  ],
+  "cat-meow-4-cc0.mp3": [
+   "0372"
+  ],
+  "cat-meow-5-cc0.mp3": [
+   "0372"
+  ],
+  "cat-meow-6-cc0.mp3": [
+   "0903"
+  ],
+  "cat-meow-7-cc0.mp3": [
+   "0903"
+  ],
+  "cat-purr-loop-cc0.mp3": [
+   "0436"
+  ],
+  "dog-bark-1-cc0.mp3": [
+   "0682"
+  ],
+  "dog-bark-2-cc0.mp3": [
+   "0612"
+  ],
+  "dog-bark-3-cc0.mp3": [
+   "0612"
+  ],
+  "dog-bark-4-cc0.mp3": [
+   "0612"
+  ],
+  "dog-bark-5-cc0.mp3": [
+   "0868"
+  ],
+  "dog-bark-6-cc0.mp3": [
+   "0868"
+  ],
+  "dog-bark-7-cc0.mp3": [
+   "0868"
+  ],
+  "dog-pant-cc0.mp3": [
+   "1547"
+  ]
+ }
+}
