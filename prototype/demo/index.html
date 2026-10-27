@@ -33041,7 +33041,7 @@ function makeRoom() {
   if (diaryOn) need = Math.max(need, mTop - diaryBox.getBoundingClientRect().top + 8 + diaryPop.offsetHeight);
   if (!setPop.hidden) need = Math.max(need, mTop - setPop.getBoundingClientRect().top + 8);
   const fb = document.getElementById("festBanner");   // the festival banner rides above the diary
-  const fbUnder = Math.min(diaryBox.getBoundingClientRect().top, !diaryPop.hidden && diaryPop.offsetHeight ? diaryPop.getBoundingClientRect().top : Infinity, !setPop.hidden && setPop.offsetHeight ? setPop.getBoundingClientRect().top : Infinity);
+  const fbUnder = fbUnderTop();
   if (!fb.hidden) need = Math.max(need, mTop - fbUnder + fb.offsetHeight + 6 + 8 + (document.getElementById("update").hidden ? 0 : document.getElementById("update").offsetHeight + 8));
   // the app keeps room above the house for all of these all the time (and
   // lets clicks through it): opening one never moves the window (user: it flashed)
@@ -40186,12 +40186,19 @@ function fbDeco(name) {
   deco.innerHTML = `<span class="fb-deco-strip">${one()}${one()}</span>`;   // two copies side by side: a seamless loop
 }
 let fbName = null, fbTimer = 0;
+// the highest thing it must stay above: the diary row, its open list, the settings rows,
+// a chat bubble with a friend, an incoming call
+function fbUnderTop() {
+  let top = diaryBox.getBoundingClientRect().top;
+  for (const el of [diaryPop, setPop, document.getElementById("peerHud"), document.getElementById("incomingCall")]) {
+    if (!el || el.hidden || !el.offsetHeight || getComputedStyle(el).visibility === "hidden") continue;
+    const r = el.getBoundingClientRect();
+    if (r.height && r.bottom > 0) top = Math.min(top, r.top);
+  }
+  return top;
+}
 function fbPlace() {
-  const box = fbEl.parentElement.getBoundingClientRect(), d = diaryBox.getBoundingClientRect();
-  let above = d.top;                                             // rides on whatever is highest below it: the diary row, its open list
-  if (!diaryPop.hidden && diaryPop.offsetHeight) above = Math.min(above, diaryPop.getBoundingClientRect().top);
-  if (!setPop.hidden && setPop.offsetHeight) above = Math.min(above, setPop.getBoundingClientRect().top);   // the settings rows too
-
+  const box = fbEl.parentElement.getBoundingClientRect(), above = fbUnderTop();
   let top = above - box.top - fbEl.offsetHeight - 6;
   if (!updEl.hidden) top -= updEl.offsetHeight + 6;              // the update pill keeps its own row
   fbEl.style.top = Math.round(top) + "px";

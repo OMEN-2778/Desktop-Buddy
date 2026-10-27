@@ -4554,7 +4554,7 @@ function makeRoom() {
   if (diaryOn) need = Math.max(need, mTop - diaryBox.getBoundingClientRect().top + 8 + diaryPop.offsetHeight);
   if (!setPop.hidden) need = Math.max(need, mTop - setPop.getBoundingClientRect().top + 8);
   const fb = document.getElementById("festBanner");   // the festival banner rides above the diary
-  const fbUnder = Math.min(diaryBox.getBoundingClientRect().top, !diaryPop.hidden && diaryPop.offsetHeight ? diaryPop.getBoundingClientRect().top : Infinity, !setPop.hidden && setPop.offsetHeight ? setPop.getBoundingClientRect().top : Infinity);
+  const fbUnder = fbUnderTop();
   if (!fb.hidden) need = Math.max(need, mTop - fbUnder + fb.offsetHeight + 6 + 8 + (document.getElementById("update").hidden ? 0 : document.getElementById("update").offsetHeight + 8));
   // the app keeps room above the house for all of these all the time (and
   // lets clicks through it): opening one never moves the window (user: it flashed)
