@@ -1,0 +1,54 @@
+{
+  "id": "disco-glitter",
+  "title": "镜球亮起来",
+  "style": "流行迪斯科（nu-disco）",
+  "bpm": 122,
+  "key": "D 小调（末段副歌升全音）",
+  "bars": 80,
+  "duration": 160.38,
+  "file": "audio/disco-glitter.mp3",
+  "midi": "audio/disco-glitter.mid",
+  "rms_db": -17.03,
+  "peak": 0.85,
+  "pitched_parts": 15,
+  "stems": {
+    "drums": -16.5,
+    "bass": -18.5,
+    "keys": -23.5,
+    "strings": -23,
+    "brass": -25.5,
+    "lead": -21,
+    "sparkle": -27.5
+  },
+  "preview_only": true,
+  "sections": [
+    {
+      "at": 0.0,
+      "title": "滤波前奏"
+    },
+    {
+      "at": 15.74,
+      "title": "主歌"
+    },
+    {
+      "at": 47.21,
+      "title": "预副歌爬升"
+    },
+    {
+      "at": 62.95,
+      "title": "副歌"
+    },
+    {
+      "at": 94.43,
+      "title": "间奏收束"
+    },
+    {
+      "at": 110.16,
+      "title": "升调副歌"
+    },
+    {
+      "at": 141.64,
+      "title": "尾奏"
+    }
+  ]
+}
