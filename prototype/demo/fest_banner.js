@@ -115,7 +115,7 @@ function fbPlace() {
 function fbFollow() {
   if (fbEl.hidden) return;
   fbPlace();
-  if (fbEl.getBoundingClientRect().top < 4 && performance.now() - (fbEl._room || 0) > 250) { fbEl._room = performance.now(); makeRoom(); }   // pushed off the top: ask for room
+  if (fbEl.getBoundingClientRect().top + window.scrollY < 4 && performance.now() - (fbEl._room || 0) > 250) { fbEl._room = performance.now(); makeRoom(); }   // pushed off the top: ask for room
   requestAnimationFrame(fbFollow);
 }
 function fbShow(f) {
