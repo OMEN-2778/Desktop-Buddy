@@ -1189,6 +1189,7 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 @keyframes fbDecoBob { from { transform: translateY(-2px) rotate(var(--r)); } to { transform: translateY(2px) rotate(calc(var(--r) * -1)); } }
 /* (the generic button bevel, edge and margin showed as stray lines round the clipped circles) */
 .fest-bar .fb-pill, .fest-bar .fb-name { margin: 0; box-shadow: none; border: 0; filter: none; text-shadow: none; }
+.ring.over-hud { z-index: 60; }   /* above the needs/time strip, the festival bar and the update pill */
 
 #petPanel{position:absolute;z-index:32;left:var(--pick-left);top:var(--pick-top);width:var(--pick-w);height:var(--pick-h);box-sizing:border-box;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden;font-size:var(--ui-font-body,14px);animation:pet-sheet-in .32s cubic-bezier(.2,.8,.2,1.12)}
 #petPanel[hidden],.pet-mini[hidden]{display:none}
@@ -11670,6 +11671,8 @@ function layoutRing() {
 }
 function openRing(which, at = which === "computer" ? "computer" : "buddy") {
   ringOf = which; ringAt = at;
+  ringEl.classList.toggle("over-hud", at === "pet");          // the pet's ring stays above the needs / time bar (user)
+  if (at === "pet") skyTipHide();
   const items = festRing4(which, festLetterRing(which, festRingItems(which, RINGS[which])));
   ringEl.innerHTML = "";
   items.forEach(([id, label, cls], i) => {

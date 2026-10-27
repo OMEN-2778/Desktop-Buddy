@@ -2766,6 +2766,8 @@ function layoutRing() {
 }
 function openRing(which, at = which === "computer" ? "computer" : "buddy") {
   ringOf = which; ringAt = at;
+  ringEl.classList.toggle("over-hud", at === "pet");          // the pet's ring stays above the needs / time bar (user)
+  if (at === "pet") skyTipHide();
   const items = festRing4(which, festLetterRing(which, festRingItems(which, RINGS[which])));
   ringEl.innerHTML = "";
   items.forEach(([id, label, cls], i) => {
