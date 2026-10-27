@@ -120,6 +120,8 @@
         <button type="button" data-weather="blizzard" aria-pressed="false">大雪</button>
         <button type="button" id="nextSeason">跳到下个季节</button>
       </div>
+      <div class="label">节日（测试用：跳到当天早上 6 点）</div>
+      <div class="row" id="festJump" role="group" aria-label="跳到节日"></div>
       <p class="note">点家具让她去做事：床、衣柜（打开造型室）、浴缸、马桶、洗手台、毛巾、书架、电脑（会弹出菜单）、沙发、电视、灶台、餐桌、冰箱、绿植；台灯和窗户可以开关。点她本人弹出互动菜单；她晕倒时长按她 5 秒。</p>
     </div>
     <div class="box" style="grid-column: span 2">
@@ -3484,6 +3486,7 @@ function arriveAt(place) {
   npcSetup(place);
   if (place === "park") { parkSetup(); festParkSetup(); festParkSetup2(); }
   if (place === "disco") discoSetup();
+  festArrive4(place);
 }
 
 
@@ -3554,6 +3557,7 @@ function drawNpcs(ctx, layer) {
   drawOutingFriend(ctx,layer);
   drawPetOutside(ctx,layer);
   if(stormOutside())return;
+  if (layer === "back") drawParade(ctx);           // 怪兽夜: giants pass behind everyone
   for (const n of life.npcs || []) {
     if (n.layer !== layer || n.gone) continue;
     if (sim.place === "mall" && n.item && mallCoveredByService(MALL.items.find(it=>it.id===n.item))) continue;
@@ -4114,7 +4118,9 @@ function renderBeach(dt) {
       bctx.fillRect(x, y, 2, 1);
     }
   }
+  drawDuanwuWater(bctx);
   drawDragonBoats(bctx, dt, run);
+  drawDuanwuOver(bctx);
   if (run && life.gulls.length < 2 && Math.random() < dt * 0.03 && w === "clear")
     life.gulls.push({ x: -10, y: 8 + Math.random() * 26, v: 12 + Math.random() * 8, ph: Math.random() * 6, t: 0 });
   for (const g of life.gulls) {
@@ -4128,7 +4134,7 @@ function renderBeach(dt) {
   if (run) life.wet += ((isRain(w) ? 1 : 0) - life.wet) * Math.min(1, dt * (isRain(w) ? 0.8 : 0.08));
   if (weather.snowCover > 0.02) { bctx.globalAlpha = Math.min(1, weather.snowCover); bctx.drawImage(O.snow, 0, 0); bctx.globalAlpha = 1; }
   npcTick(dt, run);
-  drawSnowmen(bctx);
+  drawSnowmen(bctx); drawDuanwuDock(bctx);
   drawNpcs(bctx, "back");
   const fr = activityFrame(realClock * 1000);
   const { emoteAt, dollAt } = drawOutBuddy(bctx, fr);

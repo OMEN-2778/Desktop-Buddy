@@ -171,23 +171,23 @@ function festGame(it) {
 }
 
 // ---------------------------------------------------------------- 端午: dragon boats at the dock
-const BOAT_LANES = [58, 66, 74], BOAT_FINISH = 286;
+const BOAT_LANES = [60, 68, 76], BOAT_FINISH = 270;
 let dragonRace = null;
 const boatsHere = () => festName() === "端午节" && sim.place === "beach" && !stormOutside();
 const boatMoor = k => 34 + k * 98;
 function boatX(k) { return dragonRace ? dragonRace.x[k] : boatMoor(k) + Math.sin(realClock * 0.6 + k * 2) * 2; }
-const boatY = k => BOAT_LANES[k] - 15 + Math.round(Math.sin(realClock * 1.8 + k));
+const boatY = k => BOAT_LANES[k] - 19 + Math.round(Math.sin(realClock * 1.8 + k));
 function drawDragonBoats(ctx, dt, run) {
   if (!boatsHere()) { dragonRace = null; return; }
   const r = dragonRace;
   if (r && run) stepRace(r, dt);
   if (r && r.phase !== "back") {                  // the finish line: a row of little buoys
     ctx.fillStyle = "#e1725b";
-    for (let y = 50; y <= 72; y += 4) ctx.fillRect(BOAT_FINISH + 46, y, 2, 1);
+    for (let y = 50; y <= 72; y += 4) ctx.fillRect(BOAT_FINISH + 58, y, 2, 1);
   }
   for (let k = 0; k < 3; k++) {
     const x = Math.round(boatX(k)), y = boatY(k), racing = r?.phase === "race";
-    if (racing) { ctx.fillStyle = "#f7f6fb"; for (let i = 1; i < 5; i++) if ((Math.floor(realClock * 8) + i) % 2) ctx.fillRect(x - i * 3, y + 13 + (i % 2), 2, 1); }
+    if (racing) { ctx.fillStyle = "#f7f6fb"; for (let i = 1; i < 5; i++) if ((Math.floor(realClock * 8) + i) % 2) ctx.fillRect(x - i * 3, y + 16 + (i % 2), 2, 1); }
     ctx.drawImage(festImg(D.festival2.boats[k][racing ? Math.floor(realClock * 5 + k) % 2 : 0]), x, y);
   }
 }
@@ -243,7 +243,7 @@ function festSceneClick(x, y) {
   if (!boatsHere()) return false;
   for (let k = 2; k >= 0; k--) {
     const bx = boatX(k), by = boatY(k);
-    if (x >= bx && x < bx + 46 && y >= by + 2 && y < by + 16) { if (!dragonRace) openBoatPick(k); return true; }
+    if (x >= bx && x < bx + 58 && y >= by + 4 && y < by + 20) { if (!dragonRace) openBoatPick(k); return true; }
   }
   return false;
 }
@@ -310,3 +310,104 @@ festLines(["front"], FEST_TEXT4.marathon.npc, "马拉松日"); festLines(["front
 festLines(["beach"], FEST_TEXT4.dragonboat.crowd, "端午节");
 Object.assign(FEST_TEXT.chatter, { 冬至: FEST_TEXT4.dongzhi.chatter, 雪人日: FEST_TEXT4.snowman.chatter, 怪兽夜: FEST_TEXT4.monster.chatter, 跳舞日: FEST_TEXT4.disco.chatter });
 FEST_TEXT.chatter["端午节"] = [...(FEST_TEXT.chatter["端午节"] || []), ...FEST_TEXT4.dragonboat.chatter];
+
+// ---------------------------------------------------------------- 端午: the dock dressed up
+// a drum with a drummer, a gilded dragon on a plinth, pennants on the water,
+// bunting between the lamps (艾草 tied on them), people along the railing
+const DUANWU_CROWD = [36, 88, 148, 182, 214, 262];
+let duanwuDrummer = null;
+function festArrive4(place) {
+  parade.list = []; parade.next = realClock + 5 + Math.random() * 8;
+  duanwuDrummer = null;
+  if (place !== "beach" || festName() !== "端午节" || stormOutside()) return;
+  duanwuDrummer = makeNpc("walker", { x: 74, feet: OUT.beach.deck + 9, layer: "stall" });
+  for (const x of DUANWU_CROWD) if (Math.random() < 0.85) life.npcs.push(makeNpc(Math.random() < 0.25 ? "kid" : "walker", { x: x + Math.round(Math.random() * 8), feet: OUT.beach.deck + 3, layer: "back", back: true }));
+}
+function drawDuanwuDock(ctx) {                   // behind the people on the dock
+  if (!boatsHere()) return;
+  const deck = OUT.beach.deck, D2 = D.festival2;
+  ctx.drawImage(festImg(D2.dragonStatue), 296, deck + 8 - 40);
+  ctx.drawImage(festImg(D2.drum), 50, deck + 9 - 24);
+  if (duanwuDrummer) {
+    const hit = Math.floor(realClock * (dragonRace?.phase === "race" ? 4 : 1.5)) % 2;
+    ctx.drawImage(npcCanvas(duanwuDrummer, { expr: "happy", look: -1, bob: hit, sway: 0, wave: hit }, "stand"), 64, deck + 9 - DH + 1);
+  }
+}
+function drawDuanwuWater(ctx) {                  // on the sea, before the boats
+  if (!boatsHere()) return;
+  [[70, 54], [150, 62], [230, 54], [110, 70], [200, 70], [300, 62]].forEach(([x, y], i) =>
+    ctx.drawImage(festImg(D.festival2.flags[i % 4][Math.floor(realClock * 3 + i) % 2]), x, y - 12 + Math.round(Math.sin(realClock * 1.6 + i))));
+}
+function drawDuanwuOver(ctx) {                   // over the boats: the lamp posts again, and bunting
+  if (!boatsHere()) return;
+  ctx.drawImage(festImg(D.festival2.dockLamps), 0, 0);
+  const cols = ["#e1725b", "#efc452", "#4f9f97", "#6ba14c", "#f5c3d4"], top = OUT.beach.deck + 1 - 46;
+  const spans = [[-4, OUT.beach.lamps[0]], [OUT.beach.lamps[0], OUT.beach.lamps[1]], [OUT.beach.lamps[1], W + 4]];
+  for (const [a, b] of spans) for (let x = a; x <= b; x++) {
+    const u = (x - a) / (b - a), y = Math.round(top + Math.sin(u * Math.PI) * 9);
+    ctx.fillStyle = "#5e5b71"; ctx.fillRect(x, y, 1, 1);
+    if ((x - a) % 7 === 3) { ctx.fillStyle = cols[((x / 7) | 0) % 5]; ctx.fillRect(x - 1, y + 1, 3, 1); ctx.fillRect(x, y + 2, 2, 1); ctx.fillRect(x, y + 3, 1, 1); }
+  }
+}
+
+// ---------------------------------------------------------------- 怪兽夜: giants on parade (people inside)
+const GIANT_KINDS = ["godzilla", "ghost", "tree", "skeleton"], GIANT_FACE = { godzilla: 1 };
+const parade = { list: [], next: 0, last: 0 };
+const paradeHere = () => festName() === "怪兽夜" && SNOW_PLACES.includes(sim.place) && !stormOutside();
+const paradeFeet = () => sim.place === "front" ? 106 : sim.place === "park" ? 98 : OUT.beach.deck + 11;
+function drawParade(ctx) {
+  const dt = Math.min(0.1, realClock - parade.last); parade.last = realClock;
+  if (!paradeHere()) { if (parade.list.length) parade.list = []; return; }
+  const run = speed && !cardHolds() && !wiping;
+  if (run && !parade.list.length && realClock > parade.next) {
+    const kinds = GIANT_KINDS.slice().sort(() => Math.random() - 0.5).slice(0, 1 + Math.floor(Math.random() * 3)), dir = Math.random() < 0.5 ? 1 : -1;
+    let x = dir > 0 ? -40 : W + 40;
+    for (const k of kinds) {
+      const voice = makeNpc("performer", { x, feet: 0, layer: "giant" });
+      parade.list.push({ k, x, dir, v: 9 + Math.random() * 2, dist: 0, seen: false, voice, said: realClock + 4 + Math.random() * 4 });
+      life.npcs.push(voice);
+      x -= dir * (55 + Math.random() * 25);
+    }
+  }
+  const feet = paradeFeet();
+  for (const g of parade.list) {
+    const fr = D.festival2.giants[g.k], img = festImg(fr[Math.floor(g.dist / 7) % 2]), w = img.width || 46, h = img.height || 70;
+    if (run) { g.x += g.dir * g.v * dt; g.dist += g.v * dt; }
+    const x = Math.round(g.x - w / 2), y = feet - h + 1 + (Math.floor(g.dist / 7) % 2);
+    if (GIANT_FACE[g.k] && g.dir < 0) flipDraw(ctx, img, x, y, -1, w); else ctx.drawImage(img, x, y);
+    g.voice.x = g.x; g.voice.feet = feet - h + 30;   // its words float over its head
+    if (!g.seen && g.x > 20 && g.x < W - 20) {
+      g.seen = true;
+      if (g === parade.list[0]) {
+        const T4 = FEST_TEXT4.monster.parade;
+        if (!asleep() && sim.mode !== "down") speak(pick(T4.see), true);
+        const by = (life.npcs || []).filter(n => !n.gone && n.layer !== "giant" && n.role !== "performer" && n.sayUntil < realClock);
+        for (const n of by.sort(() => Math.random() - 0.5).slice(0, 2)) npcSay(n, pick(T4.npc));
+        if (lifeFlags.paradeDay !== festDay()) { lifeFlags.paradeDay = festDay(); log(pick(T4.diary)); }
+      }
+    }
+    if (run && g.seen && realClock > g.said) { g.said = realClock + 6 + Math.random() * 6; npcSay(g.voice, pick(FEST_TEXT4.monster.parade.voice[g.k])); }
+    if ((g.dir > 0 && g.x > W + 50) || (g.dir < 0 && g.x < -50)) { g.gone = true; g.voice.gone = true; }
+  }
+  if (parade.list.length && parade.list.every(g => g.gone)) { parade.list = []; parade.next = realClock + 35 + Math.random() * 45; }
+}
+
+// ---------------------------------------------------------------- test console: jump to a festival, 06:00
+function festJump(f) {
+  const d = Math.floor(sim.t / 1440), year = 4 * SEASON_DAYS, target = f.season * SEASON_DAYS + f.day - 1;
+  let td = d - (d % year) + target;
+  if (td * 1440 + 360 <= sim.t) td += year;
+  sim.t = td * 1440 + 360;
+  updateWeather(0);
+  log(`（测试）跳到${f.name}的早上 6 点。`);
+}
+(() => {
+  const row = document.getElementById("festJump");
+  if (!row) return;
+  for (const f of [...T.festivals].sort((a, b) => a.season - b.season || a.day - b.day)) {
+    const b = document.createElement("button"); b.type = "button";
+    b.textContent = `${SEASONS[f.season].name}${f.day} ${f.name}`;
+    b.addEventListener("click", () => festJump(f));
+    row.appendChild(b);
+  }
+})();
