@@ -780,6 +780,19 @@ edits; copy changes into life_text.js.
   into `PLACE_TEXT[place].say` (outing/say_*.js; `placeWhen` takes `a+b`).
   `chooseOutside` sends her home at `outBack`, after 22:30 (23:30 when sad)
   or when a need runs red. Sent out by the player: no `outBack`. All saved.
+- **Festival activities, batch 1** (user): `prototype/demo/festival_fun.js` +
+  `festival_text.json` (FEST_TEXT). 元宵节 is spring day 2, 七夕 summer day 14,
+  发呆节 removed. 赖床节: sleeping (naps too, max 4 a day) gives good moods;
+  读书日: reading (and the mall's book stalls) does too. 元宵/端午/中秋 put a
+  `节日限定` cuisine first in the stove picker and she cooks it once that day
+  (dish looks tangyuan / zongzi / mooncake in item_icons). 甜品节/端午/中秋/
+  读书日: market stalls in the park zones (`FEST_SLOTS`, art
+  `festival_props.py`), click → menu → she walks over, buys, holds it a while.
+  读书日 turns the mall's craft/blindbox 地摊 into book mats (`mallStallAs`).
+  晒被子日: quilt racks along the street (`FEST_RACKS`). Lines tagged
+  `when: "fest:<name>"` (place say / npc / talk) and `FEST_TEXT.chatter` (a
+  third of what she says at home that day). Next batches (灯谜, 彩票, 写信,
+  大雪/雪人, 怪兽夜, 龙舟/马拉松, 迪斯科, 春节) are planned with the user.
 Moodlets add points to one emotion, the top sum wins (1-2 有点, 3-5, 6+ 非常),
 condition moodlets last while true. Events roll once a game hour with
 cooldowns; her words queue so bubbles never cut each other off. Social

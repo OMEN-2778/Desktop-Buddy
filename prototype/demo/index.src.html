@@ -594,6 +594,7 @@ function command(act, item = null) {
   stopNpcTalk("先忙眼前的事");
   if (act === "mall_food" || act === "mall_film") { mallPlanVisit(act === "mall_food" ? "restaurant" : "cinema", item); return; }
   if (sim.place === "mall" && act === "go_home" && mallS.visit) mallLeaveVisit(false,false);
+  if (act === "fest_stall") { festBuy(item); return; }
   if (act === "park_food") { if (sim.place === "park") parkRequest("food", false, item?.id); return; }
   if (sim.place === "park" && act === "go_home" && sim.park) sim.park.goal = null;
   if (sim.place === "bar") {
@@ -651,6 +652,7 @@ function step(dtGame, dtReal) {
   if(tickNpcInteraction(dtReal))return;
   // Shop visits and pending clicks must not delay finding a WC or an urgent trip home.
   if (sim.place === "mall" && mallHandleNeeds(dtGame,dtReal)) return;
+  festTick();
   if (parkHandleNeeds(dtGame > 0 || dtReal > 0)) return;
   if (sim.windup) {
     if (realClock >= sim.windup.at) { const a = sim.windup.act; sim.windup = null; startAct(a); }
@@ -1715,6 +1717,7 @@ function pickItem(act) {
   if (act === "phone_video") return chatItem("video", "friend", "phone");
   if (act === "phone_text") return chatItem("text", "friend", "phone");
   if (act === "cook") {   // hungry: she goes for something filling
+    const fd = festDishItem(); if (fd) return fd;   // a festival: its own dish first
     const all = T.cuisines.flatMap(c => c.dishes.map(d => [c, d]));
     const hungry = sim.needs.hunger < 50, w = ([, d]) => (hungry ? Math.max(1, (d.fill || 40) - 25) ** 2 : 1);
     let r = Math.random() * all.reduce((a, x) => a + w(x), 0);
@@ -1736,6 +1739,7 @@ function lifeArrive(act) {
   if (act === "sleep" && !sim.nap && emotion().key === "tense" && Math.random() < 0.3) sim.insomnia = true;
 }
 function lifeFinish(act) {
+  festFinish(act);
   const n = sim.needs, h = hour(), r = Math.random();
   switch (act) {
     case "cook": {
@@ -2027,6 +2031,8 @@ function thought() {
   if (h >= 21 || h < 5) add(sc.night);
   add(isRain(weather.kind) ? sc.rain : weather.kind === "snow" ? sc.snow : sc.sunny);
   add([sc.spring, sc.summer, sc.autumn, sc.winter][se]);
+  const fc = festChatter();
+  if (fc) add(fc, {}, Math.max(1, Math.ceil(pool.length / 2 / fc.length)));   // the day's festival: about a third of what she says
   const choices = pool.filter(([t]) => t !== lastSaid);
   const [t, vars] = pick(choices.length ? choices : pool);
   return fill(t, { ...vars });
@@ -2906,7 +2912,7 @@ const PICK = {
   tv: { title: "电视 · 看什么节目", groups: catalogPick("tv", "节目", "tv") },
   computer: { title: "电脑 · 玩什么游戏", groups: catalogPick("games", "游戏", "game") },
   phone_game: { title: "手机 · 玩什么游戏", groups: catalogPick("phoneGames", "游戏", "app") },
-  cook: { title: "厨房 · 做什么菜", groups: () => T.cuisines.map(c => ({ name: c.name, note: [c.spicy && "辣", c.sweet && "甜"].filter(Boolean).join(" "),
+  cook: { title: "厨房 · 做什么菜", groups: () => festCuisines().concat(T.cuisines).map(c => ({ name: c.name, note: [c.spicy && "辣", c.sweet && "甜"].filter(Boolean).join(" "),
     items: c.dishes.map(d => typeof d === "string" ? { title: d, icon: D.items.dish.rice[0], item: dishItem(c, d) } : {
       title: d.name, line: d.blurb || "", info: `饱食 ${d.fill} · ${d.time}分钟`,
       icon: dishIcon(d), item: dishItem(c, d) }) })) },
@@ -3327,6 +3333,7 @@ function renderOutside() {
   bctx.drawImage(treeImg, 0, 0);
   if (weather.snowCover > 0.02) { bctx.globalAlpha = Math.min(1, weather.snowCover); bctx.drawImage(O.snow, 0, 0); bctx.globalAlpha = 1; }
   drawOutsideLife(bctx);
+  if (sim.place === "front") drawFestFront(bctx);
   drawNpcs(bctx, "back");
   const ms = realClock * 1000, fr = activityFrame(ms);
   const full = { expr: "neutral", look: 0, bob: 0, sway: 0, wave: null, ...fr.f };
@@ -3454,7 +3461,7 @@ function arriveAt(place) {
     mallS.shoppers = [0, 1, 2, 3, 4, 5].map(i => ({ k: i % 5, x: Math.random() * OUT.mall.farW, dir: i % 2 ? 1 : -1, v: 5 + Math.random() * 5 }));
   }
   npcSetup(place);
-  if (place === "park") parkSetup();
+  if (place === "park") { parkSetup(); festParkSetup(); }
 }
 
 
@@ -3646,6 +3653,7 @@ const LOW_EMO = new Set(["sad", "tense", "angry", "uncomfortable", "dazed", "emb
 const HIGH_EMO = new Set(["happy", "playful", "energized", "inspired", "confident", "flirty"]);
 function placeWhen(w) {
   if (!w) return true;
+  if (w.startsWith("fest:")) return festName() === w.slice(5);   // that festival's own lines
   if (w.includes("+")) return w.split("+").every(placeWhen);   // "low+night": both
   const se = seasonOf(sim.t).i, h = hour(), k = weather.kind;
   switch (w) {
@@ -3687,7 +3695,7 @@ function placeChatter() {                       // now and then: a stranger's li
   if (near.length && r < 0.45) { const n=pick(near);if(Math.random()<(.65+personalityOf(personalityContact(n)).social*.003)&&startTalk(n))return; }
   if (seen.length && r < 0.8) {
     const n = pick(seen);
-    npcLine(n, n.role === "hawker" ? `hawk_${n.item}` : n.role);
+    npcLine(n, n.role === "hawker" ? `hawk_${mallStallAs(n.item)}` : n.role);
     return;
   }
   if (!busy) { const t = pickLine(PT().say); if (t) speak(fill(t, kidVars())); }
@@ -3696,7 +3704,7 @@ function mallStallTalk(it) {
   if(friendOutingActive())return;                     // at a kiosk / 地摊: its seller has a word with her
   const n = (life.npcs || []).find(m => m.item === it.id && (m.role === "clerk" || m.role === "hawker"));
   if (n && !life.talkQ && Math.random() < 0.7) startTalk(n);
-  else if (n) npcLine(n, n.role === "hawker" ? `hawk_${it.id}` : "clerk");
+  else if (n) npcLine(n, n.role === "hawker" ? `hawk_${mallStallAs(it.id)}` : "clerk");
 }
 function npcTick(dt, run) {
   if(stormOutside()){life.npcs=[];clearNpcPills();return;}
@@ -3753,11 +3761,12 @@ function stopAt(it) {                            // shops: a look, in she goes, 
 }
 function stallVisit(it) {
   gameAudio.sound("real-checkout-cc0",.10,{gap:5});                        // she turns round with what she got
-  const s = STALL[it.id], vars = { 电影: pick(FILMS) };
+  const s = STALL[mallStallAs(it.id)], vars = { 电影: pick(FILMS) };
   log(fill(pick(s.log), vars));
   for (const [k, v] of Object.entries(s.needs)) sim.needs[k] = clamp(sim.needs[k] + v);
-  addMood(`stall_${it.id}`, { words: false });
+  addMood(`stall_${mallStallAs(it.id)}`, { words: false });
   speak(pick(s.say), true);
+  festMallVisit(it);
 }
 const mallInside = () => mallToiletInside() || mallVisitInside() || !!(sim.place === "mall" && mallS.stop && mallS.stop.inAt != null && sim.t >= mallS.stop.inAt && sim.t < mallS.stop.outAt);
 function mallStep(dtReal) {
@@ -3796,7 +3805,7 @@ function drawMallHover(ctx) {
   const it = mallS.hover;
   if (!it || sim.place !== "mall") return;
   const shop = it.kind === "shop";
-  const img = shop ? IMG.out.mall.hover[it.id] : IMG.out.mall.props[it.id];
+  const img = shop ? IMG.out.mall.hover[it.id] : IMG.out.mall.props[mallStallAs(it.id)];
   const x = Math.round(mod((shop ? it.u : it.px) - mallS.x + MALL.at, MALL.nearW));
   for (const at of [x, x - MALL.nearW]) drawObjectHover(ctx, img, at, it.top);
 }
@@ -3989,6 +3998,7 @@ function renderPark(dt) {
   bctx.drawImage(O.bench, 0, 0);
   // The vendor stands behind the counter; all path pedestrians pass in front.
   drawParkService(bctx, O);
+  drawFestStalls(bctx);
   drawNpcs(bctx, "back");
   const fr = activityFrame(realClock * 1000);
   if (!parkInsideToilet() && !sim.park?.seated && !parkEating()) {
@@ -3998,6 +4008,7 @@ function renderPark(dt) {
   }
   const { emoteAt, dollAt } = drawOutBuddy(bctx, fr);
   drawParkBowl(bctx);
+  drawFestHold(bctx);
   drawNpcs(bctx, "front");
   // butterflies crossing right in front of us (user)
   if (run && flyOk && life.front.length < 1 && Math.random() < dt / 14) {
@@ -4132,7 +4143,7 @@ function renderMall(dt) {
   drawNpcs(bctx, "counter");                     // kiosk staff behind their counters
   for (const it of L.items) if (O.props[it.id] && !mallCoveredByService(it)) {
     const x0 = mod(it.px - mallS.x + L.at, L.nearW);
-    for (const x of [x0, x0 - L.nearW]) if (x > -60 && x < W) bctx.drawImage(O.props[it.id], Math.round(x), it.top);
+    for (const x of [x0, x0 - L.nearW]) if (x > -60 && x < W) bctx.drawImage(O.props[mallStallAs(it.id)], Math.round(x), it.top);
   }
   drawNpcs(bctx, "back");
   drawMallHover(bctx);
@@ -4967,6 +4978,7 @@ if (TAURI) {
 /*__BAR_JS__*/
 /*__PARK_FOOD_JS__*/
 /*__PARK_JS__*/
+/*__FESTIVAL_FUN_JS__*/
 /*__UI_LAYOUT_JS__*/
 /*__PERSONALITY_JS__*/
 /*__SOCIAL_HUD_JS__*/

@@ -48,6 +48,7 @@ function parkImages() { return { ...IMG.out.park, ...IMG.out.park.zones[parkLayo
 function parkInsideToilet() { return sim.place === 'park' && sim.mode === 'act' && sim.act === 'park_toilet'; }
 function parkEating() { return sim.place === 'park' && sim.mode === 'act' && sim.act === 'park_eat'; }
 function parkHit(x, y) {
+  if (festStallAt(x, y)) return 'fest_stall';
   const L = parkLayout();
   for (const [id,r] of [['park_bench',L.bench.hit], [L.facility?.kind === 'toilet' ? 'park_wc' : 'park_food',L.facility?.hit]]) {
     if (!r) continue;
@@ -144,6 +145,7 @@ ML.park_oden = {name:'樱花下的热关东煮',emo:'happy',pts:2,min:180};
 ML.park_relief = {name:'公园里也能安心逛',emo:'confident',pts:1,min:90};
 function parkClick(id, x, y) {
   if (card || guideOn || wiping || sim.mode === 'down') return;
+  if (id === 'fest_stall') { const s = festStallAt(x, y); if (s) openFestStall(s); return; }
   if (id === 'park_wc') { if (parkInsideToilet()) showHint('正在使用公厕，稍等一会儿。'); else parkRequest('toilet'); return; }
   if (id === 'park_food') { if (parkEating()) showHint('正在慢慢吃'+parkDish().name+'。'); else openPicker('park_food',{x:177,y:72}); return; }
   sim.park.goal = null;

@@ -160,7 +160,7 @@ def _fill_bowl(s, c_dark, c_light):
 def dish(look, v=0):
     s = Sprite(20, 16)
     soup = list(SOUPS.values())[v % len(SOUPS)]
-    if look in ("noodles", "rice", "soup", "porridge", "salad", "curry", "hotpot"):
+    if look in ("noodles", "rice", "soup", "porridge", "salad", "curry", "hotpot", "tangyuan"):
         if look == "hotpot":
             s.rect(1, 6, 18, 8, INK[1]).rect(2, 7, 16, 6, P.metal[2]).hline(0, 19, 6, INK[0])
             s.ellipse(9.5, 6, 8, 1.5, P.coral[2] if v % 2 == 0 else P.mustard[3])
@@ -188,12 +188,18 @@ def dish(look, v=0):
             s.ellipse(9.5, 5.5, 6.5, 2, P.green[3])
             for x, y, c in ((6, 4, P.green[4]), (9, 4, P.coral[3]), (12, 5, P.mustard[4]), (11, 3, P.green[2]), (7, 6, P.coral[3])):
                 s.set(x, y, c).set(x + 1, y, c)
+        elif look == "tangyuan":                                   # 元宵: round white balls in sweet soup
+            _fill_bowl(s, P.oat[3], P.oat[4])
+            for x, y in ((6, 5), (10, 4), (13, 5), (8, 6)):
+                s.ellipse(x, y, 1.6, 1.2, "#ffffff").set(x - 1, y - 1, POR[3])
+            if v % 2:
+                s.set(11, 6, P.coral[3]).set(5, 6, P.coral[3])          # osmanthus / goji
         elif look == "curry":
             s.ellipse(9.5, 5.5, 6.5, 2, P.mustard[2]).ellipse(6.5, 5, 3, 1.5, POR[3])
             s.set(11, 5, P.coral[3]).set(13, 6, P.green[3]).set(10, 6, P.clay[2])
         return s
     if look in ("dumplings", "meat", "fish", "shrimp", "vegetables", "egg", "tofu", "sushi", "pasta",
-                "pudding", "pancake", "taco", "sandwich", "skewer", "cookie", "cake", "pizza"):
+                "pudding", "pancake", "taco", "sandwich", "skewer", "cookie", "cake", "pizza", "zongzi", "mooncake"):
         _plate(s)
         if look == "dumplings":
             for x in (4, 9, 14):
@@ -252,6 +258,15 @@ def dish(look, v=0):
         elif look == "cake":
             s.rect(5, 5, 10, 6, P.birch[4]).rect(5, 7, 10, 1, P.coral[3] if v % 2 == 0 else P.wood[2]).rect(5, 5, 10, 1, "#ffffff")
             s.ellipse(10, 3.5, 1.5, 1.5, P.coral[2]).set(10, 2, P.green[3])
+        elif look == "zongzi":                                     # 粽子: green leaf pyramids tied with string
+            for x0 in (4, 11):
+                for k in range(5):
+                    s.hline(x0 + 2 - k // 2, x0 + 2 + k // 2 + (k % 2), 6 + k, P.green[2] if k % 2 else P.green[3])
+                s.set(x0 + 2, 6, P.green[4]).hline(x0, x0 + 4, 9, [P.coral[2], P.birch[1], P.mustard[2]][v % 3])
+        elif look == "mooncake":                                   # 月饼: round, golden, a stamped pattern
+            for x0 in (6, 13):
+                s.ellipse(x0, 9, 3.5, 2.5, P.wood[2]).ellipse(x0, 8.5, 2.5, 1.8, P.mustard[3 if v % 2 == 0 else 2])
+                s.set(x0, 8, P.wood[1]).set(x0 - 1, 9, P.wood[1]).set(x0 + 1, 9, P.wood[1])
         elif look == "pizza":
             s.ellipse(9.5, 9, 7.5, 3, P.mustard[2]).ellipse(9.5, 9, 6.5, 2.2, P.mustard[4])
             for x, y in ((6, 8), (10, 10), (13, 8), (9, 7)):
@@ -273,6 +288,12 @@ def dish(look, v=0):
         for y in range(8, 15):
             s.hline(6 + (y - 8) // 2, 13 - (y - 8) // 2, y, P.birch[3] if y % 2 else P.birch[2])
         return s
+    if look == "book":                                             # a book standing a little open
+        c = [P.coral, P.teal, P.mustard][v % 3]
+        s.rect(4, 3, 11, 12, c[1]).rect(5, 3, 10, 11, c[2]).vline(5, 3, 13, c[1])
+        s.rect(7, 5, 6, 2, P.linen[3]).hline(15, 15, 4, P.linen[3]).vline(15, 4, 13, P.linen[2])
+        s.hline(5, 14, 14, c[0])
+        return s
     if look == "drink":
         c = [P.wood[2], P.coral[3], P.green[3], P.mustard[3]][v % 4]
         s.rect(5, 4, 9, 11, POR[3]).rect(6, 5, 7, 8, c).hline(6, 12, 5, POR[2] if v else c)
@@ -290,7 +311,8 @@ def dish(look, v=0):
 
 LOOKS = ["noodles", "rice", "curry", "soup", "porridge", "dumplings", "buns", "meat", "fish", "shrimp",
          "vegetables", "salad", "egg", "tofu", "hotpot", "skewer", "sushi", "pizza", "pasta", "bread",
-         "cake", "cookie", "pudding", "icecream", "drink", "sandwich", "burger", "taco", "pancake"]
+         "cake", "cookie", "pudding", "icecream", "drink", "sandwich", "burger", "taco", "pancake",
+         "tangyuan", "zongzi", "mooncake", "book"]
 
 
 def dishes():

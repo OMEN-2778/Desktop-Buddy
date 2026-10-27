@@ -116,8 +116,8 @@ function chooseNpcTalk(n){
 function startNpcTalk(n,manual=false){
   if(!n||n.gone||life.talkQ||!manual&&(socialBusy()||phoneHolds()||asleep()||sim.mode==='down'))return false;
   if(npcRefusesDirty(n,manual))return false;
-  let talk=canClickNpc(n)?chooseNpcTalk(n):null;
-  if(!talk){const lines=pick((PT()?.talk||{})[n.role]||[]);if(!lines)return false;talk={lines,title:'路上的闲聊',scene:npcSceneKey(),id:null};}
+  const fest=festNpcTalk(n.role);let talk=fest?{lines:fest,title:'节日闲聊',scene:npcSceneKey(),id:null,early:true}:canClickNpc(n)?chooseNpcTalk(n):null;
+  if(!talk){const lines=pick(((PT()?.talk||{})[n.role]||[]).filter(x=>!x.when).map(x=>x.lines||x));if(!lines)return false;talk={lines,title:'路上的闲聊',scene:npcSceneKey(),id:null};}
   talk={...talk,lines:talk.early?talk.lines:personalityTalk(talk.lines,personalityContact(n),'meet')};
   life.talkQ={...talk,n,manual,i:0,wait:0,said:[],originalDir:npcInteraction?.originalDir??n.dir};
   (life.npcTalked||=new WeakSet()).add(n);n.paused=true;
