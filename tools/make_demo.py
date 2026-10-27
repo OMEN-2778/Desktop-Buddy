@@ -426,7 +426,8 @@ def main():
         "items": {**{k: [png(c) for c in item_icons.covers(k)] for k in ("book", "tv", "game", "app")},
                   "dish": {k: [png(d) for d in v] for k, v in item_icons.dishes().items()}},
         "festival": {"stalls": {k: png(FEST.stall(k)) for k in FEST.KINDS}, "quilts": [png(FEST.quilt_rack(v)) for v in range(4)],
-                     "lanternTree": png(FEST.lantern_tree()), "lantern": png(FEST.lantern()), "heartArch": png(FEST.heart_arch())},
+                     "lanternTree": png(FEST.lantern_tree()), "lantern": png(FEST.lantern()), "heartArch": png(FEST.heart_arch()),
+                     "mail": png(FEST.mail_bubble()), "envelope": png(FEST.envelope())},
         "skyIcons": {**{k: [png(f) for f in sky_icons.frames(k)] for k in sky_icons.NAMES},"storm":[png(STORM.icon(i)) for i in range(4)]},
         "pets": PETS.runtime_data(),
         "pixelUi": {theme:{kind:png(ui_icons.pixel_surface(kind,theme=="dark")) for kind in ("panel","control","positive","gold","gold-pill","blue-pill","input","track","pill","thumb")} for theme in ("light","dark")},
@@ -459,7 +460,7 @@ def main():
     html = html.replace("/*__PARK_FOOD_JS__*/", "const PARK_FOOD = " + json.dumps(park_food, ensure_ascii=False) + ";")
     html = html.replace("/*__NPC_SOCIAL_JS__*/", "const NPC_TALK_TEXT = " + (SRC.parent / "npc_talk.json").read_text() + ";\n" + (SRC.parent / "npc_social.js").read_text())
     html = html.replace("/*__PARK_JS__*/", (SRC.parent / "park.js").read_text())
-    html = html.replace("/*__FESTIVAL_FUN_JS__*/", "const FEST_TEXT = " + (SRC.parent / "festival_text.json").read_text() + ";\nconst FEST_TEXT2 = " + (SRC.parent / "festival_text2.json").read_text() + ";\n" + (SRC.parent / "festival_fun.js").read_text() + "\n" + (SRC.parent / "festival_fun2.js").read_text())
+    html = html.replace("/*__FESTIVAL_FUN_JS__*/", "const FEST_TEXT = " + (SRC.parent / "festival_text.json").read_text() + ";\nconst FEST_TEXT2 = " + (SRC.parent / "festival_text2.json").read_text() + ";\n" + (SRC.parent / "festival_fun.js").read_text() + "\n" + (SRC.parent / "festival_fun2.js").read_text() + "\nconst FEST_TEXT3 = " + (SRC.parent / "festival_text3.json").read_text() + ";\n" + (SRC.parent / "festival_fun3.js").read_text())
     html = html.replace("/*__BAR_JS__*/", (SRC.parent / "bar.js").read_text())
     html = html.replace("/*__DUSK_JS__*/", (SRC.parent / "dusk.js").read_text())
     html = html.replace("/*__RESTROOMS_JS__*/", (SRC.parent / "restrooms.js").read_text())

@@ -482,6 +482,8 @@ body {
 .diary-pop .talk-log p { margin: 0; }
 .diary-pop .talk-log em { font-style: normal; font-weight: 700; margin-right: .2em; }
 .diary-pop .talk-log .other { color: #9a6a3c; }
+.diary-pop .talk-log.letter { background: #fbf3e2; border-left-color: #c9a26a; padding: 6px 10px; color: #4a3a2a; }
+.diary-pop .talk-log.letter p:last-child { text-align: right; color: #9a6a3c; }
 @keyframes talkIn { from { opacity: 0; transform: translateY(-4px); } }
 
 @media (prefers-reduced-motion: reduce) { .diary, .diary-pop { transition: none; } }

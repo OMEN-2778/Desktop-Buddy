@@ -596,6 +596,8 @@ function command(act, item = null) {
   if (sim.place === "mall" && act === "go_home" && mallS.visit) mallLeaveVisit(false,false);
   if (act === "fest_stall") { festBuy(item); return; }
   if (act === "fest_riddle") { answerRiddle(item); return; }
+  if (act === "fest_letter_to") { openLetterTheme(item); return; }
+  if (act === "fest_letter") { writeLetter(item); return; }
   if (act === "park_food") { if (sim.place === "park") parkRequest("food", false, item?.id); return; }
   if (sim.place === "park" && act === "go_home" && sim.park) sim.park.goal = null;
   if (sim.place === "bar") {
@@ -1344,6 +1346,7 @@ function render() {
   } else if (fr.emote || down) bctx.drawImage(emoteCanvas(down ? "skull" : fr.emote), emoteAt[0], emoteAt[1] + (down ? Math.floor(realClock * 2) % 2 : 0));
   if (down) drawRevive(bctx);
   drawClickFx(bctx);
+  drawMailBubble(bctx);
   drawStorm(bctx);
   vctx.imageSmoothingEnabled = false;
   vctx.clearRect(0, 0, view.width, view.height);   // (the house has see-through edges: no leftovers from outside)
@@ -2669,6 +2672,7 @@ view.addEventListener("click", e => {
   const wasOpen = !!ringOf;
   closeRing();
   if (sim.mode === "down") return;
+  if (mailBubbleHit(x, y)) { readMail(); return; }   // a letter came (写信日)
   const petTarget=petHit(x,y);if(petTarget){if(petTarget==='feeder')openPetFeeder();else if(petTarget==='mat')openPetMatColors();else openPetInteractions();return;}
   if(friendVisitClick(x,y))return;
   if (buddyHit(x, y)) {
@@ -2753,7 +2757,7 @@ function layoutRing() {
 }
 function openRing(which, at = which === "computer" ? "computer" : "buddy") {
   ringOf = which; ringAt = at;
-  const items = festRingItems(which, RINGS[which]);
+  const items = festLetterRing(which, festRingItems(which, RINGS[which]));
   ringEl.innerHTML = "";
   items.forEach(([id, label, cls], i) => {
     const b = document.createElement(cls === "label" ? "span" : "button");
@@ -2851,6 +2855,7 @@ function ringPick(id) {
   }
   if (id === "phone") { openRing("phone", "buddy"); return; }
   if (id === "lotto_online") { closeRing(); festLottoOnline(); return; }
+  if (id === "write_letter") { closeRing(); openLetterTo(); return; }
   if (id === "call") { openRing("call", "buddy"); return; }
   if (id.startsWith("dial:")) { closeRing(); command("phone_call", chatItem("call", id.slice(5), "call")); return; }
   if (id === "rename") { openRename(); return; }
@@ -3336,7 +3341,7 @@ function renderOutside() {
   bctx.drawImage(treeImg, 0, 0);
   if (weather.snowCover > 0.02) { bctx.globalAlpha = Math.min(1, weather.snowCover); bctx.drawImage(O.snow, 0, 0); bctx.globalAlpha = 1; }
   drawOutsideLife(bctx);
-  if (sim.place === "front") drawFestFront(bctx);
+  if (sim.place === "front") { drawFestFront(bctx); drawMailBubble(bctx); }
   drawNpcs(bctx, "back");
   const ms = realClock * 1000, fr = activityFrame(ms);
   const full = { expr: "neutral", look: 0, bob: 0, sway: 0, wave: null, ...fr.f };
@@ -4447,9 +4452,11 @@ function diaryItem(li) {
   if (li.classList.contains("day")) { out.className = "day"; out.textContent = li.textContent; }
   else { out.innerHTML = "<time></time><span></span>"; out.firstChild.textContent = li.querySelector("time").textContent; out.lastChild.textContent = li.querySelector("span").textContent; }
   if (li._talk) {   // the whole conversation, folded under its line (user)
-    const b = Object.assign(document.createElement("button"), { type: "button", className: "talk-btn", textContent: li._talk.some(([w]) => w === "评论：" || w.startsWith("【")) ? `浏览记录 · ${li._talk.length} 条` : `聊天记录 · ${li._talk.length} 句` });
-    const box = Object.assign(document.createElement("div"), { className: "talk-log" });
-    for (const [who, line] of li._talk) {
+    const letter = li._talk[0]?.[0] === "@letter";   // a letter (写信日): its lines, no speaker names
+    const b = Object.assign(document.createElement("button"), { type: "button", className: "talk-btn", textContent: letter ? "信件 · 展开" : li._talk.some(([w]) => w === "评论：" || w.startsWith("【")) ? `浏览记录 · ${li._talk.length} 条` : `聊天记录 · ${li._talk.length} 句` });
+    const box = Object.assign(document.createElement("div"), { className: "talk-log" + (letter ? " letter" : "") });
+    if (letter) for (const [, line] of li._talk.slice(1)) box.append(Object.assign(document.createElement("p"), { textContent: spaced(line) }));
+    else for (const [who, line] of li._talk) {
       const p = document.createElement("p");
       if (who) { p.className = "other"; p.append(Object.assign(document.createElement("em"), { textContent: who })); }
       else p.append(Object.assign(document.createElement("em"), { textContent: nameOf() + "：" }));

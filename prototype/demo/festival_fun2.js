@@ -149,6 +149,7 @@ PLACE_TEXT.mall.npc.hawk_lottery = FEST_TEXT2.lottery.clerk.slice();
 FEST_TEXT.chatter["马拉松日"] = FEST_TEXT2.marathon.chatter;
 function festTick2() {
   festLottoDraw();
+  mailTick();
   if (riddleHere() && realClock > riddleNext && riddleCrowd.length) {   // the crowd mutters guesses
     riddleNext = realClock + 6 + Math.random() * 8;
     npcSay(pick(riddleCrowd), pick(FEST_TEXT2.lantern.npc));

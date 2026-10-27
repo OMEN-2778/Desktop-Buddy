@@ -804,6 +804,15 @@ edits; copy changes into life_text.js.
   游戏马拉松 became 马拉松日 (a real race: fences and runners come in batch 6).
 - Park bench is a two-seater now (±17 px; seats at bench.x ± 9, user: the
   old one was too big next to the stalls); the central bin moved to x 142.
+- **写信日, batch 3** (user): `festival_fun3.js` + `festival_text3.json`. The
+  phone/computer rings get 写信 ▸ → who (家人 / 朋友 / 未来的自己) → theme
+  (12) → her letter goes in the diary as `[["@letter", from], ["", line]…]`
+  (folds out as 信件 · 展开, letter-paper style in ui.css). Replies come 1-6
+  game hours later; on the day a parent, 1-2 friends and someone unexpected
+  write too (`planLetters`). Arrived letters wait in `lifeFlags.mail.box`
+  (saved) and show as a bubble with an envelope beside the front door (house,
+  and over the door on the street); click it → she reads it, the diary opens
+  with it unfolded, social +8, mood 收到一封信.
 Moodlets add points to one emotion, the top sum wins (1-2 有点, 3-5, 6+ 非常),
 condition moodlets last while true. Events roll once a game hour with
 cooldowns; her words queue so bubbles never cut each other off. Social

@@ -157,9 +157,31 @@ def heart_arch() -> Sprite:
     return s
 
 
+def envelope() -> Sprite:
+    """A little envelope with a red seal (11x8)."""
+    s = Sprite(11, 8)
+    s.rect(0, 0, 11, 8, P.ink[1]).rect(1, 1, 9, 6, P.linen[3])
+    s.line(1, 1, 5, 4, P.linen[1]).line(9, 1, 5, 4, P.linen[1])        # the flap
+    s.rect(4, 4, 3, 2, P.coral[2]).set(4, 4, P.coral[3])
+    return s
+
+
+def mail_bubble() -> Sprite:
+    """A letter has come: a round speech bubble with an envelope in it,
+    a small tail pointing down at the door (21x18)."""
+    s = Sprite(21, 18)
+    s.ellipse(10, 7, 10, 7, P.ink[1]).ellipse(10, 7, 9, 6, P.porcelain[3])
+    s.hline(6, 12, 1, P.porcelain[3])
+    s.set(9, 14, P.ink[1]).set(10, 14, P.porcelain[3]).set(11, 14, P.ink[1])
+    s.set(9, 15, P.ink[1]).set(10, 15, P.ink[1]).set(10, 16, P.ink[1])
+    s.blit(envelope(), 5, 4)
+    return s
+
+
 def build():
     out = {f"fest_stall_{k}": stall(k) for k in KINDS}
     out.update({f"quilt_rack_{v}": quilt_rack(v) for v in range(4)})
     out["lantern_tree"] = lantern_tree()
     out["heart_arch"] = heart_arch()
+    out["mail_bubble"] = mail_bubble()
     return out
