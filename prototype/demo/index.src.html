@@ -2722,6 +2722,7 @@ const RINGS = {
 let ringOf = null, ringAt = null;
 function ringCenter() {
   if(ringAt==="friend_host"&&atFriendHome())return {x:friendVisit.host.x,y:friendVisit.host.y-13};
+  if (ringAt === "pet" && petState.pet) { const p = petPoint(); return { x: p.x, y: p.y - 7 }; }
   if (ringAt === "computer" || ringAt === "door") { const c = CLICK[ringAt === "door" ? "front_door" : "computer"]; return { x: c.x + c.w / 2, y: c.y + c.h / 2 }; }
   const p = sim.mode === "act" && sim.act === "bath" ? { x: D.bathHead[0] + 10, y: D.bathHead[1] + 14 } : buddyFeet();
   return { x: p.x, y: p.y - 13 };
@@ -2769,7 +2770,7 @@ function openRing(which, at = which === "computer" ? "computer" : "buddy") {
   ringEl.innerHTML = "";
   items.forEach(([id, label, cls], i) => {
     const b = document.createElement(cls === "label" ? "span" : "button");
-    if (cls === "label") { b.className = "ring-label"; b.textContent = nameOf(); }   // her name tops the ring
+    if (cls === "label") { b.className = "ring-label"; b.textContent = at === "pet" && petState.pet ? petState.pet.name : nameOf(); }   // her name tops the ring
     else { b.type = "button"; b.textContent = label; b.setAttribute("role", "menuitem"); if (cls) b.className = cls; }
     if(which==="outing")b.dataset.outingPlace=id.slice(7);
     b.style.setProperty("--k", i);
@@ -2848,6 +2849,7 @@ document.addEventListener("pointerdown", e => { if (ringOf && !ringEl.contains(e
 document.addEventListener("keydown", e => { if (e.key === "Escape" && ringOf) closeRing(); });
 let lastChat = -1e9;
 function ringPick(id) {
+  if (id.startsWith("pet:")) { petRingPick(id.slice(4)); return; }
   if(id==='pet_adopt'){closeRing();openPetAdoption();return;}
   if(id.startsWith("fv:")){closeRing();if(id==="fv:stay")requestFriendStay();else friendVisitAction(id.slice(3));return;}
   if(id.startsWith('outing:')){const c=socialState.contacts.find(c=>c.id===ringEl.dataset.contactId),place=id.slice(7);closeRing();if(c)scheduleFriendOuting(c,place);return;}

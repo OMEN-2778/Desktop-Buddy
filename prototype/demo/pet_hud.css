@@ -1,27 +1,37 @@
-.pet-hud{position:fixed;z-index:2147483000;display:flex;align-items:flex-start;gap:var(--pet-gap,6px);width:max-content;color:var(--ink);font-size:var(--pet-fs,12px);pointer-events:none;opacity:0;transform:scale(.12);transform-origin:var(--pet-origin-x,50%) var(--pet-origin-y,100%);transition:opacity .2s ease,transform .32s cubic-bezier(.2,1.18,.3,1)}
-.pet-hud[hidden]{display:none}.pet-hud.on{opacity:1;transform:none}.pet-hud[inert]{pointer-events:none}
-.pet-hud.on>:not([hidden]){pointer-events:auto}
-.pet-status-card{position:relative;isolation:isolate;flex:none;width:var(--pet-card-w,124px);height:calc(var(--pet-row-h,32px)*5 + var(--pet-gap,6px)*4);display:flex;flex-direction:column;padding:8px;gap:8px;filter:drop-shadow(2px 2px 0 var(--shadow))}
-.pet-status-card::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;border:19px solid transparent;border-image:var(--pixel-pill) 19 fill /19px;image-rendering:pixelated}
-.pet-hud button{position:relative;isolation:isolate;font:inherit;font-weight:600;color:inherit;cursor:pointer;border:0;border-radius:0;background:none;box-shadow:none;min-width:0;padding:5px 8px;line-height:1.2;image-rendering:pixelated}
-.pet-hud-actions button::before,.pet-hud-submenu button::before{content:'';position:absolute;inset:0;z-index:-1;border:15px solid transparent;border-image:var(--pixel-pill) 19 fill /15px;image-rendering:pixelated;pointer-events:none}
-.pet-hud-submenu button::before{border-image-source:var(--pixel-blue-pill)}
-.pet-hud .pet-name-button{width:100%;padding:3px 1px;min-height:24px;overflow-wrap:anywhere}
-.pet-hud button:focus-visible{outline:2px dashed var(--focus);outline-offset:-4px}.pet-hud button:hover{filter:brightness(1.08)}
-.pet-hud-actions,.pet-hud-submenu{display:flex;flex-direction:column;gap:var(--pet-gap,6px);flex:none;width:var(--pet-action-w,94px)}
-.pet-hud-actions button,.pet-hud-submenu button{height:var(--pet-row-h,32px);flex:none;white-space:nowrap;filter:drop-shadow(1px 2px 0 var(--shadow))}
-.pet-hud-submenu[data-kind=treat]{padding-top:calc(var(--pet-row-h,32px) + var(--pet-gap,6px))}
-.pet-hud-submenu[hidden]{display:none}.pet-hud-actions button[aria-expanded=true]{color:var(--accent)}
-.pet-hud-submenu:not([hidden]){animation:pet-submenu-in .24s cubic-bezier(.2,1.18,.3,1) both;transform-origin:left center}
-.pet-hud-submenu.closing:not([hidden]){animation:pet-submenu-out .2s ease-in both;pointer-events:none}
-@keyframes pet-submenu-in{from{opacity:0;transform:translateX(-12px) scale(.82)}to{opacity:1;transform:none}}
-@keyframes pet-submenu-out{from{opacity:1;transform:none}to{opacity:0;transform:translateX(-12px) scale(.82)}}
-.pet-stat-bars{display:flex;flex:1;align-items:stretch;justify-content:space-around;gap:6px;min-height:0}
-.pet-stat{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;min-width:0;gap:6px}
-.pet-stat-well{position:relative;flex:1;width:14px;min-height:30px}
-.pet-stat-fill{position:absolute;inset:auto 0 0;height:max(14px,calc(var(--v)*100%));clip-path:var(--pet-bar-clip);box-shadow:inset 2px 2px #ffffff55,inset -2px -2px #22182a22;transition:height .35s cubic-bezier(.2,1.2,.3,1),background-color .2s}
-.pet-stat-fill::after{content:'';position:absolute;inset:0;background:var(--need-stripes);background-size:16px 16px;opacity:.16;image-rendering:pixelated;animation:need-stripes 1.6s steps(8) infinite}
-.pet-stat-icon{display:grid;place-items:center;width:22px;height:22px;background:var(--panel-2);clip-path:var(--pet-icon-clip)}
-.pet-stat-icon img,.pet-stat-icon canvas{display:block;image-rendering:pixelated;width:18px;height:18px}
-@media(prefers-reduced-motion:reduce){.pet-hud,.pet-stat-fill{transition:none}.pet-stat-fill::after,.pet-hud-submenu:not([hidden]){animation:none}}
-.pet-hud-submenu button{color:#22182a}
+/* the pet's status card (user: redone like the needs panel): a framed light panel, the
+   pet's name in a dark title pill sitting on its top edge, four bars that spring up
+   one after another, icons and labels under them. It pops from the pet with a spring
+   and follows it; the actions are the shared ring around the pet. */
+.pet-card { position: fixed; z-index: 2147483000; isolation: isolate; display: flex; flex-direction: column; align-items: center;
+  height: var(--pc-h, 108px); padding: 18px 8px 8px; box-sizing: border-box; color: var(--ink); font-size: var(--pc-fs, 12px);
+  filter: drop-shadow(2px 2px 0 var(--shadow)); transform-origin: var(--pc-ox, 50%) 115%; opacity: 0; transform: translateY(10px) scale(.6); }
+.pet-card.below { transform-origin: var(--pc-ox, 50%) -15%; }
+.pet-card[hidden] { display: none; }
+.pet-card::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--hud-frame, var(--edge)); clip-path: var(--hud-panel-clip); }
+.pet-card::after { content: ""; position: absolute; inset: 2px; z-index: -1; background: var(--panel); clip-path: var(--hud-panel-in); box-shadow: inset 0 2px 0 var(--bevel-hi), inset 0 -2px 0 var(--bevel-lo); }
+.pet-card.on { opacity: 1; transform: none; transition: transform .5s var(--hud-spring, cubic-bezier(.3, 1.5, .5, 1)), opacity .16s; }
+.pet-card.off { opacity: 0; transform: translateY(8px) scale(.7); transition: transform .24s cubic-bezier(.5, 0, .9, .4), opacity .2s .04s; }
+.pc-name { position: absolute; top: -12px; left: 50%; translate: -50% 0; isolation: isolate; border: 0; background: none; cursor: pointer;
+  font: inherit; font-weight: 700; letter-spacing: .06em; color: #f7f6fb; padding: 4px 14px; white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis;
+  transform: scale(.4); opacity: 0; transition: transform .3s var(--hud-spring, cubic-bezier(.3, 1.6, .5, 1)), opacity .14s; }
+.pc-name::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--title, #33253b); clip-path: var(--clip-btn); }
+.pet-card.on .pc-name { transform: none; opacity: 1; transition-delay: .12s; }
+.pc-name:hover { filter: brightness(1.15); } .pc-name:active { transform: scale(.94); }
+.pc-name:focus-visible { outline: 2px dashed var(--focus); outline-offset: 2px; }
+.pc-stats { display: flex; flex: 1; align-items: stretch; gap: 2px; min-height: 0; }
+.pc-stat { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: var(--pc-col, 34px); gap: 3px; }
+.pc-well { position: relative; flex: 1; width: 14px; min-height: 0; transform: translateY(6px) scaleY(.08); transform-origin: 50% 100%; opacity: 0; }
+.pet-card.on .pc-well { transform: none; opacity: 1; transition: transform .86s cubic-bezier(.12, 2.2, .25, 1), opacity .18s; transition-delay: calc(90ms + var(--i) * 60ms); }
+.pc-fill { position: absolute; inset: auto 0 0; height: max(14px, calc(var(--v) * 100%)); background: var(--c); clip-path: var(--pc-bar-clip);
+  box-shadow: inset 2px 2px 0 #ffffff55, inset -2px -2px 0 #22182a22; transition: height .45s var(--hud-spring, cubic-bezier(.3, 1.4, .5, 1)), background-color .25s; }
+@supports (height: round(down, 50%, 2px)) { .pc-fill { height: max(14px, round(down, calc(var(--v) * 100%), 2px)); } }
+.pc-fill::after { content: ""; position: absolute; inset: 0; background: var(--need-stripes); background-size: 16px 16px; opacity: .16; image-rendering: pixelated; animation: need-stripes 1.6s steps(8) infinite; }
+.pc-stat.low .pc-fill { animation: pcLow 1s steps(2) infinite; }
+.pc-val { position: absolute; left: 50%; bottom: calc(max(14px, var(--v, 0) * 100%) + 2px); translate: -50% 0; font-size: .85em; font-weight: 700; opacity: 0; transition: opacity .15s; pointer-events: none; }
+.pc-stat:hover .pc-val { opacity: 1; }
+.pc-icon { display: block; width: 22px; height: 22px; padding: 3px; box-sizing: border-box; background: var(--panel-2); clip-path: var(--hud-small-clip); image-rendering: pixelated; }
+.pc-icon, .pc-label { opacity: 0; transform: translateY(5px) scale(.9); }
+.pc-label { line-height: 1.1; font-weight: 500; white-space: nowrap; font-size: var(--ui-font-label, 12px); }
+.pet-card.on .pc-icon, .pet-card.on .pc-label { opacity: 1; transform: none; transition: transform .42s var(--hud-spring, cubic-bezier(.3, 1.5, .5, 1)), opacity .18s; transition-delay: calc(150ms + var(--i) * 60ms); }
+@keyframes pcLow { 50% { filter: brightness(1.25); } }
+@media (prefers-reduced-motion: reduce) { .pet-card, .pet-card *, .pet-card::before { transition: none !important; animation: none !important; } }
