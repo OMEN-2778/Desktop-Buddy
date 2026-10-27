@@ -498,8 +498,11 @@ def main():
     import shutil, hashlib
     audio_root = ROOT / "AUDIO_LIBRARY"
     audio_files = sorted(str(f.relative_to(audio_root)) for group in ("BGM", "SFX/game", "SFX/processed") for f in (audio_root / group).rglob("*.mp3"))
-    if len([f for f in audio_files if f.startswith("BGM/")]) != 17:
+    if len([f for f in audio_files if f.startswith("BGM/")]) < 17:
         raise RuntimeError("Missing BGM: run python3 AUDIO_LIBRARY/tools/build_audio.py")
+    for name in ("BGM/harbor/dragon-boat-day.mp3", "BGM/harbor/dragon-boat-night.mp3", "BGM/park/festival-streetlights.mp3"):
+        if name not in audio_files:
+            raise RuntimeError("Missing festival BGM: " + name)
     if not (audio_root / "SFX/game/ui-click.mp3").is_file():
         raise RuntimeError("Missing game sounds: run python3 AUDIO_LIBRARY/tools/build_game_sfx.py")
     for name in audio_files:
