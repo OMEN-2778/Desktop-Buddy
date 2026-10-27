@@ -10,7 +10,7 @@ from pixelkit.palette import RAMPS
 allowed={rgba(c) for ramp in RAMPS.values() for c in ramp}
 assert len(pets.BREEDS)==24 and len({b.id for b in pets.BREEDS})==24
 assert len([b for b in pets.BREEDS if b.species=='cat'])==12
-assert len(pets.actions('cat'))==25 and len(pets.actions('dog'))==26
+assert len(pets.actions('cat'))==29 and len(pets.actions('dog'))==30
 def connected(mask):
  remaining=set(zip(*mask.nonzero()));todo=[remaining.pop()]
  while todo:

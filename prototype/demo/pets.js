@@ -67,14 +67,17 @@ function tickPets(from,to){if(!(to>from)||friendHousePreview||visitSleepPreview)
  else if(p.motion){const m=p.motion,old=petPoint();m.s=Math.min(routeLength(m.route),m.s+(to-from)*(p.activity==='active'?8:5));const now=petPoint();p.direction=Math.abs(now.y-old.y)>.01?(now.y<old.y?'back':'front'):now.x<old.x?'left':'right';
   if(m.s>=routeLength(m.route)){p.position={x:now.x,y:now.y};petStartAction(m.after,m.duration);if(p.interaction){p.needs.company=clamp(p.needs.company+(p.interaction.kind==='play'?30:18));sim.needs.social=clamp(sim.needs.social+4);sim.needs.fun=clamp(sim.needs.fun+3);log(petText(p.interaction.kind));speak(petText('hero_'+p.interaction.kind));addMood('pet_company',{diary:false,words:false});p.interaction=null;}}
  }else if(p.reservedUntil>to){/* Let a person approach without chasing a moving target. */}
- else if(p.needs.hunger<60&&petState.feeder>0&&p.activityNow!=='eat')petWalkTo(119,FLOOR_Y[0],'eat',30);
  else if(p.activityNow==='eat'&&(p.needs.hunger>=97||petState.feeder<=0))petStartAction('groom',8);
- else if(p.needs.energy<25&&!['sleep','rest'].includes(p.activityNow))petWalkTo(155,FLOOR_Y[0],'sleep',300);
+ else if(p.activityNow==='eat'){p.actionUntil=to+10;}
  else if(p.activityNow==='sleep'&&p.needs.energy<90){p.actionUntil=to+10;}
+ else if(p.needs.hunger<60&&petState.feeder>0)petWalkTo(119,FLOOR_Y[0],'eat',30);
+ else if(p.needs.energy<25&&!['sleep','rest'].includes(p.activityNow))petWalkTo(155,FLOOR_Y[0],'sleep',300);
  else if(!p.motion&&(!p.actionUntil||to>=p.actionUntil)){
   if(p.attachment==='clingy'&&near&&PetRules.random(petState)<.45){const h=here();petWalkTo(Math.max(20,Math.min(325,h.x-17)),h.y,'sit',25);}
   else if(p.attachment==='clingy'&&petIsHome()&&!['bath','toilet'].includes(sim.act)&&PetRules.random(petState)<.35){const h=here();petWalkTo(Math.max(20,Math.min(325,h.x-17)),h.y,'nuzzle',20);}
-  else{const a=petBreed(p.breed).species==='cat'?['blink','sit','rest','sniff','look','groom','scratch','stretch','play','knead','pounce','roll']:['blink','sit','rest','sniff','look','groom','scratch','stretch','play','wag','pant','bark','shake'];if(PetRules.random(petState)<(p.activity==='active'?.5:.25)){const level=PetRules.random(petState)<.25?1:0;const xs=level?[30,85,125,260,300]:[28,90,112,155,255,300];petWalkTo(xs[Math.floor(PetRules.random(petState)*xs.length)],FLOOR_Y[level],'sniff',15);}else petStartAction(a[Math.floor(PetRules.random(petState)*a.length)],15+PetRules.random(petState)*35);}
+  else{const active=p.activity==='active',roll=PetRules.random(petState);if(roll<(active?.35:.16)){const level=PetRules.random(petState)<.25?1:0;const xs=level?[30,85,125,260,300]:[28,90,112,155,255,300];petWalkTo(xs[Math.floor(PetRules.random(petState)*xs.length)],FLOOR_Y[level],'sniff',15);}
+   else if(roll<(active?.72:.85)){const rest=PetRules.random(petState)<(active?.35:.8);petStartAction(rest?'rest':'sit',(rest?45:30)+PetRules.random(petState)*(rest?55:35));}
+   else{const a=petBreed(p.breed).species==='cat'?['curious','content','drowsy','surprised','blink','look','groom','scratch','stretch','play','knead','pounce','roll']:['curious','content','drowsy','surprised','blink','look','groom','scratch','stretch','play','wag','pant','bark','shake'];petStartAction(a[Math.floor(PetRules.random(petState)*a.length)],15+PetRules.random(petState)*25);}}
  }
  if(to>=p.nextEvent){p.nextEvent=to+120+PetRules.random(petState)*150;if(petIsHome()){log(petText(p.activityNow==='sleep'?'sleep':p.needs.hunger<20?'hungry':p.needs.company<25?'lonely':petBreed(p.breed).species+'_daily'));if(near&&!asleep()&&PetRules.random(petState)<.5)speak(petText('hero_daily'));}}
 }

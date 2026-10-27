@@ -80,6 +80,8 @@ COMMON_ACTIONS = {
     'scratch': ('后腿抓痒', 6, 120), 'stretch': ('伸懒腰', 6, 210),
     'play': ('伏低玩耍', 6, 150), 'happy': ('开心回应', 6, 140),
     'nuzzle': ('低头蹭蹭', 6, 200), 'roll': ('翻身打滚', 8, 160),
+    'curious': ('好奇歪头', 6, 240), 'content': ('眯眼满足', 6, 260),
+    'drowsy': ('困倦眨眼', 6, 280), 'surprised': ('惊讶抬头', 6, 210),
     'shake': ('抖抖身体', 6, 100),
 }
 SPECIES_ACTIONS = {
@@ -206,8 +208,8 @@ def cat_head(s,b,cx,cy,action,frame,front=False,back=False):
     for side in (-1,1):
         s.set(cx+side*4,cy-4,P.clay[3])
         s.hline(cx+side*4,cx+side*3,cy-3,P.blush[0])
-    closed=action=='sleep' or action=='blink' and frame in (1,2) or action=='wake' and frame<2
-    contented=action in ('stretch','happy','nuzzle') and frame in (1,2,3,4)
+    closed=action=='sleep' or action=='blink' and frame in (1,2) or action=='wake' and frame<2 or action=='drowsy' and frame in (2,3,4)
+    contented=action in ('stretch','happy','nuzzle','content') and frame in (1,2,3,4)
     eyes=(cx-2,cx+2)
     eye_color=P.blue[3] if b.pattern in ('point','bicolor') else P.mustard[3] if b.color=='black' else P.ink[0]
     for x in eyes:
@@ -217,6 +219,7 @@ def cat_head(s,b,cx,cy,action,frame,front=False,back=False):
         else:
             if b.color=='black':s.set(x,cy,eye_color)
             else:s.vline(x,cy-1,cy,eye_color)
+            if action=='surprised' and frame in (1,2,3):s.set(x,cy-2,eye_color)
     nose=cx if front else cx+1
     ramp,_=coat(b,'head',nose-cx,2,5,4)
     s.set(nose,cy+1,P.clay[3]).set(nose,cy+2,ramp[1])
@@ -271,7 +274,7 @@ def render(b, action='idle', frame=0, direction='right'):
     cat=b.species=='cat';rx=6 if cat else b.body;ry=4 if cat else b.height
     leg=3 if cat else b.legs;head=5 if cat else b.head
     cx=13;cy=FEET-leg-ry+1;hx=22;hy=cy-4
-    seated=action in ('sit','groom','scratch','knead','pant','bark')
+    seated=action in ('sit','groom','scratch','knead','pant','bark','curious','content','drowsy','surprised')
     sit_amount=(t if action=='sit_down' else 1-t if action=='stand_up' else 1 if seated else 0)
     low=action in ('rest','sleep','eat','drink','sniff','stretch','nuzzle','roll')
     if action=='lie_down':low=t>.35
@@ -293,6 +296,8 @@ def render(b, action='idle', frame=0, direction='right'):
     if action in ('sit','rest') and frame==2:hy-=1
     if action=='sleep' and frame==2:ry+=1;cy-=1
     if action=='look':hx+=(0,0,1,1,0,-1)[frame%6]
+    if action=='curious':hy+=(0,0,1,1,0,0)[frame%6]
+    if action=='surprised':hy-=(0,1,1,1,0,0)[frame%6]
     if action=='shake':cx+=(-1,1,-1,1,0,0)[frame%6];hx+=(-1,1,-1,1,0,0)[frame%6]
     if action=='nuzzle':hx+=(-1,0,1,1,0,-1)[frame%6]
     if action=='sleep' or action=='wake' and t<.4:
@@ -335,11 +340,12 @@ def render(b, action='idle', frame=0, direction='right'):
         # Keep the approved canine head and muzzle proportions.
         muzzle=2 if b.ear=='round' else 3
         fur_blob(s,b,hx+3,hy+2,muzzle,2,'muzzle')
-        eye_x=hx+1;closed=action=='sleep' or action=='blink' and frame in (1,2) or action=='wake' and t<.4
+        eye_x=hx+1;closed=action=='sleep' or action=='blink' and frame in (1,2) or action=='wake' and t<.4 or action=='drowsy' and frame in (2,3,4) or action=='content' and frame in (2,3)
         if closed:s.hline(eye_x,eye_x+1,hy,P.ink[0])
         else:
             s.vline(eye_x,hy-1,hy,P.ink[0])
             s.set(eye_x,hy-1,P.ink[0])
+            if action=='surprised' and frame in (1,2,3):s.set(eye_x,hy-2,P.ink[0])
         nose_x=hx+4 if b.ear=='round' else hx+5
         s.set(nose_x,hy+1,P.ink[0]).set(nose_x-1,hy+2,P.ink[0])
         if action in ('pant','bark','happy'):
@@ -370,7 +376,8 @@ def render_vertical(b,action,frame,direction,cy,hy,leg,jump,seated,low):
     cy-=jump;hy=max((4 if cat else head)+3,hy-jump)
     if action in ('eat','drink','sniff'):hy=FEET-(4 if cat else head)-(frame%2)
     if action=='stretch':hy=FEET-(4 if cat else head)-(frame%2)
-    if action in ('idle','wake','sit','rest'):hy+=frame%2
+    if action in ('idle','wake','sit','rest','curious'):hy+=frame%2
+    if action=='surprised' and frame in (1,2,3):hy-=1
     if action=='look':cx+=(-1,0,1,1,0,0)[frame%6]
     if action=='nuzzle':cx+=(-1,0,1,1,0,-1)[frame%6]
     if action=='shake':cx+=(-1,1,-1,1,0,0)[frame%6]
@@ -399,10 +406,12 @@ def render_vertical(b,action,frame,direction,cy,hy,leg,jump,seated,low):
         if action=='scratch':limb(s,b,cx+5,hy+3,-2-frame%2,view=direction)
         return s
     if not cat:fur_blob(s,b,cx,hy+2,3,2,'muzzle')
-    closed=action=='sleep' or action=='blink' and frame in (1,2)
+    closed=action=='sleep' or action=='blink' and frame in (1,2) or action=='drowsy' and frame in (2,3,4) or action=='content' and frame in (2,3)
     for x in (cx-2,cx+2):
         if closed:s.hline(x-1,x,hy,P.ink[0])
-        else:s.vline(x,hy-1,hy,P.ink[0])
+        else:
+            s.vline(x,hy-1,hy,P.ink[0])
+            if action=='surprised' and frame in (1,2,3):s.set(x,hy-2,P.ink[0])
     s.set(cx,hy+1,P.clay[3] if cat else P.ink[0])
     if cat:
         s.set(cx-1,hy+2,P.ink[0]).set(cx+1,hy+2,P.ink[0])
