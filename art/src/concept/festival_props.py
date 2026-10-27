@@ -11,6 +11,7 @@ Light from the top-left like everything else.
 from pixelkit import P, Sprite
 
 import item_icons as I
+import front_yard as FY
 
 PREVIEW_SCALE = 6
 SW, SH = 36, 40
@@ -95,36 +96,37 @@ def quilt_rack(v: int = 0) -> Sprite:
 
 
 def lantern(k: int = 0) -> Sprite:
-    """One red lantern with a gold tassel and a white riddle slip (7x13)."""
-    s = Sprite(7, 13)
-    s.set(3, 0, P.mustard[2]).hline(2, 4, 1, P.mustard[2])
-    s.ellipse(3, 4, 3, 2.6, P.coral[2]).set(2, 3, P.coral[4]).hline(1, 5, 4, P.coral[1])
-    s.hline(2, 4, 7, P.mustard[2]).vline(3, 8, 9, P.mustard[3])
-    s.rect(2 + (k % 2), 10, 2, 3, P.porcelain[3])
+    """A red lantern: gold caps, ribs, a soft lit side, a tassel and the
+    white riddle slip under it (7x14)."""
+    s = Sprite(7, 14)
+    R = P.coral
+    s.hline(2, 4, 0, P.mustard[2])                                   # top cap
+    for y, (a, b) in enumerate(((1, 5), (0, 6), (0, 6), (0, 6), (1, 5))):   # the body, round
+        s.hline(a, b, 1 + y, R[2])
+        s.set(a, 1 + y, R[1]).set(b, 1 + y, R[1])
+        s.set(a + 1, 1 + y, R[3])                                  # lit from the top-left
+    s.vline(3, 1, 5, R[1])                                         # a rib down the middle
+    s.set(2, 2, R[4] if len(R) > 4 else R[3])
+    s.hline(2, 4, 6, P.mustard[2])                                 # bottom cap
+    s.vline(3, 7, 8, P.mustard[3])                                 # tassel
+    s.rect(2 + (k % 2), 9, 2, 4, P.porcelain[3]).set(2 + (k % 2), 12, P.porcelain[2])   # the riddle slip
     return s
 
 
 def lantern_tree() -> Sprite:
-    """元宵节's 灯谜树: an old tree, bare-ish in early spring, every branch hung
-    with lanterns carrying riddle slips. 70x76, trunk foot at the bottom middle."""
-    s = Sprite(70, 76)
-    bark, leaf = P.walnut, P.green
-    cx, b = 35, 75
-    s.rect(cx - 4, 34, 8, b - 34, bark[2]).vline(cx - 4, 34, b, bark[3]).vline(cx + 3, 34, b, bark[1])
-    s.hline(cx - 7, cx + 6, b, bark[1])
-    for x0, y0, x1, y1 in ((cx, 36, cx - 24, 18), (cx, 38, cx + 24, 20), (cx, 30, cx - 10, 8), (cx, 30, cx + 12, 6)):
-        s.line(x0, y0, x1, y1, bark[2]).line(x0 + 1, y0, x1 + 1, y1, bark[1])
-    for ex, ey, rx, ry in ((cx, 19, 27, 14), (cx - 18, 25, 13, 9), (cx + 18, 25, 13, 9)):   # shaded underside
-        s.ellipse(ex, ey, rx, ry, leaf[1])
-    for ex, ey, rx, ry in ((cx, 17, 26, 12), (cx - 18, 23, 12, 7), (cx + 18, 23, 12, 7)):   # a light early-spring crown
-        s.ellipse(ex, ey, rx, ry, leaf[2])
-        s.dither(ex - rx + 2, ey - ry + 2, rx, ry, leaf[3], None, "checker")
-    for ex, ey in ((cx - 10, 10), (cx + 8, 8), (cx - 20, 20)):
-        s.ellipse(ex, ey, 5, 3, leaf[3])
-    for i, (lx, ly) in enumerate(((cx - 26, 28), (cx - 16, 32), (cx - 6, 30), (cx + 5, 31), (cx + 15, 33), (cx + 24, 28),
-                                   (cx - 21, 40), (cx + 20, 41), (cx - 12, 44), (cx + 11, 45))):
-        s.vline(lx + 3, ly - 6, ly, P.linen[1])
-        s.blit(lantern(i), lx, ly)
+    """元宵节's 灯谜树: one of the park's own lindens (same drawing as the
+    scene's trees, so it belongs there), its lower boughs hung with red
+    lanterns carrying riddle slips. Cropped: 56x74, trunk foot bottom middle."""
+    tx, cy, base, rx, ry = 28, 30, 71, 25, 21
+    full = FY.tree("linden", "spring", 0, at=(tx + 100, cy, base, rx, ry))
+    s = Sprite(56, 74)
+    s.blit(full, -100, 0)
+    rnd = [(-0.88, 0), (-0.64, 3), (-0.38, 1), (-0.1, 4), (0.16, 1), (0.4, 3), (0.64, 0), (0.88, 2)]
+    for i, (u, drop) in enumerate(rnd):                               # strings from the lower crown
+        x = round(tx + u * rx * 0.95)
+        y = round(cy + ry * (1 - u * u) ** 0.5 * 0.3) + drop
+        s.vline(x, y - 4, y, P.oak[1])
+        s.blit(lantern(i), x - 3, y + 1)
     return s
 
 

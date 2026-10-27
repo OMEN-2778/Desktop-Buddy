@@ -26,14 +26,14 @@ function festParkSetup2() {
 function drawRiddleTree(ctx) {
   if (!riddleHere()) return;
   const t = RIDDLE_TREE, img = festImg(D.festival.lanternTree);
-  ctx.drawImage(img, t.x - 35, t.foot - 75);
+  ctx.drawImage(img, t.x - 28, t.foot - 72);
   if (riddleHost) ctx.drawImage(npcCanvas(riddleHost, { expr: "happy", look: -1, bob: Math.floor(realClock * 1.4) % 2, sway: 0, wave: null }, "stand"), RIDDLE_TREE.x + 35, 72);
   for (const n of riddleCrowd) {
     const bob = Math.floor(realClock * 1.1 + n.ph) % 2;
     ctx.drawImage(npcCanvas(n, { expr: "happy", look: 0, bob, sway: 0, wave: null }, "stand", n.back), Math.round(n.x) - 10, 103 - 27);
   }
 }
-const riddleAt = (x, y) => riddleHere() && x >= RIDDLE_TREE.x - 34 && x < RIDDLE_TREE.x + 34 && y >= RIDDLE_TREE.foot - 75 && y < RIDDLE_TREE.foot;
+const riddleAt = (x, y) => riddleHere() && x >= RIDDLE_TREE.x - 27 && x < RIDDLE_TREE.x + 27 && y >= RIDDLE_TREE.foot - 72 && y < RIDDLE_TREE.foot;
 function openRiddle() {
   const seen = (lifeFlags.riddles ||= []);
   let fresh = FEST_TEXT2.riddles.map((_, i) => i).filter(i => !seen.includes(i));
