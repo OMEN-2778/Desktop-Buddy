@@ -21,6 +21,7 @@ KINDS = {   # awning ramp, cloth, goods looks on the counter
     "mooncake": (P.coral, P.mustard, ["mooncake", "mooncake", "drink"]),
     "book": (P.teal, P.linen, ["book", "book", "book"]),
     "lottery": (P.coral, P.mustard, []),
+    "games": (P.lilac, P.mustard, ["pudding", "cake", "icecream"]),
 }
 
 

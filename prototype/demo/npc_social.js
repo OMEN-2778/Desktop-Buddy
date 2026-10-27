@@ -11,7 +11,7 @@ function canClickNpc(n){
   if(friendOutingActive())return false;
   if(!n||n.gone||sim.place==='home'||stormOutside()||mallInside()||parkInsideToilet()||barToiletInside())return false;
   if(sim.place==='mall'&&(mallS.toilet||mallS.visit)||sim.place==='bar'&&sim.bar?.toilet)return false;
-  if(n.role==='fisher'||n.rod||n.role==='performer')return false;
+  if(n.role==='fisher'||n.rod||n.role==='performer'||n.runner)return false;
   if(['park','mall'].includes(sim.place)&&(['clerk','hawker'].includes(n.role)||n.item))return false;
   return !!NPC_TALK_TEXT[npcSceneKey()]&&(life.npcs||[]).includes(n);
 }

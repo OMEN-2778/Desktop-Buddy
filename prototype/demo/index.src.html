@@ -117,6 +117,7 @@
         <button type="button" data-weather="rain" aria-pressed="false">下雨</button>
         <button type="button" data-weather="storm" aria-pressed="false">雷雨</button>
         <button type="button" data-weather="snow" aria-pressed="false">下雪</button>
+        <button type="button" data-weather="blizzard" aria-pressed="false">大雪</button>
         <button type="button" id="nextSeason">跳到下个季节</button>
       </div>
       <p class="note">点家具让她去做事：床、衣柜（打开造型室）、浴缸、马桶、洗手台、毛巾、书架、电脑（会弹出菜单）、沙发、电视、灶台、餐桌、冰箱、绿植；台灯和窗户可以开关。点她本人弹出互动菜单；她晕倒时长按她 5 秒。</p>
@@ -202,10 +203,11 @@ function applyPose(buf, pose, lk = look) {
   return buf;
 }
 function dollCanvas(f, pose = "stand", cropRows = DH) {
-  const key = JSON.stringify([f.expr, f.look, f.bob, f.sway, f.wave ?? null, pose, cropRows]);
+  const key = JSON.stringify([f.expr, f.look, f.bob, f.sway, f.wave ?? null, pose, cropRows, curMask()]);
   if (dollCache.has(key)) return dollCache.get(key);
-  const c = doll.toCanvas(applyPose(doll.pixels(look, f, ramps), pose), DW, DH, cropRows);
-  dollCache.set(key, c);
+  const px = new Uint8ClampedArray(doll.pixels(look, f, ramps)), dressed = dressBuddy(px, f);   // 怪兽夜: her mask
+  const c = doll.toCanvas(applyPose(px, pose), DW, DH, cropRows);
+  if (dressed) dollCache.set(key, c);
   return c;
 }
 function backCanvas(f, pose = "stand") {   // seen from behind, climbing the stairs
@@ -598,6 +600,7 @@ function command(act, item = null) {
   if (act === "fest_riddle") { answerRiddle(item); return; }
   if (act === "fest_letter_to") { openLetterTheme(item); return; }
   if (act === "fest_letter") { writeLetter(item); return; }
+  if (act === "fest_boat") { startRace(item.k); return; }
   if (act === "park_food") { if (sim.place === "park") parkRequest("food", false, item?.id); return; }
   if (sim.place === "park" && act === "go_home" && sim.park) sim.park.goal = null;
   if (sim.place === "bar") {
@@ -652,7 +655,7 @@ function step(dtGame, dtReal) {
   applyNeedConsequences();
   // behaviour
   if (sim.mode === "down") { sim.windup = null; return; }
-  festTick2();
+  festTick2(); festTick4();
   if(tickNpcInteraction(dtReal))return;
   // Shop visits and pending clicks must not delay finding a WC or an urgent trip home.
   if (sim.place === "mall" && mallHandleNeeds(dtGame,dtReal)) return;
@@ -1361,7 +1364,7 @@ const SEASONS = [
   { name: "春", kind: "rain", p: 0.32, storm:0.25 },
   { name: "夏", kind: "rain", p: 0.46, storm:0.72 },
   { name: "秋", kind: "rain", p: 0.26, storm:0.28 },
-  { name: "冬", kind: "snow", p: 0.45 },
+  { name: "冬", kind: "snow", p: 0.45, heavy: 0.3 },
 ];
 const WEATHER_NAME = { clear: "晴", rain: "小雨", storm: "雷雨", snow: "下雪" };
 function seasonOf(t) {
@@ -1376,14 +1379,15 @@ function planDay(d) {
     for (const p of [s.p, s.p * 0.3]) {           // usually none, sometimes one, rarely two
       if (Math.random() >= p) break;
       const from = d * 1440 + Math.floor(Math.random() * 22 * 60);
-      eps.push({ from, to: from + 90 + Math.random() * 270, kind: s.storm && Math.random()<s.storm ? "storm" : s.kind });
+      eps.push({ from, to: from + 90 + Math.random() * 270, kind: s.storm && Math.random()<s.storm ? "storm" : s.kind, heavy: !!s.heavy && Math.random() < s.heavy });
     }
     weather.plan.set(d, eps);
   }
   return weather.plan.get(d);
 }
 function weatherAt(t) {
-  if (weather.force) return weather.force;
+  if (weather.force) return weather.force === "blizzard" ? "snow" : weather.force;
+  if (festAt(t) === "冬至") return "snow";                 // 冬至: heavy snow all day
   const d = Math.floor(t / 1440);
   for (const dd of [d - 1, d]) for (const e of planDay(dd)) if (t >= e.from && t < e.to) return e.kind;
   return "clear";
@@ -1403,6 +1407,7 @@ function updateWeather(dtGame) {
   // snow settles on the hill while it snows and melts slowly afterwards (fast outside winter)
   if (w === "snow") weather.snowCover = Math.min(1, weather.snowCover + dtGame / 150);
   else weather.snowCover = Math.max(0, weather.snowCover - dtGame / (se === 3 ? 2880 : 240));
+  heavyWeather(w, dtGame);
 }
 
 // ---------- weather through the windows
@@ -1466,8 +1471,8 @@ function drawWeather(ctx, night, windows = WMASK, states = windowState, twilight
         }
       } else {
         g.fillStyle = "rgba(255, 255, 255, 0.95)";
-        for (let i = 0; i < 12; i++) {
-          const x0 = hash(seed + i) * m.w, sp = 3 + hash(seed + i * 3) * 3;
+        for (let i = 0; i < (weather.heavy ? 40 : 12); i++) {
+          const x0 = hash(seed + i) * m.w, sp = weather.heavy ? 10 + hash(seed + i * 3) * 8 : 3 + hash(seed + i * 3) * 3;
           const y = (realClock * sp + hash(seed + i * 7) * m.h) % (m.h + 2) - 1;
           g.fillRect(Math.floor(x0 + Math.sin(realClock * 1.3 + i) * 1.5), Math.floor(y), 1, 1);
         }
@@ -1603,7 +1608,7 @@ function placeFestTag(x, half, w) {
 }
 function skyText() {
   const se = seasonOf(sim.t);
-  return `${SEASONS[se.i].name}季 · 第 ${se.day} 天 · ${fmt(sim.t)} · ${WEATHER_NAME[weather.kind]}`;
+  return `${SEASONS[se.i].name}季 · 第 ${se.day} 天 · ${fmt(sim.t)} · ${weatherName()}`;
 }
 const skyHit = document.getElementById("skyHit");
 function skyTipShow() {
@@ -2387,7 +2392,7 @@ function syncUI() {
   const day = Math.floor(sim.t / 1440) + 1, h = hour();
   const part = h < 5 ? "深夜" : h < 9 ? "早上" : h < 12 ? "上午" : h < 14 ? "中午" : h < 18 ? "下午" : h < 22 ? "晚上" : "深夜";
   const se = seasonOf(sim.t);
-  document.getElementById("clock").textContent = `第 ${day} 天 · ${SEASONS[se.i].name} ${se.day}/${SEASON_DAYS} · ${fmt(sim.t)} · ${part} · ${WEATHER_NAME[weather.kind]}`;
+  document.getElementById("clock").textContent = `第 ${day} 天 · ${SEASONS[se.i].name} ${se.day}/${SEASON_DAYS} · ${fmt(sim.t)} · ${part} · ${weatherName()}`;
   skyEl.setAttribute("aria-label", `时间与天气：${skyText()}`);
   if (!skyTip.hidden) skyTip.textContent = skyText();
   const doing = atFriendHome()?friendVisitDoing():npcInteraction ? (npcInteraction.phase === "approach" ? "走近"+npcTalkName(npcInteraction.n) : "和"+npcTalkName(npcInteraction.n)+"聊天")
@@ -2757,7 +2762,7 @@ function layoutRing() {
 }
 function openRing(which, at = which === "computer" ? "computer" : "buddy") {
   ringOf = which; ringAt = at;
-  const items = festLetterRing(which, festRingItems(which, RINGS[which]));
+  const items = festRing4(which, festLetterRing(which, festRingItems(which, RINGS[which])));
   ringEl.innerHTML = "";
   items.forEach(([id, label, cls], i) => {
     const b = document.createElement(cls === "label" ? "span" : "button");
@@ -2856,6 +2861,8 @@ function ringPick(id) {
   if (id === "phone") { openRing("phone", "buddy"); return; }
   if (id === "lotto_online") { closeRing(); festLottoOnline(); return; }
   if (id === "write_letter") { closeRing(); openLetterTo(); return; }
+  if (id === "mask") { closeRing(); wearMask(); return; }
+  if (id === "build_snowman") { closeRing(); buildSnowman(); return; }
   if (id === "call") { openRing("call", "buddy"); return; }
   if (id.startsWith("dial:")) { closeRing(); command("phone_call", chatItem("call", id.slice(5), "call")); return; }
   if (id === "rename") { openRename(); return; }
@@ -3177,6 +3184,7 @@ function chooseOutside() {
   }
   if (O.kind === "sit") return "bench";
   if (O.kind === "scroll") return "mall";
+  if (sim.place === "disco" && Math.random() < 0.6) return "dance";      // that's what she came for
   let x;
   do x = O.walk[0] + Math.random() * (O.walk[1] - O.walk[0]); while (Math.abs(x - p.x) < 30);
   sim.strollX = Math.round(x);
@@ -3187,6 +3195,7 @@ function outsideClick(id, x, y) {
   if (mallVisitInside()) { mallInteriorClick(id);return; }
   if (sim.place === "bar") { barClick(id, x, y); return; }
   if (sim.place === "park") { parkClick(id, x, y); return; }
+  if (festSceneClick(x, y)) return;
   if (id === "out_door") { useFurniture(id, true); command("go_home"); return; }
   const O = OUT[sim.place];
   if (O.kind === "sit") return;                   // on the park bench she stays put (user)
@@ -3313,11 +3322,13 @@ function drawOutsideWeather(ctx) {
       if (ph < 0.25) { ctx.fillRect(x - 1, y, 1, 1); ctx.fillRect(x + 1, y, 1, 1); ctx.fillRect(x, y - 1, 1, 1); }
     }
   } else if (w === "snow") {
+    const hv = weather.heavy;                    // 大雪: thick, fast, slanting, a white haze
+    if (hv) { ctx.fillStyle = "rgba(226, 232, 244, 0.22)"; ctx.fillRect(0, 0, W, H); }
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    for (let i = 0; i < 60; i++) {
-      const x0 = hash(i * 5.9) * W, sp = 9 + hash(i * 2.3) * 7;
+    for (let i = 0; i < (hv ? 220 : 60); i++) {
+      const x0 = hash(i * 5.9) * (W + (hv ? 60 : 0)), sp = hv ? 26 + hash(i * 2.3) * 22 : 9 + hash(i * 2.3) * 7;
       const y = ((realClock * sp + hash(i * 4.1) * H) % (H + 2)) - 1;
-      ctx.fillRect(Math.floor(x0 + Math.sin(realClock * 1.3 + i) * 3), Math.floor(y), i % 3 ? 1 : 2, i % 3 ? 1 : 2);
+      ctx.fillRect(Math.floor(x0 - (hv ? y * 0.45 : 0) + Math.sin(realClock * 1.3 + i) * 3), Math.floor(y), i % 3 ? 1 : 2, i % 3 ? 1 : 2);
     }
   }
 }
@@ -3328,6 +3339,7 @@ function renderOutside() {
   const dt = Math.min(0.1, realClock - life.t); life.t = realClock;
   if (sim.place === "park") return renderPark(dt);
   if (sim.place === "beach") return renderBeach(dt);
+  if (sim.place === "disco") return renderDisco(dt);
   if (sim.place === "mall") return renderMall(dt);
   const f = outdoorNightness(hour()), O = IMG.out[sim.place], se = SEASON_KEYS[seasonOf(sim.t).i], S = O.seasons[se];
   if (speed && !cardHolds() && !wiping) outsideLife(dt);
@@ -3341,7 +3353,7 @@ function renderOutside() {
   bctx.drawImage(treeImg, 0, 0);
   if (weather.snowCover > 0.02) { bctx.globalAlpha = Math.min(1, weather.snowCover); bctx.drawImage(O.snow, 0, 0); bctx.globalAlpha = 1; }
   drawOutsideLife(bctx);
-  if (sim.place === "front") { drawFestFront(bctx); drawMailBubble(bctx); }
+  if (sim.place === "front") { drawFestFront(bctx); drawMailBubble(bctx); drawSnowmen(bctx); }
   drawNpcs(bctx, "back");
   const ms = realClock * 1000, fr = activityFrame(ms);
   const full = { expr: "neutral", look: 0, bob: 0, sway: 0, wave: null, ...fr.f };
@@ -3364,6 +3376,7 @@ function renderOutside() {
     emoteAt = [x + 13, y - 15];
   }
   drawNpcs(bctx, "front");
+  drawMarathon(bctx);
   drawOutsideWeather(bctx);
   gradeOutside(bctx, f);
   if (f > 0) {                                     // lit windows at night, behind the trees and her
@@ -3470,6 +3483,7 @@ function arriveAt(place) {
   }
   npcSetup(place);
   if (place === "park") { parkSetup(); festParkSetup(); festParkSetup2(); }
+  if (place === "disco") discoSetup();
 }
 
 
@@ -3499,7 +3513,7 @@ function npcLook() {
 }
 function makeNpc(role, o = {}) {
   const person=worldNpcIdentity(role),lk=person.look,kid=role==="kid";
-  return { role, kid, personId:person.id,look: lk, ramps: doll.rampsOf(lk), cache: new Map(), dist: 0, ph: Math.random() * 1e4, sayUntil: 0, dir: 1, v: 0, ...o };
+  return { role, kid, personId:person.id,look: lk, ramps: doll.rampsOf(lk), cache: new Map(), dist: 0, ph: Math.random() * 1e4, sayUntil: 0, dir: 1, v: 0, ...festNpcDress(role), ...o };
 }
 function kidBody(buf, lk) {                     // the same chibi head on a shorter body: two leg rows and two torso rows go
   const drop = new Set([...D.doll.pose[lk.bottomStyle].sitDrop, 18, 20]), keep = [];
@@ -3512,14 +3526,17 @@ function npcCanvas(n, f, pose, back) {
   const key = JSON.stringify([f.expr, f.look, f.bob, f.sway, f.wave ?? null, pose, !!back]);
   let c = n.cache.get(key);
   if (!c) {
-    let buf = back ? doll.pixelsBack(n.look, f, n.ramps) : doll.pixels(n.look, f, n.ramps);
+    let buf = back ? doll.pixelsBack(n.look, f, n.ramps) : doll.pixels(n.look, f, n.ramps), dressed = true;
+    if (!back && (n.mask != null || n.costume)) { buf = new Uint8ClampedArray(buf); dressed = dressNpc(buf, n, f); }   // 怪兽夜
     buf = applyPose(buf, pose, n.look);
     if (n.kid) buf = kidBody(buf, n.look);
-    n.cache.set(key, c = doll.toCanvas(buf, DW, DH));
+    c = doll.toCanvas(buf, DW, DH);
+    if (dressed) n.cache.set(key, c);
   }
   return c;
 }
 function npcFrame(n) {
+  if (npcDancing(n)) return danceFrame(n);
   if (n.v && !n.paused) {
     const i = Math.floor(n.dist / 4) % 4;
     return [{ expr: "neutral", look: n.dir, bob: i % 2 ? 0 : 1, sway: i % 2 }, ["walkL", "stand", "walkR", "stand"][i]];
@@ -3697,8 +3714,8 @@ function placeChatter() {                       // now and then: a stranger's li
     if (t) { speak(fill(t, kidVars())); return; }
   }
   life.chatNext = realClock + 9 + Math.random() * 14;
-  const p = here(), near = (life.npcs || []).filter(n => !n.gone && Math.abs(npcX(n) - p.x) < 34 && !life.npcTalked.has(n));
-  const seen = (life.npcs || []).filter(n => { const x = npcX(n); return x > 10 && x < W - 10 && n.sayUntil < realClock; });
+  const p = here(), near = (life.npcs || []).filter(n => !n.gone && !n.runner && n.role !== "performer" && Math.abs(npcX(n) - p.x) < 34 && !life.npcTalked.has(n));
+  const seen = (life.npcs || []).filter(n => { const x = npcX(n); return !n.runner && x > 10 && x < W - 10 && n.sayUntil < realClock; });
   const r = Math.random();
   if (near.length && r < 0.45) { const n=pick(near);if(Math.random()<(.65+personalityOf(personalityContact(n)).social*.003)&&startTalk(n))return; }
   if (seen.length && r < 0.8) {
@@ -4007,7 +4024,7 @@ function renderPark(dt) {
   bctx.drawImage(O.bench, 0, 0);
   // The vendor stands behind the counter; all path pedestrians pass in front.
   drawParkService(bctx, O);
-  drawFestStalls(bctx);
+  drawFestStalls(bctx); drawSnowmen(bctx);
   drawRiddleTree(bctx);
   drawQixiPark(bctx, dt, run);
   drawNpcs(bctx, "back");
@@ -4097,6 +4114,7 @@ function renderBeach(dt) {
       bctx.fillRect(x, y, 2, 1);
     }
   }
+  drawDragonBoats(bctx, dt, run);
   if (run && life.gulls.length < 2 && Math.random() < dt * 0.03 && w === "clear")
     life.gulls.push({ x: -10, y: 8 + Math.random() * 26, v: 12 + Math.random() * 8, ph: Math.random() * 6, t: 0 });
   for (const g of life.gulls) {
@@ -4110,6 +4128,7 @@ function renderBeach(dt) {
   if (run) life.wet += ((isRain(w) ? 1 : 0) - life.wet) * Math.min(1, dt * (isRain(w) ? 0.8 : 0.08));
   if (weather.snowCover > 0.02) { bctx.globalAlpha = Math.min(1, weather.snowCover); bctx.drawImage(O.snow, 0, 0); bctx.globalAlpha = 1; }
   npcTick(dt, run);
+  drawSnowmen(bctx);
   drawNpcs(bctx, "back");
   const fr = activityFrame(realClock * 1000);
   const { emoteAt, dollAt } = drawOutBuddy(bctx, fr);

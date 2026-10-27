@@ -46,6 +46,7 @@ import friend_houses as FH  # noqa: E402
 import storm as STORM  # noqa: E402
 import bar as BAR  # noqa: E402
 import festival_props as FEST  # noqa: E402
+import festival_props2 as FEST2  # noqa: E402
 import make_creator as mc  # noqa: E402
 from pixelkit import P, Sprite, rgba  # noqa: E402
 
@@ -251,6 +252,7 @@ def main():
     outside["mall"]["img"]["foodFront"]={k:png(MR.restaurant_front(k)) for k in MR.RESTAURANTS}
     outside["mall"]["dining"]=MR.DINING
     outside["mall"]["img"]["films"]={f["id"]:[png(MR.film_frame(f["art"],b)) for b in range(3)] for f in mall_life["films"]}
+    outside["disco"] = {"kind": "walk", "img": {"bg": png(FEST2.disco_scene())}, "feet": 108, "walk": [14, 328], "doorX": 25, "side": FEST2.FLOOR_TOP, "door": [12, 36, 26, 46]}
     outside["bar"] = {"kind": "bar", "img": {"day": png(BAR.scene()), "night": png(BAR.scene(True)), "counter": png(BAR.counter()), "foreground": png(BAR.foreground()),
                                              "hover": {key: png(spr) for key, spr in BAR.interaction_sprites().items()}},
                       "feet": 107, "walk": [18, 322], "doorX": 128}
@@ -428,6 +430,10 @@ def main():
         "festival": {"stalls": {k: png(FEST.stall(k)) for k in FEST.KINDS}, "quilts": [png(FEST.quilt_rack(v)) for v in range(4)],
                      "lanternTree": png(FEST.lantern_tree()), "lantern": png(FEST.lantern()), "heartArch": png(FEST.heart_arch()),
                      "mail": png(FEST.mail_bubble()), "envelope": png(FEST.envelope())},
+        "festival2": {"snowmen": [png(FEST2.snowman(v)) for v in range(8)], "stages": [png(FEST2.snowman(0, k)) for k in (0, 1)],
+                      "masks": [png(FEST2.mask(i)) for i in range(len(FEST2.MASKS))], "maskNames": [m[0] for m in FEST2.MASKS],
+                      "boats": [[png(FEST2.dragon_boat(k, f)) for f in (0, 1)] for k in range(3)], "fence": png(FEST2.fence()),
+                      "mirrorBall": [png(FEST2.mirror_ball(f)) for f in range(3)]},
         "skyIcons": {**{k: [png(f) for f in sky_icons.frames(k)] for k in sky_icons.NAMES},"storm":[png(STORM.icon(i)) for i in range(4)]},
         "pets": PETS.runtime_data(),
         "pixelUi": {theme:{kind:png(ui_icons.pixel_surface(kind,theme=="dark")) for kind in ("panel","control","positive","gold","gold-pill","blue-pill","input","track","pill","thumb")} for theme in ("light","dark")},
@@ -460,7 +466,7 @@ def main():
     html = html.replace("/*__PARK_FOOD_JS__*/", "const PARK_FOOD = " + json.dumps(park_food, ensure_ascii=False) + ";")
     html = html.replace("/*__NPC_SOCIAL_JS__*/", "const NPC_TALK_TEXT = " + (SRC.parent / "npc_talk.json").read_text() + ";\n" + (SRC.parent / "npc_social.js").read_text())
     html = html.replace("/*__PARK_JS__*/", (SRC.parent / "park.js").read_text())
-    html = html.replace("/*__FESTIVAL_FUN_JS__*/", "const FEST_TEXT = " + (SRC.parent / "festival_text.json").read_text() + ";\nconst FEST_TEXT2 = " + (SRC.parent / "festival_text2.json").read_text() + ";\n" + (SRC.parent / "festival_fun.js").read_text() + "\n" + (SRC.parent / "festival_fun2.js").read_text() + "\nconst FEST_TEXT3 = " + (SRC.parent / "festival_text3.json").read_text() + ";\n" + (SRC.parent / "festival_fun3.js").read_text())
+    html = html.replace("/*__FESTIVAL_FUN_JS__*/", "const FEST_TEXT = " + (SRC.parent / "festival_text.json").read_text() + ";\nconst FEST_TEXT2 = " + (SRC.parent / "festival_text2.json").read_text() + ";\n" + (SRC.parent / "festival_fun.js").read_text() + "\n" + (SRC.parent / "festival_fun2.js").read_text() + "\nconst FEST_TEXT3 = " + (SRC.parent / "festival_text3.json").read_text() + ";\n" + (SRC.parent / "festival_fun3.js").read_text() + "\nconst FEST_TEXT4 = " + (SRC.parent / "festival_text4.json").read_text() + ";\n" + (SRC.parent / "festival_fun4.js").read_text() + "\n" + (SRC.parent / "disco.js").read_text())
     html = html.replace("/*__BAR_JS__*/", (SRC.parent / "bar.js").read_text())
     html = html.replace("/*__DUSK_JS__*/", (SRC.parent / "dusk.js").read_text())
     html = html.replace("/*__RESTROOMS_JS__*/", (SRC.parent / "restrooms.js").read_text())
@@ -488,7 +494,7 @@ def main():
     import shutil, hashlib
     audio_root = ROOT / "AUDIO_LIBRARY"
     audio_files = sorted(str(f.relative_to(audio_root)) for group in ("BGM", "SFX/game", "SFX/processed") for f in (audio_root / group).rglob("*.mp3"))
-    if len([f for f in audio_files if f.startswith("BGM/")]) != 16:
+    if len([f for f in audio_files if f.startswith("BGM/")]) != 17:
         raise RuntimeError("Missing BGM: run python3 AUDIO_LIBRARY/tools/build_audio.py")
     if not (audio_root / "SFX/game/ui-click.mp3").is_file():
         raise RuntimeError("Missing game sounds: run python3 AUDIO_LIBRARY/tools/build_game_sfx.py")

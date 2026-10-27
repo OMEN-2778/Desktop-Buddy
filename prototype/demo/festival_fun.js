@@ -41,6 +41,7 @@ function festFinish(act) {
   }
   if (act === "read" && name === "读书日") festGift(FEST_BOOKDAY, FEST_TEXT.bookDay);
   if (act === "cook" && sim.item?.kind?.fest) lifeFlags.festCooked = festDay();
+  festFinish4(act);
 }
 
 // ---------------------------------------------------------------- festival dishes at home
@@ -94,7 +95,7 @@ function openFestStall(s) {
   const kindLook = it => (D.items.dish[it.look] || D.items.dish.cake);
   PICK.fest_stall = { title: `${s.menu.name} · ${festName()}限定`,
     groups: () => [{ name: s.menu.name, items: s.menu.items.map((it, i) => ({ title: it.name, line: it.line,
-      icon: kindLook(it)[i % 3], info: it.mood.name + " · " + MOOD[it.mood.emo].name + " +2", item: { k: s.k, i } })) }] };
+      icon: it.icon || kindLook(it)[i % 3], info: it.mood.name + " · " + MOOD[it.mood.emo].name + " +2", item: { k: s.k, i } })) }] };
   const v = festVendors[festStallsHere().indexOf(s)];
   if (v) npcSay(v, pick(s.menu.hello));
   openPicker("fest_stall", { x: s.x, y: FEST_STALL_TOP + 20 });
@@ -122,6 +123,7 @@ function festTick() {
   const v = festVendors[festStallsHere().indexOf(s)];
   if (v) npcSay(v, pick(s.menu.hello));
   gameAudio.sound("real-checkout-cc0", .10, { gap: 5 });
+  if (it.win) { festGame(it); sim.mode = "idle"; sim.act = null; sim.idleUntil = sim.t + 8; return; }   // 怪兽夜: a game, not a snack
   addMood(it.id, { diary: false, words: false });
   log(it.diary); speak(it.say, true);
   if (it.look === "book") sim.needs.fun = clamp(sim.needs.fun + 10);

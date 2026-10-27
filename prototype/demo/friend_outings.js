@@ -1,6 +1,6 @@
 // One persistent companion, independent of transient street NPCs.
 let friendOutingState=null;
-const FRIEND_OUTING_PLACES={front:'家门口',park:'公园',mall:'商场',beach:'码头',bar:'酒吧'};
+const FRIEND_OUTING_PLACES={front:'家门口',park:'公园',mall:'商场',beach:'码头',bar:'酒吧',disco:'迪厅'};
 const outingFriend=()=>friendOutingState&&socialState.contacts.find(c=>c.id===friendOutingState.id);
 const friendOutingActive=()=>!!friendOutingState&&['active','returning'].includes(friendOutingState.phase)&&sim.place!=='home';
 const friendOutingWaiting=()=>!!friendOutingState&&['waiting','departing'].includes(friendOutingState.phase);
@@ -25,8 +25,8 @@ function openFriendOuting(id){
   openRing('outing','door');ringEl.dataset.contactId=id;ringEl.setAttribute('aria-label','和'+contactName(c)+'去哪里玩');
   for(const button of ringEl.querySelectorAll('button')){
     const place=button.dataset.outingPlace;
-    button.disabled=place==='bar'&&!barIsOpen()||['front','park','beach'].includes(place)&&weather.kind==='storm';
-    if(button.disabled)button.title=place==='bar'?'现在酒吧还没开门哦！':'雷雨太大，先选室内吧';
+    button.disabled=place==='bar'&&!barIsOpen()||place==='disco'&&!discoOpen()||['front','park','beach'].includes(place)&&weather.kind==='storm';
+    if(button.disabled)button.title=place==='bar'?'现在酒吧还没开门哦！':place==='disco'?'迪厅今天不开门':'雷雨太大，先选室内吧';
   }
 }
 function scheduleFriendOuting(c,place){
@@ -141,7 +141,7 @@ function drawOutingFriend(ctx,layer=null){
   const st=friendOutingState;if(!st)return;const boarding=st.phase==='departing'&&sim.place==='home';if(!boarding&&(!friendOutingActive()||!st.position))return;const c=outingFriend();if(!c)return;
   const p=boarding?{x:D.spots.front_door[1]+13,y:FLOOR_Y[D.spots.front_door[0]]}:st.position,interior=mallVisitInside(),paint=interior?'back':p.y<buddyFeet().y?'back':'front';if(layer&&layer!==paint)return;
   const cache=st.npc||=( {look:c.look,ramps:doll.rampsOf(c.look),cache:new Map(),kid:!!c.child});
-  const i=Math.floor(st.distance/4+.8)%4,pose=st.seated?'sit':st.moving?['stand','walkR','stand','walkL'][i]:'stand';
+  const i=Math.floor(st.distance/4+.8)%4,pose=st.danceUntil>realClock||sim.place==='disco'&&!st.moving&&!st.seated?['walkL','stand','walkR','stand'][Math.floor(realClock*1000/280)%4]:st.seated?'sit':st.moving?['stand','walkR','stand','walkL'][i]:'stand';
   const f={expr:st.talk?st.talk.expr:Math.floor(realClock*1000/2600)%5===0?'blink':'neutral',look:st.moving?st.dir:0,bob:st.moving?i%2:0,sway:st.moving?i%2:0,wave:null};
   ctx.drawImage(npcCanvas(cache,f,pose,interior&&mallS.visit.kind==='cinema'),Math.round(p.x-DW/2),Math.round(p.y-DH+1));
 }

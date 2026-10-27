@@ -97,6 +97,7 @@ const gameAudio = (() => {
     if(place==='mall')return 'BGM/mall/mall-crowd-rush.mp3';
     if(place==='bar')return 'BGM/bar/'+(night?'bar-amber-bass':'bar-daylight-cup')+'.mp3';
     if(place==='beach')return 'BGM/harbor/harbor-mist-return.mp3';
+    if(place==='disco')return 'BGM/disco/disco-mirror.mp3';
     return 'BGM/home/'+season+'-'+(night?'night':'day')+'.mp3';
   }
   function updateMusic(){
