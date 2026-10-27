@@ -123,3 +123,4 @@ Bridge 从原 A 调统一移到主段的降 E 调；保留原有两组乐句的�
 - 音色：FluidR3 GM（Frank Wen，MIT 许可，Debian `fluid-soundfont-gm` 包），只发布渲染后的音频与原创 MIDI，不分发音色库
 - 工程：`AUDIO_LIBRARY/tools/compose_disco_glitter.py`；MIDI：`audio/disco-glitter.mid`
 - 仅放在试听页，没有改动游戏的 BGM
+- 第二版（2026-10-27）：按用户意见只重写 0:17–0:47 的主歌旋律，参考东方 Project 式写法（原创，不引用任何现有曲目）：16 分音符回旋、动机上三度模进、跳进到高音长音、琶音冲刺接入下一句；主歌由 8 小节重复改为 16 小节两段，后段抬高推向预副歌。其余编配不变。
