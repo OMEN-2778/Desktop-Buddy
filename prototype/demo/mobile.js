@@ -7,6 +7,42 @@ const MOBILE = true;
 document.documentElement.classList.add("m");
 if (typeof TRIAL !== "undefined") document.documentElement.classList.add("trial");   // 手机试玩版: no 人脉 button
 document.head.insertAdjacentHTML("beforeend", `<style>${MOBILE_CSS}</style>`);
+
+// a phone held upright, or a webview locked to portrait (the Claude app, H5 containers): turn the page
+// itself a quarter turn so the game is still landscape. The page then sees a landscape world:
+// innerWidth / innerHeight, rects and pointer coordinates are given in the turned frame
+// (screen (sx, sy) = (ly, H - lx), H = the real height).
+const mobileReal = { w: Object.getOwnPropertyDescriptor(window, "innerWidth"), h: Object.getOwnPropertyDescriptor(window, "innerHeight") };
+let mobileRot = false;
+function realW() { return mobileReal.w && mobileReal.w.get ? mobileReal.w.get.call(window) : document.documentElement.clientWidth; }
+function realH() { return mobileReal.h && mobileReal.h.get ? mobileReal.h.get.call(window) : document.documentElement.clientHeight; }
+function mobileTurn() {
+  mobileRot = realH() > realW();
+  document.documentElement.classList.toggle("rot", mobileRot);
+  const st = document.documentElement.style;
+  st.setProperty("--real-w", realW() + "px"); st.setProperty("--real-h", realH() + "px");
+}
+try {
+  Object.defineProperty(window, "innerWidth", { configurable: true, get: () => mobileRot ? realH() : realW() });
+  Object.defineProperty(window, "innerHeight", { configurable: true, get: () => mobileRot ? realW() : realH() });
+  const rect = Element.prototype.getBoundingClientRect;
+  Element.prototype.getBoundingClientRect = function () {
+    const r = rect.call(this);
+    if (!mobileRot) return r;
+    const H = realH(), l = H - r.bottom, t = r.left, w = r.height, h = r.width;
+    return { left: l, top: t, right: l + w, bottom: t + h, width: w, height: h, x: l, y: t, toJSON() { return this; } };
+  };
+  for (const C of [window.MouseEvent, window.Touch]) {
+    if (!C) continue;
+    const dx = Object.getOwnPropertyDescriptor(C.prototype, "clientX"), dy = Object.getOwnPropertyDescriptor(C.prototype, "clientY");
+    if (!dx || !dx.get || !dy || !dy.get) continue;
+    Object.defineProperty(C.prototype, "clientX", { configurable: true, get() { return mobileRot ? realH() - dy.get.call(this) : dx.get.call(this); } });
+    Object.defineProperty(C.prototype, "clientY", { configurable: true, get() { return mobileRot ? dx.get.call(this) : dy.get.call(this); } });
+  }
+  const efp = document.elementFromPoint;
+  document.elementFromPoint = function (x, y) { return mobileRot ? efp.call(document, y, realH() - x) : efp.call(document, x, y); };
+} catch (e) {}
+mobileTurn();
 document.head.insertAdjacentHTML("beforeend", `<meta name="theme-color" content="#ebe6f1">`);
 
 // the left column (needs, then the gear row) and the house's free box on screen
@@ -64,8 +100,8 @@ for (let i = SETTINGS.length - 1; i >= 0; i--) if (["界面大小", "置顶游�
   const apply = applySettings;
   applySettings = function (st) { apply(st); prefs.scale = "auto"; };
 }
-addEventListener("resize", () => requestAnimationFrame(() => fit()));
-addEventListener("orientationchange", () => setTimeout(() => fit(), 300));
+addEventListener("resize", () => requestAnimationFrame(() => { mobileTurn(); fit(); }));
+addEventListener("orientationchange", () => setTimeout(() => { mobileTurn(); fit(); }, 300));
 
 {
   // text is sized for the screen, not for the (wide) house; nothing under 14px to read
@@ -124,7 +160,6 @@ let mobileFest = null;
     }
   };
 }
-document.body.insertAdjacentHTML("beforeend", `<div class="m-turn" role="alert">把手机横过来玩吧 📱</div>`);
 {
   // a page opened without the app's head: make sure the phone does not zoom out to a desktop width
   let vp = document.querySelector('meta[name="viewport"]');
