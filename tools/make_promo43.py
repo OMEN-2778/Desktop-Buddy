@@ -46,7 +46,7 @@ def view(name, i, trim=40):                            # the game picture only (
     return im.crop((int(x * 2) + trim, int(y * 2), int((x + w) * 2) - trim, int((y + h) * 2)))
 
 
-HOME = ['home_tv', 'home_computer', 'home_cook', 'home_eat', 'home_pc_video', 'home_read', 'home_water_living', 'home_snack', 'home_bath', 'home_wash', 'home_sleep']
+HOME = ['home_tv', 'home_computer', 'home_cook', 'home_eat', 'home_pc_video', 'home_read', 'home_bath', 'home_sleep']
 LABEL = {'home_tv': '看电视', 'home_computer': '打游戏', 'home_cook': '做饭', 'home_eat': '吃饭', 'home_pc_video': '视频聊天', 'home_read': '看书',
          'home_water_living': '浇花', 'home_snack': '偷吃零食', 'home_bath': '泡澡', 'home_wash': '洗脸刷牙', 'home_sleep': '睡觉'}
 def _union_box():
@@ -117,8 +117,7 @@ class Headline:
 def card_frame(w, h, radius=34, border=10):
     """A white rounded card of outer size w x h with its shadow; returns (image, pad, inner mask)."""
     c = Image.new('RGBA', (w, h), (0, 0, 0, 0)); ImageDraw.Draw(c).rounded_rectangle([0, 0, w - 1, h - 1], radius, fill=(255, 255, 255, 255) if border else (0, 0, 0, 255))
-    img, pad = shadowed(c)
-    if not border: img.paste((0, 0, 0, 0), (pad, pad, pad + w, pad + h), c.getchannel('A'))   # shadow only
+    img, pad = shadowed(c) if border else (Image.new('RGBA', (w, h), (0, 0, 0, 0)), 0)   # borderless: just the picture, no box
     m = Image.new('L', (w - 2 * border, h - 2 * border), 0); ImageDraw.Draw(m).rounded_rectangle([0, 0, m.width - 1, m.height - 1], radius - border, fill=255)
     return img, pad, m
 
@@ -145,14 +144,19 @@ def sticker_img(img, k, rim=9):
 
 class Stickers:
     """Stickers that pop in one by one (ease-out scale + fade) and then float gently."""
-    def __init__(self, items, start=24, gap=5):
+    def __init__(self, items, start=24, gap=5, orbit=False):
         self.items = [(sticker_img(img, k), cx, cy, a, start + n * gap, n) for n, (img, k, cx, cy, a) in enumerate(items)]
+        self.orbit = orbit
     def draw(self, cv, t, dy=0):
         for im, cx, cy, a, t0, n in self.items:
             u = quart_out((t - t0) / 16)
             if u <= 0: continue
             bob = 7 * math.sin((t + n * 11) / 26); tilt = 1.6 * math.sin((t + n * 17) / 41)
-            put(cv, im, cx, cy + bob + dy, u, .55 + .45 * u, a + tilt)
+            if self.orbit:                              # the whole ring of stickers turns once round the scene, then settles
+                o = quart((t - 20) / 70); ox, oy = W / 2, 1060; r = math.hypot(cx - ox, (cy - oy) * 1.35); th = math.atan2((cy - oy) * 1.35, cx - ox) - 2 * math.pi * (1 - o)
+                x, y = ox + r * math.cos(th), oy + r * math.sin(th) / 1.35; bob *= o
+            else: x, y = cx, cy
+            put(cv, im, x, y + bob + dy, u, .55 + .45 * u, a + tilt)
 
 
 def pill_img(s, px, col):
@@ -267,8 +271,10 @@ class Opening(Section):                                 # desktop, double-click,
             u = quart_out((t - self.POP) / 14); L = self.layer(t)
             put(im, L, GX + GW / 2, GY + GH / 2 + 30 * (1 - u), u, .9 + .1 * u)
         ix, iy = (ICON_AT[0] + 32) * DS, (ICON_AT[1] + 34) * DS
-        if self.CLICK <= t < self.CLICK + 16:
-            d = ImageDraw.Draw(im); rounded(d, [ICON_AT[0] - 10, ICON_AT[1] - 8, ICON_AT[0] + 74, ICON_AT[1] + 92], 10, fill=(255, 255, 255, 60), outline=(255, 255, 255, 200), width=2)
+        if 30 <= t < self.ZOOM0:                      # Windows-style: a pale hover tint, then the blue selection from the first click on
+            sel = t >= self.CLICK; box = [int(v * DS) for v in (ICON_AT[0] - 12, ICON_AT[1] - 6, ICON_AT[0] + 76, ICON_AT[1] + 90)]
+            ov = Image.new('RGBA', im.size, (0, 0, 0, 0)); ImageDraw.Draw(ov).rectangle(box, fill=(150, 205, 255, 85) if sel else (220, 236, 255, 45), outline=(160, 210, 255, 200) if sel else (220, 236, 255, 110), width=2)
+            im.alpha_composite(ov)
         if t < self.ZOOM0:
             u = quart(t / 36); x, y = lerp(1500, ix, u), lerp(1300, iy, u)
             if t > self.POP: v = quart((t - self.POP) / 24); x, y = lerp(x, W - 300, v), lerp(y, H - 520, v)
@@ -281,7 +287,7 @@ class Opening(Section):                                 # desktop, double-click,
 
 
 class Home(Section):
-    PER, FADE = 45, 8
+    PER, FADE = 36, 8
     def __init__(self):
         super().__init__(len(HOME) * self.PER + 10, backdrop((255, 240, 236), (232, 226, 255), [(300, 1500, 500, (255, 190, 200)), (2100, 400, 520, (200, 200, 255))]))
         self.head = Headline('一个小人住在你的桌面上', '桌面小屋', [(238, 70, 120), (150, 80, 230)], '吃饭睡觉样样精通……')
@@ -300,8 +306,8 @@ class Home(Section):
 
 
 class Showcase(Section):                                # poster 4 / 5: three live cards and stickers
-    def __init__(self, n, bg, head, cards, stickers):
-        super().__init__(n, bg); self.head = head; self.cards = cards; self.st = Stickers(stickers)
+    def __init__(self, n, bg, head, cards, stickers, orbit=False):
+        super().__init__(n, bg); self.head = head; self.cards = cards; self.st = Stickers(stickers, start=8 if orbit else 24, gap=2 if orbit else 5, orbit=orbit)
     def content(self, t, cv, dy=0):
         self.head.draw(cv, t, dy)
         for k, (card, name, off) in enumerate(self.cards):
@@ -314,7 +320,7 @@ class Style(Section):                                   # the dressing room, rin
              (560, 260, 4, 8), (1840, 260, -4, 8), (760, 1620, -4, 8), (1640, 1620, 5, 8)]
     EVERY, SWAP = 22, 8
     def __init__(self):
-        super().__init__(200, backdrop((255, 236, 246), (226, 232, 255), [(2000, 1400, 520, (255, 190, 230)), (300, 300, 480, (190, 210, 255))]))
+        super().__init__(170, backdrop((255, 236, 246), (226, 232, 255), [(2000, 1400, 520, (255, 190, 230)), (300, 300, 480, (190, 210, 255))]))
         self.head = Headline('', '百变造型', [(255, 120, 180), (176, 120, 255), (110, 170, 255)], '我已经尽可能多做款式了！')
         self.card = LiveCard(1080, 1380 / 982, W / 2, 1110); self._img = {}
     def doll(self, i, k):
@@ -338,7 +344,7 @@ class Style(Section):                                   # the dressing room, rin
 
 class Cards(Section):                                   # pills: tidy grid -> loose cloud -> neat columns
     def __init__(self):
-        super().__init__(240, backdrop((236, 244, 255), (240, 232, 255), [(2000, 400, 520, (190, 215, 255)), (300, 1500, 500, (220, 200, 255))]))
+        super().__init__(270, backdrop((236, 244, 255), (240, 232, 255), [(2000, 400, 520, (190, 215, 255)), (300, 1500, 500, (220, 200, 255))]))
         self.head = Headline('800+ 张', '奇思妙想机会卡', [(92, 170, 255), (178, 140, 255)], '这种问题得你来拿主意')
         titles = ['我的遥控器呢？', '一根头发的胜利', '剩饭选举', '深夜重大问题', '撤回的诱惑', '失踪鞋员', '愿望博物馆', '差评里的文学天赋', '椅子的可疑叫声',
                   '给朋友当闹钟', '一分钱的胜利', '发错窗口', '梦里有你', '摆盘尊严', '宣布早睡', '煮饭按钮的沉默', '热水壶的掌声', '锅盖失踪',
@@ -361,12 +367,15 @@ class Cards(Section):                                   # pills: tidy grid -> lo
                 b = (cx - w / 2 - 12, cy - h / 2 - 12, cx + w / 2 + 12, cy + h / 2 + 12)
                 if not any(b[0] < r[2] and b[2] > r[0] and b[1] < r[3] and b[3] > r[1] for r in taken): break
             taken.append(b); self.B.append((cx, cy, rnd.uniform(-9, 9)))
-        # C: neat columns either side of the card, plus a row above and below
-        slots = [(330, 560 + 150 * i) for i in range(7)] + [(2070, 560 + 150 * i) for i in range(7)] + \
-                [(760 + 300 * i, 1660) for i in range(4)] + [(520 + 340 * i, 450) for i in range(5)]
-        order = sorted(range(n), key=lambda k: self.B[k][1])
-        self.C = [None] * n
-        for k, s in zip(order, slots + [(W / 2, 1660)] * n): self.C[k] = (s[0], s[1], 0)
+        # C: tidy, nothing overlapping: a column each side of the card, two rows above it and two below
+        vis = [p.width - 92 for p in self.pills]; self.C = [None] * n; k = 0
+        for x_edge, side in ((560, -1), (1840, 1)):          # 9 per column, flush to the card
+            for r in range(9):
+                self.C[k] = (x_edge + side * vis[k] / 2, 560 + r * 118, 0); k += 1
+        for y in (600, 730, 1430, 1560):                    # 3 per row, spread over the card's width
+            row = list(range(k, k + 3)); tot = sum(vis[i] for i in row); gap = (1180 - tot) / 2; x = 610
+            for i in row: self.C[i] = (x + vis[i] / 2, y, 0); x += vis[i] + gap
+            k += 3
         v = view('card', 0, 0); self.card = LiveCard(1220, v.width / v.height, W / 2, 1085)
     def content(self, t, cv, dy=0):
         self.head.draw(cv, t, dy)
@@ -382,68 +391,79 @@ class Cards(Section):                                   # pills: tidy grid -> lo
         if cu > 0: self.card.draw(cv, view('card', t, 0), cu, dy)
 
 
-class Friends(Section):                                 # three chats filling in, bubble by bubble
-    CHATS = [('爸爸', 3, [('o', '喂？能看见我吗？'), ('me', '爸，我只看见你的下巴。'), ('o', '往上挪点……现在呢？'), ('me', '现在是天花板的灯。'), ('o', '也行，那灯是我新换的。')]),
-             ('朋友', 9, [('o', '新公司第一天，我坐错了工位。'), ('me', '坐了多久才发现？'), ('o', '一上午，还帮人回了邮件。'), ('me', '那人家没说什么？'), ('o', '他说我回得比他还好。')]),
-             ('妈妈', 2, [('o', '吃饭了吗？吃的什么？'), ('me', '泡面加了个蛋。'), ('o', '镜头对着冰箱，我看看。'), ('me', '……里面只有一瓶辣酱。'), ('o', '我明天就寄两箱饺子。')])]
+class Friends(Section):                                 # two rounds of two chats, each filling in bubble by bubble
+    CHATS = [[('朋友', 9, [('o', '新公司第一天，我坐错了工位。'), ('me', '坐了多久才发现？'), ('o', '一上午，还帮人回了邮件。'), ('me', '那人家没说什么？'), ('o', '他说我回得比他还好。')]),
+              ('妈妈', 2, [('o', '吃饭了吗？吃的什么？'), ('me', '泡面加了个蛋。'), ('o', '镜头对着冰箱，我看看。'), ('me', '……里面只有一瓶辣酱。'), ('o', '我明天就寄两箱饺子。')])],
+             [('朋友', 4, [('o', '快看！我家新来的猫！'), ('me', '哪儿呢？我只看到一团毛。'), ('o', '那就是它的脸。'), ('me', '好可爱！叫什么名字？'), ('o', '叫“喂”，只有这个它会回头。')]),
+              ('朋友', 7, [('o', '我科目二又挂了。'), ('me', '这次哪里出问题了？'), ('o', '倒车入库，入到隔壁库了。'), ('me', '那也算入库了吧？'), ('o', '教练也是这么安慰我的。')])]]
+    ROUND, STEP, PW = 132, 6, 900
     def __init__(self):
-        super().__init__(250, backdrop((255, 242, 236), (236, 236, 255), [(300, 1500, 520, (255, 200, 190)), (2100, 400, 520, (200, 210, 255))]))
+        super().__init__(2 * self.ROUND + 24, backdrop((255, 242, 236), (236, 236, 255), [(300, 1500, 520, (255, 200, 190)), (2100, 400, 520, (200, 210, 255))]))
         self.head = Headline('爸妈 · 朋友 · 邻居', '人际关系', [(255, 110, 140), (255, 160, 90)], '聊着聊着，话题就去了奇怪的地方')
-        fb, fh = font(46, 'Medium'), font(48, 'Black'); self.panels = []
-        for k, (who, dk, lines) in enumerate(self.CHATS):
-            pw = 720; base = Image.new('RGBA', (pw, 1080), (0, 0, 0, 0)); d = ImageDraw.Draw(base)
-            bubbles = []; y = 166
-            for side, s in lines:
-                rows, cur = [], ''
-                for ch in s:
-                    if d.textlength(cur + ch, font=fb) > 500 and ch not in '，。？！…、': rows.append(cur); cur = ch
-                    else: cur += ch
-                rows.append(cur); tw = max(d.textlength(r, font=fb) for r in rows); bh = 36 + 62 * len(rows)
-                b = Image.new('RGBA', (int(tw) + 56, bh), (0, 0, 0, 0)); bd = ImageDraw.Draw(b)
-                bd.rounded_rectangle([0, 0, b.width - 1, bh - 1], 34, fill=(240, 238, 246) if side == 'o' else (255, 128, 150))
-                for i, r in enumerate(rows): bd.text((28, 16 + 62 * i), r, font=fb, fill=INK if side == 'o' else (255, 255, 255))
-                x0 = 36 if side == 'o' else pw - 36 - b.width; bubbles.append((b, x0, y)); y += bh + 40
-            h = y + 30; panel = Image.new('RGBA', (pw, h), (0, 0, 0, 0)); pd = ImageDraw.Draw(panel)
-            pd.rounded_rectangle([0, 0, pw - 1, h - 1], 44, fill=(255, 255, 255, 236)); pd.text((pw / 2, 70), who, font=fh, fill=INK, anchor='mm')
-            pd.line([(40, 124), (pw - 40, 124)], fill=(230, 226, 240), width=3)
-            self.panels.append((shadowed(panel, 50)[0], bubbles, 430 + k * 770, 520 + h / 2, (-2, 1.5, -1)[k], h, sticker_img(STK_IMG(f'doll{dk}'), 8)))
+        fb, fh = font(48, 'Medium'), font(50, 'Black'); pw = self.PW; self.rounds = []
+        for chats in self.CHATS:
+            panels = []
+            for k, (who, dk, lines) in enumerate(chats):
+                d = ImageDraw.Draw(Image.new('RGBA', (8, 8))); bubbles = []; y = 170
+                for side, txt in lines:
+                    rows, cur = [], ''
+                    for ch in txt:
+                        if d.textlength(cur + ch, font=fb) > 640 and ch not in '，。？！…、”': rows.append(cur); cur = ch
+                        else: cur += ch
+                    rows.append(cur); tw = max(d.textlength(r, font=fb) for r in rows); bh = 38 + 64 * len(rows)
+                    bimg = Image.new('RGBA', (int(tw) + 60, bh), (0, 0, 0, 0)); bd = ImageDraw.Draw(bimg)
+                    bd.rounded_rectangle([0, 0, bimg.width - 1, bh - 1], 36, fill=(240, 238, 246) if side == 'o' else (255, 128, 150))
+                    for i, r in enumerate(rows): bd.text((30, 16 + 64 * i), r, font=fb, fill=INK if side == 'o' else (255, 255, 255))
+                    bubbles.append((bimg, 40 if side == 'o' else pw - 40 - bimg.width, y)); y += bh + 34
+                h = y + 30; panel = Image.new('RGBA', (pw, h), (0, 0, 0, 0)); pd = ImageDraw.Draw(panel)
+                pd.rounded_rectangle([0, 0, pw - 1, h - 1], 46, fill=(255, 255, 255, 240)); pd.text((pw / 2, 74), who, font=fh, fill=INK, anchor='mm')
+                pd.line([(44, 130), (pw - 44, 130)], fill=(230, 226, 240), width=3)
+                panels.append((shadowed(panel, 50)[0], bubbles, 700 + k * 1000, 540 + h / 2, (-1.5, 1.5)[k], sticker_img(STK_IMG(f'doll{dk}'), 9)))
+            self.rounds.append(panels)
         self.me = sticker_img(STK_IMG('doll0'), 9)
+    def draw_round(self, cv, panels, t, dy, out=0.0):
+        for k, (panel, bubbles, cx, cy, ang, av) in enumerate(panels):
+            u = quart_out((t - 4 - k * 5) / 20) * (1 - out)
+            if u <= 0: continue
+            p = panel.copy(); pad = (p.width - self.PW) // 2
+            for j, (b, x0, y0) in enumerate(bubbles):
+                v = quart_out((t - 18 - (j * 2 + k) * self.STEP) / 10)
+                if v <= 0: continue
+                bb = b.copy(); bb.putalpha(bb.getchannel('A').point(lambda a: int(a * v))); p.alpha_composite(bb, (pad + x0, pad + y0 + int(16 * (1 - v))))
+            sx = -160 * quart(out) * (1 if k else 1)
+            put(cv, p, cx + sx, cy + 50 * (1 - u) * (1 - out) + dy, u, 1, ang)
+            put(cv, av, cx - 430 + sx, 540 + 40 * (1 - u) + dy + 6 * math.sin((t + k * 13) / 24), u, .6 + .4 * u, (-6, 5)[k])
     def content(self, t, cv, dy=0):
         self.head.draw(cv, t, dy)
-        for k, (panel, bubbles, cx, cy, ang, h, av) in enumerate(self.panels):
-            u = quart_out((t - 8 - k * 7) / 22)
-            if u <= 0: continue
-            p = panel.copy(); pad = (p.width - 720) // 2
-            for j, (b, x0, y0) in enumerate(bubbles):
-                v = quart_out((t - 34 - (j * 3 + k) * 9) / 12)
-                if v <= 0: continue
-                bb = b.copy(); bb.putalpha(bb.getchannel('A').point(lambda a: int(a * v))); p.alpha_composite(bb, (pad + x0, pad + y0 + int(18 * (1 - v))))
-            put(cv, p, cx, cy + 50 * (1 - u) + dy, u, 1, ang)
-            put(cv, av, cx - 320, 520 + 40 * (1 - u) + dy + 6 * math.sin((t + k * 13) / 24), u, .6 + .4 * u, (-6, 5, -4)[k])
-        u = quart_out((t - 60) / 16); put(cv, self.me, 2240, 1600 + 7 * math.sin(t / 22) + dy, u, .55 + .45 * u, 6)
+        R = self.ROUND
+        if t < R + 12: self.draw_round(cv, self.rounds[0], t, dy, quart((t - R) / 12) if t > R else 0)
+        if t >= R: self.draw_round(cv, self.rounds[1], t - R - 6, dy)
+        u = quart_out((t - 40) / 16); put(cv, self.me, 2250, 1640 + 7 * math.sin(t / 22) + dy, u, .55 + .45 * u, 6)
 
 
 class Ending(Section):                                  # back to the desktop, title, fade
-    def __init__(self): super().__init__(150, None)
+    def __init__(self): super().__init__(130, None)
     def frame(self, t):
         im = DESK[1].copy(); put(im, full('idle', 40 + t).resize((GW, GH), Image.BILINEAR), GX + GW / 2, GY + GH / 2)
-        u = quart(t / 50); veil = Image.new('RGBA', (W, H), (250, 246, 255, int(150 * quart((t - 40) / 30)))); im.alpha_composite(veil)
+        u = quart(t / 50); veil = Image.new('RGBA', (W, H), (252, 250, 255, int(228 * quart((t - 40) / 30)))); im.alpha_composite(veil)
+        v = quart_out((t - 46) / 24); put(im, LOGO, W / 2, H / 2 - 330 + 40 * (1 - v), v, .8 + .2 * v)
         put(im, TITLE[0], W / 2, H / 2 - 120 + 40 * (1 - quart_out((t - 52) / 24)), quart_out((t - 52) / 24))
         put(im, TITLE[1], W / 2, H / 2 + 50 + 30 * (1 - quart_out((t - 62) / 24)), quart_out((t - 62) / 24))
         put(im, TITLE[2], W / 2, H / 2 + 140 + 30 * (1 - quart_out((t - 70) / 24)), quart_out((t - 70) / 24))
         return im
+LOGO = shadowed(Image.open(ROOT / 'desktop/src-tauri/icons/128x128.png').convert('RGBA').resize((220, 220), Image.LANCZOS), 50, 14, (0, 12))[0]
 TITLE = [grad_img('Desktop Buddy', 170, [(255, 120, 170), (255, 190, 90), (120, 220, 160), (100, 170, 255), (180, 130, 255)]),
          text_img('住在桌面上的像素小家', 60, INK, 'Bold'), text_img('内容丰富 · 挂机有趣 · 随时互动', 40, SOFT, 'Medium')]
 
 
 def tree(n): return STK_IMG(n)
 OPEN, HOMES = Opening(), Home()
-PLACES = Showcase(200, backdrop((228, 248, 242), (226, 238, 255), [(300, 1500, 520, (170, 235, 210)), (2100, 300, 520, (180, 210, 255))]),
+PLACES = Showcase(180, backdrop((228, 248, 242), (226, 238, 255), [(300, 1500, 520, (170, 235, 210)), (2100, 300, 520, (180, 210, 255))]),
                   Headline('公园  商场  码头  酒吧', '出门逛逛', [(70, 210, 170), (90, 170, 255)], '还有一些隐藏地图！'),
                   [(LiveCard(1130, 1288 / 472, 690, 1000, 5), 'place_mall', 0), (LiveCard(1130, 1288 / 472, 1720, 1050, -4), 'place_beach', 0), (LiveCard(1130, 1288 / 472, 1200, 1290, 0), 'place_park', 0)],
                   [(tree('tree2'), 7, 190, 1270, -3), (tree('tree4'), 6, 2220, 1240, 3), (tree('bush0'), 8, 470, 1620, -2), (tree('bench0'), 6, 1010, 1620, 0),
-                   (tree('bush2'), 8, 1480, 1630, 3), (tree('bush1'), 8, 1930, 1600, -3), (tree('shrub4'), 9, 760, 1650, 2), (tree('tree3'), 5, 2050, 520, 4), (tree('shrub6'), 9, 330, 560, -3)])
-FESTS = Showcase(200, backdrop((255, 240, 246), (230, 240, 255), [(400, 1500, 520, (255, 200, 170)), (2000, 300, 540, (190, 220, 255)), (1200, 900, 420, (210, 245, 220))]),
+                   (tree('bush2'), 8, 1480, 1630, 3), (tree('bush1'), 8, 1930, 1600, -3), (tree('shrub4'), 9, 760, 1650, 2), (tree('tree3'), 5, 2050, 520, 4), (tree('shrub6'), 9, 330, 560, -3)], orbit=True)
+FESTS = Showcase(180, backdrop((255, 240, 246), (230, 240, 255), [(400, 1500, 520, (255, 200, 170)), (2000, 300, 540, (190, 220, 255)), (1200, 900, 420, (210, 245, 220))]),
                  Headline('18 个节日', '每个节日都不一样', [(255, 120, 170), (255, 190, 90), (120, 220, 160), (100, 170, 255), (180, 130, 255)], '怪兽夜戴面具、跳舞日蹦蹦蹦，甜品节吃到爽'),
                  [(LiveCard(1100, 1288 / 472, 720, 900, -5), 'fest_怪兽夜', 0), (LiveCard(1100, 1288 / 472, 1700, 940, 4), 'fest_跳舞日', 0), (LiveCard(1100, 1288 / 472, 1200, 1300, 0), 'fest_甜品节', 0)],
                  [(ART_IMG('pumpkin'), 14, 230, 1180, -8), (ART_IMG('balloon_ghost'), 14, 2170, 1230, 8), (ART_IMG('mirror_ball'), 8, 2190, 560, 6), (ART_IMG('snowman_7'), 8, 210, 560, -6),

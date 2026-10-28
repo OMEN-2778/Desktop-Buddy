@@ -52,7 +52,8 @@ const VW = 1100, VH = 900, FPS = 30;
     process.stdout.write(name + ' ');
   };
   const at = (fn, arg) => p.evaluate(fn, arg);
-  const day = (h, w = 'clear', season = 1) => at(([h, w, s]) => { let d = s * SEASON_DAYS + 3; while (true) { sim.t = d * 1440 + h * 60; if (!festName()) break; d++; } weather.force = weather.kind = w; updateWeather(0); }, [h, w, season]);
+  // a plain day: no festival today or tomorrow (sleep runs past midnight)
+  const day = (h, w = 'clear', season = 1) => at(([h, w, s]) => { let d = s * SEASON_DAYS + 3; while (true) { sim.t = (d + 1) * 1440 + h * 60; const next = festName(); sim.t -= 1440; if (!festName() && !next) break; d++; } weather.force = weather.kind = w; updateWeather(0); }, [h, w, season]);
   const homeAct = (act, extra) => at(([a]) => { sim.place = 'home'; closeRing(); closePicker(); startAct(a, true); if (sim.mode === 'walk') { sim.s = sim.target; arrive(); } sim.actEnd = sim.t + 600; }, [act]);
   // the trip there runs the clock on: put it back to the wanted hour once she's arrived (noon: bright, readable shots)
   const noon = h => at(h => { sim.t = Math.floor(sim.t / 1440) * 1440 + h * 60; updateWeather(0); }, h).then(() => runFor(1500));
@@ -62,7 +63,7 @@ const VW = 1100, VH = 900, FPS = 30;
   // ---- home life: one activity after another, each with something she says
   const HOME = [['tv', 10, '广告怎么这么长'], ['computer', 11, '这关我一定能过'], ['cook', 11.5, '菜谱说少许是多少'], ['eat', 12, '好吃到跺脚'],
     ['pc_video', 14, '喂？能听见吗？'], ['read', 15, '偷看一眼结局……不行'], ['water_living', 16, '多喝点水，快长高'], ['snack', 17, '就一口……'],
-    ['bath', 20, '泡澡是人生的快乐'], ['wash', 22, '牙刷好像该换了'], ['sleep', 23.5, null]];
+    ['bath', 20, '泡澡是人生的快乐'], ['wash', 22, '牙刷好像该换了'], ['sleep', 22, null]];
   for (const [act, h, line] of HOME) {
     await day(h); await at(() => { const pt = petState.pet; pt.perch = null; pt.carried = false; pt.position = { x: 120 + Math.random() * 60, y: FLOOR_Y[0] }; });
     await clip('home_' + act, 66, async () => { await homeAct(act); await runFor(700); if (line) await say(line); await runFor(300); });
