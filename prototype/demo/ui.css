@@ -114,7 +114,7 @@ body {
   font-style: normal; vertical-align: 1px; box-shadow: 0 0 0 2px #22182a, 0 0 0 3.5px #fff;
 }
 .gd-lead { margin: 0 0 8px; }
-.gd-points { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.gd-points { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }   /* short points (user: concise) sit side by side */
 .gd-points li { padding: 2px 8px 2px 4px; transition: background-color .15s; }
 .gd-points li.plain { padding-left: 26px; position: relative; }
 .gd-points li.plain::before { content: ""; position: absolute; left: 11px; top: .75em; width: 6px; height: 6px; background: var(--muted); }
