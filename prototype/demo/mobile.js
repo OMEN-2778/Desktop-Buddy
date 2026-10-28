@@ -22,7 +22,7 @@ function mobileScale() {
   return n / dpr >= s * 0.92 ? n / dpr : s;
 }
 function mobileInset(v) { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(v)) || 0; }
-function mobileTop() { return (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sat")) || 0) + 64; }
+function mobileTop() { const r = document.querySelector(".status-row"); return (r ? r.getBoundingClientRect().bottom : mobileInset("--sat") + 54) + 8; }
 function mobileBottom() {
   const fb = document.getElementById("festBanner");
   return mobileInset("--sab") + 140 + (fb && !fb.hidden ? 44 : 0);
@@ -35,6 +35,7 @@ function mobileLayout() {
   const free = innerHeight - top - bottom;
   root.setProperty("--m-house-top", Math.round(top + Math.max(0, (free - hh) / 2)) + "px");
   root.setProperty("--m-vw", innerWidth + "px");
+  root.setProperty("--app-h", innerHeight + "px");   // the visible height (100vh can include browser bars)
 }
 
 // pan: follow Buddy when she walks off the middle of the screen, unless the player swiped lately
@@ -175,3 +176,23 @@ document.body.insertAdjacentHTML("beforeend", `<div class="m-turn" role="alert">
 // the time bar's tip: a tap shows it for a few seconds (a touch also "enters" it, which would cancel the tap)
 document.getElementById("skybar").addEventListener("pointerenter", e => { if (e.pointerType !== "mouse" && e.target === skyHit) e.stopPropagation(); }, true);
 skyHit.addEventListener("click", () => { clearTimeout(skyHit._mt); skyHit._mt = setTimeout(() => { if (skyTip.classList.contains("on")) skyTipHide(); }, 3500); });
+
+// H5 containers (小红书小工具): keep the top bar clear of the container's own buttons. getWindowInfo
+// needs client 9.49+ (buildVersion's last three digits are a build number); elsewhere nothing happens.
+(async function avoidContainerButtons() {
+  const xhs = window.xhs, mt = xhs && xhs.miniTool;
+  if (!mt || typeof mt.getWindowInfo !== "function") return;
+  let build = Number(xhs.launchOptions && xhs.launchOptions.miniToolEnv && xhs.launchOptions.miniToolEnv.buildVersion) || 0;
+  if (!build && typeof mt.getLaunchOptions === "function") try { const o = await mt.getLaunchOptions(); build = Number(o && o.miniToolEnv && o.miniToolEnv.buildVersion) || 0; } catch (e) {}
+  if (Math.floor(build / 1000) < 9490) return;
+  try {
+    const info = await mt.getWindowInfo();
+    let top = info.safeArea ? info.safeArea.top : 0;
+    for (const b of Object.values(info.menuButtons || {})) if (b && b.top < 80) top = Math.max(top, b.bottom + 4);
+    document.documentElement.style.setProperty("--m-top-avoid", Math.round(top) + "px");
+    fit();
+  } catch (e) {}
+})();
+
+// the needs are always open on a phone: tapping them does nothing
+for (const ev of ["click", "pointerdown", "pointerenter", "keydown"]) document.querySelector(".status-row").addEventListener(ev, e => { if (e.target.closest && e.target.closest("#needs")) e.stopPropagation(); }, true);
