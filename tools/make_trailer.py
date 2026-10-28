@@ -115,14 +115,14 @@ SHOTS = [
 ]
 # titles: (start beat, end beat, lines[(text, size, style)], place)
 TITLES = [
- (8.2, 11.6, [('一个小人，住在你的桌面上', 100, 'grad')], 'low'),
+ (8.2, 11.6, [('一个小人，住在你的桌面上', 100, 'grad:sunset')], 'low'),
  (12.1, 13.9, [('点一点', 120, 'white'), ('TA 就有回应', 54, 'soft')], 'low'),
- (14.1, 15.9, [('百变造型', 120, 'grad')], 'low'),
- (18.1, 21.8, [('昼夜 · 天气 · 四季', 104, 'white'), ('放着不管，TA 也在好好生活', 46, 'soft')], 'low'),
- (24.1, 29.9, [('还有一只', 64, 'soft'), ('会自己找乐子的猫', 108, 'grad')], 'low'),
- (32.05, 37.9, [('公园  商场  码头  酒吧', 96, 'white')], 'low'),
- (38.1, 39.9, [('奇思妙想的机会卡', 104, 'grad')], 'low'),
- (40.05, 47.9, [('每个节日都不一样', 116, 'grad')], 'low'),
+ (14.1, 15.9, [('百变造型', 120, 'grad:candy')], 'low'),
+ (18.1, 21.8, [('昼夜 · 天气 · 四季', 104, 'grad:sky'), ('放着不管，TA 也在好好生活', 46, 'soft')], 'low'),
+ (24.1, 29.9, [('还有一只', 64, 'soft'), ('会自己找乐子的猫', 108, 'grad:fire')], 'low'),
+ (32.05, 37.9, [('公园  商场  码头  酒吧', 96, 'grad:mint')], 'low'),
+ (38.1, 39.9, [('奇思妙想的机会卡', 104, 'grad:sky')], 'low'),
+ (40.05, 47.9, [('每个节日都不一样', 116, 'grad:aurora')], 'low'),
  (48.1, 55.6, [('挂着就有故事', 112, 'white'), ('点一下，就能陪 TA 玩', 50, 'soft')], 'center'),
 ]
 COUNTERS = [(56, STATS['festivals'], '个节日'), (57, STATS['cards'], '张机会卡'), (58, STATS['dishes'], '道料理'), (59, STATS['hair'], '种发型')]
@@ -210,15 +210,26 @@ def whip(img, amount, dirn):
 
 
 # ---------------------------------------------------------------- typography (Apple-style)
-GRAD = np.linspace(0, 1, 900)[None, :, None] * np.array([[[255, 196, 120]]]) + (1 - np.linspace(0, 1, 900)[None, :, None]) * np.array([[[255, 134, 186]]])
+def _grad(*stops, n=2700):
+    xs = np.linspace(0, 1, n); cols = np.array([c for c in stops], float); at = np.linspace(0, 1, len(stops))
+    return np.stack([np.interp(xs, at, cols[:, k]) for k in range(3)], 1)[None, :, :]
+GRADS = {   # several looks, picked per title by mood
+ 'sunset': _grad((255, 134, 186), (255, 196, 120)),
+ 'sky':    _grad((110, 200, 255), (176, 150, 255)),
+ 'mint':   _grad((120, 236, 196), (120, 196, 255)),
+ 'candy':  _grad((255, 120, 200), (186, 132, 255), (110, 196, 255)),
+ 'fire':   _grad((255, 210, 110), (255, 120, 90)),
+ 'aurora': _grad((255, 128, 170), (255, 205, 120), (130, 230, 190), (120, 180, 255), (190, 140, 255)),
+}
+GRAD = GRADS['sunset']
 
 
 def glyph(ch, px, style, gx=0):
-    f = font(px, 'Black' if style != 'soft' else 'Bold')
+    f = font(px, 'Black' if style != 'soft' else 'Bold'); pal = GRADS.get(style.split(':')[1] if ':' in style else 'sunset', GRAD)
     box = f.getbbox(ch); w = max(1, box[2] - box[0] + 24); h = int(px * 1.45)
     m = Image.new('L', (w, h), 0); ImageDraw.Draw(m).text((12 - box[0], int(px * .22)), ch, font=f, fill=255)
-    if style == 'grad':
-        g = np.repeat(GRAD, 3, 1); a0 = int(min(g.shape[1] - w - 1, max(0, gx))); col = Image.fromarray(np.uint8(np.repeat(g[:, a0:a0 + w, :], h, 0)))
+    if style.startswith('grad'):
+        g = pal; a0 = int(min(g.shape[1] - w - 1, max(0, gx))); col = Image.fromarray(np.uint8(np.repeat(g[:, a0:a0 + w, :], h, 0)))
         im = col.convert('RGBA'); im.putalpha(m)
     else:
         im = Image.new('RGBA', (w, h), (255, 255, 255, 0) if style == 'white' else (236, 232, 248, 0)); im.putalpha(m.point(lambda v: int(v * (1 if style == 'white' else .82))))
@@ -231,7 +242,7 @@ GLYPHS = {}
 def draw_line(out, text, px, style, cx, y, t_in, t_out, stagger=1.6):
     f = font(px, 'Black' if style != 'soft' else 'Bold'); total = f.getlength(text); x = cx - total / 2
     for j, ch in enumerate(text):
-        gx = int((x - (cx - total / 2)) / max(1, total) * 2400) if style == 'grad' else 0
+        gx = int((x - (cx - total / 2)) / max(1, total) * 2000) if style.startswith('grad') else 0
         key = (ch, px, style, gx // 40)
         if key not in GLYPHS: GLYPHS[key] = glyph(ch, px, style, gx)
         g, adv = GLYPHS[key]
@@ -254,12 +265,12 @@ def draw_title(out, lines, place, t_in, t_out):
         draw_line(out, text, px, style, W / 2, y, t_in - k * 4, t_out); y += px * 1.35
 
 
-def draw_counter(out, value, label, age):
+def draw_counter(out, value, label, age, pal='sunset'):
     u = ease_out(min(1, age / 9)); n = int(round(value * u))
     s = 1 + .25 * math.exp(-age / 3)
     num = f'{n}'; f = font(int(230 * s), 'Black'); w = f.getlength(num)
     m = Image.new('L', (int(w + 40), int(300 * s)), 0); ImageDraw.Draw(m).text((20, 0), num, font=f, fill=255)
-    col = Image.fromarray(np.uint8(np.repeat(np.repeat(GRAD, 3, 1)[:, :m.width, :], m.height, 0))).convert('RGBA'); col.putalpha(m)
+    g = GRADS[pal]; col = Image.fromarray(np.uint8(np.repeat(g[:, np.linspace(0, g.shape[1] - 1, m.width).astype(int), :], m.height, 0))).convert('RGBA'); col.putalpha(m)
     out.alpha_composite(col, (int(W / 2 - m.width / 2), int(H / 2 - 230 * s)))
     draw_line(out, label, 72, 'white', W / 2, H / 2 + 60, age * 2 + 20, -1, stagger=.5)
 
@@ -323,7 +334,7 @@ def render(f):
     title_on = any(a0 * BEAT <= f < a1 * BEAT + 10 for a0, a1, _, p in TITLES if p == 'center') or 56 <= b < 60 or f >= 61.5 * BEAT
     out = depth_of_field(out, ofx, ofy, max(dof, .85 if title_on else 0), rx=620 / math.sqrt(zoom), ry=470 / math.sqrt(zoom))
     out = ImageEnhance.Color(ImageEnhance.Contrast(out).enhance(1.06)).enhance(1.12)
-    if title_on: out = Image.blend(out, Image.new('RGB', out.size, (20, 14, 34)), .38)
+    if title_on: out = Image.blend(out, Image.new('RGB', out.size, (20, 14, 34)), .6 if 56 <= b < 60 else .38)
     out = out.convert('RGBA')
     if fx == 'whip' and age < 5: out = whip(out, 1 - age / 5, 1 if int(start * 2) % 2 else -1)
     out = tilt(out, yaw, pitch)
@@ -332,11 +343,11 @@ def render(f):
     if any(a0 * BEAT - 1 <= f < a1 * BEAT + 14 for a0, a1, _, p in TITLES if p == 'low'): out.alpha_composite(BAND)
     for a0, a1, lines, place in TITLES:
         if a0 * BEAT - 1 <= f < a1 * BEAT + 14: draw_title(out, lines, place, f - a0 * BEAT, f - a1 * BEAT)
-    for at, val, label in COUNTERS:
-        if at * BEAT <= f < (at + 1) * BEAT: draw_counter(out, val, label, f - at * BEAT)
+    for k, (at, val, label) in enumerate(COUNTERS):
+        if at * BEAT <= f < (at + 1) * BEAT: draw_counter(out, val, label, f - at * BEAT, ['aurora', 'sky', 'fire', 'candy'][k % 4])
     if f >= 61.5 * BEAT:
         t = f - 61.5 * BEAT
-        draw_line(out, 'Desktop Buddy', 150, 'grad', W / 2, H / 2 - 150, t, -1, stagger=1.2)
+        draw_line(out, 'Desktop Buddy', 150, 'grad:aurora', W / 2, H / 2 - 150, t, -1, stagger=1.2)
         draw_line(out, '住在桌面上的像素小家', 54, 'white', W / 2, H / 2 + 40, t - 10, -1, stagger=1.0)
         draw_line(out, '内容丰富 · 挂机有趣 · 随时互动', 34, 'soft', W / 2, H / 2 + 120, t - 18, -1, stagger=.6)
     # hits: a flash and a colour split on the big beats
