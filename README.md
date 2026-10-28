@@ -1,4 +1,6 @@
 # Desktop-Buddy
+
+> © 2026 OMEN-2778，保留所有权利。未经书面许可禁止复制、分发、出售或商用，详见 [LICENSE](LICENSE)。
 Just like a Sim from *The Sims*, this tiny character lives permanently on your desktop. It wanders around and does all kinds of little animations, keeping you company while you work or slack off.
 
 ## Prototypes

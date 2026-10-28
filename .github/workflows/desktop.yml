@@ -102,12 +102,15 @@ jobs:
         shell: bash
         run: npx tauri signer sign src-tauri/target/release/desktop-buddy.exe
 
+      # Releases go to the public downloads-only repo (OMEN-2778/Desktop-Buddy-Releases) once its
+      # token is in the secrets (RELEASES_TOKEN), so this source repo can be private; until then here.
       - name: Release (for the in-app updater)
         if: env.TAURI_SIGNING_PRIVATE_KEY != ''
         working-directory: desktop/src-tauri/target/release/bundle/nsis
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN || github.token }}
+          REPO: ${{ secrets.RELEASES_TOKEN && 'OMEN-2778/Desktop-Buddy-Releases' || github.repository }}
         run: |
           src=$(ls *_x64-setup.exe | head -1)
           exe="Desktop-Buddy_${VERSION}_x64-setup.exe"
@@ -119,7 +122,7 @@ jobs:
           mkdir -p pack && cp ../../desktop-buddy.exe "pack/Desktop Buddy.exe" && (cd pack && 7z a -tzip "../$zip" "Desktop Buddy.exe" >/dev/null)
           node -e "
             const fs = require('fs'), v = process.env.VERSION, exe = process.argv[1], bare = process.argv[4];
-            const at = f => 'https://github.com/' + process.env.GITHUB_REPOSITORY + '/releases/download/v' + v + '/' + f;
+            const at = f => 'https://github.com/' + process.env.REPO + '/releases/download/v' + v + '/' + f;
             fs.writeFileSync('latest.json', JSON.stringify({
               version: v,
               notes: process.argv[2],
@@ -130,7 +133,8 @@ jobs:
               },
             }, null, 2));
           " "$exe" "$(git log -1 --pretty=%s)" "$src.sig" "$bare"
-          gh release create "v$VERSION" "$zip" "$exe" "$bare" latest.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+          target=(); [ "$REPO" = "$GITHUB_REPOSITORY" ] && target=(--target "$GITHUB_SHA")
+          gh release create "v$VERSION" "$zip" "$exe" "$bare" latest.json --repo "$REPO" "${target[@]}" \
             --title "Desktop Buddy $VERSION" --notes "$(git log -1 --pretty=%s)" --latest
 
       - uses: actions/upload-artifact@v4

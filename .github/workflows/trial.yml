@@ -8,6 +8,7 @@ on:
   push:
     paths:
       - "prototype/demo/trial.js"
+      - "desktop/src-tauri/icons-trial/**"
       - ".github/workflows/trial.yml"
   workflow_dispatch:
 
@@ -63,18 +64,19 @@ jobs:
         shell: bash
         run: |
           npm run web
-          npx tauri build --config "{\"version\":\"$VERSION\",\"productName\":\"Desktop Buddy Trial\",\"identifier\":\"com.desktopbuddy.trial\",\"app\":{\"windows\":[{\"label\":\"main\",\"title\":\"Desktop Buddy 试玩版\",\"width\":320,\"height\":240,\"visible\":false,\"decorations\":false,\"transparent\":true,\"shadow\":false,\"resizable\":false,\"alwaysOnTop\":false,\"center\":true}]}}"
+          npx tauri build --config "{\"version\":\"$VERSION\",\"productName\":\"Desktop Buddy Trial\",\"identifier\":\"com.desktopbuddy.trial\",\"bundle\":{\"icon\":[\"icons-trial/32x32.png\",\"icons-trial/128x128.png\",\"icons-trial/128x128@2x.png\",\"icons-trial/icon.icns\",\"icons-trial/icon.ico\"]},\"app\":{\"windows\":[{\"label\":\"main\",\"title\":\"Desktop Buddy 试玩版\",\"width\":320,\"height\":240,\"visible\":false,\"decorations\":false,\"transparent\":true,\"shadow\":false,\"resizable\":false,\"alwaysOnTop\":false,\"center\":true}]}}"
       - name: Release (pre-release, not picked up by the full app's updater)
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN || github.token }}
+          REPO: ${{ secrets.RELEASES_TOKEN && 'OMEN-2778/Desktop-Buddy-Releases' || github.repository }}
         run: |
           cd desktop/src-tauri/target/release
           setup=$(ls bundle/nsis/*_x64-setup.exe | head -1)
           cp "$setup" "Desktop-Buddy-Trial_${VERSION}_x64-setup.exe"
           mkdir -p pack && cp desktop-buddy.exe "pack/Desktop Buddy 试玩版.exe" && (cd pack && 7z a -tzip "../Desktop-Buddy-Trial_${VERSION}_portable.zip" "Desktop Buddy 试玩版.exe" >/dev/null)
           gh release create "trial-v$VERSION" "Desktop-Buddy-Trial_${VERSION}_x64-setup.exe" "Desktop-Buddy-Trial_${VERSION}_portable.zip" \
-            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --latest=false \
+            --repo "$REPO" $([ "$REPO" = "$GITHUB_REPOSITORY" ] && echo --target "$GITHUB_SHA") --prerelease --latest=false \
             --title "Desktop Buddy 试玩版 $VERSION" --notes "试玩版：只有室内日常生活，没有节日、人脉、宠物和户外场景；不存档，不自动更新。"
       - uses: actions/upload-artifact@v4
         with:

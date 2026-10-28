@@ -3,7 +3,8 @@
 Tauri supplies the platform file set; PNG and Windows ICO sizes are then
 written with nearest-neighbor sampling to keep the pixel outlines sharp.
 
-    PYTHONPATH=tools python3 tools/make_desktop_icons.py
+    PYTHONPATH=tools python3 tools/make_desktop_icons.py           # icons/ (full game: the house)
+    PYTHONPATH=tools python3 tools/make_desktop_icons.py --trial   # icons-trial/ (试玩版: the park sticker)
 """
 
 from __future__ import annotations
@@ -19,12 +20,15 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT / "tools"), str(ROOT / "art/src/concept")]
 
 import app_icon  # noqa: E402
+import trip_icons  # noqa: E402
 
-ICONS = ROOT / "desktop/src-tauri/icons"
+TRIAL = "--trial" in sys.argv
+ICONS = ROOT / ("desktop/src-tauri/icons-trial" if TRIAL else "desktop/src-tauri/icons")
 
 
 def main():
-    px = Image.fromarray(app_icon.icon().px, "RGBA")
+    sprite = trip_icons.park().pad(0, 2, 0, 2) if TRIAL else app_icon.icon()
+    px = Image.fromarray(sprite.px, "RGBA")
     with tempfile.TemporaryDirectory() as tmp:
         big = Path(tmp) / "icon-1024.png"
         px.resize((px.width * 32, px.height * 32), Image.Resampling.NEAREST).save(big)
