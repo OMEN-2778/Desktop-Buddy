@@ -15,6 +15,8 @@ const PARK_DECO = {
   怪兽夜: { bunting: ["#e0782f", "#5b3c8f", "#33253b"], balloons: "ghost", bats: true, fog: true,
     props: ["pumpkin", "tomb", "pumpkin", "board", "tomb", "pumpkin"], icon: () => D.festival2.masks[0] },
   春分: { bunting: ["#a7d47a", "#f5c3d4", "#fae59c"], props: [] },
+  春节: { bunting: ["#d8383a", "#f2b33d", "#d8383a", "#f7e2b0"], lanterns: true, props: [] },
+  冬至: { lanterns: true, props: [] },
 };
 const decoHere = () => sim.place === "park" && !stormOutside() && PARK_DECO[festName()];
 const decoLife = { bats: [], sky: [], seed: 0 };

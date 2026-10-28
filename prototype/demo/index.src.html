@@ -2683,6 +2683,7 @@ view.addEventListener("click", e => {
   if (mailBubbleHit(x, y)) { readMail(); return; }   // a letter came (写信日)
   const petTarget=petHit(x,y);if(petTarget){if(petTarget==='feeder')openPetFeeder();else if(petTarget==='mat')openPetMatColors();else openPetInteractions();return;}
   if(friendVisitClick(x,y))return;
+  if(springClick(x,y))return;                    // 春节: a word with 爸爸 or 妈妈
   if (buddyHit(x, y)) {
     if (wasOpen) return;                          // a second click on her closes the menu
     if (sim.mode === "act" && sim.act === "sleep") { log(`你戳了戳${nameOf()}，${ta()}咂咂嘴继续睡。`); return; }
@@ -3389,8 +3390,10 @@ function renderOutside() {
   }
   drawNpcs(bctx, "front");
   drawMarathon(bctx);
+  drawFestScenery(bctx);
   drawOutsideWeather(bctx);
   gradeOutside(bctx, f);
+  drawFestSceneryNight(bctx, f);
   if (f > 0) {                                     // lit windows at night, behind the trees and her
     litCtx.clearRect(0, 0, W, H);
     litCtx.globalCompositeOperation = "source-over"; litCtx.drawImage(O.lit, 0, 0);
@@ -4041,7 +4044,7 @@ function renderPark(dt) {
   drawFestStalls(bctx); drawSnowmen(bctx);
   drawRiddleTree(bctx);
   drawQixiPark(bctx, dt, run);
-  drawParkDeco(bctx, dt, run);
+  drawParkDeco(bctx, dt, run); drawFestScenery(bctx);
   drawNpcs(bctx, "back");
   const fr = activityFrame(realClock * 1000);
   if (!parkInsideToilet() && !sim.park?.seated && !parkEating()) {
@@ -4068,7 +4071,7 @@ function renderPark(dt) {
   bctx.drawImage(S.foreground, 0, 0);
   drawOutsideWeather(bctx);
   gradePark(bctx, f);
-  drawParkDecoNight(bctx, f, dt, run);
+  drawParkDecoNight(bctx, f, dt, run); drawFestSceneryNight(bctx, f);
   drawLit(bctx, f, O.lit, [[treeImg, 0, 0], ...(dollAt ? [dollAt] : [])]);
   if (f > 0.5 && se === 1 && w === "clear") {    // fireflies on summer nights
     for (let i = 0; i < 9; i++) {
@@ -4151,8 +4154,10 @@ function renderBeach(dt) {
   const fr = activityFrame(realClock * 1000);
   const { emoteAt, dollAt } = drawOutBuddy(bctx, fr);
   drawNpcs(bctx, "front");
+  drawFestScenery(bctx);
   drawOutsideWeather(bctx);
   gradeOutside(bctx, f);
+  drawFestSceneryNight(bctx, f);
   drawLit(bctx, f, O.lit, dollAt ? [dollAt] : []);
   finishOut(fr, emoteAt);
 }
@@ -4186,6 +4191,7 @@ function renderMall(dt) {
   bctx.fillRect(0, 0, W, L.fascia);
   tile(O.deco[se], offD, L.nearW);
   tile(O.near, offN, L.nearW);
+  drawFestScenery(bctx, offN);
   drawMallRestroom(bctx);
   npcTick(dt, run);
   drawNpcs(bctx, "counter");                     // kiosk staff behind their counters
