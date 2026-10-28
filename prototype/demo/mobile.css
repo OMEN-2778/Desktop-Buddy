@@ -1,0 +1,94 @@
+/* ================================================================ 手机版 layout (mobile.js)
+   Portrait phone: a fixed top bar (time + needs), the house in the middle panning sideways,
+   her mood, words, diary and the gear at the bottom within thumb reach. Panels open as
+   bottom sheets as wide as the screen. Everything here is scoped to html.m. */
+html.m { --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); -webkit-text-size-adjust: 100%; }
+html.m, html.m body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+html.m body { margin: 0; display: block; -webkit-tap-highlight-color: transparent; }
+html.m .console { display: none !important; }
+html.m .desk {
+  position: fixed; inset: 0; display: block; place-items: start; padding: 0; margin: 0;
+  overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scrollbar-width: none;
+}
+html.m .desk::-webkit-scrollbar { display: none; }
+html.m .widget { width: max-content; margin: 0 !important; translate: none; transform: none; left: 0; }
+html.m .house-col { width: var(--house-w); padding-top: var(--m-house-top, 120px); }
+html.m #view { touch-action: pan-x; }
+
+/* top bar: needs + time, fixed over the screen */
+html.m .status-row {
+  position: fixed; z-index: 40; left: 12px; right: 12px; width: auto;
+  top: calc(var(--sat) + 12px); margin: 0;
+}
+/* bottom HUD: gear + diary row above the mood + words row */
+html.m .moodrow {
+  position: fixed; z-index: 41; left: 12px; right: 12px; width: auto;
+  bottom: calc(var(--sab) + 12px); margin: 0;
+}
+
+/* panels that lie over the house cover the part of it on screen (mobile.js overHouse);
+   the house holds still while one is open */
+html.m.lock .desk { overflow-x: hidden; }
+
+/* settings: a sheet above the bottom HUD, as wide as the screen */
+html.m .set-pop {
+  position: fixed; left: 12px; right: 12px; bottom: calc(var(--sab) + 136px); width: auto; max-width: none;
+  max-height: calc(100dvh - var(--sat) - var(--sab) - 210px); overflow-y: auto; overscroll-behavior: contain;
+}
+/* diary: the same place */
+html.m .diary-pop {
+  position: fixed; left: 12px; right: 12px; bottom: calc(var(--sab) + 136px); width: auto; max-width: none;
+  --diary-max: calc(100dvh - var(--sat) - var(--sab) - 230px);
+}
+/* the top bar's tips open downward */
+html.m .needs-panel { top: calc(100% + 8px); bottom: auto; width: calc(100vw - 24px); max-width: none; }
+html.m .sky-tip { top: calc(100% + 8px); bottom: auto; }
+html.m .settings { translate: none; }   /* (a transform would trap the fixed sheet inside it) */
+html.m .diary-pop li { font-size: 15px; }
+html.m .diary-pop time { font-size: 13px; }
+html.m .set-pop { background: var(--panel); padding: 12px; box-shadow: 0 0 0 2px var(--edge), 4px 4px 0 2px var(--shadow); }
+html.m .sky-tip { font-size: 13px; right: 0; left: auto !important; }
+html.m .sky-tip.on { transform: none; }
+
+/* 造型室 and 教程: sheets from the bottom of the screen, over everything */
+html.m .studio-slot { position: fixed; z-index: 60; left: 8px; bottom: calc(var(--sab) + 8px); top: auto; }
+html.m .studio-slot.open::before { content: ""; position: fixed; inset: 0; z-index: -1; background: rgba(27, 19, 34, .35); }
+html.m #studio { max-height: calc(100dvh - var(--sat) - var(--sab) - 16px); overflow-y: auto; overscroll-behavior: contain; }
+
+/* 人脉: always one tap away, in the gear's row; the list opens as a sheet above the HUD */
+html.m .moodrow .network-trigger { left: 58px; top: -58px; transform: none !important; opacity: 1; visibility: visible; transition: none; }
+html.m .moodrow::before { display: none; }
+html.m .diary { left: 114px; }
+html.m .contacts-panel {
+  position: fixed; left: 12px; right: 12px; bottom: calc(var(--sab) + 136px); top: auto; inset: auto 12px calc(var(--sab) + 136px) 12px;
+  max-height: calc(100dvh - var(--sat) - var(--sab) - 210px); overflow-y: auto; overscroll-behavior: contain; background: var(--panel);
+  box-shadow: 0 0 0 2px var(--edge), 4px 4px 0 2px var(--shadow);
+}
+html.m .contacts-tail { display: none; }
+html.m .moodrow.contacts-open > .settings, html.m .moodrow.contacts-open > .diary, html.m .moodrow.contacts-open > .mood-face, html.m .moodrow.contacts-open > .mood-talk { visibility: visible; pointer-events: auto; }
+
+/* today's festival: a strip right above the gear row, labels always shown (no hover on a phone) */
+html.m .fest-bar { position: fixed; left: 12px !important; right: 12px; width: auto !important; top: auto !important; bottom: calc(var(--sab) + 130px); overflow-x: auto; scrollbar-width: none; }
+html.m .fest-bar::-webkit-scrollbar { display: none; }
+html.m .fb-act .fb-lab { max-width: 9em; opacity: 1; }
+html.m .fb-pill.fb-act { padding: 0 12px 0 8px; gap: 5px; flex: none; }
+html.m .diary-box span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; white-space: normal; }
+/* her words may wrap to two lines: the gear and 人脉 rise with the diary (liftDiary) */
+html.m .set-gear, html.m .moodrow .network-trigger { translate: 0 calc(-1 * var(--settings-lift, 0px)); }
+html.m .ring .hint { white-space: normal; width: max-content; max-width: calc(100vw - 48px); text-align: center; }
+html.m .peer-hud { left: 114px; }
+html.m #petPanel button { min-height: 40px; }
+html.m #petPanel .pet-close { min-height: 0; width: 36px; height: 36px; }
+/* a call / an invitation: grows upward to fit its words instead of cutting them */
+html.m .incoming-call { top: auto; bottom: 0; height: auto; min-height: 100%; padding: 6px 8px; }
+html.m .incoming-call .caller-copy strong, html.m .incoming-call .caller-copy span { line-height: 1.3; }
+html.m .incoming-call button { min-height: 38px; }
+
+/* no double-tap zoom, no text-selection pop-ups on a long press (it revives her) */
+html.m body { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+html.m input, html.m textarea { -webkit-user-select: text; user-select: text; }
+/* a phone on its side: the house is laid out for portrait */
+html.m .m-turn { display: none; }
+@media (orientation: landscape) and (max-height: 520px) {
+  html.m .m-turn { display: grid; place-items: center; position: fixed; inset: 0; z-index: 2147483600; background: var(--bg, #ebe6f1); color: var(--ink); font-size: 17px; font-weight: 700; text-align: center; padding: 24px; }
+}

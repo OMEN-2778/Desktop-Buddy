@@ -55,6 +55,7 @@ from pixelkit import P, Sprite, rgba  # noqa: E402
 SRC = ROOT / "prototype/demo/index.src.html"
 OUT = ROOT / "prototype/demo/index.html"
 TRIAL = ROOT / "prototype/demo/trial.html"
+MOBILE = ROOT / "prototype/demo/mobile.html"
 
 
 def guide_shots() -> dict:
@@ -532,6 +533,12 @@ def main():
     html = html.replace("/*__PET_HUD_CSS__*/", (SRC.parent / "pet_hud.css").read_text())
     html = html.replace("/*__PETS_CSS__*/", (SRC.parent / "pets.css").read_text())
     html = html.replace("/*__DEMO_DATA__*/null", blob)
+    # the 手机版 page: the full game with a phone layout (mobile.js + mobile.css)
+    # (the phone page also travels as one file: every short game sound inside it, music stays out)
+    inline_mobile = {name: base64.b64encode((audio_root / name).read_bytes()).decode("ascii") for name in audio_files if name.startswith("SFX/game/")}
+    MOBILE.write_text(html.replace(json.dumps(inline_audio), json.dumps(inline_mobile)).replace("/*__TRIAL_JS__*/", "").replace("/*__MOBILE_JS__*/", "const MOBILE_CSS = " + json.dumps((SRC.parent / "mobile.css").read_text()) + ";\n" + (SRC.parent / "mobile.js").read_text()))
+    print(f"{MOBILE.relative_to(ROOT)}: {len(MOBILE.read_text()) // 1024} KB")
+    html = html.replace("/*__MOBILE_JS__*/", "")
     OUT.write_text(html.replace("/*__TRIAL_JS__*/", ""))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
     # the 试玩版 page: the same game with trial.js cutting it down to life at home (desktop app trial build)

@@ -17,6 +17,9 @@ tests, no unasked extras).
 - Art and the house/UI style rules: `.claude/skills/pixel-art/SKILL.md`
   (read before touching art or UI; it records every past user decision).
 - Demo page: `prototype/demo/index.src.html` → built into `index.html`.
+- 手机版 (owner asked for it): `prototype/demo/mobile.js` + `mobile.css` → `mobile.html`
+  (portrait, house pans sideways, panels as sheets). One-file build:
+  `cd desktop && BUDDY_MOBILE=1 BUDDY_MINIFY=1 npm run web` → `dist/mobile.html`.
 - Desktop app: `desktop/` (`desktop/README.md`: updater, saves, window).
 - Tutorial text: `prototype/demo/guide_text.js`; shots: `tools/make_guide_shots.js`.
 - UI layout and motion skills: `docs/UI_SKILLS.md` lists installed skills and

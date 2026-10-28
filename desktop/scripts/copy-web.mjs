@@ -12,17 +12,19 @@ const here = dirname(fileURLToPath(import.meta.url));
 const src = join(here, "..", "..", "prototype", "demo", process.env.BUDDY_TRIAL ? "trial.html" : "index.html");
 const out = join(here, "..", "dist");
 mkdirSync(out, { recursive: true });
-let page = readFileSync(src, "utf8");
 // BUDDY_MINIFY=1 (release builds): squash the game script (no comments, short local names) so
 // the shipped page is hard to read; the repo keeps the readable source. Globals keep their names.
-if (process.env.BUDDY_MINIFY) {
+async function squash(page) {
+  if (!process.env.BUDDY_MINIFY) return page;
   const { minify } = await import("terser");
   const a = page.indexOf("<script>") + 8, b = page.indexOf("</script>", a);
   const r = await minify(page.slice(a, b), { compress: { passes: 1 }, mangle: true, format: { comments: false } });
-  page = page.slice(0, a) + r.code.replaceAll("</script", "<\\/script") + page.slice(b);
+  return page.slice(0, a) + r.code.replaceAll("</script", "<\\/script") + page.slice(b);
 }
 const head = '<!doctype html>\n<html lang="zh-CN">\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n';
-writeFileSync(join(out, "index.html"), head + page + "\n</html>\n", "utf8");
+writeFileSync(join(out, "index.html"), head + await squash(readFileSync(src, "utf8")) + "\n</html>\n", "utf8");
+// BUDDY_MOBILE=1: also the 手机版 page (prototype/demo/mobile.html, one file that works on its own) as dist/mobile.html
+if (process.env.BUDDY_MOBILE) writeFileSync(join(out, "mobile.html"), head.replace("initial-scale=1", "initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover") + await squash(readFileSync(join(dirname(src), "mobile.html"), "utf8")) + "\n</html>\n", "utf8");
 console.log("copied", src, "->", join(out, "index.html"));
 
 // External audio is shared by Pages and the packaged app, so both work offline

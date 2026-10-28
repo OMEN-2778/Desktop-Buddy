@@ -995,6 +995,7 @@ function fit() {
     N = Math.floor(maxS * dpr);
     if (N < 1 || N / dpr < maxS * 0.75) N = Math.max(0.4, maxS) * dpr;   // phones: bigger beats whole pixels
   }
+  if (typeof mobileScale === "function") N = mobileScale() * dpr;   // 手机版: the house fills the screen's height and pans sideways (mobile.js)
   const s = N / dpr;
   scale = s; devPx = N;
   const hPx = sceneHouseHeight() * s, wPx = W * s;
@@ -5088,7 +5089,7 @@ function frame(now) {
 
 document.getElementById("testDown").addEventListener("click", () => { if (sim.mode !== "down") collapse(pick(EXTREME)); });
 
-/*__TRIAL_JS__*/
+/*__TRIAL_JS__*//*__MOBILE_JS__*/
 (async function boot() {
   let sv = null, st = null;
   try { sv = migrate(await store.load()); } catch (e) { sv = null; }
