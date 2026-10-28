@@ -233,7 +233,7 @@ def make_desktop(running):
 
 
 DESK = [make_desktop(False), make_desktop(True)]
-GK = .625 * DS / 1.25                                    # 2x screenshot px -> desktop px (house at its real size)
+GK = .78 * DS / 1.25                                     # 2x screenshot px -> desktop px (house at its real size)
 GW, GH = int((FULL[2] - FULL[0]) * GK), int((FULL[3] - FULL[1]) * GK)
 GX, GY = W - GW - 70, H - int(56 * DS) - GH - 30            # the game window: bottom-right, above the taskbar
 
@@ -259,7 +259,8 @@ class Opening(Section):                                 # desktop, double-click,
     def cam(self, t):                                   # crop box in desktop px
         u = quart((t - self.ZOOM0) / (self.ZOOM1 - self.ZOOM0))
         cx, cy = GX + GW / 2, GY + GH / 2; tw = GW * 1.22; th = tw * H / W
-        return (lerp(0, cx - tw / 2, u), lerp(0, cy - th / 2, u), lerp(W, cx + tw / 2, u), lerp(H, cy + th / 2, u))
+        tx, ty = min(max(0, cx - tw / 2), W - tw), min(max(0, cy - th / 2), H - th)
+        return (lerp(0, tx, u), lerp(0, ty, u), lerp(W, tx + tw, u), lerp(H, ty + th, u))
     def frame(self, t):
         im = DESK[1 if t >= self.POP else 0].copy()
         if t >= self.POP:

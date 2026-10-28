@@ -74,7 +74,7 @@ const VW = 1100, VH = 900, FPS = 30;
     await go('home');
     const fest = ([n, h]) => { festJump(T.festivals.find(x => x.name === n)); sim.t = Math.floor(sim.t / 1440) * 1440 + h * 60; updateWeather(0); };
     await at(fest, [f, h]); await go(pl); await at(fest, [f, h]); await runFor(1500);
-    if (f === '怪兽夜') { await at(() => { parade.list = []; parade.next = 0; }); await runFor(300); await at(() => parade.list.forEach(g => { g.x += g.dir * 200; })); }
+    if (f === '怪兽夜') { await at(() => { parade.list = []; parade.next = 0; }); await runFor(300); await at(() => { const L = parade.list, x0 = W * 0.55; L.forEach((g, i) => { g.x = x0 - g.dir * i * 70; g.v = 3; }); }); }   // a slow parade in the middle of the shot
     await clip('fest_' + f, 180);
   }
   await go('home'); await day(10);
