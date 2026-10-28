@@ -129,13 +129,13 @@ SUNSET, CANDY, SKY, FIRE, MINT, AURORA = [(255, 128, 171), (255, 196, 92)], [(25
 
 # 1 -- a little house on your desktop
 bg = backdrop((255, 240, 236), (232, 226, 255), [(300, 1500, 500, (255, 190, 200)), (2100, 400, 520, (200, 200, 255))])
-headline(bg, '', '一个小人，住在你的桌面上', SUNSET, '吃饭、睡觉、看电视、出门玩，TA 自己过日子')
+headline(bg, '一个小人住在你的桌面上', '桌面小屋', SUNSET, '吃饭睡觉样样精通……')
 im, info = frame('home_idle', 30); full = im.crop(im.getbbox())
 place(bg, card(full, 1700), W / 2, 1110); brand(bg); bg.convert('RGB').save(OUT / '1-home.png')
 
 # 2 -- dress-up: the studio, ringed by outfit stickers
 bg = backdrop((255, 236, 246), (226, 232, 255), [(2000, 1400, 520, (255, 190, 230)), (300, 300, 480, (190, 210, 255))])
-headline(bg, '', '百变造型', CANDY, '发型、五官、衣服、饰品，颜色也能随便调')
+headline(bg, '', '百变造型', CANDY, '我已经尽可能多做款式了！')
 im, info = frame('dressup', 20); studio = im.crop((164, 28, 1544, 1010))
 place(bg, card(studio, 1080), W / 2, 1110)
 for k, (cx, cy, a) in enumerate([(300, 760, -6), (500, 1160, 5), (270, 1500, -3), (2100, 760, 6), (1900, 1160, -5), (2130, 1500, 4),
@@ -145,17 +145,17 @@ brand(bg); bg.convert('RGB').save(OUT / '2-style.png')
 
 # 3 -- pets: the house, cats and dogs in all sorts of poses, and Buddy holding the cat
 bg = backdrop((255, 244, 228), (255, 228, 222), [(400, 400, 500, (255, 210, 150)), (2000, 1500, 520, (255, 180, 170))])
-headline(bg, '还能领养', '一只宠物', FIRE, '12 种猫、12 种狗，会趴沙发、蹲冰箱、钻花盆，还能抱起来撸')
+headline(bg, '还能领养', '一只宠物', FIRE, '模拟小人也要有陪伴')
 place(bg, card(view('cat_fridge', 30), 1400), W / 2, 1060)
 sticker(bg, Image.open(STK / 'hold.png'), 13, 380, 1420, -4)
-for k, (cx, cy, a) in enumerate([(330, 640, -5), (2080, 640, 5), (2120, 1080, -4), (820, 1580, 3), (1250, 1600, -3), (1680, 1580, 4),
-                                 (2120, 1480, -5), (210, 250, 6), (2190, 250, -6), (300, 1020, 4)]):
-    sticker(bg, Image.open(STK / f'pet{k}.png'), 7, cx, cy, a)
+for k, (cx, cy, a, z) in enumerate([(300, 620, -5, 9), (2090, 600, 5, 10), (2140, 1080, -4, 6), (800, 1590, 3, 7), (1260, 1620, -3, 5), (1720, 1570, 4, 9),
+                                    (2120, 1500, -5, 6), (200, 210, 6, 5), (2200, 230, -6, 6), (250, 1010, 4, 6)]):
+    sticker(bg, Image.open(STK / f'pet{k}.png'), z, cx, cy, a)
 brand(bg); bg.convert('RGB').save(OUT / '3-pet.png')
 
 # 4 -- going out
 bg = backdrop((228, 248, 242), (226, 238, 255), [(300, 1500, 520, (170, 235, 210)), (2100, 300, 520, (180, 210, 255))])
-headline(bg, '出门逛逛', '公园  商场  码头  酒吧', MINT, '每个地方都有路人、小摊和偶遇')
+headline(bg, '公园  商场  码头  酒吧', '出门逛逛', MINT, '还有一些隐藏地图！')
 for k, (n, ang, cx, cy) in enumerate([('place_mall', 5, 690, 1010), ('place_beach', -4, 1720, 1060), ('place_park', 0, 1200, 1290)]):
     place(bg, card(scene(n, 20), 1150, angle=ang), cx, cy)
 brand(bg); bg.convert('RGB').save(OUT / '4-places.png')
@@ -164,7 +164,7 @@ brand(bg); bg.convert('RGB').save(OUT / '4-places.png')
 bg = backdrop((255, 240, 246), (230, 240, 255), [(400, 1500, 520, (255, 200, 170)), (2000, 300, 540, (190, 220, 255)), (1200, 900, 420, (210, 245, 220))])
 text(bg, f"{M['stats']['festivals']} 个节日", 64, W / 2, 120, SOFT, 'Bold')
 grad_text(bg, '每个节日都不一样', 150, W / 2, 240, AURORA)
-text(bg, '怪兽夜、跳舞日、甜品节、赛龙舟……场景和玩法都会变', 50, W / 2, 370, SOFT, 'Medium')
+text(bg, '怪兽夜戴面具、跳舞日蹦蹦蹦，甜品节吃到爽', 50, W / 2, 370, SOFT, 'Medium')
 for n, i, b, ang, cx, cy in [('fest_怪兽夜', 10, 1.7, -5, 720, 900), ('fest_跳舞日', 40, 1.3, 4, 1700, 940), ('fest_甜品节', 10, 1.0, 0, 1200, 1300)]:
     place(bg, card(scene(n, i, b), 1100, angle=ang), cx, cy)
 for n, k, cx, cy, a in [('pumpkin', 14, 230, 1180, -8), ('balloon_ghost', 14, 2170, 1230, 8), ('mirror_ball', 8, 2190, 560, 6), ('snowman_7', 8, 210, 560, -6),
@@ -175,9 +175,9 @@ brand(bg); bg.convert('RGB').save(OUT / '5-festivals.png')
 
 # 6 -- chance cards: one card in play, a cloud of other card titles around it
 bg = backdrop((236, 244, 255), (240, 232, 255), [(2000, 400, 520, (190, 215, 255)), (300, 1500, 500, (220, 200, 255))])
-text(bg, f"{M['stats']['cards']} 张", 64, W / 2, 120, SOFT, 'Bold')
-grad_text(bg, '奇思妙想的机会卡', 150, W / 2, 240, SKY)
-text(bg, '时不时冒出一件怪事，由你替 TA 拿主意', 50, W / 2, 370, SOFT, 'Medium')
+text(bg, '800+ 张', 64, W / 2, 120, SOFT, 'Bold')
+grad_text(bg, '奇思妙想机会卡', 150, W / 2, 240, SKY)
+text(bg, '这种问题得你来拿主意', 50, W / 2, 370, SOFT, 'Medium')
 place(bg, card(view('card', 20), 1250), W / 2, 1080)
 titles = json.loads((STK / 'cards.json').read_text()); rnd = random.Random(7)
 pick = [t for t in ['我的遥控器呢？', '一根头发的胜利', '剩饭选举', '煮饭按钮的沉默', '深夜重大问题', '撤回的诱惑', '失踪鞋员', '愿望博物馆',
