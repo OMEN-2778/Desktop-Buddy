@@ -92,3 +92,4 @@ html.m .m-turn { display: none; }
 @media (orientation: landscape) and (max-height: 520px) {
   html.m .m-turn { display: grid; place-items: center; position: fixed; inset: 0; z-index: 2147483600; background: var(--bg, #ebe6f1); color: var(--ink); font-size: 17px; font-weight: 700; text-align: center; padding: 24px; }
 }
+html.m.trial .diary, html.m.trial .peer-hud { left: 58px; }

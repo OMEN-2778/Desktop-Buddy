@@ -7,6 +7,7 @@
 //    (thumb reach); menus and panels open as sheets from the bottom (mobile.css).
 const MOBILE = true;
 document.documentElement.classList.add("m");
+if (typeof TRIAL !== "undefined") document.documentElement.classList.add("trial");   // 手机试玩版: no 人脉 button
 document.head.insertAdjacentHTML("beforeend", `<style>${MOBILE_CSS}</style>`);
 document.head.insertAdjacentHTML("beforeend", `<meta name="theme-color" content="#ebe6f1">`);
 

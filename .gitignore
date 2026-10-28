@@ -8,3 +8,4 @@ prototype/demo/audio/
 # Standalone pet art viewer, generated from its template and Python rigs.
 prototype/pets/index.html
 prototype/pets/assets/
+prototype/demo/mobile_trial.html

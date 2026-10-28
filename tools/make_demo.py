@@ -538,6 +538,8 @@ def main():
     inline_mobile = {name: base64.b64encode((audio_root / name).read_bytes()).decode("ascii") for name in audio_files if name.startswith("SFX/game/")}
     MOBILE.write_text(html.replace(json.dumps(inline_audio), json.dumps(inline_mobile)).replace("/*__TRIAL_JS__*/", "").replace("/*__MOBILE_JS__*/", "const MOBILE_CSS = " + json.dumps((SRC.parent / "mobile.css").read_text()) + ";\n" + (SRC.parent / "mobile.js").read_text()))
     print(f"{MOBILE.relative_to(ROOT)}: {len(MOBILE.read_text()) // 1024} KB")
+    # ...and the 手机试玩版 (H5 platforms): the phone page cut down by trial.js (desktop/scripts/make-h5.mjs zips it)
+    (SRC.parent / "mobile_trial.html").write_text(MOBILE.read_text().replace("const MOBILE_CSS = ", (SRC.parent / "trial.js").read_text() + "\nconst MOBILE_CSS = ", 1))
     html = html.replace("/*__MOBILE_JS__*/", "")
     OUT.write_text(html.replace("/*__TRIAL_JS__*/", ""))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
