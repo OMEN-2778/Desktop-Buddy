@@ -4,7 +4,8 @@
 import sys, json
 from pathlib import Path
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
+import random
 
 CLIPS, OUT = Path(sys.argv[1]), Path(sys.argv[2]); OUT.mkdir(parents=True, exist_ok=True)
 M = json.loads((CLIPS / 'clips.json').read_text())
@@ -91,6 +92,37 @@ def brand(bg, dark=False):
     text(bg, 'Desktop Buddy', 40, W / 2, H - 70, (255, 255, 255, 200) if dark else (120, 110, 150), 'Bold')
 
 
+ART, STK = Path('art/out/concept'), CLIPS / 'stickers'
+
+
+def sticker(bg, img, k, cx, cy, angle=0, rim=9):
+    """A die-cut sticker: the sprite scaled k (nearest) with a white rim and a soft shadow."""
+    im = img.convert('RGBA'); im = im.crop(im.getbbox()); im = im.resize((im.width * k, im.height * k), Image.NEAREST)
+    pad = rim + 4; c = Image.new('RGBA', (im.width + 2 * pad, im.height + 2 * pad), (0, 0, 0, 0)); c.alpha_composite(im, (pad, pad))
+    a = c.getchannel('A').point(lambda v: 255 if v > 40 else 0).filter(ImageFilter.MaxFilter(2 * rim + 1)).filter(ImageFilter.GaussianBlur(1.2))
+    base = Image.new('RGBA', c.size, (255, 255, 255, 0)); base.putalpha(a); base.alpha_composite(c)
+    if angle: base = base.rotate(angle, Image.BICUBIC, expand=True)
+    place(bg, base, cx, cy, shadow=60)
+
+
+def pill(bg, s, px, cx, cy, col, angle=0):
+    f = font(px, 'Bold'); w = int(ImageDraw.Draw(bg).textlength(s, font=f)) + px * 2; h = int(px * 2.1)
+    c = Image.new('RGBA', (w + 8, h + 8), (0, 0, 0, 0)); d = ImageDraw.Draw(c)
+    d.rounded_rectangle([4, 4, w + 3, h + 3], h // 2, fill=(255, 255, 255, 255), outline=col + (255,), width=5)
+    d.text((w / 2 + 4, h / 2 + 4), s, font=f, fill=col, anchor='mm')
+    if angle: c = c.rotate(angle, Image.BICUBIC, expand=True)
+    place(bg, c, cx, cy, shadow=45)
+
+
+def lift(im, k=1.35):                                   # night scenes read dark on a light poster
+    return ImageEnhance.Color(ImageEnhance.Contrast(ImageEnhance.Brightness(im).enhance(k)).enhance(1.05)).enhance(1.15)
+
+
+def scene(name, i, bright=1.0):                          # a place view without the side arrow buttons
+    v = view(name, i); v = v.crop((40, 0, v.width - 40, v.height))
+    return lift(v, bright) if bright != 1 else v
+
+
 SUNSET, CANDY, SKY, FIRE, MINT, AURORA = [(255, 128, 171), (255, 196, 92)], [(255, 120, 180), (176, 120, 255), (110, 170, 255)], \
     [(92, 170, 255), (178, 140, 255)], [(255, 196, 70), (255, 110, 80)], [(70, 210, 170), (90, 170, 255)], \
     [(255, 120, 170), (255, 190, 90), (120, 220, 160), (100, 170, 255), (180, 130, 255)]
@@ -101,47 +133,59 @@ headline(bg, '', '一个小人，住在你的桌面上', SUNSET, '吃饭、睡�
 im, info = frame('home_idle', 30); full = im.crop(im.getbbox())
 place(bg, card(full, 1700), W / 2, 1110); brand(bg); bg.convert('RGB').save(OUT / '1-home.png')
 
-# 2 -- dress-up: the studio, plus a line-up of outfits (dolls from tools/poster_dolls.js)
+# 2 -- dress-up: the studio, ringed by outfit stickers
 bg = backdrop((255, 236, 246), (226, 232, 255), [(2000, 1400, 520, (255, 190, 230)), (300, 300, 480, (190, 210, 255))])
 headline(bg, '', '百变造型', CANDY, '发型、五官、衣服、饰品，颜色也能随便调')
 im, info = frame('dressup', 20); studio = im.crop((164, 28, 1544, 1010))
-place(bg, card(studio, 1080), 700, 1100)
-for k in range(6):
-    d = Image.open(CLIPS / 'dolls' / f'{k}.png').convert('RGBA'); d = d.resize((d.width * 12, d.height * 12), Image.NEAREST)
-    cx, top = 1560 + (k % 3) * 300, 700 + (k // 3) * 440
-    sh = Image.new('RGBA', bg.size, (0, 0, 0, 0)); ImageDraw.Draw(sh).ellipse([cx - 110, top + d.height - 26, cx + 110, top + d.height + 14], fill=(60, 40, 90, 70))
-    bg.alpha_composite(sh.filter(ImageFilter.GaussianBlur(10))); bg.alpha_composite(d, (cx - d.width // 2, top))
+place(bg, card(studio, 1080), W / 2, 1110)
+for k, (cx, cy, a) in enumerate([(300, 760, -6), (500, 1160, 5), (270, 1500, -3), (2100, 760, 6), (1900, 1160, -5), (2130, 1500, 4),
+                                  (560, 260, 4), (1840, 260, -4), (760, 1620, -4), (1640, 1620, 5)]):
+    sticker(bg, Image.open(STK / f'doll{k}.png'), 11 if k < 6 else 8, cx, cy, a)
 brand(bg); bg.convert('RGB').save(OUT / '2-style.png')
 
-# 3 -- pets
+# 3 -- pets: the house, cats and dogs in all sorts of poses, and Buddy holding the cat
 bg = backdrop((255, 244, 228), (255, 228, 222), [(400, 400, 500, (255, 210, 150)), (2000, 1500, 520, (255, 180, 170))])
-headline(bg, '还能领养', '一只宠物', FIRE, '趴沙发、蹲冰箱、钻花盆，还能抱起来撸')
-house = view('cat_fridge', 30); place(bg, card(house, 1700), W / 2, 1120)
-pt = M['clips']['cat_fridge']['info'][30]['pet']; vx, vy = M['clips']['cat_fridge']['info'][30]['view'][:2]
-px, py = (pt[0] - vx) * 2, (pt[1] - vy) * 2 - 14
-callout(bg, house, (int(px - 60), int(py - 80), int(px + 60), int(py + 40)), 5, (1980, 1400), 250)
+headline(bg, '还能领养', '一只宠物', FIRE, '12 种猫、12 种狗，会趴沙发、蹲冰箱、钻花盆，还能抱起来撸')
+place(bg, card(view('cat_fridge', 30), 1400), W / 2, 1060)
+sticker(bg, Image.open(STK / 'hold.png'), 13, 380, 1420, -4)
+for k, (cx, cy, a) in enumerate([(330, 640, -5), (2080, 640, 5), (2120, 1080, -4), (820, 1580, 3), (1250, 1600, -3), (1680, 1580, 4),
+                                 (2120, 1480, -5), (210, 250, 6), (2190, 250, -6), (300, 1020, 4)]):
+    sticker(bg, Image.open(STK / f'pet{k}.png'), 7, cx, cy, a)
 brand(bg); bg.convert('RGB').save(OUT / '3-pet.png')
 
 # 4 -- going out
 bg = backdrop((228, 248, 242), (226, 238, 255), [(300, 1500, 520, (170, 235, 210)), (2100, 300, 520, (180, 210, 255))])
 headline(bg, '出门逛逛', '公园  商场  码头  酒吧', MINT, '每个地方都有路人、小摊和偶遇')
 for k, (n, ang, cx, cy) in enumerate([('place_mall', 5, 690, 1010), ('place_beach', -4, 1720, 1060), ('place_park', 0, 1200, 1290)]):
-    place(bg, card(view(n, 20), 1150, angle=ang), cx, cy)
+    place(bg, card(scene(n, 20), 1150, angle=ang), cx, cy)
 brand(bg); bg.convert('RGB').save(OUT / '4-places.png')
 
-# 5 -- festivals (daytime ones, light backdrop)
+# 5 -- festivals: 怪兽夜, the disco and a park fair, festival props as stickers
 bg = backdrop((255, 240, 246), (230, 240, 255), [(400, 1500, 520, (255, 200, 170)), (2000, 300, 540, (190, 220, 255)), (1200, 900, 420, (210, 245, 220))])
 text(bg, f"{M['stats']['festivals']} 个节日", 64, W / 2, 120, SOFT, 'Bold')
 grad_text(bg, '每个节日都不一样', 150, W / 2, 240, AURORA)
-text(bg, '赛龙舟、甜品节、堆雪人、赏月……场景和玩法都会变', 50, W / 2, 370, SOFT, 'Medium')
-for n, i, ang, cx, cy in [('fest_甜品节', 10, -5, 700, 1000), ('fest_雪人日', 10, 4, 1720, 1020), ('fest_端午节', 10, 0, 1200, 1300)]:
-    place(bg, card(view(n, i), 1150, angle=ang), cx, cy)
+text(bg, '怪兽夜、跳舞日、甜品节、赛龙舟……场景和玩法都会变', 50, W / 2, 370, SOFT, 'Medium')
+for n, i, b, ang, cx, cy in [('fest_怪兽夜', 10, 1.7, -5, 720, 900), ('fest_跳舞日', 40, 1.3, 4, 1700, 940), ('fest_甜品节', 10, 1.0, 0, 1200, 1300)]:
+    place(bg, card(scene(n, i, b), 1100, angle=ang), cx, cy)
+for n, k, cx, cy, a in [('pumpkin', 14, 230, 1180, -8), ('balloon_ghost', 14, 2170, 1230, 8), ('mirror_ball', 8, 2190, 560, 6), ('snowman_7', 8, 210, 560, -6),
+                        ('dragon_boat_0', 5, 460, 1600, -3), ('fest_stall_mooncake', 5, 1960, 1580, 4), ('lantern_red', 14, 420, 1350, 6), ('balloon_heart', 14, 2000, 1330, -6),
+                        ('bat', 10, 1230, 640, 0)]:
+    sticker(bg, Image.open(ART / f'{n}.png'), k, cx, cy, a)
 brand(bg); bg.convert('RGB').save(OUT / '5-festivals.png')
 
-# 6 -- chance cards
+# 6 -- chance cards: one card in play, a cloud of other card titles around it
 bg = backdrop((236, 244, 255), (240, 232, 255), [(2000, 400, 520, (190, 215, 255)), (300, 1500, 500, (220, 200, 255))])
 text(bg, f"{M['stats']['cards']} 张", 64, W / 2, 120, SOFT, 'Bold')
 grad_text(bg, '奇思妙想的机会卡', 150, W / 2, 240, SKY)
 text(bg, '时不时冒出一件怪事，由你替 TA 拿主意', 50, W / 2, 370, SOFT, 'Medium')
-place(bg, card(view('card', 20, (0, 0, 0, 0)), 1750), W / 2, 1110); brand(bg); bg.convert('RGB').save(OUT / '6-cards.png')
+place(bg, card(view('card', 20), 1250), W / 2, 1080)
+titles = json.loads((STK / 'cards.json').read_text()); rnd = random.Random(7)
+pick = [t for t in ['我的遥控器呢？', '一根头发的胜利', '剩饭选举', '煮饭按钮的沉默', '深夜重大问题', '撤回的诱惑', '失踪鞋员', '愿望博物馆',
+                    '差评里的文学天赋', '椅子的可疑叫声', '给朋友当闹钟', '一分钱的胜利', '发错窗口', '梦里有你', '摆盘尊严', '宣布早睡'] if t in titles]
+cols = [(236, 92, 140), (90, 140, 230), (240, 140, 60), (60, 170, 140), (150, 100, 220), (220, 90, 90)]
+spots = [(300, 620), (330, 820), (280, 1020), (330, 1220), (300, 1420), (420, 1600), (2100, 620), (2070, 820), (2120, 1020), (2070, 1220),
+         (2100, 1420), (1980, 1600), (820, 1590), (1200, 1620), (1580, 1590), (1200, 520)]
+for k, (t, (cx, cy)) in enumerate(zip(pick, spots)):
+    pill(bg, t, 40, cx, cy, cols[k % len(cols)], rnd.uniform(-5, 5))
+brand(bg); bg.convert('RGB').save(OUT / '6-cards.png')
 print('posters ->', OUT)
