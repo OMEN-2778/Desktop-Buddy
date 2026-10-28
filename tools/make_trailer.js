@@ -24,7 +24,8 @@ const VW = 1100, VH = 900, FPS = 30;
     const n = o => o ? (Array.isArray(o) ? o.length : Object.keys(o).length) : 0;
     return { festivals: T.festivals.length, cards: CARDS.length, dishes: n(D.items?.dish), places: 7, hair: n(D.doll.options?.style || D.doll.options?.hair) };
   });
-  const meta = { fps: FPS, vw: VW, vh: VH, stats, clips: {} };
+  const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;   // re-record just these clips into an existing clips.json
+  const meta = ONLY ? { ...JSON.parse(fs.readFileSync(OUT + '/clips.json')), stats } : { fps: FPS, vw: VW, vh: VH, stats, clips: {} };
   const runFor = ms => p.clock.runFor(ms);
   const skipUntil = async (cond, arg, ms = 40000) => { for (let t = 0; t < ms && !(await p.evaluate(cond, arg)); t += 200) await runFor(200); };
   const go = async place => {               // off camera: through the real trip (home first, then out)
@@ -34,6 +35,7 @@ const VW = 1100, VH = 900, FPS = 30;
     await p.evaluate(() => { window.lockOut = true; speed = 1; });
   };
   const clip = async (name, frames, setup, each) => {
+    if (ONLY && !ONLY.includes(name)) return;
     if (setup) await setup();
     const dir = `${OUT}/clips/${name}`; fs.mkdirSync(dir, { recursive: true });
     const info = [];
@@ -52,6 +54,8 @@ const VW = 1100, VH = 900, FPS = 30;
   const at = (fn, arg) => p.evaluate(fn, arg);
   const day = (h, w = 'clear', season = 1) => at(([h, w, s]) => { let d = s * SEASON_DAYS + 3; while (true) { sim.t = d * 1440 + h * 60; if (!festName()) break; d++; } weather.force = weather.kind = w; updateWeather(0); }, [h, w, season]);
   const homeAct = (act, extra) => at(([a]) => { sim.place = 'home'; closeRing(); closePicker(); startAct(a, true); if (sim.mode === 'walk') { sim.s = sim.target; arrive(); } sim.actEnd = sim.t + 600; }, [act]);
+  // the trip there runs the clock on: put it back to the wanted hour once she's arrived (noon: bright, readable shots)
+  const noon = h => at(h => { sim.t = Math.floor(sim.t / 1440) * 1440 + h * 60; updateWeather(0); }, h).then(() => runFor(1500));
   const perch = id => at(i => { const pt = petState.pet, P = PERCH[i]; pt.carried = false; pt.motion = null; pt.reservedUntil = 0; pt.position = { x: P.base[0], y: FLOOR_Y[P.base[1]] }; pt.perch = { id: i, phase: 'plan' }; }, id);
 
   // ---- home life
@@ -93,18 +97,18 @@ const VW = 1100, VH = 900, FPS = 30;
 
   // ---- out and about
   for (const pl of ['front', 'park', 'mall', 'beach', 'bar']) {
-    await day(pl === 'bar' ? 20 : 11); await go(pl);
+    await day(pl === 'bar' ? 20 : 12); await go(pl); await noon(pl === 'bar' ? 20 : 12);
     await clip('place_' + pl, 36);
   }
   await go('home');
 
   // ---- festivals, rapid fire
-  const FEST = [['七夕', 'park', 19], ['甜品节', 'park', 11], ['端午节', 'beach', 11], ['中秋节', 'park', 21], ['怪兽夜', 'park', 21], ['雪人日', 'front', 11], ['元宵节', 'park', 20], ['读书日', 'park', 11], ['马拉松日', 'park', 9], ['跳舞日', 'disco', 21]];
+  const FEST = [['七夕', 'park', 12], ['甜品节', 'park', 12], ['端午节', 'beach', 12], ['中秋节', 'park', 12], ['怪兽夜', 'park', 12], ['雪人日', 'front', 12], ['元宵节', 'park', 12], ['读书日', 'park', 12], ['马拉松日', 'park', 10], ['跳舞日', 'disco', 12]];
   for (const [f, pl, h] of FEST) {
     if (!(await at(n => !!T.festivals.find(x => x.name === n), f))) continue;
     await go('home');
     await at(([n, h]) => { const fx = T.festivals.find(x => x.name === n); festJump(fx); sim.t = Math.floor(sim.t / 1440) * 1440 + h * 60; updateWeather(0); }, [f, h]);
-    await go(pl); await runFor(1500);
+    await go(pl); await at(([n, h]) => { festJump(T.festivals.find(x => x.name === n)); sim.t = Math.floor(sim.t / 1440) * 1440 + h * 60; updateWeather(0); }, [f, h]); await runFor(1500);
     await clip('fest_' + f, pl === 'disco' ? 60 : 18);
   }
   await go('home');

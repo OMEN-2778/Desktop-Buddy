@@ -129,9 +129,9 @@ SUNSET, CANDY, SKY, FIRE, MINT, AURORA = [(255, 128, 171), (255, 196, 92)], [(25
 
 # 1 -- a little house on your desktop
 bg = backdrop((255, 240, 236), (232, 226, 255), [(300, 1500, 500, (255, 190, 200)), (2100, 400, 520, (200, 200, 255))])
-headline(bg, '一个小人住在你的桌面上', '桌面小屋', SUNSET, '吃饭睡觉样样精通……')
+headline(bg, '一个小人住在你的桌面上', '桌面小屋', [(238, 70, 120), (150, 80, 230)], '吃饭睡觉样样精通……')
 im, info = frame('home_idle', 30); full = im.crop(im.getbbox())
-place(bg, card(full, 1700), W / 2, 1110); brand(bg); bg.convert('RGB').save(OUT / '1-home.png')
+place(bg, card(full, 1700, border=0, radius=28), W / 2, 1110); brand(bg); bg.convert('RGB').save(OUT / '1-home.png')
 
 # 2 -- dress-up: the studio, ringed by outfit stickers
 bg = backdrop((255, 236, 246), (226, 232, 255), [(2000, 1400, 520, (255, 190, 230)), (300, 300, 480, (190, 210, 255))])
@@ -158,6 +158,9 @@ bg = backdrop((228, 248, 242), (226, 238, 255), [(300, 1500, 520, (170, 235, 210
 headline(bg, '公园  商场  码头  酒吧', '出门逛逛', MINT, '还有一些隐藏地图！')
 for k, (n, ang, cx, cy) in enumerate([('place_mall', 5, 690, 1010), ('place_beach', -4, 1720, 1060), ('place_park', 0, 1200, 1290)]):
     place(bg, card(scene(n, 20), 1150, angle=ang), cx, cy)
+for n, k, cx, cy, a in [('tree2', 7, 190, 1270, -3), ('tree4', 6, 2220, 1240, 3), ('bush0', 8, 470, 1620, -2), ('bench0', 6, 1010, 1610, 0),
+                        ('bush2', 8, 1480, 1630, 3), ('bush1', 8, 1930, 1600, -3), ('shrub4', 9, 760, 1650, 2), ('tree3', 5, 2050, 520, 4), ('shrub6', 9, 330, 560, -3)]:
+    sticker(bg, Image.open(STK / f'{n}.png'), k, cx, cy, a)
 brand(bg); bg.convert('RGB').save(OUT / '4-places.png')
 
 # 5 -- festivals: 怪兽夜, the disco and a park fair, festival props as stickers
@@ -165,7 +168,7 @@ bg = backdrop((255, 240, 246), (230, 240, 255), [(400, 1500, 520, (255, 200, 170
 text(bg, f"{M['stats']['festivals']} 个节日", 64, W / 2, 120, SOFT, 'Bold')
 grad_text(bg, '每个节日都不一样', 150, W / 2, 240, AURORA)
 text(bg, '怪兽夜戴面具、跳舞日蹦蹦蹦，甜品节吃到爽', 50, W / 2, 370, SOFT, 'Medium')
-for n, i, b, ang, cx, cy in [('fest_怪兽夜', 10, 1.7, -5, 720, 900), ('fest_跳舞日', 40, 1.3, 4, 1700, 940), ('fest_甜品节', 10, 1.0, 0, 1200, 1300)]:
+for n, i, b, ang, cx, cy in [('fest_怪兽夜', 10, 1.0, -5, 720, 900), ('fest_跳舞日', 40, 1.1, 4, 1700, 940), ('fest_甜品节', 10, 1.0, 0, 1200, 1300)]:
     place(bg, card(scene(n, i, b), 1100, angle=ang), cx, cy)
 for n, k, cx, cy, a in [('pumpkin', 14, 230, 1180, -8), ('balloon_ghost', 14, 2170, 1230, 8), ('mirror_ball', 8, 2190, 560, 6), ('snowman_7', 8, 210, 560, -6),
                         ('dragon_boat_0', 5, 460, 1600, -3), ('fest_stall_mooncake', 5, 1960, 1580, 4), ('lantern_red', 14, 420, 1350, 6), ('balloon_heart', 14, 2000, 1330, -6),
@@ -178,14 +181,49 @@ bg = backdrop((236, 244, 255), (240, 232, 255), [(2000, 400, 520, (190, 215, 255
 text(bg, '800+ 张', 64, W / 2, 120, SOFT, 'Bold')
 grad_text(bg, '奇思妙想机会卡', 150, W / 2, 240, SKY)
 text(bg, '这种问题得你来拿主意', 50, W / 2, 370, SOFT, 'Medium')
-place(bg, card(view('card', 20), 1250), W / 2, 1080)
+place(bg, card(view('card', 20), 1250), W / 2, 1085)
 titles = json.loads((STK / 'cards.json').read_text()); rnd = random.Random(7)
-pick = [t for t in ['我的遥控器呢？', '一根头发的胜利', '剩饭选举', '煮饭按钮的沉默', '深夜重大问题', '撤回的诱惑', '失踪鞋员', '愿望博物馆',
-                    '差评里的文学天赋', '椅子的可疑叫声', '给朋友当闹钟', '一分钱的胜利', '发错窗口', '梦里有你', '摆盘尊严', '宣布早睡'] if t in titles]
+fav = ['我的遥控器呢？', '一根头发的胜利', '剩饭选举', '深夜重大问题', '撤回的诱惑', '失踪鞋员', '愿望博物馆', '差评里的文学天赋', '椅子的可疑叫声',
+       '给朋友当闹钟', '一分钱的胜利', '发错窗口', '梦里有你', '摆盘尊严', '宣布早睡', '煮饭按钮的沉默', '热水壶的掌声', '锅盖失踪', '一块顽强的污渍',
+       '酸得有态度', '互不信任', '句号。。。。', '一部神作', '请您假装懂行', '群里的免费专家', '验证码的审美门槛', '自动续费的纪念日', '分享欲的时差',
+       '小众忧郁款', '房间里的怪味', '今天的背景音', '一个过于准确的推荐', '朋友更换了头像', '被拉进了兴趣群']
+pick = [t for t in fav if t in titles]
 cols = [(236, 92, 140), (90, 140, 230), (240, 140, 60), (60, 170, 140), (150, 100, 220), (220, 90, 90)]
-spots = [(300, 620), (330, 820), (280, 1020), (330, 1220), (300, 1420), (420, 1600), (2100, 620), (2070, 820), (2120, 1020), (2070, 1220),
-         (2100, 1420), (1980, 1600), (820, 1590), (1200, 1620), (1580, 1590), (1200, 520)]
-for k, (t, (cx, cy)) in enumerate(zip(pick, spots)):
-    pill(bg, t, 40, cx, cy, cols[k % len(cols)], rnd.uniform(-5, 5))
+taken = [(560, 840, 1840, 1330), (520, 40, 1880, 420)]          # the card and the headline stay clear
+f = font(34, 'Bold'); k = 0
+for t in pick:
+    w, h = int(ImageDraw.Draw(bg).textlength(t, font=f)) + 80, 84
+    for _ in range(400):
+        cx, cy = rnd.uniform(60 + w / 2, W - 60 - w / 2), rnd.uniform(110, H - 140)
+        box = (cx - w / 2 - 14, cy - h / 2 - 14, cx + w / 2 + 14, cy + h / 2 + 14)
+        if not any(box[0] < r[2] and box[2] > r[0] and box[1] < r[3] and box[3] > r[1] for r in taken):
+            taken.append(box); pill(bg, t, 34, cx, cy, cols[k % len(cols)], rnd.uniform(-5, 5)); k += 1; break
 brand(bg); bg.convert('RGB').save(OUT / '6-cards.png')
+# 7 -- relationships: three video chats that drift somewhere odd
+CHATS = [('爸爸', 3, [('o', '喂？能看见我吗？'), ('me', '爸，我只看见你的下巴。'), ('o', '往上挪点……现在呢？'), ('me', '现在是天花板的灯。'), ('o', '也行，那灯是我新换的。')]),
+         ('朋友', 9, [('o', '新公司第一天，我坐错了工位。'), ('me', '坐了多久才发现？'), ('o', '一上午，还帮人回了邮件。'), ('me', '那人家没说什么？'), ('o', '他说我回得比他还好。')]),
+         ('妈妈', 2, [('o', '吃饭了吗？吃的什么？'), ('me', '泡面加了个蛋。'), ('o', '镜头对着冰箱，我看看。'), ('me', '……里面只有一瓶辣酱。'), ('o', '我明天就寄两箱饺子。')])]
+bg = backdrop((255, 242, 236), (236, 236, 255), [(300, 1500, 520, (255, 200, 190)), (2100, 400, 520, (200, 210, 255))])
+headline(bg, '爸妈 · 朋友 · 邻居', '人际关系', [(255, 110, 140), (255, 160, 90)], '聊着聊着，话题就去了奇怪的地方')
+fb = font(46, 'Medium'); fh = font(48, 'Black')
+for k, (who, dk, lines) in enumerate(CHATS):
+    pw, cx = 720, 430 + k * 770; panel = Image.new('RGBA', (pw, 1080), (0, 0, 0, 0)); d = ImageDraw.Draw(panel)
+    d.rounded_rectangle([0, 0, pw - 1, 1079], 44, fill=(255, 255, 255, 236))
+    d.text((pw / 2, 70), who, font=fh, fill=INK, anchor='mm'); d.line([(40, 124), (pw - 40, 124)], fill=(230, 226, 240), width=3)
+    y = 166
+    for side, t in lines:
+        rows, cur = [], ''
+        for ch in t:
+            if d.textlength(cur + ch, font=fb) > 500 and ch not in '，。？！…、': rows.append(cur); cur = ch
+            else: cur += ch
+        rows.append(cur); tw = max(d.textlength(r, font=fb) for r in rows); bh = 36 + 62 * len(rows)
+        x0 = 36 if side == 'o' else pw - 36 - tw - 56
+        d.rounded_rectangle([x0, y, x0 + tw + 56, y + bh], 34, fill=(240, 238, 246) if side == 'o' else (255, 128, 150))
+        for i, r in enumerate(rows): d.text((x0 + 28, y + 16 + 62 * i), r, font=fb, fill=INK if side == 'o' else (255, 255, 255))
+        y += bh + 40
+    panel = panel.crop((0, 0, pw, y + 30)).rotate((-2, 1.5, -1)[k], Image.BICUBIC, expand=True)
+    place(bg, panel, cx, 520 + panel.height / 2, shadow=50)
+    sticker(bg, Image.open(STK / f'doll{dk}.png'), 8, cx - pw / 2 + 40, 520, (-6, 5, -4)[k])
+sticker(bg, Image.open(STK / 'doll0.png'), 9, 2240, 1600, 6)
+brand(bg); bg.convert('RGB').save(OUT / '7-friends.png')
 print('posters ->', OUT)
