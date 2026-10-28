@@ -101,12 +101,16 @@ headline(bg, '', '一个小人，住在你的桌面上', SUNSET, '吃饭、睡�
 im, info = frame('home_idle', 30); full = im.crop(im.getbbox())
 place(bg, card(full, 1700), W / 2, 1110); brand(bg); bg.convert('RGB').save(OUT / '1-home.png')
 
-# 2 -- dress-up
+# 2 -- dress-up: the studio, plus a line-up of outfits (dolls from tools/poster_dolls.js)
 bg = backdrop((255, 236, 246), (226, 232, 255), [(2000, 1400, 520, (255, 190, 230)), (300, 300, 480, (190, 210, 255))])
 headline(bg, '', '百变造型', CANDY, '发型、五官、衣服、饰品，颜色也能随便调')
 im, info = frame('dressup', 20); studio = im.crop((164, 28, 1544, 1010))
-place(bg, card(studio, 1300), W / 2 - 200, 1100)
-callout(bg, im, (400, 160, 575, 360), 3, (1820, 1180), 270)
+place(bg, card(studio, 1080), 700, 1100)
+for k in range(6):
+    d = Image.open(CLIPS / 'dolls' / f'{k}.png').convert('RGBA'); d = d.resize((d.width * 12, d.height * 12), Image.NEAREST)
+    cx, top = 1560 + (k % 3) * 300, 700 + (k // 3) * 440
+    sh = Image.new('RGBA', bg.size, (0, 0, 0, 0)); ImageDraw.Draw(sh).ellipse([cx - 110, top + d.height - 26, cx + 110, top + d.height + 14], fill=(60, 40, 90, 70))
+    bg.alpha_composite(sh.filter(ImageFilter.GaussianBlur(10))); bg.alpha_composite(d, (cx - d.width // 2, top))
 brand(bg); bg.convert('RGB').save(OUT / '2-style.png')
 
 # 3 -- pets
@@ -125,14 +129,14 @@ for k, (n, ang, cx, cy) in enumerate([('place_mall', 5, 690, 1010), ('place_beac
     place(bg, card(view(n, 20), 1150, angle=ang), cx, cy)
 brand(bg); bg.convert('RGB').save(OUT / '4-places.png')
 
-# 5 -- festivals (night palette)
-bg = backdrop((40, 30, 78), (22, 20, 46), [(400, 300, 520, (150, 80, 200)), (2000, 1500, 560, (60, 90, 200))])
-text(bg, f"{M['stats']['festivals']} 个节日", 64, W / 2, 120, (220, 210, 255), 'Bold')
+# 5 -- festivals (daytime ones, light backdrop)
+bg = backdrop((255, 240, 246), (230, 240, 255), [(400, 1500, 520, (255, 200, 170)), (2000, 300, 540, (190, 220, 255)), (1200, 900, 420, (210, 245, 220))])
+text(bg, f"{M['stats']['festivals']} 个节日", 64, W / 2, 120, SOFT, 'Bold')
 grad_text(bg, '每个节日都不一样', 150, W / 2, 240, AURORA)
-text(bg, '赛龙舟、赏月、怪兽夜、跳舞日……场景和玩法都会变', 50, W / 2, 370, (200, 192, 230), 'Medium')
-for n, i, ang, cx, cy in [('fest_端午节', 10, -5, 700, 1000), ('fest_中秋节', 10, 4, 1720, 1020), ('fest_跳舞日', 40, 0, 1200, 1300)]:
-    place(bg, card(view(n, i), 1150, angle=ang), cx, cy, shadow=150)
-brand(bg, True); bg.convert('RGB').save(OUT / '5-festivals.png')
+text(bg, '赛龙舟、甜品节、堆雪人、赏月……场景和玩法都会变', 50, W / 2, 370, SOFT, 'Medium')
+for n, i, ang, cx, cy in [('fest_甜品节', 10, -5, 700, 1000), ('fest_雪人日', 10, 4, 1720, 1020), ('fest_端午节', 10, 0, 1200, 1300)]:
+    place(bg, card(view(n, i), 1150, angle=ang), cx, cy)
+brand(bg); bg.convert('RGB').save(OUT / '5-festivals.png')
 
 # 6 -- chance cards
 bg = backdrop((236, 244, 255), (240, 232, 255), [(2000, 400, 520, (190, 215, 255)), (300, 1500, 500, (220, 200, 255))])
