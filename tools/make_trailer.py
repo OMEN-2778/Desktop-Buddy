@@ -134,8 +134,13 @@ def ease(u): return u * u * (3 - 2 * u)
 def ease_out(u): return 1 - (1 - u) ** 3
 
 
+WARNED = set()
+
+
 def clip_frame(name, i):
-    c = M['clips'][name]; i = max(0, min(c['frames'] - 1, int(i)))
+    c = M['clips'][name]
+    if int(i) >= c['frames'] and name not in WARNED: WARNED.add(name); print('clip too short:', name, int(i) + 1, '>', c['frames'], flush=True)
+    i = max(0, min(c['frames'] - 1, int(i)))
     return Image.open(CLIPS / 'clips' / name / f'{i:03d}.png').convert('RGBA'), c['info'][i]
 
 
@@ -166,21 +171,32 @@ def solve(src, dst):
     return np.linalg.solve(np.array(A, float), np.array(B, float)).tolist()
 
 
-BACK = Image.fromarray(np.uint8(np.array([30, 22, 48]) * (1 - np.linspace(0, .6, H))[:, None, None]).repeat(W, 1)).convert('RGBA')
 
 
-def tilt(img, yaw, pitch):
-    if abs(yaw) < .2 and abs(pitch) < .2: return img
-    d, k = 2400, .95; cy, sy, cp, sp = math.cos(math.radians(yaw)), math.sin(math.radians(yaw)), math.cos(math.radians(pitch)), math.sin(math.radians(pitch))
+def _quad(yaw, pitch, k):
+    d = 2400; cy, sy, cp, sp = math.cos(math.radians(yaw)), math.sin(math.radians(yaw)), math.cos(math.radians(pitch)), math.sin(math.radians(pitch))
     q = []
     for X, Y in ((-W / 2, -H / 2), (W / 2, -H / 2), (W / 2, H / 2), (-W / 2, H / 2)):
         X, Y = X * k, Y * k; x1, z1 = X * cy, -X * sy; y2, z2 = Y * cp - z1 * sp, Y * sp + z1 * cp
         q.append((W / 2 + d * x1 / (d + z2), H / 2 + d * y2 / (d + z2)))
-    plane = img.transform((W, H), Image.PERSPECTIVE, solve([(0, 0), (W, 0), (W, H), (0, H)], q), Image.BICUBIC)
-    mask = Image.new('L', (W, H), 0); ImageDraw.Draw(mask).polygon(q, fill=255)
-    out = BACK.copy(); sh = Image.new('RGBA', (W, H), (0, 0, 0, 0)); ImageDraw.Draw(sh).polygon([(x + 20, y + 30) for x, y in q], fill=(0, 0, 0, 130))
-    out.alpha_composite(sh.filter(ImageFilter.GaussianBlur(24))); out.paste(plane, (0, 0), mask)
-    return out
+    return q
+
+
+def _covers(q):                                        # the tilted plane covers the whole frame (convex, clockwise quad)
+    for x, y in ((0, 0), (W, 0), (W, H), (0, H)):
+        for (ax, ay), (bx, by) in zip(q, q[1:] + q[:1]):
+            if (bx - ax) * (y - ay) - (by - ay) * (x - ax) < 0: return False
+    return True
+
+
+def tilt(img, yaw, pitch):
+    """3D swing of the picture plane, scaled just enough to keep filling the frame (no edges, no jump at 0)."""
+    if yaw == 0 and pitch == 0: return img
+    lo, hi = 1.0, 1.6
+    for _ in range(18):
+        mid = (lo + hi) / 2; lo, hi = (lo, mid) if _covers(_quad(yaw, pitch, mid)) else (mid, hi)
+    q = _quad(yaw, pitch, hi)
+    return img.transform((W, H), Image.PERSPECTIVE, solve([(0, 0), (W, 0), (W, H), (0, H)], q), Image.BICUBIC)
 
 
 YY, XX = np.mgrid[0:H, 0:W]
@@ -329,7 +345,7 @@ def render(f):
     if 56 <= b < 60: zoom *= 1 + .08 * math.exp(-((f % BEAT) / 3))
     cw, ch = W * S / zoom, H * S / zoom
     x0 = min(max(0, px * S - cw / 2), W * S - cw); y0 = min(max(0, py * S - ch / 2), H * S - ch)
-    out = im.crop((int(x0), int(y0), int(x0 + cw), int(y0 + ch))).resize((W, H), Image.LANCZOS).convert('RGB')
+    out = im.resize((W, H), Image.LANCZOS, box=(x0, y0, x0 + cw, y0 + ch)).convert('RGB')   # sub-pixel crop: no stepping
     ofx, ofy = (px * S - x0) / cw * W, (py * S - y0) / ch * H
     title_on = any(a0 * BEAT <= f < a1 * BEAT + 10 for a0, a1, _, p in TITLES if p == 'center') or 56 <= b < 60 or f >= 61.5 * BEAT
     out = depth_of_field(out, ofx, ofy, max(dof, .85 if title_on else 0), rx=620 / math.sqrt(zoom), ry=470 / math.sqrt(zoom))

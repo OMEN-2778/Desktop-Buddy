@@ -70,8 +70,8 @@ const VW = 1100, VH = 900, FPS = 30;
   await at(() => { closeWardrobe(); setLook(doll.PRESETS.f); });
   await clip('tv', 30, () => homeAct('tv'));
   await clip('computer', 30, () => homeAct('computer'));
-  await clip('weather', 48, async () => { await homeAct('read'); }, async i => {
-    const k = Math.floor(i / 12); if (i % 12) return;
+  await clip('weather', 60, async () => { await homeAct('read'); }, async i => {
+    const k = Math.floor(i / 15); if (i % 15) return;
     await day([10, 19.5, 9, 17.5][k], ['clear', 'rain', 'snow', 'clear'][k], [1, 2, 3, 0][k]); });
   await clip('sleep', 36, async () => { await day(23.5); await homeAct('sleep'); });
   await clip('bath', 30, async () => { await day(20); await homeAct('bath'); });
@@ -81,8 +81,8 @@ const VW = 1100, VH = 900, FPS = 30;
   await clip('cat_walk', 60, () => at(() => { const pt = petState.pet; pt.perch = null; pt.reservedUntil = 0; pt.position = { x: 40, y: FLOOR_Y[0] }; petWalkTo(150, FLOOR_Y[0], 'sit', 30); }));
   await clip('cat_fridge', 48, () => perch('fridge'));
   await clip('cat_bookshelf', 40, () => perch('bookshelf'));
-  await clip('cat_plant', 40, () => perch('plant'));
-  await clip('hold_cat', 36, () => at(() => { const pt = petState.pet; pt.perch = null; pt.reservedUntil = 0; pt.carried = true; sim.mode = 'act'; sim.act = 'pet_hold'; sim.actEnd = sim.t + 999; petStartAction('rest', 1e6); petHearts(3); }));
+  await clip('cat_plant', 64, () => perch('plant'));
+  await clip('hold_cat', 64, () => at(() => { const pt = petState.pet; pt.perch = null; pt.reservedUntil = 0; pt.carried = true; sim.mode = 'act'; sim.act = 'pet_hold'; sim.actEnd = sim.t + 999; petStartAction('rest', 1e6); petHearts(3); }));
   await at(() => { const pt = petState.pet; pt.carried = false; sim.mode = 'idle'; sim.act = null; pt.position = { x: 150, y: FLOOR_Y[0] }; });
 
   // ---- a call, a card
@@ -108,7 +108,7 @@ const VW = 1100, VH = 900, FPS = 30;
     await clip('fest_' + f, pl === 'disco' ? 60 : 18);
   }
   await go('home');
-  await clip('final', 75, async () => { await day(10); await at(() => { sim.mode = 'idle'; sim.act = null; petState.pet.position = { x: 140, y: FLOOR_Y[0] }; }); });
+  await clip('final', 124, async () => { await day(10); await at(() => { sim.mode = 'idle'; sim.act = null; petState.pet.position = { x: 140, y: FLOOR_Y[0] }; }); });
 
   meta.errors = errors;
   fs.writeFileSync(OUT + '/clips.json', JSON.stringify(meta));
