@@ -88762,6 +88762,7 @@ function frame(now) {
 
 document.getElementById("testDown").addEventListener("click", () => { if (sim.mode !== "down") collapse(pick(EXTREME)); });
 
+
 (async function boot() {
   let sv = null, st = null;
   try { sv = migrate(await store.load()); } catch (e) { sv = null; }

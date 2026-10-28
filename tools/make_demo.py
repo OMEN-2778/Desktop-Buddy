@@ -54,6 +54,7 @@ from pixelkit import P, Sprite, rgba  # noqa: E402
 
 SRC = ROOT / "prototype/demo/index.src.html"
 OUT = ROOT / "prototype/demo/index.html"
+TRIAL = ROOT / "prototype/demo/trial.html"
 
 
 def guide_shots() -> dict:
@@ -530,8 +531,12 @@ def main():
     html = html.replace("/*__PET_HUD_JS__*/", (SRC.parent / "pet_hud.js").read_text() + "\nObject.assign(PET_TEXT, " + (SRC.parent / "pets_text2.json").read_text() + ");\n" + (SRC.parent / "pet_bond.js").read_text() + "\n" + (SRC.parent / "pet_perch.js").read_text())
     html = html.replace("/*__PET_HUD_CSS__*/", (SRC.parent / "pet_hud.css").read_text())
     html = html.replace("/*__PETS_CSS__*/", (SRC.parent / "pets.css").read_text())
-    OUT.write_text(html.replace("/*__DEMO_DATA__*/null", blob))
+    html = html.replace("/*__DEMO_DATA__*/null", blob)
+    OUT.write_text(html.replace("/*__TRIAL_JS__*/", ""))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
+    # the 试玩版 page: the same game with trial.js cutting it down to life at home (desktop app trial build)
+    TRIAL.write_text(html.replace("/*__TRIAL_JS__*/", (SRC.parent / "trial.js").read_text()))
+    print(f"{TRIAL.relative_to(ROOT)}: {len(TRIAL.read_text()) // 1024} KB")
 
 
 if __name__ == "__main__":

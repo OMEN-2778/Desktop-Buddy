@@ -8,7 +8,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const src = join(here, "..", "..", "prototype", "demo", "index.html");
+// BUDDY_TRIAL=1: the 试玩版 page instead (tools/make_demo.py builds both)
+const src = join(here, "..", "..", "prototype", "demo", process.env.BUDDY_TRIAL ? "trial.html" : "index.html");
 const out = join(here, "..", "dist");
 mkdirSync(out, { recursive: true });
 const page = readFileSync(src, "utf8");

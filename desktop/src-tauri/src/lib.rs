@@ -40,6 +40,8 @@
 
 mod window_motion;
 
+/// The 试玩版 build (BUDDY_TRIAL set when compiling): no save file, no updates.
+const TRIAL: bool = option_env!("BUDDY_TRIAL").is_some();
 use std::{
     fs,
     path::PathBuf,
@@ -173,6 +175,9 @@ fn write_settings(app: AppHandle, data: String) -> Result<(), String> {
 /// fresh start.
 #[tauri::command]
 fn load_save(app: AppHandle) -> Result<Option<String>, String> {
+    if TRIAL {
+        return Ok(None);
+    }
     let file = save_file(&app)?;
     for path in [file.clone(), file.with_extension("json.bak")] {
         if let Ok(text) = fs::read_to_string(&path) {
@@ -188,6 +193,9 @@ fn load_save(app: AppHandle) -> Result<Option<String>, String> {
 /// swap the new one in: a crash mid-write never leaves a half save.
 #[tauri::command]
 fn write_save(app: AppHandle, data: String) -> Result<(), String> {
+    if TRIAL {
+        return Ok(());
+    }
     serde_json::from_str::<serde_json::Value>(&data).map_err(|e| e.to_string())?;
     let file = save_file(&app)?;
     let tmp = file.with_extension("json.tmp");
@@ -413,6 +421,9 @@ fn app_version(app: AppHandle) -> String {
 
 #[tauri::command]
 async fn check_update(app: AppHandle) -> Result<Option<serde_json::Value>, String> {
+    if TRIAL {
+        return Ok(None);
+    }
     use tauri_plugin_updater::UpdaterExt;
     let update = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| {
         update_log(&app, &format!("check: {e}"));
@@ -423,6 +434,9 @@ async fn check_update(app: AppHandle) -> Result<Option<serde_json::Value>, Strin
 
 #[tauri::command]
 async fn download_update(app: AppHandle, pending: State<'_, Pending>) -> Result<Option<String>, String> {
+    if TRIAL {
+        return Ok(None);
+    }
     use tauri_plugin_updater::UpdaterExt;
     let exe = writable_exe();
     // the bare exe when we can swap it in (older releases have none: the installer then)
@@ -564,10 +578,10 @@ pub fn run() {
             let on_top = CheckMenuItem::with_id(app, "on_top", "置顶游戏", true, false, None::<&str>)?;
             let update = MenuItem::with_id(app, "update", "检查更新", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show, &on_top, &update, &quit])?;
+            let menu = if TRIAL { Menu::with_items(app, &[&show, &on_top, &quit])? } else { Menu::with_items(app, &[&show, &on_top, &update, &quit])? };
             app.manage(OnTopItem(on_top.clone()));
             let mut tray = TrayIconBuilder::with_id("main")
-                .tooltip("Desktop Buddy")
+                .tooltip(if TRIAL { "Desktop Buddy 试玩版" } else { "Desktop Buddy" })
                 .menu(&menu)
                 .on_menu_event(move |app, event| match event.id.as_ref() {
                     "show" => {
