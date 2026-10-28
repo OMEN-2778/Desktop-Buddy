@@ -21,7 +21,8 @@ tests, no unasked extras).
   (portrait, house pans sideways, panels as sheets). One-file build:
   `cd desktop && BUDDY_MOBILE=1 BUDDY_MINIFY=1 npm run web` → `dist/mobile.html`.
   手机试玩版 for H5 platforms (zip ≤ 10 MB, index.html + game.js, no inline JS, no outside
-  resources): `cd desktop && node scripts/make-h5.mjs` → `dist-h5/desktop-buddy-h5.zip`.
+  resources): `cd desktop && node scripts/make-h5.mjs` → `desktop/desktop-buddy-h5.zip` (小红书小工具
+  rules: `.claude/skills/minitool-zip-builder`; ES2017 via esbuild, Chrome 61 CSS fallbacks).
 - Desktop app: `desktop/` (`desktop/README.md`: updater, saves, window).
 - Tutorial text: `prototype/demo/guide_text.js`; shots: `tools/make_guide_shots.js`.
 - UI layout and motion skills: `docs/UI_SKILLS.md` lists installed skills and

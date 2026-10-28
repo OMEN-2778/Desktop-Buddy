@@ -2541,7 +2541,7 @@ const nameOf = () => look.name, ta = () => doll.pronoun(look);
 // ("和 Buddy 聊天", "Buddy 的小屋"): applied to every line the page writes
 const spaced = t => t.replace(/([\u3400-\u9fff])([A-Za-z0-9])/g, "$1 $2").replace(/([A-Za-z0-9])([\u3400-\u9fff])/g, "$1 $2");
 // Spoken punctuation is a presentation rule; diary prose keeps its full stops.
-const spokenText = t => String(t ?? '').trimEnd().replace(/[。．]+(?=[”’」』]*$)/u,'').replace(/(?<!\.)\.(?=[”’」』]*$)/u,'');
+const spokenText = t => String(t ?? '').trimEnd().replace(/[。．]+(?=[”’」』]*$)/u,'').replace(/(^|[^.])\.(?=[”’」』]*$)/u,'$1');   // (no lookbehind: old phone webviews)
 function syncNames() {
   const n = nameOf();
   document.title = spaced(`${n}的小屋`);

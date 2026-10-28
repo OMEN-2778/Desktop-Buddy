@@ -37,10 +37,10 @@ html.m .need img, html.m .needs.open .need img, html.m .need-label { order: 0; o
 html.m .need img, html.m .needs.open .need img { width: 20px; height: 20px; padding: 2px; }
 html.m .need-label { order: 1; font-size: 13px; line-height: 1; white-space: nowrap; }
 html.m .need-well, html.m .needs.open .need-well {
-  order: 2; flex: 1 1 auto; width: auto; min-width: 0; height: 10px; transform: none; opacity: 1; transition: none;
-  background: #fff; box-shadow: 0 0 0 2px var(--edge);
+  order: 2; flex: 1 1 auto; width: auto; min-width: 0; height: 12px; transform: none; opacity: 1; transition: none;
+  background: #fff; border-radius: 6px; box-shadow: 0 0 0 2px var(--edge); overflow: hidden;
 }
-html.m .need .fill { top: 0; bottom: 0; left: 0; right: auto; height: auto; width: calc(var(--v) * 100%); min-width: 4px; clip-path: none; box-shadow: inset 0 2px 0 #ffffff55; }
+html.m .need .fill { top: 0; bottom: 0; left: 0; right: auto; height: auto; width: calc(var(--v) * 100%); min-width: 6px; clip-path: none; border-radius: 6px; box-shadow: inset 0 2px 0 #ffffff55; }
 
 /* bottom HUD: gear + diary row above the mood + words row */
 html.m .moodrow {
@@ -68,7 +68,11 @@ html.m .sky-tip { top: calc(100% + 8px); bottom: auto; }
 html.m .settings { translate: none; }   /* (a transform would trap the fixed sheet inside it) */
 html.m .diary-pop li { font-size: 15px; }
 html.m .diary-pop time { font-size: 13px; }
-html.m .set-pop { background: var(--panel); padding: 12px; box-shadow: 0 0 0 2px var(--edge), 4px 4px 0 2px var(--shadow); }
+/* sheets keep the game's rounded pixel frame (user: rounded corners everywhere): outline + fill layers */
+html.m .set-pop { padding: 14px; isolation: isolate; filter: drop-shadow(3px 3px 0 var(--shadow)); }
+html.m .set-pop::before, html.m .set-pop::after { content: ""; position: absolute; z-index: -1; pointer-events: none; }
+html.m .set-pop::before { top: 0; right: 0; bottom: 0; left: 0; background: var(--edge); clip-path: var(--hud-panel-clip); }
+html.m .set-pop::after { top: 2px; right: 2px; bottom: 2px; left: 2px; background: var(--panel); clip-path: var(--hud-panel-in); }
 html.m .sky-tip { font-size: 13px; right: 0; left: auto !important; }
 html.m .sky-tip.on { transform: none; }
 
@@ -83,8 +87,7 @@ html.m .moodrow::before { display: none; }
 html.m .diary { left: 114px; }
 html.m .contacts-panel {
   position: fixed; left: 12px; right: 12px; bottom: calc(var(--sab) + 136px); top: auto; inset: auto 12px calc(var(--sab) + 136px) 12px;
-  max-height: calc(var(--app-h, 100vh) - var(--sat) - var(--sab) - 210px); overflow-y: auto; overscroll-behavior: contain; background: var(--panel);
-  box-shadow: 0 0 0 2px var(--edge), 4px 4px 0 2px var(--shadow);
+  max-height: calc(var(--app-h, 100vh) - var(--sat) - var(--sab) - 210px); overflow-y: auto; overscroll-behavior: contain; padding: 14px;
 }
 html.m .contacts-tail { display: none; }
 html.m .moodrow.contacts-open > .settings, html.m .moodrow.contacts-open > .diary, html.m .moodrow.contacts-open > .mood-face, html.m .moodrow.contacts-open > .mood-talk { visibility: visible; pointer-events: auto; }
@@ -116,5 +119,14 @@ html.m .m-turn { display: none; }
 }
 html.m.trial .diary, html.m.trial .peer-hud { left: 58px; }
 html.m .needs:focus, html.m .needs:focus-visible { outline: none; }
-html.m .needs .needs-panel::before, html.m .needs .needs-panel::after { display: none; }
-html.m .needs .needs-panel { background: var(--panel); box-shadow: 0 0 0 2px var(--edge), 3px 3px 0 2px var(--shadow); filter: none; }
+html.m .status-row .skybar { z-index: 30; }   /* its tip opens over the needs */
+
+/* rounded corners on every panel (user): one ring outline + hard shadow that follows the radius */
+html.m .picker, html.m .card, html.m #studio, html.m .guide, html.m #petPanel, html.m .social-sheet {
+  border-radius: 16px; overflow: hidden;
+}
+html.m .picker, html.m #studio, html.m .guide, html.m #petPanel { box-shadow: 0 0 0 2px var(--edge), 4px 4px 0 2px var(--shadow); }
+html.m .pk-item, html.m .studio .st-thumb, html.m #petPanel .pet-offer { border-radius: 10px; }
+html.m .pk-head button, html.m .st-tabs button, html.m .st-chips button, html.m .gd-foot button, html.m #petPanel button, html.m .social-sheet button { border-radius: 10px; }
+html.m .sky-tip { border-radius: 12px; box-shadow: 0 0 0 2px var(--edge), 3px 3px 0 2px var(--shadow); padding: 4px 12px; }
+html.m .card-res .cr-box { border-radius: 14px; }
