@@ -12,37 +12,44 @@ document.head.insertAdjacentHTML("beforeend", `<style>${MOBILE_CSS}</style>`);
 // itself a quarter turn so the game is still landscape. The page then sees a landscape world:
 // innerWidth / innerHeight, rects and pointer coordinates are given in the turned frame
 // (screen (sx, sy) = (ly, H - lx), H = the real height).
-const mobileReal = { w: Object.getOwnPropertyDescriptor(window, "innerWidth"), h: Object.getOwnPropertyDescriptor(window, "innerHeight") };
-let mobileRot = false;
-function realW() { return mobileReal.w && mobileReal.w.get ? mobileReal.w.get.call(window) : document.documentElement.clientWidth; }
-function realH() { return mobileReal.h && mobileReal.h.get ? mobileReal.h.get.call(window) : document.documentElement.clientHeight; }
+// The real size is measured, not read from innerWidth / innerHeight: in some webviews (iOS in an
+// app) those differ from the box fixed elements live in, and the turned page came out shifted and cut.
+const mobileRect0 = Element.prototype.getBoundingClientRect;
+const mobileProbe = document.createElement("i");
+mobileProbe.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;visibility:hidden;pointer-events:none;z-index:-1";
+document.documentElement.appendChild(mobileProbe);   // outside <body>, so it never turns with it
+let mobileRot = false, mobileWH = [0, 0];
+function realW() { return mobileRect0.call(mobileProbe).width || document.documentElement.clientWidth; }
+function realH() { return mobileRect0.call(mobileProbe).height || document.documentElement.clientHeight; }
 function mobileTurn() {
-  mobileRot = realH() > realW();
+  const w = realW(), h = realH(); mobileWH = [w, h];
+  mobileRot = h > w;
   document.documentElement.classList.toggle("rot", mobileRot);
   const st = document.documentElement.style;
-  st.setProperty("--real-w", realW() + "px"); st.setProperty("--real-h", realH() + "px");
+  st.setProperty("--real-w", w + "px"); st.setProperty("--real-h", h + "px");
 }
 try {
-  Object.defineProperty(window, "innerWidth", { configurable: true, get: () => mobileRot ? realH() : realW() });
-  Object.defineProperty(window, "innerHeight", { configurable: true, get: () => mobileRot ? realW() : realH() });
-  const rect = Element.prototype.getBoundingClientRect;
+  Object.defineProperty(window, "innerWidth", { configurable: true, get: () => mobileRot ? mobileWH[1] : mobileWH[0] });
+  Object.defineProperty(window, "innerHeight", { configurable: true, get: () => mobileRot ? mobileWH[0] : mobileWH[1] });
   Element.prototype.getBoundingClientRect = function () {
-    const r = rect.call(this);
+    const r = mobileRect0.call(this);
     if (!mobileRot) return r;
-    const H = realH(), l = H - r.bottom, t = r.left, w = r.height, h = r.width;
+    const H = mobileWH[1], l = H - r.bottom, t = r.left, w = r.height, h = r.width;
     return { left: l, top: t, right: l + w, bottom: t + h, width: w, height: h, x: l, y: t, toJSON() { return this; } };
   };
   for (const C of [window.MouseEvent, window.Touch]) {
     if (!C) continue;
     const dx = Object.getOwnPropertyDescriptor(C.prototype, "clientX"), dy = Object.getOwnPropertyDescriptor(C.prototype, "clientY");
     if (!dx || !dx.get || !dy || !dy.get) continue;
-    Object.defineProperty(C.prototype, "clientX", { configurable: true, get() { return mobileRot ? realH() - dy.get.call(this) : dx.get.call(this); } });
+    Object.defineProperty(C.prototype, "clientX", { configurable: true, get() { return mobileRot ? mobileWH[1] - dy.get.call(this) : dx.get.call(this); } });
     Object.defineProperty(C.prototype, "clientY", { configurable: true, get() { return mobileRot ? dx.get.call(this) : dy.get.call(this); } });
   }
   const efp = document.elementFromPoint;
-  document.elementFromPoint = function (x, y) { return mobileRot ? efp.call(document, y, realH() - x) : efp.call(document, x, y); };
+  document.elementFromPoint = function (x, y) { return mobileRot ? efp.call(document, y, mobileWH[1] - x) : efp.call(document, x, y); };
 } catch (e) {}
 mobileTurn();
+// webviews resize without telling (an app's bars settling): keep checking the real size
+setInterval(() => { const w = realW(), h = realH(); if (w !== mobileWH[0] || h !== mobileWH[1]) { mobileTurn(); try { if (booted) fit(); } catch (e) {} } }, 400);
 document.head.insertAdjacentHTML("beforeend", `<meta name="theme-color" content="#ebe6f1">`);
 
 // the left column (needs, then the gear row) and the house's free box on screen
@@ -54,7 +61,7 @@ function mobileTop() {
   document.documentElement.style.setProperty("--m-sky-h", sh + "px");
   return mobileInset("--sat") + 8 + sh + 8 + fh;
 }
-function mobileBottom() { const m = document.getElementById("moodrow"); return mobileInset("--sab") + 10 + (m ? m.offsetHeight : 52) + 8; }
+function mobileBottom() { const m = document.getElementById("moodrow"); return mobileInset("--sab") + 10 + (m ? m.offsetHeight : 52) + 58 + 8; }   // + the gear / diary row
 function mobileBox() {
   return { left: mobileInset("--sal") + 12 + MOBILE_COL + 12, right: innerWidth - mobileInset("--sar") - 12, top: mobileTop(), bottom: innerHeight - mobileBottom() };
 }
