@@ -40,6 +40,7 @@ jobs:
     env:
       VERSION: 0.1.${{ github.run_number }}
       BUDDY_TRIAL: "1"
+      BUDDY_MINIFY: "1"   # shipped page minified (desktop/scripts/copy-web.mjs)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4

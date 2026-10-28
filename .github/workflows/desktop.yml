@@ -48,6 +48,7 @@ jobs:
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
       VERSION: 0.1.${{ github.run_number }}
+      BUDDY_MINIFY: "1"   # shipped page minified (desktop/scripts/copy-web.mjs)
     steps:
       - uses: actions/checkout@v4
 

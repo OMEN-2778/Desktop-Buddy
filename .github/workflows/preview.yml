@@ -40,7 +40,8 @@ jobs:
       - name: Build the browser game from source
         run: |
           PYTHONPATH=tools python tools/make_demo.py
-          BUDDY_TRIAL=1 node desktop/scripts/copy-web.mjs   # public page: the 试玩版 only, never the full game
+          npm ci --prefix desktop --no-audit --no-fund   # terser for the minify step
+          BUDDY_TRIAL=1 BUDDY_MINIFY=1 node desktop/scripts/copy-web.mjs   # public page: the 试玩版 only, never the full game
           PYTHONPATH=tools python tools/make_pet_preview.py
           mkdir -p desktop/dist/pets
           cp prototype/pets/index.html desktop/dist/pets/index.html

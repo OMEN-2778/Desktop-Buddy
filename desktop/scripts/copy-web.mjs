@@ -12,7 +12,15 @@ const here = dirname(fileURLToPath(import.meta.url));
 const src = join(here, "..", "..", "prototype", "demo", process.env.BUDDY_TRIAL ? "trial.html" : "index.html");
 const out = join(here, "..", "dist");
 mkdirSync(out, { recursive: true });
-const page = readFileSync(src, "utf8");
+let page = readFileSync(src, "utf8");
+// BUDDY_MINIFY=1 (release builds): squash the game script (no comments, short local names) so
+// the shipped page is hard to read; the repo keeps the readable source. Globals keep their names.
+if (process.env.BUDDY_MINIFY) {
+  const { minify } = await import("terser");
+  const a = page.indexOf("<script>") + 8, b = page.indexOf("</script>", a);
+  const r = await minify(page.slice(a, b), { compress: { passes: 1 }, mangle: true, format: { comments: false } });
+  page = page.slice(0, a) + r.code.replaceAll("</script", "<\\/script") + page.slice(b);
+}
 const head = '<!doctype html>\n<html lang="zh-CN">\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n';
 writeFileSync(join(out, "index.html"), head + page + "\n</html>\n", "utf8");
 console.log("copied", src, "->", join(out, "index.html"));
