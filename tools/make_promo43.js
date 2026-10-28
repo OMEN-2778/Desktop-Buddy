@@ -67,6 +67,15 @@ const VW = 1100, VH = 900, FPS = 30;
     await day(h); await at(() => { const pt = petState.pet; pt.perch = null; pt.carried = false; pt.position = { x: 120 + Math.random() * 60, y: FLOOR_Y[0] }; });
     await clip('home_' + act, 66, async () => { await homeAct(act); await runFor(700); if (line) await say(line); await runFor(300); });
   }
+  // ---- the dressing room: a new outfit every 12 frames
+  await day(11);
+  await clip('dressup', 150, async () => { await at(() => { closeRing(); sim.mode = 'idle'; sim.act = null; openWardrobe(); }); await runFor(600); },
+    async i => { if (i % 12 === 0) await at(() => { const O = D.doll.options || {}, pick = a => a[Math.floor(Math.random() * a.length)];
+      const l = { ...look }; for (const k of ['style', 'eyes']) l[k] = pick(O[k])[0];
+      l.topStyle = pick(O.top)[0]; l.bottomStyle = pick(O.bottom)[0]; l.acc = Math.random() < .7 ? [pick(O.acc)[0]] : [];
+      const sw = D.doll.swatches; l.hair = pick(sw.hair); l.top = pick(sw.cloth); l.bottom = pick(sw.cloth);
+      try { setLook(l); studio.setLook(look); } catch (e) {} }); });
+  await at(() => { closeWardrobe(); setLook(doll.PRESETS.f); });
   // ---- places and festivals, all at noon
   for (const pl of ['mall', 'beach', 'park']) { await day(12); await go(pl); await noon(12); await clip('place_' + pl, 180); }
   const FEST = [['怪兽夜', 'park', 12], ['跳舞日', 'disco', 12], ['甜品节', 'park', 12]];

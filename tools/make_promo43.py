@@ -309,6 +309,33 @@ class Showcase(Section):                                # poster 4 / 5: three li
         self.st.draw(cv, t, dy)
 
 
+class Style(Section):                                   # the dressing room, ringed by stickers that keep changing outfit
+    SPOTS = [(300, 760, -6, 11), (500, 1160, 5, 11), (270, 1500, -3, 11), (2100, 760, 6, 11), (1900, 1160, -5, 11), (2130, 1500, 4, 11),
+             (560, 260, 4, 8), (1840, 260, -4, 8), (760, 1620, -4, 8), (1640, 1620, 5, 8)]
+    EVERY, SWAP = 22, 8
+    def __init__(self):
+        super().__init__(200, backdrop((255, 236, 246), (226, 232, 255), [(2000, 1400, 520, (255, 190, 230)), (300, 300, 480, (190, 210, 255))]))
+        self.head = Headline('', '百变造型', [(255, 120, 180), (176, 120, 255), (110, 170, 255)], '我已经尽可能多做款式了！')
+        self.card = LiveCard(1080, 1380 / 982, W / 2, 1110); self._img = {}
+    def doll(self, i, k):
+        if (i, k) not in self._img: self._img[(i, k)] = sticker_img(STK_IMG(f'rand{i % 120}'), k)
+        return self._img[(i, k)]
+    def content(self, t, cv, dy=0):
+        self.head.draw(cv, t, dy)
+        im = frame('dressup', 20 + t)[0].crop((164, 28, 1544, 1010)); self.card.draw(cv, im, quart_out((t - 6) / 22), dy)
+        for n, (cx, cy, a, k) in enumerate(self.SPOTS):
+            u = quart_out((t - 24 - n * 5) / 16)
+            if u <= 0: continue
+            tt = max(0, t - 24 - n * 5) + n * 7; step, f = divmod(tt, self.EVERY)
+            cur, prev = self.doll(n * 12 + step, k), self.doll(n * 12 + step - 1, k)
+            bob = 7 * math.sin((t + n * 11) / 26) + dy; tilt = a + 1.6 * math.sin((t + n * 17) / 41)
+            if step and f < self.SWAP:                   # outfit change: the old one shrinks away as the new one grows in
+                v = quart(f / self.SWAP)
+                put(cv, prev, cx, cy + bob, u * (1 - v), (.55 + .45 * u) * (1 - .15 * v), tilt)
+                put(cv, cur, cx, cy + bob, u * v, (.55 + .45 * u) * (.85 + .15 * v), tilt)
+            else: put(cv, cur, cx, cy + bob, u, .55 + .45 * u, tilt)
+
+
 class Cards(Section):                                   # pills: tidy grid -> loose cloud -> neat columns
     def __init__(self):
         super().__init__(240, backdrop((236, 244, 255), (240, 232, 255), [(2000, 400, 520, (190, 215, 255)), (300, 1500, 500, (220, 200, 255))]))
@@ -422,7 +449,8 @@ FESTS = Showcase(200, backdrop((255, 240, 246), (230, 240, 255), [(400, 1500, 52
                  [(ART_IMG('pumpkin'), 14, 230, 1180, -8), (ART_IMG('balloon_ghost'), 14, 2170, 1230, 8), (ART_IMG('mirror_ball'), 8, 2190, 560, 6), (ART_IMG('snowman_7'), 8, 210, 560, -6),
                   (ART_IMG('dragon_boat_0'), 5, 460, 1600, -3), (ART_IMG('fest_stall_mooncake'), 5, 1960, 1580, 4), (ART_IMG('lantern_red'), 14, 420, 1350, 6), (ART_IMG('balloon_heart'), 14, 2000, 1330, -6), (ART_IMG('bat'), 10, 1230, 640, 0)])
 CARDS, FRIENDS, END = Cards(), Friends(), Ending()
-POSTERS = [HOMES, PLACES, FESTS, CARDS, FRIENDS]
+STYLE = Style()
+POSTERS = [HOMES, STYLE, PLACES, FESTS, CARDS, FRIENDS]
 X = 20                                                  # frames each poster-to-poster change takes
 
 # timeline: opening, then posters back to back (each change overlaps X frames), ending
@@ -449,7 +477,7 @@ def render(f):
     if f >= T_END:
         im = END.frame(f - T_END)
         if f < T_END + X:                               # poster 5 fades off the desktop
-            u = quart((f - T_END) / X); old = FRIENDS.bg.copy(); old.alpha_composite(poster_frame(4, f - starts[4], -60 * u)); old.putalpha(int(255 * (1 - u))); im.alpha_composite(old)
+            u = quart((f - T_END) / X); old = FRIENDS.bg.copy(); old.alpha_composite(poster_frame(len(POSTERS) - 1, f - starts[-1], -60 * u)); old.putalpha(int(255 * (1 - u))); im.alpha_composite(old)
         g = max(0, (f - (N - 24)) / 24); im = Image.blend(im, Image.new('RGBA', im.size, (0, 0, 0, 255)), g) if g > 0 else im
         return im.convert('RGB')
     k = max(i for i, s in enumerate(starts) if f >= s); t = f - starts[k]; s = POSTERS[k]
