@@ -18,7 +18,7 @@ tests, no unasked extras).
   (read before touching art or UI; it records every past user decision).
 - Demo page: `prototype/demo/index.src.html` → built into `index.html`.
 - 手机版 (owner asked for it): `prototype/demo/mobile.js` + `mobile.css` → `mobile.html`
-  (portrait, house pans sideways, panels as sheets). One-file build:
+  (landscape: whole house on screen, needs column on the left, panels over the house). One-file build:
   `cd desktop && BUDDY_MOBILE=1 BUDDY_MINIFY=1 npm run web` → `dist/mobile.html`.
   手机试玩版 for H5 platforms (zip ≤ 10 MB, index.html + game.js, no inline JS, no outside
   resources): `cd desktop && node scripts/make-h5.mjs` → `desktop/desktop-buddy-h5.zip` (小红书小工具

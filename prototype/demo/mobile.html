@@ -88713,67 +88713,47 @@ function frame(now) {
 
 document.getElementById("testDown").addEventListener("click", () => { if (sim.mode !== "down") collapse(pick(EXTREME)); });
 
-const MOBILE_CSS = "/* ================================================================ \u624b\u673a\u7248 layout (mobile.js)\n   Portrait phone: a fixed top bar (time + needs), the house in the middle panning sideways,\n   her mood, words, diary and the gear at the bottom within thumb reach. Panels open as\n   bottom sheets as wide as the screen. Everything here is scoped to html.m. */\n/* safe areas: the H5 container's simulator injects --safe-area-inset-*, phones give env(); mobile.js may\n   raise the top one to clear the container's own buttons (--m-top-avoid) */\nhtml.m { --sat: var(--m-top-avoid, var(--safe-area-inset-top, env(safe-area-inset-top, 0px))); --sab: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)); -webkit-text-size-adjust: 100%; }\nhtml.m, html.m body { height: 100%; overflow: hidden; overscroll-behavior: none; }\nhtml.m body { margin: 0; display: block; -webkit-tap-highlight-color: transparent; }\nhtml.m .console { display: none !important; }\nhtml.m .desk {\n  position: fixed; inset: 0; display: block; place-items: start; padding: 0; margin: 0;\n  overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scrollbar-width: none;\n}\nhtml.m .desk::-webkit-scrollbar { display: none; }\nhtml.m .widget { width: max-content; margin: 0 !important; translate: none; transform: none; left: 0; }\nhtml.m .house-col { width: var(--house-w); padding-top: var(--m-house-top, 120px); }\nhtml.m #view { touch-action: pan-x; }\n\n/* top bar (user: needs always open on a tall screen, bars lying sideways): the time bar, then\n   the six needs as a 3 \u00d7 2 grid of icon + name + horizontal bar, fixed over the screen */\nhtml.m .status-row {\n  position: fixed; z-index: 40; left: 12px; right: 12px; width: auto;\n  top: calc(var(--sat) + 10px); margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-gap: 8px;\n}\nhtml.m .status-row .skybar { order: -1; }\nhtml.m .needs { height: auto; cursor: default; }\nhtml.m .needs-summary { display: none; }\nhtml.m .needs .needs-panel, html.m .needs.open .needs-panel {\n  position: relative; left: auto; bottom: auto; top: auto; width: auto; max-width: none; height: auto;\n  transform: none; opacity: 1; visibility: visible; pointer-events: auto; transition: none;\n  grid-template-columns: repeat(3, minmax(0, 1fr)); grid-gap: 8px 12px; padding: 10px 12px;\n}\nhtml.m .need { flex-direction: row; align-items: center; justify-content: flex-start; height: auto; }\nhtml.m .need > * + * { margin-left: 5px; }\nhtml.m .need img, html.m .needs.open .need img, html.m .need-label { order: 0; opacity: 1; transform: none; transition: none; flex: none; }\nhtml.m .need img, html.m .needs.open .need img { width: 20px; height: 20px; padding: 2px; }\nhtml.m .need-label { order: 1; font-size: 13px; line-height: 1; white-space: nowrap; }\nhtml.m .need-well, html.m .needs.open .need-well {\n  order: 2; flex: 1 1 auto; width: auto; min-width: 0; height: 12px; transform: none; opacity: 1; transition: none;\n  background: #fff; border-radius: 6px; box-shadow: 0 0 0 2px var(--edge); overflow: hidden;\n}\nhtml.m .need .fill { top: 0; bottom: 0; left: 0; right: auto; height: auto; width: calc(var(--v) * 100%); min-width: 6px; clip-path: none; border-radius: 6px; box-shadow: inset 0 2px 0 #ffffff55; }\n\n/* bottom HUD: gear + diary row above the mood + words row */\nhtml.m .moodrow {\n  position: fixed; z-index: 41; left: 12px; right: 12px; width: auto;\n  bottom: calc(var(--sab) + 12px); margin: 0;\n}\n\n/* panels that lie over the house cover the part of it on screen (mobile.js overHouse);\n   the house holds still while one is open */\nhtml.m.lock .desk { overflow-x: hidden; }\n\n/* settings: a sheet above the bottom HUD, as wide as the screen */\nhtml.m .set-pop {\n  position: fixed; left: 12px; right: 12px; bottom: calc(var(--sab) + 136px); width: auto; max-width: none;\n  max-height: calc(var(--app-h, 100vh) - var(--sat) - var(--sab) - 210px); overflow-y: auto; overscroll-behavior: contain;\n}\n/* diary: the same place */\nhtml.m .diary-pop {\n  position: fixed; left: 12px; right: 12px; bottom: calc(var(--sab) + 136px); width: auto; max-width: none;\n  --diary-max: calc(var(--app-h, 100vh) - var(--sat) - var(--sab) - 230px);\n}\n/* the top bar's tips open downward */\nhtml.m .needs-panel { top: calc(100% + 8px); bottom: auto; width: calc(100vw - 24px); max-width: none; }\nhtml.m .sky-tip { top: calc(100% + 8px); bottom: auto; }\nhtml.m .settings { translate: none; }   /* (a transform would trap the fixed sheet inside it) */\nhtml.m .diary-pop li { font-size: 15px; }\nhtml.m .diary-pop time { font-size: 13px; }\n/* sheets keep the game's rounded pixel frame (user: rounded corners everywhere): outline + fill layers */\nhtml.m .set-pop { padding: 14px; isolation: isolate; filter: drop-shadow(3px 3px 0 var(--shadow)); }\nhtml.m .set-pop::before, html.m .set-pop::after { content: \"\"; position: absolute; z-index: -1; pointer-events: none; }\nhtml.m .set-pop::before { top: 0; right: 0; bottom: 0; left: 0; background: var(--edge); clip-path: var(--hud-panel-clip); }\nhtml.m .set-pop::after { top: 2px; right: 2px; bottom: 2px; left: 2px; background: var(--panel); clip-path: var(--hud-panel-in); }\nhtml.m .sky-tip { font-size: 13px; right: 0; left: auto !important; }\nhtml.m .sky-tip.on { transform: none; }\n\n/* \u9020\u578b\u5ba4 and \u6559\u7a0b: sheets from the bottom of the screen, over everything */\nhtml.m .studio-slot { position: fixed; z-index: 60; left: 8px; bottom: calc(var(--sab) + 8px); top: auto; }\nhtml.m .studio-slot.open::before { content: \"\"; position: fixed; inset: 0; z-index: -1; background: rgba(27, 19, 34, .35); }\nhtml.m #studio { max-height: calc(var(--app-h, 100vh) - var(--sat) - var(--sab) - 16px); overflow-y: auto; overscroll-behavior: contain; }\n\n/* \u4eba\u8109: always one tap away, in the gear's row; the list opens as a sheet above the HUD */\nhtml.m .moodrow .network-trigger { left: 58px; top: -58px; transform: none !important; opacity: 1; visibility: visible; transition: none; }\nhtml.m .moodrow::before { display: none; }\nhtml.m .diary { left: 114px; }\nhtml.m .contacts-panel {\n  position: fixed; left: 12px; right: 12px; bottom: calc(var(--sab) + 136px); top: auto; inset: auto 12px calc(var(--sab) + 136px) 12px;\n  max-height: calc(var(--app-h, 100vh) - var(--sat) - var(--sab) - 210px); overflow-y: auto; overscroll-behavior: contain; padding: 14px;\n}\nhtml.m .contacts-tail { display: none; }\nhtml.m .moodrow.contacts-open > .settings, html.m .moodrow.contacts-open > .diary, html.m .moodrow.contacts-open > .mood-face, html.m .moodrow.contacts-open > .mood-talk { visibility: visible; pointer-events: auto; }\n\n/* today's festival: a strip right above the gear row, labels always shown (no hover on a phone) */\nhtml.m .fest-bar { position: fixed; left: 12px !important; right: 12px; width: auto !important; top: auto !important; bottom: calc(var(--sab) + 130px); overflow-x: auto; scrollbar-width: none; }\nhtml.m .fest-bar::-webkit-scrollbar { display: none; }\nhtml.m .fb-act .fb-lab { max-width: 9em; opacity: 1; }\nhtml.m .fb-pill.fb-act { padding: 0 12px 0 8px; gap: 5px; flex: none; }\nhtml.m .diary-box span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; white-space: normal; }\n/* her words may wrap to two lines: the gear and \u4eba\u8109 rise with the diary (liftDiary) */\nhtml.m .set-gear, html.m .moodrow .network-trigger { translate: 0 calc(-1 * var(--settings-lift, 0px)); }\nhtml.m .ring .hint { white-space: normal; width: max-content; max-width: calc(100vw - 48px); text-align: center; }\nhtml.m .peer-hud { left: 114px; }\nhtml.m #petPanel button { min-height: 40px; }\nhtml.m #petPanel .pet-close { min-height: 0; width: 36px; height: 36px; }\n/* a call / an invitation: grows upward to fit its words instead of cutting them */\nhtml.m .incoming-call { top: auto; bottom: 0; height: auto; min-height: 100%; padding: 6px 8px; }\nhtml.m .incoming-call .caller-copy strong, html.m .incoming-call .caller-copy span { line-height: 1.3; }\nhtml.m .incoming-call button { min-height: 38px; }\n\n/* no double-tap zoom, no text-selection pop-ups on a long press (it revives her) */\nhtml.m body { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }\nhtml.m input, html.m textarea { -webkit-user-select: text; user-select: text; }\n/* a phone on its side: the house is laid out for portrait */\nhtml.m .m-turn { display: none; }\n@media (orientation: landscape) and (max-height: 520px) {\n  html.m .m-turn { display: grid; place-items: center; position: fixed; inset: 0; z-index: 2147483600; background: var(--bg, #ebe6f1); color: var(--ink); font-size: 17px; font-weight: 700; text-align: center; padding: 24px; }\n}\nhtml.m.trial .diary, html.m.trial .peer-hud { left: 58px; }\nhtml.m .needs:focus, html.m .needs:focus-visible { outline: none; }\nhtml.m .status-row .skybar { z-index: 30; }   /* its tip opens over the needs */\n\n/* rounded corners on every panel (user): one ring outline + hard shadow that follows the radius */\nhtml.m .picker, html.m .card, html.m #studio, html.m .guide, html.m #petPanel, html.m .social-sheet {\n  border-radius: 16px; overflow: hidden;\n}\nhtml.m .picker, html.m #studio, html.m .guide, html.m #petPanel { box-shadow: 0 0 0 2px var(--edge), 4px 4px 0 2px var(--shadow); }\nhtml.m .pk-item, html.m .studio .st-thumb, html.m #petPanel .pet-offer { border-radius: 10px; }\nhtml.m .pk-head button, html.m .st-tabs button, html.m .st-chips button, html.m .gd-foot button, html.m #petPanel button, html.m .social-sheet button { border-radius: 10px; }\nhtml.m .sky-tip { border-radius: 12px; box-shadow: 0 0 0 2px var(--edge), 3px 3px 0 2px var(--shadow); padding: 4px 12px; }\nhtml.m .card-res .cr-box { border-radius: 14px; }\n";
+const MOBILE_CSS = "/* ================================================================ \u624b\u673a\u7248 layout (mobile.js)\n   Landscape phone (user: portrait with the house panning sideways was awkward): the whole house\n   fits the screen; the six needs stand in a column on the left, the gear row under them, the time\n   bar over the house, her mood and words along the bottom. Panels open over the house.\n   Everything here is scoped to html.m. */\n/* safe areas: the H5 container's simulator injects --safe-area-inset-*, phones give env(); mobile.js may\n   raise the top one to clear the container's own buttons (--m-top-avoid) */\nhtml.m { --sat: var(--m-top-avoid, var(--safe-area-inset-top, env(safe-area-inset-top, 0px))); --sab: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));\n  --sal: var(--safe-area-inset-left, env(safe-area-inset-left, 0px)); --sar: var(--safe-area-inset-right, env(safe-area-inset-right, 0px)); -webkit-text-size-adjust: 100%; }\nhtml.m, html.m body { height: 100%; overflow: hidden; overscroll-behavior: none; }\nhtml.m body { margin: 0; display: block; -webkit-tap-highlight-color: transparent; }\nhtml.m .console { display: none !important; }\nhtml.m .desk { position: fixed; inset: 0; display: block; padding: 0; margin: 0; overflow: hidden; }\nhtml.m .widget { position: absolute; left: var(--m-house-left, 194px); top: var(--m-house-top, 50px); width: max-content; margin: 0 !important; translate: none; transform: none; }\nhtml.m .house-col { width: var(--house-w); padding-top: 0; }\n\n/* left column: the six needs, always open, each an icon + name + bar lying sideways */\nhtml.m .status-row {\n  position: fixed; z-index: 40; left: calc(var(--sal) + 12px); width: 170px;\n  top: calc(var(--sat) + 10px); margin: 0; display: block;\n}\n/* the time bar rides over the house, as wide as it */\nhtml.m .status-row .skybar { position: fixed; z-index: 30; top: calc(var(--sat) + 8px); left: var(--m-house-left, 194px); width: var(--house-w); margin: 0; }\nhtml.m .needs { height: auto; cursor: default; }\nhtml.m .needs-summary { display: none; }\nhtml.m .needs .needs-panel, html.m .needs.open .needs-panel {\n  position: relative; left: auto; bottom: auto; top: auto; width: auto; max-width: none; height: auto;\n  transform: none; opacity: 1; visibility: visible; pointer-events: auto; transition: none;\n  grid-template-columns: minmax(0, 1fr); grid-gap: 9px; padding: 10px 12px;\n}\nhtml.m .need { flex-direction: row; align-items: center; justify-content: flex-start; height: auto; }\nhtml.m .need > * + * { margin-left: 6px; }\nhtml.m .need img, html.m .needs.open .need img, html.m .need-label { order: 0; opacity: 1; transform: none; transition: none; flex: none; }\nhtml.m .need img, html.m .needs.open .need img { width: 20px; height: 20px; padding: 2px; }\nhtml.m .need-label { order: 1; font-size: 13px; line-height: 1; white-space: nowrap; width: 2.1em; }\nhtml.m .need-well, html.m .needs.open .need-well {\n  order: 2; flex: 1 1 auto; width: auto; min-width: 0; height: 12px; transform: none; opacity: 1; transition: none;\n  background: #fff; border-radius: 6px; box-shadow: 0 0 0 2px var(--edge); overflow: hidden;\n}\nhtml.m .need .fill { top: 0; bottom: 0; left: 0; right: auto; height: auto; width: calc(var(--v) * 100%); min-width: 6px; clip-path: none; border-radius: 6px; box-shadow: inset 0 2px 0 #ffffff55; }\n\n/* bottom: her mood + words along the screen; the gear row (gear, \u4eba\u8109, \u65e5\u8bb0) sits on it, under the needs */\nhtml.m .moodrow {\n  position: fixed; z-index: 41; left: calc(var(--sal) + 12px); right: calc(var(--sar) + 12px); width: auto;\n  bottom: calc(var(--sab) + 10px); margin: 0;\n}\nhtml.m .diary-box span { display: none !important; }   /* the column is narrow: the \u65e5\u8bb0 label opens the list */\n\n/* settings, diary and \u4eba\u8109 open over the house, between the time bar and her words */\nhtml.m .set-pop, html.m .diary-pop, html.m .contacts-panel {\n  position: fixed; left: var(--m-house-left, 194px); right: auto; width: var(--house-w); max-width: none;\n  top: auto; bottom: calc(var(--sab) + 72px); inset: auto auto calc(var(--sab) + 72px) var(--m-house-left, 194px);\n  max-height: calc(var(--app-h, 100vh) - var(--sat) - var(--sab) - 90px); overflow-y: auto; overscroll-behavior: contain;\n}\nhtml.m .diary-pop { --diary-max: calc(var(--app-h, 100vh) - var(--sat) - var(--sab) - 110px); overflow: visible; }\n/* the top bar's tips open downward */\nhtml.m .sky-tip { top: calc(100% + 8px); bottom: auto; }\nhtml.m .settings { translate: none; }   /* (a transform would trap the fixed sheet inside it) */\nhtml.m .diary-pop li { font-size: 15px; }\nhtml.m .diary-pop time { font-size: 13px; }\n/* sheets keep the game's rounded pixel frame (user: rounded corners everywhere): outline + fill layers */\nhtml.m .set-pop { padding: 14px; isolation: isolate; filter: drop-shadow(3px 3px 0 var(--shadow)); }\nhtml.m .set-pop::before, html.m .set-pop::after { content: \"\"; position: absolute; z-index: -1; pointer-events: none; }\nhtml.m .set-pop::before { top: 0; right: 0; bottom: 0; left: 0; background: var(--edge); clip-path: var(--hud-panel-clip); }\nhtml.m .set-pop::after { top: 2px; right: 2px; bottom: 2px; left: 2px; background: var(--panel); clip-path: var(--hud-panel-in); }\nhtml.m .sky-tip { font-size: 13px; right: 0; left: auto !important; }\nhtml.m .sky-tip.on { transform: none; }\n\n/* \u9020\u578b\u5ba4 and \u6559\u7a0b: sheets from the bottom of the screen, over everything */\nhtml.m .studio-slot { position: fixed; z-index: 60; left: 8px; bottom: calc(var(--sab) + 8px); top: auto; }\nhtml.m .studio-slot.open::before { content: \"\"; position: fixed; inset: 0; z-index: -1; background: rgba(27, 19, 34, .35); }\nhtml.m #studio { max-height: calc(var(--app-h, 100vh) - var(--sat) - var(--sab) - 16px); overflow-y: auto; overscroll-behavior: contain; }\n\n/* \u4eba\u8109: always one tap away, in the gear's row; the list opens as a sheet above the HUD */\nhtml.m .moodrow .network-trigger { left: 58px; top: -58px; transform: none !important; opacity: 1; visibility: visible; transition: none; }\nhtml.m .moodrow::before { display: none; }\nhtml.m .diary { left: 114px; right: auto; width: 56px; translate: none; }   /* (a transform would trap the fixed list inside it) */\nhtml.m .contacts-panel { padding: 14px; }\nhtml.m .contacts-tail { display: none; }\nhtml.m .moodrow.contacts-open > .settings, html.m .moodrow.contacts-open > .diary, html.m .moodrow.contacts-open > .mood-face, html.m .moodrow.contacts-open > .mood-talk { visibility: visible; pointer-events: auto; }\n\n/* today's festival: a strip under the time bar, labels always shown (no hover on a phone) */\nhtml.m .fest-bar { position: fixed; left: var(--m-house-left, 194px) !important; width: var(--house-w) !important; bottom: auto; top: calc(var(--sat) + 16px + var(--m-sky-h, 28px)) !important; overflow-x: auto; scrollbar-width: none; }\nhtml.m .fest-bar::-webkit-scrollbar { display: none; }\nhtml.m .fb-act .fb-lab { max-width: 9em; opacity: 1; }\nhtml.m .fb-pill.fb-act { padding: 0 12px 0 8px; gap: 5px; flex: none; }\n/* her words may wrap to two lines: the gear and \u4eba\u8109 rise with the diary (liftDiary) */\nhtml.m .set-gear, html.m .moodrow .network-trigger { translate: 0 calc(-1 * var(--settings-lift, 0px)); }\nhtml.m .ring .hint { white-space: normal; width: max-content; max-width: calc(100vw - 48px); text-align: center; }\nhtml.m .peer-hud { left: 114px; }\nhtml.m #petPanel button { min-height: 40px; }\nhtml.m #petPanel .pet-close { min-height: 0; width: 36px; height: 36px; }\n/* a call / an invitation: grows upward to fit its words instead of cutting them */\nhtml.m .incoming-call { top: auto; bottom: 0; height: auto; min-height: 100%; padding: 6px 8px; }\nhtml.m .incoming-call .caller-copy strong, html.m .incoming-call .caller-copy span { line-height: 1.3; }\nhtml.m .incoming-call button { min-height: 38px; }\n\n/* no double-tap zoom, no text-selection pop-ups on a long press (it revives her) */\nhtml.m body { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }\nhtml.m input, html.m textarea { -webkit-user-select: text; user-select: text; }\n/* a phone held upright: the house is laid out for landscape */\nhtml.m .m-turn { display: none; }\n@media (orientation: portrait) and (max-width: 600px) {\n  html.m .m-turn { display: grid; place-items: center; position: fixed; inset: 0; z-index: 2147483600; background: var(--bg, #ebe6f1); color: var(--ink); font-size: 17px; font-weight: 700; text-align: center; padding: 24px; }\n}\nhtml.m.trial .diary, html.m.trial .peer-hud { left: 58px; }\nhtml.m .needs:focus, html.m .needs:focus-visible { outline: none; }\n\n/* rounded corners on every panel (user): one ring outline + hard shadow that follows the radius */\nhtml.m .picker, html.m .card, html.m #studio, html.m .guide, html.m #petPanel, html.m .social-sheet {\n  border-radius: 16px; overflow: hidden;\n}\nhtml.m .picker, html.m #studio, html.m .guide, html.m #petPanel { box-shadow: 0 0 0 2px var(--edge), 4px 4px 0 2px var(--shadow); }\nhtml.m .pk-item, html.m .studio .st-thumb, html.m #petPanel .pet-offer { border-radius: 10px; }\nhtml.m .pk-head button, html.m .st-tabs button, html.m .st-chips button, html.m .gd-foot button, html.m #petPanel button, html.m .social-sheet button { border-radius: 10px; }\nhtml.m .sky-tip { border-radius: 12px; box-shadow: 0 0 0 2px var(--edge), 3px 3px 0 2px var(--shadow); padding: 4px 12px; }\nhtml.m .card-res .cr-box { border-radius: 14px; }\n";
 // ================================================================ 手机版 (mobile page only)
 // tools/make_demo.py pastes this just before boot, into prototype/demo/mobile.html (the desktop
-// page stays as it is). Portrait phone layout (user asked for a full phone UI):
-//  - the house is drawn big enough to tap furniture and Buddy, as tall as the screen allows,
-//    and pans sideways with a swipe; the view follows Buddy unless the player just swiped;
-//  - time + needs ride a bar at the top, her mood, words, diary and the gear sit at the bottom
-//    (thumb reach); menus and panels open as sheets from the bottom (mobile.css).
+// page stays as it is). Landscape phone layout (user: portrait with a house panning sideways was
+// awkward): the whole house fits the screen, needs in a column on the left with the gear row
+// under them, the time bar over the house, her mood and words along the bottom (mobile.css).
 const MOBILE = true;
 document.documentElement.classList.add("m");
 if (typeof TRIAL !== "undefined") document.documentElement.classList.add("trial");   // 手机试玩版: no 人脉 button
 document.head.insertAdjacentHTML("beforeend", `<style>${MOBILE_CSS}</style>`);
 document.head.insertAdjacentHTML("beforeend", `<meta name="theme-color" content="#ebe6f1">`);
 
-// CSS px per house pixel: the house fills the space between the top bar and the bottom HUD,
-// never narrower than the screen, and at most 4 (whole device pixels when that is close)
+// the left column (needs, then the gear row) and the house's free box on screen
+const MOBILE_COL = 170;
+function mobileInset(v) { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(v)) || 0; }
+function mobileTop() {
+  const sky = document.getElementById("skybar"), fb = document.getElementById("festBanner");
+  const sh = sky ? sky.offsetHeight : 28, fh = fb && !fb.hidden ? fb.offsetHeight + 8 : 0;
+  document.documentElement.style.setProperty("--m-sky-h", sh + "px");
+  return mobileInset("--sat") + 8 + sh + 8 + fh;
+}
+function mobileBottom() { const m = document.getElementById("moodrow"); return mobileInset("--sab") + 10 + (m ? m.offsetHeight : 52) + 8; }
+function mobileBox() {
+  return { left: mobileInset("--sal") + 12 + MOBILE_COL + 12, right: innerWidth - mobileInset("--sar") - 12, top: mobileTop(), bottom: innerHeight - mobileBottom() };
+}
+// CSS px per house pixel: the whole house fits the free box (no panning), at most 4,
+// whole device pixels when that is close
 function mobileScale() {
-  const top = mobileTop(), bottom = mobileBottom();
-  const room = Math.max(120, innerHeight - top - bottom - 16);
-  let s = Math.min(3.6, room * 0.9 / sceneHouseHeight());
-  s = Math.max(s, innerWidth / W);
+  const b = mobileBox();
+  const s = Math.max(0.5, Math.min(4, (b.right - b.left) / W, (b.bottom - b.top) / sceneHouseHeight()));
   const dpr = devicePixelRatio || 1, n = Math.floor(s * dpr);
   return n / dpr >= s * 0.92 ? n / dpr : s;
 }
-function mobileInset(v) { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(v)) || 0; }
-function mobileTop() { const r = document.querySelector(".status-row"); return (r ? r.getBoundingClientRect().bottom : mobileInset("--sat") + 54) + 8; }
-function mobileBottom() {
-  const fb = document.getElementById("festBanner");
-  return mobileInset("--sab") + 140 + (fb && !fb.hidden ? 44 : 0);
-}
-
-// the house's place on screen: centred in the free space between the bars
+// the house's place on screen: centred in the free box
 function mobileLayout() {
-  const root = document.documentElement.style, hh = view.offsetHeight;
-  const top = mobileTop(), bottom = mobileBottom();
-  const free = innerHeight - top - bottom;
-  root.setProperty("--m-house-top", Math.round(top + Math.max(0, (free - hh) / 2)) + "px");
-  root.setProperty("--m-vw", innerWidth + "px");
+  const root = document.documentElement.style, b = mobileBox();
+  root.setProperty("--m-house-left", Math.round(b.left + Math.max(0, (b.right - b.left - view.offsetWidth) / 2)) + "px");
+  root.setProperty("--m-house-top", Math.round(b.top + Math.max(0, (b.bottom - b.top - view.offsetHeight) / 2)) + "px");
   root.setProperty("--app-h", innerHeight + "px");   // the visible height (100vh can include browser bars)
 }
-
-// pan: follow Buddy when she walks off the middle of the screen, unless the player swiped lately
 const deskEl = document.querySelector(".desk");
-let mobileTouchAt = -1e9, mobileFollowX = null;
-for (const ev of ["touchstart", "wheel", "pointerdown"]) deskEl.addEventListener(ev, () => { mobileTouchAt = performance.now(); mobileFollowX = null; }, { passive: true });
-function mobileFollow() {
-  if (performance.now() - mobileTouchAt < 5000 || !view.offsetWidth) return;
-  if (!ringEl.hidden || document.documentElement.classList.contains("lock")) return;
-  let x;
-  try { x = ringCenter().x * scale; } catch { return; }
-  const left = deskEl.scrollLeft, w = deskEl.clientWidth, max = deskEl.scrollWidth - w;
-  if (mobileFollowX == null && x > left + w * 0.28 && x < left + w * 0.72) return;
-  mobileFollowX = Math.max(0, Math.min(max, x - w / 2));
-  const d = mobileFollowX - left;
-  if (Math.abs(d) < 1) { mobileFollowX = null; return; }
-  deskEl.scrollLeft = left + d * 0.08 + Math.sign(d) * Math.min(Math.abs(d), 0.5);
-}
-function mobileCenterNow() {
-  try { deskEl.scrollLeft = Math.max(0, ringCenter().x * scale - deskEl.clientWidth / 2); } catch {}
-}
-(function loop() { mobileFollow(); requestAnimationFrame(loop); })();
 
 {
   const f = fit;
@@ -88793,17 +88773,6 @@ function mobileCenterNow() {
     w.style.setProperty("--guide-w", innerWidth - 16 + "px"); w.style.setProperty("--guide-left", "0px");
     w.style.setProperty("--guide-h", gh + "px"); w.style.setProperty("--fig-h", Math.round(Math.min(gh * 0.3, (innerWidth - 40) * 0.42)) + "px");
   };
-  // a menu (or a hint) around Buddy or a thing: pan so all of it is on screen
-  const pr = placeRing;
-  placeRing = function (...a) {
-    const r = pr.apply(this, a);
-    if (ringEl.hidden) return r;
-    let L = Infinity, R = -Infinity;
-    for (const el of ringEl.children) { const b = el.getBoundingClientRect(); if (b.width) { L = Math.min(L, b.left); R = Math.max(R, b.right); } }
-    const d = L < 8 ? L - 8 : R > innerWidth - 8 ? Math.min(R - innerWidth + 8, L - 8) : 0;
-    if (d) { deskEl.scrollLeft += d; mobileTouchAt = performance.now(); }
-    return r;
-  };
 }
 // settings that mean nothing on a phone (music: the one-file phone page carries only the short sounds)
 for (let i = SETTINGS.length - 1; i >= 0; i--) if (["界面大小", "置顶游戏", "更新", "背景音乐"].includes(SETTINGS[i].label)) SETTINGS.splice(i, 1);
@@ -88813,18 +88782,8 @@ for (let i = SETTINGS.length - 1; i >= 0; i--) if (["界面大小", "置顶游�
 }
 addEventListener("resize", () => requestAnimationFrame(() => fit()));
 addEventListener("orientationchange", () => setTimeout(() => fit(), 300));
-setTimeout(mobileCenterNow, 600);
 
-// panels over the house: over the part of it on screen
 {
-  const over = overHouse;
-  overHouse = function (el) {
-    over(el);
-    const m = 8, vh = view.offsetHeight;
-    el.style.setProperty("--pick-left", deskEl.scrollLeft + m + "px");
-    el.style.setProperty("--pick-w", deskEl.clientWidth - 2 * m + "px");
-    el.style.setProperty("--pick-h", vh + "px");
-  };
   // text is sized for the screen, not for the (wide) house; nothing under 14px to read
   const um = uiMetrics;
   uiMetrics = function (w, h) {
@@ -88881,7 +88840,7 @@ let mobileFest = null;
     }
   };
 }
-document.body.insertAdjacentHTML("beforeend", `<div class="m-turn" role="alert">把手机竖过来玩吧 📱</div>`);
+document.body.insertAdjacentHTML("beforeend", `<div class="m-turn" role="alert">把手机横过来玩吧 📱</div>`);
 {
   // a page opened without the app's head: make sure the phone does not zoom out to a desktop width
   let vp = document.querySelector('meta[name="viewport"]');

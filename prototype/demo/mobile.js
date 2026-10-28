@@ -1,63 +1,43 @@
 // ================================================================ 手机版 (mobile page only)
 // tools/make_demo.py pastes this just before boot, into prototype/demo/mobile.html (the desktop
-// page stays as it is). Portrait phone layout (user asked for a full phone UI):
-//  - the house is drawn big enough to tap furniture and Buddy, as tall as the screen allows,
-//    and pans sideways with a swipe; the view follows Buddy unless the player just swiped;
-//  - time + needs ride a bar at the top, her mood, words, diary and the gear sit at the bottom
-//    (thumb reach); menus and panels open as sheets from the bottom (mobile.css).
+// page stays as it is). Landscape phone layout (user: portrait with a house panning sideways was
+// awkward): the whole house fits the screen, needs in a column on the left with the gear row
+// under them, the time bar over the house, her mood and words along the bottom (mobile.css).
 const MOBILE = true;
 document.documentElement.classList.add("m");
 if (typeof TRIAL !== "undefined") document.documentElement.classList.add("trial");   // 手机试玩版: no 人脉 button
 document.head.insertAdjacentHTML("beforeend", `<style>${MOBILE_CSS}</style>`);
 document.head.insertAdjacentHTML("beforeend", `<meta name="theme-color" content="#ebe6f1">`);
 
-// CSS px per house pixel: the house fills the space between the top bar and the bottom HUD,
-// never narrower than the screen, and at most 4 (whole device pixels when that is close)
+// the left column (needs, then the gear row) and the house's free box on screen
+const MOBILE_COL = 170;
+function mobileInset(v) { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(v)) || 0; }
+function mobileTop() {
+  const sky = document.getElementById("skybar"), fb = document.getElementById("festBanner");
+  const sh = sky ? sky.offsetHeight : 28, fh = fb && !fb.hidden ? fb.offsetHeight + 8 : 0;
+  document.documentElement.style.setProperty("--m-sky-h", sh + "px");
+  return mobileInset("--sat") + 8 + sh + 8 + fh;
+}
+function mobileBottom() { const m = document.getElementById("moodrow"); return mobileInset("--sab") + 10 + (m ? m.offsetHeight : 52) + 8; }
+function mobileBox() {
+  return { left: mobileInset("--sal") + 12 + MOBILE_COL + 12, right: innerWidth - mobileInset("--sar") - 12, top: mobileTop(), bottom: innerHeight - mobileBottom() };
+}
+// CSS px per house pixel: the whole house fits the free box (no panning), at most 4,
+// whole device pixels when that is close
 function mobileScale() {
-  const top = mobileTop(), bottom = mobileBottom();
-  const room = Math.max(120, innerHeight - top - bottom - 16);
-  let s = Math.min(3.6, room * 0.9 / sceneHouseHeight());
-  s = Math.max(s, innerWidth / W);
+  const b = mobileBox();
+  const s = Math.max(0.5, Math.min(4, (b.right - b.left) / W, (b.bottom - b.top) / sceneHouseHeight()));
   const dpr = devicePixelRatio || 1, n = Math.floor(s * dpr);
   return n / dpr >= s * 0.92 ? n / dpr : s;
 }
-function mobileInset(v) { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(v)) || 0; }
-function mobileTop() { const r = document.querySelector(".status-row"); return (r ? r.getBoundingClientRect().bottom : mobileInset("--sat") + 54) + 8; }
-function mobileBottom() {
-  const fb = document.getElementById("festBanner");
-  return mobileInset("--sab") + 140 + (fb && !fb.hidden ? 44 : 0);
-}
-
-// the house's place on screen: centred in the free space between the bars
+// the house's place on screen: centred in the free box
 function mobileLayout() {
-  const root = document.documentElement.style, hh = view.offsetHeight;
-  const top = mobileTop(), bottom = mobileBottom();
-  const free = innerHeight - top - bottom;
-  root.setProperty("--m-house-top", Math.round(top + Math.max(0, (free - hh) / 2)) + "px");
-  root.setProperty("--m-vw", innerWidth + "px");
+  const root = document.documentElement.style, b = mobileBox();
+  root.setProperty("--m-house-left", Math.round(b.left + Math.max(0, (b.right - b.left - view.offsetWidth) / 2)) + "px");
+  root.setProperty("--m-house-top", Math.round(b.top + Math.max(0, (b.bottom - b.top - view.offsetHeight) / 2)) + "px");
   root.setProperty("--app-h", innerHeight + "px");   // the visible height (100vh can include browser bars)
 }
-
-// pan: follow Buddy when she walks off the middle of the screen, unless the player swiped lately
 const deskEl = document.querySelector(".desk");
-let mobileTouchAt = -1e9, mobileFollowX = null;
-for (const ev of ["touchstart", "wheel", "pointerdown"]) deskEl.addEventListener(ev, () => { mobileTouchAt = performance.now(); mobileFollowX = null; }, { passive: true });
-function mobileFollow() {
-  if (performance.now() - mobileTouchAt < 5000 || !view.offsetWidth) return;
-  if (!ringEl.hidden || document.documentElement.classList.contains("lock")) return;
-  let x;
-  try { x = ringCenter().x * scale; } catch { return; }
-  const left = deskEl.scrollLeft, w = deskEl.clientWidth, max = deskEl.scrollWidth - w;
-  if (mobileFollowX == null && x > left + w * 0.28 && x < left + w * 0.72) return;
-  mobileFollowX = Math.max(0, Math.min(max, x - w / 2));
-  const d = mobileFollowX - left;
-  if (Math.abs(d) < 1) { mobileFollowX = null; return; }
-  deskEl.scrollLeft = left + d * 0.08 + Math.sign(d) * Math.min(Math.abs(d), 0.5);
-}
-function mobileCenterNow() {
-  try { deskEl.scrollLeft = Math.max(0, ringCenter().x * scale - deskEl.clientWidth / 2); } catch {}
-}
-(function loop() { mobileFollow(); requestAnimationFrame(loop); })();
 
 {
   const f = fit;
@@ -77,17 +57,6 @@ function mobileCenterNow() {
     w.style.setProperty("--guide-w", innerWidth - 16 + "px"); w.style.setProperty("--guide-left", "0px");
     w.style.setProperty("--guide-h", gh + "px"); w.style.setProperty("--fig-h", Math.round(Math.min(gh * 0.3, (innerWidth - 40) * 0.42)) + "px");
   };
-  // a menu (or a hint) around Buddy or a thing: pan so all of it is on screen
-  const pr = placeRing;
-  placeRing = function (...a) {
-    const r = pr.apply(this, a);
-    if (ringEl.hidden) return r;
-    let L = Infinity, R = -Infinity;
-    for (const el of ringEl.children) { const b = el.getBoundingClientRect(); if (b.width) { L = Math.min(L, b.left); R = Math.max(R, b.right); } }
-    const d = L < 8 ? L - 8 : R > innerWidth - 8 ? Math.min(R - innerWidth + 8, L - 8) : 0;
-    if (d) { deskEl.scrollLeft += d; mobileTouchAt = performance.now(); }
-    return r;
-  };
 }
 // settings that mean nothing on a phone (music: the one-file phone page carries only the short sounds)
 for (let i = SETTINGS.length - 1; i >= 0; i--) if (["界面大小", "置顶游戏", "更新", "背景音乐"].includes(SETTINGS[i].label)) SETTINGS.splice(i, 1);
@@ -97,18 +66,8 @@ for (let i = SETTINGS.length - 1; i >= 0; i--) if (["界面大小", "置顶游�
 }
 addEventListener("resize", () => requestAnimationFrame(() => fit()));
 addEventListener("orientationchange", () => setTimeout(() => fit(), 300));
-setTimeout(mobileCenterNow, 600);
 
-// panels over the house: over the part of it on screen
 {
-  const over = overHouse;
-  overHouse = function (el) {
-    over(el);
-    const m = 8, vh = view.offsetHeight;
-    el.style.setProperty("--pick-left", deskEl.scrollLeft + m + "px");
-    el.style.setProperty("--pick-w", deskEl.clientWidth - 2 * m + "px");
-    el.style.setProperty("--pick-h", vh + "px");
-  };
   // text is sized for the screen, not for the (wide) house; nothing under 14px to read
   const um = uiMetrics;
   uiMetrics = function (w, h) {
@@ -165,7 +124,7 @@ let mobileFest = null;
     }
   };
 }
-document.body.insertAdjacentHTML("beforeend", `<div class="m-turn" role="alert">把手机竖过来玩吧 📱</div>`);
+document.body.insertAdjacentHTML("beforeend", `<div class="m-turn" role="alert">把手机横过来玩吧 📱</div>`);
 {
   // a page opened without the app's head: make sure the phone does not zoom out to a desktop width
   let vp = document.querySelector('meta[name="viewport"]');
