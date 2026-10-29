@@ -30,7 +30,8 @@ console.log("copied", src, "->", join(out, "index.html"));
 // External audio is shared by Pages and the packaged app, so both work offline
 // after installation without contacting any audio host.
 const audioSource = join(here, "..", "..", "AUDIO_LIBRARY");
-for (const group of ["BGM", "SFX/game", "SFX/processed"]) {
+// (the 试玩版 lives at home only: just the home music)
+for (const group of [process.env.BUDDY_TRIAL ? "BGM/home" : "BGM", "SFX/game", "SFX/processed"]) {
   const source = join(audioSource, group);
   if (!existsSync(source)) throw new Error("Missing audio assets: " + source);
   cpSync(source, join(out, "audio", group), { recursive: true });

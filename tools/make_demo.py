@@ -115,6 +115,49 @@ def chats_js():
     return out
 
 
+# ---------- the 试玩版 is life at home only (user: as small as it can be): the pictures, texts and cards
+# of going out, pets, contacts and festivals are cut out of its page. Pictures become one transparent
+# pixel and text lists keep one entry, so the data keeps its shape and the switched-off code still loads.
+TRIAL_BLANK = ("pets", "outside", "friendHouses", "festival", "festival2", "storm")
+TRIAL_PRUNE = ("SOCIAL_DIALOGUE", "FRIEND_OUTING_TEXT", "NPC_TALK_TEXT", "PET_TEXT", "HOME_VISIT_TEXT", "SOCIAL_TEXT",
+               "FRIEND_VISIT_TEXT", "FEST_TEXT", "FEST_TEXT2", "FEST_TEXT3", "FEST_TEXT4", "BAR_TEXT", "MALL_LIFE", "STORM_TEXT")
+PIXEL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+TRIAL_CARD_WHEN = ("hasPet", "hasCat", "hasDog")
+
+
+def slim_trial(page):
+    dec = json.JSONDecoder()
+
+    def swap(at, fn):          # the JSON value starting at `at`, replaced by fn(value)
+        val, end = dec.raw_decode(page, at)
+        return page[:at] + json.dumps(fn(val), ensure_ascii=False, separators=(",", ":")) + page[end:]
+
+    def blank(v):
+        if isinstance(v, str): return PIXEL if v.startswith("data:image/") else v
+        if isinstance(v, list): return [blank(x) for x in v]
+        if isinstance(v, dict): return {k: blank(x) for k, x in v.items()}
+        return v
+
+    def prune(v):
+        if isinstance(v, list): return [prune(v[0])] if v else []
+        if isinstance(v, dict): return {k: prune(x) for k, x in v.items()}
+        return v
+
+    def home_card(c):
+        return (c.get("at") or "home") == "home" and not c.get("service") and not any(t in (c.get("when") or "") for t in TRIAL_CARD_WHEN)
+
+    i = page.index("const DATA = ") + len("const DATA = ")
+    page = swap(i, lambda d: {k: (blank(v) if k in TRIAL_BLANK else v) for k, v in d.items()})
+    for name in TRIAL_PRUNE:
+        k = page.find("const " + name + " = ")
+        if k >= 0: page = swap(k + len("const " + name + " = "), prune)
+    k = 0
+    while (k := page.find("CARDS.push(...", k)) >= 0:
+        k += len("CARDS.push(...")
+        if page[k] == "[": page = swap(k, lambda cs: [c for c in cs if home_card(c)])
+    return page
+
+
 def main():
     day = empty_house(False)
     night = empty_house(True)
@@ -541,12 +584,12 @@ def main():
     print(f"{MOBILE.relative_to(ROOT)}: {len(MOBILE.read_text()) // 1024} KB")
     # ...and the 手机试玩版 (H5 platforms): the phone page cut down by trial.js (desktop/scripts/make-h5.mjs zips it)
     # (only the tiny cue sounds ride inline there: H5 packages take no audio files and no long base64)
-    (SRC.parent / "mobile_trial.html").write_text(html.replace("/*__TRIAL_JS__*/", (SRC.parent / "trial.js").read_text()).replace("/*__MOBILE_JS__*/", "const MOBILE_CSS = " + json.dumps((SRC.parent / "mobile.css").read_text()) + ";\n" + (SRC.parent / "mobile.js").read_text()))
+    (SRC.parent / "mobile_trial.html").write_text(slim_trial(html.replace("/*__TRIAL_JS__*/", (SRC.parent / "trial.js").read_text()).replace("/*__MOBILE_JS__*/", "const MOBILE_CSS = " + json.dumps((SRC.parent / "mobile.css").read_text()) + ";\n" + (SRC.parent / "mobile.js").read_text())))
     html = html.replace("/*__MOBILE_JS__*/", "")
     OUT.write_text(html.replace("/*__TRIAL_JS__*/", ""))
     print(f"{OUT.relative_to(ROOT)}: {len(OUT.read_text()) // 1024} KB")
     # the 试玩版 page: the same game with trial.js cutting it down to life at home (desktop app trial build)
-    TRIAL.write_text(html.replace("/*__TRIAL_JS__*/", (SRC.parent / "trial.js").read_text()))
+    TRIAL.write_text(slim_trial(html.replace("/*__TRIAL_JS__*/", (SRC.parent / "trial.js").read_text())))
     print(f"{TRIAL.relative_to(ROOT)}: {len(TRIAL.read_text()) // 1024} KB")
 
 

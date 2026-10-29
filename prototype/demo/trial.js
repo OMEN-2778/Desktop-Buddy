@@ -14,6 +14,8 @@ socialState.nextCall = socialState.nextVisit = Infinity;
 // pets: none to adopt, none at home
 petChoiceScores = () => {};
 PetRules.weekly = () => [];
+// cards of places, visits, friends and pets never come (tools/make_demo.py also drops most of them from the page)
+for (let i = CARDS.length - 1; i >= 0; i--) { const c = CARDS[i]; if ((c.at || "home") !== "home" || c.service || /has(Pet|Cat|Dog)/.test(c.when || "")) CARDS.splice(i, 1); }
 const TRIAL_OFF = new Set(["go_out", "phone_call", "phone_video", "phone_text", "pc_video", "host"]);
 {
   const start = startAct;
