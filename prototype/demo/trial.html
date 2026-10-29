@@ -23949,14 +23949,18 @@ const VALLEY_BLOSSOM = { mouth: [[250, 30, 26]], slope: [[176, 30, 26]], falls: 
 function valleyLife(dt) {
   const z = valleyZone().id, h = hour(), day = h >= 7 && h < 18.5, clear = weather.kind === "clear";
   const src = VALLEY_BLOSSOM[z];
-  if (src.length && valley.petals.length < 26 && Math.random() < dt * 3) {
-    const [x, y, r] = pick(src);
+  // 落英缤纷 (user: bigger petals): petals tumble down from the trees, and on
+  // the wind some sail across the whole screen; nearer ones are bigger
+  const windy = src.length && Math.random() < 0.35;
+  if (src.length && valley.petals.length < 46 && Math.random() < dt * 6) {
+    const [x, y, r] = windy ? [-10, 20 + Math.random() * 50, 0] : pick(src);
     valley.petals.push({ x: x + (Math.random() * 2 - 1) * r, y: y + Math.random() * 10, vy: 5 + Math.random() * 6, ph: Math.random() * 6,
+      big: Math.random() < 0.45 ? 2 : 1, wind: windy ? 14 + Math.random() * 10 : 4,
       c: z === "wisteria" && x > 100 ? pick(["#a98ddc", "#d3c2f2", "#8467bd"]) : z === "slope" ? pick(["#ffffff", "#f4f2ee", "#d8ee9c"]) : pick(["#f8cfda", "#fff0f3", "#eba9bd"]), t: 0, floor: 96 + Math.random() * 10 });
   }
   for (const b of valley.petals) {
-    b.t += dt; b.y += b.vy * dt; b.x += Math.sin(b.t * 2.4 + b.ph) * 10 * dt + 4 * dt;
-    if (b.y > b.floor) b.gone = true;
+    b.t += dt; b.y += b.vy * dt; b.x += Math.sin(b.t * 2.4 + b.ph) * 10 * dt + b.wind * dt;
+    if (b.y > b.floor || b.x > W + 6) b.gone = true;
   }
   valley.petals = valley.petals.filter(b => !b.gone);
   const flyOk = day && clear && z !== "falls";
@@ -23981,8 +23985,15 @@ function drawValleyLife(ctx) {
     }
   for (const f of valley.flies) ctx.drawImage(O.butterfly[f.k + (Math.floor(realClock * 6) % 2)], Math.round(f.x) - 3, Math.round(f.y) - 2);
 }
+// a petal tumbling: four turns (flat, tilted, edge-on, tilted), lit on top, a darker underside
+const PETAL_TURN = [[[0, 0], [1, 0], [2, 0], [0, 1, 1], [1, 1, 1], [2, 1, 1]], [[1, 0], [2, 0], [0, 1], [1, 1, 1]], [[0, 0], [1, 0], [2, 0, 1]], [[0, 0], [1, 0], [1, 1, 1], [2, 1, 1]]];
 function drawValleyPetals(ctx) {
-  for (const b of valley.petals) { ctx.fillStyle = b.c; ctx.fillRect(Math.round(b.x), Math.round(b.y), Math.sin(b.t * 5 + b.ph) > 0 ? 2 : 1, 1); }
+  for (const b of valley.petals) {
+    const x = Math.round(b.x), y = Math.round(b.y);
+    if (b.big < 2) { ctx.fillStyle = b.c; ctx.fillRect(x, y, Math.sin(b.t * 5 + b.ph) > 0 ? 2 : 1, 1); continue; }
+    const turn = PETAL_TURN[Math.floor(b.t * 7 + b.ph) % 4];
+    for (const [dx, dy, dark] of turn) { ctx.fillStyle = dark ? b.shade || (b.shade = tint(b.c.length === 7 ? b.c : "#eba9bd", -0.18)) : b.c; ctx.fillRect(x + dx, y + dy, 1, 1); }
+  }
 }
 
 function renderValley(dt) {

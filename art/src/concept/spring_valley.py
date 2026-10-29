@@ -190,22 +190,33 @@ def forest_ridge(px, base, amp, scale, seed, ramp, haze, pink=0.12, density=1.0,
 
 # ---------------------------------------------------------------- the valley floor
 def meadow_floor(px, top_near):
-    """Grass from the last ridge down to the trail: big soft patches of
-    light and shade, blades that grow with nearness, a little haze far off."""
-    h0 = int(top_near.min())
+    """The valley floor in layers (user: 错落有致): rolling knolls one in front
+    of another, each with a sunlit brow and a shaded foot where the next one
+    rises, grass patches and blades that grow with nearness, haze far off."""
     ys = np.arange(H)[:, None]
-    inside = ys >= top_near[None, :]
     depth = np.clip((ys - 58) / 45, 0, 1)
     big = fbm(PW, H, 45, 3, "mbig")
     mid = fbm(PW, H, 9, 3, "mmid", stretch=2.2)
     blades = fbm(PW, H, 1.6, 2, "blade", stretch=0.35)
-    v = 0.55 + (big - 0.5) * 0.45 + (mid - 0.5) * 0.25 + (blades - 0.5) * (0.12 + 0.35 * depth)
-    v = v + (1 - depth) * 0.18 - depth * 0.05
-    rgb = quant(np.clip(v, 0, 1), GRASS, 1.0).astype(np.float32)
-    hz = np.clip((70 - ys) / 16, 0, 1) * 0.35
-    rgb = rgb + (HAZE - rgb) * hz[..., None] if rgb.ndim == 3 else rgb
-    px[inside, :3] = rgb[inside].astype(np.uint8)
-    px[inside, 3] = 255
+    base = 0.55 + (big - 0.5) * 0.35 + (mid - 0.5) * 0.22 + (blades - 0.5) * (0.12 + 0.35 * depth) + (1 - depth) * 0.12
+    v = np.full((H, PW), np.nan, np.float32)
+    region = ys >= top_near[None, :]
+    rel = ys - top_near[None, :]
+    v = np.where(region, base + 0.16 * np.exp(-rel / 2.5) - np.clip(rel / 16, 0, 1) * 0.14, v)
+    for by, amp, sc, seed in ((72, 9, 60, "k1"), (80, 8, 45, "k2"), (88, 6, 34, "k3")):
+        top = (by - fbm1(PW, sc, 3, seed) * amp * 2 + amp).astype(int)
+        slope = np.gradient(top.astype(float))[None, :]
+        r = ys - top[None, :]
+        inside = (r >= 0) & region
+        k_v = base + 0.24 * np.exp(-r / 2.2) - np.clip(r / 10, 0, 1) * 0.2 + slope * 0.06
+        v = np.where(inside, k_v, v)
+    cs = fbm(PW, H, 38, 3, "cloudshadow", stretch=2.2)                  # drifting cloud shadows: light and shade
+    v = np.where(cs + bayer(H, PW) * 0.05 > 0.6, v - 0.2, v)
+    rgb = quant(np.clip(np.nan_to_num(v, nan=0.5), 0, 1), GRASS, 1.0).astype(np.float32)
+    hz = np.clip((72 - ys) / 16, 0, 1) * 0.35
+    rgb = rgb + (HAZE - rgb) * hz[..., None]
+    px[region, :3] = rgb[region].astype(np.uint8)
+    px[region, 3] = 255
     return v
 
 
@@ -526,62 +537,54 @@ def beehive(px, x, base):
 FALLS_X = 171
 
 
+# the cascade: (x of the water, top y, bottom y, half width) for each drop
+TIERS = [(FALLS_X - 3, 12, 33, 4.5), (FALLS_X + 4, 36, 51, 6), (FALLS_X - 1, 54, 72, 8)]
+
+
 def cliff(px, x0):
-    """A rock face in ledges: lit left, shaded right, horizontal strata with
-    lit lips, vertical cracks, moss on the ledges, shrubs and wild cherry
-    along the crest; a dark notch where the water comes over."""
+    """A gorge of piled, lit, mossy boulders: two walls stepping down to the
+    pool, ledge stones where each drop breaks, shrubs and wild cherry over
+    the top, ferns in the joints, the dark wet rock behind the water."""
     cx = x0 + FALLS_X
-    top, bot = 14, 70
-    hwn = fbm1(80, 6, 3, "cliffw")
-    xs = np.arange(x0 + 100, x0 + 245)
-    ys = np.arange(top, bot)
-    n = fbm(px.shape[1], H, 4, 4, "cliffn", stretch=0.6)
-    crack = 1 - np.abs(fbm(px.shape[1], H, 3, 3, "crack", stretch=0.25) * 2 - 1)
-    strat = fbm(px.shape[1], H, 10, 2, "strat")
-    for y in ys:
-        hw = 30 + (y - top) * 0.42 + (hwn[y - top] - 0.5) * 10
-        crest = top + (np.abs(np.sin((xs - cx) * 0.09)) * 3).astype(int)
-        for x in xs:
-            u = (x - cx) / hw
-            if abs(u) > 1 or y < crest[x - xs[0]]:
-                continue
-            layer = math.sin((y + strat[y, x] * 8) * 0.95)
-            lip = layer > 0.75
-            v = 0.6 - u * 0.3 + (n[y, x] - 0.5) * 0.4 + (0.22 if lip else -0.05 if layer < -0.6 else 0)
-            v -= max(0, crack[y, x] - 0.86) * 3.5
-            if abs(u) > 0.85:
-                v -= (abs(u) - 0.85) * 2
-            c = ROCK[int(np.clip(v, 0, 0.999) * len(ROCK))]
-            if lip and n[y, x] > 0.52:
-                c = MOSS[int(np.clip(v + 0.1, 0, 0.999) * len(MOSS))]
-            px[y, x, :3] = c
-    for y in range(top - 1, top + 5):                                   # the notch
-        for x in range(cx - 8, cx + 9):
-            px[y, x, :3] = ROCK[1] if y > top else ROCK[3]
-    L = Layer(px.shape[1], H)                                            # crest shrubs and cherry
-    rnd = random.Random("crest")
+    rnd = random.Random("gorge")
+    for k, (tx, ty0, ty1, hw) in enumerate(TIERS):                       # wet dark rock behind the water
+        for y in range(ty0 + (2 if k == 0 else -2), ty1 + 2):
+            for x in range(int(x0 + tx - hw - (2 if k == 0 else 5)), int(x0 + tx + hw + (3 if k == 0 else 6))):
+                v = 0.18 + ((x * 7 + y * 3) % 5) / 5 * 0.12
+                px[y, x, :3] = ROCK[int(v * len(ROCK))]
+    blocks = []
+    for side in (-1, 1):                                                 # the two walls, back rows first
+        for row, (y, spread, r) in enumerate(((16, 44, 11), (28, 54, 12), (42, 62, 13), (56, 70, 12), (66, 76, 9))):
+            x = 14
+            while x < spread:
+                rr = r * rnd.uniform(0.7, 1.15)
+                blocks.append((y + rnd.uniform(-3, 3), cx + side * (x + rr * 0.6), rr * 1.25, rr * 0.85))
+                x += rr * rnd.uniform(1.1, 1.5)
+    blocks.sort(key=lambda b: b[0])
+    for k, (y, x, rx, ry) in enumerate(blocks):
+        rock(px, x, y, rx, ry, f"gw{k}", moss=0.75)
+    for k, (tx, ty0, ty1, hw) in enumerate(TIERS[:-1]):                  # ledge stones under each drop
+        rock(px, x0 + tx + 2, ty1 + 2, hw + 7, 3.2, f"ledge{k}", moss=0.4)
+    L = Layer(px.shape[1], H)
     cl = []
-    for _ in range(70):
+    for _ in range(90):                                                  # shrubs and cherry over the crest
         u = rnd.uniform(-1, 1)
-        x = cx + u * 40
-        if abs(x - cx) < 11:
+        x = cx + u * 66
+        if abs(x - cx) < 9:
             continue
-        y = top + 2 + abs(u) * 4 + rnd.uniform(-3, 3)
-        key = "pink" if abs(u + 0.5) < 0.18 or abs(u - 0.55) < 0.15 else "green"
-        cl.append((x, y, rnd.uniform(2.5, 4.2), key, 0.0))
-    for _ in range(40):                                                  # shrubs hiding its foot
-        x = cx + rnd.uniform(-58, 58)
-        if abs(x - cx) < 16:
+        y = 9 + abs(u) * 12 + rnd.uniform(-3, 3)
+        key = "pink" if abs(u + 0.55) < 0.17 or abs(u - 0.5) < 0.14 else "white" if abs(u + 0.85) < 0.06 else "green"
+        cl.append((x, y, rnd.uniform(3, 5.5), key, 0.0))
+    for _ in range(40):                                                  # ferns and grass in the joints
+        b_ = rnd.choice(blocks)
+        cl.append((b_[1] + rnd.uniform(-b_[2], b_[2]) * 0.6, b_[0] - b_[3] * 0.7, rnd.uniform(1.4, 2.4), "green", 0.05))
+    for _ in range(50):                                                  # bushes hiding its foot
+        x = cx + rnd.uniform(-80, 80)
+        if abs(x - cx) < 20:
             continue
-        cl.append((x, rnd.uniform(60, 68), rnd.uniform(3, 5), "pink" if rnd.random() < 0.12 else "green", 0.02))
-    for _ in range(26):                                                  # plants in the cracks
-        y = rnd.randint(top + 8, bot - 6)
-        side = rnd.choice((-1, 1))
-        hw = 30 + (y - top) * 0.42
-        x = cx + side * rnd.uniform(0.4, 0.95) * hw
-        cl.append((x, y, rnd.uniform(1.4, 2.4), "pink" if rnd.random() < 0.25 else "green", 0.0))
+        cl.append((x, rnd.uniform(62, 72), rnd.uniform(3, 5.5), "pink" if rnd.random() < 0.1 else "green", 0.02))
     cl.sort(key=lambda c: c[1])
-    L.stamp_clumps(cl, {"green": LEAF, "pink": SAKURA}, "crestleaf", edge=0.6)
+    L.stamp_clumps(cl, {"green": LEAF, "pink": SAKURA, "white": PEAR}, "crestleaf", edge=0.55)
     a = L.px[..., 3] > 0
     px[a, :3] = L.px[a, :3]
 
@@ -976,35 +979,38 @@ def front(i):
 
 
 def falls(frame):
-    """The waterfall (screen 3), three frames: streaky falling water, white
-    where it breaks, spray drifting at the foot, rings on the pool."""
+    """The cascade (screen 3), three frames: three drops of streaky water,
+    white where each breaks on its ledge, spray at the foot, rings on the pool."""
     s = Layer(W, H)
-    cx = FALLS_X
     streak = fbm(W, H * 2, 2, 3, "fallstreak", stretch=0.18)
-    for y in range(17, 73):
-        hw = 6 + (y - 17) * 0.06
-        for x in range(int(cx - hw), int(cx + hw) + 1):
-            u = (x - cx) / hw
-            sv = streak[(y - frame * 5) % (H * 2), x]
-            v = 0.62 + (sv - 0.5) * 0.9 - abs(u) ** 3 * 0.35 - u * 0.08
-            s.px[y, x, :3] = WATER[int(np.clip(v, 0, 0.999) * len(WATER))] if v < 0.9 else CLOUD[-2]
-            s.px[y, x, 3] = 255
-    for x in range(cx - 7, cx + 8):
-        s.px[16, x, :3] = WATER[8]
-        s.px[16, x, 3] = 255
     rnd = random.Random(f"spray{frame}")
-    for _ in range(90):
-        a = rnd.uniform(0, math.pi)
-        r = rnd.uniform(0, 1) ** 0.7
-        x = int(cx + math.cos(a) * r * 22)
-        y = int(72 - math.sin(a) * r * 9 + rnd.uniform(-1, 1))
-        s.px[y, x, :3] = CLOUD[rnd.randint(4, 7)]
-        s.px[y, x, 3] = 255
+    for k, (tx, ty0, ty1, hw) in enumerate(TIERS):
+        for y in range(ty0, ty1 + 1):
+            t_ = (y - ty0) / (ty1 - ty0)
+            w = hw * (0.85 + t_ * 0.3)
+            for x in range(int(tx - w), int(tx + w) + 1):
+                u = (x - tx) / w
+                sv = streak[(y - frame * 5 + k * 17) % (H * 2), x]
+                v = 0.6 + (sv - 0.5) * 0.95 - abs(u) ** 3 * 0.35 - u * 0.1 + t_ * 0.1
+                s.px[y, x, :3] = WATER[int(np.clip(v, 0, 0.999) * len(WATER))] if v < 0.92 else CLOUD[-2]
+                s.px[y, x, 3] = 255
+        for x in range(int(tx - hw), int(tx + hw) + 1):                  # the lip, bright
+            s.px[ty0, x, :3] = WATER[9]
+            s.px[ty0, x, 3] = 255
+        n = 26 if k < 2 else 80
+        rr = (hw + 6) if k < 2 else 24
+        for _ in range(n):                                               # white water where it lands
+            a = rnd.uniform(0, math.pi)
+            r = rnd.uniform(0, 1) ** 0.7
+            x = int(tx + math.cos(a) * r * rr)
+            y = int(ty1 + 1 - math.sin(a) * r * (3 if k < 2 else 9) + rnd.uniform(-1, 1))
+            s.px[y, x, :3] = CLOUD[rnd.randint(4, 7)]
+            s.px[y, x, 3] = 255
     for k in range(3):                                                   # rings on the pool
-        rr = 8 + ((frame + k) % 3) * 7
-        for j in range(24):
-            a = j / 24 * math.tau
-            x, y = int(cx + math.cos(a) * rr), int(73 + math.sin(a) * rr * 0.18)
+        rr = 10 + ((frame + k) % 3) * 7
+        for j in range(28):
+            a = j / 28 * math.tau
+            x, y = int(FALLS_X + math.cos(a) * rr), int(74 + math.sin(a) * rr * 0.16)
             if 0 <= y < H and abs(math.sin(a)) > 0.3:
                 s.px[y, x, :3] = WATER[8]
                 s.px[y, x, 3] = 255
