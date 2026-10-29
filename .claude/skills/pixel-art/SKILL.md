@@ -1055,8 +1055,13 @@ rejected as "too simple, cartoonish": v2 is painted with `_render.py` — lit
 value fields quantized into long hue-shifted ramps with Bayer dither,
 foliage as masses of lit leaf clumps (`stamp_clumps`), rocks as faceted lit
 ellipsoids with moss, haze toward the distance, NO outlines on scenery.
-New outdoor scenes should use this style. One 1710px panorama sliced
-into five 342px screens (谷口 · 花坡 · 溪谷飞瀑 · 花海草甸 · 紫藤小亭) so the
+New outdoor scenes should use this style. v3 (user): too empty, and it
+didn't match the other maps — open meadows stay open but the village,
+wood and farm are packed; objects get dark comic outlines (`drawn()` /
+`outline_layer`, outline = the object's own colour darkened) and ridge /
+knoll brows get a drawn line. Seven screens: 山村 · 樱花林 · 花坡 · 溪谷飞瀑 ·
+农庄 · 花海草甸 · 紫藤小亭. One 1710px panorama sliced
+into 342px screens so the
 screens join up; edge walk / arrows move between them. Door ring offers
 it only in spring. Own ramps in palette.py (ridge_far, ridge_mid, meadow,
 sakura, wisteria, rock, stream, earth). Use `outl()` there: pixelkit's

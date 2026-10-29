@@ -23,18 +23,21 @@ from pixelkit import Sprite
 from _render import R, quant, fbm, fbm1, mix, sphere_light, Layer, bayer
 
 W, H = 342, 118
-N = 5
+N = 7
 PW = W * N
 PATH = (95, 107)
 FEET = 103
 PREVIEW_SCALE = 4
-ZONES = [
-    {"id": "mouth", "name": "谷口"},
+ZONES = [                                    # open meadows between denser, busier places (user)
+    {"id": "village", "name": "山村"},
+    {"id": "woods", "name": "樱花林"},
     {"id": "slope", "name": "花坡"},
     {"id": "falls", "name": "溪谷飞瀑"},
+    {"id": "farm", "name": "农庄"},
     {"id": "meadow", "name": "花海草甸"},
     {"id": "wisteria", "name": "紫藤小亭"},
 ]
+ZI = {z["id"]: i for i, z in enumerate(ZONES)}
 
 # ---------------------------------------------------------------- ramps (dark -> light, hue shifted)
 SKY = R("#4e7cc2", "#5f8bcb", "#7199d3", "#86a9db", "#9cbbe3", "#b3cbea", "#c8d9ef", "#d9e4f1", "#e7ebf1", "#f1ece9")
@@ -71,6 +74,65 @@ FLOWER = {
 
 def zone_x(i):
     return i * W
+
+
+def X(zid):
+    return ZI[zid] * W
+
+
+PLASTER = R("#7f7469", "#998c80", "#b3a698", "#c9bdaf", "#dcd2c5", "#ebe4d9", "#f6f1e9")
+THATCH = R("#3f3220", "#56452a", "#6e5b34", "#87723f", "#9f894c", "#b69f5c", "#cbb672", "#ddca8c")
+CLAYTILE = R("#3e1d19", "#55271f", "#6d3226", "#863f2f", "#9e4f39", "#b46446", "#c77c58")
+BARN = R("#3a1715", "#511f1b", "#692a22", "#82362a", "#9a4434", "#b05742")
+SOIL = R("#2e2119", "#3d2c20", "#4e3828", "#604631", "#72553b", "#856647")
+WOOL = R("#77726c", "#948f87", "#b0aba2", "#c9c4bb", "#dedad2", "#efece6", "#fbfaf7")
+
+
+# ---------------------------------------------------------------- comic outlines (user: thick outlines, a comic feel)
+OUTLINE_K = np.array([0.36, 0.34, 0.42])                  # outline = the object's own colour, much darker, a touch blue
+SHADED = np.zeros((H, PW), bool)
+SHC = np.zeros((H, PW, 3), np.uint8)
+
+
+def outline_mask(px, obj, k=OUTLINE_K):
+    """Darken the ring of pixels around obj with each neighbour's own colour."""
+    h, w = obj.shape
+    pad = np.pad(obj, 1)
+    cpad = np.pad(px[..., :3], ((1, 1), (1, 1), (0, 0)))
+    edge = np.zeros_like(obj)
+    col = np.zeros((h, w, 3), np.float32)
+    for dy, dx in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+        nb = pad[1 + dy:1 + dy + h, 1 + dx:1 + dx + w]
+        new = nb & ~obj & ~edge
+        col[new] = cpad[1 + dy:1 + dy + h, 1 + dx:1 + dx + w][new]
+        edge |= new
+    px[edge, :3] = np.clip(col[edge] * k, 0, 255).astype(np.uint8)
+    if px.shape[2] == 4:
+        px[edge, 3] = 255
+    return edge
+
+
+class drawn:
+    """with drawn(px): ... — whatever the block paints (not cast shadows)
+    gets a dark comic outline afterwards."""
+
+    def __init__(self, px, inner=False):
+        self.px = px
+
+    def __enter__(self):
+        self.before = self.px.copy()
+        self.sh = SHADED.copy()
+        return self
+
+    def __exit__(self, *a):
+        changed = np.any(self.px != self.before, axis=2)
+        shadow = SHADED & ~self.sh & np.all(self.px[..., :3] == SHC, axis=2)
+        outline_mask(self.px, changed & ~shadow)
+
+
+def outline_layer(L):
+    outline_mask(L.px, L.px[..., 3] > 0)
+    return L
 
 
 # ---------------------------------------------------------------- sky and clouds
@@ -181,6 +243,7 @@ def forest_ridge(px, base, amp, scale, seed, ramp, haze, pink=0.12, density=1.0,
     clumps.sort(key=lambda c: c[1])
     ramps = {"green": ramp, "dark": ramp[:-2], "pink": SAKURA_FAR, "white": PEAR[3:]}
     L.stamp_clumps(clumps, ramps, seed + "leaf", edge=0.5)
+    outline_layer(L)                                                     # a crisp skyline, softened by the haze below
     a = L.px[..., 3] > 0
     rgb = L.px[..., :3].astype(np.float32)
     rgb = rgb + (HAZE - rgb) * haze
@@ -203,11 +266,13 @@ def meadow_floor(px, top_near):
     region = ys >= top_near[None, :]
     rel = ys - top_near[None, :]
     v = np.where(region, base + 0.16 * np.exp(-rel / 2.5) - np.clip(rel / 16, 0, 1) * 0.14, v)
+    brow = region & (rel == 0)
     for by, amp, sc, seed in ((72, 9, 60, "k1"), (80, 8, 45, "k2"), (88, 6, 34, "k3")):
         top = (by - fbm1(PW, sc, 3, seed) * amp * 2 + amp).astype(int)
         slope = np.gradient(top.astype(float))[None, :]
         r = ys - top[None, :]
         inside = (r >= 0) & region
+        brow = (brow & ~inside) | (inside & (r == 0))
         k_v = base + 0.24 * np.exp(-r / 2.2) - np.clip(r / 10, 0, 1) * 0.2 + slope * 0.06
         v = np.where(inside, k_v, v)
     cs = fbm(PW, H, 38, 3, "cloudshadow", stretch=2.2)                  # drifting cloud shadows: light and shade
@@ -217,6 +282,7 @@ def meadow_floor(px, top_near):
     rgb = rgb + (HAZE - rgb) * hz[..., None]
     px[region, :3] = rgb[region].astype(np.uint8)
     px[region, 3] = 255
+    px[brow, :3] = (px[brow, :3] * np.array([0.62, 0.66, 0.7])).astype(np.uint8)    # a drawn line along each brow
     return v
 
 
@@ -274,6 +340,9 @@ def shade_ground(px, cx, cy, rx, ry, k=0.62):
     f = np.where(core, k * 0.92, k)[..., None]
     sub = np.where(m[..., None], sub * f * np.array([0.92, 0.97, 1.08]), sub)
     px[y0:y1, x0:x1, :3] = np.clip(sub, 0, 255).astype(np.uint8)
+    if px.shape[1] == PW:
+        SHADED[y0:y1, x0:x1] |= m
+        SHC[y0:y1, x0:x1][m] = px[y0:y1, x0:x1, :3][m]
 
 
 def rock(px, cx, cy, rx, ry, seed, moss=0.5, ramp=None):
@@ -776,6 +845,297 @@ def pergola(x0):
 
 
 # ---------------------------------------------------------------- assemble
+# ---------------------------------------------------------------- 山村 / 农庄: buildings
+LIT_WIN = []
+
+
+def ramp_at(ramp, v):
+    return ramp[int(np.clip(v, 0, 0.999) * len(ramp))]
+
+
+def cottage(px, x, base, w, wall_h, roof="tile", wall="plaster", seed="c", door=True, chimney=True, haze=0.0):
+    """A village house seen from the front: stone footing, plaster or
+    timber-framed walls (shade under the eaves), deep-set windows with
+    flower boxes, a plank door, a thick overhanging roof of clay tiles,
+    slate tiles or thatch, a chimney."""
+    rnd = random.Random(seed)
+    before = px[..., :3].copy() if haze else None
+    n = fbm(px.shape[1], H, 2.5, 3, seed + "n")
+    roof_h = int(wall_h * 0.8) + 4
+    over = 4
+    wy = base - wall_h
+    shade_ground(px, x + w * 0.6, base + 1, w * 0.62, 2.6, 0.6)
+    for y in range(wy, base):                                            # walls
+        for xx in range(x, x + w):
+            u = (xx - x) / w
+            v = 0.68 - u * 0.12 + (n[y, xx] - 0.5) * 0.18 - max(0, 3 - (y - wy)) * 0.12
+            if wall == "timber" and ((xx - x) % 9 in (0, 1) or y in (wy + wall_h // 2,)):
+                px[y, xx, :3] = ramp_at(WOOD, 0.3 - u * 0.1 + (n[y, xx] - 0.5) * 0.2)
+                continue
+            px[y, xx, :3] = ramp_at(PLASTER, v)
+    for y in range(base - 3, base):                                      # stone footing
+        for xx in range(x - 1, x + w + 1):
+            v = 0.5 + (0.12 if (xx // 4 + y) % 2 else -0.05) - (0.25 if xx % 4 == 0 else 0) + (n[y, xx] - 0.5) * 0.3
+            px[y, xx, :3] = ramp_at(ROCK, v)
+    win = max(1, (w - 10) // 14)
+    slots = [x + 5 + k * ((w - 10) // max(1, win)) for k in range(win + (0 if door else 1))]
+    dx = x + w // 2 - 3 if door else None
+    for sx in slots:                                                     # windows
+        if dx is not None and abs(sx + 4 - (dx + 3)) < 9:
+            continue
+        wy0 = wy + 4
+        if not haze:
+            LIT_WIN.append((sx + 1, wy0 + 1))
+        for y in range(wy0, wy0 + 8):
+            for xx in range(sx, sx + 8):
+                edge = xx in (sx, sx + 7) or y in (wy0, wy0 + 7) or xx == sx + 3 or y == wy0 + 3
+                if edge:
+                    px[y, xx, :3] = ramp_at(WOOD, 0.55 if (xx == sx or y == wy0) else 0.32)
+                else:
+                    gl = 0.2 + (0.5 if (xx - sx) + (y - wy0) < 5 else 0) + (0.15 if xx < sx + 3 else 0)
+                    px[y, xx, :3] = ramp_at(WATER, gl)
+        for xx in range(sx - 1, sx + 9):                                 # flower box
+            px[wy0 + 8, xx, :3] = ramp_at(WOOD, 0.4)
+            px[wy0 + 9, xx, :3] = ramp_at(WOOD, 0.2)
+            if xx % 2 == 0:
+                c = rnd.choice((FLOWER["poppy"], FLOWER["rape"], FLOWER["vetch"], FLOWER["white"]))
+                px[wy0 + 7, xx, :3] = c[-2]
+                px[wy0 + 6, xx, :3] = LEAF[5]
+    if door:
+        for y in range(base - 17, base - 2):
+            for xx in range(dx, dx + 7):
+                v = 0.5 - (xx - dx) * 0.04 - (0.2 if (xx - dx) % 3 == 0 else 0) + (0.15 if y == base - 17 else 0)
+                px[y, xx, :3] = ramp_at(WOOD, v)
+        px[base - 9, dx + 5, :3] = FLOWER["rape"][5]
+        for xx in range(dx - 1, dx + 8):
+            px[base - 2, xx, :3] = ramp_at(ROCK, 0.7)
+    R_ = {"tile": CLAYTILE, "slate": TILE, "thatch": THATCH}[roof]
+    ry0 = wy - roof_h
+    for k in range(roof_h):                                              # the roof: we see its front slope
+        y = wy - 1 - k
+        inset = int(k * 0.55)
+        x0_, x1_ = x - over + inset, x + w + over - inset
+        for xx in range(x0_, x1_):
+            u = (xx - x0_) / max(1, x1_ - x0_)
+            if roof == "thatch":
+                v = 0.55 - u * 0.15 + (n[y, xx] - 0.5) * 0.5 + (0.15 if k > roof_h - 3 else 0) - (0.2 if k < 2 else 0)
+            else:
+                row = k % 3
+                v = 0.55 - u * 0.18 + (0.2 if row == 2 else -0.1 if row == 0 else 0) - (0.18 if (xx + (k // 3) * 2) % 4 == 0 else 0)
+            px[y, xx, :3] = ramp_at(R_, v)
+    for xx in range(x - over, x + w + over):                             # eave shadow on the wall
+        for y in range(wy, wy + 2):
+            if x <= xx < x + w:
+                px[y, xx, :3] = (px[y, xx, :3] * 0.62).astype(np.uint8)
+    for xx in range(x - over + int(roof_h * 0.55), x + w + over - int(roof_h * 0.55)):   # ridge cap
+        px[ry0 - 1, xx, :3] = ramp_at(R_, 0.75)
+    if chimney:
+        cxx = x + int(w * 0.72)
+        for y in range(ry0 - 6, ry0 + 4):
+            for xx in range(cxx, cxx + 4):
+                px[y, xx, :3] = ramp_at(ROCK if roof != "tile" else CLAYTILE, 0.6 - (xx - cxx) * 0.12 + (0.2 if y == ry0 - 6 else 0))
+    if haze:                                                             # only the house itself, not the ground around it
+        m = np.any(px[..., :3] != before, axis=2) & ~SHADED
+        sub = px[m, :3].astype(np.float32)
+        px[m, :3] = (sub + (HAZE - sub) * haze).astype(np.uint8)
+
+
+def barn(px, x, base, w=60, h=30):
+    """A red plank barn with a pale-trimmed loft door and big sliding doors."""
+    n = fbm(px.shape[1], H, 3, 2, "barn", stretch=0.3)
+    shade_ground(px, x + w * 0.6, base + 1, w * 0.6, 3, 0.58)
+    wy = base - h
+    peak = wy - 16
+    for y in range(peak, base):
+        half = w / 2 if y >= wy else (y - peak) / 16 * (w / 2 + 4) - 2
+        for xx in range(int(x + w / 2 - half), int(x + w / 2 + half)):
+            u = (xx - x) / w
+            v = 0.62 - u * 0.2 + (n[y, xx] - 0.5) * 0.3 - (0.22 if (xx - x) % 4 == 0 else 0)
+            px[y, xx, :3] = ramp_at(BARN, v)
+    for k in range(18):                                                  # roof edges (gable seen end-on)
+        y = peak + k - 2
+        for s_ in (-1, 1):
+            xx = int(x + w / 2 + s_ * (k / 16 * (w / 2 + 4) - 1))
+            for d in range(3):
+                if wy - 2 >= y:
+                    px[y, xx + s_ * d, :3] = ramp_at(TILE, 0.5 - d * 0.15)
+    dx0, dw = x + w // 2 - 12, 24
+    for y in range(base - 20, base):                                     # big doors with the white X brace
+        for xx in range(dx0, dx0 + dw):
+            v = 0.45 - (xx - dx0) / dw * 0.15 - (0.18 if (xx - dx0) % 4 == 0 else 0)
+            px[y, xx, :3] = ramp_at(BARN, v)
+        for xx in (dx0, dx0 + dw // 2, dx0 + dw - 1):
+            px[y, xx, :3] = PLASTER[5]
+        t_ = (y - base + 20) / 20
+        for xx in (int(dx0 + t_ * (dw // 2 - 1)), int(dx0 + dw // 2 - t_ * (dw // 2 - 1)),
+                   int(dx0 + dw // 2 + t_ * (dw // 2 - 1)), int(dx0 + dw - 1 - t_ * (dw // 2 - 1))):
+            px[y, xx, :3] = PLASTER[4]
+    for xx in range(dx0, dx0 + dw):
+        px[base - 20, xx, :3] = PLASTER[5]
+    lx, ly = x + w // 2 - 5, peak + 6                                    # loft door
+    for y in range(ly, ly + 9):
+        for xx in range(lx, lx + 10):
+            px[y, xx, :3] = PLASTER[5] if xx in (lx, lx + 9) or y in (ly, ly + 8) else BARN[1]
+
+
+def fence(px, x0, x1, base, step=8, h=12):
+    """A split-rail fence: lit posts, two rails."""
+    for x in range(x0, x1, step):
+        for y in range(base - h, base):
+            px[y, x, :3] = WOOD[6]
+            px[y, x + 1, :3] = WOOD[3]
+    for ry in (base - h + 2, base - h // 2 + 1):
+        for x in range(x0, x1 + 1):
+            px[ry, x, :3] = WOOD[7]
+            px[ry + 1, x, :3] = WOOD[3]
+
+
+def veg_plot(px, x0, x1, y0, y1, seed):
+    """Tilled rows in perspective: soil ridges (lit tops) with young
+    greens, lettuces and cabbages along them."""
+    rnd = random.Random(seed)
+    for y in range(y0, y1):
+        t_ = (y - y0) / max(1, y1 - y0)
+        period = 2 + int(t_ * 3)
+        for x in range(x0, x1):
+            ridge = ((y - y0) % period) == 0
+            v = 0.55 + (0.25 if ridge else -0.1) + rnd.uniform(-0.08, 0.08)
+            px[y, x, :3] = ramp_at(SOIL, v)
+    for y in range(y0, y1, 2):
+        t_ = (y - y0) / max(1, y1 - y0)
+        for x in range(x0 + 1, x1 - 1, 3 + int(t_ * 2)):
+            if rnd.random() < 0.85:
+                r = 0.6 + t_ * 1.4
+                for dy in range(-int(r), 1):
+                    for dx in range(-int(r), int(r) + 1):
+                        if dx * dx + dy * dy <= r * r + 0.5:
+                            px[y + dy, x + dx, :3] = ramp_at(LEAF, 0.55 - dx * 0.12 - dy * 0.1 + rnd.uniform(-0.1, 0.1))
+
+
+def sheep(px, x, base, face=1, graze=False):
+    """A woolly sheep, 15x10: lumpy fleece lit from the top left, dark face and legs."""
+    shade_ground(px, x + 8, base + 1, 9, 1.6, 0.6)
+    for lx in (x + 3, x + 6, x + 9, x + 12):
+        for y in range(base - 3, base + 1):
+            px[y, lx, :3] = BARK[1]
+    for k in range(14):
+        a = k / 14 * math.tau
+        cx, cy = x + 7.5 + math.cos(a) * 5, base - 6 + math.sin(a) * 2.5
+        for dy in range(-2, 3):
+            for dx in range(-2, 3):
+                if dx * dx + dy * dy <= 5:
+                    px[int(cy + dy), int(cx + dx), :3] = ramp_at(WOOL, 0.62 - (dx + dy) * 0.07 + math.sin(a + 2.3) * 0.12)
+    for dy in range(-3, 2):
+        for dx in range(-6, 7):
+            if (dx / 6.5) ** 2 + (dy / 3) ** 2 <= 1:
+                px[int(base - 6 + dy), int(x + 7.5 + dx), :3] = ramp_at(WOOL, 0.7 - (dx + dy) * 0.04)
+    hx = x + (15 if face > 0 else -2)
+    hy = base - (4 if graze else 8)
+    for dy in range(4):
+        for dx in range(3):
+            px[hy + dy, hx + dx, :3] = BARK[2] if dx < 2 else BARK[1]
+    px[hy, hx + (2 if face > 0 else 0), :3] = WOOL[4]
+
+
+def haystack(px, x, base, r=10):
+    shade_ground(px, x + 4, base + 1, r + 3, 2.4, 0.6)
+    n = fbm(px.shape[1], H, 1.4, 2, "hay", stretch=0.4)
+    for y in range(base - int(r * 1.5), base):
+        for xx in range(x - r, x + r + 1):
+            dx, dy = (xx - x) / r, (base - y) / (r * 1.5)
+            if dx * dx + dy ** 1.6 <= 1:
+                v = 0.55 - dx * 0.25 + dy * 0.1 + (n[y, xx] - 0.5) * 0.45
+                px[y, xx, :3] = ramp_at(THATCH, v)
+
+
+def well(px, x, base):
+    """A stone well with a little roof and a bucket."""
+    n = fbm(px.shape[1], H, 1.5, 2, "well")
+    shade_ground(px, x + 7, base + 1, 11, 2, 0.6)
+    for y in range(base - 9, base):
+        for xx in range(x, x + 14):
+            v = 0.55 - (xx - x) / 14 * 0.25 + (0.12 if ((xx // 3) + (y // 2)) % 2 else -0.05) + (n[y, xx] - 0.5) * 0.25
+            px[y, xx, :3] = ramp_at(ROCK, v)
+    for xx in range(x - 1, x + 15):
+        px[base - 10, xx, :3] = ROCK[8]
+    for xx in (x + 1, x + 12):
+        for y in range(base - 24, base - 10):
+            px[y, xx, :3] = WOOD[6]
+            px[y, xx + 1, :3] = WOOD[3]
+    for k in range(6):
+        for xx in range(x - 3 + k, x + 17 - k):
+            px[base - 24 - k, xx, :3] = ramp_at(CLAYTILE, 0.6 - (xx - x) / 20 * 0.25 + (0.15 if k % 2 else 0))
+    for y in range(base - 17, base - 13):
+        for xx in range(x + 5, x + 9):
+            px[y, xx, :3] = ramp_at(WOOD, 0.6 - (xx - x - 5) * 0.12)
+
+
+def laundry(px, x0, x1, y):
+    """A line between two poles with washing drying in the sun."""
+    for x in (x0, x1):
+        for yy in range(y, 94):
+            px[yy, x, :3] = WOOD[5]
+    for x in range(x0, x1 + 1):
+        sag = int(2 * math.sin(math.pi * (x - x0) / (x1 - x0)))
+        px[y + sag, x, :3] = PLASTER[2]
+    rnd = random.Random("wash")
+    x = x0 + 4
+    for c in (FLOWER["blue"], PLASTER, FLOWER["poppy"], FLOWER["rape"], PLASTER):
+        w, h = rnd.randint(5, 8), rnd.randint(6, 10)
+        if x + w > x1 - 2:
+            break
+        for yy in range(h):
+            for xx in range(w):
+                sag = int(2 * math.sin(math.pi * (x + xx - x0) / (x1 - x0)))
+                px[y + sag + 1 + yy, x + xx, :3] = ramp_at(c, 0.75 - xx / w * 0.3 - yy / h * 0.15)
+        x += w + 3
+
+
+# ---------------------------------------------------------------- 樱花林: inside the wood
+def woodland(px, x0):
+    """Inside a wood of cherry and oak: a hazy wall of trunks and crowns
+    behind, a canopy closing overhead with sky through gaps, slanting shafts
+    of sunlight, dappled light on the floor, ferns and fallen petals."""
+    rnd = random.Random("woods")
+    L = Layer(px.shape[1], H)
+    for k in range(34):                                                  # back trunks, hazy
+        x = x0 + rnd.uniform(-10, W + 10)
+        bark_segment(L, x, 86, x + rnd.uniform(-3, 3), 20, rnd.choice((2, 3, 3, 4)), seed=k)
+    cl = []
+    for _ in range(420):                                                 # the canopy, top band
+        x = x0 + rnd.uniform(-12, W + 12)
+        y = rnd.uniform(-6, 40) + (abs(x - x0 - W / 2) / (W / 2)) * 6
+        key = "pink" if math.sin((x - x0) * 0.03) > 0.25 and rnd.random() < 0.75 else "green"
+        cl.append((x, y, rnd.uniform(4, 7.5), key, (rnd.random() - 0.5) * 0.1 - (y / 40) * 0.12))
+    for _ in range(160):                                                 # undergrowth
+        x = x0 + rnd.uniform(-8, W + 8)
+        cl.append((x, rnd.uniform(78, 92), rnd.uniform(2.5, 5), "green" if rnd.random() < 0.85 else "pink", 0.05))
+    cl.sort(key=lambda c: (c[1] > 70, c[1]))
+    L.stamp_clumps(cl, {"green": LEAF, "pink": SAKURA}, "woodleaf", edge=0.5, holes=0.12)
+    outline_layer(L)
+    a = L.px[..., 3] > 0
+    rgb = L.px[..., :3].astype(np.float32)
+    ys = np.arange(H)[:, None]
+    hz = np.where(ys > 40, 0.18, 0.0)[..., None] * np.ones((1, px.shape[1], 1))
+    rgb = rgb + (HAZE - rgb) * hz * 0.6
+    px[a, :3] = rgb[a].astype(np.uint8)
+    for k in range(5):                                                   # shafts of light, slanting down to the right
+        sx = x0 + 30 + k * 66 + rnd.uniform(-10, 10)
+        wdt = rnd.uniform(6, 12)
+        for y in range(10, 96):
+            c0 = sx + (y - 10) * 0.45
+            for x in range(int(c0), int(c0 + wdt)):
+                if x0 <= x < x0 + W and (x + y) % 2 == 0 and rnd.random() < 0.55:
+                    px[y, x, :3] = np.clip(px[y, x, :3].astype(np.float32) * 1.18 + np.array([16, 14, 4]), 0, 255).astype(np.uint8)
+    for _ in range(60):                                                  # dapples on the floor
+        x, y = x0 + rnd.uniform(0, W), rnd.uniform(86, 95)
+        r = rnd.uniform(1.5, 4)
+        for yy in range(int(y - 1), int(y + 2)):
+            for xx in range(int(x - r), int(x + r)):
+                if x0 <= xx < x0 + W and ((xx - x) / r) ** 2 + (yy - y) ** 2 <= 1:
+                    px[yy, xx, :3] = np.clip(px[yy, xx, :3].astype(np.float32) * 1.25 + 10, 0, 255).astype(np.uint8)
+
+
 def willow(cx, base, frame=0):
     """A weeping willow in fresh leaf: a soft head of fine leaves and long
     curtains of strands, darker ones behind, light yellow-green in front."""
@@ -821,37 +1181,46 @@ def swing(L, x):
 
 
 def zone_trees(i, frame=0):
-    """Each screen's trees as one layer (two sway frames) plus their ground shadows."""
+    """Each screen's trees as one layer (two sway frames, each tree outlined)
+    plus their ground shadows."""
     out, shadows = Layer(W, H), []
+    zid = ZONES[i]["id"]
 
     def add(res):
         L, sh = res
+        outline_layer(L)
         a = L.px[..., 3] > 0
         out.px[a] = L.px[a]
-        shadows.append(sh)
+        if sh:
+            shadows.append(sh)
 
-    if i == 0:
-        add(tree(24, 91, 58, {"a": LEAF, "b": LEAF}, "oak0", lean=-0.15, frame=frame, clump=(3.4, 6)))
-        add(tree(252, 93, 74, {"a": SAKURA, "b": SAKURA, "c": SAKURA[1:]}, "cherry0", lean=0.3, frame=frame,
-                 clump=(3.6, 6.2), holes=0.12, petals=[SAKURA[-1], SAKURA[-2], LEAF[7]]))
-    elif i == 1:
+    if zid == "village":
+        add(tree(16, 95, 56, {"a": LEAF, "b": LEAF}, "oakv", lean=0.1, frame=frame, clump=(3.4, 6)))
+        add(tree(306, 96, 64, {"a": SAKURA, "b": SAKURA, "c": SAKURA[1:]}, "cherryv", lean=-0.25, frame=frame,
+                 clump=(3.6, 6), petals=[SAKURA[-1], SAKURA[-2]]))
+    elif zid == "woods":
+        for k, (x, kind) in enumerate(((22, "s"), (118, "g"), (214, "s"), (318, "g"))):
+            ramps = {"a": SAKURA, "b": SAKURA, "c": SAKURA[1:]} if kind == "s" else {"a": LEAF, "b": LEAF[1:]}
+            add(tree(x, 95, 96, ramps, f"wood{k}", lean=(-0.15, 0.1, -0.05, 0.15)[k], frame=frame, clump=(4.4, 7.4),
+                     width=1.3, petals=[SAKURA[-1]] if kind == "s" else None))
+    elif zid == "slope":
         add(tree(176, 91, 70, {"a": PEAR, "b": PEAR, "c": LEAF[2:]}, "pear", frame=frame, clump=(4, 6.4), width=1.15,
                  petals=[PEAR[-1], LEAF[8]]))
-    elif i == 2:
+    elif zid == "falls":
         add(willow(58, 93, frame))
         add(tree(306, 93, 64, {"a": SAKURA, "b": SAKURA[1:]}, "cherry2", lean=-0.3, frame=frame, clump=(3.4, 5.8),
                  petals=[SAKURA[-1], SAKURA[-2]]))
-    elif i == 3:
+    elif zid == "farm":
+        add(tree(166, 93, 60, {"a": LEAF, "b": LEAF[1:]}, "oakf", lean=0.15, frame=frame, clump=(3.6, 6.2)))
+    elif zid == "meadow":
         L, sh = tree(282, 94, 72, {"a": LEAF, "b": LEAF, "c": LEAF[1:]}, "oak3", lean=-0.12, spread=1.1, frame=frame,
                      clump=(4.4, 7.2), width=1.2, holes=0.06)
         swing(L, 254)
         add((L, sh))
-    elif i == 4:
+    elif zid == "wisteria":
         add(tree(24, 93, 62, {"a": SAKURA, "b": SAKURA}, "cherry4", lean=0.2, frame=frame, clump=(3.4, 5.8),
                  petals=[SAKURA[-1]]))
-        p = pergola(4 * W)
-        a = p.px[..., 3] > 0
-        out.px[a] = p.px[a]
+        add((pergola(X("wisteria")), None))
     return out, shadows
 
 
@@ -868,37 +1237,80 @@ def panorama():
     near = forest_ridge(px, 60, 6, 55, "ridgeB", FOREST_MID, 0.18, pink=0.16, r_rng=(1.8, 3.2), bottom=70)
     top_near = (66 + fbm1(PW, 80, 3, "floor") * 6).astype(int)
     meadow_floor(px, top_near)
-    # 谷口
-    flowers(px, 0, W, 72, 94, {"rape": 0.4, "white": 0.75, "blue": 1.0}, 0.05, "f0", top_near)
-    rock(px, 64, 85, 19, 11, "boulder0", moss=0.8)
-    rock(px, 90, 90, 9, 6, "boulder1", moss=0.5)
-    rock(px, 38, 92, 6, 3.5, "boulder2", moss=0.3)
-    stone_tablet(px, 44, 93)
-    signpost(px, 290, 94)
+    ys = np.arange(H)[:, None]
+    # 山村: a back row of houses in the haze, a packed front row, a well, washing
+    x0 = X("village")
+    flowers(px, x0, x0 + W, 74, 94, {"white": 0.5, "rape": 0.8, "blue": 1}, 0.04, "fv", top_near)
+    for x, b_, w, h_, roof, seed in ((x0 + 36, 84, 46, 17, "slate", "vb1"), (x0 + 146, 82, 40, 15, "thatch", "vb2"),
+                                     (x0 + 250, 84, 52, 17, "tile", "vb3")):
+        with drawn(px):
+            cottage(px, x, b_, w, h_, roof, seed=seed, door=False, haze=0.22)
+    for x, w, h_, roof, wall, seed in ((x0 + 6, 58, 25, "tile", "plaster", "vf1"), (x0 + 120, 66, 27, "thatch", "timber", "vf2"),
+                                       (x0 + 236, 54, 24, "slate", "plaster", "vf3")):
+        with drawn(px):
+            cottage(px, x, 94, w, h_, roof, wall, seed=seed)
+    with drawn(px):
+        well(px, x0 + 88, 94)
+    with drawn(px):
+        laundry(px, x0 + 192, x0 + 230, 72)
+    with drawn(px):
+        fence(px, x0 + 66, x0 + 86, 95)
+        fence(px, x0 + 292, x0 + 300, 95)
+    # 樱花林: inside the wood, the floor in shade
+    x0 = X("woods")
+    sub = px[58:96, x0:x0 + W, :3].astype(np.float32)
+    px[58:96, x0:x0 + W, :3] = (sub * np.array([0.72, 0.78, 0.82])).astype(np.uint8)
+    woodland(px, x0)
+    flowers(px, x0, x0 + W, 88, 95, {"white": 0.6, "blue": 1}, 0.12, "fw")
     # 花坡: broad drifts on the slope
+    x0 = X("slope")
     for cx, cy, rx, ry, mixk in ((60, 74, 80, 6, {"rape": 1}), (215, 78, 95, 7, {"vetch": 1}), (320, 72, 60, 5, {"rape": 1}),
                                  (130, 87, 95, 6, {"white": 0.7, "vetch": 1}), (270, 89, 80, 5, {"rape": 1}), (20, 90, 40, 5, {"vetch": 1})):
-        flowers(px, W + max(0, cx - rx), W + min(W, cx + rx), cy - ry - 2, cy + ry + 2, mixk, 0.55, f"slope{cx}", top_near, oval=True)
-    beehive(px, W + 262, 93)
-    beehive(px, W + 283, 93)
+        flowers(px, x0 + max(0, cx - rx), x0 + min(W, cx + rx), cy - ry - 2, cy + ry + 2, mixk, 0.55, f"slope{cx}", top_near, oval=True)
+    for x in (262, 283):
+        with drawn(px):
+            beehive(px, x0 + x, 93)
     # 溪谷飞瀑
-    cliff(px, 2 * W)
-    pool_and_stream(px, 2 * W)
-    flowers(px, 2 * W, 2 * W + 120, 74, 94, {"white": 0.5, "blue": 1}, 0.05, "f2a", top_near)
-    flowers(px, 2 * W + 225, 3 * W, 74, 94, {"vetch": 0.5, "white": 1}, 0.05, "f2b", top_near)
+    x0 = X("falls")
+    with drawn(px):
+        cliff(px, x0)
+    pool_and_stream(px, x0)
+    flowers(px, x0, x0 + 120, 74, 94, {"white": 0.5, "blue": 1}, 0.05, "f2a", top_near)
+    flowers(px, x0 + 225, x0 + W, 74, 94, {"vetch": 0.5, "white": 1}, 0.05, "f2b", top_near)
+    # 农庄: farmhouse, vegetable rows, a barn, sheep and a haystack
+    x0 = X("farm")
+    with drawn(px):
+        haystack(px, x0 + 312, 84, 9)
+    with drawn(px):
+        cottage(px, x0 + 8, 93, 64, 25, "thatch", "timber", seed="farmh")
+    veg_plot(px, x0 + 82, x0 + 154, 76, 92, "veg1")
+    with drawn(px):
+        fence(px, x0 + 80, x0 + 154, 96, 9, 6)
+    with drawn(px):
+        barn(px, x0 + 186, 92, 58, 28)
+    with drawn(px):
+        fence(px, x0 + 252, x0 + 340, 95, 9)
+    for sx, sy, f, g in ((x0 + 262, 91, 1, False), (x0 + 288, 89, -1, True), (x0 + 312, 93, 1, True)):
+        with drawn(px):
+            sheep(px, sx, sy, f, g)
     # 花海草甸
-    flowers(px, 3 * W, 4 * W, 66, 95, {"lupine": 0.2, "pinklupine": 0.32, "poppy": 0.52, "white": 0.7, "rape": 0.82, "blue": 1.0}, 0.2, "f3", top_near)
+    x0 = X("meadow")
+    flowers(px, x0, x0 + W, 66, 95, {"lupine": 0.2, "pinklupine": 0.32, "poppy": 0.52, "white": 0.7, "rape": 0.82, "blue": 1.0}, 0.2, "f3", top_near)
     # 紫藤小亭
-    flowers(px, 4 * W, 5 * W, 74, 94, {"white": 0.6, "vetch": 1}, 0.04, "f4", top_near)
-    pavilion(px, 4 * W)
-    stone_lantern(px, 4 * W + 150, 93)
-    pond(px, 4 * W)
+    x0 = X("wisteria")
+    flowers(px, x0, x0 + W, 74, 94, {"white": 0.6, "vetch": 1}, 0.04, "f4", top_near)
+    with drawn(px):
+        pavilion(px, x0)
+    with drawn(px):
+        stone_lantern(px, x0 + 150, 93)
+    pond(px, x0)
     for i in range(N):
         _, shadows = zone_trees(i)
         for cx, cy, rx, ry in shadows:
             shade_ground(px, zone_x(i) + cx, cy, rx, ry, 0.62)
     trail(px)
-    bridge(px, 2 * W)
+    with drawn(px):
+        bridge(px, X("falls"))
     _P["bg"] = px
     return px
 
@@ -923,7 +1335,7 @@ def front(i):
             v = 0.3 + (base[y, x] - 0.5) * 0.4 - (y - y0) * 0.01
             s.px[y, x, :3] = GRASS[int(np.clip(v, 0, 0.999) * len(GRASS))]
             s.px[y, x, 3] = 255
-    if i == 2:
+    if ZONES[i]["id"] == "falls":
         flow = fbm(W, H, 3, 3, "flowf", stretch=0.35)
         for y in range(PATH[0], H):
             tt = (y - PATH[0]) / (H - PATH[0])
@@ -934,7 +1346,7 @@ def front(i):
                     v = 0.45 + (flow[y, x] - 0.5) * 0.5 - abs(u) ** 2 * 0.2
                     s.px[y, x, :3] = WATER[int(np.clip(v, 0, 0.999) * len(WATER))]
                     s.px[y, x, 3] = 255
-    gap = (lambda x: abs(x - FALLS_X - 4) < 36) if i == 2 else (lambda x: False)
+    gap = (lambda x: abs(x - FALLS_X - 4) < 36) if ZONES[i]["id"] == "falls" else (lambda x: False)
     for x in range(-2, W + 2):
         for _ in range(3):
             if gap(x):
@@ -948,8 +1360,9 @@ def front(i):
                     v = 0.25 + k / hgt * 0.6 + rnd.uniform(-0.08, 0.08)
                     s.px[yy, xx, :3] = GRASS[int(np.clip(v, 0, 0.999) * len(GRASS))]
                     s.px[yy, xx, 3] = 255
-    kinds = [["white", "rape", "blue"], ["vetch", "rape", "white"], ["white", "blue", "poppy"],
-             ["lupine", "poppy", "pinklupine"], ["pinklupine", "white", "vetch"]][i]
+    kinds = {"village": ["white", "rape", "poppy"], "woods": ["white", "blue", "vetch"], "slope": ["vetch", "rape", "white"],
+             "falls": ["white", "blue", "poppy"], "farm": ["rape", "white", "blue"], "meadow": ["lupine", "poppy", "pinklupine"],
+             "wisteria": ["pinklupine", "white", "vetch"]}[ZONES[i]["id"]]
     for x in range(4, W - 4, 5):
         if gap(x) or rnd.random() < 0.3:
             continue
@@ -1027,9 +1440,14 @@ def bee(frame):
 def lit(i):
     """Night glows: the stone lantern and a lamp under the pavilion (screen 5)."""
     s = Sprite(W, H)
-    if i == 4:
+    panorama()
+    if ZONES[i]["id"] == "wisteria":
         s.rect(148, 74, 4, 4, "#fff1b8").rect(149, 75, 2, 2, "#fffbe6")
         s.rect(102, 64, 5, 5, "#fff1b8").rect(103, 65, 3, 3, "#fffbe6")
+    for x, y in LIT_WIN:                                                 # village and farm windows
+        if zone_x(i) <= x < zone_x(i) + W:
+            for (dx, dy) in ((0, 0), (4, 0), (0, 4), (4, 4)):
+                s.rect(x - zone_x(i) + dx, y + dy, 2, 2, "#ffd98a")
     return s
 
 
@@ -1042,7 +1460,7 @@ def sky(s):
 def scene(i, frame=0):
     s = background(i)
     s.blit(trees(i, frame), 0, 0)
-    if i == 2:
+    if ZONES[i]["id"] == "falls":
         s.blit(falls(0), 0, 0)
     s.blit(front(i), 0, 0)
     return s

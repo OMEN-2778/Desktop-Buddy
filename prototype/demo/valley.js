@@ -1,6 +1,6 @@
 // ================================================================ 春日山谷 (user)
-// A valley in full bloom, five screens side by side (spring_valley.py, all
-// new art): 谷口 · 花坡 · 溪谷飞瀑 · 花海草甸 · 紫藤小亭. The front door offers
+// A valley in full bloom, seven screens side by side (spring_valley.py, all
+// new art): 山村 · 樱花林 · 花坡 · 溪谷飞瀑 · 农庄 · 花海草甸 · 紫藤小亭. The front door offers
 // it only in spring. Walking off a side (or the arrows) leads to the next
 // screen. Life: drifting petals, bees over the hives, butterflies over the
 // flowers, the waterfall, hikers on the trail.
@@ -100,7 +100,8 @@ function valleySetup() {
   if (valleyZone().id === "falls" && !valley.fallsSeen) { valley.fallsSeen = true; addMood("valley_falls", { words: false }); }
 }
 // where petals fall from on each screen: [x, y, spread]
-const VALLEY_BLOSSOM = { mouth: [[250, 30, 26]], slope: [[176, 30, 26]], falls: [[304, 34, 24], [171, 14, 30]], meadow: [], wisteria: [[22, 32, 22], [235, 36, 60]] };
+const VALLEY_BLOSSOM = { village: [[306, 34, 26]], woods: [[22, 16, 34], [214, 16, 34], [171, 4, 170]], slope: [[176, 30, 26]],
+  falls: [[304, 34, 24], [171, 10, 40]], farm: [], meadow: [], wisteria: [[22, 32, 22], [235, 36, 60]] };
 function valleyLife(dt) {
   const z = valleyZone().id, h = hour(), day = h >= 7 && h < 18.5, clear = weather.kind === "clear";
   const src = VALLEY_BLOSSOM[z];
