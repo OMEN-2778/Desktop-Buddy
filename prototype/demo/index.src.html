@@ -23,7 +23,7 @@
         </div>
         <div class="diary" id="diary">
           <div class="diary-pop" id="diaryPop" hidden><ol id="diaryList" aria-label="最近发生的事"></ol></div>
-          <button type="button" class="diary-box" id="diaryBox" aria-expanded="false" aria-controls="diaryPop" title="看看最近发生的事"><b>日记</b><span></span></button>
+          <button type="button" class="diary-box" id="diaryBox" aria-expanded="false" aria-controls="diaryPop" title="看看最近发生的事"><i class="diary-ico"><img alt="日记" id="diaryImg" width="32" height="32"></i><span></span></button>
         </div>
         <section class="peer-hud" id="peerHud" role="region" aria-label="对方的对话" aria-hidden="true" hidden>
           <div class="peer-bubble" id="peerBubble" role="status" aria-live="polite"><i class="bg" aria-hidden="true"></i><i class="dot d1" aria-hidden="true"></i><i class="dot d2" aria-hidden="true"></i><span></span></div>
@@ -404,6 +404,8 @@ const logEl = document.getElementById("log");
 const diaryEl = document.getElementById("diary"), diaryBox = document.getElementById("diaryBox");
 const diaryPop = document.getElementById("diaryPop"), diaryList = document.getElementById("diaryList");
 let diaryOn = false;
+let diaryPeekUntil = 0, diaryHover = false, diaryTimer = 0, diaryPeekOk = false;   // the diary folds into a round button (syncDiaryFold)
+setTimeout(() => { diaryPeekOk = true; }, 2500);   // lines written while the page loads do not unfold it
 function log(text, cls, talk = null) {   // talk: [[who, line], ...], a whole conversation kept with the line
   text = spaced(text);
   const li = document.createElement("li");
@@ -2337,7 +2339,8 @@ function liftDiary() {
   moodrow.style.setProperty('--buddy-lift',growth/2+'px');
   // Align each left-hand icon with the centre of its actual, wrapped text row.
   const gear=document.getElementById('setGear'),upper=peer&&!peer.hidden?peer:diary;
-  const target=upper.offsetTop+upper.offsetHeight/2-growth-(upper===diary?diaryGrow:0);
+  // the gear rides one row above the diary (user): shown while the diary is pointed at
+  const target=upper.offsetTop-growth-(upper===diary?diaryGrow:0)-8-24;
   const origin=gear.parentElement.offsetTop+gear.offsetTop+gear.offsetHeight/2;
   moodrow.style.setProperty('--settings-lift',Math.round(origin-target)+'px');
 }
@@ -2349,6 +2352,12 @@ function fitSay() {
 }
 function fitDiary() {
   const di = document.getElementById("diary");
+  if (!di.classList.contains("open")) {   // folded into its round button: one row
+    diaryGrow = 0; di.style.height = ""; diaryBox.style.height = ""; diaryBox.classList.remove("two");
+    diaryBox.style.removeProperty("--clip-diary"); diaryBox.style.removeProperty("--clip-diary-in");
+    diaryBox.querySelector("span").style.whiteSpace = "nowrap"; liftDiary(); return;
+  }
+  if (diaryBox.offsetWidth < 80) { clearTimeout(fitDiary._t); fitDiary._t = setTimeout(fitDiary, 250); return; }   // not laid out yet (a panel over it)
   diaryGrow = fitText(diaryBox, diaryBox.querySelector("span"), SAY_FS() - 4, 0, 48, "--clip-diary", "--clip-diary-in");
   di.style.height = diaryGrow ? 48 + diaryGrow + "px" : "";   // it grows upward too
   liftDiary();
@@ -2446,6 +2455,7 @@ document.addEventListener('pointerdown',e=>{if(!needsEl.contains(e.target))setNe
 // arrow is half of it, three arrows twice (user).
 const setPop = document.getElementById("setPop"), setGear = document.getElementById("setGear");
 document.getElementById("gearImg").src = D.uiIcons.gear;
+document.getElementById("diaryImg").src = D.uiIcons.diary;
 // a pixel glyph (ui_icons.GLYPHS) as crisp SVG squares in the button's text colour
 function glyphSvg(name, p = 2) {
   const rows = D.uiGlyphs[name], w = rows[0].length, h = rows.length;
@@ -4520,7 +4530,9 @@ function syncDiary() {
   const li = logEl.firstElementChild;
   // just the words: the times show in the opened list, so more of the line fits here
   const text = diaryBox.querySelector("span");
+  const was = text.textContent;
   text.textContent = !li ? "今天还没有写什么。" : li.classList.contains("day") ? li.textContent : li.querySelector("span").textContent;
+  if (diaryPeekOk && was && text.textContent !== was) peekDiary(text.textContent);   // a new line: unfold it for a while
   fitDiary();
   if (diaryOn) fillDiary();
 }
@@ -4547,6 +4559,31 @@ function setDiaryOpen(on) {
     diaryPop.classList.remove("on");
     setTimeout(() => { if (!diaryOn) { diaryPop.hidden = true; makeRoom(); } }, reduceMotionUI ? 0 : 240);
   }
+  syncDiaryFold();
+}
+// The diary rests as a round button and unfolds to the right (user): fast, so the words show at
+// once. It unfolds while pointed at (the gear rises above it then) or for a while after a new line.
+function diaryShouldOpen() { return diaryHover || diaryOn || (!peerDiaryReserved() && performance.now() < diaryPeekUntil); }
+function setDiaryUnfolded(on) {
+  if (on === diaryEl.classList.contains("open")) { if (on) fitDiary(); return; }
+  if (on) {   // measure at full width first, then unfold from the round button
+    diaryEl.classList.add("measure", "open"); fitDiary();
+    diaryEl.classList.remove("open"); void diaryEl.offsetWidth; diaryEl.classList.remove("measure");
+    diaryEl.classList.add("open");
+  } else { diaryEl.classList.remove("open"); fitDiary(); }
+}
+function syncDiaryFold() {
+  clearTimeout(diaryTimer);
+  setDiaryUnfolded(diaryShouldOpen());
+  if (diaryPeekUntil > performance.now()) diaryTimer = setTimeout(syncDiaryFold, diaryPeekUntil - performance.now() + 20);
+}
+function peekDiary(text) { diaryPeekUntil = performance.now() + Math.max(4000, Math.min(9000, 2500 + text.length * 120)); syncDiaryFold(); }
+{
+  let leave = 0;
+  const into = () => { clearTimeout(leave); if (!diaryHover) { diaryHover = true; moodrow.classList.add("diary-hover"); syncDiaryFold(); } };
+  const out = () => { clearTimeout(leave); leave = setTimeout(() => { diaryHover = false; moodrow.classList.remove("diary-hover"); syncDiaryFold(); }, 450); };
+  for (const el of [diaryEl, document.getElementById("settings")]) { el.addEventListener("pointerenter", into); el.addEventListener("pointerleave", out); }
+  diaryBox.addEventListener("focus", into); diaryBox.addEventListener("blur", out);
 }
 diaryBox.addEventListener("click", () => setDiaryOpen(!diaryOn));
 document.addEventListener("pointerdown", e => { if (diaryOn && !diaryEl.contains(e.target)) setDiaryOpen(false); });

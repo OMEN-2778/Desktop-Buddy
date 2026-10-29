@@ -86,7 +86,7 @@ def glyph(name: str, color=P.ink[1]) -> Sprite:
 
 
 def icon(name: str) -> Sprite:
-    return {"gear": gear, "people": people}[name]()
+    return {"gear": gear, "people": people, "diary": diary}[name]()
 
 
 def people() -> Sprite:
@@ -119,6 +119,38 @@ def people() -> Sprite:
         out.set(x, y, P.metal[4])
     out.set(1, 12, P.blue[3])
     return out
+
+
+def diary() -> Sprite:
+    """16x16 open book with a pen writing on the right page (the diary button, user)."""
+    s = Sprite(16, 16)
+    O, W, S, L = P.metal[2], P.linen[3], P.linen[2], P.metal[4]
+    C, Cd = P.blue[2], P.blue[1]
+    for x in range(1, 15):                      # pages: tops dip toward the spine, cover under them
+        d = min(x - 1, 14 - x)
+        top, bot = 3 + (d + 1) // 2, 12 + (1 if d >= 5 else 0)
+        for y in range(top, bot + 1):
+            s.set(x, y, W)
+        s.set(x, top - 1, O); s.set(x, bot + 1, C); s.set(x, bot + 2, Cd)
+    for y in range(3, 13):
+        s.set(0, y, O); s.set(15, y, O)
+    s.set(0, 13, C); s.set(15, 13, C); s.set(0, 14, Cd); s.set(15, 14, Cd)
+    for y in range(5, 14):                      # the fold
+        s.set(7, y, S); s.set(8, y, S)
+    for y in (6, 8, 10):                        # writing on the left page
+        for x in range(2, 6):
+            s.set(x, y, L)
+    for y in (9, 11):
+        for x in range(10, 14):
+            s.set(x, y, L)
+    for x in range(12, 14):
+        s.set(x, 7, L)
+    for i, (x, y) in enumerate([(14, 1), (13, 2), (12, 3), (11, 4), (10, 5)]):   # the pen, nib down-left
+        s.set(x, y, P.clay[1]); s.set(x + 1, y, P.clay[3] if i else P.metal[2])
+        s.set(x, y - 1, P.clay[2] if i else P.metal[2])
+    s.set(10, 6, P.metal[3]); s.set(11, 6, P.metal[4]); s.set(10, 7, P.ink[1]); s.set(11, 7, P.metal[1])
+    s.set(15, 0, P.metal[3]); s.set(15, 1, P.clay[2])
+    return s
 
 
 def need_stripes() -> Sprite:
@@ -169,7 +201,7 @@ def build():
     for g in GLYPHS:
         out.blit(glyph(g), x, 2)
         x += len(GLYPHS[g][0]) + 3
-    return {"ui_icons": out, "ui_people": people(), "ui_need_stripes": need_stripes(),
+    return {"ui_icons": out, "ui_people": people(), "ui_diary": diary(), "ui_need_stripes": need_stripes(),
             "ui_relief_badge": relief_plate(22, 11),
             "ui_relief_badge_small": relief_plate(19, 9),
             "ui_relief_answer": relief_plate(),

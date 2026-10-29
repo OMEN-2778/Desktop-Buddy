@@ -62,7 +62,7 @@ function showPeerSay(text,who,speaker=null){
   }
   if(peerSpeech.phase==='preparing')return;
   const wasLeaving=peerSpeech.phase==='leaving';
-  peerSpeech.phase='preparing';setDiaryOpen(false);diaryEl.classList.add('peer-away');diaryEl.inert=true;
+  peerSpeech.phase='preparing';setDiaryOpen(false);diaryEl.classList.add('peer-away');syncDiaryFold();
   peerHud.hidden=false;peerHud.classList.remove('leaving');
   clearTimeout(peerSpeech.entry);
   peerSpeech.entry=setTimeout(revealPeerLine,reduceMotionUI||wasLeaving?0:240);
@@ -73,7 +73,7 @@ function hidePeerSay(immediate=false){
   if(peerSpeech.phase==='idle'){peerHud.hidden=true;return;}
   peerSpeech.phase='leaving';peerHud.classList.remove('on');peerHud.classList.add('leaving');peerHud.setAttribute('aria-hidden','true');
   const done=()=>{peerSpeech.exit=0;peerSpeech.phase='idle';peerSpeech.speakerId=null;peerHud.hidden=true;peerHud.classList.remove('leaving');
-    diaryEl.classList.remove('peer-away');diaryEl.inert=moodrow.classList.contains('contacts-open');fitDiary();};
+    diaryEl.classList.remove('peer-away');diaryEl.inert=moodrow.classList.contains('contacts-open');syncDiaryFold();};
   if(immediate||reduceMotionUI)done();else peerSpeech.exit=setTimeout(done,240);
 }
 function tickPeerSpeech(now){
@@ -81,6 +81,6 @@ function tickPeerSpeech(now){
   if(peerSpeech.phase==='idle'&&peerSpeech.pending){const line=peerSpeech.pending;showPeerSay(line.text,line.who,line.speaker);return;}
   if(!['visible','preparing'].includes(peerSpeech.phase))return;
   if(asleep()||sim.mode==='down'){hidePeerSay();return;}
-  const talking=friendOutingState?.talk||remoteSocial||socialState.guest?.talk||socialState.guest?.bedTalk||sim.talk&&sim.item?.talk;
-  if(!talking&&peerSpeech.phase==='visible'&&now>=peerSpeech.until)hidePeerSay();
+  // each line stays a while, then the bubble folds away even mid-talk (user); the next line brings it back
+  if(peerSpeech.phase==='visible'&&now>=peerSpeech.until)hidePeerSay();
 }

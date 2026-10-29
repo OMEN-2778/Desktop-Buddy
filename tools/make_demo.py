@@ -423,7 +423,7 @@ def main():
         "doll": mc.doll_data(),   # Buddy's role maps + dressing-room options (shared with the creator)
         "bg": {"day": png(day), "night": png(night)},
         "needIcons": {k: png(need_icons.icon(k)) for k in need_icons.GRIDS},
-        "uiIcons": {**{name: png(ui_icons.icon(name)) for name in ("gear", "people")}, "stripes": png(ui_icons.need_stripes())},
+        "uiIcons": {**{name: png(ui_icons.icon(name)) for name in ("gear", "people", "diary")}, "stripes": png(ui_icons.need_stripes())},
         "uiRelief": {"badge": png(ui_icons.relief_plate(22, 11)),
                      "badgeSmall": png(ui_icons.relief_plate(19, 9)),
                      "answer": png(ui_icons.relief_plate()), "decline": png(ui_icons.relief_plate(kind="red")), "invite":png(ui_icons.relief_plate(kind="gold")), "later":png(ui_icons.relief_plate(kind="blue"))},
