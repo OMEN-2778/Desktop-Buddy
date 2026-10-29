@@ -1294,7 +1294,8 @@ function render() {
   drawChair(homeActorsCtx);
   drawSleepoverBedding(homeActorsCtx);
   drawHomeGuest(homeActorsCtx);drawOutingFriend(homeActorsCtx);
-  drawPetActor(homeActorsCtx);
+  const petAfter = sleeping && sim.mode !== "down";   // while she sleeps the pet goes over the duvet, never behind the bed (user)
+  if (!petAfter) drawPetActor(homeActorsCtx);
   // Buddy
   const ms = realClock * 1000;
   const fr = activityFrame(ms);
@@ -1328,6 +1329,7 @@ function render() {
     }
     emoteAt = [x + 13, y - 15];
   }
+  if (petAfter) drawPetActor(homeActorsCtx);
   drawPetActor(homeActorsCtx,true);
   bctx.drawImage(homeActors,0,0);
   grade(bctx, f, lit);
@@ -1657,6 +1659,7 @@ const one = v => (Array.isArray(v) ? pick(v) : v);   // a line, or one of its va
 // "{食物}" -> a random dish; vars pins a value so diary and words agree
 function fill(text, vars = {}) {
   vars.名字 ??= nameOf(); vars.她 ??= ta();
+  if (!vars.宠物 && text.includes("{宠物}")) try { vars.宠物 = petState.pet?.name || "小家伙"; } catch (e) { vars.宠物 = "小家伙"; }
   return text.replace(/\{(\S+?)\}/g, (m, k) => vars[k] || (T.fill[k] ? (vars[k] = pick(T.fill[k])) : m));
 }
 const moods = new Map();          // id -> { until: game minute | null (condition), t: when added }
@@ -1883,7 +1886,10 @@ const EVENTS = [
   ["sleepTalk", c => c.sleeping, 0.06, 1440, () => { const t = pick(T.events.sleepTalk.say); log(`说梦话：「${t}」`); speak(`（梦话）${t}`, true); }],
 ];
 // everyday events written in life_text.js with a `when`: tags joined with "+"
+// her pet when it is at home: its species ("cat" / "dog"), else null (pets.js may load later, or not at all in the 试玩版)
+const petAtHome = () => { try { const p = petState.pet; return p && p.status === "home" ? D.pets.breeds.find(b => b.id === p.breed)?.species || "pet" : null; } catch (e) { return null; } };
 const WHEN = {
+  hasPet: c => c.awake && !!petAtHome(), hasCat: c => c.awake && petAtHome() === "cat", hasDog: c => c.awake && petAtHome() === "dog",
   morning: c => c.awake && c.h >= 6 && c.h < 10, day: c => c.awake && c.day, evening: c => c.awake && c.h >= 18 && c.h < 22,
   night: c => c.awake && (c.h >= 22 || c.h < 4), sleeping: c => c.sleeping,
   rain: () => isRain(weather.kind), snow: () => weather.kind === "snow", clear: c => c.clear, windowOpen: c => c.open,
@@ -2765,11 +2771,15 @@ function layoutRing() {
     if (apart(pos)) break;
     R *= 1.05;
   }
+  // the pet's menu (user): one column of pills to the right of its status card, the two side by side over the pet
+  let extra = null;
+  if (ringAt === "pet" && typeof petColumnLayout === "function") ({ pos, extra } = petColumnLayout(sz, gap));
   els.forEach((el, i) => { el.style.setProperty("--x", pos[i][0] + "px"); el.style.setProperty("--y", pos[i][1] + "px"); });
   // keep it all inside the house (margin 4px); if it can't fit, inside the window
   const c = ringCenter(), cx = view.offsetLeft + c.x * scale, cy = view.offsetTop + c.y * scale;
-  const L = Math.min(...pos.map(([x], i) => x - sz[i][0] / 2)), Rt = Math.max(...pos.map(([x], i) => x + sz[i][0] / 2));
-  const T = Math.min(...pos.map(([, y], i) => y - sz[i][1] / 2)), B = Math.max(...pos.map(([, y], i) => y + sz[i][1] / 2));
+  let L = Math.min(...pos.map(([x], i) => x - sz[i][0] / 2)), Rt = Math.max(...pos.map(([x], i) => x + sz[i][0] / 2));
+  let T = Math.min(...pos.map(([, y], i) => y - sz[i][1] / 2)), B = Math.max(...pos.map(([, y], i) => y + sz[i][1] / 2));
+  if (extra) { L = Math.min(L, extra.l); T = Math.min(T, extra.t - 14); B = Math.max(B, extra.t + extra.h); }   // (the card's title pill pokes 12px above it)
   const wr = ringEl.offsetParent.getBoundingClientRect();
   const fitIn = (lo, hi, a, b, c0) => (b - a > hi - lo ? (lo + hi) / 2 - (a + b) / 2 - c0 : Math.max(lo - (c0 + a), Math.min(0, hi - (c0 + b))));
   const boxX = Rt - L > view.offsetWidth - 8 ? [12 - wr.left, innerWidth - 12 - wr.left] : [view.offsetLeft + 4, view.offsetLeft + view.offsetWidth - 4];

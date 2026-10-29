@@ -60,19 +60,29 @@ function fitPetHud(){
  if(!petHudState.open)return;
  if(!petCanSee()||wiping||phoneHolds()||card||wardrobeOpen||!petPanel.hidden||!(ringAt==='pet'&&ringOf)){closePetHud();return;}
  const p=petState.pet,v=view.getBoundingClientRect(),growth=Math.max(0,Math.min(1,(v.width-342)/1026));
- petHud.style.setProperty('--pc-fs',Math.round(12+growth*3)+'px');petHud.style.setProperty('--pc-h',Math.round(108+growth*30)+'px');petHud.style.setProperty('--pc-col',Math.round(34+growth*8)+'px');
+ petHud.style.setProperty('--pc-fs',Math.round(12+growth*3)+'px');petHud.style.setProperty('--pc-col',Math.round(34+growth*8)+'px');
  if(petNameButton.textContent!==p.name){petNameButton.textContent=p.name;petNameButton.title='点击给'+p.name+'改名';}
  for(const [key,{column,fill,val,label}]of petStatNodes){
   const value=Math.round(key==='affinity'?(p.affinity??30):p.needs[key]);
   if(column.getAttribute('aria-valuenow')!==String(value)){column.setAttribute('aria-valuenow',value);column.title=label+' '+value;val.textContent=value;fill.style.setProperty('--v',value/100);
    fill.style.setProperty('--c',key==='affinity'?'#e9a1c0':value<20?'var(--need-low)':value<40?'var(--need-warn)':'var(--need-ok)');column.classList.toggle('low',key!=='affinity'&&value<20);}
  }
- // above the ring's top button, centred on the pet, kept on screen
+ // left of the column of pills (petColumnLayout), as tall as it: slim, tall bars (user)
  const btns=[...ringEl.children].map(b=>b.getBoundingClientRect()).filter(r=>r.width);if(!btns.length)return;
- const ringTop=Math.min(...btns.map(r=>r.top)),pt=petPoint(),cx=v.left+pt.x*scale,w=petHud.offsetWidth,h=petHud.offsetHeight;
- let top=ringTop-h-10,below=false;if(top<6){top=Math.max(...btns.map(r=>r.bottom))+10;below=true;}
- const left=Math.max(6,Math.min(innerWidth-w-6,cx-w/2));
- petHud.style.left=Math.round(left)+'px';petHud.style.top=Math.round(top)+'px';petHud.style.setProperty('--pc-ox',Math.round(cx-left)+'px');petHud.classList.toggle('below',below);
+ const colL=Math.min(...btns.map(r=>r.left)),colT=Math.min(...btns.map(r=>r.top)),colB=Math.max(...btns.map(r=>r.bottom)),w=petHud.offsetWidth;
+ petHud.style.setProperty('--pc-h',Math.round(colB-colT)+'px');
+ const left=colL-PET_CARD_GAP-w;
+ petHud.style.left=Math.round(left)+'px';petHud.style.top=Math.round(colT)+'px';petHud.style.setProperty('--pc-ox','100%');petHud.classList.remove('below');
+}
+// the menu's pills stacked in one column right of the card; the pair sits centred over the pet
+const PET_CARD_GAP=10;
+function petCardWidth(){const v=view.getBoundingClientRect(),growth=Math.max(0,Math.min(1,(v.width-342)/1026));return 4*Math.round(34+growth*8)+6+16;}
+function petColumnLayout(sz,gap){
+ const g=6,H=sz.reduce((a,[,h])=>a+h,0)+g*(sz.length-1),colW=Math.max(...sz.map(([w])=>w)),cardW=petCardWidth();
+ const groupW=cardW+PET_CARD_GAP+colW,above=Math.round(10*scale);   // its bottom just over the pet's head
+ const colX=Math.round(-groupW/2+cardW+PET_CARD_GAP+colW/2);let y=-above-H;
+ const pos=sz.map(([,h])=>{const p=[colX,Math.round(y+h/2)];y+=h+g;return p;});
+ return {pos,extra:{l:-groupW/2,t:-above-H,h:H}};
 }
 document.addEventListener('pointerdown',e=>{if(petHudState.open&&!petHud.contains(e.target)&&!ringEl.contains(e.target))closePetHud();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePetHud();});

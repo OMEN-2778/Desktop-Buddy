@@ -845,3 +845,5 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 #update.update button:active { transform: scale(.92); transition-duration: .08s; }
 @keyframes upStripes { to { background-position: 25px 0; } }
 @media (prefers-reduced-motion: reduce) { #update.update, #update.update .up-bar::after { transition: none; animation: none; } }
+/* the pet's menu stands in one column (pet_hud.js petColumnLayout): pills one width */
+.ring.over-hud > button { min-width: 7.2em; text-align: center; }

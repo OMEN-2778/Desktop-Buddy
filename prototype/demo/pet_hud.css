@@ -4,7 +4,7 @@
    and follows it; the actions are the shared ring around the pet. */
 .pet-card { position: fixed; z-index: 2147483000; isolation: isolate; display: flex; flex-direction: column; align-items: center;
   height: var(--pc-h, 108px); padding: 18px 8px 8px; box-sizing: border-box; color: var(--ink); font-size: var(--pc-fs, 12px);
-  filter: drop-shadow(2px 2px 0 var(--shadow)); transform-origin: var(--pc-ox, 50%) 115%; opacity: 0; transform: translateY(10px) scale(.6); }
+  filter: drop-shadow(2px 2px 0 var(--shadow)); transform-origin: 100% 60%; opacity: 0; transform: translateY(10px) scale(.6); }
 .pet-card.below { transform-origin: var(--pc-ox, 50%) -15%; }
 .pet-card[hidden] { display: none; }
 .pet-card::before { content: ""; position: absolute; inset: 0; z-index: -2; background: var(--hud-frame, var(--edge)); clip-path: var(--hud-panel-clip); }
