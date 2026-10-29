@@ -427,25 +427,32 @@ body {
   position: absolute; z-index: 19; height: var(--say-h, 60px);   /* as tall as the speech bubble */
   top: calc(-8px - var(--row-h, 42px) + (var(--row-h, 42px) - var(--say-h, 60px)) / 2);
   /* at rest a round button over the emoji, where the gear was; unfolded it runs to the house's right edge (user) */
-  left: calc(var(--mood-d, 78px) / 2 - var(--say-h, 48px) / 2); width: var(--say-h, 48px); max-width: calc(100% - var(--mood-d, 78px) / 2 + var(--say-h, 48px) / 2);
+  left: calc(var(--mood-d, 78px) / 2 - var(--say-h, 48px) / 2); width: var(--say-h, 48px); min-width: var(--say-h, 48px);   /* (the spring may overshoot past the edge, never under a circle) */
   --pe: #bebdcc; --pf: #ffffff; --wood-ink: var(--ink, #2b2433);   /* white, pixel outline (user) */
   translate: 0 var(--lift, 0px);
-  transition: opacity .2s, translate .35s cubic-bezier(.3, 1.4, .5, 1), width .16s cubic-bezier(.2, .8, .3, 1), height .16s cubic-bezier(.2, .8, .3, 1);
+  transition: opacity .2s, translate .35s cubic-bezier(.3, 1.4, .5, 1), width .3s cubic-bezier(.3, 1.45, .5, 1), height .3s cubic-bezier(.3, 1.45, .5, 1);   /* fast, with a little spring (user) */
 }
 .diary.open { width: calc(100% - var(--mood-d, 78px) / 2 + var(--say-h, 48px) / 2); }
 .diary.measure { transition: none !important; }
 .diary-box span { opacity: 0; transition: opacity .08s; }
 .diary.open .diary-box span { opacity: 1; transition-delay: .06s; }
-.diary-ico { flex: none; width: 32px; height: 32px; display: block; }
-.diary-ico img { display: block; width: 32px; height: 32px; image-rendering: pixelated; }
+.diary-ico { flex: none; width: 28px; height: 28px; display: block; }
+.diary-ico img { display: block; width: 28px; height: 28px; image-rendering: pixelated; }
+/* the icon gives a little hop as the diary unfolds and a nod as it folds (user) */
+.diary-ico.pop-open { animation: diary-ico-open .38s cubic-bezier(.3, 1.4, .5, 1); }
+.diary-ico.pop-close { animation: diary-ico-close .32s ease-out; }
+@keyframes diary-ico-open { 0% { transform: scale(.8) rotate(-12deg); } 55% { transform: scale(1.12) rotate(6deg); } 100% { transform: none; } }
+@keyframes diary-ico-close { 0% { transform: none; } 45% { transform: scale(.86) rotate(-8deg); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .diary-ico.pop-open, .diary-ico.pop-close { animation: none; } }
 .diary:not(.open) .diary-box { padding-right: 0; }
+.diary:not(.open) { transition-timing-function: ease, cubic-bezier(.3, 1.4, .5, 1), cubic-bezier(.3, 1.3, .5, 1), cubic-bezier(.3, 1.3, .5, 1); transition-duration: .2s, .35s, .26s, .26s; }
 /* the gear: a row above the diary, out only while the diary is pointed at (or its rows are open) */
 .settings { opacity: 0; pointer-events: none; scale: .6; transform-origin: 50% 100%; transition: translate .35s var(--hud-settle), opacity .12s, scale .16s cubic-bezier(.3, 1.6, .5, 1); }
 .moodrow.diary-hover .settings, .moodrow.setting .settings, .settings:focus-within { opacity: 1; pointer-events: auto; scale: 1; }
 .diary.away { opacity: 0; translate: 12px var(--lift, 0px); pointer-events: none; }   /* while the settings rows are out */
 .diary-box {
   position: relative; isolation: isolate; width: 100%; height: 100%; margin: 0; border: 0;
-  padding: 0 20px 0 calc(var(--say-h, 48px) / 2 - 16px);   /* the book icon sits centred in the round button */
+  padding: 0 20px 0 calc(var(--say-h, 48px) / 2 - 14px);   /* the book icon sits centred in the round button */
   display: flex; align-items: center; gap: 10px; min-width: 0;
   background: none; box-shadow: none; color: var(--wood-ink); font-size: var(--diary-fs, 18px); line-height: 1.3; text-align: left; cursor: pointer;
   filter: drop-shadow(3px 3px 0 var(--shadow));
@@ -1380,7 +1387,7 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
         </div>
         <div class="diary" id="diary">
           <div class="diary-pop" id="diaryPop" hidden><ol id="diaryList" aria-label="最近发生的事"></ol></div>
-          <button type="button" class="diary-box" id="diaryBox" aria-expanded="false" aria-controls="diaryPop" title="看看最近发生的事"><i class="diary-ico"><img alt="日记" id="diaryImg" width="32" height="32"></i><span></span></button>
+          <button type="button" class="diary-box" id="diaryBox" aria-expanded="false" aria-controls="diaryPop" title="看看最近发生的事"><i class="diary-ico"><img alt="日记" id="diaryImg" width="28" height="28"></i><span></span></button>
         </div>
         <section class="peer-hud" id="peerHud" role="region" aria-label="对方的对话" aria-hidden="true" hidden>
           <div class="peer-bubble" id="peerBubble" role="status" aria-live="polite"><i class="bg" aria-hidden="true"></i><i class="dot d1" aria-hidden="true"></i><i class="dot d2" aria-hidden="true"></i><span></span></div>
@@ -41042,6 +41049,8 @@ function setDiaryOpen(on) {
 function diaryShouldOpen() { return diaryHover || diaryOn || (!peerDiaryReserved() && performance.now() < diaryPeekUntil); }
 function setDiaryUnfolded(on) {
   if (on === diaryEl.classList.contains("open")) { if (on) fitDiary(); return; }
+  const ico = diaryEl.querySelector(".diary-ico");
+  ico.classList.remove("pop-open", "pop-close"); void ico.offsetWidth; ico.classList.add(on ? "pop-open" : "pop-close");
   if (on) {   // measure at full width first, then unfold from the round button
     diaryEl.classList.add("measure", "open"); fitDiary();
     diaryEl.classList.remove("open"); void diaryEl.offsetWidth; diaryEl.classList.remove("measure");

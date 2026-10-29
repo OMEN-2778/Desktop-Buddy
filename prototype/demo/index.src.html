@@ -23,7 +23,7 @@
         </div>
         <div class="diary" id="diary">
           <div class="diary-pop" id="diaryPop" hidden><ol id="diaryList" aria-label="最近发生的事"></ol></div>
-          <button type="button" class="diary-box" id="diaryBox" aria-expanded="false" aria-controls="diaryPop" title="看看最近发生的事"><i class="diary-ico"><img alt="日记" id="diaryImg" width="32" height="32"></i><span></span></button>
+          <button type="button" class="diary-box" id="diaryBox" aria-expanded="false" aria-controls="diaryPop" title="看看最近发生的事"><i class="diary-ico"><img alt="日记" id="diaryImg" width="28" height="28"></i><span></span></button>
         </div>
         <section class="peer-hud" id="peerHud" role="region" aria-label="对方的对话" aria-hidden="true" hidden>
           <div class="peer-bubble" id="peerBubble" role="status" aria-live="polite"><i class="bg" aria-hidden="true"></i><i class="dot d1" aria-hidden="true"></i><i class="dot d2" aria-hidden="true"></i><span></span></div>
@@ -4566,6 +4566,8 @@ function setDiaryOpen(on) {
 function diaryShouldOpen() { return diaryHover || diaryOn || (!peerDiaryReserved() && performance.now() < diaryPeekUntil); }
 function setDiaryUnfolded(on) {
   if (on === diaryEl.classList.contains("open")) { if (on) fitDiary(); return; }
+  const ico = diaryEl.querySelector(".diary-ico");
+  ico.classList.remove("pop-open", "pop-close"); void ico.offsetWidth; ico.classList.add(on ? "pop-open" : "pop-close");
   if (on) {   // measure at full width first, then unfold from the round button
     diaryEl.classList.add("measure", "open"); fitDiary();
     diaryEl.classList.remove("open"); void diaryEl.offsetWidth; diaryEl.classList.remove("measure");
