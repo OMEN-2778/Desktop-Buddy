@@ -1050,7 +1050,12 @@ artifact 交给 Windows 签名打包，禁止把旧的已提交 index.html 直�
 
 **春日山谷 (valley, spring only)** — `art/src/concept/spring_valley.py`,
 `prototype/demo/valley.js`. User: a valley in bloom, big, refined, NO reused
-art (own trees, sky, ridges, flowers, trail). One 1710px panorama sliced
+art (own trees, sky, ridges, flowers, trail). v1 (flat fills, outlines) was
+rejected as "too simple, cartoonish": v2 is painted with `_render.py` — lit
+value fields quantized into long hue-shifted ramps with Bayer dither,
+foliage as masses of lit leaf clumps (`stamp_clumps`), rocks as faceted lit
+ellipsoids with moss, haze toward the distance, NO outlines on scenery.
+New outdoor scenes should use this style. One 1710px panorama sliced
 into five 342px screens (谷口 · 花坡 · 溪谷飞瀑 · 花海草甸 · 紫藤小亭) so the
 screens join up; edge walk / arrows move between them. Door ring offers
 it only in spring. Own ramps in palette.py (ridge_far, ridge_mid, meadow,

@@ -1,22 +1,16 @@
-"""春日山谷: a valley in full spring bloom, five 342x118 screens side by side.
+"""春日山谷 v2: a valley in full spring bloom, five 342x118 screens.
 
-All new art (user: no reused pieces). One continuous panorama, 1710 px wide,
-is drawn first (sky, three mountain ridges, the valley floor, the trail) so
-walking from one screen to the next lines up; each screen then gets its own
-landmark:
+User: "too simple and cartoonish, make every scene detailed and as realistic
+as possible", no reused art. Painted with _render: every surface is a lit
+value field quantized into long hue-shifted ramps with Bayer dithering;
+foliage is masses of lit leaf clumps with ragged edges and holes; no
+outlines on scenery; haze lifts and cools everything with distance.
 
-    谷口       a mossy boulder with a carved stone, a signpost, a wild cherry
-    花坡       slopes striped with rapeseed, milk vetch and clover; a pear in
-               white bloom; two beehives
-    溪谷飞瀑   a cliff with a waterfall, a pool, the stream under a wooden bridge
-    花海草甸   a meadow packed with lupines and poppies; an old oak with a swing
-    紫藤小亭   a wooden pavilion under a wisteria pergola, a stone lantern, a pond
-
-Light from the top left. Walking lane y=103 on an earth trail (95..107),
-flowers and grass in front (foreground layer, drawn over Buddy).
-
-    build() -> valley_<zone> (background), valley_<zone>_trees_<0|1>,
-    valley_<zone>_front, falls frames, lamb/bee sprites, previews.
+One 1710 px panorama (sky, snow peaks, forested ridges with wild cherry,
+the valley floor, the trail) is cut into the five screens:
+    谷口 · 花坡 · 溪谷飞瀑 · 花海草甸 · 紫藤小亭
+Walking lane y=103 on the trail (95..107); the near grass (front()) is
+drawn over Buddy.
 """
 from __future__ import annotations
 
@@ -25,16 +19,15 @@ import random
 
 import numpy as np
 
-from pixelkit import P, Sprite
+from pixelkit import Sprite
+from _render import R, quant, fbm, fbm1, mix, sphere_light, Layer, bayer
 
 W, H = 342, 118
 N = 5
 PW = W * N
 PATH = (95, 107)
 FEET = 103
-FLOOR = 64               # where the valley floor meets the last ridge (roughly)
 PREVIEW_SCALE = 4
-
 ZONES = [
     {"id": "mouth", "name": "谷口"},
     {"id": "slope", "name": "花坡"},
@@ -42,798 +35,1020 @@ ZONES = [
     {"id": "meadow", "name": "花海草甸"},
     {"id": "wisteria", "name": "紫藤小亭"},
 ]
-STREAM_X = 2 * W + 171   # the stream crosses the trail here (screen 3)
-BRIDGE = (STREAM_X - 34, STREAM_X + 34)
 
-SKY, FAR, MID, G, SAK, WIS, ROCK, WAT, EARTH = (P.sky_day, P.ridge_far, P.ridge_mid, P.meadow, P.sakura,
-                                                 P.wisteria, P.rock, P.stream, P.earth)
-BARK = P.walnut
+# ---------------------------------------------------------------- ramps (dark -> light, hue shifted)
+SKY = R("#4e7cc2", "#5f8bcb", "#7199d3", "#86a9db", "#9cbbe3", "#b3cbea", "#c8d9ef", "#d9e4f1", "#e7ebf1", "#f1ece9")
+CLOUD = R("#9497b8", "#a7aac8", "#babdd6", "#cdcfe3", "#dedfee", "#ecedf6", "#f7f7fb", "#ffffff")
+MTN = R("#56628e", "#64709b", "#7380a8", "#8490b5", "#96a2c2", "#a9b4cf", "#bcc6dc", "#cfd7e7")
+SNOW = R("#a3aecb", "#b7c1da", "#cad3e7", "#dde4f1", "#eef2f8", "#fafcfe")
+FOREST_FAR = R("#3f5d68", "#4a6a70", "#567878", "#638680", "#71948a", "#82a296", "#95b1a3")
+FOREST_MID = R("#2c4a3c", "#365a41", "#426a47", "#4f7a4c", "#5e8a52", "#709a5b", "#85aa66", "#9bba74")
+SAKURA_FAR = R("#a07f97", "#b8919f", "#cba3ad", "#dbb7bf", "#e8cbd1", "#f2dde1")
+GRASS = R("#2d4a25", "#38592a", "#446930", "#527a35", "#618a3a", "#729b41", "#86ab4b", "#9cbb57", "#b4cb6a", "#cbda83")
+LEAF = R("#1d3628", "#26452d", "#305532", "#3c6636", "#4b773a", "#5d893f", "#729b46", "#8aad50", "#a5c260", "#c3d77c")
+SAKURA = R("#6f3d55", "#8b4f68", "#a7637c", "#c07b91", "#d595a8", "#e4afbe", "#efc8d3", "#f8dee5", "#fff1f4")
+PEAR = R("#6f7468", "#8a8f82", "#a4a99b", "#bdc1b3", "#d3d6c9", "#e5e7dc", "#f2f3ec", "#fcfdf8")
+WISTERIA = R("#35265a", "#45326f", "#574186", "#6c529c", "#8268b2", "#9a82c6", "#b49fd8", "#cebee8", "#e6dbf4")
+BARK = R("#231a19", "#33251f", "#453227", "#58402f", "#6c5039", "#816244", "#977551")
+ROCK = R("#2a2b33", "#363843", "#444653", "#535664", "#646776", "#767a88", "#8a8e9a", "#a0a3ac", "#b7b9bf", "#cdced2")
+MOSS = R("#2f4a26", "#3d5d2b", "#4d7031", "#5f8338", "#739642", "#8aa94f")
+EARTH = R("#3f2e22", "#4f3a2b", "#604835", "#72573f", "#856849", "#987a56", "#ab8d65", "#bea077", "#d0b38b", "#e0c7a2")
+WATER = R("#143a52", "#1b4b66", "#235d79", "#2e708b", "#3d849c", "#5098ad", "#68adbe", "#86c2cf", "#a9d6df", "#cfeaee")
+WOOD = R("#2e1f19", "#3f2b21", "#523a2a", "#664a34", "#7b5c3f", "#8f6e4b", "#a38259", "#b7966a", "#caa97d")
+LACQUER = R("#3b1615", "#521e1b", "#6b2822", "#86342a", "#a14434", "#ba5841")
+TILE = R("#22252e", "#2c303b", "#373c49", "#444a58", "#535a69", "#646b7a", "#777e8c")
+HAZE = np.array([214, 224, 238], np.float32)          # the valley air, pale blue
+FLOWER = {
+    "rape": R("#7a5a17", "#a07a1c", "#c79c22", "#e2bb2e", "#f2d34a", "#fbe679", "#fff3b0"),
+    "vetch": R("#5e2c58", "#7d3b72", "#9c4f8c", "#b766a3", "#cf82b9", "#e2a2cf", "#f0c4e2"),
+    "white": R("#8d907f", "#aaad9c", "#c6c8b8", "#dedfd2", "#efefe6", "#fbfbf6"),
+    "blue": R("#283c7a", "#34509a", "#4767b6", "#5f82cb", "#7d9fdb", "#a3bfe9"),
+    "poppy": R("#5c1514", "#7e1d19", "#a12a1f", "#c23d27", "#db5734", "#ec7a4c", "#f6a272"),
+    "lupine": R("#3b2a68", "#4c3784", "#61489e", "#7a5db5", "#957ac9", "#b39bdb", "#d2c1ec"),
+    "pinklupine": R("#6b2a4d", "#8a3862", "#a94b79", "#c46490", "#da82a8", "#eaa3c0", "#f5c5d8"),
+}
 
 
-def noise1(seed, octaves):
-    """A smooth 1-D height function: a few sines with random phases."""
+def zone_x(i):
+    return i * W
+
+
+# ---------------------------------------------------------------- sky and clouds
+def sky_px():
+    """Sky: deep blue overhead, softening to a warm haze at the horizon."""
+    h = 72
+    y = np.arange(h)[:, None] / (h - 1)
+    v = 1 - y ** 0.85
+    v = v + (fbm(PW, h, 60, 3, "skyv") - 0.5) * 0.06
+    rgb = quant(1 - np.clip(v, 0, 1), SKY, 1.0)
+    px = np.zeros((H, PW, 4), np.uint8)
+    px[:h, :, :3] = rgb
+    px[:h, :, 3] = 255
+    px[h:, :, :3] = SKY[-1]
+    px[h:, :, 3] = 255
+    return px
+
+
+def clouds(px):
+    """Cumulus banks: density from stretched noise; lit from the top left
+    (the side facing the sun is bright, bellies are lavender-grey)."""
+    h = 46
+    d = fbm(PW, h, 14, 5, "cloud", stretch=1.7)
+    band = np.exp(-((np.arange(h)[:, None] - 15) / 10.0) ** 2)
+    big = fbm(PW, h, 60, 2, "cloudbig", stretch=1.4)
+    dens = d * band * np.clip(big * 2.2 - 0.45, 0, 2)
+    t = 0.42
+    mask = dens + bayer(h, PW) * 0.03 > t
+    up = np.roll(dens, 2, axis=0)
+    left = np.roll(dens, 2, axis=1)
+    lit = 0.62 + (dens - up) * 3.2 + (dens - left) * 1.6 + (dens - t) * 1.2
+    lit -= np.clip((np.arange(h)[:, None] - 20) / 40, 0, 1) * 0.25
+    rgb = quant(np.clip(lit, 0, 1), CLOUD, 1.0)
+    sub = px[:h]
+    sub[mask, :3] = rgb[mask]
+
+
+# ---------------------------------------------------------------- mountains
+def ridged(n, scale, seed):
+    r = 1 - np.abs(fbm1(n, scale, 5, seed) * 2 - 1)
+    return r
+
+
+def far_mountains(px):
+    """Snow-capped peaks: cones with rough ridged flanks; the face is lit
+    per pixel from a ridged terrain field (gullies and spurs) plus which
+    side of its peak it is on; old snow lies in the high gullies only; the
+    haze swallows their feet."""
+    rnd = random.Random("peaks")
+    peaks, x = [], -40
+    while x < PW + 80:
+        peaks.append((x, rnd.uniform(7, 28), rnd.uniform(0.42, 0.78)))
+        x += rnd.uniform(85, 150)
+    rough = fbm1(PW, 9, 4, "pkr") - 0.5
+    top = np.full(PW, 99.0)
+    own = np.zeros(PW)
+    for px_, py, k in peaks:
+        xs = np.arange(PW)
+        y = py + np.abs(xs - px_) * k * (0.55 + 0.25 * np.sin(xs * 0.05 + px_))
+        better = y < top
+        top = np.where(better, y, top)
+        own = np.where(better, px_, own)
+    top = (top + rough * 7).astype(int)
+    summit = np.array([min(py for px_, py, k in peaks if px_ == o) for o in own])
+    h = 70
+    T = fbm(PW, h, 6, 4, "terrain", stretch=0.7)
+    Tr = 1 - np.abs(T * 2 - 1)
+    gx = np.roll(Tr, -1, 1) - np.roll(Tr, 1, 1)
+    ys = np.arange(h)[:, None]
+    below = ys - top[None, :]
+    inside = below >= 0
+    side = np.where(np.arange(PW) < own, 0.2, -0.17)[None, :]
+    lit = 0.44 + side - gx * 1.1 + (Tr - 0.5) * 0.3
+    haze = np.clip((ys - 40) / 26, 0, 1) ** 1.2
+    lit = lit * (1 - haze) + 0.98 * haze
+    rgb = quant(np.clip(lit, 0, 1), MTN, 1.0)
+    reach = np.clip(26 - summit, 0, 20)[None, :] * 0.7
+    snow = inside & (ys < (summit[None, :] + reach * (0.6 + fbm(PW, h, 3, 3, "snowl") * 0.8))) & (Tr > 0.42) & (summit[None, :] < 24)
+    snow |= inside & (below < 2) & (summit[None, :] < 18)
+    srgb = quant(np.clip(0.6 + side * 1.6 - gx * 1.8 + (Tr - 0.5) * 0.4, 0, 1), SNOW, 1.0)
+    rgb = np.where(snow[..., None], srgb, rgb)
+    px[:h][inside, :3] = rgb[inside]
+    return top
+
+
+def forest_ridge(px, base, amp, scale, seed, ramp, haze, pink=0.12, density=1.0, r_rng=(1.6, 2.8), bottom=None):
+    """A forested ridge: its skyline is bumpy with crowns; the slope is a
+    canopy of lit tree crowns (back rows first), spring greens with drifts
+    of wild cherry and white pear; haze pulls it toward the air colour."""
+    top = (base - fbm1(PW, scale, 4, seed) * amp).astype(int)
+    bottom = bottom or base + 30
+    L = Layer(PW, H)
     rnd = random.Random(seed)
-    waves = [(rnd.uniform(0, 6.3), f, a) for f, a in octaves]
-    return lambda x: sum(a * math.sin(x * f + ph) for ph, f, a in waves)
+    ys = np.arange(H)[:, None]
+    L.px[(ys >= top[None, :] + 2) & (ys < bottom), :3] = ramp[1]
+    L.px[(ys >= top[None, :] + 2) & (ys < bottom), 3] = 255
+    clumps = []
+    cherry = fbm1(PW, 40, 3, seed + "ch")
+    n = int(PW * (bottom - base + amp) / 6 * density)
+    for _ in range(n):
+        x = rnd.uniform(0, PW)
+        t = top[min(PW - 1, int(x))]
+        y = rnd.uniform(t + 1, bottom + 2)
+        r = rnd.uniform(*r_rng) * (0.8 + 0.4 * (y - t) / (bottom - t + 1))
+        c = cherry[min(PW - 1, int(x))]
+        key = "pink" if c > 1 - pink and rnd.random() < 0.6 else "white" if rnd.random() < 0.012 and haze < 0.3 else "dark" if rnd.random() < 0.15 else "green"
+        clumps.append((x, y, r, key, (rnd.random() - 0.5) * 0.12))
+    clumps.sort(key=lambda c: c[1])
+    ramps = {"green": ramp, "dark": ramp[:-2], "pink": SAKURA_FAR, "white": PEAR[3:]}
+    L.stamp_clumps(clumps, ramps, seed + "leaf", edge=0.5)
+    a = L.px[..., 3] > 0
+    rgb = L.px[..., :3].astype(np.float32)
+    rgb = rgb + (HAZE - rgb) * haze
+    px[a, :3] = rgb[a].astype(np.uint8)
+    return top
 
 
-# ---------------------------------------------------------------- sky
-def sky(s):
-    """A soft spring sky: blue on top, a pale warm haze at the horizon."""
-    bands = [(0, 12, SKY[1]), (12, 26, SKY[2]), (26, 50, SKY[3]), (50, 70, P.sky_rose[4])]
-    for y0, y1, c in bands:
-        s.rect(0, y0, PW, y1 - y0, c)
-    for y0, a, b in ((12, SKY[1], SKY[2]), (26, SKY[2], SKY[3]), (50, SKY[3], P.sky_rose[4])):
-        s.dither(0, y0 - 1, PW, 1, a, b, "sparse2")
-        s.dither(0, y0, PW, 1, a, b, "checker")
-        s.dither(0, y0 + 1, PW, 1, b, None, "sparse")
+# ---------------------------------------------------------------- the valley floor
+def meadow_floor(px, top_near):
+    """Grass from the last ridge down to the trail: big soft patches of
+    light and shade, blades that grow with nearness, a little haze far off."""
+    h0 = int(top_near.min())
+    ys = np.arange(H)[:, None]
+    inside = ys >= top_near[None, :]
+    depth = np.clip((ys - 58) / 45, 0, 1)
+    big = fbm(PW, H, 45, 3, "mbig")
+    mid = fbm(PW, H, 9, 3, "mmid", stretch=2.2)
+    blades = fbm(PW, H, 1.6, 2, "blade", stretch=0.35)
+    v = 0.55 + (big - 0.5) * 0.45 + (mid - 0.5) * 0.25 + (blades - 0.5) * (0.12 + 0.35 * depth)
+    v = v + (1 - depth) * 0.18 - depth * 0.05
+    rgb = quant(np.clip(v, 0, 1), GRASS, 1.0).astype(np.float32)
+    hz = np.clip((70 - ys) / 16, 0, 1) * 0.35
+    rgb = rgb + (HAZE - rgb) * hz[..., None] if rgb.ndim == 3 else rgb
+    px[inside, :3] = rgb[inside].astype(np.uint8)
+    px[inside, 3] = 255
+    return v
 
 
-def cloud(s, cx, cy, w, rnd):
-    """A flat-bottomed cumulus: puffs along a base line, lit from the top left."""
-    puffs = []
-    x = cx - w // 2
-    while x < cx + w // 2:
-        r = rnd.uniform(3, 6) * (1.25 - abs(x - cx) / w)
-        puffs.append((x, cy - r * 0.6, r))
-        x += rnd.uniform(3, 5)
-    c = Sprite(PW, H)
-    for x, y, r in puffs:
-        c.ellipse(x + 1, y + 1, r, r * 0.8, P.sky_soft[3])
-    for x, y, r in puffs:
-        c.ellipse(x - 0.5, y - 0.5, r * 0.85, r * 0.68, P.linen[3])
-    c.px[int(cy) + 1:, :, 3] = 0                                          # flat bottom
-    c.hline(cx - w // 2 + 1, cx + w // 2 - 2, int(cy), P.sky_soft[3])
-    s.blit(c, 0, 0)
+def trail(px):
+    """An earth trail: soft worn ruts, small lit pebbles, grass blades
+    leaning over both edges."""
+    y0, y1 = PATH
+    edge_t = (fbm1(PW, 9, 3, "te") * 3).astype(int)
+    edge_b = (fbm1(PW, 11, 3, "tb") * 3).astype(int)
+    ys = np.arange(H)[:, None]
+    inside = (ys >= y0 + edge_t[None, :] - 1) & (ys < y1 - edge_b[None, :] + 1)
+    rel = (ys - y0) / (y1 - y0)
+    n1 = fbm(PW, H, 6, 3, "earth1", stretch=3)
+    n2 = fbm(PW, H, 1.5, 2, "earth2")
+    rut = np.exp(-((rel - 0.38) / 0.09) ** 2) + np.exp(-((rel - 0.75) / 0.09) ** 2)
+    v = 0.6 + (n1 - 0.5) * 0.35 + (n2 - 0.5) * 0.35 - rut * 0.12 + np.exp(-((rel - 0.5) / 0.15) ** 2) * 0.1
+    v -= np.exp(-(rel / 0.18) ** 2) * 0.25                                   # the grass edge shades it
+    rgb = quant(np.clip(v, 0, 1), EARTH, 1.0)
+    px[inside, :3] = rgb[inside]
+    rnd = random.Random("pebbles")
+    for _ in range(PW // 40):
+        x, y = rnd.randrange(2, PW - 2), rnd.randint(y0 + 2, y1 - 2)
+        r = rnd.choice((0.6, 0.8, 1, 1.3))
+        for yy in range(int(y - r), int(y + r) + 1):
+            for xx in range(int(x - r * 1.4), int(x + r * 1.4) + 1):
+                dx, dy = (xx - x) / (r * 1.4 + 0.3), (yy - y) / (r + 0.3)
+                if dx * dx + dy * dy <= 1:
+                    l = sphere_light(np.float32(dx), np.float32(dy))
+                    px[yy, xx, :3] = EARTH[int(3 + l * 6)]
+        px[int(y + r) + 1 if int(y + r) + 1 < H else int(y + r), int(x), :3] = EARTH[1]
+    # grass leaning over the edges
+    for x in range(PW):
+        if rnd.random() < 0.7:
+            t = y0 + edge_t[x] - 1
+            for k in range(rnd.randint(1, 3)):
+                px[t + k, x, :3] = GRASS[rnd.randint(3, 7)]
+        if rnd.random() < 0.6:
+            b = y1 - edge_b[x]
+            for k in range(rnd.randint(1, 3)):
+                px[b - k, x, :3] = GRASS[rnd.randint(2, 6)]
 
 
-# ---------------------------------------------------------------- ridges
-def peaks_profile(seed, n_every, top_rng, half_rng, rough, round_=False):
-    """Mountain tops: a row of peaks, each a cone with rough flanks; returns
-    the skyline y per column and which peak owns it (for lit / shaded faces)."""
+# ---------------------------------------------------------------- shading helpers
+def shade_ground(px, cx, cy, rx, ry, k=0.62):
+    """A soft cast shadow on the ground (darker core, dithered rim)."""
+    y0, y1 = max(0, int(cy - ry - 1)), min(H, int(cy + ry + 2))
+    x0, x1 = max(0, int(cx - rx - 1)), min(px.shape[1], int(cx + rx + 2))
+    if x1 <= x0 or y1 <= y0:
+        return
+    ys, xs = np.mgrid[y0:y1, x0:x1]
+    d = ((xs + 0.5 - cx) / rx) ** 2 + ((ys + 0.5 - cy) / ry) ** 2
+    m = d + bayer(y1 - y0, x1 - x0, x0, y0) * 0.5 < 1
+    core = d < 0.45
+    sub = px[y0:y1, x0:x1, :3].astype(np.float32)
+    f = np.where(core, k * 0.92, k)[..., None]
+    sub = np.where(m[..., None], sub * f * np.array([0.92, 0.97, 1.08]), sub)
+    px[y0:y1, x0:x1, :3] = np.clip(sub, 0, 255).astype(np.uint8)
+
+
+def rock(px, cx, cy, rx, ry, seed, moss=0.5, ramp=None):
+    """A boulder: an ellipsoid broken into facets by noise, lit from the top
+    left, moss on its upward faces, a dark contact line at its foot."""
+    ramp = ROCK if ramp is None else ramp
+    shade_ground(px, cx + rx * 0.35, cy + ry * 0.8, rx * 1.15, ry * 0.35, 0.6)
+    y0, y1 = max(0, int(cy - ry - 2)), min(H, int(cy + ry + 2))
+    x0, x1 = max(0, int(cx - rx - 2)), min(px.shape[1], int(cx + rx + 2))
+    ys, xs = np.mgrid[y0:y1, x0:x1]
+    f = fbm(x1 - x0, y1 - y0, 3, 3, seed)
+    f2 = fbm(x1 - x0, y1 - y0, 1.5, 2, seed + "f")
+    dx, dy = (xs + 0.5 - cx) / rx, (ys + 0.5 - cy) / ry
+    d2 = dx * dx + dy * dy
+    inside = (d2 < 1 - (f - 0.5) * 0.5) & (ys < cy + ry * 0.75)
+    fx = np.gradient(f, axis=1) * 6
+    fy = np.gradient(f, axis=0) * 6
+    l = sphere_light(np.clip(dx + fx, -1, 1) * 0.92, np.clip(dy + fy, -1, 1) * 0.92)
+    v = l * 0.85 + (f2 - 0.5) * 0.25 + 0.05
+    rgb = quant(np.clip(v, 0, 1), ramp, 1.0, x0, y0)
+    mz = inside & (dy + fy * 0.6 < -0.25) & (f + f2 * 0.6 > 1.05 - moss * 0.45)
+    mrgb = quant(np.clip(l * 0.8 + (f2 - 0.5) * 0.5 + 0.1, 0, 1), MOSS, 1.0, x0, y0)
+    rgb = np.where(mz[..., None], mrgb, rgb)
+    sub = px[y0:y1, x0:x1]
+    sub[inside, :3] = rgb[inside]
+    sub[inside, 3] = 255
+
+
+def bark_segment(L, x0, y0, x1, y1, th, seed=0):
+    """A trunk or bough as a lit cylinder with streaky bark."""
+    n = max(1, int(math.hypot(x1 - x0, y1 - y0) * 2))
+    nx, ny = -(y1 - y0), (x1 - x0)
+    ln = math.hypot(nx, ny) or 1
+    nx, ny = nx / ln, ny / ln
+    if nx > 0:
+        nx, ny = -nx, -ny                                                # across: from the left (lit) side
+    for i in range(n + 1):
+        t = i / n
+        cx, cy = x0 + (x1 - x0) * t, y0 + (y1 - y0) * t
+        for k in range(-int(th * 4), int(th * 4) + 1):
+            u = k / (th * 4)                                             # -1 lit side .. 1 shade side
+            x, y = int(round(cx + nx * u * th / 2)), int(round(cy + ny * u * th / 2))
+            if 0 <= x < L.w and 0 <= y < L.h:
+                streak = ((x * 7 + int(y * 0.5) * 13 + seed) % 11) / 11
+                v = 0.62 - u * 0.42 - abs(u) ** 3 * 0.15 + (streak - 0.5) * 0.18
+                L.px[y, x, :3] = BARK[int(np.clip(v, 0, 0.999) * len(BARK))]
+                L.px[y, x, 3] = 255
+
+
+def tree(cx, base, height, ramps, seed, lean=0.0, spread=1.0, frame=0, clump=(3.2, 5.6), holes=0.10,
+         droop=0.0, petals=None, width=None, canvas=W):
+    """A tree: a forked trunk and boughs, a crown of lit leaf clumps around
+    the branch tips (lighter up and to the left, deep shade inside and
+    below), sky holes through it, blossom sparkles."""
     rnd = random.Random(seed)
-    peaks, x = [], -60
-    while x < PW + 120:
-        peaks.append((x, rnd.uniform(*top_rng), rnd.uniform(*half_rng)))
-        x += rnd.uniform(*n_every)
-    jag = noise1(seed + "j", [(0.21, rough), (0.53, rough * 0.5)])
-    tops, owner = [], []
-    for x in range(PW):
-        best, who = 999, None
-        for px, py, hw in peaks:
-            d = abs(x - px) / hw
-            y = py + (min(d, 1.4) ** 2 * 22 + max(0, d - 1.4) * 40 if round_ else d * 34) + jag(x) * d
-            if y < best:
-                best, who = y, (px, py, hw)
-        tops.append(int(best))
-        owner.append(who)
-    return tops, owner, peaks
+    L = Layer(canvas, H)
+    segs, tips = [], []
 
+    def grow(x, y, ang, length, th, depth):
+        x1, y1 = x + math.cos(ang) * length, y - math.sin(ang) * length
+        segs.append((x, y, x1, y1, th))
+        if depth == 0:
+            tips.append((x1, y1))
+            return
+        for d in (-1, 1) if depth > 1 else (-1, 0, 1):
+            grow(x1, y1, ang + d * rnd.uniform(0.3, 0.62) * spread - droop * (1 if ang < 1.57 else -1) * 0.2,
+                 length * rnd.uniform(0.62, 0.8), max(1, th - 1), depth - 1)
 
-def ridge_far(s):
-    """Far mountains: hazy lilac-blue cones, sunlit left faces, snow left on
-    the highest tops, spurs running down, melting into the haze below."""
-    tops, owner, peaks = peaks_profile("far", (110, 170), (14, 30), (55, 85), 1.6)
-    for x in range(PW):
-        t, (px, py, hw) = tops[x], owner[x]
-        lit = x < px
-        for y in range(t, 66):
-            c = FAR[2] if lit else FAR[1]
-            if y > 48:
-                c = FAR[3] if not ((x + y) % 2 and y < 51) else c
-            if y > 55:
-                c = FAR[4] if not ((x + y) % 2 and y < 58) else FAR[3]
-            s.set(x, y, c)
-        s.set(x, t, FAR[3] if lit else FAR[2])
-        if py < 23 and t < py + 6:                                       # snow cap, ragged lower edge
-            for y in range(t, int(py + 6 + (2 if (x * 7) % 5 < 2 else 0))):
-                s.set(x, y, P.snow[3] if lit else P.snow[1])
-    rnd = random.Random("spurs")
-    for px, py, hw in peaks:                                             # spurs: lit ridge lines down the faces
-        for d in (-1, 1):
-            x, y = px + d * rnd.uniform(4, 10), py + 6
-            for _ in range(rnd.randint(8, 16)):
-                xi = int(x)
-                if 0 <= xi < PW and y > tops[xi] + 1 and y < 48:
-                    s.set(xi, int(y), FAR[3] if d < 0 else FAR[2])
-                    s.set(xi + 1, int(y), FAR[1] if d < 0 else FAR[0])
-                x += d * rnd.uniform(0.6, 1.6)
-                y += 1
-
-
-def ridge_mid(s):
-    """Nearer wooded hills, blue-green, rounded, with pink drifts of wild
-    cherry and a lighter, sunlit rim."""
-    tops, owner, _ = peaks_profile("mid", (80, 130), (38, 47), (50, 80), 0.8, round_=True)
-    rnd = random.Random("midtrees")
-    for x in range(PW):
-        t, (px, _, _) = tops[x], owner[x]
-        for y in range(t, 74):
-            s.set(x, y, MID[2] if x < px else MID[1])
-        s.set(x, t, MID[3])
-    for _ in range(900):                                                 # a forest of little crowns
-        x = rnd.randrange(PW)
-        y = tops[x] + rnd.randint(0, 16)
-        if y >= 72:
+    fork_y = base - height * 0.34
+    fx = cx + lean * height * 0.15
+    segs.append((cx, base + 1, fx, fork_y, 5 if height > 55 else 4))
+    for a in (1.0, 1.57, 2.14):
+        grow(fx, fork_y, a + lean * 0.35 + rnd.uniform(-0.12, 0.12), height * 0.25 * (width or 1), 3, 3)
+    for s in segs:
+        bark_segment(L, *s, seed=rnd.randint(0, 99))
+    bx = sum(t[0] for t in tips) / len(tips)
+    by = sum(t[1] for t in tips) / len(tips)
+    rx = max(abs(t[0] - bx) for t in tips) + clump[1]
+    ry = max(abs(t[1] - by) for t in tips) + clump[1]
+    clumps = []
+    for tx, ty in tips:
+        for _ in range(4):
+            x, y = tx + rnd.uniform(-5, 5), ty + rnd.uniform(-4, 3.5)
+            clumps.append([x, y, rnd.uniform(*clump)])
+    for x0, y0, x1, y1, th in segs:
+        if th <= 3 and y1 < fork_y - 8:
+            clumps.append([(x0 + x1) / 2 + rnd.uniform(-2, 2), (y0 + y1) / 2 + rnd.uniform(-2, 2), rnd.uniform(*clump) * 0.9])
+    area = math.pi * rx * ry
+    for _ in range(int(area / 16)):                                      # fill the crown's volume, a dome
+        u, v = rnd.uniform(-1, 1), rnd.uniform(-1, 0.75)
+        if u * u + v * v > 1:
             continue
-        lit = x < owner[x][0]
-        s.ellipse(x, y, 1.5, 1.2, MID[1] if lit else MID[0])
-        s.set(x - 1, y - 1, MID[3] if lit else MID[2])
-    for _ in range(70):                                                  # wild cherry drifts
-        x = rnd.randrange(PW)
-        y = tops[x] + rnd.randint(2, 12)
-        for k in range(rnd.randint(2, 5)):
-            xx, yy = x + rnd.randint(-4, 4), y + rnd.randint(-1, 2)
-            s.set(xx, yy, SAK[2]).set(xx + 1, yy, SAK[3]).set(xx, yy - 1, SAK[4] if k % 2 else SAK[3])
-    return tops
-
-
-def ridge_near(s):
-    """The valley's own sides: fresh green slopes that run down to the floor."""
-    f = noise1("near", [(0.008, 5), (0.021, 3), (0.06, 1)])
-    tops = [int(58 + f(x)) for x in range(PW)]
-    rnd = random.Random("near")
-    for x in range(PW):
-        t = tops[x]
-        for y in range(t, PATH[0]):
-            s.set(x, y, G[3])
-        s.set(x, t, G[4])
-        s.set(x, t + 1, G[4] if x % 3 else G[3])
-    for _ in range(2600):                                                # grass texture
-        x, y = rnd.randrange(PW), rnd.randint(60, PATH[0] - 1)
-        if y > tops[x] + 1:
-            s.set(x, y, G[rnd.choice((2, 4, 4, 2, 5))])
-    return tops
+        clumps.append([bx + u * (rx - clump[1] * 0.6), by + v * (ry - clump[1] * 0.5), rnd.uniform(*clump)])
+    keys = list(ramps)
+    out = []
+    for x, y, r in clumps:
+        u, v = (x - bx) / rx, (y - by) / ry
+        if frame and v < 0:
+            x += 1
+        z = rnd.random() * 0.6 - v * 0.4 + u * 0.1                         # lower / front clumps on top
+        glow = -u * 0.12 - v * 0.2 - (0.12 if u * u + v * v < 0.2 else 0)
+        out.append((z, (x, y, r, keys[rnd.randrange(len(keys))], glow)))
+    out.sort(key=lambda o: o[0])
+    L.stamp_clumps([o[1] for o in out], ramps, seed + "lf", edge=0.45, holes=holes)
+    if petals:                                                           # bright blossom flecks on the lit side
+        for _ in range(len(tips) * 9):
+            tx, ty = rnd.choice(tips)
+            x, y = int(tx + rnd.uniform(-6, 5)), int(ty + rnd.uniform(-5, 3))
+            if 0 <= x < canvas and 0 <= y < H and L.px[y, x, 3] and rnd.random() < 0.7 - (x - bx) / rx * 0.3:
+                L.px[y, x, :3] = rnd.choice(petals)
+    return L, (bx + 4, base + 1, rx * 0.9, 3.2)
 
 
 # ---------------------------------------------------------------- flowers
-def daisy(s, x, y):
-    s.set(x, y, P.mustard[3]).set(x - 1, y, P.linen[3]).set(x + 1, y, P.linen[3]).set(x, y - 1, P.linen[3]).set(x, y + 1, P.linen[2])
-
-
-def dandelion(s, x, y):
-    s.rect(x, y, 2, 2, P.mustard[3]).set(x, y, P.mustard[4]).set(x + 1, y + 1, P.mustard[2])
-
-
-def lupine(s, x, y, R, h=5):
-    """A flower spike: buds getting lighter toward the tip, a green stem."""
-    s.vline(x, y + h - 1, y + h + 2, G[1])
-    for k in range(h):
-        s.set(x, y + k, R[min(4, 1 + (h - k) * 3 // h)])
-        if 0 < k < h - 1:
-            s.set(x + (1 if k % 2 else -1), y + k, R[2])
-
-
-def poppy(s, x, y):
-    s.vline(x, y + 2, y + 4, G[1])
-    s.rect(x - 1, y, 3, 2, P.coral[3]).set(x, y, P.coral[4]).set(x, y + 1, P.coral[1]).set(x + 1, y + 1, P.coral[2])
-
-
-def patch(s, cx, cy, rx, ry, kind, rnd, density=0.5, mask=None):
-    """A drift of one kind of flower, sparse at its edge."""
-    for _ in range(int(rx * ry * density)):
-        u, v = rnd.uniform(-1, 1), rnd.uniform(-1, 1)
-        d = u * u + v * v
-        if d > 1 or rnd.random() < d * 0.7:
-            continue
-        x, y = int(cx + u * rx), int(cy + v * ry)
-        if mask is not None and not (0 <= x < PW and mask[x] < y):
-            continue
-        near = (y - 60) / 40
-        if kind == "rape":
-            s.set(x, y, P.mustard[3]).set(x + 1, y, P.mustard[4] if rnd.random() < 0.5 else P.mustard[2])
-            if near > 0.5:
-                s.set(x, y - 1, P.mustard[4])
-        elif kind == "vetch":
-            s.set(x, y, P.blossom[2]).set(x + 1, y, P.lilac[3])
-            if near > 0.5:
-                s.set(x, y - 1, P.blossom[3])
-        elif kind == "clover":
-            s.set(x, y, P.linen[3])
-            if near > 0.6:
-                s.set(x + 1, y, P.linen[2])
-        elif kind == "dandelion":
-            (dandelion if near > 0.6 else lambda s, x, y: s.set(x, y, P.mustard[3]))(s, x, y)
-        elif kind == "daisy":
-            (daisy if near > 0.6 else lambda s, x, y: s.set(x, y, P.linen[3]))(s, x, y)
-
-
-def outl(spr, c):
-    """Outline without wrapping round the canvas edge."""
-    return spr.pad(2, 2, 2, 2).outline(c, grow=False).crop(2, 2, spr.w, spr.h)
-
-
-# ---------------------------------------------------------------- trees (new: tiered puffs at branch tips)
-def grow_branches(x, y, ang, length, th, depth, rnd, segs, tips, spread=0.55):
-    x1, y1 = x + math.cos(ang) * length, y - math.sin(ang) * length
-    segs.append((x, y, x1, y1, th))
-    if depth == 0:
-        tips.append((x1, y1))
-        return
-    n = 2 if depth > 1 else rnd.choice((2, 3))
-    for i in range(n):
-        a = ang + (i - (n - 1) / 2) * spread * 2 / max(1, n - 1) + rnd.uniform(-0.18, 0.18)
-        grow_branches(x1, y1, a, length * rnd.uniform(0.6, 0.78), max(1, th - 1), depth - 1, rnd, segs, tips, spread)
-
-
-def thick_line(s, x0, y0, x1, y1, th, R):
-    n = max(1, int(math.hypot(x1 - x0, y1 - y0) * 1.5))
-    for i in range(n + 1):
-        t = i / n
-        x, y = x0 + (x1 - x0) * t, y0 + (y1 - y0) * t
-        for k in range(th):
-            c = R[3] if k == 0 and th > 1 else R[1] if k == th - 1 and th > 2 else R[2]
-            s.set(int(round(x - th / 2 + k)), int(round(y)), c)
-
-
-def puff_tree(cx, base, height, ramps, seed, lean=0.0, reach=1.0, frame=0, accent=None, puff=1.0):
-    """A tree whose crown is a loose cloud of puffs at the branch tips, each
-    puff lit from the top left; dark branch glimpses show between them."""
+def flowers(px, x0, x1, y0, y1, mix_, density, seed, floor=None, oval=False):
+    """A drift of wildflowers. Each kind keeps to its own patches (noise);
+    far ones are single lit dots, near ones get petals, a shaded side and
+    a stem; lupines are spikes that grow toward us."""
     rnd = random.Random(seed)
-    s = Sprite(W, H)
-    segs, tips = [], []
-    fork = base - height * 0.38
-    segs.append((cx, base + 1, cx + lean * 6, fork, 5))
-    for a in (1.05, 1.57, 2.1):
-        grow_branches(cx + lean * 6, fork, a + lean * 0.3 + rnd.uniform(-0.1, 0.1), height * 0.24 * reach, 4, 3, rnd, segs, tips, 0.5)
-    for x0, y0, x1, y1, th in segs:
-        thick_line(s, x0, y0, x1, y1, th, BARK)
-    s.hline(int(cx) - 4, int(cx) + 4, base + 1, BARK[1]).hline(int(cx) - 3, int(cx) + 2, base, BARK[2])
-    crown = Sprite(W, H)
-    bx, by = cx + lean * 6, fork - height * 0.3
-    rx = max(abs(t[0] - bx) for t in tips) + 1
-    ry = max(abs(t[1] - by) for t in tips) + 1
-    sway = lambda y: (1 if frame and y < by else 0)
-    nodes = tips + [((x0 + x1) / 2, (y0 + y1) / 2) for x0, y0, x1, y1, th in segs if th <= 2]
-    order = sorted(nodes, key=lambda t: (t[1], -t[0]), reverse=True)   # lower right first
-    for tx, ty in order:
-        r0 = rnd.uniform(6, 8.5) * puff
-        R = ramps[rnd.randrange(len(ramps))]
-        for _ in range(11):
-            u, v = rnd.uniform(-1, 1), rnd.uniform(-1, 0.7)
-            px, py, r = tx + u * r0 * 0.8 + sway(ty), ty + v * r0 * 0.6, rnd.uniform(2.2, 3.6) * puff
-            gl = -((px - bx) / rx) * 0.5 - ((py - by) / ry) * 0.8 - u * 0.4 - v * 0.6
-            t = 1 if gl < -0.6 else 2 if gl < 0.0 else 3 if gl < 0.6 else 4
-            crown.ellipse(px, py, r, r * 0.85, R[t])
-            crown.ellipse(px - 0.7, py - 0.7, r * 0.45, r * 0.4, R[min(len(R) - 1, t + 1)])
-    out = outl(crown, ramps[0][0])
-    for x0, y0, x1, y1, th in segs[1:]:
-        if th >= 3 and min(y0, y1) > by + 2:
-            thick_line(out, x0, y0, x1, y1, th - 1, BARK)
-    if accent:                                                           # a sprinkle of fresh leaves / bright petals
-        for _ in range(len(tips) * 5):
-            tx, ty = rnd.choice(tips)
-            x, y = int(tx + rnd.uniform(-6, 6)), int(ty + rnd.uniform(-4, 4))
-            if out.px[y, x, 3] if 0 <= x < W and 0 <= y < H else 0:
-                out.set(x, y, rnd.choice(accent))
-    s.blit(out, 0, 0)
-    return s
+    kinds = list(mix_)
+    zone = fbm(px.shape[1], H, 26, 3, seed + "z")
+    count = int((x1 - x0) * (y1 - y0) * density)
+    pts = []
+    for _ in range(count):
+        x, y = rnd.randrange(x0, x1), rnd.randrange(y0, y1)
+        if floor is not None and y < floor[x] + 1:
+            continue
+        if oval:
+            u, v = (x - (x0 + x1) / 2) / ((x1 - x0) / 2), (y - (y0 + y1) / 2) / ((y1 - y0) / 2)
+            if u * u + v * v + (zone[y, x] - 0.5) * 0.9 > rnd.random() * 0.6 + 0.4:
+                continue
+        z = zone[y, x]
+        acc, k = 0, kinds[-1]
+        for kk in kinds:
+            acc += mix_[kk]
+            if z * 1.0 < acc:
+                k = kk
+                break
+        if rnd.random() < 0.25:
+            k = rnd.choice(kinds)
+        pts.append((y, x, k))
+    pts.sort()
+    for y, x, k in pts:
+        t = np.clip((y - 64) / 42, 0, 1)
+        Rm = FLOWER[k]
+        n = len(Rm)
+        if k in ("lupine", "pinklupine"):
+            hgt = int(2 + t * 6)
+            for j in range(hgt):
+                c = Rm[min(n - 1, int((1 - j / hgt) * (n - 2)) + 1)] if j else Rm[-1]
+                xx = x + (1 if (j % 2 and t > 0.5) else 0)
+                if 0 <= y - hgt + j < H:
+                    px[y - hgt + j, xx, :3] = c
+                    if t > 0.55 and j > 0 and xx - 1 >= 0:
+                        px[y - hgt + j, xx - 1, :3] = Rm[min(n - 1, int((1 - j / hgt) * (n - 3)) + 2)]
+            if t > 0.4:
+                px[min(H - 1, y + 1), x, :3] = GRASS[2]
+            continue
+        if t < 0.3:
+            px[y, x, :3] = Rm[n - 2 if rnd.random() < 0.6 else n - 3]
+        elif t < 0.62:
+            px[y, x, :3] = Rm[n - 2]
+            px[y, x + 1, :3] = Rm[n - 3]
+            px[min(H - 1, y + 1), x, :3] = Rm[2] if k != "rape" else GRASS[3]
+        else:
+            px[y, x, :3] = Rm[n - 1]
+            for dx, dy, c in ((-1, 0, n - 2), (1, 0, n - 3), (0, -1, n - 2), (0, 1, 2), (1, 1, 1)):
+                if 0 <= x + dx < px.shape[1]:
+                    px[y + dy, x + dx, :3] = Rm[c]
+            if k in ("white", "rape"):
+                px[y, x, :3] = FLOWER["rape"][-2] if k == "white" else FLOWER["rape"][-1]
+            for s in range(2, 4):
+                if y + s < H:
+                    px[y + s, x, :3] = GRASS[2 + (s % 2)]
 
 
+# ---------------------------------------------------------------- 谷口: boulders, a carved stone, a signpost
+def stone_tablet(px, x, base):
+    """An upright carved stone: lit front, a darker side face, a pale top,
+    carved strokes (shadow above, light below), on a rough slab."""
+    w, h, side = 12, 24, 3
+    top = base - h
+    n = fbm(px.shape[1], H, 2, 3, "tablet")
+    shade_ground(px, x + 9, base + 1, 13, 2.5, 0.6)
+    for y in range(top, base):
+        for xx in range(x, x + w + side):
+            if xx >= x + w:
+                v = 0.32 - (xx - x - w) * 0.05
+                if y - top < (xx - x - w):
+                    continue
+            else:
+                v = 0.62 - (xx - x) / w * 0.18
+            if y == top and xx < x + w:
+                v = 0.85
+            v += (n[y, xx] - 0.5) * 0.35
+            px[y, xx, :3] = ROCK[int(np.clip(v, 0, 0.999) * len(ROCK))]
+    for k in range(3):                                                   # carved strokes
+        yy = top + 5 + k * 6
+        for xx in range(x + 3, x + 9):
+            px[yy, xx, :3] = ROCK[2]
+            px[yy + 1, xx, :3] = ROCK[7]
+        px[yy + 2, x + 5, :3] = ROCK[2]
+        px[yy + 3, x + 5, :3] = ROCK[7]
+    for y in range(base - 2, base + 2):                                  # the slab
+        for xx in range(x - 4, x + w + side + 4):
+            v = 0.55 - (y - base + 2) * 0.12 + (n[y, xx] - 0.5) * 0.4
+            px[y, xx, :3] = ROCK[int(np.clip(v, 0, 0.999) * len(ROCK))]
+
+
+def wood_box(px, x, y, w, h, ramp=WOOD, grain=True, seed="wb"):
+    """A lit wooden board/box face: grain streaks, light top edge, dark foot."""
+    n = fbm(px.shape[1], H, 3, 2, seed, stretch=4)
+    for yy in range(y, y + h):
+        for xx in range(x, x + w):
+            v = 0.58 - (yy - y) / max(1, h) * 0.18 + ((n[yy, xx] - 0.5) * 0.45 if grain else 0)
+            if yy == y:
+                v += 0.22
+            if yy == y + h - 1:
+                v -= 0.2
+            if xx == x + w - 1:
+                v -= 0.12
+            px[yy, xx, :3] = ramp[int(np.clip(v, 0, 0.999) * len(ramp))]
+
+
+def signpost(px, x, base):
+    shade_ground(px, x + 6, base + 1, 9, 2, 0.6)
+    wood_box(px, x, base - 34, 3, 34, seed="post")
+    for y in range(base - 34, base):
+        px[y, x, :3] = WOOD[6]
+        px[y, x + 2, :3] = WOOD[2]
+    for y, d in ((base - 31, 1), (base - 22, -1)):                      # two arrow boards
+        bx = x + 3 if d > 0 else x - 17
+        wood_box(px, bx, y, 17, 6, seed=f"board{y}")
+        tip = bx + 17 if d > 0 else bx - 1
+        for k in range(3):
+            for yy in range(y + k, y + 6 - k):
+                px[yy, tip + d * k, :3] = WOOD[5 - k]
+        for xx in range(bx + 3, bx + 13):                                # painted letters, worn
+            if xx % 3:
+                px[y + 2, xx, :3] = WOOD[1]
+                px[y + 3, xx, :3] = WOOD[2] if xx % 2 else WOOD[1]
+        for xx in range(bx, bx + 17):
+            px[y + 6, xx, :3] = (px[y + 6, xx, :3] * 0.7).astype(np.uint8)
+
+
+# ---------------------------------------------------------------- 花坡: beehives
+def beehive(px, x, base):
+    shade_ground(px, x + 9, base + 1, 11, 2.2, 0.58)
+    wood_box(px, x - 1, base - 3, 16, 3, seed=f"stand{x}")
+    for k, ramp in enumerate((PEAR[2:], FLOWER["rape"][1:], PEAR[2:])):
+        y = base - 8 - k * 6
+        wood_box(px, x, y, 14, 6, ramp=ramp, grain=False, seed=f"hive{x}{k}")
+        for xx in range(x, x + 14):
+            px[y + 5, xx, :3] = (px[y + 5, xx, :3] * 0.72).astype(np.uint8)
+    wood_box(px, x - 2, base - 23, 18, 3, ramp=TILE, grain=False, seed=f"lid{x}")
+    for xx in range(x + 5, x + 9):
+        px[base - 5, xx, :3] = BARK[0]
+
+
+# ---------------------------------------------------------------- 溪谷飞瀑
+FALLS_X = 171
+
+
+def cliff(px, x0):
+    """A rock face in ledges: lit left, shaded right, horizontal strata with
+    lit lips, vertical cracks, moss on the ledges, shrubs and wild cherry
+    along the crest; a dark notch where the water comes over."""
+    cx = x0 + FALLS_X
+    top, bot = 14, 70
+    hwn = fbm1(80, 6, 3, "cliffw")
+    xs = np.arange(x0 + 100, x0 + 245)
+    ys = np.arange(top, bot)
+    n = fbm(px.shape[1], H, 4, 4, "cliffn", stretch=0.6)
+    crack = 1 - np.abs(fbm(px.shape[1], H, 3, 3, "crack", stretch=0.25) * 2 - 1)
+    strat = fbm(px.shape[1], H, 10, 2, "strat")
+    for y in ys:
+        hw = 30 + (y - top) * 0.42 + (hwn[y - top] - 0.5) * 10
+        crest = top + (np.abs(np.sin((xs - cx) * 0.09)) * 3).astype(int)
+        for x in xs:
+            u = (x - cx) / hw
+            if abs(u) > 1 or y < crest[x - xs[0]]:
+                continue
+            layer = math.sin((y + strat[y, x] * 8) * 0.95)
+            lip = layer > 0.75
+            v = 0.6 - u * 0.3 + (n[y, x] - 0.5) * 0.4 + (0.22 if lip else -0.05 if layer < -0.6 else 0)
+            v -= max(0, crack[y, x] - 0.86) * 3.5
+            if abs(u) > 0.85:
+                v -= (abs(u) - 0.85) * 2
+            c = ROCK[int(np.clip(v, 0, 0.999) * len(ROCK))]
+            if lip and n[y, x] > 0.52:
+                c = MOSS[int(np.clip(v + 0.1, 0, 0.999) * len(MOSS))]
+            px[y, x, :3] = c
+    for y in range(top - 1, top + 5):                                   # the notch
+        for x in range(cx - 8, cx + 9):
+            px[y, x, :3] = ROCK[1] if y > top else ROCK[3]
+    L = Layer(px.shape[1], H)                                            # crest shrubs and cherry
+    rnd = random.Random("crest")
+    cl = []
+    for _ in range(70):
+        u = rnd.uniform(-1, 1)
+        x = cx + u * 40
+        if abs(x - cx) < 11:
+            continue
+        y = top + 2 + abs(u) * 4 + rnd.uniform(-3, 3)
+        key = "pink" if abs(u + 0.5) < 0.18 or abs(u - 0.55) < 0.15 else "green"
+        cl.append((x, y, rnd.uniform(2.5, 4.2), key, 0.0))
+    for _ in range(40):                                                  # shrubs hiding its foot
+        x = cx + rnd.uniform(-58, 58)
+        if abs(x - cx) < 16:
+            continue
+        cl.append((x, rnd.uniform(60, 68), rnd.uniform(3, 5), "pink" if rnd.random() < 0.12 else "green", 0.02))
+    for _ in range(26):                                                  # plants in the cracks
+        y = rnd.randint(top + 8, bot - 6)
+        side = rnd.choice((-1, 1))
+        hw = 30 + (y - top) * 0.42
+        x = cx + side * rnd.uniform(0.4, 0.95) * hw
+        cl.append((x, y, rnd.uniform(1.4, 2.4), "pink" if rnd.random() < 0.25 else "green", 0.0))
+    cl.sort(key=lambda c: c[1])
+    L.stamp_clumps(cl, {"green": LEAF, "pink": SAKURA}, "crestleaf", edge=0.6)
+    a = L.px[..., 3] > 0
+    px[a, :3] = L.px[a, :3]
+
+
+def pool_and_stream(px, x0):
+    """The plunge pool (cliff reflected, dark at the centre), the stream
+    winding toward us with flow lines and wet stones at its banks."""
+    cx = x0 + FALLS_X
+    flow = fbm(px.shape[1], H, 3, 3, "flow", stretch=0.35)
+    for y in range(66, PATH[0] + 1):
+        if y < 76:
+            hw = 34 * math.sqrt(max(0, 1 - ((y - 71) / 6) ** 2))
+            mid = cx
+        else:
+            tt = (y - 76) / (PATH[0] - 76)
+            mid = cx + math.sin(tt * 2.6) * 12
+            hw = 8 + tt * 22
+        for x in range(int(mid - hw), int(mid + hw) + 1):
+            u = (x - mid) / max(1, hw)
+            v = 0.42 + (flow[y, x] - 0.5) * 0.5 - abs(u) ** 2 * 0.25 + (0.12 if u < -0.3 else 0)
+            if y < 76:
+                ry = 2 * 71 - y - 50                                     # the cliff above, upside down
+                if 14 <= ry < 70 and abs(u) < 0.8:
+                    r = px[ry, x, :3].astype(np.float32)
+                    w_ = WATER[int(np.clip(v, 0, 0.999) * len(WATER))]
+                    px[y, x, :3] = (r * 0.35 + w_ * 0.65).astype(np.uint8)
+                    continue
+            px[y, x, :3] = WATER[int(np.clip(v, 0, 0.999) * len(WATER))]
+        if y >= 76:
+            for side in (-1, 1):                                         # banks: wet dark edge
+                xb = int(mid + side * (hw + 1))
+                px[y, xb, :3] = ROCK[2]
+    rnd = random.Random("bankrocks")
+    for k in range(16):
+        y = rnd.randint(68, 93)
+        if y < 76:
+            hw, mid = 34 * math.sqrt(max(0, 1 - ((y - 71) / 6) ** 2)), cx
+        else:
+            tt = (y - 76) / (PATH[0] - 76)
+            mid, hw = cx + math.sin(tt * 2.6) * 12, 8 + tt * 22
+        side = rnd.choice((-1, 1))
+        r = rnd.uniform(2.2, 4.5) * (0.7 + (y - 66) / 40)
+        rock(px, mid + side * (hw + r * 0.4), y, r * 1.3, r * 0.8, f"br{k}", moss=0.7)
+
+
+def bridge(px, x0):
+    """An arched timber bridge carrying the trail over the stream; its
+    shadow lies on the water under it."""
+    cx = x0 + FALLS_X + 4
+    a, b = cx - 32, cx + 32
+    deck = lambda x: PATH[0] - 3 - int(4 * math.sin(math.pi * (x - a) / (b - a)))
+    for x in range(a, b + 1):                                            # shadow on the water
+        for y in range(deck(x) + 7, deck(x) + 10):
+            px[y, x, :3] = (px[y, x, :3] * 0.6).astype(np.uint8)
+    for x in range(a, b + 1):
+        d = deck(x)
+        plank = (x - a) % 4 == 0
+        for y in range(d, d + 5):
+            v = 0.7 - (y - d) * 0.1 - (0.25 if plank else 0) + ((x * 13) % 7) / 7 * 0.1
+            px[y, x, :3] = WOOD[int(np.clip(v, 0, 0.999) * len(WOOD))]
+        for y in range(d + 5, d + 8):                                    # the beam beneath
+            px[y, x, :3] = WOOD[1 + (y - d - 5) // 2]
+    for x in range(a + 2, b - 1, 9):                                     # posts and rails
+        d = deck(x)
+        for y in range(d - 10, d):
+            px[y, x, :3] = WOOD[6]
+            px[y, x + 1, :3] = WOOD[3]
+    for x in range(a, b + 1):
+        d = deck(x)
+        px[d - 10, x, :3] = WOOD[7]
+        px[d - 9, x, :3] = WOOD[3]
+        px[d - 5, x, :3] = WOOD[5]
+
+
+# ---------------------------------------------------------------- 紫藤小亭
+def pavilion(px, x0):
+    """A small open timber pavilion: stone plinth, red lacquered posts with
+    shaded rounds, a bench rail, deep shade under the eaves, a tiled hip
+    roof with lit tile rows and upturned corners, a finial."""
+    cx, base = x0 + 104, 92
+    shade_ground(px, cx + 8, base + 1, 44, 3, 0.55)
+    for y in range(base - 4, base + 1):                                  # plinth
+        for x in range(cx - 33, cx + 34):
+            v = 0.62 - (y - base + 4) * 0.08 + (((x // 6 + y // 2) % 2) * 0.06) - (0.2 if x % 6 == 0 else 0)
+            px[y, x, :3] = ROCK[int(np.clip(v, 0, 0.999) * len(ROCK))]
+    for y in range(base - 30, base - 4):                                 # inside: in shade
+        for x in range(cx - 28, cx + 29):
+            px[y, x, :3] = (px[y, x, :3] * (0.55 + (y - base + 30) / 26 * 0.25)).astype(np.uint8)
+    for px_ in (cx - 27, cx - 9, cx + 8, cx + 25):
+        for y in range(base - 31, base - 4):
+            for k, v in enumerate((0.85, 0.62, 0.4)):
+                px[y, px_ + k, :3] = LACQUER[int(v * len(LACQUER))]
+    for y in (base - 14, base - 13):                                     # bench rail
+        for x in range(cx - 27, cx + 28):
+            px[y, x, :3] = WOOD[6 if y == base - 14 else 3]
+    for x in range(cx - 26, cx + 27, 3):
+        for y in range(base - 12, base - 5):
+            px[y, x, :3] = WOOD[2]
+    for k in range(16):                                                  # roof
+        y = base - 32 - k
+        hw = 40 - k * 2.3
+        lift = (2 if k < 2 else 0)
+        for x in range(int(cx - hw), int(cx + hw) + 1):
+            u = (x - cx) / hw
+            v = 0.55 - u * 0.25 + (0.22 if k % 3 == 0 else -0.06) - k * 0.008
+            if (x + k * 2) % 5 == 0:
+                v -= 0.15
+            px[y, x, :3] = TILE[int(np.clip(v, 0, 0.999) * len(TILE))]
+        if lift:
+            for s in (-1, 1):
+                xe = int(cx + s * (hw + 1))
+                px[y - 1, xe, :3] = TILE[5]
+                px[y - 2, xe + s, :3] = TILE[6]
+    for x in range(cx - 41, cx + 42):                                    # eave edge and its shadow
+        px[base - 31, x, :3] = TILE[1]
+        px[base - 30, x, :3] = (px[base - 30, x, :3] * 0.5).astype(np.uint8)
+    for y in range(base - 52, base - 47):
+        for x in range(cx - 1, cx + 2):
+            px[y, x, :3] = FLOWER["rape"][2 + (x - cx + 1)]
+
+
+def stone_lantern(px, x, base):
+    shade_ground(px, x + 4, base + 1, 9, 2, 0.6)
+    n = fbm(px.shape[1], H, 1.5, 2, "lantern")
+    parts = [(base - 3, 3, 11), (base - 14, 11, 3), (base - 21, 7, 9), (base - 24, 3, 14), (base - 26, 2, 4)]
+    for y0, h, w in parts:
+        for y in range(y0, y0 + h):
+            for xx in range(x - w // 2, x - w // 2 + w):
+                u = (xx - x) / max(1, w / 2)
+                v = 0.6 - u * 0.25 + (n[y, xx] - 0.5) * 0.3 + (0.15 if y == y0 else 0)
+                px[y, xx, :3] = ROCK[int(np.clip(v, 0, 0.999) * len(ROCK))]
+    for y in range(base - 19, base - 15):                                # the window
+        for xx in range(x - 2, x + 2):
+            px[y, xx, :3] = ROCK[0]
+
+
+def pond(px, x0):
+    cx, cy = x0 + 236, 89
+    for y in range(cy - 3, cy + 4):
+        hw = 18 * math.sqrt(max(0, 1 - ((y - cy) / 3.6) ** 2))
+        for x in range(int(cx - hw), int(cx + hw) + 1):
+            u = (x - cx) / max(1, hw)
+            v = 0.35 + (y - cy + 3) * 0.06 - abs(u) * 0.1 + (0.35 if y == cy - 1 and -0.6 < u < 0.1 else 0)
+            px[y, x, :3] = WATER[int(np.clip(v, 0, 0.999) * len(WATER))]
+    for x, c in ((cx - 7, FLOWER["poppy"]), (cx + 6, FLOWER["white"]), (cx, FLOWER["rape"])):
+        px[cy + 1, x:x + 3, :3] = c[-2]
+        px[cy + 1, x + 3, :3] = c[-3]
+    for x in (cx - 13, cx + 11):
+        px[cy - 1, x - 2:x + 3, :3] = GRASS[5]
+        px[cy - 2, x, :3] = SAKURA[6]
+    rnd = random.Random("pondrim")
+    for k in range(10):
+        a = k / 10 * math.tau
+        rock(px, cx + math.cos(a) * 19, cy + math.sin(a) * 4 + 1, rnd.uniform(1.6, 2.6), rnd.uniform(1.0, 1.5), f"pr{k}", moss=0.4)
+
+
+def pergola(x0):
+    """The wisteria pergola as its own layer (over the background, behind
+    Buddy): timber posts and beams, a canopy of leaves, and hundreds of
+    hanging racemes, each a cone of florets lit on its left, paler at the
+    top, deep violet at the tip."""
+    L = Layer(W, H)
+    a, b, top = 170, 302, 40
+    for px_ in (a, a + 44, a + 88, b):
+        bark_segment(L, px_ + 1, 92, px_ + 1, top, 3, seed=px_)
+    for y in (top - 2, top - 1, top):
+        for x in range(a - 7, b + 9):
+            L.px[y, x, :3] = WOOD[7 if y == top - 2 else 4 if y == top - 1 else 2]
+            L.px[y, x, 3] = 255
+    rnd = random.Random("wis")
+    cl = [(rnd.uniform(a - 10, b + 12), top - 5 + rnd.uniform(-4, 4), rnd.uniform(2.4, 3.8), "g", rnd.uniform(-0.05, 0.08)) for _ in range(160)]
+    cl.sort(key=lambda c: c[1])
+    L.stamp_clumps(cl, {"g": LEAF}, "wisleaf", edge=0.6, holes=0.08)
+    for _ in range(140):
+        x = rnd.uniform(a - 8, b + 10)
+        y = top - 1 + rnd.uniform(-2, 3)
+        ln = rnd.randint(7, 19)
+        for j in range(ln):
+            t = j / ln
+            wdt = max(0.5, (1 - t) * 2.2)
+            for k in range(-int(wdt), int(wdt) + 1):
+                xx = int(x + k + math.sin(j * 0.5) * 0.4)
+                yy = int(y + j)
+                if 0 <= xx < W and yy < H:
+                    v = 0.85 - t * 0.55 - (k / (wdt + 0.5)) * 0.2 + rnd.uniform(-0.12, 0.12)
+                    L.px[yy, xx, :3] = WISTERIA[int(np.clip(v, 0, 0.999) * len(WISTERIA))]
+                    L.px[yy, xx, 3] = 255
+    return L
+
+
+# ---------------------------------------------------------------- assemble
 def willow(cx, base, frame=0):
-    """A weeping willow in new leaf: a soft head of fine leaves, then
-    curtains of strands, darker ones behind, light green ones in front."""
-    s = Sprite(W, H)
+    """A weeping willow in fresh leaf: a soft head of fine leaves and long
+    curtains of strands, darker ones behind, light yellow-green in front."""
+    L = Layer(W, H)
     rnd = random.Random("willow")
-    thick_line(s, cx, base + 1, cx - 3, base - 30, 5, BARK)
-    for a, l in ((1.1, 14), (2.0, 14), (1.55, 10)):
-        segs, tips = [], []
-        grow_branches(cx - 3, base - 30, a, l, 3, 1, rnd, segs, tips, 0.5)
-        for seg in segs:
-            thick_line(s, *seg[:4], seg[4], BARK)
-    hx, hy, rx = cx - 2, base - 44, 24
+    bark_segment(L, cx, base + 1, cx - 3, base - 30, 5)
+    for a, l in ((1.05, 15), (2.05, 15), (1.6, 11)):
+        x1, y1 = cx - 3 + math.cos(a) * l, base - 30 - math.sin(a) * l
+        bark_segment(L, cx - 3, base - 30, x1, y1, 3)
+    hx, hy, rx = cx - 3, base - 46, 22
 
-    def strands(layer, cols, n, sway):
+    def strands(n, lo, hi, sway):
         for _ in range(n):
             u = rnd.uniform(-1, 1)
             x = hx + u * rx
-            y = hy + 3 + int(u * u * 8) + rnd.randint(-1, 2)
-            ln = int((26 - abs(u) * 12) * rnd.uniform(0.6, 1.1))
+            y = hy + 2 + u * u * 9 + rnd.uniform(-1, 2)
+            ln = int((30 - abs(u) * 14) * rnd.uniform(0.55, 1.05))
             for k in range(ln):
-                bend = int((k / ln) ** 2 * 3 * (1 if u > 0 else -1) * 0.5) + (sway if k > ln * 0.4 else 0)
-                layer.set(int(x) + bend, y + k, cols[0] if k > ln - 3 else cols[1] if (k // 2) % 3 else cols[2])
+                bend = (k / ln) ** 2 * 2.5 * (1 if u > 0 else -1) + (sway if k > ln * 0.35 else 0)
+                xx, yy = int(x + bend), int(y + k)
+                if 0 <= xx < W and yy < H:
+                    v = lo + (hi - lo) * (0.5 - u * 0.35) + rnd.uniform(-0.12, 0.12) - (k / ln) * 0.1
+                    L.px[yy, xx, :3] = LEAF[int(np.clip(v, 0, 0.999) * len(LEAF))]
+                    L.px[yy, xx, 3] = 255
 
-    back = Sprite(W, H)
-    strands(back, (G[1], G[2], G[2]), 60, frame)
-    head = Sprite(W, H)
-    for _ in range(70):
-        u, v = rnd.uniform(-1, 1), rnd.uniform(-1, 1)
-        if u * u + v * v > 1:
-            continue
-        light = -u * 0.5 - v * 0.8
-        head.ellipse(hx + u * rx, hy + v * 7, 2.6, 2, G[4] if light > 0.5 else G[3] if light > -0.2 else G[2])
-    front_ = Sprite(W, H)
-    strands(front_, (G[2], G[3], G[4]), 55, frame)
-    s.blit(back, 0, 0)
-    s.blit(outl(head, G[0]), 0, 0)
-    s.blit(front_, 0, 0)
-    return s
+    strands(90, 0.15, 0.5, frame)
+    cl = [(hx + u * rx * 0.9, hy + rnd.uniform(-7, 5) * math.sqrt(1 - u * u) - 1, rnd.uniform(2.6, 4), "g", 0.05) for u in (rnd.uniform(-1, 1) for _ in range(70))]
+    cl.sort(key=lambda c: c[1])
+    L.stamp_clumps(cl, {"g": LEAF}, "willowhead", edge=0.6, holes=0.05)
+    strands(80, 0.45, 0.95, frame)
+    return L, (cx + 4, base + 1, 24, 3)
 
 
-# ---------------------------------------------------------------- the trail
-def trail(s):
-    """An earth trail with soft grassy edges and a few flat stones."""
-    y0, y1 = PATH
-    rnd = random.Random("trail")
-    edge = noise1("edge", [(0.12, 1), (0.31, 0.7)])
-    for x in range(PW):
-        top = y0 + int(edge(x) > 0.4)
-        bot = y1 - int(edge(x + 100) > 0.5)
-        for y in range(top, bot):
-            s.set(x, y, EARTH[3] if y < top + 2 else EARTH[2])
-        s.set(x, top, EARTH[4])
-        s.set(x, bot - 1, EARTH[1])
-    for _ in range(1500):                                                # grit
-        x, y = rnd.randrange(PW), rnd.randint(y0 + 2, y1 - 2)
-        s.set(x, y, EARTH[rnd.choice((1, 3, 3, 4))])
-    for x in range(0, PW, rnd.randint(40, 70)):                          # flat stepping stones
-        x += rnd.randint(0, 30)
-        w = rnd.randint(6, 10)
-        y = rnd.randint(y0 + 4, y1 - 4)
-        s.ellipse(x, y + 1, w / 2, 1.6, EARTH[1])
-        s.ellipse(x, y, w / 2, 1.6, ROCK[3])
-        s.hline(x - w // 2 + 2, x, y - 1, ROCK[4])
-    for x in range(PW):                                                  # grass creeping over both edges
-        if rnd.random() < 0.45:
-            s.set(x, y0 + rnd.choice((0, 0, 1)), G[rnd.choice((3, 4))])
-        if rnd.random() < 0.35:
-            s.set(x, y1 - 1 - rnd.choice((0, 1)), G[rnd.choice((2, 3))])
+def swing(L, x):
+    for xx in (x, x + 14):
+        for y in range(54, 87):
+            L.px[y, xx, :3] = PEAR[3] if y % 3 else PEAR[1]
+            L.px[y, xx, 3] = 255
+    for y, c in ((87, WOOD[7]), (88, WOOD[4]), (89, WOOD[2])):
+        for xx in range(x - 2, x + 17):
+            L.px[y, xx, :3] = c
+            L.px[y, xx, 3] = 255
 
 
-def front(zone_i):
-    """The near edge, drawn over Buddy: tall grass and flowers, clumps at
-    the screen corners for depth."""
-    s = Sprite(W, H)
-    rnd = random.Random(f"front{zone_i}")
-    y0 = PATH[1]
-    s.rect(0, y0, W, H - y0, G[2])
-    for x in range(W):
-        for k in range(rnd.randint(1, 4)):
-            s.set(x, y0 - k + rnd.randint(0, 1), G[rnd.choice((2, 3, 3, 4))])
-        if rnd.random() < 0.5:
-            s.set(x, H - 1 - rnd.randint(0, 3), G[1])
-    if zone_i == 2:                                                      # the stream runs on under the near bank
-        for y in range(y0 - 2, H):
-            tt = (y - PATH[0]) / (H - PATH[0])
-            hw, cx = 28 + tt * 8, 171 + math.sin(1 + tt) * 4
-            s.hline(int(cx - hw) - 1, int(cx + hw) + 1, y, ROCK[1])
-            s.hline(int(cx - hw), int(cx + hw), y, WAT[2])
-            if y % 3 == 1:
-                s.hline(int(cx - hw * 0.5), int(cx + hw * 0.2), y, WAT[3])
-    kinds = [["daisy", "dandelion", "vetch"], ["vetch", "dandelion", "daisy"], ["daisy", "poppy", "lupine"],
-             ["lupine", "poppy", "daisy"], ["lupine", "daisy", "vetch"]][zone_i]
-    for x in range(3, W - 2, 4):
-        k = kinds[rnd.randrange(3)]
-        if zone_i == 2 and 135 < x < 212:
-            continue
-        y = rnd.randint(y0 + 2, H - 5)
-        if k == "daisy":
-            daisy(s, x, y)
-        elif k == "dandelion":
-            dandelion(s, x, y)
-        elif k == "vetch":
-            s.set(x, y, P.blossom[2]).set(x + 1, y, P.lilac[3]).set(x, y - 1, P.blossom[3])
-        elif k == "poppy":
-            poppy(s, x, y - 2)
-        else:
-            lupine(s, x, y - 4, rnd.choice((WIS, P.blossom, P.hydrangea)), 4)
-    for cx in (-4, W + 3):                                               # corner clumps
-        for _ in range(26):
-            x = cx + rnd.randint(-14, 14)
-            h = rnd.randint(6, 16)
-            s.line(x, H - 1, x + rnd.choice((-2, -1, 1, 2)), H - h, G[rnd.choice((1, 2, 3))])
-        for _ in range(5):
-            x = cx + rnd.randint(-12, 12)
-            lupine(s, x, H - rnd.randint(14, 19), rnd.choice((WIS, P.blossom)), 6)
-    return s
+def zone_trees(i, frame=0):
+    """Each screen's trees as one layer (two sway frames) plus their ground shadows."""
+    out, shadows = Layer(W, H), []
+
+    def add(res):
+        L, sh = res
+        a = L.px[..., 3] > 0
+        out.px[a] = L.px[a]
+        shadows.append(sh)
+
+    if i == 0:
+        add(tree(24, 91, 58, {"a": LEAF, "b": LEAF}, "oak0", lean=-0.15, frame=frame, clump=(3.4, 6)))
+        add(tree(252, 93, 74, {"a": SAKURA, "b": SAKURA, "c": SAKURA[1:]}, "cherry0", lean=0.3, frame=frame,
+                 clump=(3.6, 6.2), holes=0.12, petals=[SAKURA[-1], SAKURA[-2], LEAF[7]]))
+    elif i == 1:
+        add(tree(176, 91, 70, {"a": PEAR, "b": PEAR, "c": LEAF[2:]}, "pear", frame=frame, clump=(4, 6.4), width=1.15,
+                 petals=[PEAR[-1], LEAF[8]]))
+    elif i == 2:
+        add(willow(58, 93, frame))
+        add(tree(306, 93, 64, {"a": SAKURA, "b": SAKURA[1:]}, "cherry2", lean=-0.3, frame=frame, clump=(3.4, 5.8),
+                 petals=[SAKURA[-1], SAKURA[-2]]))
+    elif i == 3:
+        L, sh = tree(282, 94, 72, {"a": LEAF, "b": LEAF, "c": LEAF[1:]}, "oak3", lean=-0.12, spread=1.1, frame=frame,
+                     clump=(4.4, 7.2), width=1.2, holes=0.06)
+        swing(L, 254)
+        add((L, sh))
+    elif i == 4:
+        add(tree(24, 93, 62, {"a": SAKURA, "b": SAKURA}, "cherry4", lean=0.2, frame=frame, clump=(3.4, 5.8),
+                 petals=[SAKURA[-1]]))
+        p = pergola(4 * W)
+        a = p.px[..., 3] > 0
+        out.px[a] = p.px[a]
+    return out, shadows
 
 
-# ---------------------------------------------------------------- landmarks
-def boulder(s, x, y, w, h, moss=True):
-    """A rounded boulder: lit top left, moss on the top."""
-    s.ellipse(x + 2, y + 1, w / 2 + 1, h / 2, ROCK[0])
-    s.ellipse(x, y, w / 2, h / 2, ROCK[2])
-    s.ellipse(x - w * 0.15, y - h * 0.15, w * 0.32, h * 0.3, ROCK[3])
-    s.ellipse(x - w * 0.22, y - h * 0.22, w * 0.14, h * 0.12, ROCK[4])
-    s.ellipse(x + w * 0.2, y + h * 0.2, w * 0.25, h * 0.18, ROCK[1])
-    if moss:
-        for i in range(int(w)):
-            xx = int(x - w / 2 + i)
-            top = None
-            for yy in range(int(y - h / 2) - 1, int(y + h / 2)):
-                if s.px[yy, xx % PW, 3] and tuple(s.px[yy, xx % PW, :3]) in [tuple(int(ROCK[k][j:j + 2], 16) for j in (1, 3, 5)) for k in range(5)]:
-                    top = yy
-                    break
-            if top is not None and i % 5 != 4 and i < w * 0.8:
-                s.set(xx, top, G[3]).set(xx, top + 1, G[2] if i % 2 else G[3])
-
-
-def zone_mouth(s, x0):
-    rnd = random.Random("mouth")
-    patch(s, x0 + 90, 82, 70, 9, "dandelion", rnd, 0.35)
-    patch(s, x0 + 240, 86, 80, 7, "daisy", rnd, 0.4)
-    patch(s, x0 + 300, 72, 40, 6, "vetch", rnd, 0.4)
-    # a mossy boulder with a carved stone tablet in front of it
-    boulder(s, x0 + 62, 84, 34, 20)
-    boulder(s, x0 + 86, 89, 16, 10)
-    tx, ty = x0 + 44, 72
-    s.rect(tx + 1, ty + 1, 13, 22, ROCK[0])
-    s.rect(tx, ty, 13, 22, ROCK[3]).rect(tx + 10, ty, 3, 22, ROCK[2]).hline(tx, tx + 12, ty, ROCK[4])
-    s.rect(tx - 2, ty + 20, 17, 3, ROCK[1]).hline(tx - 2, tx + 14, ty + 20, ROCK[2])
-    for k in range(3):                                                    # carved strokes (no real letters)
-        s.rect(tx + 4, ty + 4 + k * 5, 5, 1, ROCK[1]).set(tx + 6, ty + 5 + k * 5, ROCK[1]).set(tx + 4, ty + 6 + k * 5, ROCK[1])
-    # signpost pointing on into the valley
-    sx = x0 + 286
-    s.rect(sx, 64, 3, 30, P.oak[1]).vline(sx, 64, 93, P.oak[3])
-    for i, (y, d, c) in enumerate(((66, 1, P.oak), (74, -1, P.birch))):
-        x = sx + 2 if d > 0 else sx - 15
-        s.rect(x, y, 15, 6, c[2]).hline(x, x + 14, y, c[3]).hline(x, x + 14, y + 5, c[1])
-        tip = x + 15 if d > 0 else x - 1
-        for k in range(3):
-            s.vline(tip + d * k, y + k, y + 5 - k, c[2])
-        s.hline(x + 3, x + 10, y + 2, c[1])
-    s.ellipse(sx + 1, 94, 5, 1.5, G[1])
-
-
-def zone_slope(s, x0, near):
-    rnd = random.Random("slope")
-    # broad bands of bloom draped over the near slope
-    for cx, cy, rx, ry, k in ((x0 + 60, 70, 75, 6, "rape"), (x0 + 210, 74, 90, 7, "vetch"), (x0 + 320, 69, 60, 5, "rape"),
-                              (x0 + 130, 84, 90, 6, "clover"), (x0 + 270, 87, 70, 5, "rape"), (x0 + 20, 88, 40, 5, "vetch")):
-        patch(s, cx, cy, rx, ry, k, rnd, 1.8, near)
-    # beehives on a little stand
-    for i, hx in enumerate((x0 + 262, x0 + 282)):
-        by = 91
-        s.rect(hx - 1, by - 1, 15, 2, P.walnut[2]).vline(hx, by, by + 2, P.walnut[1]).vline(hx + 12, by, by + 2, P.walnut[1])
-        for k, c in enumerate((P.linen, P.mustard, P.linen)):
-            y = by - 5 - k * 5
-            s.rect(hx, y, 13, 5, c[2]).hline(hx, hx + 12, y, c[3]).vline(hx + 12, y, y + 4, c[1]).hline(hx, hx + 12, y + 4, c[1])
-        s.rect(hx - 1, by - 17, 15, 2, P.clay[2]).hline(hx - 1, hx + 13, by - 17, P.clay[3])
-        s.rect(hx + 5, by - 3, 3, 1, P.walnut[0])
-
-
-def zone_falls(s, x0):
-    """A rock face at the back, stacked in ledges and topped with shrubs and
-    wild cherry; the waterfall (falls()) pours through a notch in its crest."""
-    cx = x0 + 171
-    rnd = random.Random("cliff")
-    edge = noise1("cliffedge", [(0.31, 1.5), (0.7, 0.8)])
-    half = lambda y: 33 + (y - 17) * 0.3 + edge(y) * 2.5 + 3 * math.sin(y * 0.21)
-    rows, y = [], 17
-    while y < 76:                                                        # strata
-        h = rnd.randint(4, 7)
-        rows.append((y, h))
-        y += h
-    for y0, h in rows:
-        hw = half(y0 + h)
-        x = cx - hw - rnd.randint(0, 4)
-        while x < cx + hw:
-            w = rnd.randint(6, 15)
-            u = (x + w / 2 - cx) / hw
-            k = 3 if u < -0.4 else 2 if u < 0.3 else 1
-            for yy in range(y0, y0 + h):
-                lo, hi = cx - half(yy), cx + half(yy)
-                for xx in range(int(x), int(x + w)):
-                    if lo <= xx <= hi:
-                        c = ROCK[k + 1] if yy == y0 else ROCK[k - 1] if yy == y0 + h - 1 else ROCK[k]
-                        if xx == int(x) and yy > y0:
-                            c = ROCK[k - 1]                              # the joint between blocks
-                        s.set(xx, yy, c)
-            if rnd.random() < 0.5:                                       # moss on the ledge
-                for xx in range(int(x) + 1, int(x + w * rnd.uniform(0.3, 0.8))):
-                    if cx - half(y0) <= xx <= cx + half(y0):
-                        s.set(xx, y0, G[3] if xx % 3 else G[4])
-                        if rnd.random() < 0.3:
-                            s.set(xx, y0 - 1, G[3])
-            x += w
-    s.rect(cx - 8, 15, 17, 4, ROCK[0])                                   # the notch the water runs through
-    crest = Sprite(PW, H)
-    for _ in range(90):                                                  # shrubs along the crest
-        u = rnd.uniform(-1, 1)
-        xx = cx + u * 36
-        if abs(xx - cx) < 10:
-            continue
-        crest.ellipse(xx, 18 - (1 - abs(u)) * 2 + rnd.uniform(-1, 2.5), rnd.uniform(2.5, 4), 2.5,
-                      G[2] if u > 0.2 else G[3] if rnd.random() < 0.6 else G[4])
-    for xx, R in ((cx - 22, SAK), (cx + 21, SAK), (cx - 34, P.porcelain)):
-        for _ in range(7):
-            crest.ellipse(xx + rnd.uniform(-4, 4), 13 + rnd.uniform(-2, 1), 2.5, 2, R[2])
-            crest.set(int(xx + rnd.uniform(-4, 2)), int(11 + rnd.uniform(0, 3)), R[3])
-    s.blit(crest.outline(G[0], grow=False), 0, 0)
-    for _ in range(10):                                                  # ferns hanging off the ledges
-        y0, h = rnd.choice(rows[1:-1])
-        side = rnd.choice((-1, 1))
-        xx = int(cx + side * (half(y0) - rnd.randint(1, 4)))
-        for k in range(4):
-            s.set(xx + side * (k // 2), y0 + k, G[3] if k < 2 else G[2])
-
-
-def falls_water(s, x0):
-    """The pool at the cliff's foot and the stream down to the trail (drawn
-    over the valley floor)."""
-    cx = x0 + 171
-    rnd = random.Random("banks")
-    s.ellipse(cx, 74, 30, 5, ROCK[1])
-    s.ellipse(cx, 73, 28, 4, WAT[2])
-    s.ellipse(cx - 6, 72, 16, 2, WAT[3])
-    for y in range(76, PATH[0] + 1):
-        t = (y - 76) / (PATH[0] - 76)
-        mid = cx + math.sin(t * 3) * 10
-        hw = 6 + t * 22
-        s.hline(int(mid - hw) - 1, int(mid + hw) + 1, y, ROCK[1])
-        s.hline(int(mid - hw), int(mid + hw), y, WAT[2])
-        s.hline(int(mid - hw) + 1, int(mid - hw * 0.3), y, WAT[3])
-        if y % 3 == 0:
-            s.hline(int(mid - hw * 0.1), int(mid + hw * 0.4), y, WAT[1])
-    for side in (-1, 1):                                                 # stones and reeds on the banks
-        for k in range(5):
-            y = 78 + k * 4
-            t = (y - 76) / (PATH[0] - 76)
-            x = int(cx + math.sin(t * 3) * 10 + side * (8 + t * 22))
-            boulder(s, x, y, 6 + k, 3 + k * 0.4, moss=k % 2 == 0)
-    for k in range(9):
-        x = cx + rnd.choice((-1, 1)) * rnd.randint(30, 44)
-        y = rnd.randint(78, 92)
-        for d in (-1, 0, 1):
-            s.line(x + d, y, x + d * 2, y - rnd.randint(4, 7), G[rnd.choice((2, 3))])
-
-
-def bridge(s, x0):
-    """The arched wooden bridge carrying the trail over the stream."""
-    a, b = BRIDGE[0] - 2 * W + x0, BRIDGE[1] - 2 * W + x0
-    for x in range(a, b + 1):                                            # the stream continues under, to the front
-        pass
-    for y in range(PATH[0], H):
-        t = (y - PATH[0]) / (H - PATH[0])
-        hw = 28 + t * 8
-        cx = (a + b) // 2 + math.sin(1 + t) * 4
-        s.hline(int(cx - hw) - 1, int(cx + hw) + 1, y, ROCK[1])
-        s.hline(int(cx - hw), int(cx + hw), y, WAT[2])
-        if y % 3 == 1:
-            s.hline(int(cx - hw * 0.5), int(cx + hw * 0.2), y, WAT[3])
-    deck = lambda x: PATH[0] - 2 - int(3 * math.sin(math.pi * (x - a) / (b - a)))
-    for x in range(a, b + 1):
-        d = deck(x)
-        s.vline(x, d, d + 4, P.oak[2] if (x - a) % 4 else P.oak[1])
-        s.set(x, d, P.oak[4])
-        s.vline(x, d + 5, d + 7, P.walnut[1])                            # the beam under it
-    for x in range(a + 2, b - 1, 8):                                     # posts and the rail
-        d = deck(x)
-        s.rect(x, d - 9, 2, 9, P.oak[1]).vline(x, d - 9, d - 1, P.oak[3])
-    for x in range(a, b + 1):
-        s.set(x, deck(x) - 8, P.oak[3]).set(x, deck(x) - 7, P.oak[1])
-
-
-def zone_meadow(s, x0, near):
-    """Packed with flowers: lupine spikes in drifts, poppies, daisies."""
-    rnd = random.Random("meadow")
-    for _ in range(1600):
-        x = x0 + rnd.randrange(W)
-        y = rnd.randint(near[x] + 2, PATH[0] - 2)
-        depth = (y - 60) / 35
-        drift = math.sin(x * 0.045) + math.sin(x * 0.11 + 2)
-        R = WIS if drift > 0.6 else P.blossom if drift > -0.2 else P.hydrangea if drift > -0.9 else P.coral
-        if depth > 0.6 and rnd.random() < 0.45:
-            if R is P.coral:
-                poppy(s, x, y - 3)
-            else:
-                lupine(s, x, y - 4, R, 4 if depth < 0.8 else 5)
-        elif depth > 0.3:
-            s.set(x, y, R[3]).set(x, y - 1, R[4])
-        else:
-            s.set(x, y, R[2] if rnd.random() < 0.6 else R[3])
-    patch(s, x0 + 120, 92, 60, 3, "daisy", rnd, 0.6)
-
-
-def oak_swing(s, x0, frame=0):
-    """The swing hangs from the old oak's low branch (ropes and seat)."""
-    sx = x0 + 268
-    for x in (sx, sx + 14):
-        s.vline(x, 52, 86, P.oat[1])
-    s.rect(sx - 2, 86, 19, 2, P.oak[2]).hline(sx - 2, sx + 16, 86, P.oak[3])
-
-
-def pavilion(s, x0):
-    """A small open wooden pavilion with a hipped, upturned roof."""
-    cx, base = x0 + 104, 91
-    s.rect(cx - 30, base - 2, 61, 4, ROCK[2]).hline(cx - 30, cx + 30, base - 2, ROCK[4]).hline(cx - 30, cx + 30, base + 1, ROCK[1])
-    for px in (cx - 25, cx - 9, cx + 7, cx + 22):
-        s.rect(px, base - 28, 3, 26, P.clay[1]).vline(px, base - 28, base - 3, P.clay[3])
-    s.rect(cx - 26, base - 12, 52, 2, P.oak[2]).hline(cx - 26, cx + 25, base - 12, P.oak[3])   # bench rail
-    for x in range(cx - 25, cx + 25, 3):
-        s.vline(x, base - 10, base - 3, P.oak[1])
-    for k in range(14):                                                  # the roof: tiers sweeping up at the ends
-        y = base - 30 - k
-        hw = 38 - k * 2.4
-        up = 3 if k < 2 else 0
-        s.hline(int(cx - hw), int(cx + hw), y, P.slate[2] if k % 3 else P.slate[1])
-        s.hline(int(cx - hw), int(cx - hw * 0.4), y, P.slate[3])
-        if up:
-            s.set(int(cx - hw) - 1, y - 1, P.slate[3]).set(int(cx + hw) + 1, y - 1, P.slate[2])
-    s.hline(cx - 39, cx + 39, base - 29, P.slate[0])
-    s.rect(cx - 1, base - 47, 3, 4, P.mustard[2]).set(cx, base - 48, P.mustard[4])
-
-
-def pergola(s, x0):
-    """A pergola laden with wisteria; long racemes hang down."""
-    a, b, top = x0 + 170, x0 + 300, 40
-    for px in (a, a + 42, a + 86, b):
-        s.rect(px, top, 3, 52, P.oak[1]).vline(px, top, top + 51, P.oak[3])
-    s.rect(a - 6, top - 2, b - a + 14, 3, P.oak[2]).hline(a - 6, b + 7, top - 2, P.oak[4])
-    rnd = random.Random("wisteria")
-    leaves = Sprite(PW, H)
-    for _ in range(170):
-        x = rnd.randint(a - 8, b + 10)
-        y = top - 6 + rnd.randint(-3, 6)
-        leaves.ellipse(x, y, rnd.uniform(2, 3.5), 2, G[rnd.choice((2, 3, 3, 4))])
-    s.blit(leaves.outline(G[0], grow=False), 0, 0)
-    for _ in range(60):                                                  # racemes
-        x = rnd.randint(a - 6, b + 8)
-        y = top - 2 + rnd.randint(-2, 3)
-        ln = rnd.randint(7, 16)
-        for k in range(ln):
-            c = WIS[3] if k < ln * 0.3 else WIS[2] if k < ln * 0.75 else WIS[1]
-            w = 1 if k > ln - 3 else 2
-            s.rect(x - (w // 2) + (1 if (k // 3) % 2 and w > 1 else 0), y + k, w, 1, c)
-            if k % 3 == 0 and k < ln - 3:
-                s.set(x - 1, y + k, WIS[4])
-
-
-def stone_lantern(s, x, base):
-    s.rect(x - 5, base - 3, 11, 3, ROCK[2]).hline(x - 5, x + 5, base - 3, ROCK[3])
-    s.rect(x - 1, base - 13, 3, 10, ROCK[2]).vline(x - 1, base - 13, base - 4, ROCK[3])
-    s.rect(x - 4, base - 20, 9, 7, ROCK[2]).rect(x - 2, base - 18, 5, 3, ROCK[0]).hline(x - 4, x + 4, base - 20, ROCK[3])
-    s.rect(x - 6, base - 23, 13, 3, ROCK[3]).hline(x - 6, x + 6, base - 21, ROCK[1])
-    s.rect(x - 1, base - 25, 3, 2, ROCK[3])
-
-
-def koi_pond(s, x0):
-    cx, cy = x0 + 234, 88
-    s.ellipse(cx, cy + 1, 19, 4, ROCK[1])
-    s.ellipse(cx, cy, 17, 3, WAT[2])
-    s.ellipse(cx - 5, cy - 1, 9, 1, WAT[3])
-    for x, c in ((cx - 8, P.coral[3]), (cx + 6, P.linen[3]), (cx, P.mustard[3])):
-        s.rect(x, cy + 1, 3, 1, c).set(x + 3, cy + 1, c)
-    for x in (cx - 13, cx + 11):                                         # lily pads
-        s.ellipse(x, cy - 1, 3, 1, G[3]).set(x + 1, cy - 2, P.blossom[3])
-
-
-# ---------------------------------------------------------------- the whole valley
-_PANO = {}
+_P = {}
 
 
 def panorama():
-    """Everything behind Buddy, all five screens in one strip."""
-    if "bg" in _PANO:
-        return _PANO["bg"], _PANO["near"]
-    s = Sprite(PW, H)
-    sky(s)
-    rnd = random.Random("clouds")
-    for i in range(14):
-        cloud(s, rnd.randint(0, PW), rnd.randint(8, 24), rnd.randint(22, 44), rnd)
-    ridge_far(s)
-    ridge_mid(s)
-    zone_falls(s, 2 * W)                                                  # the cliff sits on the mid ridge
-    near = ridge_near(s)
-    falls_water(s, 2 * W)
-    zone_mouth(s, 0)
-    zone_slope(s, W, near)
-    zone_meadow(s, 3 * W, near)
-    trail(s)
-    bridge(s, 2 * W)
-    pavilion(s, 4 * W)
-    stone_lantern(s, 4 * W + 150, 93)
-    koi_pond(s, 4 * W)
-    pergola(s, 4 * W)
-    _PANO["bg"], _PANO["near"] = s, near
-    return s, near
+    if "bg" in _P:
+        return _P["bg"]
+    px = sky_px()
+    clouds(px)
+    far_mountains(px)
+    forest_ridge(px, 52, 14, 60, "ridgeA", FOREST_FAR, 0.42, pink=0.1, r_rng=(1.4, 2.4), bottom=66)
+    near = forest_ridge(px, 60, 6, 55, "ridgeB", FOREST_MID, 0.18, pink=0.16, r_rng=(1.8, 3.2), bottom=70)
+    top_near = (66 + fbm1(PW, 80, 3, "floor") * 6).astype(int)
+    meadow_floor(px, top_near)
+    # 谷口
+    flowers(px, 0, W, 72, 94, {"rape": 0.4, "white": 0.75, "blue": 1.0}, 0.05, "f0", top_near)
+    rock(px, 64, 85, 19, 11, "boulder0", moss=0.8)
+    rock(px, 90, 90, 9, 6, "boulder1", moss=0.5)
+    rock(px, 38, 92, 6, 3.5, "boulder2", moss=0.3)
+    stone_tablet(px, 44, 93)
+    signpost(px, 290, 94)
+    # 花坡: broad drifts on the slope
+    for cx, cy, rx, ry, mixk in ((60, 74, 80, 6, {"rape": 1}), (215, 78, 95, 7, {"vetch": 1}), (320, 72, 60, 5, {"rape": 1}),
+                                 (130, 87, 95, 6, {"white": 0.7, "vetch": 1}), (270, 89, 80, 5, {"rape": 1}), (20, 90, 40, 5, {"vetch": 1})):
+        flowers(px, W + max(0, cx - rx), W + min(W, cx + rx), cy - ry - 2, cy + ry + 2, mixk, 0.55, f"slope{cx}", top_near, oval=True)
+    beehive(px, W + 262, 93)
+    beehive(px, W + 283, 93)
+    # 溪谷飞瀑
+    cliff(px, 2 * W)
+    pool_and_stream(px, 2 * W)
+    flowers(px, 2 * W, 2 * W + 120, 74, 94, {"white": 0.5, "blue": 1}, 0.05, "f2a", top_near)
+    flowers(px, 2 * W + 225, 3 * W, 74, 94, {"vetch": 0.5, "white": 1}, 0.05, "f2b", top_near)
+    # 花海草甸
+    flowers(px, 3 * W, 4 * W, 66, 95, {"lupine": 0.2, "pinklupine": 0.32, "poppy": 0.52, "white": 0.7, "rape": 0.82, "blue": 1.0}, 0.2, "f3", top_near)
+    # 紫藤小亭
+    flowers(px, 4 * W, 5 * W, 74, 94, {"white": 0.6, "vetch": 1}, 0.04, "f4", top_near)
+    pavilion(px, 4 * W)
+    stone_lantern(px, 4 * W + 150, 93)
+    pond(px, 4 * W)
+    for i in range(N):
+        _, shadows = zone_trees(i)
+        for cx, cy, rx, ry in shadows:
+            shade_ground(px, zone_x(i) + cx, cy, rx, ry, 0.62)
+    trail(px)
+    bridge(px, 2 * W)
+    _P["bg"] = px
+    return px
 
 
 def background(i):
-    return panorama()[0].crop(i * W, 0, W, H)
+    return Sprite(0, 0, px=panorama()[:, zone_x(i):zone_x(i) + W].copy())
 
 
 def trees(i, frame):
-    """The big trees of each screen (two sway frames), drawn over the
-    background, behind Buddy."""
+    return Sprite(0, 0, px=zone_trees(i, frame)[0].px)
+
+
+def front(i):
+    """The near edge, over Buddy: tall grass blades (dark at the root, lit
+    tips), big near flowers, the stream continuing on screen 3."""
+    s = Layer(W, H)
+    rnd = random.Random(f"front{i}")
+    y0 = PATH[1] - 1
+    base = fbm(W, H, 8, 3, f"fb{i}")
+    for y in range(y0 + 2, H):
+        for x in range(W):
+            v = 0.3 + (base[y, x] - 0.5) * 0.4 - (y - y0) * 0.01
+            s.px[y, x, :3] = GRASS[int(np.clip(v, 0, 0.999) * len(GRASS))]
+            s.px[y, x, 3] = 255
+    if i == 2:
+        flow = fbm(W, H, 3, 3, "flowf", stretch=0.35)
+        for y in range(PATH[0], H):
+            tt = (y - PATH[0]) / (H - PATH[0])
+            mid, hw = FALLS_X + 4 + math.sin(1 + tt) * 4, 30 + tt * 8
+            for x in range(int(mid - hw), int(mid + hw) + 1):
+                if y >= y0:
+                    u = (x - mid) / hw
+                    v = 0.45 + (flow[y, x] - 0.5) * 0.5 - abs(u) ** 2 * 0.2
+                    s.px[y, x, :3] = WATER[int(np.clip(v, 0, 0.999) * len(WATER))]
+                    s.px[y, x, 3] = 255
+    gap = (lambda x: abs(x - FALLS_X - 4) < 36) if i == 2 else (lambda x: False)
+    for x in range(-2, W + 2):
+        for _ in range(3):
+            if gap(x):
+                continue
+            hgt = rnd.randint(3, 9)
+            lean = rnd.uniform(-0.35, 0.35)
+            for k in range(hgt):
+                xx, yy = int(x + lean * k), H - 1 - k - rnd.randint(0, 1) - int((y0 + 6 - (H - hgt)) * 0)
+                yy = min(H - 1, y0 + 6 + (H - y0 - 6) - k - 1 - rnd.randint(0, 3))
+                if 0 <= xx < W and yy >= y0 - 2:
+                    v = 0.25 + k / hgt * 0.6 + rnd.uniform(-0.08, 0.08)
+                    s.px[yy, xx, :3] = GRASS[int(np.clip(v, 0, 0.999) * len(GRASS))]
+                    s.px[yy, xx, 3] = 255
+    kinds = [["white", "rape", "blue"], ["vetch", "rape", "white"], ["white", "blue", "poppy"],
+             ["lupine", "poppy", "pinklupine"], ["pinklupine", "white", "vetch"]][i]
+    for x in range(4, W - 4, 5):
+        if gap(x) or rnd.random() < 0.3:
+            continue
+        x += rnd.randint(-2, 2)
+        k = rnd.choice(kinds)
+        y = rnd.randint(y0 + 3, H - 4)
+        Rm = FLOWER[k]
+        if "lupine" in k:
+            hh = rnd.randint(5, 9)
+            y += rnd.randint(0, 2)
+            for j in range(hh):
+                tt = j / hh
+                for dx in (-1, 0, 1):
+                    if dx and tt > 0.8:
+                        continue
+                    v = 0.92 - tt * 0.6 - dx * 0.15 + rnd.uniform(-0.1, 0.1)
+                    if dx and (j % 2) == (dx > 0):
+                        continue
+                    s.px[y - hh + j, x + dx, :3] = Rm[int(np.clip(v, 0, 0.999) * len(Rm))]
+                    s.px[y - hh + j, x + dx, 3] = 255
+            continue
+        for dx, dy, c in ((0, 0, -1), (-1, 0, -2), (1, 0, -3), (0, -1, -2), (0, 1, 2), (-1, -1, -3), (1, 1, 1)):
+            s.px[y + dy, x + dx, :3] = Rm[c]
+            s.px[y + dy, x + dx, 3] = 255
+        s.px[y, x, :3] = FLOWER["rape"][-2] if k in ("white", "poppy") else Rm[-1]
+    return Sprite(0, 0, px=s.px)
+
+
+def falls(frame):
+    """The waterfall (screen 3), three frames: streaky falling water, white
+    where it breaks, spray drifting at the foot, rings on the pool."""
+    s = Layer(W, H)
+    cx = FALLS_X
+    streak = fbm(W, H * 2, 2, 3, "fallstreak", stretch=0.18)
+    for y in range(17, 73):
+        hw = 6 + (y - 17) * 0.06
+        for x in range(int(cx - hw), int(cx + hw) + 1):
+            u = (x - cx) / hw
+            sv = streak[(y - frame * 5) % (H * 2), x]
+            v = 0.62 + (sv - 0.5) * 0.9 - abs(u) ** 3 * 0.35 - u * 0.08
+            s.px[y, x, :3] = WATER[int(np.clip(v, 0, 0.999) * len(WATER))] if v < 0.9 else CLOUD[-2]
+            s.px[y, x, 3] = 255
+    for x in range(cx - 7, cx + 8):
+        s.px[16, x, :3] = WATER[8]
+        s.px[16, x, 3] = 255
+    rnd = random.Random(f"spray{frame}")
+    for _ in range(90):
+        a = rnd.uniform(0, math.pi)
+        r = rnd.uniform(0, 1) ** 0.7
+        x = int(cx + math.cos(a) * r * 22)
+        y = int(72 - math.sin(a) * r * 9 + rnd.uniform(-1, 1))
+        s.px[y, x, :3] = CLOUD[rnd.randint(4, 7)]
+        s.px[y, x, 3] = 255
+    for k in range(3):                                                   # rings on the pool
+        rr = 8 + ((frame + k) % 3) * 7
+        for j in range(24):
+            a = j / 24 * math.tau
+            x, y = int(cx + math.cos(a) * rr), int(73 + math.sin(a) * rr * 0.18)
+            if 0 <= y < H and abs(math.sin(a)) > 0.3:
+                s.px[y, x, :3] = WATER[8]
+                s.px[y, x, 3] = 255
+    return Sprite(0, 0, px=s.px)
+
+
+def bee(frame):
+    s = Sprite(4, 3)
+    s.rect(0, 1, 3, 2, "#e2bb2e").set(1, 1, "#33251f").set(1, 2, "#33251f")
+    s.set(1 + frame, 0, "#f7f7fb")
+    return s
+
+
+def lit(i):
+    """Night glows: the stone lantern and a lamp under the pavilion (screen 5)."""
     s = Sprite(W, H)
-    if i == 0:
-        s.blit(puff_tree(250, 92, 70, [SAK, SAK, P.blossom], "cherry0", lean=0.35, frame=frame, accent=[SAK[4], G[4]]), 0, 0)
-        s.blit(puff_tree(18, 90, 52, [G[1:], G[1:]], "oak0", lean=-0.2, frame=frame, puff=1.1), 0, 0)
-    elif i == 1:
-        s.blit(puff_tree(176, 90, 64, [P.porcelain + [P.linen[3]], P.porcelain + [P.linen[3]], G[1:]], "pear", frame=frame,
-                         accent=[G[4], G[5], P.linen[3]]), 0, 0)
-    elif i == 2:
-        s.blit(willow(60, 92, frame), 0, 0)
-        s.blit(puff_tree(304, 93, 62, [SAK, P.blossom], "cherry2", lean=-0.3, frame=frame, accent=[SAK[4]]), 0, 0)
-    elif i == 3:
-        s.blit(puff_tree(280, 93, 78, [G[1:], G[1:], P.leaf_spring], "oak3", lean=-0.15, reach=1.15, frame=frame, puff=1.15,
-                         accent=[G[5], G[4]]), 0, 0)
-        oak_swing(s, 0, frame)
-    elif i == 4:
-        s.blit(puff_tree(22, 92, 60, [SAK, SAK, G[1:]], "cherry4", lean=0.2, frame=frame, accent=[SAK[4]]), 0, 0)
+    if i == 4:
+        s.rect(148, 74, 4, 4, "#fff1b8").rect(149, 75, 2, 2, "#fffbe6")
+        s.rect(102, 64, 5, 5, "#fff1b8").rect(103, 65, 3, 3, "#fffbe6")
+    return s
+
+
+def sky(s):
+    """The sky alone (for the dusk mask)."""
+    s.px[:] = sky_px()
     return s
 
 
 def scene(i, frame=0):
     s = background(i)
     s.blit(trees(i, frame), 0, 0)
+    if i == 2:
+        s.blit(falls(0), 0, 0)
     s.blit(front(i), 0, 0)
-    return s
-
-
-def falls(frame):
-    """The waterfall and the white water at its foot (screen 3), 3 frames."""
-    s = Sprite(W, H)
-    cx = 171
-    for y in range(18, 72):
-        hw = 6 + (y - 18) * 0.07
-        for x in range(int(cx - hw), int(cx + hw) + 1):
-            k = (y + frame * 3 + (x * 7) % 5) % 6
-            c = WAT[4] if k < 2 else WAT[3] if k < 4 else P.linen[3]
-            s.set(x, y, c)
-        s.set(int(cx - hw) - 1, y, WAT[2])
-        s.set(int(cx + hw) + 1, y, WAT[1])
-    s.rect(cx - 7, 16, 15, 2, WAT[3]).hline(cx - 6, cx + 6, 16, P.linen[3])
-    rnd = random.Random(f"foam{frame}")
-    for _ in range(26):
-        x, y = cx + rnd.randint(-12, 12), 70 + rnd.randint(-2, 3)
-        s.set(x, y, P.linen[3] if rnd.random() < 0.6 else WAT[4])
-    for _ in range(14):                                                  # glints running down the stream
-        y = rnd.randint(77, 117)
-        t = (y - 76) / 41
-        x = int(cx + math.sin(min(1, t) * 3) * 10 + rnd.uniform(-1, 1) * (6 + t * 20))
-        s.hline(x, x + rnd.randint(1, 3), y, WAT[4])
-    return s
-
-
-def lamb(frame):
-    """A lamb in fluffy wool, 14x11; frame 1 grazes (head down)."""
-    s = Sprite(14, 11)
-    for x, y in ((3, 8), (5, 8), (9, 8), (11, 8)):
-        s.vline(x, y, 10, P.ink[1])
-    s.ellipse(7, 5, 5, 3.5, P.oat[3])
-    for x, y in ((4, 3), (7, 2), (10, 3), (5, 6), (9, 6)):
-        s.ellipse(x, y, 1.6, 1.4, P.linen[3])
-    s.set(4, 4, P.oat[2]).set(10, 7, P.oat[2])
-    hy = 4 if frame == 0 else 7
-    s.rect(11, hy, 3, 3, P.ink[1]).set(12, hy + 1, P.linen[3]).set(11, hy - 1, P.oat[3])
-    return s.outline(P.oat[1], grow=False)
-
-
-def bee(frame):
-    s = Sprite(4, 3)
-    s.rect(0, 1, 3, 2, P.mustard[3]).set(1, 1, P.ink[1]).set(1, 2, P.ink[1])
-    s.set(1 + frame, 0, P.linen[3])
-    return s
-
-
-def lit(i):
-    """Glows at night: the pavilion's lantern and the stone lantern (screen 5)."""
-    s = Sprite(W, H)
-    if i == 4:
-        s.rect(148, 75, 5, 3, P.light[0]).rect(149, 76, 3, 1, P.light[1])
-        s.rect(102, 50, 5, 6, P.light[0]).rect(103, 51, 3, 4, P.light[1])
     return s
 
 
 def build():
     out = {}
     for i, z in enumerate(ZONES):
-        bg = background(i)
-        out[f"valley_{z['id']}"] = bg
-        for f in (0, 1):
-            out[f"valley_{z['id']}_trees_{f}"] = trees(i, f)
-        out[f"valley_{z['id']}_front"] = front(i)
+        out[f"valley_{z['id']}"] = background(i)
         out[f"valley_{z['id']}_preview"] = scene(i)
-    for f in range(3):
-        out[f"valley_falls_{f}"] = falls(f)
     pano = Sprite(PW, H)
     for i in range(N):
         pano.blit(scene(i), i * W, 0)
-    p2 = scene(2)
-    p2.blit(falls(0), 0, 0)
-    pano.blit(p2, 2 * W, 0)
     out["valley_panorama"] = pano
-    out["valley_lamb"] = Sprite(28, 11).blit(lamb(0), 0, 0).blit(lamb(1), 14, 0)
     return out
