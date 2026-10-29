@@ -17,6 +17,7 @@ from __future__ import annotations
 import base64
 import io
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -118,11 +119,13 @@ def chats_js():
 # ---------- the 试玩版 is life at home only (user: as small as it can be): the pictures, texts and cards
 # of going out, pets, contacts and festivals are cut out of its page. Pictures become one transparent
 # pixel and text lists keep one entry, so the data keeps its shape and the switched-off code still loads.
-TRIAL_BLANK = ("pets", "outside", "friendHouses", "festival", "festival2", "storm")
+TRIAL_BLANK = ("pets", "outside", "friendHouses", "festival", "festival2", "storm", "guide")
 TRIAL_PRUNE = ("SOCIAL_DIALOGUE", "FRIEND_OUTING_TEXT", "NPC_TALK_TEXT", "PET_TEXT", "HOME_VISIT_TEXT", "SOCIAL_TEXT",
                "FRIEND_VISIT_TEXT", "FEST_TEXT", "FEST_TEXT2", "FEST_TEXT3", "FEST_TEXT4", "BAR_TEXT", "MALL_LIFE", "STORM_TEXT")
 PIXEL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
 TRIAL_CARD_WHEN = ("hasPet", "hasCat", "hasDog")
+# sounds of places, pets, calls and crowds; of the music only the spring daytime home song (audio.js plays it all year) (copy-web.mjs ships just the files left in the list)
+TRIAL_SOUND_OFF = re.compile(r"^BGM/(?!home/spring-day\.mp3$)|/(cat|dog|crowd|park)-|real-(auto-door|boat|checkout|gulls|horn|lake|sea|shaker)|rain-(light-dense|storm-heavy)|thunder-heavy|/(cinema|gulls|waves|phone-[a-z]+|step-outdoor)\.mp3$")
 
 
 def slim_trial(page):
@@ -146,6 +149,8 @@ def slim_trial(page):
     def home_card(c):
         return (c.get("at") or "home") == "home" and not c.get("service") and not any(t in (c.get("when") or "") for t in TRIAL_CARD_WHEN)
 
+    k = page.index("const GAME_AUDIO_FILES = ") + len("const GAME_AUDIO_FILES = ")
+    page = swap(k, lambda fs: [f for f in fs if not TRIAL_SOUND_OFF.search(f)])
     i = page.index("const DATA = ") + len("const DATA = ")
     page = swap(i, lambda d: {k: (blank(v) if k in TRIAL_BLANK else v) for k, v in d.items()})
     for name in TRIAL_PRUNE:

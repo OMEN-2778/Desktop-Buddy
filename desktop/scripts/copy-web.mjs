@@ -30,8 +30,14 @@ console.log("copied", src, "->", join(out, "index.html"));
 // External audio is shared by Pages and the packaged app, so both work offline
 // after installation without contacting any audio host.
 const audioSource = join(here, "..", "..", "AUDIO_LIBRARY");
-// (the 试玩版 lives at home only: just the home music)
-for (const group of [process.env.BUDDY_TRIAL ? "BGM/home" : "BGM", "SFX/game", "SFX/processed"]) {
+if (process.env.BUDDY_TRIAL) {
+  // the 试玩版 ships only the sounds its page still lists (tools/make_demo.py slim_trial: no music, nothing from outside)
+  const page = readFileSync(src, "utf8"), at = page.indexOf("const GAME_AUDIO_FILES = ") + "const GAME_AUDIO_FILES = ".length;
+  const files = JSON.parse(page.slice(at, page.indexOf("]", at) + 1));
+  // its one song is a lighter copy (desktop/trial-audio: 64 kbps mono, made with ffmpeg from the full one)
+  const lite = f => join(here, "..", "trial-audio", f.split("/").pop());
+  for (const f of files) { mkdirSync(dirname(join(out, "audio", f)), { recursive: true }); cpSync(f.startsWith("BGM/") && existsSync(lite(f)) ? lite(f) : join(audioSource, f), join(out, "audio", f)); }
+} else for (const group of ["BGM", "SFX/game", "SFX/processed"]) {
   const source = join(audioSource, group);
   if (!existsSync(source)) throw new Error("Missing audio assets: " + source);
   cpSync(source, join(out, "audio", group), { recursive: true });

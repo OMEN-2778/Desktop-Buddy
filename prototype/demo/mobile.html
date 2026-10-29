@@ -100566,6 +100566,7 @@ const gameAudio = (() => {
   }
   function stopMusic(){musicKey='';stats.music='';nextMusicRetry=0;retryMusicKey='';currentMusic=requestedMusic=null;for(const t of tracks)disposeTrack(t,.08);}
   function chooseMusic(){
+    if(typeof TRIAL!=='undefined')return 'BGM/home/spring-day.mp3';   // the 试玩版 ships this one song, all year, day and night (user)
     const place=sim.place,season=SEASON_KEYS[seasonOf(sim.t).i],night=hour()<6||hour()>=18;
     const festival=festName();
     if(place==='park')return festival&&!night?'BGM/park/festival-streetlights.mp3':'BGM/park/park-'+season+'.mp3';
