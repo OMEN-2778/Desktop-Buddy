@@ -1,6 +1,7 @@
 /* Upper counterpart to Buddy's lower speech bubble: the tail points right. */
-/* while someone else talks the diary stays a round button beside their words (it unfolds over them only when pointed at) */
-.peer-hud { --pe:#8a6446; --pf:#ecd5ad; --peer-clip:var(--clip-diary); --peer-inner:var(--clip-diary-in); position:absolute; z-index:18; bottom:calc(100% + 10px); left:calc(var(--mood-d,52px) + var(--sky-b,3px)*2 + var(--tail,18px)); right:0; height:48px; translate:0 var(--peer-lift,0px); transition:translate .35s var(--hud-spring); pointer-events:none; }
+/* someone else's words outrank the diary (user): it steps aside while they talk and they use its whole row */
+.diary.peer-away { opacity:0; translate:-12px var(--lift,0px); pointer-events:none; transition:opacity .18s ease-in,translate .22s cubic-bezier(.4,0,.8,.2); }
+.peer-hud { --pe:#8a6446; --pf:#ecd5ad; --peer-clip:var(--clip-diary); --peer-inner:var(--clip-diary-in); position:absolute; z-index:18; bottom:calc(100% + 10px); left:calc(var(--mood-d,52px) / 2 - var(--say-h,48px) / 2); right:0; height:48px; translate:0 var(--peer-lift,0px); transition:translate .35s var(--hud-spring); pointer-events:none; }
 .peer-hud[hidden] { display:none; }
 .peer-bubble { position:absolute; inset:0 72px 0 0; display:flex; align-items:center; margin:0; padding:0 18px; min-width:0; color:#3d2a1e; font-size:var(--say-fs,20px); font-weight:700; line-height:1.35; isolation:isolate; filter:drop-shadow(3px 3px 0 var(--shadow)); transform-origin:right center; opacity:0; transform:translateX(10px) scale(.88); transition:transform .44s var(--hud-spring) .04s,opacity .18s .04s; }
 .peer-bubble span { min-width:0; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }

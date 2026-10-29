@@ -404,7 +404,7 @@ const logEl = document.getElementById("log");
 const diaryEl = document.getElementById("diary"), diaryBox = document.getElementById("diaryBox");
 const diaryPop = document.getElementById("diaryPop"), diaryList = document.getElementById("diaryList");
 let diaryOn = false;
-let diaryPeekUntil = 0, diaryHover = false, diaryTimer = 0, diaryPeekOk = false;   // the diary folds into a round button (syncDiaryFold)
+let diaryPeekUntil = 0, diaryHover = false, diaryTimer = 0, diaryPeekOk = false, diaryMissed = false;   // the diary folds into a round button (syncDiaryFold)
 setTimeout(() => { diaryPeekOk = true; }, 2500);   // lines written while the page loads do not unfold it
 function log(text, cls, talk = null) {   // talk: [[who, line], ...], a whole conversation kept with the line
   text = spaced(text);
@@ -4580,7 +4580,7 @@ function syncDiaryFold() {
   setDiaryUnfolded(diaryShouldOpen());
   if (diaryPeekUntil > performance.now()) diaryTimer = setTimeout(syncDiaryFold, diaryPeekUntil - performance.now() + 20);
 }
-function peekDiary(text) { diaryPeekUntil = performance.now() + Math.max(4000, Math.min(9000, 2500 + text.length * 120)); syncDiaryFold(); }
+function peekDiary(text) { if (peerDiaryReserved()) { diaryMissed = true; return; } diaryPeekUntil = performance.now() + Math.max(4000, Math.min(9000, 2500 + text.length * 120)); syncDiaryFold(); }
 {
   let leave = 0;
   const into = () => { clearTimeout(leave); if (!diaryHover) { diaryHover = true; moodrow.classList.add("diary-hover"); syncDiaryFold(); } };
