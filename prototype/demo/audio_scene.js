@@ -51,14 +51,14 @@ function audioSceneBeds(){
   else if(!night&&exposure.gain>.3)beds.birds=['park-birds-cc0',.12*exposure.gain,{cutoff:exposure.cutoff}];
   return beds;
  }
- if(['front','park','beach'].includes(place)){
+ if(['front','park','beach','valley'].includes(place)){
   if(wet)beds.rain=[weather.kind==='storm'?'rain-storm-heavy-cc0':'rain-light-dense-cc0',weather.kind==='storm'?.40:.30];
   if(place!=='park')beds.air=['park-wind-cc0',(weather.kind==='storm'?.15:.07)*breeze];
   if(place==='beach'){
    beds.water=['real-sea-cc0',.25,{x:160,y:45,radius:190}];
 
   }else if(!wet&&weather.kind!=='snow'){
-   if(!night&&(place==='park'||time%39<20))beds.birds=['park-birds-cc0',place==='park'?.18:.10,{x:65,y:35,radius:190}];
+   if(!night&&(place==='park'||place==='valley'||time%39<20))beds.birds=['park-birds-cc0',place==='park'||place==='valley'?.18:.10,{x:65,y:35,radius:190}];
    if(night&&place==='park')beds.night=['park-cicadas-cc0',.10];
    else if(night&&seasonOf(sim.t).i!==3)beds.night=['real-night-cc0',.09];
   }

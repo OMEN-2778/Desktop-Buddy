@@ -291,6 +291,7 @@ function festRing4(which, items) {
   }
   if (which === "away" && ["park", "beach", "disco"].includes(sim.place)) add("dance", "跳支舞");
   if (which === "door" && discoOpen()) out.push(["go:disco", "去迪厅"]);
+  if (which === "door" && valleyOpen()) out.push(["go:valley", "去春日山谷"]);
   return out;
 }
 function festTick4() { snowTick(); maskTick(); marathonTick(); danceTick(); }

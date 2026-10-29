@@ -1047,3 +1047,12 @@ roundClip(7,1) 的满半径像素圆角，最短为 14px 圆点。面板水平�
 旧存档的正面晕倒修复为正常状态（确实饿/累耗尽则保留对应原因）。
 Windows 发布流程先在 Linux 从当前源码重建页面，再通过 current-game-page
 artifact 交给 Windows 签名打包，禁止把旧的已提交 index.html 直接装进新 EXE。
+
+**春日山谷 (valley, spring only)** — `art/src/concept/spring_valley.py`,
+`prototype/demo/valley.js`. User: a valley in bloom, big, refined, NO reused
+art (own trees, sky, ridges, flowers, trail). One 1710px panorama sliced
+into five 342px screens (谷口 · 花坡 · 溪谷飞瀑 · 花海草甸 · 紫藤小亭) so the
+screens join up; edge walk / arrows move between them. Door ring offers
+it only in spring. Own ramps in palette.py (ridge_far, ridge_mid, meadow,
+sakura, wisteria, rock, stream, earth). Use `outl()` there: pixelkit's
+outline wraps round the canvas edge (np.roll).

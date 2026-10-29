@@ -255,8 +255,41 @@ def home():
                     part(door, Te[0]), part(step, P.oak[0]), part(bush, P.green[0])])
 
 
+# ---------------------------------------------------------------- 春日山谷: twin peaks, a sakura, a flower
+def valley():
+    F, M, G, S = P.ridge_far, P.ridge_mid, P.meadow, P.sakura
+
+    def peaks(s):
+        for cx, top, hw, R in ((20, 3, 12, F), (9, 8, 9, F)):
+            for y in range(top, 22):
+                w = int((y - top) * hw / 14)
+                s.hline(cx - w, cx + w, y, R[2])
+                s.hline(cx, cx + w, y, R[1])
+            for y in range(top, top + 3):
+                w = int((y - top) * hw / 14)
+                s.hline(cx - w, cx + w, y, P.snow[3])
+
+    def hills(s):
+        blob(s, 8, 23, 10, 3.5, M)
+        blob(s, 26, 24, 9, 2.5, G[1:])
+        for x in range(1, 31):
+            s.set(x, 26, G[2])
+
+    def sakura(s):
+        s.vline(24, 16, 24, P.walnut[2]).set(23, 19, P.walnut[2]).set(25, 18, P.walnut[1])
+        for cx, cy, rx, ry in ((24, 13, 5.5, 4), (20.5, 15, 3, 2.5), (27.5, 15, 3, 2.5)):
+            blob(s, cx, cy, rx, ry, S)
+
+    def flower(s):
+        for x, c in ((5, P.mustard), (10, P.lilac), (15, S), (30, P.linen)):
+            s.set(x, 24, c[3]).set(x, 25, G[3])
+
+    return sticker([part(peaks, F[0]), part(hills, M[0]), part(sakura, S[0]), part(flower, G[0])])
+
+
 def build():
-    return {"trip_park": park(), "trip_dock": dock(), "trip_mall": mall(), "trip_home": home(), "trip_disco": disco()}
+    return {"trip_park": park(), "trip_dock": dock(), "trip_mall": mall(), "trip_home": home(), "trip_disco": disco(),
+            "trip_valley": valley()}
 
 
 PREVIEW_SCALE = 8
