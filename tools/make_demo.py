@@ -235,6 +235,7 @@ def main():
                 "shopper": [[png(MALL.shopper(k, f)) for f in (0, 1)] for k in range(5)],
                 "props": {**{it["id"]: png(it["sprite"]) for it in mall_items if "sprite" in it}, "lottery": png(MALL.prop_like("lottery", "balloon"))},
                 "restroom": png(MALL.restroom_sprite()),
+                "restroomW": {str(w): png(MALL.restroom_sprite(w)) for w in sorted({u[3] for u in MALL.UNITS if u[2] == "shop"})},
                 "hover": {it["id"]: png(mall_near.crop(it["u"], it["top"], it["w"], MALL.FLOOR - it["top"])) for it in mall_items if it["kind"] == "shop"}},
         "farW": MALL.FAR_W, "nearW": MALL.NEAR_W, "at": MALL.AT, "feet": MALL.FEET, "upWalk": MALL.UP_WALK,
         "fascia": MALL.FASCIA, "floor": MALL.FLOOR, "walk": [MALL.AT, MALL.AT], "doorX": MALL.AT,

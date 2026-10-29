@@ -10,6 +10,29 @@ function mallCoveredByService(it) {
     const x=wrapNear(it.u-front.u);return x<front.w&&x+it.w>0;
   });
 }
+// The stand-in WC takes over one whole shop unit (flush with its neighbours, user) that is still off
+// screen, so it never pops up in view: it scrolls in as she walks to it. Ahead if she can make it, else behind.
+const mallUnitLeft=it=>it.u-5, mallUnitW=it=>it.w+5;
+function mallEmergencyWc(dir,budget) {
+  const imgs=IMG.out.mall.restroomW||{},door=MALL.restroom.door;
+  for(const d of [dir,-dir]){
+    let best=null;
+    for(const it of MALL.items){
+      if(it.kind!=='shop'||it.id==='restroom'||!imgs[mallUnitW(it)]||mallS.visit?.shop===it.id)continue;
+      const dist=mod((mallUnitLeft(it)+door-mallS.x)*d,MALL.nearW),x0=MALL.at+d*dist-door;
+      if(dist>budget||(d===1?x0<W+2:x0+mallUnitW(it)>-2))continue;
+      if(!best||dist<best.dist)best={it,dist};
+    }
+    if(best){
+      const stop=mallS.x+d*best.dist,uw=mallUnitW(best.it);
+      return {id:'restroom',name:'卫生间',kind:'shop',dynamic:true,u:stop-door+5,w:uw-5,uw,top:MALL.restroom.top,stop,born:realClock};
+    }
+  }
+  const stop=mallS.x+dir*budget;   // (no unit fits: the old free-standing one)
+  return {id:'restroom',name:'卫生间',kind:'shop',dynamic:true,u:stop-door+5,w:MALL.restroom.w-5,top:MALL.restroom.top,stop,born:realClock};
+}
+// gone once the whole unit is off screen again
+function mallEmergencyGone(it) { const x0=MALL.at+wrapNear(it.u-5-mallS.x);return x0>W+10||x0+(it.uw||MALL.restroom.w)< -10; }
 function mallSeekToilet(auto=false,requested=null) {
   if(mallS.toilet||sim.mode==='down'||wiping||cardHolds())return;
   stopNpcTalk('先去一下卫生间');
@@ -17,15 +40,11 @@ function mallSeekToilet(auto=false,requested=null) {
   if(mallVisitInside())mallLeaveVisit(false,false);
   mallS.visit=null;
   // Reach the door while enough bladder remains, including at the fastest game speed.
-  const budget=Math.max(3,Math.min(64,(sim.needs.bladder-1)/DECAY.bladder*WALK*Math.min(speed||1,4)/Math.max(speed,1)*.35));
+  const budget=Math.max(3,Math.min(420,(sim.needs.bladder-1)/DECAY.bladder*WALK*Math.min(speed||1,4)/Math.max(speed,1)*.75));
   const ahead=it=>mod((it.stop-mallS.x)*dir,MALL.nearW);
   let it=requested||mallItems().filter(it=>it.id==='restroom'&&ahead(it)<=budget).sort((a,b)=>ahead(a)-ahead(b))[0];
-  if(!it){
-    const target=mallS.x+dir*budget;
-    it=mallS.emergency={id:'restroom',name:'卫生间',kind:'shop',dynamic:true,
-      u:target-MALL.restroom.door+5,w:MALL.restroom.w-5,top:MALL.restroom.top,stop:target,born:realClock};
-    log('顺着 WC 指示，发现前方不远处有一间卫生间。');
-  }
+  if(!it)it=mallS.emergency=mallEmergencyWc(dir,budget);
+  if(it.dynamic&&!requested)log('顺着 WC 指示，前面不远处就有一间卫生间。');
   closeRing();closePicker();sim.windup=null;sim.queue=[];sim.chosen=null;sim.talk=null;life.talkQ=null;reaction=null;
   mallS.stop=null;mallS.hover=null;mallS.pointer=null;
   mallS.toilet={phase:'search',left:PUBLIC_WC_TIME,dynamic:!!it.dynamic,resumeDir:dir};
@@ -73,8 +92,9 @@ function mallHandleNeeds(dtGame,dtReal) {
 function drawMallRestroom(ctx) {
   for(const it of [mallS.foodFront,mallS.emergency].filter(Boolean)){
     const x=mod(it.u-5-mallS.x+MALL.at,MALL.nearW);
-    ctx.save();ctx.globalAlpha=Math.max(0,Math.min(1,(realClock-it.born)/.4));
-    for(const at of [x,x-MALL.nearW])ctx.drawImage(it.food?IMG.out.mall.foodFront[it.id]:IMG.out.mall.restroom,Math.round(at),0);
+    ctx.save();ctx.globalAlpha=it.uw?1:Math.max(0,Math.min(1,(realClock-it.born)/.4));   // a whole-unit WC was placed off screen
+    const img=it.food?IMG.out.mall.foodFront[it.id]:it.uw&&IMG.out.mall.restroomW?.[it.uw]||IMG.out.mall.restroom;
+    for(const at of [x,x-MALL.nearW])ctx.drawImage(img,Math.round(at),0);
     ctx.restore();
   }
   if(mallToiletInside()){
@@ -87,15 +107,16 @@ function drawMallRestroom(ctx) {
 }
 function mallSnapshot() {
   return {x:mallS.x,dir:mallS.dir,toilet:mallS.toilet&&{...mallS.toilet},
-    emergency:mallS.emergency&&{u:mallS.emergency.u,stop:mallS.emergency.stop},
+    emergency:mallS.emergency&&{u:mallS.emergency.u,stop:mallS.emergency.stop,uw:mallS.emergency.uw},
     foodFront:mallS.foodFront&&{id:mallS.foodFront.id,u:mallS.foodFront.u,stop:mallS.foodFront.stop},visit:mallS.visit&&{...mallS.visit}};
 }
 function restoreMall(raw) {
   if(!raw||!Number.isFinite(raw.x))return;
   mallS.x=raw.x;mallS.dir=raw.dir===1?1:-1;
   if(Number.isFinite(raw.emergency?.u)&&Number.isFinite(raw.emergency?.stop)){
+    const uw=IMG.out.mall.restroomW?.[raw.emergency.uw]?raw.emergency.uw:undefined;
     mallS.emergency={id:'restroom',name:'卫生间',kind:'shop',dynamic:true,u:raw.emergency.u,stop:raw.emergency.stop,
-      w:MALL.restroom.w-5,top:MALL.restroom.top,born:realClock-.5};
+      w:(uw||MALL.restroom.w)-5,uw,top:MALL.restroom.top,born:realClock-.5};
   }
   if(MALL_RESTAURANTS[raw.foodFront?.id]&&Number.isFinite(raw.foodFront.u)&&Number.isFinite(raw.foodFront.stop))
     mallS.foodFront={...raw.foodFront,name:'餐厅',kind:'shop',dynamic:true,food:true,w:91,top:MALL.restroom.top,born:realClock-.5};

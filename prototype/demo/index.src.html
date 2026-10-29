@@ -3824,7 +3824,7 @@ function stallVisit(it) {
 }
 const mallInside = () => mallToiletInside() || mallVisitInside() || !!(sim.place === "mall" && mallS.stop && mallS.stop.inAt != null && sim.t >= mallS.stop.inAt && sim.t < mallS.stop.outAt);
 function mallStep(dtReal) {
-  if (!mallS.toilet && mallS.emergency && Math.abs(itemX(mallS.emergency)-MALL.at)>W/2+80) mallS.emergency=null;
+  if (!mallS.toilet && mallS.emergency && mallEmergencyGone(mallS.emergency)) mallS.emergency=null;   // only once it is out of view
   if (reaction && realClock < reaction.until) return;      // she stops to wave back
   const st = mallS.stop;
   if (st) {
@@ -4546,6 +4546,7 @@ function setDiaryOpen(on) {
   if(on&&peerDiaryReserved())return;
   if (on === diaryOn) return;
   diaryOn = on;
+  diaryEl.classList.toggle("listing", on);   // the open list lies over everything, the gear too (user)
   diaryBox.setAttribute("aria-expanded", String(on));
   if (on) {
     diaryList._seen = false;

@@ -428,6 +428,7 @@ body {
 }
 .diary.open { width: calc(100% - var(--mood-d, 78px) / 2 + var(--say-h, 48px) / 2); }
 .diary.measure { transition: none !important; }
+.diary.listing { z-index: 60; }
 .diary-box span { opacity: 0; transition: opacity .08s; }
 .diary.open .diary-box span { opacity: 1; transition-delay: .06s; }
 .diary-ico { flex: none; width: 28px; height: 28px; display: block; }

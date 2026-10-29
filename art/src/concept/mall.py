@@ -626,9 +626,10 @@ def restroom(s,x=0,w=74):
     return x+45
 
 
-def restroom_sprite():
-    s=Sprite(74,H)
-    restroom(s);column(s,0)
+def restroom_sprite(w=74):
+    """A whole shop unit w wide turned into a WC (the mall's stand-in toilet takes over one unit, user)."""
+    s=Sprite(w,H)
+    restroom(s,0,w);column(s,0)
     return s
 
 
