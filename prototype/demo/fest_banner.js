@@ -101,11 +101,11 @@ function fbDeco(name) {
   deco.innerHTML = `<span class="fb-deco-strip">${one()}${one()}</span>`;   // two copies side by side: a seamless loop
 }
 let fbName = null, fbTimer = 0;
-// the highest thing it must stay above: the diary row, its open list, the settings rows,
+// the highest thing it must stay above: the diary row, its open list,
 // a chat bubble with a friend, an incoming call
 function fbUnderTop() {
   let top = diaryBox.getBoundingClientRect().top;
-  for (const el of [diaryPop, setPop, document.getElementById("peerHud"), document.getElementById("incomingCall")]) {
+  for (const el of [diaryPop, document.getElementById("peerHud"), document.getElementById("incomingCall")]) {   // (not the settings rows: the gear sits over the bar, its rows may cover it)
     if (!el || el.hidden || !el.offsetHeight || getComputedStyle(el).visibility === "hidden") continue;
     const r = el.getBoundingClientRect();
     if (r.height && r.bottom > 0) top = Math.min(top, r.top);
@@ -128,6 +128,7 @@ function fbPlace() {
 function fbFollow() {
   if (fbEl.hidden) return;
   fbPlace();
+  if (fbEl.offsetHeight !== fbEl._liftH) { fbEl._liftH = fbEl.offsetHeight; liftDiary(); }   // the gear goes over the bar
   if (fbEl.getBoundingClientRect().top + window.scrollY < 4 && performance.now() - (fbEl._room || 0) > 250) { fbEl._room = performance.now(); makeRoom(); }   // pushed off the top: ask for room
   requestAnimationFrame(fbFollow);
 }
@@ -163,7 +164,7 @@ function fbShow(f) {
 function fbHide() {
   clearTimeout(fbTimer);
   fbEl.classList.remove("in", "idle"); fbEl.classList.add("out");
-  fbTimer = setTimeout(() => { fbEl.hidden = true; fbEl.classList.remove("out"); makeRoom(); }, 650);
+  fbTimer = setTimeout(() => { fbEl.hidden = true; fbEl.classList.remove("out"); makeRoom(); liftDiary(); }, 650);
 }
 function fbTick() {
   if (!booted) return;

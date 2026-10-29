@@ -2346,7 +2346,9 @@ function liftDiary() {
   // Align each left-hand icon with the centre of its actual, wrapped text row.
   const gear=document.getElementById('setGear'),upper=peer&&!peer.hidden?peer:diary;
   // the gear rides one row above the diary (user): shown while the diary is pointed at
-  const target=upper.offsetTop-growth-(upper===diary?diaryGrow:0)-8-24;
+  let target=upper.offsetTop-growth-(upper===diary?diaryGrow:0)-8-24;
+  // today's festival bar (and the update pill on it) ride over the diary: the gear goes over them (user)
+  for(const id of ['festBanner','update']){const el=document.getElementById(id);if(el&&!el.hidden&&el.offsetHeight)target-=el.offsetHeight+6;}
   const origin=gear.parentElement.offsetTop+gear.offsetTop+gear.offsetHeight/2;
   moodrow.style.setProperty('--settings-lift',Math.round(origin-target)+'px');
 }
