@@ -5096,6 +5096,10 @@ if (TAURI) {
   }, true);
   // their icons are <img>s: the browser's own image drag would swallow the press
   document.addEventListener("dragstart", e => { if (e.target.closest?.("#settings, #festBanner, #diary")) e.preventDefault(); }, true);
+  // no pinch / Ctrl+wheel zoom (a player's touchpad pinch blew the page up
+  // past the window's edges): a touchpad pinch arrives as a wheel with ctrlKey
+  window.addEventListener("wheel", e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+  document.documentElement.style.touchAction = "pan-x pan-y";   // touch screens: scroll, never pinch
   // no browser menu (Reload, Back...) on a right click, except where text is typed
   document.addEventListener("contextmenu", e => { if (!e.target.closest?.("input, textarea, [contenteditable]")) e.preventDefault(); });
   document.addEventListener("click", e => { if (eatClick) { eatClick = false; e.stopPropagation(); e.preventDefault(); } }, true);

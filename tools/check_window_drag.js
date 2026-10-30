@@ -26,6 +26,7 @@ function harness() {
       getElementById: () => fake, querySelector: () => fake,
       addEventListener(name, fn) { const k = 'document:' + name; events.set(k, [...(events.get(k) || []), fn]); },
       elementFromPoint: () => ({ matches: () => true }),
+      documentElement: { style: {} },
     },
     window: {
       addEventListener(name, fn) { events.set(name, fn); },
