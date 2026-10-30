@@ -1049,6 +1049,7 @@ Windows 发布流程先在 Linux 从当前源码重建页面，再通过 current
 artifact 交给 Windows 签名打包，禁止把旧的已提交 index.html 直接装进新 EXE。
 
 **春日山谷 (valley, spring only)** — `art/src/concept/spring_valley.py`,
+**Hidden from players** (user: not ready to use it): `VALLEY_READY = false` in valley.js keeps it off the door ring; flip it only when the user says so.
 `prototype/demo/valley.js`. User: a valley in bloom, big, refined, NO reused
 art (own trees, sky, ridges, flowers, trail). v1 (flat fills, outlines) was
 rejected as "too simple, cartoonish": v2 is painted with `_render.py` — lit
