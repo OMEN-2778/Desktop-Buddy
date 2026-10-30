@@ -56,7 +56,7 @@ use std::{
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem},
     tray::TrayIconBuilder,
-    AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, State, WebviewWindow, WindowEvent, Wry,
+    AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, RunEvent, State, WebviewWindow, WindowEvent, Wry,
 };
 
 /// The tray's "置顶游戏" item, kept so the page's own setting can tick it.
@@ -255,12 +255,16 @@ fn fit_window(window: WebviewWindow, width: f64, height: f64, dx: Option<f64>, d
             let _ = window.set_position(PhysicalPosition::new(x, y));
         }
     }
+    // macOS resizes a fixed-size window fine, and flipping the style mask of a
+    // borderless see-through window there is asking for trouble
+    #[cfg(not(target_os = "macos"))]
     let _ = window.set_resizable(true);
     let done = window.set_size(LogicalSize::new(width.max(200.0), height.max(150.0)));
     let first = !SHOWN.swap(true, Ordering::SeqCst);
     // lock it again (and show it, the first time) once the new size has gone through
     thread::spawn(move || {
         thread::sleep(Duration::from_millis(150));
+        #[cfg(not(target_os = "macos"))]
         let _ = window.set_resizable(false);
         if first {
             // back where it was before an update restarted it, else centred
@@ -274,15 +278,29 @@ fn fit_window(window: WebviewWindow, width: f64, height: f64, dx: Option<f64>, d
                     }
                     let _ = write_config(app, &config);
                 }
-                None => {
-                    let _ = window.center();
-                }
+                None => place_centred(&window),
             }
             let _ = window.show();
             let _ = window.set_focus();
         }
     });
     done.map(|_| (moved_x, moved_y)).map_err(|e| e.to_string())
+}
+
+/// Centred in the screen's work area, but never with the bottom (the house)
+/// below it: the headroom above the house can make the window taller than a
+/// small screen (a 13" Mac), and then plain centring hangs the house off the
+/// bottom, under the Dock or taskbar. The see-through top may go off screen.
+fn place_centred(window: &WebviewWindow) {
+    let (Ok(size), Ok(Some(m))) = (window.outer_size(), window.current_monitor()) else {
+        let _ = window.center();
+        return;
+    };
+    let (wa, (w, h)) = (m.work_area(), (size.width as i32, size.height as i32));
+    let (ww, wh) = (wa.size.width as i32, wa.size.height as i32);
+    let x = wa.position.x + (ww - w) / 2;
+    let y = (wa.position.y + (wh - h) / 2).min(wa.position.y + wh - h);
+    let _ = window.set_position(PhysicalPosition::new(x, y));
 }
 
 // Native caption dragging clamps an oversized transparent window to the work
@@ -319,25 +337,98 @@ fn drag_with_cursor(window: WebviewWindow) -> Result<(), String> {
     Ok(())
 }
 
+/// macOS: the same loop in points (logical pixels). tao gives the cursor in
+/// the PRIMARY screen's scale but windows in their own, which disagree on a
+/// Retina laptop with an ordinary external screen, so the mouse is read from
+/// Quartz directly: points, top-left of the main display, like the window's
+/// logical position.
+#[cfg(target_os = "macos")]
+mod mac_mouse {
+    use std::ffi::c_void;
+    #[repr(C)]
+    struct CGPoint {
+        x: f64,
+        y: f64,
+    }
+    #[link(name = "CoreGraphics", kind = "framework")]
+    extern "C" {
+        fn CGEventSourceButtonState(state: i32, button: u32) -> bool;
+        fn CGEventCreate(source: *const c_void) -> *mut c_void;
+        fn CGEventGetLocation(event: *mut c_void) -> CGPoint;
+    }
+    #[link(name = "CoreFoundation", kind = "framework")]
+    extern "C" {
+        fn CFRelease(cf: *const c_void);
+    }
+    /// The left button (kCGEventSourceStateCombinedSessionState, kCGMouseButtonLeft).
+    pub fn left_down() -> bool {
+        unsafe { CGEventSourceButtonState(0, 0) }
+    }
+    pub fn position() -> Option<(f64, f64)> {
+        unsafe {
+            let event = CGEventCreate(std::ptr::null());
+            if event.is_null() {
+                return None;
+            }
+            let p = CGEventGetLocation(event);
+            CFRelease(event);
+            Some((p.x, p.y))
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn drag_with_cursor(window: WebviewWindow) -> Result<(), String> {
+    use tauri::LogicalPosition;
+    let sf = window.scale_factor().map_err(|e| e.to_string())?;
+    let origin = window.outer_position().map_err(|e| e.to_string())?.to_logical::<f64>(sf);
+    let start = mac_mouse::position().ok_or("no mouse position")?;
+    window.set_ignore_cursor_events(false).map_err(|e| e.to_string())?;
+    let mut previous = (origin.x.round(), origin.y.round());
+    while mac_mouse::left_down() {
+        if let Some(now) = mac_mouse::position() {
+            let next = ((origin.x + now.0 - start.0).round(), (origin.y + now.1 - start.1).round());
+            if next != previous {
+                window.set_position(LogicalPosition::new(next.0, next.1)).map_err(|e| e.to_string())?;
+                previous = next;
+            }
+        }
+        thread::sleep(Duration::from_millis(8));
+    }
+    Ok(())
+}
+
 #[tauri::command]
 async fn start_drag(window: WebviewWindow) -> Result<(), String> {
-    #[cfg(target_os = "windows")]
+    #[cfg(any(target_os = "windows", target_os = "macos"))]
     {
         if DRAGGING.swap(true, Ordering::SeqCst) { return Ok(()); }
         let result = tauri::async_runtime::spawn_blocking(move || drag_with_cursor(window)).await;
         DRAGGING.store(false, Ordering::SeqCst);
         result.map_err(|e| e.to_string())?
     }
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     { window.start_dragging().map_err(|e| e.to_string()) }
 }
 
 #[tauri::command]
 fn cursor_in_window(app: AppHandle, window: WebviewWindow) -> Option<(f64, f64)> {
-    let c = app.cursor_position().ok()?;
-    let (p, s, sf) = (window.inner_position().ok()?, window.inner_size().ok()?, window.scale_factor().ok()?);
-    let (x, y) = (c.x - p.x as f64, c.y - p.y as f64);
-    if x < 0.0 || y < 0.0 || x >= s.width as f64 || y >= s.height as f64 {
+    // macOS in points (see mac_mouse), elsewhere in physical pixels
+    #[cfg(target_os = "macos")]
+    let (c, p, s, sf) = {
+        let _ = app;
+        let sf = window.scale_factor().ok()?;
+        let (p, s) = (window.inner_position().ok()?.to_logical::<f64>(sf), window.inner_size().ok()?.to_logical::<f64>(sf));
+        (mac_mouse::position()?, (p.x, p.y), (s.width, s.height), 1.0)
+    };
+    #[cfg(not(target_os = "macos"))]
+    let (c, p, s, sf) = {
+        let c = app.cursor_position().ok()?;
+        let (p, s) = (window.inner_position().ok()?, window.inner_size().ok()?);
+        ((c.x, c.y), (p.x as f64, p.y as f64), (s.width as f64, s.height as f64), window.scale_factor().ok()?)
+    };
+    let (x, y) = (c.0 - p.0, c.1 - p.1);
+    if x < 0.0 || y < 0.0 || x >= s.0 || y >= s.1 {
         return None;
     }
     Some((x / sf, y / sf))
@@ -529,10 +620,18 @@ fn apply_update(app: AppHandle, window: WebviewWindow, pending: State<Pending>) 
             app.exit(0);
             Ok(())
         }
-        None => ready.update.install(&ready.bytes).map_err(|e| {
-            update_log(&app, &format!("install: {e}"));
-            format!("安装失败：{e}")
-        }), // runs the installer, which closes us
+        None => {
+            // Windows: runs the installer, which closes us. macOS: swaps the
+            // .app bundle in place, then we start the new one ourselves.
+            ready.update.install(&ready.bytes).map_err(|e| {
+                update_log(&app, &format!("install: {e}"));
+                format!("安装失败：{e}")
+            })?;
+            if cfg!(target_os = "macos") {
+                app.restart();
+            }
+            Ok(())
+        }
     }
 }
 
@@ -566,9 +665,44 @@ fn quit_after_save(app: &AppHandle) {
     });
 }
 
+/// macOS's menu bar: Tauri's default one quits on Cmd+Q without letting the
+/// page save, and offers full screen / minimise, which make no sense for a
+/// see-through pet window. Ours: hide, quit (saving first) and the Edit items,
+/// without which Cmd+C / Cmd+V / Cmd+A do nothing in the name box.
+#[cfg(target_os = "macos")]
+fn mac_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
+    use tauri::menu::{PredefinedMenuItem, Submenu};
+    let name = if TRIAL { "Desktop Buddy 试玩版" } else { "Desktop Buddy" };
+    let quit = MenuItem::with_id(app, "mac_quit", format!("退出 {name}"), true, Some("CmdOrCtrl+Q"))?;
+    let app_menu = Submenu::with_items(app, name, true, &[
+        &PredefinedMenuItem::hide(app, Some(&format!("隐藏 {name}")))?,
+        &PredefinedMenuItem::hide_others(app, Some("隐藏其他"))?,
+        &PredefinedMenuItem::show_all(app, Some("全部显示"))?,
+        &PredefinedMenuItem::separator(app)?,
+        &quit,
+    ])?;
+    let edit = Submenu::with_items(app, "编辑", true, &[
+        &PredefinedMenuItem::undo(app, Some("撤销"))?,
+        &PredefinedMenuItem::redo(app, Some("重做"))?,
+        &PredefinedMenuItem::separator(app)?,
+        &PredefinedMenuItem::cut(app, Some("剪切"))?,
+        &PredefinedMenuItem::copy(app, Some("拷贝"))?,
+        &PredefinedMenuItem::paste(app, Some("粘贴"))?,
+        &PredefinedMenuItem::select_all(app, Some("全选"))?,
+    ])?;
+    Menu::with_items(app, &[&app_menu, &edit])
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    #[cfg(target_os = "macos")]
+    let builder = builder.menu(mac_menu).on_menu_event(|app, event| {
+        if event.id.as_ref() == "mac_quit" {
+            quit_after_save(app);
+        }
+    });
+    builder
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(Pending(Mutex::new(None)))
@@ -657,6 +791,22 @@ pub fn run() {
             download_update,
             apply_update
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running Desktop Buddy");
+        .build(tauri::generate_context!())
+        .expect("error while running Desktop Buddy")
+        .run(|app, event| match event {
+            // a quit that didn't come from us (exit code None): save first
+            RunEvent::ExitRequested { code: None, api, .. } => {
+                api.prevent_exit();
+                quit_after_save(app);
+            }
+            // macOS: clicking the Dock icon brings back a hidden window
+            #[cfg(target_os = "macos")]
+            RunEvent::Reopen { .. } => {
+                if let Some(w) = app.get_webview_window("main") {
+                    let _ = w.show();
+                    let _ = w.set_focus();
+                }
+            }
+            _ => {}
+        });
 }

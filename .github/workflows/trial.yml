@@ -1,4 +1,4 @@
-# Builds the 试玩版 (trial) of the desktop app for Windows: life at home only, no saves, no
+# Builds the 试玩版 (trial) of the desktop app for Windows and macOS (a .dmg added to the same release): life at home only, no saves, no
 # updates (prototype/demo/trial.js on the page side, BUDDY_TRIAL in desktop/src-tauri/src/lib.rs).
 # It installs as its own app (another identifier), never touches the full version's save, and is
 # published as a pre-release "trial-v0.1.N", which the full app's updater ignores.
@@ -65,7 +65,7 @@ jobs:
         shell: bash
         run: |
           npm run web
-          npx tauri build --config "{\"version\":\"$VERSION\",\"productName\":\"Desktop Buddy Trial\",\"identifier\":\"com.desktopbuddy.trial\",\"bundle\":{\"icon\":[\"icons-trial/32x32.png\",\"icons-trial/128x128.png\",\"icons-trial/128x128@2x.png\",\"icons-trial/icon.icns\",\"icons-trial/icon.ico\"]},\"app\":{\"windows\":[{\"label\":\"main\",\"title\":\"Desktop Buddy 试玩版\",\"width\":320,\"height\":240,\"visible\":false,\"decorations\":false,\"transparent\":true,\"shadow\":false,\"resizable\":false,\"alwaysOnTop\":false,\"center\":true}]}}"
+          npx tauri build --config "{\"version\":\"$VERSION\",\"productName\":\"Desktop Buddy Trial\",\"identifier\":\"com.desktopbuddy.trial\",\"bundle\":{\"icon\":[\"icons-trial/32x32.png\",\"icons-trial/128x128.png\",\"icons-trial/128x128@2x.png\",\"icons-trial/icon.icns\",\"icons-trial/icon.ico\"]},\"app\":{\"windows\":[{\"label\":\"main\",\"title\":\"Desktop Buddy 试玩版\",\"width\":320,\"height\":240,\"visible\":false,\"decorations\":false,\"transparent\":true,\"shadow\":false,\"resizable\":false,\"alwaysOnTop\":false,\"center\":true,\"acceptFirstMouse\":true}]}}"
       - name: Release (pre-release, not picked up by the full app's updater)
         shell: bash
         env:
@@ -85,4 +85,50 @@ jobs:
           path: |
             desktop/src-tauri/target/release/bundle/nsis/*.exe
             desktop/src-tauri/target/release/desktop-buddy.exe
+          if-no-files-found: error
+
+  macos:
+    needs: windows       # adds the .dmg to the release the Windows job made
+    runs-on: macos-latest
+    env:
+      VERSION: 0.1.${{ github.run_number }}
+      BUDDY_TRIAL: "1"
+      BUDDY_MINIFY: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: trial-game-page
+          path: prototype/demo
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+          key: trial-macos
+      - name: Install the Tauri CLI
+        working-directory: desktop
+        run: npm ci
+      - name: Build
+        working-directory: desktop
+        run: |
+          npm run web
+          npx tauri build --target universal-apple-darwin --bundles app --config '{"version":"'"$VERSION"'","productName":"Desktop Buddy Trial","identifier":"com.desktopbuddy.trial","bundle":{"icon":["icons-trial/32x32.png","icons-trial/128x128.png","icons-trial/128x128@2x.png","icons-trial/icon.icns","icons-trial/icon.ico"]},"app":{"windows":[{"label":"main","title":"Desktop Buddy 试玩版","width":320,"height":240,"visible":false,"decorations":false,"transparent":true,"shadow":false,"resizable":false,"alwaysOnTop":false,"center":true,"acceptFirstMouse":true}]}}'
+      - name: Disk image
+        run: bash desktop/scripts/make-dmg.sh "Desktop Buddy Trial" "Desktop-Buddy-Trial_${VERSION}_mac.dmg"
+      - name: Add to the release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN || github.token }}
+          REPO: ${{ secrets.RELEASES_TOKEN && 'OMEN-2778/Desktop-Buddy-Releases' || github.repository }}
+        run: gh release upload "trial-v$VERSION" "Desktop-Buddy-Trial_${VERSION}_mac.dmg" --repo "$REPO" --clobber
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Desktop-Buddy-Trial-macos
+          path: Desktop-Buddy-Trial_*_mac.dmg
           if-no-files-found: error

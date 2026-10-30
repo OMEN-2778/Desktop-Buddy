@@ -104,3 +104,21 @@ drag ends and then resize without repositioning the window. Regression checks:
 `node tools/check_window_drag.js` and
 `rustc --test desktop/src-tauri/src/window_motion.rs -o window-motion-tests.exe`
 (run the resulting test executable). The Windows workflow runs both checks.
+
+## macOS
+
+CI (`macos` jobs in `desktop.yml` / `trial.yml`) builds one universal `.app`
+(Intel + Apple chips, macOS 11+), ad-hoc signed and not notarized, packed by
+`scripts/make-dmg.sh` into a `.dmg` with an Applications shortcut and a note
+on allowing it once in 系统设置 → 隐私与安全性. The full version's `.app.tar.gz`
+goes into `latest.json` as `darwin-aarch64` / `darwin-x86_64`, so it updates
+itself like the Windows one (the bundle is swapped in place, then it restarts).
+
+Mac-specific in `src-tauri/src/lib.rs`: see-through window via
+`macOSPrivateApi`; `acceptFirstMouse` so the first click on the pet works while
+another app is active; dragging and `cursor_in_window` read the mouse from
+Quartz in points (tao's cursor uses the primary screen's scale, wrong on a
+Retina + external screen pair); no resizable toggling; our own menu bar
+(Cmd+Q saves first, Edit items for copy/paste, no full screen); a Dock click
+shows a hidden window. Dock → 退出 skips the page's save (macOS terminates
+directly), so up to one autosave interval can be lost there.

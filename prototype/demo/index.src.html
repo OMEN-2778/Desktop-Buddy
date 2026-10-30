@@ -133,6 +133,9 @@
 </details>
 
 <script>
+// Older Macs' WebKit (Safari < 15.4) has no .at(): the desktop app on macOS runs on it
+for (const C of [Array, String]) if (!C.prototype.at) Object.defineProperty(C.prototype, "at", { configurable: true, writable: true,
+  value(i) { i = Math.trunc(i) || 0; if (i < 0) i += this.length; return i < 0 || i >= this.length ? undefined : this[i]; } });
 const DATA = /*__DEMO_DATA__*/null;
 const D = DATA;
 /*__BAR_TEXT_JS__*/
@@ -5091,6 +5094,10 @@ if (TAURI) {
     if (!uiPress || !(e.buttons & 1) || Math.hypot(e.clientX - uiPress.x, e.clientY - uiPress.y) <= 4) return;
     uiPress = null; eatClick = true; dragWindow();
   }, true);
+  // their icons are <img>s: the browser's own image drag would swallow the press
+  document.addEventListener("dragstart", e => { if (e.target.closest?.("#settings, #festBanner, #diary")) e.preventDefault(); }, true);
+  // no browser menu (Reload, Back...) on a right click, except where text is typed
+  document.addEventListener("contextmenu", e => { if (!e.target.closest?.("input, textarea, [contenteditable]")) e.preventDefault(); });
   document.addEventListener("click", e => { if (eatClick) { eatClick = false; e.stopPropagation(); e.preventDefault(); } }, true);
   window.addEventListener("buddy-drag-ended", () => { held = false; press = null; uiPress = null; through = false; });
   document.addEventListener("keydown", () => { eatClick = false; }, true);
