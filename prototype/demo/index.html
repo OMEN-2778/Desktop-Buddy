@@ -1224,7 +1224,7 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 /* the pet's menu stands in one column (pet_hud.js petColumnLayout): pills one width */
 .ring.over-hud > button { min-width: 7.2em; text-align: center; }
 
-#petPanel{position:absolute;z-index:32;left:var(--pick-left);top:var(--pick-top);width:var(--pick-w);height:var(--pick-h);box-sizing:border-box;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden;font-size:var(--ui-font-body,14px);animation:pet-sheet-in .32s cubic-bezier(.2,.8,.2,1.12)}
+#petPanel{position:absolute;z-index:61;left:var(--pick-left);top:var(--pick-top);width:var(--pick-w);height:var(--pick-h);box-sizing:border-box;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden;font-size:var(--ui-font-body,14px);animation:pet-sheet-in .32s cubic-bezier(.2,.8,.2,1.12)}
 #petPanel[hidden],.pet-mini[hidden]{display:none}
 #petPanel header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;min-height:25px}
 #petPanel h3{font-size:var(--ui-font-heading,18px);margin:0;line-height:1.25;overflow-wrap:anywhere}
@@ -1292,6 +1292,14 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 @keyframes pmKid{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
 @keyframes pmOut{to{opacity:0;transform:translateY(6px) scale(.5)}}
 @media(prefers-reduced-motion:reduce){.pet-mini.in,.pet-mini.in>*,.pet-mini.out{animation:none}}
+
+/* a small house (25%): the shelter's notes stay whole, buttons included */
+#petPanel[data-compact=true]{padding:6px;gap:3px}
+#petPanel[data-compact=true]:is([data-page=confirm],[data-page=notice]) h3{font-size:var(--ui-font-heading,16px);line-height:1.2}
+#petPanel[data-compact=true]:is([data-page=confirm],[data-page=notice]) header{min-height:0}
+#petPanel[data-compact=true]:is([data-page=confirm],[data-page=notice]) p{margin:0;line-height:1.3;font-size:var(--ui-font-label,12px)}
+#petPanel[data-compact=true] .pet-options{margin-top:3px}
+#petPanel[data-compact=true] .pet-options button{padding:3px 10px}
 
 /* the pet's status card (user: redone like the needs panel): a framed light panel, the
    pet's name in a dark title pill sitting on its top edge, four bars that spring up
@@ -99722,7 +99730,7 @@ function petNode(tag,text,cls){const n=document.createElement(tag);if(text!==und
 function petButton(text,fn,cls){const b=petNode('button',text,cls);b.type='button';b.onclick=()=>{gameAudio.sound('ui-click',.35);fn();};return b;}
 function fitPetPanel(){fitPetHud();fitPetMini();if(petPanel.hidden)return;overHouse(petPanel);petPanel.dataset.compact=String(view.offsetWidth<520);}
 function closePetPanel(){petPanel.hidden=true;petPanelPage=null;petSelection=null;for(const id of petImages.keys())if(!petState.pets.some(p=>p.breed===id)){petImages.delete(id);petImageLoads.delete(id);}}
-function petSheet(title,page){closePetHud();closeRing();closePicker();setContactsOpen(false);petPanelPage=page;petPanel.dataset.page=page;petPanel.querySelector('h3').textContent=title;petPanel.hidden=false;const body=petPanel.querySelector('.pet-panel-body');body.replaceChildren();fitPetPanel();petPanel.focus({preventScroll:true});return body;}
+function petSheet(title,page){closePetHud();closeRing();closePicker();setContactsOpen(false);setNeedsOpen(false);petPanelPage=page;petPanel.dataset.page=page;petPanel.querySelector('h3').textContent=title;petPanel.hidden=false;const body=petPanel.querySelector('.pet-panel-body');body.replaceChildren();fitPetPanel();petPanel.focus({preventScroll:true});return body;}
 function petRefusal(){const reason=PetRules.refusal(petState,sim.t);if(!reason)return false;const body=petSheet('收容所的回复','notice');const days=Math.ceil((petState.banUntil-sim.t)/1440);body.append(petNode('p',reason==='ban'?(petState.banWhy==='abandon'?`小宠物已经回到收容所了。请在 ${days} 天后再来申请领养。`:`这次走失后，我们想先给你和小家伙一点时间。请在 ${days} 天后再来申请领养。`):reason==='pending'?'送养安排已经记下啦，小家伙还在路上，等它到家了再来看看吧。':'家里已经有两位毛茸茸的成员啦，每个家庭最多领养两只宠物。'));body.append(petButton('我知道了',closePetPanel));return true;}
 function openPetAdoption(){if(!booted||wiping||phoneHolds()||card||sim.mode==='down')return;if(petRefusal())return;const body=petSheet('每周领养','list');
  const note=petNode('p',petState.pets.some(p=>p.status!=='lost')?'这是本周待领养的小猫小狗，家里还能再添一位新成员':'这是本周待领养的小猫小狗','pet-list-note');body.append(note);const grid=petNode('div',undefined,'pet-grid');

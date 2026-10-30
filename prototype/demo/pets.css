@@ -1,4 +1,4 @@
-#petPanel{position:absolute;z-index:32;left:var(--pick-left);top:var(--pick-top);width:var(--pick-w);height:var(--pick-h);box-sizing:border-box;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden;font-size:var(--ui-font-body,14px);animation:pet-sheet-in .32s cubic-bezier(.2,.8,.2,1.12)}
+#petPanel{position:absolute;z-index:61;left:var(--pick-left);top:var(--pick-top);width:var(--pick-w);height:var(--pick-h);box-sizing:border-box;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden;font-size:var(--ui-font-body,14px);animation:pet-sheet-in .32s cubic-bezier(.2,.8,.2,1.12)}
 #petPanel[hidden],.pet-mini[hidden]{display:none}
 #petPanel header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;min-height:25px}
 #petPanel h3{font-size:var(--ui-font-heading,18px);margin:0;line-height:1.25;overflow-wrap:anywhere}
@@ -66,3 +66,11 @@
 @keyframes pmKid{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
 @keyframes pmOut{to{opacity:0;transform:translateY(6px) scale(.5)}}
 @media(prefers-reduced-motion:reduce){.pet-mini.in,.pet-mini.in>*,.pet-mini.out{animation:none}}
+
+/* a small house (25%): the shelter's notes stay whole, buttons included */
+#petPanel[data-compact=true]{padding:6px;gap:3px}
+#petPanel[data-compact=true]:is([data-page=confirm],[data-page=notice]) h3{font-size:var(--ui-font-heading,16px);line-height:1.2}
+#petPanel[data-compact=true]:is([data-page=confirm],[data-page=notice]) header{min-height:0}
+#petPanel[data-compact=true]:is([data-page=confirm],[data-page=notice]) p{margin:0;line-height:1.3;font-size:var(--ui-font-label,12px)}
+#petPanel[data-compact=true] .pet-options{margin-top:3px}
+#petPanel[data-compact=true] .pet-options button{padding:3px 10px}
