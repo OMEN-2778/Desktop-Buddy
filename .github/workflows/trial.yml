@@ -10,6 +10,7 @@ on:
       - "prototype/demo/trial.js"
       - "desktop/src-tauri/icons-trial/**"
       - ".github/workflows/trial.yml"
+      - "desktop/scripts/make-dmg.sh"
   workflow_dispatch:
 
 permissions:

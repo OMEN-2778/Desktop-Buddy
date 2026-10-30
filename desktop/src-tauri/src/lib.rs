@@ -12,9 +12,9 @@
 //!   open_save_dir            show that folder in the file manager
 //!   load_settings / write_settings   the settings (settings.json), kept
 //!                            apart from the save and written right away
-//!   fit_window               size the window to the game
+//!   fit_window               size the window to the game (physical pixels)
 //!   start_drag               move the window with the mouse (no title bar)
-//!   cursor_in_window         where the mouse is, in page pixels (or null: outside)
+//!   cursor_in_window         where the mouse is, in physical pixels (or null: outside)
 //!   set_click_through        let clicks pass to what's behind (the page
 //!                            turns it on over its see-through parts)
 //!   set_on_top               "置顶游戏" (also ticks the tray item)
@@ -56,7 +56,7 @@ use std::{
 use tauri::{
     menu::{CheckMenuItem, Menu, MenuItem},
     tray::TrayIconBuilder,
-    AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, RunEvent, State, WebviewWindow, WindowEvent, Wry,
+    AppHandle, Emitter, LogicalSize, Manager, PhysicalPosition, PhysicalSize, RunEvent, State, WebviewWindow, WindowEvent, Wry,
 };
 
 /// The tray's "置顶游戏" item, kept so the page's own setting can tick it.
@@ -233,6 +233,8 @@ static SHOWN: AtomicBool = AtomicBool::new(false);
 static DRAGGING: AtomicBool = AtomicBool::new(false);
 
 #[tauri::command]
+/// All in physical (screen) pixels, converted by the page with its own
+/// devicePixelRatio, which can differ from the window's scale factor.
 fn fit_window(window: WebviewWindow, width: f64, height: f64, dx: Option<f64>, dy: Option<f64>) -> Result<(f64, f64), String> {
     if DRAGGING.load(Ordering::SeqCst) { return Ok((0.0, 0.0)); }
     // dy > 0: the page made room above the house (造型室, diary list), dx > 0
@@ -242,16 +244,16 @@ fn fit_window(window: WebviewWindow, width: f64, height: f64, dx: Option<f64>, d
     let (mut moved_x, mut moved_y) = (0.0, 0.0);
     let (dx, dy) = (dx.unwrap_or(0.0), dy.unwrap_or(0.0));
     if dx.abs() >= 0.5 || dy.abs() >= 0.5 {
-        if let (Ok(pos), Ok(sf)) = (window.outer_position(), window.scale_factor()) {
-            let mut x = pos.x - (dx * sf).round() as i32;
-            let mut y = pos.y - (dy * sf).round() as i32;
+        if let Ok(pos) = window.outer_position() {
+            let mut x = pos.x - dx.round() as i32;
+            let mut y = pos.y - dy.round() as i32;
             if let Ok(Some(m)) = window.current_monitor() {
                 let wa = m.work_area().position;
                 if dx > 0.0 { x = x.max(wa.x.min(pos.x)); }
                 if dy > 0.0 { y = y.max(wa.y.min(pos.y)); }
             }
-            moved_x = (pos.x - x) as f64 / sf;
-            moved_y = (pos.y - y) as f64 / sf;
+            moved_x = (pos.x - x) as f64;
+            moved_y = (pos.y - y) as f64;
             let _ = window.set_position(PhysicalPosition::new(x, y));
         }
     }
@@ -259,7 +261,8 @@ fn fit_window(window: WebviewWindow, width: f64, height: f64, dx: Option<f64>, d
     // borderless see-through window there is asking for trouble
     #[cfg(not(target_os = "macos"))]
     let _ = window.set_resizable(true);
-    let done = window.set_size(LogicalSize::new(width.max(200.0), height.max(150.0)));
+    let sf = window.scale_factor().unwrap_or(1.0);
+    let done = window.set_size(PhysicalSize::new((width.max(200.0 * sf)).round() as u32, (height.max(150.0 * sf)).round() as u32));
     let first = !SHOWN.swap(true, Ordering::SeqCst);
     // lock it again (and show it, the first time) once the new size has gone through
     thread::spawn(move || {
@@ -413,25 +416,26 @@ async fn start_drag(window: WebviewWindow) -> Result<(), String> {
 
 #[tauri::command]
 fn cursor_in_window(app: AppHandle, window: WebviewWindow) -> Option<(f64, f64)> {
-    // macOS in points (see mac_mouse), elsewhere in physical pixels
+    // in physical pixels: the page divides by its own devicePixelRatio (see
+    // fit_window). macOS measures in points (see mac_mouse), then scales.
     #[cfg(target_os = "macos")]
     let (c, p, s, sf) = {
         let _ = app;
         let sf = window.scale_factor().ok()?;
         let (p, s) = (window.inner_position().ok()?.to_logical::<f64>(sf), window.inner_size().ok()?.to_logical::<f64>(sf));
-        (mac_mouse::position()?, (p.x, p.y), (s.width, s.height), 1.0)
+        (mac_mouse::position()?, (p.x, p.y), (s.width, s.height), sf)
     };
     #[cfg(not(target_os = "macos"))]
     let (c, p, s, sf) = {
         let c = app.cursor_position().ok()?;
         let (p, s) = (window.inner_position().ok()?, window.inner_size().ok()?);
-        ((c.x, c.y), (p.x as f64, p.y as f64), (s.width as f64, s.height as f64), window.scale_factor().ok()?)
+        ((c.x, c.y), (p.x as f64, p.y as f64), (s.width as f64, s.height as f64), 1.0)
     };
     let (x, y) = (c.0 - p.0, c.1 - p.1);
     if x < 0.0 || y < 0.0 || x >= s.0 || y >= s.1 {
         return None;
     }
-    Some((x / sf, y / sf))
+    Some((x * sf, y * sf))
 }
 
 #[tauri::command]

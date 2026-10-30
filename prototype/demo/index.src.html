@@ -2626,6 +2626,7 @@ function setSettingsOpen(open) {
     buildSettings();
     setPop.classList.remove("on"); void setPop.offsetWidth; setPop.classList.add("on");
     makeRoom();
+    setTimeout(() => { if (!setPop.hidden) makeRoom(); }, reduceMotionUI ? 0 : 320);   // measured again once it has popped out to full size
   } else {
     setPop.classList.remove("on");
     setTimeout(() => { if (setGear.getAttribute("aria-expanded") === "false") { setPop.hidden = true; makeRoom(); } }, reduceMotionUI ? 0 : 260);
@@ -5028,8 +5029,13 @@ function fitWindow() {
   if (dx < 0) dx = -Math.min(-dx, shifted);
   if (`${width}x${height}` === lastWin && !dy && !dx) return;
   lastWin = `${width}x${height}`;
-  TAURI.core.invoke("fit_window", { width, height, dx, dy })
-    .then(m => { const [mx, my] = Array.isArray(m) ? m : [0, +m || 0]; shifted = Math.max(0, shifted + mx); lifted = Math.max(0, lifted + my); })
+  // in screen pixels by the PAGE's own pixel ratio: the app's idea of the
+  // display scale can differ from the web view's (Windows text size, a
+  // scaling change without signing out), and the window then came out
+  // smaller than the page, cut off right and bottom (a player's report)
+  const dpr = window.devicePixelRatio || 1;
+  TAURI.core.invoke("fit_window", { width: Math.ceil(width * dpr), height: Math.ceil(height * dpr), dx: dx * dpr, dy: dy * dpr })
+    .then(m => { const [mx, my] = Array.isArray(m) ? m : [0, +m || 0]; shifted = Math.max(0, shifted + mx / dpr); lifted = Math.max(0, lifted + my / dpr); })
     .catch(e => TAURI.core.invoke("log_js", { message: `fit_window: ${e}` }));
 }
 // Moving the window (it has no title bar): press on the time bar, or on the
@@ -5067,8 +5073,9 @@ if (TAURI) {
   window.addEventListener("pointerup", () => { held = false; }, true);
   setInterval(async () => {
     if (held || desktopDragging) return;                // never in the middle of a press or a drag
-    const p = await TAURI.core.invoke("cursor_in_window").catch(() => null);
-    if (!p || held || desktopDragging) return;
+    const c = await TAURI.core.invoke("cursor_in_window").catch(() => null);   // screen pixels (see fitWindow)
+    if (!c || held || desktopDragging) return;
+    const p = [c[0] / (window.devicePixelRatio || 1), c[1] / (window.devicePixelRatio || 1)];
     const el = document.elementFromPoint(p[0], p[1]);
     moodHover(p[0], p[1]);                              // click-through hides the mouse from the page
     const hollow = (!el || el.matches(HOLLOW)) && !(listOpen && inMoodZone(p[0], p[1]));
