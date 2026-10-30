@@ -2926,7 +2926,7 @@ const EMO_PULL = {
   embarrassed: { bath: 15, go_out: 10 }, uncomfortable: { go_out: 15 }, dazed: { window: 10, go_out: 10 },
 };
 function startAct(name, quiet = false) {
-  if(petState.pet?.carried&&!name.startsWith("pet_")&&!["tv","host"].includes(name))dropCarriedPet();
+  if(!name.startsWith("pet_")&&!["tv","host"].includes(name))eachPet(p=>{if(p.carried)dropCarriedPet();});
   if(name.startsWith("pet_")&&!preparePetHumanAction(name))return;
   if(atFriendHome()){friendVisitCommand(name);return;}
   if(sim.place==='home'){
@@ -3135,7 +3135,7 @@ function updateDoors(dtReal) {
     const near = sim.mode === "walk" && !p.dy && d.storey === storey
       && sim.crossing.some(([id, x]) => id === d.id && Math.abs(p.x - x) < 16)
       || sim.place==='home'&&d.storey===0&&socialState.guest&&['entering','leaving'].includes(socialState.guest.phase)&&Math.abs(homeGuestPoint(socialState.guest).x-d.x-2)<16
-      || petCanSee()&&petState.pet.motion&&d.storey===storeyOfY(petPoint().y)&&Math.abs(petPoint().x-d.x-2)<16;
+      || somePet(p=>petCanSee()&&p.motion&&d.storey===storeyOfY(petPoint().y)&&Math.abs(petPoint().x-d.x-2)<16);
     if (near && st.angle === 0) st.side = sim.facing > 0 ? "r" : "l";
     st.t += dtReal * Math.min(speed, 4);
     if (st.t < 0.06) continue;
@@ -11665,7 +11665,7 @@ view.addEventListener("click", e => {
   closeRing();
   if (sim.mode === "down") return;
   if (mailBubbleHit(x, y)) { readMail(); return; }   // a letter came (写信日)
-  const petTarget=petHit(x,y);if(petTarget){if(petTarget==='feeder')openPetFeeder();else if(petTarget==='mat')openPetMatColors();else openPetInteractions();return;}
+  const petTarget=petHit(x,y);if(petTarget){if(petTarget==='pet'&&petHoverPet)focusPet(petHoverPet);if(petTarget==='feeder')openPetFeeder();else if(petTarget==='mat')openPetMatColors();else openPetInteractions();return;}
   if(friendVisitClick(x,y))return;
   if(springClick(x,y))return;                    // 春节: a word with 爸爸 or 妈妈
   if (buddyHit(x, y)) {
@@ -11842,6 +11842,7 @@ let lastChat = -1e9;
 function ringPick(id) {
   if (id.startsWith("pet:")) { petRingPick(id.slice(4)); return; }
   if(id==='pet_adopt'){closeRing();openPetAdoption();return;}
+  if(id==='pet_abandon'){closeRing();openPetAbandon();return;}
   if(id.startsWith("fv:")){closeRing();if(id==="fv:stay")requestFriendStay();else friendVisitAction(id.slice(3));return;}
   if(id.startsWith('outing:')){const c=socialState.contacts.find(c=>c.id===ringEl.dataset.contactId),place=id.slice(7);closeRing();if(c)scheduleFriendOuting(c,place);return;}
   if (id === "mall_leave") { closeRing();mallLeaveVisit(false);return; }
@@ -20456,7 +20457,7 @@ const GUIDE = [
 
   { title: "节日和宠物", shot: null,
     lead: "过节那天，日记上方会出现节日条，点上面的按钮，{她}就去。",
-    points: ["电脑或手机里有「领养宠物」，每周都有新的小猫小狗。"],
+    points: ["电脑或手机里有「领养宠物」，每周都有新的小猫小狗，最多养两只。"],
     tip: null },
 
   { title: "设置", shot: "settings",
@@ -25992,27 +25993,40 @@ pixelUiStyle.textContent=`:root{${pixelUiVars('light')}}`;
 document.head.append(pixelUiStyle);
 
 // Pure, game-minute pet state. No wall-clock catch-up and no save-file side effects.
+// Up to two pets (user): s.pets, and s.pet is the one being looked at (s.sel). The
+// game runs each pet's routine with s.sel pointed at it (withPet in pets.js).
 const PetRules = (()=>{
  const DAY=1440,MAX=100,clamp=n=>Math.max(0,Math.min(MAX,n));
- const fresh=(seed=Date.now())=>({version:1,seed:seed>>>0,week:-1,offers:[],pet:null,feeder:0,installed:false,matColor:'sage',banUntil:0,sadUntil:0});
+ const MAX_PETS=2,KEEP_DAYS=3;
+ const withPet=s=>Object.defineProperty(s,'pet',{enumerable:false,configurable:true,
+  get(){return this.pets[this.sel]??this.pets[0]??null;},
+  set(v){const i=this.pets.indexOf(this.pet);if(v==null){if(i>=0)this.pets.splice(i,1);this.sel=0;}else if(i>=0)this.pets[i]=v;else{this.pets.push(v);this.sel=this.pets.length-1;}}});
+ const fresh=(seed=Date.now())=>withPet({version:2,seed:seed>>>0,week:-1,offers:[],pets:[],sel:0,feeder:0,installed:false,matColor:'sage',banUntil:0,banWhy:'',sadUntil:0});
  function random(s){s.seed=(Math.imul(s.seed,1664525)+1013904223)>>>0;return s.seed/4294967296;}
  function weekly(s,t,breeds){const week=Math.floor(t/(7*DAY));if(s.week===week&&s.offers.length===12)return s.offers;s.week=week;s.offers=[];
   for(const species of ['cat','dog']){const list=breeds.filter(b=>b.species===species);for(let i=0;i<6;i++){const breed=list[Math.floor(random(s)*list.length)];s.offers.push({id:`${week}-${species}-${i}`,breed:breed.id,activity:random(s)<.5?'lazy':'active',attachment:random(s)<.5?'independent':'clingy'});}}return s.offers;
  }
- function refusal(s,t){if(s.banUntil>t)return 'ban';if(s.pet&&s.pet.status!=='lost')return 'occupied';return null;}
+ function refusal(s,t){if(s.banUntil>t)return 'ban';const live=s.pets.filter(p=>p.status!=='lost');if(live.some(p=>p.status==='pending'))return 'pending';if(live.length>=MAX_PETS)return 'occupied';return null;}
+ // 放弃领养 (user): a pet that has lived here 3 days can go back to the shelter; no new pet for 7 days.
+ // Its mat goes with it; with no pet left, the feeder and the mat are taken back too.
+ const abandonable=(s,t)=>s.pets.filter(p=>p.status==='home'&&t>=p.arrivalAt+KEEP_DAYS*DAY);
+ function abandon(s,p,t){const i=s.pets.indexOf(p);if(i<0||!abandonable(s,t).includes(p))return false;s.pets.splice(i,1);s.sel=Math.min(s.sel,Math.max(0,s.pets.length-1));
+  s.banUntil=Math.max(s.banUntil,t+7*DAY);s.banWhy='abandon';if(!s.pets.some(q=>q.status!=='lost')){s.pets=[];s.sel=0;s.installed=false;s.feeder=0;}return true;}
  function adopt(s,offer,name,t){if(refusal(s,t)||!s.offers.some(o=>o.id===offer?.id))return false;name=[...String(name).trim()].slice(0,8).join('');if(!name)return false;
-  const o=s.offers.find(o=>o.id===offer.id);s.pet={...o,name,status:'pending',arrivalAt:t+DAY,affinity:30,needs:{hunger:100,energy:100,company:100},low:{hunger:0,energy:0,company:0},warned:{},motion:null,activityNow:'idle',nextEvent:t+DAY+120};s.installed=true;s.feeder=900;return true;
+  const o=s.offers.find(o=>o.id===offer.id);s.pets=s.pets.filter(p=>p.status!=='lost');s.sel=Math.min(s.sel,Math.max(0,s.pets.length-1));
+  s.pets.push({...o,uid:o.id+'@'+t,name,status:'pending',arrivalAt:t+DAY,affinity:30,needs:{hunger:100,energy:100,company:100},low:{hunger:0,energy:0,company:0},warned:{},motion:null,activityNow:'idle',nextEvent:t+DAY+120});s.installed=true;s.feeder=900;return true;
  }
- function restore(raw,breeds){const s=fresh();if(!raw||raw.version!==1)return s;const ids=new Set(breeds.map(b=>b.id)),number=(n,d=0)=>Number.isFinite(n)?Math.max(0,n):d;
+ function restore(raw,breeds){const s=fresh();if(!raw||![1,2].includes(raw.version))return s;const ids=new Set(breeds.map(b=>b.id)),number=(n,d=0)=>Number.isFinite(n)?Math.max(0,n):d;
   s.seed=Number.isInteger(raw.seed)?raw.seed>>>0:s.seed;s.week=Number.isInteger(raw.week)?raw.week:-1;s.offers=(Array.isArray(raw.offers)?raw.offers:[]).filter(o=>ids.has(o?.breed)&&['lazy','active'].includes(o.activity)&&['independent','clingy'].includes(o.attachment)).slice(0,12);if(s.offers.length!==12)s.week=-1;
   for(const k of ['feeder','banUntil','sadUntil'])s[k]=number(raw[k]);s.feeder=Math.min(900,s.feeder);s.installed=!!raw.installed;s.matColor=['sage','blue','rose','cream','lilac','clay'].includes(raw.matColor)?raw.matColor:'sage';
-  const p=raw.pet;if(p&&ids.has(p.breed)&&['pending','home','away','lost'].includes(p.status)){
-   s.pet={...p,name:[...String(p.name||'团子')].slice(0,8).join(''),needs:{},low:{},warned:p.warned&&typeof p.warned==='object'?p.warned:{},motion:null,activityNow:'idle',nextEvent:number(p.nextEvent)};
-   for(const k of ['hunger','energy','company']){s.pet.needs[k]=clamp(number(p.needs?.[k],100));s.pet.low[k]=number(p.low?.[k]);}
-   for(const k of ['arrivalAt','returnAt','escapedAt'])s.pet[k]=number(p[k]);s.pet.position=p.position&&Number.isFinite(p.position.x)&&Number.isFinite(p.position.y)?{x:p.position.x,y:p.position.y}:null;s.pet.interaction=null;s.pet.reservedUntil=0;s.pet.affinity=clamp(number(p.affinity,30));s.pet.carried=p.carried===true;s.pet.walk=p.walk&&['front','park','beach'].includes(p.walk.dest)&&['departing','active'].includes(p.walk.phase)?{dest:p.walk.dest,phase:p.walk.phase,startedAt:number(p.walk.startedAt),until:number(p.walk.until),position:null}:null;s.pet.willReturn=p.willReturn===true;s.pet.activity=p.activity==='active'?'active':'lazy';s.pet.attachment=p.attachment==='clingy'?'clingy':'independent';
-  }return s;
+  s.banWhy=raw.banWhy==='abandon'?'abandon':'';
+  for(const p of (raw.version===1?[raw.pet]:Array.isArray(raw.pets)?raw.pets:[]).slice(0,MAX_PETS))if(p&&ids.has(p.breed)&&['pending','home','away','lost'].includes(p.status)){
+   const q={...p,uid:typeof p.uid==='string'&&p.uid?p.uid:String(p.id||'pet')+'@'+s.pets.length,name:[...String(p.name||'团子')].slice(0,8).join(''),needs:{},low:{},warned:p.warned&&typeof p.warned==='object'?p.warned:{},motion:null,activityNow:'idle',nextEvent:number(p.nextEvent)};s.pets.push(q);
+   for(const k of ['hunger','energy','company']){q.needs[k]=clamp(number(p.needs?.[k],100));q.low[k]=number(p.low?.[k]);}
+   for(const k of ['arrivalAt','returnAt','escapedAt'])q[k]=number(p[k]);q.position=p.position&&Number.isFinite(p.position.x)&&Number.isFinite(p.position.y)?{x:p.position.x,y:p.position.y}:null;q.interaction=null;q.reservedUntil=0;q.affinity=clamp(number(p.affinity,30));q.carried=p.carried===true;q.walk=p.walk&&['front','park','beach'].includes(p.walk.dest)&&['departing','active'].includes(p.walk.phase)?{dest:p.walk.dest,phase:p.walk.phase,startedAt:number(p.walk.startedAt),until:number(p.walk.until),position:null}:null;q.willReturn=p.willReturn===true;q.activity=p.activity==='active'?'active':'lazy';q.attachment=p.attachment==='clingy'?'clingy':'independent';
+  }s.sel=Math.max(0,Math.min(s.pets.length-1,Number.isInteger(raw.sel)?raw.sel:0));return s;
  }
- function escape(s,t,emit){const p=s.pet;p.status='away';p.walk=null;p.carried=false;p.escapedAt=t;p.returnAt=t+2*DAY;p.willReturn=random(s)<.5;p.motion=null;s.banUntil=t+7*DAY;s.sadUntil=t+2*DAY;emit('escape',p);}
+ function escape(s,t,emit,p=s.pet){p.status='away';p.walk=null;p.carried=false;p.escapedAt=t;p.returnAt=t+2*DAY;p.willReturn=random(s)<.5;p.motion=null;s.banUntil=t+7*DAY;s.sadUntil=t+2*DAY;emit('escape',p);}
  function tick(s,from,to,context,emit=()=>{}){if(!(to>from)||!s.pet)return;
   // One-minute integration keeps fast sleep and ordinary speed equivalent.
   for(let t=from;t<to;){const end=Math.min(to,t+1),dt=end-t,p=s.pet;t=end;
@@ -26021,16 +26035,16 @@ const PetRules = (()=>{
    if(p.status!=='home')continue;
    const n=p.needs;n.hunger=clamp(n.hunger-dt/18);const sleeping=['sleep','rest','lie_down'].includes(p.activityNow);
    n.energy=clamp(n.energy+dt*(sleeping?.28:-(p.activity==='active'?.055:.04)));
-   n.company=clamp(n.company+dt*(context.nearby?.085:-(p.attachment==='clingy'?.045:.026)));
+   n.company=clamp(n.company+dt*(context.nearby?.085:-(p.attachment==='clingy'?.045:.026)*(context.pal?.6:1)));   // a second pet at home keeps it some company
    if(p.activityNow==='eat'&&context.atFeeder&&s.feeder>0){const food=Math.min(s.feeder,dt*4,100-n.hunger);s.feeder-=food;n.hunger=clamp(n.hunger+food);}
    for(const k of Object.keys(n)){
     if(n[k]<10)p.low[k]+=dt;else p.low[k]=0;
     if(n[k]<20&&!p.warned[k]){p.warned[k]=true;emit('warning:'+k,p);}if(n[k]>=25)delete p.warned[k];
-    if(p.low[k]>=DAY){escape(s,t,emit);break;}
+    if(p.low[k]>=DAY){escape(s,t,emit,p);break;}
    }
   }
  }
- return {DAY,fresh,random,weekly,refusal,adopt,restore,tick,escape};
+ return {DAY,MAX_PETS,KEEP_DAYS,fresh,random,weekly,refusal,adopt,restore,tick,escape,abandonable,abandon};
 })();
 if(typeof module!=='undefined')module.exports=PetRules;
 
@@ -26040,6 +26054,15 @@ const PET_TEXT = {"arrival":["送养车到了。{宠物}先把鼻子伸出门，
 let petState=PetRules.fresh(),petPanelPage=null,petSelection=null,petHover=null;
 const petImages=new Map(),petFurnitureImages={},petClips=new Map(D.pets.breeds.map(b=>[b.id,new Map(b.clips.map(c=>[c.id+':'+c.direction,c]))]));
 const petBreed=id=>D.pets.breeds.find(b=>b.id===id);
+// Two pets (user): petState.pet is the one in focus. Each pet's routine, drawing and lines
+// run with the focus moved onto it (withPet), and the focus comes back afterwards.
+function withPet(p,fn){const s=petState,i=s.pets.indexOf(p);if(i<0)return;const old=s.pet;s.sel=i;try{return fn(p);}finally{const j=s.pets.indexOf(old);s.sel=j>=0?j:Math.min(s.sel,Math.max(0,s.pets.length-1));}}
+function eachPet(fn){for(const p of [...petState.pets])withPet(p,fn);}
+const somePet=fn=>petState.pets.some(p=>withPet(p,fn));
+function focusPet(p){const i=petState.pets.indexOf(p);if(i>=0)petState.sel=i;}
+// the feeder stays where it was; the mats sit right of it, the second one on the left of the first (user)
+const petMatXs=()=>petState.pets.filter(p=>p.status!=='lost').length>1?[145,117]:[142];
+const petBedX=(p=petState.pet)=>{const xs=petMatXs();return xs[Math.min(xs.length-1,Math.max(0,petState.pets.filter(q=>q.status!=='lost').indexOf(p)))]+13;};
 const petName=()=>petState.pet?.name||'小家伙';
 const petText=key=>{const sp=petState.pet?petBreed(petState.pet.breed).species:'';if(PET_TEXT[key+'_'+sp])key+='_'+sp;const list=PET_TEXT[key]||[''];return list[Math.floor(PetRules.random(petState)*list.length)].replaceAll('{宠物}',petName());};   // a _cat / _dog variant wins
 const petIsHome=()=>sim.place==='home'&&!atFriendHome()&&!friendHousePreview;
@@ -26059,15 +26082,15 @@ document.getElementById('widget').append(petPanel);petPanel.querySelector('.pet-
 function petNode(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
 function petButton(text,fn,cls){const b=petNode('button',text,cls);b.type='button';b.onclick=()=>{gameAudio.sound('ui-click',.35);fn();};return b;}
 function fitPetPanel(){fitPetHud();fitPetMini();if(petPanel.hidden)return;overHouse(petPanel);petPanel.dataset.compact=String(view.offsetWidth<520);}
-function closePetPanel(){petPanel.hidden=true;petPanelPage=null;petSelection=null;for(const id of petImages.keys())if(id!==petState.pet?.breed){petImages.delete(id);petImageLoads.delete(id);}}
+function closePetPanel(){petPanel.hidden=true;petPanelPage=null;petSelection=null;for(const id of petImages.keys())if(!petState.pets.some(p=>p.breed===id)){petImages.delete(id);petImageLoads.delete(id);}}
 function petSheet(title,page){closePetHud();closeRing();closePicker();setContactsOpen(false);petPanelPage=page;petPanel.dataset.page=page;petPanel.querySelector('h3').textContent=title;petPanel.hidden=false;const body=petPanel.querySelector('.pet-panel-body');body.replaceChildren();fitPetPanel();petPanel.focus({preventScroll:true});return body;}
-function petRefusal(){const reason=PetRules.refusal(petState,sim.t);if(!reason)return false;const body=petSheet('收容所的回复','notice');body.append(petNode('p',reason==='ban'?`这次走失后，我们想先给你和小家伙一点时间。请在 ${Math.ceil((petState.banUntil-sim.t)/1440)} 天后再来申请领养。`:petState.pet.status==='pending'?'送养安排已经记下啦，小家伙还在路上。每个家庭只能领养一只宠物哦。':'家里已经有一位毛茸茸的成员啦，每个家庭只能领养一只宠物。'));body.append(petButton('我知道了',closePetPanel));return true;}
+function petRefusal(){const reason=PetRules.refusal(petState,sim.t);if(!reason)return false;const body=petSheet('收容所的回复','notice');const days=Math.ceil((petState.banUntil-sim.t)/1440);body.append(petNode('p',reason==='ban'?(petState.banWhy==='abandon'?`小宠物已经回到收容所了。请在 ${days} 天后再来申请领养。`:`这次走失后，我们想先给你和小家伙一点时间。请在 ${days} 天后再来申请领养。`):reason==='pending'?'送养安排已经记下啦，小家伙还在路上，等它到家了再来看看吧。':'家里已经有两位毛茸茸的成员啦，每个家庭最多领养两只宠物。'));body.append(petButton('我知道了',closePetPanel));return true;}
 function openPetAdoption(){if(!booted||wiping||phoneHolds()||card||sim.mode==='down')return;if(petRefusal())return;const body=petSheet('每周领养','list');
- const note=petNode('p','这是本周待领养的小猫小狗','pet-list-note');body.append(note);const grid=petNode('div',undefined,'pet-grid');
- for(const offer of PetRules.weekly(petState,sim.t,D.pets.breeds)){const breed=petBreed(offer.breed),b=petButton('',()=>petConfirm(offer),'pet-offer');b.dataset.offer=offer.id;b.setAttribute('aria-label',`${breed.name}，${petTraits(offer)}`);const c=petNode('canvas');c.width=64;c.height=56;paintPetPortrait(c,offer.breed);b.append(c,petNode('strong',breed.name),petNode('span',petTraits(offer)));grid.append(b);}body.append(grid);autoSave();
+ const note=petNode('p',petState.pets.some(p=>p.status!=='lost')?'这是本周待领养的小猫小狗，家里还能再添一位新成员':'这是本周待领养的小猫小狗','pet-list-note');body.append(note);const grid=petNode('div',undefined,'pet-grid');
+ for(const offer of PetRules.weekly(petState,sim.t,D.pets.breeds).filter(o=>!petState.pets.some(p=>p.id===o.id))){const breed=petBreed(offer.breed),b=petButton('',()=>petConfirm(offer),'pet-offer');b.dataset.offer=offer.id;b.setAttribute('aria-label',`${breed.name}，${petTraits(offer)}`);const c=petNode('canvas');c.width=64;c.height=56;paintPetPortrait(c,offer.breed);b.append(c,petNode('strong',breed.name),petNode('span',petTraits(offer)));grid.append(b);}body.append(grid);autoSave();
 }
 function petTraits(p){return (p.activity==='active'?'活跃':'慵懒')+' · '+(p.attachment==='clingy'?'黏人':'独立');}
-function petConfirm(offer){if(petRefusal())return;petSelection=offer;const body=petSheet('宠物领养中心提示','confirm');petSelection=offer;body.append(petNode('p','领养宠物意味着长久的责任，您做好准备了吗？'),petNode('p','记得添粮、陪伴，困了让它好好休息。长期忽略需求，小家伙可能会离家。'),petNode('p','我们为您免费提供了喂食机和睡垫，不用客气！'));const row=petNode('div',undefined,'pet-options');row.append(petButton('我明白',()=>petNaming(offer),'pet-positive'),petButton('我再考虑考虑',openPetAdoption));body.append(row);}
+function petConfirm(offer){if(petRefusal())return;petSelection=offer;const body=petSheet('宠物领养中心提示','confirm');petSelection=offer;const second=petState.installed&&petState.pets.some(p=>p.status!=='lost');body.append(petNode('p','领养宠物意味着长久的责任，您做好准备了吗？'),petNode('p','记得添粮、陪伴，困了让它好好休息。长期忽略需求，小家伙可能会离家。'),petNode('p',second?'两只小家伙共用一台喂食机，我们会再送您一张睡垫，就放在原来那张的左边。':'我们为您免费提供了喂食机和睡垫，不用客气！'));const row=petNode('div',undefined,'pet-options');row.append(petButton('我明白',()=>petNaming(offer),'pet-positive'),petButton('我再考虑考虑',openPetAdoption));body.append(row);}
 function petNaming(offer,rename=false){
  if(rename?!petState.pet:petRefusal())return;const body=petSheet(rename?'给宠物改个名字':'给新家人取个名字','name');petSelection=offer;
  const nameRow=petNode('div',undefined,'pet-name-row'),input=petNode('input');input.type='text';input.maxLength=16;input.setAttribute('aria-label','宠物名字');input.placeholder='最多 8 个字';if(rename)input.value=petName();
@@ -26075,13 +26098,13 @@ function petNaming(offer,rename=false){
  dice.setAttribute('aria-label','随机起个宠物名字');dice.title='随机起个宠物名字';
  dice.innerHTML=`<svg width="20" height="20" viewBox="0 0 10 10" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">${DIE.flatMap((row,y)=>[...row].map((c,x)=>c==='#'?`<rect x="${x}" y="${y}" width="1" height="1"/>`:'')).join('')}</svg>`;
  const field=petNode('label',undefined,'pet-name-field');field.append(input);nameRow.append(field,dice);const error=petNode('p','','pet-error');error.hidden=true;error.setAttribute('role','alert');body.append(nameRow,error);
- const submit=()=>{if(rename){const name=[...input.value.trim()].slice(0,8).join('');if(!name){error.hidden=false;error.textContent='先写个名字吧';return;}const old=petName();petState.pet.name=name;if(old!==name)log(`给${old}改了名字，以后叫「${name}」。`);closePetPanel();autoSave();return;}if(petRefusal())return;if(!PetRules.adopt(petState,offer,input.value,sim.t)){error.hidden=false;error.textContent='给小家伙起个名字吧（最多 8 个字）';return;}ensurePetImage(offer.breed);log(`感谢您的领养，「${petName()}」大概一天后就会送到您家！`);speak('得把家里收拾一下，等新室友报到！',true);closePetPanel();autoSave();};
+ const submit=()=>{const had=petState.pets.find(p=>p.status!=='lost');if(rename){const name=[...input.value.trim()].slice(0,8).join('');if(!name){error.hidden=false;error.textContent='先写个名字吧';return;}const old=petName();petState.pet.name=name;if(old!==name)log(`给${old}改了名字，以后叫「${name}」。`);closePetPanel();autoSave();return;}if(petRefusal())return;if(!PetRules.adopt(petState,offer,input.value,sim.t)){error.hidden=false;error.textContent='给小家伙起个名字吧（最多 8 个字）';return;}ensurePetImage(offer.breed);const fresh=petState.pets[petState.pets.length-1];log(`感谢您的领养，「${fresh.name}」大概一天后就会送到您家！`);speak(had?pairLine('hero_second',had,fresh):'得把家里收拾一下，等新室友报到！',true);closePetPanel();autoSave();};
  input.oninput=()=>{input.value=[...input.value].slice(0,8).join('');error.hidden=true;};input.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')submit();};body.append(petButton('就叫这个！',submit,'pet-positive'));requestAnimationFrame(()=>input.focus());
 }
 function paintPetPortrait(canvas,id){
  if(!petImages.has(id)){ensurePetImage(id).then(()=>paintPetPortrait(canvas,id));return;}const ctx=canvas.getContext('2d'),b=petBreed(id),clip=petClips.get(id)?.get('idle:right'),img=petImages.get(id);ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);if(img&&clip)ctx.drawImage(img,0,clip.row*28,32,28,0,0,canvas.width,canvas.height);}
 
-function petPoint(){const p=petState.pet;if(!p)return {x:155,y:FLOOR_Y[0]};if(p.carried){const h=buddyFeet();return {x:Math.round(h.x),y:Math.round(h.y)-4};}if(p.walk?.position)return p.walk.position;if(p.motion?.route)return routePos(p.motion.route,p.motion.s);return p.position||{x:155,y:FLOOR_Y[0]};}
+function petPoint(){const p=petState.pet;if(!p)return {x:petBedX(),y:FLOOR_Y[0]};if(p.carried){const h=buddyFeet();return {x:Math.round(h.x),y:Math.round(h.y)-4};}if(p.walk?.position)return p.walk.position;if(p.motion?.route)return routePos(p.motion.route,p.motion.s);return p.position||{x:petBedX(p),y:FLOOR_Y[0]};}
 function petWalkTo(x,y,after='idle',duration=20){const p=petState.pet,from=petPoint();p.motion={route:planRoute(from.x,from.y,x,y),s:0,after,duration};p.activityNow='walk';}
 function petStartAction(action,duration){const p=petState.pet;p.animTime=0;p.activityNow=action;if(action==='eat')p.direction='left';p.actionUntil=sim.t+duration;p.motion=null;}
 function petInteract(kind){closePetHud();if(!petCanSee()){closePetPanel();showHint('回到家再陪小家伙玩吧');return;}const p=petState.pet;
@@ -26092,13 +26115,13 @@ function petInteract(kind){closePetHud();if(!petCanSee()){closePetPanel();showHi
 function petEvent(type,p){if(type==='arrival'){p.position={x:D.spots.front_door[1]-16,y:FLOOR_Y[0]};log(petText('arrival'));if(petIsHome())speak(petText('welcome'),true);}
  else if(type==='escape'){log(petText('escape'));addMood('pet_escape',{diary:false,words:false});moods.get('pet_escape').until=petState.sadUntil;if(petIsHome())speak(petText('missing'),true);autoSave();}
  else if(type==='return'){p.position={x:D.spots.front_door[1]-16,y:FLOOR_Y[0]};log(petText('return'));addMood('pet_return',{diary:false,words:false});autoSave();}
- else if(type==='lost'){log(petText('lost'));autoSave();}
+ else if(type==='lost'){log(petText('lost'));setTimeout(()=>{const i=petState.pets.indexOf(p);if(i>=0&&p.status==='lost'&&petState.pets.length>1){petState.pets.splice(i,1);petState.sel=0;}},0);autoSave();}
  else if(type.startsWith('warning:')){log(petText(type.replace('warning:','warning_')));}
 }
 function tickPets(from,to){if(!(to>from)||friendHousePreview||visitSleepPreview)return;const p=petState.pet;if(!p)return;
  tickPetActivities(from,to);
  const point=petPoint(),near=petNearby(),atFeeder=Math.hypot(point.x-119,point.y-FLOOR_Y[0])<4;
- PetRules.tick(petState,from,to,{nearby:near,atFeeder},petEvent);
+ PetRules.tick(petState,from,to,{nearby:near,atFeeder,pal:petState.pets.some(q=>q!==p&&q.status==='home')},petEvent);
  if(p.status!=='home')return;
  p.animTime=(p.animTime||0)+(to-from);
  if(p.walk||p.carried){/* Walking/carrying owns the actor, needs still advance above. */}
@@ -26108,8 +26131,8 @@ function tickPets(from,to){if(!(to>from)||friendHousePreview||visitSleepPreview)
  else if(p.activityNow==='eat'&&(p.needs.hunger>=97||petState.feeder<=0))petStartAction('groom',8);
  else if(p.activityNow==='eat'){p.actionUntil=to+10;}
  else if(p.activityNow==='sleep'&&p.needs.energy<90){p.actionUntil=to+10;}
- else if(p.needs.hunger<60&&petState.feeder>0)petWalkTo(119,FLOOR_Y[0],'eat',30);
- else if(p.needs.energy<25&&!['sleep','rest'].includes(p.activityNow))petWalkTo(155,FLOOR_Y[0],'sleep',300);
+ else if(p.needs.hunger<60&&petState.feeder>0&&!petFeederTaken(p))petWalkTo(119,FLOOR_Y[0],'eat',30);
+ else if(p.needs.energy<25&&!['sleep','rest'].includes(p.activityNow))petWalkTo(petBedX(p),FLOOR_Y[0],'sleep',300);
  else if(!p.motion&&(!p.actionUntil||to>=p.actionUntil)){
   if(p.attachment==='clingy'&&near&&PetRules.random(petState)<.45){const h=here();petWalkTo(Math.max(20,Math.min(325,h.x-17)),h.y,'sit',25);}
   else if(p.attachment==='clingy'&&petIsHome()&&!['bath','toilet'].includes(sim.act)&&PetRules.random(petState)<.35){const h=here();petWalkTo(Math.max(20,Math.min(325,h.x-17)),h.y,'nuzzle',20);}
@@ -26119,9 +26142,11 @@ function tickPets(from,to){if(!(to>from)||friendHousePreview||visitSleepPreview)
  }
  if(to>=p.nextEvent){p.nextEvent=to+120+PetRules.random(petState)*150;if(petIsHome()){log(petText(p.activityNow==='sleep'?'sleep':p.needs.hunger<20?'hungry':p.needs.company<25?'lonely':petBreed(p.breed).species+'_daily'));if(near&&!asleep()&&PetRules.random(petState)<.5)speak(petText('hero_daily'));}}
 }
+// one feeder for two: whoever gets there first eats, the other waits its turn
+const petFeederTaken=p=>petState.pets.some(o=>o!==p&&o.status==='home'&&(o.activityNow==='eat'||o.motion?.after==='eat'));
 function petClip(){const p=petState.pet;if(!p)return null;const id=p.activityNow||'idle',direction=p.direction||'right';return petClips.get(p.breed)?.get(id+':'+direction)||petClips.get(p.breed)?.get('idle:right');}
 function petSpriteFrame(){const c=petClip(),p=petState.pet;return c?Math.floor((p?.animTime||0)*1000/c.ms)%c.frames:0;}
-function drawPetKit(ctx){if(!petState.installed||!petIsHome())return;const mat=petMatImage(),feeder=petFurnitureImages.pet_feeder;if(mat)ctx.drawImage(mat,142,FLOOR_Y[0]-5);if(feeder)ctx.drawImage(feeder,91,FLOOR_Y[0]-21);if(petHover==='feeder'&&feeder)drawObjectHover(ctx,feeder,91,FLOOR_Y[0]-21);if(petHover==='mat'&&mat)drawObjectHover(ctx,mat,142,FLOOR_Y[0]-5);}
+function drawPetKit(ctx){if(!petState.installed||!petIsHome())return;const mat=petMatImage(),feeder=petFurnitureImages.pet_feeder;if(mat)for(const x of petMatXs())ctx.drawImage(mat,x,FLOOR_Y[0]-5);if(feeder)ctx.drawImage(feeder,91,FLOOR_Y[0]-21);if(petHover==='feeder'&&feeder)drawObjectHover(ctx,feeder,91,FLOOR_Y[0]-21);if(petHover==='mat'&&mat)for(const x of petMatXs())drawObjectHover(ctx,mat,x,FLOOR_Y[0]-5);}
 const petFrameCache=new Map();
 function petFrameCanvas(){const p=petState.pet,c=petClip(),img=p&&petImages.get(p.breed);if(!c||!img)return null;const frame=petSpriteFrame(),key=p.breed+':'+c.row+':'+frame;let canvas=petFrameCache.get(key);if(!canvas){canvas=document.createElement('canvas');canvas.width=32;canvas.height=28;canvas.getContext('2d').drawImage(img,frame*32,c.row*28,32,28,0,0,32,28);petFrameCache.set(key,canvas);if(petFrameCache.size>96)petFrameCache.delete(petFrameCache.keys().next().value);}return canvas;}
 function drawHoldingHands(ctx,point){   // her two hands cradling it from below (user: 抱的姿势要体面)
@@ -26129,14 +26154,15 @@ function drawHoldingHands(ctx,point){   // her two hands cradling it from below 
  const skin=d[3]?`rgb(${d[0]},${d[1]},${d[2]})`:'#f2c6a0';
  for(const hx of [left+4,left+14]){ctx.fillStyle='#8a5a4a';ctx.fillRect(hx,point.y-2,2,3);ctx.fillStyle=skin;ctx.fillRect(hx,point.y-2,2,2);}
 }
-function drawPetActor(ctx,held=false){if(!petCanSee()||!!petState.pet.carried!==held)return;const img=petFrameCanvas(),point=petPoint();if(!img)return;if(!held)drawPetToy(ctx);const x=Math.round(point.x-16),y=Math.round(point.y-25);ctx.drawImage(img,x,y);if(held)drawHoldingHands(ctx,point);drawPetHearts(ctx,point);if(petHover==='pet')drawObjectHover(ctx,img,x,y);}
-function petHit(x,y){if(!petIsHome()&&!petWalkActive())return null;const shapes=[];if(petCanSee()){const p=petPoint();shapes.push(['pet',petFrameCanvas(),Math.round(p.x-16),Math.round(p.y-25)]);}if(petState.installed&&petIsHome())shapes.push(['feeder',petFurnitureImages.pet_feeder,91,FLOOR_Y[0]-21],['mat',petMatImage(),142,FLOOR_Y[0]-5]);for(const [id,img,ox,oy]of shapes)if(img){if(!outlineCache.has(img))outlineCache.set(img,outlineShape(img));if(outlineCache.get(img).near.has(Math.floor(x-ox)+','+Math.floor(y-oy)))return id;}return null;}
+function drawPetActor(ctx,held=false){if(!petCanSee()||!!petState.pet.carried!==held)return;const img=petFrameCanvas(),point=petPoint();if(!img)return;if(!held)drawPetToy(ctx);const x=Math.round(point.x-16),y=Math.round(point.y-25);ctx.drawImage(img,x,y);if(held)drawHoldingHands(ctx,point);drawPetHearts(ctx,point);if(petHover==='pet'&&petHoverPet===petState.pet)drawObjectHover(ctx,img,x,y);}
+let petHoverPet=null;   // which pet the pointer is on (petHit), so a click focuses that one
+function petHit(x,y){const shapes=[];for(const q of [...petState.pets].reverse())withPet(q,()=>{if(!petIsHome()&&!petWalkActive()||!petCanSee())return;const p=petPoint();shapes.push(['pet',petFrameCanvas(),Math.round(p.x-16),Math.round(p.y-25),q]);});if(petState.installed&&petIsHome()){shapes.push(['feeder',petFurnitureImages.pet_feeder,91,FLOOR_Y[0]-21]);for(const mx of petMatXs())shapes.push(['mat',petMatImage(),mx,FLOOR_Y[0]-5]);}for(const [id,img,ox,oy,q]of shapes)if(img){if(!outlineCache.has(img))outlineCache.set(img,outlineShape(img));if(outlineCache.get(img).near.has(Math.floor(x-ox)+','+Math.floor(y-oy))){petHoverPet=q||null;return id;}}petHoverPet=null;return null;}
 
 const petImageLoads=new Map();
 function ensurePetImage(id){if(petImages.has(id))return Promise.resolve(petImages.get(id));if(!petImageLoads.has(id))petImageLoads.set(id,loadImg(petBreed(id).image).then(img=>{petImages.set(id,img);return img;}));return petImageLoads.get(id);}
-async function loadPets(){if(petState.pet)await ensurePetImage(petState.pet.breed);await Promise.all(Object.entries(D.pets.furniture).map(async([id,src])=>petFurnitureImages[id]=await loadImg(src)));}
-function petSnapshot(){const data=JSON.parse(JSON.stringify(petState));if(data.pet){const p=petPoint();data.pet.position={x:p.x,y:p.y};data.pet.motion=null;data.pet.interaction=null;data.pet.reservedUntil=0;if(data.pet.walk)data.pet.walk={dest:data.pet.walk.dest,phase:data.pet.walk.phase,startedAt:data.pet.walk.startedAt,until:data.pet.walk.until};}return data;}
-function restorePets(raw){petState=PetRules.restore(raw,D.pets.breeds);if(petState.pet){const p=petState.pet;if(p.position){p.position.x=Math.max(18,Math.min(324,p.position.x));p.position.y=FLOOR_Y[storeyOfY(p.position.y)];}p.actionUntil=0;ensurePetImage(p.breed);}closePetHud();closePetPanel();closePetMini();petHover=null;}
+async function loadPets(){await Promise.all(petState.pets.map(p=>ensurePetImage(p.breed)));await Promise.all(Object.entries(D.pets.furniture).map(async([id,src])=>petFurnitureImages[id]=await loadImg(src)));}
+function petSnapshot(){const data=JSON.parse(JSON.stringify(petState));data.pets.forEach((d,i)=>withPet(petState.pets[i],()=>{const p=petPoint();d.position={x:p.x,y:p.y};d.motion=null;d.interaction=null;d.reservedUntil=0;delete d.pair;if(d.walk)d.walk={dest:d.walk.dest,phase:d.walk.phase,startedAt:d.walk.startedAt,until:d.walk.until};}));return data;}
+function restorePets(raw){petState=PetRules.restore(raw,D.pets.breeds);for(const p of petState.pets){if(p.position){p.position.x=Math.max(18,Math.min(324,p.position.x));p.position.y=FLOOR_Y[storeyOfY(p.position.y)];}p.actionUntil=0;ensurePetImage(p.breed);}closePetHud();closePetPanel();closePetMini();petHover=null;petHoverPet=null;}
 RINGS.computer.push(['pet_adopt','领养宠物']);RINGS.phone.splice(RINGS.phone.length-1,0,['pet_adopt','领养宠物']);
 window.addEventListener('resize',fitPetPanel);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!petPanel.hidden){e.preventDefault();closePetPanel();}});
 
@@ -26187,7 +26213,7 @@ function openPetMini(kind,label){closePetHud();closePetPanel();closeRing();clear
 function openPetFeeder(){if(!petState.installed||!petIsHome())return;const panel=openPetMini('feeder','自动喂食机');panel.append(petNode('span',feederDescription(petState.feeder)),petButton('加满！',()=>{closePetMini();if(petState.feeder>=880){speak('已经是满的啦');return;}command('pet_feed');},'pet-refill'));fitPetMini();}
 function openPetMatColors(){if(!petState.installed||!petIsHome())return;const panel=openPetMini('mat','睡垫颜色');panel.append(petNode('strong','睡垫颜色'));const colors=petNode('div',undefined,'pet-mat-colors');for(const color of D.pets.matColors){const b=petButton('',()=>{petState.matColor=color.id;for(const button of colors.children)button.setAttribute('aria-pressed',String(button.dataset.color===color.id));autoSave();render();});b.dataset.color=color.id;b.setAttribute('aria-label',color.name);b.setAttribute('aria-pressed',String(petState.matColor===color.id));const swatch=petNode('i');swatch.style.backgroundColor=color.color;swatch.setAttribute('aria-hidden','true');b.append(swatch,petNode('span',color.name));colors.append(b);}panel.append(colors);fitPetMini();}
 function fitPetMini(){if(petMini.hidden)return;if(petMini.dataset.kind==='feeder'){const h=petMini.offsetHeight,b=petMini.querySelector('.pet-refill');if(h&&h!==petMini._h){petMini._h=h;const n=Math.max(4,Math.floor(h/4)),pad=6;petMini.style.setProperty('--pm-o',roundClip(n,2));petMini.style.setProperty('--pm-o-in',roundClip(n-1,2));petMini.style.setProperty('--pm-i',roundClip(Math.max(3,n-pad/2),2));petMini.style.setProperty('--pm-i-in',roundClip(Math.max(2,n-pad/2-1),2));}}if(!petIsHome()){closePetMini();return;}if(petMini.dataset.kind==='feeder'){const label=petMini.querySelector('span'),text=feederDescription(petState.feeder);if(label.textContent!==text)label.textContent=text;}
- const mat=petMini.dataset.kind==='mat',x=mat?155:103,padding=4,w=view.offsetWidth;petMini.style.maxWidth=Math.max(0,w-padding*2)+'px';const pw=petMini.offsetWidth,ph=petMini.offsetHeight;
+ const mat=petMini.dataset.kind==='mat',x=mat?petBedX(petState.pets[0]):103,padding=4,w=view.offsetWidth;petMini.style.maxWidth=Math.max(0,w-padding*2)+'px';const pw=petMini.offsetWidth,ph=petMini.offsetHeight;
  petMini.style.left=view.offsetLeft+Math.max(padding,Math.min(w-pw-padding,x*scale-pw/2))+'px';petMini.style.top=view.offsetTop+Math.max(padding,Math.min(view.offsetHeight-ph-padding,(FLOOR_Y[0]-28)*scale-ph))+'px';
 }
 function openPetInteractions(){openPetHud();}
@@ -26208,7 +26234,7 @@ function beginPetWalk(place){const p=petState.pet;if(!petCanSee()||!['front','pa
 }
 function onPetSceneChanged(to){const p=petState.pet;if(!p?.walk)return;
  if(to==='home'){p.walk=null;p.position={x:D.spots.front_door[1]-18,y:FLOOR_Y[0]};p.motion=null;p.carried=false;petStartAction('sniff',10);gainPetAffinity(5,'walk');log(petText('walk_home'));autoSave();return;}
- if(!['front','park','beach'].includes(to)){p.walk=null;p.carried=false;p.position={x:155,y:FLOOR_Y[0]};p.motion=null;petStartAction('rest',10);return;}
+ if(!['front','park','beach'].includes(to)){p.walk=null;p.carried=false;p.position={x:petBedX(p),y:FLOOR_Y[0]};p.motion=null;petStartAction('rest',10);return;}
  p.walk.phase='active';p.walk.position={x:Math.max(18,Math.min(W-18,here().x-18)),y:OUT[to].feet};p.walk.nextTalk=sim.t+15;p.activityNow='walk';p.direction='right';p.motion=null;sim.outBack=p.walk.until;
 }
 function tickPetActivities(from,to){const p=petState.pet,dt=to-from;if(!p||p.status!=='home')return;
@@ -26216,7 +26242,7 @@ function tickPetActivities(from,to){const p=petState.pet,dt=to-from;if(!p||p.sta
  if(p.playUntil>to&&petIsHome()&&!p.carried&&p.playOrigin){const room=D.roomX[roomAt(p.playOrigin)];if(room){const target=p.playOrigin.x+Math.sin((to-p.playAt)*.7)*9;p.position={x:Math.max(room[1]+16,Math.min(room[2]-16,target)),y:p.playOrigin.y};p.direction=Math.cos((to-p.playAt)*.7)<0?'left':'right';}}
  const w=p.walk;if(!w)return;
  // Friend-home travel has its own transition, outside throughDoor's callback.
- if(w.phase==='active'&&!petWalkActive()){if(petIsHome())onPetSceneChanged('home');else{p.walk=null;p.carried=false;p.position={x:155,y:FLOOR_Y[0]};petStartAction('rest',20);}return;}
+ if(w.phase==='active'&&!petWalkActive()){if(petIsHome())onPetSceneChanged('home');else{p.walk=null;p.carried=false;p.position={x:petBedX(p),y:FLOOR_Y[0]};petStartAction('rest',20);}return;}
  if(w.phase==='departing'&&petIsHome()&&!headingOut()){p.walk=null;if(sim.outWhy==='pet'){sim.outWhy=null;sim.outBack=null;sim.dest=null;}petStartAction('rest',5);return;}   // sent elsewhere before the door
  if(w.phase==='departing'&&petIsHome()){
   const h=here(),goal={x:Math.max(18,Math.min(W-18,h.x-(sim.facing||1)*18)),y:FLOOR_Y[storeyOfY(h.y)]},pos=w.position||p.position||goal;
@@ -26633,10 +26659,10 @@ Object.assign(PET_TEXT, {
 let petFlash = -9, petHeartsUntil = 0;
 for (const sp of ["cat", "dog"]) PET_TEXT["train_" + sp] = [...PET_TEXT.train, ...(PET_TEXT["trick_" + sp] || [])];   // 教它小动作:握手 / 转圈 / 击掌…
 PET_TEXT.hero_train = [...PET_TEXT.hero_train, ...(PET_TEXT.hero_trick || [])];
-function petHearts(sec) { if (sec > 0) petHeartsUntil = Math.max(petHeartsUntil, realClock + sec); }
+function petHearts(sec) { const p = petState.pet; if (sec > 0 && p) p.heartsUntil = Math.max(p.heartsUntil || 0, realClock + sec); }   // per pet: two can glow at once
 const PET_HEART = [".##.##.", "#######", "#######", ".#####.", "..###..", "...#..."];
 function drawPetHearts(ctx, point) {
-  const left = petHeartsUntil - realClock;
+  const left = (petState.pet?.heartsUntil || 0) - realClock;
   if (left > 0) {
     for (let i = 0; i < 3; i++) {
       const t = (realClock * 0.8 + i / 3) % 1, x = Math.round(point.x - 6 + i * 6 + Math.sin(realClock * 3 + i * 2) * 2), y = Math.round(point.y - 28 - t * 14);
@@ -26663,13 +26689,12 @@ function petBondGo(kind, x, y, action, dur, say = 0.4) {
   if (p.activityNow === "sleep") petStartAction("wake", 2);
   petWalkTo(Math.max(20, Math.min(325, Math.round(x))), y, action, dur);
   p.reservedUntil = sim.t + dur;
-  setTimeout(() => {                                // once it's on its way: the line and a little warmth
-    if (!petState.pet) return;
+  setTimeout(() => withPet(p, () => {             // once it's on its way: the line and a little warmth (said of this pet)
     log(petText(kind));
     if (Math.random() < say) speak(petText("hero_" + kind));
     p.needs.company = clamp(p.needs.company + 10); sim.needs.social = clamp(sim.needs.social + 2);
     gainPetAffinity(1, "auto_" + kind); petHearts(2);
-  }, 1800);
+  }), 1800);
   return true;
 }
 function petBondTick() {
@@ -26689,7 +26714,7 @@ function petBondTick() {
   if (["bath", "toilet"].includes(act)) { petBondGo("bathroom", h.x + side * 2, y, "sit", 20); return; }
   if (!act && p.needs.company < 55) { if (petBondGo("bring_toy", h.x + side, y, petPlayAction(), 20, 0.6)) startPetPlay(); }
 }
-setInterval(petBondTick, 1000);
+setInterval(() => petBondTick(), 1000);   // (late-bound: pets_multi.js runs it per pet)
 // ---------------------------------------------------------------- the pet's voice (user: 猫狗的叫声太少)
 // Real recordings (BigSoundBank, CC0): a cat purrs while it's fussed over or kneading and
 // meows when curious, happy, startled or waking; a dog barks when happy, startled or
@@ -26792,6 +26817,329 @@ drawPetActor = function (ctx, held = false) {
   ctx.save(); ctx.beginPath(); ctx.rect(c.x + 1, 0, c.w - 1, cut); ctx.clip(); drawPetActorPlain(ctx, held); ctx.restore();   // its tail stays hidden in the leaves
   ctx.save(); ctx.beginPath(); ctx.rect(0, cut, W, H - cut); ctx.clip(); drawOverlay(ctx, "plant_living"); ctx.restore();   // leaves in front of its chin
 };
+
+const PET_PAIR_TEXT = {
+ "_note": "Two pets (user): what they do together, what she does with both, adopting a second, giving one back. {A} starts it, {B} is the other; in _cat_dog lines {猫} / {狗}. {名字} / {她} are her.",
+
+ "pair_sniff": ["{A}凑到{B}身边，认认真真闻了一圈，确认还是那个熟悉的味道。", "{A}和{B}鼻子碰鼻子，碰完各自打了个喷嚏。", "{A}绕着{B}转了两圈，像在核对什么。"],
+ "pair_sniff_cat_cat": ["{A}和{B}鼻尖对鼻尖碰了一下，算是打过招呼了。", "{A}凑过去闻{B}的耳朵，{B}眯起眼睛没躲。", "{A}闻了闻{B}的后脑勺，确认它今天也没出过门。"],
+ "pair_sniff_cat_dog": ["{狗}把鼻子凑到{猫}跟前使劲嗅，{猫}一脸嫌弃，倒也没走开。", "{猫}伸长脖子闻了闻{狗}的鼻子，又飞快缩回去了。", "{狗}闻着{猫}的尾巴一路跟，{猫}的尾巴尖一下一下地甩。"],
+ "pair_sniff_dog_dog": ["{A}和{B}互相闻来闻去，尾巴摇成了两把扇子。", "{A}一路闻到{B}跟前，好像在问：你刚才去哪儿了？", "{A}和{B}头碰头闻了半天地板，不知道发现了什么。"],
+
+ "pair_groom": ["{A}给{B}舔了舔头顶的毛，{B}舒服得一动不动。", "{A}帮{B}理了理脖子后面的毛，理得很认真。", "{A}低头给{B}梳毛，{B}眯着眼睛随它去。"],
+ "pair_groom_cat_cat": ["{A}按住{B}的脑袋，一下一下舔得很认真，{B}眯着眼睛呼噜呼噜。", "{A}给{B}洗脸，舔到一半{B}嫌烦，回舔了一口。", "{A}和{B}互相舔毛，舔着舔着差点打起来。", "{A}专挑{B}自己舔不到的后脖颈下嘴。"],
+ "pair_groom_cat_dog": ["{猫}居然给{狗}舔了舔耳朵，{狗}激动得尾巴拍地。", "{狗}想帮{猫}舔毛，一舌头下去，{猫}半张脸的毛都湿了。", "{猫}给{狗}舔了两下头顶，舔完露出“你这毛真难打理”的表情。"],
+ "pair_groom_dog_dog": ["{A}舔了舔{B}的脸，{B}也舔回去，舔得满脸都是口水。", "{A}叼着{B}的耳朵轻轻拽，像是在帮它整理。", "{A}把{B}的脸舔得湿漉漉的，{B}甩甩头，又凑回来。"],
+
+ "pair_play": ["{A}和{B}在地上滚成一团，分不清谁是谁的爪子。", "{A}拍了{B}一爪子就跑，{B}立刻追了上去。", "{A}和{B}抢着同一个毛线团，谁也不让谁。"],
+ "pair_play_cat_cat": ["{A}伏低身子，屁股扭了两下，扑向了{B}的尾巴。", "{A}和{B}抱在一起蹬腿，蹬完各自去舔毛，装作什么都没发生。", "{A}躲在沙发后面突然冲出来，把{B}吓得原地蹦起来。", "{A}和{B}隔着一张椅子互相拍爪子，拍得啪啪响。"],
+ "pair_play_cat_dog": ["{狗}趴下来摆出邀请玩耍的姿势，{猫}犹豫了一下，一爪子拍在它鼻子上。", "{猫}在{狗}面前甩尾巴，{狗}追着尾巴原地转圈。", "{狗}叼来玩具放在{猫}面前，{猫}拨了一下，{狗}高兴得直蹦。", "{猫}跳到高处，往下拍{狗}的头，{狗}还以为在玩游戏。"],
+ "pair_play_dog_dog": ["{A}叼着玩具到处跑，{B}在后面追，两只的爪子在地板上打滑。", "{A}和{B}玩起了拔河，咬着同一根绳子谁也不松口。", "{A}和{B}扭成一团假装打架，叫声里全是开心。", "{A}趴下撅起屁股，{B}立刻扑了上去。"],
+
+ "pair_chase": ["{A}追着{B}满屋子跑，跑了两圈又反过来被追。", "{A}和{B}在客厅里绕圈赛跑，地毯都被蹭歪了。", "一阵咚咚咚的脚步声，{A}和{B}又开始赛跑了。"],
+ "pair_chase_cat_cat": ["{A}和{B}突然开始深夜跑酷，从这头冲到那头，再冲回来。", "{A}追着{B}跑，追上了却只是闻一下，然后换{B}追它。", "{A}和{B}在楼梯上跑上跑下，像两颗弹来弹去的毛球。"],
+ "pair_chase_cat_dog": ["{狗}追着{猫}跑，{猫}一个急转弯，{狗}刹不住滑了出去。", "{猫}故意从{狗}面前慢悠悠走过，{狗}一追，{猫}就窜走了。", "{狗}追了{猫}半圈，{猫}回头哈了一声，{狗}立刻掉头假装在闻地板。"],
+ "pair_chase_dog_dog": ["{A}和{B}在屋里赛跑，转弯时撞在一起，又爬起来继续跑。", "{A}追着{B}的尾巴跑，{B}追着自己的尾巴跑，场面一度很乱。", "{A}和{B}来回冲刺，喘得舌头都伸出来了。"],
+
+ "pair_nap": ["{A}挤到{B}身边，两个靠在一起睡着了。", "{A}和{B}背靠背打起了瞌睡。", "{A}趴在{B}旁边，呼吸慢慢变成了同一个节奏。"],
+ "pair_nap_cat_cat": ["{A}和{B}团成了一个阴阳图案，睡得很熟。", "{A}把下巴搁在{B}背上，两个一起打起了小呼噜。", "{A}和{B}挤在一起睡觉，尾巴缠成了一团。"],
+ "pair_nap_cat_dog": ["{猫}窝在{狗}的肚子边睡着了，{狗}一动也不敢动。", "{狗}睡着了，{猫}踩了两下它的背，在上面团成了一个球。", "{猫}和{狗}靠在一起睡觉，{狗}的呼噜声把{猫}的胡子吹得一抖一抖。"],
+ "pair_nap_dog_dog": ["{A}和{B}叠在一起睡着了，下面那只看起来有点挤。", "{A}把头枕在{B}的屁股上，睡得四仰八叉。", "{A}和{B}并排睡着，梦里都在蹬腿。"],
+
+ "pair_nuzzle": ["{A}用脑袋蹭了蹭{B}，{B}也蹭了回去。", "{A}靠在{B}身上蹭了两下，像在说“你在就好”。", "{A}和{B}脸贴着脸蹭了一会儿。"],
+ "pair_nuzzle_cat_cat": ["{A}拿额头顶了顶{B}的下巴，{B}慢慢眨了眨眼。", "{A}和{B}互相顶脑袋，顶出了一点点呼噜声。", "{A}贴着{B}走过去，尾巴从它脸上扫过。"],
+ "pair_nuzzle_cat_dog": ["{猫}用头蹭了蹭{狗}的下巴，{狗}受宠若惊，尾巴摇个不停。", "{狗}把鼻子埋进{猫}的毛里拱了拱，{猫}居然没生气。", "{猫}绕着{狗}的腿蹭了一圈，把自己的味道蹭了上去。"],
+ "pair_nuzzle_dog_dog": ["{A}把脑袋搁在{B}背上，{B}回头舔了它一下。", "{A}和{B}互相拱来拱去，像两团会动的抱枕。", "{A}用鼻子拱{B}的脸，{B}高兴得哼哼。"],
+
+ "pair_squabble": ["{A}和{B}为了一个好位置争了起来，最后谁也没占到。", "{A}不小心踩到了{B}，{B}不高兴地叫了一声。", "{A}和{B}互相瞪了一会儿，又各自走开了。"],
+ "pair_squabble_cat_cat": ["{A}和{B}为了阳光最好的那块地板对峙了半天，最后挤着一起晒。", "{A}抢了{B}的位置，{B}一爪子拍过去，{A}一脸无辜。", "{A}和{B}隔着一米互相哈气，哈完又一起去吃饭了。"],
+ "pair_squabble_cat_dog": ["{狗}太热情了，{猫}忍无可忍，给了它一记猫猫拳。", "{猫}占了{狗}的睡垫，{狗}站在旁边委屈巴巴地看着。", "{狗}想闻{猫}的饭，被{猫}一爪子按住了鼻子。"],
+ "pair_squabble_dog_dog": ["{A}和{B}为了一根玩具绳汪汪了几声，最后一起叼着跑。", "{A}抢了{B}正在啃的玩具，{B}追着讨了半天。", "{A}和{B}互相吼了两声，没过一分钟又凑到一起了。"],
+
+ "pair_watch": ["{A}和{B}并排坐着，一起盯着窗外看。", "{A}和{B}一起盯着墙角，不知道看见了什么。", "{A}和{B}坐成一排，像在等什么人回来。"],
+ "pair_watch_cat_cat": ["{A}和{B}一起盯着窗外的鸟，下巴同时咔咔作响。", "{A}和{B}并排坐着，两条尾巴一起甩。", "{A}和{B}一起蹲着，盯着天花板上一个小黑点看了很久。"],
+ "pair_watch_cat_dog": ["{猫}和{狗}一起趴在窗边看外面，{狗}看行人，{猫}看小鸟。", "{狗}坐在{猫}旁边，学它的样子一动不动地盯着墙角。", "{猫}和{狗}并排坐着，一个歪头，另一个也跟着歪头。"],
+ "pair_watch_dog_dog": ["{A}和{B}一起守在门边，竖着耳朵听楼道里的动静。", "{A}和{B}并排坐着，头一起跟着外面路过的人转。", "{A}和{B}趴在一起，一起盯着厨房的方向。"],
+
+ "hero_pair_sniff": ["你们俩在交换情报吗？", "闻出什么来了？", "嗯，今天也是好朋友。"],
+ "hero_pair_groom": ["哇，互相梳毛，感情真好。", "要不要我也帮忙梳一梳？", "{A}好会照顾{B}啊。"],
+ "hero_pair_groom_cat_dog": ["猫给狗舔毛……这画面我得记下来。", "你们俩真是不一样的好朋友。"],
+ "hero_pair_play": ["轻点轻点，别打翻东西！", "玩得真开心呀你们。", "两个小疯子。"],
+ "hero_pair_play_cat_dog": ["一个出爪子，一个摇尾巴，这游戏规则我看不懂。", "猫狗大战第一回合！"],
+ "hero_pair_chase": ["别在楼梯上跑啦！", "又开始赛跑了，谁赢了？", "我的地毯……算了，跑吧。"],
+ "hero_pair_chase_cat_cat": ["你们俩又开始跑酷了是不是。", "这个时间点精神怎么这么好。"],
+ "hero_pair_nap": ["嘘——都睡着了。", "挤在一起睡，不嫌热吗。", "好想拍下来。"],
+ "hero_pair_nap_cat_dog": ["猫睡在狗身上……这是什么神仙画面。", "{狗}你别动，让{猫}再睡会儿。"],
+ "hero_pair_nuzzle": ["你们俩是在撒娇吗？", "好黏糊啊。", "好啦好啦，知道你们关系好。"],
+ "hero_pair_squabble": ["不许吵架，都是一家人！", "好了好了，一人一半。", "谁先动的手？"],
+ "hero_pair_squabble_cat_dog": ["{狗}，你别老去招惹{猫}。", "{猫}，下手轻一点嘛。"],
+ "hero_pair_watch": ["你们在看什么呀？", "外面有什么好看的？", "两个小哨兵。"],
+
+ "both_pat": ["{名字}一手摸{A}，一手摸{B}，两边都不想停。", "{名字}左摸摸右摸摸，两个小家伙都把头往{她}手里拱。", "{名字}蹲下来同时摸着{A}和{B}，摸得两个都眯起了眼睛。"],
+ "both_pat_cat_cat": ["{名字}两只手各摸一只猫，左右两边的呼噜声此起彼伏。", "{名字}刚摸了{A}，{B}就挤过来把头塞进{她}手里。"],
+ "both_pat_cat_dog": ["{名字}摸着{狗}的头，{猫}在旁边用尾巴扫{她}的手，提醒{她}还有自己。", "{名字}一边摸{猫}，一边被{狗}舔手，忙得不可开交。"],
+ "both_pat_dog_dog": ["{名字}被两只狗围住，两颗脑袋同时往{她}手心里钻。", "{名字}摸完{A}再摸{B}，摸慢了还会被拱。"],
+
+ "both_play": ["{名字}陪{A}和{B}玩了一会儿，两个小家伙抢着往前凑。", "{名字}把玩具扔出去，{A}和{B}一起冲了过去。", "{名字}和{A}、{B}在地板上闹成一团。"],
+ "both_play_cat_cat": ["{名字}拿逗猫棒一甩，{A}和{B}同时扑了上来，撞在了一起。", "{名字}晃着逗猫棒，两只猫一左一右地埋伏。"],
+ "both_play_cat_dog": ["{名字}扔球给{狗}，晃逗猫棒给{猫}，一个人忙成了两个人。", "{狗}去追球，{猫}趁机扑向{名字}手里的逗猫棒。"],
+ "both_play_dog_dog": ["{名字}扔出一个球，{A}和{B}同时冲出去，回来时一狗叼着一半。", "{名字}陪两只狗玩拔河，一个人拔不过两只狗。"],
+
+ "both_treat": ["{名字}给{A}和{B}一人分了一块零食，分得一样大。", "{名字}拿出零食，两个小家伙立刻坐得端端正正。", "{名字}一手一块零食，{A}和{B}吃得吧唧吧唧。"],
+ "both_treat_cat_cat": ["{名字}撕开小鱼干，两只猫同时出现在脚边，速度快得像瞬移。", "{名字}一块小鱼干掰成两半，两只猫各叼一半跑开了。"],
+ "both_treat_cat_dog": ["{名字}给{猫}小鱼干，给{狗}饼干，{狗}吃完还想看看{猫}的。", "{狗}三口吃完，眼巴巴盯着{猫}慢慢吃，{名字}赶紧再给了一块。"],
+ "both_treat_dog_dog": ["{名字}让两只狗先坐好再吃，{A}坐得最快，{B}坐得最端正。", "{名字}分完零食，两只狗吃完互相闻对方的嘴。"],
+
+ "both_photo": ["{名字}给{A}和{B}拍了张合照，两个都没看镜头。", "{名字}拍了一张{A}和{B}的合照，糊了一半，但很可爱。", "{名字}想拍合照，{A}看着镜头，{B}在舔爪子。"],
+ "both_photo_cat_cat": ["{名字}拍到了两只猫一起歪头的瞬间，激动得手都抖了。", "{名字}拍了十几张，终于有一张两只猫都没在动。"],
+ "both_photo_cat_dog": ["{名字}拍到了{狗}咧嘴笑、{猫}一脸冷漠的合照，表情对比强烈。", "{名字}拍了张猫狗合照，准备设成手机壁纸。"],
+ "both_photo_dog_dog": ["{名字}拍到两只狗同时吐舌头，像约好了一样。", "{名字}喊了一声，两只狗同时抬头，咔嚓！"],
+
+ "both_talk": ["{名字}坐在{A}和{B}中间，跟它们聊起了今天的事。", "{名字}跟{A}和{B}说话，两个都歪着头认真听。", "{名字}给{A}和{B}讲了个故事，听到一半都睡着了。"],
+ "both_talk_cat_cat": ["{名字}跟两只猫说话，两只猫轮流慢慢眨眼回应。", "{名字}问它们今天乖不乖，{A}喵了一声，{B}假装没听见。"],
+ "both_talk_cat_dog": ["{名字}说话的时候，{狗}一直摇尾巴附和，{猫}偶尔甩一下尾巴。", "{名字}问谁想{她}了，{狗}立刻扑过来，{猫}在远处慢慢眨了下眼。"],
+ "both_talk_dog_dog": ["{名字}一说“散步”两个字，两只狗同时站了起来。", "{名字}跟两只狗聊天，每说一句，两条尾巴就一起摇一下。"],
+
+ "hero_both_pat": ["两个都乖，两个都摸。", "一人一只手，刚刚好。", "别挤别挤，都有份！"],
+ "hero_both_play": ["来，看谁先抢到！", "你们俩一起上吧！", "我一个人陪不过来了。"],
+ "hero_both_play_cat_dog": ["{狗}去追球，{猫}来抓这个！", "公平起见，一人一个玩具。"],
+ "hero_both_treat": ["一人一块，不许抢。", "坐好坐好，乖的先吃。", "{A}一块，{B}一块。"],
+ "hero_both_treat_cat_dog": ["{狗}你吃完了也不能吃{猫}的哦。", "猫吃小鱼干，狗吃饼干，都有。"],
+ "hero_both_photo": ["来，看这里——茄子！", "你们俩靠近一点。", "这张必须洗出来。"],
+ "hero_both_talk": ["你们俩今天在家都干什么啦？", "有你们俩在，家里热闹多了。", "要好好相处哦。", "我不在的时候，有没有互相照顾？"],
+ "hero_both_talk_cat_dog": ["{狗}，你要让着{猫}一点；{猫}，你也别老欺负{狗}。", "猫和狗也能做好朋友，你们就是证明。"],
+
+ "pair_meet": ["{A}第一次见到新来的{B}，远远地看了很久。", "{A}凑过去闻了闻新来的{B}，没有生气，只是有点好奇。"],
+ "pair_meet_cat_cat": ["{A}对新来的{B}哈了一口气，又偷偷跟在它后面走了一圈。", "{A}和新来的{B}隔着沙发对视了很久，谁也没先眨眼。"],
+ "pair_meet_cat_dog": ["{狗}看见{猫}兴奋得直摇尾巴，{猫}拱起背，退到了高处。", "{猫}从高处俯视着新来的{狗}，像是在审查新员工。", "{狗}凑过来想闻，{猫}一爪子按住了它的鼻子——这就是它们的第一次见面。"],
+ "pair_meet_dog_dog": ["{A}和新来的{B}互相闻了闻屁股，很快就玩到了一起。", "{A}把自己最喜欢的玩具叼给了新来的{B}。"],
+ "hero_second": ["家里又要多一个小家伙了！", "这下热闹了，得再准备一张睡垫。", "{A}，你要有新伙伴了哦。"],
+
+ "abandon": ["{名字}把{宠物}送回了收容所，屋子一下子安静了不少。", "{宠物}跟着收容所的工作人员走了，{名字}在门口站了一会儿。"],
+ "hero_goodbye": ["对不起……希望你能找到更合适的家。", "去吧，要好好的。", "在那边也要乖乖的。"],
+ "left_behind": ["{宠物}在空出来的那块地方闻了很久。", "{宠物}跑到门口看了好几次，像在等谁回来。"],
+ "left_behind_cat": ["{宠物}在少了一张垫子的地方坐了一会儿，又默默回到自己的垫子上。", "{宠物}今天格外黏人，一直跟着{名字}走。"],
+ "left_behind_dog": ["{宠物}对着门口呜呜了两声，又趴回垫子上。", "{宠物}叼着那只不见了的伙伴常玩的玩具，到处找它。"]
+}
+;
+// ================================================================ two pets (user: 现在可以养两只猫或狗了)
+// pets.js keeps one pet in focus (petState.pet). Here every routine runs once per pet
+// with the focus moved onto it: their needs, walking, perches, drawing, coming to her,
+// guests. The feeder is shared (pets.js: petFeederTaken), each pet has its own mat.
+// On top: things the two do together, things she does with both at once, and
+// 放弃领养 from the computer. Texts: pets_pair_text.json (cat_cat / cat_dog / dog_dog).
+Object.assign(ML, { pet_goodbye: { name: '送走了宠物', emo: 'sad', pts: 3, min: 1440, noCollapse: true } });
+const petsHome = () => petState.pets.filter(p => p.status === 'home');
+const petSpecies = p => petBreed(p.breed).species;
+const petCombo = (a, b) => [petSpecies(a), petSpecies(b)].sort().join('_');   // cat_cat / cat_dog / dog_dog
+// a line about the two of them: the combo's own lines and the shared ones, names filled in
+function pairLine(key, a, b) {
+  const pool = [...(PET_PAIR_TEXT[key + '_' + petCombo(a, b)] || []), ...(PET_PAIR_TEXT[key] || [])];
+  if (!pool.length) return '';
+  const cat = petSpecies(a) === 'cat' ? a : b, dog = cat === a ? b : a;
+  return pool[Math.floor(Math.random() * pool.length)].replaceAll('{A}', a.name).replaceAll('{B}', b.name)
+    .replaceAll('{猫}', cat.name).replaceAll('{狗}', dog.name).replaceAll('{名字}', nameOf()).replaceAll('{她}', ta());
+}
+const petOther = p => petState.pets.find(q => q !== p && q.status === 'home');
+
+// ---------------------------------------------------------------- each pet runs its own routine
+const tickPetsOne = tickPets;
+tickPets = function (from, to) { eachPet(() => tickPetsOne(from, to)); tickPetPair(from, to); };
+const drawPetActorOne = drawPetActor;
+drawPetActor = function (ctx, held = false) { eachPet(() => drawPetActorOne(ctx, held)); };
+drawPetOutside = function (ctx, layer) { eachPet(p => { if (petWalkActive() && layer === 'front') drawPetActorOne(ctx, !!p.carried); }); };
+const petBondTickOne = petBondTick;
+petBondTick = function () { const was = petBondPlace; eachPet(() => { petBondPlace = was; petBondTickOne(); }); petBondPlace = sim.place; };
+const tickGuestPetOne = tickGuestPet;
+tickGuestPet = function (g, c) {   // a guest keeps to one pet per visit
+  let p = petState.pets.find(q => q.uid === g.petUid && q.status === 'home');
+  if (!p) { const home = petsHome(); p = home[Math.floor(Math.random() * home.length)]; g.petUid = p?.uid; }
+  if (p) withPet(p, () => tickGuestPetOne(g, c));
+};
+const restorePetActivityLocationOne = restorePetActivityLocation;
+restorePetActivityLocation = function () { eachPet(() => restorePetActivityLocationOne()); };
+const onPetSceneChangedOne = onPetSceneChanged;
+onPetSceneChanged = function (to) { eachPet(() => onPetSceneChangedOne(to)); };
+// she picks one of them for what she does on her own
+const petChoiceScoresOne = petChoiceScores;
+petChoiceScores = function (score) {
+  const home = petsHome();
+  if (home.length > 1 && !petHudState.open && petPanel.hidden) focusPet(home[Math.floor(Math.random() * home.length)]);
+  petChoiceScoresOne(score);
+  if (home.length > 1 && Object.keys(score).some(k => k.startsWith('pet_') && k !== 'pet_feed') && Math.random() < 0.4) {   // now and then both at once
+    const k = ['pat', 'play', 'talk', 'photo'][Math.floor(Math.random() * 4)];
+    score['pet_both_' + k] = 60;
+  }
+};
+// she carries one pet at a time; the action goes to the pet it was meant for
+let petActFor = null;
+const preparePetHumanActionOne = preparePetHumanAction;
+preparePetHumanAction = function (act) { petActFor = petState.pet; return preparePetHumanActionOne(act); };
+const onPetHumanArriveOne = onPetHumanArrive;
+onPetHumanArrive = function (act) {
+  const p = petActFor && petState.pets.includes(petActFor) ? petActFor : petState.pet;
+  if (act.startsWith('pet_both_')) { withPet(p, () => petBothArrive(act.slice(9))); return; }
+  if (act === 'pet_hold') petState.pets.forEach(q => { if (q !== p && q.carried) withPet(q, dropCarriedPet); });
+  withPet(p, () => onPetHumanArriveOne(act));
+};
+// arrival / losing one: the other pet notices
+const petEventOne = petEvent;
+petEvent = function (type, p) {
+  petEventOne(type, p);
+  const o = petState.pets.find(q => q !== p && q.status === 'home');
+  if (type === 'arrival' && o) { p.position = { x: D.spots.front_door[1] - 30, y: FLOOR_Y[0] }; setTimeout(() => log(pairLine('pair_meet', o, p)), 1500); }
+};
+
+// ---------------------------------------------------------------- the two of them together
+// Now and then, when both are home, awake and not busy: one goes over to the other and
+// they do something together, side by side and facing each other. Both get company.
+const PAIR_ACTS = {   // [cat: [the one who comes over, the other], dog: [...], minutes]
+  sniff: [['sniff', 'curious'], ['sniff', 'curious'], 10],
+  groom: [['groom', 'content'], ['nuzzle', 'content'], 25],
+  play: [['pounce', 'roll'], ['play', 'wag'], 20],
+  chase: [['run', 'run'], ['run', 'run'], 15],
+  nap: [['sleep', 'sleep'], ['sleep', 'sleep'], 120],
+  nuzzle: [['nuzzle', 'nuzzle'], ['nuzzle', 'happy'], 12],
+  squabble: [['pounce', 'surprised'], ['bark', 'surprised'], 8],
+  watch: [['sit', 'sit'], ['sit', 'sit'], 30],
+};
+let petPairNext = 0;
+const petPairFree = p => p.status === 'home' && !p.carried && !p.walk && !p.perch && !p.motion && !p.interaction && !(p.reservedUntil > sim.t)
+  && !['sleep', 'eat'].includes(p.activityNow) && p.needs.hunger > 35 && p.needs.energy > 20;
+function petPairPick(a, b) {
+  const tired = a.needs.energy < 60 && b.needs.energy < 60, lazy = a.activity === 'lazy' && b.activity === 'lazy';
+  const w = { sniff: 2, groom: 3, play: lazy ? 1 : 3, chase: lazy ? 0.5 : 2, nap: tired ? 6 : hour() >= 12 && hour() < 16 ? 1.5 : 0.4, nuzzle: 3, squabble: 0.8, watch: 2 };
+  let r = Math.random() * Object.values(w).reduce((x, y) => x + y, 0);
+  for (const [k, v] of Object.entries(w)) if ((r -= v) < 0) return k;
+  return 'nuzzle';
+}
+function tickPetPair(from, to) {
+  if (!petIsHome() || friendHousePreview || visitSleepPreview || sim.mode === 'down') return;
+  const home = petsHome();
+  if (home.length < 2) return;
+  for (const p of home) if (p.pair && (to >= p.pair.until || p.carried || p.walk || p.perch)) delete p.pair;
+  if (to < petPairNext) return;
+  if (!petPairNext) { petPairNext = to + 20 + Math.random() * 40; return; }
+  const [x, y] = Math.random() < 0.5 ? home : [home[1], home[0]];
+  if (!petPairFree(x) || !petPairFree(y)) { petPairNext = to + 10; return; }
+  const bp = withPet(y, petPoint), ap = withPet(x, petPoint);
+  if (storeyOfY(ap.y) !== storeyOfY(bp.y) || ['stairs', 'bath'].includes(roomAt(bp))) { petPairNext = to + 15; return; }
+  petPairNext = to + 70 + Math.random() * 110;
+  const kind = petPairPick(x, y), A = PAIR_ACTS[kind], actA = A[petSpecies(x) === 'cat' ? 0 : 1][0], actB = A[petSpecies(y) === 'cat' ? 0 : 1][1], dur = A[2] * (0.8 + Math.random() * 0.5);
+  const side = bp.x > 160 ? -1 : 1, spot = Math.max(22, Math.min(320, bp.x + side * 15)), walkMin = Math.abs(spot - ap.x) / 5 + 2;
+  withPet(x, () => { petWalkTo(spot, bp.y, actA, dur); x.reservedUntil = to + walkMin + dur; x.pair = { with: y.uid, kind, until: to + walkMin + dur }; });
+  withPet(y, () => { petStartAction(actB === 'run' || actB === 'sleep' ? 'look' : actB, walkMin); y.reservedUntil = to + walkMin + dur; y.direction = side < 0 ? 'right' : 'left'; y.pair = { with: x.uid, kind, until: to + walkMin + dur, then: actB, at: to + walkMin }; });
+  x.needs.company = clamp(x.needs.company + 14); y.needs.company = clamp(y.needs.company + 14);
+  if (kind === 'nap') { x.needs.energy = clamp(x.needs.energy + 5); y.needs.energy = clamp(y.needs.energy + 5); }
+}
+// the other one switches to its part once the first is beside it
+const tickPetPairOne = tickPetPair;
+tickPetPair = function (from, to) {
+  for (const y of petsHome()) if (y.pair?.then && to >= y.pair.at) {   // once the first is beside it: the other's part, and the line
+    const act = y.pair.then, kind = y.pair.kind, x = petState.pets.find(q => q.uid === y.pair.with);
+    delete y.pair.then;
+    withPet(y, () => petStartAction(act === 'run' ? 'play' : act, y.pair.until - to));
+    if (!x || x.pair?.kind !== kind) continue;
+    if (kind === 'chase') { withPet(x, startPetPlay); withPet(y, startPetPlay); }   // round and round each other
+    log(pairLine('pair_' + kind, x, y));
+    if (!asleep() && petIsHome() && roomAt(here()) === roomAt(withPet(y, petPoint)) && Math.random() < 0.55) speak(pairLine('hero_pair_' + kind, x, y));
+    if (['groom', 'nuzzle', 'nap'].includes(kind)) { withPet(x, () => petHearts(2)); withPet(y, () => petHearts(2)); }
+  }
+  tickPetPairOne(from, to);
+};
+
+// ---------------------------------------------------------------- she does something with both
+for (const [id, label, dur] of [['pat', '一起摸摸', 12], ['play', '陪它俩玩', 22], ['treat', '给它俩分零食', 10], ['photo', '拍张合照', 10], ['talk', '跟它俩聊聊天', 14]]) {
+  ACTS['pet_both_' + id] = { spot: 'pet_interact', label, emote: 'heart', dur, log: null }; EFFECT['pet_both_' + id] = { fun: .3, social: .3 };
+}
+function petBothArrive(kind) {
+  const a = petState.pet, b = petOther(a);
+  if (!b || !petCanSee()) return onPetHumanArriveOne('pet_' + (kind === 'treat' ? 'pat' : kind));
+  const h = here(), side = a.position && a.position.x < h.x ? 1 : -1;
+  withPet(b, () => { if (b.carried) dropCarriedPet(); b.perch = null; petWalkTo(Math.max(21, Math.min(320, h.x + side * 17)), FLOOR_Y[storeyOfY(h.y)], 'happy', 10); b.reservedUntil = sim.t + (ACTS['pet_both_' + kind]?.dur || 12); });
+  const acts = { pat: ['nuzzle', 'content'], play: [null, null], treat: ['eat', 'eat'], photo: ['curious', 'look'], talk: ['look', 'curious'] }[kind];
+  for (const [p, i] of [[a, 0], [b, 1]]) withPet(p, () => {
+    const act = acts[i] || petPlayAction();
+    if (p === a) petStartAction(act, ACTS['pet_both_' + kind].dur); else setTimeout(() => withPet(p, () => { if (!p.motion) petStartAction(act, ACTS['pet_both_' + kind].dur); }), 2500);
+    if (kind === 'play' && p === a) startPetPlay();
+    if (kind === 'treat') { p.needs.hunger = clamp(p.needs.hunger + 12); p.lastTreat = sim.t; }
+    p.needs.company = clamp(p.needs.company + (kind === 'play' ? 28 : 18)); gainPetAffinity(kind === 'play' ? 4 : 2, 'both_' + kind);
+    if (kind !== 'photo') petHearts(2.5);
+    p.nextHero = sim.t + 75 + Math.random() * 75; p.reservedUntil = sim.t + ACTS['pet_both_' + kind].dur;
+  });
+  if (kind === 'photo') petFlash = realClock;
+  sim.needs.social = clamp(sim.needs.social + 3); sim.needs.fun = clamp(sim.needs.fun + 3);
+  log(pairLine('both_' + kind, a, b)); speak(pairLine('hero_both_' + kind, a, b));
+  addMood('pet_company', { diary: false, words: false }); autoSave();
+}
+// the pet's ring gets 它俩一起 ▸ when the other one is around too
+const petRingsOne = petRings;
+petRings = function () {
+  petRingsOne();
+  const o = petOther(petState.pet);
+  if (o && withPet(o, petCanSee) && !petWalkActive()) {
+    RINGS.pet.splice(RINGS.pet.length - 1, 0, ['pet:both', '它俩一起 ▸', 'more']);
+    RINGS.pet_both = [['pet:both:pat', '一起摸摸'], ['pet:both:play', '陪它俩玩'], ['pet:both:treat', '分零食'], ['pet:both:photo', '拍合照'], ['pet:both:talk', '聊聊天'], ['pet:back', '返回', 'back']];
+  }
+};
+const petRingPickOne = petRingPick;
+petRingPick = function (k) {
+  if (k === 'both') { openRing('pet_both', 'pet'); return; }
+  if (k.startsWith('both:')) { closePetHud(); petInteractBoth(k.slice(5)); return; }
+  petRingPickOne(k);
+};
+function petInteractBoth(kind) {
+  const p = petState.pet;
+  if (!petCanSee() || !petOther(p)) { showHint('回到家再陪它们玩吧'); return; }
+  if (['bath', 'toilet', 'sleep'].includes(sim.act) || sim.mode === 'down') { showHint('先让小人忙完，等会儿再陪它们'); return; }
+  if (kind === 'treat' && petState.pets.some(q => sim.t - (q.lastTreat ?? -Infinity) < 15)) { showHint('刚吃过零食啦，等一会儿再喂吧'); return; }
+  command('pet_both_' + kind);
+}
+
+// ---------------------------------------------------------------- 放弃领养 (user)
+// On the computer's ring once a pet has lived here 3 days. Two that qualify: pick one
+// first. The shelter asks once more; then the pet goes back, its mat goes too, and no
+// new pet for 7 days. With no pet left, the feeder and the mat are taken back.
+RINGS.computer.push(['pet_abandon', '放弃领养']);
+const festRingItemsPets = festRingItems;
+festRingItems = function (which, items) {
+  items = festRingItemsPets(which, items);
+  return which === 'computer' && !PetRules.abandonable(petState, sim.t).length ? items.filter(i => i[0] !== 'pet_abandon') : items;
+};
+function openPetAbandon() {
+  if (!booted || wiping || phoneHolds() || card || sim.mode === 'down') return;
+  const list = PetRules.abandonable(petState, sim.t);
+  if (!list.length) { showHint('小家伙入住满 3 天后才能放弃领养'); return; }
+  if (list.length === 1) { petAbandonConfirm(list[0]); return; }
+  const body = petSheet('放弃领养哪一只？', 'list'), grid = petNode('div', undefined, 'pet-grid');
+  for (const p of list) {
+    const b = petButton('', () => petAbandonConfirm(p), 'pet-offer'), c = petNode('canvas');
+    c.width = 64; c.height = 56; paintPetPortrait(c, p.breed);
+    b.setAttribute('aria-label', p.name); b.append(c, petNode('strong', p.name), petNode('span', petBreed(p.breed).name));
+    grid.append(b);
+  }
+  body.append(grid);
+}
+function petAbandonConfirm(p) {
+  const body = petSheet('收容所的提示', 'confirm');
+  body.append(petNode('p', '是否确认放弃领养？'), petNode('p', `你的小宠物「${p.name}」会回到我们的收容所，并且7天内无法再次领养我们的宠物。`));
+  const row = petNode('div', undefined, 'pet-options');
+  row.append(petButton('确认放弃', () => petAbandon(p), 'pet-positive'), petButton('我再想想', closePetPanel));
+  body.append(row);
+}
+function petAbandon(p) {
+  closePetPanel(); closePetHud(); closePetMini();
+  const left = () => petState.pets.find(q => q !== p && q.status === 'home');
+  withPet(p, () => { if (p.carried) dropCarriedPet(); log(petText('abandon').replaceAll('{名字}', nameOf())); });
+  if (!PetRules.abandon(petState, p, sim.t)) return;
+  speak(PET_PAIR_TEXT.hero_goodbye[Math.floor(Math.random() * PET_PAIR_TEXT.hero_goodbye.length)], true);
+  addMood('pet_goodbye', { diary: false, words: false });
+  const o = left();
+  if (o) setTimeout(() => withPet(o, () => log(petText('left_behind').replaceAll('{名字}', nameOf()).replaceAll('{她}', ta()))), 2500);
+  else log('收容所的工作人员顺便把喂食机和睡垫也带走了。');
+  petHover = null; petHoverPet = null; autoSave(); render();
+}
+Object.assign(PET_TEXT, { abandon: PET_PAIR_TEXT.abandon, left_behind: PET_PAIR_TEXT.left_behind, left_behind_cat: PET_PAIR_TEXT.left_behind_cat, left_behind_dog: PET_PAIR_TEXT.left_behind_dog });
 
 // Scene acoustics are independent of rendering and simulation speed.
 function audioRoom(p){

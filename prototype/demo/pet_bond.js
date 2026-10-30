@@ -8,10 +8,10 @@
 let petFlash = -9, petHeartsUntil = 0;
 for (const sp of ["cat", "dog"]) PET_TEXT["train_" + sp] = [...PET_TEXT.train, ...(PET_TEXT["trick_" + sp] || [])];   // 教它小动作:握手 / 转圈 / 击掌…
 PET_TEXT.hero_train = [...PET_TEXT.hero_train, ...(PET_TEXT.hero_trick || [])];
-function petHearts(sec) { if (sec > 0) petHeartsUntil = Math.max(petHeartsUntil, realClock + sec); }
+function petHearts(sec) { const p = petState.pet; if (sec > 0 && p) p.heartsUntil = Math.max(p.heartsUntil || 0, realClock + sec); }   // per pet: two can glow at once
 const PET_HEART = [".##.##.", "#######", "#######", ".#####.", "..###..", "...#..."];
 function drawPetHearts(ctx, point) {
-  const left = petHeartsUntil - realClock;
+  const left = (petState.pet?.heartsUntil || 0) - realClock;
   if (left > 0) {
     for (let i = 0; i < 3; i++) {
       const t = (realClock * 0.8 + i / 3) % 1, x = Math.round(point.x - 6 + i * 6 + Math.sin(realClock * 3 + i * 2) * 2), y = Math.round(point.y - 28 - t * 14);
@@ -38,13 +38,12 @@ function petBondGo(kind, x, y, action, dur, say = 0.4) {
   if (p.activityNow === "sleep") petStartAction("wake", 2);
   petWalkTo(Math.max(20, Math.min(325, Math.round(x))), y, action, dur);
   p.reservedUntil = sim.t + dur;
-  setTimeout(() => {                                // once it's on its way: the line and a little warmth
-    if (!petState.pet) return;
+  setTimeout(() => withPet(p, () => {             // once it's on its way: the line and a little warmth (said of this pet)
     log(petText(kind));
     if (Math.random() < say) speak(petText("hero_" + kind));
     p.needs.company = clamp(p.needs.company + 10); sim.needs.social = clamp(sim.needs.social + 2);
     gainPetAffinity(1, "auto_" + kind); petHearts(2);
-  }, 1800);
+  }), 1800);
   return true;
 }
 function petBondTick() {
@@ -64,7 +63,7 @@ function petBondTick() {
   if (["bath", "toilet"].includes(act)) { petBondGo("bathroom", h.x + side * 2, y, "sit", 20); return; }
   if (!act && p.needs.company < 55) { if (petBondGo("bring_toy", h.x + side, y, petPlayAction(), 20, 0.6)) startPetPlay(); }
 }
-setInterval(petBondTick, 1000);
+setInterval(() => petBondTick(), 1000);   // (late-bound: pets_multi.js runs it per pet)
 // ---------------------------------------------------------------- the pet's voice (user: 猫狗的叫声太少)
 // Real recordings (BigSoundBank, CC0): a cat purrs while it's fussed over or kneading and
 // meows when curious, happy, startled or waking; a dog barks when happy, startled or

@@ -511,7 +511,7 @@ const EMO_PULL = {
   embarrassed: { bath: 15, go_out: 10 }, uncomfortable: { go_out: 15 }, dazed: { window: 10, go_out: 10 },
 };
 function startAct(name, quiet = false) {
-  if(petState.pet?.carried&&!name.startsWith("pet_")&&!["tv","host"].includes(name))dropCarriedPet();
+  if(!name.startsWith("pet_")&&!["tv","host"].includes(name))eachPet(p=>{if(p.carried)dropCarriedPet();});
   if(name.startsWith("pet_")&&!preparePetHumanAction(name))return;
   if(atFriendHome()){friendVisitCommand(name);return;}
   if(sim.place==='home'){
@@ -720,7 +720,7 @@ function updateDoors(dtReal) {
     const near = sim.mode === "walk" && !p.dy && d.storey === storey
       && sim.crossing.some(([id, x]) => id === d.id && Math.abs(p.x - x) < 16)
       || sim.place==='home'&&d.storey===0&&socialState.guest&&['entering','leaving'].includes(socialState.guest.phase)&&Math.abs(homeGuestPoint(socialState.guest).x-d.x-2)<16
-      || petCanSee()&&petState.pet.motion&&d.storey===storeyOfY(petPoint().y)&&Math.abs(petPoint().x-d.x-2)<16;
+      || somePet(p=>petCanSee()&&p.motion&&d.storey===storeyOfY(petPoint().y)&&Math.abs(petPoint().x-d.x-2)<16);
     if (near && st.angle === 0) st.side = sim.facing > 0 ? "r" : "l";
     st.t += dtReal * Math.min(speed, 4);
     if (st.t < 0.06) continue;
@@ -2709,7 +2709,7 @@ view.addEventListener("click", e => {
   closeRing();
   if (sim.mode === "down") return;
   if (mailBubbleHit(x, y)) { readMail(); return; }   // a letter came (写信日)
-  const petTarget=petHit(x,y);if(petTarget){if(petTarget==='feeder')openPetFeeder();else if(petTarget==='mat')openPetMatColors();else openPetInteractions();return;}
+  const petTarget=petHit(x,y);if(petTarget){if(petTarget==='pet'&&petHoverPet)focusPet(petHoverPet);if(petTarget==='feeder')openPetFeeder();else if(petTarget==='mat')openPetMatColors();else openPetInteractions();return;}
   if(friendVisitClick(x,y))return;
   if(springClick(x,y))return;                    // 春节: a word with 爸爸 or 妈妈
   if (buddyHit(x, y)) {
@@ -2886,6 +2886,7 @@ let lastChat = -1e9;
 function ringPick(id) {
   if (id.startsWith("pet:")) { petRingPick(id.slice(4)); return; }
   if(id==='pet_adopt'){closeRing();openPetAdoption();return;}
+  if(id==='pet_abandon'){closeRing();openPetAbandon();return;}
   if(id.startsWith("fv:")){closeRing();if(id==="fv:stay")requestFriendStay();else friendVisitAction(id.slice(3));return;}
   if(id.startsWith('outing:')){const c=socialState.contacts.find(c=>c.id===ringEl.dataset.contactId),place=id.slice(7);closeRing();if(c)scheduleFriendOuting(c,place);return;}
   if (id === "mall_leave") { closeRing();mallLeaveVisit(false);return; }

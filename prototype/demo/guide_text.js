@@ -46,7 +46,7 @@ const GUIDE = [
 
   { title: "节日和宠物", shot: null,
     lead: "过节那天，日记上方会出现节日条，点上面的按钮，{她}就去。",
-    points: ["电脑或手机里有「领养宠物」，每周都有新的小猫小狗。"],
+    points: ["电脑或手机里有「领养宠物」，每周都有新的小猫小狗，最多养两只。"],
     tip: null },
 
   { title: "设置", shot: "settings",

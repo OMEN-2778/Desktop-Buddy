@@ -2,6 +2,15 @@
 let petState=PetRules.fresh(),petPanelPage=null,petSelection=null,petHover=null;
 const petImages=new Map(),petFurnitureImages={},petClips=new Map(D.pets.breeds.map(b=>[b.id,new Map(b.clips.map(c=>[c.id+':'+c.direction,c]))]));
 const petBreed=id=>D.pets.breeds.find(b=>b.id===id);
+// Two pets (user): petState.pet is the one in focus. Each pet's routine, drawing and lines
+// run with the focus moved onto it (withPet), and the focus comes back afterwards.
+function withPet(p,fn){const s=petState,i=s.pets.indexOf(p);if(i<0)return;const old=s.pet;s.sel=i;try{return fn(p);}finally{const j=s.pets.indexOf(old);s.sel=j>=0?j:Math.min(s.sel,Math.max(0,s.pets.length-1));}}
+function eachPet(fn){for(const p of [...petState.pets])withPet(p,fn);}
+const somePet=fn=>petState.pets.some(p=>withPet(p,fn));
+function focusPet(p){const i=petState.pets.indexOf(p);if(i>=0)petState.sel=i;}
+// the feeder stays where it was; the mats sit right of it, the second one on the left of the first (user)
+const petMatXs=()=>petState.pets.filter(p=>p.status!=='lost').length>1?[145,117]:[142];
+const petBedX=(p=petState.pet)=>{const xs=petMatXs();return xs[Math.min(xs.length-1,Math.max(0,petState.pets.filter(q=>q.status!=='lost').indexOf(p)))]+13;};
 const petName=()=>petState.pet?.name||'小家伙';
 const petText=key=>{const sp=petState.pet?petBreed(petState.pet.breed).species:'';if(PET_TEXT[key+'_'+sp])key+='_'+sp;const list=PET_TEXT[key]||[''];return list[Math.floor(PetRules.random(petState)*list.length)].replaceAll('{宠物}',petName());};   // a _cat / _dog variant wins
 const petIsHome=()=>sim.place==='home'&&!atFriendHome()&&!friendHousePreview;
@@ -21,15 +30,15 @@ document.getElementById('widget').append(petPanel);petPanel.querySelector('.pet-
 function petNode(tag,text,cls){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;}
 function petButton(text,fn,cls){const b=petNode('button',text,cls);b.type='button';b.onclick=()=>{gameAudio.sound('ui-click',.35);fn();};return b;}
 function fitPetPanel(){fitPetHud();fitPetMini();if(petPanel.hidden)return;overHouse(petPanel);petPanel.dataset.compact=String(view.offsetWidth<520);}
-function closePetPanel(){petPanel.hidden=true;petPanelPage=null;petSelection=null;for(const id of petImages.keys())if(id!==petState.pet?.breed){petImages.delete(id);petImageLoads.delete(id);}}
+function closePetPanel(){petPanel.hidden=true;petPanelPage=null;petSelection=null;for(const id of petImages.keys())if(!petState.pets.some(p=>p.breed===id)){petImages.delete(id);petImageLoads.delete(id);}}
 function petSheet(title,page){closePetHud();closeRing();closePicker();setContactsOpen(false);petPanelPage=page;petPanel.dataset.page=page;petPanel.querySelector('h3').textContent=title;petPanel.hidden=false;const body=petPanel.querySelector('.pet-panel-body');body.replaceChildren();fitPetPanel();petPanel.focus({preventScroll:true});return body;}
-function petRefusal(){const reason=PetRules.refusal(petState,sim.t);if(!reason)return false;const body=petSheet('收容所的回复','notice');body.append(petNode('p',reason==='ban'?`这次走失后，我们想先给你和小家伙一点时间。请在 ${Math.ceil((petState.banUntil-sim.t)/1440)} 天后再来申请领养。`:petState.pet.status==='pending'?'送养安排已经记下啦，小家伙还在路上。每个家庭只能领养一只宠物哦。':'家里已经有一位毛茸茸的成员啦，每个家庭只能领养一只宠物。'));body.append(petButton('我知道了',closePetPanel));return true;}
+function petRefusal(){const reason=PetRules.refusal(petState,sim.t);if(!reason)return false;const body=petSheet('收容所的回复','notice');const days=Math.ceil((petState.banUntil-sim.t)/1440);body.append(petNode('p',reason==='ban'?(petState.banWhy==='abandon'?`小宠物已经回到收容所了。请在 ${days} 天后再来申请领养。`:`这次走失后，我们想先给你和小家伙一点时间。请在 ${days} 天后再来申请领养。`):reason==='pending'?'送养安排已经记下啦，小家伙还在路上，等它到家了再来看看吧。':'家里已经有两位毛茸茸的成员啦，每个家庭最多领养两只宠物。'));body.append(petButton('我知道了',closePetPanel));return true;}
 function openPetAdoption(){if(!booted||wiping||phoneHolds()||card||sim.mode==='down')return;if(petRefusal())return;const body=petSheet('每周领养','list');
- const note=petNode('p','这是本周待领养的小猫小狗','pet-list-note');body.append(note);const grid=petNode('div',undefined,'pet-grid');
- for(const offer of PetRules.weekly(petState,sim.t,D.pets.breeds)){const breed=petBreed(offer.breed),b=petButton('',()=>petConfirm(offer),'pet-offer');b.dataset.offer=offer.id;b.setAttribute('aria-label',`${breed.name}，${petTraits(offer)}`);const c=petNode('canvas');c.width=64;c.height=56;paintPetPortrait(c,offer.breed);b.append(c,petNode('strong',breed.name),petNode('span',petTraits(offer)));grid.append(b);}body.append(grid);autoSave();
+ const note=petNode('p',petState.pets.some(p=>p.status!=='lost')?'这是本周待领养的小猫小狗，家里还能再添一位新成员':'这是本周待领养的小猫小狗','pet-list-note');body.append(note);const grid=petNode('div',undefined,'pet-grid');
+ for(const offer of PetRules.weekly(petState,sim.t,D.pets.breeds).filter(o=>!petState.pets.some(p=>p.id===o.id))){const breed=petBreed(offer.breed),b=petButton('',()=>petConfirm(offer),'pet-offer');b.dataset.offer=offer.id;b.setAttribute('aria-label',`${breed.name}，${petTraits(offer)}`);const c=petNode('canvas');c.width=64;c.height=56;paintPetPortrait(c,offer.breed);b.append(c,petNode('strong',breed.name),petNode('span',petTraits(offer)));grid.append(b);}body.append(grid);autoSave();
 }
 function petTraits(p){return (p.activity==='active'?'活跃':'慵懒')+' · '+(p.attachment==='clingy'?'黏人':'独立');}
-function petConfirm(offer){if(petRefusal())return;petSelection=offer;const body=petSheet('宠物领养中心提示','confirm');petSelection=offer;body.append(petNode('p','领养宠物意味着长久的责任，您做好准备了吗？'),petNode('p','记得添粮、陪伴，困了让它好好休息。长期忽略需求，小家伙可能会离家。'),petNode('p','我们为您免费提供了喂食机和睡垫，不用客气！'));const row=petNode('div',undefined,'pet-options');row.append(petButton('我明白',()=>petNaming(offer),'pet-positive'),petButton('我再考虑考虑',openPetAdoption));body.append(row);}
+function petConfirm(offer){if(petRefusal())return;petSelection=offer;const body=petSheet('宠物领养中心提示','confirm');petSelection=offer;const second=petState.installed&&petState.pets.some(p=>p.status!=='lost');body.append(petNode('p','领养宠物意味着长久的责任，您做好准备了吗？'),petNode('p','记得添粮、陪伴，困了让它好好休息。长期忽略需求，小家伙可能会离家。'),petNode('p',second?'两只小家伙共用一台喂食机，我们会再送您一张睡垫，就放在原来那张的左边。':'我们为您免费提供了喂食机和睡垫，不用客气！'));const row=petNode('div',undefined,'pet-options');row.append(petButton('我明白',()=>petNaming(offer),'pet-positive'),petButton('我再考虑考虑',openPetAdoption));body.append(row);}
 function petNaming(offer,rename=false){
  if(rename?!petState.pet:petRefusal())return;const body=petSheet(rename?'给宠物改个名字':'给新家人取个名字','name');petSelection=offer;
  const nameRow=petNode('div',undefined,'pet-name-row'),input=petNode('input');input.type='text';input.maxLength=16;input.setAttribute('aria-label','宠物名字');input.placeholder='最多 8 个字';if(rename)input.value=petName();
@@ -37,13 +46,13 @@ function petNaming(offer,rename=false){
  dice.setAttribute('aria-label','随机起个宠物名字');dice.title='随机起个宠物名字';
  dice.innerHTML=`<svg width="20" height="20" viewBox="0 0 10 10" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true">${DIE.flatMap((row,y)=>[...row].map((c,x)=>c==='#'?`<rect x="${x}" y="${y}" width="1" height="1"/>`:'')).join('')}</svg>`;
  const field=petNode('label',undefined,'pet-name-field');field.append(input);nameRow.append(field,dice);const error=petNode('p','','pet-error');error.hidden=true;error.setAttribute('role','alert');body.append(nameRow,error);
- const submit=()=>{if(rename){const name=[...input.value.trim()].slice(0,8).join('');if(!name){error.hidden=false;error.textContent='先写个名字吧';return;}const old=petName();petState.pet.name=name;if(old!==name)log(`给${old}改了名字，以后叫「${name}」。`);closePetPanel();autoSave();return;}if(petRefusal())return;if(!PetRules.adopt(petState,offer,input.value,sim.t)){error.hidden=false;error.textContent='给小家伙起个名字吧（最多 8 个字）';return;}ensurePetImage(offer.breed);log(`感谢您的领养，「${petName()}」大概一天后就会送到您家！`);speak('得把家里收拾一下，等新室友报到！',true);closePetPanel();autoSave();};
+ const submit=()=>{const had=petState.pets.find(p=>p.status!=='lost');if(rename){const name=[...input.value.trim()].slice(0,8).join('');if(!name){error.hidden=false;error.textContent='先写个名字吧';return;}const old=petName();petState.pet.name=name;if(old!==name)log(`给${old}改了名字，以后叫「${name}」。`);closePetPanel();autoSave();return;}if(petRefusal())return;if(!PetRules.adopt(petState,offer,input.value,sim.t)){error.hidden=false;error.textContent='给小家伙起个名字吧（最多 8 个字）';return;}ensurePetImage(offer.breed);const fresh=petState.pets[petState.pets.length-1];log(`感谢您的领养，「${fresh.name}」大概一天后就会送到您家！`);speak(had?pairLine('hero_second',had,fresh):'得把家里收拾一下，等新室友报到！',true);closePetPanel();autoSave();};
  input.oninput=()=>{input.value=[...input.value].slice(0,8).join('');error.hidden=true;};input.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')submit();};body.append(petButton('就叫这个！',submit,'pet-positive'));requestAnimationFrame(()=>input.focus());
 }
 function paintPetPortrait(canvas,id){
  if(!petImages.has(id)){ensurePetImage(id).then(()=>paintPetPortrait(canvas,id));return;}const ctx=canvas.getContext('2d'),b=petBreed(id),clip=petClips.get(id)?.get('idle:right'),img=petImages.get(id);ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);if(img&&clip)ctx.drawImage(img,0,clip.row*28,32,28,0,0,canvas.width,canvas.height);}
 
-function petPoint(){const p=petState.pet;if(!p)return {x:155,y:FLOOR_Y[0]};if(p.carried){const h=buddyFeet();return {x:Math.round(h.x),y:Math.round(h.y)-4};}if(p.walk?.position)return p.walk.position;if(p.motion?.route)return routePos(p.motion.route,p.motion.s);return p.position||{x:155,y:FLOOR_Y[0]};}
+function petPoint(){const p=petState.pet;if(!p)return {x:petBedX(),y:FLOOR_Y[0]};if(p.carried){const h=buddyFeet();return {x:Math.round(h.x),y:Math.round(h.y)-4};}if(p.walk?.position)return p.walk.position;if(p.motion?.route)return routePos(p.motion.route,p.motion.s);return p.position||{x:petBedX(p),y:FLOOR_Y[0]};}
 function petWalkTo(x,y,after='idle',duration=20){const p=petState.pet,from=petPoint();p.motion={route:planRoute(from.x,from.y,x,y),s:0,after,duration};p.activityNow='walk';}
 function petStartAction(action,duration){const p=petState.pet;p.animTime=0;p.activityNow=action;if(action==='eat')p.direction='left';p.actionUntil=sim.t+duration;p.motion=null;}
 function petInteract(kind){closePetHud();if(!petCanSee()){closePetPanel();showHint('回到家再陪小家伙玩吧');return;}const p=petState.pet;
@@ -54,13 +63,13 @@ function petInteract(kind){closePetHud();if(!petCanSee()){closePetPanel();showHi
 function petEvent(type,p){if(type==='arrival'){p.position={x:D.spots.front_door[1]-16,y:FLOOR_Y[0]};log(petText('arrival'));if(petIsHome())speak(petText('welcome'),true);}
  else if(type==='escape'){log(petText('escape'));addMood('pet_escape',{diary:false,words:false});moods.get('pet_escape').until=petState.sadUntil;if(petIsHome())speak(petText('missing'),true);autoSave();}
  else if(type==='return'){p.position={x:D.spots.front_door[1]-16,y:FLOOR_Y[0]};log(petText('return'));addMood('pet_return',{diary:false,words:false});autoSave();}
- else if(type==='lost'){log(petText('lost'));autoSave();}
+ else if(type==='lost'){log(petText('lost'));setTimeout(()=>{const i=petState.pets.indexOf(p);if(i>=0&&p.status==='lost'&&petState.pets.length>1){petState.pets.splice(i,1);petState.sel=0;}},0);autoSave();}
  else if(type.startsWith('warning:')){log(petText(type.replace('warning:','warning_')));}
 }
 function tickPets(from,to){if(!(to>from)||friendHousePreview||visitSleepPreview)return;const p=petState.pet;if(!p)return;
  tickPetActivities(from,to);
  const point=petPoint(),near=petNearby(),atFeeder=Math.hypot(point.x-119,point.y-FLOOR_Y[0])<4;
- PetRules.tick(petState,from,to,{nearby:near,atFeeder},petEvent);
+ PetRules.tick(petState,from,to,{nearby:near,atFeeder,pal:petState.pets.some(q=>q!==p&&q.status==='home')},petEvent);
  if(p.status!=='home')return;
  p.animTime=(p.animTime||0)+(to-from);
  if(p.walk||p.carried){/* Walking/carrying owns the actor, needs still advance above. */}
@@ -70,8 +79,8 @@ function tickPets(from,to){if(!(to>from)||friendHousePreview||visitSleepPreview)
  else if(p.activityNow==='eat'&&(p.needs.hunger>=97||petState.feeder<=0))petStartAction('groom',8);
  else if(p.activityNow==='eat'){p.actionUntil=to+10;}
  else if(p.activityNow==='sleep'&&p.needs.energy<90){p.actionUntil=to+10;}
- else if(p.needs.hunger<60&&petState.feeder>0)petWalkTo(119,FLOOR_Y[0],'eat',30);
- else if(p.needs.energy<25&&!['sleep','rest'].includes(p.activityNow))petWalkTo(155,FLOOR_Y[0],'sleep',300);
+ else if(p.needs.hunger<60&&petState.feeder>0&&!petFeederTaken(p))petWalkTo(119,FLOOR_Y[0],'eat',30);
+ else if(p.needs.energy<25&&!['sleep','rest'].includes(p.activityNow))petWalkTo(petBedX(p),FLOOR_Y[0],'sleep',300);
  else if(!p.motion&&(!p.actionUntil||to>=p.actionUntil)){
   if(p.attachment==='clingy'&&near&&PetRules.random(petState)<.45){const h=here();petWalkTo(Math.max(20,Math.min(325,h.x-17)),h.y,'sit',25);}
   else if(p.attachment==='clingy'&&petIsHome()&&!['bath','toilet'].includes(sim.act)&&PetRules.random(petState)<.35){const h=here();petWalkTo(Math.max(20,Math.min(325,h.x-17)),h.y,'nuzzle',20);}
@@ -81,9 +90,11 @@ function tickPets(from,to){if(!(to>from)||friendHousePreview||visitSleepPreview)
  }
  if(to>=p.nextEvent){p.nextEvent=to+120+PetRules.random(petState)*150;if(petIsHome()){log(petText(p.activityNow==='sleep'?'sleep':p.needs.hunger<20?'hungry':p.needs.company<25?'lonely':petBreed(p.breed).species+'_daily'));if(near&&!asleep()&&PetRules.random(petState)<.5)speak(petText('hero_daily'));}}
 }
+// one feeder for two: whoever gets there first eats, the other waits its turn
+const petFeederTaken=p=>petState.pets.some(o=>o!==p&&o.status==='home'&&(o.activityNow==='eat'||o.motion?.after==='eat'));
 function petClip(){const p=petState.pet;if(!p)return null;const id=p.activityNow||'idle',direction=p.direction||'right';return petClips.get(p.breed)?.get(id+':'+direction)||petClips.get(p.breed)?.get('idle:right');}
 function petSpriteFrame(){const c=petClip(),p=petState.pet;return c?Math.floor((p?.animTime||0)*1000/c.ms)%c.frames:0;}
-function drawPetKit(ctx){if(!petState.installed||!petIsHome())return;const mat=petMatImage(),feeder=petFurnitureImages.pet_feeder;if(mat)ctx.drawImage(mat,142,FLOOR_Y[0]-5);if(feeder)ctx.drawImage(feeder,91,FLOOR_Y[0]-21);if(petHover==='feeder'&&feeder)drawObjectHover(ctx,feeder,91,FLOOR_Y[0]-21);if(petHover==='mat'&&mat)drawObjectHover(ctx,mat,142,FLOOR_Y[0]-5);}
+function drawPetKit(ctx){if(!petState.installed||!petIsHome())return;const mat=petMatImage(),feeder=petFurnitureImages.pet_feeder;if(mat)for(const x of petMatXs())ctx.drawImage(mat,x,FLOOR_Y[0]-5);if(feeder)ctx.drawImage(feeder,91,FLOOR_Y[0]-21);if(petHover==='feeder'&&feeder)drawObjectHover(ctx,feeder,91,FLOOR_Y[0]-21);if(petHover==='mat'&&mat)for(const x of petMatXs())drawObjectHover(ctx,mat,x,FLOOR_Y[0]-5);}
 const petFrameCache=new Map();
 function petFrameCanvas(){const p=petState.pet,c=petClip(),img=p&&petImages.get(p.breed);if(!c||!img)return null;const frame=petSpriteFrame(),key=p.breed+':'+c.row+':'+frame;let canvas=petFrameCache.get(key);if(!canvas){canvas=document.createElement('canvas');canvas.width=32;canvas.height=28;canvas.getContext('2d').drawImage(img,frame*32,c.row*28,32,28,0,0,32,28);petFrameCache.set(key,canvas);if(petFrameCache.size>96)petFrameCache.delete(petFrameCache.keys().next().value);}return canvas;}
 function drawHoldingHands(ctx,point){   // her two hands cradling it from below (user: 抱的姿势要体面)
@@ -91,14 +102,15 @@ function drawHoldingHands(ctx,point){   // her two hands cradling it from below 
  const skin=d[3]?`rgb(${d[0]},${d[1]},${d[2]})`:'#f2c6a0';
  for(const hx of [left+4,left+14]){ctx.fillStyle='#8a5a4a';ctx.fillRect(hx,point.y-2,2,3);ctx.fillStyle=skin;ctx.fillRect(hx,point.y-2,2,2);}
 }
-function drawPetActor(ctx,held=false){if(!petCanSee()||!!petState.pet.carried!==held)return;const img=petFrameCanvas(),point=petPoint();if(!img)return;if(!held)drawPetToy(ctx);const x=Math.round(point.x-16),y=Math.round(point.y-25);ctx.drawImage(img,x,y);if(held)drawHoldingHands(ctx,point);drawPetHearts(ctx,point);if(petHover==='pet')drawObjectHover(ctx,img,x,y);}
-function petHit(x,y){if(!petIsHome()&&!petWalkActive())return null;const shapes=[];if(petCanSee()){const p=petPoint();shapes.push(['pet',petFrameCanvas(),Math.round(p.x-16),Math.round(p.y-25)]);}if(petState.installed&&petIsHome())shapes.push(['feeder',petFurnitureImages.pet_feeder,91,FLOOR_Y[0]-21],['mat',petMatImage(),142,FLOOR_Y[0]-5]);for(const [id,img,ox,oy]of shapes)if(img){if(!outlineCache.has(img))outlineCache.set(img,outlineShape(img));if(outlineCache.get(img).near.has(Math.floor(x-ox)+','+Math.floor(y-oy)))return id;}return null;}
+function drawPetActor(ctx,held=false){if(!petCanSee()||!!petState.pet.carried!==held)return;const img=petFrameCanvas(),point=petPoint();if(!img)return;if(!held)drawPetToy(ctx);const x=Math.round(point.x-16),y=Math.round(point.y-25);ctx.drawImage(img,x,y);if(held)drawHoldingHands(ctx,point);drawPetHearts(ctx,point);if(petHover==='pet'&&petHoverPet===petState.pet)drawObjectHover(ctx,img,x,y);}
+let petHoverPet=null;   // which pet the pointer is on (petHit), so a click focuses that one
+function petHit(x,y){const shapes=[];for(const q of [...petState.pets].reverse())withPet(q,()=>{if(!petIsHome()&&!petWalkActive()||!petCanSee())return;const p=petPoint();shapes.push(['pet',petFrameCanvas(),Math.round(p.x-16),Math.round(p.y-25),q]);});if(petState.installed&&petIsHome()){shapes.push(['feeder',petFurnitureImages.pet_feeder,91,FLOOR_Y[0]-21]);for(const mx of petMatXs())shapes.push(['mat',petMatImage(),mx,FLOOR_Y[0]-5]);}for(const [id,img,ox,oy,q]of shapes)if(img){if(!outlineCache.has(img))outlineCache.set(img,outlineShape(img));if(outlineCache.get(img).near.has(Math.floor(x-ox)+','+Math.floor(y-oy))){petHoverPet=q||null;return id;}}petHoverPet=null;return null;}
 
 const petImageLoads=new Map();
 function ensurePetImage(id){if(petImages.has(id))return Promise.resolve(petImages.get(id));if(!petImageLoads.has(id))petImageLoads.set(id,loadImg(petBreed(id).image).then(img=>{petImages.set(id,img);return img;}));return petImageLoads.get(id);}
-async function loadPets(){if(petState.pet)await ensurePetImage(petState.pet.breed);await Promise.all(Object.entries(D.pets.furniture).map(async([id,src])=>petFurnitureImages[id]=await loadImg(src)));}
-function petSnapshot(){const data=JSON.parse(JSON.stringify(petState));if(data.pet){const p=petPoint();data.pet.position={x:p.x,y:p.y};data.pet.motion=null;data.pet.interaction=null;data.pet.reservedUntil=0;if(data.pet.walk)data.pet.walk={dest:data.pet.walk.dest,phase:data.pet.walk.phase,startedAt:data.pet.walk.startedAt,until:data.pet.walk.until};}return data;}
-function restorePets(raw){petState=PetRules.restore(raw,D.pets.breeds);if(petState.pet){const p=petState.pet;if(p.position){p.position.x=Math.max(18,Math.min(324,p.position.x));p.position.y=FLOOR_Y[storeyOfY(p.position.y)];}p.actionUntil=0;ensurePetImage(p.breed);}closePetHud();closePetPanel();closePetMini();petHover=null;}
+async function loadPets(){await Promise.all(petState.pets.map(p=>ensurePetImage(p.breed)));await Promise.all(Object.entries(D.pets.furniture).map(async([id,src])=>petFurnitureImages[id]=await loadImg(src)));}
+function petSnapshot(){const data=JSON.parse(JSON.stringify(petState));data.pets.forEach((d,i)=>withPet(petState.pets[i],()=>{const p=petPoint();d.position={x:p.x,y:p.y};d.motion=null;d.interaction=null;d.reservedUntil=0;delete d.pair;if(d.walk)d.walk={dest:d.walk.dest,phase:d.walk.phase,startedAt:d.walk.startedAt,until:d.walk.until};}));return data;}
+function restorePets(raw){petState=PetRules.restore(raw,D.pets.breeds);for(const p of petState.pets){if(p.position){p.position.x=Math.max(18,Math.min(324,p.position.x));p.position.y=FLOOR_Y[storeyOfY(p.position.y)];}p.actionUntil=0;ensurePetImage(p.breed);}closePetHud();closePetPanel();closePetMini();petHover=null;petHoverPet=null;}
 RINGS.computer.push(['pet_adopt','领养宠物']);RINGS.phone.splice(RINGS.phone.length-1,0,['pet_adopt','领养宠物']);
 window.addEventListener('resize',fitPetPanel);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!petPanel.hidden){e.preventDefault();closePetPanel();}});
 
@@ -149,7 +161,7 @@ function openPetMini(kind,label){closePetHud();closePetPanel();closeRing();clear
 function openPetFeeder(){if(!petState.installed||!petIsHome())return;const panel=openPetMini('feeder','自动喂食机');panel.append(petNode('span',feederDescription(petState.feeder)),petButton('加满！',()=>{closePetMini();if(petState.feeder>=880){speak('已经是满的啦');return;}command('pet_feed');},'pet-refill'));fitPetMini();}
 function openPetMatColors(){if(!petState.installed||!petIsHome())return;const panel=openPetMini('mat','睡垫颜色');panel.append(petNode('strong','睡垫颜色'));const colors=petNode('div',undefined,'pet-mat-colors');for(const color of D.pets.matColors){const b=petButton('',()=>{petState.matColor=color.id;for(const button of colors.children)button.setAttribute('aria-pressed',String(button.dataset.color===color.id));autoSave();render();});b.dataset.color=color.id;b.setAttribute('aria-label',color.name);b.setAttribute('aria-pressed',String(petState.matColor===color.id));const swatch=petNode('i');swatch.style.backgroundColor=color.color;swatch.setAttribute('aria-hidden','true');b.append(swatch,petNode('span',color.name));colors.append(b);}panel.append(colors);fitPetMini();}
 function fitPetMini(){if(petMini.hidden)return;if(petMini.dataset.kind==='feeder'){const h=petMini.offsetHeight,b=petMini.querySelector('.pet-refill');if(h&&h!==petMini._h){petMini._h=h;const n=Math.max(4,Math.floor(h/4)),pad=6;petMini.style.setProperty('--pm-o',roundClip(n,2));petMini.style.setProperty('--pm-o-in',roundClip(n-1,2));petMini.style.setProperty('--pm-i',roundClip(Math.max(3,n-pad/2),2));petMini.style.setProperty('--pm-i-in',roundClip(Math.max(2,n-pad/2-1),2));}}if(!petIsHome()){closePetMini();return;}if(petMini.dataset.kind==='feeder'){const label=petMini.querySelector('span'),text=feederDescription(petState.feeder);if(label.textContent!==text)label.textContent=text;}
- const mat=petMini.dataset.kind==='mat',x=mat?155:103,padding=4,w=view.offsetWidth;petMini.style.maxWidth=Math.max(0,w-padding*2)+'px';const pw=petMini.offsetWidth,ph=petMini.offsetHeight;
+ const mat=petMini.dataset.kind==='mat',x=mat?petBedX(petState.pets[0]):103,padding=4,w=view.offsetWidth;petMini.style.maxWidth=Math.max(0,w-padding*2)+'px';const pw=petMini.offsetWidth,ph=petMini.offsetHeight;
  petMini.style.left=view.offsetLeft+Math.max(padding,Math.min(w-pw-padding,x*scale-pw/2))+'px';petMini.style.top=view.offsetTop+Math.max(padding,Math.min(view.offsetHeight-ph-padding,(FLOOR_Y[0]-28)*scale-ph))+'px';
 }
 function openPetInteractions(){openPetHud();}
