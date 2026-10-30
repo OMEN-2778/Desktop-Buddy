@@ -4629,7 +4629,13 @@ function makeRoom() {
   if (stack) need = Math.max(need, mTop - fbUnder + stack + 8);
   // the app keeps room above the house for all of these all the time (and
   // lets clicks through it): opening one never moves the window (user: it flashed)
-  if (TAURI) need = Math.max(need, APP_HEADROOM);
+  // ...but the window never gets taller than the screen: Windows cuts a
+  // too-tall window off at the bottom, right through the house (a player on
+  // a high display scaling, where the screen is only ~540-720px tall)
+  if (TAURI) {
+    const below = document.getElementById("widget").getBoundingClientRect().bottom - mTop + 60;
+    need = Math.max(need, Math.min(APP_HEADROOM, (screen.availHeight || 1e5) - below));
+  }
   need += 8;
   // the smallest room that fits it (a centred page moves by half: iterate)
   for (let i = 0; i < 12; i++) {
