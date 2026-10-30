@@ -1,6 +1,7 @@
 # The "Mac 版来了" poster (4:3, same look as tools/make_posters.py): a drawn
 # MacBook whose desktop shows the game see-through, the menu bar icon with its
-# menu open, the Dock; pixel-art computer, doll and pet stickers around it.
+# menu open, the Dock; outdoor scenes in white frames behind it; pixel-art
+# computer, doll and pet stickers around it.
 #   python3 tools/make_mac_poster.py GAME_PNG STICKER_DIR OUT_JPG
 # GAME_PNG: the game shot with a transparent background (Playwright,
 # omitBackground). STICKER_DIR: the trailer's stickers (doll*.png, pet*.png).
@@ -10,6 +11,9 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 GAME, STK, OUT = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
+CLIPS = STK.parent                                   # the trailer's clips: outdoor scenes for the cards behind
+import json
+M = json.loads((CLIPS / 'clips.json').read_text())
 W, H = 2400, 1800
 NOTO = '/usr/share/fonts/opentype/noto/NotoSansCJK-{}.ttc'
 INK, SOFT = (36, 28, 58), (98, 90, 122)
@@ -64,6 +68,27 @@ def sticker(bg, img, k, cx, cy, angle=0, rim=9):
     base = Image.new('RGBA', c.size, (255, 255, 255, 0)); base.putalpha(a); base.alpha_composite(c)
     if angle: base = base.rotate(angle, Image.BICUBIC, expand=True)
     placec(bg, base, cx, cy, shadow=60)
+
+
+def scene(name, i, bright=1.0):
+    """An outdoor view from a trailer clip (2 screen px per css px), without the side arrows."""
+    from PIL import ImageEnhance
+    im = Image.open(CLIPS / 'clips' / name / f'{i:03d}.png').convert('RGBA'); x, y, w, h = M['clips'][name]['info'][i]['view']
+    v = im.crop((int(x * 2) + 40, int(y * 2), int((x + w) * 2) - 40, int((y + h) * 2)))
+    return ImageEnhance.Brightness(v).enhance(bright) if bright != 1 else v
+
+
+def card(img, width, radius=34, border=10, angle=0):
+    """The game picture in a white rounded frame, like the other posters."""
+    k = width / img.width
+    im = img.resize((round(img.width * k), round(img.height * k)), Image.NEAREST if k >= 1.5 else Image.LANCZOS)
+    w, h = im.width + 2 * border, im.height + 2 * border
+    c = Image.new('RGBA', (w, h), (0, 0, 0, 0)); m = Image.new('L', (w, h), 0)
+    ImageDraw.Draw(m).rounded_rectangle([0, 0, w - 1, h - 1], radius, fill=255)
+    c.paste(Image.new('RGBA', (w, h), (255, 255, 255, 255)), (0, 0), m)
+    inner = Image.new('L', im.size, 0); ImageDraw.Draw(inner).rounded_rectangle([0, 0, im.width - 1, im.height - 1], radius - border, fill=255)
+    c.paste(im, (border, border), inner)
+    return c.rotate(angle, Image.BICUBIC, expand=True) if angle else c
 
 
 # ---------------------------------------------------------------- pixel stickers
@@ -192,17 +217,20 @@ text(d, 'Desktop-Buddy Mac 端震撼（也许）发布', 56, W / 2, 318, SOFT, '
 
 icon = Image.open('art/out/concept/app_icon.png').convert('RGBA')
 mb = macbook(Image.open(GAME).convert('RGBA'), icon)
-k = 1800 / mb.width; mb = mb.resize((int(mb.width * k), int(mb.height * k)), Image.LANCZOS)
-placec(bg, mb, W / 2, 420 + mb.height / 2, shadow=80, blur=40, dy=40)
+# outdoor scenes peeking out from behind the laptop
+for n, i, b, ang, cx, cy in [('place_park', 20, 1, -5, 420, 760), ('place_beach', 20, 1, 4, 430, 1270),
+                             ('place_mall', 20, 1, 5, 1980, 760), ('fest_怪兽夜', 10, 1.3, -4, 1970, 1270)]:
+    placec(bg, card(scene(n, i, b), 690, angle=ang), cx, cy, shadow=60)
+k = 1560 / mb.width; mb = mb.resize((int(mb.width * k), int(mb.height * k)), Image.LANCZOS)
+placec(bg, mb, W / 2, 450 + mb.height / 2, shadow=80, blur=40, dy=40)
 
 
 sticker(bg, retro_mac(), 13, 270, 220, -8)
 sticker(bg, laptop(), 10, 2130, 220, 7)
-sticker(bg, Image.open(STK / 'doll0.png'), 9, 160, 980, -5)
-sticker(bg, Image.open(STK / 'doll5.png'), 8, 2245, 960, 6)
-sticker(bg, Image.open(STK / 'pet2.png'), 6, 170, 1420, 4)
-sticker(bg, Image.open(STK / 'pet6.png'), 6, 2235, 1420, -4)
-for n, k, cx, cy, a in [('doll2', 8, 640, 1660, -4), ('pet0', 6, 1000, 1690, 3), ('doll7', 8, 1400, 1660, 4), ('pet4', 6, 1760, 1690, -3)]:
+sticker(bg, Image.open(STK / 'doll0.png'), 8, 130, 1030, -5)
+sticker(bg, Image.open(STK / 'doll5.png'), 8, 2270, 1030, 6)
+for n, k, cx, cy, a in [('pet2', 6, 250, 1640, 4), ('doll2', 8, 640, 1650, -4), ('pet0', 6, 1000, 1690, 3), ('doll7', 8, 1400, 1650, 4),
+                        ('pet4', 6, 1760, 1690, -3), ('pet6', 6, 2150, 1640, -4)]:
     sticker(bg, Image.open(STK / f'{n}.png'), k, cx, cy, a)
 OUT.parent.mkdir(parents=True, exist_ok=True)
 bg.convert('RGB').save(OUT, quality=92)
