@@ -20841,7 +20841,25 @@ if (TAURI) {
     if (press && (e.buttons & 1) && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 3) { press = null; dragWindow(); }
   });
   window.addEventListener("pointerup", () => { press = null; });
-  window.addEventListener("buddy-drag-ended", () => { held = false; press = null; through = false; });
+  // The gear and its pills, the festival bar and the diary move the window
+  // too (user): a press that travels 4px is a drag and swallows its click;
+  // the volume sliders and scrollbars keep their own drag.
+  let uiPress = null, eatClick = false;
+  document.addEventListener("pointerdown", e => {
+    uiPress = null; eatClick = false;
+    if (e.button !== 0 || e.pointerType !== "mouse") return;
+    const t = e.target;
+    if (!t.closest?.("#settings, #festBanner, #diary") || t.closest(".audio-volume, input, textarea, select")) return;
+    if (t.scrollHeight > t.clientHeight && e.offsetX >= t.clientWidth) return;
+    uiPress = { x: e.clientX, y: e.clientY };
+  }, true);
+  document.addEventListener("pointermove", e => {
+    if (!uiPress || !(e.buttons & 1) || Math.hypot(e.clientX - uiPress.x, e.clientY - uiPress.y) <= 4) return;
+    uiPress = null; eatClick = true; dragWindow();
+  }, true);
+  document.addEventListener("click", e => { if (eatClick) { eatClick = false; e.stopPropagation(); e.preventDefault(); } }, true);
+  window.addEventListener("buddy-drag-ended", () => { held = false; press = null; uiPress = null; through = false; });
+  document.addEventListener("keydown", () => { eatClick = false; }, true);
 }
 if (TAURI) {
   const ro = new ResizeObserver(fitWindow);

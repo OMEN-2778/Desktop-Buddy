@@ -24,7 +24,7 @@ function harness() {
     } } },
     document: {
       getElementById: () => fake, querySelector: () => fake,
-      addEventListener(name, fn) { events.set('document:' + name, fn); },
+      addEventListener(name, fn) { const k = 'document:' + name; events.set(k, [...(events.get(k) || []), fn]); },
       elementFromPoint: () => ({ matches: () => true }),
     },
     window: {
@@ -63,7 +63,7 @@ function harness() {
     assert.equal(h.run('lastTop'), 700, 'Drag changed the old anchor');
     await h.intervals[0]();
     assert.ok(!h.calls.some(c => c.name === 'cursor_in_window'), 'Click-through polling ran during drag');
-    h.events.get('document:pointerdown')(); // Release can happen outside WebView.
+    h.events.get('document:pointerdown').forEach(fn => fn({ button: 0, pointerType: 'mouse', target: {} })); // Release can happen outside WebView.
     h.finish(); await drag;
     assert.equal(h.run('desktopDragging'), false);
     assert.equal(h.frames.length, 1, 'Deferred layout not coalesced');
@@ -84,5 +84,21 @@ function harness() {
   h.frames.shift()();
   drag = h.run('dragWindow()'); h.finish(); await drag;
   assert.equal(h.calls.filter(c => c.name === 'start_drag').length, 3, 'Cannot drag again after interruption');
+  {
+    const u = harness(), on = id => ({ closest: s => s.includes(id) ? {} : null, scrollHeight: 0, clientHeight: 0 });
+    const fire = (n, e) => u.events.get('document:' + n).forEach(fn => fn(e));
+    const ev = (target, x) => ({ button: 0, buttons: 1, pointerType: 'mouse', target, clientX: x, clientY: 0, stopPropagation() { ev.eaten = true; }, preventDefault() {} });
+    fire('pointerdown', ev(on('#settings'), 0)); fire('pointermove', ev(on('#settings'), 3));
+    assert.ok(!u.calls.some(c => c.name === 'start_drag'), 'A small wobble started a drag');
+    ev.eaten = false; fire('click', ev(on('#settings'), 3)); assert.ok(!ev.eaten, 'A plain click was swallowed');
+    fire('pointerdown', ev(on('#festBanner'), 0)); fire('pointermove', ev(on('#festBanner'), 9));
+    assert.ok(u.calls.some(c => c.name === 'start_drag'), 'Festival bar did not drag');
+    ev.eaten = false; fire('click', ev(on('#festBanner'), 9)); assert.ok(ev.eaten, 'Click after a drag went through');
+    u.finish(); await new Promise(r => setTimeout(r));
+    const n = u.calls.filter(c => c.name === 'start_drag').length;
+    fire('pointerdown', ev(on('.audio-volume'), 0)); fire('pointermove', ev(on('.audio-volume'), 30));
+    assert.equal(u.calls.filter(c => c.name === 'start_drag').length, n, 'Volume slider dragged the window');
+  }
+  console.log('PASS: UI presses tell clicks from drags; slider excluded. ');
   console.log('PASS: all 4 scales defer/coalesce window resizing during drag, preserve both position axes, restore click-through/release state, prevent duplicate drags and recover from interruption.');
 })().catch(error => { console.error(error); process.exitCode = 1; });
