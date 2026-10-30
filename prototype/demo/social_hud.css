@@ -57,17 +57,17 @@
 .contact-copy small { color:var(--muted); font-size:var(--ui-font-caption); white-space:normal; overflow-wrap:anywhere; }
 .contact-traits { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:2px; align-items:center; min-width:0; }
 .contact-traits[hidden] { display:none; }
-.contact-traits span { padding:1px 1px; background:var(--ring); color:var(--muted); font-size:12px; line-height:16px; white-space:nowrap; clip-path:var(--hud-trait-clip); }
+.contact-traits span { padding:1px 1px; background:var(--ring); color:var(--muted); font-size: calc(12px * var(--fs, 1)); line-height:16px; white-space:nowrap; clip-path:var(--hud-trait-clip); }
 .affinity { grid-column:1/-1; grid-row:3; height:10px; padding:2px; background:var(--ring); clip-path:var(--hud-meter-clip); overflow:hidden; }
 .affinity i { display:block; height:100%; width:calc(var(--affinity)*1%); background:var(--need-ok); clip-path:var(--hud-meter-in); box-shadow:inset 0 2px 0 #ffffff55; }
 .contact-actions { position:fixed; z-index:60; width:0; height:0; opacity:0; visibility:hidden; transition:opacity .15s,visibility 0s .25s; }
 .contact-actions.on { visibility:visible; opacity:1; transition-delay:0s; }
-.contact-actions button { --hud-outline:var(--clip-btn); --hud-inner:var(--clip-btn-in); position:absolute; margin:0; white-space:nowrap; transform:translate(-50%,-50%) scale(.9); opacity:0; padding:6px 16px; color:var(--ink); font-size:14px; font-weight:700; transition:transform .38s var(--hud-spring),opacity .18s; }
+.contact-actions button { --hud-outline:var(--clip-btn); --hud-inner:var(--clip-btn-in); position:absolute; margin:0; white-space:nowrap; transform:translate(-50%,-50%) scale(.9); opacity:0; padding:6px 16px; color:var(--ink); font-size: calc(14px * var(--fs, 1)); font-weight:700; transition:transform .38s var(--hud-spring),opacity .18s; }
 .contact-actions.on button { transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) scale(1); opacity:1; }
 .contact-actions button:hover { --hud-surface:var(--panel-2); }
 .contact-actions button[aria-disabled="true"] { --hud-frame:var(--bevel-lo); color:var(--muted); cursor:help; }
 .contact-actions button.parent-visit { --hud-surface:var(--panel-2); min-width:138px; cursor:default; }
-.contact-actions button.parent-visit small { display:block; margin-top:3px; font-size:11px; line-height:1.5; font-weight:400; }
+.contact-actions button.parent-visit small { display:block; margin-top:3px; font-size: calc(11px * var(--fs, 1)); line-height:1.5; font-weight:400; }
 .contact-unavailable { display:block; font-weight:400; line-height:1.1; font-size:var(--ui-font-caption); }
 .incoming-call { --hud-surface:#332c42; --hud-frame:#757187; position:absolute; inset:0 0 0 var(--tail,18px); z-index:30; display:flex; align-items:center; padding:4px 6px; color:#f7f6fb; transform-origin:8% 50%; animation:call-arrive .5s var(--hud-spring) both; gap:6px; }
 .incoming-call[hidden] { display:none; }
@@ -134,7 +134,7 @@
 .social-memories { margin:0; padding:0; list-style:none; }
 .social-memories li { border-top:2px solid var(--bevel-lo); padding:8px 0; }
 .social-memories time { display:block; color:var(--muted); font-size:var(--ui-font-caption); margin-bottom:6px; }
-.social-memories strong { font-size:15px; }
+.social-memories strong { font-size: calc(15px * var(--fs, 1)); }
 .home-guest-say { z-index:18; max-width:min(240px,65vw); white-space:normal; text-align:center; overflow-wrap:anywhere; pointer-events:none; }
 /* Compact desktop zoom keeps four CJK characters readable inside the same panel. */
 .contacts-panel.compact .contact-card { grid-template-columns:20px minmax(0,1fr); gap:4px; padding:6px; }
@@ -196,18 +196,18 @@
 .personality-axes input:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 
 /* Embedded editor belongs to the dressing room, never to the house overlay. */
-.wardrobe-personality { position:relative; min-width:0; padding:8px; border:2px solid var(--bevel-lo); background:var(--panel-2); font-size:12px; line-height:1.4; }
-.wardrobe-personality h3 { font-size:14px; line-height:1.3; margin:0 32px 6px 0; }
+.wardrobe-personality { position:relative; min-width:0; padding:8px; border:2px solid var(--bevel-lo); background:var(--panel-2); font-size: calc(12px * var(--fs, 1)); line-height:1.4; }
+.wardrobe-personality h3 { font-size: calc(14px * var(--fs, 1)); line-height:1.3; margin:0 32px 6px 0; }
 .wardrobe-personality > p { margin:4px 0; }
 .wardrobe-personality small { display:block; color:var(--muted); font-size:var(--ui-font-caption); }
 .wardrobe-personality .personality-intro { display:none; }
 .wardrobe-personality .personality-axes { overflow:visible; gap:5px; }
 .wardrobe-personality .personality-axes fieldset { padding:3px 4px; }
-.wardrobe-personality .personality-axes legend { font-size:12px; }
-.wardrobe-personality .personality-axes label { font-size:12px; line-height:1.5; margin-right:5px; gap:2px; }
+.wardrobe-personality .personality-axes legend { font-size: calc(12px * var(--fs, 1)); }
+.wardrobe-personality .personality-axes label { font-size: calc(12px * var(--fs, 1)); line-height:1.5; margin-right:5px; gap:2px; }
 .wardrobe-personality .personality-axes input { width:10px; height:10px; }
 .wardrobe-personality .personality-actions { margin-top:6px; gap:6px; }
-.studio .wardrobe-personality button { margin:0; box-shadow:none; border:1px solid var(--bevel-lo); font-size:12px; line-height:1.4; padding:3px 4px; }
+.studio .wardrobe-personality button { margin:0; box-shadow:none; border:1px solid var(--bevel-lo); font-size: calc(12px * var(--fs, 1)); line-height:1.4; padding:3px 4px; }
 .studio .wardrobe-personality .personality-cancel { position:absolute; right:4px; top:4px; font-size:var(--ui-font-caption); padding:1px 3px; }
 /* Visiting invitations keep the same pixel contour and modest bevel. */
 .incoming-call.friend-home-invite .call-answer { --hud-surface:#dfb65f; }
@@ -220,8 +220,8 @@
 /* A one-storey studio is only 62px tall at 25%. Keep the answer readable
    beside a small portrait; the close button acknowledges this result. */
 .friend-stay-sheet.friend-stay-tiny { overflow:hidden; padding:5px; }
-.friend-stay-sheet.friend-stay-tiny > h3 { margin:0 32px 0 32px; font-size:14px; line-height:18px; }
+.friend-stay-sheet.friend-stay-tiny > h3 { margin:0 32px 0 32px; font-size: calc(14px * var(--fs, 1)); line-height:18px; }
 .friend-stay-sheet.friend-stay-tiny .friend-stay-avatar { position:absolute; left:5px; top:5px; width:26px; height:26px; }
 .friend-stay-sheet.friend-stay-tiny .social-sheet-content { display:block; padding-left:32px; height:calc(100% - 20px); min-height:0; overflow-y:auto; margin:2px 0 0; }
-.friend-stay-sheet.friend-stay-tiny .social-sheet-content > p { margin:0; font-size:13px; line-height:17px; }
+.friend-stay-sheet.friend-stay-tiny .social-sheet-content > p { margin:0; font-size: calc(13px * var(--fs, 1)); line-height:17px; }
 .friend-stay-sheet.friend-stay-tiny > button:last-child { display:none; }

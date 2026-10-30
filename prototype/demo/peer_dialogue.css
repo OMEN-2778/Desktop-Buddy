@@ -14,7 +14,7 @@
 .peer-bubble .d2 { --clip-dot:var(--clip-dot-s); --clip-dot-in:var(--clip-dot-s-in); right:-9px; top:calc(50% - 6px); width:8px; height:8px; transition-delay:.1s; }
 .peer-avatar { position:absolute; right:0; top:calc(50% - 24px); width:48px; height:48px; padding:4px; background:var(--ring); clip-path:var(--hud-circle-clip); opacity:0; transform:translateX(8px) scale(.8); transition:transform .4s var(--hud-spring),opacity .18s; }
 .peer-avatar canvas { display:block; width:40px; height:40px; image-rendering:pixelated; clip-path:var(--hud-avatar-clip); }
-.friendship-gain { position:absolute; z-index:3; right:6px; top:calc(50% - 34px); font-size:18px; line-height:22px; font-weight:900; color:#72e692; text-shadow:1px 1px #185b39,-1px -1px #185b39,1px -1px #185b39,-1px 1px #185b39; pointer-events:none; animation:friendship-rise 1.5s cubic-bezier(.2,.65,.3,1) both; }
+.friendship-gain { position:absolute; z-index:3; right:6px; top:calc(50% - 34px); font-size: calc(18px * var(--fs, 1)); line-height:22px; font-weight:900; color:#72e692; text-shadow:1px 1px #185b39,-1px -1px #185b39,1px -1px #185b39,-1px 1px #185b39; pointer-events:none; animation:friendship-rise 1.5s cubic-bezier(.2,.65,.3,1) both; }
 @keyframes friendship-rise { 0% { opacity:0; transform:translateY(5px) scale(.6); } 18% { opacity:1; transform:translateY(0) scale(1.15); } 35% { transform:translateY(-5px) scale(1); } 80% { opacity:1; } 100% { opacity:0; transform:translateY(-25px) scale(.9); } }
 @media (prefers-reduced-motion:reduce) { .friendship-gain { animation:none; } }
 .peer-hud.on .peer-bubble,.peer-hud.on .peer-avatar { opacity:1; transform:none; }

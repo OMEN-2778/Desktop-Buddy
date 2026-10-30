@@ -47,15 +47,15 @@ const SHOTS = [
   { id: "contacts", setup: () => { at("sofa"); setContactsOpen(true); }, wait: 700,
     clip: ["#networkTrigger", "#contactsPanel"], pad: 14,
     marks: ["#networkTrigger", "#contactsList", '.contact-card[data-id="abu"]'] },
-  { id: "card", setup: () => { at("sofa"); showCard(CARDS.find(c => c.n === 4)); }, wait: 1400,
+  { id: "card", setup: () => { at("sofa"); realShowCard(CARDS.find(c => c.n === 4)); }, wait: 1400,
     clip: ["#view"], pad: 4,
     marks: [() => box(cardEl.querySelector("h3")), ".cd-opt[data-k=a]", ".cd-opt[data-k=b]"] },
   { id: "door", setup: () => { at("front_door"); openRing("door", "door"); }, wait: 800,
     clip: ["#view"], pad: 4,
-    marks: ["@front_door", () => btn("去门口"), () => btn("去公园"), () => btn("去商场"), () => btn("去海边")] },
+    marks: ["@front_door", () => btn("去门口"), () => btn("去公园"), () => btn("去商场"), () => btn("去海边"), () => btn("去酒吧")] },
   { id: "settings", setup: () => { at("sofa"); setSettingsOpen(true); }, wait: 1000,
     clip: ["#setGear", "#setPop"], pad: 12,
-    marks: [() => row("时间流速"), () => row("界面大小"), () => row("置顶游戏"), () => row("存档"), () => btn("教程", setPop), () => row("更新")] },
+    marks: [() => row("时间流速"), () => row("界面大小"), () => row("文字大小"), () => row("背景音乐"), () => row("置顶游戏"), () => row("存档"), () => btn("教程", setPop), () => row("更新")] },
 ];
 
 // helpers defined in the page before each setup
@@ -98,6 +98,9 @@ const HELPERS = () => {
     await pg.evaluate(HELPERS);
     await pg.evaluate(() => {
       cardMoment = () => false; rollCard = () => false;
+      // no chance card may pop up over a shot (one covered the ring and door shots); only the card page shows one
+      window.realShowCard = showCard; showCard = () => {};
+      if (card) { clearTimeout(card.timer); cardEl.hidden = true; cardEl.classList.remove("on", "picked"); cardRes.hidden = true; dimHouse(false); card = null; }   // one that came up while booting
       sim.t = 3 * 1440 + 10 * 60; weather.force = "clear"; weather.kind = "clear";
       for (const k in sim.needs) sim.needs[k] = 80;
       speed = 0.2;

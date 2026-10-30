@@ -3,7 +3,7 @@
    right. Every tab panel sits in the same grid cell, so the window keeps the
    height of the tallest tab and nothing below it jumps when tabs change.
    The host page supplies the color tokens; --sp is one UI pixel. */
-.studio { --sp: 3px; background: var(--panel); color: var(--ink); font-size: 13px; line-height: 1.4; box-shadow:
+.studio { --sp: 3px; background: var(--panel); color: var(--ink); font-size: calc(13px * var(--fs, 1)); line-height: 1.4; box-shadow:
     0 calc(-1 * var(--sp)) 0 0 var(--edge), 0 var(--sp) 0 0 var(--edge),
     calc(-1 * var(--sp)) 0 0 0 var(--edge), var(--sp) 0 0 0 var(--edge),
     calc(var(--sp) * 2) calc(var(--sp) * 2) 0 0 var(--shadow); min-width: 0; --st-option-clip:polygon(4px 0,calc(100% - 4px) 0,calc(100% - 4px) 2px,calc(100% - 2px) 2px,calc(100% - 2px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 2px) calc(100% - 4px),calc(100% - 2px) calc(100% - 2px),calc(100% - 4px) calc(100% - 2px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 2px),2px calc(100% - 2px),2px calc(100% - 4px),0 calc(100% - 4px),0 4px,2px 4px,2px 2px,4px 2px); --st-option-in:polygon(2px 0,calc(100% - 2px) 0,calc(100% - 2px) 1px,calc(100% - 1px) 1px,calc(100% - 1px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 1px) calc(100% - 2px),calc(100% - 1px) calc(100% - 1px),calc(100% - 2px) calc(100% - 1px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 1px),1px calc(100% - 1px),1px calc(100% - 2px),0 calc(100% - 2px),0 2px,1px 2px,1px 1px,2px 1px); }
@@ -33,7 +33,7 @@
 }
 .st-name::before { content: ""; display: inline-block; width: 6px; height: 6px; background: var(--focus); margin-right: 8px; vertical-align: 2px; }
 .st-tools { display: flex; align-items: center; gap: 4px; }
-.studio .st-tools button { margin: 0; padding: 1px 8px; font-size: 12px; letter-spacing: .04em; box-shadow: none; background: transparent; color: inherit; }
+.studio .st-tools button { margin: 0; padding: 1px 8px; font-size: calc(12px * var(--fs, 1)); letter-spacing: .04em; box-shadow: none; background: transparent; color: inherit; }
 .studio .st-tools button:hover { background: rgba(255, 255, 255, .14); }
 .studio .st-tools .st-random { background: var(--focus); color: #22182a; }
 .studio .st-tools .st-random:hover { background: var(--focus); filter: brightness(1.1); }
@@ -56,7 +56,7 @@
 .studio .st-dice { padding: 3px 6px; display: grid; place-items: center; }
 .st-dice svg { display: block; }
 .st-modes { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; max-width: 100%; }
-.studio .st-modes button { padding: 1px 7px; font-size: 12px; }
+.studio .st-modes button { padding: 1px 7px; font-size: calc(12px * var(--fs, 1)); }
 
 .st-main { display: grid; gap: 10px; min-width: 0; }
 .st-tabs { display: flex; flex-wrap: wrap; gap: 2px 4px; border-bottom: var(--sp) solid var(--edge); padding-bottom: 6px; }
@@ -66,7 +66,7 @@
 .st-panel { grid-area: 1 / 1; display: grid; gap: 8px; align-content: start; visibility: hidden; min-width: 0; }
 .st-panel.on { visibility: visible; }
 .st-group { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); gap: 6px; align-items: center; }
-.st-label { color: var(--muted); font-weight: 700; font-size: 12px; letter-spacing: .08em; }
+.st-label { color: var(--muted); font-weight: 700; font-size: calc(12px * var(--fs, 1)); letter-spacing: .08em; }
 .st-chips { display: flex; flex-wrap: wrap; gap: 2px 4px; }
 .st-thumbs { flex-wrap: wrap; display:grid; grid-template-columns:repeat(auto-fill,minmax(var(--st-thumb-min-w,68px),1fr)); gap:8px; }
 .studio .st-thumb { display: grid; justify-items: center; gap: 2px; width:100%; min-width:0; margin:0; grid-template-rows:var(--st-thumb-image-h) 15px; align-content:center; align-items:center; padding:4px; }
@@ -84,14 +84,14 @@
 .st-swatch::before { content: ""; position: absolute; left: 3px; top: 3px; width: 5px; height: 2px; background: rgba(255, 255, 255, .45); z-index: 1; }
 .studio .st-swatch[aria-pressed="true"] { outline: var(--sp) solid var(--accent); outline-offset: 3px; }
 .studio .st-custom {
-  display: grid; place-items: center; cursor: pointer; font-weight: 900; font-size: 15px; color: var(--ink);
+  display: grid; place-items: center; cursor: pointer; font-weight: 900; font-size: calc(15px * var(--fs, 1)); color: var(--ink);
   background: repeating-conic-gradient(var(--bevel-lo) 0 25%, var(--panel) 0 50%) 0 0 / 8px 8px;
 }
 .st-custom::before, .st-custom::after { display: none; }
 .st-custom.has-color { background: var(--c); color: transparent; }
 .st-custom.has-color::after { display: block; }
 .st-custom input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: 0; padding: 0; }
-.st-note { margin: 0; color: var(--muted); font-size: 12px; }
+.st-note { margin: 0; color: var(--muted); font-size: calc(12px * var(--fs, 1)); }
 
 /* narrow: stage above the tabs */
 .studio.narrow .st-body { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 10px; }
@@ -109,7 +109,7 @@
 .st-summary { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); gap:12px; align-items:start; }
 .st-summary .st-stage { min-width:0; width:100%; }
 .st-summary .st-namerow { width:100%; min-width:0; gap:4px; }
-.st-summary .st-nameinput { flex:1; width:0; font-size:12px; padding:3px 4px; }
+.st-summary .st-nameinput { flex:1; width:0; font-size: calc(12px * var(--fs, 1)); padding:3px 4px; }
 .st-summary .st-dice { flex:none; padding:3px; }
 .st-summary .st-label { font-size:var(--ui-font-caption,12px); letter-spacing:0; }
 

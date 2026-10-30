@@ -150,7 +150,7 @@ if (TAURI) {
   window.addEventListener("unhandledrejection", e => report(`unhandled: ${e.reason && (e.reason.stack || e.reason)}`));
 }
 // 界面大小 (% or "auto" = fit the page), 置顶游戏, 自动保存 (every 5 minutes, or never)
-const prefs = { scale: TAURI ? 100 : "auto", onTop: false, bgm: false, sfx: false, bgmVolume:0, sfxVolume:0, autosave: true, guided: false, autoUpdate: true };   // guided: the guide has been seen
+const prefs = { scale: TAURI ? 100 : "auto", onTop: false, bgm: false, sfx: false, bgmVolume:0, sfxVolume:0, autosave: true, guided: false, autoUpdate: true, fontSize: "auto" };   // guided: the guide has been seen
 let appVersion = "";
 // 界面大小 counts SCREEN pixels: 25% = one game pixel is one pixel of the
 // monitor (at any Windows display scaling), 100% = 4 of them; every step is
@@ -2487,6 +2487,7 @@ function pill(text, { glyph, label, pressed, disabled, cls, title, onClick } = {
   return b;
 }
 const scalePct = () => (prefs.scale === "auto" ? Math.round(devPx * 25) : prefs.scale);   // what the page shows now
+const FONT_SIZES = [[0.8, "小"], [1, "中"], [1.2, "大"]];
 function setScale(v) { prefs.scale = v; fit(); saveSettings(); buildSettings(); }
 const SETTINGS = [
   { label: "时间流速", role: "radiogroup", items: () => [[0, "暂停", "pause"], [1.5, "0.5 倍", "play"], [3, "一倍", "ff"], [6, "两倍", "fff"]].map(([v, name, g]) =>
@@ -2505,6 +2506,9 @@ const SETTINGS = [
       ];
       return out;
     } },
+  // 文字大小 (players on small screens found the text too big at 25%): 自动 shrinks it on a small house
+  { label: "文字大小", role: "radiogroup", items: () => [["auto", "自动"], ...FONT_SIZES].map(([v, name]) =>
+      pill(name, { pressed: prefs.fontSize === v, title: v === "auto" ? "小屋小的时候文字也跟着小一点" : "", onClick: () => { prefs.fontSize = v; fit(); saveSettings(); buildSettings(); } })) },
   ...[['背景音乐','bgm'],['音效','sfx']].map(([label,channel])=>({label,role:'group',items:()=>{
     const box=document.createElement('div');box.className='audio-volume';
     const track=document.createElement('div');track.className='audio-slider';const fill=document.createElement('i');fill.className='audio-fill';fill.setAttribute('aria-hidden','true');
@@ -2599,7 +2603,7 @@ const settingsStore = TAURI ? {
   save: async o => localStorage.setItem("buddy-settings", JSON.stringify(o)),
 };
 function saveSettings() {
-  settingsStore.save({ speed, scale: prefs.scale, onTop: prefs.onTop, bgm: prefs.bgm, sfx: prefs.sfx, bgmVolume:prefs.bgmVolume, sfxVolume:prefs.sfxVolume, autosave: prefs.autosave, guided: prefs.guided, autoUpdate: prefs.autoUpdate }).catch(() => {});
+  settingsStore.save({ speed, scale: prefs.scale, onTop: prefs.onTop, bgm: prefs.bgm, sfx: prefs.sfx, bgmVolume:prefs.bgmVolume, sfxVolume:prefs.sfxVolume, autosave: prefs.autosave, guided: prefs.guided, autoUpdate: prefs.autoUpdate, fontSize: prefs.fontSize }).catch(() => {});
 }
 function applySettings(st) {
   if (!st || typeof st !== "object") return;
@@ -2609,6 +2613,7 @@ function applySettings(st) {
   if (typeof st.autosave === "boolean") prefs.autosave = st.autosave;
   if (typeof st.guided === "boolean") prefs.guided = st.guided;
   if (typeof st.autoUpdate === "boolean") prefs.autoUpdate = st.autoUpdate;
+  if (st.fontSize === "auto" || FONT_SIZES.some(f => f[0] === st.fontSize)) prefs.fontSize = st.fontSize;
   for(const key of ["bgm","sfx"]){
     const v=st[key+'Volume'];
     if(Number.isFinite(v)){prefs[key+'Volume']=Math.round(Math.max(0,Math.min(100,v)));prefs[key]=prefs[key+'Volume']>0;}
