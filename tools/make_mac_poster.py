@@ -1,6 +1,6 @@
 # The "Mac 版来了" poster (4:3, same look as tools/make_posters.py): a drawn
 # MacBook whose desktop shows the game see-through, the menu bar icon with its
-# menu open, the Dock; pixel-art computer stickers; four feature cards.
+# menu open, the Dock; pixel-art computer, doll and pet stickers around it.
 #   python3 tools/make_mac_poster.py GAME_PNG STICKER_DIR OUT_JPG
 # GAME_PNG: the game shot with a transparent background (Playwright,
 # omitBackground). STICKER_DIR: the trailer's stickers (doll*.png, pet*.png).
@@ -184,37 +184,26 @@ def macbook(game, app_icon):
     return out
 
 
-def feature(title, line, col, w=500, h=170):
-    c = rounded((w, h), 36, (255, 255, 255, 236)); d = ImageDraw.Draw(c)
-    d.rounded_rectangle([28, 34, 36, h - 34], 4, fill=col + (255,))
-    text(d, title, 46, 62, 62, col, 'Black', 'lm'); text(d, line, 30, 62, 118, SOFT, 'Medium', 'lm')
-    return c
-
-
 # ---------------------------------------------------------------- the poster
 bg = backdrop((246, 242, 255), (226, 236, 255), [(300, 1500, 520, (255, 200, 222)), (2100, 380, 540, (190, 210, 255)), (1200, 950, 460, (226, 214, 255))])
 d = ImageDraw.Draw(bg)
-text(d, 'Desktop Buddy 现在也能在 Mac 上玩', 64, W / 2, 120, SOFT, 'Bold')
-grad_text(bg, 'Mac 版来了', 150, W / 2, 245, [(255, 110, 160), (160, 110, 255), (90, 160, 255)])
-text(d, '小屋照样住在桌面上，只露出房子，不挡你干活', 50, W / 2, 372, SOFT, 'Medium')
+grad_text(bg, 'Mac 版来了！', 170, W / 2, 175, [(255, 110, 160), (160, 110, 255), (90, 160, 255)])
+text(d, 'Desktop-Buddy Mac 端震撼（也许）发布', 56, W / 2, 318, SOFT, 'Bold')
 
 icon = Image.open('art/out/concept/app_icon.png').convert('RGBA')
 mb = macbook(Image.open(GAME).convert('RGBA'), icon)
-k = 1500 / mb.width; mb = mb.resize((int(mb.width * k), int(mb.height * k)), Image.LANCZOS)
-placec(bg, mb, W / 2, 470 + mb.height / 2, shadow=80, blur=40, dy=40)
+k = 1800 / mb.width; mb = mb.resize((int(mb.width * k), int(mb.height * k)), Image.LANCZOS)
+placec(bg, mb, W / 2, 420 + mb.height / 2, shadow=80, blur=40, dy=40)
 
-cards = [('透明窗口', '桌面上只有小屋', (236, 92, 140)), ('菜单栏图标', '显示、置顶、退出', (120, 100, 230)),
-         ('两种芯片通用', 'Intel 和 M 系列', (70, 150, 230)), ('自动更新', '新内容自己送到', (60, 170, 130))]
-for i, (t, l, c) in enumerate(cards):
-    placec(bg, feature(t, l, c), 330 + i * 580, 1580, shadow=45, blur=24, dy=16)
 
-sticker(bg, retro_mac(), 14, 300, 300, -8)
-sticker(bg, laptop(), 11, 2110, 300, 7)
-sticker(bg, Image.open(STK / 'doll0.png'), 10, 190, 1060, -5)
-sticker(bg, Image.open(STK / 'doll5.png'), 9, 2230, 1000, 6)
-sticker(bg, Image.open(STK / 'pet2.png'), 7, 180, 1350, 4)
-sticker(bg, Image.open(STK / 'pet6.png'), 7, 2240, 1330, -4)
-text(d, 'Windows 版和 Mac 版都可以下载', 34, W / 2, H - 70, (120, 110, 150), 'Bold')
+sticker(bg, retro_mac(), 13, 270, 220, -8)
+sticker(bg, laptop(), 10, 2130, 220, 7)
+sticker(bg, Image.open(STK / 'doll0.png'), 9, 160, 980, -5)
+sticker(bg, Image.open(STK / 'doll5.png'), 8, 2245, 960, 6)
+sticker(bg, Image.open(STK / 'pet2.png'), 6, 170, 1420, 4)
+sticker(bg, Image.open(STK / 'pet6.png'), 6, 2235, 1420, -4)
+for n, k, cx, cy, a in [('doll2', 8, 640, 1660, -4), ('pet0', 6, 1000, 1690, 3), ('doll7', 8, 1400, 1660, 4), ('pet4', 6, 1760, 1690, -3)]:
+    sticker(bg, Image.open(STK / f'{n}.png'), k, cx, cy, a)
 OUT.parent.mkdir(parents=True, exist_ok=True)
 bg.convert('RGB').save(OUT, quality=92)
 print('poster ->', OUT)
