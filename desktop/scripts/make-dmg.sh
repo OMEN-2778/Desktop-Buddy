@@ -21,5 +21,15 @@ cat > "$stage/第一次打不开请看这里.txt" <<NOTE
 
 4. 它在屏幕顶部菜单栏右侧也有一个图标，可以显示 / 隐藏、置顶、退出。
 NOTE
+# the same steps as empty files, so they show right in the window (user)
+for step in \
+  "① 先把 ${app} 拖进「应用程序」，再从那里打开" \
+  "② 弹出「无法打开」时，先点「好」" \
+  "③ 打开 系统设置 → 隐私与安全性，往下翻到「安全性」" \
+  "④ 点「仍要打开」，输入开机密码，再点「打开」" \
+  "⑤ 或者：按住 Control 点图标，选「打开」" \
+  "⑥ 还不行或提示「已损坏」，看「第一次打不开请看这里.txt」"; do
+  : > "$stage/$step"
+done
 hdiutil create -volname "${app}" -srcfolder "$stage" -fs HFS+ -format UDZO -ov "$out"
 rm -rf "$stage"
