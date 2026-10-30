@@ -5,7 +5,9 @@
 // screen. Life: drifting petals, bees over the hives, butterflies over the
 // flowers, the waterfall, hikers on the trail.
 const VALLEY = OUT.valley, VZ = VALLEY.zones;
-const valleyOpen = () => seasonOf(sim.t).i === 0;
+// Not shipped yet (user): the door never offers it until this is true.
+const VALLEY_READY = false;
+const valleyOpen = () => VALLEY_READY && seasonOf(sim.t).i === 0;
 PLACE_LOG.valley = ["走进春日山谷，满山的花都开了。", "沿着山路进了山谷，风里全是花香。", "来山谷踏青，一路都是花。"];
 ML.valley = { name: "山谷踏青", emo: "inspired", pts: 2, min: 180,
   say: ["满山都是花", "空气好甜", "春天原来在这里", "想在这里住下", "走慢一点，多看两眼"] };
