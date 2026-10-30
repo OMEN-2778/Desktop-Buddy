@@ -1048,22 +1048,3 @@ roundClip(7,1) 的满半径像素圆角，最短为 14px 圆点。面板水平�
 Windows 发布流程先在 Linux 从当前源码重建页面，再通过 current-game-page
 artifact 交给 Windows 签名打包，禁止把旧的已提交 index.html 直接装进新 EXE。
 
-**春日山谷 (valley, spring only)** — `art/src/concept/spring_valley.py`,
-**Hidden from players** (user: not ready to use it): `VALLEY_READY = false` in valley.js keeps it off the door ring; flip it only when the user says so.
-`prototype/demo/valley.js`. User: a valley in bloom, big, refined, NO reused
-art (own trees, sky, ridges, flowers, trail). v1 (flat fills, outlines) was
-rejected as "too simple, cartoonish": v2 is painted with `_render.py` — lit
-value fields quantized into long hue-shifted ramps with Bayer dither,
-foliage as masses of lit leaf clumps (`stamp_clumps`), rocks as faceted lit
-ellipsoids with moss, haze toward the distance, NO outlines on scenery.
-New outdoor scenes should use this style. v3 (user): too empty, and it
-didn't match the other maps — open meadows stay open but the village,
-wood and farm are packed; objects get dark comic outlines (`drawn()` /
-`outline_layer`, outline = the object's own colour darkened) and ridge /
-knoll brows get a drawn line. Seven screens: 山村 · 樱花林 · 花坡 · 溪谷飞瀑 ·
-农庄 · 花海草甸 · 紫藤小亭. One 1710px panorama sliced
-into 342px screens so the
-screens join up; edge walk / arrows move between them. Door ring offers
-it only in spring. Own ramps in palette.py (ridge_far, ridge_mid, meadow,
-sakura, wisteria, rock, stream, earth). Use `outl()` there: pixelkit's
-outline wraps round the canvas edge (np.roll).

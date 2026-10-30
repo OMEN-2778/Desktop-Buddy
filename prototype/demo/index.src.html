@@ -552,7 +552,6 @@ function startAct(name, quiet = false) {
 function arrive() {
   if (sim.place === "park" && ["park_toilet","park_eat"].includes(sim.act)) { parkServiceArrive(); return; }
   if (sim.place === "park" && parkCrossEdge()) return;
-  if (sim.place === "valley" && valleyCrossEdge()) return;
   if (sim.place === "park" && sim.act === "bench") {
     sim.mode = "act"; sim.actEnd = Infinity; sim.park.seated = true;
     log("在" + parkLayout().name + "的长椅上坐下歇一会儿。"); return;
@@ -3190,7 +3189,6 @@ function throughDoor(to) {
     if (sim.place === "bar" && to !== "bar") barScene = null;
     sim.place = to;
     sim.park = to === "park" ? { zone: "central", seated: false } : null;
-    sim.valley = to === "valley" ? { zone: 0 } : null;
     if (to === "home") { const [st, x] = D.spots.front_door; sim.route = [[x, FLOOR_Y[st]]]; }
     else sim.route = [[OUT[to].doorX, OUT[to].feet]];
     sim.s = 0; sim.target = 0; sim.crossing = []; sim.facing = 1; sim.dest = null;
@@ -3220,7 +3218,6 @@ function chooseOutside() {
     sim.strollX = Math.round(38 + Math.random() * (W - 76)); sim.strollY = parkLayout().feet;
     return "stroll";
   }
-  if (sim.place === "valley") return valleyChoose();
   if (O.kind === "sit") return "bench";
   if (O.kind === "scroll") return "mall";
   if (sim.place === "disco" && Math.random() < 0.6) return "dance";      // that's what she came for
@@ -3377,7 +3374,6 @@ function renderOutside() {
   if (sim.place === "bar") { renderBar(); return; }
   const dt = Math.min(0.1, realClock - life.t); life.t = realClock;
   if (sim.place === "park") return renderPark(dt);
-  if (sim.place === "valley") return renderValley(dt);
   if (sim.place === "beach") return renderBeach(dt);
   if (sim.place === "disco") return renderDisco(dt);
   if (sim.place === "mall") return renderMall(dt);
@@ -3526,7 +3522,6 @@ function arriveAt(place) {
   npcSetup(place);
   if (place === "park") { parkSetup(); festParkSetup(); festParkSetup2(); }
   if (place === "disco") discoSetup();
-  if (place === "valley") valleySetup();
   festArrive4(place);
 }
 
@@ -4829,7 +4824,6 @@ function snapshot() {
            lastDay: sim.lastDay, sleepPlace:sim.sleepPlace||null, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
            graceUntil: sim.graceUntil, insomnia: !!sim.insomnia, place: sim.place, lastOut: sim.lastOut ?? null, outBack: sim.outBack ?? null, outWhy: sim.outWhy ?? null, bar: sim.place === "bar" ? sim.bar : null,
            park: sim.place === "park" ? parkState() : null,
-           valley: sim.place === "valley" ? { zone: valleyZoneIndex() } : null,
            mall: sim.place === "mall" ? mallSnapshot() : null },
     moods: [...moods].filter(([id]) => ML[id] && !id.startsWith("test_")).map(([id, m]) => [id, m.until, m.t]),
     pets: petSnapshot(),
@@ -4886,7 +4880,6 @@ function restore(sv) {
   sim.place = OUT[m.place] ? m.place : "home";
   sim.bar = m.bar || null;
   sim.park = sim.place === "park" ? parkState(m.park) : null;
-  sim.valley = sim.place === "valley" ? { zone: Math.max(0, Math.min(VZ.length - 1, m.valley?.zone | 0)) } : null;
   sim.lastOut = m.lastOut ?? null; sim.outBack = m.outBack ?? null; sim.outWhy = m.outWhy ?? null;
   if (sim.place !== "home") {                     // out in front: back on the sidewalk where she was
     const O = OUT[sim.place], ox = Math.max(O.walk[0], Math.min(O.walk[1], Array.isArray(m.at) ? m.at[0] : O.doorX));

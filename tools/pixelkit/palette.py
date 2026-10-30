@@ -79,16 +79,6 @@ RAMPS: dict[str, list[str]] = {
     "sand": ["#8a6a4a", "#b8946a", "#d9b98a", "#ecd5a8", "#f8ebcc"],
     "marble": ["#8f8b96", "#b5b1b9", "#d3d0d6", "#e7e5e9", "#f7f6f8"],
     "lilac": ["#3d2a52", "#5f4384", "#8a6ab5", "#b49ad9", "#dccbf2"],
-    # 春日山谷: hazy far ridges, blue-green near ridges, fresh valley grass,
-    # wild-cherry pink, wisteria, rock and water
-    "ridge_far": ["#7f8db3", "#98a6c8", "#b3bfdc", "#ccd6ea", "#e2e8f4"],
-    "ridge_mid": ["#4b736f", "#5f8c84", "#7aa799", "#9cc2ad", "#c1dcc4"],
-    "meadow": ["#264a2b", "#3a6a34", "#55903f", "#7db650", "#b0d872", "#d8ee9c"],
-    "sakura": ["#8c4a62", "#c97a93", "#eba9bd", "#f8cfda", "#fff0f3"],
-    "wisteria": ["#3f2f63", "#5e4790", "#8467bd", "#a98ddc", "#d3c2f2"],
-    "rock": ["#3a3a45", "#55566a", "#767a8a", "#9aa0ab", "#c2c7cc"],
-    "stream": ["#1d4d6b", "#2d7193", "#4b9bb8", "#80c6d8", "#c4ecf2"],
-    "earth": ["#5a4130", "#82603f", "#a98455", "#c9a872", "#e4cc98"],
     # sky / light
     "moon": ["#0b1a5c", "#123194", "#1f4bc4", "#5b82e0", "#a9c2f5"],
     "sky_day": ["#5c8dd0", "#80b1e7", "#b4d7f3", "#e3f1fb"],

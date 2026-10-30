@@ -50,7 +50,6 @@ import festival_props as FEST  # noqa: E402
 import festival_props2 as FEST2  # noqa: E402
 import giants_v2 as GIANTS2  # noqa: E402
 import festival_deco as DECO  # noqa: E402
-import spring_valley as SV  # noqa: E402
 import make_creator as mc  # noqa: E402
 from pixelkit import P, Sprite, rgba  # noqa: E402
 
@@ -307,16 +306,6 @@ def main():
     outside["mall"]["dining"]=MR.DINING
     outside["mall"]["img"]["films"]={f["id"]:[png(MR.film_frame(f["art"],b)) for b in range(3)] for f in mall_life["films"]}
     outside["disco"] = {"kind": "walk", "img": {"bg": png(FEST2.disco_scene())}, "feet": 108, "walk": [14, 328], "doorX": 25, "side": FEST2.FLOOR_TOP, "door": [12, 36, 26, 46]}
-    # 春日山谷 (user): five screens of a valley in bloom, open only in spring
-    sv_sky = Sprite(SV.PW, SV.H); SV.sky(sv_sky)
-    blank = png(Sprite(1, 1))
-    outside["valley"] = {"kind": "walk", "feet": SV.FEET, "walk": [8, SV.W - 8], "doorX": 40, "side": SV.PATH[0],
-        "zones": [{"id": z["id"], "name": z["name"]} for z in SV.ZONES],
-        "img": {"zones": {z["id"]: {"bg": png(SV.background(i)), "skyMask": png(DUSK.sky_mask(SV.background(i), sv_sky.crop(i * SV.W, 0, SV.W, SV.H))),
-                                    "trees": [png(SV.trees(i, f)) for f in (0, 1)], "front": png(SV.front(i)), "lit": png(SV.lit(i)),
-                                    "wet": blank, "snow": blank} for i, z in enumerate(SV.ZONES)},
-                "falls": [png(SV.falls(f)) for f in range(3)],
-                "bee": [png(SV.bee(f)) for f in (0, 1)], "sparrow": sparrows, "butterfly": flies}}
     outside["bar"] = {"kind": "bar", "img": {"day": png(BAR.scene()), "night": png(BAR.scene(True)), "counter": png(BAR.counter()), "foreground": png(BAR.foreground()),
                                              "hover": {key: png(spr) for key, spr in BAR.interaction_sprites().items()}},
                       "feet": 107, "walk": [18, 322], "doorX": 128}
@@ -539,7 +528,7 @@ def main():
     html = html.replace("/*__PARK_FOOD_JS__*/", "const PARK_FOOD = " + json.dumps(park_food, ensure_ascii=False) + ";")
     html = html.replace("/*__NPC_SOCIAL_JS__*/", "const NPC_TALK_TEXT = " + (SRC.parent / "npc_talk.json").read_text() + ";\n" + (SRC.parent / "npc_social.js").read_text())
     html = html.replace("/*__PARK_JS__*/", (SRC.parent / "park.js").read_text())
-    html = html.replace("/*__FESTIVAL_FUN_JS__*/", "const FEST_TEXT = " + (SRC.parent / "festival_text.json").read_text() + ";\nconst FEST_TEXT2 = " + (SRC.parent / "festival_text2.json").read_text() + ";\n" + (SRC.parent / "festival_fun.js").read_text() + "\n" + (SRC.parent / "festival_fun2.js").read_text() + "\nconst FEST_TEXT3 = " + (SRC.parent / "festival_text3.json").read_text() + ";\n" + (SRC.parent / "festival_fun3.js").read_text() + "\nconst FEST_TEXT4 = " + (SRC.parent / "festival_text4.json").read_text() + ";\n" + (SRC.parent / "festival_fun4.js").read_text() + "\n" + (SRC.parent / "disco.js").read_text() + "\n" + (SRC.parent / "fest_banner.js").read_text() + "\n" + (SRC.parent / "park_deco.js").read_text() + "\n" + (SRC.parent / "fest_scenery.js").read_text() + "\n" + (SRC.parent / "spring_festival.js").read_text() + "\n" + (SRC.parent / "valley.js").read_text())
+    html = html.replace("/*__FESTIVAL_FUN_JS__*/", "const FEST_TEXT = " + (SRC.parent / "festival_text.json").read_text() + ";\nconst FEST_TEXT2 = " + (SRC.parent / "festival_text2.json").read_text() + ";\n" + (SRC.parent / "festival_fun.js").read_text() + "\n" + (SRC.parent / "festival_fun2.js").read_text() + "\nconst FEST_TEXT3 = " + (SRC.parent / "festival_text3.json").read_text() + ";\n" + (SRC.parent / "festival_fun3.js").read_text() + "\nconst FEST_TEXT4 = " + (SRC.parent / "festival_text4.json").read_text() + ";\n" + (SRC.parent / "festival_fun4.js").read_text() + "\n" + (SRC.parent / "disco.js").read_text() + "\n" + (SRC.parent / "fest_banner.js").read_text() + "\n" + (SRC.parent / "park_deco.js").read_text() + "\n" + (SRC.parent / "fest_scenery.js").read_text() + "\n" + (SRC.parent / "spring_festival.js").read_text())
     html = html.replace("/*__BAR_JS__*/", (SRC.parent / "bar.js").read_text())
     html = html.replace("/*__DUSK_JS__*/", (SRC.parent / "dusk.js").read_text())
     html = html.replace("/*__RESTROOMS_JS__*/", (SRC.parent / "restrooms.js").read_text())
