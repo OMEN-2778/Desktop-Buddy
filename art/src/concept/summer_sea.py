@@ -32,9 +32,9 @@ import numpy as np
 from pixelkit import P, Sprite, rgba
 
 PREVIEW_SCALE = 1
-OW, OH = 1710, 560
+OW, OH = 1026, 354         # owner: smaller and fuller (3 x 1.5 dive views)
 VIEW = (342, 236)
-SURF = 24                  # waterline (sky above it)
+SURF = 20                  # waterline (sky above it)
 
 
 def C(hex_):
@@ -43,10 +43,9 @@ def C(hex_):
 
 # ------------------------------------------------------------- seabed profile
 
-KEYS = [(0, SURF - 4), (60, 40), (150, 120), (240, 230), (300, 292), (380, 300), (520, 296),
-        (600, 310), (640, 420), (700, 440), (880, 446), (980, 430), (1030, 470), (1070, 540),
-        (1150, 545), (1190, 470), (1240, 400), (1320, 384), (1480, 380), (1540, 330),
-        (1590, 180), (1630, 70), (1670, 26), (1710, 14)]
+KEYS = [(0, SURF - 4), (40, 30), (110, 110), (170, 168), (200, 182), (260, 176), (330, 188),
+        (360, 198), (400, 250), (430, 262), (580, 266), (612, 250), (650, 236), (720, 232),
+        (820, 238), (860, 222), (900, 150), (940, 70), (980, 26), (1026, 14)]
 
 
 def floor_y(x):
@@ -64,13 +63,13 @@ FLOOR = [floor_y(x) for x in range(OW)]
 
 def depth_ramp(y):
     """Which shade set to use at depth y: shallow, mid, deep, abyss."""
-    return 0 if y < 140 else 1 if y < 300 else 2 if y < 440 else 3
+    return 0 if y < 110 else 1 if y < 220 else 2 if y < 300 else 3
 
 
 # ------------------------------------------------------------- water
 
 BAYER = np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]) / 16.0
-WATER = [(SURF, P.sea[4]), (70, P.sea[3]), (170, P.sea[2]), (290, P.sea[1]), (420, P.sea[0]), (540, P.blue[0])]
+WATER = [(SURF, P.sea[4]), (60, P.sea[3]), (140, P.sea[2]), (230, P.sea[1]), (330, P.sea[0])]
 
 
 def gradient_rows(stops, h, w):
@@ -109,7 +108,7 @@ def far():
     drawn with a slower scroll (the page offsets this layer)."""
     s = Sprite(OW, OH)
     rnd = random.Random(2)
-    for layer, (base_y, amp, col) in enumerate(((330, 60, P.sea[2]), (400, 40, P.sea[1]))):
+    for layer, (base_y, amp, col) in enumerate(((220, 50, P.sea[2]), (270, 30, P.sea[1]))):
         for x in range(OW):
             top = int(base_y - amp * (0.5 + 0.5 * math.sin(x * 0.006 + layer * 2)) - 14 * math.sin(x * 0.021 + layer))
             for y in range(top, OH):
@@ -136,10 +135,10 @@ def noise(w, h, seed, scale):
     return a * (1 - fy) + b * fy
 
 
-ROCK_D = [(0, [P.sage[0], P.sage[1], P.sage[2], P.sage[3]]), (150, [P.slate[1], P.slate[2], P.slate[3], P.slate[4]]),
-          (300, [P.sea_grey[0], P.sea_grey[1], P.sea_grey[2], P.sea_grey[3]]), (460, [P.blue[0], P.sea_grey[0], P.sea_grey[1], P.sea_grey[2]])]
-SAND_D = [(0, [P.sand[1], P.sand[2], P.sand[3], P.sand[4]]), (170, [P.sand[0], P.sand[1], P.sand[2], P.sand[3]]),
-          (320, [P.sea_grey[1], P.sea_grey[2], P.sea_grey[3], P.sea_grey[4]]), (470, [P.sea_grey[0], P.sea_grey[1], P.sea_grey[2], P.sea_grey[3]])]
+ROCK_D = [(0, [P.sage[0], P.sage[1], P.sage[2], P.sage[3]]), (110, [P.slate[1], P.slate[2], P.slate[3], P.slate[4]]),
+          (220, [P.sea_grey[0], P.sea_grey[1], P.sea_grey[2], P.sea_grey[3]]), (320, [P.blue[0], P.sea_grey[0], P.sea_grey[1], P.sea_grey[2]])]
+SAND_D = [(0, [P.sand[1], P.sand[2], P.sand[3], P.sand[4]]), (130, [P.sand[0], P.sand[1], P.sand[2], P.sand[3]]),
+          (240, [P.sea_grey[1], P.sea_grey[2], P.sea_grey[3], P.sea_grey[4]]), (340, [P.sea_grey[0], P.sea_grey[1], P.sea_grey[2], P.sea_grey[3]])]
 
 
 def shade_map(mask, kind_sand, seed):
@@ -196,14 +195,17 @@ def terrain():
         if slope < 1.0:
             sand[fy:fy + 5 + (x * 7) % 3, x] = True
     yy, xx = np.mgrid[0:OH, 0:OW]
-    for cx, cy, r in ((710, 438, 14), (742, 444, 9), (960, 428, 12), (1250, 398, 16), (1290, 390, 11),
-                      (1460, 378, 18), (360, 298, 10), (520, 292, 12), (1520, 340, 22), (330, 296, 8), (1000, 432, 9)):
+    for cx, cy, r in ((440, 262, 12), (566, 264, 10), (692, 232, 14), (842, 236, 16), (870, 214, 12),
+                      (214, 182, 9), (300, 184, 11), (380, 214, 8)):
         b = ((xx - cx) / r) ** 2 + ((yy - cy) / (r * 0.7)) ** 2 <= 1
         mask |= b
         sand &= ~b
-    arch = lava_arch_mask(1330, 386)
+    arch = lava_arch_mask(760, 236)
     mask |= arch
-    for cx, top, r in ((1652, 4, 20), (1694, 0, 18), (1604, 14, 10)):   # rocks breaking the surface
+    for y in range(110, 262):                                      # a coral pinnacle rising from the valley
+        hw = int(6 + (y - 110) * 0.14 + 2 * math.sin(y * 0.3))
+        mask[y, 630 - hw:630 + hw] = True
+    for cx, top, r in ((968, 4, 20), (1010, 0, 18), (924, 14, 10)):   # rocks breaking the surface
         for k in range(5):
             ex, ey, er = cx + (k - 2) * r * 0.35, top + 6 + (k % 2) * 4 + abs(k - 2) * 5, r * (0.55 - abs(k - 2) * 0.08)
             mask |= ((xx - ex) / er) ** 2 + ((yy - ey) / (er * 0.9)) ** 2 <= 1
@@ -215,7 +217,7 @@ def terrain():
         y = FLOOR[x] + rnd.randint(0, 3)
         if 0 <= y < OH and sand[y, x]:
             s.set(x, y, rnd.choice((P.porcelain[3], P.sand[0], P.coral[3] if y < 300 else P.sea_grey[4])))
-    for cx in (1652, 1694, 1604):
+    for cx in (968, 1010, 924):
         s.hline(cx - 14, cx + 14, SURF, P.porcelain[3]).hline(cx - 10, cx + 10, SURF + 1, P.sea[4])
     return s
 
@@ -225,8 +227,8 @@ def lava_arch_mask(cx, base):
     lumpy edges, wide feet."""
     yy, xx = np.mgrid[0:OH, 0:OW]
     n = noise(OW, OH, 21, 5)
-    outer = ((xx - cx) / 62) ** 2 + ((yy - base) / 78) ** 2 <= 1 + 0.25 * (n - 0.5)
-    inner = ((xx - cx) / 38) ** 2 + ((yy - base) / 56) ** 2 <= 1 + 0.2 * (n - 0.5)
+    outer = ((xx - cx) / 50) ** 2 + ((yy - base) / 64) ** 2 <= 1 + 0.25 * (n - 0.5)
+    inner = ((xx - cx) / 30) ** 2 + ((yy - base) / 44) ** 2 <= 1 + 0.2 * (n - 0.5)
     return outer & ~inner & (yy <= base + 6)
 
 
@@ -436,57 +438,72 @@ def anchor(s, x, base):
     s.set(x - 6, base - 6, P.steel[2]).set(x + 6, base - 6, P.steel[2])
 
 
+def tall_weed(s, x, base, h, R=P.teal, seed=0):
+    """Tall swaying seaweed ribbons for the wreck valley forest."""
+    rnd = random.Random(seed or x)
+    for k in range(3):
+        bx = x + k * 3
+        hh = int(h * rnd.uniform(0.7, 1.0))
+        for j in range(hh):
+            sx = bx + int(2.5 * math.sin(j * 0.15 + k * 2))
+            s.set(sx, base - j, R[2 if (j // 4) % 2 else 3])
+            if j % 6 == 3:
+                s.set(sx + 1, base - j, R[4]).set(sx + 2, base - j + 1, R[3])
+
+
 def decor():
     s = Sprite(OW, OH)
     rnd = random.Random(12)
     kinds = list(CORALS)
-    # 浅滩: a dense seagrass meadow on the sand, shells, starfish, small coral and limu
-    for x in range(56, 280, 5):
-        seagrass(s, x, FLOOR[x] + 1, rnd.randint(3, 6), rnd.randint(8, 20), seed=x)
-    for x in range(40, 270, 19):
+    # 浅滩: dense seagrass on the beach slope, starfish, limu, small coral heads
+    for x in range(36, 180, 4):
+        seagrass(s, x, FLOOR[x] + 1, rnd.randint(3, 6), rnd.randint(8, 18), seed=x)
+    for x in range(30, 176, 13):
         starfish(s, x, FLOOR[x] - 1, rnd.choice((P.coral, P.mustard, P.blossom)))
-        limu(s, x + 9, FLOOR[x + 9] + 1, rnd.choice((P.coral, P.clay)))
-    for x in (120, 200, 250):
-        bommie(s, x, FLOOR[x] + 2, 0.6, seed=x)
-    # 珊瑚花园: big coral heads on the plateau, corals packed between them
-    for x in range(296, 630, 7):
+        limu(s, x + 6, FLOOR[x + 6] + 1, rnd.choice((P.coral, P.clay)))
+    for x in (80, 140):
+        bommie(s, x, FLOOR[x] + 2, 0.7, seed=x)
+    # 珊瑚花园 on the plateau: big coral heads, corals packed between them
+    for x in range(176, 362, 5):
         coral(s, kinds[(x * 7) % len(kinds)], x + rnd.randint(-2, 2), FLOOR[x] + 1, rnd.uniform(0.7, 1.2), seed=x)
-    for x, sz in ((320, 1.1), (392, 1.4), (470, 1.0), (548, 1.5), (612, 0.9)):
+    for x, sz in ((196, 1.2), (250, 1.6), (306, 1.3), (350, 1.0)):
         bommie(s, x, FLOOR[x] + 2, sz, seed=x)
-    for x in range(300, 620, 23):
-        sponge(s, x + 11, FLOOR[x + 11] + 1, rnd.choice((P.lilac, P.coral, P.mustard)), 2, seed=x)
-        urchin(s, x + 4, FLOOR[x + 4] + 1)
-    clam(s, 456, FLOOR[456] + 1)
-    # the drop-off wall below the garden: fans and sponges clinging to it
-    for y in range(320, 420, 13):
-        x = next((xx for xx in range(600, 660) if FLOOR[xx] >= y), 640)
+    for x in range(180, 360, 17):
+        sponge(s, x + 8, FLOOR[x + 8] + 1, rnd.choice((P.lilac, P.coral, P.mustard)), 2, seed=x)
+        urchin(s, x + 3, FLOOR[x + 3] + 1)
+    clam(s, 280, FLOOR[280] + 1)
+    for y in range(200, 255, 9):                                   # the slope down to the valley
+        x = next((xx for xx in range(350, 420) if FLOOR[xx] >= y), 400)
         coral(s, "fan", x - 2, y + 2, 0.7, seed=y)
-        sponge(s, x - 6, y + 4, P.mustard, 2, seed=y + 3)
-    # 沉船 on the sand plain
-    shipwreck(s, 720, FLOOR[790] + 2)
-    anchor(s, 900, FLOOR[900] + 1)
-    for x in range(650, 1010, 13):
+        sponge(s, x - 5, y + 4, P.mustard, 2, seed=y + 3)
+    # 沉船谷: a seaweed forest round the wreck
+    for x in range(412, 600, 9):
+        tall_weed(s, x, FLOOR[x] + 1, rnd.randint(30, 70), rnd.choice((P.teal, P.green, P.sage)), seed=x)
+    shipwreck(s, 446, FLOOR[500] + 2)
+    anchor(s, 590, FLOOR[590] + 1)
+    for x in range(420, 600, 11):
         seagrass(s, x, FLOOR[x] + 1, 3, 10, P.sage, seed=x)
-    for x in (680, 960):
-        bommie(s, x, FLOOR[x] + 2, 0.8, seed=x)
-    # 深沟: sparse and dim, a few fans on the walls
-    for x in (1036, 1052, 1188, 1204):
-        coral(s, "fan", x, FLOOR[x] + 1, 0.8)
+    # the pinnacle: corals stepping up both faces
+    for y in range(116, 262, 7):
+        hw = int(6 + (y - 110) * 0.14)
+        coral(s, kinds[(y // 7) % len(kinds)], 630 - hw - 1, y + 3, 0.6, seed=y)
+        coral(s, kinds[(y // 7 + 3) % len(kinds)], 630 + hw + 1, y + 3, 0.6, seed=y + 1)
+    bommie(s, 630, 112, 0.6, seed=630)
     # 熔岩拱门: tiki, coral heads on the pillow lava, fans on the arch
-    tiki(s, 1392, FLOOR[1392] + 2)
-    for x in range(1220, 1530, 9):
-        if 1290 < x < 1372:
+    tiki(s, 800, FLOOR[800] + 2)
+    for x in range(652, 900, 6):
+        if 720 < x < 800:
             continue
         coral(s, kinds[(x * 5) % len(kinds)], x, FLOOR[x] + 1, rnd.uniform(0.7, 1.1), seed=x)
-    for x, sz in ((1250, 1.0), (1460, 1.3)):
+    for x, sz in ((680, 1.1), (850, 1.3)):
         bommie(s, x, FLOOR[x] + 2, sz, seed=x)
-    for x in (1300, 1330, 1360):
-        coral(s, "fan", x, 312 + abs(x - 1330) // 4, 0.6, seed=x)
+    for x in (735, 760, 785):
+        coral(s, "fan", x, 176 + abs(x - 760) // 3, 0.6, seed=x)
     # 礁墙: corals and sponges stepping up the wall to the surface
-    for y in range(40, 340, 9):
-        x = next((xx for xx in range(1520, OW) if FLOOR[xx] <= y), OW - 1)
-        coral(s, kinds[(y // 9) % len(kinds)], x - 1, y + 2, 0.75, seed=y)
-        if y % 27 == 4:
+    for y in range(36, 230, 7):
+        x = next((xx for xx in range(850, OW) if FLOOR[xx] <= y), OW - 1)
+        coral(s, kinds[(y // 7) % len(kinds)], x - 1, y + 2, 0.75, seed=y)
+        if y % 21 == 1:
             sponge(s, x + 3, y + 3, P.coral, 2, seed=y)
     return s
 
@@ -494,7 +511,7 @@ def decor():
 def front():
     """Foreground fronds and coral silhouettes the diver passes behind."""
     s = Sprite(OW, OH)
-    for x in range(30, OW, 140):
+    for x in range(20, OW, 110):
         y = FLOOR[x] + 2
         seagrass(s, x, y + 6, 8, 28, P.teal, seed=x + 1)
     return s
@@ -505,13 +522,13 @@ def rays():
     ripples over the shallow floor (the page draws them at low alpha and
     slides them slowly)."""
     s = Sprite(OW, OH)
-    for x0, w in ((80, 14), (330, 10), (560, 18), (880, 12), (1230, 16), (1500, 10)):
-        for y in range(SURF, 300):
+    for x0, w in ((60, 14), (300, 10), (520, 16), (800, 12)):
+        for y in range(SURF, 220):
             a = int(x0 + (y - SURF) * 0.35)
             s.hline(a, a + w - int((y - SURF) / 30), y, P.porcelain[3])
-    for x in range(0, 640):                                        # caustics where the floor is shallow
+    for x in range(0, 420):                                        # caustics where the floor is shallow
         fy = FLOOR[x]
-        if fy < 320:
+        if fy < 220:
             for k in range(0, 10, 3):
                 if (x * 7 + k * 13) % 9 < 2:
                     s.set(x, fy - 1 - k // 3, P.porcelain[3])
@@ -650,6 +667,20 @@ def seal(frame):
     return s
 
 
+def diver(frame, suit=P.slate, skin=P.skin, fin=P.mustard):
+    """An NPC scuba diver swimming right: fins kick, a tank on the back,
+    mask, arms forward; a bubble trail is drawn by the page."""
+    s = Sprite(32, 12)
+    s.rect(9, 4, 14, 5, suit[1]).hline(9, 22, 4, suit[2])          # body
+    s.rect(12, 2, 9, 3, P.steel[3]).hline(12, 20, 2, P.steel[4])    # tank
+    s.ellipse(25, 6, 3, 2.5, skin[2]).hline(25, 28, 5, P.slate[0]).set(27, 5, P.glass[3])   # head + mask
+    s.line(23, 7, 30, 8, suit[2])                                  # arm forward
+    k = 2 if frame else -1                                         # legs and fins kick
+    s.line(9, 5, 3, 5 + k, suit[1]).line(9, 7, 3, 8 - k, suit[1])
+    s.rect(0, 4 + k, 4, 2, fin[2]).rect(0, 7 - k, 4, 2, fin[3])
+    return s
+
+
 def bubble(frame):
     s = Sprite(5, 5)
     r = 1.6 if frame == 0 else 2.2
@@ -665,30 +696,29 @@ CREATURES = {
     "tang": lambda f: fish("tang", f), "humu": lambda f: fish("humu", f), "idol": lambda f: fish("idol", f),
     "parrot": lambda f: fish("parrot", f), "butterflyfish": lambda f: fish("butterfly", f), "school": lambda f: fish("school", f),
     "turtle": turtle, "manta": manta, "octopus": octopus, "jelly": jelly, "eel": eel, "crab": crab, "seal": seal,
-    "bubble": bubble,
+    "bubble": bubble, "diver": diver,
 }
 
 # Interactive spots (map px): what the page can offer when the diver swims close.
 HOTSPOTS = [
-    {"id": "turtle_rock", "x": 180, "y": FLOOR[180] - 8, "name": "海龟清洁站", "what": "honu come to rest; swim slowly beside one"},
-    {"id": "clam", "x": 456, "y": FLOOR[456] - 4, "name": "巨蚌", "what": "opens now and then: a pearl"},
-    {"id": "coral_photo", "x": 520, "y": FLOOR[520] - 20, "name": "珊瑚花园", "what": "photo spot; fish scatter and return"},
-    {"id": "octopus_den", "x": 600, "y": FLOOR[600] - 6, "name": "章鱼洞", "what": "an octopus hides, peeks, changes colour"},
-    {"id": "wreck_chest", "x": 792, "y": FLOOR[790] - 4, "name": "沉船宝箱", "what": "a chest in the hold: coins, a message in a bottle"},
-    {"id": "anchor", "x": 900, "y": FLOOR[900] - 12, "name": "旧锚", "what": "a crab lives under it"},
-    {"id": "trench", "x": 1110, "y": 500, "name": "深沟", "what": "dark and cold: a manta glides past; too deep to stay long"},
-    {"id": "arch", "x": 1330, "y": 340, "name": "熔岩拱门", "what": "swim through it (a little achievement)"},
-    {"id": "tiki", "x": 1398, "y": FLOOR[1392] - 18, "name": "沉没的提基像", "what": "make a wish"},
-    {"id": "eel_crevice", "x": 1560, "y": 300, "name": "海鳗石缝", "what": "a moray peeks out; it is shy"},
-    {"id": "seal_rock", "x": 1640, "y": SURF + 6, "name": "海豹礁", "what": "a monk seal naps on the rock by the surface"},
+    {"id": "turtle_rock", "x": 120, "y": FLOOR[120] - 8, "name": "海龟清洁站", "what": "honu come to rest; swim slowly beside one"},
+    {"id": "clam", "x": 280, "y": FLOOR[280] - 4, "name": "巨蚌", "what": "opens now and then: a pearl"},
+    {"id": "coral_photo", "x": 250, "y": FLOOR[250] - 24, "name": "珊瑚花园", "what": "photo spot; fish scatter and return"},
+    {"id": "octopus_den", "x": 352, "y": FLOOR[352] - 6, "name": "章鱼洞", "what": "an octopus hides, peeks, changes colour"},
+    {"id": "wreck_chest", "x": 518, "y": FLOOR[500] - 4, "name": "沉船宝箱", "what": "a chest in the hold: coins, a message in a bottle"},
+    {"id": "kelp_forest", "x": 470, "y": 220, "name": "海藻林", "what": "swim through the swaying weed; small fish hide in it"},
+    {"id": "pinnacle", "x": 630, "y": 104, "name": "珊瑚尖塔", "what": "circle the tower top: a school of fish wheels round"},
+    {"id": "arch", "x": 760, "y": 210, "name": "熔岩拱门", "what": "swim through it (a little achievement)"},
+    {"id": "tiki", "x": 806, "y": FLOOR[800] - 18, "name": "沉没的提基像", "what": "make a wish"},
+    {"id": "eel_crevice", "x": 890, "y": 170, "name": "海鳗石缝", "what": "a moray peeks out; it is shy"},
+    {"id": "seal_rock", "x": 960, "y": SURF + 6, "name": "海豹礁", "what": "a monk seal naps on the rock by the surface"},
 ]
-# Where creatures live (the page spawns and moves them inside these boxes).
 SPAWNS = {
-    "tang": (260, 200, 640, 300), "humu": (280, 230, 620, 300), "idol": (300, 220, 600, 300),
-    "parrot": (260, 200, 700, 320), "butterflyfish": (1200, 300, 1520, 380), "school": (600, 120, 1300, 300),
-    "turtle": (60, 60, 700, 260), "manta": (900, 360, 1250, 520), "octopus": (580, 280, 640, 310),
-    "jelly": (700, 40, 1500, 200), "eel": (1550, 280, 1580, 320), "crab": (60, 40, 260, 240),
-    "seal": (1600, 20, 1700, 60),
+    "tang": (170, 120, 360, 180), "humu": (180, 140, 360, 185), "idol": (190, 130, 350, 180),
+    "parrot": (170, 120, 400, 190), "butterflyfish": (650, 170, 900, 225), "school": (560, 60, 700, 120),
+    "turtle": (40, 40, 420, 150), "manta": (400, 140, 620, 230), "octopus": (346, 182, 360, 196),
+    "jelly": (420, 30, 900, 110), "eel": (884, 160, 900, 180), "crab": (40, 30, 170, 160),
+    "seal": (930, 10, 1020, 40), "diver": (60, 30, 900, 200),
 }
 
 
@@ -705,9 +735,16 @@ def compose():
     for kind, (x0, y0, x1, y1) in SPAWNS.items():
         if kind in ("bubble",):
             continue
-        for k in range(6 if kind in ("tang", "school", "idol", "butterflyfish") else 1):
-            spr = CREATURES[kind](k % 2)
-            s.blit(spr, rnd.randint(x0, max(x0, x1 - spr.w)), rnd.randint(y0, max(y0, y1 - spr.h)))
+        n = {"school": 16, "tang": 8, "idol": 5, "butterflyfish": 6, "humu": 3, "parrot": 3, "diver": 4, "jelly": 3, "turtle": 2}.get(kind, 1)
+        for k in range(n):
+            spr = CREATURES[kind](k % 2) if kind != "diver" else diver(k % 2, (P.slate, P.hydrangea, P.coral, P.teal)[k % 4], (P.skin, P.skin_tan, P.skin_deep)[k % 3])
+            for _ in range(20):                                    # only in open water (or on the floor for crabs)
+                px_, py_ = rnd.randint(x0, max(x0, x1 - spr.w)), rnd.randint(y0, max(y0, y1 - spr.h))
+                if kind == "crab":
+                    py_ = FLOOR[px_ + spr.w // 2] - spr.h + 1
+                if py_ + spr.h - 1 < FLOOR[min(OW - 1, px_ + spr.w // 2)] or kind == "crab":
+                    s.blit(spr, px_, py_)
+                    break
     s.blit(front(), 0, 0)
     return s
 

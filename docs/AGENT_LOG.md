@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-10-31 · Claude
+- Summer art round 2 (owner: too plain/empty): lush shore (jungle backdrop, refined palms,
+  banana, heliconia, monstera), new 海滩 screen with loungers/umbrellas/lifeguard tower,
+  swimmer NPCs at the surface, NPC divers; dive map shrunk to 1026×354 and filled (seaweed
+  forest round the wreck, coral pinnacle, denser reef). See docs/SUMMER_SEA.md.
+
 ## 2026-10-31 · Codex
 - Spring farm art review: rapeseed and tulip beds now fill the ground up to the road;
   orchard/pasture share a 684px tree line and rolling lawn (no reset at the join).

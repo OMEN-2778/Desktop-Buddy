@@ -1,6 +1,6 @@
 # 夏 · 夏威夷海岛 + 海底: hand-off
 
-State on 2026-10-31: **art only**, first round, waiting for the owner's review. Nothing is
+State on 2026-10-31: **art only**, round 2, waiting for the owner's review. Nothing is
 in the game yet. Shared rules: `AGENTS.md`. The model for this doc is `docs/SPRING_FARM.md`.
 
 ## Owner's brief
@@ -18,6 +18,15 @@ in the game yet. Shared rules: `AGENTS.md`. The model for this doc is `docs/SPRI
 - **No invisible walls**: the map's own design closes it off.
 - Everything must be refined, Hawaiian and lively.
 
+## Owner feedback, round 1 → round 2 (rules)
+- Everything was too plain and the map too empty.
+- Land must be lush (枝繁叶茂): jungle backdrop, palm clusters, banana, heliconia,
+  monstera, hibiscus everywhere.
+- The beach has **loungers Buddy can lie on**, plus umbrellas.
+- **Many NPCs swimming and snorkelling** at the surface (and NPC scuba divers in the sea).
+- The dive map is **smaller and fuller**: now 1026×354. Mostly reef, weed forest and
+  structures, little empty water.
+
 ## Build / review
 ```
 PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/src/concept/summer_sea.py
@@ -30,6 +39,9 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
 
 ## Files and layout
 - `art/src/concept/summer_isle.py`: the shore. Screens are 342×118 and feet are at y=103.
+  - Three screens: `lodge` 旅舍 | `beach` 海滩 (4 loungers, 2 umbrellas, towels, cooler,
+    sandcastle, lifeguard tower, swimmers) | `cabana` 更衣室. Swimmer NPC sprites:
+    `swimmer(kind)` — snorkel, swim, kid in a float ring, paddleboard, duck-dive.
   - `lodge` 旅舍:
     - plantation cottage at x 96–232, door x=164 (`LODGE_DOOR`); tin roof, lanai, louvred
       windows, rattan chairs, surfboards, ukulele, lei;
@@ -49,7 +61,7 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
       surfboard on the wall;
     - kitchen: koa counter, shelf, bananas;
     - bath: shower, toilet.
-- `art/src/concept/summer_sea.py`: the dive map, `OW×OH` = 1710×560 (5 × 2.4 dive
+- `art/src/concept/summer_sea.py`: the dive map, `OW×OH` = 1026×354 (3 × 1.5 dive
   views). Surface at `SURF`=24. Seabed profile: `KEYS` → `FLOOR[x]`.
   - Layers, back to front:
     1. `sea_water` (dithered depth gradient)
@@ -63,15 +75,16 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
     1. 浅滩 seagrass shallows on the beach slope
     2. 珊瑚花园 coral garden with big coral heads (`bommie`)
     3. drop-off wall with fans and sponges
-    4. 沉船 a wreck with a chest, an old anchor
-    5. 深沟 the blue trench (closed by rock)
+    4. 沉船谷 the wreck in a tall seaweed forest, an old anchor
+    5. 珊瑚尖塔 a coral pinnacle rising from the valley
     6. 熔岩拱门 lava arch with a sunken tiki and pillow lava
     7. 礁墙 the reef wall, rising to rocks that break the surface
   - Boundaries made by design: the beach slope on the left (swim up it to go ashore),
     the surface on top, the reef wall on the right, the seabed everywhere below.
   - Creatures (2 frames each): yellow tang, humuhumunukunukuāpuaʻa, Moorish idol,
     parrotfish, butterflyfish, a silver school, honu (turtle), manta, heʻe (octopus),
-    jellyfish, moray, hermit crab, Hawaiian monk seal, bubbles.
+    jellyfish, moray, hermit crab, Hawaiian monk seal, bubbles, and NPC scuba `diver`
+    (suit and skin colours vary).
   - `SPAWNS` gives each creature a box to live in.
   - `HOTSPOTS`: 11 interactive spots — turtle cleaning rock, giant clam pearl, coral photo
     spot, octopus den, wreck chest, anchor crab, trench manta, swim through the arch, tiki

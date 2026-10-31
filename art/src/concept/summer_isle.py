@@ -489,17 +489,309 @@ def shallows(s, x0):
         s.hline(x, x + rnd.randint(1, 3), y, P.porcelain[3] if rnd.random() < 0.3 else P.sea[4])
 
 
+# ============================================================= round 2 (owner: lusher, loungers, swimmers)
+
+import front_yard as FY                                     # noqa: E402
+
+FY.LEAVES.setdefault(("monkeypod", "spring"), [P.green, P.grass, P.green])
+FY.LEAVES.setdefault(("jungle", "spring"), [P.green, P.grass, P.leaf_spring, P.green])
+FY.LEAVES.setdefault(("plumtree", "spring"), [P.green, P.grass])
+
+
+def palm2(s, x, base, h, lean=1, frame=0, seed=0):
+    """A refined coconut palm: a curved trunk with a diamond bark pattern and a
+    swollen base, a shaggy collar, a coconut cluster and ten arching fronds,
+    each a rib with leaflets on both sides, lit from the top left, darker
+    underneath. Frame 1: frond tips sway."""
+    rnd = random.Random(seed)
+    pts = [(x + lean * (i / h) ** 1.8 * h * 0.32, base - i) for i in range(h)]
+    for i, (px, py) in enumerate(pts):
+        w = 5 if i < 4 else 4 if i < h * 0.6 else 3
+        for k in range(w):
+            c = WOOD[3] if k == 0 else WOOD[1] if k == w - 1 else WOOD[2]
+            if (i + k * 2) % 4 == 0:
+                c = WOOD[1] if k else WOOD[2]                       # diamond bark
+            s.set(int(px) - w // 2 + k, int(py), c)
+    tx, ty = int(pts[-1][0]), int(pts[-1][1])
+    s.ellipse(tx, ty + 2, 3, 2, P.oak[1])                           # shaggy collar
+    for k in range(4):
+        cx, cy = tx - 3 + k * 2 + (k % 2), ty + 3 + (k % 2)
+        s.ellipse(cx, cy, 1.8, 1.8, P.green[1] if k % 2 else P.walnut[2]).set(cx - 1, cy - 1, P.green[3] if k % 2 else P.walnut[3])
+    sway = 1 if frame else 0
+    fronds = [(-3.0, 24), (-2.65, 26), (-2.25, 22), (-1.85, 16), (-1.57, 11), (-1.3, 16), (-0.9, 22), (-0.5, 26), (-0.15, 24), (0.35, 18), (-3.5, 18)]
+    for a, L in fronds:
+        a += rnd.uniform(-0.06, 0.06)
+        side = 1 if math.cos(a) >= 0 else -1
+        droop = 0.65 if abs(math.cos(a)) > 0.4 else 0.25
+        prev = None
+        for j in range(L):
+            t = j / L
+            fx = tx + math.cos(a) * j + (sway * t * t * 2 if t > 0.6 else 0)
+            fy = ty + math.sin(a) * j + (t ** 2) * L * droop
+            top_side = math.sin(a) < -0.3
+            rib = LEAF[3] if top_side else LEAF[2]
+            s.set(int(fx), int(fy), rib)
+            if j > 1:
+                n = int(1 + 4 * math.sin(math.pi * min(1, t * 1.15)))
+                for d in range(1, n + 1):                            # leaflets both sides, hanging
+                    lx1, ly1 = int(fx + side * d * 0.5), int(fy + d)
+                    lx2, ly2 = int(fx - side * d * 0.3), int(fy + d * 0.8)
+                    s.set(lx1, ly1, LEAF[2 if d < n else 1])
+                    if j % 2 == 0:
+                        s.set(lx2, ly2, LEAF[1 if not top_side else 2])
+                if j % 3 == 0 and top_side:
+                    s.set(int(fx), int(fy) - 1, LEAF[4])
+    s.ellipse(tx, ty, 2.5, 2, LEAF[3]).set(tx - 1, ty - 1, LEAF[4])
+
+
+def banana(s, x, base, h=26, seed=0):
+    """A banana plant: a green pseudostem and big paddle leaves, some torn,
+    one with a hanging bunch."""
+    rnd = random.Random(seed or x)
+    s.rect(x - 1, base - h, 3, h, P.grass[2]).vline(x - 1, base - h, base - 1, P.grass[3]).vline(x + 1, base - h, base - 1, P.grass[1])
+    for a, L in ((-2.6, 16), (-2.0, 18), (-1.3, 18), (-0.6, 16), (-1.65, 12)):
+        a += rnd.uniform(-0.1, 0.1)
+        for j in range(L):
+            t = j / L
+            fx = x + math.cos(a) * j
+            fy = base - h + math.sin(a) * j + t * t * 6
+            wdt = int(3 * math.sin(math.pi * t) + 1)
+            for d in range(-wdt, wdt + 1):
+                c = P.grass[3] if d < 0 else P.grass[2]
+                if (j + d) % 5 == 0 and d > 0:
+                    continue                                        # torn edges
+                s.set(int(fx), int(fy + d * 0.8), c)
+            s.set(int(fx), int(fy), P.grass[4] if j % 2 else P.grass[3])
+    s.ellipse(x + 3, base - h + 7, 2, 3, P.mustard[2]).set(x + 3, base - h + 5, P.mustard[3])
+    s.line(x + 3, base - h + 10, x + 4, base - h + 14, P.coral[1])
+
+
+def heliconia(s, x, base, R=P.coral):
+    """Lobster-claw heliconia / bird-of-paradise clump."""
+    for k in range(4):
+        lx = x + k * 3 - 4
+        s.line(lx, base, lx + (k - 2), base - 12 - k * 2, P.green[2])
+        s.ellipse(lx + (k - 2) * 2, base - 12 - k * 2, 2, 4, P.green[3])
+    for k in range(3):
+        fy = base - 10 - k * 3
+        s.set(x + k, fy, R[3]).set(x + k + 1, fy + 1, R[2]).set(x + k + 2, fy + 2, P.mustard[3])
+
+
+def monstera(s, x, base, size=1.0):
+    for a, L in ((-2.5, 9), (-1.9, 12), (-1.2, 12), (-0.6, 9), (-1.55, 7)):
+        L = int(L * size)
+        ex, ey = int(x + math.cos(a) * L), int(base + math.sin(a) * L)
+        s.line(x, base, ex, ey, P.green[2])
+        s.ellipse(ex, ey, 3.5 * size, 2.5 * size, P.green[2]).set(ex - 1, ey - 1, P.green[3]).set(ex + 1, ey + 1, P.green[1])
+        s.set(ex, ey, P.green[1])                                   # the split
+
+
+def jungle(s, x0, x1, base, seed, n=None, rmin=7, rmax=13):
+    """A dense backdrop of tropical crowns (monkeypod, kukui) with palm tops
+    poking through: overlapping, outlined, lit top-left."""
+    rnd = random.Random(seed)
+    xs = sorted(rnd.uniform(x0, x1) for _ in range(n or int((x1 - x0) / 9)))
+    for x in xs:
+        rx = rnd.randint(rmin, rmax)
+        cy = base - rnd.randint(rx, rx + 8)
+        s.blit(FY.tree(rnd.choice(("jungle", "monkeypod")), "spring", 0, at=(int(x), cy, base, rx, int(rx * 0.75))), 0, 0)
+
+
+def lounger(s, x, base, C=P.hydrangea, towel=True):
+    """A wooden beach lounger (backrest up) with a striped cushion and a towel."""
+    s.rect(x, base - 6, 26, 2, WOOD[3]).hline(x, x + 25, base - 6, WOOD[4]).hline(x, x + 25, base - 5, WOOD[1])
+    for k in range(9):                                              # backrest
+        s.set(x + 1 + k // 2, base - 7 - k, WOOD[2]).set(x + 2 + k // 2, base - 7 - k, WOOD[3])
+    s.rect(x + 5, base - 8, 20, 2, C[2]).hline(x + 5, x + 24, base - 8, C[3])
+    for xx in range(x + 6, x + 24, 4):
+        s.set(xx, base - 7, P.porcelain[3])
+    for k in range(7):
+        s.set(x + 2 + k // 2, base - 9 - k, C[3])
+    for lx in (x + 2, x + 23):
+        s.vline(lx, base - 4, base - 1, WOOD[1])
+    s.hline(x + 1, x + 25, base, P.sand[1])
+    if towel:
+        s.rect(x + 16, base - 9, 7, 2, P.coral[3]).set(x + 22, base - 7, P.coral[2]).set(x + 22, base - 6, P.coral[2])
+
+
+def umbrella(s, x, base, R=P.coral, R2=None):
+    R2 = R2 or [P.porcelain[0], P.porcelain[1], P.porcelain[2], P.porcelain[3], P.porcelain[3]]
+    s.vline(x, base - 30, base, WOOD[2]).vline(x + 1, base - 30, base, WOOD[1])
+    for k in range(8):
+        y = base - 34 + k
+        hw = 3 + k * 2
+        for xx in range(x - hw, x + hw + 1):
+            seg = int((xx - x + hw) / max(1, hw * 2 + 1) * 6)
+            Rr = R if seg % 2 == 0 else R2
+            s.set(xx, y, Rr[3] if k < 3 else Rr[2])
+    for xx in range(x - 17, x + 18, 2):
+        s.set(xx, base - 26, R[1])
+    s.hline(x - 16, x + 16, base - 27, R[1])
+    s.ellipse(x + 3, base + 1, 14, 1.5, P.sand[1])
+
+
+def cooler(s, x, base):
+    s.rect(x, base - 6, 10, 6, P.sea[3]).hline(x, x + 9, base - 6, P.porcelain[3]).hline(x, x + 9, base - 5, P.porcelain[2])
+    s.hline(x + 3, x + 6, base - 7, P.porcelain[2])
+
+
+def sandcastle(s, x, base):
+    S2 = P.sand
+    s.rect(x, base - 5, 14, 5, S2[2]).rect(x + 4, base - 9, 6, 4, S2[3])
+    for xx in (x, x + 5, x + 10):
+        s.rect(xx, base - 7, 3, 2, S2[3])
+    s.vline(x + 7, base - 13, base - 9, P.walnut[1]).rect(x + 8, base - 13, 3, 2, P.coral[3])
+    s.rect(x + 16, base - 4, 5, 4, P.mustard[3]).vline(x + 18, base - 7, base - 4, P.coral[2])   # a bucket
+
+
+def lifeguard(s, x, base):
+    """A lifeguard tower on stilts with a red cross flag and a rescue board."""
+    for lx in (x, x + 18):
+        s.line(lx, base, lx + (4 if lx == x else -4), base - 22, WOOD[1])
+    s.rect(x + 2, base - 34, 16, 12, P.porcelain[3]).rect(x + 4, base - 32, 12, 6, P.sea[2])
+    s.rect(x, base - 36, 20, 3, P.coral[2]).hline(x, x + 19, base - 36, P.coral[3])
+    s.rect(x + 2, base - 22, 16, 2, WOOD[3])
+    s.vline(x + 19, base - 46, base - 36, P.steel[2]).rect(x + 20, base - 46, 6, 4, P.coral[2])
+    for y in range(base - 22, base):
+        s.set(x + 9 + (y % 2), y, WOOD[2])
+    s.rect(x - 8, base - 24, 3, 24, P.coral[2]).vline(x - 8, base - 24, base - 1, P.coral[3])
+
+
+def swimmer(kind, frame, skin=P.skin, cap=P.coral):
+    """People in the water, seen from the beach (sea band). Kinds: snorkel
+    (face down, mask + tube), swim (head and a stroking arm), kid (with a
+    float ring), sup (paddleboarder standing), duck (a diver's fins going
+    down)."""
+    if kind == "snorkel":
+        s = Sprite(12, 6)
+        s.ellipse(5, 3, 3, 2, skin[2]).hline(3, 7, 2, P.slate[1]).set(4, 2, P.glass[3]).set(6, 2, P.glass[3])
+        s.vline(8, 0, 2, cap[2]).set(8, 0, cap[3])
+        s.hline(0, 11, 4, P.porcelain[3] if frame else P.sea[4])
+        return s
+    if kind == "swim":
+        s = Sprite(12, 8)
+        s.ellipse(5, 5, 2.5, 2.5, skin[2]).hline(3, 7, 3, cap[2])
+        if frame:
+            s.line(7, 4, 11, 1, skin[2])
+        else:
+            s.line(2, 5, 0, 2, skin[2])
+        s.hline(0, 11, 7, P.porcelain[3])
+        return s
+    if kind == "kid":
+        s = Sprite(14, 10)
+        for a in range(0, 360, 20):
+            r = math.radians(a)
+            s.set(int(7 + 6 * math.cos(r)), int(7 + 2 * math.sin(r)), P.mustard[3] if (a // 60) % 2 else P.coral[3])
+        s.ellipse(7, 4, 2.5, 2.5, skin[2]).hline(5, 9, 2, P.walnut[1])
+        s.set(4, 6 - frame, skin[2]).set(10, 6 - frame, skin[2])
+        return s
+    if kind == "sup":
+        s = Sprite(20, 22)
+        s.hline(1, 18, 21, P.porcelain[3]).hline(0, 19, 20, P.mustard[3])
+        s.rect(9, 9, 3, 6, cap[2]).vline(9, 15, 19, skin[1]).vline(11, 15, 19, skin[1])
+        s.ellipse(10, 6, 2, 2, skin[2]).hline(9, 11, 4, P.walnut[1])
+        s.line(12, 10, 15 + frame, 20, P.walnut[1]).rect(14 + frame, 18, 2, 3, P.walnut[2])
+        return s
+    s = Sprite(10, 8)                                                   # duck dive: fins up
+    s.rect(3, 2 + frame, 2, 4, P.slate[1]).rect(6, 2 + frame, 2, 4, P.slate[1]).hline(2, 8, 1 + frame, P.mustard[3])
+    s.hline(0, 9, 7, P.porcelain[3])
+    return s
+
+
+SKINS = [P.skin, P.skin_tan, P.skin_deep]
+
+
+def bathers(s, x0, x1, y0, y1, seed, n=8):
+    rnd = random.Random(seed)
+    kinds = ["snorkel", "snorkel", "swim", "kid", "duck", "snorkel", "swim", "sup"]
+    for k in range(n):
+        kind = kinds[k % len(kinds)]
+        spr = swimmer(kind, k % 2, rnd.choice(SKINS), rnd.choice((P.coral, P.hydrangea, P.mustard, P.lilac)))
+        s.blit(spr, rnd.randint(x0, x1 - spr.w), rnd.randint(y0, y1) - spr.h + (6 if kind != "sup" else 1))
+
+
+def background2(zone):
+    """Round 2 scenes: three shore screens, lush, with loungers and swimmers."""
+    s = Sprite(W, H)
+    sky(s)
+    clouds(s, zone["id"])
+    zid = zone["id"]
+    sea(s, y1={"lodge": 80, "beach": 72, "cabana": 76}[zid])
+    if zid == "lodge":
+        ridge(s, -40, 260, 30, 1)
+        jungle(s, -10, W + 10, HORIZON + 8, 11, n=44, rmin=8, rmax=13)
+        beach(s, 80)
+        lane(s)
+        jungle(s, -20, 60, LANE[0] - 1, 12, n=4, rmin=14, rmax=20)
+        banana(s, 248, LANE[0] - 1, 30, 1)
+        banana(s, 300, LANE[0] - 1, 26, 2)
+        for x, F in ((62, P.coral), (88, P.blossom), (252, P.mustard), (276, P.coral), (324, P.blossom)):
+            hibiscus(s, x, LANE[0] - 1, 11, 11, F)
+        plumeria(s, 74, LANE[0] - 1, 30)
+        lodge(s)
+        for x in (86, 244):
+            tiki_torch(s, x, LANE[0] - 1)
+            heliconia(s, x + 6, LANE[0] - 1, P.coral if x < 100 else P.mustard)
+        monstera(s, 100, LANE[0] - 1, 1.2)
+        monstera(s, 230, LANE[0] - 1, 1.1)
+        mailbox_sign(s, 310, LANE[0] - 1)
+    elif zid == "beach":
+        ridge(s, 120, 400, 20, 3)
+        bathers(s, 10, 330, HORIZON + 6, 70, 21, 10)
+        beach(s, 72)
+        lane(s)
+        for i, x in enumerate((40, 104, 196, 260)):
+            lounger(s, x, 92, (P.hydrangea, P.coral, P.mustard, P.mint)[i])
+        umbrella(s, 72, 92, P.coral)
+        umbrella(s, 226, 92, P.sea)
+        cooler(s, 132, 92)
+        sandcastle(s, 160, 86)
+        for x, C in ((128, P.blossom), (284, P.hydrangea)):            # beach towels on the sand
+            s.rect(x, 82, 16, 5, C[2]).hline(x, x + 15, 82, C[3])
+            for xx in range(x + 1, x + 15, 4):
+                s.vline(xx, 83, 86, P.porcelain[3])
+        s.ellipse(186, 89, 2.5, 2.5, P.coral[3]).set(185, 88, P.porcelain[3]).set(187, 90, P.mustard[3])   # beach ball
+        lifeguard(s, 300, 92)
+        for x, F in ((6, P.coral), (330, P.blossom)):
+            hibiscus(s, x, LANE[0] - 1, 10, 10, F)
+    else:
+        ridge(s, 160, 420, 22, 2)
+        jungle(s, -10, 150, HORIZON + 8, 13, n=18, rmin=8, rmax=12)
+        bathers(s, 230, 330, HORIZON + 6, 70, 22, 5)
+        beach(s, 76)
+        shallows(s, 236)
+        bathers(s, 260, 336, 76, 92, 23, 4)
+        lane(s)
+        canoe(s, 8, 84)
+        banana(s, 58, LANE[0] - 1, 24, 3)
+        cabana(s)
+        heliconia(s, 182, LANE[0] - 1, P.coral)
+        monstera(s, 196, LANE[0] - 1)
+        hibiscus(s, 212, LANE[0] - 1, 9, 9, P.mustard)
+        pier(s)
+    border = Sprite(W, H)
+    tropical_border(border, zid)
+    s.blit(border, 0, 0)
+    return s
+
+
 # ------------------------------------------------------------- scenes
 
 ZONES = [
     {"id": "lodge", "name": "旅舍"},
+    {"id": "beach", "name": "海滩"},
     {"id": "cabana", "name": "更衣室"},
 ]
-PALMS = {"lodge": [(30, 96, 60, 1, 1), (262, 95, 52, -1, 2), (318, 96, 66, -1, 3)],
-         "cabana": [(26, 95, 58, 1, 4), (200, 95, 62, 1, 5)]}
+PALMS = {"lodge": [(30, 96, 64, 1, 1), (46, 96, 54, -1, 6), (262, 95, 56, -1, 2), (318, 96, 70, -1, 3), (334, 96, 50, 1, 7)],
+         "beach": [(18, 96, 66, 1, 8), (150, 96, 58, -1, 9), (166, 96, 46, 1, 10), (330, 96, 64, -1, 11)],
+         "cabana": [(26, 95, 62, 1, 4), (40, 95, 48, -1, 12), (200, 95, 66, 1, 5), (218, 96, 50, -1, 13)]}
 
 
 def background(zone):
+    return background2(zone)
+
+
+def background_v1(zone):
     s = Sprite(W, H)
     sky(s)
     clouds(s, zone["id"])
@@ -535,7 +827,7 @@ def background(zone):
 def trees(zone, frame):
     s = Sprite(W, H)
     for x, base, h, lean, seed in PALMS[zone["id"]]:
-        palm(s, x, base, h, lean, frame, seed)
+        palm2(s, x, base, h, lean, frame, seed)
     return s
 
 
