@@ -838,83 +838,179 @@ INSIDE_DATA = {"rooms": {"living": (50, 92), "kitchen": (146, 50), "bath": (200,
 
 
 def lodge_inside():
-    """One storey, compact: bedroom | living room (front door) | kitchen | bath.
-    Built on the friend-house planner shell, then furnished by hand: rattan,
-    koa wood, a quilt with a Hawaiian appliqué, a monstera, a surfboard on the
-    wall, louvred windows."""
+    """One storey, compact: bedroom | living room | kitchen | bath. The
+    friend-house planner draws the shell; every room is furnished by hand
+    (owner: refined): koa wood with grain, rattan weave, hibiscus prints, a
+    Hawaiian quilt, louvred windows with a palm outside, plants in woven
+    baskets, a ukulele and a surfboard on the walls."""
     plan = ("lodge", "海岛旅舍", IN_W, "", "garden", [[("laundry", 6, 72), ("laundry", 82, 82), ("laundry", 168, 50), ("laundry", 222, 34)]])
     data, bg, front = FH.draw_plan(plan)
     s = bg.copy()
     top, fl = 5, 50
-    K = P.walnut
+    K = P.walnut                    # koa
+    R = P.oak                       # rattan
+    import _furniture as F
 
     def room(x, w, floor="wood", wall=P.plaster_kitchen):
         HS.back_wall(s, x, w, top, fl, wall)
         HS.floor_band(s, x, w, fl, floor)
 
-    def louvre(x, y, w=16, h=12):
-        s.rect(x - 1, y - 1, w + 2, h + 2, P.porcelain[3]).rect(x, y, w, h, P.sky_day[2])
-        for yy in range(y, y + h, 2):
-            s.hline(x, x + w - 1, yy, P.glass[2])
+    def louvre(x, y, w=18, h=14):
+        """Louvred window: white frame, sky and a palm frond outside, slats."""
+        s.rect(x - 2, y - 2, w + 4, h + 4, P.porcelain[3]).hline(x - 2, x + w + 1, y + h + 1, P.porcelain[1])
+        s.rect(x, y, w, h, P.sky_day[2]).rect(x, y + h - 4, w, 4, P.sea[3])
+        for k in range(6):                                          # a frond outside
+            s.set(x + w - 2 - k, y + 2 + k // 2, P.green[2]).set(x + w - 2 - k, y + 3 + k // 2, P.green[1])
+        for yy in range(y + 1, y + h, 3):
+            s.hline(x, x + w - 1, yy, P.porcelain[2])
+        s.vline(x + w // 2, y, y + h - 1, P.porcelain[3])
+        s.rect(x - 3, y + h + 2, w + 6, 2, K[3]).hline(x - 3, x + w + 2, y + h + 3, K[1])   # koa sill
+
+    def grain(x, y, w, h):
+        for yy in range(y, y + h):
+            for xx in range(x + (yy * 3) % 5, x + w, 7):
+                s.set(xx, yy, K[1])
+
+    def weave(x, y, w, h):
+        s.rect(x, y, w, h, R[2])
+        for yy in range(y, y + h):
+            for xx in range(x, x + w):
+                if (xx + yy) % 3 == 0:
+                    s.set(xx, yy, R[3])
+                elif (xx - yy) % 4 == 0:
+                    s.set(xx, yy, R[1])
+
+    def basket_plant(x, base, kind="palm"):
+        weave(x, base - 7, 9, 7)
+        s.hline(x, x + 8, base - 7, R[4]).hline(x, x + 8, base - 1, R[0])
+        if kind == "palm":
+            for a in (-2.6, -2.1, -1.57, -1.0, -0.5):
+                for j in range(12):
+                    px_, py_ = int(x + 4 + math.cos(a) * j), int(base - 8 + math.sin(a) * j + j * j * 0.04)
+                    s.set(px_, py_, P.green[3])
+                    if j % 2:
+                        s.set(px_, py_ + 1, P.green[1])
+        else:
+            for a, L in ((-2.4, 9), (-1.7, 11), (-1.0, 9), (-1.35, 6)):
+                ex, ey = int(x + 4 + math.cos(a) * L), int(base - 8 + math.sin(a) * L)
+                s.line(x + 4, base - 8, ex, ey, P.green[2])
+                s.ellipse(ex, ey, 3, 2.2, P.green[2]).set(ex - 1, ey - 1, P.green[3]).set(ex, ey, P.green[1])
+
+    def hibiscus_dot(x, y, F=P.coral):
+        s.set(x, y, F[3]).set(x - 1, y, F[2]).set(x + 1, y, F[2]).set(x, y - 1, F[2]).set(x, y + 1, F[1])
 
     room(6, 72, wall=P.plaster_bed)
     room(82, 82)
     room(168, 50, floor="tile")
     room(222, 34, floor="tile", wall=P.plaster_bath)
-    # bedroom: koa bed with a quilt (red appliqué), a rattan lamp, a window
-    louvre(14, top + 10)
-    s.rect(10, fl - 9, 46, 3, K[2]).hline(10, 55, fl - 9, K[3])
-    s.rect(10, fl - 20, 3, 20, K[2]).rect(53, fl - 14, 3, 14, K[2])
-    s.rect(13, fl - 12, 40, 4, P.porcelain[3]).ellipse(17, fl - 13, 4, 2, P.porcelain[3])
-    s.rect(22, fl - 13, 31, 5, P.coral[2]).hline(22, 52, fl - 13, P.coral[3])
-    for k in range(24, 52, 7):                                      # appliqué motif
-        s.set(k, fl - 11, P.porcelain[3]).set(k + 1, fl - 12, P.porcelain[3]).set(k + 2, fl - 11, P.porcelain[3]).set(k + 1, fl - 10, P.porcelain[3])
-    s.vline(10, fl - 6, fl, K[1]).vline(55, fl - 6, fl, K[1])
-    s.rect(60, fl - 8, 10, 8, P.oak[2]).hline(60, 69, fl - 8, P.oak[4])   # rattan nightstand + lamp
-    s.ellipse(65, fl - 13, 4, 4, P.oak[3]).vline(65, fl - 10, fl - 9, P.oak[1])
-    # living room: rattan sofa (seats 3), coffee table, monstera, surfboard on the wall
-    louvre(110, top + 8, 20, 12)
-    s.rect(90, fl - 10, 44, 3, P.oak[3]).hline(90, 133, fl - 10, P.oak[4])
-    s.rect(90, fl - 20, 44, 10, P.oak[2])
-    for x in range(91, 133, 2):
-        s.vline(x, fl - 19, fl - 11, P.oak[1 + (x % 4 == 1)])
+    # rush mats on the wooden floors
+    for x0, x1 in ((12, 70), (88, 156)):
+        for x in range(x0, x1):
+            s.set(x, fl + 2, R[3] if (x // 2) % 2 else R[2])
+        s.set(x0 - 1, fl + 2, R[1]).set(x1, fl + 2, R[1])
+
+    # ---- bedroom: carved koa bed, Hawaiian quilt, two pillows, nightstand, lamp, art
+    louvre(16, top + 8)
+    bx, bw = 9, 44
+    s.rect(bx, fl - 24, 4, 24, K[2]).vline(bx, fl - 24, fl - 1, K[3])         # headboard posts
+    s.rect(bx + 1, fl - 26, 2, 2, K[3])
+    s.rect(bx + 3, fl - 22, 2, 12, K[2])
+    for yy in range(fl - 21, fl - 11, 3):
+        s.set(bx + 4, yy, K[3])
+    s.rect(bx, fl - 10, bw, 4, K[2]).hline(bx, bx + bw - 1, fl - 10, K[3]).hline(bx, bx + bw - 1, fl - 7, K[0])   # frame
+    grain(bx + 1, fl - 9, bw - 2, 2)
+    s.rect(bx + bw - 3, fl - 15, 3, 15, K[2]).vline(bx + bw - 3, fl - 15, fl - 1, K[3])   # footboard
+    s.vline(bx + 1, fl - 6, fl, K[1]).vline(bx + bw - 2, fl - 6, fl, K[1])
+    s.rect(bx + 5, fl - 14, bw - 9, 4, P.porcelain[3]).hline(bx + 5, bx + bw - 5, fl - 11, P.porcelain[1])   # sheet
+    for k, px_ in enumerate((bx + 6, bx + 12)):                                  # pillows
+        s.ellipse(px_ + 2, fl - 15 - k, 3.5, 2, P.porcelain[3 if k else 2]).set(px_, fl - 16 - k, P.porcelain[3])
+    qx = bx + 17
+    s.rect(qx, fl - 15, bx + bw - 4 - qx, 5, P.coral[2]).hline(qx, bx + bw - 5, fl - 15, P.coral[3]).hline(qx, bx + bw - 5, fl - 11, P.coral[1])
+    for k in range(qx + 3, bx + bw - 5, 7):                                    # breadfruit appliqué
+        s.set(k, fl - 13, P.porcelain[3]).set(k - 1, fl - 14, P.porcelain[3]).set(k + 1, fl - 14, P.porcelain[3]).set(k, fl - 12, P.porcelain[3])
+    s.vline(bx + bw - 5, fl - 14, fl - 10, P.coral[1])                          # folded edge
+    ns = bx + bw + 2                                                           # koa nightstand
+    s.rect(ns, fl - 10, 12, 10, K[2]).hline(ns, ns + 11, fl - 10, K[4]).vline(ns + 11, fl - 9, fl - 1, K[0])
+    s.hline(ns + 1, ns + 10, fl - 6, K[1]).set(ns + 6, fl - 8, P.mustard[3]).set(ns + 6, fl - 4, P.mustard[3])
+    s.vline(ns + 6, fl - 14, fl - 11, K[1])                                    # rattan lamp
+    for k in range(5):
+        s.hline(ns + 3 + abs(2 - k) // 2, ns + 9 - abs(2 - k) // 2, fl - 20 + k, R[3] if k % 2 else R[2])
+    s.set(ns + 6, fl - 16, P.light[0])
+    s.rect(ns + 1, fl - 12, 3, 2, P.porcelain[3]).set(ns + 2, fl - 13, P.blossom[3])   # a shell
+    s.rect(43, top + 9, 13, 10, K[1]).rect(44, top + 10, 11, 8, P.sea[3])     # framed print: a wave
+    s.hline(44, 54, top + 15, P.porcelain[3]).hline(46, 52, top + 14, P.sea[4]).rect(44, top + 16, 11, 2, P.sand[3])
+
+    # ---- living room: rattan sofa (3 seats) with hibiscus cushions, koa table, ukulele, surfboard, plants
+    louvre(118, top + 7, 22, 13)
+    sx, sw = 90, 46
+    weave(sx, fl - 20, sw, 9)                                                  # backrest
+    s.hline(sx, sx + sw - 1, fl - 20, R[4]).hline(sx, sx + sw - 1, fl - 21, R[1])
+    for ax in (sx - 3, sx + sw):                                               # rolled arms
+        weave(ax, fl - 15, 4, 8)
+        s.ellipse(ax + 2, fl - 15, 2, 1.5, R[3])
+    s.rect(sx, fl - 11, sw, 4, P.teal[2]).hline(sx, sx + sw - 1, fl - 11, P.teal[4]).hline(sx, sx + sw - 1, fl - 8, P.teal[1])   # seat cushion
     for k in range(3):
-        s.rect(92 + k * 14, fl - 13, 12, 3, P.teal[3]).hline(92 + k * 14, 103 + k * 14, fl - 13, P.teal[4])
-        s.set(96 + k * 14, fl - 12, P.porcelain[3]).set(99 + k * 14, fl - 12, P.coral[3])
-    s.vline(91, fl - 7, fl, P.oak[1]).vline(132, fl - 7, fl, P.oak[1])
-    s.rect(100, fl - 4, 22, 2, K[3]).vline(102, fl - 2, fl, K[1]).vline(119, fl - 2, fl, K[1])
-    s.ellipse(111, fl - 6, 2, 2, P.mustard[3])                     # a pineapple on the table
+        cx = sx + 2 + k * 15
+        s.rect(cx, fl - 18, 12, 7, P.porcelain[3]).hline(cx, cx + 11, fl - 12, P.porcelain[1]).vline(cx + 11, fl - 18, fl - 12, P.porcelain[2])
+        hibiscus_dot(cx + 4, fl - 15, (P.coral, P.blossom, P.coral)[k])
+        s.set(cx + 8, fl - 14, P.green[3]).set(cx + 9, fl - 15, P.green[2])
+        s.vline(sx + 15 * (k + 1) - 1, fl - 11, fl - 8, P.teal[1]) if k < 2 else None
+    for lx in (sx, sx + sw - 2):
+        s.rect(lx, fl - 7, 2, 7, R[1])
+    tx = sx + 10                                                               # koa coffee table, glass bowl of limes
+    s.rect(tx, fl - 5, 26, 2, K[3]).hline(tx, tx + 25, fl - 5, K[4]).hline(tx, tx + 25, fl - 4, K[1])
+    s.vline(tx + 2, fl - 3, fl, K[1]).vline(tx + 23, fl - 3, fl, K[1]).hline(tx + 2, tx + 23, fl - 1, K[0])
+    s.ellipse(tx + 8, fl - 7, 3, 1.5, P.glass[3]).set(tx + 7, fl - 8, P.green[3]).set(tx + 9, fl - 8, P.mustard[3])
+    s.ellipse(tx + 18, fl - 8, 1.8, 2.5, P.mustard[3]).set(tx + 17, fl - 9, P.mustard[4])   # pineapple
     for k in range(3):
-        s.set(110 + k, fl - 9 + (k % 2), P.green[3])
-    mx = 146                                                        # monstera in a pot
-    s.rect(mx - 3, fl - 7, 7, 7, P.terracotta[2]).hline(mx - 3, mx + 3, fl - 7, P.terracotta[3])
-    for a, L in ((-2.4, 9), (-1.6, 12), (-0.8, 9), (-1.2, 7), (-2.0, 7)):
-        ex, ey = int(mx + math.cos(a) * L), int(fl - 8 + math.sin(a) * L)
-        s.line(mx, fl - 8, ex, ey, P.green[2])
-        s.ellipse(ex, ey, 3, 2.2, P.green[2]).set(ex - 1, ey - 1, P.green[3]).set(ex + 1, ey, P.green[1])
-    for y in range(top + 6, top + 30):                              # surfboard on the wall
-        t = (y - top - 6) / 24
-        hw = int(2.5 * math.sin(math.pi * t) + 0.4)
-        s.hline(89 - hw, 89 + hw, y, P.hydrangea[3])
-    s.vline(89, top + 8, top + 28, P.porcelain[3])
-    # kitchen: koa counter, two burners, open shelf with bowls and a bunch of bananas
-    s.rect(170, fl - 14, 46, 14, K[2]).hline(170, 215, fl - 14, P.porcelain[3]).hline(170, 215, fl - 13, P.porcelain[2])
-    for x in (180, 196):
-        s.rect(x, fl - 10, 10, 8, K[1]).set(x + 8, fl - 6, P.mustard[3])
-    s.rect(200, fl - 16, 10, 2, P.slate[1])                         # burners
-    s.rect(172, fl - 18, 9, 4, P.steel[3]).hline(172, 180, fl - 18, P.steel[4])   # kettle-ish pot
-    s.rect(172, top + 12, 40, 2, K[3])
-    for k, C in enumerate((P.porcelain, P.teal, P.coral, P.porcelain)):
-        s.rect(174 + k * 9, top + 8, 6, 4, C[2]).hline(174 + k * 9, 179 + k * 9, top + 8, C[3])
-    for k in range(4):
-        s.ellipse(206 + k, top + 18 + k, 1.5, 3, P.mustard[3])
-    louvre(186, top + 18, 12, 8)
-    # bath: walk-in shower with a bamboo screen, toilet, basin and mirror
-    s.rect(224, top + 12, 12, fl - top - 12, P.glass[3]).vline(236, top + 12, fl - 1, P.steel[3])
-    s.vline(229, top + 8, top + 12, P.steel[2]).rect(227, top + 12, 5, 2, P.steel[3])
-    import _furniture as F
-    HS.on_floor(s, F.toilet(), 240, 1, 1)
-    s.rect(244, top + 16, 8, 8, P.glass[2]).rect(243, top + 15, 10, 1, P.oak[3])
+        s.set(tx + 17 + k, fl - 11 - (k % 2), P.green[3])
+    for y in range(top + 5, top + 32):                                         # surfboard on the wall
+        t = (y - top - 5) / 27
+        hw = int(2.6 * math.sin(math.pi * t) + 0.4)
+        s.hline(87 - hw, 87 + hw, y, P.hydrangea[3])
+        s.set(87 - hw, y, P.hydrangea[4]).set(87 + hw, y, P.hydrangea[1])
+    s.vline(87, top + 7, top + 30, P.porcelain[3])
+    ux, uy = 147, top + 10                                                      # ukulele
+    s.ellipse(ux, uy + 10, 3, 3.5, K[3]).ellipse(ux, uy + 6, 2.5, 2.5, K[3]).set(ux, uy + 9, K[0])
+    s.vline(ux, uy - 2, uy + 4, K[1]).rect(ux - 1, uy - 4, 3, 2, K[2])
+    s.vline(ux - 1, uy + 3, uy + 12, P.oat[3])
+    basket_plant(151, fl, "monstera")
+
+    # ---- kitchen: koa cabinets, a sink under the window, two-burner stove with a kettle, shelf
+    louvre(178, top + 6, 14, 9)
+    kx0, kx1 = 170, 216
+    s.rect(kx0, fl - 15, kx1 - kx0, 15, K[2]).hline(kx0, kx1 - 1, fl - 1, K[0])
+    for dx in range(kx0 + 1, kx1 - 1, 11):                                     # cabinet doors with brass knobs
+        s.rect(dx, fl - 12, 10, 10, K[1]).rect(dx + 1, fl - 11, 8, 8, K[2]).hline(dx + 1, dx + 8, fl - 11, K[3])
+        s.set(dx + 8, fl - 7, P.mustard[3])
+    s.rect(kx0 - 1, fl - 16, kx1 - kx0 + 2, 2, P.porcelain[3]).hline(kx0 - 1, kx1, fl - 15, P.porcelain[1])   # counter top
+    s.rect(180, fl - 16, 12, 1, P.steel[2])                                    # sink + tap
+    s.vline(186, fl - 21, fl - 17, P.steel[3]).hline(186, 189, fl - 21, P.steel[3])
+    s.rect(200, fl - 17, 12, 1, P.slate[1]).set(203, fl - 18, P.slate[2]).set(209, fl - 18, P.slate[2])   # burners
+    s.ellipse(204, fl - 20, 3, 2.5, P.coral[2]).hline(202, 206, fl - 22, P.coral[3]).set(207, fl - 21, P.coral[1])   # kettle
+    s.rect(196, top + 6, 20, 2, K[3]).hline(196, 215, top + 7, K[1])        # open shelf
+    for k, C in enumerate((P.porcelain, P.teal, P.porcelain, P.coral)):
+        s.rect(197 + k * 5, top + 2, 4, 4, C[2]).hline(197 + k * 5, 200 + k * 5, top + 2, C[3])
+    for k in range(4):                                                        # bananas hanging under the shelf
+        s.ellipse(213 - k, top + 13 + k, 1.2, 2.6, P.mustard[3])
+    s.vline(213, top + 8, top + 11, K[1])
+    s.ellipse(173, fl - 19, 3, 2, R[2]).set(172, fl - 21, P.coral[3]).set(174, fl - 20, P.mustard[3]).set(173, fl - 21, P.green[3])   # fruit bowl
+
+    # ---- bath: tiled shower with a curtain, toilet, vanity with mirror, towel, orchid
+    for yy in range(top + 2, fl, 4):                                           # wall tiles
+        s.hline(222, 255, yy, P.porcelain[2])
+        for xx in range(222 + (yy // 4) % 2 * 3, 256, 6):
+            s.vline(xx, yy, yy + 3, P.porcelain[2])
+    s.hline(223, 236, top + 4, P.steel[3])                                     # shower rail + curtain
+    for x in range(223, 230):
+        s.vline(x, top + 5, fl - 3, P.sea[3] if (x % 2) else P.sea[4])
+    s.vline(234, top + 6, top + 9, P.steel[2]).rect(232, top + 9, 5, 2, P.steel[3])
+    HS.on_floor(s, F.toilet(), 238, 1, 1)
+    s.rect(244, top + 12, 9, 10, K[2]).rect(245, top + 13, 7, 8, P.glass[2]).set(246, top + 14, P.glass[4])   # mirror
+    s.rect(242, top + 26, 12, 3, P.porcelain[3]).hline(242, 253, top + 28, P.porcelain[1])   # basin shelf
+    s.vline(248, top + 23, top + 25, P.steel[3])
+    s.rect(231, top + 18, 3, 9, P.coral[3]).vline(233, top + 18, top + 26, P.coral[1])   # towel
+    s.rect(250, top + 23, 3, 3, P.porcelain[3]).set(251, top + 21, P.lilac[3]).set(252, top + 20, P.lilac[2])   # orchid
     s.blit(front, 0, 0)
     return s, INSIDE_DATA
 
