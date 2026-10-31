@@ -203,3 +203,10 @@ validation and remaining gaps. Standalone reviews remain available.
 - Native NPCs only in public flower-field/windmill regions (0–2); farmhouse, planting,
   orchard and pasture (3–5) and interiors are private and have zero NPCs.
 - This is `/map-test/` only; no formal-version integration. See `SEASON_GAME_TEST.md`.
+
+### Owner decisions · 2026-11-01
+- Drift clouds BEHIND every non-sky plane; clear sky from live field-wind sheets too.
+- Add small/heavy rain and small/heavy snow, following game weather with a temporary
+  visual test selector. Never draw precipitation in the farmhouse.
+- Walk to entrance/exit + fade out/in transition; visible clickable indoor exit arrow;
+  leaving from the upper floor must route down stairs. Remains `/map-test/` only.

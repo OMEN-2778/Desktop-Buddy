@@ -24,17 +24,18 @@ function installSeasonPeople(active,ctl){
   for(const n of life.npcs){if(!n.paused){n.x+=n.dir*n.v*dt;if(Math.abs(n.x-n.origin)>n.range)n.dir*=-1;n.dist+=n.v*dt;}
    n.feet=sim.place==='spring_test'?103:n.seasonKind==='walk'?c.gr(n.x):n.seasonKind==='swim'?128+Math.sin(realClock*1.7+n.phase)*.5:Math.min(c.gr(n.x)-20,170+Math.sin(realClock*.35+n.phase)*12);
   }
+  if(sim.place==='summer_test')for(const n of life.npcs)if(n.seasonKind!=='walk'&&Math.abs(n.x-c.state.camX-171)<250&&Math.abs(n.feet-c.state.camY-c.canvas.height/2)<c.canvas.height/2+40)c.fx.waterActor(n.personId,n.x,n.feet,n.dir,!n.paused,n.seasonKind==='dive',dt,116);
   if(life.talkQ)advanceNpcTalk(dt);
   const q=life.talkQ,n=q?.n||life.npcs.find(n=>n.sayUntil>realClock);
   if(n&&(n.sayUntil>realClock||q?.lastOther)){
    const text=q?.lastOther?q.lastText:n.sayText;if(text){if(bubble.textContent!==text)bubble.textContent=text;bubble.hidden=false;const s=c.state,x=n.x-(s.camera??s.camX??0),y=n.feet-(s.camY||0)-30;const scale=Number(view.style.width.replace('px',''))/342||view.width/342;bubble.style.left=Math.max(8,Math.min(342*scale-8,x*scale))+'px';bubble.style.top=(y*scale)+'px';}
   }else bubble.hidden=true;
  }
- function image(n){const [f,pose]=npcFrame(n),pic=npcCanvas(n,f,pose,false);if(n.seasonKind==='walk')return pic;
-  n.seaCanvas??=Object.assign(document.createElement('canvas'),{width:20,height:28});const ctx=n.seaCanvas.getContext('2d');ctx.clearRect(0,0,20,28);const sheet=ctl().personSheet(n.look.gender,n.seasonKind==='dive'?'wetsuit':'swim');ctx.drawImage(sheet,4,14,20,14,0,14,20,14);ctx.drawImage(pic,0,0,20,15,0,0,20,15);return n.seaCanvas;
- }
- function draw(ctx){sync();for(const n of life.npcs){const pic=image(n);ctx.save();ctx.translate(n.x,n.feet);if(n.seasonKind==='dive'){ctx.scale(n.dir,1);ctx.rotate(Math.PI/2);ctx.drawImage(pic,-10,-14);}else{if(hover===n)drawObjectHover(ctx,pic,-10,-27);ctx.drawImage(pic,-10,-27);}ctx.restore();}}
- function hit(x,y){return [...life.npcs].reverse().find(n=>Math.abs(n.x-x)<(n.seasonKind==='dive'?17:12)&&Math.abs(n.feet-y-(n.seasonKind==='dive'?0:13))<18);}
+ function draw(ctx){sync();const c=ctl(),s=c.state;for(const n of life.npcs){const cx=s.camera??s.camX??0,cy=s.camY||0;if(n.x<cx-60||n.x>cx+400||n.feet<cy-5||n.feet>cy+c.canvas.height+40)continue;const [f,pose]=npcFrame(n),pic=npcCanvas(n,f,pose,false);
+  if(n.seasonKind!=='walk'){const diving=n.seasonKind==='dive';c.fx.swimmer(ctx,{head:pic,skin:n.look.skin,sheet:c.personSheet(n.look.gender,diving?'wetsuit':'swim'),x:n.x,y:n.feet,time:s.time,facing:n.dir,diving,moving:!n.paused,wetsuit:diving,waterline:116,phase:n.phase});}
+  else{if(hover===n)drawObjectHover(ctx,pic,n.x-10,n.feet-27);ctx.drawImage(pic,n.x-10,n.feet-27);}
+ }}
+ function hit(x,y){return [...life.npcs].reverse().find(n=>Math.abs(n.x-x)<(n.seasonKind==='walk'?12:33)&&Math.abs(n.feet-y-(n.seasonKind==='dive'?0:13))<18);}
  function click(x,y){const n=hit(x,y);if(!n)return false;if(!canClickNpc(n)||npcRefusesDirty(n,true))return true;
   const c=ctl(),s=c.state;if(n.seasonKind!=='walk'&&s.suit==='clothes'){showHint('先换上泳装再游过去吧');return true;}
   stopNpcTalk();if(approaching)approaching.paused=false;approaching=n;n.paused=true;

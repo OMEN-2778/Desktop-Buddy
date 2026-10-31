@@ -18,10 +18,10 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  await page.evaluate(()=>springPreview.go(5,530));await page.waitForTimeout(250);assert(await page.evaluate(()=>springPreview.state.camera)>300);
  await page.locator('canvas').screenshot({path:'/workspace/artifacts/spring-web/ranch-camera.png'});
  await page.locator('#maps button').nth(3).click();await page.locator('#enter').click();
- await page.evaluate(()=>{for(let i=0;i<90;i++)springPreview.move(.05);});assert(await page.evaluate(()=>springPreview.state.inside));
- await page.evaluate(()=>{springPreview.target(120,50);for(let i=0;i<160;i++)springPreview.move(.05);});assert.equal(Math.round(await page.evaluate(()=>springPreview.state.y)),50);
+ await page.evaluate(()=>{for(let i=0;i<90;i++){springPreview.move(.05);springPreview.advanceDoor(.05);}});assert(await page.evaluate(()=>springPreview.state.inside));
+ await page.evaluate(()=>{springPreview.target(120,50);for(let i=0;i<160;i++){springPreview.move(.05);springPreview.advanceDoor(.05);}});assert.equal(Math.round(await page.evaluate(()=>springPreview.state.y)),50);
  await page.locator('canvas').screenshot({path:'/workspace/artifacts/spring-web/inside.png'});
- await page.locator('#exit').click();await page.evaluate(()=>{for(let i=0;i<180;i++)springPreview.move(.05);});assert.equal(await page.evaluate(()=>springPreview.state.inside),false);
+ await page.locator('#exit').click();await page.evaluate(()=>{for(let i=0;i<180;i++){springPreview.move(.05);springPreview.advanceDoor(.05);}});assert.equal(await page.evaluate(()=>springPreview.state.inside),false);
  await page.locator('#maps button').nth(2).click();const a=await canvas.screenshot();await page.waitForTimeout(400);const b=await canvas.screenshot();assert(!a.equals(b),'Scene must animate');
  await page.locator('#pause').click();const time=await page.evaluate(()=>springPreview.state.time);await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>springPreview.state.time),time);await page.locator('#pause').click();
  assert.deepEqual(errors,[]);console.log('PASS six maps, click and keyboard walk, edge transition, ranch camera, farmhouse floors and exit, animations, pause; no page errors');

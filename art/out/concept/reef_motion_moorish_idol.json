@@ -1,0 +1,21 @@
+{
+  "frame_w": 31,
+  "frame_h": 39,
+  "anims": {
+    "reef_motion_moorish_idol": {
+      "row": 0,
+      "frames": 8,
+      "durations": [
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90
+      ],
+      "loop": true
+    }
+  }
+}

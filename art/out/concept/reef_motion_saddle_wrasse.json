@@ -1,0 +1,21 @@
+{
+  "frame_w": 33,
+  "frame_h": 22,
+  "anims": {
+    "reef_motion_saddle_wrasse": {
+      "row": 0,
+      "frames": 8,
+      "durations": [
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90
+      ],
+      "loop": true
+    }
+  }
+}

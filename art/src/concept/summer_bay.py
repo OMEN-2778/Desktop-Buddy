@@ -22,6 +22,7 @@ import summer_sea as SS
 import _bay_parts as BP
 import beach as BE
 import sea_life as SL
+import sea_life_motion as MOT
 from pixelkit import P, Sprite
 
 PREVIEW_SCALE = 1
@@ -200,9 +201,13 @@ def strata(s):
         wob = 2 * math.sin(x * 0.045) + 1.5 * math.sin(x * 0.13 + 1)
         for y in range(g, GH):
             d = y - g
+            noise=x*374761393+y*668265263
+            noise=(noise^(noise>>13))*1274126177
+            grain=(noise^(noise>>16)) & 65535
+            jitter=(grain/65535-.5)*5 + 1.8*math.sin(x*.73+y*.31)
             k = 0
             for i, (dd, _) in enumerate(STRATA):
-                if d >= dd + (wob if i > 2 else 0):
+                if d + (jitter if d>3 else jitter*.25) >= dd + (wob if i > 2 else 0):
                     k = i
             col = STRATA[k][1]
             if d < 3 and x < 470 - 30 * SS.BAYER[y % 4, x % 4]:     # lawn round the lodge, fading into sand
@@ -212,6 +217,9 @@ def strata(s):
                     col = P.sand[max(0, P.sand.index(col) - 1)]
                 if steep > 1.2 and d < 7:                            # bare rock skin on steep faces
                     col = (P.sea_grey[3], P.sea_grey[2], P.sea_grey[2], P.sea_grey[1], P.sea_grey[1], P.walnut[1], P.walnut[1])[d]
+            # Fine stone grains and warm/cool flecks, never a flat striped fill.
+            if d>4 and grain%41==0 and k>0:col=STRATA[k-1][1]
+            elif d>8 and grain%59==0 and k<len(STRATA)-1:col=STRATA[k+1][1]
             s.set(x, y, col)
             EARTH[y, x] = True
         if x >= LAND:
@@ -290,7 +298,12 @@ def jungle_strip(s, x0, x1, seed):
         s.blit(tmp, o, DY)
 
 
-def lodge_screen(t):
+def lodge_screen(t, plants=True):
+    if not plants:
+        SI.lodge(t)
+        for x in (86,244):SI.tiki_torch(t,x,SI.LANE[0]-1)
+        SI.mailbox_sign(t,316,SI.LANE[0]-1)
+        return
     b = SI.LANE[0] - 1
     for x, h, ln, sd in ((24, 62, 1, 1), (40, 50, -1, 6), (268, 56, -1, 2), (320, 66, -1, 3)):
         SI.palm2(t, x, b + 2, h, lean=ln, seed=sd)
@@ -308,7 +321,10 @@ def lodge_screen(t):
     SI.mailbox_sign(t, 316, b)
 
 
-def cabana_screen(t):
+def cabana_screen(t, plants=True):
+    if not plants:
+        SI.canoe(t,272,SI.LANE[0]+1)
+        return
     b = SI.LANE[0] - 1
     for x, h, ln, sd in ((20, 60, 1, 4), (36, 48, -1, 12), (226, 64, 1, 5), (244, 50, -1, 13), (318, 58, 1, 14)):
         SI.palm2(t, x, b + 2, h, lean=ln, seed=sd)
@@ -322,27 +338,68 @@ def cabana_screen(t):
 CHAIRS = [(PRE + 190, P.hydrangea), (PRE + 222, P.mustard)]
 
 
-def land(s, frame=0):
+def land(s, frame=0, plants=True, structures=True):
     BP.mountains(s, 0, PRE + 236, WL - 9, [(170, 60, 74), (440, 80, 56), (PRE + 40, 60, 66), (PRE + 180, 40, 30)], 9)
     gy = lambda x: GROUND[max(0, min(GW - 1, x))]
-    BP.jungle(s, 0, PRE + 170, gy, 31)
-    BP.understory(s, 0, PRE + 160, gy, 8)
+    if plants:
+        BP.jungle(s, 0, PRE + 170, gy, 31)
+        BP.understory(s, 0, PRE + 160, gy, 8)
     strata(s)
     for cx, w, h, sd in ((10, 34, 30, 1), (34, 26, 18, 2), (2, 20, 40, 3)):    # rocks close the map on the left
         boulder(s, cx, GROUND[max(0, cx)] + 3, w, h, sd)
-    s.blit(screen_piece(lodge_screen, DY), 0, DY)
-    s.blit(screen_piece(cabana_screen, DY), 342, DY)
-    BP.cabana3d(s, 342 + SI.CABANA[0], 342 + SI.CABANA[1], GROUND[342 + 120] + 1, {k: 342 + v for k, v in SI.CABANA_DOORS.items()})
-    BP.understory(s, 342 + 190, 342 + 250, gy, 4)
+    if structures:
+        buildings(s,plants)
+    if plants:BP.understory(s,342+190,342+250,gy,4)
     for cx, w, h, sd in ((PRE + 30, 20, 12, 4), (PRE + 46, 12, 7, 5), (LAND + 52, 18, 9, 7), (LAND + 40, 9, 5, 8)):
         boulder(s, cx, GROUND[cx] + 2, w, h, sd)
-    SI.palm2(s, PRE + 112, GROUND[PRE + 112], 70, lean=1, frame=frame, seed=2)
-    SI.palm2(s, PRE + 140, GROUND[PRE + 140], 52, lean=1, frame=frame, seed=5)
-    SI.palm2(s, PRE + 74, GROUND[PRE + 74], 44, lean=-1, frame=frame, seed=8)
-    SI.umbrella(s, PRE + 206, GROUND[PRE + 206], R=P.coral)
-    for cx, C in CHAIRS:                                             # front-facing beach chairs (owner)
-        BP.beach_chair(s, cx, GROUND[cx] + 1, C)
+    if plants:SI.palm2(s, PRE + 112, GROUND[PRE + 112], 70, lean=1, frame=frame, seed=2)
+    if plants:SI.palm2(s, PRE + 140, GROUND[PRE + 140], 52, lean=1, frame=frame, seed=5)
+    if plants:SI.palm2(s, PRE + 74, GROUND[PRE + 74], 44, lean=-1, frame=frame, seed=8)
+    if structures:
+        SI.umbrella(s,PRE+206,GROUND[PRE+206],R=P.coral)
+        for cx,C in CHAIRS:BP.beach_chair(s,cx,GROUND[cx]+1,C)
     footprints(s, 470, PRE + 300)
+
+
+def buildings(s,plants=False):
+    s.blit(screen_piece(lambda t:lodge_screen(t,plants),DY),0,DY)
+    s.blit(screen_piece(lambda t:cabana_screen(t,plants),DY),342,DY)
+    BP.cabana3d(s,342+SI.CABANA[0],342+SI.CABANA[1],GROUND[342+120]+6,{k:342+v for k,v in SI.CABANA_DOORS.items()})
+
+
+def moving_plants():
+    """Individual rooted sprites: separate phases, shrubs move less than palms."""
+    result=[]
+    def capture(fn,args,kind='tree',offset=(0,0),kwargs=None):
+        tmp=Sprite(GW,GH);fn(tmp,*args,**(kwargs or {}));ys,xs=np.nonzero(tmp.px[...,3]);
+        if not len(xs):return
+        x,y=int(xs.min()),int(ys.min());piece=tmp.crop(x,y,int(xs.max())-x+1,int(ys.max())-y+1)
+        result.append((piece,x+offset[0],y+offset[1],kind))
+    gy=lambda x:GROUND[max(0,min(GW-1,x))]
+    original=BP.canopy
+    def canopy(_s,*args,**kw):capture(original,args,'tree' if kw.get('trunk',True) else 'shrub',kwargs=kw)
+    BP.canopy=canopy
+    try:
+        dummy=Sprite(GW,GH);BP.jungle(dummy,0,PRE+170,gy,31);BP.understory(dummy,0,PRE+160,gy,8)
+        front_start=len(result);BP.understory(dummy,342+190,342+250,gy,4)
+        for i in range(front_start,len(result)):
+            im,x,y,kind=result[i];result[i]=(im,x,y,'shrub-front')
+    finally:BP.canopy=original
+    b=SI.LANE[0]-1
+    for o,items in [(0,[(24,62,1,1),(40,50,-1,6),(268,56,-1,2),(320,66,-1,3)]),(342,[(20,60,1,4),(36,48,-1,12),(226,64,1,5),(244,50,-1,13),(318,58,1,14)])]:
+        for x,h,ln,seed in items:capture(SI.palm2,(x,b+2,h),'palm',(o,DY),{'lean':ln,'seed':seed})
+    for x,h,ln,seed in [(PRE+112,70,1,2),(PRE+140,52,1,5),(PRE+74,44,-1,8)]:capture(SI.palm2,(x,GROUND[x],h),'palm',kwargs={'lean':ln,'seed':seed})
+    for o,x,h,seed in [(0,252,30,1),(0,300,26,2),(342,50,24,3)]:capture(SI.banana,(x,b,h,seed),'palm',(o,DY))
+    for x,R in [(62,P.coral),(88,P.blossom),(256,P.mustard),(282,P.coral)]:capture(SI.hibiscus,(x,b,11,11,R),'shrub',(0,DY))
+    capture(SI.plumeria,(74,b,30),'tree',(0,DY))
+    for x in (86,244):capture(SI.heliconia,(x+6,b,P.coral if x<100 else P.mustard),'shrub-front',(0,DY))
+    for x,z in ((100,1.2),(230,1.1)):capture(SI.monstera,(x,b,z),'shrub-front',(0,DY))
+    for x,R in ((200,P.coral),(264,P.mustard),(30,P.blossom)):
+        if x==200:capture(SI.heliconia,(x,b,R),'shrub',(342,DY))
+        else:capture(SI.hibiscus,(x,b,9,9,R),'shrub',(342,DY))
+    tmp=Sprite(GW,GH);cx,cy=BP.sea_stack(tmp,STACK[0]+6,GW+10,WL,GH,3)
+    capture(SI.palm2,(cx+2,cy,34),'palm',kwargs={'lean':-1,'seed':21})
+    return result
 
 
 # ------------------------------------------------------------- under water (owner: calmer, a real gradient)
@@ -481,7 +538,7 @@ def calm_decor():
 def calm_life():
     s = Sprite(SEA_W, SEA_H)
     for kind, f, x, y in LIFE:
-        s.blit(f(0), x, y)
+        s.blit(MOT.frames(kind)[0], x, y)
     return s
 
 
@@ -543,7 +600,7 @@ def fog(s):
     s.px[WL:, :, :3] = (px * (1 - f) + WROWS[WL:, None, :] * f).astype(np.uint8)
 
 
-def bay(frame=0, clouds=True, life=True):
+def bay(frame=0, clouds=True, life=True, plants=True, structures=True, sun=True):
     """clouds/life=False: the static backdrop for the web preview, which
     drifts the clouds and swims the creatures itself."""
     s = Sprite(GW, GH)
@@ -567,9 +624,9 @@ def bay(frame=0, clouds=True, life=True):
         s.set(x, WL + 1, P.sea[4])
     rock(s)
     cx, cy = BP.sea_stack(s, STACK[0] + 6, GW + 10, WL, GH, 3)
-    SI.palm2(s, cx + 2, cy, 34, lean=-1, seed=21)
+    if plants:SI.palm2(s, cx + 2, cy, 34, lean=-1, seed=21)
     foam(s, STACK[0] - 2, GW, WL)
-    land(s, frame)
+    land(s, frame, plants, structures)
     s.blit(calm_decor(), LAND, SKY)
     if life:
         s.blit(calm_life(), LAND, SKY)
@@ -577,7 +634,7 @@ def bay(frame=0, clouds=True, life=True):
     rays.px[:, :, 3] = np.where(rays.px[..., 3] > 0, 255, 0)
     rp = _pad(rays)
     rp.px[EARTH] = 0
-    SS.blend_into(s, rp, 0.10)
+    if sun:SS.blend_into(s, rp, 0.10)
     fog(s)
     shore(s)
     return s

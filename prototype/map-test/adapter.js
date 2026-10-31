@@ -11,11 +11,9 @@ const seasonalTest=(function(){
   const walking=s.walk,phase=Math.floor(s.time*7)%4;
   const f={expr:sim.mode==='down'?'sleepy':emotion().key==='happy'?'happy':'neutral',look:s.facing||1,bob:walking?phase%2:0,sway:walking?phase%2:0,wave:null};
   let dc=dollCanvas(f,sea&&s.lying!==null?'sit':walking?(phase===1?'walkL':phase===3?'walkR':'stand'):'stand');
+  if(sea&&(sea.under||sea.floating)&&!s.inside){state.summer.fx.swimmer(ctx,{head:dc,skin:look.skin,sheet:sea.sheet,x,y,time:s.time,facing:s.facing,diving:sea.under,moving:s.walk,wetsuit:s.suit==='wetsuit',waterline:116});return;}
   if(sea&&s.suit!=='clothes'){
-   bodyCtx.clearRect(0,0,20,28);const i=sea.cell;
-   // Keep the player's real head/hair/eyes; use the shared preview's outfit body.
-   bodyCtx.drawImage(sea.sheet,(i>=6?4:i*28+4),14,20,14,0,14,20,14);
-   bodyCtx.drawImage(dc,0,0,20,15,0,0,20,15);dc=body;
+   bodyCtx.clearRect(0,0,20,28);bodyCtx.drawImage(sea.sheet,4,14,20,14,0,14,20,14);bodyCtx.drawImage(dc,0,0,20,15,0,0,20,15);dc=body;
   }
   ctx.save();ctx.translate(x,y+(sea?.floating?Math.sin(s.time*2.2)*.65:0));
   if(sea&&(s.diveBlend||0)>.001){ctx.translate(0,-14);ctx.scale(s.facing||1,1);ctx.rotate(Math.PI/2*s.diveBlend);ctx.drawImage(dc,-10,-14);}
@@ -59,7 +57,7 @@ const seasonalTest=(function(){
   state.spring.root.hidden=sim.place!=='spring_test';state.summer.root.hidden=sim.place!=='summer_test';
   if(sim.place==='spring_test')c.go(0,80);
   else{c.state.x=120;c.state.y=c.gr(120);c.state.target=null;c.state.inside=false;c.state.lying=null;c.state.camX=c.state.camY=0;c.state.viewH=118;c.canvas.height=118;}
-  c.state.inCabana=false;people.sync(true);c.state.gender=look.gender||'f';state.last=realClock;state.autoAt=sim.t+25;sync();state.activeHeight=c.canvas.height;fit();
+  c.state.door=null;c.state.inCabana=false;people.sync(true);c.state.gender=look.gender||'f';state.last=realClock;state.autoAt=sim.t+25;sync();state.activeHeight=c.canvas.height;fit();
  };
  const originalThrough=throughDoor;throughDoor=function(dest){if(['spring_test','summer_test'].includes(dest)&&(friendOutingActive()||homeGuestPresent()||petWalkActive())){showHint('先结束当前同行或来访，再测试季节地图吧');sim.dest=null;sim.mode='idle';sim.act=null;sim.idleUntil=sim.t+5;return;}return originalThrough(dest);};
  const originalStart=startAct;startAct=function(name,quiet){
@@ -69,10 +67,10 @@ const seasonalTest=(function(){
  const originalRender=renderOutside;renderOutside=function(){
   if(!active())return originalRender();const c=ctl();if(!c.state.loaded)return;
   const dt=Math.min(.1,Math.max(0,realClock-state.last));state.last=realClock;
-  people.sync();c.setResolution(Math.max(1,view.width/W));const run=!!speed&&!cardHolds()&&!wiping&&sim.mode!=='down';
+  c.setWeather(weather.force==='blizzard'||weather.kind==='snow'&&weather.heavy?'blizzard':weather.kind);people.sync();c.setResolution(Math.max(1,view.width/W));const run=!!speed&&!cardHolds()&&!wiping&&sim.mode!=='down';
   c.state.paused=!run;c.state.gender=look.gender||'f';
   if(run){
-   if(!life.talkQ&&!c.state.inCabana&&!c.state.target&&sim.t>=state.autoAt&&!ringOf){state.autoAt=sim.t+20+Math.random()*25;
+   if(!life.talkQ&&!c.state.door&&!c.state.inCabana&&!c.state.target&&sim.t>=state.autoAt&&!ringOf){state.autoAt=sim.t+20+Math.random()*25;
     if(sim.place==='spring_test'&&!c.state.inside)c.target(Math.max(20,Math.min((c.state.scene===5?684:342)-20,c.state.x+(Math.random()<.5?-1:1)*(30+Math.random()*70))));
     else if(sim.place==='summer_test'&&!c.state.inside&&c.state.lying===null)c.goTo(Math.max(50,c.state.x+(Math.random()<.5?-1:1)*45));
    }
@@ -84,7 +82,7 @@ const seasonalTest=(function(){
  };
  const oldCenter=ringCenter;ringCenter=function(){if(!active())return oldCenter();const c=ctl(),s=c.state;return {x:s.x-(s.camera??s.camX??0),y:s.y-(s.camY??0)-13};};
  view.addEventListener('pointerdown',e=>{
-  if(!active())return;e.stopImmediatePropagation();if(wiping||phoneHolds()||cardHolds()||wardrobeOpen)return;
+  if(!active())return;e.stopImmediatePropagation();if(ctl()?.state.door||wiping||phoneHolds()||cardHolds()||wardrobeOpen)return;
   const c=ctl(),s=c.state,r=view.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*c.canvas.height/r.height;
   const sx=s.x-(s.camera??s.camX??0),sy=s.y-(s.camY??0);
   if(sim.mode==='down'){if(Math.abs(x-sx)<22&&Math.abs(y-sy+8)<18){holding={t0:realClock,pointerId:e.pointerId};view.setPointerCapture(e.pointerId);showHint('按住主角 5 秒即可唤醒');}return;}
@@ -97,7 +95,7 @@ const seasonalTest=(function(){
  const originalSnapshot=snapshot;snapshot=function(){const save=originalSnapshot();if(active())save.seasonMapTest={place:sim.place,state:JSON.parse(JSON.stringify(ctl().state,(key,value)=>value instanceof Set?[...value]:value))};return save;};
  const originalRestore=restore;restore=function(save){
   if(['spring_test','summer_test'].includes(save?.sim?.place)&&!save.seasonMapTest)save.sim.place='home';
-  const out=originalRestore(save);if(active()&&save.seasonMapTest){const c=ctl(),saved=save.seasonMapTest.state;Object.assign(c.state,saved,{loaded:c.state.loaded,target:null,after:null,inCabana:false});people.sync();if(c.state.found)c.state.found=new Set(saved.found||[]);sync();fit();}return out;
+  const out=originalRestore(save);if(active()&&save.seasonMapTest){const c=ctl(),saved=save.seasonMapTest.state;Object.assign(c.state,saved,{loaded:c.state.loaded,target:null,after:null,inCabana:false,door:null});people.sync();if(c.state.found)c.state.found=new Set(saved.found||[]);sync();fit();}return out;
  };
  // No actual updater on a browser test page. Persistent test saves use a separate key.
  startUpdateChecks=()=>{};

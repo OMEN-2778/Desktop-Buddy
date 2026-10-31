@@ -1,0 +1,21 @@
+{
+  "frame_w": 20,
+  "frame_h": 30,
+  "anims": {
+    "reef_motion_jelly": {
+      "row": 0,
+      "frames": 8,
+      "durations": [
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90
+      ],
+      "loop": true
+    }
+  }
+}

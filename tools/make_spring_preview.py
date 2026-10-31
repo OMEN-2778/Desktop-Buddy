@@ -2,6 +2,7 @@
 from pathlib import Path
 import sys,io,base64,json,subprocess,tempfile
 from PIL import Image
+import numpy as np
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'tools'),str(ROOT/'art/src/concept')]
 import spring_fields as F
@@ -27,9 +28,16 @@ def runtime_data():
                 for i,(x,y,w,h) in enumerate(F.PLOTS):
                     if i in (3,10):continue
                     for j,(cx,base) in enumerate(F.plot_slots(x,y,w,h)):F.crop(bg,F.CROPS[i%len(F.CROPS)],(3,3,2,3,1,2)[(i+j)%6],cx,base)
-        entry={'id':key,'name':{'brook':'溪桥樱堤','rape':'油菜花田','tulip':'风车花圃','home':'农舍','farm':'菜园','ranch':'果园与牧场'}[key],'width':width,'bg':uri(bg),'trees':tree,'front':front,'clouds':uri(cloud)}
+        # Clear only the exact sky pixels from the opaque scenic plane.
+        sky=Sprite(width,118);F.PK.sky(sky)
+        bp=np.array(bg.to_image() if isinstance(bg,Sprite) else bg.convert('RGBA'))
+        mask=np.all(bp[:118,:,:3]==sky.px[:118,:,:3],axis=2)
+        bp[:118,:,3][mask]=0;bg=Image.fromarray(bp)
+        entry={'sky':uri(sky),'id':key,'name':{'brook':'溪桥樱堤','rape':'油菜花田','tulip':'风车花圃','home':'农舍','farm':'菜园','ranch':'果园与牧场'}[key],'width':width,'bg':uri(bg),'trees':tree,'front':front,'clouds':uri(cloud)}
         if key in ('rape','tulip'):
-            entry['wind']=uri(art/f'spring_{key}_wind.png');entry['cleanTop']=uri(bg)
+            wind=np.array(Image.open(art/f'spring_{key}_wind.png').convert('RGBA'))
+            wind[:,:,3][np.tile(mask,(1,wind.shape[1]//342))]=0
+            entry['wind']=uri(Image.fromarray(wind));entry['cleanTop']=uri(bg)
         scenes.append(entry)
     inside,_=F.FS.cn_farmhouse_inside()
     poses=['stand','walkL','stand','walkR'];hero=Image.new('RGBA',(80,28))
@@ -48,7 +56,7 @@ def runtime_data():
 def main():
     data=runtime_data()
     # Public output contains built assets and minified preview code only.
-    js=(ROOT/'prototype/spring/viewer.js').read_text().replace('/*__DATA__*/null',json.dumps(data,ensure_ascii=False,separators=(',',':')))
+    js=(ROOT/'prototype/season/effects.js').read_text()+'\n'+(ROOT/'prototype/spring/viewer.js').read_text().replace('/*__DATA__*/null',json.dumps(data,ensure_ascii=False,separators=(',',':')))
     with tempfile.TemporaryDirectory(prefix='buddy-spring-preview-') as temp:
         source=Path(temp)/'viewer.js';target=Path(temp)/'viewer.min.js';source.write_text(js)
         subprocess.run(['node',str(ROOT/'desktop/node_modules/terser/bin/terser'),str(source),'--compress','--mangle','toplevel','--output',str(target)],check=True)

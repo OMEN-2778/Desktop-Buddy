@@ -216,3 +216,17 @@ validation and remaining gaps. Standalone reviews remain available.
 - Actual swimmers/divers belong to `/map-test/` native social adapter, not painted props.
   Removed decorative diver from shared LIFE. All changes remain previews/test-only.
 - See `SEASON_GAME_TEST.md` for implementation, test commands and remaining limitations.
+
+### Owner decisions · 2026-11-01 (15-point motion/art pass)
+- Full scenic-window wardrobe; remove “从左门进入，换好后由右门离开”. Cabana itself
+  lowered another 5px; keep physical left-in/right-out paths.
+- Redo swimmers with connected arm/leg strokes and knee flexion; abundant bubble trails,
+  expanding surface ripples for BOTH player/NPC, depth-weighted blue sprite-only tint.
+- ALL live reef species now use refined eight-phase motion (`sea_life_motion.py`),
+  individually phased schools + profile narrowing on turns. Original generated art.
+- Rolling waves/shore foam, shallow caustics/sun shafts, rooted long swaying kelp.
+- Clouds behind every non-sky layer. All land vegetation exported individually and
+  asynchronously deformed with rooted trunks; palms move more than shrubs.
+- Fine granular mixed soil boundaries replace rigid strata. Rain/heavy rain/snow/heavy
+  snow supported (incl. visual test selector). Indoor doors have a two-phase fade and
+  accessible exit. Implementation/tests/build limits: `SEASON_GAME_TEST.md` living pass.

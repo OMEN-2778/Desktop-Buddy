@@ -79,3 +79,47 @@ Still **test-only**, not a formal game/EXE change.
   all-pet locks and lock opt-out. Existing game-shell and standalone spring tests retained.
 - No claim of real-device frame-rate verification: headless browser checks behavior and
   layout; owner should assess mouse/camera feel on their actual display.
+
+## Living world pass · owner decisions 2026-11-01
+The owner supplied 15 explicit revisions; **still preview/test only**, no formal EXE.
+- Wardrobe: remove the left-in/right-out explanatory sentence; cover the entire scenic
+  window at every desktop scale. Keep the left/right physical entrance/exit behavior.
+- Shared `prototype/season/effects.js` draws articulated swimming: connected torso,
+  alternating flexed knees/extension, arm strokes, upright real head, wetsuit fins.
+  Used by actual player, all swimming/diving NPCs and standalone summer character.
+  Native look remains unchanged. Opaque sprite pixels alone get a blue source-atop tint,
+  increasing with actual world depth; no filled rectangle around the character.
+- Swimming AND diving leave plentiful rising bubbles; surface strokes emit expanding
+  elliptical ripples for the player AND NPCs. Effects tick on real time independently
+  from movement speed, pause with the scene, cap bubbles at 300; offscreen NPC emission
+  and avatar drawing are culled. Trails/particles are transient, not saved.
+- Summer has rolling surface wave crests + shoreline foam wash, shallow animated
+  caustics and shifting sun shafts (suppressed during rain/snow). Long individually
+  phased kelp ribbons grow from actual ground positions through the enlarged sea.
+- `sea_life_motion.py` replaces ALL live fish/animal art with refined profiles and
+  eight-phase tail/fin/bell cycles. School members have different phases. Runtime fish
+  turn with narrowed profile instead of an instant full-width flip. Distinct large
+  grouper/trevally profiles; generated PNG sheets/JSON in `art/out/concept/reef_motion_*`.
+  Some single-pixel fin rays/school highlights are intentional pixelkit lint orphans.
+- Shared runtime layer order: sky -> drifting clouds -> opaque scenic plane -> rooted
+  moving vegetation -> structures -> sea/animals/actors -> weather/transition. Spring
+  field wind sheets have the original sky mask cleared too, so they cannot cover clouds.
+- Summer `moving_plants()` exports individual forest trees, palms, bananas, flowers and
+  shrubs with anchored band deformation. Independent world-position phase/frequency;
+  shrubs have smaller amplitude. Cabana lowered five further world pixels into sand.
+- Soil strata now mix neighboring tones with deterministic fine granular thresholds,
+  irregular transitions and sparse grains; no uniform hard horizontal color bands.
+- Both maps render native small/heavy rain + small/heavy snow. Native heavy snow reads
+  weather.heavy/force=blizzard. Per-controller weather select can temporarily override
+  visuals for review; “跟随游戏” restores native weather. No precipitation indoors or
+  below the water surface; god rays/caustics disappear in precipitation.
+- Both farmhouse/lodge portals: walk to entrance, 650ms fade out/in with scene swap at
+  midpoint, ignore movement input during transition. Lodge inside now executes target
+  completion callbacks (root cause of stuck exit), proper floor y=84; visible exit arrow
+  and existing exit button. Farmhouse exit works from upstairs via the stairs route.
+  Loading a save clears transient door transitions; leaving any map clears wardrobe.
+- Regression `check_season_living_world.js`: real portal/upper-floor exit, lodge clickable
+  exit, wardrobe fill/no overflow at 25/50/75/100%, fish distinct frame assets, plant/kelp
+  counts, hero/NPC trails and ripples, increasing depth tint, all four weather types,
+  bounded particle counts + headless per-frame CPU render sample. Actual monitor/GPU
+  smoothness still needs owner play testing; headless timing is not a device FPS promise.

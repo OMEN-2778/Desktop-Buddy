@@ -6,6 +6,16 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-01 · Codex
+- Owner's 15-point seasonal TEST pass: full-window wardrobe/no door instruction; actual
+  articulated swimmers, player/NPC bubbles/ripples + depth tint; all reef species 8 poses.
+- Rolling waves, caustics/rays, long kelp, granular soil, lower cabana; individual rooted
+  vegetation motion + correct cloud planes; four weather types on both maps.
+- Animated farmhouse/lodge portals + clickable exit, upstairs route; fixed lodge callback.
+  Common FX `prototype/season/effects.js`; generated art `sea_life_motion.py`; test-only.
+- Tests/screens/per-frame headless sample in `check_season_living_world.js`, existing
+  regressions retained. Handoff: SEASON_GAME_TEST/SUMMER_SEA/SPRING_FARM. No formal EXE.
+
 ## 2026-10-31 · Codex
 - Seasonal TEST polish: spring edge arrows/14px tolerance; sea free area 3.06×,
   coral/kelp habitats; smooth damped/high-resolution camera, one resize/mode, slower dive,

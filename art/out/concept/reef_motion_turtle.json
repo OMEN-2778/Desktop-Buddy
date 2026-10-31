@@ -1,0 +1,21 @@
+{
+  "frame_w": 44,
+  "frame_h": 32,
+  "anims": {
+    "reef_motion_turtle": {
+      "row": 0,
+      "frames": 8,
+      "durations": [
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90
+      ],
+      "loop": true
+    }
+  }
+}

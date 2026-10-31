@@ -1,0 +1,21 @@
+{
+  "frame_w": 59,
+  "frame_h": 33,
+  "anims": {
+    "reef_motion_whitetip": {
+      "row": 0,
+      "frames": 8,
+      "durations": [
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90
+      ],
+      "loop": true
+    }
+  }
+}

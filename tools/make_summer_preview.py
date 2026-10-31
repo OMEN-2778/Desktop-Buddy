@@ -11,6 +11,7 @@ import summer_isle as SI
 import beach as BE
 import doll
 import sea_life as SL
+import sea_life_motion as MOT
 from pixelkit import Sprite, P
 
 
@@ -190,17 +191,28 @@ LIFE_TEXT = {
 
 
 def life():
-    """Creatures the page swims back and forth (global coords, from summer_bay.LIFE)."""
-    rng = {'turtle': (60, 4), 'manta': (80, 5), 'diver': (55, 6), 'jelly': (6, 1), 'eagleray': (50, 5), 'school': (70, 9),
-           'tang': (24, 7), 'butterflyfish': (20, 6), 'shark': (120, 6), 'grouper': (30, 2), 'ulua': (90, 10)}
-    return [{'f': [uri(fn(0)), uri(fn(1))], 'x': B.LAND + x, 'y': B.SKY + y, 'r': rng.get(k,(35,5))[0], 'v': rng.get(k,(35,5))[1], 'k': k}
-            for k, fn, x, y in B.LIFE if k!='diver']
+    speeds={'turtle':(60,4),'manta':(80,5),'jelly':(6,1),'eagleray':(50,5),'school':(70,9),'tang':(24,7),'butterflyfish':(20,6),'shark':(120,6),'grouper':(30,2),'ulua':(90,10)}
+    cache={}
+    def poses(k):
+        if k not in cache:cache[k]=[uri(f) for f in MOT.frames(k)]
+        return cache[k]
+    return [{'f':poses(k),'x':B.LAND+x,'y':B.SKY+y,'r':speeds.get(k,(35,5))[0],'v':speeds.get(k,(35,5))[1],'k':k} for k,fn,x,y in B.LIFE if k!='diver']
 
 
 def runtime_data():
-    bg = B.bay(clouds=False, life=False)
+    bg = B.bay(clouds=False,life=False,plants=False,structures=False,sun=False)
+    sky=B.Sprite(B.GW,B.GH);B.sky(sky)
+    import numpy as np
+    same=np.all(bg.px[:B.WL,:,:3]==sky.px[:B.WL,:,:3],axis=2)
+    bg.px[:B.WL,:,3][same]=0
+    structures=B.Sprite(B.GW,B.GH);B.buildings(structures)
+    SI.umbrella(structures,B.PRE+206,B.GROUND[B.PRE+206],R=B.P.coral)
+    for cx,C in B.CHAIRS:B.BP.beach_chair(structures,cx,B.GROUND[cx]+1,C)
+    plants=[{'img':uri(im),'x':x,'y':y,'kind':kind} for im,x,y,kind in B.moving_plants()]
+    # Individual rooted kelp stalks, heights follow the actual collision floor.
+    kelp=[{'x':x,'y':B.GROUND[x]+1,'h':48+(i*17)%53} for i,x in enumerate(range(B.LAND+320,B.STACK[0]-70,113))]
     data = {
-        'bg': uri(bg), 'W': B.GW, 'H': B.GH, 'WL': B.WL, 'ground': B.GROUND,
+        'bg':uri(bg),'sky':uri(sky),'structures':uri(structures),'plants':plants,'kelp':kelp,'shore':next(x for x in range(B.PRE,B.JOIN) if B.GROUND[x]>=B.WL), 'W': B.GW, 'H': B.GH, 'WL': B.WL, 'ground': B.GROUND,
         'lodgeDoor': SI.LODGE_DOOR, 'cabanaBounds':[342+SI.CABANA[0]-8,342+SI.CABANA[1]+20], 'cabana': {('swim' if k == 'bikini' else k): 342 + v for k, v in SI.CABANA_DOORS.items()},
         'zones': [[0, '旅舍'], [342, '更衣室'], [B.PRE, '沙滩'], [B.LAND, '海湾'], [B.LAND + 380, '沉船谷'], [B.LAND + 700, '熔岩拱门'], [B.LAND + B.SPLIT + 20, '海草草甸'], [B.LAND + B.SPLIT + 220, '深蓝海沟'], [B.STACK[0] - 160, '礁墙']],
         'inside': uri(ROOT / 'art/out/concept/summer_lodge_inside.png'),
@@ -217,7 +229,7 @@ def runtime_data():
 
 def main():
     data=runtime_data()
-    js = (ROOT / 'prototype/summer/viewer.js').read_text().replace('/*__DATA__*/null', json.dumps(data, ensure_ascii=False, separators=(',', ':')))
+    js = (ROOT/'prototype/season/effects.js').read_text()+'\n'+(ROOT / 'prototype/summer/viewer.js').read_text().replace('/*__DATA__*/null', json.dumps(data, ensure_ascii=False, separators=(',', ':')))
     with tempfile.TemporaryDirectory(prefix='buddy-summer-preview-') as temp:
         source, target = Path(temp) / 'viewer.js', Path(temp) / 'viewer.min.js'
         source.write_text(js)

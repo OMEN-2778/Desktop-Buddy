@@ -11,14 +11,11 @@ def controller(name,data):
     dom=re.search(r'<main>(.*?)</main>',template,re.S)[1]
     dom=re.sub(r'id="([^"]+)"',lambda m:f'id="season-{name}-{m[1]}"',dom)
     source=(ROOT/f'prototype/{name}/viewer.js').read_text().replace('/*__DATA__*/null',json.dumps(data,ensure_ascii=False,separators=(',',':')))
-    if name=='summer':
-        a=source.index("if(state.inside){ctx.fillStyle=");b=source.index(' const cx=state.camX',a)
-        source=source[:a]+"if(state.inside){ctx.fillStyle='#2f2a33';ctx.fillRect(0,0,VW,vh);ctx.drawImage(img(DATA.inside),40,28);hero(clamp(state.x,46,296),78);return;}\n"+source[b:]
     source=source.replace('dt*42','dt*opts.walkSpeed').replace('Math.abs(dy)>0?27:42','Math.abs(dy)>0?opts.walkSpeed*.7:opts.walkSpeed').replace('inSea()?30:42','inSea()?opts.walkSpeed*1.15:opts.walkSpeed')
     source=source.replace("const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d'),images=new Map();","const canvas=document.getElementById('scene'),images=new Map();let ctx=canvas.getContext('2d');")
     exported='springPreview' if name=='spring' else 'summerPreview'
     extra="actor=()=>opts.drawHero(ctx,state.x,state.y,state,null);" if name=='spring' else "hero=(x,y)=>{if(state.inCabana)return;opts.drawHero(ctx,x,y,state,{under:under(),floating:floating(),sheet:img(DATA.heroes[state.gender][state.suit]),cell:cell()});};"
-    ticks='if(!state.paused)state.time+=realDt;move(dt);draw();' if name=='spring' else 'if(!state.paused)state.time+=realDt;move(dt);camera(realDt);prepare();draw();updateUI();'
+    ticks='if(!state.paused)state.time+=realDt;advanceDoor(state.paused?0:realDt);move(dt);draw();' if name=='spring' else 'if(!state.paused)fx.tickWater(realDt);if(!state.paused)state.time+=realDt;advanceDoor(state.paused?0:realDt);move(dt);camera(realDt);prepare();draw();updateUI();'
     return f'''function makeSeason_{name}(opts){{
  const realDocument=globalThis.document,realWindow=globalThis.window;
  const root=realDocument.createElement('section');root.className='season-controller';root.dataset.kind='{name}';root.innerHTML={json.dumps(dom,ensure_ascii=False)};root.hidden=true;
@@ -48,7 +45,7 @@ def main():
     page=page.replace("if(place==='park')","if(place==='spring_test')return 'BGM/park/festival-streetlights.mp3';if(place==='summer_test')return 'BGM/harbor/dragon-boat-day.mp3';if(place==='park')")
     for key in ['buddy-save','buddy-settings','buddy-look-v2','buddy-look-at']:
         page=page.replace('"'+key+'"','"season-test-'+key+'"')
-    source=controller('spring',SP.runtime_data())+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(ROOT/'prototype/map-test/cheats.js').read_text()+(ROOT/'prototype/map-test/adapter.js').read_text()
+    source=(ROOT/'prototype/season/effects.js').read_text()+controller('spring',SP.runtime_data())+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(ROOT/'prototype/map-test/cheats.js').read_text()+(ROOT/'prototype/map-test/adapter.js').read_text()
     mark='(async function boot() {'
     assert page.count(mark)==1
     page=page.replace(mark,source+'\n'+mark)
