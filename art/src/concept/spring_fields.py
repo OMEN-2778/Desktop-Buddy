@@ -1,4 +1,4 @@
-"""春日花溪: a spring-only outing, four connected 342x118 screens in the park's
+"""春日花溪: a spring-only outing, five connected 342x118 screens in the park's
 style (same sky, far tree line, gravel lane at y=94..106, flower border, trees
 and bushes from front_yard). Light from the top left.
 
@@ -7,7 +7,10 @@ and bushes from front_yard). Light from the top left.
     rape    油菜花田  terraced rapeseed rows run to the hills, white-walled
                       farmhouses, beehives beside the lane
     tulip   风车花圃  tulip stripes in four colours, a windmill behind
-    arbor   紫藤花廊  a wooden pergola heavy with wisteria, a bench under it
+    farm    小菜园    six raised beds for crops (cabbage, carrot, tomato,
+                      strawberry, corn, pumpkin; 4 stages each), a well
+    orchard 果园      pear, peach, apple and orange trees (sapling → young
+                      → blossom → fruit), an empty pit for a new tree
 
 Art only for now (user decides when it goes into the game).
     build() -> spring_<zone> (background), spring_<zone>_tree_<0|1>,
@@ -40,8 +43,9 @@ ZONES = [
      "trees": [("linden", 22, 36, 92, 22, 22), ("cherry", 300, 46, 64, 12, 11)]},
     {"id": "tulip", "name": "风车花圃",
      "trees": [("cherry", 330, 34, 93, 22, 22), ("linden", 40, 47, 62, 11, 10)]},
-    {"id": "arbor", "name": "紫藤花廊",
-     "trees": [("linden", 20, 34, 93, 22, 23), ("cherry", 324, 36, 92, 22, 22)]},
+    {"id": "farm", "name": "小菜园",
+     "trees": [("linden", 330, 36, 93, 20, 22)]},
+    {"id": "orchard", "name": "果园", "trees": []},
 ]
 
 
@@ -49,7 +53,7 @@ ZONES = [
 
 def hills(s, zone):
     """Two hazy ridges behind the tree line, the near one greener."""
-    off = {"brook": 0, "rape": 90, "tulip": 170, "arbor": 260}[zone["id"]]
+    off = {"brook": 0, "rape": 90, "tulip": 170, "farm": 260, "orchard": 40}[zone["id"]]
     for k, (base, amp, R) in enumerate(((HZ - 10, 9, P.sky_soft), (HZ - 5, 7, P.mint))):
         for x in range(W):
             u = (x + off * (k + 1)) / W * math.tau
@@ -333,51 +337,191 @@ def rape_pick(i, y):
     return P.mustard if i % 4 else G
 
 
-# ------------------------------------------------------------- arbor
+# ------------------------------------------------------------- farm
 
-ARBOR = (118, 262, 50)    # x0, x1, beam y
-
-
-def arbor(s, front=False):
-    """Pergola behind the lane: posts, beams and wisteria racemes. The back
-    half goes in the background; front=True draws only the hanging flowers
-    that overlap the beam (same layer, kept for the page if needed)."""
-    x0, x1, by = ARBOR
-    Wd = P.oak
-    rnd = random.Random(61)
-    if not front:
-        for x in range(x0, x1 + 1, 24):                    # posts
-            s.rect(x, by, 4, PATH[0] - 2 - by, Wd[2]).vline(x, by, PATH[0] - 3, Wd[3]).vline(x + 3, by, PATH[0] - 3, Wd[1])
-            s.rect(x - 1, PATH[0] - 4, 6, 3, ST[2]).hline(x - 1, x + 4, PATH[0] - 4, ST[3])
-        s.rect(x0 - 8, by - 4, x1 - x0 + 20, 3, Wd[3]).hline(x0 - 8, x1 + 11, by - 4, Wd[4]).hline(x0 - 8, x1 + 11, by - 2, Wd[1])
-        for x in range(x0 - 6, x1 + 10, 6):                # rafters ends
-            s.rect(x, by - 7, 2, 3, Wd[2]).set(x, by - 7, Wd[3])
-        s.rect(x0 - 8, by - 1, x1 - x0 + 20, 2, Wd[1])
-    # leafy mass along the top, then racemes hanging down
-    for x in range(x0 - 10, x1 + 14, 3):
-        y = by - 6 + rnd.randint(-3, 1)
-        s.ellipse(x, y, 3.5, 2.6, G[rnd.choice((2, 3))]).set(x - 1, y - 1, G[4]).set(x + 2, y + 1, G[1])
-    L = P.lilac
-    for x in range(x0 - 8, x1 + 12, 2):
-        if rnd.random() < 0.18:
-            continue
-        top = by - 3 + rnd.randint(-1, 2)
-        ln = rnd.randint(6, 16)
-        for k in range(ln):
-            w = 1 if k < ln - 3 else 0
-            c = L[3] if k < ln * 0.35 else L[2] if k < ln * 0.75 else L[1]
-            if (x + k) % 5 == 0:
-                c = L[4]
-            s.hline(x - w + (k % 2), x + (k % 2), top + k, c)
-    for _ in range(40):                                    # fallen florets on the stones
-        s.set(rnd.randint(x0 - 4, x1 + 6), rnd.randint(PATH[0] + 2, PATH[1] - 2), rnd.choice((L[3], L[4], L[2])))
+SOIL = P.wood
+PLOTS = [(66, 70, 58, 8), (134, 70, 58, 8), (202, 70, 58, 8),          # x, top, w, h: back row
+         (58, 81, 66, 10), (134, 81, 66, 10), (210, 81, 66, 10)]       # front row (bigger, nearer)
+CROPS = ["cabbage", "carrot", "tomato", "strawberry", "corn", "pumpkin"]
 
 
-def stepping(s, x0, x1):
-    """Flagstone paving under the pergola, between lawn and lane."""
-    for x in range(x0, x1, 9):
-        y = 88 + (x // 9) % 2
-        s.ellipse(x + 4, y, 4, 1.6, ST[2]).hline(x + 1, x + 6, y - 1, ST[3]).hline(x + 2, x + 6, y + 1, ST[1])
+def plot(s, x, y, w, h):
+    """A raised bed: plank edging lit on top, tilled soil in furrows."""
+    s.rect(x - 1, y - 1, w + 2, h + 3, P.oak[1])
+    s.hline(x - 1, x + w, y - 1, P.oak[3]).hline(x - 1, x + w, y + h + 1, P.oak[0])
+    s.rect(x, y, w, h, SOIL[2])
+    for yy in range(y, y + h, 3):                          # furrows: lit ridge, dark trench
+        s.hline(x, x + w - 1, yy, SOIL[3]).hline(x, x + w - 1, yy + 2, SOIL[1])
+    rnd = random.Random(x * 7 + y)
+    for _ in range(w * h // 8):
+        s.set(rnd.randint(x, x + w - 1), rnd.randint(y, y + h - 1), SOIL[rnd.choice((1, 3, 4))])
+    for px in range(x - 1, x + w + 1, 12):                 # edging posts
+        s.vline(px, y - 2, y + h + 1, P.oak[2]).set(px, y - 2, P.oak[4])
+
+
+def crop(s, kind, stage, x, base):
+    """One plant centred on x standing on `base`; stage 0 seed mound,
+    1 sprout, 2 growing, 3 ripe."""
+    L = P.green
+    if stage == 0:
+        s.hline(x - 2, x + 2, base, SOIL[1]).hline(x - 1, x + 1, base - 1, SOIL[3])
+        return
+    if stage == 1:
+        s.vline(x, base - 2, base, L[2]).set(x - 1, base - 3, L[3]).set(x + 1, base - 3, L[3]).set(x - 2, base - 3, L[2])
+        return
+    big = stage == 3
+    if kind == "cabbage":
+        r = 4 if big else 2.6
+        s.ellipse(x, base - r, r + 1, r, L[2]).ellipse(x - 1, base - r - 1, r * 0.6, r * 0.55, L[3])
+        if big:
+            s.ellipse(x, base - r, 2, 2, P.leaf_spring[4]).set(x - 1, base - r - 1, P.linen[3])
+        s.set(x + 2, base - 1, L[1])
+    elif kind == "carrot":
+        h = 7 if big else 4
+        for dx in (-2, 0, 2):
+            s.line(x, base - 1, x + dx, base - h, L[2 + (dx == 0)])
+            s.set(x + dx, base - h, L[4])
+        if big:
+            s.rect(x - 1, base - 1, 3, 2, P.coral[3]).set(x - 1, base - 1, P.coral[4])
+    elif kind == "tomato":
+        h = 11 if big else 7
+        s.vline(x + 2, base - h - 1, base, P.oak[3])         # stake
+        s.vline(x, base - h, base, L[1])
+        for k in range(2, h, 3):
+            s.hline(x - 2, x - 1, base - k, L[2]).hline(x + 1, x + 2, base - k - 1, L[3])
+        if big:
+            for fx, fy in ((-2, 4), (1, 7), (-1, 9)):
+                s.rect(x + fx, base - fy, 2, 2, P.coral[2]).set(x + fx, base - fy, P.coral[4])
+    elif kind == "strawberry":
+        s.ellipse(x, base - 2, 3, 2, L[2]).set(x - 1, base - 3, L[3]).set(x + 2, base - 1, L[1])
+        if big:
+            for fx in (-3, 2):
+                s.rect(x + fx, base - 1, 2, 2, P.coral[2]).set(x + fx, base - 1, P.coral[4]).set(x + fx + 1, base, P.coral[1])
+        else:
+            s.set(x - 2, base - 1, P.linen[3])
+    elif kind == "corn":
+        h = 15 if big else 8
+        s.vline(x, base - h, base, L[2]).vline(x + 1, base - h + 2, base, L[1])
+        for k in range(3, h, 4):
+            s.line(x, base - k, x - 3, base - k + 2, L[3]).line(x + 1, base - k - 1, x + 4, base - k + 1, L[2])
+        if big:
+            s.rect(x + 2, base - 9, 2, 4, P.mustard[3]).set(x + 2, base - 9, P.mustard[4]).set(x + 3, base - 10, L[3])
+            s.hline(x - 1, x + 1, base - h - 1, P.mustard[4])
+    elif kind == "pumpkin":
+        s.line(x - 4, base - 2, x + 4, base - 3, L[2]).ellipse(x - 3, base - 3, 2, 1.5, L[3]).ellipse(x + 3, base - 3, 2, 1.5, L[2])
+        if big:
+            s.ellipse(x, base - 3, 4, 3, P.mustard[2]).ellipse(x - 1, base - 4, 2, 1.5, P.mustard[3])
+            s.vline(x, base - 5, base - 1, P.mustard[1]).vline(x, base - 7, base - 6, P.walnut[2])
+
+
+def plot_slots(px, top, w, h):
+    """Planting spots in a bed: (x, base) pairs, one per 11 px."""
+    n = max(1, w // 11)
+    gap = w / n
+    return [(round(px + gap * (i + 0.5)), top + h - 1) for i in range(n)]
+
+
+def well(s, x, base):
+    """A stone well with a little roof and a bucket (water for the beds)."""
+    s.rect(x - 7, base - 8, 15, 8, ST[2]).hline(x - 7, x + 7, base - 8, ST[4]).hline(x - 7, x + 7, base - 1, ST[1])
+    for xx in range(x - 6, x + 7, 4):
+        s.vline(xx, base - 7, base - 2, ST[1])
+    s.hline(x - 5, x + 5, base - 9, P.sea[1])
+    for px in (x - 7, x + 7):
+        s.vline(px, base - 22, base - 9, P.walnut[2])
+    for k in range(5):
+        s.hline(x - 10 + k, x + 10 - k, base - 23 - k, P.terracotta[2] if k else P.terracotta[1])
+    s.hline(x - 6, x - 1, base - 26, P.terracotta[3])
+    s.hline(x - 6, x + 6, base - 18, P.walnut[1])                # windlass
+    s.vline(x, base - 17, base - 13, P.oat[2]).rect(x - 1, base - 13, 3, 3, P.oak[2])
+
+
+def tool_rack(s, x, base):
+    s.vline(x, base - 14, base, P.walnut[2]).vline(x + 12, base - 14, base, P.walnut[2]).hline(x, x + 12, base - 13, P.walnut[3])
+    s.vline(x + 3, base - 17, base - 1, P.oak[3]).rect(x + 2, base - 3, 3, 3, P.steel[2])      # spade
+    s.vline(x + 8, base - 17, base - 1, P.oak[3]).hline(x + 6, x + 10, base - 17, P.steel[2])  # rake
+    for k in range(6, 11, 2):
+        s.set(x + k, base - 16, P.steel[1])
+    s.rect(x + 15, base - 5, 6, 5, P.sea[2]).hline(x + 15, x + 20, base - 5, P.sea[3])     # watering can
+    s.line(x + 21, base - 4, x + 24, base - 7, P.sea[2]).hline(x + 16, x + 19, base - 7, P.sea[1])
+
+
+def farm(s):
+    for x, y, w, h in PLOTS:                               # trodden grass round each bed
+        s.ellipse(x + w / 2, y + h / 2 + 1, w / 2 + 6, h / 2 + 3, G[2])
+    for x, y, w, h in PLOTS:
+        plot(s, x, y, w, h)
+    well(s, 300, 80)
+    tool_rack(s, 20, 92)
+
+
+# ------------------------------------------------------------- orchard
+
+WHITE = [P.blossom[0], P.blossom[2], P.blossom[3], P.blossom[4], P.porcelain[3]]   # pale pink-white petals
+PEACH = [P.blossom[0], P.coral[2], P.blossom[2], P.blossom[3], P.blossom[4]]
+FY.LEAVES.setdefault(("pear", "spring"), [WHITE, WHITE, P.leaf_spring, P.leaf_spring])
+FY.LEAVES.setdefault(("apple", "spring"), [WHITE, P.blossom, WHITE, P.leaf_spring])
+FY.LEAVES.setdefault(("peach", "spring"), [PEACH, PEACH, P.blossom, P.leaf_spring])
+FY.LEAVES.setdefault(("orange", "spring"), [P.green, P.green, P.leaf_spring])
+FY.LEAVES.setdefault(("fruit", "spring"), [P.green, P.leaf_spring, P.green])
+FRUIT = {"apple": P.coral, "peach": PEACH, "pear": P.mustard, "orange": P.terracotta}
+ORCHARD = [("pear", 70, 52, 66, 10, 8), ("peach", 128, 52, 66, 10, 8), ("apple", 186, 52, 66, 10, 8), ("orange", 244, 52, 66, 10, 8),
+           ("peach", 300, 52, 66, 10, 8),
+           ("apple", 52, 58, 88, 17, 14), ("peach", 124, 58, 88, 17, 14), ("pear", 196, 58, 88, 17, 14),
+           ("orange", 268, 58, 88, 17, 14)]
+PITS = [(330, 88)]                                         # an empty spot to plant a new tree
+
+
+def orchard(s):
+    for _, x, _, base, rx, _ in ORCHARD:                  # mown circles under the trees
+        s.ellipse(x + 2, base + 1, rx * 0.7 + 3, 2.5, G[3])
+    rnd = random.Random(81)
+    for _, x, _, base, rx, _ in ORCHARD:                  # fallen petals round each trunk
+        for _ in range(int(rx * 1.5)):
+            s.set(x + rnd.randint(-rx, rx), base + rnd.randint(-1, 3), rnd.choice((P.blossom[3], P.porcelain[3])))
+    for x, y in PITS:
+        s.ellipse(x, y, 6, 2, SOIL[1]).ellipse(x - 1, y - 1, 4, 1, SOIL[2])
+        s.vline(x + 7, y - 9, y, P.oak[3]).rect(x + 5, y - 9, 5, 3, P.oak[4])     # a little sign
+    ladder(s, 222, 88)
+    for bx in (150, 162):
+        s.rect(bx, 85, 9, 6, P.oak[2]).hline(bx, bx + 8, 85, P.oak[4]).hline(bx, bx + 8, 88, P.oak[1])
+
+
+def ladder(s, x, base):
+    s.line(x, base, x + 6, base - 24, P.oak[3]).line(x + 6, base, x + 12, base - 24, P.oak[2])
+    for k in range(3, 24, 4):
+        s.hline(x + k * 6 // 24, x + 6 + k * 6 // 24, base - k, P.oak[2])
+
+
+def fruit_tree(kind, frame, at, stage=3):
+    """A fruit tree: stage 0 sapling, 1 young, 2 in blossom, 3 bearing fruit."""
+    x, cy, base, rx, ry = at
+    if stage == 0:
+        s = Sprite(W, H)
+        s.vline(x, base - 10, base, P.walnut[2]).set(x - 1, base - 10, G[3]).set(x + 1, base - 11, G[3]).set(x, base - 12, G[4])
+        s.vline(x + 3, base - 10, base, P.oak[3]).hline(x + 1, x + 3, base - 7, P.oat[2])
+        return s
+    if stage == 1:
+        return FY.tree("linden", SEASON, frame, at=(x, base - 14, base, 6, 5))
+    if stage == 2:
+        s = FY.tree(kind, SEASON, frame, at=at)
+        if kind == "orange":                               # citrus: small white flowers among dark leaves
+            rnd = random.Random("orangeflower" + str(x))
+            for _ in range(int(rx * ry / 6)):
+                u, v = rnd.uniform(-0.85, 0.85), rnd.uniform(-0.8, 0.8)
+                if u * u + v * v < 0.75:
+                    fx, fy = int(x + u * rx), int(cy + v * ry)
+                    s.set(fx, fy, P.porcelain[3]).set(fx + 1, fy, P.linen[2])
+        return s
+    s = FY.tree("fruit", SEASON, frame, at=at)
+    rnd = random.Random(kind + str(x))
+    F = FRUIT[kind]
+    for _ in range(int(rx * ry / 12)):
+        u, v = rnd.uniform(-0.8, 0.8), rnd.uniform(-0.6, 0.8)
+        if u * u + v * v < 0.7:
+            fx, fy = int(x + u * rx), int(cy + v * ry)
+            s.rect(fx, fy, 2, 2, F[2]).set(fx, fy, F[4]).set(fx + 1, fy + 1, F[1])
+    return s
 
 
 # ------------------------------------------------------------- scenes
@@ -394,8 +538,8 @@ def background(zone):
                          (300, 88, 20, 3, P.mustard), (40, 66, 22, 3, P.blossom)],
                "rape": [(20, 72, 18, 4, P.lilac)],
                "tulip": [(28, 70, 20, 4, P.blossom)],
-               "arbor": [(50, 76, 34, 6, P.mustard), (300, 74, 24, 5, P.lilac), (200, 66, 60, 3, P.blossom),
-                         (90, 88, 20, 3, P.lilac)]}[zid]
+               "farm": [(30, 72, 20, 4, P.mustard), (300, 64, 20, 2, P.lilac)],
+               "orchard": [(100, 74, 30, 3, P.mustard), (240, 76, 30, 3, P.lilac)]}[zid]
     wildflowers(s, patches, zid + "wf")
     if zid == "brook":
         brook(s)
@@ -407,10 +551,12 @@ def background(zone):
     if zid == "tulip":
         windmill(s, 236, HZ + 4)
         field(s, 170, HZ + 3, PATH[0] - 5, (96, 300), (58, 322), tulip_pick, 73)
-    if zid == "arbor":
-        stepping(s, ARBOR[0] - 6, ARBOR[1] + 10)
+    if zid == "farm":
+        farm(s)
+    if zid == "orchard":
+        orchard(s)
     PK.path(s, SEASON)
-    petals(s, PATH[0] + 2, PATH[1] - 2, 50 if zid in ("brook", "arbor") else 22, zid + "pp")
+    petals(s, PATH[0] + 2, PATH[1] - 2, 50 if zid in ("brook", "orchard") else 22, zid + "pp")
     if zid == "brook":
         bridge(s)
         petals(s, PATH[0] + 2, PATH[1] - 2, 18, "br", 138, 202)
@@ -419,14 +565,12 @@ def background(zone):
     bushes = {"brook": [("hydrangea", 60, 10, 8, 93), ("box", 290, 9, 7, 93)],
               "rape": [("box", 316, 10, 8, 93)],
               "tulip": [("hydrangea", 22, 12, 9, 93)],
-              "arbor": [("hydrangea", 70, 11, 9, 93), ("box", 290, 9, 7, 93)]}[zid]
+              "farm": [("box", 40, 9, 7, 93)],
+              "orchard": [("hydrangea", 14, 11, 9, 93)]}[zid]
     for kind, cx, hw, ht, base in bushes:
         s.blit(FY.bush(kind, cx, hw, ht, SEASON, base=base), 0, 0)
     if zid == "rape":
         beehives(s, 92, 93)
-    if zid == "arbor":
-        arbor(s)
-        PK.bench(s, 190, 92)
     border = Sprite(W, H)
     PK.border(border, SEASON)
     if zid == "brook":
@@ -437,6 +581,9 @@ def background(zone):
 
 def trees(zone, frame):
     s = Sprite(W, H)
+    if zone["id"] == "orchard":
+        for kind, x, cy, base, rx, ry in sorted(ORCHARD, key=lambda t: t[3]):
+            s.blit(fruit_tree(kind, frame, (x, cy, base, rx, ry), stage=2), 0, 0)
     for kind, x, cy, base, rx, ry in sorted(zone["trees"], key=lambda t: t[3]):
         s.blit(FY.tree(kind, SEASON, frame, at=(x, cy, base, rx, ry)), 0, 0)
     return s
@@ -444,7 +591,28 @@ def trees(zone, frame):
 
 def preview(zone, frame=0):
     s = background(zone)
+    if zone["id"] == "farm":                               # sample crops at every stage
+        for i, (x, y, w, h) in enumerate(PLOTS):
+            for j, (cx, base) in enumerate(plot_slots(x, y, w, h)):
+                crop(s, CROPS[i], min(3, j), cx, base)
     s.blit(trees(zone, frame), 0, 0)
+    return s
+
+
+def stage_sheet():
+    """Every crop and fruit tree at every stage, for review."""
+    s = Sprite(240, 180)
+    s.rect(0, 0, 240, 180, P.sky_day[3])
+    for i, kind in enumerate(CROPS):
+        y = 20 + i * 26
+        s.rect(2, y + 1, 64, 3, SOIL[2])
+        for st in range(4):
+            crop(s, kind, st, 9 + st * 16, y)
+    for i, kind in enumerate(("apple", "peach", "pear", "orange")):
+        for st in range(4):
+            cell = fruit_tree(kind, 0, (30, 18, 40, 13, 11), stage=st)
+            s.rect(72 + st * 42, 2 + i * 44 + 40, 40, 2, G[2])
+            s.blit(cell.crop(8, 2, 44, 42), 70 + st * 42, 2 + i * 44)
     return s
 
 
@@ -459,4 +627,5 @@ def build():
         out[f"spring_{zone['id']}_preview"] = pv
         pano.blit(pv, i * W, 0)
     out["spring_panorama"] = pano
+    out["spring_stages"] = stage_sheet()
     return out
