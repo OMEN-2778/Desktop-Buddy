@@ -7,6 +7,15 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- Owner's sea polish (TEST ONLY): irregular, broad-to-narrow pixel sun openings/caustics;
+  sparse staggered breath/hand/foot bubbles, waterline removal + defensive draw boundary.
+- Removed whole-fish turn squash/rotation; inverse-sampled connected body/tail poses,
+  attached moorish dorsal streamer and jelly tentacles, spaced complete school members.
+- Added every-frame connectivity/clipping/school tests and minute-long bubble boundary,
+  density/source-spread + constant fish-width regressions; inspected enlarged art/scenes.
+- Rebuilt demo/web + summer/map-test; no formal seasonal integration or EXE release.
+
+## 2026-11-01 · Codex
 - Owner rejected BOTH procedural swimmer proportions and smooth vector sea FX.
   Restored original 20×28 doll: only
   alternate 1px lower-leg tucks/extensions; native dance wave arms, intact dive rotation.

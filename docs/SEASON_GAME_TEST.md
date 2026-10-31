@@ -145,3 +145,17 @@ between opposing kicks and alternating foot pixels. Cropped pose contact sheet r
 - Browser regression temporarily rejects vector Canvas APIs during all FX calls and
   checks backing layers remain logical 1× even when the actual view is scaled up.
   Existing original-body/kicking and motion/portal/weather checks still apply.
+
+### Owner correction: sea light, intact animals, sparse bubbles (2026-11-01)
+- Pixel sun openings have seeded unequal spacing/width/reach, narrow and fade downward;
+  no repeated inverted cones. Broken caustics follow the local seabed with varied gaps.
+- Fish keep their full aspect ratio even while turning. No whole-body squash or canvas
+  rotation. Tail motion uses connected inverse-sampled poses; fine dorsal streamers and
+  tentacles remain attached. Schools have padded separate lanes, no clipped members.
+- Water actors emit roughly 1–3 bubbles/sec while moving, staggered among head/hands/feet;
+  idle releases are slower. Bubbles carry their waterline, disappear before reaching it,
+  and cannot render above it. Source positions follow movement; no single-point hose.
+- Regression: `PYTHONPATH=tools python tools/check_sea_life_motion.py` (all frames),
+  `node tools/check_season_living_world.js` (includes a minute of five emitters and
+  unchanged fish widths through turns), `node tools/check_season_polish.js`.
+- Applies only to `/summer/` and `/map-test/`; does not enable formal game seasonal maps.

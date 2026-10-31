@@ -66,7 +66,7 @@ function move(dt){state.walk=false;if(state.paused||!state.loaded)return;
   if(done){state.target=null;state.walk=false;if(state.after){const f=state.after;state.after=null;f();}}}
  const sea=floating();if(sea&&!state.wasSea)splash(state.x,WL,12);state.wasSea=sea;
  // fish shy away from Buddy
- for(const c of DATA.life)if(c.k==='school'||c.k==='tang'){const dx=(c.cx||0)-state.x,dy=(c.cy||0)-(state.y-10),d=Math.hypot(dx,dy);if(d<28&&under()){c.ox=(c.ox||0)+dx/d*dt*60;c.oy=(c.oy||0)+dy/d*dt*40;}c.ox=(c.ox||0)*.985;c.oy=(c.oy||0)*.985;}
+ for(const c of DATA.life)if(c.k==='school'||c.k==='tang'){const dx=(c.cx||0)-state.x,dy=(c.cy||0)-(state.y-10),d=Math.hypot(dx,dy);if(d>0.01&&d<28&&under()){c.ox=(c.ox||0)+dx/d*dt*60;c.oy=(c.oy||0)+dy/d*dt*40;}c.ox=(c.ox||0)*.985;c.oy=(c.oy||0)*.985;}
  for(const p of parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=p.g*dt;p.life-=dt;}for(let i=parts.length-1;i>=0;i--)if(parts[i].life<=0)parts.splice(i,1);
  if(inSea()&&!state.inside)fx.waterActor('hero',state.x,state.y,state.facing,state.walk,under(),dt,WL);}
 function follow(value,velocity,target,omega,dt){const delta=value-target,e=Math.exp(-omega*dt),temp=(velocity+omega*delta)*dt;return [target+(delta+temp)*e,(velocity-omega*temp)*e];}
@@ -116,9 +116,9 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
  const sim=img(DATA.seal[Math.floor(t*.7)%2]);ctx.drawImage(sim,DATA.sealAt[0],DATA.sealAt[1]-sim.height);
  for(const h of DATA.hotspots)if(!state.found.has(h.id))sparkle(h.x,h.y,t);
  for(const c of DATA.life){const ph=t*c.v/Math.max(1,c.r)+c.x*.031,x=c.x+Math.sin(ph)*c.r+(c.ox||0),y=c.y+Math.sin(t*.7+c.x)*2+(c.oy||0),left=Math.cos(ph)<0,im=img(c.f[Math.floor(t*10+c.x)%c.f.length]);
-  c.cx=x+im.width/2;c.cy=y+im.height/2;c.w=im.width*Math.max(.22,Math.abs(Math.cos(ph)));c.h=im.height;
+  c.cx=x+im.width/2;c.cy=y+im.height/2;c.w=im.width;c.h=im.height;
   if(x+im.width<cx||x>cx+VW||y+im.height<cy||y>cy+vh)continue;
-  ctx.save();ctx.translate(x+im.width/2,y+im.height/2);ctx.scale((left?-1:1)*Math.max(.22,Math.abs(Math.cos(ph))),1);ctx.rotate(Math.sin(t*1.1+c.x)*.035);ctx.drawImage(im,-im.width/2,-im.height/2);ctx.restore();}
+  ctx.save();ctx.translate(x+im.width/2,y+im.height/2);ctx.scale(left?-1:1,1);ctx.drawImage(im,-im.width/2,-im.height/2);ctx.restore();}
  peopleRenderer?.(ctx,{time:t,inside:state.inside,under:under()});
  if(state.lying!==null){const [lx,ly]=DATA.chairs[state.lying];state.facing=1;hero(lx,ly);}else hero(state.x,state.y);
  fx.drawWater(ctx,WL,{x:cx,y:cy,w:VW,h:vh});

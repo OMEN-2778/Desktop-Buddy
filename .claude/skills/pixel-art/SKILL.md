@@ -1065,3 +1065,10 @@ pixel glyphs, stair-step lines/contours, palette colours and finite opacity leve
 upscale with nearest-neighbour only. No anti-aliased strokes/curves/ellipses, soft
 vector ribbons or continuous gradient beams. Keep fluid timing/camera motion; do not
 solve this by reducing animation frame rate. Inspect enlarged actual pixels before push.
+
+### Sea life and light correction (2026-11-01)
+No whole-fish squashing on turns or detached strip animation. Preserve connected
+silhouettes, attached fins/tentacles and complete, separated school members in every
+frame. Underwater pixel light openings must vary spacing/width/reach and taper/fade
+into depth, not repeat widening cones. Bubble trails are sparse, have multiple plausible
+attachment sites, and disappear at the waterline rather than floating above the sea.

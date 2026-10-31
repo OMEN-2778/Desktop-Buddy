@@ -27,12 +27,19 @@ function makeSeasonEffects(skinBase=null){
   ctx.save();ctx.translate(x,y);if(diving){ctx.translate(0,-14);ctx.scale(facing,1);ctx.rotate(Math.PI/2);ctx.drawImage(actorCanvas,-10,-14);}else{ctx.scale(facing,1);ctx.drawImage(actorCanvas,-10,-28);}ctx.restore();
  }
  function waterActor(id,x,y,face,moving,diving,dt,wl){
-  let a=trails.get(id);if(!a){a={x,y,emission:0,ripple:0};trails.set(id,a);}a.x=x;a.y=y;
-  if(dt<=0)return;a.emission+=dt*(moving?20:4);a.ripple+=dt;
-  while(a.emission>=1){a.emission--;if(bubbles.length>=300)bubbles.shift();bubbles.push({x:x-face*((diving?14:6)+Math.random()*4),y:diving?y-10+(Math.random()-.5)*8:wl+3+Math.random()*8,life:1.3+Math.random(),age:0,r:.6+Math.random()*.9,dx:-face*(2+Math.random()*3)});}
-  if(!diving&&a.ripple>(moving?.25:.9)){a.ripple=0;ripples.push({x,y:wl,age:0,life:1.6,force:moving?1:.5});}
+  let a=trails.get(id);if(!a){a={x,y,emission:0,ripple:0,next:.3+Math.random()*.5,site:0};trails.set(id,a);}
+  const oldX=a.x,oldY=a.y;a.x=x;a.y=y;
+  if(dt<=0)return;a.emission+=dt;a.ripple+=dt;
+  // Sparse, staggered releases from breath, hands and kicking feet; never a hose.
+  if(a.emission>=a.next){a.emission=0;a.next=(moving?.35:.95)+Math.random()*(moving?.55:1.4);
+   const site=a.site++%3,f=Math.random(),px=oldX+(x-oldX)*f,py=oldY+(y-oldY)*f;
+   const bx=px+face*(diving?([11,-2,-14][site]):([-5,5,0][site]))+(Math.random()-.5)*4;
+   const by=diving?py-14+([-3,5,0][site])+(Math.random()-.5)*4:wl+4+Math.random()*7;
+   if(bubbles.length>=90)bubbles.shift();bubbles.push({x:bx,y:Math.max(wl+3,by),wl,life:1.1+Math.random()*1.5,age:0,r:.6+Math.random()*.9,dx:(Math.random()-.5)*3,vy:5+Math.random()*4,phase:Math.random()*6});
+  }
+  if(!diving&&a.ripple>(moving?.45:1.3)){a.ripple=0;ripples.push({x:x+(Math.random()-.5)*8,y:wl,age:0,life:1.4,force:moving?1:.5});}
  }
- function tickWater(dt){for(const p of bubbles){p.age+=dt;p.x+=p.dx*dt;p.y-=dt*9;}for(const p of ripples)p.age+=dt;for(const list of [bubbles,ripples])for(let i=list.length-1;i>=0;i--)if(list[i].age>=list[i].life)list.splice(i,1);}
+ function tickWater(dt){for(const p of bubbles){p.age+=dt;p.x+=(p.dx+Math.sin(p.age*3+p.phase))*dt;p.y-=dt*p.vy;}for(const p of ripples)p.age+=dt;for(const list of [bubbles,ripples])for(let i=list.length-1;i>=0;i--)if(list[i].age>=list[i].life||(list[i].wl!==undefined&&list[i].y<=list[i].wl+3))list.splice(i,1);}
  // All scenery FX paint onto logical 1x pixel canvases, then upscale nearest-neighbour.
  // No Canvas paths, smooth strokes, ellipses, gradients or subpixel FX geometry.
  const rasterLayers=new Map();
@@ -44,7 +51,7 @@ function makeSeasonEffects(skinBase=null){
  function pxLine(g,x0,y0,x1,y1,width=1){x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);const dx=Math.abs(x1-x0),sx=x0<x1?1:-1,dy=-Math.abs(y1-y0),sy=y0<y1?1:-1;let error=dx+dy;for(;;){g.fillRect(x0,y0,width,width);if(x0===x1&&y0===y1)break;const e=error*2;if(e>=dy){error+=dy;x0+=sx;}if(e<=dx){error+=dx;y0+=sy;}}}
  function pixelRing(g,cx,cy,rx,ry){cx=Math.round(cx);cy=Math.round(cy);rx=Math.max(1,Math.round(rx));ry=Math.max(1,Math.round(ry));for(let x=-rx;x<=rx;x++){const y=Math.round(ry*Math.sqrt(Math.max(0,1-x*x/(rx*rx))));g.fillRect(cx+x,cy-y,1,1);g.fillRect(cx+x,cy+y,1,1);}}
  function drawWater(ctx,wl,bounds={x:0,y:0,w:342,h:236}){raster(ctx,'water',bounds.x-1,bounds.y-1,bounds.w+2,bounds.h+2,g=>{
-  for(const p of bubbles){const x=Math.round(p.x),y=Math.round(p.y);if(x<bounds.x-5||x>bounds.x+bounds.w+5||y<bounds.y-5||y>bounds.y+bounds.h+5)continue;g.globalAlpha=p.age/p.life<.4?.75:p.age/p.life<.75?.5:.25;g.fillStyle='#9bd3df';
+  for(const p of bubbles){const x=Math.round(p.x),y=Math.round(p.y);if(y-1<=wl||x<bounds.x-5||x>bounds.x+bounds.w+5||y<bounds.y-5||y>bounds.y+bounds.h+5)continue;g.globalAlpha=p.age/p.life<.4?.75:p.age/p.life<.75?.5:.25;g.fillStyle='#9bd3df';
    if(p.r<1.1){g.fillRect(x,y-1,1,1);g.fillRect(x-1,y,1,1);g.fillRect(x+1,y,1,1);g.fillRect(x,y+1,1,1);}else{g.fillRect(x,y-1,2,1);g.fillRect(x-1,y,1,2);g.fillRect(x+2,y,1,2);g.fillRect(x,y+2,2,1);}g.fillStyle='#f4f2ee';g.fillRect(x,y-1,1,1);
   }
   for(const p of ripples){const age=p.age/p.life;g.globalAlpha=age<.5?.5:.25;g.fillStyle='#9bd3df';pixelRing(g,p.x,p.y,4+Math.floor(age*18),1+Math.floor(age*2));}g.globalAlpha=1;
@@ -56,12 +63,23 @@ function makeSeasonEffects(skinBase=null){
   for(let i=0;i<3;i++){const phase=(t*.19+i/3)%1,edge=Math.round(shore-12+phase*28),width=Math.round(7+phase*11);g.globalAlpha=phase<.2||phase>.8?.25:.5;g.fillStyle='#f4f2ee';for(let j=0;j<width;j++)if((j+i)%5!==0)g.fillRect(edge+j,wl-2+(j%7===0?1:0),1,1);}g.globalAlpha=1;
  });}
  function sunlight(ctx,t,cx,cy,w,h,wl,ground,cloudy){if(cloudy||cy>wl+220||cx+w<1020)return;raster(ctx,'sunlight',cx-1,cy-1,w+2,h+2,g=>{
-  for(let i=Math.floor(cx/64)-1;i<(cx+w)/64+1;i++){const top=Math.round(i*64+Math.sin(t*.35+i)*7),reach=Math.round(110+25*Math.sin(i));g.fillStyle='#f4f2ee';
-   for(let dy=Math.max(0,Math.floor(cy-wl));dy<reach&&wl+dy<cy+h+2;dy+=2){const u=dy/reach,left=Math.round(top+u*23),width=Math.round(4+u*13);g.globalAlpha=u<.3?.18:u<.65?.12:.06;
-    for(let x=left;x<left+width;x++){if(x<cx-1||x>cx+w+1||wl+dy>=ground[clamp(x,0,ground.length-1)])continue;if(u>.75&&(x+dy)%4===0)continue;g.fillRect(x,wl+dy,1,Math.min(2,ground[clamp(x,0,ground.length-1)]-wl-dy));}
+  const noise=n=>{const v=Math.sin(n*127.1+311.7)*43758.5453;return v-Math.floor(v);};
+  // Broken surface openings: unequal spacing/width, broad at entry and fading narrower.
+  for(let i=Math.floor((cx-80)/47);i<(cx+w+80)/47;i++){
+   if(noise(i+9)<.3)continue;
+   const top=i*47+noise(i)*35+Math.sin(t*.23+i)*4,reach=55+noise(i+2)*115,span=9+noise(i+3)*18,lean=-16+noise(i+4)*28;
+   g.fillStyle='#f4f2ee';
+   for(let dy=Math.max(0,Math.floor(cy-wl));dy<reach&&wl+dy<cy+h+2;dy++){
+    const u=dy/reach,width=Math.max(1,Math.round(span*(1-u*.85))),left=Math.round(top+u*lean-width/2+Math.sin(dy*.07+t*.4+i)*1.5);
+    g.globalAlpha=u<.25?.12:u<.6?.08:.04;
+    for(let x=left;x<left+width;x++){if(x<Math.max(1020,cx-1)||x>cx+w+1||wl+dy>=ground[clamp(x,0,ground.length-1)])continue;
+     if((x+dy*3+i)%5===0||u>.7&&(x*3+dy)%3===0)continue;g.fillRect(x,wl+dy,1,1);}
    }
   }
-  g.fillStyle='#f4f2ee';g.globalAlpha=.25;for(let x=Math.max(1020,Math.floor(cx/14)*14);x<cx+w+14;x+=14){const floor=ground[clamp(Math.round(x),0,ground.length-1)];if(floor>wl+135||floor<wl||floor<cy||floor>cy+h+5)continue;for(let j=0;j<4;j++){const y=Math.round(floor-2+Math.sin(t*1.8+j+x)*2-j%2*2);pxLine(g,x+j*4,y,x+j*4+3,y+(j%2?1:-1));}}g.globalAlpha=1;
+  g.fillStyle='#f4f2ee';g.globalAlpha=.18;
+  for(let i=Math.floor(cx/23)-1;i<(cx+w)/23+1;i++){if(noise(i+42)<.35)continue;const x=Math.round(i*23+noise(i+18)*18+Math.sin(t*.6+i)*3),floor=ground[clamp(x,0,ground.length-1)];if(floor>wl+145||floor<wl||floor<cy||floor>cy+h+5)continue;
+   const length=3+Math.floor(noise(i+31)*8);for(let j=0;j<length;j++){const xx=x+j,yy=Math.round(ground[clamp(xx,0,ground.length-1)]-2-Math.abs(Math.sin(j*.5+t*.8+i))*3);if((j+i)%4!==0)g.fillRect(xx,yy,1,1);}}
+  g.globalAlpha=1;
  });}
  function plant(ctx,im,p,t){const amp=p.kind==='palm'?2.7:p.kind.startsWith('shrub')?.32:1.1,phase=p.x*.071+p.y*.13;for(let y=0;y<im.height;y+=3){const h=Math.min(3,im.height-y),root=1-y/im.height,dx=(Math.sin(t*(p.kind==='palm'?.9:1.3)+phase)+.27*Math.sin(t*2.3+phase*2))*amp*root**1.8;ctx.drawImage(im,0,y,im.width,h,p.x+dx,p.y+y,im.width,h);}}
  function kelp(ctx,t,items,cx,cy,w,h){raster(ctx,'kelp',cx-1,cy-1,w+2,h+2,g=>{

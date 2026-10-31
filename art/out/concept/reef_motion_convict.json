@@ -1,6 +1,6 @@
 {
-  "frame_w": 64,
-  "frame_h": 34,
+  "frame_w": 86,
+  "frame_h": 79,
   "anims": {
     "reef_motion_convict": {
       "row": 0,

@@ -1,6 +1,6 @@
 {
-  "frame_w": 68,
-  "frame_h": 50,
+  "frame_w": 100,
+  "frame_h": 84,
   "anims": {
     "reef_motion_bait_ball": {
       "row": 0,
