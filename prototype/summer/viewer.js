@@ -99,7 +99,7 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
  for(const c of DATA.life){const ph=t*c.v/Math.max(1,c.r),x=c.x+Math.sin(ph)*c.r+(c.ox||0),y=c.y+Math.sin(t*.7+c.x)*2+(c.oy||0),left=Math.cos(ph)<0,im=img(c.f[Math.floor(t*3+c.x)%2]);
   c.cx=x+im.width/2;c.cy=y+im.height/2;c.w=im.width;c.h=im.height;
   ctx.save();ctx.translate(Math.round(x),Math.round(y));if(left){ctx.scale(-1,1);ctx.drawImage(im,-im.width,0);}else ctx.drawImage(im,0,0);ctx.restore();}
- if(state.lying!==null){const [lx,ly]=DATA.loungers[state.lying];hero(lx,ly);}else hero(state.x,state.y);
+ if(state.lying!==null){const [lx,ly]=DATA.chairs[state.lying];state.facing=1;hero(lx,ly);}else hero(state.x,state.y);
  if(floating()){ctx.fillStyle='rgba(120,190,215,.5)';ctx.fillRect(Math.round(state.x)-12,WL+1,24,Math.round(state.y)-WL);
   ctx.fillStyle='#f4fbff';const r=4+Math.round((t*6)%6);ctx.fillRect(Math.round(state.x)-r-4,WL,3,1);ctx.fillRect(Math.round(state.x)+r+2,WL,3,1);}   // ripples
  for(const p of parts){ctx.fillStyle=p.c;ctx.globalAlpha=clamp(p.life*1.5,0,1);ctx.fillRect(Math.round(p.x),Math.round(p.y),1,1);}ctx.globalAlpha=1;
@@ -108,12 +108,12 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
   ctx.fillStyle='rgba(30,50,70,.55)';ctx.fillRect(6,6,46,7);ctx.fillStyle=f<.25?'#e86b5a':'#bfe9f5';ctx.fillRect(8,8,Math.round(42*f),3);}}
 // ------------------------------------------------------------- input
 function pick(x,y){
- if(state.lying!==null){state.lying=null;toast('起来活动活动～',1.5);}
+ if(state.lying!==null){state.lying=null;toast('站起来活动活动～',1.5);}
  const g=gr(x);
  if(Math.abs(x-DATA.lodgeDoor)<12&&y>g-36&&y<g+2)return goTo(DATA.lodgeDoor,'walk',0,()=>{state.inside=true;state.x=150;toast('旅舍里：卧室、客厅、厨房和浴室。',2.5);});
  for(const [k,dx]of Object.entries(DATA.cabana))if(Math.abs(x-dx)<10&&y>g-34&&y<g+2)return goTo(dx,'walk',0,()=>{state.changing=1.1;const next=state.suit===k?'clothes':k;
   setTimeout(()=>{state.suit=next;state.breath=BREATH[next];toast(next==='clothes'?'换回了便装。':next==='swim'?'换上了泳衣！戴着浮潜面罩，能潜一小会儿。':'换上了潜水服！背着气瓶，可以下到深海沟。');},reduced?0:1000);});
- for(const [i,[lx,ly]]of DATA.loungers.entries())if(Math.abs(x-lx)<14&&y>ly-12&&y<ly+8)return goTo(lx,'walk',0,()=>{state.lying=i;toast('躺在躺椅上晒太阳，海风吹得好舒服～');});
+ for(const [i,[lx,ly]]of DATA.chairs.entries())if(Math.abs(x-lx)<14&&y>ly-32&&y<ly+3)return goTo(lx,'walk',0,()=>{state.lying=i;toast('坐在沙滩椅上吹海风，好惬意～');});
  for(const c of DATA.life)if(c.cx&&Math.abs(x-c.cx)<c.w/2+5&&Math.abs(y-c.cy)<c.h/2+5){
   if(state.suit==='clothes')return toast('先去更衣室换上泳装，才能游过去看看。');
   return goTo(c.cx,'dive',c.cy,()=>{if(Math.hypot(c.cx-state.x,c.cy-state.y+10)<40)discover('life:'+c.k,DATA.lifeText[c.k]);else toast('它游走了……');});}

@@ -306,6 +306,37 @@ def cabana3d(s, x0, x1, base, doors):
         s.hline(x1 + dx + 1, x1 + dx + 1 + 10 - i, base - 1 - i // 4, P.sand[2])
 
 
+# ------------------------------------------------------------- beach chair
+
+def beach_chair(s, cx, base, C):
+    """A wooden folding beach chair seen from the front (owner: turn the
+    lounger round, Buddy sits in it): tall back posts, a striped canvas back,
+    a sling seat, armrests, crossed front legs. The back is taller and wider
+    than Buddy, so it frames her when she sits."""
+    Wd = P.walnut
+    top, seat = base - 31, base - 9
+    for px in (cx - 12, cx + 11):                                   # back posts
+        s.vline(px, top, base - 1, Wd[2]).vline(px + 1, top, base - 1, Wd[1])
+        s.set(px, top, Wd[3])
+    for y in range(top + 2, seat):                                  # striped canvas back
+        for x in range(cx - 10, cx + 11):
+            col = C[3] if ((x - cx) // 3) % 2 == 0 else P.porcelain[3]
+            if x == cx - 10 or y == top + 2:
+                col = C[2] if col == C[3] else P.porcelain[2]
+            if x == cx + 10 or y == seat - 1:
+                col = C[1] if col == C[3] else P.porcelain[1]
+            s.set(x, y, col)
+    s.rect(cx - 11, seat, 23, 3, C[1]).hline(cx - 11, cx + 11, seat, C[2])   # sling seat
+    for sgn in (-1, 1):                                             # armrests
+        ax = cx + sgn * 13
+        s.hline(min(ax, ax - sgn * 4), max(ax, ax - sgn * 4), seat - 4, Wd[3])
+        s.vline(ax, seat - 4, base - 1, Wd[1])
+    for k in range(8):                                              # crossed front legs
+        s.set(cx - 9 + k * 2, seat + 3 + k // 2 if seat + 3 + k // 2 < base else base - 1, Wd[2])
+        s.set(cx + 9 - k * 2, seat + 3 + k // 2 if seat + 3 + k // 2 < base else base - 1, Wd[1])
+    s.hline(cx - 12, cx + 12, base - 1, Wd[0])
+
+
 # ------------------------------------------------------------- sea stack
 
 def sea_stack(s, x0, x1, wl, floor, seed):

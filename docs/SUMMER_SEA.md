@@ -192,3 +192,5 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
   hibiscus dots and a frilled skirt; boy = rash guard + board shorts; wetsuit with a chest
   panel and booties. Suits are clothes / swim (泳衣) / wetsuit; the page has 换成男生/女生.
   The cabana's 泳衣 door sign is a swim ring now.
+- Owner: no lying on loungers. The loungers became front-facing beach chairs (`BP.beach_chair`,
+  `CHAIRS`); clicking one seats Buddy in it, facing us (sheet cell 8 = sit).

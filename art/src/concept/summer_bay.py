@@ -317,6 +317,9 @@ def cabana_screen(t):
     SI.hibiscus(t, 30, b, 9, 9, P.blossom)
 
 
+CHAIRS = [(PRE + 190, P.hydrangea), (PRE + 222, P.mustard)]
+
+
 def land(s, frame=0):
     BP.mountains(s, 0, PRE + 236, WL - 9, [(170, 60, 74), (440, 80, 56), (PRE + 40, 60, 66), (PRE + 180, 40, 30)], 9)
     gy = lambda x: GROUND[max(0, min(GW - 1, x))]
@@ -334,9 +337,9 @@ def land(s, frame=0):
     SI.palm2(s, PRE + 112, GROUND[PRE + 112], 70, lean=1, frame=frame, seed=2)
     SI.palm2(s, PRE + 140, GROUND[PRE + 140], 52, lean=1, frame=frame, seed=5)
     SI.palm2(s, PRE + 74, GROUND[PRE + 74], 44, lean=-1, frame=frame, seed=8)
-    SI.umbrella(s, PRE + 196, GROUND[PRE + 196], R=P.coral)
-    SI.lounger(s, PRE + 184, GROUND[PRE + 190])
-    SI.lounger(s, PRE + 214, GROUND[PRE + 218], C=P.mustard)
+    SI.umbrella(s, PRE + 206, GROUND[PRE + 206], R=P.coral)
+    for cx, C in CHAIRS:                                             # front-facing beach chairs (owner)
+        BP.beach_chair(s, cx, GROUND[cx] + 1, C)
     footprints(s, 470, PRE + 300)
 
 

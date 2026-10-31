@@ -7,6 +7,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- Summer: loungers -> front-facing beach chairs; Buddy sits in them (all outfits). `/summer/` rebuilt.
+
+## 2026-10-31 · Claude
 - Summer: sea enlarged (meadow + deep trench, 2736x560), swimwear redrawn (girl one-piece /
   boy rash guard + board shorts / wetsuit), 比基尼 renamed 泳衣, boy/girl toggle in `/summer/`.
   Checked in Chromium: change as boy, dive to the trench bottom; no errors.

@@ -113,8 +113,20 @@ BASE_LEGS = """
 CELL = 28
 
 
+def sitting(kind, gender):
+    """Seated, front view: the doll's own sit pose in clothes; in swimwear the
+    upper body drops 2px and only the shins and feet show below."""
+    if kind == 'clothes':
+        return (doll.GIRL if gender == 'f' else doll.BOY).render(pose='sit').to_image()
+    st = outfit(kind, gender)
+    out = Image.new('RGBA', (20, 28))
+    out.paste(st.crop((0, 0, 20, 22)), (0, 2))
+    out.paste(st.crop((0, 24, 20, 28)), (0, 24))
+    return out
+
+
 def hero_sheet(kind, gender='f'):
-    """Cells of 28x28: 0-3 walk, 4-5 float (arm stroke), 6-7 dive (kick), 8 lie."""
+    """Cells of 28x28: 0-3 walk, 4-5 float (arm stroke), 6-7 dive (kick), 8 sit."""
     sheet = Image.new('RGBA', (CELL * 9, CELL))
     walk = []
     for i in range(4):
@@ -131,7 +143,7 @@ def hero_sheet(kind, gender='f'):
         sheet.paste(outfit(kind, gender, bob=f, wave=f) if kind != 'clothes' else walk[0], ((4 + f) * CELL + 4, 0))
         rot = walk[1 + 2 * f].rotate(-90, expand=True)                 # head forward (right), legs kicking
         sheet.paste(rot, ((6 + f) * CELL, 8))
-    sheet.paste(walk[0].rotate(90, expand=True), (8 * CELL, 8))          # lying, head on the backrest (left)
+    sheet.paste(sitting(kind, gender), (8 * CELL + 4, 0))              # sitting in a beach chair, facing us
     return sheet
 
 
@@ -195,7 +207,7 @@ def main():
         'clouds': [uri(BE.cloud(i)) for i in range(3)], 'life': life(),
         'heroes': {g: {k: uri(hero_sheet(k, g)) for k in ('clothes', 'swim', 'wetsuit')} for g in ('f', 'm')},
         'solid': uri(solid_mask()),
-        'loungers': [[B.PRE + 184 + 13, B.GROUND[B.PRE + 190] - 7], [B.PRE + 214 + 13, B.GROUND[B.PRE + 218] - 7]],
+        'chairs': [[cx, B.GROUND[cx] + 1] for cx, _ in B.CHAIRS],
         'hotspots': [dict(h, text=HOTSPOT_TEXT[h['id']]) for h in B.HOTSPOTS],
         'lifeText': LIFE_TEXT, 'seal': [uri(SS.seal(0)), uri(SS.seal(1))], 'sealAt': [B.STACK[0] + 4, B.WL - 4],
         'seaEnd': B.STACK[0] - 6,
