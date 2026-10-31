@@ -31,9 +31,12 @@ tests, no unasked extras).
   keep the current vanilla JS/Canvas stack unless a migration is requested.
 
 ## After a change
+0. Codex works on the same branch: `git pull` and read the top of `docs/AGENT_LOG.md`
+   before starting; shared rules are in `AGENTS.md`.
 1. `PYTHONPATH=tools python3 tools/make_demo.py`, then `cd desktop && npm run web`.
 2. Test the change in a headless browser (Playwright, Chromium preinstalled).
-3. Commit and push to the session's branch. No PR unless asked.
+3. Commit and push to the session's branch. No PR unless asked. Add an entry at the
+   top of `docs/AGENT_LOG.md`.
 4. If the user follows the live demo, republish it (artifact
    https://claude.ai/artifact/PAUM9uEkbffFBq7tUroHmb from `prototype/demo/index.html`).
 5. Pushes touching `desktop/**` or the demo build a new release (0.1.<run>)
