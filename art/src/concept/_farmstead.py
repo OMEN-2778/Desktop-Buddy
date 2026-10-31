@@ -522,16 +522,14 @@ def shrub_border(s, x0=0, x1=W, y0=106, seed=0):
     s.blit(m, 0, 0)
 
 
-def sun_shafts(w=W):
-    """Light shafts slanting from the top left; the page draws this layer with
-    low alpha (about 0.15) and breathes it slowly."""
-    s = Sprite(w, H)
-    for x0, bw in ((10, 14), (52, 8), (96, 18), (150, 7), (196, 12), (262, 16), (330, 9), (400, 14), (470, 10), (540, 16), (610, 9)):
-        if x0 > w:
-            break
-        for y in range(0, 96):
-            a = int(x0 + y * 0.55)
-            s.hline(a, min(w - 1, a + bw), y, P.light[1])
+def sun_shaft(bw=16):
+    """ONE light shaft slanting from the top left (owner: not a dense curtain
+    of them). The page sweeps one, now and then two, slowly across the scene
+    at low alpha (~0.15), fading in and out."""
+    s = Sprite(bw + 54, 96)
+    for y in range(96):
+        a = int(y * 0.55)
+        s.hline(a, a + bw - (1 if y % 7 == 0 else 0), y, P.light[1])
     return s
 
 
@@ -686,8 +684,6 @@ def cn_farmhouse(s):
     s.rect(dx - 1, plinth - 2, dw + 2, 2, ST[2])                   # threshold
     couplets(s, dx, dw, plinth - 21, plinth - 2)
     s.rect(dx + 5, plinth - 30, 8, 4, DARK[0]).rect(dx + 6, plinth - 29, 6, 2, P.mustard[3])   # name plaque
-    for lx in (dx - 14, dx + dw + 8):
-        lantern(s, lx, eave + 6)
     chili_string(s, x0 + 8, up + 5, 8, "chili")
     chili_string(s, x0 + 11, up + 5, 6, "corn")
     chili_string(s, x1 - 9, up + 5, 8, "chili")
@@ -899,66 +895,205 @@ def moon_window(r=10):
     return s
 
 
+def canopy_bed(w=48, quilt=P.sage, double=False):
+    """架子床: a canopy bed, side-on: four turned posts, a carved top frame
+    with a fretwork frieze, bed curtains tied back, a patterned quilt, a
+    plump pillow and a footstool."""
+    h = 36
+    s = Sprite(w, h)
+    D = DARK
+    s.rect(1, 2, w - 2, 3, D[2]).hline(1, w - 2, 2, D[4]).hline(1, w - 2, 4, D[1])       # canopy frame
+    for x in range(3, w - 3, 4):                                                       # fretwork frieze
+        s.rect(x, 5, 3, 3, D[1]).set(x + 1, 6, D[3])
+    s.hline(2, w - 3, 8, D[2])
+    for px in (1, w - 3):                                                              # posts
+        s.rect(px, 2, 2, h - 6, D[2]).vline(px, 2, h - 5, D[3])
+        s.hline(px - 1, px + 2, h - 4, D[1])
+    for cx, d in ((3, 1), (w - 4, -1)):                                                # tied curtains
+        for y in range(9, 26):
+            k = abs(y - 17) // 3
+            s.hline(cx, cx + d * (3 - k if y < 17 else 2), y, P.linen[3] if y % 3 else P.linen[2]) if d > 0 else s.hline(cx - (3 - k if y < 17 else 2), cx, y, P.linen[3] if y % 3 else P.linen[2])
+        s.set(cx + d, 17, RED[2]).set(cx + 2 * d, 17, RED[2])
+    s.rect(1, 26, w - 2, 5, D[2]).hline(1, w - 2, 26, D[3]).hline(1, w - 2, 30, D[0])   # bed frame
+    for x in range(5, w - 5, 6):
+        s.rect(x, 27, 4, 3, D[1]).set(x + 1, 28, D[3])                                 # carved apron panels
+    s.ellipse(9, 22, 5, 3, P.porcelain[3]).hline(5, 13, 24, P.porcelain[2]).set(7, 21, P.porcelain[3])   # pillow
+    qx0 = 13 if not double else 12
+    s.rect(qx0, 20, w - qx0 - 4, 6, quilt[2]).hline(qx0, w - 5, 20, quilt[3]).hline(qx0, w - 5, 25, quilt[1])
+    for x in range(qx0 + 2, w - 5, 5):                                                 # quilt pattern
+        s.set(x, 22, quilt[4]).set(x + 1, 23, P.mustard[3]).set(x + 2, 22, quilt[4])
+    if double:
+        s.ellipse(9, 19, 5, 2.5, P.porcelain[3]).hline(5, 13, 21, P.porcelain[1])     # a second pillow behind
+    s.rect(w // 2 - 6, h - 4, 12, 4, D[2]).hline(w // 2 - 6, w // 2 + 5, h - 4, D[4])  # footstool
+    return s
+
+
+def wardrobe_cn(w=22, h=38):
+    """顶箱柜: a tall two-door cabinet with a top box, round brass plates and
+    pull rings, stiles lit on the left."""
+    s = Sprite(w, h)
+    D = DARK
+    s.rect(0, 0, w, h - 2, D[2]).vline(0, 0, h - 3, D[3]).vline(w - 1, 0, h - 3, D[0])
+    s.hline(0, w - 1, 0, D[4]).hline(0, w - 1, 9, D[1]).hline(0, w - 1, 10, D[3])
+    for x0 in (2, w // 2 + 1):
+        s.rect(x0, 2, w // 2 - 3, 6, D[1]).hline(x0, x0 + w // 2 - 4, 2, D[3])        # top box doors
+        s.rect(x0, 12, w // 2 - 3, h - 16, D[1]).hline(x0, x0 + w // 2 - 4, 12, D[3])  # main doors
+        s.rect(x0 + 1, 14, w // 2 - 5, 10, D[2]).rect(x0 + 1, 26, w // 2 - 5, h - 32, D[2])
+    cx = w // 2
+    s.vline(cx, 1, h - 3, D[0])
+    for y in (5, 19):                                                                  # brass plates + rings
+        s.rect(cx - 3, y - 1, 6, 4, P.mustard[2]).hline(cx - 3, cx + 2, y - 1, P.mustard[4])
+        s.set(cx - 2, y + 3, P.mustard[3]).set(cx + 1, y + 3, P.mustard[3])
+    s.rect(1, h - 2, 2, 2, D[1]).rect(w - 3, h - 2, 2, 2, D[1])
+    return s
+
+
+def side_table(w=20):
+    """条案 with upturned ends, a vase with a branch of plum blossom."""
+    s = Sprite(w + 2, 30)
+    D = DARK
+    s.rect(1, 16, w, 2, D[2]).hline(1, w, 16, D[4]).set(0, 15, D[2]).set(w + 1, 15, D[2])
+    s.vline(3, 18, 29, D[2]).vline(w - 2, 18, 29, D[2]).hline(3, w - 2, 25, D[1])
+    s.ellipse(w // 2, 12, 3, 3.5, P.porcelain[3]).rect(w // 2 - 1, 8, 3, 2, P.porcelain[3]).set(w // 2 - 1, 12, P.teal[2]).set(w // 2 + 1, 11, P.teal[2])
+    for x, y in ((w // 2, 7), (w // 2 - 2, 4), (w // 2 + 1, 2), (w // 2 + 3, 5), (w // 2 - 4, 1)):
+        s.set(x, y, D[1])
+    for x, y in ((w // 2 - 2, 3), (w // 2 + 2, 1), (w // 2 + 4, 4), (w // 2 - 5, 0)):
+        s.set(x, y, P.blossom[3])
+    return s
+
+
+def dresser_cn():
+    """梳妆台 with a round bronze mirror on a stand."""
+    s = Sprite(22, 30)
+    D = DARK
+    s.rect(0, 14, 22, 3, D[2]).hline(0, 21, 14, D[4])
+    s.rect(1, 17, 20, 6, D[1]).rect(3, 18, 7, 4, D[2]).rect(12, 18, 7, 4, D[2]).set(6, 20, P.mustard[3]).set(15, 20, P.mustard[3])
+    s.vline(1, 23, 29, D[2]).vline(20, 23, 29, D[2])
+    s.vline(11, 9, 13, D[2]).hline(8, 14, 13, D[2])
+    s.ellipse(11, 5, 5, 5, P.mustard[1]).ellipse(11, 5, 4, 4, P.mustard[2]).ellipse(10, 4, 1.5, 1.5, P.mustard[4])
+    s.rect(15, 11, 4, 3, RED[2]).set(16, 11, RED[3])                                  # a little red box
+    return s
+
+
+def bath_tub():
+    """木浴桶: a round wooden tub with two iron hoops and a dipper."""
+    s = Sprite(22, 16)
+    D = P.oak
+    s.rect(1, 2, 20, 13, D[2])
+    for x in range(2, 21, 3):
+        s.vline(x, 2, 14, D[1])
+    s.vline(1, 2, 14, D[3]).vline(20, 2, 14, D[0])
+    s.hline(1, 20, 2, D[4]).hline(2, 19, 3, P.glass[3])
+    for y in (5, 12):
+        s.hline(1, 20, y, P.steel[1])
+    s.line(17, 1, 21, -3 + 3, D[1]).rect(14, 0, 4, 2, D[3])
+    return s
+
+
+def washstand():
+    """脸盆架: a tall wooden stand with a basin, a towel over the top rail."""
+    s = Sprite(12, 30)
+    D = DARK
+    s.vline(2, 0, 29, D[2]).vline(9, 0, 29, D[2]).hline(1, 10, 0, D[3])
+    s.rect(2, 2, 8, 9, P.linen[3]).vline(9, 2, 10, P.linen[1]).hline(2, 9, 10, RED[2])   # towel
+    s.hline(1, 10, 14, D[2])
+    s.ellipse(6, 14, 5, 1.6, P.porcelain[3]).hline(2, 10, 15, P.teal[2])
+    s.line(2, 29, 5, 18, D[1]).line(9, 29, 6, 18, D[1])
+    return s
+
+
+def screen_panel():
+    """A small folding screen (屏风) with a painted landscape."""
+    s = Sprite(18, 26)
+    D = DARK
+    for k in range(3):
+        x = k * 6
+        s.rect(x, 0, 6, 25, D[2]).rect(x + 1, 1, 4, 22, P.linen[3])
+        for i in range(4):
+            s.vline(x + 1 + i, 16 - abs(i - 2 + k) * 2, 22, P.sage[1 + (i % 2)])
+        s.vline(x, 0, 25, D[1])
+    s.set(13, 3, RED[2])
+    return s
+
+
 def cn_farmhouse_inside():
-    """Upstairs from the friend-house planner (bedrooms, bath, stairs), dressed
-    Chinese; downstairs drawn by hand as one open room with one wooden floor:
-    a living corner with a three-seat settee and tea table, a square dining
-    table for three, and a kitchen with a brick stove."""
+    """Hand-dressed Chinese interior. The friend-house planner draws the shell
+    (frames, partitions, stairs, door); every room is wiped and furnished:
+    upstairs Buddy's room, a small bath, the PARENTS' room (right; Buddy does
+    not sleep there); downstairs one open room on one wooden floor: settee for
+    three, tea table, square table with three stools, brick stove."""
     plan = ("farmhouse", "山谷农舍", CN_W, "", "oak", [
-        [("stair", 6, 40), ("bed", 50, 90), ("bath", 144, 40), ("guest_bed", 188, 94)],
+        [("stair", 6, 40), ("laundry", 50, 90), ("laundry", 144, 40), ("laundry", 188, 94)],
         [("entry_stair", 6, 40), ("laundry", 50, 232)]])
     data, bg, front = FH.draw_plan(plan)
     s = bg.copy()
+    D = DARK
+
+    def room(x, w, top, fl, floor="wood", wall=P.plaster_living):
+        HS.back_wall(s, x, w, top, fl, wall)
+        HS.floor_band(s, x, w, fl, floor)
+        for jx in range(x + 4, x + w - 2, 18):                      # ceiling joists
+            s.rect(jx, top, 5, 3, D[1]).hline(jx, jx + 4, top, D[3])
+
+    def wainscot(x, w, fl):
+        s.rect(x, fl - 15, w, 12, D[2]).hline(x, x + w - 1, fl - 15, D[3]).hline(x, x + w - 1, fl - 4, D[1])
+        for px in range(x + 5, x + w - 8, 12):
+            s.rect(px, fl - 13, 9, 8, D[1]).hline(px, px + 8, fl - 13, D[3])
+
+    # ---- upstairs (top 5, floor 50)
+    ut, uf = 5, 50
+    room(50, 90, ut, uf, wall=P.plaster_bed)
+    room(144, 40, ut, uf, floor="tile", wall=P.plaster_bath)
+    room(188, 94, ut, uf, wall=P.plaster_bed)
+    # Buddy's room: canopy bed, lattice window, wardrobe, a side table with plum blossom
+    HS.on_floor(s, canopy_bed(46, P.sage), 54, 1, 1)
+    HS.on_floor(s, wardrobe_cn(), 114, 1, 1)
+    HS.on_floor(s, side_table(14), 100, 1, 1)
+    # bath: wooden tub, washstand, toilet
+    HS.on_floor(s, bath_tub(), 146, 1, 1)
+    import _furniture as F
+    HS.on_floor(s, F.toilet(), 169, 1, 1)
+    HS.place(s, washstand().crop(0, 0, 12, 16), 170, ut + 10)
+    # the parents' room: a wider bed with a red-and-gold quilt, dresser, wardrobe, screen
+    HS.on_floor(s, canopy_bed(56, RED, double=True), 192, 1, 1)
+    HS.on_floor(s, dresser_cn(), 254, 1, 1)
+    HS.place(s, scroll(10, 16, "fu"), 270, ut + 8)
+    # ---- downstairs (top 63, floor 108)
     x0, x1 = LIVING
     top, fl = GROUND_TOP, GROUND_FL
-    HS.back_wall(s, x0, x1 - x0, top, fl, P.plaster_living)        # wipe the placeholder room
-    HS.floor_band(s, x0, x1 - x0, fl, "wood")
-    s.rect(x0, fl - 15, x1 - x0, 12, DARK[2])                      # wooden wainscot
-    s.hline(x0, x1 - 1, fl - 15, DARK[3]).hline(x0, x1 - 1, fl - 4, DARK[1])
-    for x in range(x0 + 6, x1, 12):
-        s.rect(x, fl - 13, 9, 8, DARK[1]).hline(x, x + 8, fl - 13, DARK[3])
-    for x in range(x0 + 4, x1 - 2, 18):                            # ceiling joists
-        s.rect(x, top, 5, 3, DARK[1]).hline(x, x + 4, top, DARK[3])
-    # living corner
+    room(x0, x1 - x0, top, fl)
+    wainscot(x0, x1 - x0, fl)
     HS.place(s, moon_window(10), x0 + 18, top + 9)
-    HS.place(s, scroll(12, 26, "fu"), x0 + 52, top + 6)
+    HS.place(s, scroll(12, 26, "fu"), x0 + 54, top + 6)
     HS.on_floor(s, settee(46), x0 + 14, 0, 2)
     tt = tea_table()
     s.blit(tt, x0 + 24, fl + 1 - tt.h + 3)
     teaset(s, x0 + 30, fl - 3)
-    pot_x = x0 + 66
-    s.rect(pot_x, fl - 7, 8, 8, P.teal[2]).hline(pot_x, pot_x + 7, fl - 7, P.teal[3])   # potted bamboo
+    pot_x = x0 + 68
+    s.rect(pot_x, fl - 7, 8, 8, P.teal[2]).hline(pot_x, pot_x + 7, fl - 7, P.teal[3]).vline(pot_x + 7, fl - 6, fl, P.teal[1])
     for k in range(4):
         s.vline(pot_x + 1 + k * 2, fl - 26 + k * 3, fl - 8, P.green[2 + (k % 2)])
         s.line(pot_x + 1 + k * 2, fl - 20 + k * 3, pot_x + 4 + k * 2, fl - 22 + k * 3, P.green[3])
-    # dining: square table, three stools (left, back, right)
+        s.set(pot_x + 1 + k * 2, fl - 16 + k * 2, P.green[1])
     tx = x0 + 112
-    HS.on_floor(s, stool(), tx + 10, 0, 1)                         # the one behind the table
-    HS.place(s, scroll(10, 20, "mountain"), tx + 8, top + 8)
-    lantern(s, tx + 10, top + 4)
+    HS.place(s, scroll(10, 22, "mountain"), tx + 8, top + 8)
+    HS.on_floor(s, stool(), tx + 10, 0, 1)
     st = square_table()
     s.blit(st, tx, fl + 2 - st.h)
     for sx in (tx - 9, tx + 27):
         s.blit(stool(), sx, fl + 2 - 10)
-    s.rect(tx + 6, fl - 16, 5, 2, P.porcelain[3]).rect(tx + 14, fl - 16, 5, 2, P.porcelain[3]).set(tx + 12, fl - 17, P.coral[3])   # bowls
-    # kitchen
+    s.rect(tx + 5, fl - 16, 5, 2, P.porcelain[3]).rect(tx + 12, fl - 16, 5, 2, P.porcelain[3]).rect(tx + 19, fl - 16, 4, 2, P.porcelain[3])
+    s.set(tx + 7, fl - 17, P.coral[3]).set(tx + 14, fl - 17, P.green[3])
     kx = x1 - 82
     HS.on_floor(s, stove(), kx, 0, 1)
     HS.on_floor(s, water_jar(), kx + 44, 0, 1)
-    s.rect(kx + 46, top + 14, 30, 3, DARK[2]).hline(kx + 46, kx + 75, top + 14, DARK[3])   # shelf with jars
+    s.rect(kx + 46, top + 14, 30, 3, D[2]).hline(kx + 46, kx + 75, top + 14, D[3])
     for k, C in enumerate((P.porcelain, P.teal, P.clay, P.porcelain)):
         s.rect(kx + 48 + k * 7, top + 8, 5, 6, C[2]).hline(kx + 48 + k * 7, kx + 52 + k * 7, top + 8, C[3])
     for k, x in enumerate(range(kx + 60, kx + 78, 5)):
         chili_string(s, x, top + 18, 6, "chili" if k % 2 == 0 else "corn")
-    s.rect(kx + 60, fl - 22, 18, 3, DARK[2]).hline(kx + 60, kx + 77, fl - 22, DARK[3])   # chopping block on a stand
-    s.vline(kx + 62, fl - 19, fl, DARK[1]).vline(kx + 75, fl - 19, fl, DARK[1])
+    s.rect(kx + 60, fl - 22, 18, 3, D[2]).hline(kx + 60, kx + 77, fl - 22, D[3])
+    s.vline(kx + 62, fl - 19, fl, D[1]).vline(kx + 75, fl - 19, fl, D[1])
     s.rect(kx + 64, fl - 25, 9, 3, P.oak[3]).set(kx + 70, fl - 26, P.steel[3])
-    # upstairs: Chinese touches over the planner's rooms (lattice instead of curtained windows)
-    for f in data["furniture"]:
-        if f.get("kind") == "window":
-            lattice(s, f["x"] + 2, f["y"] + 2, f["w"] - 4, f["h"] - 6)
-    for x in (60, 196):
-        s.blit(scroll(10, 18, "mountain"), x + 50, 5 + 12)
-    lantern(s, 160, 8)
     s.blit(front, 0, 0)
     return s, INSIDE_DATA

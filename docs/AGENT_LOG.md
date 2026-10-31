@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- 春日花溪 art: no lanterns inside or out; interior fully hand-furnished Chinese (canopy beds,
+  顶箱柜, 条案, wooden tub, dresser; parents' room = upstairs right). Animals now sit behind
+  the fence (`spring_ranch_front` is drawn over them). Sun: one `spring_shaft` that the page
+  sweeps past now and then (owner: not a dense curtain).
+
+## 2026-10-31 · Claude
 - 春日花溪 art: farmhouse, inside and barn redone in Chinese style (`_farmstead.cn_*`,
   `granary`, `grain_bin`, `bamboo_fence`). Inside ground floor hand-drawn: one wooden floor
   for living + dining + kitchen, settee for 3, square table with 3 stools, brick 灶台.

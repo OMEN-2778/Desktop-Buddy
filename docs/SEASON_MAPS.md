@@ -15,8 +15,9 @@ Status: planning. Nothing here is in the game yet. Art first, owner approves, th
   sleep there (the parents will live on the farm later). Home interactions support up to
   three people (Buddy + 爸爸 + 妈妈): 3 seats on the settee, 3 at the dining table
   (`_farmstead.INSIDE_DATA`).
-- Orchard and pasture are one long 684px map. Shrubs (not flowers) under the lane. Sun
-  shafts, birds and butterflies as live layers.
+- No lanterns on the farmhouse (inside or out). Parents' room = upstairs right.
+- Orchard and pasture are one long 684px map. Animals behind the fence. Shrubs (not flowers) under the lane. Sun
+  shafts: only one (rarely two) sweeping past now and then; birds, butterflies live.
 
 ## 夏 · 热带岛屿 + 海底
 - A tropical island you can dive from. Buddy changes into a bikini or a wetsuit

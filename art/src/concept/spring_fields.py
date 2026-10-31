@@ -664,8 +664,6 @@ def background(zone):
         s.blit(FY.bush(kind, cx, hw, ht, SEASON, base=base), 0, 0)
     if zid == "rape":
         beehives(s, 92, 93)
-    if zid == "pasture":
-        FS.bamboo_fence(s, 30, W, 92, gate=(184, 204))
     border = Sprite(W, H)
     FS.shrub_border(border, seed=zid)
     if zid == "brook":
@@ -701,6 +699,7 @@ def preview(zone, frame=0):
         for kind, x, y, f in sorted(HERD, key=lambda h: h[2]):
             a = animal(kind, f)
             s.blit(a, x, y - a.h)
+        s.blit(front(zone), 0, 0)                          # the fence stands in front of them
     if zone["id"] == "home":
         for x, y, f, r in COOP:
             s.blit(FS.chicken(f, r), x, y - 11)
@@ -708,10 +707,21 @@ def preview(zone, frame=0):
     return ambience(s, zone)
 
 
+def front(zone):
+    """Layer drawn over the animals: the pasture's bamboo fence."""
+    s = Sprite(W, H)
+    if zone["id"] == "pasture":
+        FS.bamboo_fence(s, 30, W, 92, gate=(184, 204))
+    return s
+
+
 def ambience(s, zone):
     """Preview of the live layers: sun shafts at low alpha, birds, butterflies."""
-    s = FS.blend(s, FS.sun_shafts(), 0.14)
     rnd = random.Random(zone["id"] + "life")
+    if rnd.random() < 0.6:                                 # now and then a single shaft sweeps past
+        beam = Sprite(W, H)
+        beam.blit(FS.sun_shaft(rnd.randint(12, 18)), rnd.randint(20, W - 90), 0)
+        s = FS.blend(s, beam, 0.16)
     for k in range(rnd.randint(2, 3)):
         b = FS.bird(k % 3)
         s.blit(b, rnd.randint(40, W - 60), rnd.randint(6, 26))
@@ -753,12 +763,12 @@ def build():
         for suffix in ("", "_preview", "_tree_0", "_tree_1"):
             out.pop(f"spring_{key}{suffix}", None)
     halves = [z for z in ZONES if z.get("long") == "ranch"]
-    for suffix, make in (("", background), ("_tree_0", lambda z: trees(z, 0)), ("_tree_1", lambda z: trees(z, 1)), ("_preview", preview)):
+    for suffix, make in (("", background), ("_tree_0", lambda z: trees(z, 0)), ("_tree_1", lambda z: trees(z, 1)), ("_preview", preview), ("_front", front)):
         long = Sprite(W * 2, H)
         for i, z in enumerate(halves):
             long.blit(make(z), i * W, 0)
         out[f"spring_ranch{suffix}"] = long
-    out["spring_shafts"] = FS.sun_shafts(W * 2)
+    out["spring_shaft"] = FS.sun_shaft()
     for f in range(3):
         out[f"spring_bird_{f}"] = FS.bird(f)
     inside, _ = FS.cn_farmhouse_inside()
