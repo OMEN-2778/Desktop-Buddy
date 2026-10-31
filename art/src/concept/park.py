@@ -79,12 +79,12 @@ def skyline(s):
         x += w + rnd.randint(-2, 3)
 
 
-def treeline(s, season):
+def treeline(s, season, width=W):
     rnd = random.Random(7)
     R = FAR[season]
-    m = Sprite(W, H)
-    for i in range(70):                                                # overlapping crowns, back row first
-        cx = rnd.uniform(-6, W + 6)
+    m = Sprite(width, H)
+    for i in range(round(70 * width / W)):                              # overlapping crowns, back row first
+        cx = rnd.uniform(-6, width + 6)
         r = rnd.uniform(5, 9)
         cy = HORIZON - 2 - r * rnd.uniform(0.4, 0.9)
         A = R[rnd.randrange(len(R))]
@@ -99,7 +99,7 @@ def treeline(s, season):
         for _ in range(4):
             m.set(int(cx + rnd.uniform(-r, r) * 0.7), int(cy + rnd.uniform(0, r * 0.6)), A[1])
     s.blit(m, 0, 0)
-    s.hline(0, W - 1, HORIZON - 1, R[0][1])
+    s.hline(0, width - 1, HORIZON - 1, R[0][1])
 
 
 def lawn(s, season):
