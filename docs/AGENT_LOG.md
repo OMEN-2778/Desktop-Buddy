@@ -7,6 +7,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- Hand-off for Codex: `docs/SPRING_FARM.md` (state, build/review, files, coordinates, 11
+  owner decisions + rejected ideas, next steps as one-commit pieces, gotchas). AGENTS.md:
+  how art review rounds go, and that big features keep such a doc. Removed dead western
+  farmhouse/barn code from `_farmstead.py` (outputs unchanged); fixed dining seat points.
+- **Current focus:** spring farm art, waiting on the owner. Not started: gameplay, summer
+  island/sea art.
+
+## 2026-10-31 · Claude
 - 春日花溪 art: no lanterns inside or out; interior fully hand-furnished Chinese (canopy beds,
   顶箱柜, 条案, wooden tub, dresser; parents' room = upstairs right). Animals now sit behind
   the fence (`spring_ranch_front` is drawn over them). Sun: one `spring_shaft` that the page

@@ -22,6 +22,13 @@ either can pick up the other's work:
   (targeted test or screenshot, no page errors), the affected `tools/check_*.js` still pass,
   pushed. Say plainly what was not tested.
 - **Hand-off:** after each push, add an entry at the top of `docs/AGENT_LOG.md`.
+- **Art review rounds** (how the owner works): change only what they pointed at, rebuild,
+  send ONE combined preview image, list what changed in short Chinese bullets, say what
+  you did not change and why. Record each decision in the feature doc (e.g.
+  `docs/SPRING_FARM.md` → "Owner decisions") in the same commit.
+- **Big features have a hand-off doc** (`docs/SPRING_FARM.md` is the model): state, how to
+  build/review, files and functions, layout coordinates, owner decisions, rejected ideas,
+  next steps as one-commit pieces, gotchas. Keep it current when you change the feature.
 
 ## Releases (do not change without the owner asking)
 - Pushes that touch the demo or `desktop/**` build the Windows app automatically

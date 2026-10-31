@@ -6,10 +6,11 @@ Status: planning. Nothing here is in the game yet. Art first, owner approves, th
 - Story: on 写信日 (spring) 爸爸妈妈 write a letter (existing letter system,
   `festival_fun3.js`): they have leased a farm in a valley and ask Buddy to get there
   before spring ends.
-- The farm is the current five-screen map: 溪桥樱堤, 油菜花田, 风车花圃, 小菜园 (crops),
-  果园 (fruit trees). Buddy plants trees and crops, and may even keep cows and sheep.
+- The farm is the 春日花溪 map (now: 溪桥樱堤, 油菜花田, 风车花圃, 农舍, 菜园, and one long
+  果园·牧场). Buddy plants trees and crops and keeps cows and sheep. Full hand-off with
+  coordinates, files and every owner decision: `docs/SPRING_FARM.md`.
 - Owner decisions (art): Chinese rural style for the farmhouse, its inside and the barn
-  (grey tile roofs, lattice windows, couplets, lanterns, a 粮仓 granary, a woven grain bin,
+  (grey tile roofs, lattice windows, couplets, a 粮仓 granary, a woven grain bin,
   bamboo fences). Inside: small; one open living room + kitchen on ONE wooden floor with a
   dining table; a small bath; two bedrooms. The parents' bedroom is theirs: Buddy may not
   sleep there (the parents will live on the farm later). Home interactions support up to

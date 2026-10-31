@@ -1,23 +1,20 @@
-"""春日花溪: a spring-only outing, seven connected 342x118 screens in the park's
-style (same sky, far tree line, gravel lane at y=94..106, flower border, trees
-and bushes from front_yard). Light from the top left.
+"""春日花溪 / 山谷农场: the spring farm map, art only (not in the game yet).
+Park style: same sky, far tree line, gravel lane y=94..106, front_yard trees and
+bushes; a shrub border under the lane. Light from the top left. Left to right:
 
-    brook   溪桥樱堤  a brook winds down from the hills under a stone arch
-                      bridge in the lane; cherry trees on both banks
-    rape    油菜花田  terraced rapeseed rows run to the hills, white-walled
-                      farmhouses, beehives beside the lane
-    tulip   风车花圃  tulip stripes in four colours, a windmill behind
-    home    农舍      the family farmhouse (inside: spring_farmhouse_inside), well, washing
-    farm    菜园      13 raised beds for crops (cabbage, carrot, tomato,
-                      strawberry, corn, pumpkin; 4 stages each), a well
-    orchard 果园      21 trees in three rows: pear, peach, apple and orange trees (sapling → young
-                      → blossom → fruit), empty pits for new trees
-    pasture 牧场      red barn, silo, haystack, trough, paddock fence; cows and sheep
-                      (spring_cow_*, spring_sheep_*, spring_chicken_* sprites)
+    brook    溪桥樱堤  brook under a stone arch bridge, cherry trees    342px
+    rape     油菜花田  rapeseed rows, distant farmhouses, beehives      342px
+    tulip    风车花圃  tulip stripes, a windmill                       342px
+    home     农舍      Chinese farmhouse (_farmstead), well, woodpile,  342px
+                       washing line, mailbox, chickens (COOP)
+    farm     菜园      13 raised beds (PLOTS), crops via crop(kind, stage) 342px
+    ranch    果园·牧场  ONE long map from two halves: orchard (ORCHARD,   684px
+                       fruit_tree(kind, stage), PITS) | pasture (granary,
+                       grain bin, hay, cart, trough, HERD, bamboo fence)
 
-Art only for now (user decides when it goes into the game).
-    build() -> spring_<zone> (background), spring_<zone>_tree_<0|1>,
-    spring_<zone>_preview, spring_panorama.
+build() -> spring_<zone>[_tree_0|1|_preview], spring_ranch[_front|_tree_*|_preview],
+spring_farmhouse_inside, animals, spring_shaft, spring_bird_*, spring_stages,
+spring_panorama. Hand-off notes: docs/SPRING_FARM.md.
 """
 from __future__ import annotations
 

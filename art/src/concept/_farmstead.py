@@ -1,6 +1,9 @@
-"""Detailed farm pieces for 春日花溪 (spring_fields.py): the family farmhouse
-(outside + a small inside), the barn, livestock, a shrub border for the front
-of the lane, and ambient overlays (sun shafts, birds). Light from the top left.
+"""Detailed farm pieces for 春日花溪 (spring_fields.py), Chinese rural style
+(owner): the family farmhouse outside (`cn_farmhouse`) and inside
+(`cn_farmhouse_inside` + `INSIDE_DATA`), the 粮仓 granary, a grain bin, bamboo
+fence, livestock (cow / sheep / lamb / hen / rooster, 4 or 2 frames), the shrub
+border under the lane, and live-layer art (one sun shaft, birds). Light from
+the top left. Owner decisions: docs/SEASON_MAPS.md; hand-off: docs/SPRING_FARM.md.
 Scale: 1px ≈ 6cm, Buddy is 20x28, so a cow is ~38px long, a sheep ~22px.
 """
 from __future__ import annotations
@@ -52,283 +55,11 @@ def plaster(s, x0, y0, w, h, R, seed):
         s.set(rnd.randint(x0, x0 + w - 1), rnd.randint(y0, y0 + h - 1), R[2])
 
 
-# ------------------------------------------------------------- farmhouse outside
-
-HOUSE = (112, 240)
-HOUSE_DOOR = 182
+HOUSE = (112, 240)        # farmhouse front wall x0, x1 on the 农舍 screen
+HOUSE_DOOR = 182          # door centre: where Buddy walks in
 
 
-def window(s, x, y, w, h, shutters=True, box=True, curtain=P.blossom):
-    s.rect(x - 2, y - 2, w + 4, h + 4, TB[1])                       # frame
-    s.hline(x - 2, x + w + 1, y - 2, TB[3])
-    s.rect(x, y, w, h, P.glass[1])
-    for k in range(w + h):                                          # a diagonal sky reflection
-        for d in range(2):
-            px, py = x + k - h // 2 + d, y + h - 1 - k
-            if x <= px < x + w and y <= py < y + h:
-                s.set(px, py, P.glass[3])
-    s.rect(x, y, 2, h - 1, curtain[3]).set(x + 1, y + h // 2, curtain[1])   # tied-back curtains
-    s.rect(x + w - 2, y, 2, h - 1, curtain[2]).set(x + w - 2, y + h // 2, curtain[1])
-    s.hline(x, x + w - 1, y, curtain[3])
-    s.vline(x + w // 2, y, y + h - 1, TB[2]).hline(x, x + w - 1, y + h // 2, TB[2])
-    s.rect(x - 3, y + h + 1, w + 6, 2, P.porcelain[3]).hline(x - 3, x + w + 2, y + h + 2, P.porcelain[1])  # sill
-    if shutters:
-        for sx in (x - 7, x + w + 2):
-            s.rect(sx, y - 2, 5, h + 4, P.sage[2])
-            s.vline(sx, y - 2, y + h + 1, P.sage[3]).vline(sx + 4, y - 2, y + h + 1, P.sage[1])
-            s.vline(sx + 2, y - 2, y + h + 1, P.sage[1])
-            s.hline(sx, sx + 4, y, P.sage[3]).hline(sx, sx + 4, y + h - 1, P.sage[3])
-            s.line(sx, y + h - 1, sx + 4, y, P.sage[3])            # Z brace
-    if box:
-        by = y + h + 3
-        s.rect(x - 2, by, w + 4, 3, P.terracotta[2]).hline(x - 2, x + w + 1, by, P.terracotta[3]).hline(x - 2, x + w + 1, by + 2, P.terracotta[1])
-        rnd = random.Random(x * 13 + y)
-        for k in range(-1, w + 2):
-            s.set(x + k, by - 1, P.green[rnd.choice((2, 3))])
-            if rnd.random() < 0.55:
-                F = rnd.choice((P.coral, P.blossom, P.mustard, P.linen))
-                s.set(x + k, by - 2, F[3]).set(x + k, by - 1, F[2])
-        for k in (0, w // 2, w):                                    # trailing ivy
-            for d in range(rnd.randint(2, 4)):
-                s.set(x + k - 1 + (d % 2), by + 3 + d, P.green[2 + (d == 0)])
-
-
-def roof(s, x0, x1, top, eave):
-    """Steep tiled roof seen from the long side, with a barge board at each
-    gable, scalloped tile rows, a little moss and a gutter."""
-    Rf = P.terracotta
-    rnd = random.Random(7)
-    for y in range(top, eave + 1):
-        t = (y - top) / (eave - top)
-        a, b = int(x0 + 16 - 22 * t), int(x1 - 16 + 22 * t)
-        row = (y - top) // 3
-        k = (y - top) % 3
-        c = (Rf[3], Rf[2], Rf[1])[k]
-        s.hline(a, b, y, c)
-        if k == 2:                                                  # tile joints, staggered per row
-            for x in range(a + (row % 2) * 3, b, 6):
-                s.set(x, y, Rf[0]).set(x, y - 1, Rf[1])
-        if k == 0:
-            for x in range(a, b):
-                if rnd.random() < 0.06:
-                    s.set(x, y, Rf[4])
-                elif rnd.random() < 0.03 and t > 0.5:
-                    s.set(x, y, P.sage[2])                         # moss
-        s.set(a, y, TB[3]).set(a + 1, y, TB[2]).set(b, y, TB[1]).set(b - 1, y, TB[2])
-    s.hline(x0 + 15, x1 - 15, top - 1, Rf[1]).hline(x0 + 15, x1 - 15, top - 2, Rf[3])   # ridge tiles
-    for x in range(x0 + 16, x1 - 15, 4):
-        s.set(x, top - 2, Rf[4])
-    s.rect(x0 - 7, eave + 1, x1 - x0 + 14, 2, P.steel[2]).hline(x0 - 7, x1 + 6, eave + 1, P.steel[4])   # gutter
-    s.vline(x1 + 4, eave + 3, LANE - 2, P.steel[2]).vline(x1 + 5, eave + 3, LANE - 2, P.steel[1])       # downpipe
-    s.hline(x1 + 3, x1 + 6, LANE - 2, P.steel[1])
-
-
-def weathervane(s, x, y):
-    s.vline(x, y - 10, y, TB[0]).hline(x - 4, x + 4, y - 6, TB[0])
-    s.rect(x - 2, y - 13, 5, 3, TB[0]).set(x + 3, y - 14, TB[0]).set(x - 3, y - 12, TB[0]).set(x + 2, y - 14, P.coral[2])
-
-
-def chimney(s, x, top, base):
-    stones(s, x, x + 10, top, base, P.brick, seed=x)
-    s.rect(x - 1, top - 2, 12, 2, P.pave[3]).hline(x - 1, x + 10, top - 1, P.pave[1])
-    for k, (dx, r) in enumerate(((2, 2), (5, 3), (10, 4), (16, 4.5))):
-        cy = top - 6 - k * 6
-        s.ellipse(x + 5 + dx, cy, r, r * 0.7, P.porcelain[3 if k < 2 else 2])
-        s.ellipse(x + 4 + dx, cy - 1, r * 0.5, r * 0.35, P.porcelain[3])
-
-
-def climbing_rose(s, x, y0, y1):
-    rnd = random.Random(x)
-    for y in range(y1, y0, -1):
-        xx = x + int(2 * math.sin(y * 0.5))
-        s.set(xx, y, P.green[1])
-        if rnd.random() < 0.6:
-            s.set(xx + rnd.choice((-1, 1)), y, P.green[rnd.choice((2, 3))])
-        if rnd.random() < 0.22:
-            s.rect(xx - 1 + rnd.randint(-1, 1), y, 2, 2, P.blossom[2]).set(xx, y, P.blossom[4])
-
-
-def pot(s, x, base, F):
-    s.rect(x, base - 4, 6, 4, P.terracotta[2]).hline(x - 1, x + 6, base - 4, P.terracotta[3]).vline(x + 5, base - 3, base - 1, P.terracotta[1])
-    s.ellipse(x + 3, base - 7, 3.5, 2.5, P.green[2]).set(x + 1, base - 8, P.green[3])
-    for dx in (0, 2, 4, 5):
-        s.set(x + dx, base - 8 - (dx % 2), F[3]).set(x + dx, base - 7, F[2])
-
-
-def bench(s, x, base):
-    s.rect(x, base - 7, 18, 2, P.oak[3]).hline(x, x + 17, base - 7, P.oak[4]).hline(x, x + 17, base - 6, P.oak[1])
-    s.rect(x, base - 14, 18, 2, P.oak[2]).hline(x, x + 17, base - 14, P.oak[3])
-    for lx in (x + 1, x + 16):
-        s.vline(lx, base - 14, base - 1, P.oak[1])
-    s.rect(x + 3, base - 9, 6, 2, P.blossom[2]).hline(x + 3, x + 8, base - 9, P.blossom[3])   # cushion
-
-
-def farmhouse(s):
-    """Two storeys: fieldstone plinth, lime-white ground floor, half-timbered
-    upper floor, steep tiled roof with two dormers, chimney, weathervane,
-    porch with bench and pots, a climbing rose."""
-    x0, x1 = HOUSE
-    base = LANE - 1
-    plinth = base - 5
-    up = plinth - 25
-    eave = up - 19
-    top = eave - 27
-    chimney(s, x1 - 34, top - 6, eave - 6)
-    roof(s, x0, x1, top, eave)
-    weathervane(s, x0 + 30, top - 2)
-    for wx in (x0 + 38, x1 - 52):                                  # dormers
-        plaster(s, wx, eave - 15, 16, 14, P.linen, wx)
-        s.vline(wx, eave - 15, eave - 2, P.linen[3]).vline(wx + 15, eave - 15, eave - 2, P.linen[1])
-        window(s, wx + 4, eave - 12, 8, 7, shutters=False, box=False, curtain=P.linen)
-        for k in range(6):
-            s.hline(wx - 3 + k, wx + 18 - k, eave - 16 - k, P.terracotta[3 - (k % 3 == 2)] if k else P.terracotta[1])
-        s.set(wx - 3, eave - 16, TB[1]).set(wx + 18, eave - 16, TB[1])
-    # upper floor: plaster infill between oak timbers
-    plaster(s, x0, eave + 3, x1 - x0, up - eave - 3, P.linen, 11)
-    s.hline(x0, x1 - 1, eave + 3, P.linen[1]).hline(x0, x1 - 1, eave + 4, P.linen[2])     # eave shadow
-    Tm = P.walnut
-    s.rect(x0, up - 1, x1 - x0, 3, Tm[2]).hline(x0, x1 - 1, up - 1, Tm[3]).hline(x0, x1 - 1, up + 1, Tm[1])
-    for x in range(x0, x1, 21):
-        s.rect(x, eave + 3, 3, up - eave - 3, Tm[2]).vline(x, eave + 3, up - 1, Tm[3])
-        if x + 21 < x1:
-            for d in range(2):
-                s.line(x + 3 + d, up - 2, x + 10 + d, eave + 5, Tm[2 - d])
-                s.line(x + 20 - d, up - 2, x + 13 - d, eave + 5, Tm[2 - d])
-    s.rect(x1 - 3, eave + 3, 3, up - eave - 3, Tm[1])
-    for wx in (x0 + 24, x0 + 66, x1 - 30):
-        window(s, wx, eave + 7, 9, 8, shutters=False, curtain=P.linen)
-    # ground floor
-    plaster(s, x0, up + 2, x1 - x0, plinth - up - 2, P.linen, 13)
-    s.hline(x0, x1 - 1, up + 2, P.linen[1])
-    s.vline(x1 - 1, up + 2, plinth, P.linen[1]).vline(x1 - 2, up + 2, plinth, P.linen[2])
-    for wx in (x0 + 16, x0 + 42, x1 - 40, x1 - 18):
-        if abs(wx + 5 - HOUSE_DOOR) > 16:
-            window(s, wx, up + 7, 11, 10)
-    climbing_rose(s, x0 + 4, eave + 6, plinth)
-    # door, porch
-    dx = HOUSE_DOOR - 7
-    s.rect(dx - 1, plinth - 21, 16, 21, TB[1])
-    s.rect(dx, plinth - 20, 14, 20, P.sage[2])
-    for px in range(dx + 2, dx + 14, 3):
-        s.vline(px, plinth - 20, plinth - 1, P.sage[1])
-    s.vline(dx, plinth - 20, plinth - 1, P.sage[3])
-    s.rect(dx + 4, plinth - 17, 6, 4, P.glass[2]).hline(dx + 4, dx + 9, plinth - 17, P.glass[3])
-    for hy in (plinth - 16, plinth - 5):
-        s.hline(dx, dx + 4, hy, P.slate[1])
-    s.set(dx + 11, plinth - 9, P.mustard[3]).set(dx + 11, plinth - 10, P.mustard[4])
-    s.ellipse(dx + 7, plinth - 23, 3, 2, P.green[2]).set(dx + 5, plinth - 24, P.coral[3]).set(dx + 9, plinth - 23, P.mustard[4])   # wreath
-    for px in (dx - 9, dx + 22):
-        s.rect(px, plinth - 27, 2, 27 + 4, Tm[3]).vline(px + 1, plinth - 27, base, Tm[1])
-    for k in range(5):
-        s.hline(dx - 12 + k, dx + 25 - k, plinth - 28 - k, P.terracotta[3 - (k % 2)] if k else P.terracotta[1])
-    s.hline(dx - 11, dx + 24, plinth - 27, Tm[1])
-    s.rect(dx + 18, plinth - 22, 3, 5, P.slate[1]).rect(dx + 19, plinth - 21, 1, 3, P.light[0])   # lantern
-    bench(s, dx - 30, plinth + 4)
-    for px, F in ((dx - 7, P.coral), (dx + 17, P.mustard), (x1 - 14, P.blossom), (x0 + 6, P.lilac)):
-        pot(s, px, base, F)
-    # plinth and steps
-    stones(s, x0 - 2, x1 + 2, plinth, base + 1, seed=3)
-    s.rect(dx - 4, base - 2, 22, 3, ST[3]).hline(dx - 4, dx + 17, base - 2, ST[4]).hline(dx - 4, dx + 17, base, ST[1])
-    s.rect(dx - 2, base - 5, 18, 3, ST[3]).hline(dx - 2, dx + 15, base - 5, ST[4]).hline(dx - 2, dx + 15, base - 3, ST[1])
-
-
-# ------------------------------------------------------------- farmhouse inside
-
-INSIDE = ("farmhouse", "山谷农舍", 288, "爸妈承包的农舍：楼上小人的卧室、小浴室、爸妈的卧室；楼下客厅连着厨房。", "oak", [
-    [("stair", 6, 40), ("bed", 50, 90), ("bath", 144, 40), ("guest_bed", 188, 94)],
-    [("entry_stair", 6, 40), ("living", 50, 134), ("kitchen", 188, 94)]])
-OPEN_X = 184               # the living/kitchen partition removed: one open room
-
-
-def farmhouse_inside():
-    data, bg, front = FH.draw_plan(INSIDE)
-    s = bg.copy()
-    w = s.w
-    top, fl = 58 + 5, 58 + 50
-    HS.back_wall(s, OPEN_X - 4, 12, top, fl, P.plaster_bed)        # open the living room into the kitchen
-    HS.floor_band(s, OPEN_X - 4, 12, fl, "wood")
-    s.rect(OPEN_X - 1, top - 5, 3, 14, P.walnut[2]).hline(OPEN_X - 1, OPEN_X + 1, top + 8, P.walnut[1])   # a beam over the opening
-    for level in range(2):                                         # exposed ceiling joists
-        t = level * 58 + 5
-        for x in range(8, w - 6, 18):
-            s.rect(x, t, 5, 3, P.walnut[1]).hline(x, x + 4, t, P.walnut[3]).set(x + 4, t + 2, P.walnut[0])
-    for k, x in enumerate(range(200, 270, 12)):                    # dried herbs and garlic over the kitchen
-        s.vline(x, top + 3, top + 6, P.oat[1])
-        C = (P.sage, P.mustard, P.linen)[k % 3]
-        s.ellipse(x, top + 9, 2, 3, C[2]).set(x - 1, top + 8, C[3])
-    for x in range(64, 170, 2):                                    # a rag rug in the living room
-        c = (P.clay[2], P.oat[2], P.sage[2], P.mustard[2])[(x // 6) % 4]
-        s.set(x, fl + 3, c).set(x + 1, fl + 3, c)
-    s.blit(front, 0, 0)
-    return s, data
-
-
-# ------------------------------------------------------------- barn and yard
-
-def barn(s, x, base):
-    """Red board-and-batten barn with a gambrel roof, white trim, hayloft
-    with hay, sliding doors on a rail, a lantern."""
-    w = 86
-    R, Wt = P.terracotta, P.porcelain
-    wall = base - 34
-    s.rect(x, wall, w, 34, R[2])
-    for xx in range(x + 1, x + w, 4):
-        s.vline(xx, wall, base - 1, R[3]).vline(xx + 2, wall, base - 1, R[1])
-    rnd = random.Random(5)
-    for _ in range(60):
-        s.set(rnd.randint(x, x + w - 1), rnd.randint(wall, base - 1), R[rnd.choice((1, 3))])
-    s.vline(x, wall, base - 1, Wt[3]).vline(x + 1, wall, base - 1, Wt[2])
-    s.vline(x + w - 1, wall, base - 1, Wt[1]).vline(x + w - 2, wall, base - 1, Wt[2])
-    for k in range(22):                                            # gambrel roof
-        a, b = (x - 4 + k, x + w + 3 - k) if k < 9 else (x + 5 + (k - 9) * 3, x + w - 6 - (k - 9) * 3)
-        if a >= b:
-            break
-        c = P.slate[3] if k % 3 == 0 else P.slate[2]
-        s.hline(a, b, wall - 1 - k, c)
-        s.set(a, wall - 1 - k, Wt[3]).set(b, wall - 1 - k, Wt[2])
-        for xx in range(a + (k % 2) * 2, b, 5):
-            if k % 3 == 2:
-                s.set(xx, wall - 1 - k, P.slate[1])
-    s.hline(x - 4, x + w + 3, wall, Wt[3]).hline(x - 4, x + w + 3, wall + 1, R[0])
-    cx = x + w // 2
-    s.rect(cx - 8, wall - 16, 16, 13, Wt[3]).rect(cx - 7, wall - 15, 14, 11, TB[0])   # hayloft
-    for k in range(7):
-        s.hline(cx - 6, cx + 5, wall - 10 + k // 2, P.mustard[(2, 3, 4)[k % 3]])
-    for k in range(-6, 6, 2):
-        s.set(cx + k, wall - 11, P.mustard[3])
-    s.hline(cx - 9, cx + 8, wall - 17, TB[1]).vline(cx, wall - 22, wall - 17, TB[1]).set(cx, wall - 23, P.steel[3])   # hay hook beam
-    d0, d1 = cx - 16, cx + 16                                      # sliding doors
-    s.hline(d0 - 6, d1 + 6, base - 27, P.steel[1])
-    s.rect(d0, base - 26, 32, 26, R[1])
-    for a, b in ((d0, cx), (cx, d1)):
-        s.rect(a, base - 26, b - a, 26, R[2])
-        for xx in range(a + 2, b, 3):
-            s.vline(xx, base - 25, base - 2, R[1])
-        s.vline(a, base - 26, base - 1, Wt[3]).vline(b - 1, base - 26, base - 1, Wt[2])
-        s.hline(a, b - 1, base - 26, Wt[3]).hline(a, b - 1, base - 13, Wt[3]).hline(a, b - 1, base - 1, Wt[2])
-        s.line(a, base - 25, b - 1, base - 14, Wt[3]).line(a, base - 12, b - 1, base - 2, Wt[3])
-    for wx in (x + 7, x + w - 17):
-        s.rect(wx, base - 22, 10, 9, Wt[3]).rect(wx + 1, base - 21, 8, 7, P.glass[1]).vline(wx + 5, base - 21, base - 15, Wt[3]).hline(wx + 1, wx + 8, base - 18, Wt[3])
-        s.rect(wx + 1, base - 21, 3, 2, P.glass[3])
-    s.rect(d1 + 3, base - 31, 3, 4, P.slate[1]).set(d1 + 4, base - 30, P.light[0])
-
-
-def silo(s, x, base):
-    h, w = 58, 18
-    for y in range(base - h, base):
-        s.hline(x, x + w - 1, y, P.porcelain[2])
-        s.hline(x, x + 3, y, P.porcelain[3]).hline(x + w - 4, x + w - 1, y, P.porcelain[1]).set(x + w - 1, y, P.porcelain[0])
-    for y in range(base - h + 4, base, 6):
-        s.hline(x, x + w - 1, y, P.porcelain[1])
-        for xx in range(x + 2, x + w - 1, 5):
-            s.set(xx, y + 1, P.steel[2])
-    s.vline(x + w - 4, base - h + 2, base - 1, P.steel[2])                 # ladder
-    for y in range(base - h + 3, base, 3):
-        s.set(x + w - 5, y, P.steel[2])
-    for k in range(7):
-        s.hline(x + k, x + w - 1 - k, base - h - k, P.slate[3 if k < 2 else 2])
-    s.set(x + w // 2, base - h - 8, P.steel[3])
-
+# ------------------------------------------------------------- yard props
 
 def hay(s, x, base):
     """A round stack plus square bales, straw scattered."""
@@ -366,23 +97,6 @@ def cart(s, x, base):
     for a in (0, 45, 90, 135):
         r = math.radians(a)
         s.line(int(cx - 4 * math.cos(r)), int(cy - 4 * math.sin(r)), int(cx + 4 * math.cos(r)), int(cy + 4 * math.sin(r)), TB[2])
-
-
-def rail_fence(s, x0, x1, y, gate=None, R=P.oak):
-    """Split-rail paddock fence; posts every 16px, two rails, a gate gap."""
-    for x in range(x0, x1):
-        if gate and gate[0] <= x < gate[1]:
-            continue
-        for ry in (y - 8, y - 3):
-            s.set(x, ry, R[3]).set(x, ry + 1, R[1])
-    for x in range(x0 + 3, x1, 16):
-        if gate and gate[0] - 3 <= x < gate[1] + 1:
-            continue
-        s.rect(x, y - 11, 3, 12, R[2]).vline(x, y - 11, y, R[3]).vline(x + 2, y - 11, y, R[1]).hline(x, x + 2, y - 11, R[4])
-        s.set(x - 1, y + 1, G[1]).set(x + 3, y + 1, G[1])
-    if gate:
-        for gx in gate:
-            s.rect(gx - 2, y - 13, 4, 14, R[2]).vline(gx - 2, y - 13, y, R[3]).hline(gx - 2, gx + 1, y - 13, R[4])
 
 
 # ------------------------------------------------------------- livestock
@@ -611,14 +325,6 @@ def lattice(s, x, y, w, h, frame=DARK, paper=P.linen, pattern="grid"):
     s.hline(x - 3, x + w + 2, y + h + 2, frame[2]).hline(x - 3, x + w + 2, y + h + 3, frame[0])
 
 
-def lantern(s, x, y):
-    s.vline(x + 3, y - 3, y, DARK[0])
-    s.ellipse(x + 3, y + 4, 3.5, 3.5, RED[2]).ellipse(x + 2, y + 3, 1.5, 1.5, RED[4])
-    s.hline(x + 1, x + 5, y, P.mustard[2]).hline(x + 1, x + 5, y + 8, P.mustard[2])
-    for k in range(3):
-        s.set(x + 2 + k, y + 9 + (k % 2), P.mustard[3])
-
-
 def couplets(s, dx, dw, top, bottom):
     for cx in (dx - 5, dx + dw + 2):
         s.rect(cx, top, 3, bottom - top, RED[2]).vline(cx, top, bottom - 1, RED[3])
@@ -786,7 +492,7 @@ LIVING = (50, 282)          # one open room: living | dining | kitchen, one wood
 INSIDE_DATA = {
     "rooms": {"buddy_bed": (50, 90), "bath": (144, 40), "parents_bed": (188, 94), "living": LIVING},
     "seats": {"sofa": [(72, GROUND_FL - 3), (86, GROUND_FL - 3), (100, GROUND_FL - 3)],          # up to three people
-              "dining": [(164, GROUND_FL - 4), (184, GROUND_FL - 4), (202, GROUND_FL - 4)]},
+              "dining": [(157, GROUND_FL - 4), (176, GROUND_FL - 6), (193, GROUND_FL - 4)]},
     "parents_bed_off_limits": True,
 }
 
@@ -999,20 +705,6 @@ def washstand():
     s.hline(1, 10, 14, D[2])
     s.ellipse(6, 14, 5, 1.6, P.porcelain[3]).hline(2, 10, 15, P.teal[2])
     s.line(2, 29, 5, 18, D[1]).line(9, 29, 6, 18, D[1])
-    return s
-
-
-def screen_panel():
-    """A small folding screen (屏风) with a painted landscape."""
-    s = Sprite(18, 26)
-    D = DARK
-    for k in range(3):
-        x = k * 6
-        s.rect(x, 0, 6, 25, D[2]).rect(x + 1, 1, 4, 22, P.linen[3])
-        for i in range(4):
-            s.vline(x + 1 + i, 16 - abs(i - 2 + k) * 2, 22, P.sage[1 + (i % 2)])
-        s.vline(x, 0, 25, D[1])
-    s.set(13, 3, RED[2])
     return s
 
 
