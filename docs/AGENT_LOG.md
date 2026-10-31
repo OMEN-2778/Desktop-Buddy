@@ -6,6 +6,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-10-31 · Codex
+- Spring farm art review: rapeseed and tulip beds now fill the ground up to the road;
+  orchard/pasture share a 684px tree line and rolling lawn (no reset at the join).
+- Source + generated PNGs updated; decisions and implementation in `docs/SPRING_FARM.md`.
+  Other scenes/props preserved; art only, gameplay still waiting on owner approval.
+- Checked: visual combined preview, original park tree-line parity (all seasons), unchanged
+  brook/home/garden, pixelkit rebuild, make_demo + npm run web, local browser boot (no errors).
+
 ## 2026-10-31 · Claude
 - Summer Hawaiian getaway, art round 1 (not in the game): `summer_isle.py` (旅舍 + 更衣室
   shore screens, compact lodge inside) and `summer_sea.py` (1710×560 dive map in layers,

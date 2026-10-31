@@ -85,17 +85,18 @@ def clouds(s, zone):
 
 def lawn(s, zone):
     """Soft rolling lawn (no mowing stripes: this is country, not a park)."""
-    s.rect(0, HZ, W, PATH[0] - HZ, G[2])
-    for cx, cy, rx, ry in ((60, 86, 90, 18), (250, 88, 110, 16)):
+    width = s.w
+    s.rect(0, HZ, width, PATH[0] - HZ, G[2])
+    for cx, cy, rx, ry in ((60 * width / W, 86, 90 * width / W, 18), (250 * width / W, 88, 110 * width / W, 16)):
         s.ellipse(cx + 4, cy + 3, rx, ry, G[2])
         s.ellipse(cx - 6, cy - 4, rx - 8, ry - 5, G[3])
-    s.hline(0, W - 1, HZ, G[1])
+    s.hline(0, width - 1, HZ, G[1])
     rnd = random.Random(zone["id"] + "lawn")
-    for _ in range(420):
-        x, y = rnd.randrange(W), rnd.randint(HZ + 1, PATH[0] - 1)
+    for _ in range(round(420 * width / W)):
+        x, y = rnd.randrange(width), rnd.randint(HZ + 1, PATH[0] - 1)
         s.set(x, y, G[rnd.choice((1, 2, 4))])
-    for _ in range(70):                                    # daisies, dandelions, violets
-        x, y = rnd.randrange(W), rnd.randint(HZ + 3, PATH[0] - 2)
+    for _ in range(round(70 * width / W)):                   # daisies, dandelions, violets
+        x, y = rnd.randrange(width), rnd.randint(HZ + 3, PATH[0] - 2)
         s.set(x, y, rnd.choice((P.linen[3], P.linen[3], P.mustard[4], P.lilac[3])))
 
 
@@ -616,6 +617,19 @@ def background(zone):
     PK.treeline(s, SEASON)
     lawn(s, zone)
     zid = zone["id"]
+    if zone.get("long") == "ranch":
+        # Render shared terrain across 684px, then crop. No restarted tree line
+        # or duplicated lawn mound at the orchard/pasture join.
+        terrain = Sprite(W * 2, H)
+        for i, key in enumerate(("orchard", "pasture")):
+            half = Sprite(W, H)
+            PK.sky(half)
+            clouds(half, {"id": key})
+            hills(half, {"id": key})
+            terrain.blit(half, i * W, 0)
+        PK.treeline(terrain, SEASON, width=W * 2)
+        lawn(terrain, {"id": "ranch"})
+        s = terrain.crop(0 if zid == "orchard" else W, 0, W, H)
     patches = {"brook": [(60, 80, 26, 5, P.lilac), (120, 70, 18, 3, P.mustard), (270, 78, 30, 5, P.blossom),
                          (300, 88, 20, 3, P.mustard), (40, 66, 22, 3, P.blossom)],
                "rape": [(20, 72, 18, 4, P.lilac)],
@@ -630,11 +644,11 @@ def background(zone):
     if zid == "rape":
         farmhouse(s, 168, HZ + 1, 24)
         farmhouse(s, 206, HZ + 2, 16)
-        field(s, 190, HZ + 2, PATH[0] - 5, (110, 300), (44, 312), rape_pick, 71)
+        field(s, 190, HZ - 1, PATH[0] - 1, (-2, W + 2), (-2, W + 2), rape_pick, 71)
         scarecrow(s, 262, 84)
     if zid == "tulip":
         windmill(s, 236, HZ + 4)
-        field(s, 170, HZ + 3, PATH[0] - 5, (96, 300), (58, 322), tulip_pick, 73)
+        field(s, 170, HZ - 1, PATH[0] - 1, (-2, W + 2), (-2, W + 2), tulip_pick, 73)
     if zid == "home":
         homestead(s)
     if zid == "farm":

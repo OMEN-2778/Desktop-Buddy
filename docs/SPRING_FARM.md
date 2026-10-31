@@ -32,6 +32,9 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/spring_fields.py
     step); `chicken(f, rooster)` has 2.
   - Lane edge and live layers: `shrub_border`, `sun_shaft`, `bird`; `blend` is for
     previews only.
+- Shared ranch terrain: `background()` constructs a 684px terrain layer and crops each
+  half. `lawn()` uses the target sprite width; `park.treeline` accepts optional `width`
+  with the original default. Field rows keep their perspective but reach both edges.
 - Reused: `park.py` (sky, tree line, lane), `front_yard.py` (trees, bushes, butterflies),
   `friend_houses.draw_plan` (interior shell only), `house.back_wall/floor_band/on_floor/place`.
 
@@ -67,10 +70,13 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/spring_fields.py
 
 ## Owner decisions (rules; do not undo)
 1. Keep the existing maps' look ("贴近目前的地图"), refined and lively ("精致、生动、华丽自然").
-2. Screens 1–3 (brook, rapeseed, tulips/windmill) were approved as they are.
+2. Brook screen approved as-is. Rapeseed and tulip/windmill fields were expanded on
+   2026-10-31: fill the whole ground up to the walking lane, no narrow trapezoid of
+   flowers surrounded by lawn. Keep the road, foreground shrub strip and existing props.
 3. Screen 4 was 紫藤花廊; it became the vegetable garden. The beds and the orchard were
    too small and were enlarged.
-4. The orchard and the pasture form one long map.
+4. The orchard and the pasture form one long map. Their terrain and far tree line
+   must be rendered continuously across 684px, never reset at x=342 (2026-10-31).
 5. **Chinese rural style** for the farmhouse, its inside and the barn.
    - Grey tiles, curled ridge ends, lattice windows, couplets, a 福 sign, strings of
      chillies and corn, a granary, a grain bin, bamboo fences.
@@ -98,8 +104,8 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/spring_fields.py
 - [ ] Owner's answers to the open questions in `docs/SEASON_MAPS.md`: farm open all year
       or spring only, the deadline, crop growth time, fruit trees after spring, which
       animals and what Buddy does with them.
-- [ ] Ranch seam at x=342: the far tree line breaks slightly. Make `park.treeline` take an
-      offset or width before going live.
+- [x] Ranch seam at x=342: `park.treeline(..., width=684)` and a shared wide lawn now
+      span both halves before cropping. Default width=342 preserves other maps.
 - [ ] Upstairs bedrooms have no window (they were hidden behind the beds). Ask the owner
       whether to add a small high window.
 - [ ] Only once the owner says go, gameplay. Planned steps, one commit each:
