@@ -22,7 +22,8 @@ import summer_sea as SS
 from pixelkit import P, Sprite
 
 PREVIEW_SCALE = 1
-LAND = 342
+PRE = 684                        # 旅舍 screen (0-342) and 更衣室 screen (342-684) before the beach
+LAND = PRE + 342                 # the beach ends / the dive map starts here
 SKY = 96                         # extra sky above the dive map
 GW, GH = LAND + SS.OW, SKY + SS.OH
 WL = SKY + SS.SURF               # waterline (global)
@@ -35,10 +36,10 @@ JOIN = LAND + 150                # the beach curve meets the dive map's seabed h
 def ground_y(x):
     """Walkable top: flat sand, then ONE smooth beach curve down into the sea
     (gentle at the waterline, steeper further out) until the dive map's floor."""
-    if x < 236:
+    if x < PRE + 236:
         return WL - 10 + int(1.2 * math.sin(x * 0.05))
     if x < JOIN:
-        t = (x - 236) / (JOIN - 236)
+        t = (x - PRE - 236) / (JOIN - PRE - 236)
         end = SS.FLOOR[JOIN - LAND] + SKY
         return int(WL - 10 + (end - WL + 10) * (t ** 1.8) * (1.6 - 0.6 * t))
     return SS.FLOOR[x - LAND] + SKY
@@ -82,18 +83,24 @@ def cloud(s, cx, base, w, seed):
     s.px[edge & (yy > base - w * 0.25)] = C(P.sky_soft[1])
 
 
+PEAKS = [(150, 70, 62), (430, 90, 40), (PRE + 60, 70, 54), (PRE + 190, 45, 24)]   # x, width, height
+
+
 def mountain(s):
-    """A grey volcanic ridge far behind the land (owner sketch: grey, left),
-    two flat tones: lit west faces, shaded east faces, a pale rim."""
-    for x in range(0, 236):
-        h = 58 * math.exp(-((x - 60) / 70) ** 2) + 26 * math.exp(-((x - 190) / 45) ** 2) + 2 * math.sin(x * 0.23)
+    """Grey volcanic ridges far behind the land (owner sketch: grey), one
+    continuous range over all three land screens, ending before the beach
+    slope. Two flat tones: lit west faces, shaded east faces, a pale rim."""
+    def hgt(x):
+        return sum(h * math.exp(-((x - c) / w) ** 2) for c, w, h in PEAKS)
+    for x in range(0, PRE + 236):
+        h = hgt(x) + 2 * math.sin(x * 0.23) + 6
         top = int(WL - 10 - h)
         if top >= WL - 16:
             continue
-        slope = (58 * math.exp(-((x + 1 - 60) / 70) ** 2) + 26 * math.exp(-((x + 1 - 190) / 45) ** 2)) - (h - 2 * math.sin(x * 0.23))
+        lit = hgt(x + 1) > hgt(x)
         for y in range(top, WL - 8):
-            s.set(x, y, P.sea_grey[3] if slope > 0 else P.sea_grey[2])
-        s.set(x, top, P.sea_grey[4] if slope > 0 else P.sea_grey[3])
+            s.set(x, y, P.sea_grey[3] if lit else P.sea_grey[2])
+        s.set(x, top, P.sea_grey[4] if lit else P.sea_grey[3])
 
 
 def sailboat(s, x, y):
@@ -127,6 +134,8 @@ def strata(s):
                 if d >= dd + (wob if i > 2 else 0):
                     k = i
             col = STRATA[k][1]
+            if d < 3 and x < 470 - 30 * SS.BAYER[y % 4, x % 4]:     # lawn round the lodge, fading into sand
+                col = (P.grass[3], P.grass[2], P.grass[1])[d]
             if x >= LAND:                                            # under the sea the earth ends along a slanted
                 edge = 40 + 0.9 * (y - WL) + (1 if SS.BAYER[y % 4, x % 4] > 0.5 else 0)
                 if x - LAND > edge:                                  # line, like a fault: the reef rock goes on
@@ -189,25 +198,76 @@ def footprints(s, x0, x1):
         s.set(x, y, P.sand[1]).set(x + 1, y, P.sand[1])
 
 
+def screen_piece(draw, dy):
+    """Draw summer_isle pieces (made for a 342x118 screen, lane at y=94) and
+    return them lifted onto our ground line."""
+    tmp = Sprite(SI.W, SI.H)
+    draw(tmp)
+    tmp.px[:, :1] = 0
+    tmp.px[:, -1:] = 0
+    return tmp
+
+
+DY = (WL - 10) - (SI.LANE[0] - 1)    # summer_isle's lane top -> our ground
+
+
+def jungle_strip(s, x0, x1, seed):
+    """front_yard trees live on a 342px canvas: draw in 300px pieces."""
+    for o in range(x0, x1, 300):
+        tmp = Sprite(SI.W, SI.H + 20)
+        SI.jungle(tmp, 0, min(300, x1 - o), WL - 10 - DY, seed=seed + o, rmin=8, rmax=14)
+        tmp.px[:, 330:] = 0                                          # pieces overlap; only the wrapped column goes
+        s.blit(tmp, o, DY)
+
+
+def lodge_screen(t):
+    b = SI.LANE[0] - 1
+    for x, h, ln, sd in ((24, 62, 1, 1), (40, 50, -1, 6), (268, 56, -1, 2), (320, 66, -1, 3)):
+        SI.palm2(t, x, b + 2, h, lean=ln, seed=sd)
+    SI.banana(t, 252, b, 30, 1)
+    SI.banana(t, 300, b, 26, 2)
+    for x, F in ((62, P.coral), (88, P.blossom), (256, P.mustard), (282, P.coral)):
+        SI.hibiscus(t, x, b, 11, 11, F)
+    SI.plumeria(t, 74, b, 30)
+    SI.lodge(t)
+    for x in (86, 244):
+        SI.tiki_torch(t, x, b)
+        SI.heliconia(t, x + 6, b, P.coral if x < 100 else P.mustard)
+    SI.monstera(t, 100, b, 1.2)
+    SI.monstera(t, 230, b, 1.1)
+    SI.mailbox_sign(t, 316, b)
+
+
+def cabana_screen(t):
+    b = SI.LANE[0] - 1
+    for x, h, ln, sd in ((20, 60, 1, 4), (36, 48, -1, 12), (210, 64, 1, 5), (228, 50, -1, 13), (318, 58, 1, 14)):
+        SI.palm2(t, x, b + 2, h, lean=ln, seed=sd)
+    SI.banana(t, 54, b, 24, 3)
+    SI.cabana(t)
+    SI.heliconia(t, 186, b, P.coral)
+    SI.monstera(t, 198, b)
+    SI.hibiscus(t, 252, b, 9, 9, P.mustard)
+    SI.canoe(t, 262, b + 2)
+    SI.hibiscus(t, 306, b, 9, 9, P.blossom)
+
+
 def land(s, frame=0):
     mountain(s)
-    tmp = Sprite(GW, GH)                                             # front_yard trees are drawn on a 342px canvas:
-    SI.jungle(tmp, 0, 150, WL - 10, seed=31, rmin=8, rmax=14)        # their outline wraps to x=341, clear it
-    tmp.px[:, 300:] = 0
-    s.blit(tmp, 0, 0)
+    jungle_strip(s, 0, PRE + 160, 31)
     strata(s)
-    # headland rocks on the far left, a scatter by the water like the reference
-    for cx, w, h, sd in ((18, 34, 26, 1), (44, 30, 18, 2), (6, 22, 14, 3), (68, 22, 12, 4), (88, 14, 8, 5)):
+    for cx, w, h, sd in ((10, 34, 30, 1), (34, 26, 18, 2), (2, 20, 40, 3)):    # rocks close the map on the left
         boulder(s, cx, GROUND[max(0, cx)] + 3, w, h, sd)
-    for cx, w, h, sd in ((LAND + 40, 22, 12, 7), (LAND + 26, 10, 6, 8)):
+    s.blit(screen_piece(lodge_screen, DY), 0, DY)
+    s.blit(screen_piece(cabana_screen, DY), 342, DY)
+    for cx, w, h, sd in ((PRE + 30, 20, 12, 4), (PRE + 46, 12, 7, 5), (LAND + 40, 22, 12, 7), (LAND + 26, 10, 6, 8)):
         boulder(s, cx, GROUND[cx] + 2, w, h, sd)
-    SI.palm2(s, 112, GROUND[112], 70, lean=1, frame=frame, seed=2)
-    SI.palm2(s, 140, GROUND[140], 52, lean=1, frame=frame, seed=5)
-    SI.palm2(s, 74, GROUND[74] - 4, 44, lean=-1, frame=frame, seed=8)
-    SI.umbrella(s, 196, GROUND[196], R=P.coral)
-    SI.lounger(s, 184, GROUND[190])
-    SI.lounger(s, 214, GROUND[218], C=P.mustard)
-    footprints(s, 230, 312)
+    SI.palm2(s, PRE + 112, GROUND[PRE + 112], 70, lean=1, frame=frame, seed=2)
+    SI.palm2(s, PRE + 140, GROUND[PRE + 140], 52, lean=1, frame=frame, seed=5)
+    SI.palm2(s, PRE + 74, GROUND[PRE + 74], 44, lean=-1, frame=frame, seed=8)
+    SI.umbrella(s, PRE + 196, GROUND[PRE + 196], R=P.coral)
+    SI.lounger(s, PRE + 184, GROUND[PRE + 190])
+    SI.lounger(s, PRE + 214, GROUND[PRE + 218], C=P.mustard)
+    footprints(s, 470, PRE + 312)
 
 
 # ------------------------------------------------------------- under water (owner: calmer, a real gradient)
@@ -236,7 +296,7 @@ def horizon(s):
     islands standing on it, a sailboat."""
     s.px[WL - 7:WL, :, :3] = C(P.sea[3])[:3]
     s.px[WL - 7, :, :3] = C(P.sea[4])[:3]
-    for cx, w, h in ((420, 90, 16), (520, 50, 9), (980, 120, 22), (1110, 60, 11), (1290, 80, 14)):
+    for cx, w, h in ((PRE + 420, 90, 16), (PRE + 520, 50, 9), (PRE + 980, 120, 22), (PRE + 1110, 60, 11), (PRE + 1290, 80, 14)):
         for x in range(cx - w // 2, cx + w // 2):
             u = (x - cx) / (w / 2)
             top = int(WL - 7 - h * max(0.0, 1 - u * u) ** 0.7 - 1.5 * math.sin(x * 0.3))
@@ -245,7 +305,7 @@ def horizon(s):
     for x in range(0, GW, 9):                                        # glints on the far water
         if (x * 13) % 7 < 2:
             s.hline(x, x + 2, WL - 4 - (x % 3), P.sea[4])
-    sailboat(s, 760, WL - 4)
+    sailboat(s, PRE + 760, WL - 4)
 
 
 def rock(s):
@@ -333,7 +393,8 @@ def fog(s):
 def bay(frame=0):
     s = Sprite(GW, GH)
     sky(s)
-    for cx, base, w, sd in ((120, 60, 70, 1), (300, 44, 56, 2), (560, 70, 90, 3), (860, 50, 64, 4), (1180, 66, 80, 5)):
+    for cx, base, w, sd in ((90, 50, 60, 7), (360, 40, 70, 8), (560, 56, 50, 9), (PRE + 120, 60, 70, 1), (PRE + 300, 44, 56, 2),
+                            (PRE + 560, 70, 90, 3), (PRE + 860, 50, 64, 4), (PRE + 1180, 66, 80, 5)):
         cloud(s, cx, base, w, sd)
     horizon(s)
     s.px[WL:, :, :3] = WROWS[WL:, None, :].astype(np.uint8)          # the water
@@ -368,7 +429,7 @@ def _pad(layer):
 def shore(s):
     """Where the sand enters the water: wet sand, a wash of foam lying on it,
     a thin shallow wedge of pale water."""
-    xs = [x for x in range(200, JOIN) if GROUND[x] >= WL]
+    xs = [x for x in range(PRE, JOIN) if GROUND[x] >= WL]
     x0 = xs[0]
     for x in range(x0 - 14, x0):                                     # wet sand just above the line
         s.set(x, GROUND[x], P.sand[2]).set(x, GROUND[x] + 1, P.sand[2])
@@ -393,7 +454,9 @@ def build():
     full = bay()
     return {
         "bay_preview": full,
-        "bay_view_beach": view(full, 200, WL - 40, (342, 118)),
+        "bay_view_lodge": view(full, 171, WL - 50, (342, 118)),
+        "bay_view_cabana": view(full, 513, WL - 50, (342, 118)),
+        "bay_view_beach": view(full, PRE + 171, WL - 50, (342, 118)),
         "bay_view_shore": view(full, LAND, WL + 30),
         "bay_view_dive": view(full, LAND + 200, WL + 90),
     }

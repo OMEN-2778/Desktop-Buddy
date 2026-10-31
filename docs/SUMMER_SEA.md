@@ -140,3 +140,10 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
   decor and life are a few grouped pieces (`calm_decor`, `calm_life`); one smooth beach
   curve (`JOIN`) runs into the seabed, with wet sand, a foam wash and a pale shallow wedge;
   远景 = a pale far-sea band above the waterline with distant islands and a sailboat.
+- Round 3 (owner: one seamless map 旅舍 -> 更衣室 -> 沙滩 -> 水底): `bay_preview` is now
+  2052x450. `PRE`=684: 旅舍 screen 0-342 (lodge door at x=164, `SI.LODGE_DOOR`), 更衣室
+  screen 342-684 (doors at 342+96 / 342+142), beach 684-1026 (`LAND`), then the sea.
+  Same side-view and ground line everywhere (feet on `GROUND[x]`); the lawn round the
+  lodge fades into sand; one grey ridge and one jungle strip run behind all land; rocks
+  close the map at x=0. Lodge/cabana art reused from `summer_isle.py`, lifted by `DY`.
+  Views: `bay_view_{lodge,cabana,beach,shore,dive}`.
