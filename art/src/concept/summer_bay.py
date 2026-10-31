@@ -147,10 +147,12 @@ EARTH = np.zeros((GH, GW), bool)    # cut-open earth: stays warm, no water fog
 
 def strata(s):
     """The cut-open land: wavy bands that follow the ground and dip under the
-    sea along the slope; fades into the dive map's own seabed."""
+    sea and run on under the whole seabed (owner: no hard line between earth
+    and reef). Where the seabed is steep the skin is bare rock, not sand."""
     rnd = random.Random(7)
-    for x in range(LAND + 520):
+    for x in range(GW):
         g = GROUND[x]
+        steep = abs(GROUND[min(GW - 1, x + 3)] - GROUND[max(0, x - 3)]) / 6
         wob = 2 * math.sin(x * 0.045) + 1.5 * math.sin(x * 0.13 + 1)
         for y in range(g, GH):
             d = y - g
@@ -161,12 +163,11 @@ def strata(s):
             col = STRATA[k][1]
             if d < 3 and x < 470 - 30 * SS.BAYER[y % 4, x % 4]:     # lawn round the lodge, fading into sand
                 col = (P.grass[3], P.grass[2], P.grass[1])[d]
-            if x >= LAND:                                            # under the sea the earth ends along a slanted
-                edge = (JOIN - LAND + 10) + 0.8 * (y - GROUND[JOIN]) + (1 if SS.BAYER[y % 4, x % 4] > 0.5 else 0)
-                if x - LAND > edge:                                  # line, like a fault: the reef rock goes on
-                    continue
+            if x >= LAND:
                 if y > WL and k < 3:                                 # wet sand one shade darker
                     col = P.sand[max(0, P.sand.index(col) - 1)]
+                if steep > 1.2 and d < 7:                            # bare rock skin on steep faces
+                    col = (P.sea_grey[3], P.sea_grey[2], P.sea_grey[2], P.sea_grey[1], P.sea_grey[1], P.walnut[1], P.walnut[1])[d]
             s.set(x, y, col)
             EARTH[y, x] = True
         if x >= LAND:

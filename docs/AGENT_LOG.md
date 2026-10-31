@@ -7,6 +7,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- Bay round 6: earth strata continue under the whole seabed (no fault line). Art only.
+
+## 2026-10-31 · Claude
 - Bay round 5: clouds switched back to the game's drifting clouds (`beach.cloud`). Art only.
 
 ## 2026-10-31 · Claude
