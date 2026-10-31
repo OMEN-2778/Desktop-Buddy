@@ -20,7 +20,7 @@ Status: planning. Nothing here is in the game yet. Art first, owner approves, th
 - Orchard and pasture are one long 684px map. Animals behind the fence. Shrubs (not flowers) under the lane. Sun
   shafts: only one (rarely two) sweeping past now and then; birds, butterflies live.
 
-## 夏 · 热带岛屿 + 海底
+## 夏 · 热带岛屿 + 海底 (art round 1 done: `docs/SUMMER_SEA.md`)
 - A tropical island you can dive from. Buddy changes into a bikini or a wetsuit
   (new 造型室 pieces) and dives.
 - The underwater map must be **big**. Owner's reference is the feeling of a diving

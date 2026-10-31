@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- Summer Hawaiian getaway, art round 1 (not in the game): `summer_isle.py` (旅舍 + 更衣室
+  shore screens, compact lodge inside) and `summer_sea.py` (1710×560 dive map in layers,
+  14 creatures, SPAWNS, 11 HOTSPOTS, boundaries made by terrain). Hand-off:
+  `docs/SUMMER_SEA.md`. Waiting on the owner's review.
+
+## 2026-10-31 · Claude
 - Hand-off for Codex: `docs/SPRING_FARM.md` (state, build/review, files, coordinates, 11
   owner decisions + rejected ideas, next steps as one-commit pieces, gotchas). AGENTS.md:
   how art review rounds go, and that big features keep such a doc. Removed dead western
