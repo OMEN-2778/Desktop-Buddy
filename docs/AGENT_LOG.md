@@ -7,6 +7,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- 春日花溪 art (still not in the game): now 7 screens. New 农舍 screen (farmhouse exterior,
+  door x=`HOUSE_DOOR`) + interior `spring_farmhouse_inside` (friend-house planner plan
+  `INSIDE`: bedroom, bath, stairs, parents' room / kitchen, dining, entry, living).
+  菜园 13 beds (`PLOT_ROWS`), 果园 21 trees + pits, new 牧场 (barn, silo, fence, `HERD`;
+  cow/sheep/chicken 2-frame sprites). Waiting on owner's review.
+
+## 2026-10-31 · Claude
 - Owner's 四季地图 plan written down in `docs/SEASON_MAPS.md` (spring valley farm via a
   写信日 letter from parents; summer tropical island with a big underwater map; autumn and
   winter undecided). Planning only, open questions listed there.
