@@ -11,7 +11,7 @@ const SUIT_NAME={clothes:'便装',swim:'泳衣',wetsuit:'潜水服'};
 const TOTAL=DATA.hotspots.length+new Set(DATA.life.map(c=>c.k)).size;
 const state={x:120,y:0,vy:0,target:null,after:null,facing:1,camX:0,camY:0,viewH:LAND_H,time:0,paused:false,inside:false,walk:false,loaded:false,
  suit:'clothes',gender:'f',moveSpeed:0,camVX:0,camVY:0,diveBlend:0,inCabana:false,lying:null,changing:0,found:new Set(),wasSea:false,warned:0};
-const fx=makeSeasonEffects();let wetKind='clear',weatherOverride=null;
+const fx=makeSeasonEffects(DATA.skinRamp);let wetKind='clear',weatherOverride=null;
 const wxLabel=document.createElement('label');wxLabel.className='season-weather';wxLabel.innerHTML='天气 <select aria-label="地图测试天气"><option value="">跟随游戏</option><option value="clear">晴天</option><option value="rain">小雨</option><option value="storm">大雨</option><option value="snow">小雪</option><option value="blizzard">大雪</option></select>';canvas.parentElement.parentElement.querySelector('.controls').append(wxLabel);wxLabel.querySelector('select').onchange=e=>{weatherOverride=e.target.value||null;wetKind=weatherOverride||'clear';};
 const keys=new Set(),parts=[];let peopleRenderer=null;
 const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -121,7 +121,7 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
   ctx.save();ctx.translate(x+im.width/2,y+im.height/2);ctx.scale((left?-1:1)*Math.max(.22,Math.abs(Math.cos(ph))),1);ctx.rotate(Math.sin(t*1.1+c.x)*.035);ctx.drawImage(im,-im.width/2,-im.height/2);ctx.restore();}
  peopleRenderer?.(ctx,{time:t,inside:state.inside,under:under()});
  if(state.lying!==null){const [lx,ly]=DATA.chairs[state.lying];state.facing=1;hero(lx,ly);}else hero(state.x,state.y);
- fx.drawWater(ctx,WL);
+ fx.drawWater(ctx,WL,{x:cx,y:cy,w:VW,h:vh});
  for(const p of parts){ctx.fillStyle=p.c;ctx.globalAlpha=clamp(p.life*1.5,0,1);ctx.fillRect(Math.round(p.x),Math.round(p.y),1,1);}ctx.globalAlpha=1;
  ctx.restore();
  fx.weather(ctx,wetKind,t,VW,vh,{waterline:WL-cy});

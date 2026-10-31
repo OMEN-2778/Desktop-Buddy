@@ -123,3 +123,25 @@ The owner supplied 15 explicit revisions; **still preview/test only**, no formal
   counts, hero/NPC trails and ripples, increasing depth tint, all four weather types,
   bounded particle counts + headless per-frame CPU render sample. Actual monitor/GPU
   smoothness still needs owner play testing; headless timing is not a device FPS promise.
+
+### Swimming correction after owner visual review · 2026-11-01
+The articulated/split swimmer described above is **superseded**. Owner explicitly wants
+original 20×28 doll proportions: copy existing outfit + native head/dance wave, compress
+only the bottom four rows of one leg from 4px to 3px, restore, alternate to the other leg.
+Whole original doll rotates for diving; no detached head, custom fins or drawn limbs.
+Cached skin-ramp recoloring preserves native player/NPC skin. Native wave/head and outfit
+use the same 280ms phase. Shared implementation `effects.js`; same standalone/test wiring.
+Regression additionally bounds surface sprite to 20×28, verifies identical upper body
+between opposing kicks and alternating foot pixels. Cropped pose contact sheet reviewed.
+
+### Pixel FX correction · 2026-11-01 (overrides living-world vector effects)
+- Owner explicitly rejected smooth vectors for sea/water/kelp/light effects. Shared FX
+  `raster()` allocates five logical 1× layers (water/waves/kelp/sunlight/weather) and draws
+  only integer pixel primitives before nearest-neighbour composition. Reuses canvases;
+  culls offscreen particles/plants, no new RAF/layout work. Exact project palette.
+- Pixel glyph bubbles, stepped ripple rings/wave crests, shaded kelp stalks + leaflets,
+  flat opacity-band/dithered rays and pixel caustics; pixel rain/snow. No smooth strokes,
+  ellipses, Beziers or Canvas gradients. Existing static water background not redrawn.
+- Browser regression temporarily rejects vector Canvas APIs during all FX calls and
+  checks backing layers remain logical 1× even when the actual view is scaled up.
+  Existing original-body/kicking and motion/portal/weather checks still apply.

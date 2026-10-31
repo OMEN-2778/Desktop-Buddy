@@ -230,3 +230,22 @@ validation and remaining gaps. Standalone reviews remain available.
 - Fine granular mixed soil boundaries replace rigid strata. Rain/heavy rain/snow/heavy
   snow supported (incl. visual test selector). Indoor doors have a two-phase fade and
   accessible exit. Implementation/tests/build limits: `SEASON_GAME_TEST.md` living pass.
+
+### Owner correction · 2026-11-01: original doll swimming ONLY
+- Rejected the elongated, independently drawn limbs/torso of the living-world pass.
+- Keep the original 20×28 body, head, proportions and outfit. Alternate a **one-pixel**
+  shortening/restoration of each lower leg; hands reuse the native dance wave poses
+  (280ms cadence). No procedural limb skeleton, stretched body or separately rotated head.
+- Surface actor stays upright; diving rotates the intact doll as one piece, as before.
+  Actual player/NPC skin ramps recolor the existing outfit skin pixels, cached per look.
+- Applies to player, NPCs and standalone summer. Bubbles/ripples/depth tint remain;
+  attachment offsets/hit areas adjusted to the restored small body. Still test-only.
+
+### Owner correction · 2026-11-01: pixel effects, never smooth vectors
+Owner rejected smooth vector waves, kelp, bubbles/ripples and sun rays. All dynamic sea
+FX now paint on logical 1× intermediate layers using pixel glyphs, integer stair-step
+contours, exact sea/teal/porcelain/sky-soft palette colours and discrete opacity bands.
+Nearest-neighbour composition into the existing high-resolution game view. No arcs,
+ellipse/stroke paths or Canvas gradients. Kelp has shaded pixel stalks/leaflets; waves
+use stepped crests/foam; bubbles use 3–4px outline glyphs; caustics use broken pixel lines.
+Rain/snow corrected too. Motion timing remains continuous; camera/other art unchanged.

@@ -1048,3 +1048,20 @@ roundClip(7,1) 的满半径像素圆角，最短为 14px 圆点。面板水平�
 Windows 发布流程先在 Linux 从当前源码重建页面，再通过 current-game-page
 artifact 交给 Windows 签名打包，禁止把旧的已提交 index.html 直接装进新 EXE。
 
+
+### Swimming — owner correction (2026-11-01, seasonal previews)
+Keep the original **20×28** doll body and proportions. Only alternate slight leg
+shortening/restoration (1px in lower four leg rows); hands may reuse native dance/wave
+poses. The owner rejected elongated, separately drawn limbs and a detached/repositioned
+head. Rotate the intact doll together when a diving orientation is needed. Use the
+same simple pose for player and NPCs; keep native looks/skin colours. This rule overrides
+the experimental articulated swimmer from the preceding seasonal-map pass.
+
+### Seasonal scene effects — strict owner correction (2026-11-01)
+**This is a pixel game. Smooth motion does not authorize smooth vector artwork.**
+The owner explicitly rejected smooth vector waves, kelp, bubble trails/ripples and
+sunlight. Draw those (and rain/snow) on the logical **1× pixel grid**, using integer
+pixel glyphs, stair-step lines/contours, palette colours and finite opacity levels;
+upscale with nearest-neighbour only. No anti-aliased strokes/curves/ellipses, soft
+vector ribbons or continuous gradient beams. Keep fluid timing/camera motion; do not
+solve this by reducing animation frame rate. Inspect enlarged actual pixels before push.

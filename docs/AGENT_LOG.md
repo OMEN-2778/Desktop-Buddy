@@ -7,6 +7,17 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- Owner rejected BOTH procedural swimmer proportions and smooth vector sea FX.
+  Restored original 20×28 doll: only
+  alternate 1px lower-leg tucks/extensions; native dance wave arms, intact dive rotation.
+- Shared FX + player/NPC/standalone wiring, cached native skin recoloring; existing
+  bubble/ripple/depth effects retained with body-sized attachment/hit offsets.
+- Sea/rain/snow FX now use logical 1× pixel canvases, glyphs/stepped lines + finite
+  palette/opacity; nearest-neighbour upscale. No vector paths/gradients.
+- Owner rules recorded in pixel-art skill + SUMMER_SEA/SEASON_GAME_TEST; visual pose sheet
+  and geometry/alternate-leg + forbidden-vector API regressions added. Test-only.
+
+## 2026-11-01 · Codex
 - Owner's 15-point seasonal TEST pass: full-window wardrobe/no door instruction; actual
   articulated swimmers, player/NPC bubbles/ripples + depth tint; all reef species 8 poses.
 - Rolling waves, caustics/rays, long kelp, granular soil, lower cabana; individual rooted

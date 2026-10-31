@@ -8,10 +8,11 @@ const seasonalTest=(function(){
  const ctl=()=>sim.place==='spring_test'?state.spring:sim.place==='summer_test'?state.summer:null;
  const body=document.createElement('canvas');body.width=20;body.height=28;const bodyCtx=body.getContext('2d');
  function drawHero(ctx,x,y,s,sea){
+  const swimming=sea&&(sea.under||sea.floating)&&!s.inside,arm=Math.floor(s.time/.28)%2;
   const walking=s.walk,phase=Math.floor(s.time*7)%4;
-  const f={expr:sim.mode==='down'?'sleepy':emotion().key==='happy'?'happy':'neutral',look:s.facing||1,bob:walking?phase%2:0,sway:walking?phase%2:0,wave:null};
-  let dc=dollCanvas(f,sea&&s.lying!==null?'sit':walking?(phase===1?'walkL':phase===3?'walkR':'stand'):'stand');
-  if(sea&&(sea.under||sea.floating)&&!s.inside){state.summer.fx.swimmer(ctx,{head:dc,skin:look.skin,sheet:sea.sheet,x,y,time:s.time,facing:s.facing,diving:sea.under,moving:s.walk,wetsuit:s.suit==='wetsuit',waterline:116});return;}
+  const f={expr:sim.mode==='down'?'sleepy':emotion().key==='happy'?'happy':'neutral',look:s.facing||1,bob:swimming?0:walking?phase%2:0,sway:swimming?0:walking?phase%2:0,wave:swimming?arm:null};
+  let dc=dollCanvas(f,sea&&s.lying!==null?'sit':swimming?'stand':walking?(phase===1?'walkL':phase===3?'walkR':'stand'):'stand');
+  if(sea&&(sea.under||sea.floating)&&!s.inside){state.summer.fx.swimmer(ctx,{head:dc,skinRamp:ramps.skin,sheet:sea.sheet,x,y,time:s.time,facing:s.facing,diving:sea.under,moving:s.walk,wetsuit:s.suit==='wetsuit',waterline:116});return;}
   if(sea&&s.suit!=='clothes'){
    bodyCtx.clearRect(0,0,20,28);bodyCtx.drawImage(sea.sheet,4,14,20,14,0,14,20,14);bodyCtx.drawImage(dc,0,0,20,15,0,0,20,15);dc=body;
   }
