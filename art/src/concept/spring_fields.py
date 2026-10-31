@@ -435,9 +435,7 @@ def well(s, x, base):
     s.hline(x - 5, x + 5, base - 9, P.sea[1])
     for px in (x - 7, x + 7):
         s.vline(px, base - 22, base - 9, P.walnut[2])
-    for k in range(5):
-        s.hline(x - 10 + k, x + 10 - k, base - 23 - k, P.terracotta[2] if k else P.terracotta[1])
-    s.hline(x - 6, x - 1, base - 26, P.terracotta[3])
+    FS.cn_roof(s, x - 6, x + 7, base - 27, base - 23, lift=2, overhang=4)
     s.hline(x - 6, x + 6, base - 18, P.walnut[1])                # windlass
     s.vline(x, base - 17, base - 13, P.oat[2]).rect(x - 1, base - 13, 3, 3, P.oak[2])
 
@@ -574,7 +572,7 @@ def homestead(s):
     """农舍: the farmhouse, a well, a woodpile under a lean-to, washing on the
     line, a mailbox by the lane, a tool rack and a wheelbarrow."""
     s.ellipse(HOUSE_DOOR, PATH[0], 82, 4, G[1])
-    FS.farmhouse(s)
+    FS.cn_farmhouse(s)
     well(s, 284, 92)
     woodpile(s, 72, 92)
     clothesline(s, 14, 58, 64)
@@ -589,8 +587,8 @@ def pasture(s):
         x, y = rnd.randrange(W), rnd.randint(HZ + 4, PATH[0] - 3)
         s.set(x, y, G[rnd.choice((1, 4))])
     s.ellipse(190, 84, 70, 4, P.oat[1])                            # trodden earth by the barn
-    FS.silo(s, 246, 84)
-    FS.barn(s, 152, 84)
+    FS.grain_bin(s, 252, 84)
+    FS.granary(s, 150, 84)
     for _ in range(50):
         s.set(rnd.randint(165, 225), rnd.randint(84, 88), P.mustard[rnd.choice((2, 3))])
     FS.hay(s, 104, 82)
@@ -667,7 +665,7 @@ def background(zone):
     if zid == "rape":
         beehives(s, 92, 93)
     if zid == "pasture":
-        FS.rail_fence(s, 30, W, 92, gate=(184, 204))
+        FS.bamboo_fence(s, 30, W, 92, gate=(184, 204))
     border = Sprite(W, H)
     FS.shrub_border(border, seed=zid)
     if zid == "brook":
@@ -763,7 +761,7 @@ def build():
     out["spring_shafts"] = FS.sun_shafts(W * 2)
     for f in range(3):
         out[f"spring_bird_{f}"] = FS.bird(f)
-    inside, _ = FS.farmhouse_inside()
+    inside, _ = FS.cn_farmhouse_inside()
     out["spring_farmhouse_inside"] = inside
     for f in range(4):
         out[f"spring_cow_{f}"] = FS.cow(f)

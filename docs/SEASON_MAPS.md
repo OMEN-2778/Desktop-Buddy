@@ -8,7 +8,15 @@ Status: planning. Nothing here is in the game yet. Art first, owner approves, th
   before spring ends.
 - The farm is the current five-screen map: 溪桥樱堤, 油菜花田, 风车花圃, 小菜园 (crops),
   果园 (fruit trees). Buddy plants trees and crops, and may even keep cows and sheep.
-- "自己的小屋" on the farm: owner will decide later.
+- Owner decisions (art): Chinese rural style for the farmhouse, its inside and the barn
+  (grey tile roofs, lattice windows, couplets, lanterns, a 粮仓 granary, a woven grain bin,
+  bamboo fences). Inside: small; one open living room + kitchen on ONE wooden floor with a
+  dining table; a small bath; two bedrooms. The parents' bedroom is theirs: Buddy may not
+  sleep there (the parents will live on the farm later). Home interactions support up to
+  three people (Buddy + 爸爸 + 妈妈): 3 seats on the settee, 3 at the dining table
+  (`_farmstead.INSIDE_DATA`).
+- Orchard and pasture are one long 684px map. Shrubs (not flowers) under the lane. Sun
+  shafts, birds and butterflies as live layers.
 
 ## 夏 · 热带岛屿 + 海底
 - A tropical island you can dive from. Buddy changes into a bikini or a wetsuit

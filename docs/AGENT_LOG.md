@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- 春日花溪 art: farmhouse, inside and barn redone in Chinese style (`_farmstead.cn_*`,
+  `granary`, `grain_bin`, `bamboo_fence`). Inside ground floor hand-drawn: one wooden floor
+  for living + dining + kitchen, settee for 3, square table with 3 stools, brick 灶台.
+  Seat points + "parents' bed off limits" in `INSIDE_DATA`; decisions in docs/SEASON_MAPS.md.
+
+## 2026-10-31 · Claude
 - 春日花溪 art pass 3 (owner: "too simple, make it refined and lively"): new `_farmstead.py`
   (detailed farmhouse, barn, silo, hay, cart, rail fence; 4-frame cow / sheep / lamb, hen /
   rooster; shrub border replacing the flower border under the lane; `sun_shafts` layer for
