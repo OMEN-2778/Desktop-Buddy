@@ -20,7 +20,7 @@ function installSeasonPeople(active,ctl){
    cache.set(k,rows);
   }life.npcs=cache.get(k);
  }
- function tick(dt){sync();if(!active())return;const c=ctl();
+ function tick(dt){sync();if(!active())return;const c=ctl();if(approaching&&!c.state.after&&!life.talkQ){approaching.paused=false;approaching=null;}
   for(const n of life.npcs){if(!n.paused){n.x+=n.dir*n.v*dt;if(Math.abs(n.x-n.origin)>n.range)n.dir*=-1;n.dist+=n.v*dt;}
    n.feet=sim.place==='spring_test'?103:n.seasonKind==='walk'?c.gr(n.x):n.seasonKind==='swim'?128+Math.sin(realClock*1.7+n.phase)*.5:Math.min(c.gr(n.x)-20,170+Math.sin(realClock*.35+n.phase)*12);
   }
@@ -38,7 +38,7 @@ function installSeasonPeople(active,ctl){
  function click(x,y){const n=hit(x,y);if(!n)return false;if(!canClickNpc(n)||npcRefusesDirty(n,true))return true;
   const c=ctl(),s=c.state;if(n.seasonKind!=='walk'&&s.suit==='clothes'){showHint('先换上泳装再游过去吧');return true;}
   stopNpcTalk();if(approaching)approaching.paused=false;approaching=n;n.paused=true;
-  const tx=n.x+(s.x<n.x?-15:15),done=()=>{if(active()&&life.npcs.includes(n)){s.facing=Math.sign(n.x-s.x)||1;n.dir=-s.facing;startNpcTalk(n,true);}approaching=null;};
+  const tx=n.x+(s.x<n.x?-15:15),done=()=>{if(active()&&life.npcs.includes(n)){s.facing=Math.sign(n.x-s.x)||1;n.dir=-s.facing;if(!startNpcTalk(n,true))n.paused=false;}approaching=null;};
   if(sim.place==='spring_test')c.target(tx,103,done);else c.goTo(tx,n.seasonKind==='dive'?'dive':'walk',n.feet,done);return true;
  }
  function cancel(){if(approaching)approaching.paused=false;approaching=null;stopNpcTalk();bubble.hidden=true;}

@@ -10,6 +10,7 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 - Seasonal TEST polish: spring edge arrows/14px tolerance; sea free area 3.06×,
   coral/kelp habitats; smooth damped/high-resolution camera, one resize/mode, slower dive,
   no oxygen/blue swim box. Cabana grounded, whole-hut left-in/right-out wardrobe.
+- Follow-up: clear wardrobe on every scene exit; interrupted NPC approach releases NPC.
 - Native test NPCs: spring public only; summer walkers/4 swimmers/2 divers; native
   friendship + projected speech. New console full/lock cheats cover hero and both pets.
 - Sources `prototype/map-test/`, shared viewers/builders/art; feature handoff docs updated.

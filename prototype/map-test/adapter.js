@@ -53,6 +53,7 @@ const seasonalTest=(function(){
  }
  root.querySelectorAll('[data-dest]').forEach(b=>b.onclick=()=>start(b.dataset.dest));
  const originalArrive=arriveAt;arriveAt=function(place){
+  state.summer.wardrobe.hidden=true;state.summer.state.inCabana=false;
   if(!active()){people.cancel();people.sync();state.spring.root.hidden=state.summer.root.hidden=true;const r=originalArrive(place);state.activeHeight=H;fit();return r;}
   people.cancel();life.npcs=[];life.talkQ=null;clearNpcPills();const c=ctl();
   state.spring.root.hidden=sim.place!=='spring_test';state.summer.root.hidden=sim.place!=='summer_test';

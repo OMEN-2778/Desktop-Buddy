@@ -65,7 +65,7 @@ Still **test-only**, not a formal game/EXE change.
   fit()/height animation. Dive speed eases toward 12 world px/s (was 30); no oxygen
   timer/HUD/forced surfacing, no blue rectangle around swimmer.
 - Click anywhere on cabana: approach LEFT door, hide actor/show pixel wardrobe (clock
-  paused); choice appears from RIGHT door and walks clear. Foundation touches sand.
+  paused); choice appears from RIGHT door and walks clear. Any scene exit hides the dialog. Foundation touches sand.
 - `people.js`: native world identities/avatars/social dialogue/contact discovery; spring
   regions 0–2 have 2 walkers, regions 3–5/interior have none. Summer 3 walkers + 4 swimmers
   + 2 divers, stop/wait/approach before native talk; screen-projected DOM NPC speech.
