@@ -3,6 +3,26 @@
 Read `CLAUDE.md` first: project overview, where things are, and the steps after a change.
 The owner writes Chinese: answer in Chinese, briefly.
 
+## Two agents, one branch: keep the same granularity
+Claude Code and Codex both work on `claude/awesome-einstein-wtzgsw`. Work the same way so
+either can pick up the other's work:
+- **Before starting:** `git pull`, then read the top of `docs/AGENT_LOG.md` (what the other
+  agent did, what is half done, what the owner decided). Do not redo or undo the other
+  agent's work unless the owner asks.
+- **Owner decisions are rules.** Art/UI decisions live in `.claude/skills/pixel-art/SKILL.md`
+  (read it before touching art or UI, even if you are not Claude); system designs in
+  `docs/<TOPIC>.md`. When the owner decides something new, write it there in the same commit.
+- **One request = one commit** (or a few, one per finished piece). Never mix unrelated
+  changes; never commit half-broken work to the branch (every push can become a release).
+  Commit subject: one line saying what changed for the player, Chinese or English.
+- **Scope:** do exactly what was asked. Ask before adding game content the owner did not
+  request. New maps / big art: draw it first and show the owner a preview, wire it into the
+  game only after they approve (they were upset once when unapproved art went in).
+- **Done means:** rebuilt (`make_demo.py` + `npm run web`), checked in a headless browser
+  (targeted test or screenshot, no page errors), the affected `tools/check_*.js` still pass,
+  pushed. Say plainly what was not tested.
+- **Hand-off:** after each push, add an entry at the top of `docs/AGENT_LOG.md`.
+
 ## Releases (do not change without the owner asking)
 - Pushes that touch the demo or `desktop/**` build the Windows app automatically
   (`.github/workflows/desktop.yml`, full game, version 0.1.<run>) and the 试玩版
