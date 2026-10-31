@@ -49,9 +49,9 @@ ZONES = [
     {"id": "home", "name": "农舍",
      "trees": [("linden", 30, 34, 92, 24, 24), ("cherry", 306, 40, 66, 14, 13)]},
     {"id": "farm", "name": "菜园", "trees": []},
-    {"id": "orchard", "name": "果园", "trees": []},
-    {"id": "pasture", "name": "牧场",
-     "trees": [("linden", 326, 36, 92, 22, 23)]},
+    {"id": "orchard", "name": "果园", "trees": [], "long": "ranch"},          # these two halves make one
+    {"id": "pasture", "name": "牧场", "long": "ranch",                     # long 684px map: 果园·牧场
+     "trees": [("linden", 330, 36, 92, 20, 22)]},
 ]
 
 
@@ -59,10 +59,10 @@ ZONES = [
 
 def hills(s, zone):
     """Two hazy ridges behind the tree line, the near one greener."""
-    off = {"brook": 0, "rape": 90, "tulip": 170, "home": 220, "farm": 260, "orchard": 40, "pasture": 120}[zone["id"]]
+    off = {"brook": 0, "rape": 90, "tulip": 170, "home": 220, "farm": 260, "orchard": 40, "pasture": 40 + W}[zone["id"]]
     for k, (base, amp, R) in enumerate(((HZ - 10, 9, P.sky_soft), (HZ - 5, 7, P.mint))):
         for x in range(W):
-            u = (x + off * (k + 1)) / W * math.tau
+            u = (x + off + 137 * k) / W * math.tau
             top = int(base - amp * (0.55 + 0.45 * math.sin(u * 1.3 + k)) - 3 * math.sin(u * 3.1 + 2 * k))
             s.vline(x, top, HZ - 1, R[2])
             s.set(x, top, R[3])
@@ -488,6 +488,9 @@ def orchard(s):
         s.ellipse(x, y, 6, 2, SOIL[1]).ellipse(x - 1, y - 1, 4, 1, SOIL[2])
         s.vline(x + 7, y - 9, y, P.oak[3]).rect(x + 5, y - 9, 5, 3, P.oak[4])     # a little sign
     ladder(s, 238, 90)
+    beehives(s, 150, 92)
+    for x in range(0, W, 2):                                       # a mown aisle along the front row
+        s.set(x, 93, G[3])
     for bx in (104, 116):
         s.rect(bx, 87, 9, 6, P.oak[2]).hline(bx, bx + 8, 87, P.oak[4]).hline(bx, bx + 8, 90, P.oak[1])
 
@@ -529,99 +532,11 @@ def fruit_tree(kind, frame, at, stage=3):
     return s
 
 
-# ------------------------------------------------------------- homestead
+# ------------------------------------------------------------- homestead, pasture
 
-HOUSE = (118, 236)        # farmhouse x0, x1 (front wall); door centre is the walk-in point
-HOUSE_DOOR = 177
+import _farmstead as FS                                       # noqa: E402
 
-
-def farmhouse_big(s):
-    """The family farmhouse, behind the lane: stone plinth, white walls with
-    a timber frame, half-timbered upper floor, steep terracotta roof, a
-    porch over the door, shutters and window boxes. Light from the top left."""
-    x0, x1 = HOUSE
-    base = PATH[0] - 1
-    Wl, Tb, Rf, Sn = P.linen, P.walnut, P.terracotta, ST
-    g1 = base - 4                                          # top of the plinth
-    up = g1 - 24                                           # first floor line
-    eave = up - 18
-    # chimney behind the roof
-    s.rect(x1 - 30, eave - 30, 8, 26, Sn[2]).vline(x1 - 30, eave - 30, eave - 5, Sn[3]).vline(x1 - 23, eave - 30, eave - 5, Sn[1])
-    s.rect(x1 - 31, eave - 32, 10, 2, Sn[3]).hline(x1 - 31, x1 - 22, eave - 31, Sn[1])
-    for k, (dx, r) in enumerate(((0, 2), (3, 3), (7, 4))):
-        s.ellipse(x1 - 26 + dx, eave - 36 - k * 5, r, r * 0.7, P.porcelain[3 - (k == 2)])
-    # roof: a steep gable seen from the long side -> a trapezoid of tile rows
-    top = eave - 26
-    for y in range(top, eave + 1):
-        t = (y - top) / (eave - top)
-        a, b = int(x0 + 18 - 24 * t), int(x1 - 18 + 24 * t)
-        c = Rf[3] if (y - top) % 4 == 0 else Rf[2]
-        s.hline(a, b, y, c)
-        s.set(a, y, Rf[1]).set(b, y, Rf[0])
-        if (y - top) % 4 == 2:
-            for x in range(a + (y % 8), b, 8):
-                s.set(x, y, Rf[1])
-    s.hline(x0 + 18, x1 - 18, top, Rf[4]).hline(x0 + 18, x1 - 18, top - 1, Rf[1])   # ridge
-    s.hline(x0 - 6, x1 + 6, eave + 1, Rf[0])
-    for wx in (x0 + 34, x1 - 46):                          # dormers
-        s.rect(wx, eave - 14, 14, 13, Wl[3]).vline(wx, eave - 14, eave - 2, Wl[3]).vline(wx + 13, eave - 14, eave - 2, Wl[1])
-        s.rect(wx + 3, eave - 11, 8, 8, P.glass[1]).rect(wx + 4, eave - 10, 3, 3, P.glass[3]).vline(wx + 7, eave - 11, eave - 4, Tb[2])
-        for k in range(5):
-            s.hline(wx - 2 + k, wx + 15 - k, eave - 15 - k, Rf[2] if k else Rf[1])
-    # upper floor: half-timbering
-    s.rect(x0, eave + 2, x1 - x0, up - eave - 1, Wl[3])
-    s.hline(x0, x1 - 1, eave + 2, Tb[1]).hline(x0, x1 - 1, up, Tb[2]).hline(x0, x1 - 1, up + 1, Tb[1])
-    for x in range(x0, x1, 20):
-        s.vline(x, eave + 2, up, Tb[2]).vline(x + 1, eave + 2, up, Tb[1])
-        if x + 20 < x1:
-            s.line(x + 2, up - 1, x + 9, eave + 4, Tb[2])
-            s.line(x + 19, up - 1, x + 12, eave + 4, Tb[2])
-    s.vline(x1 - 1, eave + 2, up, Tb[1])
-    for wx in (x0 + 26, x0 + 66, x1 - 34):                 # upper windows with boxes of geraniums
-        window_small(s, wx, eave + 5, 10, 9)
-    # ground floor: white walls, posts
-    s.rect(x0, up + 2, x1 - x0, g1 - up - 2, Wl[3])
-    s.vline(x0, up + 2, g1, Wl[3]).vline(x1 - 1, up + 2, g1, Wl[1]).vline(x1 - 2, up + 2, g1, Wl[2])
-    for x in (x0 + 2, x1 - 4):
-        s.rect(x, up + 2, 2, g1 - up - 2, Tb[2])
-    for wx in (x0 + 14, x0 + 34, x1 - 46, x1 - 26):
-        window_small(s, wx, up + 7, 11, 11, shutters=True)
-    # door + porch
-    dx = HOUSE_DOOR - 6
-    s.rect(dx, g1 - 17, 13, 17, Tb[2]).rect(dx + 1, g1 - 16, 11, 16, P.sage[2]).vline(dx + 1, g1 - 16, g1 - 1, P.sage[3])
-    s.vline(dx + 6, g1 - 16, g1 - 1, P.sage[1]).set(dx + 9, g1 - 8, P.mustard[3])
-    s.rect(dx + 3, g1 - 14, 7, 4, P.glass[1]).hline(dx + 3, dx + 9, g1 - 14, P.glass[3])
-    for px in (dx - 8, dx + 20):                           # porch posts and roof
-        s.vline(px, g1 - 22, base, Tb[3]).vline(px + 1, g1 - 22, base, Tb[1])
-    for k in range(4):
-        s.hline(dx - 11 + k, dx + 24 - k, g1 - 23 - k, Rf[2] if k else Rf[1])
-    s.hline(dx - 10, dx + 23, g1 - 22, Tb[1])
-    s.rect(dx - 9, g1 - 30, 31, 2, P.oak[3])                # name board
-    s.hline(dx - 6, dx + 18, g1 - 29, P.walnut[1])
-    s.rect(dx + 21, g1 - 19, 3, 4, P.light[0]).set(dx + 22, g1 - 18, P.light[1])   # lantern
-    # plinth and steps
-    s.rect(x0 - 2, g1, x1 - x0 + 4, base - g1 + 1, Sn[2]).hline(x0 - 2, x1 + 1, g1, Sn[3])
-    for x in range(x0, x1, 7):
-        s.vline(x + (g1 % 2), g1 + 1, base, Sn[1])
-    s.rect(dx - 3, base - 2, 19, 3, Sn[3]).hline(dx - 3, dx + 15, base, Sn[1])
-    s.rect(dx - 1, base - 4, 15, 2, Sn[3]).hline(dx - 1, dx + 13, base - 3, Sn[1])
-    # cast shadow under the eaves
-    s.hline(x0, x1 - 1, eave + 3, Wl[1]).hline(x0, x1 - 1, up + 2, Wl[1])
-
-
-def window_small(s, x, y, w, h, shutters=False):
-    Tb = P.walnut
-    s.rect(x - 1, y - 1, w + 2, h + 2, Tb[1])
-    s.rect(x, y, w, h, P.glass[1]).rect(x + 1, y + 1, w // 2 - 1, h // 2 - 1, P.glass[3])
-    s.vline(x + w // 2, y, y + h - 1, Tb[2]).hline(x, x + w - 1, y + h // 2, Tb[2])
-    if shutters:
-        for sx in (x - 5, x + w + 1):
-            s.rect(sx, y - 1, 4, h + 2, P.sage[2]).vline(sx, y - 1, y + h, P.sage[3]).vline(sx + 3, y - 1, y + h, P.sage[1])
-            for yy in range(y + 1, y + h, 2):
-                s.hline(sx + 1, sx + 2, yy, P.sage[1])
-    s.rect(x - 2, y + h + 1, w + 4, 3, P.oak[2]).hline(x - 2, x + w + 1, y + h + 1, P.oak[3])  # window box
-    for k in range(0, w + 2, 2):
-        s.set(x - 1 + k, y + h, P.green[2]).set(x - 1 + k + (k % 4 == 0), y + h - 1, P.coral[2 + (k % 3 == 0)])
+HOUSE_DOOR = FS.HOUSE_DOOR
 
 
 def woodpile(s, x, base):
@@ -629,194 +544,71 @@ def woodpile(s, x, base):
         for k in range(4 - row):
             cx, cy = x + row * 3 + k * 6, base - 3 - row * 5
             s.ellipse(cx, cy, 2.6, 2.4, P.oak[3]).set(cx, cy, P.oak[1]).set(cx - 1, cy - 1, P.oak[4])
-    s.vline(x - 3, base - 18, base, P.walnut[2]).hline(x - 5, x + 26, base - 18, P.walnut[2])
+            s.set(cx + 1, cy + 1, P.oak[0])
+    s.rect(x - 4, base - 20, 34, 2, P.walnut[2]).hline(x - 4, x + 29, base - 20, P.walnut[3])   # a little lean-to roof
+    s.vline(x - 3, base - 18, base, P.walnut[1]).vline(x + 28, base - 18, base, P.walnut[1])
+    s.line(x + 18, base - 1, x + 22, base - 9, P.oak[2]).rect(x + 21, base - 11, 4, 2, P.steel[3])   # axe
 
 
 def clothesline(s, x0, x1, y):
     for x in (x0, x1):
-        s.vline(x, y, PATH[0] - 4, P.walnut[2]).hline(x - 2, x + 2, y, P.walnut[2])
-    s.line(x0, y + 1, (x0 + x1) // 2, y + 3, P.oat[1]).line((x0 + x1) // 2, y + 3, x1, y + 1, P.oat[1])
-    for k, (dx, C, w, h) in enumerate(((6, P.blossom, 7, 8), (16, P.linen, 9, 10), (28, P.sky_day, 6, 7))):
-        xx = x0 + dx
-        yy = y + 2 + (1 if 8 < dx < 24 else 0)
+        s.vline(x, y, PATH[0] - 3, P.walnut[2]).vline(x + 1, y, PATH[0] - 3, P.walnut[1]).hline(x - 2, x + 3, y, P.walnut[2])
+    mid = (x0 + x1) // 2
+    s.line(x0, y + 1, mid, y + 3, P.oat[1]).line(mid, y + 3, x1, y + 1, P.oat[1])
+    for dx, C, w, h in ((5, P.blossom, 8, 9), (16, P.linen, 11, 12), (30, P.sky_day, 7, 8)):
+        xx, yy = x0 + dx, y + 2 + (1 if 8 < dx < 26 else 0)
         s.rect(xx, yy, w, h, C[2]).vline(xx, yy, yy + h - 1, C[3]).hline(xx, xx + w - 1, yy + h - 1, C[1])
+        s.vline(xx + w - 1, yy, yy + h - 1, C[1])
+        s.set(xx + 1, yy - 1, P.oak[2]).set(xx + w - 2, yy - 1, P.oak[2])     # pegs
+    s.rect(x0 + 16, y + 6, 11, 2, P.coral[2])                       # a stripe on the sheet
 
 
 def mailbox(s, x, base):
-    s.vline(x + 3, base - 10, base, P.walnut[2])
-    s.rect(x, base - 15, 8, 5, P.coral[2]).hline(x, x + 7, base - 15, P.coral[3]).hline(x, x + 7, base - 11, P.coral[1])
-    s.vline(x + 8, base - 18, base - 13, P.walnut[1]).rect(x + 8, base - 18, 3, 2, P.mustard[3])
+    s.vline(x + 3, base - 11, base, P.walnut[2]).vline(x + 4, base - 11, base, P.walnut[1])
+    s.rect(x, base - 17, 9, 6, P.coral[2]).hline(x, x + 8, base - 17, P.coral[3]).hline(x, x + 8, base - 12, P.coral[1])
+    s.ellipse(x + 4, base - 17, 4.5, 1.2, P.coral[3])
+    s.vline(x + 9, base - 21, base - 14, P.walnut[1]).rect(x + 9, base - 21, 4, 3, P.mustard[3])
 
 
 def homestead(s):
-    """农舍: the farmhouse, a well, a woodpile, washing on the line, chickens."""
-    s.ellipse(HOUSE_DOOR, PATH[0] - 1, 70, 4, G[1])
-    farmhouse_big(s)
-    well(s, 280, 90)
-    woodpile(s, 92, 92)
-    clothesline(s, 16, 58, 66)
-    mailbox(s, 104, 93)
-    tool_rack(s, 300, 92)
-
-
-def chicken(frame):
-    s = Sprite(9, 7)
-    C = P.porcelain
-    s.ellipse(4, 4, 3.5, 2.5, C[3]).set(2, 5, C[1]).set(3, 5, C[1])
-    hy = 1 if frame == 0 else 3                            # frame 1 pecks
-    s.rect(6, hy, 2, 2, C[3]).set(7, hy - 1, P.coral[2]).set(8, hy + 1, P.mustard[3]).set(7, hy, P.walnut[0])
-    s.set(0, 2, C[2]).set(1, 3, C[2])
-    s.set(3, 6, P.mustard[2]).set(5, 6, P.mustard[2])
-    return s
-
-
-# ------------------------------------------------------------- pasture
-
-def fence(s, x0, x1, y, gate=None):
-    """A post-and-rail paddock fence; `gate` = (x0, x1) left open."""
-    Wd = P.oak
-    for x in range(x0, x1, 2):
-        if gate and gate[0] <= x < gate[1]:
-            continue
-        s.set(x, y - 6, Wd[3]).set(x, y - 5, Wd[1]).set(x, y - 2, Wd[3]).set(x, y - 1, Wd[1])
-    for x in range(x0 + 2, x1, 14):
-        if gate and gate[0] - 2 <= x < gate[1]:
-            continue
-        s.rect(x, y - 9, 2, 10, Wd[2]).vline(x, y - 9, y, Wd[3]).set(x, y - 9, Wd[4])
-    if gate:
-        for gx in gate:
-            s.rect(gx - 1, y - 11, 3, 12, Wd[2]).vline(gx - 1, y - 11, y, Wd[3])
-
-
-def barn(s, x, base):
-    """A red gambrel-roofed barn with white trim and a hayloft."""
-    w = 74
-    R, Wt = P.terracotta, P.linen
-    wall_top = base - 30
-    s.rect(x, wall_top, w, 30, R[2])
-    for xx in range(x + 2, x + w, 4):
-        s.vline(xx, wall_top, base - 1, R[1])
-    s.vline(x, wall_top, base - 1, R[3]).vline(x + w - 1, wall_top, base - 1, R[0])
-    for k in range(18):                                    # gambrel roof
-        if k < 8:
-            a, b = x - 3 + k, x + w + 2 - k
-        else:
-            a, b = x + 5 + (k - 8) * 3, x + w - 6 - (k - 8) * 3
-        s.hline(a, b, wall_top - 1 - k, P.slate[2] if k % 3 else P.slate[3])
-        s.set(a, wall_top - 1 - k, P.slate[1]).set(b, wall_top - 1 - k, P.slate[0])
-    s.hline(x - 3, x + w + 2, wall_top, Wt[3])
-    cx = x + w // 2                                        # big doors with white X braces
-    d0, d1 = cx - 13, cx + 13
-    s.rect(d0, base - 22, 26, 22, R[1]).rect(d0 - 1, base - 23, 28, 1, Wt[3])
-    s.vline(d0 - 1, base - 23, base - 1, Wt[3]).vline(d1, base - 23, base - 1, Wt[2]).vline(cx, base - 22, base - 1, Wt[2])
-    for a, b in ((d0, cx), (cx, d1)):
-        s.line(a, base - 22, b, base - 1, Wt[3]).line(b, base - 22, a, base - 1, Wt[3])
-    s.rect(cx - 6, wall_top - 13, 12, 10, Wt[3]).rect(cx - 5, wall_top - 12, 10, 8, P.walnut[0])   # hayloft
-    for k in range(4):
-        s.hline(cx - 4 + k, cx + 3, wall_top - 5 + (k // 2), P.mustard[3 - k % 2])
-    for wx in (x + 7, x + w - 15):
-        s.rect(wx, base - 20, 8, 7, Wt[3]).rect(wx + 1, base - 19, 6, 5, P.glass[1]).vline(wx + 4, base - 19, base - 15, Wt[3])
-
-
-def silo(s, x, base):
-    h = 52
-    s.rect(x, base - h, 16, h, P.porcelain[2]).vline(x, base - h, base - 1, P.porcelain[3]).vline(x + 15, base - h, base - 1, P.porcelain[0])
-    s.vline(x + 1, base - h, base - 1, P.porcelain[3])
-    for y in range(base - h + 5, base, 7):
-        s.hline(x, x + 15, y, P.porcelain[1])
-    s.ellipse(x + 8, base - h, 8, 5, P.slate[2]).ellipse(x + 6, base - h - 1, 4, 2, P.slate[3])
-    s.hline(x, x + 15, base - h + 1, P.slate[1])
-
-
-def haystack(s, x, base):
-    Y = P.mustard
-    s.ellipse(x, base - 6, 12, 7, Y[2]).ellipse(x - 3, base - 8, 7, 4, Y[3])
-    for k in range(-10, 11, 3):
-        s.line(x + k, base - 2, x + k + 2, base - 9, Y[1])
-    s.hline(x - 11, x + 11, base, Y[1])
-    s.rect(x + 14, base - 7, 12, 7, Y[2]).hline(x + 14, x + 25, base - 7, Y[3]).vline(x + 19, base - 7, base - 1, P.oak[1])   # a bale
-
-
-def trough(s, x, base):
-    s.rect(x, base - 5, 22, 5, P.oak[2]).hline(x, x + 21, base - 5, P.oak[4]).hline(x + 1, x + 20, base - 4, P.sea[3])
-    s.vline(x + 1, base - 1, base, P.oak[1]).vline(x + 20, base - 1, base, P.oak[1])
+    """农舍: the farmhouse, a well, a woodpile under a lean-to, washing on the
+    line, a mailbox by the lane, a tool rack and a wheelbarrow."""
+    s.ellipse(HOUSE_DOOR, PATH[0], 82, 4, G[1])
+    FS.farmhouse(s)
+    well(s, 284, 92)
+    woodpile(s, 72, 92)
+    clothesline(s, 14, 58, 64)
+    mailbox(s, 100, 93)
+    tool_rack(s, 304, 92)
 
 
 def pasture(s):
-    """牧场: a red barn and silo at the back, a haystack, a trough, the paddock
-    behind the lane (the fence is drawn in front, after the lane)."""
+    """The pasture half of the ranch: barn, silo, hay, cart, trough."""
     rnd = random.Random(91)
-    for _ in range(140):                                   # clover and tufts
+    for _ in range(160):
         x, y = rnd.randrange(W), rnd.randint(HZ + 4, PATH[0] - 3)
         s.set(x, y, G[rnd.choice((1, 4))])
-    silo(s, 108, 80)
-    barn(s, 30, 82)
-    for _ in range(40):                                    # straw by the barn door
-        s.set(rnd.randint(50, 90), rnd.randint(82, 86), P.mustard[rnd.choice((2, 3))])
-    haystack(s, 150, 80)
-    trough(s, 232, 84)
-    s.ellipse(220, 74, 40, 3, G[3])
+    s.ellipse(190, 84, 70, 4, P.oat[1])                            # trodden earth by the barn
+    FS.silo(s, 246, 84)
+    FS.barn(s, 152, 84)
+    for _ in range(50):
+        s.set(rnd.randint(165, 225), rnd.randint(84, 88), P.mustard[rnd.choice((2, 3))])
+    FS.hay(s, 104, 82)
+    FS.cart(s, 30, 84)
+    FS.trough(s, 280, 86)
+    for x0 in (8, 24):                                             # stone gate pillars where the orchard ends
+        FS.stones(s, x0, x0 + 6, 72, 92, seed=x0)
+        s.rect(x0 - 1, 70, 8, 2, ST[3])
 
 
-def cow(frame):
-    """A Holstein cow, side view facing right, 24x15; frame 1 grazes."""
-    s = Sprite(24, 15)
-    Wt, Bk = P.porcelain, P.slate
-    s.rect(3, 3, 15, 7, Wt[3]).hline(3, 17, 9, Wt[1]).vline(3, 3, 9, Wt[2])
-    s.rect(6, 4, 4, 3, Bk[1]).rect(13, 6, 3, 3, Bk[1]).set(9, 3, Bk[1]).set(4, 7, Bk[1])
-    for lx in (4, 7, 14, 16):
-        s.vline(lx, 10, 13, Wt[2] if lx in (4, 14) else Wt[1]).set(lx, 14, Bk[0])
-    s.set(12, 10, P.blossom[2]).set(13, 10, P.blossom[2])         # udder
-    s.vline(2, 3, 8, Wt[2]).set(1, 9, Bk[1])                     # tail
-    hy = 1 if frame == 0 else 6
-    s.rect(18, hy + 1, 4, 5, Wt[3]).rect(19, hy + 4, 4, 3, P.blossom[3]).set(20, hy + 2, Bk[0])
-    s.set(18, hy, Wt[2]).set(21, hy, Wt[2]).set(17, hy + 1, Bk[1])  # horns/ear
-    s.rect(17, 3, 2, 4, Wt[3])
-    return s
+ANIMALS = {"cow": FS.cow, "sheep": FS.sheep}
+HERD = [("cow", 214, 87, 0), ("sheep", 60, 86, 1), ("sheep", 84, 82, 0),
+        ("sheep", 138, 88, 2), ("lamb", 74, 88, 0), ("cow", 290, 90, 1)]   # kind, x, feet y, frame (pasture half)
+COOP = [(40, 90, 0, False), (52, 88, 1, False), (64, 91, 0, True)]   # chickens by the farmhouse: x, feet y, frame, rooster
 
 
-def sheep(frame):
-    """A woolly sheep facing left, 16x12; frame 1 grazes."""
-    s = Sprite(16, 12)
-    Wl = P.linen
-    for cx, cy, r in ((6, 4, 3), (9, 3, 3), (12, 4, 3), (8, 6, 4), (11, 6, 3.5)):
-        s.ellipse(cx, cy, r, r * 0.8, Wl[3])
-    for cx, cy in ((7, 2), (10, 2), (13, 4)):
-        s.set(cx, cy, Wl[3] if Wl[3] else Wl[2])
-    s.hline(5, 14, 9, Wl[1]).set(13, 7, Wl[1]).set(6, 3, Wl[2])
-    for lx in (6, 8, 11, 13):
-        s.vline(lx, 9, 11, P.walnut[0])
-    hy = 2 if frame == 0 else 6
-    s.rect(1, hy, 4, 4, P.walnut[1]).set(1, hy + 2, P.walnut[0]).set(4, hy, Wl[3]).set(2, hy + 1, Wl[1])
-    s.set(5, hy, P.walnut[1])
-    return s
-
-
-ANIMALS = {"cow": cow, "sheep": sheep}
-HERD = [("cow", 196, 76, 0), ("cow", 252, 82, 1), ("sheep", 118, 84, 1), ("sheep", 142, 81, 0),
-        ("sheep", 176, 83, 0), ("sheep", 286, 74, 1)]            # kind, x, feet y, frame
-
-
-# ------------------------------------------------------------- farmhouse inside
-
-import friend_houses as FH                                    # noqa: E402
-
-INSIDE = ("farmhouse", "山谷农舍", 330, "爸妈承包的农舍：楼上小人的卧室、浴室和爸妈的房间，楼下厨房、餐厅和起居室。", "oak", [
-    [("bed", 6, 108), ("bath", 118, 70), ("stair", 192, 40), ("guest_bed", 236, 88)],
-    [("kitchen", 6, 108), ("dining", 118, 70), ("entry_stair", 192, 40), ("living", 236, 88)]])
-
-
-def farmhouse_inside():
-    """The farmhouse cutaway, built with the friend-house planner (same scale and
-    furniture as the other homes), then dressed rustic: ceiling beams, a hearth."""
-    data, bg, front = FH.draw_plan(INSIDE)
-    s = bg.copy()
-    for level in range(2):                                 # exposed ceiling beams
-        top = level * 58 + 5
-        for x in range(10, 326, 22):
-            s.rect(x, top, 4, 3, P.walnut[1]).hline(x, x + 3, top, P.walnut[2])
-    s.blit(front, 0, 0)
-    return s
+def animal(kind, frame):
+    return FS.sheep(frame, lamb=True) if kind == "lamb" else ANIMALS[kind](frame)
 
 
 # ------------------------------------------------------------- scenes
@@ -875,9 +667,9 @@ def background(zone):
     if zid == "rape":
         beehives(s, 92, 93)
     if zid == "pasture":
-        fence(s, 0, W, 91, gate=(150, 176))
+        FS.rail_fence(s, 30, W, 92, gate=(184, 204))
     border = Sprite(W, H)
-    PK.border(border, SEASON)
+    FS.shrub_border(border, seed=zid)
     if zid == "brook":
         border.px[:, 136:205] = 0
     s.blit(border, 0, 0)
@@ -908,13 +700,25 @@ def preview(zone, frame=0):
             for j, (cx, base) in enumerate(plot_slots(x, y, w, h)):
                 crop(s, CROPS[i % len(CROPS)], (3, 3, 2, 3, 1, 2)[(i + j) % 6], cx, base)
     if zone["id"] == "pasture":                            # where the animals graze (the page moves them)
-        for kind, x, y, f in HERD:
-            a = ANIMALS[kind](f)
+        for kind, x, y, f in sorted(HERD, key=lambda h: h[2]):
+            a = animal(kind, f)
             s.blit(a, x, y - a.h)
     if zone["id"] == "home":
-        for x, y, f in ((70, 92, 0), (80, 90, 1), (60, 89, 1)):
-            s.blit(chicken(f), x, y - 7)
+        for x, y, f, r in COOP:
+            s.blit(FS.chicken(f, r), x, y - 11)
     s.blit(trees(zone, frame), 0, 0)
+    return ambience(s, zone)
+
+
+def ambience(s, zone):
+    """Preview of the live layers: sun shafts at low alpha, birds, butterflies."""
+    s = FS.blend(s, FS.sun_shafts(), 0.14)
+    rnd = random.Random(zone["id"] + "life")
+    for k in range(rnd.randint(2, 3)):
+        b = FS.bird(k % 3)
+        s.blit(b, rnd.randint(40, W - 60), rnd.randint(6, 26))
+    for k in range(rnd.randint(2, 3)):
+        s.blit(FY.butterfly(k % 4), rnd.randint(20, W - 30), rnd.randint(70, 90))
     return s
 
 
@@ -947,9 +751,25 @@ def build():
         pano.blit(pv, i * W, 0)
     out["spring_panorama"] = pano
     out["spring_stages"] = stage_sheet()
-    out["spring_farmhouse_inside"] = farmhouse_inside()
-    for kind, draw in ANIMALS.items():
-        for f in (0, 1):
-            out[f"spring_{kind}_{f}"] = draw(f)
-    out["spring_chicken_0"], out["spring_chicken_1"] = chicken(0), chicken(1)
+    for key in ("orchard", "pasture"):                     # the halves only live inside spring_ranch*
+        for suffix in ("", "_preview", "_tree_0", "_tree_1"):
+            out.pop(f"spring_{key}{suffix}", None)
+    halves = [z for z in ZONES if z.get("long") == "ranch"]
+    for suffix, make in (("", background), ("_tree_0", lambda z: trees(z, 0)), ("_tree_1", lambda z: trees(z, 1)), ("_preview", preview)):
+        long = Sprite(W * 2, H)
+        for i, z in enumerate(halves):
+            long.blit(make(z), i * W, 0)
+        out[f"spring_ranch{suffix}"] = long
+    out["spring_shafts"] = FS.sun_shafts(W * 2)
+    for f in range(3):
+        out[f"spring_bird_{f}"] = FS.bird(f)
+    inside, _ = FS.farmhouse_inside()
+    out["spring_farmhouse_inside"] = inside
+    for f in range(4):
+        out[f"spring_cow_{f}"] = FS.cow(f)
+        out[f"spring_sheep_{f}"] = FS.sheep(f)
+        out[f"spring_lamb_{f}"] = FS.sheep(f, lamb=True)
+    for f in (0, 1):
+        out[f"spring_hen_{f}"] = FS.chicken(f)
+        out[f"spring_rooster_{f}"] = FS.chicken(f, True)
     return out

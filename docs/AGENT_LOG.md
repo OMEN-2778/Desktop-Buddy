@@ -7,6 +7,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- 春日花溪 art pass 3 (owner: "too simple, make it refined and lively"): new `_farmstead.py`
+  (detailed farmhouse, barn, silo, hay, cart, rail fence; 4-frame cow / sheep / lamb, hen /
+  rooster; shrub border replacing the flower border under the lane; `sun_shafts` layer for
+  the page at ~0.15 alpha; flying `bird`). Orchard + pasture are one long 684px map
+  `spring_ranch*`. Farmhouse inside: open living room + kitchen, small bath, two bedrooms
+  (parents' room is not Buddy's bed; parents will live there later). Still art only.
+
+## 2026-10-31 · Claude
 - 春日花溪 art (still not in the game): now 7 screens. New 农舍 screen (farmhouse exterior,
   door x=`HOUSE_DOOR`) + interior `spring_farmhouse_inside` (friend-house planner plan
   `INSIDE`: bedroom, bath, stairs, parents' room / kitchen, dining, entry, living).
