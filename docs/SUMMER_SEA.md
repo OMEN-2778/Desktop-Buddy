@@ -194,3 +194,8 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
   The cabana's 泳衣 door sign is a swim ring now.
 - Owner: no lying on loungers. The loungers became front-facing beach chairs (`BP.beach_chair`,
   `CHAIRS`); clicking one seats Buddy in it, facing us (sheet cell 8 = sit).
+- Chairs made smaller (owner). New refined sea-life sprites, ART ONLY, waiting on the owner:
+  `art/src/concept/sea_life.py` (9 fish/large animals, 3 schools, 10 floor creatures, 11
+  corals/plants; a shared side-view `fish()` engine), labelled sheet via
+  `python3 tools/make_sea_life_sheet.py`. Once approved, swap them into `summer_bay.LIFE`
+  and `calm_decor` (keep the floor calm, grouped).

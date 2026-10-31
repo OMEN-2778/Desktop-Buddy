@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- Smaller beach chairs. New `sea_life.py`: 33 refined reef sprites (fish, schools, floor
+  creatures, corals, seaweed) + `tools/make_sea_life_sheet.py`. Art only, waiting on owner.
+
+## 2026-10-31 · Claude
 - Summer: loungers -> front-facing beach chairs; Buddy sits in them (all outfits). `/summer/` rebuilt.
 
 ## 2026-10-31 · Claude
