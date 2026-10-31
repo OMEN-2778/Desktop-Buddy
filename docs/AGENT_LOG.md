@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- Owner's 四季地图 plan written down in `docs/SEASON_MAPS.md` (spring valley farm via a
+  写信日 letter from parents; summer tropical island with a big underwater map; autumn and
+  winter undecided). Planning only, open questions listed there.
+
+## 2026-10-31 · Claude
 - Source repo going private. Web preview now also published to the public releases repo's
   Pages (`preview.yml` → `Desktop-Buddy-Releases` gh-pages):
   https://omen-2778.github.io/Desktop-Buddy-Releases/ . Rules for previewing, sharing and
