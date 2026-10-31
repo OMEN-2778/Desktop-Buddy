@@ -105,6 +105,9 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/spring_fields.py
     Owner found the first 16-frame version too choppy; use 25 fps (72 × 40ms),
     preserving the original 2.88-second sway cycle.
 
+13. Animate existing scenery too, especially windmill rotation (2026-10-31). Keep the
+    original buildings, props and map layout; this round is a motion review only.
+
 ## Field wind animation (art only, 2026-10-31)
 - Combined animated review: [spring-flower-wind.gif](design/spring-flower-wind.gif).
   Rebuild it after the sprite sheets: `python3 tools/make_spring_wind_review.py`.
@@ -119,6 +122,21 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/spring_fields.py
 - Not wired into gameplay: when the farm is approved, select frames by **real elapsed
   time**, freeze on pause and use static art for reduced motion. Do not animate the road
   or stack replacement frames over a second copy of the static flowers.
+
+## Existing scenery animation review (art only, 2026-10-31)
+- Owner requested other existing scene elements to move, specifically rotating windmill
+  sails. Combined review: [spring-scenery-life.gif](design/spring-scenery-life.gif).
+- Rebuild: `python3 tools/make_spring_life_review.py` after the field-wind sheets.
+  144 frames × 40ms = 5.76s, shared GIF palette. Reuses existing bird/butterfly/tree art.
+- `background(zone, mill_sails=False, with_clouds=False)` prepares a clean background
+  without baked sails/clouds. Defaults preserve the existing stills and field-wind assets.
+- `spring_windmill_sails.png/.json`: 50×50 transparent frames, local hub (25,25),
+  scene hub (236,27); put each frame at (211,2). Quarter-turn cycle (four identical
+  sails), full revolution 23.04s. Never rotate the tower or double-draw baked sails.
+- Preview also demonstrates gentle cloud drift, canopy sway, flapping birds on looping
+  paths, butterflies weaving over flowers, and one intermittent soft light ray.
+- This is not a game integration. When integrating later, use elapsed real time, pause
+  animations with the scene, keep layers independent and honor reduced-motion settings.
 
 ## Known gaps / next steps (small pieces; check each with the owner as it lands)
 - [ ] Owner's answers to the open questions in `docs/SEASON_MAPS.md`: farm open all year

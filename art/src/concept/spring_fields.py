@@ -311,9 +311,9 @@ def scarecrow(s, x, base):
         s.set(x + k, base - 16, P.mustard[4])
 
 
-def windmill(s, cx, base):
+def windmill(s, cx, base, draw_sails=True):
     """A tall white windmill on the horizon: tapering tower, red cap, four
-    lattice sails (still; the page can turn a sprite of them)."""
+    lattice sails (optional: the live scene draws its independent rotor)."""
     Wl = P.linen
     top = base - 34
     for y in range(top, base):
@@ -330,7 +330,8 @@ def windmill(s, cx, base):
         s.hline(cx - 6 + k, cx + 6 - k, top - k, P.terracotta[2] if k else P.terracotta[1])
     s.hline(cx - 4, cx, top - 3, P.terracotta[3])
     hub = (cx, top - 1)
-    sails(s, *hub)
+    if draw_sails:
+        sails(s, *hub)
 
 
 def sails(s, hx, hy, phase=0.0):
@@ -623,10 +624,11 @@ def animal(kind, frame):
 
 # ------------------------------------------------------------- scenes
 
-def background(zone, wind_frame=None):
+def background(zone, wind_frame=None, mill_sails=True, with_clouds=True):
     s = Sprite(W, H)
     PK.sky(s)
-    clouds(s, zone)
+    if with_clouds:
+        clouds(s, zone)
     hills(s, zone)
     PK.treeline(s, SEASON)
     lawn(s, zone)
@@ -661,7 +663,7 @@ def background(zone, wind_frame=None):
         field(s, 190, HZ - 1, PATH[0] - 1, (-2, W + 2), (-2, W + 2), rape_pick, 71, wind_frame)
         scarecrow(s, 262, 84)
     if zid == "tulip":
-        windmill(s, 236, HZ + 4)
+        windmill(s, 236, HZ + 4, draw_sails=mill_sails)
         field(s, 170, HZ - 1, PATH[0] - 1, (-2, W + 2), (-2, W + 2), tulip_pick, 73, wind_frame)
     if zid == "home":
         homestead(s)

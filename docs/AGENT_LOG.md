@@ -6,6 +6,15 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-10-31 · Codex
+- Owner requested existing scenery motion, especially windmill rotation. Added one
+  25fps / 5.76s combined GIF: clouds, canopy sway, flapping birds, butterflies, one soft ray.
+- Reusable transparent rotor sheet/JSON (hub stays at scene 236,27); optional clean
+  background flags preserve the original stills. `tools/make_spring_life_review.py` rebuilds it.
+- Notes/decision + GIF link in `docs/SPRING_FARM.md`. Still art only, no gameplay wiring.
+- Checked: static background parity, rotor hub/palette, GIF timing, make_demo + web build,
+  Chromium game boot and actual GIF playback; visually reviewed combined frame.
+
 ## 2026-10-31 · Claude
 - Summer sea round 3 (owner: richer, like a diving game, flat 2D): parallax reef ranges,
   dark foreground rim, caustics, marine snow, ledges, big fish, shoals; per-view previews
