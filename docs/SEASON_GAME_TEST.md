@@ -51,3 +51,31 @@ Also keep standalone `check_spring_preview.js` passing after shared data-builder
   art is not connected. Main game time and weather simulation still run.
 - Future formal integration needs explicit owner approval and should move from this
   build-time adapter into native scene modules with lifecycle/save tests.
+
+## Owner-requested polish · 2026-10-31
+Still **test-only**, not a formal game/EXE change.
+- Spring edges activate within 14 world pixels; public maps have clickable edge arrows.
+  Summer arrows walk toward the next named stretch of the continuous bay.
+- Sea now 4446×700 total; actual free water pixels below WL+16, before closing stack,
+  excluding rock collision: 996929 vs previous 325768 (3.06×). More coral/kelp gardens,
+  sand valleys, schools and deep trenches. Built artwork regenerated with pixelkit.
+- Summer camera uses a critically damped follower, continuous coordinates, render target
+  at game device-pixel resolution. Height changes exactly once per land/sea switch;
+  widget gets a 460ms compositor translation, respecting reduced motion. No per-frame
+  fit()/height animation. Dive speed eases toward 12 world px/s (was 30); no oxygen
+  timer/HUD/forced surfacing, no blue rectangle around swimmer.
+- Click anywhere on cabana: approach LEFT door, hide actor/show pixel wardrobe (clock
+  paused); choice appears from RIGHT door and walks clear. Foundation touches sand.
+- `people.js`: native world identities/avatars/social dialogue/contact discovery; spring
+  regions 0–2 have 2 walkers, regions 3–5/interior have none. Summer 3 walkers + 4 swimmers
+  + 2 divers, stop/wait/approach before native talk; screen-projected DOM NPC speech.
+  Old decorative diver removed from shared life list. NPCs are test adapter functionality;
+  standalone art viewers retain traversal/discovery only. Native rainy/storm/dirty refusal
+  still applies. NPC cache lasts this browser session; not a persistent population system.
+- `cheats.js`: console immediate refill and separate hero/all-pets locks, off by default,
+  session-only; resets all pet low-demand timers. Includes both pets from latest CC system.
+- Tests: `check_season_polish.js` covers private zones, early edge, native friendship,
+  swimmer/diver counts, whole-hut flow/time freeze, slow/no-timeout dive, render backing,
+  all-pet locks and lock opt-out. Existing game-shell and standalone spring tests retained.
+- No claim of real-device frame-rate verification: headless browser checks behavior and
+  layout; owner should assess mouse/camera feel on their actual display.

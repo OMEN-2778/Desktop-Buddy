@@ -10,6 +10,7 @@ import summer_sea as SS
 import summer_isle as SI
 import beach as BE
 import doll
+import sea_life as SL
 from pixelkit import Sprite, P
 
 
@@ -177,7 +178,6 @@ HOTSPOT_TEXT = {
 LIFE_TEXT = {
     'turtle': '绿海龟（honu）慢悠悠地划水，看了你一眼。',
     'manta': '蝠鲼像一张大毯子一样从头顶滑过去。',
-    'diver': '潜水员朝你比了个 OK 的手势。',
     'jelly': '小水母一张一合地漂着，别碰它哦。',
     'eagleray': '斑点鹞鲼扇着“翅膀”飞过沙地。',
     'school': '银色的鱼群“哗”地一下散开，又聚了回来。',
@@ -193,23 +193,23 @@ def life():
     """Creatures the page swims back and forth (global coords, from summer_bay.LIFE)."""
     rng = {'turtle': (60, 4), 'manta': (80, 5), 'diver': (55, 6), 'jelly': (6, 1), 'eagleray': (50, 5), 'school': (70, 9),
            'tang': (24, 7), 'butterflyfish': (20, 6), 'shark': (120, 6), 'grouper': (30, 2), 'ulua': (90, 10)}
-    return [{'f': [uri(fn(0)), uri(fn(1))], 'x': B.LAND + x, 'y': B.SKY + y, 'r': rng[k][0], 'v': rng[k][1], 'k': k}
-            for k, fn, x, y in B.LIFE]
+    return [{'f': [uri(fn(0)), uri(fn(1))], 'x': B.LAND + x, 'y': B.SKY + y, 'r': rng.get(k,(35,5))[0], 'v': rng.get(k,(35,5))[1], 'k': k}
+            for k, fn, x, y in B.LIFE if k!='diver']
 
 
 def runtime_data():
     bg = B.bay(clouds=False, life=False)
     data = {
         'bg': uri(bg), 'W': B.GW, 'H': B.GH, 'WL': B.WL, 'ground': B.GROUND,
-        'lodgeDoor': SI.LODGE_DOOR, 'cabana': {('swim' if k == 'bikini' else k): 342 + v for k, v in SI.CABANA_DOORS.items()},
+        'lodgeDoor': SI.LODGE_DOOR, 'cabanaBounds':[342+SI.CABANA[0]-8,342+SI.CABANA[1]+20], 'cabana': {('swim' if k == 'bikini' else k): 342 + v for k, v in SI.CABANA_DOORS.items()},
         'zones': [[0, '旅舍'], [342, '更衣室'], [B.PRE, '沙滩'], [B.LAND, '海湾'], [B.LAND + 380, '沉船谷'], [B.LAND + 700, '熔岩拱门'], [B.LAND + B.SPLIT + 20, '海草草甸'], [B.LAND + B.SPLIT + 220, '深蓝海沟'], [B.STACK[0] - 160, '礁墙']],
         'inside': uri(ROOT / 'art/out/concept/summer_lodge_inside.png'),
         'clouds': [uri(BE.cloud(i)) for i in range(3)], 'life': life(),
         'heroes': {g: {k: uri(hero_sheet(k, g)) for k in ('clothes', 'swim', 'wetsuit')} for g in ('f', 'm')},
         'solid': uri(solid_mask()),
         'chairs': [[cx, B.GROUND[cx] + 1] for cx, _ in B.CHAIRS],
-        'hotspots': [dict(h, text=HOTSPOT_TEXT[h['id']]) for h in B.HOTSPOTS],
-        'lifeText': LIFE_TEXT, 'seal': [uri(SS.seal(0)), uri(SS.seal(1))], 'sealAt': [B.STACK[0] + 4, B.WL - 4],
+        'hotspots': [dict(h, text=HOTSPOT_TEXT.get(h['id'],'沿着'+h['name']+'游了一圈，珊瑚和小鱼近得伸手就能碰到。')) for h in B.HOTSPOTS],
+        'lifeText': {**LIFE_TEXT,**{k:'在水中遇到了'+name+'，慢慢靠近看了一会儿。' for group in SL.GROUPS for k,(name,_) in group[1].items()}}, 'seal': [uri(SS.seal(0)), uri(SS.seal(1))], 'sealAt': [B.STACK[0] + 4, B.WL - 4],
         'seaEnd': B.STACK[0] - 6,
     }
     return data

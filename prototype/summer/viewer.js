@@ -1,17 +1,17 @@
 'use strict';
 // Summer bay walk-through: one seamless map 旅舍 -> 更衣室 -> 沙滩 -> 水底.
 // Walk on land; change at the cabana (clothes can only wade); swim at the
-// surface; click under water to dive (snorkel breath in swimwear, a tank in a
-// wetsuit); rocks are solid, the arch has a hole; discover hotspots and sea life.
+// surface; click under water to dive without an oxygen timer. Rocks are solid;
+// the arch has a hole. Discover habitats and sea life at your own pace.
 const DATA=/*__DATA__*/null;
 const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d'),images=new Map();
 const say=document.getElementById('say'),status=document.getElementById('status'),maps=document.getElementById('maps');
 const {W,H,WL,ground}=DATA,VW=342,LAND_H=118,SEA_H=236,SURF_Y=WL+12,CELL=28;
-const BREATH={clothes:0,swim:20,wetsuit:90},SUIT_NAME={clothes:'便装',swim:'泳衣',wetsuit:'潜水服'};
-const TOTAL=DATA.hotspots.length+Object.keys(DATA.lifeText).length;
+const SUIT_NAME={clothes:'便装',swim:'泳衣',wetsuit:'潜水服'};
+const TOTAL=DATA.hotspots.length+new Set(DATA.life.map(c=>c.k)).size;
 const state={x:120,y:0,vy:0,target:null,after:null,facing:1,camX:0,camY:0,viewH:LAND_H,time:0,paused:false,inside:false,walk:false,loaded:false,
- suit:'clothes',gender:'f',breath:0,lying:null,changing:0,found:new Set(),wasSea:false,warned:0};
-const keys=new Set(),parts=[];
+ suit:'clothes',gender:'f',moveSpeed:0,camVX:0,camVY:0,diveBlend:0,inCabana:false,lying:null,changing:0,found:new Set(),wasSea:false,warned:0};
+const keys=new Set(),parts=[];let peopleRenderer=null;
 const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 let solid=null;
 function load(o){if(typeof o==='string'&&o.startsWith('data:image/')){if(!images.has(o)){const im=new Image();images.set(o,im);im.src=o;}return;}if(o&&typeof o==='object')Object.values(o).forEach(load);}
@@ -29,8 +29,8 @@ const LEFT=44,RIGHT=DATA.seaEnd;
 let sayTimer=0;
 function toast(text,sec=3.2){say.textContent=text;say.hidden=false;sayTimer=sec;}
 function zoneName(){if(state.inside)return '旅舍里';let n=DATA.zones[0][1];for(const [x,name]of DATA.zones)if(state.x>=x)n=name;return n+(under()?' · 潜水中':inSea()?' · 水里':'');}
-function updateUI(){status.textContent=`${zoneName()} · ${SUIT_NAME[state.suit]} · 发现 ${state.found.size}/${TOTAL}`;document.getElementById('exit').hidden=!state.inside;
- [...maps.children].forEach((b,i)=>{const z=DATA.zones[i],nx=DATA.zones[i+1];b.setAttribute('aria-current',String(!state.inside&&state.x>=z[0]&&(!nx||state.x<nx[0])));});}
+function updateUI(){const label=`${zoneName()} · ${SUIT_NAME[state.suit]} · 发现 ${state.found.size}/${TOTAL}`;if(status.textContent!==label)status.textContent=label;document.getElementById('exit').hidden=!state.inside;
+ [...maps.children].forEach((b,i)=>{const z=DATA.zones[i],nx=DATA.zones[i+1];const value=String(!state.inside&&state.x>=z[0]&&(!nx||state.x<nx[0]));if(b.getAttribute('aria-current')!==value)b.setAttribute('aria-current',value);});}
 function goTo(x,kind='walk',y=0,after=null){state.lying=null;state.target={x:clamp(x,LEFT,RIGHT),y,kind};state.after=after;}
 function discover(id,text){const first=!state.found.has(id);state.found.add(id);toast((first?'✦ 新发现：':'')+text,4.2);}
 function splash(x,y,n=10){for(let i=0;i<n;i++)parts.push({x:x+(Math.random()-.5)*8,y,vx:(Math.random()-.5)*30,vy:-20-Math.random()*30,life:.7,c:'#f4fbff',g:80});}
@@ -40,7 +40,7 @@ function walkTo(tx,dt){const sp=dt*(inSea()?30:42);let [x,,ok]=step(state.x,0,tx
  if(gr(x)>wadeLimit()){if(state.warned<=0){toast('穿着便装只能在浅水边踩踩水，先去更衣室换上泳装吧～');state.warned=6;}return true;}
  state.x=x;state.y+=(standY(state.x)-state.y)*Math.min(1,dt*10);return ok&&Math.abs(state.y-standY(state.x))<1;}
 function swimTo(tx,ty,dt){                               // free swimming with rock collision (slides along walls)
- const [nx,ny,ok]=step(state.x,state.y,tx,ty,dt*30);let x=state.x,y=state.y;
+ const distance=Math.hypot(tx-state.x,ty-state.y),limit=state.target?.kind==='up'?18:12;state.moveSpeed+=(Math.min(limit,Math.sqrt(distance*28))-state.moveSpeed)*(1-Math.exp(-9*dt));const [nx,ny,ok]=step(state.x,state.y,tx,ty,dt*state.moveSpeed);let x=state.x,y=state.y;
  const free=(a,b)=>!isSolid(a,b)&&!isSolid(a,b-10)&&b>=SURF_Y&&a<=RIGHT;
  if(free(nx,ny)){x=nx;y=ny;}else if(free(nx,state.y)){x=nx;}else if(free(state.x,ny)){y=ny;}else return true;
  state.vy=(y-state.y)/Math.max(dt,1e-3);state.x=x;state.y=y;return ok;}
@@ -51,10 +51,6 @@ function move(dt){state.walk=false;if(state.paused||!state.loaded)return;
  const dir=(keys.has('ArrowRight')||keys.has('d')||keys.has('D')?1:0)-(keys.has('ArrowLeft')||keys.has('a')||keys.has('A')?1:0);
  const vdir=(keys.has('ArrowDown')||keys.has('s')||keys.has('S')?1:0)-(keys.has('ArrowUp')||keys.has('w')||keys.has('W')?1:0);
  if(dir||vdir){state.after=null;if(state.suit!=='clothes'&&(under()||(vdir>0&&deep(state.x))))goTo(state.x+dir*30,'dive',state.y+vdir*30);else if(dir)goTo(state.x+dir*40);}
- // breath: a snorkel in swimwear, a tank in a wetsuit; refills at the surface
- const max=BREATH[state.suit];
- if(under()){state.breath-=dt;if(state.breath<=0&&state.target?.kind!=='up'){toast(state.suit==='swim'?'憋不住气了，先浮上去换口气！':'气瓶快空了，先浮上去！');state.target={x:state.x,y:SURF_Y,kind:'up'};state.after=null;}}
- else state.breath=Math.min(max,state.breath+dt*max/2);
  const t=state.target;
  if(t){if(Math.abs(t.x-state.x)>.5)state.facing=Math.sign(t.x-state.x);let done=false;
   if(t.kind==='up'){done=swimTo(state.x,SURF_Y,dt);}
@@ -70,18 +66,25 @@ function move(dt){state.walk=false;if(state.paused||!state.loaded)return;
  for(const c of DATA.life)if(c.k==='school'||c.k==='tang'){const dx=(c.cx||0)-state.x,dy=(c.cy||0)-(state.y-10),d=Math.hypot(dx,dy);if(d<28&&under()){c.ox=(c.ox||0)+dx/d*dt*60;c.oy=(c.oy||0)+dy/d*dt*40;}c.ox=(c.ox||0)*.985;c.oy=(c.oy||0)*.985;}
  for(const p of parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=p.g*dt;p.life-=dt;}for(let i=parts.length-1;i>=0;i--)if(parts[i].life<=0)parts.splice(i,1);
  if(under()&&!reduced&&Math.random()<dt*3)parts.push({x:state.x+state.facing*7,y:state.y-12,vx:(Math.random()-.5)*4,vy:-14,life:1.6,c:'#e8f6fb',g:-2});}
-function camera(dt){const k=Math.min(1,dt*3);
- const wantH=(inSea()&&gr(state.x)>WL+8)||under()?SEA_H:LAND_H;state.viewH+=(wantH-state.viewH)*Math.min(1,dt*4);
- const vh=Math.round(state.viewH);if(canvas.height!==vh){canvas.height=vh;ctx.imageSmoothingEnabled=false;}
- state.camX+=(clamp(state.x-VW/2,0,W-VW)-state.camX)*k;
- const wantY=wantH===LAND_H?clamp(gr(clamp(state.x,0,W-1))-104,0,H-vh):clamp(state.y-vh/2,0,H-vh);
- state.camY=clamp(state.camY+(wantY-state.camY)*k,0,H-vh);}
+function follow(value,velocity,target,omega,dt){const delta=value-target,e=Math.exp(-omega*dt),temp=(velocity+omega*delta)*dt;return [target+(delta+temp)*e,(velocity-omega*temp)*e];}
+function camera(dt){
+ const sea=!state.inside&&((inSea()&&gr(state.x)>WL+8)||under()),wantH=sea?SEA_H:LAND_H;
+ // Resize once per mode switch, not once per animated height pixel.
+ if(canvas.height!==wantH){canvas.height=wantH;ctx.imageSmoothingEnabled=false;}
+ state.viewH+=(wantH-state.viewH)*(1-Math.exp(-6*dt));
+ const lead=state.walk?state.facing*14:0,tx=clamp(state.x-VW/2+lead,0,W-VW);
+ [state.camX,state.camVX]=follow(state.camX,state.camVX,tx,7,dt);
+ const ty=sea?clamp(state.y-state.viewH*.48,0,H-wantH):clamp(gr(state.x)-104,0,H-wantH);
+ [state.camY,state.camVY]=follow(state.camY,state.camVY,ty,6,dt);
+ state.camX=clamp(state.camX,0,W-VW);state.camY=clamp(state.camY,0,H-wantH);
+ state.diveBlend+=(Number(under())-state.diveBlend)*(1-Math.exp(-8*dt));
+}
 // ------------------------------------------------------------- drawing
 function cell(){const t=state.time;if(state.lying!==null)return 8;
  if(under())return 6+(state.walk?Math.floor(t*5)%2:Math.floor(t*1.5)%2);
  if(floating())return 4+(state.walk?Math.floor(t*4)%2:0);
  return state.walk?Math.floor(t*7)%4:0;}
-function hero(x,y){if(state.changing>0)return;const sheet=img(DATA.heroes[state.gender][state.suit]),c=cell();ctx.save();ctx.translate(Math.round(x),Math.round(y));
+function hero(x,y){if(state.inCabana||state.changing>0)return;const sheet=img(DATA.heroes[state.gender][state.suit]),c=cell();ctx.save();ctx.translate(x,y);
  if(under()){ctx.translate(0,-14);ctx.rotate(clamp(state.vy/60,-.6,.6)*state.facing);ctx.translate(0,14);}
  if(c!==8)ctx.scale(state.facing,1);
  ctx.drawImage(sheet,c*CELL,0,CELL,CELL,-14,-28+(floating()?Math.round(Math.sin(state.time*3)):0),CELL,CELL);ctx.restore();}
@@ -90,29 +93,40 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
  const t=reduced?0:state.time;
  if(state.inside){ctx.fillStyle='#2f2a33';ctx.fillRect(0,0,VW,vh);ctx.drawImage(img(DATA.inside),40,28);const sheet=img(DATA.heroes[state.gender][state.suit]),c=state.walk?Math.floor(state.time*7)%4:0;
   ctx.save();ctx.translate(Math.round(clamp(state.x,46,296)),78);ctx.scale(state.facing,1);ctx.drawImage(sheet,c*CELL,0,CELL,CELL,-14,-28,CELL,CELL);ctx.restore();return;}
- const cx=Math.round(state.camX),cy=Math.round(state.camY);
+ const cx=state.camX,cy=state.camY;
  ctx.drawImage(img(DATA.bg),cx,cy,VW,vh,0,0,VW,vh);
  ctx.save();ctx.translate(-cx,-cy);
+ // Small travelling highlights keep the broad sea alive without a filled actor box.
+ if(!reduced){ctx.fillStyle='#d5eef0';for(let i=Math.floor(cx/46);i<(cx+VW)/46+1;i++){const x=i*46+Math.sin(t*.8+i)*5;if(x>1020&&x<DATA.seaEnd){ctx.globalAlpha=.3+.2*Math.sin(t*1.2+i);ctx.fillRect(x,WL+Math.sin(t*.9+i)*.5,7,1);}}ctx.globalAlpha=1;}
  for(let i=0;i<20;i++){const c=img(DATA.clouds[i%3]),x=((i*113+t*(1.2+i%4*.5))%(W+60))-40,y=4+(i*17)%36;if(y+c.height<WL-8)ctx.drawImage(c,Math.round(x),y);}
  const sim=img(DATA.seal[Math.floor(t*.7)%2]);ctx.drawImage(sim,DATA.sealAt[0],DATA.sealAt[1]-sim.height);
  for(const h of DATA.hotspots)if(!state.found.has(h.id))sparkle(h.x,h.y,t);
  for(const c of DATA.life){const ph=t*c.v/Math.max(1,c.r),x=c.x+Math.sin(ph)*c.r+(c.ox||0),y=c.y+Math.sin(t*.7+c.x)*2+(c.oy||0),left=Math.cos(ph)<0,im=img(c.f[Math.floor(t*3+c.x)%2]);
   c.cx=x+im.width/2;c.cy=y+im.height/2;c.w=im.width;c.h=im.height;
-  ctx.save();ctx.translate(Math.round(x),Math.round(y));if(left){ctx.scale(-1,1);ctx.drawImage(im,-im.width,0);}else ctx.drawImage(im,0,0);ctx.restore();}
+  if(x+im.width<cx||x>cx+VW||y+im.height<cy||y>cy+vh)continue;
+  ctx.save();ctx.translate(x,y);if(left){ctx.scale(-1,1);ctx.drawImage(im,-im.width,0);}else ctx.drawImage(im,0,0);ctx.restore();}
+ peopleRenderer?.(ctx,{time:t,inside:state.inside,under:under()});
  if(state.lying!==null){const [lx,ly]=DATA.chairs[state.lying];state.facing=1;hero(lx,ly);}else hero(state.x,state.y);
- if(floating()){ctx.fillStyle='rgba(120,190,215,.5)';ctx.fillRect(Math.round(state.x)-12,WL+1,24,Math.round(state.y)-WL);
+ if(floating()){
   ctx.fillStyle='#f4fbff';const r=4+Math.round((t*6)%6);ctx.fillRect(Math.round(state.x)-r-4,WL,3,1);ctx.fillRect(Math.round(state.x)+r+2,WL,3,1);}   // ripples
  for(const p of parts){ctx.fillStyle=p.c;ctx.globalAlpha=clamp(p.life*1.5,0,1);ctx.fillRect(Math.round(p.x),Math.round(p.y),1,1);}ctx.globalAlpha=1;
  ctx.restore();
- if(under()&&BREATH[state.suit]){const f=clamp(state.breath/BREATH[state.suit],0,1);                 // breath / air
-  ctx.fillStyle='rgba(30,50,70,.55)';ctx.fillRect(6,6,46,7);ctx.fillStyle=f<.25?'#e86b5a':'#bfe9f5';ctx.fillRect(8,8,Math.round(42*f),3);}}
+ drawTravelArrows();
+}
+function drawTravelArrows(){if(state.inside||state.inCabana)return;const y=canvas.height*.56;
+ for(const [x,dir]of [[12,-1],[VW-12,1]]){ctx.fillStyle='rgba(247,246,251,.88)';ctx.fillRect(x-8,y-9,16,18);ctx.fillStyle='#5d6176';for(let i=0;i<5;i++){ctx.fillRect(x+dir*(i-2),y-5+i,2,2);ctx.fillRect(x+dir*(i-2),y+3-i,2,2);}}}
+function travel(dir){if(state.inside||state.inCabana)return;const next=DATA.zones.filter(z=>dir>0?z[0]>state.x+24:z[0]<state.x-24);const x=next.length?(dir>0?next[0][0]+35:next[next.length-1][0]+35):state.x+dir*180;goTo(x,under()?'dive':'walk',state.y);}
+const wardrobe=document.createElement('section');wardrobe.className='bay-wardrobe';wardrobe.hidden=true;wardrobe.setAttribute('role','dialog');wardrobe.setAttribute('aria-modal','true');wardrobe.setAttribute('aria-label','更衣室');wardrobe.innerHTML='<h2>换好衣服，再去海里玩</h2><p>从左门进入，换好后由右门离开</p><div><button data-suit="swim">穿泳衣</button><button data-suit="wetsuit">穿潜水服</button><button data-suit="clothes">换回便装</button><button data-cancel>先不换</button></div>';
+canvas.parentElement.append(wardrobe);
+function leaveCabana(kind){if(kind){state.suit=kind;toast('换上了'+SUIT_NAME[kind]+'，从右边出去吧～');}state.inCabana=false;wardrobe.hidden=true;state.x=DATA.cabana.wetsuit;state.y=standY(state.x);goTo(DATA.cabana.wetsuit+16,'walk');canvas.focus();}
+wardrobe.querySelectorAll('[data-suit]').forEach(b=>b.onclick=()=>leaveCabana(b.dataset.suit));wardrobe.querySelector('[data-cancel]').onclick=()=>leaveCabana(null);
+function enterCabana(){goTo(DATA.cabana.swim,'walk',0,()=>{state.inCabana=true;state.target=null;wardrobe.hidden=false;wardrobe.querySelector('button').focus();});}
 // ------------------------------------------------------------- input
 function pick(x,y){
  if(state.lying!==null){state.lying=null;toast('站起来活动活动～',1.5);}
  const g=gr(x);
  if(Math.abs(x-DATA.lodgeDoor)<12&&y>g-36&&y<g+2)return goTo(DATA.lodgeDoor,'walk',0,()=>{state.inside=true;state.x=150;toast('旅舍里：卧室、客厅、厨房和浴室。',2.5);});
- for(const [k,dx]of Object.entries(DATA.cabana))if(Math.abs(x-dx)<10&&y>g-34&&y<g+2)return goTo(dx,'walk',0,()=>{state.changing=1.1;const next=state.suit===k?'clothes':k;
-  setTimeout(()=>{state.suit=next;state.breath=BREATH[next];toast(next==='clothes'?'换回了便装。':next==='swim'?'换上了泳衣！戴着浮潜面罩，能潜一小会儿。':'换上了潜水服！背着气瓶，可以下到深海沟。');},reduced?0:1000);});
+ if(x>=DATA.cabanaBounds[0]&&x<=DATA.cabanaBounds[1]&&y>g-77&&y<g+12)return enterCabana();
  for(const [i,[lx,ly]]of DATA.chairs.entries())if(Math.abs(x-lx)<14&&y>ly-32&&y<ly+3)return goTo(lx,'walk',0,()=>{state.lying=i;toast('坐在沙滩椅上吹海风，好惬意～');});
  for(const c of DATA.life)if(c.cx&&Math.abs(x-c.cx)<c.w/2+5&&Math.abs(y-c.cy)<c.h/2+5){
   if(state.suit==='clothes')return toast('先去更衣室换上泳装，才能游过去看看。');
@@ -128,7 +142,7 @@ document.getElementById('gender').onclick=e=>{state.gender=state.gender==='f'?'m
 document.getElementById('exit').onclick=()=>{state.inside=false;state.x=DATA.lodgeDoor;state.y=standY(state.x);};
 document.getElementById('pause').onclick=e=>{state.paused=!state.paused;e.target.textContent=state.paused?'继续':'暂停';e.target.setAttribute('aria-pressed',String(state.paused));};
 canvas.addEventListener('pointerdown',e=>{canvas.focus();const r=canvas.getBoundingClientRect(),sx=(e.clientX-r.left)*VW/r.width,sy=(e.clientY-r.top)*canvas.height/r.height;
- if(state.changing>0)return;if(state.inside){state.target={x:clamp(sx,46,296)};return;}pick(sx+state.camX,sy+state.camY);});
+ if(state.changing>0||state.inCabana)return;if(!state.inside&&sy>canvas.height*.56-20&&sy<canvas.height*.56+20&&(sx<25||sx>VW-25)){travel(sx<25?-1:1);return;}if(state.inside){state.target={x:clamp(sx,46,296)};return;}pick(sx+state.camX,sy+state.camY);});
 window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','a','d','w','s','A','D','W','S'].includes(e.key)&&!['BUTTON','INPUT'].includes(document.activeElement.tagName)){e.preventDefault();keys.add(e.key);state.lying=null;}});
 window.addEventListener('keyup',e=>keys.delete(e.key));window.addEventListener('blur',()=>keys.clear());
 load(DATA);Promise.all([...images.values()].map(im=>im.decode())).then(()=>{
@@ -137,4 +151,4 @@ load(DATA);Promise.all([...images.values()].map(im=>im.decode())).then(()=>{
  state.y=standY(state.x);state.loaded=true;ctx.imageSmoothingEnabled=false;toast('先去更衣室换上泳装，再去海里玩吧～ 发光的小星星是可以探索的地方。',5);
  let last=performance.now();function frame(now){const dt=document.hidden?0:clamp((now-last)/1000,0,.05);last=now;if(!state.paused)state.time+=dt;move(dt);camera(dt);draw();updateUI();requestAnimationFrame(frame);}requestAnimationFrame(frame);})
  .catch(e=>{const el=document.getElementById('error');el.hidden=false;el.textContent='地图加载失败，请刷新重试';console.error(e);});
-window.summerPreview={state,goTo,pick,move,camera,draw,gr,deep,isSolid};
+window.summerPreview={state,goTo,pick,move,camera,draw,gr,deep,isSolid,enterCabana,leaveCabana,travel,wardrobe,setPeopleRenderer:fn=>peopleRenderer=fn};

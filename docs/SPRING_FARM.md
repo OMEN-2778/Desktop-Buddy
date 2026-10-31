@@ -197,3 +197,9 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/spring_fields.py
 Owner requested actual game-shell testing, **not formal-version integration**. See
 [SEASON_GAME_TEST.md](SEASON_GAME_TEST.md) for the separate `/map-test/` build, hooks,
 validation and remaining gaps. Standalone reviews remain available.
+
+### Owner decisions · 2026-10-31 (game-shell test polish)
+- Relax map-edge switch to 14px and show clickable left/right travel arrows.
+- Native NPCs only in public flower-field/windmill regions (0–2); farmhouse, planting,
+  orchard and pasture (3–5) and interiors are private and have zero NPCs.
+- This is `/map-test/` only; no formal-version integration. See `SEASON_GAME_TEST.md`.

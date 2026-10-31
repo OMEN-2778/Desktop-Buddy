@@ -7,6 +7,16 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Codex
+- Seasonal TEST polish: spring edge arrows/14px tolerance; sea free area 3.06×,
+  coral/kelp habitats; smooth damped/high-resolution camera, one resize/mode, slower dive,
+  no oxygen/blue swim box. Cabana grounded, whole-hut left-in/right-out wardrobe.
+- Native test NPCs: spring public only; summer walkers/4 swimmers/2 divers; native
+  friendship + projected speech. New console full/lock cheats cover hero and both pets.
+- Sources `prototype/map-test/`, shared viewers/builders/art; feature handoff docs updated.
+- Validation: game-shell regression, seasonal polish tests, standalone spring; headless
+  screenshots reviewed. Actual-device motion feel awaits owner; no formal EXE change.
+
+## 2026-10-31 · Codex
 - Owner clarified: use actual game shell to test both maps, **NOT formal-version integration**.
   New `/map-test/` build injects scene-local preview controllers + native actor/needs/time/
   travel/home/save hooks; trial root and EXE inputs unchanged. Sources `prototype/map-test/`.

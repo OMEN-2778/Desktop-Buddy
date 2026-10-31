@@ -21,6 +21,7 @@ import summer_isle as SI
 import summer_sea as SS
 import _bay_parts as BP
 import beach as BE
+import sea_life as SL
 from pixelkit import P, Sprite
 
 PREVIEW_SCALE = 1
@@ -28,8 +29,8 @@ PRE = 684                        # 旅舍 screen (0-342) and 更衣室 screen (3
 LAND = PRE + 342                 # the beach ends / the dive map starts here
 SKY = 96                         # extra sky above the dive map
 SPLIT = 830                      # owner: the sea was too small. A new stretch is inserted into
-EXT = 684                        # the dive map here (sea-local x), before the reef wall,
-DEEP = 110                       # and the whole sea gets DEEP more rows: a deep trench.
+EXT = 2394                        # the dive map here (sea-local x), before the reef wall,
+DEEP = 250                       # and the whole sea gets DEEP more rows: a deep trench.
 SEA_W, SEA_H = SS.OW + EXT, SS.OH + DEEP
 GW, GH = LAND + SEA_W, SKY + SEA_H
 WL = SKY + SS.SURF               # waterline (global)
@@ -81,8 +82,9 @@ def smap(x):
 
 def _mid_keys():
     f0 = SS.FLOOR[SPLIT]
-    return [(0, f0), (60, 248), (170, 256), (214, 300), (258, 420), (300, SEA_H - 26), (360, SEA_H - 20),
-            (420, SEA_H - 24), (468, 404), (516, 292), (576, 250), (EXT, f0)]
+    return [(0,f0),(180,260),(360,320),(530,SEA_H-55),(760,SEA_H-35),
+            (940,360),(1130,280),(1320,340),(1510,SEA_H-42),(1770,SEA_H-26),
+            (1960,370),(2170,265),(EXT,f0)]
 
 
 def _seafloor(x):
@@ -105,7 +107,7 @@ def stitch(layer, fill_down=False):
     out = np.zeros((SEA_H, SEA_W, 4), np.uint8)
     oh = src.shape[0]
     out[:oh, :SPLIT] = src[:, :SPLIT]
-    out[:oh, SPLIT:SPLIT + EXT] = src[:, SPLIT - EXT:SPLIT]
+    out[:oh, SPLIT:SPLIT + EXT] = src[:, 140 + np.arange(EXT) % (SPLIT - 140)]
     out[:oh, SPLIT + EXT:] = src[:, SPLIT:]
     if fill_down:
         out[oh:] = out[oh - 1]
@@ -330,7 +332,7 @@ def land(s, frame=0):
         boulder(s, cx, GROUND[max(0, cx)] + 3, w, h, sd)
     s.blit(screen_piece(lodge_screen, DY), 0, DY)
     s.blit(screen_piece(cabana_screen, DY), 342, DY)
-    BP.cabana3d(s, 342 + SI.CABANA[0], 342 + SI.CABANA[1], WL - 9, {k: 342 + v for k, v in SI.CABANA_DOORS.items()})
+    BP.cabana3d(s, 342 + SI.CABANA[0], 342 + SI.CABANA[1], GROUND[342 + 120] + 1, {k: 342 + v for k, v in SI.CABANA_DOORS.items()})
     BP.understory(s, 342 + 190, 342 + 250, gy, 4)
     for cx, w, h, sd in ((PRE + 30, 20, 12, 4), (PRE + 46, 12, 7, 5), (LAND + 52, 18, 9, 7), (LAND + 40, 9, 5, 8)):
         boulder(s, cx, GROUND[cx] + 2, w, h, sd)
@@ -462,6 +464,17 @@ def calm_decor():
         SS.coral(d, kinds[u % len(kinds)], SPLIT + u, F[SPLIT + u] + 1, 0.8, seed=u)
     SS.treasure(d, SPLIT + 362, F[SPLIT + 362] + 1)
     SS.bommie(d, SPLIT + 560, F[SPLIT + 560] + 2, 1.1, seed=7)
+    # New coral gardens and kelp groves throughout the expanded sea. Pieces sit
+    # on the actual seabed; leave sandy channels between distinct habitats.
+    rng=random.Random(714)
+    coral=list(SL.CORAL.values());floor=list(SL.FLOOR.values())
+    for i,cx in enumerate(range(SPLIT+40,SPLIT+EXT-40,85)):
+        for j in range(3+(i%3)):
+            x=cx+rng.randint(-26,26);spr=coral[(i*3+j)%len(coral)][1]()
+            d.blit(spr,x-spr.w//2,F[x]-spr.h+2)
+        if i%2==0:
+            spr=floor[i%len(floor)][1]();d.blit(spr,cx-spr.w//2,F[cx]-spr.h+1)
+        if i%4==0:SS.tall_weed(d,cx+30,F[cx+30]+1,44+i%30,P.teal,seed=i+741)
     return d
 
 
@@ -475,8 +488,7 @@ def calm_life():
 def _life():
     """(kind, frame fn, sea-local x, y): the creatures, shared with the web preview."""
     L = [("turtle", SS.turtle, 150, 70), ("manta", SS.manta, 480, 150),
-         ("diver", lambda f: SS.diver(f, P.hydrangea, P.skin_tan), 330, 60),
-         ("diver", lambda f: SS.diver(f, P.coral, P.skin), 700, 120), ("jelly", SS.jelly, 620, 40),
+         ("jelly", SS.jelly, 620, 40),
          ("eagleray", lambda f: SS.big_fish("eagleray", f), smap(900), 110)]
     for k in range(14):
         L.append(("school", lambda f: SS.fish("school", f), 560 + int(22 * math.cos(k * 1.3)), 70 + int(8 * math.sin(k * 1.7))))
@@ -488,6 +500,15 @@ def _life():
           ("shark", lambda f: SS.big_fish("shark", f), SPLIT + 300, 330),
           ("grouper", lambda f: SS.big_fish("grouper", f), SPLIT + 400, SEA_H - 50),
           ("ulua", lambda f: SS.big_fish("ulua", f), SPLIT + 150, 150), ("ulua", lambda f: SS.big_fish("ulua", f), SPLIT + 180, 162)]
+    refined=list(SL.FISH.items());schools=list(SL.SCHOOLS.items())
+    for i,x in enumerate(range(SPLIT+40,SPLIT+EXT-25,80)):
+        key,(_,fn)=refined[i%len(refined)]
+        ceiling=max(60,SEAFLOOR[x]-35)
+        y=min(ceiling,75+(i*67)%max(80,ceiling-70))
+        L.append((key,lambda f,fn=fn:fn(),x,y))
+        if i%3==0:
+            key,(_,fn)=schools[(i//3)%len(schools)]
+            L.append((key,lambda f,fn=fn:fn(),x+22,max(50,y-55)))
     return L
 
 
@@ -502,6 +523,8 @@ def _hotspots():
     for hid, name, u, dy in (("meadow", "海草草甸", 120, -6), ("trench", "深蓝海沟底", 362, -6), ("trench_rim", "海沟边缘", 214, -20)):
         x = LAND + SPLIT + u
         hs.append({"id": hid, "name": name, "x": x, "y": GROUND[x] + dy})
+    for i,(name,u) in enumerate([('珊瑚花园',260),('蓝洞沙谷',680),('海扇坡地',1030),('海藻森林',1350),('深海岩台',1690),('贝壳沙坪',2050)]):
+        x=LAND+SPLIT+u;hs.append({'id':'expanded_'+str(i),'name':name,'x':x,'y':GROUND[x]-14})
     return hs
 
 

@@ -205,3 +205,14 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
 Owner requested actual game-shell testing, **not formal-version integration**. See
 [SEASON_GAME_TEST.md](SEASON_GAME_TEST.md) for the separate `/map-test/` build, hooks,
 validation and remaining gaps. Standalone reviews remain available.
+
+### Owner decisions / test-page polish · 2026-10-31
+- Expand diveable water at least 2×, enrich scenery; implemented 3.06× free collision-mask
+  area, 4446×700 bay, coral/kelp/sand habitats and refined CC sea-life sprites.
+- Remove oxygen HUD and breath restriction. Dive more slowly (12 world px/s), smooth
+  camera, remove swimmer blue box; one resize per water-mode transition.
+- Entire changing hut clickable: LEFT door in, choose swimsuit/wetsuit/clothes, RIGHT
+  door out. Sand-contact foundation; pixel dialog. No individual-door costume guessing.
+- Actual swimmers/divers belong to `/map-test/` native social adapter, not painted props.
+  Removed decorative diver from shared LIFE. All changes remain previews/test-only.
+- See `SEASON_GAME_TEST.md` for implementation, test commands and remaining limitations.
