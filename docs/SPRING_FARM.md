@@ -100,6 +100,22 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/spring_fields.py
     - scrolls overlapping the wardrobe;
     - windows half hidden behind the canopy beds.
 
+12. Rapeseed and tulip fields must visibly sway in the wind (2026-10-31): a real
+    looping animation, with phase offsets across the field. Keep roads and terrain still.
+
+## Field wind animation (art only, 2026-10-31)
+- Combined animated review: [spring-flower-wind.gif](design/spring-flower-wind.gif).
+- `WIND_FRAMES=16`, `WIND_MS=180`: 2.88-second seamless cycle. Deterministic flower
+  positions; stalk bases stay put while connected heads lean 1–2px in travelling gusts.
+- `spring_rape_wind` / `spring_tulip_wind`: 16-frame replacement-background sheets
+  and pixelkit JSON metadata. Draw beneath the existing tree and live-effect layers.
+- `spring_*_wind_preview`: same cycle composited with props/trees for review. GIFs
+  are generated in `art/preview/concept/` by the standard pixelkit build.
+- Static `spring_rape` / `spring_tulip` are unchanged fallback art for reduced motion.
+- Not wired into gameplay: when the farm is approved, select frames by **real elapsed
+  time**, freeze on pause and use static art for reduced motion. Do not animate the road
+  or stack replacement frames over a second copy of the static flowers.
+
 ## Known gaps / next steps (small pieces; check each with the owner as it lands)
 - [ ] Owner's answers to the open questions in `docs/SEASON_MAPS.md`: farm open all year
       or spring only, the deadline, crop growth time, fruit trees after spring, which

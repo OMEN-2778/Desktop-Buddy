@@ -21,7 +21,7 @@ from __future__ import annotations
 import math
 import random
 
-from pixelkit import P, Sprite
+from pixelkit import P, Sprite, Anim
 
 import park as PK
 import front_yard as FY
@@ -209,7 +209,10 @@ def bridge(s):
 
 # ------------------------------------------------------------- fields
 
-def field(s, vx, top, y_end, far, near, pick, seed):
+WIND_FRAMES, WIND_MS = 16, 180
+
+
+def field(s, vx, top, y_end, far, near, pick, seed, wind_frame=None):
     """Crop rows converging on (vx, top). The bed is a trapezoid from `far`
     (x0, x1 at the top) to `near` (x0, x1 at y_end) with ragged grassy
     edges; rows blur into haze far off. pick(i, y) gives row i's ramp."""
@@ -240,7 +243,18 @@ def field(s, vx, top, y_end, far, near, pick, seed):
                 u = (x - vx) / (d * 60 + 0.01)
                 if (u - math.floor(u)) > 0.25:
                     R = pick(math.floor(u), y)
-                    s.set(x, y, R[4]).set(x, y - 1, R[3])
+                    if wind_frame is None:
+                        s.set(x, y, R[4]).set(x, y - 1, R[3])
+                    else:
+                        # A travelling gust, staggered by depth and position. The
+                        # stalk base stays fixed; only its connected flower head
+                        # bends 1–2px. Never scroll the ground or the whole scene.
+                        phase = math.tau * wind_frame / WIND_FRAMES - x / 48 - y / 13
+                        lean = round(math.sin(phase) * (0.55 + d * 1.1))
+                        lift = int(d > .65 and math.cos(phase) > .6)
+                        sx = max(0, min(W - 1, x + lean))
+                        s.line(x, y, sx, y - 1 - lift, R[2])
+                        s.set(sx, y - 1 - lift, R[4]).set(sx, y - 2 - lift, R[3])
         for x in (int(lo) - 1, int(hi)):                   # grass tufts along the edges
             s.set(x, y, G[3]).set(x + rnd.choice((-1, 1)), y, G[2])
     for x in range(near[0] - 2, near[1] + 2):             # a grassy bund at the near edge
@@ -609,7 +623,7 @@ def animal(kind, frame):
 
 # ------------------------------------------------------------- scenes
 
-def background(zone):
+def background(zone, wind_frame=None):
     s = Sprite(W, H)
     PK.sky(s)
     clouds(s, zone)
@@ -644,11 +658,11 @@ def background(zone):
     if zid == "rape":
         farmhouse(s, 168, HZ + 1, 24)
         farmhouse(s, 206, HZ + 2, 16)
-        field(s, 190, HZ - 1, PATH[0] - 1, (-2, W + 2), (-2, W + 2), rape_pick, 71)
+        field(s, 190, HZ - 1, PATH[0] - 1, (-2, W + 2), (-2, W + 2), rape_pick, 71, wind_frame)
         scarecrow(s, 262, 84)
     if zid == "tulip":
         windmill(s, 236, HZ + 4)
-        field(s, 170, HZ - 1, PATH[0] - 1, (-2, W + 2), (-2, W + 2), tulip_pick, 73)
+        field(s, 170, HZ - 1, PATH[0] - 1, (-2, W + 2), (-2, W + 2), tulip_pick, 73, wind_frame)
     if zid == "home":
         homestead(s)
     if zid == "farm":
@@ -698,8 +712,8 @@ def trees(zone, frame):
     return s
 
 
-def preview(zone, frame=0):
-    s = background(zone)
+def preview(zone, frame=0, wind_frame=None):
+    s = background(zone, wind_frame)
     if zone["id"] == "farm":                               # sample crops; two beds left bare
         for i, (x, y, w, h) in enumerate(PLOTS):
             if i in (3, 10):
@@ -768,6 +782,13 @@ def build():
         pv = preview(zone)
         out[f"spring_{zone['id']}_preview"] = pv
         pano.blit(pv, i * W, 0)
+        if zone["id"] in ("rape", "tulip"):
+            # Full replacement background frames, beneath existing tree/live
+            # layers. Keep the static picture as the reduced-motion fallback.
+            out[f"spring_{zone['id']}_wind"] = Anim(
+                [background(zone, f) for f in range(WIND_FRAMES)], WIND_MS)
+            out[f"spring_{zone['id']}_wind_preview"] = Anim(
+                [preview(zone, wind_frame=f) for f in range(WIND_FRAMES)], WIND_MS)
     out["spring_panorama"] = pano
     out["spring_stages"] = stage_sheet()
     for key in ("orchard", "pasture"):                     # the halves only live inside spring_ranch*

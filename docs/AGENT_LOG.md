@@ -6,6 +6,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-10-31 · Codex
+- Spring field wind art: 16-frame / 180ms loop for rapeseed and tulips, travelling gusts
+  move connected flower heads while the road and props stay still. Static fallbacks unchanged.
+- Source, PNG sheets + JSON timings, and `docs/design/spring-flower-wind.gif` committed;
+  ownership decisions/runtime integration notes in `docs/SPRING_FARM.md`. Still art only.
+- Checked: pixelkit rebuild, 16 distinct frames, fixed road, loop continuity, unchanged static
+  art; make_demo + npm run web; Chromium boot and actual animated GIF playback.
+
 ## 2026-10-31 · Claude
 - Summer lodge inside refurnished by hand (owner: more refined): carved koa bed + quilt,
   nightstand + rattan lamp, rattan sofa with hibiscus cushions, koa table, ukulele,
