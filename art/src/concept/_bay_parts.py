@@ -309,32 +309,28 @@ def cabana3d(s, x0, x1, base, doors):
 # ------------------------------------------------------------- beach chair
 
 def beach_chair(s, cx, base, C):
-    """A wooden folding beach chair seen from the front (owner: turn the
-    lounger round, Buddy sits in it): tall back posts, a striped canvas back,
-    a sling seat, armrests, crossed front legs. The back is taller and wider
-    than Buddy, so it frames her when she sits."""
+    """A small wooden folding beach chair seen from the front (owner: the first
+    one was too big): back posts, a striped canvas back, a sling seat, short
+    armrests. Sized to a seated Buddy: the back peeks out round her shoulders."""
     Wd = P.walnut
-    top, seat = base - 31, base - 9
-    for px in (cx - 12, cx + 11):                                   # back posts
+    top, seat = base - 20, base - 6
+    for px in (cx - 8, cx + 7):                                      # back posts
         s.vline(px, top, base - 1, Wd[2]).vline(px + 1, top, base - 1, Wd[1])
         s.set(px, top, Wd[3])
-    for y in range(top + 2, seat):                                  # striped canvas back
-        for x in range(cx - 10, cx + 11):
-            col = C[3] if ((x - cx) // 3) % 2 == 0 else P.porcelain[3]
-            if x == cx - 10 or y == top + 2:
-                col = C[2] if col == C[3] else P.porcelain[2]
-            if x == cx + 10 or y == seat - 1:
+    for y in range(top + 1, seat):                                   # striped canvas back
+        for x in range(cx - 6, cx + 7):
+            col = C[3] if ((x - cx) // 2) % 2 == 0 else P.porcelain[3]
+            if x == cx + 6 or y == seat - 1:
                 col = C[1] if col == C[3] else P.porcelain[1]
             s.set(x, y, col)
-    s.rect(cx - 11, seat, 23, 3, C[1]).hline(cx - 11, cx + 11, seat, C[2])   # sling seat
-    for sgn in (-1, 1):                                             # armrests
-        ax = cx + sgn * 13
-        s.hline(min(ax, ax - sgn * 4), max(ax, ax - sgn * 4), seat - 4, Wd[3])
-        s.vline(ax, seat - 4, base - 1, Wd[1])
-    for k in range(8):                                              # crossed front legs
-        s.set(cx - 9 + k * 2, seat + 3 + k // 2 if seat + 3 + k // 2 < base else base - 1, Wd[2])
-        s.set(cx + 9 - k * 2, seat + 3 + k // 2 if seat + 3 + k // 2 < base else base - 1, Wd[1])
-    s.hline(cx - 12, cx + 12, base - 1, Wd[0])
+    s.rect(cx - 7, seat, 15, 2, C[1]).hline(cx - 7, cx + 7, seat, C[2])   # sling seat
+    for sgn in (-1, 1):                                              # armrests
+        ax = cx + sgn * 9
+        s.hline(min(ax, ax - sgn * 3), max(ax, ax - sgn * 3), seat - 3, Wd[3])
+        s.vline(ax, seat - 3, base - 1, Wd[1])
+    for k in range(4):                                               # crossed front legs
+        s.set(cx - 5 + k * 3, seat + 2 + k // 2, Wd[2]).set(cx + 5 - k * 3, seat + 2 + k // 2, Wd[1])
+    s.hline(cx - 9, cx + 9, base - 1, Wd[0])
 
 
 # ------------------------------------------------------------- sea stack
