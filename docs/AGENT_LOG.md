@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- Bay round 2 (owner feedback): calmer sea floor, smooth water gradient + depth fog,
+  smooth beach curve into the sea, far horizon with islands. `summer_bay.py`; notes in
+  `docs/SUMMER_SEA.md`. Art only, waiting on owner review.
+
+## 2026-10-31 · Claude
 - Owner sketch: beach and sea are ONE side-view map (cut-open land, slope into the sea,
   walk -> surface swim -> click below to dive). New `summer_bay.py` (`bay_preview`,
   `bay_view_*`), notes in `docs/SUMMER_SEA.md`. Art only, waiting on owner review.

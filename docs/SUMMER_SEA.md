@@ -133,3 +133,10 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
   seabed). The earth ends under the sea along a slanted fault line; the reef rock goes on.
 - `bay_view_*`: what the camera shows (beach 342x118, shore and dive 342x236).
 - Art only; the old separate beach zone in `summer_isle.py` stays until the owner decides.
+- Round 2 (owner: floor too busy, use a real gradient for the water, smoother shore, add
+  远景): water is a smooth vertical gradient (`WATER_STOPS`; the page should draw it as a
+  canvas gradient, so its colours are off-palette on purpose); depth fog tints everything
+  in the water except the cut-open earth (`EARTH`); far reef ranges are flat silhouettes;
+  decor and life are a few grouped pieces (`calm_decor`, `calm_life`); one smooth beach
+  curve (`JOIN`) runs into the seabed, with wet sand, a foam wash and a pale shallow wedge;
+  远景 = a pale far-sea band above the waterline with distant islands and a sailboat.
