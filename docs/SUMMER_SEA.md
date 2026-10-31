@@ -199,3 +199,9 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
   corals/plants; a shared side-view `fish()` engine), labelled sheet via
   `python3 tools/make_sea_life_sheet.py`. Once approved, swap them into `summer_bay.LIFE`
   and `calm_decor` (keep the floor calm, grouped).
+
+## Game-shell test page (2026-10-31)
+
+Owner requested actual game-shell testing, **not formal-version integration**. See
+[SEASON_GAME_TEST.md](SEASON_GAME_TEST.md) for the separate `/map-test/` build, hooks,
+validation and remaining gaps. Standalone reviews remain available.

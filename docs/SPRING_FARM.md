@@ -191,3 +191,9 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/spring_fields.py
   crashes the build.
 - `pixelkit` lint flags off-palette colours in `*_preview` (from the blend). That is
   expected; game layers must stay clean.
+
+## Game-shell test page (2026-10-31)
+
+Owner requested actual game-shell testing, **not formal-version integration**. See
+[SEASON_GAME_TEST.md](SEASON_GAME_TEST.md) for the separate `/map-test/` build, hooks,
+validation and remaining gaps. Standalone reviews remain available.

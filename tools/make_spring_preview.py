@@ -13,7 +13,7 @@ def uri(im):
     if isinstance(im,Path):im=Image.open(im)
     out=io.BytesIO();im.save(out,format='PNG');return 'data:image/png;base64,'+base64.b64encode(out.getvalue()).decode()
 
-def main():
+def runtime_data():
     art=ROOT/'art/out/concept';zones={z['id']:z for z in F.ZONES};scenes=[]
     for key in ['brook','rape','tulip','home','farm','ranch']:
         if key=='ranch':
@@ -42,6 +42,11 @@ def main():
                 image.paste(limb,(half*10,21 if half==(i//2)%2 else 22),limb)
         hero.paste(image,(i*20,0))
     data={'scenes':scenes,'inside':uri(inside),'hero':uri(hero),'sails':uri(art/'spring_windmill_sails.png'),'birds':[uri(F.FS.bird(i)) for i in range(3)],'butterflies':[uri(F.FY.butterfly(i)) for i in range(4)],'animals':{k:[uri(F.animal(k,f)) for f in range(4)] for k in ('cow','sheep','lamb')},'chickens':[uri(F.FS.chicken(f,r)) for r in (False,True) for f in (0,1)],'herd':F.HERD,'coop':F.COOP,'beam':uri(F.FS.sun_shaft())}
+    return data
+
+
+def main():
+    data=runtime_data()
     # Public output contains built assets and minified preview code only.
     js=(ROOT/'prototype/spring/viewer.js').read_text().replace('/*__DATA__*/null',json.dumps(data,ensure_ascii=False,separators=(',',':')))
     with tempfile.TemporaryDirectory(prefix='buddy-spring-preview-') as temp:

@@ -6,6 +6,16 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-10-31 · Codex
+- Owner clarified: use actual game shell to test both maps, **NOT formal-version integration**.
+  New `/map-test/` build injects scene-local preview controllers + native actor/needs/time/
+  travel/home/save hooks; trial root and EXE inputs unchanged. Sources `prototype/map-test/`.
+- Shared preview builders now expose runtime_data(); standalone pages retain their behavior.
+  Latest CC summer outfits/breath/collision/discoveries reused; separate test save keys.
+- Handoff/limits: `docs/SEASON_GAME_TEST.md`; test-only exception in AGENTS.md.
+- Checked minified game-shell test: native trip, live needs/time, same look, spring regions,
+  summer height, pause, save/reload and hunger-driven home; standalone spring regression.
+
 ## 2026-10-31 · Claude
 - Smaller beach chairs. New `sea_life.py`: 33 refined reef sprites (fish, schools, floor
   creatures, corals, seaweed) + `tools/make_sea_life_sheet.py`. Art only, waiting on owner.

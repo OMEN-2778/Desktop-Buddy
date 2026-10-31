@@ -197,7 +197,7 @@ def life():
             for k, fn, x, y in B.LIFE]
 
 
-def main():
+def runtime_data():
     bg = B.bay(clouds=False, life=False)
     data = {
         'bg': uri(bg), 'W': B.GW, 'H': B.GH, 'WL': B.WL, 'ground': B.GROUND,
@@ -212,6 +212,11 @@ def main():
         'lifeText': LIFE_TEXT, 'seal': [uri(SS.seal(0)), uri(SS.seal(1))], 'sealAt': [B.STACK[0] + 4, B.WL - 4],
         'seaEnd': B.STACK[0] - 6,
     }
+    return data
+
+
+def main():
+    data=runtime_data()
     js = (ROOT / 'prototype/summer/viewer.js').read_text().replace('/*__DATA__*/null', json.dumps(data, ensure_ascii=False, separators=(',', ':')))
     with tempfile.TemporaryDirectory(prefix='buddy-summer-preview-') as temp:
         source, target = Path(temp) / 'viewer.js', Path(temp) / 'viewer.min.js'

@@ -43,7 +43,12 @@ either can pick up the other's work:
   `desktop/scripts/copy-web.mjs`, terser). The repo keeps the readable source: edit that,
   never the minified output. Code must keep working when local names are mangled (global
   names are kept).
-- The public web preview (`.github/workflows/preview.yml`) shows only the 试玩版.
+- The public web preview root (`.github/workflows/preview.yml`) shows only the 试玩版.
+- Owner exception (2026-10-31): `/map-test/` is a separate **game-shell seasonal-map test**
+  page (full game UI/needs/transition + test-only adapters). Owner explicitly said **do not
+  put these maps into the formal version**. `make_season_game_test.py` injects them only
+  into that built page; never add its adapter to make_demo.py or desktop release inputs.
+  Keep the public trial root unchanged. `/spring/` and `/summer/` remain independent reviews.
 - The 试玩版 is the full game with features switched off in `prototype/demo/trial.js`
   (no festivals, contacts, pets, going out, saves, updates, tutorial). A new feature that
   happens outside the house or involves other people must stay off there too.

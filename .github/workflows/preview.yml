@@ -53,6 +53,8 @@ jobs:
           PYTHONPATH=tools python tools/make_spring_preview.py
           # Owner-requested summer bay walk-through (旅舍 -> 更衣室 -> 沙滩 -> 水底), same rules.
           PYTHONPATH=tools python tools/make_summer_preview.py
+          # Owner-authorized game-shell map test, separate from trial and EXE builds.
+          PYTHONPATH=tools python tools/make_season_game_test.py
           touch desktop/dist/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
