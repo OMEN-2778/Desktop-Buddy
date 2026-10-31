@@ -155,3 +155,5 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
   wall, hip roof, eave shadow), `sea_stack` closing the map on the right. Beach profile
   is a smooth Hermite curve through `_beach_keys()` (berm, shallow run, sandbar,
   drop-off) to `JOIN` = LAND+250; the earth ends along a line slanting down-right.
+- Round 5: owner found the cumulus towers fake; the sky now uses the game's own drifting
+  clouds (`beach.cloud(i)`, the sprites the page drifts). `BP.cumulus` is unused.

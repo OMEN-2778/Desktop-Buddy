@@ -20,6 +20,7 @@ import numpy as np
 import summer_isle as SI
 import summer_sea as SS
 import _bay_parts as BP
+import beach as BE
 from pixelkit import P, Sprite
 
 PREVIEW_SCALE = 1
@@ -423,11 +424,10 @@ def fog(s):
 def bay(frame=0):
     s = Sprite(GW, GH)
     sky(s)
-    for cx, w, h, sd in ((120, 200, 92, 1), (560, 240, 104, 2), (PRE + 300, 180, 84, 3),
-                         (PRE + 760, 260, 100, 4), (PRE + 1180, 200, 90, 5)):
-        BP.cumulus(s, cx, WL - 6, w, h, sd)
-    for cx, y, w, sd in ((330, 14, 40, 1), (PRE + 40, 22, 52, 2), (PRE + 560, 12, 44, 3), (PRE + 1000, 20, 36, 4)):
-        BP.wisp(s, cx, y, w, sd)
+    # owner: use the game's own drifting clouds (beach.cloud, the sprites the page drifts)
+    rnd = random.Random(5)
+    for x in range(20, GW, 110):
+        s.blit(BE.cloud(rnd.randrange(3)), x + rnd.randint(-30, 30), rnd.randint(4, 40))
     BP.mountains(s, 0, PRE + 250, WL - 8, [(80, 80, 70), (300, 60, 52), (560, 90, 64), (PRE + 120, 60, 40)], 5, far=True)
     horizon(s)
     s.px[WL:, :, :3] = WROWS[WL:, None, :].astype(np.uint8)          # the water
