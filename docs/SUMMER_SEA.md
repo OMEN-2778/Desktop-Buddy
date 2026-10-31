@@ -167,6 +167,19 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
   `desktop/dist/summer/index.html` (assets embedded; preview.yml builds it).
 - Walk on land, swim at the surface, click under water to dive, click the surface or
   land to come up; view grows 118 -> 236 in the sea, camera eases after Buddy. Lodge door
-  opens the interior; cabana curtains set the suit (status text only: swimwear art and
-  swim/dive poses are not drawn yet). Creatures swim back and forth; clouds drift.
+  opens the interior. Creatures swim back and forth; clouds drift.
+- Gameplay round (owner: 完善交互玩法和走路逻辑):
+  - Outfits drawn on the bare doll in `make_summer_preview.outfit()`: clothes, blue bikini,
+    slate wetsuit; sheet cells 0-3 walk, 4-5 float stroke, 6-7 dive kick, 8 lying.
+  - Cabana curtains: Buddy goes behind the curtain (~1s) and comes out changed; the same
+    curtain again changes back. In clothes she only wades (depth 5) and is told to change.
+  - Breath: bikini = snorkel, 20s under water; wetsuit = tank, 90s; bar top-left; at 0
+    she surfaces by herself; refills at the surface. (Owner can retune; was an open question.)
+  - Solid mask (`solid_mask()`): ground, reef rocks, sea stack; Buddy slides along rock,
+    the arch keeps its hole. Map edges: rocks on the left, the sea stack on the right.
+  - 11 hotspots (twinkle until found) + 8 kinds of sea life are clickable: Buddy swims
+    there and a line pops up; counter 发现 n/19. Shoals scatter when she swims close.
+  - Loungers: click to lie in the sun. Splash on entering the water, ripples while
+    floating, bubbles while diving.
+  - Debug build: `BUDDY_NO_MINIFY=1` (never for the public page).
 - Backdrop: `summer_bay.bay(clouds=False, life=False)`.

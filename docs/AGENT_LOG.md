@@ -7,6 +7,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- `/summer/` gameplay round: bikini/wetsuit art + swim/dive/lie frames, cabana changing,
+  clothes only wade, breath (bikini 20s / wetsuit 90s), rock collision, 11 hotspots + sea
+  life discoveries, loungers, splash/ripples/bubbles. Notes in `docs/SUMMER_SEA.md`.
+- Checked in Chromium (file://): blocked in clothes, lounger, change, surface, dive to the
+  wreck chest, collision at the pinnacle; no page errors. Still preview only.
+
+## 2026-10-31 · Claude
 - Owner: add the summer bay to the web previews like Codex's `/spring/`. New `/summer/`
   (`prototype/summer/`, `tools/make_summer_preview.py`, preview.yml step): walk, surface
   swim, click-to-dive, 2x view in the sea, lodge interior, cabana suit (text only).
