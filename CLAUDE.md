@@ -40,4 +40,7 @@ tests, no unasked extras).
    that installed apps pick up by themselves; check the "Desktop app"
    workflow only when the user asks.
 
+The source repo is private: see `AGENTS.md` (preview link on the public
+releases repo's Pages, local `file://` checks, Actions minutes).
+
 Never commit the updater signing key (`TAURI_SIGNING_PRIVATE_KEY` is a repo secret).

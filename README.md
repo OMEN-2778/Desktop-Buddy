@@ -20,7 +20,7 @@ Just like a Sim from *The Sims*, this tiny character lives permanently on your d
 
 ## Browser preview
 
-Play at https://omen-2778.github.io/Desktop-Buddy/ . Source changes on
+Play at https://omen-2778.github.io/Desktop-Buddy-Releases/ . Source changes on
 `claude/awesome-einstein-wtzgsw` are rebuilt by the `Web preview` workflow;
 refresh after deployment completes. The Windows release workflow is separate.
 

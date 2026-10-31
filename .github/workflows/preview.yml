@@ -21,12 +21,15 @@ concurrency:
   group: web-preview
   cancel-in-progress: false
 
+# This source repo may be private (no free GitHub Pages then). The built page
+# always goes to the public downloads repo's gh-pages branch as well:
+#   https://omen-2778.github.io/Desktop-Buddy-Releases/
+# and to this repo's own Pages only while it is public.
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      TOKEN: ${{ secrets.RELEASES_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -47,10 +50,28 @@ jobs:
           cp prototype/pets/index.html desktop/dist/pets/index.html
           cp -R prototype/music-preview desktop/dist/music
           touch desktop/dist/.nojekyll
-      - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: desktop/dist
+      - name: Publish to the public downloads repo (gh-pages)
+        if: ${{ env.TOKEN != '' }}
+        working-directory: desktop/dist
+        run: |
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "Web preview ${GITHUB_SHA::7}"
+          git push -fq "https://x-access-token:${TOKEN}@github.com/OMEN-2778/Desktop-Buddy-Releases.git" gh-pages
+
+  pages:
+    needs: build
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Publish preview
         id: deployment
         uses: actions/deploy-pages@v4
