@@ -183,3 +183,12 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
     floating, bubbles while diving.
   - Debug build: `BUDDY_NO_MINIFY=1` (never for the public page).
 - Backdrop: `summer_bay.bay(clouds=False, life=False)`.
+- Round (owner: sea too small again; swimwear looked silly, boys and girls must differ; call
+  it 泳衣 not 比基尼): sea enlarged: `SPLIT`/`EXT` insert a 684px stretch before the reef
+  wall (海草草甸 + 深蓝海沟 down to the new bottom) and `DEEP` adds 110 rows; old dive-map x
+  map through `smap()`, layers through `stitch()`, solids from `seabed_mask()`, creatures
+  in `LIFE`, hotspots (14) in `HOTSPOTS`. Map is now 2736x560.
+  Swimwear redrawn as doll-role grids (`SWIM` in make_summer_preview): girl = one-piece with
+  hibiscus dots and a frilled skirt; boy = rash guard + board shorts; wetsuit with a chest
+  panel and booties. Suits are clothes / swim (泳衣) / wetsuit; the page has 换成男生/女生.
+  The cabana's 泳衣 door sign is a swim ring now.

@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- Summer: sea enlarged (meadow + deep trench, 2736x560), swimwear redrawn (girl one-piece /
+  boy rash guard + board shorts / wetsuit), 比基尼 renamed 泳衣, boy/girl toggle in `/summer/`.
+  Checked in Chromium: change as boy, dive to the trench bottom; no errors.
+
+## 2026-10-31 · Claude
 - `/summer/` gameplay round: bikini/wetsuit art + swim/dive/lie frames, cabana changing,
   clothes only wade, breath (bikini 20s / wetsuit 90s), rock collision, 11 hotspots + sea
   life discoveries, loungers, splash/ripples/bubbles. Notes in `docs/SUMMER_SEA.md`.

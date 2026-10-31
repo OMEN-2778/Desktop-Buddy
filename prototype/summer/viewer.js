@@ -1,16 +1,16 @@
 'use strict';
 // Summer bay walk-through: one seamless map 旅舍 -> 更衣室 -> 沙滩 -> 水底.
 // Walk on land; change at the cabana (clothes can only wade); swim at the
-// surface; click under water to dive (snorkel breath in a bikini, a tank in a
+// surface; click under water to dive (snorkel breath in swimwear, a tank in a
 // wetsuit); rocks are solid, the arch has a hole; discover hotspots and sea life.
 const DATA=/*__DATA__*/null;
 const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d'),images=new Map();
 const say=document.getElementById('say'),status=document.getElementById('status'),maps=document.getElementById('maps');
 const {W,H,WL,ground}=DATA,VW=342,LAND_H=118,SEA_H=236,SURF_Y=WL+12,CELL=28;
-const BREATH={clothes:0,bikini:20,wetsuit:90},SUIT_NAME={clothes:'便装',bikini:'比基尼',wetsuit:'潜水服'};
+const BREATH={clothes:0,swim:20,wetsuit:90},SUIT_NAME={clothes:'便装',swim:'泳衣',wetsuit:'潜水服'};
 const TOTAL=DATA.hotspots.length+Object.keys(DATA.lifeText).length;
 const state={x:120,y:0,vy:0,target:null,after:null,facing:1,camX:0,camY:0,viewH:LAND_H,time:0,paused:false,inside:false,walk:false,loaded:false,
- suit:'clothes',breath:0,lying:null,changing:0,found:new Set(),wasSea:false,warned:0};
+ suit:'clothes',gender:'f',breath:0,lying:null,changing:0,found:new Set(),wasSea:false,warned:0};
 const keys=new Set(),parts=[];
 const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 let solid=null;
@@ -51,9 +51,9 @@ function move(dt){state.walk=false;if(state.paused||!state.loaded)return;
  const dir=(keys.has('ArrowRight')||keys.has('d')||keys.has('D')?1:0)-(keys.has('ArrowLeft')||keys.has('a')||keys.has('A')?1:0);
  const vdir=(keys.has('ArrowDown')||keys.has('s')||keys.has('S')?1:0)-(keys.has('ArrowUp')||keys.has('w')||keys.has('W')?1:0);
  if(dir||vdir){state.after=null;if(state.suit!=='clothes'&&(under()||(vdir>0&&deep(state.x))))goTo(state.x+dir*30,'dive',state.y+vdir*30);else if(dir)goTo(state.x+dir*40);}
- // breath: a snorkel in a bikini, a tank in a wetsuit; refills at the surface
+ // breath: a snorkel in swimwear, a tank in a wetsuit; refills at the surface
  const max=BREATH[state.suit];
- if(under()){state.breath-=dt;if(state.breath<=0&&state.target?.kind!=='up'){toast(state.suit==='bikini'?'憋不住气了，先浮上去换口气！':'气瓶快空了，先浮上去！');state.target={x:state.x,y:SURF_Y,kind:'up'};state.after=null;}}
+ if(under()){state.breath-=dt;if(state.breath<=0&&state.target?.kind!=='up'){toast(state.suit==='swim'?'憋不住气了，先浮上去换口气！':'气瓶快空了，先浮上去！');state.target={x:state.x,y:SURF_Y,kind:'up'};state.after=null;}}
  else state.breath=Math.min(max,state.breath+dt*max/2);
  const t=state.target;
  if(t){if(Math.abs(t.x-state.x)>.5)state.facing=Math.sign(t.x-state.x);let done=false;
@@ -81,14 +81,14 @@ function cell(){const t=state.time;if(state.lying!==null)return 8;
  if(under())return 6+(state.walk?Math.floor(t*5)%2:Math.floor(t*1.5)%2);
  if(floating())return 4+(state.walk?Math.floor(t*4)%2:0);
  return state.walk?Math.floor(t*7)%4:0;}
-function hero(x,y){if(state.changing>0)return;const sheet=img(DATA.heroes[state.suit]),c=cell();ctx.save();ctx.translate(Math.round(x),Math.round(y));
+function hero(x,y){if(state.changing>0)return;const sheet=img(DATA.heroes[state.gender][state.suit]),c=cell();ctx.save();ctx.translate(Math.round(x),Math.round(y));
  if(under()){ctx.translate(0,-14);ctx.rotate(clamp(state.vy/60,-.6,.6)*state.facing);ctx.translate(0,14);}
  if(c!==8)ctx.scale(state.facing,1);
  ctx.drawImage(sheet,c*CELL,0,CELL,CELL,-14,-28+(floating()?Math.round(Math.sin(state.time*3)):0),CELL,CELL);ctx.restore();}
 function sparkle(x,y,t){const a=(Math.sin(t*3+x)+1)/2;if(a<.3)return;ctx.fillStyle=`rgba(255,250,220,${a})`;ctx.fillRect(x,y-2,1,5);ctx.fillRect(x-2,y,5,1);}
 function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,VW,vh);if(!state.loaded)return;
  const t=reduced?0:state.time;
- if(state.inside){ctx.fillStyle='#2f2a33';ctx.fillRect(0,0,VW,vh);ctx.drawImage(img(DATA.inside),40,28);const sheet=img(DATA.heroes[state.suit]),c=state.walk?Math.floor(state.time*7)%4:0;
+ if(state.inside){ctx.fillStyle='#2f2a33';ctx.fillRect(0,0,VW,vh);ctx.drawImage(img(DATA.inside),40,28);const sheet=img(DATA.heroes[state.gender][state.suit]),c=state.walk?Math.floor(state.time*7)%4:0;
   ctx.save();ctx.translate(Math.round(clamp(state.x,46,296)),78);ctx.scale(state.facing,1);ctx.drawImage(sheet,c*CELL,0,CELL,CELL,-14,-28,CELL,CELL);ctx.restore();return;}
  const cx=Math.round(state.camX),cy=Math.round(state.camY);
  ctx.drawImage(img(DATA.bg),cx,cy,VW,vh,0,0,VW,vh);
@@ -112,7 +112,7 @@ function pick(x,y){
  const g=gr(x);
  if(Math.abs(x-DATA.lodgeDoor)<12&&y>g-36&&y<g+2)return goTo(DATA.lodgeDoor,'walk',0,()=>{state.inside=true;state.x=150;toast('旅舍里：卧室、客厅、厨房和浴室。',2.5);});
  for(const [k,dx]of Object.entries(DATA.cabana))if(Math.abs(x-dx)<10&&y>g-34&&y<g+2)return goTo(dx,'walk',0,()=>{state.changing=1.1;const next=state.suit===k?'clothes':k;
-  setTimeout(()=>{state.suit=next;state.breath=BREATH[next];toast(next==='clothes'?'换回了便装。':next==='bikini'?'换上了比基尼！戴着浮潜面罩，能潜一小会儿。':'换上了潜水服！背着气瓶，可以在海底待很久。');},reduced?0:1000);});
+  setTimeout(()=>{state.suit=next;state.breath=BREATH[next];toast(next==='clothes'?'换回了便装。':next==='swim'?'换上了泳衣！戴着浮潜面罩，能潜一小会儿。':'换上了潜水服！背着气瓶，可以下到深海沟。');},reduced?0:1000);});
  for(const [i,[lx,ly]]of DATA.loungers.entries())if(Math.abs(x-lx)<14&&y>ly-12&&y<ly+8)return goTo(lx,'walk',0,()=>{state.lying=i;toast('躺在躺椅上晒太阳，海风吹得好舒服～');});
  for(const c of DATA.life)if(c.cx&&Math.abs(x-c.cx)<c.w/2+5&&Math.abs(y-c.cy)<c.h/2+5){
   if(state.suit==='clothes')return toast('先去更衣室换上泳装，才能游过去看看。');
@@ -124,6 +124,7 @@ function pick(x,y){
  goTo(x);}
 DATA.zones.forEach(([x,name])=>{const b=document.createElement('button');b.textContent=name;b.onclick=()=>{state.inside=false;state.target=null;state.lying=null;
  let nx=x+60;if(state.suit==='clothes'&&gr(nx)>WL+5){nx=x;toast('换上泳装才能下水哦。');}state.x=nx;state.y=standY(nx)>SURF_Y?SURF_Y:standY(nx);state.camX=clamp(state.x-VW/2,0,W-VW);canvas.focus();};maps.append(b);});
+document.getElementById('gender').onclick=e=>{state.gender=state.gender==='f'?'m':'f';e.target.textContent=state.gender==='f'?'换成男生':'换成女生';canvas.focus();};
 document.getElementById('exit').onclick=()=>{state.inside=false;state.x=DATA.lodgeDoor;state.y=standY(state.x);};
 document.getElementById('pause').onclick=e=>{state.paused=!state.paused;e.target.textContent=state.paused?'继续':'暂停';e.target.setAttribute('aria-pressed',String(state.paused));};
 canvas.addEventListener('pointerdown',e=>{canvas.focus();const r=canvas.getBoundingClientRect(),sx=(e.clientX-r.left)*VW/r.width,sy=(e.clientY-r.top)*canvas.height/r.height;

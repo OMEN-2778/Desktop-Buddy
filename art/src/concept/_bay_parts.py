@@ -272,8 +272,9 @@ def cabana3d(s, x0, x1, base, doors):
         s.hline(cx - 10, cx + 9, deck - 27, P.walnut[2])
         sy = deck - 31
         s.ellipse(cx, sy, 5, 4, P.walnut[2]).ellipse(cx, sy, 4, 3, P.oat[3])
-        if key == "bikini":
-            s.rect(cx - 3, sy - 1, 2, 2, C[2]).rect(cx + 1, sy - 1, 2, 2, C[2]).hline(cx - 1, cx, sy - 1, C[1])
+        if key == "bikini":                                          # 泳衣 door: a swim ring
+            s.ellipse(cx, sy, 3, 2.5, C[2]).ellipse(cx, sy, 1.2, 1, P.oat[3])
+            s.set(cx - 3, sy, P.porcelain[3]).set(cx + 3, sy, P.porcelain[3])
         else:
             s.rect(cx - 3, sy - 1, 6, 2, P.slate[2]).set(cx - 2, sy - 1, P.glass[3]).set(cx + 1, sy - 1, P.glass[3])
     # roof: front slope (trapezoid), right hip slope, ridge, ragged eave, underside

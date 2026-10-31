@@ -27,13 +27,17 @@ PREVIEW_SCALE = 1
 PRE = 684                        # 旅舍 screen (0-342) and 更衣室 screen (342-684) before the beach
 LAND = PRE + 342                 # the beach ends / the dive map starts here
 SKY = 96                         # extra sky above the dive map
-GW, GH = LAND + SS.OW, SKY + SS.OH
+SPLIT = 830                      # owner: the sea was too small. A new stretch is inserted into
+EXT = 684                        # the dive map here (sea-local x), before the reef wall,
+DEEP = 110                       # and the whole sea gets DEEP more rows: a deep trench.
+SEA_W, SEA_H = SS.OW + EXT, SS.OH + DEEP
+GW, GH = LAND + SEA_W, SKY + SEA_H
 WL = SKY + SS.SURF               # waterline (global)
 C = SS.C
 
 
 JOIN = LAND + 250                # the beach profile meets the dive map's seabed here
-STACK = (LAND + 900, GW)         # the sea stack that closes the map on the right
+STACK = (GW - 126, GW)           # the sea stack that closes the map on the right
 
 
 def _beach_keys():
@@ -67,7 +71,45 @@ def ground_y(x):
         return WL - 10 + int(1.2 * math.sin(x * 0.05))
     if x < JOIN:
         return int(round(_hermite(_beach_keys(), x)))
-    return SS.FLOOR[x - LAND] + SKY
+    return SEAFLOOR[x - LAND] + SKY
+
+
+def smap(x):
+    """Old dive-map x -> sea-local x on the enlarged sea."""
+    return x if x < SPLIT else x + EXT
+
+
+def _mid_keys():
+    f0 = SS.FLOOR[SPLIT]
+    return [(0, f0), (60, 248), (170, 256), (214, 300), (258, 420), (300, SEA_H - 26), (360, SEA_H - 20),
+            (420, SEA_H - 24), (468, 404), (516, 292), (576, 250), (EXT, f0)]
+
+
+def _seafloor(x):
+    if x < SPLIT:
+        return SS.FLOOR[x]
+    if x >= SPLIT + EXT:
+        return SS.FLOOR[x - EXT]
+    u = x - SPLIT
+    return int(_hermite(_mid_keys(), u) + 2 * math.sin(x * 0.11) + 1.5 * math.sin(x * 0.27 + 1))
+
+
+SEAFLOOR = [_seafloor(x) for x in range(SEA_W)]
+
+
+def stitch(layer, fill_down=False):
+    """Stretch a dive-map layer onto the enlarged sea: the part before SPLIT as is,
+    the reef wall end shifted right by EXT, the new middle reusing an earlier
+    stretch; fill_down repeats the bottom row into the extra depth."""
+    src = layer.px
+    out = np.zeros((SEA_H, SEA_W, 4), np.uint8)
+    oh = src.shape[0]
+    out[:oh, :SPLIT] = src[:, :SPLIT]
+    out[:oh, SPLIT:SPLIT + EXT] = src[:, SPLIT - EXT:SPLIT]
+    out[:oh, SPLIT + EXT:] = src[:, SPLIT:]
+    if fill_down:
+        out[oh:] = out[oh - 1]
+    return Sprite(0, 0, px=out)
 
 
 GROUND = [ground_y(x) for x in range(GW)]
@@ -324,7 +366,8 @@ def horizon(s):
     islands standing on it, a sailboat."""
     s.px[WL - 7:WL, :, :3] = C(P.sea[3])[:3]
     s.px[WL - 7, :, :3] = C(P.sea[4])[:3]
-    for cx, w, h in ((PRE + 420, 90, 16), (PRE + 520, 50, 9), (PRE + 980, 120, 22), (PRE + 1110, 60, 11), (PRE + 1290, 80, 14)):
+    for cx, w, h in ((PRE + 420, 90, 16), (PRE + 520, 50, 9), (PRE + 980, 120, 22), (PRE + 1110, 60, 11), (PRE + 1290, 80, 14),
+                     (PRE + 1620, 100, 18), (PRE + 1760, 50, 10), (PRE + 1950, 70, 12)):
         for x in range(cx - w // 2, cx + w // 2):
             u = (x - cx) / (w / 2)
             top = int(WL - 7 - h * max(0.0, 1 - u * u) ** 0.7 - 1.5 * math.sin(x * 0.3))
@@ -336,16 +379,31 @@ def horizon(s):
     sailboat(s, PRE + 760, WL - 4)
 
 
+def seabed_mask():
+    """Solid seabed on the enlarged sea (global coords): the dive map's rocks
+    (pinnacle, arch, boulders), the new trench, everything under the ground."""
+    orig = SS.terrain().px[..., 3] > 0
+    tm = np.zeros((SEA_H, SEA_W), bool)
+    tm[:SS.OH, :SPLIT] = orig[:, :SPLIT]
+    tm[:SS.OH, SPLIT + EXT:] = orig[:, SPLIT:]
+    yy, xx = np.mgrid[0:SEA_H, 0:SEA_W]
+    for u, r in ((330, 16), (392, 12), (190, 9)):                   # boulders in the trench and on the meadow
+        cx = SPLIT + u
+        tm |= ((xx - cx) / r) ** 2 + ((yy - SEAFLOOR[cx]) / (r * 0.7)) ** 2 <= 1
+    m = np.zeros((GH, GW), bool)
+    m[SKY:, LAND:] = tm
+    for x in range(GW):
+        if x < JOIN:
+            m[:, x] = False
+        m[GROUND[x]:, x] = True
+    m[:WL + 30, STACK[0]:] = False                                   # the sea stack replaces the old surface rocks
+    return m
+
+
 def rock(s):
     """Seabed beyond the earth: flat gouache tones (lit crust, body, core),
     sand on gentle ground. Depth fog is added afterwards."""
-    m = np.zeros((GH, GW), bool)
-    sea_mask = SS.terrain().px[..., 3] > 0
-    m[SKY:, LAND:] = sea_mask
-    for x in range(JOIN):
-        m[:, x] = False
-        m[GROUND[x]:, x] = True
-    m[:WL + 30, STACK[0]:] = False                                   # the sea stack replaces the old surface rocks
+    m = seabed_mask()
     under = np.zeros((GH, GW))
     run = np.zeros(GW)
     for y in range(GH):
@@ -365,9 +423,10 @@ def rock(s):
 
 
 def calm_decor():
-    """Few, grouped pieces (owner: the floor was too busy)."""
-    d = Sprite(SS.OW, SS.OH)
-    F = [GROUND[x + LAND] - SKY for x in range(SS.OW)]
+    """Few, grouped pieces (owner: the floor was too busy). Old dive-map x go
+    through smap(); the new meadow and trench get their own few pieces."""
+    d = Sprite(SEA_W, SEA_H)
+    F = [GROUND[x + LAND] - SKY for x in range(SEA_W)]
     kinds = list(SS.CORALS)
     for x0 in (40, 100):                                             # sea grass tufts on the beach slope
         for k in range(4):
@@ -384,30 +443,66 @@ def calm_decor():
     SS.anchor(d, 610, F[610] + 1)
     SS.bommie(d, 630, 112, 0.6, seed=630)
     SS.tiki(d, 800, F[800] + 2)
-    for x in (680, 700, 850, 870):
+    for x in (680, 700, smap(850), smap(870)):
         SS.coral(d, kinds[x % len(kinds)], x, F[x] + 1, 1.0, seed=x)
     for y in (60, 100, 150):
-        x = next((xx for xx in range(850, SS.OW) if F[xx] <= y), SS.OW - 1)
+        x = next((xx for xx in range(smap(850), SEA_W) if F[xx] <= y), SEA_W - 1)
         SS.coral(d, kinds[y % len(kinds)], x - 1, y + 2, 0.8, seed=y)
+    # 海草草甸: a calm meadow of sea grass
+    for x in range(SPLIT + 20, SPLIT + 170, 6):
+        SS.seagrass(d, x, F[x] + 1, 5, 9 + (x * 7) % 8, R=P.green if x % 12 else P.sage, seed=x)
+    SS.clam(d, SPLIT + 120, F[SPLIT + 120] + 1)
+    # 深蓝海沟: kelp on both rims, a few corals down the walls, an old helmet at the bottom
+    for u in (204, 212, 520, 530):
+        SS.tall_weed(d, SPLIT + u, F[SPLIT + u] + 1, 46 + u % 20, P.teal, seed=u)
+    for u in (236, 250, 486, 500):
+        SS.coral(d, kinds[u % len(kinds)], SPLIT + u, F[SPLIT + u] + 1, 0.8, seed=u)
+    SS.treasure(d, SPLIT + 362, F[SPLIT + 362] + 1)
+    SS.bommie(d, SPLIT + 560, F[SPLIT + 560] + 2, 1.1, seed=7)
     return d
 
 
 def calm_life():
-    s = Sprite(SS.OW, SS.OH)
-    put = lambda spr, x, y: s.blit(spr, x, y)
-    put(SS.turtle(0), 150, 70)
-    put(SS.manta(0), 480, 150)
-    put(SS.diver(0, P.hydrangea, P.skin_tan), 330, 60)
-    put(SS.diver(1, P.coral, P.skin), 700, 120)
-    for k in range(14):                                              # one silver shoal
-        put(SS.fish("school", k % 2), 560 + int(22 * math.cos(k * 1.3)), 70 + int(8 * math.sin(k * 1.7)))
-    for k, (x, y) in enumerate(((230, 150), (244, 158), (238, 168), (262, 146), (300, 160))):
-        put(SS.fish("tang", k % 2), x, y)
-    for x, y in ((760, 190), (780, 200), (880, 150)):
-        put(SS.fish("butterflyfish", 0), x, y)
-    put(SS.jelly(0), 620, 40)
-    put(SS.big_fish("eagleray", 0), 900, 110)
+    s = Sprite(SEA_W, SEA_H)
+    for kind, f, x, y in LIFE:
+        s.blit(f(0), x, y)
     return s
+
+
+def _life():
+    """(kind, frame fn, sea-local x, y): the creatures, shared with the web preview."""
+    L = [("turtle", SS.turtle, 150, 70), ("manta", SS.manta, 480, 150),
+         ("diver", lambda f: SS.diver(f, P.hydrangea, P.skin_tan), 330, 60),
+         ("diver", lambda f: SS.diver(f, P.coral, P.skin), 700, 120), ("jelly", SS.jelly, 620, 40),
+         ("eagleray", lambda f: SS.big_fish("eagleray", f), smap(900), 110)]
+    for k in range(14):
+        L.append(("school", lambda f: SS.fish("school", f), 560 + int(22 * math.cos(k * 1.3)), 70 + int(8 * math.sin(k * 1.7))))
+    for x, y in ((230, 150), (244, 158), (238, 168), (262, 146), (300, 160)):
+        L.append(("tang", lambda f: SS.fish("tang", f), x, y))
+    for x, y in ((760, 190), (780, 200), (smap(880), 150)):
+        L.append(("butterflyfish", lambda f: SS.fish("butterflyfish", f), x, y))
+    L += [("turtle", SS.turtle, SPLIT + 90, 200), ("manta", SS.manta, SPLIT + 300, 120),
+          ("shark", lambda f: SS.big_fish("shark", f), SPLIT + 300, 330),
+          ("grouper", lambda f: SS.big_fish("grouper", f), SPLIT + 400, SEA_H - 50),
+          ("ulua", lambda f: SS.big_fish("ulua", f), SPLIT + 150, 150), ("ulua", lambda f: SS.big_fish("ulua", f), SPLIT + 180, 162)]
+    return L
+
+
+LIFE = _life()
+
+
+def _hotspots():
+    hs = []
+    for h in SS.HOTSPOTS:
+        x = LAND + smap(h["x"])
+        hs.append({"id": h["id"], "name": h["name"], "x": x, "y": min(SKY + h["y"], GROUND[x] - 6)})
+    for hid, name, u, dy in (("meadow", "海草草甸", 120, -6), ("trench", "深蓝海沟底", 362, -6), ("trench_rim", "海沟边缘", 214, -20)):
+        x = LAND + SPLIT + u
+        hs.append({"id": hid, "name": name, "x": x, "y": GROUND[x] + dy})
+    return hs
+
+
+HOTSPOTS = _hotspots()
 
 
 def fog(s):
@@ -437,10 +532,10 @@ def bay(frame=0, clouds=True, life=True):
     horizon(s)
     s.px[WL:, :, :3] = WROWS[WL:, None, :].astype(np.uint8)          # the water
     s.px[WL:, :, 3] = 255
-    for mask_layer, k in ((SS.far2(), 0.86), (SS.far1(), 0.76)):    # far reef ranges: flat, a shade darker
+    for mask_layer, k in ((stitch(SS.far2(), True), 0.86), (stitch(SS.far1(), True), 0.76)):   # far reef ranges
         m = mask_layer.px[..., 3] > 0
         reg = s.px[SKY:, LAND:, :3]
-        reg[m] = (WROWS[SKY:, None, :].repeat(SS.OW, 1)[m] * k).astype(np.uint8)
+        reg[m] = (WROWS[SKY:, None, :].repeat(SEA_W, 1)[m] * k).astype(np.uint8)
     for x in range(GW):                                              # surface seen from below
         s.set(x, WL, P.porcelain[3])
         s.set(x, WL + 1, P.sea[4])
@@ -452,7 +547,7 @@ def bay(frame=0, clouds=True, life=True):
     s.blit(calm_decor(), LAND, SKY)
     if life:
         s.blit(calm_life(), LAND, SKY)
-    rays = SS.rays()
+    rays = stitch(SS.rays())
     rays.px[:, :, 3] = np.where(rays.px[..., 3] > 0, 255, 0)
     rp = _pad(rays)
     rp.px[EARTH] = 0
@@ -501,4 +596,5 @@ def build():
         "bay_view_beach": view(full, PRE + 171, WL - 50, (342, 118)),
         "bay_view_shore": view(full, LAND, WL + 30),
         "bay_view_dive": view(full, LAND + 200, WL + 90),
+        "bay_view_trench": view(full, LAND + SPLIT + 300, GH - 120),
     }
