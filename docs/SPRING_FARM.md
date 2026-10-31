@@ -1,6 +1,6 @@
 # 春 · 山谷农场 (春日花溪): hand-off
 
-State on 2026-10-31: **art only**. Nothing is wired into the game. The owner reviews every
+State on 2026-10-31: **art + isolated walk-through**. Nothing is wired into the main game. The owner reviews every
 art round, and decides when the map goes in. Plan and open questions:
 `docs/SEASON_MAPS.md`. Shared rules for both agents: `AGENTS.md`.
 
@@ -108,6 +108,9 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/spring_fields.py
 13. Animate existing scenery too, especially windmill rotation (2026-10-31). Keep the
     original buildings, props and map layout; this round is a motion review only.
 
+14. Owner asked for a public Releases Pages walking preview because chat GIFs were not
+    visible. Keep this review separate from the full game and public trial (2026-10-31).
+
 ## Field wind animation (art only, 2026-10-31)
 - Combined animated review: [spring-flower-wind.gif](design/spring-flower-wind.gif).
   Rebuild it after the sprite sheets: `python3 tools/make_spring_wind_review.py`.
@@ -137,6 +140,24 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/spring_fields.py
   paths, butterflies weaving over flowers, and one intermittent soft light ray.
 - This is not a game integration. When integrating later, use elapsed real time, pause
   animations with the scene, keep layers independent and honor reduced-motion settings.
+
+## Public walking review (owner requested, 2026-10-31)
+- Fixed URL: https://omen-2778.github.io/Desktop-Buddy-Releases/spring/
+- Independent art review, **not the full game** and does not enable outdoor features in
+  the public trial. No saves, needs, growing crops, dialogue or social mechanics.
+- `prototype/spring/index.src.html` + `viewer.js`; build with
+  `PYTHONPATH=tools python3 tools/make_spring_preview.py` (requires `npm ci --prefix desktop`).
+  Writes **minified** `desktop/dist/spring/index.html`, with rendered PNGs embedded; no
+  source maps or raw Python/JS source is published. `preview.yml` rebuilds it on each push.
+- Click-to-walk, Left/Right or A/D, edge-to-edge travel, map navigation. Ranch keeps its
+  full 684px terrain with a following camera; all other outdoor scenes remain 342px.
+- Farmhouse door/entry button walks to the door then enters; inside clicks choose the
+  ground/upstairs floor and route via the left staircase. Exit uses the same stairs.
+- Wind uses existing 72-frame sheets at 25fps; independent rotor at fixed hub; birds,
+  butterflies, clouds, trees, livestock and occasional light ray. Pause freezes movement
+  and animation; reduced-motion uses fixed scenery frames.
+- `tools/check_spring_preview.js [URL]` checks all maps, keyboard/click walking, map edge
+  travel, camera, farmhouse floors/exit, animations and pause. No game integration yet.
 
 ## Known gaps / next steps (small pieces; check each with the owner as it lands)
 - [ ] Owner's answers to the open questions in `docs/SEASON_MAPS.md`: farm open all year

@@ -12,6 +12,15 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
   `bay_view_*`), notes in `docs/SUMMER_SEA.md`. Art only, waiting on owner review.
 
 ## 2026-10-31 · Codex
+- Owner cannot view chat GIFs; requested public walking review at Releases Pages.
+  Added isolated `/spring/` (minified build in preview.yml), six outdoor maps + farmhouse;
+  click/keyboard walking, edge travel, continuous ranch camera, animation and pause.
+- Sources: `prototype/spring/`, `tools/make_spring_preview.py`; rendered assets embedded.
+  Notes/owner decision in `docs/SPRING_FARM.md`. Full game/trial mechanics unchanged.
+- Checked: make_demo + web + minified preview builds, six-map Chromium tests, click/keyboard,
+  edge transition, ranch camera, farmhouse stairs/exit, animation/pause; no page errors.
+
+## 2026-10-31 · Codex
 - Owner requested existing scenery motion, especially windmill rotation. Added one
   25fps / 5.76s combined GIF: clouds, canopy sway, flapping birds, butterflies, one soft ray.
 - Reusable transparent rotor sheet/JSON (hub stays at scene 236,27); optional clean
