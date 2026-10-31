@@ -80,6 +80,7 @@ def gradient_rows(stops, h, w):
         for (y0, c0), (y1, c1) in zip(stops, stops[1:]):
             if y0 <= y < y1:
                 t = (y - y0) / (y1 - y0)
+                t = max(0.0, (t - 0.7) / 0.3)                      # solid, then a short dithered seam
                 pick = BAYER[y % 4][xs % 4] < t
                 out[y] = np.where(pick[:, None], C(c1), C(c0))
                 break
@@ -765,7 +766,7 @@ def creature_sheet():
     return s
 
 
-def build():
+def build_v2():
     out = {"sea_water": water(), "sea_far": far(), "sea_terrain": terrain(), "sea_decor": decor(),
            "sea_front": front(), "sea_rays": rays()}
     pv = compose()
@@ -775,3 +776,283 @@ def build():
             out[f"sea_{k}_{f}"] = fn(f)
     out["sea_creatures"] = creature_sheet()
     return out
+
+
+# ============================================================= round 3: rich, layered, 2D (owner: "like a
+# diving game, as rich as possible, not 3D"). Depth comes from stacked flat
+# layers moving at different speeds, haze towards the water colour, dark
+# foreground silhouettes, light shafts, caustics and drifting marine snow.
+
+PARALLAX = {"sea_far2": 0.35, "sea_far1": 0.6, "sea_front": 1.25}   # scroll factor vs. the camera
+
+
+def silhouette_layer(seed, base, amp, rough, body, rim, blobs, blob_col):
+    """A flat hazy reef range: a noisy ridge line filled with one tone, a
+    lighter rim on top, coral-head and sea-fan silhouettes on its back."""
+    s = Sprite(OW, OH)
+    rng = random.Random(seed)
+    n = noise(OW, 1, seed, 40)[0]
+    n2 = noise(OW, 1, seed + 7, 9)[0]
+    tops = [int(base - amp * n[x] - rough * n2[x]) for x in range(OW)]
+    for x in range(OW):
+        s.vline(x, tops[x], OH - 1, body)
+        s.set(x, tops[x], rim)
+    for _ in range(blobs):
+        x = rng.randrange(8, OW - 8)
+        y = tops[x]
+        kind = rng.random()
+        if kind < 0.5:
+            r = rng.randint(4, 10)
+            s.ellipse(x, y, r, r * 0.7, blob_col)
+        elif kind < 0.8:
+            h = rng.randint(8, 18)
+            for k in range(-h, h + 1, 2):
+                s.line(x, y, x + k // 2, y - h + abs(k) // 3, blob_col)
+        else:
+            for k in range(3):
+                s.line(x + k * 2, y, x + k * 2 + int(3 * math.sin(k)), y - rng.randint(10, 26), blob_col)
+    return s
+
+
+def far2():
+    return silhouette_layer(31, 200, 90, 14, P.sea[3], P.sea[4], 50, P.sea[3])
+
+
+def far1():
+    return silhouette_layer(32, 250, 70, 18, P.sea[2], P.sea[3], 70, P.sea[1])
+
+
+def caustics(frame=0):
+    """Dapples of sunlight on the lit rock and sand of the shallows (two
+    frames the page alternates slowly)."""
+    s = Sprite(OW, OH)
+    n = noise(OW, OH, 50 + frame, 6)
+    n2 = noise(OW, OH, 60 + frame, 3)
+    for x in range(OW):
+        fy = FLOOR[x]
+        if fy > 250:
+            continue
+        for y in range(max(0, fy - 1), min(OH, fy + 7)):
+            v = abs(n[y, x] - 0.5) + 0.3 * abs(n2[y, x] - 0.5)
+            if v < 0.05:
+                s.set(x, y, P.sea[4] if fy < 160 else P.sea[3])
+    return s
+
+
+def marine_snow():
+    s = Sprite(OW, OH)
+    rnd = random.Random(77)
+    for _ in range(900):
+        x, y = rnd.randrange(OW), rnd.randint(SURF + 4, OH - 1)
+        if y < FLOOR[x]:
+            s.set(x, y, P.porcelain[3] if rnd.random() < 0.3 else P.sea[4])
+    return s
+
+
+def front3():
+    """Dark foreground: low, wide rock and coral silhouettes along the bottom
+    of the map with kelp ribbons rising from them, scrolled a little faster
+    than the map so the reef feels deep. Kept low so it frames, never hides."""
+    s = Sprite(OW, OH)
+    rnd = random.Random(91)
+    D = [P.blue[0], P.sea[0], P.sea_grey[0]]
+    n = noise(OW, 1, 93, 14)[0]
+    for x in range(OW):                                            # a rolling dark rim along the bottom
+        top = int(FLOOR[x] + 26 + 14 * n[x])
+        if top < OH:
+            s.vline(x, top, OH - 1, D[0])
+            s.set(x, top, D[1])
+    for _ in range(26):                                            # coral-head and fan silhouettes on the rim
+        x = rnd.randrange(10, OW - 10)
+        top = int(FLOOR[x] + 26 + 14 * n[x])
+        if top >= OH - 4:
+            continue
+        if rnd.random() < 0.5:
+            r = rnd.randint(5, 12)
+            s.ellipse(x, top, r, r * 0.6, D[0])
+            for k in range(-r, r, 3):
+                s.set(x + k, top - int(r * 0.5) + abs(k) // 3, D[1])
+        else:
+            h = rnd.randint(10, 18)
+            for k in range(-h, h + 1, 2):
+                s.line(x, top, x + k // 2, top - h + abs(k) // 3, D[1])
+    for _ in range(14):                                            # kelp ribbons
+        x = rnd.randrange(10, OW - 10)
+        top = int(FLOOR[x] + 26 + 14 * n[x])
+        for j in range(rnd.randint(30, 60)):
+            kx = x + int(3 * math.sin(j * 0.12 + x))
+            if top - j > SURF:
+                s.set(kx, top - j, D[1] if j % 5 else D[2])
+                if j % 7 == 3:
+                    s.set(kx + 1, top - j, D[1])
+    return s
+
+
+def ledge_corals(s):
+    """Overhanging ledges along the walls with corals on top and fans
+    hanging under them (big shapes, like a stage set)."""
+    for cx, y, w in ((380, 214, 30), (906, 120, 26), (930, 70, 22), (870, 190, 28), (618, 180, 18)):
+        for k in range(w):
+            t = k / w
+            th = int(6 * math.sin(math.pi * t) + 2)
+            s.vline(cx - w // 2 + k, y, y + th, P.slate[1])
+            s.set(cx - w // 2 + k, y, P.slate[3])
+        for k in range(0, w, 6):
+            coral(s, ["brain", "branch", "plate", "finger"][k % 4], cx - w // 2 + k + 3, y + 1, 0.6, seed=cx + k)
+        for k in range(2, w - 2, 7):
+            for j in range(4 + (k % 5)):
+                s.set(cx - w // 2 + k, y + 7 + j, P.blossom[2] if j % 2 else P.coral[2])
+
+
+def big_fish(kind, frame):
+    if kind == "grouper":                                          # a fat roi / grouper, spotted
+        s = Sprite(30, 16)
+        s.ellipse(14, 8, 11, 6, P.walnut[3]).ellipse(12, 6, 8, 3, P.oak[3])
+        for cx, cy in ((8, 7), (13, 9), (18, 7), (11, 11), (20, 10)):
+            s.set(cx, cy, P.walnut[1])
+        s.set(23, 6, P.walnut[0]).hline(24, 26, 9, P.walnut[1])
+        s.vline(1, 4 + frame, 12 - frame, P.walnut[2]).vline(2, 5, 11, P.walnut[2])
+        s.line(12, 2, 18, 3, P.walnut[2])
+        return s
+    if kind == "ulua":                                             # giant trevally, silver
+        s = Sprite(28, 12)
+        s.ellipse(13, 6, 10, 4.5, P.steel[3]).ellipse(12, 4, 8, 2, P.steel[4])
+        s.hline(4, 22, 7, P.steel[2]).set(21, 5, P.walnut[0])
+        s.line(1, 2 + frame, 4, 6, P.steel[2]).line(1, 10 - frame, 4, 6, P.steel[2])
+        return s
+    if kind == "shark":                                            # whitetip reef shark (shy, harmless)
+        s = Sprite(46, 16)
+        for x in range(4, 42):
+            t = (x - 4) / 38
+            hw = 4 * math.sin(math.pi * min(1, t * 1.2)) + 0.5
+            s.vline(x, int(8 - hw), int(8 + hw * 0.8), P.slate[3])
+            s.set(x, int(8 + hw * 0.8), P.porcelain[2])
+        s.line(22, 4, 18, 0, P.slate[3]).set(18, 0, P.porcelain[3])  # dorsal with a white tip
+        s.line(26, 10, 22, 14, P.slate[2])
+        s.set(38, 7, P.walnut[0])
+        k = frame * 2
+        s.line(4, 8, 0, 2 + k, P.slate[3]).line(4, 8, 1, 13 - k, P.slate[3]).set(0, 2 + k, P.porcelain[3])
+        return s
+    s = Sprite(40, 18)                                             # spotted eagle ray
+    tip = 3 if frame == 0 else 9
+    for x in range(40):
+        t = abs(x - 20) / 20
+        top = int(8 - (1 - t) * 4 + (tip if t > 0.7 else 0) * (t - 0.7) / 0.3)
+        s.vline(x, top, int(10 + (1 - t) * 2), P.slate[1])
+        if (x * 3) % 7 == 0:
+            s.set(x, top + 2, P.porcelain[3])
+    s.line(20, 12, 20, 17, P.slate[0]).set(17, 7, P.walnut[0]).set(23, 7, P.walnut[0])
+    return s
+
+
+BIG = ("grouper", "ulua", "shark", "eagleray")
+SPAWNS.update({"grouper": (360, 180, 420, 230), "ulua": (100, 50, 600, 140), "shark": (420, 160, 640, 230),
+               "eagleray": (650, 120, 900, 200)})
+
+
+def place_life(s, rnd, cam=None):
+    """Scatter creatures in open water for previews (the page moves them)."""
+    counts = {"school": 40, "tang": 14, "idol": 8, "butterflyfish": 10, "humu": 5, "parrot": 5, "diver": 4,
+              "jelly": 4, "turtle": 2, "manta": 1, "grouper": 1, "ulua": 3, "shark": 1, "eagleray": 1,
+              "octopus": 1, "eel": 1, "crab": 3, "seal": 1}
+    for kind, n in counts.items():
+        x0, y0, x1, y1 = SPAWNS[kind]
+        for k in range(n):
+            if kind in BIG:
+                spr = big_fish(kind, k % 2)
+            elif kind == "diver":
+                spr = diver(k % 2, (P.slate, P.hydrangea, P.coral, P.teal)[k % 4], (P.skin, P.skin_tan, P.skin_deep)[k % 3])
+            else:
+                spr = CREATURES[kind](k % 2)
+            if kind == "school":                                   # schools swim in a tight shoal
+                cx, cy = (300, 90) if k < 20 else (640, 80)
+                px_, py_ = cx + int(28 * math.cos(k * 1.3)) + rnd.randint(-6, 6), cy + int(10 * math.sin(k * 1.7)) + rnd.randint(-4, 4)
+                if py_ + 3 < FLOOR[min(OW - 1, px_)]:
+                    s.blit(spr, px_, py_)
+                continue
+            for _ in range(20):
+                px_, py_ = rnd.randint(x0, max(x0, x1 - spr.w)), rnd.randint(y0, max(y0, y1 - spr.h))
+                if kind == "crab":
+                    py_ = FLOOR[px_ + spr.w // 2] - spr.h + 1
+                if kind == "crab" or py_ + spr.h - 1 < FLOOR[min(OW - 1, px_ + spr.w // 2)]:
+                    s.blit(spr, px_, py_)
+                    break
+
+
+def blend_into(s, layer, alpha):
+    m = layer.px[..., 3] > 0
+    s.px[m, :3] = (s.px[m, :3] * (1 - alpha) + layer.px[m, :3] * alpha).astype(np.uint8)
+
+
+def compose3():
+    """Full map preview (no parallax offsets)."""
+    s = water()
+    for layer in (far2(), far1(), terrain()):
+        s.blit(layer, 0, 0)
+    d = decor()
+    ledge_corals(d)
+    s.blit(d, 0, 0)
+    blend_into(s, caustics(0), 0.7)
+    blend_into(s, rays(), 0.16)
+    place_life(s, random.Random(3))
+    blend_into(s, marine_snow(), 0.6)
+    s.blit(front3(), 0, 0)
+    return s
+
+
+def view(cx, cy):
+    """What the dive view (342x236) shows with the camera centred on (cx, cy):
+    each layer shifted by its parallax factor, as the page will draw it."""
+    vw, vh = VIEW
+    x0 = max(0, min(OW - vw, cx - vw // 2))
+    y0 = max(0, min(OH - vh, cy - vh // 2))
+    out = Sprite(vw, vh)
+
+    def put(layer, f=1.0, alpha=None):
+        ox = int(x0 * f + (vw / 2) * (1 - f) * 0) if f != 1.0 else x0
+        ox = max(0, min(OW - vw, int(cx * f - vw / 2 + (OW / 2) * (1 - f) * 0)))
+        ox = max(0, min(OW - vw, int(x0 + (cx - OW / 2) * (f - 1) * 0.4)))
+        oy = y0
+        piece = layer.crop(ox, oy, vw, vh)
+        if alpha is None:
+            out.blit(piece, 0, 0)
+        else:
+            blend_into(out, piece, alpha)
+
+    put(water())
+    put(far2(), PARALLAX["sea_far2"])
+    put(far1(), PARALLAX["sea_far1"])
+    put(terrain())
+    d = decor()
+    ledge_corals(d)
+    put(d)
+    put(caustics(0), alpha=0.7)
+    put(rays(), alpha=0.16)
+    life = Sprite(OW, OH)
+    place_life(life, random.Random(3))
+    put(life)
+    put(marine_snow(), alpha=0.6)
+    put(front3(), PARALLAX["sea_front"])
+    return out
+
+
+def build3():
+    d = decor()
+    ledge_corals(d)
+    out = {"sea_water": water(), "sea_far2": far2(), "sea_far1": far1(), "sea_terrain": terrain(), "sea_decor": d,
+           "sea_front": front3(), "sea_rays": rays(), "sea_caustic_0": caustics(0), "sea_caustic_1": caustics(1),
+           "sea_snow": marine_snow()}
+    out["sea_preview"] = compose3()
+    for name, (cx, cy) in (("shallows", (160, 110)), ("garden", (290, 140)), ("wreck", (500, 180)), ("arch", (780, 170))):
+        out[f"sea_view_{name}"] = view(cx, cy)
+    for k, fn in CREATURES.items():
+        for f in (0, 1):
+            out[f"sea_{k}_{f}"] = fn(f)
+    for k in BIG:
+        for f in (0, 1):
+            out[f"sea_{k}_{f}"] = big_fish(k, f)
+    out["sea_creatures"] = creature_sheet()
+    return out
+
+
+build = build3

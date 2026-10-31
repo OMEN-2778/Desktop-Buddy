@@ -1,6 +1,7 @@
 # 夏 · 夏威夷海岛 + 海底: hand-off
 
-State on 2026-10-31: **art only**, round 2, waiting for the owner's review. Nothing is
+State on 2026-10-31: **art only**, round 3 (sea), waiting for the owner's review. The owner
+will also draw their own scene sketches; follow them when they arrive. Nothing is
 in the game yet. Shared rules: `AGENTS.md`. The model for this doc is `docs/SPRING_FARM.md`.
 
 ## Owner's brief
@@ -26,6 +27,21 @@ in the game yet. Shared rules: `AGENTS.md`. The model for this doc is `docs/SPRI
 - **Many NPCs swimming and snorkelling** at the surface (and NPC scuba divers in the sea).
 - The dive map is **smaller and fuller**: now 1026×354. Mostly reef, weed forest and
   structures, little empty water.
+
+## Round 3 (sea): rich, layered, flat 2D (owner: like a diving game, but not 3D)
+- Depth comes from flat layers scrolled at different speeds (`PARALLAX`):
+  - `sea_far2` ×0.35 and `sea_far1` ×0.6: hazy reef ranges;
+  - the map ×1;
+  - `sea_front` ×1.25: a dark rim of rock, coral and kelp silhouettes along the bottom.
+- Live layers:
+  - `sea_caustic_0/1`: sunlight dapples on the shallow rock; alternate them;
+  - `sea_rays`: god rays;
+  - `sea_snow`: marine snow drifting.
+- Overhanging ledges with corals on top and fans below (`ledge_corals`).
+- Big fish: grouper, ulua, whitetip reef shark (harmless), spotted eagle ray.
+- Shoals of 20.
+- Review `sea_view_<shallows|garden|wreck|arch>.png`: exactly what the 342×236 dive view
+  shows there, parallax included. `build_v2` is the round-2 build, kept for reference.
 
 ## Build / review
 ```

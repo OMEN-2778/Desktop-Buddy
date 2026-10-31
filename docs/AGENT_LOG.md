@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-10-31 · Claude
+- Summer sea round 3 (owner: richer, like a diving game, flat 2D): parallax reef ranges,
+  dark foreground rim, caustics, marine snow, ledges, big fish, shoals; per-view previews
+  `sea_view_*`. Owner is drawing their own scene sketches: when they arrive, follow them.
+
 ## 2026-10-31 · Codex
 - Owner: first field-wind animation too choppy. Raised both fields from 16 × 180ms
   (~5.6fps) to 72 × 40ms (25fps), keeping the same 2.88s sway cycle and fixed terrain.
