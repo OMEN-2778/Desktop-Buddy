@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- Bay round 4 (7 owner notes): new `_bay_parts.py` (anime clouds, fluted mountains,
+  canopy trees, 3D cabana, sea stack), natural beach profile. Art only, waiting on owner.
+
+## 2026-10-31 · Claude
 - Bay round 3: one seamless side-view map 旅舍 -> 更衣室 -> 沙滩 -> 水底 (2052x450) in
   `summer_bay.py`; layout numbers in `docs/SUMMER_SEA.md`. Art only, waiting on owner.
 

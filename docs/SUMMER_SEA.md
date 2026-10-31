@@ -147,3 +147,11 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
   lodge fades into sand; one grey ridge and one jungle strip run behind all land; rocks
   close the map at x=0. Lodge/cabana art reused from `summer_isle.py`, lifted by `DY`.
   Views: `bay_view_{lodge,cabana,beach,shore,dive}`.
+- Round 4 (owner: flat cabana, plain round trees, stiff slope, rough far rocks, a seam
+  in the jungle, rough mountains, plain clouds). New `_bay_parts.py`: anime cumulus towers
+  standing on the horizon (`cumulus`), fluted Hawaiian ridges + a pale far range
+  (`mountains`), leafy broadleaf `canopy` trees in a hazy back row and a front row drawn
+  straight onto the big map (no more 342px pieces, so no seam), `cabana3d` (deck, side
+  wall, hip roof, eave shadow), `sea_stack` closing the map on the right. Beach profile
+  is a smooth Hermite curve through `_beach_keys()` (berm, shallow run, sandbar,
+  drop-off) to `JOIN` = LAND+250; the earth ends along a line slanting down-right.

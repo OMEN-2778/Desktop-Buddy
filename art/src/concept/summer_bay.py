@@ -19,6 +19,7 @@ import numpy as np
 
 import summer_isle as SI
 import summer_sea as SS
+import _bay_parts as BP
 from pixelkit import P, Sprite
 
 PREVIEW_SCALE = 1
@@ -30,18 +31,41 @@ WL = SKY + SS.SURF               # waterline (global)
 C = SS.C
 
 
-JOIN = LAND + 150                # the beach curve meets the dive map's seabed here
+JOIN = LAND + 250                # the beach profile meets the dive map's seabed here
+STACK = (LAND + 900, GW)         # the sea stack that closes the map on the right
+
+
+def _beach_keys():
+    return [(PRE + 236, WL - 10), (PRE + 300, WL - 7), (LAND - 6, WL - 1), (LAND + 40, WL + 7),
+            (LAND + 62, WL + 11), (LAND + 80, WL + 9), (LAND + 104, WL + 18), (LAND + 150, WL + 58),
+            (LAND + 196, SKY + 150), (LAND + 228, SKY + 170), (JOIN, SS.FLOOR[JOIN - LAND] + SKY)]
+
+
+def _hermite(keys, x):
+    """Smooth curve through the keys (cubic Hermite, tangents from the
+    neighbours), so the beach flows: berm, long shallow run, a sandbar, a
+    soft drop-off."""
+    for i in range(len(keys) - 1):
+        (x0, y0), (x1, y1) = keys[i], keys[i + 1]
+        if x0 <= x <= x1:
+            def tan(j):
+                a, b = keys[max(0, j - 1)], keys[min(len(keys) - 1, j + 1)]
+                return (b[1] - a[1]) / (b[0] - a[0])
+            h = x1 - x0
+            t = (x - x0) / h
+            m0, m1 = tan(i) * h, tan(i + 1) * h
+            return (2 * t ** 3 - 3 * t ** 2 + 1) * y0 + (t ** 3 - 2 * t ** 2 + t) * m0 + \
+                   (-2 * t ** 3 + 3 * t ** 2) * y1 + (t ** 3 - t ** 2) * m1
+    return keys[-1][1]
 
 
 def ground_y(x):
-    """Walkable top: flat sand, then ONE smooth beach curve down into the sea
-    (gentle at the waterline, steeper further out) until the dive map's floor."""
+    """Walkable top: flat sand, then the beach profile into the sea, then the
+    dive map's seabed."""
     if x < PRE + 236:
         return WL - 10 + int(1.2 * math.sin(x * 0.05))
     if x < JOIN:
-        t = (x - PRE - 236) / (JOIN - PRE - 236)
-        end = SS.FLOOR[JOIN - LAND] + SKY
-        return int(WL - 10 + (end - WL + 10) * (t ** 1.8) * (1.6 - 0.6 * t))
+        return int(round(_hermite(_beach_keys(), x)))
     return SS.FLOOR[x - LAND] + SKY
 
 
@@ -124,7 +148,7 @@ def strata(s):
     """The cut-open land: wavy bands that follow the ground and dip under the
     sea along the slope; fades into the dive map's own seabed."""
     rnd = random.Random(7)
-    for x in range(LAND + 360):
+    for x in range(LAND + 520):
         g = GROUND[x]
         wob = 2 * math.sin(x * 0.045) + 1.5 * math.sin(x * 0.13 + 1)
         for y in range(g, GH):
@@ -137,7 +161,7 @@ def strata(s):
             if d < 3 and x < 470 - 30 * SS.BAYER[y % 4, x % 4]:     # lawn round the lodge, fading into sand
                 col = (P.grass[3], P.grass[2], P.grass[1])[d]
             if x >= LAND:                                            # under the sea the earth ends along a slanted
-                edge = 40 + 0.9 * (y - WL) + (1 if SS.BAYER[y % 4, x % 4] > 0.5 else 0)
+                edge = (JOIN - LAND + 10) + 0.8 * (y - GROUND[JOIN]) + (1 if SS.BAYER[y % 4, x % 4] > 0.5 else 0)
                 if x - LAND > edge:                                  # line, like a fault: the reef rock goes on
                     continue
                 if y > WL and k < 3:                                 # wet sand one shade darker
@@ -240,26 +264,28 @@ def lodge_screen(t):
 
 def cabana_screen(t):
     b = SI.LANE[0] - 1
-    for x, h, ln, sd in ((20, 60, 1, 4), (36, 48, -1, 12), (210, 64, 1, 5), (228, 50, -1, 13), (318, 58, 1, 14)):
+    for x, h, ln, sd in ((20, 60, 1, 4), (36, 48, -1, 12), (226, 64, 1, 5), (244, 50, -1, 13), (318, 58, 1, 14)):
         SI.palm2(t, x, b + 2, h, lean=ln, seed=sd)
-    SI.banana(t, 54, b, 24, 3)
-    SI.cabana(t)
-    SI.heliconia(t, 186, b, P.coral)
-    SI.monstera(t, 198, b)
-    SI.hibiscus(t, 252, b, 9, 9, P.mustard)
-    SI.canoe(t, 262, b + 2)
-    SI.hibiscus(t, 306, b, 9, 9, P.blossom)
+    SI.banana(t, 50, b, 24, 3)
+    SI.heliconia(t, 200, b, P.coral)
+    SI.hibiscus(t, 264, b, 9, 9, P.mustard)
+    SI.canoe(t, 272, b + 2)
+    SI.hibiscus(t, 30, b, 9, 9, P.blossom)
 
 
 def land(s, frame=0):
-    mountain(s)
-    jungle_strip(s, 0, PRE + 160, 31)
+    BP.mountains(s, 0, PRE + 236, WL - 9, [(170, 60, 74), (440, 80, 56), (PRE + 40, 60, 66), (PRE + 180, 40, 30)], 9)
+    gy = lambda x: GROUND[max(0, min(GW - 1, x))]
+    BP.jungle(s, 0, PRE + 170, gy, 31)
+    BP.understory(s, 0, PRE + 160, gy, 8)
     strata(s)
     for cx, w, h, sd in ((10, 34, 30, 1), (34, 26, 18, 2), (2, 20, 40, 3)):    # rocks close the map on the left
         boulder(s, cx, GROUND[max(0, cx)] + 3, w, h, sd)
     s.blit(screen_piece(lodge_screen, DY), 0, DY)
     s.blit(screen_piece(cabana_screen, DY), 342, DY)
-    for cx, w, h, sd in ((PRE + 30, 20, 12, 4), (PRE + 46, 12, 7, 5), (LAND + 40, 22, 12, 7), (LAND + 26, 10, 6, 8)):
+    BP.cabana3d(s, 342 + SI.CABANA[0], 342 + SI.CABANA[1], WL - 9, {k: 342 + v for k, v in SI.CABANA_DOORS.items()})
+    BP.understory(s, 342 + 190, 342 + 250, gy, 4)
+    for cx, w, h, sd in ((PRE + 30, 20, 12, 4), (PRE + 46, 12, 7, 5), (LAND + 52, 18, 9, 7), (LAND + 40, 9, 5, 8)):
         boulder(s, cx, GROUND[cx] + 2, w, h, sd)
     SI.palm2(s, PRE + 112, GROUND[PRE + 112], 70, lean=1, frame=frame, seed=2)
     SI.palm2(s, PRE + 140, GROUND[PRE + 140], 52, lean=1, frame=frame, seed=5)
@@ -267,7 +293,7 @@ def land(s, frame=0):
     SI.umbrella(s, PRE + 196, GROUND[PRE + 196], R=P.coral)
     SI.lounger(s, PRE + 184, GROUND[PRE + 190])
     SI.lounger(s, PRE + 214, GROUND[PRE + 218], C=P.mustard)
-    footprints(s, 470, PRE + 312)
+    footprints(s, 470, PRE + 300)
 
 
 # ------------------------------------------------------------- under water (owner: calmer, a real gradient)
@@ -317,6 +343,7 @@ def rock(s):
     for x in range(JOIN):
         m[:, x] = False
         m[GROUND[x]:, x] = True
+    m[:WL + 30, STACK[0]:] = False                                   # the sea stack replaces the old surface rocks
     under = np.zeros((GH, GW))
     run = np.zeros(GW)
     for y in range(GH):
@@ -386,16 +413,22 @@ def fog(s):
     floor, the earth and the creatures sit IN the water."""
     px = s.px[WL:, :, :3].astype(float)
     f = np.clip(0.08 + (np.arange(WL, GH) - WL) / 420, 0, 0.62)[:, None, None]
-    f = np.where(EARTH[WL:, :, None], 0.0, f)
+    top = np.zeros_like(EARTH)                                       # the sand skin of the slope is IN the water
+    for x in range(GW):
+        top[GROUND[x]:GROUND[x] + 10, x] = True
+    f = np.where((EARTH & ~top)[WL:, :, None], 0.0, f)
     s.px[WL:, :, :3] = (px * (1 - f) + WROWS[WL:, None, :] * f).astype(np.uint8)
 
 
 def bay(frame=0):
     s = Sprite(GW, GH)
     sky(s)
-    for cx, base, w, sd in ((90, 50, 60, 7), (360, 40, 70, 8), (560, 56, 50, 9), (PRE + 120, 60, 70, 1), (PRE + 300, 44, 56, 2),
-                            (PRE + 560, 70, 90, 3), (PRE + 860, 50, 64, 4), (PRE + 1180, 66, 80, 5)):
-        cloud(s, cx, base, w, sd)
+    for cx, w, h, sd in ((120, 200, 92, 1), (560, 240, 104, 2), (PRE + 300, 180, 84, 3),
+                         (PRE + 760, 260, 100, 4), (PRE + 1180, 200, 90, 5)):
+        BP.cumulus(s, cx, WL - 6, w, h, sd)
+    for cx, y, w, sd in ((330, 14, 40, 1), (PRE + 40, 22, 52, 2), (PRE + 560, 12, 44, 3), (PRE + 1000, 20, 36, 4)):
+        BP.wisp(s, cx, y, w, sd)
+    BP.mountains(s, 0, PRE + 250, WL - 8, [(80, 80, 70), (300, 60, 52), (560, 90, 64), (PRE + 120, 60, 40)], 5, far=True)
     horizon(s)
     s.px[WL:, :, :3] = WROWS[WL:, None, :].astype(np.uint8)          # the water
     s.px[WL:, :, 3] = 255
@@ -407,6 +440,9 @@ def bay(frame=0):
         s.set(x, WL, P.porcelain[3])
         s.set(x, WL + 1, P.sea[4])
     rock(s)
+    cx, cy = BP.sea_stack(s, STACK[0] + 6, GW + 10, WL, GH, 3)
+    SI.palm2(s, cx + 2, cy, 34, lean=-1, seed=21)
+    foam(s, STACK[0] - 2, GW, WL)
     land(s, frame)
     s.blit(calm_decor(), LAND, SKY)
     s.blit(calm_life(), LAND, SKY)
