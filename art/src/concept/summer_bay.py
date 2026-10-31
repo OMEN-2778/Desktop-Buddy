@@ -422,13 +422,17 @@ def fog(s):
     s.px[WL:, :, :3] = (px * (1 - f) + WROWS[WL:, None, :] * f).astype(np.uint8)
 
 
-def bay(frame=0):
+def bay(frame=0, clouds=True, life=True):
+    """clouds/life=False: the static backdrop for the web preview, which
+    drifts the clouds and swims the creatures itself."""
     s = Sprite(GW, GH)
     sky(s)
     # owner: use the game's own drifting clouds (beach.cloud, the sprites the page drifts)
     rnd = random.Random(5)
     for x in range(20, GW, 110):
-        s.blit(BE.cloud(rnd.randrange(3)), x + rnd.randint(-30, 30), rnd.randint(4, 40))
+        k, dx, y = rnd.randrange(3), rnd.randint(-30, 30), rnd.randint(4, 40)
+        if clouds:
+            s.blit(BE.cloud(k), x + dx, y)
     BP.mountains(s, 0, PRE + 250, WL - 8, [(80, 80, 70), (300, 60, 52), (560, 90, 64), (PRE + 120, 60, 40)], 5, far=True)
     horizon(s)
     s.px[WL:, :, :3] = WROWS[WL:, None, :].astype(np.uint8)          # the water
@@ -446,7 +450,8 @@ def bay(frame=0):
     foam(s, STACK[0] - 2, GW, WL)
     land(s, frame)
     s.blit(calm_decor(), LAND, SKY)
-    s.blit(calm_life(), LAND, SKY)
+    if life:
+        s.blit(calm_life(), LAND, SKY)
     rays = SS.rays()
     rays.px[:, :, 3] = np.where(rays.px[..., 3] > 0, 255, 0)
     rp = _pad(rays)

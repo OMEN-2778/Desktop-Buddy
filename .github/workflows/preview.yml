@@ -51,6 +51,8 @@ jobs:
           cp -R prototype/music-preview desktop/dist/music
           # Owner-requested isolated spring art walk-through; no full-game features.
           PYTHONPATH=tools python tools/make_spring_preview.py
+          # Owner-requested summer bay walk-through (旅舍 -> 更衣室 -> 沙滩 -> 水底), same rules.
+          PYTHONPATH=tools python tools/make_summer_preview.py
           touch desktop/dist/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -159,3 +159,14 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
   clouds (`beach.cloud(i)`, the sprites the page drifts). `BP.cumulus` is unused.
 - Round 6: owner found the slanted earth/reef line stiff. The earth strata now run on
   under the whole seabed (like the owner's sketch); steep faces get a bare-rock skin.
+
+## Web walk-through (owner request, 2026-10-31)
+- Fixed URL: https://omen-2778.github.io/Desktop-Buddy-Releases/summer/
+- `prototype/summer/index.src.html` + `viewer.js`; build with
+  `PYTHONPATH=tools python3 tools/make_summer_preview.py` -> minified
+  `desktop/dist/summer/index.html` (assets embedded; preview.yml builds it).
+- Walk on land, swim at the surface, click under water to dive, click the surface or
+  land to come up; view grows 118 -> 236 in the sea, camera eases after Buddy. Lodge door
+  opens the interior; cabana curtains set the suit (status text only: swimwear art and
+  swim/dive poses are not drawn yet). Creatures swim back and forth; clouds drift.
+- Backdrop: `summer_bay.bay(clouds=False, life=False)`.

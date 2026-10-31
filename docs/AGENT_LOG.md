@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Claude
+- Owner: add the summer bay to the web previews like Codex's `/spring/`. New `/summer/`
+  (`prototype/summer/`, `tools/make_summer_preview.py`, preview.yml step): walk, surface
+  swim, click-to-dive, 2x view in the sea, lodge interior, cabana suit (text only).
+- Checked in Chromium (file://): walk, cabana, surface, dive, surface again, lodge; no errors.
+
+## 2026-10-31 · Claude
 - Bay round 6: earth strata continue under the whole seabed (no fault line). Art only.
 
 ## 2026-10-31 · Claude
