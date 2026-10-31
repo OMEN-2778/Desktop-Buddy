@@ -120,3 +120,16 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/summer_isle.py art/sr
 - [ ] Creatures moving inside `SPAWNS`; hotspot interactions and their texts (diary lines,
       moodlets); maybe a breath/oxygen rhythm (ask the owner).
 - [ ] Summer-only gate; keep it off in the 试玩版.
+
+
+## Owner sketch: one seamless beach -> sea map (2026-10-31)
+- Owner drew a side cross-section: land cut open on the left (sand, tan, dark earth),
+  palms and a grey mountain behind, the slope running on under the water as the seabed.
+  Style reference: a flat gouache beach painting (cumulus with pale-blue facets, teal/rust
+  boulders, white foam). Buddy walks off the sand into the water, swims at the surface,
+  and dives when the player clicks below it.
+- `art/src/concept/summer_bay.py`: `bay_preview` (1368x450) = one 342px beach screen +
+  the dive map, one sky. Waterline `WL`, walkable ground `GROUND[x]` (land part, then the
+  seabed). The earth ends under the sea along a slanted fault line; the reef rock goes on.
+- `bay_view_*`: what the camera shows (beach 342x118, shore and dive 342x236).
+- Art only; the old separate beach zone in `summer_isle.py` stays until the owner decides.

@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-10-31 · Claude
+- Owner sketch: beach and sea are ONE side-view map (cut-open land, slope into the sea,
+  walk -> surface swim -> click below to dive). New `summer_bay.py` (`bay_preview`,
+  `bay_view_*`), notes in `docs/SUMMER_SEA.md`. Art only, waiting on owner review.
+
 ## 2026-10-31 · Codex
 - Owner requested existing scenery motion, especially windmill rotation. Added one
   25fps / 5.76s combined GIF: clouds, canopy sway, flapping birds, butterflies, one soft ray.
