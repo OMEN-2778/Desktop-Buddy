@@ -7,6 +7,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-10-31 · Codex
+- Owner: first field-wind animation too choppy. Raised both fields from 16 × 180ms
+  (~5.6fps) to 72 × 40ms (25fps), keeping the same 2.88s sway cycle and fixed terrain.
+- Rebuilt sheets/timings and shared GIF; new `tools/make_spring_wind_review.py` makes
+  the review reproducible with one stable palette. Notes/decision in `docs/SPRING_FARM.md`.
+- Checked: all 72 frames unique, fixed road, loop delta, unchanged static art; pixelkit,
+  make_demo + web build, Chromium boot and actual GIF playback. Still art only.
+
+## 2026-10-31 · Codex
 - Spring field wind art: 16-frame / 180ms loop for rapeseed and tulips, travelling gusts
   move connected flower heads while the road and props stay still. Static fallbacks unchanged.
 - Source, PNG sheets + JSON timings, and `docs/design/spring-flower-wind.gif` committed;

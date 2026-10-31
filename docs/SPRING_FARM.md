@@ -102,12 +102,16 @@ PYTHONPATH=tools python3 -m pixelkit build art/src/concept/spring_fields.py
 
 12. Rapeseed and tulip fields must visibly sway in the wind (2026-10-31): a real
     looping animation, with phase offsets across the field. Keep roads and terrain still.
+    Owner found the first 16-frame version too choppy; use 25 fps (72 × 40ms),
+    preserving the original 2.88-second sway cycle.
 
 ## Field wind animation (art only, 2026-10-31)
 - Combined animated review: [spring-flower-wind.gif](design/spring-flower-wind.gif).
-- `WIND_FRAMES=16`, `WIND_MS=180`: 2.88-second seamless cycle. Deterministic flower
+  Rebuild it after the sprite sheets: `python3 tools/make_spring_wind_review.py`.
+  Shared GIF palette keeps colours steady between frames.
+- `WIND_FRAMES=72`, `WIND_MS=40`: 2.88-second seamless cycle. Deterministic flower
   positions; stalk bases stay put while connected heads lean 1–2px in travelling gusts.
-- `spring_rape_wind` / `spring_tulip_wind`: 16-frame replacement-background sheets
+- `spring_rape_wind` / `spring_tulip_wind`: 72-frame replacement-background sheets
   and pixelkit JSON metadata. Draw beneath the existing tree and live-effect layers.
 - `spring_*_wind_preview`: same cycle composited with props/trees for review. GIFs
   are generated in `art/preview/concept/` by the standard pixelkit build.

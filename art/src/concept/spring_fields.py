@@ -209,7 +209,7 @@ def bridge(s):
 
 # ------------------------------------------------------------- fields
 
-WIND_FRAMES, WIND_MS = 16, 180
+WIND_FRAMES, WIND_MS = 72, 40
 
 
 def field(s, vx, top, y_end, far, near, pick, seed, wind_frame=None):
