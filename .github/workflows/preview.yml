@@ -49,6 +49,8 @@ jobs:
           mkdir -p desktop/dist/pets
           cp prototype/pets/index.html desktop/dist/pets/index.html
           cp -R prototype/music-preview desktop/dist/music
+          # Owner-requested isolated spring art walk-through; no full-game features.
+          PYTHONPATH=tools python tools/make_spring_preview.py
           touch desktop/dist/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
