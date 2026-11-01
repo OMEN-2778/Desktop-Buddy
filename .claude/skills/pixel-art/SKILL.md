@@ -1127,3 +1127,7 @@ Owner wants polygon corners to flow with rounded pixel transitions, stone corner
 coping details, especially terrace corners and airplane silhouettes. Round on the native
 integer pixel grid; no smooth vector/blur. Remove every outdoor long bench, including
 summit plaza and quay. Preserve path openings, native character scale and Source Han signs.
+
+Owner follow-up (2026-11-01): remove ALL aircraft surface patterning, panel lines,
+rivets and decorative stripes. Convey volume with broad palette light/shadow regions,
+rounded fuselage belly, wing thickness and cast shadow. Retain functional glazing/gear.

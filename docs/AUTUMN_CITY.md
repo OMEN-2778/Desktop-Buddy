@@ -103,3 +103,7 @@ now use integer quadratic corner transitions and dressed coping stones; plane fu
 wings, tail and cockpit contours use the same small-radius pixel transitions. No blur,
 antialiased scenery or change to the orthogonal route graph. All outdoor bench draw
 calls removed; indoor sofa and ordinary service stools remain separate furniture.
+
+Owner follow-up (2026-11-01): remove ALL aircraft surface patterning, panel lines,
+rivets and decorative stripes. Convey volume with broad palette light/shadow regions,
+rounded fuselage belly, wing thickness and cast shadow. Retain functional glazing/gear.

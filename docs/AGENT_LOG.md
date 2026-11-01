@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- Owner follow-up: stripped plane panel/rivet/decorative lines; broad shaded fuselage,
+  wing thickness/cast shadow and rounded silhouette supply volume. Prior bench removal
+  and stone corner finishing retained. Pixel-only art; test-page update.
+
+## 2026-11-01 · Codex
 - Owner detail pass: softened native-pixel terrace/retaining and plane corners, dressed
   stone corner coping; removed every outdoor long bench (including summit/quay).
 - Routes, scene dimensions, story and indoor furniture unchanged. Owner rules/handoffs
