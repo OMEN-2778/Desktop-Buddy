@@ -1131,3 +1131,9 @@ summit plaza and quay. Preserve path openings, native character scale and Source
 Owner follow-up (2026-11-01): remove ALL aircraft surface patterning, panel lines,
 rivets and decorative stripes. Convey volume with broad palette light/shadow regions,
 rounded fuselage belly, wing thickness and cast shadow. Retain functional glazing/gear.
+
+### Office interior: reuse existing house (2026-11-01)
+Owner remains dissatisfied with custom interior; directly reuse a smaller complete plan
+from the existing 30 homes. Selected `oak` 暖木小复式, native 242×120, no scaling or
+custom repaint. Room window contracts to native height; align every service/pose with
+existing furnishings. Current exterior remains 侦探事务所; owner's “律师事务所” refers here.

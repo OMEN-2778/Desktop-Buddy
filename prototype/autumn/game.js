@@ -93,35 +93,9 @@ function makeSeason_autumn(opts, DATA) {
             });
         }
     }
-    const indoorNodes = [ {
-        x: 29,
-        y: 204
-    }, {
-        x: 67,
-        y: 204
-    }, {
-        x: 154,
-        y: 204
-    }, {
-        x: 180,
-        y: 204
-    }, {
-        x: 250,
-        y: 204
-    }, {
-        x: 154,
-        y: 102
-    }, {
-        x: 75,
-        y: 102
-    }, {
-        x: 110,
-        y: 102
-    }, {
-        x: 269,
-        y: 102
-    } ];
-    const indoorPairs = [ [ 0, 1 ], [ 1, 2 ], [ 2, 3 ], [ 3, 4 ], [ 2, 5 ], [ 5, 6 ], [ 6, 7 ], [ 5, 8 ] ];
+    // Existing oak house, native 242×120, centered by +50px; floors 50/108.
+    const indoorNodes = [{x:80,y:108},{x:140,y:108},{x:172,y:108},{x:193,y:108},{x:240,y:108},{x:193,y:50},{x:80,y:50},{x:225,y:50},{x:275,y:50}];
+    const indoorPairs = [[0,1],[1,2],[2,3],[3,4],[3,5],[5,6],[5,7],[7,8]];
     function graph() {
         if (!state.inside) return {
             nodes: nodes,
@@ -382,7 +356,7 @@ function makeSeason_autumn(opts, DATA) {
     }
     function leave() {
         close();
-        goTo(29, 204, {
+        goTo(172, 108, {
             id: "exit_inside"
         });
     }
@@ -460,55 +434,15 @@ function makeSeason_autumn(opts, DATA) {
         opts.needs().fun = Math.min(100, opts.needs().fun + 5);
         opts.hint(text);
     }
-    const indoorSpots = [ {
-        id: "bed",
-        name: "床铺",
-        x: 269,
-        y: 102,
-        rect: [ 243, 57, 66, 47 ],
-        need: "energy"
-    }, {
-        id: "bath",
-        name: "浴缸",
-        x: 75,
-        y: 102,
-        rect: [ 28, 66, 58, 37 ],
-        need: "hygiene"
-    }, {
-        id: "wc",
-        name: "卫生间",
-        x: 110,
-        y: 102,
-        rect: [ 90, 68, 30, 35 ],
-        need: "bladder"
-    }, {
-        id: "kitchen",
-        name: "厨房",
-        x: 67,
-        y: 204,
-        rect: [ 28, 132, 86, 72 ],
-        need: "hunger"
-    }, {
-        id: "sofa",
-        name: "沙发",
-        x: 180,
-        y: 204,
-        rect: [ 162, 167, 48, 37 ],
-        need: "social"
-    }, {
-        id: "books",
-        name: "书架",
-        x: 250,
-        y: 204,
-        rect: [ 259, 149, 38, 51 ],
-        need: "fun"
-    }, {
-        id: "exit",
-        name: "出门",
-        x: 29,
-        y: 204,
-        rect: [ 19, 181, 18, 35 ]
-    } ];
+    const indoorSpots = [
+      {id:"bed",name:"床铺",x:80,y:50,rect:[61,29,45,24],need:"energy"},
+      {id:"bath",name:"浴缸",x:225,y:50,rect:[211,18,31,35],need:"hygiene"},
+      {id:"wc",name:"卫生间",x:275,y:50,rect:[268,30,16,24],need:"bladder"},
+      {id:"kitchen",name:"厨房",x:240,y:108,rect:[209,69,76,42],need:"hunger"},
+      {id:"sofa",name:"沙发",x:80,y:108,rect:[61,90,42,23],need:"social"},
+      {id:"books",name:"电视",x:140,y:108,rect:[125,81,32,29],need:"fun"},
+      {id:"exit",name:"出门",x:172,y:108,rect:[166,72,14,36]}
+    ];
     function insideVisit(need) {
         const p = indoorSpots.find(p => p.need === need);
         return p && goTo(p.x, p.y, {
@@ -612,8 +546,8 @@ function makeSeason_autumn(opts, DATA) {
         if (!d.mid && d.elapsed >= .3) {
             d.mid = true;
             state.inside = d.to;
-            state.x = d.to ? 29 : landmark("detective_home").x;
-            state.y = d.to ? 204 : landmark("detective_home").y;
+            state.x = d.to ? 172 : landmark("detective_home").x;
+            state.y = d.to ? 108 : landmark("detective_home").y;
             state.camX = d.to ? 0 : state.x - 171;
             state.camY = d.to ? 0 : state.y - 118;
         }
@@ -698,15 +632,16 @@ function makeSeason_autumn(opts, DATA) {
         ctx.globalAlpha = 1;
     }
     function draw() {
-        const ratio = resolution;
-        if (renderCanvas.width !== 342 * ratio || renderCanvas.height !== 236 * ratio) {
+        canvas.height=state.inside?120:236;
+        const vh=canvas.height, ratio = resolution;
+        if (renderCanvas.width !== 342 * ratio || renderCanvas.height !== vh * ratio) {
             renderCanvas.width = 342 * ratio;
-            renderCanvas.height = 236 * ratio;
+            renderCanvas.height = vh * ratio;
         }
         ctx = renderCanvas.getContext("2d");
         ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
         ctx.imageSmoothingEnabled = false;
-        ctx.clearRect(0, 0, 342, 236);
+        ctx.clearRect(0, 0, 342, vh);
         if (!state.loaded) return;
         const bg = images.get(DATA.scenes[state.stage]);
         if (state.mapOpen) {
@@ -768,10 +703,10 @@ function makeSeason_autumn(opts, DATA) {
                 pose: null,
                 walk: false
             }, null);
-            ctx.drawImage(headCanvas, 0, 0, 20, 15, 35, 77, 20, 15);
+            ctx.drawImage(headCanvas, 0, 0, 20, 15, 218, 26, 20, 15);
         } else if (state.inside && state.service?.need === "energy") {
             ctx.save();
-            ctx.translate(275, 92);
+            ctx.translate(96, 42);
             ctx.rotate(-Math.PI / 2);
             opts.drawHero(ctx, 0, 0, {
                 ...state,
@@ -841,10 +776,10 @@ function makeSeason_autumn(opts, DATA) {
         }
         if (state.service) {
             ctx.fillStyle = "#262a36";
-            ctx.fillRect(99, 215, 144, 13);
+            ctx.fillRect(99, state.inside ? 114 : 215, 144, state.inside ? 5 : 13);
             ctx.fillStyle = "#a7cd6b";
             const v = opts.needs()[state.service.need];
-            ctx.fillRect(101, 217, Math.round(140 * v / 100), 9);
+            ctx.fillRect(101, state.inside ? 116 : 217, Math.round(140 * v / 100), state.inside ? 2 : 9);
         }
     }
     function hit(x, y) {
@@ -978,7 +913,7 @@ function makeSeason_autumn(opts, DATA) {
     canvas.getBoundingClientRect = () => opts.view.getBoundingClientRect();
     canvas.addEventListener("pointerdown", e => {
         const b = opts.view.getBoundingClientRect();
-        pick((e.clientX - b.left) * 342 / b.width + state.camX, (e.clientY - b.top) * 236 / b.height + state.camY);
+        pick((e.clientX - b.left) * 342 / b.width + state.camX, (e.clientY - b.top) * canvas.height / b.height + state.camY);
     });
     window.addEventListener("keydown", e => {
         if (opts.active() && e.key === "Escape" && !modal.hidden) {

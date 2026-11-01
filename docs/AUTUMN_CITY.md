@@ -107,3 +107,14 @@ calls removed; indoor sofa and ordinary service stools remain separate furniture
 Owner follow-up (2026-11-01): remove ALL aircraft surface patterning, panel lines,
 rivets and decorative stripes. Convey volume with broad palette light/shadow regions,
 rounded fuselage belly, wing thickness and cast shadow. Retain functional glazing/gear.
+
+## Existing house reuse (2026-11-01, latest owner correction)
+Owner rejects the custom office interior. Replace it outright with existing friend house
+`oak` / 暖木小复式, from the original 30 plans in `friend_houses.py`. Exact existing
+242×120 layout/art/furnishings, centered at x50 in a 342×120 scene; no stretching.
+Interior window now contracts to 120px logical height on entry, expands to 236 on exit.
+Upper/ground walk floors 50/108, stairs x193, entry (172,108). Bed (80,50), bath (225,50),
+WC (275,50), kitchen (240,108), sofa (80,108), TV (140,108). All hit boxes / service
+poses / door positions match the reused furniture; six needs retained. Layout v4 resets
+obsolete v3 travel coordinates while preserving story/needs. Exterior name 侦探事务所 kept.
+This supersedes all earlier bespoke interior coordinates and recolouring instructions.

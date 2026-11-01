@@ -7,6 +7,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- Owner requested existing small house instead of bespoke office interior: exact `oak`
+  暖木小复式 reused from 30 plans. Native 242×120 centered in 342×120 view, no scaling.
+- Updated indoor graph/hit boxes, entry, six services and sleep/bath poses; room height
+  contracts on entry. v4 migration; exterior name/plot preserved. Handoffs supersede old coords.
+- Full autumn browser regression plus existing seasonal shell checks; test webpage only.
+
+## 2026-11-01 · Codex
 - Owner follow-up: stripped plane panel/rivet/decorative lines; broad shaded fuselage,
   wing thickness/cast shadow and rounded silhouette supply volume. Prior bench removal
   and stone corner finishing retained. Pixel-only art; test-page update.

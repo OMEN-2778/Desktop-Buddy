@@ -466,51 +466,10 @@ def river_boat():
 
 def polluted_city():return city_layers(0,True)[0]
 def detective_inside():
- import _furniture as Native
- class OfficeFurniture:
-  def __getattr__(self,name):
-   def draw(*args,**kwargs):
-    piece=getattr(Native,name)(*args,**kwargs);px=np.array(piece.to_image());original=px.copy()
-    for old,new in [(Native.OAK,P.walnut),(Native.ASH,P.wood),(Native.OAT,P.sage)]:
-     for a,b in zip(old,new):px[np.all(original==ImageColor.getcolor(a,"RGBA"),axis=2)]=ImageColor.getcolor(b,"RGBA")
-    return Sprite(0,0,px=px)
-   return draw
- F=OfficeFurniture()
- room=Sprite(342,236,P.cut[0]);room.rect(16,20,310,200,P.oat[0])
- for x,y,w,h in [(20,24,113,78),(137,24,185,78),(20,106,302,110)]:
-  room.rect(x,y,w,h,P.plaster_study[2]);room.rect(x,y+h-18,w,18,P.wood[2])
-  for yy in range(y+h-18,y+h,5):room.hline(x,x+w-1,yy,P.wood[1])
- # Tile wainscot and wood paneling give the compact rooms material detail.
- for yy in range(60,85,5):
-  room.hline(21,131,yy,P.porcelain[0])
-  for xx in range(22+(yy//5%2)*4,132,9):room.vline(xx,yy+1,yy+4,P.porcelain[0])
- for xx in range(169,321,12):room.rect(xx,169,10,16,P.oat[1]).hline(xx,xx+9,169,P.oat[3])
- for xx in (25,191):room.blit(F.window(),xx,31)
- room.blit(F.bathtub(),28,70);room.blit(F.toilet(),91,85);room.blit(F.bed(),246,82)
- room.blit(F.backsplash(),30,168);room.blit(F.kitchen_base(),30,182);room.blit(F.wall_cabinets(),30,154);room.blit(F.fridge(),99,173)
- room.blit(F.sofa(),163,187);room.blit(F.bookshelf(),281,172);room.blit(F.coffee_table(),205,200)
- for k in range(21):room.rect(143,101+k*5,23,3,P.oat[2]);room.rect(143,104+k*5,23,2,P.wood[1])
- # Fine native furniture details, leaving all six service approaches and stairs free.
- room.blit(F.towel(),73,46);room.blit(F.sconce(True),112,34)
- room.blit(F.nightstand(),228,91);room.blit(F.lamp(True),230,79)
- room.blit(F.wardrobe(),294,68);room.blit(F.art_print(19,14,'sun'),221,35)
- room.blit(F.desk(),181,87);room.blit(F.monitor(False),186,75);room.blit(F.office_chair(),206,102-F.office_chair().h)
- room.blit(F.rug(57),240,100);room.blit(F.rug(77),166,211)
- room.blit(F.clock(),212,136);room.blit(F.window(),172,132);room.blit(F.art_print(24,16,'sun'),234,139)
- room.blit(F.plant(False),300,194);room.blit(F.sconce(True),133,142)
- room.blit(F.mug(),219,198);room.blit(F.bowl(),47,179)
- room.blit(F.vanity(),65,61);room.blit(F.towel(),112,66)
- room.rect(108,90,16,12,P.wood[0]).rect(109,91,14,10,P.oat[2])
- for yy in (93,96,99):room.hline(110,121,yy,P.wood[1])
- room.rect(110,88,10,3,P.porcelain[2]);room.rect(115,86,7,3,P.clay[2])
- room.blit(F.dining_table(),117,190);room.blit(F.chair('left'),117,198);room.blit(F.mug(),124,188)
- room.blit(F.media_console(),223,204-F.media_console().h);room.blit(F.tv(True),226,164)
- room.rect(168,57,46,3,P.wood[0]).hline(168,213,57,P.wood[3])
- for i in range(8):room.rect(171+i*4,46+i%3,3,11-i%3,[P.sage[1],P.clay[1],P.oat[1]][i%3])
- room.blit(F.art_print(28,19,'sun'),255,37);room.blit(F.plant(False),301,47)
- room.rect(299,63,20,3,P.wood[1]);room.rect(85,144,29,3,P.wood[1])
- for x in (87,94,101,108):room.rect(x,137,4,7,P.oat[2]).hline(x,x+3,137,P.steel[1])
- room.rect(20,185,16,31,P.walnut[1]);room.rect(22,187,12,27,P.wood[2]);room.set(30,203,P.mustard[3])
+ import friend_houses as FH
+ plan=next(p for p in FH.PLANS if p[0]=='oak')
+ data,bg,front=FH.draw_plan(plan)
+ room=Sprite(342,120,P.cut[0]);room.blit(bg.copy().blit(front,0,0),50,0)
  return room
 
 def build():
