@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- Owner detail pass: softened native-pixel terrace/retaining and plane corners, dressed
+  stone corner coping; removed every outdoor long bench (including summit/quay).
+- Routes, scene dimensions, story and indoor furniture unchanged. Owner rules/handoffs
+  updated. Art rebuilt/reviewed; geometry + art/game browser regressions; test page only.
+
+## 2026-11-01 · Codex
 - Fixed door/window and sign/lintel overlap, removed rooftop/wall-hanging trees; detailed
   plane, grounded 66-tree forest/courts. Native furnishings recoloured; 4px office slab.
 - Renamed location to 侦探事务所 (stable ID). Added left ascent to forest-ringed summit,

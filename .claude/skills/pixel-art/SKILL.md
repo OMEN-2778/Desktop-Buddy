@@ -1121,3 +1121,9 @@ Ground-floor windows must exclude refined door frames; raised signs must not cov
 Reuse native furnishings with local recolouring, eliminate the 24px blank floor band
 (4px slab), and rename 阿简的家 to **侦探事务所**. Refine plane details and give the river/
 moored boat pixel animation. Preserve smooth Source Han Sans lettering and pixel scenery.
+
+### Autumn pixel corner finishing (2026-11-01)
+Owner wants polygon corners to flow with rounded pixel transitions, stone corner caps /
+coping details, especially terrace corners and airplane silhouettes. Round on the native
+integer pixel grid; no smooth vector/blur. Remove every outdoor long bench, including
+summit plaza and quay. Preserve path openings, native character scale and Source Han signs.

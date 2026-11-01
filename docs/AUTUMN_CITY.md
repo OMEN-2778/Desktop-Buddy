@@ -95,3 +95,11 @@ Only the game page is animated; the art inspector is an explicitly static full-m
 
 The summit starts in grey haze. Stage 4 retains the approved sunny ending: sky clears,
 mountain layers turn sage and maples red. The new view does not freeze the story in smog.
+
+## Pixel corner finishing / bench removal (2026-11-01)
+Owner requests softened polygon corners with small stone corner treatments and removal
+of ALL outdoor benches, including summit and quay. Terrace top/retaining silhouettes
+now use integer quadratic corner transitions and dressed coping stones; plane fuselage,
+wings, tail and cockpit contours use the same small-radius pixel transitions. No blur,
+antialiased scenery or change to the orthogonal route graph. All outdoor bench draw
+calls removed; indoor sofa and ordinary service stools remain separate furniture.

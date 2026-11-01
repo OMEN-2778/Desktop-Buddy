@@ -118,3 +118,11 @@ with other assets. `drawRiver()` runs before actors/foliage, with integer wavele
 fixed-end mooring; only native pixels, no gradients. New browser regression walks to
 the actual lookout, measures camera continuity and compares river-only rendered pixels.
 Office uses recoloured native furniture and a 4px midfloor slab; services stay at y102/204.
+
+## Pixel corner finishing / bench removal (2026-11-01)
+Owner requests softened polygon corners with small stone corner treatments and removal
+of ALL outdoor benches, including summit and quay. Terrace top/retaining silhouettes
+now use integer quadratic corner transitions and dressed coping stones; plane fuselage,
+wings, tail and cockpit contours use the same small-radius pixel transitions. No blur,
+antialiased scenery or change to the orthogonal route graph. All outdoor bench draw
+calls removed; indoor sofa and ordinary service stools remain separate furniture.

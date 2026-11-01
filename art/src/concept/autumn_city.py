@@ -71,6 +71,20 @@ class City:
   if w>0 and h>0:self.d.rectangle((int(x),int(y),int(x+w-1),int(y+h-1)),fill=c)
  def line(self,pts,c,width=1):self.d.line([(int(x),int(y)) for x,y in pts],fill=c,width=width)
  def poly(self,pts,c):self.d.polygon([(int(x),int(y)) for x,y in pts],fill=c)
+ def rounded(self,pts,radius=5):
+  # Integer quadratic corner transitions: preserve pixel edges, no filtering/AA.
+  result=[]
+  for i,v in enumerate(pts):
+   prev=pts[i-1];nxt=pts[(i+1)%len(pts)]
+   before=math.dist(prev,v);after=math.dist(v,nxt)
+   if not before or not after:continue
+   r=min(radius,before*.24,after*.24)
+   a=(v[0]+(prev[0]-v[0])*r/before,v[1]+(prev[1]-v[1])*r/before)
+   b=(v[0]+(nxt[0]-v[0])*r/after,v[1]+(nxt[1]-v[1])*r/after)
+   for j in range(5):
+    t=j/4;result.append((round((1-t)**2*a[0]+2*(1-t)*t*v[0]+t*t*b[0]),round((1-t)**2*a[1]+2*(1-t)*t*v[1]+t*t*b[1])))
+  return result
+ def soft_poly(self,pts,color,radius=5):self.poly(self.rounded(pts,radius),color)
  def oval(self,x,y,rx,ry,c):self.d.ellipse((int(x-rx),int(y-ry),int(x+rx),int(y+ry)),fill=c)
  def text(self,x,y,t,n=10,c=None):
   f=font(n);b=f.getbbox(t);mask=Image.new('L',(b[2]+2,max(n+5,b[3]+2)));ImageDraw.Draw(mask).text((0,0),t,font=f,fill=255)
@@ -118,13 +132,19 @@ class City:
   for off in (14,8):self.line([(a[0],a[1]-off),(b[0],b[1]-off)],col[1],2);self.line([(a[0],a[1]-off-1),(b[0],b[1]-off-1)],col[3])
  def terrace(self,pts,drop,seed):
   front=pts[len(pts)//2:];wall=front+[(x,y+drop) for x,y in reversed(front)]
-  self.masonry(wall,seed);self.poly(pts,P.pave[2]);self.line(pts+[pts[0]],P.pave[0],2)
+  self.masonry(self.rounded(wall,5),seed);outline=self.rounded(pts,6);self.poly(outline,P.pave[2]);self.line(outline+[outline[0]],P.pave[0],1)
   # Parallel irregular flagstones follow the top plane, clipped to its polygon.
-  mask=Image.new('1',(W,H));ImageDraw.Draw(mask).polygon(pts,fill=1);arr=np.array(mask);r=random.Random(seed)
+  mask=Image.new('1',(W,H));ImageDraw.Draw(mask).polygon(outline,fill=1);arr=np.array(mask);r=random.Random(seed)
   for _ in range(250):
    x=r.randrange(min(p[0] for p in pts),max(p[0] for p in pts));y=r.randrange(min(p[1] for p in pts),max(p[1] for p in pts))
    if arr[y,x]:self.line([(x,y),(min(W-1,x+r.randrange(2,6)),y)],P.pave[1] if _%3 else P.pave[3])
-  for a,b in zip(front,front[1:]):self.line([a,b],P.oat[3],2)
+  for a,b in zip(front,front[1:]):self.line([(a[0]-5,a[1]),(b[0]+5,b[1])],P.oat[3],2)
+  # Small dressed corner stones tie the coping to the retaining face.
+  for x,y in front:
+   inward=1 if x==min(p[0] for p in pts) else -1
+   self.soft_poly([(x,y-4),(x+inward*8,y-4),(x+inward*8,y+4),(x+inward*3,y+7),(x,y+4)],P.oat[1],2)
+   self.line([(x+inward*2,y-3),(x+inward*6,y-3)],P.oat[3])
+   self.line([(x+inward*2,y+2),(x+inward*2,y+5)],P.pave[0])
  def stairs(self,a,b,width=32):
   # Solid sandstone, open at both ends. Horizontal links are landings, never ladders.
   if a==b:return
@@ -306,12 +326,12 @@ def city_layers(stage=0,review=False):
  c.box(350,49,244,73,P.pave[0]);c.box(353,52,238,67,P.pave[1])
  for x in range(365,586,27):c.box(x,108,15,2,P.oat[3]);c.box(x,57,15,2,P.oat[3])
  # Larger private plane, 174px span, with separate tailplane, engine and landing gear.
- c.poly([(380,92),(422,88),(519,91),(542,98),(512,102),(407,100)],P.pave[0])
- c.poly([(377,83),(409,78),(493,78),(531,84),(550,89),(531,95),(484,96),(409,92)],P.porcelain[1])
- c.poly([(406,80),(483,80),(522,84),(538,88),(485,89),(411,86)],P.porcelain[3])
- c.poly([(436,83),(417,54),(430,54),(475,84),(491,115),(477,115),(448,93)],P.porcelain[2])
+ c.soft_poly([(380,92),(422,88),(519,91),(542,98),(512,102),(407,100)],P.pave[0])
+ c.soft_poly([(377,83),(409,78),(493,78),(531,84),(550,89),(531,95),(484,96),(409,92)],P.porcelain[1])
+ c.soft_poly([(406,80),(483,80),(522,84),(538,88),(485,89),(411,86)],P.porcelain[3])
+ c.soft_poly([(436,83),(417,54),(430,54),(475,84),(491,115),(477,115),(448,93)],P.porcelain[2])
  c.line([(422,57),(453,84)],P.porcelain[3],2);c.line([(457,94),(482,112)],P.porcelain[0],2)
- c.poly([(389,85),(380,67),(390,67),(413,86),(410,96),(388,96)],P.porcelain[2]);c.box(384,69,4,13,P.clay[1])
+ c.soft_poly([(389,85),(380,67),(390,67),(413,86),(410,96),(388,96)],P.porcelain[2]);c.box(384,69,4,13,P.clay[1])
  for x in (481,495,509):c.box(x,82,9,7,P.teal[0]);c.box(x+1,83,7,3,P.teal[2])
  c.box(540,84,5,9,P.steel[1]);c.box(547,77,2,24,P.steel[0]);c.box(546,88,5,3,P.steel[2])
  for x,y in ((413,95),(494,99)):c.box(x,y,2,6,P.steel[0]);c.oval(x+1,y+6,3,3,P.steel[0]);c.box(x,y+5,2,2,P.steel[2])
@@ -319,7 +339,7 @@ def city_layers(stage=0,review=False):
  c.line([(411,90),(477,94),(526,92)],P.teal[1],2)
  c.line([(406,79),(482,79),(523,84)],P.porcelain[0])
  for x in range(423,475,10):c.box(x,91,2,1,P.steel[1])
- c.poly([(522,82),(534,85),(540,89),(526,88)],P.teal[0]);c.line([(525,83),(532,85)],P.teal[2]);c.box(529,84,1,5,P.steel[2])
+ c.soft_poly([(522,82),(534,85),(540,89),(526,88)],P.teal[0]);c.line([(525,83),(532,85)],P.teal[2]);c.box(529,84,1,5,P.steel[2])
  c.box(462,81,14,12,P.porcelain[0]);c.box(463,82,12,10,P.porcelain[2]);c.box(465,83,8,4,P.teal[0]);c.box(471,89,3,1,P.steel[0])
  for a,b in [((429,64),(454,84)),((438,64),(463,84)),((467,96),(482,111)),((471,95),(487,109))]:c.line([a,b],P.porcelain[0])
  c.line([(421,56),(430,56),(470,84)],P.porcelain[3]);c.line([(449,91),(479,113)],P.steel[1])
@@ -339,10 +359,10 @@ def city_layers(stage=0,review=False):
  c.lamp(192,248)
  # Central residence / plaza. Little roofs, ledges and courts fill the whole terrace.
  c.building(50,376,100,2,'old','侦探事务所',30);c.building(162,376,72,2,'brick',None,31)
- c.bench(253,373);c.lamp(303,379);c.box(251,353,3,17,P.wood[1]);c.box(249,350,9,5,P.oat[2])
+ c.lamp(303,379);c.box(251,353,3,17,P.wood[1]);c.box(249,350,9,5,P.oat[2])
  c.building(370,341,98,1,'old','街角集市',32);c.stall(374,376,P.sage);c.stall(423,376,P.clay)
  c.building(480,330,106,1,'civic',None,33)
- c.box(497,346,48,27,P.wood[0]);c.box(500,349,42,21,P.oat[2]);c.box(503,352,12,15,P.oat[3]);c.box(520,352,17,8,P.clay[1]);c.box(501,372,3,9,P.wood[0]);c.box(538,372,3,9,P.wood[0]);c.bench(553,374)
+ c.box(497,346,48,27,P.wood[0]);c.box(500,349,42,21,P.oat[2]);c.box(503,352,12,15,P.oat[3]);c.box(520,352,17,8,P.clay[1]);c.box(501,372,3,9,P.wood[0]);c.box(538,372,3,9,P.wood[0]);
  # Worker frontages: narrow shared walls and distinct practical fittings.
  c.building(44,508,72,1,'old','洗衣铺',40);c.building(126,508,98,2,'old','工人食堂',41)
  c.building(236,508,76,2,'civic','苏医生诊所',42);c.building(368,508,74,2,'brick','公共浴场',43)
@@ -366,7 +386,7 @@ def city_layers(stage=0,review=False):
  if stage<2:c.poly([(484,625),(470,642),(454,657),(468,672),(486,657),(495,632)],P.oak[0])
  c.box(67,623,151,34,P.wood[0])
  for x in range(69,216,6):c.box(x,625,4,30,P.wood[2])
- c.bench(91,635);c.box(175,611,22,17,P.wood[1]);c.box(179,608,14,5,P.oat[1]);c.oval(206,634,6,6,P.steel[0]);c.oval(206,634,3,3,P.wood[2])
+ c.box(175,611,22,17,P.wood[1]);c.box(179,608,14,5,P.oat[1]);c.oval(206,634,6,6,P.steel[0]);c.oval(206,634,3,3,P.wood[2])
  # River rocks, reed beds and moored craft fill the lower edge, not empty water.
  if review:c.im.alpha_composite(river_boat().to_image(),(84,673));c.d=ImageDraw.Draw(c.im)
  for x,y in [(230,677),(287,672),(394,680),(588,679)]:
@@ -409,7 +429,7 @@ def city_layers(stage=0,review=False):
  for y in (() if stage>=4 else (33,57,83)):
   for x in range(0,W,19):top.box(x,y+(x//19%3),14,1,P.oat[2])
  top.terrace([(102,TOP-118),(329,TOP-118),(329,TOP-20),(102,TOP-20)],18,77)
- top.bench(147,TOP-28);top.bench(204,TOP-28)
+
  top.box(300,TOP-95,3,25,P.steel[0]);top.box(290,TOP-98,23,6,P.steel[1]);top.box(289,TOP-99,7,8,P.steel[2]);top.box(309,TOP-98,6,6,P.steel[0])
  top.rail((120,TOP-111),(313,TOP-111))
  # Continuous ascent on the user's left edge, with right-angle landings and clear mouths.
