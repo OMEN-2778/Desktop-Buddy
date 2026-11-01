@@ -159,3 +159,11 @@ between opposing kicks and alternating foot pixels. Cropped pose contact sheet r
   `node tools/check_season_living_world.js` (includes a minute of five emitters and
   unchanged fish widths through turns), `node tools/check_season_polish.js`.
 - Applies only to `/summer/` and `/map-test/`; does not enable formal game seasonal maps.
+
+## Autumn playable integration · 2026-11-01
+Owner authorized direct front-door entry into 枫叶城 on this TEST page. Compact front-only
+art, orthogonal graph walking/lift, local house/services, five story NPCs and approved
+story progression are implemented. Independent foreground trees/shrubs/rails fade near
+the actual actor. Full implementation, build, persistence and limits: `AUTUMN_GAME.md`.
+No autumn adapter is written into formal release input. Existing spring/summer limits
+above remain specific to those controllers, not autumn.

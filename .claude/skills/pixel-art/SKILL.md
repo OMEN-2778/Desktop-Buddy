@@ -1078,3 +1078,11 @@ Owner wants one continuous large autumn hillside city, strong oblique depth and 
 vertical traversal via interlocking stairs/switchbacks/stacked streets, like the spatial
 experience of Chongqing/Hongyadong. Do not split into boxed districts or flatten into a
 left/right strip. First review is pollution state only. Art handoff: docs/AUTUMN_CITY.md.
+
+### 枫叶城 follow-up owner corrections (2026-11-01, overrides diagonal review)
+Use horizontal streets, vertical stair flights and right-angle landings; preserve height
+through stacked floors, not diagonal/curved stairs. Compact excessive empty spacing and
+omit building side faces. Add dry yellow maples/shrubs in sensible edge planters/ledges,
+with doors and stairs accessible. Foreground occlusion is allowed: fade only the nearby
+object when it hides Buddy, recover after she leaves. Runtime uses independent foliage
+atlases and street rails, not a whole-scene transparency change. See AUTUMN_GAME.md.

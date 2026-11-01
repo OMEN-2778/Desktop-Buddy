@@ -5,6 +5,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tools'))
 import make_spring_preview as SP
 import make_summer_preview as SU
+from autumn_runtime import runtime_data as autumn_data
 
 def controller(name,data):
     template=(ROOT/f'prototype/{name}/index.src.html').read_text()
@@ -40,12 +41,13 @@ def main():
     page=(ROOT/'prototype/demo/index.html').read_text()
     # Changes below apply to this page only. The public trial and EXE stay untouched.
     page=page.replace('const cardHolds =','let cardHolds =')
-    page=page.replace("bar:'酒吧'}","bar:'酒吧',spring_test:'春日农庄',summer_test:'夏日海湾'}")
+    page=page.replace("bar:'酒吧'}","bar:'酒吧',spring_test:'春日农庄',summer_test:'夏日海湾',autumn_test:'枫叶城'}")
     page=page.replace('const sceneHouseHeight=()=>','let sceneHouseHeight=()=>')
-    page=page.replace("if(place==='park')","if(place==='spring_test')return 'BGM/park/festival-streetlights.mp3';if(place==='summer_test')return 'BGM/harbor/dragon-boat-day.mp3';if(place==='park')")
+    page=page.replace("if(place==='park')","if(place==='autumn_test')return 'BGM/park/festival-streetlights.mp3';if(place==='spring_test')return 'BGM/park/festival-streetlights.mp3';if(place==='summer_test')return 'BGM/harbor/dragon-boat-day.mp3';if(place==='park')")
     for key in ['buddy-save','buddy-settings','buddy-look-v2','buddy-look-at']:
         page=page.replace('"'+key+'"','"season-test-'+key+'"')
-    source=(ROOT/'prototype/season/effects.js').read_text()+controller('spring',SP.runtime_data())+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(ROOT/'prototype/map-test/cheats.js').read_text()+(ROOT/'prototype/map-test/adapter.js').read_text()
+    autumn=(ROOT/'prototype/autumn/story.js').read_text()+(ROOT/'prototype/autumn/game.js').read_text()+'\nconst AUTUMN_MAP_DATA='+json.dumps(autumn_data(),ensure_ascii=False,separators=(',',':'))+';\n'
+    source=autumn+(ROOT/'prototype/season/effects.js').read_text()+controller('spring',SP.runtime_data())+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(ROOT/'prototype/map-test/cheats.js').read_text()+(ROOT/'prototype/map-test/adapter.js').read_text()
     mark='(async function boot() {'
     assert page.count(mark)==1
     page=page.replace(mark,source+'\n'+mark)

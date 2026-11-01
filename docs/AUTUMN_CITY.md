@@ -1,7 +1,7 @@
 # 枫叶城 · map art handoff
 
-Status (2026-11-01): **polluted-state art preview only**, owner review pending.
-No autumn scene, story, NPC logic, collision mesh or formal EXE integration.
+Status (2026-11-01): compact front-facing art and playable test integration are complete.
+Gameplay handoff: `AUTUMN_GAME.md`. Formal EXE integration remains off.
 Approved story: `AUTUMN_STORY.md`. The new art does not revise its cast or plot.
 
 ## Owner decisions
@@ -14,9 +14,9 @@ Approved story: `AUTUMN_STORY.md`. The new art does not revise its cast or plot.
 - Previous seasonal test restriction remains: no formal integration before review.
 
 ## Layout and source
-`art/src/concept/autumn_city.py`: 1152×1408 RGBA, opaque project palette only.
-Light comes from top left. Front walls are vertical; roofs, side walls and streets expose
-oblique planes. Receding ridge + distant housing are less contrasted. All shapes rasterized
+`art/src/concept/autumn_city.py`: design 1152×1408, export **1024×1216** with nearest-neighbour. Opaque base/project palette only.
+Light comes from top left. Owner rejected diagonal flights and empty spacing: streets
+are horizontal, stairs vertical, landings right-angled. House walls show fronts only. Receding ridge + distant housing are less contrasted. All shapes rasterized
 at 1×; no filtered scaling, smooth paths, gradients or anti-aliased text.
 - Summit ~y180–300: landing strip, small plane, sapling beds.
 - Ridge ~y310–430: old hut and lookout.
@@ -27,11 +27,11 @@ at 1×; no filtered scaling, smooth paths, gradients or anti-aliased text.
 - River ~y1180–1408: polluted water, old mine tunnel/siding, concealed outfall, rusty pier.
 
 The broad ranges overlap intentionally: no hard district boundaries or scene changes.
-`ROUTES` (13 named connected polylines) stores planned feet positions. Stairs and switchback
+`ROUTES` (connected orthogonal polylines) stores planned feet positions. Stairs and switchback
 landings are drawn from this same metadata. `LANDMARKS` stores review focus positions and
-future need provisions. These are **planning coordinates**, not a finished walkability mesh.
-Two projected routes can cross without being connected; later navigation needs explicit
-height/deck/occlusion data, not just XY nearest-neighbour connections. Elevated street
+future need provisions. The runtime uses these explicit graph edges as its walkability constraint.
+Two projected routes can cross without being connected; navigation must keep explicit
+connections instead of introducing XY nearest-neighbour shortcuts. Elevated street
 foreground rails must occlude feet appropriately when gameplay is implemented.
 
 ## Review build
@@ -56,6 +56,14 @@ node tools/check_autumn_preview.js
 - Inspected entire map and enlarged mid-city after three refinement passes.
 - Pixelkit palette/alpha lint; browser art inspector regression and screenshots.
 - Main demo/web rebuilt as repository checklist requires; their tracked inputs unchanged.
-- Owner review first. Sunny variant, layered runtime export, interiors, navigation and
-  all six needs on-site are future pieces. Buddy must never autonomously leave a seasonal
-  map, per AGENTS.md; future need handling uses local houses/facilities first.
+- Five environment states, layered runtime export, interior services and orthogonal
+  walking are now implemented in the test game. Buddy stays in the city for autonomous
+  needs and only leaves on a player request. See AUTUMN_GAME.md for exact scope.
+
+## Latest owner corrections / integration
+- Compact world by about 23% in area; keep native character dimensions.
+- Front-facing buildings only; straight horizontal/vertical streets and flights.
+- Added dry maples/shrubs in edge planters and ledges. All foliage exported individually,
+  with foreground fade near the actual actor; see AUTUMN_GAME.md for runtime details.
+- `/autumn/` remains the full-image inspector. The actual playable scene is entered from
+  the door in `/map-test/`. Gameplay and approved story are now implemented there.

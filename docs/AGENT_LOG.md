@@ -7,6 +7,15 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- Owner authorized playable autumn in `/map-test/` via native house door, test-only.
+- Revised art per steering: horizontal streets/vertical flights/right-angle landings,
+  front-only houses, compact 1024×1216; dry maples/shrubs, independent foreground fade.
+- `autumn/game.js`, `story.js`, runtime packer: graph movement/camera/lift, local house
+  and six needs, actual hot spots, approved 5-NPC story + environment stages/save.
+- Full handoff AUTUMN_GAME.md; art/story/pixel rules updated. Four-scale UI + actual game
+  browser checks, art inspector and existing seasonal checks; no formal EXE integration.
+
+## 2026-11-01 · Codex
 - Autumn preview CI lacked authoring CJK font; builder now publishes the exact tracked,
   reviewed pixelkit PNG instead of re-rendering labels on the host. No art change.
 - Local inspector regression passes; authoring font requirement recorded in AUTUMN_CITY.
