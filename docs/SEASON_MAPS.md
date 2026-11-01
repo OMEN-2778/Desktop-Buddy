@@ -26,7 +26,19 @@ Status: planning. Nothing here is in the game yet. Art first, owner approves, th
 - The underwater map must be **big**. Owner's reference is the feeling of a diving
   game; build our own original sea, fish, mechanics and art, not a copy of any game.
 
-## 秋 / 冬
+## ⚠️ Rule for all season maps: no leaving on her own
+Buddy never autonomously leaves a season map. Needs go to the map's house first (farmhouse /
+lodge·cabana / detective's house), else the nearest spot in the map. Every map must offer a
+spot for each of the six needs. Only the player or the story takes her out. (`AGENTS.md`)
+
+## 秋 · 枫叶城 (story draft: `docs/AUTUMN_STORY.md`, waiting on owner)
+- A small vertical industrial city, story-driven. All autumn a detective NPC stands at the
+  front door with a "!" over his head; miss him and wait for next autumn. Talking to him flies
+  Buddy to 枫叶城 in his private plane. Buddy may use the detective's house there for all needs.
+- During the story, friend chats and invitations are muted (queued, delivered afterwards).
+- Ending: the grey city turns sunny with falling maple leaves; Buddy gets an office job there.
+
+## 冬
 - Not decided yet.
 
 ## Open questions for the owner

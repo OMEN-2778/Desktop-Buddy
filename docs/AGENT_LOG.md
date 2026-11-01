@@ -6,6 +6,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-01 · Claude Code
+- Owner rule for ALL season maps written into `AGENTS.md`, `CLAUDE.md`, `docs/SEASON_MAPS.md`:
+  Buddy never leaves a season map on her own; needs go to the map's house first, else nearest
+  spot in the map; every map needs a spot for each need.
+- 秋 枫叶城 story draft: `docs/AUTUMN_STORY.md` (detective intro is owner-given, rest proposed).
+  Waiting on owner. Docs only, no code.
+
 ## 2026-11-01 · Codex
 - Seasonal test follow-up: seeded irregular separated fish schools; conservative whole-sprite
   rock collision prevents entering solid terrain, retains last safe position when blocked.

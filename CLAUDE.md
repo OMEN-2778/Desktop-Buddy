@@ -30,6 +30,10 @@ tests, no unasked extras).
   pixel-art rules and user decisions take priority over generic web defaults;
   keep the current vanilla JS/Canvas stack unless a migration is requested.
 
+## Season maps (owner rule)
+In any season map Buddy never decides to leave or go home; needs are met in the map's own house
+first, else the nearest spot in the map. Details: `AGENTS.md` → "Season maps".
+
 ## After a change
 0. Codex works on the same branch: `git pull` and read the top of `docs/AGENT_LOG.md`
    before starting; shared rules are in `AGENTS.md`.

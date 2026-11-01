@@ -30,6 +30,18 @@ either can pick up the other's work:
   build/review, files and functions, layout coordinates, owner decisions, rejected ideas,
   next steps as one-commit pieces, gotchas. Keep it current when you change the feature.
 
+## ⚠️ Season maps: Buddy never leaves on her own (owner rule, applies to EVERY season map)
+While Buddy is in a season map (春 farm, 夏 island + sea, 秋 枫叶城, 冬 later), her autonomous
+behaviour never chooses to leave the map or "go home". No want, wish, moodlet or need may
+trigger a trip back to the desktop house.
+- Low needs are met **first in the house the map gives her** (spring farmhouse, summer
+  lodge/cabana, the detective's house in 枫叶城), **otherwise at the nearest fitting spot inside
+  the map** (canteen, public bath, bench, public toilet…). Each season map must provide a
+  spot for every need (饱腹 精力 清洁 如厕 社交 开心) so this always works.
+- Only the player (or a story beat) takes her out of a season map.
+- Map-specific limits still apply (e.g. the parents' bedroom on the farm is not hers).
+Design docs: `docs/SEASON_MAPS.md`; 秋 story: `docs/AUTUMN_STORY.md`.
+
 ## Releases (do not change without the owner asking)
 - Pushes that touch the demo or `desktop/**` build the Windows app automatically
   (`.github/workflows/desktop.yml`, full game, version 0.1.<run>) and the 试玩版
