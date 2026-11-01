@@ -29,29 +29,22 @@ def uri(im):
 # G = print/accent, W = white trim, o/x/X shoes, skin q s S L). Rows 15-21 are the
 # top, 22+ the bottom, 26-27 the feet: drawn over the doll's own skin layer.
 SWIM = {
-    # girls: a one-piece with thin straps, hibiscus dots and a little frilled skirt
+    # Owner: two-piece bikini / bare-chested swim briefs; shared by hero and NPCs.
     ("f", "swim"): dict(sleeve="tank", top="""
+......u....u
+......u....u
+......uTCuTCu
+......uccuccu
 .
-......uTu..uCu
-......uTTCCCCu
-......uTCGCCcu
-......uTCCCGcu
-......uCGCCCcu
-......uCCCCCcu""", bottom="""
+.
+.""", bottom="""
 .....uTCCCCCCcu
-....uWWWWWWWWWWu""", ramps=(P.coral, P.coral), accent=P.mustard[3]),
-    # boys: a short-sleeved rash guard with a chest stripe, long board shorts
-    ("m", "swim"): dict(sleeve="tee", top="""
-.
-....uTTTTccCCCcu
-...uTTcTCCCCCcCcu
-...uuucWWWWWWcuuu
-......cTCCCCCc
-......cCCCCCCc
-......uccccccu""", bottom="""
-.....nPWPPPPPpn
-.....nPPGnnPGpn
-.....nRPpnnRPpn""", ramps=(P.sea, P.mustard), accent=P.coral[3]),
+......uCCCCcu
+.......uccu""", ramps=(P.coral,P.coral), accent=P.mustard[3]),
+    ("m", "swim"): dict(sleeve="tank", top=".", bottom="""
+.....nPPPPPPPpn
+......nPPPPpn
+.......nppn""", ramps=(P.sea,P.sea), accent=P.coral[3]),
     # wetsuit (both): long sleeves, a coloured chest panel, full legs, booties
     ("f", "wetsuit"): dict(sleeve="long", top="""
 .

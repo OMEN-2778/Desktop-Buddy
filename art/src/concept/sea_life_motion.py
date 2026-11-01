@@ -1,6 +1,7 @@
 """Eight-pose reef animals: shaded species profiles, flexible caudal peduncles,
 independent school phases and fin strokes. Original art, no external assets."""
 import math
+import random
 from functools import lru_cache
 import numpy as np
 from pixelkit import Sprite, Anim, P
@@ -36,13 +37,21 @@ def frames(kind):
         spr=species() if kind in ('bluestripe','convict') else S.fish(7,3,P.sea_grey,T=2,TH=4,dorsal=(.3,.7,0),anal=(.3,.7,0),belly=P.porcelain)
         cols=4 if kind=='bait_ball' else 3;rows=4 if kind=='bait_ball' else 3
         # Full padded swimmers fit in separate, staggered lanes without overlap/clipping.
-        step_x,step_y=spr.w+12,spr.h+13;w,h=cols*step_x+8,rows*step_y+4
+        step_x,step_y=spr.w+12,spr.h+13;w,h=int(cols*step_x*1.35)+8,int(rows*step_y*1.35)+4
+        rng=random.Random(731+sum(map(ord,kind)));points=[]
+        count=14 if kind=='bait_ball' else 8
+        for j in range(count):
+            for attempt in range(2000):
+                x=rng.randrange(0,w-spr.w-8);y=rng.randrange(0,h-spr.h-10)
+                if all(abs(x-a)>spr.w+8 or abs(y-b)>spr.h+10 for a,b in points):break
+            else: raise ValueError('School layout cannot fit')
+            points.append((x,y))
         result=[]
         for f in range(8):
             out=Sprite(w,h)
             for j in range(8 if kind!='bait_ball' else 14):
                 fish=bend(spr,f*math.tau/8+j*.8,'fish')
-                x=(j%cols)*step_x+(j//cols%2)*4;y=(j//cols)*step_y
+                x,y=points[j]
                 out.blit(fish,x,y)
             result.append(out)
         return tuple(result)

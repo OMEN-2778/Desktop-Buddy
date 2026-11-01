@@ -263,3 +263,5 @@ Rain/snow corrected too. Motion timing remains continuous; camera/other art unch
   `node tools/check_season_living_world.js` (includes a minute of five emitters and
   unchanged fish widths through turns), `node tools/check_season_polish.js`.
 - Applies only to `/summer/` and `/map-test/`; does not enable formal game seasonal maps.
+
+Owner 2026-11-01: irregular randomized fish schools (no rectangular ranks), rock avoidance; female bikini and male bare-chested briefs for hero and NPC alike. Test-only.

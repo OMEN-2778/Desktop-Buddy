@@ -7,6 +7,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- Seasonal test follow-up: seeded irregular separated fish schools; conservative whole-sprite
+  rock collision prevents entering solid terrain, retains last safe position when blocked.
+- Owner swimsuit change: female bikini, male bare-chested briefs, shared hero/NPC sheets.
+- Art connectivity tests pass. Conservative school collision can pause a school near rocks;
+  independent member steering remains a limitation. No formal map integration.
+
+## 2026-11-01 · Codex
 - Owner's sea polish (TEST ONLY): irregular, broad-to-narrow pixel sun openings/caustics;
   sparse staggered breath/hand/foot bubbles, waterline removal + defensive draw boundary.
 - Removed whole-fish turn squash/rotation; inverse-sampled connected body/tail poses,

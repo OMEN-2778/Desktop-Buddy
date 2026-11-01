@@ -15,7 +15,7 @@ const fx=makeSeasonEffects(DATA.skinRamp);let wetKind='clear',weatherOverride=nu
 const wxLabel=document.createElement('label');wxLabel.className='season-weather';wxLabel.innerHTML='天气 <select aria-label="地图测试天气"><option value="">跟随游戏</option><option value="clear">晴天</option><option value="rain">小雨</option><option value="storm">大雨</option><option value="snow">小雪</option><option value="blizzard">大雪</option></select>';canvas.parentElement.parentElement.querySelector('.controls').append(wxLabel);wxLabel.querySelector('select').onchange=e=>{weatherOverride=e.target.value||null;wetKind=weatherOverride||'clear';};
 const keys=new Set(),parts=[];let peopleRenderer=null;
 const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
-let solid=null;
+let solid=null,solidSum=null;
 function load(o){if(typeof o==='string'&&o.startsWith('data:image/')){if(!images.has(o)){const im=new Image();images.set(o,im);im.src=o;}return;}if(o&&typeof o==='object')Object.values(o).forEach(load);}
 const img=s=>images.get(s);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -115,7 +115,17 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
  fx.waves(ctx,t,cx,VW,WL,DATA.shore,DATA.seaEnd);
  const sim=img(DATA.seal[Math.floor(t*.7)%2]);ctx.drawImage(sim,DATA.sealAt[0],DATA.sealAt[1]-sim.height);
  for(const h of DATA.hotspots)if(!state.found.has(h.id))sparkle(h.x,h.y,t);
- for(const c of DATA.life){const ph=t*c.v/Math.max(1,c.r)+c.x*.031,x=c.x+Math.sin(ph)*c.r+(c.ox||0),y=c.y+Math.sin(t*.7+c.x)*2+(c.oy||0),left=Math.cos(ph)<0,im=img(c.f[Math.floor(t*10+c.x)%c.f.length]);
+ for(const c of DATA.life){const ph=t*c.v/Math.max(1,c.r)+c.x*.031,proposedX=c.x+Math.sin(ph)*c.r+(c.ox||0),proposedY=c.y+Math.sin(t*.7+c.x)*2+(c.oy||0),left=Math.cos(ph)<0,im=img(c.f[Math.floor(t*10+c.x)%c.f.length]);
+  c.w=im.width;c.h=im.height;
+  // Whole sprite bounds must remain in open water, including through turns.
+  const free=(xx,yy)=>{const x0=Math.floor(xx),y0=Math.floor(yy),x1=Math.ceil(xx+im.width),y1=Math.ceil(yy+im.height),stride=W+1;if(x0<0||x1>W||y0<=WL+3||y1>H)return false;return solidSum[y1*stride+x1]-solidSum[y0*stride+x1]-solidSum[y1*stride+x0]+solidSum[y0*stride+x0]===0;};
+  let x=proposedX,y=proposedY;
+  if(!free(x,y)){
+   if(c.safeX!==undefined){x=c.safeX;y=c.safeY;}
+   else{for(let up=1;up<300;up++){if(free(x,y-up)){y-=up;break;}}}
+  }
+  if(!free(x,y))continue;
+  c.safeX=x;c.safeY=y;
   c.cx=x+im.width/2;c.cy=y+im.height/2;c.w=im.width;c.h=im.height;
   if(x+im.width<cx||x>cx+VW||y+im.height<cy||y>cy+vh)continue;
   ctx.save();ctx.translate(x+im.width/2,y+im.height/2);ctx.scale(left?-1:1,1);ctx.drawImage(im,-im.width/2,-im.height/2);ctx.restore();}
@@ -162,6 +172,7 @@ window.addEventListener('keyup',e=>keys.delete(e.key));window.addEventListener('
 load(DATA);Promise.all([...images.values()].map(im=>im.decode())).then(()=>{
  const mc=document.createElement('canvas');mc.width=W;mc.height=H;const m=mc.getContext('2d');m.drawImage(img(DATA.solid),0,0);
  const d=m.getImageData(0,0,W,H).data;solid=new Uint8Array(W*H);for(let i=0;i<W*H;i++)solid[i]=d[i*4+3];
+ solidSum=new Uint32Array((W+1)*(H+1));for(let y=0;y<H;y++){let row=0;for(let x=0;x<W;x++){row+=solid[y*W+x]>0?1:0;solidSum[(y+1)*(W+1)+x+1]=solidSum[y*(W+1)+x+1]+row;}}
  state.y=standY(state.x);state.loaded=true;ctx.imageSmoothingEnabled=false;toast('先去更衣室换上泳装，再去海里玩吧～ 发光的小星星是可以探索的地方。',5);
  let last=performance.now();function frame(now){const dt=document.hidden?0:clamp((now-last)/1000,0,.05);last=now;if(!state.paused)state.time+=dt;advanceDoor(state.paused?0:dt);fx.tickWater(state.paused?0:dt);move(dt);camera(dt);draw();updateUI();requestAnimationFrame(frame);}requestAnimationFrame(frame);})
  .catch(e=>{const el=document.getElementById('error');el.hidden=false;el.textContent='地图加载失败，请刷新重试';console.error(e);});
