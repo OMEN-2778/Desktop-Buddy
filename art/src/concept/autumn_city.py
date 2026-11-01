@@ -1,4 +1,4 @@
-"""枫叶城 · polluted art review. One continuous 1152x1408 pixel world.
+"""枫叶城 · compact flat-roof mountain diorama, 640×688 native pixels.
 Top-left light; front facades, solid stone flights and terraced mountain bedrock.
 Original code art; project palette only. Routes drive both visible stair openings
 and the test-game navigation graph; never draw a barrier across their junctions.
@@ -13,48 +13,51 @@ import numpy as np
 from pixelkit import Sprite, P
 
 PREVIEW_SCALE=1
-W,H=1152,1408
-MAP_W,MAP_H=1024,1216
+W,H=640,688
+MAP_W,MAP_H=W,H
 SCALE_X,SCALE_Y=MAP_W/W,MAP_H/H
 def map_point(x,y):return round(x*SCALE_X),round(y*SCALE_Y)
 def runtime_routes():return [(name,[map_point(x,y) for x,y in points]) for name,points in ROUTES]
 def runtime_landmarks():
  return [{**p,'x':map_point(p['x'],p['y'])[0],'y':map_point(p['x'],p['y'])[1],'rect':[round(p['rect'][0]*SCALE_X),round(p['rect'][1]*SCALE_Y),round(p['rect'][2]*SCALE_X),round(p['rect'][3]*SCALE_Y)]} for p in LANDMARKS]
+# Compact diorama: five populated terraces; front-facing flat-roof houses.
+STREETS=[132,258,388,520,646]
 ROUTES=[
- ('河岸码头',[(144,1248),(272,1248),(272,1184),(336,1184),(336,1048)]),
- ('工人街',[(65,1048),(272,1048),(336,1048),(440,1048),(672,1048),(784,1048),(896,1048),(1000,1048),(1070,1048)]),
- ('西侧折梯',[(272,1048),(272,870),(336,870),(336,816)]),
- ('中城街',[(132,816),(336,816),(368,816),(430,816),(560,816),(672,816),(736,816),(832,816),(936,816),(1000,816)]),
- ('东侧折梯',[(1000,1048),(1038,1048),(1038,876),(936,876),(936,816)]),
- ('西上城梯',[(368,816),(368,600),(480,600)]),
- ('东上城梯',[(736,816),(810,816),(810,600),(784,600)]),
- ('矿业大街',[(304,600),(430,600),(480,600),(512,600),(608,600),(704,600),(784,600),(880,600),(968,600)]),
- ('山腰东梯',[(968,600),(1016,600),(1016,448),(944,448),(944,392)]),
- ('山腰街',[(672,392),(736,392),(832,392),(896,392),(944,392)]),
- ('山顶折梯',[(736,392),(736,280),(848,280),(848,240)]),
- ('山顶路',[(640,240),(704,240),(848,240),(912,240),(1008,240)]),
- ('货运升降机',[(1000,1048),(1056,1048),(1056,600),(968,600)]),
- ('矿道石阶',[(784,1048),(784,1184),(784,1248),(944,1248)]),
+ ('山顶街',[(24,132),(92,132),(188,132),(276,132),(330,132),(456,132),(608,132)]),
+ ('矿业街',[(24,258),(112,258),(260,258),(330,258),(464,258),(608,258),(620,258)]),
+ ('中城街',[(24,388),(100,388),(188,388),(276,388),(330,388),(344,388),(420,388),(520,388),(608,388)]),
+ ('工人街',[(24,520),(80,520),(174,520),(276,520),(344,520),(404,520),(476,520),(550,520),(608,520),(620,520)]),
+ ('河岸街',[(24,646),(144,646),(244,646),(344,646),(552,646),(608,646)]),
+ ('西侧石阶',[(24,132),(24,258),(24,388),(24,520),(24,646)]),
+ ('山顶石阶',[(330,132),(330,258)]),
+ ('广场石阶',[(330,258),(330,388)]),
+ ('工人街石阶',[(344,388),(344,520)]),
+ ('河岸石阶',[(344,520),(344,646)]),
+ ('东山石阶',[(608,132),(608,258)]),
+ ('货运升降机',[(608,258),(620,258),(620,520),(608,520)]),
+ ('东岸石阶',[(608,520),(608,646)]),
 ]
 LANDMARKS=[
- dict(id='airstrip',name='山顶停机坪',x=912,y=240,need=None,rect=[866,192,128,52]),
- dict(id='nursery',name='枫树苗圃',x=704,y=240,need=None,rect=[629,178,103,59]),
- dict(id='hut',name='山上小屋',x=672,y=392,need=None,rect=[642,321,63,69]),
- dict(id='lookout',name='旧瞭望台',x=832,y=392,need='fun',rect=[792,312,79,80]),
- dict(id='mine_office',name='赤岩矿业',x=608,y=600,need=None,rect=[536,373,180,226]),
- dict(id='townhall',name='市政厅',x=880,y=600,need=None,rect=[824,464,117,135]),
- dict(id='detective_home',name='阿简的家',x=430,y=816,need='all',rect=[387,708,98,106]),
- dict(id='plaza',name='中城广场',x=560,y=816,need='social',rect=[497,763,110,52]),
- dict(id='market',name='街角集市',x=832,y=816,need='hunger',rect=[796,772,96,43]),
- dict(id='notice',name='公告栏',x=672,y=816,need=None,rect=[648,777,48,36]),
- dict(id='canteen',name='工人食堂',x=440,y=1048,need='hunger',rect=[393,948,118,98]),
- dict(id='laundry',name='洗衣铺',x=336,y=1048,need='hygiene',rect=[301,948,86,98]),
- dict(id='clinic',name='苏医生的诊所',x=672,y=1048,need=None,rect=[631,948,102,98]),
- dict(id='bath',name='公共浴场',x=896,y=1048,need='hygiene',rect=[852,948,118,98]),
- dict(id='toilet',name='公厕',x=1000,y=1048,need='bladder',rect=[974,979,65,67]),
- dict(id='mine',name='旧矿道',x=944,y=1248,need=None,rect=[904,1182,84,67]),
- dict(id='pier',name='锈蚀码头',x=144,y=1248,need=None,rect=[74,1218,148,57]),
+ dict(id='airstrip',name='山顶停机坪',x=456,y=132,need=None,rect=[354,58,236,70]),
+ dict(id='nursery',name='枫树苗圃',x=92,y=132,need=None,rect=[45,55,92,72]),
+ dict(id='hut',name='山上小屋',x=188,y=132,need=None,rect=[150,60,76,68]),
+ dict(id='lookout',name='旧瞭望台',x=276,y=132,need='fun',rect=[242,56,65,72]),
+ dict(id='mine_office',name='赤岩矿业',x=112,y=258,need=None,rect=[46,152,134,100]),
+ dict(id='townhall',name='市政厅',x=260,y=258,need=None,rect=[204,152,104,100]),
+ dict(id='detective_home',name='阿简的家',x=100,y=388,need='all',rect=[50,279,100,103]),
+ dict(id='plaza',name='中城广场',x=276,y=388,need='social',rect=[246,321,67,61]),
+ dict(id='market',name='街角集市',x=420,y=388,need='hunger',rect=[367,325,104,57]),
+ dict(id='notice',name='公告栏',x=520,y=388,need=None,rect=[495,339,53,43]),
+ dict(id='canteen',name='工人食堂',x=174,y=520,need='hunger',rect=[126,416,98,98]),
+ dict(id='laundry',name='洗衣铺',x=80,y=520,need='hygiene',rect=[44,452,72,62]),
+ dict(id='clinic',name='苏医生的诊所',x=276,y=520,need=None,rect=[236,416,76,98]),
+ dict(id='bath',name='公共浴场',x=404,y=520,need='hygiene',rect=[368,416,74,98]),
+ dict(id='toilet',name='公厕',x=476,y=520,need='bladder',rect=[454,452,44,62]),
+ dict(id='mine',name='旧矿道',x=552,y=646,need=None,rect=[510,559,79,83]),
+ dict(id='pier',name='锈蚀码头',x=144,y=646,need=None,rect=[78,608,125,40]),
 ]
+LIFT=dict(x=620,top=258,bottom=520)
+SMOKE=(572,170)
 FONT='/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc'
 @lru_cache(None)
 def font(n):return ImageFont.truetype(FONT,n,index=2)
@@ -200,14 +203,15 @@ class City:
  def window(self,x,y,w=12,h=17,lit=False):
   self.box(x-2,y-2,w+4,h+5,P.oat[0]);self.box(x,y,w,h,P.wood[0]);self.box(x+2,y+2,w-4,h-4,P.oat[2] if lit else P.teal[0]);self.box(x+2,y+2,w-4,3,P.mustard[3] if lit else P.teal[2]);self.box(x+w//2,y,1,h,P.walnut[1]);self.box(x,y+h//2,w,1,P.walnut[1]);self.box(x-3,y+h,w+6,2,P.oat[2])
  def roof(self,x,y,w,depth=17,pitch=12):
-  # Hip roof: front plane, shaded right hip, lifted eaves; tile lengths stay consistent.
-  self.poly([(x-7,y+4),(x+8,y-pitch),(x+w-10,y-pitch),(x+w+10,y+4),(x+w+4,y+depth),(x-3,y+depth)],P.slate[0]);self.poly([(x+8,y-pitch),(x+w-10,y-pitch),(x+w-2,y+depth-3),(x-3,y+depth-3)],P.slate[2]);self.poly([(x+w-10,y-pitch),(x+w+10,y+4),(x+w+4,y+depth),(x+w-2,y+depth-3)],P.slate[1])
-  for yy in range(y-pitch+2,y+depth-2,4):
-   u=(yy-(y-pitch))/(depth+pitch);lo=round(x+8-u*11);hi=round(x+w-10+u*8)
-   self.line([(lo,yy),(hi,yy)],P.slate[0]);self.line([(lo,yy+1),(hi,yy+1)],P.slate[3])
-   for xx in range(lo+2,hi,7):self.box(xx+(yy%3),yy+1,1,2,P.slate[1])
-  self.line([(x-5,y+depth-1),(x+w+5,y+depth-1)],P.wood[0],3);self.line([(x-5,y+depth-3),(x+w+5,y+depth-3)],P.oat[1]);self.line([(x+7,y-pitch-1),(x+w-10,y-pitch-1)],P.slate[4],2)
-  for xx,sg in ((x-6,-1),(x+w+7,1)):self.line([(xx-sg*4,y+depth-2),(xx,y+depth-6),(xx+sg,y+depth-9)],P.slate[2],2)
+  # Shallow flat terrace, continuous parapet, brick coping: no pitched roof anywhere.
+  self.box(x-3,y-7,w+6,17,P.pave[0]);self.box(x-1,y-5,w+2,12,P.oat[1])
+  for xx in range(x+3,x+w-2,12):self.box(xx,y-3,8,1,P.pave[1])
+  self.box(x-4,y+6,w+8,5,P.oat[0]);self.box(x-4,y+5,w+8,2,P.oat[3])
+  self.box(x-3,y-8,w+6,3,P.oat[3]);self.box(x-3,y-7,3,14,P.oat[2]);self.box(x+w,y-7,3,14,P.pave[1])
+  # Modest roof tank, vent and pots distinguish silhouettes without adding side walls.
+  if w>62:
+   self.box(x+8,y-17,13,13,P.steel[0]);self.box(x+9,y-16,11,11,P.steel[1]);self.oval(x+14,y-17,6,2,P.steel[2]);self.line([(x+21,y-10),(x+25,y-10),(x+25,y+5)],P.steel[0])
+   self.box(x+w-20,y-14,8,10,P.clay[0]);self.box(x+w-22,y-16,12,3,P.oat[1])
  def building(self,x,base,w,floors=2,kind='old',sign=None,seed=1):
   r=random.Random(seed);floor=36;hh=floors*floor+13;y=base-hh;side=18
   wall=P.oat if kind=='old' else P.clay if kind=='brick' else P.sage
@@ -267,164 +271,110 @@ class City:
 
 
 def background(c):
- r=c.r
- for y in range(H):c.line([(0,y),(W,y)],P.sky_soft[2] if c.stage>=4 else P.oat[2])
- c.oval(165,102,25,25,P.light[0] if c.stage>=4 else P.oat[3])
- # Continuous receding ridges, not disconnected facets or floating skyline windows.
- for layer,col,base in [(0,P.porcelain[0],330),(1,P.pave[1],460),(2,P.pave[0],610)]:
-  pts=[(-30,base)]
-  for x in range(-30,W+30,12):
-   yy=base-(math.sin(x*.006+layer*.9)*54+math.sin(x*.017+layer)*26+math.sin(x*.039+layer)*8)
-   pts.append((x,round(yy)))
-  c.poly(pts+[(W,H),(0,H)],col)
- # Main ridge wraps the town as one stone body with narrow stratification and fissures.
- ridge=[(0,850),(48,731),(134,668),(211,648),(276,588),(329,539),(410,508),(478,444),(553,395),(615,294),(702,230),(818,178),(1007,225),(1093,303),(1152,422),(1152,1260),(0,1260)]
- c.poly(ridge,P.oat[0])
- for j in range(85):
-  x=r.randrange(W);y=r.randrange(390,1180);length=r.randrange(12,53)
-  c.line([(x,y),(x+length//2,y-6),(x+length,y-3)],P.pave[0] if j%3 else P.oat[1])
-  if j%4==0:c.line([(x+length//2,y-6),(x+length//2-4,y+17),(x+length//2+1,y+25)],P.pave[0])
- # Distant workers' housing grows out of the left-hand slope, compressed with depth.
- for j in range(16):
-  x=15+(j%5)*83+(j//5%2)*20;base=600+(j//5)*42-(j%5)*26
-  w=47+(j%3)*5;hh=33+(j%4)*13
-  c.box(x,base-hh,w,hh,P.pave[1]);c.box(x-3,base-hh-3,w+7,4,P.pave[0])
-  c.poly([(x-5,base-hh-3),(x+8,base-hh-12),(x+w-6,base-hh-12),(x+w+6,base-hh-3)],P.oat[0]);
-  for yy in range(base-hh+7,base-3,14):
-   for xx in range(x+6,x+w-5,13):c.box(xx,yy,5,7,P.pave[0]);c.box(xx,yy,2,5,P.oat[1])
-  c.line([(x,base),(x+w+3,base)],P.oat[1])
- # Polluted river bends around the city foot.
- c.poly([(0,1169),(140,1200),(309,1178),(503,1220),(684,1198),(849,1236),(1152,1191),(1152,H),(0,H)],P.teal[2] if c.stage>=2 else P.teal[0])
- c.poly([(0,1195),(160,1227),(310,1208),(510,1253),(682,1230),(850,1275),(1152,1225),(1152,H),(0,H)],P.teal[3] if c.stage>=2 else P.sage[0])
- for j in range(360):
-  x=r.randrange(W);y=r.randrange(1205,H);length=r.randrange(3,27)
-  c.line([(x,y),(x+length,y)],P.teal[4] if c.stage>=2 else P.teal[1] if j%4 else P.oat[0])
- # Oily flow from the concealed drain.
- if c.stage<2:c.poly([(1019,1204),(1000,1242),(954,1258),(898,1288),(963,1305),(1013,1262),(1050,1224)],P.oak[0])
- for x,y in [(97,1351),(323,1279),(622,1330),(909,1373)]:c.box(x,y,7,2,P.oat[2]);c.box(x+3,y-2,3,2,P.oat[0])
+ # Full-frame planted mountainside, with no unused skyline or vast blank river.
+ c.box(0,0,W,H,P.sage[0] if c.stage>=4 else P.oat[0])
+ for y in range(0,H,18):
+  for x in range(-10,W,24):
+   xx=x+(y//18%2)*11;c.poly([(xx,y+8),(xx+8,y),(xx+24,y+3),(xx+30,y+15),(xx+9,y+19)],P.pave[0]);c.line([(xx+6,y+4),(xx+20,y+4)],P.oat[1])
+ # Continuous narrow river at the foot of the model; it changes with the story.
+ c.box(0,574,W,114,P.teal[2] if c.stage>=2 else P.teal[0])
+ for j in range(190):
+  x=c.r.randrange(W);y=c.r.randrange(577,H);c.box(x,y,c.r.randrange(3,16),1,P.teal[3] if c.stage>=2 else P.sage[1])
 
 def city_layers(stage=0,review=False):
  c=City(stage);background(c)
- for x,y,w,h,seed in [(576,232,510,120,1),(462,390,600,118,2),(220,592,855,125,3),(65,811,1020,125,4),(10,1048,1127,185,5)]:
-  c.rock_bank(x,y,w,h,seed)
- # Terraces align to the screen axes. Perspective comes from the architecture,
- # facade overlap and visible retaining walls, never diagonal stair flights.
- c.terrace([(608,171),(1058,171),(1058,248),(608,248)],87,11)
- c.poly([(746,198),(1003,198),(1003,227),(746,227)],P.pave[0])
- for xx in range(768,989,37):c.box(xx,211,18,2,P.oat[3])
- c.poly([(876,208),(900,204),(940,209),(950,215),(927,217),(900,215)],P.porcelain[1]);c.poly([(909,211),(898,193),(910,193),(929,211),(935,230),(925,230)],P.porcelain[2]);c.box(937,210,10,3,P.teal[1])
- c.building(981,234,51,1,'old',None,41)
- for x,y in [(646,228),(680,228),(714,228)]:c.box(x-8,y,21,8,P.wood[0]);c.tree(x,y,.55)
- c.terrace([(494,308),(993,308),(993,402),(494,402)],97,12)
- c.building(642,382,59,1,'old',None,32)
- for xx in (801,859):c.box(xx,335,5,48,P.walnut[0]);c.box(xx+1,336,2,45,P.wood[2])
- c.box(794,354,78,5,P.wood[0]);c.rail((796,354),(869,354),True);c.roof(795,326,74,15,18);c.bench(811,383);c.tree(942,384,.85)
- c.terrace([(255,468),(1028,468),(1028,612),(255,612)],103,23)
- c.building(304,590,77,2,'brick',None,71);c.building(392,590,71,3,'old',None,72)
- c.building(748,578,54,2,'old',None,89)
- c.masonry([(1028,551),(1126,551),(1126,592),(1028,592)],421);c.box(1028,551,99,4,P.oat[2]);c.building(1045,553,70,2,'brick',None,42)
- c.chimney(1008,535,173);c.chimney(1071,574,121);c.pipe([(962,539),(944,539),(944,583),(991,583)])
- # Headquarters' top office is reserved as a story interaction.
- x,y,w,h=537,410,144,180
- c.box(x,y,w,h,P.oat[1]);c.box(x+4,y+4,w-8,h-8,P.oat[2])
- for yy in range(y+15,y+h-36,34):
-  c.box(x+3,yy+26,w-6,3,P.oat[0]);c.line([(x+3,yy+25),(x+w-4,yy+25)],P.oat[3])
-  for xx in range(x+14,x+w-10,28):c.window(xx,yy,15,20)
- for xx in range(x+8,x+w,28):c.box(xx,y,4,h,P.oat[1]);c.box(xx,y,1,h,P.oat[3])
- c.poly([(x-5,y),(x+27,y-21),(x+w+38,y-21),(x+w+4,y)],P.pave[2]);c.box(x-5,y,153,7,P.pave[0]);c.box(x-7,y-3,157,4,P.oat[3]);c.sign(x+19,y+125,107,'赤岩矿业',14)
- c.box(595,556,27,34,P.steel[0]);c.box(598,559,21,29,P.teal[1]);c.box(607,559,2,29,P.steel[3]);c.building(824,590,99,3,'civic','市政厅',74)
- c.lamp(705,603);c.bench(729,600)
- c.terrace([(94,663),(1020,663),(1020,828),(94,828)],113,37)
- c.building(154,801,87,4,'old',None,101);c.building(260,801,81,3,'old',None,102);c.building(397,806,70,2,'old','阿简的家',120)
- c.building(696,800,88,3,'brick',None,105);c.building(875,800,94,2,'old',None,106)
- c.box(281,666,20,14,P.steel[1]);c.oval(291,666,10,3,P.steel[2]);c.line([(147,745),(260,757),(386,746)],P.steel[0])
- c.bench(525,800);c.bench(576,800);c.lamp(615,818);c.tree(618,797,.75)
- c.box(650,778,3,27,P.wood[0]);c.box(692,778,3,27,P.wood[0]);c.box(647,773,50,23,P.wood[0]);c.box(650,776,44,17,P.oat[1]);c.box(655,778,10,11,P.oat[3]);c.box(671,778,15,7,P.oat[2])
- c.stall(800,804);c.stall(848,804,P.sage)
- c.oval(962,750,25,8,P.wood[0]);c.box(960,719,3,29,P.oat[1]);c.poly([(933,721),(959,708),(990,722)],P.clay[1])
- for xx in (942,960,978):c.box(xx,723,1,23,P.steel[1]);c.oval(xx,742,6,3,P.oat[1])
- c.terrace([(28,899),(1094,899),(1094,1060),(28,1060)],124,49)
- c.building(80,1038,88,3,'old',None,201);c.building(180,1038,72,2,'brick',None,202);c.building(302,1038,71,2,'old','洗衣铺',203);c.building(393,1038,100,2,'old','工人食堂',204)
- c.building(544,1038,70,3,'brick',None,205);c.building(632,1038,84,2,'civic','苏医生诊所',206);c.building(789,1038,48,2,'old',None,207);c.building(852,1038,100,2,'brick','公共浴场',208);c.building(970,1038,43,1,'civic','公厕',209)
- c.stall(460,1057,P.sage);c.bench(573,1054);c.lamp(724,1059);c.lamp(141,1059)
- c.pipe([(864,942),(846,942),(846,1110),(1006,1110),(1006,1199)])
- for xx in (304,326):c.oval(xx,1059,10,5,P.steel[0]);c.oval(xx,1057,9,4,P.porcelain[0]);c.line([(xx-6,1057),(xx+5,1057)],P.teal[1])
- for xx in (186,204,220):c.box(xx,1050,13,14,P.wood[1]);c.oval(xx+6,1049,6,3,P.slate[0])
- c.masonry([(750,1137),(1095,1137),(1095,1264),(750,1264)],61)
- c.oval(944,1210,37,40,P.cut[0]);c.box(907,1210,75,42,P.cut[0]);c.oval(944,1210,26,30,P.ink[0]);c.box(918,1210,53,40,P.ink[0])
+ # Whole-city masonry platforms are only a few steps apart, each filled with frontage.
+ for top,bottom,seed in [(22,146,1),(159,272,2),(286,402,3),(418,534,4)]:
+  c.terrace([(8,top),(632,top),(632,bottom),(8,bottom)],30,seed)
+  # Thin drainage channel and paving edging instead of empty slabs.
+  c.box(10,bottom-4,620,2,P.pave[0])
+  for x in range(12,630,9):c.box(x,bottom-4,4,1,P.oat[2])
+ # Upper garden: nursery racks, a real cottage and flat-roof lookout.
+ c.building(150,120,76,1,'old','山上小屋',8)
+ c.building(242,120,65,1,'civic','瞭望台',9)
+ c.box(253,53,3,16,P.steel[0]);c.box(252,52,20,4,P.steel[1]);c.box(270,50,3,8,P.steel[2])
+ for x in (53,83,113):
+  c.box(x-8,94,22,22,P.wood[1]);c.box(x-9,94,24,3,P.wood[3]);c.box(x-6,98,18,14,P.oak[0]);c.tree(x+3,95,.5)
+ c.sign(52,53,80,'枫树苗圃',10)
+ c.box(350,49,244,73,P.pave[0]);c.box(353,52,238,67,P.pave[1])
+ for x in range(365,586,27):c.box(x,108,15,2,P.oat[3]);c.box(x,57,15,2,P.oat[3])
+ # Plane is compact but has separate wings, tail, propeller and cabin pixels.
+ c.poly([(411,86),(452,80),(484,83),(503,90),(486,96),(450,95)],P.porcelain[1]);c.poly([(448,85),(431,66),(441,65),(469,86),(479,106),(469,106),(454,93)],P.porcelain[2]);c.box(481,84,8,5,P.teal[1]);c.box(405,78,3,16,P.steel[0]);c.line([(411,86),(407,75)],P.porcelain[2],3)
+ c.sign(505,76,73,'停机坪',10)
+ # Upper town: adjoining offices and a compact furnace yard.
+ c.building(46,246,134,2,'civic','赤岩矿业',20);c.building(204,246,104,2,'old','市政厅',21)
+ c.building(364,246,86,2,'brick','机修间',22);c.building(460,246,94,1,'brick',None,23)
+ c.chimney(572,242,72);c.pipe([(557,228),(544,228),(544,240),(487,240)])
+ for x in (470,490,510):c.box(x,230,14,14,P.wood[0]);c.box(x+2,231,10,9,P.oak[0])
+ if stage>=1:
+  c.box(468,230,57,10,P.sage[1]);c.line([(468,230),(525,230)],P.sage[3])
+ c.lamp(192,248)
+ # Central residence / plaza. Little roofs, ledges and courts fill the whole terrace.
+ c.building(50,376,100,2,'old','阿简的家',30);c.building(162,376,72,2,'brick',None,31)
+ c.bench(253,373);c.lamp(303,379);c.box(251,353,3,17,P.wood[1]);c.box(249,350,9,5,P.oat[2])
+ c.building(370,341,98,1,'old','街角集市',32);c.stall(374,376,P.sage);c.stall(423,376,P.clay)
+ c.building(480,330,106,1,'civic',None,33)
+ c.box(497,346,48,27,P.wood[0]);c.box(500,349,42,21,P.oat[2]);c.box(503,352,12,15,P.oat[3]);c.box(520,352,17,8,P.clay[1]);c.box(501,372,3,9,P.wood[0]);c.box(538,372,3,9,P.wood[0]);c.bench(553,374)
+ # Worker frontages: narrow shared walls and distinct practical fittings.
+ c.building(44,508,72,1,'old','洗衣铺',40);c.building(126,508,98,2,'old','工人食堂',41)
+ c.building(236,508,76,2,'civic','苏医生诊所',42);c.building(368,508,74,2,'brick','公共浴场',43)
+ c.building(454,508,44,1,'civic','公厕',44);c.building(510,508,78,2,'old',None,45)
+ for x in (48,63):c.oval(x,508,6,3,P.steel[0]);c.oval(x,506,5,2,P.porcelain[2])
+ c.box(296,462,10,10,P.porcelain[2]);c.box(300,463,2,8,P.clay[2]);c.box(297,466,8,2,P.clay[2])
+ c.box(382,482,12,22,P.steel[1]);c.line([(388,482),(388,469),(396,469)],P.steel[0],2)
+ for x,y,seed in [(52,376,1),(170,376,2),(131,508,3),(516,508,4),(210,246,5),(155,120,6)]:c.street_detail(x,y,seed)
+ # Planted riverbank is solid ground; roots never stand directly in the water.
+ c.terrace([(35,550),(317,550),(317,604),(35,604)],13,50)
+ c.box(39,558,273,42,P.oak[0])
+ for x in range(42,312,12):c.box(x,560+(x%7),7,2,P.oat[0])
+ # Rock-cut lower precinct; narrow quay and the story's concealed tailings pipe.
+ c.masonry([(350,551),(632,551),(632,660),(350,660)],51)
+ c.building(374,628,74,1,'brick',None,52)
+ c.oval(552,594,33,31,P.cut[0]);c.box(519,594,67,46,P.cut[0]);c.oval(552,594,24,24,P.ink[0]);c.box(528,594,49,46,P.ink[0])
  for i in range(9):
-  t=i*math.pi/8;xx=round(944+34*math.cos(t));yy=round(1210-37*math.sin(t));c.line([(xx-3,yy-2),(xx+3,yy+2)],P.pave[2],4)
- for yy in range(1229,1248,6):c.line([(914,yy),(972,yy)],P.wood[0],3)
- c.line([(924,1230),(924,1247)],P.steel[2],2);c.line([(962,1230),(962,1247)],P.steel[2],2);c.sign(1002,1191,62,'旧矿道',11)
- for ax,ay,aw,ah in [(432,859,28,33),(628,862,31,35),(693,1100,30,43),(377,1100,25,42)]:
-  c.oval(ax+aw//2,ay,aw//2,aw//2,P.pave[0]);c.box(ax,ay,aw,ah,P.pave[0]);c.box(ax+4,ay+3,aw-8,ah-3,P.walnut[0])
-  for xx in range(ax+6,ax+aw-3,5):c.box(xx,ay+5,1,ah-6,P.steel[1])
- for x,y in [(382,863),(561,1099),(1069,1100)]:c.box(x,y,11,7,P.cut[0]);c.line([(x,y+8),(x,y+37)],P.sage[0],2)
- for x,y in [(212,867),(491,1108),(893,1149)]:c.box(x,y,13,18,P.oat[1]);c.box(x+1,y+1,11,3,P.clay[1]);c.line([(x+2,y+7),(x+9,y+7)],P.pave[0])
- # Exposed mountain ribs interrupt retaining courses; small drainage details show
- # how the city was cut into rock. All of these stay outside staircase footprints.
- for x,y,w,h,seed in [(98,839,121,48,31),(504,849,109,39,32),(830,840,67,42,33),(34,1075,153,67,34),(398,1079,151,66,35),(590,1094,118,53,36),(614,265,91,31,37)]:
-  c.rock_bank(x,y,w,h,seed)
- for x,y in [(295,626),(552,631),(864,632),(170,850),(608,855),(895,864),(125,1098),(473,1092),(654,1087)]:
-  c.box(x,y,9,6,P.cut[0]);c.box(x-2,y-2,13,2,P.oat[2])
-  for j in range(15):
-   xx=x+(j%3)*3+(j//3%2);yy=y+8+j*2
-   c.box(xx,yy,2,3,P.sage[0]);c.box(xx-2,yy+1,3,1,P.oak[1])
- # Domestic fixtures stay on the frontages, never in a stair corridor.
- for x,y,seed in [(181,801,1),(283,801,2),(397,806,3),(711,800,4),(902,800,5),(91,1037,6),(404,1037,7),(646,1037,8),(861,1037,9),(313,590,10),(838,590,11),(649,382,12)]:c.street_detail(x,y,seed)
- # Wall-mounted utility boxes, rain chains and patched plaster establish lived-in streets.
- for x,y in [(246,774),(467,782),(790,775),(255,1015),(616,1009),(955,1010),(926,568)]:
-  c.box(x,y,10,14,P.steel[0]);c.box(x+1,y+1,8,12,P.steel[1]);c.box(x+3,y+3,4,3,P.porcelain[0]);c.line([(x+5,y),(x+5,y-15),(x-8,y-15)],P.steel[0])
- # Draw flights first, then flush cross-streets. Their shared coordinates create
- # actual landings; street paving stops behind doors instead of erasing their sills.
+  angle=i*math.pi/8;x=552+30*math.cos(angle);y=594-30*math.sin(angle);c.box(x-2,y-2,5,4,P.oat[2])
+ c.sign(514,550,77,'旧矿道',11)
+ c.pipe([(445,568),(469,568),(469,617),(485,617)]);c.oval(486,619,7,8,P.steel[0]);c.oval(486,619,4,5,P.ink[0])
+ if stage<2:c.poly([(484,625),(470,642),(454,657),(468,672),(486,657),(495,632)],P.oak[0])
+ c.box(67,623,151,34,P.wood[0])
+ for x in range(69,216,6):c.box(x,625,4,30,P.wood[2])
+ c.bench(91,635);c.box(175,611,22,17,P.wood[1]);c.box(179,608,14,5,P.oat[1]);c.oval(206,634,6,6,P.steel[0]);c.oval(206,634,3,3,P.wood[2])
+ # River rocks, reed beds and moored craft fill the lower edge, not empty water.
+ c.poly([(81,669),(163,669),(149,684),(96,684)],P.walnut[0]);c.box(101,665,36,12,P.oat[1]);c.box(107,666,22,6,P.teal[0]);c.line([(88,670),(83,654)],P.wood[1])
+ for x,y in [(230,677),(287,672),(394,680),(588,679)]:
+  c.oval(x,y,18,7,P.pave[0]);c.oval(x-3,y-2,12,4,P.oat[0])
+  for j in range(5):c.line([(x+j*3,y-2),(x+j*3-2,y-14-j%3*4)],P.oak[1]);c.box(x+j*3-3,y-16-j%3*4,3,4,P.mustard[1])
+ # Shared route artwork: stone flights first; landings second, with open rail mouths.
  for vertical in (True,False):
   for name,points in ROUTES:
    if name=='货运升降机':continue
    for a,b in zip(points,points[1:]):
-    if (a[0]==b[0])==vertical:c.stairs(a,b,32)
- if stage>=1:
-  c.poly([(184,1048),(233,1048),(229,1059),(188,1059)],P.sage[1]);c.line([(185,1049),(231,1049)],P.sage[3]);c.line([(191,1050),(190,1058)],P.steel[0]);c.line([(223,1050),(224,1058)],P.steel[0])
-  for k in range(19):
-   xx=351+k*24;c.box(xx,1052+(k%3),13+k%5,1,P.pave[0]);c.box(xx+3,1053+(k%3),8,1,P.pave[3])
- # Planked quay, no angled route to it.
- c.box(74,1233,149,39,P.wood[0])
- for xx in range(77,220,6):c.box(xx,1235,4,33,P.wood[2] if xx%3 else P.wood[1])
- for x,y in [(79,1239),(213,1240),(144,1269)]:c.box(x,y,4,25,P.walnut[0]);c.box(x-2,y-3,8,4,P.clay[1])
- c.rail((78,1235),(218,1235),True)
- c.poly([(181,1322),(279,1322),(314,1334),(290,1354),(207,1354)],P.walnut[0]);c.poly([(193,1326),(276,1326),(301,1335),(281,1346),(216,1346)],P.oak[1]);c.box(235,1307,31,21,P.oat[0]);c.box(239,1309,23,11,P.teal[0]);c.line([(197,1325),(144,1273)],P.wood[1])
- for xx in (1043,1069):c.box(xx,600,4,448,P.steel[0]);c.box(xx+1,600,1,448,P.steel[3])
- for yy in range(606,1030,27):c.line([(1047,yy),(1068,yy+24)],P.steel[1]);c.line([(1068,yy),(1047,yy+24)],P.steel[1])
- if review:
-  c.box(1038,931,37,40,P.steel[0]);c.box(1041,934,31,32,P.wood[1])
-  for xx in range(1043,1071,6):c.box(xx,935,2,29,P.steel[2])
- c.line([(1056,598),(1056,930)],P.steel[0]);c.oval(1056,598,12,8,P.steel[0]);c.oval(1056,598,7,4,P.steel[2]);c.box(1035,971,45,5,P.steel[1]);c.stairs((968,600),(1056,600),32);c.stairs((1000,1048),(1056,1048),32)
- # Cable visually crosses the levels; its stations remain horizontally aligned to streets.
- c.line([(360,690),(815,363)],P.steel[0],2);c.line([(360,695),(815,368)],P.steel[2]);c.box(470,611,2,24,P.steel[0]);c.box(454,632,35,29,P.clay[0]);c.box(457,635,29,15,P.oat[1]);c.box(459,637,11,10,P.teal[1]);c.box(473,637,11,10,P.teal[0]);c.box(456,654,31,6,P.clay[1])
- for x,y,sz in [(30,1094,1.2),(1111,1157,1.3),(56,883,.9),(1090,846,.9),(350,855,.7)]:c.tree(x,y,sz)
- # Planting is anchored on real terrace soil/planters, away from doors and stair mouths.
- for x,y,z in [(602,230,.65),(1066,285,.8),(519,383,.9),(575,365,.7),(267,580,.8),(719,583,.7),(1064,570,.65),(112,799,.8),(496,790,.72),(995,792,.75),(44,1035,.8),(749,1032,.8),(1128,1043,1),(55,1177,.7)]:
-  c.box(x-11,y-2,24,7,P.oat[0]);c.tree(x,y,z)
- for i,(x,y) in enumerate([(618,216),(749,190),(775,190),(1039,228),(513,329),(546,329),(930,324),(963,324),(265,489),(291,489),(727,487),(941,567),(111,687),(125,786),(504,782),(634,783),(660,759),(991,785),(101,914),(131,914),(738,1001),(750,1017),(1081,1014),(69,1030),(48,1145),(690,1130),(720,1130),(1028,1155)]):
-  c.box(x-15,y,31,5,P.oat[0]);c.shrub(x,y,i+41)
- # Dense hillside groves occupy planted shoulders and rear courts, not walking mouths.
- for i,(x,y,z) in enumerate([(587,289,.85),(1097,340,1),(1090,410,.95),(476,442,.9),(522,458,.8),(574,365,.75),(350,690,.9),(430,684,.8),(544,757,1),(588,747,.9),(846,756,.9),(61,989,1),(204,938,.9),(399,933,.8),(521,973,1),(687,933,.85),(913,927,.9),(82,1151,.85),(162,1162,.9),(424,1160,.9),(500,1167,1),(586,1155,.85),(714,1190,.8),(1102,1225,1)]):
-  c.box(x-13,y-2,27,6,P.oat[0]);c.tree(x,y,z)
- for i,(x,y) in enumerate([(584,292),(1100,354),(1080,425),(458,451),(531,454),(347,694),(429,689),(547,761),(577,761),(842,763),(60,994),(202,942),(398,940),(520,978),(690,941),(913,934),(82,1158),(152,1166),(190,1168),(423,1166),(455,1170),(500,1171),(548,1165),(588,1160),(713,1195),(1090,1229)]):c.shrub(x,y,100+i)
- # Rails exported separately so actors on the same deck stand behind the front rail.
+    if (a[0]==b[0])==vertical:c.stairs(a,b,28)
+ for a,b in [((608,258),(620,258)),((608,520),(620,520))]:c.stairs(a,b,28)
+ for x in (607,633):c.box(x,249,3,276,P.steel[0]);c.box(x+1,250,1,274,P.steel[2])
+ for y in range(260,515,22):c.line([(610,y),(632,y+20)],P.steel[1])
+ if review:c.box(606,485,29,35,P.wood[0]);c.box(608,487,25,29,P.steel[1])
+ # A small suspended cable cabin crosses the planted seam above the plaza.
+ c.line([(185,277),(578,277)],P.steel[0]);c.box(354,277,2,9,P.steel[0]);c.box(343,285,26,22,P.clay[0]);c.box(346,288,20,11,P.teal[1]);c.box(346,300,20,4,P.clay[1])
+ # Root every reused maple in a real ledge or courtyard; all gaps get planted.
+ trees=[(8,69,.75),(137,62,.6),(233,61,.6),(318,58,.6),(601,50,.7),(626,86,.7),(10,217,.65),(190,217,.6),(354,214,.55),(592,214,.55),(9,342,.7),(245,324,.6),(288,341,.65),(351,351,.55),(594,361,.6),(10,476,.65),(121,449,.5),(323,449,.55),(448,445,.5),(594,474,.55),(47,587,.7),(92,590,.7),(142,590,.65),(198,589,.7),(248,590,.7),(300,595,.65),(458,577,.55),(600,596,.7),(632,647,.65)]
+ for x,y,z in trees:c.box(x-8,y-1,17,5,P.oat[0]);c.tree(x,y,z)
+ # Dense boundary vegetation frames the model; recycled palette variants, no new asset style.
+ shrubs=[]
+ for y in (22,151,282,411,545):
+  shrubs.extend((x,y) for x in range(46,600,26) if all(abs(x-v)>24 for v in (24,330,344,608,620)))
+ shrubs.extend([(53,604),(83,604),(116,605),(151,606),(182,604),(221,610),(253,607),(287,609),(300,623),(363,569),(451,623),(592,626)])
+ for i,(x,y) in enumerate(shrubs):c.shrub(x+(i*7%9)-4,y+(i*3%5)-2,200+i)
+ # Export only independent, split front rails (never baking them across a stair entry).
  fg=City(stage);fg.foreground_mode=False;fg.im=Image.new('RGBA',(W,H));fg.d=ImageDraw.Draw(fg.im)
  for a,b,wood in c.foreground_rails:fg.rail(a,b,wood)
  if review:
   for im,x,y,base in sorted(c.foliage,key=lambda p:p[3]):c.im.alpha_composite(im,(x,y))
   c.im.alpha_composite(fg.im)
- c.im=c.im.resize((MAP_W,MAP_H),Image.Resampling.NEAREST);c.d=ImageDraw.Draw(c.im)
- if review:
-  for xx,yy,seed in [(560,816,1),(704,600,2),(440,1048,3),(1000,1048,4)]:
-   xx,yy=map_point(xx,yy);c.person(xx,yy,seed)
- global LAST_FOLIAGE
- LAST_FOLIAGE=c.foliage
- global LAST_RAILS
- LAST_RAILS=c.foreground_rails
- return Sprite(0,0,px=np.array(c.im)),Sprite(0,0,px=np.array(fg.im.resize((MAP_W,MAP_H),Image.Resampling.NEAREST)))
+  for x,y,seed in [(276,388,1),(188,132,2),(174,520,3)]:c.person(x,y,seed)
+ global LAST_FOLIAGE,LAST_RAILS
+ LAST_FOLIAGE=c.foliage;LAST_RAILS=c.foreground_rails
+ return Sprite(0,0,px=np.array(c.im)),Sprite(0,0,px=np.array(fg.im))
 
 def polluted_city():return city_layers(0,True)[0]
 def detective_inside():
@@ -433,11 +383,25 @@ def detective_inside():
  for x,y,w,h in [(20,24,113,78),(137,24,185,78),(20,126,302,90)]:
   room.rect(x,y,w,h,P.plaster_study[2]);room.rect(x,y+h-18,w,18,P.wood[2])
   for yy in range(y+h-18,y+h,5):room.hline(x,x+w-1,yy,P.wood[1])
+ # Tile wainscot and wood paneling give the compact rooms material detail.
+ for yy in range(60,85,5):
+  room.hline(21,131,yy,P.porcelain[0])
+  for xx in range(22+(yy//5%2)*4,132,9):room.vline(xx,yy+1,yy+4,P.porcelain[0])
+ for xx in range(169,321,12):room.rect(xx,169,10,16,P.oat[1]).hline(xx,xx+9,169,P.oat[3])
  for xx in (25,191):room.blit(F.window(),xx,31)
  room.blit(F.bathtub(),28,70);room.blit(F.toilet(),91,85);room.blit(F.bed(),246,82)
- room.blit(F.kitchen_base(),30,182);room.blit(F.wall_cabinets(),30,136);room.blit(F.fridge(),99,173)
+ room.blit(F.backsplash(),30,168);room.blit(F.kitchen_base(),30,182);room.blit(F.wall_cabinets(),30,154);room.blit(F.fridge(),99,173)
  room.blit(F.sofa(),163,187);room.blit(F.bookshelf(),264,172);room.blit(F.coffee_table(),213,196)
  for k in range(21):room.rect(143,101+k*5,23,3,P.oat[2]);room.rect(143,104+k*5,23,2,P.wood[1])
+ # Fine native furniture details, leaving all six service approaches and stairs free.
+ room.blit(F.towel(),73,46);room.blit(F.sconce(True),112,34)
+ room.blit(F.nightstand(),228,91);room.blit(F.lamp(True),230,79)
+ room.blit(F.wardrobe(),294,68);room.blit(F.art_print(19,14,'sun'),221,35)
+ room.blit(F.desk(),181,87);room.blit(F.monitor(False),186,75);room.blit(F.office_chair(),206,87)
+ room.blit(F.rug(57),240,100);room.blit(F.rug(77),166,211)
+ room.blit(F.clock(),212,136);room.blit(F.art_print(24,16,'sun'),178,145)
+ room.blit(F.plant(False),300,194);room.blit(F.sconce(True),133,142)
+ room.blit(F.mug(),229,194);room.blit(F.bowl(),47,179)
  room.rect(20,185,16,31,P.walnut[1]);room.rect(22,187,12,27,P.wood[2]);room.set(30,203,P.mustard[3])
  return room
 

@@ -4,7 +4,7 @@
 </style>
 <header><h1>枫叶城 · 污染状态</h1><button id="fit">全城</button><button id="native">100%</button><button id="minus" aria-label="缩小">－</button><span id="zoom"></span><button id="plus" aria-label="放大">＋</button><button id="routes" aria-pressed="false">查看规划路线</button><a href="autumn-city-polluted.png" download>下载原图</a></header>
 <nav id="places" aria-label="查看地图地点"></nav><main id="stage" aria-label="可拖动缩放的像素地图"><canvas id="world" width="1152" height="1408" aria-label="枫叶城污染状态像素地图"></canvas><div id="hint">拖动查看 · 滚轮缩放 · 点击上方地点定位</div></main>
-<footer><span>一整张山城：石阶、折返巷、吊脚楼、货运升降机与索道</span><span>美术预览 · 剧情与行走尚未接入</span></footer>
+<footer><span>紧凑山城箱庭：平顶房、石阶、枫树庭院与河岸</span><span>整图预览 · 实际游玩请进入地图测试页</span></footer>
 <script>
 const DATA=__DATA__,stage=document.querySelector('#stage'),canvas=document.querySelector('#world'),ctx=canvas.getContext('2d'),picture=new Image();let scale=1,tx=0,ty=0,overlay=false,drag=null,ready=false;ctx.imageSmoothingEnabled=false;
 function pixelLine(a,b,color){ctx.fillStyle=color;let x=Math.round(a[0]),y=Math.round(a[1]),x1=Math.round(b[0]),y1=Math.round(b[1]),dx=Math.abs(x1-x),dy=-Math.abs(y1-y),sx=x<x1?1:-1,sy=y<y1?1:-1,err=dx+dy,n=0;for(;;){if(n++%12<7)ctx.fillRect(x-1,y-1,3,3);if(x===x1&&y===y1)break;let e=2*err;if(e>=dy){err+=dy;x+=sx}if(e<=dx){err+=dx;y+=sy}}}

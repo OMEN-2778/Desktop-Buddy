@@ -7,6 +7,15 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- Owner rejected sprawling autumn map: replaced with 640×688 compact flat-roof diorama
+  (64.6% less area), tightly packed frontages, 129 plants; all 17 story/service spots retained.
+- Rebuilt 13 routes/39 vertices; native furnished interior; explicit lift/smoke anchors,
+  foliage on minimap. Versioned old-save position migration preserves story/needs.
+- Fixed autumn discovery Array restoration; updated art/game handoffs and owner skill rules.
+- Geometry + full browser story/needs/save-upgrade/four-scale + seasonal regression;
+  test webpage only. No EXE integration or changes to approved story.
+
+## 2026-11-01 · Codex
 - Detailed autumn mountain repair: solid stone stairs/thresholds, route-derived open
   rail mouths, rerouted facade and roof collisions; exposed rock/drains replace stilts.
 - Rebuilt maple crowns, 102 independent plants; grounded props/utility details. New

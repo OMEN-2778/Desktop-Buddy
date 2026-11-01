@@ -5,7 +5,7 @@
 No autumn code is included in formal EXE/trial inputs. `/autumn/` remains an art inspector.
 
 ## Owner decisions now applied
-- One continuous compact map, **1024×1216** world pixels, not separate boxed areas.
+- One continuous compact map, **640×688** world pixels, not separate boxed areas.
 - Horizontal streets, vertical stair flights and right-angle landings. No diagonal
   walking links. Building walls show fronts only. More dry yellow maples/shrubs placed
   in planters, corners and along ledges, with doors and stair mouths kept accessible.
@@ -17,38 +17,27 @@ No autumn code is included in formal EXE/trial inputs. `/autumn/` remains an art
 - Only the player requests departure. Test entry is available any season, for review;
   formal autumn detective/unlock gates remain outside this test adapter.
 
-## Mountain-city repair · 2026-11-01
-- Owner requests detailed commercial-quality polish: a city founded on mountain rock,
-  solid stone stairs, many dry maples/shrubs and richer sensible scene dressing.
-- Fixed actual visual/nav mismatches: uninterrupted rails across stair mouths; west
-  lower stair through laundry roof; east lower through WC; east upper through housing;
-  west upper landing over detective roof; summit landing through pavilion roof; mine
-  stair through its lintel (now descends to a forecourt and approaches horizontally).
-  Relocated the cable cabin off the office sign; raised that sign above its door and
-  supplied a stone foundation under the detached eastern factory facade.
-- Routes remain orthogonal/connected; west upper and east upper are clear straight
-  alley flights. Lower switchbacks and summit landing have new coordinates. Restore
-  already projects old save positions/routes onto the new graph.
-- Flights now have sandstone treads/risers, solid masonry cheeks, caps and flush mouths.
-  Streets are drawn after flights, with their back edge below building sills; no door
-  bottom is erased by paving. Mountain ribs, retaining courses, exposed rock and drains
-  replace the timber stilt skeleton; utility boxes/crates/pots enrich existing frontages.
-- 102 individually sorted/fading foliage pieces (previous 52), with rebuilt lobed maple
-  crowns, trunks/roots and dry leaf clusters. Stage 4 still changes to autumn red.
-- Rail openings derive from ALL perpendicular route intersections. Tracked
-  `autumn_rails_world.json` stores the exact split segments; runtime packer consumes
-  these instead of guessing rail positions from route directions. Keep it with PNGs.
-- Tests: `python tools/check_autumn_geometry.py` catches blocked rail mouths, known
-  facade/roof traps, foliage/stage parity; browser game regression now physically walks
-  every distinct route vertex. Existing story/services/save/four-size checks retained.
-- Art atlas lint's 63 isolated pixels are intentional leaf tips/fallen leaves; palette
-  and binary transparency checks pass. No claim of independent commercial QA or
-  real-device performance certification; this remains the test map, not formal EXE.
+## Compact replacement · 2026-11-01 (current)
+The owner rejected the large city even after repairs. Rebuilt its composition as a
+640×688 continuous diorama (64.6% smaller), densely packed flat-roof frontages and
+129 reused/recoloured foliage pieces. All 17 story/life-service landmarks remain.
+Current coordinates and owner rules: AUTUMN_CITY.md. Old large-map coordinates are retired.
+
+- `layoutVersion:2` in runtime metadata/state. Adapter explicitly treats saved states
+  without this marker as v1; restore preserves quest/stage/flags/discoveries/needs,
+  resets obsolete travel/service/inside coordinates to the new airstrip, clamps lift.
+- Also fixed autumn discovery saves being restored as Set although controller uses an
+  Array; spring/summer keep their existing Set representation.
+- Lift and chimney effects use DATA anchors; ending tree uses plaza-relative offsets.
+  Whole-city map includes foliage/rails instead of showing bare baked backgrounds.
+- Detective interior uses native tiled wainscot, wood panels, wardrobe, bedside light,
+  small desk, framed art, clock and kitchen fittings. Existing service targets retained.
+- Geometry tests updated to every compact facade, rail mouths and <450000px area;
+  browser checks walk all 39 vertices, full story/services, four scales, normal saves
+  and explicit migration from an old large-map save. Existing seasonal test retained.
 
 ## Implementation / files
-- `art/src/concept/autumn_city.py` draws at design 1152×1408 then exports the compact
-  nearest-neighbour world. `runtime_routes()/runtime_landmarks()` export the same
-  coordinate conversion as the artwork; game character stays native 20×28.
+- `art/src/concept/autumn_city.py` draws/exports at native 640×688, with no shrinking pass. `runtime_routes()/runtime_landmarks()` export the same coordinates as the artwork; game character stays native 20×28.
 - Five environment states: dust/tarps/wet street, river clearing, furnace shut,
   sunny city/red maples. Base map excludes foreground foliage and front rails.
 - `autumn_foliage_atlas_0..4.png` + `autumn_foliage_world.json`: each tree/shrub is

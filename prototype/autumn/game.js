@@ -47,7 +47,8 @@ function makeSeason_autumn(opts, DATA) {
         found: [],
         mapOpen: false,
         autoAt: 0,
-        liftY: 1048 * DATA.scale[1],
+        layoutVersion: DATA.layoutVersion,
+        liftY: DATA.lift.bottom,
         riding: false,
         keyboard: false
     };
@@ -662,6 +663,8 @@ function makeSeason_autumn(opts, DATA) {
         if (state.mapOpen) {
             const sc = Math.min(342 / DATA.width, 236 / DATA.height), ox = (342 - DATA.width * sc) / 2;
             ctx.drawImage(bg, ox, 0, DATA.width * sc, DATA.height * sc);
+            for (const p of DATA.foliage) ctx.drawImage(images.get(DATA.foliageSheets[state.stage]), p.frame * 64, 0, 64, 96, ox + p.x * sc, p.y * sc, 64 * sc, 96 * sc);
+            ctx.drawImage(images.get(DATA.front), ox, 0, DATA.width * sc, DATA.height * sc);
             ctx.fillStyle = "#efc452";
             ctx.fillRect(ox + state.x * sc - 2, state.y * sc - 2, 4, 4);
             return;
@@ -682,7 +685,7 @@ function makeSeason_autumn(opts, DATA) {
             }
         }
         if (!state.inside) {
-            const x = 1056 * DATA.scale[0], y = state.liftY;
+            const x = DATA.lift.x, y = state.liftY;
             ctx.fillStyle = "#262434";
             ctx.fillRect(x - 15, y - 31, 30, 33);
             ctx.fillStyle = "#87573e";
@@ -723,7 +726,7 @@ function makeSeason_autumn(opts, DATA) {
             ctx.restore();
         } else if (!privacy) opts.drawHero(ctx, state.x, state.y, state, null);
         if (!state.inside) {
-            const lx = 1056 * DATA.scale[0], ly = state.liftY;
+            const lx = DATA.lift.x, ly = state.liftY;
             ctx.globalAlpha = state.riding ? .3 : 1;
             ctx.fillStyle = "#8b8899";
             for (let i = 0; i < 5; i++) ctx.fillRect(lx - 12 + i * 6, ly - 29, 1, 27);
@@ -742,9 +745,9 @@ function makeSeason_autumn(opts, DATA) {
             if (state.flags.tree) {
                 ctx.fillStyle = "#87573e";
                 ctx.fillRect(landmark("plaza").x + 22, landmark("plaza").y - 33, 3, 26);
-                for (const [x, y] of [ [ 579, 784 ], [ 587, 778 ], [ 591, 789 ] ]) {
+                for (const [x, y] of [ [ 18, -37 ], [ 25, -42 ], [ 29, -32 ] ]) {
                     ctx.fillStyle = "#e88a2f";
-                    ctx.fillRect(x * DATA.scale[0], y * DATA.scale[1], 9, 7);
+                    ctx.fillRect(landmark("plaza").x + x, landmark("plaza").y + y, 9, 7);
                 }
             }
         }
@@ -758,7 +761,7 @@ function makeSeason_autumn(opts, DATA) {
             if (state.stage < 3) {
                 ctx.fillStyle = "#c4c1bc";
                 for (let i = 0; i < 12; i++) {
-                    const x = 1008 * DATA.scale[0] - state.camX + Math.round((state.time * 5 + i * 7) % 65), y = 360 * DATA.scale[1] - state.camY - (state.time * 2 + i * 5) % 45;
+                    const x = DATA.smoke[0] - state.camX + Math.round((state.time * 5 + i * 7) % 65), y = DATA.smoke[1] - state.camY - (state.time * 2 + i * 5) % 45;
                     if (x >= 0 && x < 342 && y >= 0 && y < 236) ctx.fillRect(x, y, 3 + i % 3, 1);
                 }
             }
@@ -893,7 +896,18 @@ function makeSeason_autumn(opts, DATA) {
         state.quest = clamp(Math.floor(state.quest) || 0, 0, 6);
         state.stage = clamp(Math.floor(state.stage) || 0, 0, 4);
         state.flags ||= {};
-        state.found ||= [];
+        state.found = Array.from(state.found || []);
+        if (state.layoutVersion !== DATA.layoutVersion) {
+            // Preserve story/needs, discard travel coordinates from the retired large map.
+            state.x = landmark("airstrip").x;
+            state.y = landmark("airstrip").y;
+            state.route = [];
+            state.target = state.goal = state.service = state.pose = null;
+            state.inside = false;
+            state.layoutVersion = DATA.layoutVersion;
+        }
+        state.liftY = clamp(Number(state.liftY) || DATA.lift.bottom, DATA.lift.top, DATA.lift.bottom);
+        state.riding = false;
         const p = nearest(state.x, state.y);
         state.x = p.x;
         state.y = p.y;

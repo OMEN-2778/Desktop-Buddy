@@ -1095,3 +1095,11 @@ gaps from the same routes used for movement. Never send landings over house/pavi
 roofs. Enrich dry maple canopies, shrubs, exposed rock, drainage and lived-in frontages;
 root plants in actual courts/planting ledges, not visually on roofs. Keep continuous
 compact map, front facades, orthogonal streets and per-object foreground fading.
+
+### 枫叶城 replacement: compact flat-roof diorama (2026-11-01)
+Owner rejected the repaired large map as still too big/coarse. Latest decision overrides
+that composition: rebuild MUCH smaller, like a dense large diorama; tightly packed
+**flat-roof houses only**, compact carefully dressed rooms, fill gaps with reused /
+recoloured shrubs and trees. Include every story location. Current world 640×688,
+not the retired 1024×1216. Preserve native character scale, orthogonal stone stairs,
+open mouths, foreground fading and test-only integration. See AUTUMN_CITY.md.

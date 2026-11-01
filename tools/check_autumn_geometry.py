@@ -15,25 +15,17 @@ for rail in rails:
   if u[0]!=v[0] or name=='货运升降机':continue
   if min(u[1],v[1])<=a[1]<=max(u[1],v[1]):
    assert not min(a[0],b[0])-13<u[0]<max(a[0],b[0])+13,(name,rail,u,v)
-# Main known facade traps: straight flights must fit a native 20px body beside them.
-facades=[(260,680,341,801),(397,735,467,806),(696,698,784,800),(875,735,969,800),(302,972,373,1038),(852,972,952,1038),(970,1010,1013,1038)]
+# All compact frontages: a full-width actor must fit beside vertical flights.
+facades=[(150,60,226,120),(242,56,307,120),(46,152,180,246),(204,152,308,246),(364,152,450,246),(460,188,554,246),(50,279,150,376),(162,279,234,376),(370,283,468,341),(480,272,586,330),(44,452,116,508),(126,416,224,508),(236,416,312,508),(368,416,442,508),(454,452,498,508),(510,416,588,508),(374,570,448,628),(519,563,586,640)]
 for name,pts in A.ROUTES:
- if name=='货运升降机':continue
  for a,b in zip(pts,pts[1:]):
-  if a[0]!=b[0]:continue
   for l,t,r,bot in facades:
-   assert not (a[0]-11<r and a[0]+11>l and max(min(a[1],b[1]),t)<min(max(a[1],b[1]),bot)),(name,a,b,(l,t,r,bot))
-# Horizontal landings must not run through roofs (the previous two visual shortcuts).
-for name,pts in A.ROUTES:
- for a,b in zip(pts,pts[1:]):
-  if a[1]!=b[1]:continue
-  for l,t,r,bot in [(397,690,467,806),(788,306,881,380)]:
-   assert not (t<a[1]<bot and max(min(a[0],b[0]),l)<min(max(a[0],b[0]),r)),(name,a,b,'roof')
-# Mine is approached from its forecourt, not down through its lintel/opening.
-for name,pts in A.ROUTES:
- for a,b in zip(pts,pts[1:]):
-  if a[0]==b[0]:
-   assert not (910<a[0]<978 and max(min(a[1],b[1]),1185)<min(max(a[1],b[1]),1240)),(name,'mine lintel')
+   if a[0]==b[0]:
+    assert not (a[0]-11<r and a[0]+11>l and max(min(a[1],b[1]),t)<min(max(a[1],b[1]),bot)),(name,a,b,(l,t,r,bot))
+   else:
+    assert not (t<a[1]<bot and max(min(a[0],b[0]),l)<min(max(a[0],b[0]),r)),(name,a,b,'roof')
+assert A.MAP_W*A.MAP_H < 450000
+assert len(A.LANDMARKS)==17
 for stage in range(5):
  im=Image.open(ROOT/f'art/out/concept/autumn_city_stage_{stage}.png')
  assert im.size==(A.MAP_W,A.MAP_H)

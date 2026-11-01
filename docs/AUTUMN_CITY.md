@@ -1,78 +1,52 @@
-# 枫叶城 · map art handoff
+# 枫叶城 · compact diorama art handoff
 
-Status (2026-11-01): compact front-facing art and playable test integration are complete.
-Gameplay handoff: `AUTUMN_GAME.md`. Formal EXE integration remains off.
-Approved story: `AUTUMN_STORY.md`. The new art does not revise its cast or plot.
+Current layout: **640×688 native pixels**, replaced the rejected 1024×1216 city on
+2026-11-01. Area reduced 64.6%. One continuous, densely furnished hillside diorama;
+not separate scenes. Only `/map-test/` playable integration, `/autumn/` art inspector.
+Story remains the approved `AUTUMN_STORY.md`; runtime details in `AUTUMN_GAME.md`.
 
-## Owner decisions
-- One large continuous city, not separate boxed areas. Strong depth and elevation,
-  inspired by the experience of Chongqing/Hongyadong's layered stairs and buildings.
-  Original town design; no copied landmark facade or outside artwork.
-- Up/down travel through long stairs, switchback landings, alleys and stacked structures;
-  never reduce the city to a left/right strip. First draw pollution state only.
-- Strict native pixel art, project palette and original 20x28 doll scale.
-- Previous seasonal test restriction remains: no formal integration before review.
+## Latest owner decisions (override the retired large-city composition)
+- Redo the map, much smaller, like a large miniature courtyard / diorama.
+- Closely packed **flat-roof houses only**. No hip roofs, sprawling blocks, empty skyline.
+- Carefully finished compact rooms/frontages; fill interstices with trees/shrubs and
+  purposeful domestic fittings. Reuse/recolour project assets where suitable.
+- Include every story location. Keep orthogonal stone stairs, clear mouths, mountain
+  foundations and per-object foreground fading from earlier requests.
+- Native palette and 20×28 character. No smooth vector art or antialiased scaling.
 
-## Layout and source
-`art/src/concept/autumn_city.py`: design 1152×1408, export **1024×1216** with nearest-neighbour. Opaque base/project palette only.
-Light comes from top left. Owner rejected diagonal flights and empty spacing: streets
-are horizontal, stairs vertical, landings right-angled. House walls show fronts only. Receding ridge + distant housing are less contrasted. All shapes rasterized
-at 1×; no filtered scaling, smooth paths, gradients or anti-aliased text.
-- Summit ~y180–300: landing strip, small plane, sapling beds.
-- Ridge ~y310–430: old hut and lookout.
-- Upper town ~y350–630: mine offices, town hall, chimneys/old works.
-- Mid-city ~y600–870: timber balconies, stilt supports, 阿简's house, market/plaza,
-  notice board, benches, disused carousel, pigeons.
-- Workers ~y880–1120: dorms, laundry, canteen, clinic, bath and public toilet.
-- River ~y1180–1408: polluted water, old mine tunnel/siding, concealed outfall, rusty pier.
+## Current coordinates (all 1×, no export shrink)
+World 640×688. Five horizontal streets: **132 / 258 / 388 / 520 / 646**.
+- Summit: nursery x92; hut x188; lookout x276; plane/airstrip x456.
+- Upper town: mining office x112; town hall x260; furnace/workshop x364–584.
+- Centre: detective home x100; dorm x188; plaza x276; market x420; notice x520.
+- Workers: laundry x80; canteen x174; clinic x276; bath x404; WC x476; dorm x550.
+- River: quay x144; planted bank x35–317; concealed outfall x486; old mine x552.
+- Western stair x24 connects every level. Interior stairs x330 (summit to centre),
+  x344 (centre to river). Eastern flights x608 top/bottom; freight lift x620, y258–520.
+- 17 stable landmark IDs, 13 connected route polylines, 39 unique walk vertices.
+- 129 independent foliage pieces; roots sit on terraces/bank beds, never directly in water.
+- No empty skyline; stone/vegetation border frames the entire model. The small plane
+  apron, clear walking lanes and functional plaza are intentionally usable open space.
 
-The broad ranges overlap intentionally: no hard district boundaries or scene changes.
-`ROUTES` (connected orthogonal polylines) stores planned feet positions. Stairs and switchback
-landings are drawn from this same metadata. `LANDMARKS` stores review focus positions and
-future need provisions. The runtime uses these explicit graph edges as its walkability constraint.
-Two projected routes can cross without being connected; navigation must keep explicit
-connections instead of introducing XY nearest-neighbour shortcuts. Elevated street
-foreground rails must occlude feet appropriately when gameplay is implemented.
+## Source / layers
+`art/src/concept/autumn_city.py`: City pixel primitives + compact `city_layers` layout.
+`roof()` always draws a shallow flat terrace/parapet with vents, tank/pots; front walls
+remain native code-art. Native furniture dresses the two-floor detective interior.
+Five story environment stages still change dust/river/furnace/maples.
+Tracked PNGs + foliage/rail JSON are runtime inputs. `tools/autumn_runtime.py` exports
+`layoutVersion:2`, lift/smoke anchors and all coordinates; no hardcoded old-map anchors.
+Art requires NotoSansCJK-Bold; CI packages reviewed PNGs without rendering Chinese fonts.
+Foliage atlas lint's 11 isolated pixels are intentional leaf tips/fallen leaves.
 
-## Review build
+## Build / review
 ```
 PYTHONPATH=tools:art/src/concept python -m pixelkit build art/src/concept/autumn_city.py
+python tools/check_autumn_geometry.py
 PYTHONPATH=tools python tools/make_autumn_preview.py
+PYTHONPATH=tools python tools/make_season_game_test.py
 node tools/check_autumn_preview.js
+node tools/check_autumn_game.js
 ```
-- Art: `art/out/concept/autumn_city_polluted.png` (tracked original logical resolution).
-- Asset authoring requires NotoSansCJK-Bold (`fonts-noto-cjk`). The preview builder
-  publishes the tracked, reviewed PNG directly; CI does not re-render Chinese labels or
-  depend on host fonts. Regenerate/commit that PNG whenever changing the art source.
-- Viewer template: `prototype/autumn/index.src.html`; builder embeds art, minifies JS with
-  existing terser; `desktop/dist/autumn/index.html` and downloadable PNG are generated only.
-- Public review: `/autumn/` in Desktop-Buddy-Releases Pages, built by `preview.yml`.
-  Only minified page/rendered image goes public, no art sources.
-- Drag to pan, wheel/buttons to zoom, 全城 to fit, 100% for native pixels, landmark buttons
-  focus at 2×. Optional overlay shows the **planned** ascent; not simulated movement.
-- No save, gameplay updates, story unlocking, new named cast or sound.
-
-## Checked / next
-- Inspected entire map and enlarged mid-city after three refinement passes.
-- Pixelkit palette/alpha lint; browser art inspector regression and screenshots.
-- Main demo/web rebuilt as repository checklist requires; their tracked inputs unchanged.
-- Five environment states, layered runtime export, interior services and orthogonal
-  walking are now implemented in the test game. Buddy stays in the city for autonomous
-  needs and only leaves on a player request. See AUTUMN_GAME.md for exact scope.
-
-## Latest owner corrections / integration
-- Compact world by about 23% in area; keep native character dimensions.
-- Front-facing buildings only; straight horizontal/vertical streets and flights.
-- Added dry maples/shrubs in edge planters and ledges. All foliage exported individually,
-  with foreground fade near the actual actor; see AUTUMN_GAME.md for runtime details.
-- `/autumn/` remains the full-image inspector. The actual playable scene is entered from
-  the door in `/map-test/`. Gameplay and approved story are now implemented there.
-
-## 2026-11-01 detailed mountain repair
-Owner wants solid stone stairs and a mountain-founded city, abundant dry maples/shrubs,
-rich purposeful placement. Rebuilt stair cheeks/thresholds; cut real rail entrances;
-rerouted facade/roof collisions. Replaced stilts with retaining rock and added drains,
-wall utilities and domestic props. 102 independent plants; maple crowns/roots redrawn.
-Route/rail geometry now shares authored coordinates and a tracked rail metadata file.
-See AUTUMN_GAME.md for exact fixes and regression commands. Compact world dimensions,
-front-only facades, story and test-only entry remain in force.
+Inspect actual PNG + gameplay screenshot. Geometry checks cover facade/roof clearance,
+rail mouths, all 17 landmarks, compact area, five stages and foliage. Browser tests
+walk every node and cover story/local needs/four-scale UI/save upgrade. No formal EXE.
