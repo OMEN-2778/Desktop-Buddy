@@ -20,7 +20,7 @@ No autumn code is included in formal EXE/trial inputs. `/autumn/` remains an art
 ## Compact replacement · 2026-11-01 (current)
 The owner rejected the large city even after repairs. Rebuilt its composition as a
 640×688 continuous diorama (64.6% smaller), densely packed flat-roof frontages and
-129 reused/recoloured foliage pieces. All 17 story/life-service landmarks remain.
+160 reused/recoloured foliage pieces (63 trees). All 17 story/life-service landmarks remain.
 Current coordinates and owner rules: AUTUMN_CITY.md. Old large-map coordinates are retired.
 
 - `layoutVersion:2` in runtime metadata/state. Adapter explicitly treats saved states
@@ -46,7 +46,7 @@ Current coordinates and owner rules: AUTUMN_CITY.md. Old large-map coordinates a
 - `autumn_detective_inside.png`: borrowed house; bed, bath, WC, kitchen, sofa, books.
   Actor is retained visibly in the bath and lies on the bed; toilet keeps privacy.
 - `tools/autumn_runtime.py` packs tracked images, metadata and five native doll NPC looks;
-  no CI font dependency. Art authoring still requires Noto CJK, as in AUTUMN_CITY.md.
+  no host-font dependency. Art authoring still requires Noto CJK, as in AUTUMN_CITY.md.
 - `prototype/autumn/game.js`: main game RAF drives one controller. Explicit graph
   vertices/edges, Dijkstra routing with temporary start/target projections. Authoring
   intersections are connected only if an explicit shared/collinear vertex exists;
@@ -94,3 +94,15 @@ Other seasonal game-shell checks remain in place. No real-device FPS claim.
   house service implementation here belongs to autumn, not a blanket furniture upgrade.
 - Gameplay camera does not rotate; depth comes from levels and painter order. Layer
   changes only occur on graph stairs/lift; there is no free walking through scenery.
+
+## Latest detail pass (2026-11-01)
+- `DATA.signs` and `DATA.signFont` draw Source Han Sans SC Medium text at actual canvas
+  resolution, separately from pixel sign plates. FontFace load participates in scene-ready;
+  minified page embeds the renamed WOFF subset. OFL text is published as FONT-LICENSE.txt.
+- `windAmount` / `windSprite`: independent tree phases, fixed roots, pixel-row crown
+  bending and bounded native-sprite cache. Pause freezes time; no extra animation loop.
+- All 160 plants keep independent depth/fade; 31 added trees have supported planters.
+- Larger plane and furnished home reviewed in PNG + actual game. Browser regression
+  checks loaded font / antialiased lettering, changing crowns / unchanged roots,
+  asynchronous phases and pause, in addition to story/needs/migration/four-scale UI.
+- No new furniture interactions added; original six local services stay functional.

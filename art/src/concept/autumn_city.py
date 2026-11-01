@@ -58,12 +58,12 @@ LANDMARKS=[
 ]
 LIFT=dict(x=620,top=258,bottom=520)
 SMOKE=(572,170)
-FONT='/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc'
+FONT=str(Path(__file__).resolve().parents[2]/'fonts/source-han-sans/BuddyAutumnSigns.otf')
 @lru_cache(None)
-def font(n):return ImageFont.truetype(FONT,n,index=2)
+def font(n):return ImageFont.truetype(FONT,n)
 class City:
  def __init__(self,stage=0):
-  self.stage=stage;self.rail_segments=[];self.foreground_rails=[];self.foreground_mode=True;self.foliage=[]
+  self.stage=stage;self.rail_segments=[];self.foreground_rails=[];self.foreground_mode=True;self.foliage=[];self.labels=[]
   self.im=Image.new('RGBA',(W,H),P.oat[2]);self.d=ImageDraw.Draw(self.im);self.r=random.Random(2197)
  def box(self,x,y,w,h,c):
   if w>0 and h>0:self.d.rectangle((int(x),int(y),int(x+w-1),int(y+h-1)),fill=c)
@@ -74,7 +74,9 @@ class City:
   f=font(n);b=f.getbbox(t);mask=Image.new('L',(b[2]+2,max(n+5,b[3]+2)));ImageDraw.Draw(mask).text((0,0),t,font=f,fill=255)
   mask=mask.point(lambda v:255 if v>=100 else 0);self.im.paste(c or P.oat[3],(int(x),int(y)),mask)
  def sign(self,x,y,w,t,n=10):
-  self.box(x,y,w,n+8,P.teal[0]);self.box(x+1,y+1,w-2,n+5,P.teal[1]);self.line([(x+2,y+1),(x+w-3,y+1)],P.sage[2]);self.text(x+(w-font(n).getlength(t))/2,y-1,t,n,P.oat[3])
+  self.box(x,y,w,n+8,P.teal[0]);self.box(x+1,y+1,w-2,n+5,P.teal[1]);self.line([(x+2,y+1),(x+w-3,y+1)],P.sage[2])
+  # Smooth Source Han Sans text is a separate high-DPI layer, never baked at 1x.
+  self.labels.append(dict(x=x,y=y,w=w,h=n+8,text=t,size=n))
  def masonry(self,pts,seed,scale=1):
   """Clipped shaded sandstone courses; sparse chips, not flat noisy fill."""
   self.poly(pts,P.pave[0]);mask=Image.new('1',(W,H));ImageDraw.Draw(mask).polygon(pts,fill=1)
@@ -298,9 +300,17 @@ def city_layers(stage=0,review=False):
  c.sign(52,53,80,'枫树苗圃',10)
  c.box(350,49,244,73,P.pave[0]);c.box(353,52,238,67,P.pave[1])
  for x in range(365,586,27):c.box(x,108,15,2,P.oat[3]);c.box(x,57,15,2,P.oat[3])
- # Plane is compact but has separate wings, tail, propeller and cabin pixels.
- c.poly([(411,86),(452,80),(484,83),(503,90),(486,96),(450,95)],P.porcelain[1]);c.poly([(448,85),(431,66),(441,65),(469,86),(479,106),(469,106),(454,93)],P.porcelain[2]);c.box(481,84,8,5,P.teal[1]);c.box(405,78,3,16,P.steel[0]);c.line([(411,86),(407,75)],P.porcelain[2],3)
- c.sign(505,76,73,'停机坪',10)
+ # Larger private plane, 174px span, with separate tailplane, engine and landing gear.
+ c.poly([(380,92),(422,88),(519,91),(542,98),(512,102),(407,100)],P.pave[0])
+ c.poly([(377,83),(409,78),(493,78),(531,84),(550,89),(531,95),(484,96),(409,92)],P.porcelain[1])
+ c.poly([(406,80),(483,80),(522,84),(538,88),(485,89),(411,86)],P.porcelain[3])
+ c.poly([(436,83),(417,54),(430,54),(475,84),(491,115),(477,115),(448,93)],P.porcelain[2])
+ c.line([(422,57),(453,84)],P.porcelain[3],2);c.line([(457,94),(482,112)],P.porcelain[0],2)
+ c.poly([(389,85),(380,67),(390,67),(413,86),(410,96),(388,96)],P.porcelain[2]);c.box(384,69,4,13,P.clay[1])
+ for x in (481,495,509):c.box(x,82,9,7,P.teal[0]);c.box(x+1,83,7,3,P.teal[2])
+ c.box(540,84,5,9,P.steel[1]);c.box(547,77,2,24,P.steel[0]);c.box(546,88,5,3,P.steel[2])
+ for x,y in ((413,95),(494,99)):c.box(x,y,2,6,P.steel[0]);c.oval(x+1,y+6,3,3,P.steel[0]);c.box(x,y+5,2,2,P.steel[2])
+ c.sign(508,29,79,'停机坪',11);c.box(515,49,2,8,P.steel[0]);c.box(578,49,2,8,P.steel[0])
  # Upper town: adjoining offices and a compact furnace yard.
  c.building(46,246,134,2,'civic','赤岩矿业',20);c.building(204,246,104,2,'old','市政厅',21)
  c.building(364,246,86,2,'brick','机修间',22);c.building(460,246,94,1,'brick',None,23)
@@ -358,7 +368,12 @@ def city_layers(stage=0,review=False):
  c.line([(185,277),(578,277)],P.steel[0]);c.box(354,277,2,9,P.steel[0]);c.box(343,285,26,22,P.clay[0]);c.box(346,288,20,11,P.teal[1]);c.box(346,300,20,4,P.clay[1])
  # Root every reused maple in a real ledge or courtyard; all gaps get planted.
  trees=[(8,69,.75),(137,62,.6),(233,61,.6),(318,58,.6),(601,50,.7),(626,86,.7),(10,217,.65),(190,217,.6),(354,214,.55),(592,214,.55),(9,342,.7),(245,324,.6),(288,341,.65),(351,351,.55),(594,361,.6),(10,476,.65),(121,449,.5),(323,449,.55),(448,445,.5),(594,474,.55),(47,587,.7),(92,590,.7),(142,590,.65),(198,589,.7),(248,590,.7),(300,595,.65),(458,577,.55),(600,596,.7),(632,647,.65)]
- for x,y,z in trees:c.box(x-8,y-1,17,5,P.oat[0]);c.tree(x,y,z)
+ trees += [(55,48,.55),(102,44,.55),(169,40,.52),(210,39,.5),(266,40,.5),(365,42,.55),
+  (61,154,.5),(145,154,.5),(228,154,.5),(291,154,.5),(401,154,.5),(502,190,.5),
+  (67,284,.5),(127,284,.5),(181,284,.5),(215,284,.5),(389,285,.5),(455,285,.5),(551,274,.5),
+  (69,452,.5),(166,416,.5),(264,416,.5),(397,416,.5),(544,416,.5),
+  (66,599,.6),(118,600,.6),(170,599,.6),(221,600,.55),(278,603,.55),(376,564,.5),(567,568,.5)]
+ for x,y,z in trees:c.box(x-9,y-2,19,6,P.oat[0]);c.box(x-9,y-3,19,2,P.oat[2]);c.tree(x,y,z)
  # Dense boundary vegetation frames the model; recycled palette variants, no new asset style.
  shrubs=[]
  for y in (22,151,282,411,545):
@@ -372,8 +387,8 @@ def city_layers(stage=0,review=False):
   for im,x,y,base in sorted(c.foliage,key=lambda p:p[3]):c.im.alpha_composite(im,(x,y))
   c.im.alpha_composite(fg.im)
   for x,y,seed in [(276,388,1),(188,132,2),(174,520,3)]:c.person(x,y,seed)
- global LAST_FOLIAGE,LAST_RAILS
- LAST_FOLIAGE=c.foliage;LAST_RAILS=c.foreground_rails
+ global LAST_FOLIAGE,LAST_RAILS,LAST_LABELS
+ LAST_FOLIAGE=c.foliage;LAST_RAILS=c.foreground_rails;LAST_LABELS=c.labels
  return Sprite(0,0,px=np.array(c.im)),Sprite(0,0,px=np.array(fg.im))
 
 def polluted_city():return city_layers(0,True)[0]
@@ -391,22 +406,40 @@ def detective_inside():
  for xx in (25,191):room.blit(F.window(),xx,31)
  room.blit(F.bathtub(),28,70);room.blit(F.toilet(),91,85);room.blit(F.bed(),246,82)
  room.blit(F.backsplash(),30,168);room.blit(F.kitchen_base(),30,182);room.blit(F.wall_cabinets(),30,154);room.blit(F.fridge(),99,173)
- room.blit(F.sofa(),163,187);room.blit(F.bookshelf(),264,172);room.blit(F.coffee_table(),213,196)
+ room.blit(F.sofa(),163,187);room.blit(F.bookshelf(),281,172);room.blit(F.coffee_table(),205,200)
  for k in range(21):room.rect(143,101+k*5,23,3,P.oat[2]);room.rect(143,104+k*5,23,2,P.wood[1])
  # Fine native furniture details, leaving all six service approaches and stairs free.
  room.blit(F.towel(),73,46);room.blit(F.sconce(True),112,34)
  room.blit(F.nightstand(),228,91);room.blit(F.lamp(True),230,79)
  room.blit(F.wardrobe(),294,68);room.blit(F.art_print(19,14,'sun'),221,35)
- room.blit(F.desk(),181,87);room.blit(F.monitor(False),186,75);room.blit(F.office_chair(),206,87)
+ room.blit(F.desk(),181,87);room.blit(F.monitor(False),186,75);room.blit(F.office_chair(),206,102-F.office_chair().h)
  room.blit(F.rug(57),240,100);room.blit(F.rug(77),166,211)
- room.blit(F.clock(),212,136);room.blit(F.art_print(24,16,'sun'),178,145)
+ room.blit(F.clock(),212,136);room.blit(F.window(),172,132);room.blit(F.art_print(24,16,'sun'),234,139)
  room.blit(F.plant(False),300,194);room.blit(F.sconce(True),133,142)
- room.blit(F.mug(),229,194);room.blit(F.bowl(),47,179)
+ room.blit(F.mug(),219,198);room.blit(F.bowl(),47,179)
+ room.blit(F.vanity(),65,61);room.blit(F.towel(),112,66)
+ room.rect(108,90,16,12,P.wood[0]).rect(109,91,14,10,P.oat[2])
+ for yy in (93,96,99):room.hline(110,121,yy,P.wood[1])
+ room.rect(110,88,10,3,P.porcelain[2]);room.rect(115,86,7,3,P.clay[2])
+ room.blit(F.dining_table(),117,190);room.blit(F.chair('left'),117,198);room.blit(F.mug(),124,188)
+ room.blit(F.media_console(),223,204-F.media_console().h);room.blit(F.tv(True),226,164)
+ room.rect(168,57,46,3,P.wood[0]).hline(168,213,57,P.wood[3])
+ for i in range(8):room.rect(171+i*4,46+i%3,3,11-i%3,[P.sage[1],P.clay[1],P.oat[1]][i%3])
+ room.blit(F.art_print(28,19,'sun'),255,37);room.blit(F.plant(False),301,47)
+ room.rect(299,63,20,3,P.wood[1]);room.rect(85,144,29,3,P.wood[1])
+ for x in (87,94,101,108):room.rect(x,137,4,7,P.oat[2]).hline(x,x+3,137,P.steel[1])
  room.rect(20,185,16,31,P.walnut[1]);room.rect(22,187,12,27,P.wood[2]);room.set(30,203,P.mustard[3])
  return room
 
 def build():
  out={'autumn_city_polluted':polluted_city(),'autumn_detective_inside':detective_inside()}
+ # Inspection/download PNG: pixel scenery enlarged nearest-neighbour; only letters smooth.
+ review=out['autumn_city_polluted'].to_image().resize((W*4,H*4),Image.Resampling.NEAREST);rd=ImageDraw.Draw(review)
+ for p in LAST_LABELS:
+  f=font(p['size']*4);rd.text(((p['x']+p['w']/2)*4,(p['y']+p['h']/2-1)*4),p['text'],font=f,fill=P.oat[3],anchor='mm')
+ target=Path(__file__).resolve().parents[2]/'out/concept/autumn_city_review.png';review.save(target)
+ target.with_name('autumn_signs_world.json').write_text(json.dumps(LAST_LABELS,ensure_ascii=False,separators=(',',':')))
+
  for stage in range(5):
   bg,fg=city_layers(stage);out['autumn_city_stage_'+str(stage)]=bg
   if stage==0:
@@ -417,7 +450,7 @@ def build():
   for i,(im,x,y,base) in enumerate(LAST_FOLIAGE):
    im=im.resize((max(1,round(im.width*SCALE_X)),max(1,round(im.height*SCALE_Y))),Image.Resampling.NEAREST)
    assert im.width<=64 and im.height<=96
-   atlas.alpha_composite(im,(i*64,0));xx,yy=map_point(x,y);meta.append(dict(x=xx,y=yy,w=im.width,h=im.height,base=round(base*SCALE_Y),frame=i))
+   atlas.alpha_composite(im,(i*64,0));xx,yy=map_point(x,y);meta.append(dict(x=xx,y=yy,w=im.width,h=im.height,base=round(base*SCALE_Y),frame=i,kind='tree' if im.height>26 else 'shrub'))
   out['autumn_foliage_atlas_'+str(stage)]=Sprite(0,0,px=np.array(atlas))
   if stage==0:
    target=Path(__file__).resolve().parents[2]/'out/concept/autumn_foliage_world.json';target.parent.mkdir(parents=True,exist_ok=True);target.write_text(json.dumps(meta,separators=(',',':')))

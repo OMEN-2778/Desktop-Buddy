@@ -1103,3 +1103,11 @@ that composition: rebuild MUCH smaller, like a dense large diorama; tightly pack
 recoloured shrubs and trees. Include every story location. Current world 640×688,
 not the retired 1024×1216. Preserve native character scale, orthogonal stone stairs,
 open mouths, foreground fading and test-only integration. See AUTUMN_CITY.md.
+
+### Autumn signs / richer home and living trees (2026-11-01)
+Owner explicitly requests **non-pixel sign lettering in 思源黑体**. Use embedded Source
+Han Sans SC (OFL subset + license); render text separately at display resolution. This
+exception applies to sign text only, not buildings/foliage/effects. Populate 阿简's home
+with useful domestic furnishings; more actual trees, independent gentle wind with fixed
+roots, pause support and retained foreground fade. Plane must read as a larger private
+plane. See AUTUMN_CITY.md for asset/font pipeline and exact current counts.

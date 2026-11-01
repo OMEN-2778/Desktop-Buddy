@@ -60,6 +60,7 @@ def main():
         page=page[:start]+b.read_text().replace('</script','<\\/script')+page[end:]
     page='<!doctype html><html lang="zh-CN"><meta charset="utf-8">'+page+'\n</html>'
     out=ROOT/'desktop/dist/map-test/index.html';out.parent.mkdir(parents=True,exist_ok=True);out.write_text(page)
+    (out.parent/'FONT-LICENSE.txt').write_bytes((ROOT/'art/fonts/source-han-sans/LICENSE.txt').read_bytes())
     # Full-game audio referenced relatively inside /map-test/, always kept under this page.
     import shutil
     for group in ['BGM','SFX/game','SFX/processed']:shutil.copytree(ROOT/'AUDIO_LIBRARY'/group,out.parent/'audio'/group,dirs_exist_ok=True)

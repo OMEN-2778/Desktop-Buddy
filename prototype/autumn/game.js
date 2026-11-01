@@ -638,13 +638,42 @@ function makeSeason_autumn(opts, DATA) {
         im.src = src;
         return im.decode();
     }
+    // Pixel-row bending: roots fixed, attached crown, independent phase/rate.
+    // Cache warped native sprites; no per-frame rasterization once a wind shape exists.
+    const windCache = new Map;
+    function windAmount(p, time = state.time) {
+        const phase = p.frame * 2.399963, rate = .9 + p.frame % 7 * .073;
+        return Math.round((Math.sin(time * rate + phase) + .23 * Math.sin(time * .47 + phase * .7)) * (p.kind === "tree" ? 2.3 : .7) * 4) / 4;
+    }
+    function windSprite(p) {
+        const wind = windAmount(p), key = state.stage + ":" + p.frame + ":" + wind;
+        if (windCache.has(key)) return windCache.get(key);
+        const c = document.createElement("canvas");c.width = 70;c.height = 96;
+        const g = c.getContext("2d"), root = Math.max(1,p.base-p.y);
+        g.imageSmoothingEnabled = false;
+        for (let y=0;y<p.h;y++) {
+            const height = Math.max(0,1-y/root), dx = Math.round(wind*height*height);
+            g.drawImage(images.get(DATA.foliageSheets[state.stage]),p.frame*64,y,64,1,3+dx,y,64,1);
+        }
+        if (windCache.size >= 384) windCache.delete(windCache.keys().next().value);
+        windCache.set(key,c);return c;
+    }
+    function drawSigns() {
+        ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#e6dfcf";
+        for (const p of DATA.signs) {
+            if(p.x+p.w<state.camX||p.x>state.camX+342||p.y+p.h<state.camY||p.y>state.camY+236)continue;
+            ctx.font=p.size+'px "Buddy Autumn Signs"';
+            ctx.fillText(p.text,p.x+p.w/2,p.y+p.h/2-1,p.w-6);
+        }
+        ctx.restore();
+    }
     function drawFoliage(front) {
         for (const p of DATA.foliage) {
             if (p.base >= state.y - 3 !== front || p.x + p.w < state.camX || p.x > state.camX + 342 || p.y + p.h < state.camY || p.y > state.camY + 236) continue;
             const overlap = front && state.x + 12 > p.x && state.x - 12 < p.x + p.w && state.y > p.y && state.y - 29 < p.y + p.h, key = "tree" + p.frame, target = overlap ? .3 : 1, prev = foregroundAlpha.get(key) ?? 1, alpha = prev + (target - prev) * (1 - Math.exp(-frameDt * 14));
             foregroundAlpha.set(key, alpha);
             ctx.globalAlpha = alpha;
-            ctx.drawImage(images.get(DATA.foliageSheets[state.stage]), p.frame * 64, 0, 64, 96, p.x, p.y, 64, 96);
+            ctx.drawImage(windSprite(p), p.x - 3, p.y);
         }
         ctx.globalAlpha = 1;
     }
@@ -663,6 +692,9 @@ function makeSeason_autumn(opts, DATA) {
         if (state.mapOpen) {
             const sc = Math.min(342 / DATA.width, 236 / DATA.height), ox = (342 - DATA.width * sc) / 2;
             ctx.drawImage(bg, ox, 0, DATA.width * sc, DATA.height * sc);
+            ctx.save();ctx.translate(ox,0);ctx.scale(sc,sc);
+            ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#e6dfcf";
+            for(const p of DATA.signs){ctx.font=p.size+'px "Buddy Autumn Signs"';ctx.fillText(p.text,p.x+p.w/2,p.y+p.h/2-1,p.w-6)}ctx.restore();
             for (const p of DATA.foliage) ctx.drawImage(images.get(DATA.foliageSheets[state.stage]), p.frame * 64, 0, 64, 96, ox + p.x * sc, p.y * sc, 64 * sc, 96 * sc);
             ctx.drawImage(images.get(DATA.front), ox, 0, DATA.width * sc, DATA.height * sc);
             ctx.fillStyle = "#efc452";
@@ -673,6 +705,7 @@ function makeSeason_autumn(opts, DATA) {
         ctx.translate(-state.camX, -state.camY);
         ctx.drawImage(state.inside ? images.get(DATA.inside) : bg, 0, 0);
         if (!state.inside) {
+            drawSigns();
             drawFoliage(false);
             for (const n of npcRows()) {
                 if (Math.abs(n.x - state.x) > 240 || Math.abs(n.y - state.y) > 190) continue;
@@ -959,7 +992,9 @@ function makeSeason_autumn(opts, DATA) {
     root.querySelector("[data-home]").onclick = () => visit("detective_home");
     root.querySelector("[data-goal]").onclick = () => panel("当前线索", objective(), [ [ "知道了" ] ]);
     root.querySelector("[data-exit]").onclick = opts.exit;
-    Promise.all([ ...DATA.scenes, DATA.front, DATA.inside, ...DATA.npcs.flat(), ...DATA.foreground.map(p => p.img), ...DATA.foliageSheets ].map(load)).then(() => {
+    const signFont = new FontFace("Buddy Autumn Signs", 'url("'+DATA.signFont+'")');
+    const fontReady = signFont.load().then(face=>document.fonts.add(face));
+    Promise.all([fontReady, ...[ ...DATA.scenes, DATA.front, DATA.inside, ...DATA.npcs.flat(), ...DATA.foreground.map(p => p.img), ...DATA.foliageSheets ].map(load)]).then(() => {
         state.loaded = true;
         draw();
         updateStatus();
@@ -975,6 +1010,8 @@ function makeSeason_autumn(opts, DATA) {
         modal: modal,
         DATA: DATA,
         foregroundAlpha: foregroundAlpha,
+        windAmount: windAmount,
+        windSprite: windSprite,
         nodes: nodes,
         edges: edges,
         npcRows: npcRows,

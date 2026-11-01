@@ -24,7 +24,7 @@ World 640×688. Five horizontal streets: **132 / 258 / 388 / 520 / 646**.
 - Western stair x24 connects every level. Interior stairs x330 (summit to centre),
   x344 (centre to river). Eastern flights x608 top/bottom; freight lift x620, y258–520.
 - 17 stable landmark IDs, 13 connected route polylines, 39 unique walk vertices.
-- 129 independent foliage pieces; roots sit on terraces/bank beds, never directly in water.
+- 160 independent foliage pieces (63 trees / 97 shrubs); roots sit on terraces/bank beds, never directly in water.
 - No empty skyline; stone/vegetation border frames the entire model. The small plane
   apron, clear walking lanes and functional plaza are intentionally usable open space.
 
@@ -35,7 +35,14 @@ remain native code-art. Native furniture dresses the two-floor detective interio
 Five story environment stages still change dust/river/furnace/maples.
 Tracked PNGs + foliage/rail JSON are runtime inputs. `tools/autumn_runtime.py` exports
 `layoutVersion:2`, lift/smoke anchors and all coordinates; no hardcoded old-map anchors.
-Art requires NotoSansCJK-Bold; CI packages reviewed PNGs without rendering Chinese fonts.
+Sign lettering is the explicit exception to the pixel-only rule: Source Han Sans SC
+Medium (思源黑体), SIL OFL 1.1. `art/fonts/source-han-sans` contains renamed subset
+OTF/WOFF + license/upstream provenance. Regenerate with `tools/subset_autumn_font.py`
+when adding glyphs. OTF creates the 4× review PNG; WOFF is embedded for crisp live
+canvas text and loaded before scene-ready. CI just packages tracked assets.
+`autumn_signs_world.json` stores text/plate geometry. Background PNGs have blank plates;
+`autumn_city_review.png` is the labelled downloadable view (4× nearest pixel scene,
+smooth text only). Inspector uses a 4× backing canvas but keeps 640×688 logical size.
 Foliage atlas lint's 11 isolated pixels are intentional leaf tips/fallen leaves.
 
 ## Build / review
@@ -50,3 +57,14 @@ node tools/check_autumn_game.js
 Inspect actual PNG + gameplay screenshot. Geometry checks cover facade/roof clearance,
 rail mouths, all 17 landmarks, compact area, five stages and foliage. Browser tests
 walk every node and cover story/local needs/four-scale UI/save upgrade. No formal EXE.
+
+## Interior / wind / plane follow-up (2026-11-01)
+Owner found the home bare, trees too sparse/static, plane too small, signs too pixelated.
+Added vanity/mirror, towels/laundry basket, dining area, wall-mounted TV/media console,
+books/storage/shelves, framed art. Native six-service routes and original body scale kept.
+Plane now ~174px wide (previous ~98px), with landing gear, tail, propeller and cabin.
+Added 31 trees in planted roof terraces/courts, bringing actual trees from 32 to 63.
+Runtime bends individual pixel rows with separate phase/rate, quadratic falloff toward
+fixed roots; shrubs move less. A bounded 384-sprite wind cache avoids per-frame row
+rasterization after warmup. Cull offscreen sprites; pause stops wind. Foreground fade retained.
+Only the game page is animated; the art inspector is an explicitly static full-map review.

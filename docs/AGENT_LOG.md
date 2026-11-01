@@ -7,6 +7,15 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- Owner detail pass: furnished detective home, larger ~174px plane; 32→63 actual trees
+  (160 total plants). Fixed-root pixel wind with independent phases, bounded cache/pause.
+- Sign text now separate smooth 思源黑体 layer, offline OFL subset + license; pixel scenery
+  unchanged. Added 4× labelled review PNG and retained native logical inspector coords.
+- Browser checks include font loading/smooth text, crown motion/root stability/phases/pause;
+  existing geometry/story/needs/save migration/four-scale and seasonal regressions retained.
+- Art/game docs + owner skill rules updated. Test page only; no formal EXE or new services.
+
+## 2026-11-01 · Codex
 - Owner rejected sprawling autumn map: replaced with 640×688 compact flat-roof diorama
   (64.6% less area), tightly packed frontages, 129 plants; all 17 story/service spots retained.
 - Rebuilt 13 routes/39 vertices; native furnished interior; explicit lift/smoke anchors,
