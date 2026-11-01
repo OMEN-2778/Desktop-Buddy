@@ -6,6 +6,15 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-01 · Codex
+- Owner requested pollution-state 枫叶城 art: ONE continuous 1152×1408 pixel hillside,
+  oblique planes, interlocked stair/switchback routes, stilt housing, river/industrial haze.
+- New autumn_city.py + art PNG; 13 connected planned route polylines, landmark focus data.
+  Art inspector `/autumn/`: pan/zoom, optional route overlay, PNG download, minified only.
+- Handoff AUTUMN_CITY.md; story/planning status updated. No sunny version, working
+  navigation/story/needs or formal-game integration yet; owner review pending.
+- Palette/alpha lint + visual review, browser inspector checks; demo/web rebuilt.
+
 ## 2026-11-01 · Claude Code
 - 秋 owner decisions added to `docs/AUTUMN_STORY.md`: city open all year after the story;
   office job optional, no effect; unfinished story continues in winter; 程铁山 next door in

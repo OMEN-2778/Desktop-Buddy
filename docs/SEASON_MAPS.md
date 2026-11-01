@@ -1,6 +1,7 @@
 # 四季地图 (big update) — owner's plan
 
-Status: planning. Nothing here is in the game yet. Art first, owner approves, then gameplay.
+Status: seasonal art/test previews exist, no formal-version integration. Art first, owner
+approves, then gameplay. Autumn polluted city review: `docs/AUTUMN_CITY.md`.
 
 ## 春 · 山谷农场 (art: `art/src/concept/spring_fields.py`, 春日花溪)
 - Story: on 写信日 (spring) 爸爸妈妈 write a letter (existing letter system,

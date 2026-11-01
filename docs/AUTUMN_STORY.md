@@ -1,7 +1,7 @@
 # 秋 · 枫叶城 — story (方案 B, owner-approved)
 
-Status: **story approved by owner (2026-11-01).** Nothing drawn or wired yet. Next: art preview
-of 枫叶城 (grey + sunny states) for the owner, then gameplay. Codex: read this whole file
+Status: **story approved by owner (2026-11-01).** Polluted city art preview is now drawn;
+see `AUTUMN_CITY.md`. Owner review pending; sunny art and gameplay are not implemented. Codex: read this whole file
 before touching anything autumn-related; dialogue follows `.claude/skills/everyday-dialogue`.
 
 ## Owner rules for this story

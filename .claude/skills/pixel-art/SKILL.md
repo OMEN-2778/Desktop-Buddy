@@ -1072,3 +1072,9 @@ silhouettes, attached fins/tentacles and complete, separated school members in e
 frame. Underwater pixel light openings must vary spacing/width/reach and taper/fade
 into depth, not repeat widening cones. Bubble trails are sparse, have multiple plausible
 attachment sites, and disappear at the waterline rather than floating above the sea.
+
+### 枫叶城 depth / whole-map rule (2026-11-01)
+Owner wants one continuous large autumn hillside city, strong oblique depth and genuine
+vertical traversal via interlocking stairs/switchbacks/stacked streets, like the spatial
+experience of Chongqing/Hongyadong. Do not split into boxed districts or flatten into a
+left/right strip. First review is pollution state only. Art handoff: docs/AUTUMN_CITY.md.
