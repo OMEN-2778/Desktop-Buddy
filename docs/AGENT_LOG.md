@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Claude Code
+- Owner picked 秋 story 方案 B; `docs/AUTUMN_STORY.md` rewritten as the single approved story
+  (v1/v2 removed). Names: 阿简, 程铁山, 程青, 老周, 苏医生. Codex: read it fully before autumn work.
+  Docs only. Next: 枫叶城 art preview (grey + sunny).
+
+## 2026-11-01 · Claude Code
 - 秋 story 方案 B appended to `docs/AUTUMN_STORY.md` (neighbour opening, mystery solved in ch2,
   smog keeps the plane grounded). Docs only, waiting on owner to pick.
 

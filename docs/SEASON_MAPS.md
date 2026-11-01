@@ -31,7 +31,7 @@ Buddy never autonomously leaves a season map. Needs go to the map's house first 
 lodge·cabana / detective's house), else the nearest spot in the map. Every map must offer a
 spot for each of the six needs. Only the player or the story takes her out. (`AGENTS.md`)
 
-## 秋 · 枫叶城 (story draft: `docs/AUTUMN_STORY.md`, waiting on owner)
+## 秋 · 枫叶城 (story 方案 B approved: `docs/AUTUMN_STORY.md`)
 - A small vertical industrial city, story-driven. All autumn a detective NPC stands at the
   front door with a "!" over his head; miss him and wait for next autumn. Talking to him flies
   Buddy to 枫叶城 in his private plane. Buddy may use the detective's house there for all needs.
