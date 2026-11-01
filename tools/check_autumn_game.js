@@ -6,8 +6,8 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  await p.waitForFunction(()=>typeof booted!=='undefined'&&booted&&seasonMapTest.state.autumn.state.loaded);
  await p.evaluate(()=>{closeGuide();prefs.guided=true;prefs.autosave=false;prefs.scale=50;fit();speed=1;sim.t=720;socialState.nextCall=socialState.nextVisit=1e12;cardMoment=rollCard=rollEvents=()=>false;seasonMapTest.cheats.fillHero();});
  // Click the actual house door, then the actual destination menu item.
- const door=await p.evaluate(()=>{for(let y=65;y<118;y++)for(let x=10;x<332;x++)if(clickableAt(x,y)==='front_door'&&!buddyHit(x,y))return {x,y}});assert(door);
- let box=await p.locator('#view').boundingBox();await p.mouse.click(box.x+door.x*box.width/342,box.y+door.y*box.height/118);await p.getByRole('button',{name:'去枫叶城',exact:true}).filter({hasText:'去枫叶城'}).last().click();
+ const door=await p.evaluate(()=>{for(let y=65;y<118;y++)for(let x=10;x<332;x++)if(clickableAt(x,y)==='front_door'&&!buddyHit(x,y))return {x:x+.5,y:y+.5}});assert(door);
+ let box=await p.locator('#view').boundingBox();await p.mouse.click(box.x+door.x*box.width/342,box.y+door.y*box.height/118);await p.getByRole('menuitem',{name:'去枫叶城',exact:true}).click();
  await p.evaluate(()=>{sim.windup=null;startAct('go_out');sim.s=sim.target;arrive()});await p.waitForFunction(()=>sim.place==='autumn_test'&&!wiping);
  assert.equal(await p.evaluate(()=>sceneHouseHeight()),236);const originalLook=await p.evaluate(()=>JSON.stringify(look));
  const nav=await p.evaluate(()=>{const c=seasonMapTest.ctl();return c.DATA.landmarks.map(p=>{const path=c.plan(p.x,p.y);let prev=c.state;const valid=path.every(n=>{const ok=Math.abs(n.x-prev.x)<.01||Math.abs(n.y-prev.y)<.01;prev=n;return ok});return {id:p.id,len:path.length,valid,end:path.at(-1),want:{x:p.x,y:p.y}}})});
@@ -35,11 +35,15 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  assert(await p.evaluate(()=>seasonMapTest.ctl().state.goal?.id==='detective_home'||seasonMapTest.ctl().state.door?.need==='hunger'));await finishRoute();assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.service?.need),'hunger');await p.evaluate(()=>step(1,.05));assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.service?.need),'hunger');assert.equal(await p.evaluate(()=>sim.place),'autumn_test');
  await p.evaluate(()=>{const c=seasonMapTest.ctl();c.state.service=null;c.state.goal=null;sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,95]));sim.t=720});
  // Approved story can be completed explicitly, preserving every chapter effect.
- for(const who of ['qing','zhou','doctor'])await talk(who);assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.stage),1);
+ for(const who of ['qing','zhou'])await talk(who);await p.evaluate(()=>seasonMapTest.ctl().converse('doctor'));
+ for(let i=0;i<25;i++){if((await p.locator('.autumn-panel-body p').textContent()).startsWith('诊所里好几个'))break;await p.locator('.autumn-actions button').first().click()}
+ await p.keyboard.press('Escape');assert(!await p.locator('.autumn-panel').isVisible());assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.quest),1);await talk('qing');assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.stage),1);
  await talk('father');assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.stage),2);
  await talk('doctor');await talk('zhou');await talk('qing');assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.stage),3);
  await talk('qing');await p.evaluate(()=>seasonMapTest.ctl().interact('townhall'));await drain();assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.stage),4);
  await p.evaluate(()=>seasonMapTest.ctl().interact('plaza'));await drain();assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.quest),6);
+ // Optional office visit does not grant stats, work penalties or a service.
+ await p.evaluate(()=>{const c=seasonMapTest.ctl();c.state.service=null;c.interact('mine_office')});await drain();assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.service),null);
  // All desktop scales: card remains within scenic window; scroll handles long text.
  for(const size of [25,50,75,100]){await p.evaluate(size=>{prefs.scale=size;fit();seasonMapTest.ctl().interact('notice')},size);const bounds=await p.evaluate(()=>{const a=document.querySelector('.autumn-panel').getBoundingClientRect(),b=view.getBoundingClientRect();return {w:Math.abs(a.width-b.width),h:Math.abs(a.height-b.height),fs:parseFloat(getComputedStyle(document.querySelector('.autumn-panel-body')).fontSize)}});assert(bounds.w<2&&bounds.h<2&&bounds.fs>=13,JSON.stringify({size,bounds}));await p.locator('.autumn-actions button').last().click();}
  await p.evaluate(()=>{prefs.scale=50;fit();const c=seasonMapTest.ctl();c.state.inside=false;c.visit('lookout')});await finishRoute();await drain();await p.locator('#view').screenshot({path:'/workspace/artifacts/autumn-game/city.png'});

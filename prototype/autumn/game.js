@@ -242,6 +242,13 @@ function makeSeason_autumn(opts, DATA) {
         lastFocus = document.activeElement;
         modal.hidden = false;
         modal.innerHTML = "";
+        const dismiss = document.createElement("button");
+        dismiss.className = "autumn-close";
+        dismiss.type = "button";
+        dismiss.textContent = "×";
+        dismiss.setAttribute("aria-label", "关闭");
+        dismiss.onclick = close;
+        modal.append(dismiss);
         clearKeys();
     }
     function close() {
@@ -327,6 +334,7 @@ function makeSeason_autumn(opts, DATA) {
     const objective = () => [ "先和停机坪的阿简说说话", "去公司、食堂、诊所问问程铁山的下落", "到山上的小屋找程铁山", "再去诊所、食堂和公司看看", "去公司看账本，再到市政厅参加公开讨论", "把带来的枫树苗种到中城广场", "枫叶城已开放，想逛多久都行" ][state.quest] || "四处逛逛";
     function converse(id) {
         const q = state.quest, f = state.flags;
+        if (q === 1 && [ "qing", "zhou", "doctor" ].every(n => f["heard_" + n])) return talk(AUTUMN_STORY.dust, () => chapter(2, 1, "运输车盖上了篷布，工人街开始洒水。山上的小屋也许有人。"));
         if (id === "jian" && q === 0) return talk(AUTUMN_STORY.intro, () => chapter(1, 0, "借住阿简的老房子，开始寻找程铁山。"));
         if (q === 1 && [ "qing", "zhou", "doctor" ].includes(id) && !f["heard_" + id]) return talk(AUTUMN_STORY[id === "qing" ? "qing1" : id === "zhou" ? "zhou1" : "su1"], () => {
             f["heard_" + id] = true;
@@ -411,7 +419,7 @@ function makeSeason_autumn(opts, DATA) {
         if (!p) return;
         if (id === "detective_home") return panel(p.name, "阿简留下了钥匙。床铺、厨房和洗漱间都能用。", [ [ "进屋", () => enter() ], [ "先不进去" ] ]);
         if (id === "hut") return state.quest >= 2 ? converse("father") : panel("山上的小屋", "门虚掩着。先把公司的消息和诊所那边的情况问清楚。", [ [ "好" ] ]);
-        if (id === "mine_office") return state.quest >= 6 ? talk(AUTUMN_STORY.office, () => beginService("fun", "新办公室")) : converse("qing");
+        if (id === "mine_office") return state.quest >= 6 ? talk(AUTUMN_STORY.office) : converse("qing");
         if (id === "clinic") return converse("doctor");
         if (id === "townhall" && state.quest === 4 && state.flags.ledger) return talk(AUTUMN_STORY.meeting, () => chapter(5, 4, "公开讨论结束。矿区开始分步转型，烟囱停了；也有人准备离开。把那棵枫树种下来吧。"));
         if (id === "plaza" && state.quest === 5) return panel("广场上的空地", "带来的枫树苗可以种在这里。", [ [ "种下树苗", () => talk(AUTUMN_STORY.planting, () => {
@@ -680,9 +688,19 @@ function makeSeason_autumn(opts, DATA) {
             ctx.fillStyle = "#87573e";
             ctx.fillRect(x - 12, y - 28, 24, 27);
         }
-        if (!state.inside && state.service && ["hunger", "social", "fun"].includes(state.service.need)) {
-            ctx.fillStyle = "#5d3831"; ctx.fillRect(state.x-9,state.y-5,18,3); ctx.fillRect(state.x-7,state.y-2,2,5);ctx.fillRect(state.x+5,state.y-2,2,5);
-            if(state.service.need === "hunger"){ctx.fillRect(state.x+10,state.y-10,18,3);ctx.fillRect(state.x+13,state.y-7,2,10);ctx.fillStyle="#e0ddd8";ctx.fillRect(state.x+15,state.y-13,9,3);ctx.fillStyle="#d29b30";ctx.fillRect(state.x+17,state.y-14,5,1);}
+        if (!state.inside && state.service && [ "hunger", "social", "fun" ].includes(state.service.need)) {
+            ctx.fillStyle = "#5d3831";
+            ctx.fillRect(state.x - 9, state.y - 5, 18, 3);
+            ctx.fillRect(state.x - 7, state.y - 2, 2, 5);
+            ctx.fillRect(state.x + 5, state.y - 2, 2, 5);
+            if (state.service.need === "hunger") {
+                ctx.fillRect(state.x + 10, state.y - 10, 18, 3);
+                ctx.fillRect(state.x + 13, state.y - 7, 2, 10);
+                ctx.fillStyle = "#e0ddd8";
+                ctx.fillRect(state.x + 15, state.y - 13, 9, 3);
+                ctx.fillStyle = "#d29b30";
+                ctx.fillRect(state.x + 17, state.y - 14, 5, 1);
+            }
         }
         const privacy = state.service && [ "hygiene", "bladder" ].includes(state.service.need);
         if (state.inside && state.service?.need === "hygiene") {
@@ -817,7 +835,14 @@ function makeSeason_autumn(opts, DATA) {
         return hover;
     }
     function updateStatus() {
-        root.querySelector("[data-status]").textContent = state.service ? ({hunger:"正在吃饭",energy:"正在睡觉",hygiene:"正在洗漱",bladder:"正在使用卫生间",social:"正在聊聊天",fun:"正在休息"}[state.service.need] + " · " + Math.round(opts.needs()[state.service.need]) + "%") : state.inside ? "阿简的家 · 点击床铺、浴缸、厨房或书架使用" : objective();
+        root.querySelector("[data-status]").textContent = state.service ? {
+            hunger: "正在吃饭",
+            energy: "正在睡觉",
+            hygiene: "正在洗漱",
+            bladder: "正在使用卫生间",
+            social: "正在聊聊天",
+            fun: "正在休息"
+        }[state.service.need] + " · " + Math.round(opts.needs()[state.service.need]) + "%" : state.inside ? "阿简的家 · 点击床铺、浴缸、厨房或书架使用" : objective();
     }
     function tick(dt, realDt = dt) {
         if (!state.loaded) return;
@@ -887,6 +912,11 @@ function makeSeason_autumn(opts, DATA) {
         pick((e.clientX - b.left) * 342 / b.width + state.camX, (e.clientY - b.top) * 236 / b.height + state.camY);
     });
     window.addEventListener("keydown", e => {
+        if (opts.active() && e.key === "Escape" && !modal.hidden) {
+            e.preventDefault();
+            close();
+            return;
+        }
         if (!opts.active() || /INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName) || !modal.hidden) return;
         if ([ "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d" ].includes(e.key)) {
             e.preventDefault();

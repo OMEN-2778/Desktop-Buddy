@@ -3,10 +3,10 @@ from pathlib import Path
 import sys,base64,io,json
 from dataclasses import replace
 from pixelkit import P
-import doll
 from PIL import Image
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'tools'),str(ROOT/'art/src/concept')]
+import doll
 import autumn_city as A
 
 def uri(name):return 'data:image/png;base64,'+base64.b64encode((ROOT/'art/out/concept'/name).read_bytes()).decode()

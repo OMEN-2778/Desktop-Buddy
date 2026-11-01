@@ -7,6 +7,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- Final rule audit: optional post-story office visit is dialogue only (no need gains/job
+  penalty), matching owner's "no effect" decision. Added explicit regression.
+- Runtime art packer imports its doll dependency after establishing its source path.
+- Interrupted dust-report dialogue can be resumed after all three clues; added close/Esc
+  controls without consuming unfinished chapter progress.
+
+## 2026-11-01 · Codex
 - Owner authorized playable autumn in `/map-test/` via native house door, test-only.
 - Revised art per steering: horizontal streets/vertical flights/right-angle landings,
   front-only houses, compact 1024×1216; dry maples/shrubs, independent foreground fade.
