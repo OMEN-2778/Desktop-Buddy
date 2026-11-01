@@ -137,3 +137,7 @@ WC (275,50), kitchen (240,108), sofa (80,108), TV (140,108). All hit boxes / ser
 poses / door positions match the reused furniture; six needs retained. Layout v4 resets
 obsolete v3 travel coordinates while preserving story/needs. Exterior name 侦探事务所 kept.
 This supersedes all earlier bespoke interior coordinates and recolouring instructions.
+
+Latest story correction: removed all sapling/carrying/watering/planting plot content.
+Quest 5 now asks the player to converse in the plaza; epilogue remains a dialogue, no
+planting menu or planted marker. Old saved tree flags are discarded.

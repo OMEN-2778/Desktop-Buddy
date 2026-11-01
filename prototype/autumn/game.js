@@ -306,7 +306,7 @@ function makeSeason_autumn(opts, DATA) {
             y: landmark(loc).y
         }));
     }
-    const objective = () => [ "先和停机坪的阿简说说话", "去公司、食堂、诊所问问程铁山的下落", "到山上的小屋找程铁山", "再去诊所、食堂和公司看看", "去公司看账本，再到市政厅参加公开讨论", "把带来的枫树苗种到中城广场", "枫叶城已开放，想逛多久都行" ][state.quest] || "四处逛逛";
+    const objective = () => [ "先和停机坪的阿简说说话", "去公司、食堂、诊所问问程铁山的下落", "到山上的小屋找程铁山", "再去诊所、食堂和公司看看", "去公司看账本，再到市政厅参加公开讨论", "到中城广场和大家聊聊", "枫叶城已开放，想逛多久都行" ][state.quest] || "四处逛逛";
     function converse(id) {
         const q = state.quest, f = state.flags;
         if (q === 1 && [ "qing", "zhou", "doctor" ].every(n => f["heard_" + n])) return talk(AUTUMN_STORY.dust, () => chapter(2, 1, "运输车盖上了篷布，工人街开始洒水。山上的小屋也许有人。"));
@@ -396,11 +396,8 @@ function makeSeason_autumn(opts, DATA) {
         if (id === "hut") return state.quest >= 2 ? converse("father") : panel("山上的小屋", "门虚掩着。先把公司的消息和诊所那边的情况问清楚。", [ [ "好" ] ]);
         if (id === "mine_office") return state.quest >= 6 ? talk(AUTUMN_STORY.office) : converse("qing");
         if (id === "clinic") return converse("doctor");
-        if (id === "townhall" && state.quest === 4 && state.flags.ledger) return talk(AUTUMN_STORY.meeting, () => chapter(5, 4, "公开讨论结束。矿区开始分步转型，烟囱停了；也有人准备离开。把那棵枫树种下来吧。"));
-        if (id === "plaza" && state.quest === 5) return panel("广场上的空地", "带来的枫树苗可以种在这里。", [ [ "种下树苗", () => talk(AUTUMN_STORY.planting, () => {
-            state.flags.tree = true;
-            chapter(6, 4, "枫树苗种在中城广场。枫叶城从此全年开放；办公室想去就去，不去也没关系。");
-        }) ], [ "等一会儿" ] ]);
+        if (id === "townhall" && state.quest === 4 && state.flags.ledger) return talk(AUTUMN_STORY.meeting, () => chapter(5, 4, "公开讨论结束。矿区开始分步转型，烟囱停了；也有人准备离开。去中城广场和大家聊聊吧。"));
+        if (id === "plaza" && state.quest === 5) return talk(AUTUMN_STORY.epilogue, () => chapter(6,4,"与大家聊过近况。枫叶城从此全年开放；办公室想去就去，不去也没关系。"));
         if (id === "notice") return panel(p.name, state.quest < 4 ? "墙上贴着运输安排，几张纸被灰盖住了。" : state.quest < 5 ? "公开讨论：工资、债务、河水检测。表上有日期，也有空着的项目。" : "新的河水与空气报告按月贴在这里。做完的和没做完的，都留着。", [ [ "记进日记", () => discover("notice", "看了广场的公告，日期和没完成的项目都还在。") ], [ "离开" ] ]);
         if (id === "airstrip") return panel(p.name, state.quest < 6 ? "雾霾还没散，阿简正在等能起飞的天气。测试时也可以随时返回小屋。" : "天清了，飞机随时可以出发。枫叶城以后全年都能来。", [ [ "返回小屋", opts.exit ], [ "再逛逛" ] ]);
         const services = {
@@ -417,7 +414,7 @@ function makeSeason_autumn(opts, DATA) {
             return panel(p.name, id === "plaza" ? "长椅边有人歇脚，能坐下来聊几句。" : "走到地方了，先歇口气。", [ [ label, () => beginService(need, p.name) ], ...id === "canteen" ? [ [ "和老周聊聊", () => converse("zhou") ] ] : [], [ "离开" ] ]);
         }
         const discoveries = {
-            nursery: "苗圃里的枫树苗，一片片叶子上都落着灰。",
+            nursery: "苗圃的叶片上积着一层灰。",
             pier: "旧码头的缆绳还拴着船，木板上的锈水印已经洗不掉了。",
             mine: "旧矿道墙上留着工人的照片，最下面那排比上面的新。",
             townhall: "市政厅的告示里夹着旧矿区改造的申请，盖章的日期很早。"
@@ -732,14 +729,7 @@ function makeSeason_autumn(opts, DATA) {
                 ctx.drawImage(images.get(p.img), p.x, p.y);
             }
             ctx.globalAlpha = 1;
-            if (state.flags.tree) {
-                ctx.fillStyle = "#87573e";
-                ctx.fillRect(landmark("plaza").x + 22, landmark("plaza").y - 33, 3, 26);
-                for (const [x, y] of [ [ 18, -37 ], [ 25, -42 ], [ 29, -32 ] ]) {
-                    ctx.fillStyle = "#e88a2f";
-                    ctx.fillRect(landmark("plaza").x + x, landmark("plaza").y + y, 9, 7);
-                }
-            }
+
         }
         if (hover) {
             const p = hover;
@@ -886,6 +876,7 @@ function makeSeason_autumn(opts, DATA) {
         state.quest = clamp(Math.floor(state.quest) || 0, 0, 6);
         state.stage = clamp(Math.floor(state.stage) || 0, 0, 4);
         state.flags ||= {};
+        delete state.flags.tree;
         state.found = Array.from(state.found || []);
         if (state.layoutVersion !== DATA.layoutVersion) {
             // Preserve story/needs, discard travel coordinates from the retired large map.

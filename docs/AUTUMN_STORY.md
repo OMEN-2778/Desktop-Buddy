@@ -51,11 +51,10 @@ dead leaves. After: blue sky, red maples, leaves falling through every layer.
 ## Story (方案 B, owner-approved)
 
 ### 序章 · 隔壁的空房子
-- Summer: a quiet old man (程铁山, unnamed until ch1) rents the house next door, gives Buddy maple syrup, and before leaving
-  "回老家一周" asks her to water his maple sapling and leaves the key. He doesn't come back.
+- Summer: a quiet old man (程铁山, unnamed until ch1) rents the house next door, gives Buddy maple syrup, then says "回老家一周". He does not come back.
 - Autumn: 阿简 (with "!") is knocking on doors along our street. He was hired by the old man's
   daughter. "我手上只有他二十年前的照片。你认得他，能跟我走一趟吗？"
-- Buddy brings the sapling (she promised to look after it). The plane barely lands in the smog;
+- Buddy accompanies 阿简. The plane barely lands in the smog;
   阿简 mutters: "降得下来，起不起得来就难说了。" He lends her his old family house.
 
 ### 第一章 · 找人
@@ -88,10 +87,10 @@ dead leaves. After: blue sky, red maples, leaves falling through every layer.
 - **变化 ④:** the chimney goes cold.
 
 ### 尾声
-- Sun, red maples, leaves falling through every layer. Buddy plants the sapling in the square.
+- Sun, red maples, leaves falling through every layer. Buddy meets everyone in the square.
 - 程青 offers Buddy a desk in the new office that publishes the river/air report each month:
   "大家都跟你说过话。你写的，他们会看。"
-- 阿简's plane can finally take off. "明年秋天，我再来看看那棵树。"
+- 阿简's plane can finally take off. "明年秋天，我再来看看。"
 
 ## Discoveries (optional, no new named NPCs)
 Old miners' photo wall · a stray cat on the pipes · 老周's lunch tin with his grandson's drawing ·
@@ -100,7 +99,6 @@ merry-go-round · a radio playing the city's old song · 阿简's carved initial
 the square. Each adds a diary entry and a small line in the chapter-4 meeting.
 
 ## Gameplay notes
-- The sapling Buddy brings is carried through the story and planted in the square at the end.
 - The plane cannot take off while the haze lasts (story reason 阿简 stays after ch2).
 - Each chapter ends with one visible change in its own layer; costs stay visible after.
 
@@ -110,3 +108,9 @@ the square. Each adds a diary entry and a small line in the chapter-4 meeting.
 - If autumn ends mid-story, the story **continues in winter** (progress kept).
 - 程铁山 living next door in summer is **only told** in the prologue dialogue; he does not
   appear in the summer game.
+
+## Owner correction (2026-11-01)
+Remove the entire sapling storyline: no watering promise, carrying sapling, planting,
+planting choices/diary/marker or return-to-see-tree line. Epilogue is a conversation
+in the plaza; office invitation and health/future-city exchanges remain. Natural maples
+and nursery scenery remain environmental art, not a story item.
