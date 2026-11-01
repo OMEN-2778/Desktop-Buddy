@@ -67,3 +67,12 @@ node tools/check_autumn_preview.js
   with foreground fade near the actual actor; see AUTUMN_GAME.md for runtime details.
 - `/autumn/` remains the full-image inspector. The actual playable scene is entered from
   the door in `/map-test/`. Gameplay and approved story are now implemented there.
+
+## 2026-11-01 detailed mountain repair
+Owner wants solid stone stairs and a mountain-founded city, abundant dry maples/shrubs,
+rich purposeful placement. Rebuilt stair cheeks/thresholds; cut real rail entrances;
+rerouted facade/roof collisions. Replaced stilts with retaining rock and added drains,
+wall utilities and domestic props. 102 independent plants; maple crowns/roots redrawn.
+Route/rail geometry now shares authored coordinates and a tracked rail metadata file.
+See AUTUMN_GAME.md for exact fixes and regression commands. Compact world dimensions,
+front-only facades, story and test-only entry remain in force.

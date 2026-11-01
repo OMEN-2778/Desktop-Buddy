@@ -12,6 +12,8 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  assert.equal(await p.evaluate(()=>sceneHouseHeight()),236);const originalLook=await p.evaluate(()=>JSON.stringify(look));
  const nav=await p.evaluate(()=>{const c=seasonMapTest.ctl();return c.DATA.landmarks.map(p=>{const path=c.plan(p.x,p.y);let prev=c.state;const valid=path.every(n=>{const ok=Math.abs(n.x-prev.x)<.01||Math.abs(n.y-prev.y)<.01;prev=n;return ok});return {id:p.id,len:path.length,valid,end:path.at(-1),want:{x:p.x,y:p.y}}})});
  for(const n of nav){assert(n.valid,n.id);if(n.end)assert(Math.hypot(n.end.x-n.want.x,n.end.y-n.want.y)<.1,n.id);else assert.equal(n.id,'airstrip')}
+ // Walk every authored route vertex through the movement controller, including all stair mouths.
+ const walked=await p.evaluate(()=>{const c=seasonMapTest.ctl(),seen=new Set;let count=0;for(const [,points] of c.DATA.routes)for(const [x,y] of points){const key=x+','+y;if(seen.has(key))continue;seen.add(key);c.state.paused=false;c.goTo(x,y);for(let i=0;i<20000&&c.state.target;i++)c.tick(.2,0);if(Math.hypot(c.state.x-x,c.state.y-y)>1)return {bad:key,at:[c.state.x,c.state.y]};count++}c.reset();return {count}});assert(!walked.bad,JSON.stringify(walked));assert(walked.count>40);
  // Simulation acceleration below moves along real graph segments, never teleports a route.
  async function finishRoute(){await p.evaluate(()=>{const c=seasonMapTest.ctl();c.state.paused=false;for(let i=0;i<10000&&(c.state.target||c.state.door);i++)c.tick(.1,.01)});}
  async function talk(id){await p.evaluate(id=>seasonMapTest.ctl().converse(id),id);await drain();}

@@ -17,6 +17,34 @@ No autumn code is included in formal EXE/trial inputs. `/autumn/` remains an art
 - Only the player requests departure. Test entry is available any season, for review;
   formal autumn detective/unlock gates remain outside this test adapter.
 
+## Mountain-city repair · 2026-11-01
+- Owner requests detailed commercial-quality polish: a city founded on mountain rock,
+  solid stone stairs, many dry maples/shrubs and richer sensible scene dressing.
+- Fixed actual visual/nav mismatches: uninterrupted rails across stair mouths; west
+  lower stair through laundry roof; east lower through WC; east upper through housing;
+  west upper landing over detective roof; summit landing through pavilion roof; mine
+  stair through its lintel (now descends to a forecourt and approaches horizontally).
+  Relocated the cable cabin off the office sign; raised that sign above its door and
+  supplied a stone foundation under the detached eastern factory facade.
+- Routes remain orthogonal/connected; west upper and east upper are clear straight
+  alley flights. Lower switchbacks and summit landing have new coordinates. Restore
+  already projects old save positions/routes onto the new graph.
+- Flights now have sandstone treads/risers, solid masonry cheeks, caps and flush mouths.
+  Streets are drawn after flights, with their back edge below building sills; no door
+  bottom is erased by paving. Mountain ribs, retaining courses, exposed rock and drains
+  replace the timber stilt skeleton; utility boxes/crates/pots enrich existing frontages.
+- 102 individually sorted/fading foliage pieces (previous 52), with rebuilt lobed maple
+  crowns, trunks/roots and dry leaf clusters. Stage 4 still changes to autumn red.
+- Rail openings derive from ALL perpendicular route intersections. Tracked
+  `autumn_rails_world.json` stores the exact split segments; runtime packer consumes
+  these instead of guessing rail positions from route directions. Keep it with PNGs.
+- Tests: `python tools/check_autumn_geometry.py` catches blocked rail mouths, known
+  facade/roof traps, foliage/stage parity; browser game regression now physically walks
+  every distinct route vertex. Existing story/services/save/four-size checks retained.
+- Art atlas lint's 63 isolated pixels are intentional leaf tips/fallen leaves; palette
+  and binary transparency checks pass. No claim of independent commercial QA or
+  real-device performance certification; this remains the test map, not formal EXE.
+
 ## Implementation / files
 - `art/src/concept/autumn_city.py` draws at design 1152×1408 then exports the compact
   nearest-neighbour world. `runtime_routes()/runtime_landmarks()` export the same

@@ -7,6 +7,15 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- Detailed autumn mountain repair: solid stone stairs/thresholds, route-derived open
+  rail mouths, rerouted facade and roof collisions; exposed rock/drains replace stilts.
+- Rebuilt maple crowns, 102 independent plants; grounded props/utility details. New
+  tracked rail metadata drives runtime crops. Owner decisions in pixel skill + autumn docs.
+- Geometry regression and browser walking of every route vertex; story/services/save,
+  four desktop scales and seasonal regression checked. Test webpage only; no EXE change.
+- No independent commercial QA / real-device performance claim; art lint leaf specks intentional.
+
+## 2026-11-01 · Codex
 - Final rule audit: optional post-story office visit is dialogue only (no need gains/job
   penalty), matching owner's "no effect" decision. Added explicit regression.
 - Runtime art packer imports its doll dependency after establishing its source path.
