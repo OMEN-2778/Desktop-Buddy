@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- iPad could not open chat sandbox download: published requested story DOCX via ordinary
+  HTTPS plus readable `/story-review/` page. Static exported prose/document only; no game
+  changes. Preview workflow retains this folder so future map updates do not break it.
+
+## 2026-11-01 · Codex
 - Owner removed sapling storyline throughout current dialogue, objectives, planting
   action/diary and planted marker. Plaza epilogue is now a conversation; other plot retained.
 - Updated editable DOCX export and story handoffs; old saved tree flag discarded.
