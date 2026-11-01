@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Claude Code
+- `docs/AUTUMN_STORY.md` v2 per owner: no absolute good/bad, every NPC has a stance with a
+  reason and a cost; cast cut to 5 (林砚 程铁山 赵启明 老鲁 阿禾). Docs only, waiting on owner.
+
+## 2026-11-01 · Claude Code
 - Owner rule for ALL season maps written into `AGENTS.md`, `CLAUDE.md`, `docs/SEASON_MAPS.md`:
   Buddy never leaves a season map on her own; needs go to the map's house first, else nearest
   spot in the map; every map needs a spot for each need.
