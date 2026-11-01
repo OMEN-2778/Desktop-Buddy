@@ -41,6 +41,9 @@ PYTHONPATH=tools python tools/make_autumn_preview.py
 node tools/check_autumn_preview.js
 ```
 - Art: `art/out/concept/autumn_city_polluted.png` (tracked original logical resolution).
+- Asset authoring requires NotoSansCJK-Bold (`fonts-noto-cjk`). The preview builder
+  publishes the tracked, reviewed PNG directly; CI does not re-render Chinese labels or
+  depend on host fonts. Regenerate/commit that PNG whenever changing the art source.
 - Viewer template: `prototype/autumn/index.src.html`; builder embeds art, minifies JS with
   existing terser; `desktop/dist/autumn/index.html` and downloadable PNG are generated only.
 - Public review: `/autumn/` in Desktop-Buddy-Releases Pages, built by `preview.yml`.

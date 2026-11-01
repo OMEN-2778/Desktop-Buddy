@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- Autumn preview CI lacked authoring CJK font; builder now publishes the exact tracked,
+  reviewed pixelkit PNG instead of re-rendering labels on the host. No art change.
+- Local inspector regression passes; authoring font requirement recorded in AUTUMN_CITY.
+
+## 2026-11-01 · Codex
 - Owner requested pollution-state 枫叶城 art: ONE continuous 1152×1408 pixel hillside,
   oblique planes, interlocked stair/switchback routes, stilt housing, river/industrial haze.
 - New autumn_city.py + art PNG; 13 connected planned route polylines, landmark focus data.
