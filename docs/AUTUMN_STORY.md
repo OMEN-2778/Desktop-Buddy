@@ -126,3 +126,61 @@ at the meeting and a diary entry.
 2. Keep the twists "the gardener is Chen" and "Chen hired the detective himself"?
 3. After the story: can Buddy come back later? Office job daily from the house, or autumn only?
 4. If autumn ends halfway: does progress wait for next autumn?
+
+---
+
+# 方案 B（Claude 重写，与上面的 v2 二选一或混用）
+Goal: a natural opening with no coincidences, no puppet-master twist; mystery solved early,
+the real story is the city's choice. 5 NPCs.
+
+## Cast
+| 角色 | 立场 | 理由 | 代价/盲点 |
+|---|---|---|---|
+| **阿简** 侦探 | 只管查案，不想掺和 | 枫叶城人，多年前离开；这是份工作 | 案子破了却走不了（雾霾，飞机起不来），被迫看清老家 |
+| **何振东** 矿场老板，退休 | 关矿 | 夏天住在我家隔壁，看到这里的枫叶是红的，自己家乡的不是 | 当年开矿没问过谁，现在关矿也不问；把烂摊子丢给女儿 |
+| **何青** 他女儿，现任总经理 | 慢慢改，不能停 | 三百户人家、银行贷款都压在她身上 | 一直在拖，"等下个季度" |
+| **老周** 老矿工，班组长 | 保住饭碗 | 一辈子只会这个，徒弟们要养家 | 知道河的事，装作不知道 |
+| **苏医生** 小诊所医生 | 必须让外面知道 | 诊所里咳嗽的孩子越来越多 | 诊所的钱是矿上出的；匿名举报信是她写的，不敢认 |
+
+## 序章 · 隔壁的空房子
+- Summer: a quiet old man rents the house next door, gives Buddy maple syrup, and before leaving
+  "回老家一周" asks her to water his maple sapling and leaves the key. He doesn't come back.
+- Autumn: 阿简 (with "!") is knocking on doors along our street. He was hired by the old man's
+  daughter. "我手上只有他二十年前的照片。你认得他，能跟我走一趟吗？"
+- Buddy brings the sapling (she promised to look after it). The plane barely lands in the smog;
+  阿简 mutters: "降得下来，起不起得来就难说了。" He lends her his old family house.
+
+## 第一章 · 找人
+- 何青 at the company: polite, tired. "他说要关矿，说完就关机了。"
+- 老周 at the canteen: "老何跑不远，他舍不得那几口井。"
+- 苏医生, clinic full of coughing kids, gets cagey when Buddy mentions 何.
+- Clues point to the old miners' hut on the hill.
+- **变化 ①:** after Buddy passes on what she saw at the clinic, 何青 has the ore trucks covered
+  and the streets watered. Dust settles on the workers' street. She knows it's not enough.
+
+## 第二章 · 山上的老人
+- 何振东 is at the hut, fine, just stubborn. "你那条街的枫叶，是红的。"
+- 阿简 phones 何青: found. Case closed. The plane can't take off in the haze, so he stays.
+- Father won't come down until the mine closes; daughter: "你开矿的时候，问过谁吗？"
+- 何振东 and 老周 close the old tailings drain 何 built himself.
+- **变化 ②:** the river clears. Cost: 老周's night shift is gone.
+
+## 第三章 · 举报信
+- An inspection team is coming because of anonymous letters. The city panics; 老周 wants to find
+  "那个告状的". 苏医生 tells only Buddy it was her; the mine pays for her clinic.
+- Buddy doesn't spill it. 苏医生 decides to tell 老周 herself; he walks out without a word.
+- 何青 has to choose: tidy up for the inspectors, or open the books. She shuts the old furnace.
+- **变化 ③:** smoke thins, the upper town sees blue.
+
+## 第四章 · 账本
+- 何青 opens the books at a meeting in the square. Debts, wages, the river reports.
+- Plan the city makes together: the mine winds down over years, part becomes a recycling works;
+  the clinic gets a public fund. Costs stay: some families leave; 老周 retires; father and
+  daughter still don't fully agree. 老周 comes back to the clinic with his grandson.
+- **变化 ④:** the chimney goes cold.
+
+## 尾声
+- Sun, red maples, leaves falling through every layer. Buddy plants the sapling in the square.
+- 何青 offers Buddy a desk in the new office that publishes the river/air report each month:
+  "大家都跟你说过话。你写的，他们会看。"
+- 阿简's plane can finally take off. "明年秋天，我再来看看那棵树。"

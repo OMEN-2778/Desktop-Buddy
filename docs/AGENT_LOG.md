@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Claude Code
+- 秋 story 方案 B appended to `docs/AUTUMN_STORY.md` (neighbour opening, mystery solved in ch2,
+  smog keeps the plane grounded). Docs only, waiting on owner to pick.
+
+## 2026-11-01 · Claude Code
 - 秋 story: detective renamed 阿简; owner finds the opening/early chapters contrived and will
   rewrite them with another AI. Docs only.
 
