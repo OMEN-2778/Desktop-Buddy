@@ -36,6 +36,8 @@ spot for each of the six needs. Only the player or the story takes her out. (`AG
   front door with a "!" over his head; miss him and wait for next autumn. Talking to him flies
   Buddy to 枫叶城 in his private plane. Buddy may use the detective's house there for all needs.
 - During the story, friend chats and invitations are muted (queued, delivered afterwards).
+- After the story: open all year; office job optional, no effect; an unfinished story
+  continues in winter. Full decisions in `docs/AUTUMN_STORY.md`.
 - Ending: the grey city turns sunny with falling maple leaves; Buddy gets an office job there.
 
 ## 冬

@@ -104,8 +104,9 @@ the square. Each adds a diary entry and a small line in the chapter-4 meeting.
 - The plane cannot take off while the haze lasts (story reason 阿简 stays after ch2).
 - Each chapter ends with one visible change in its own layer; costs stay visible after.
 
-## Open questions for the owner
-1. After the story: can Buddy come back later? Office job daily from the house, or autumn only?
-2. If autumn ends halfway: does progress wait for next autumn?
-3. Does the summer neighbour (程铁山 next door) need to appear in the summer game, or is it
-   only told in the prologue?
+## Owner decisions (2026-11-01)
+- After the story, 枫叶城 is open **all year** (sunny version).
+- The office job is optional: Buddy may go any day or not at all; it has no effect on anything.
+- If autumn ends mid-story, the story **continues in winter** (progress kept).
+- 程铁山 living next door in summer is **only told** in the prologue dialogue; he does not
+  appear in the summer game.

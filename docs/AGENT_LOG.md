@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Claude Code
+- 秋 owner decisions added to `docs/AUTUMN_STORY.md`: city open all year after the story;
+  office job optional, no effect; unfinished story continues in winter; 程铁山 next door in
+  summer is only told in the prologue. Docs only. Autumn work is handed to Codex.
+
+## 2026-11-01 · Claude Code
 - Owner picked 秋 story 方案 B; `docs/AUTUMN_STORY.md` rewritten as the single approved story
   (v1/v2 removed). Names: 阿简, 程铁山, 程青, 老周, 苏医生. Codex: read it fully before autumn work.
   Docs only. Next: 枫叶城 art preview (grey + sunny).
