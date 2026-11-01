@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Claude Code
+- 秋 story: detective renamed 阿简; owner finds the opening/early chapters contrived and will
+  rewrite them with another AI. Docs only.
+
+## 2026-11-01 · Claude Code
 - `docs/AUTUMN_STORY.md` v2 per owner: no absolute good/bad, every NPC has a stance with a
   reason and a cost; cast cut to 5 (林砚 程铁山 赵启明 老鲁 阿禾). Docs only, waiting on owner.
 
