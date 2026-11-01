@@ -5,7 +5,7 @@
 No autumn code is included in formal EXE/trial inputs. `/autumn/` remains an art inspector.
 
 ## Owner decisions now applied
-- One continuous compact map, **640×688** world pixels, not separate boxed areas.
+- One continuous compact map, **640×944 including the requested summit** world pixels, not separate boxed areas.
 - Horizontal streets, vertical stair flights and right-angle landings. No diagonal
   walking links. Building walls show fronts only. More dry yellow maples/shrubs placed
   in planters, corners and along ledges, with doors and stair mouths kept accessible.
@@ -19,11 +19,11 @@ No autumn code is included in formal EXE/trial inputs. `/autumn/` remains an art
 
 ## Compact replacement · 2026-11-01 (current)
 The owner rejected the large city even after repairs. Rebuilt its composition as a
-640×688 continuous diorama (64.6% smaller), densely packed flat-roof frontages and
-160 reused/recoloured foliage pieces (63 trees). All 17 story/life-service landmarks remain.
+a compact continuous diorama, now with the owner-requested summit strip; densely packed flat-roof frontages and
+164 reused/recoloured foliage pieces (66 trees). All 17 story/life-service landmarks remain.
 Current coordinates and owner rules: AUTUMN_CITY.md. Old large-map coordinates are retired.
 
-- `layoutVersion:2` in runtime metadata/state. Adapter explicitly treats saved states
+- `layoutVersion:3` in runtime metadata/state. Adapter explicitly treats saved states
   without this marker as v1; restore preserves quest/stage/flags/discoveries/needs,
   resets obsolete travel/service/inside coordinates to the new airstrip, clamps lift.
 - Also fixed autumn discovery saves being restored as Set although controller uses an
@@ -33,11 +33,11 @@ Current coordinates and owner rules: AUTUMN_CITY.md. Old large-map coordinates a
 - Detective interior uses native tiled wainscot, wood panels, wardrobe, bedside light,
   small desk, framed art, clock and kitchen fittings. Existing service targets retained.
 - Geometry tests updated to every compact facade, rail mouths and <450000px area;
-  browser checks walk all 39 vertices, full story/services, four scales, normal saves
+  browser checks walk every authored vertex, full story/services, four scales, normal saves
   and explicit migration from an old large-map save. Existing seasonal test retained.
 
 ## Implementation / files
-- `art/src/concept/autumn_city.py` draws/exports at native 640×688, with no shrinking pass. `runtime_routes()/runtime_landmarks()` export the same coordinates as the artwork; game character stays native 20×28.
+- `art/src/concept/autumn_city.py` draws a native 640×720 core plus a 224px summit strip, exporting 640×944 with no shrinking pass. `runtime_routes()/runtime_landmarks()` export coordinates using the same TOP offset as the artwork; game character stays native 20×28.
 - Five environment states: dust/tarps/wet street, river clearing, furnace shut,
   sunny city/red maples. Base map excludes foreground foliage and front rails.
 - `autumn_foliage_atlas_0..4.png` + `autumn_foliage_world.json`: each tree/shrub is
@@ -101,8 +101,20 @@ Other seasonal game-shell checks remain in place. No real-device FPS claim.
   minified page embeds the renamed WOFF subset. OFL text is published as FONT-LICENSE.txt.
 - `windAmount` / `windSprite`: independent tree phases, fixed roots, pixel-row crown
   bending and bounded native-sprite cache. Pause freezes time; no extra animation loop.
-- All 160 plants keep independent depth/fade; 31 added trees have supported planters.
+- All 164 plants keep independent depth/fade; 31 added trees have supported planters.
 - Larger plane and furnished home reviewed in PNG + actual game. Browser regression
   checks loaded font / antialiased lettering, changing crowns / unchanged roots,
   asynchronous phases and pause, in addition to story/needs/migration/four-scale UI.
 - No new furniture interactions added; original six local services stay functional.
+
+## Summit / detective office follow-up (2026-11-01)
+Current world includes TOP=224 + CORE_H=720. All outdoor y coordinates go through
+`map_point`; no engine magic offsets. `layoutVersion:3` resets v1/v2 travel coordinates
+while preserving plot/needs/discoveries. Stable `detective_home` ID is displayed as
+**侦探事务所**; intro/status/controls/diary are renamed consistently.
+`DATA.summit` drives positional camera look-ahead on the upper plaza. `DATA.river` holds
+world-space boat/mooring/water/rock bounds and palette colours. New boat image is loaded
+with other assets. `drawRiver()` runs before actors/foliage, with integer wavelets and
+fixed-end mooring; only native pixels, no gradients. New browser regression walks to
+the actual lookout, measures camera continuity and compares river-only rendered pixels.
+Office uses recoloured native furniture and a 4px midfloor slab; services stay at y102/204.

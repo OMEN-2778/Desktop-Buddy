@@ -24,7 +24,7 @@ for name,pts in A.ROUTES:
     assert not (a[0]-11<r and a[0]+11>l and max(min(a[1],b[1]),t)<min(max(a[1],b[1]),bot)),(name,a,b,(l,t,r,bot))
    else:
     assert not (t<a[1]<bot and max(min(a[0],b[0]),l)<min(max(a[0],b[0]),r)),(name,a,b,'roof')
-assert A.MAP_W*A.MAP_H < 450000
+assert A.CORE_H<=720 and A.TOP<=224 and A.MAP_W==640
 assert len(A.LANDMARKS)==17
 for stage in range(5):
  im=Image.open(ROOT/f'art/out/concept/autumn_city_stage_{stage}.png')

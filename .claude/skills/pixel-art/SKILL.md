@@ -1111,3 +1111,13 @@ exception applies to sign text only, not buildings/foliage/effects. Populate 阿
 with useful domestic furnishings; more actual trees, independent gentle wind with fixed
 roots, pause support and retained foreground fade. Plane must read as a larger private
 plane. See AUTUMN_CITY.md for asset/font pipeline and exact current counts.
+
+### Autumn summit and concrete defect corrections (2026-11-01)
+Owner requests a left-edge upward path into a small forest-ringed summit plaza; walking
+north blends the camera upward to reveal only haze/distant mountain silhouettes for now.
+This explicitly permits a panorama strip above the compact core. No separate scene.
+Remove wall-hanging/ambiguous rooftop trees; use actual ground/forest/riverbank planting.
+Ground-floor windows must exclude refined door frames; raised signs must not cover lintels.
+Reuse native furnishings with local recolouring, eliminate the 24px blank floor band
+(4px slab), and rename 阿简的家 to **侦探事务所**. Refine plane details and give the river/
+moored boat pixel animation. Preserve smooth Source Han Sans lettering and pixel scenery.

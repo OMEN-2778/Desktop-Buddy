@@ -7,6 +7,16 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-01 · Codex
+- Fixed door/window and sign/lintel overlap, removed rooftop/wall-hanging trees; detailed
+  plane, grounded 66-tree forest/courts. Native furnishings recoloured; 4px office slab.
+- Renamed location to 侦探事务所 (stable ID). Added left ascent to forest-ringed summit,
+  smooth positional panorama look-ahead, haze/remote ridge silhouettes; no scene split.
+- World 640×944: old core + 32px river + TOP224. v3 save migration preserves story;
+  all outdoor anchors shifted together. Pixel water/boat/reflection/fixed mooring animate.
+- Updated handoffs/tests for route/river/camera and existing story/needs/fonts/wind/saves;
+  test webpage only, no formal EXE. See AUTUMN_CITY.md before editing coordinates.
+
+## 2026-11-01 · Codex
 - Owner detail pass: furnished detective home, larger ~174px plane; 32→63 actual trees
   (160 total plants). Fixed-root pixel wind with independent phases, bounded cache/pause.
 - Sign text now separate smooth 思源黑体 layer, offline OFL subset + license; pixel scenery

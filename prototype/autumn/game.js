@@ -9,7 +9,7 @@ function makeSeason_autumn(opts, DATA) {
     root.className = "season-controller";
     root.dataset.kind = "autumn";
     root.hidden = true;
-    root.innerHTML = '<div class="controls"><strong>枫叶城</strong><button data-map>全城地图</button><button data-home>阿简的家</button><button data-goal>当前线索</button><button data-exit>返回小屋</button></div><p data-status></p>';
+    root.innerHTML = '<div class="controls"><strong>枫叶城</strong><button data-map>全城地图</button><button data-home>侦探事务所</button><button data-goal>当前线索</button><button data-exit>返回小屋</button></div><p data-status></p>';
     const modal = document.createElement("section");
     modal.className = "autumn-panel";
     modal.hidden = true;
@@ -370,7 +370,7 @@ function makeSeason_autumn(opts, DATA) {
             elapsed: 0
         };
         state.pose = [ "energy", "social", "fun" ].includes(need) || need === "hunger" && !state.inside ? "sit" : null;
-        opts.record((state.inside ? "在阿简家里" : location) + "，" + names[need] + "。");
+        opts.record((state.inside ? "在侦探事务所里" : location) + "，" + names[need] + "。");
     }
     function enter(automaticNeed = null) {
         state.door = {
@@ -398,7 +398,7 @@ function makeSeason_autumn(opts, DATA) {
             return;
         }
         if (goal.id === "inside_service") {
-            beginService(goal.need, "阿简的家");
+            beginService(goal.need, "侦探事务所");
             return;
         }
         if (goal.id === "detective_home" && goal.automatic) {
@@ -627,7 +627,9 @@ function makeSeason_autumn(opts, DATA) {
             state.camX = state.camY = 0;
             return;
         }
-        const x = clamp(state.x - 171, 0, DATA.width - 342), y = clamp(state.y - 130, 0, DATA.height - 236), t = 1 - Math.exp(-dt * 5);
+        const viewProgress = !state.inside && state.x > 80 && state.x < 345 ? clamp((DATA.summit.triggerY-state.y)/65,0,1) : 0;
+        const ease=viewProgress*viewProgress*(3-2*viewProgress);
+        const x = clamp(state.x - 171, 0, DATA.width - 342), y = clamp(state.y - 130-ease*76, 0, DATA.height - 236), t = 1 - Math.exp(-dt * 5);
         state.camX += (x - state.camX) * t;
         state.camY += (y - state.camY) * t;
     }
@@ -657,6 +659,24 @@ function makeSeason_autumn(opts, DATA) {
         }
         if (windCache.size >= 384) windCache.delete(windCache.keys().next().value);
         windCache.set(key,c);return c;
+    }
+    function drawRiver() {
+        const r=DATA.river,t=state.time;
+        if(r.bottom<state.camY||r.top>state.camY+236)return;
+        // Native pixel wavelets: move on the water only, avoiding baked shoreline rocks.
+        for(let i=0;i<65;i++){
+            const x=Math.floor((i*79+t*(2+i%3))%DATA.width),y=r.top+((i*13)%Math.max(1,r.bottom-r.top-2));
+            if(r.rocks.some(([rx,ry])=>Math.abs(x-rx)<24&&Math.abs(y-ry)<11))continue;
+            ctx.fillStyle=(state.stage>=2?r.clean:r.dirty)[i%3?0:1];
+            const w=3+i%8;ctx.fillRect(x,y,w,1);if(i%4===0)ctx.fillRect(x+2,y+2,w-3,1);
+        }
+        const bob=Math.round(Math.sin(t*1.1)*1.5),by=r.boatY+bob;
+        ctx.fillStyle=r.shadow[state.stage>=2?1:0];
+        for(let j=0;j<4;j++)ctx.fillRect(r.boatX+12+j*3,by+36+j*2,66-j*8,1);
+        ctx.drawImage(images.get(DATA.boat),r.boatX,by);
+        // Mooring rope follows the hull but stays attached to the fixed quay bollard.
+        ctx.fillStyle=r.rope;const endX=r.boatX+13,endY=by+21;
+        for(let i=0;i<=28;i++){const u=i/28;ctx.fillRect(Math.round(r.moorX+(endX-r.moorX)*u),Math.round(r.moorY+(endY-r.moorY)*u+Math.sin(u*Math.PI)*3),1,1)}
     }
     function drawSigns() {
         ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#e6dfcf";
@@ -692,6 +712,7 @@ function makeSeason_autumn(opts, DATA) {
         if (state.mapOpen) {
             const sc = Math.min(342 / DATA.width, 236 / DATA.height), ox = (342 - DATA.width * sc) / 2;
             ctx.drawImage(bg, ox, 0, DATA.width * sc, DATA.height * sc);
+            ctx.drawImage(images.get(DATA.boat),ox+DATA.river.boatX*sc,(DATA.river.boatY+Math.round(Math.sin(state.time*1.1)*1.5))*sc,98*sc,38*sc);
             ctx.save();ctx.translate(ox,0);ctx.scale(sc,sc);
             ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#e6dfcf";
             for(const p of DATA.signs){ctx.font=p.size+'px "Buddy Autumn Signs"';ctx.fillText(p.text,p.x+p.w/2,p.y+p.h/2-1,p.w-6)}ctx.restore();
@@ -705,6 +726,7 @@ function makeSeason_autumn(opts, DATA) {
         ctx.translate(-state.camX, -state.camY);
         ctx.drawImage(state.inside ? images.get(DATA.inside) : bg, 0, 0);
         if (!state.inside) {
+            drawRiver();
             drawSigns();
             drawFoliage(false);
             for (const n of npcRows()) {
@@ -878,7 +900,7 @@ function makeSeason_autumn(opts, DATA) {
             bladder: "正在使用卫生间",
             social: "正在聊聊天",
             fun: "正在休息"
-        }[state.service.need] + " · " + Math.round(opts.needs()[state.service.need]) + "%" : state.inside ? "阿简的家 · 点击床铺、浴缸、厨房或书架使用" : objective();
+        }[state.service.need] + " · " + Math.round(opts.needs()[state.service.need]) + "%" : state.inside ? "侦探事务所 · 点击床铺、浴缸、厨房或书架使用" : objective();
     }
     function tick(dt, realDt = dt) {
         if (!state.loaded) return;
@@ -994,7 +1016,7 @@ function makeSeason_autumn(opts, DATA) {
     root.querySelector("[data-exit]").onclick = opts.exit;
     const signFont = new FontFace("Buddy Autumn Signs", 'url("'+DATA.signFont+'")');
     const fontReady = signFont.load().then(face=>document.fonts.add(face));
-    Promise.all([fontReady, ...[ ...DATA.scenes, DATA.front, DATA.inside, ...DATA.npcs.flat(), ...DATA.foreground.map(p => p.img), ...DATA.foliageSheets ].map(load)]).then(() => {
+    Promise.all([fontReady, ...[ ...DATA.scenes, DATA.front, DATA.inside, DATA.boat, ...DATA.npcs.flat(), ...DATA.foreground.map(p => p.img), ...DATA.foliageSheets ].map(load)]).then(() => {
         state.loaded = true;
         draw();
         updateStatus();

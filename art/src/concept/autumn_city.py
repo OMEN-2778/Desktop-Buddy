@@ -8,21 +8,23 @@ import random
 import json
 from pathlib import Path
 from functools import lru_cache
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageColor
 import numpy as np
 from pixelkit import Sprite, P
 
 PREVIEW_SCALE=1
-W,H=640,688
+W,CORE_H,TOP=640,720,224
+H=CORE_H+TOP
 MAP_W,MAP_H=W,H
 SCALE_X,SCALE_Y=MAP_W/W,MAP_H/H
-def map_point(x,y):return round(x*SCALE_X),round(y*SCALE_Y)
+def map_point(x,y):return round(x*SCALE_X),round(y*SCALE_Y)+TOP
 def runtime_routes():return [(name,[map_point(x,y) for x,y in points]) for name,points in ROUTES]
 def runtime_landmarks():
- return [{**p,'x':map_point(p['x'],p['y'])[0],'y':map_point(p['x'],p['y'])[1],'rect':[round(p['rect'][0]*SCALE_X),round(p['rect'][1]*SCALE_Y),round(p['rect'][2]*SCALE_X),round(p['rect'][3]*SCALE_Y)]} for p in LANDMARKS]
+ return [{**p,'x':map_point(p['x'],p['y'])[0],'y':map_point(p['x'],p['y'])[1],'rect':[round(p['rect'][0]*SCALE_X),round(p['rect'][1]*SCALE_Y)+TOP,round(p['rect'][2]*SCALE_X),round(p['rect'][3]*SCALE_Y)]} for p in LANDMARKS]
 # Compact diorama: five populated terraces; front-facing flat-roof houses.
 STREETS=[132,258,388,520,646]
 ROUTES=[
+ ('林间登山路',[(24,132),(24,0),(24,-24),(112,-24),(112,-60),(270,-60),(270,-92)]),
  ('山顶街',[(24,132),(92,132),(188,132),(276,132),(330,132),(456,132),(608,132)]),
  ('矿业街',[(24,258),(112,258),(260,258),(330,258),(464,258),(608,258),(620,258)]),
  ('中城街',[(24,388),(100,388),(188,388),(276,388),(330,388),(344,388),(420,388),(520,388),(608,388)]),
@@ -41,10 +43,10 @@ LANDMARKS=[
  dict(id='airstrip',name='山顶停机坪',x=456,y=132,need=None,rect=[354,58,236,70]),
  dict(id='nursery',name='枫树苗圃',x=92,y=132,need=None,rect=[45,55,92,72]),
  dict(id='hut',name='山上小屋',x=188,y=132,need=None,rect=[150,60,76,68]),
- dict(id='lookout',name='旧瞭望台',x=276,y=132,need='fun',rect=[242,56,65,72]),
+ dict(id='lookout',name='山顶瞭望台',x=270,y=-92,need='fun',rect=[110,-125,220,110]),
  dict(id='mine_office',name='赤岩矿业',x=112,y=258,need=None,rect=[46,152,134,100]),
  dict(id='townhall',name='市政厅',x=260,y=258,need=None,rect=[204,152,104,100]),
- dict(id='detective_home',name='阿简的家',x=100,y=388,need='all',rect=[50,279,100,103]),
+ dict(id='detective_home',name='侦探事务所',x=100,y=388,need='all',rect=[50,279,100,103]),
  dict(id='plaza',name='中城广场',x=276,y=388,need='social',rect=[246,321,67,61]),
  dict(id='market',name='街角集市',x=420,y=388,need='hunger',rect=[367,325,104,57]),
  dict(id='notice',name='公告栏',x=520,y=388,need=None,rect=[495,339,53,43]),
@@ -95,7 +97,7 @@ class City:
    # Subtract full-width openings where a perpendicular walk corridor meets this edge.
    horizontal=a[1]==b[1];axis=0 if horizontal else 1;fixed=a[1-axis]
    lo,hi=sorted((a[axis],b[axis]));parts=[(lo,hi)]
-   for name,points in ROUTES:
+   for name,points in getattr(self,'routes',ROUTES):
     for u,v in zip(points,points[1:]):
      if (u[1]==v[1])==horizontal:continue
      if min(u[1-axis],v[1-axis])-1<=fixed<=max(u[1-axis],v[1-axis])+1:
@@ -215,7 +217,7 @@ class City:
    self.box(x+8,y-17,13,13,P.steel[0]);self.box(x+9,y-16,11,11,P.steel[1]);self.oval(x+14,y-17,6,2,P.steel[2]);self.line([(x+21,y-10),(x+25,y-10),(x+25,y+5)],P.steel[0])
    self.box(x+w-20,y-14,8,10,P.clay[0]);self.box(x+w-22,y-16,12,3,P.oat[1])
  def building(self,x,base,w,floors=2,kind='old',sign=None,seed=1):
-  r=random.Random(seed);floor=36;hh=floors*floor+13;y=base-hh;side=18
+  r=random.Random(seed);floor=36;hh=floors*floor+(25 if floors==1 else 13);y=base-hh;side=18
   wall=P.oat if kind=='old' else P.clay if kind=='brick' else P.sage
   self.box(x,y,w,hh,wall[2]);self.box(x+2,y+3,w-4,hh-4,wall[1] if kind=='brick' else wall[2])
   # Damp soot gathers immediately below eaves and around a leaking drainpipe.
@@ -224,6 +226,7 @@ class City:
    yy=base-32-fl*floor
    self.box(x,yy+27,w,3,P.walnut[1]);self.box(x,yy+26,w,1,wall[3]);
    for xx in range(x+10,x+w-12,27):
+    if fl==0 and xx+14>x+w//2-12 and xx-2<x+w//2+12:continue
     self.window(xx,yy,12,18,r.random()<.23)
     if r.random()<.3:self.box(xx-1,yy-5,14,2,P.steel[1]);self.box(xx+2,yy-10,9,5,P.porcelain[0]);self.line([(xx+3,yy-8),(xx+9,yy-8)],P.steel[1])
    if kind=='old' and fl>0:
@@ -233,14 +236,16 @@ class City:
   for xx in (x+2,x+w-3):self.box(xx,y+5,3,hh-5,P.walnut[1])
   for _ in range(12):
    xx=r.randrange(x+6,x+w-8);yy=r.randrange(y+8,base-3);self.box(xx,yy,r.randrange(2,5),1,wall[1])
-  self.box(x+w//2-8,base-25,17,25,P.walnut[0]);self.box(x+w//2-5,base-22,11,21,P.wood[1]);self.box(x+w//2+3,base-12,2,2,P.mustard[2]);self.box(x+w//2-11,base,w//3,3,P.pave[3])
+  self.box(x+w//2-11,base-29,23,29,P.oat[0]);self.box(x+w//2-10,base-28,21,28,P.walnut[0])
+  self.box(x+w//2-7,base-25,15,24,P.wood[1]);self.box(x+w//2-6,base-24,13,9,P.teal[0]);self.box(x+w//2-5,base-23,11,2,P.teal[2]);self.box(x+w//2,base-24,1,9,P.wood[2])
+  self.box(x+w//2-5,base-12,11,9,P.walnut[0]);self.box(x+w//2-4,base-11,9,7,P.wood[2]);self.box(x+w//2+4,base-15,2,3,P.mustard[3]);self.box(x+w//2-13,base,27,3,P.pave[3]);self.box(x+w//2-14,base+3,29,2,P.pave[1])
   self.roof(x-2,y-5,w+4)
-  if sign:self.sign(x+7,base-40,w-14,sign,10)
-  if kind!='brick':
+  if sign:self.sign(x+7,base-49,w-14,sign,10)
+  if kind!='brick' and floors>1:
    # Cable + a few irregular garments, hung between real balcony supports.
-   self.line([(x+5,y+35),(x+w-4,y+38)],P.walnut[0])
+   self.line([(x+5,y+23),(x+w-4,y+24)],P.walnut[0])
    for j in range(3):
-    xx=x+14+j*17;yy=y+36;self.box(xx,yy,7,9,[P.sage[1],P.clay[2],P.oat[3]][j]);self.box(xx-2,yy+1,11,3,[P.sage[1],P.clay[2],P.oat[3]][j])
+    xx=x+14+j*17;yy=y+24;self.box(xx,yy,7,9,[P.sage[1],P.clay[2],P.oat[3]][j]);self.box(xx-2,yy+1,11,3,[P.sage[1],P.clay[2],P.oat[3]][j])
  def lamp(self,x,y):
   self.box(x,y-43,3,43,P.steel[0]);self.box(x+1,y-42,1,40,P.steel[2]);self.line([(x+1,y-42),(x+10,y-47),(x+16,y-44)],P.steel[0],2);self.box(x+11,y-44,9,4,P.steel[1]);self.box(x+12,y-42,7,2,P.mustard[3]);self.box(x-2,y,7,3,P.steel[1])
  def bench(self,x,y):
@@ -279,9 +284,9 @@ def background(c):
   for x in range(-10,W,24):
    xx=x+(y//18%2)*11;c.poly([(xx,y+8),(xx+8,y),(xx+24,y+3),(xx+30,y+15),(xx+9,y+19)],P.pave[0]);c.line([(xx+6,y+4),(xx+20,y+4)],P.oat[1])
  # Continuous narrow river at the foot of the model; it changes with the story.
- c.box(0,574,W,114,P.teal[2] if c.stage>=2 else P.teal[0])
+ c.box(0,574,W,CORE_H-574,P.teal[2] if c.stage>=2 else P.teal[0])
  for j in range(190):
-  x=c.r.randrange(W);y=c.r.randrange(577,H);c.box(x,y,c.r.randrange(3,16),1,P.teal[3] if c.stage>=2 else P.sage[1])
+  x=c.r.randrange(W);y=c.r.randrange(577,CORE_H);c.box(x,y,c.r.randrange(3,16),1,P.teal[3] if c.stage>=2 else P.sage[1])
 
 def city_layers(stage=0,review=False):
  c=City(stage);background(c)
@@ -293,7 +298,7 @@ def city_layers(stage=0,review=False):
   for x in range(12,630,9):c.box(x,bottom-4,4,1,P.oat[2])
  # Upper garden: nursery racks, a real cottage and flat-roof lookout.
  c.building(150,120,76,1,'old','山上小屋',8)
- c.building(242,120,65,1,'civic','瞭望台',9)
+ c.building(242,120,65,1,'civic','山顶驿站',9)
  c.box(253,53,3,16,P.steel[0]);c.box(252,52,20,4,P.steel[1]);c.box(270,50,3,8,P.steel[2])
  for x in (53,83,113):
   c.box(x-8,94,22,22,P.wood[1]);c.box(x-9,94,24,3,P.wood[3]);c.box(x-6,98,18,14,P.oak[0]);c.tree(x+3,95,.5)
@@ -310,6 +315,19 @@ def city_layers(stage=0,review=False):
  for x in (481,495,509):c.box(x,82,9,7,P.teal[0]);c.box(x+1,83,7,3,P.teal[2])
  c.box(540,84,5,9,P.steel[1]);c.box(547,77,2,24,P.steel[0]);c.box(546,88,5,3,P.steel[2])
  for x,y in ((413,95),(494,99)):c.box(x,y,2,6,P.steel[0]);c.oval(x+1,y+6,3,3,P.steel[0]);c.box(x,y+5,2,2,P.steel[2])
+ # Panel boundaries/metal ribs, cockpit glazing and cabin hatch give the plane volume.
+ c.line([(411,90),(477,94),(526,92)],P.teal[1],2)
+ c.line([(406,79),(482,79),(523,84)],P.porcelain[0])
+ for x in range(423,475,10):c.box(x,91,2,1,P.steel[1])
+ c.poly([(522,82),(534,85),(540,89),(526,88)],P.teal[0]);c.line([(525,83),(532,85)],P.teal[2]);c.box(529,84,1,5,P.steel[2])
+ c.box(462,81,14,12,P.porcelain[0]);c.box(463,82,12,10,P.porcelain[2]);c.box(465,83,8,4,P.teal[0]);c.box(471,89,3,1,P.steel[0])
+ for a,b in [((429,64),(454,84)),((438,64),(463,84)),((467,96),(482,111)),((471,95),(487,109))]:c.line([a,b],P.porcelain[0])
+ c.line([(421,56),(430,56),(470,84)],P.porcelain[3]);c.line([(449,91),(479,113)],P.steel[1])
+ c.oval(531,91,8,4,P.porcelain[0]);c.oval(532,90,7,3,P.porcelain[2])
+ for x in (527,530,533,536):c.box(x,90,1,3,P.steel[1])
+ c.line([(414,95),(417,101),(413,103)],P.steel[2],2);c.line([(494,98),(497,104)],P.steel[2],2)
+ for x,y in ((414,101),(495,105)):c.oval(x,y,4,3,P.steel[0]);c.oval(x,y,2,2,P.steel[2]);c.box(x,y,1,1,P.porcelain[2])
+ c.box(389,72,2,8,P.porcelain[0]);c.box(391,74,9,2,P.teal[1]);c.box(394,78,7,1,P.teal[1])
  c.sign(508,29,79,'停机坪',11);c.box(515,49,2,8,P.steel[0]);c.box(578,49,2,8,P.steel[0])
  # Upper town: adjoining offices and a compact furnace yard.
  c.building(46,246,134,2,'civic','赤岩矿业',20);c.building(204,246,104,2,'old','市政厅',21)
@@ -320,7 +338,7 @@ def city_layers(stage=0,review=False):
   c.box(468,230,57,10,P.sage[1]);c.line([(468,230),(525,230)],P.sage[3])
  c.lamp(192,248)
  # Central residence / plaza. Little roofs, ledges and courts fill the whole terrace.
- c.building(50,376,100,2,'old','阿简的家',30);c.building(162,376,72,2,'brick',None,31)
+ c.building(50,376,100,2,'old','侦探事务所',30);c.building(162,376,72,2,'brick',None,31)
  c.bench(253,373);c.lamp(303,379);c.box(251,353,3,17,P.wood[1]);c.box(249,350,9,5,P.oat[2])
  c.building(370,341,98,1,'old','街角集市',32);c.stall(374,376,P.sage);c.stall(423,376,P.clay)
  c.building(480,330,106,1,'civic',None,33)
@@ -350,7 +368,7 @@ def city_layers(stage=0,review=False):
  for x in range(69,216,6):c.box(x,625,4,30,P.wood[2])
  c.bench(91,635);c.box(175,611,22,17,P.wood[1]);c.box(179,608,14,5,P.oat[1]);c.oval(206,634,6,6,P.steel[0]);c.oval(206,634,3,3,P.wood[2])
  # River rocks, reed beds and moored craft fill the lower edge, not empty water.
- c.poly([(81,669),(163,669),(149,684),(96,684)],P.walnut[0]);c.box(101,665,36,12,P.oat[1]);c.box(107,666,22,6,P.teal[0]);c.line([(88,670),(83,654)],P.wood[1])
+ if review:c.im.alpha_composite(river_boat().to_image(),(84,673));c.d=ImageDraw.Draw(c.im)
  for x,y in [(230,677),(287,672),(394,680),(588,679)]:
   c.oval(x,y,18,7,P.pave[0]);c.oval(x-3,y-2,12,4,P.oat[0])
   for j in range(5):c.line([(x+j*3,y-2),(x+j*3-2,y-14-j%3*4)],P.oak[1]);c.box(x+j*3-3,y-16-j%3*4,3,4,P.mustard[1])
@@ -368,34 +386,82 @@ def city_layers(stage=0,review=False):
  c.line([(185,277),(578,277)],P.steel[0]);c.box(354,277,2,9,P.steel[0]);c.box(343,285,26,22,P.clay[0]);c.box(346,288,20,11,P.teal[1]);c.box(346,300,20,4,P.clay[1])
  # Root every reused maple in a real ledge or courtyard; all gaps get planted.
  trees=[(8,69,.75),(137,62,.6),(233,61,.6),(318,58,.6),(601,50,.7),(626,86,.7),(10,217,.65),(190,217,.6),(354,214,.55),(592,214,.55),(9,342,.7),(245,324,.6),(288,341,.65),(351,351,.55),(594,361,.6),(10,476,.65),(121,449,.5),(323,449,.55),(448,445,.5),(594,474,.55),(47,587,.7),(92,590,.7),(142,590,.65),(198,589,.7),(248,590,.7),(300,595,.65),(458,577,.55),(600,596,.7),(632,647,.65)]
+ trees=[p for p in trees if (p[0],p[1]) not in {(121,449),(448,445),(323,449),(632,647)}]
  trees += [(55,48,.55),(102,44,.55),(169,40,.52),(210,39,.5),(266,40,.5),(365,42,.55),
-  (61,154,.5),(145,154,.5),(228,154,.5),(291,154,.5),(401,154,.5),(502,190,.5),
-  (67,284,.5),(127,284,.5),(181,284,.5),(215,284,.5),(389,285,.5),(455,285,.5),(551,274,.5),
-  (69,452,.5),(166,416,.5),(264,416,.5),(397,416,.5),(544,416,.5),
-  (66,599,.6),(118,600,.6),(170,599,.6),(221,600,.55),(278,603,.55),(376,564,.5),(567,568,.5)]
+  (66,599,.6),(118,600,.6),(170,599,.6),(221,600,.55),(278,603,.55)]
  for x,y,z in trees:c.box(x-9,y-2,19,6,P.oat[0]);c.box(x-9,y-3,19,2,P.oat[2]);c.tree(x,y,z)
  # Dense boundary vegetation frames the model; recycled palette variants, no new asset style.
  shrubs=[]
- for y in (22,151,282,411,545):
-  shrubs.extend((x,y) for x in range(46,600,26) if all(abs(x-v)>24 for v in (24,330,344,608,620)))
+ for y in (22,122,248,378,510):
+  shrubs.extend((x,y) for x in range(46,600,26) if all(abs(x-v)>24 for v in (24,330,344,608,620)) and not any(abs(x-p['x'])<23 and abs(y-p['y'])<18 for p in LANDMARKS))
  shrubs.extend([(53,604),(83,604),(116,605),(151,606),(182,604),(221,610),(253,607),(287,609),(300,623),(363,569),(451,623),(592,626)])
  for i,(x,y) in enumerate(shrubs):c.shrub(x+(i*7%9)-4,y+(i*3%5)-2,200+i)
  # Export only independent, split front rails (never baking them across a stair entry).
  fg=City(stage);fg.foreground_mode=False;fg.im=Image.new('RGBA',(W,H));fg.d=ImageDraw.Draw(fg.im)
  for a,b,wood in c.foreground_rails:fg.rail(a,b,wood)
+ # Add just the summit strip above the compact city. Core coordinates stay authorable.
+ top=City(stage);top.routes=runtime_routes();top.im=Image.new('RGBA',(W,H),P.sky_soft[2] if stage>=4 else P.oat[2]);top.d=ImageDraw.Draw(top.im)
+ for layer,col,base in [(0,P.porcelain[0],65),(1,P.pave[1],98),(2,P.oat[0],133)]:
+  pts=[(0,H)]
+  for x in range(0,W+8,8):pts.append((x,round(base-20*math.sin(x*.017+layer)-12*math.sin(x*.033+layer))))
+  top.poly(pts+[(W,H)],P.sage[2-layer] if stage>=4 else col)
+ # Pixel haze bands soften distant silhouettes without gradients or vector blur.
+ for y in (() if stage>=4 else (33,57,83)):
+  for x in range(0,W,19):top.box(x,y+(x//19%3),14,1,P.oat[2])
+ top.terrace([(102,TOP-118),(329,TOP-118),(329,TOP-20),(102,TOP-20)],18,77)
+ top.bench(147,TOP-28);top.bench(204,TOP-28)
+ top.box(300,TOP-95,3,25,P.steel[0]);top.box(290,TOP-98,23,6,P.steel[1]);top.box(289,TOP-99,7,8,P.steel[2]);top.box(309,TOP-98,6,6,P.steel[0])
+ top.rail((120,TOP-111),(313,TOP-111))
+ # Continuous ascent on the user's left edge, with right-angle landings and clear mouths.
+ for _,pts in ROUTES[:1]:
+  for a,b in zip(pts,pts[1:]):
+   if max(a[1],b[1])>0:continue
+   top.stairs(map_point(*a),map_point(*b),28)
+ top.sign(158,TOP-13,120,'山顶瞭望台',12)
+ for i,(x,y) in enumerate([(x,y) for y in (TOP-72,TOP-34,TOP+7) for x in (53,78,362,400,443,487,531,574,614)]):
+  xx=x+(i%3-1)*4;yy=y+(i%4)*3
+  top.box(xx-11,yy-2,23,7,P.oat[0]);top.tree(xx,yy,.65+(i%3)*.1)
+ for i,(x,y) in enumerate([(x,TOP-16) for x in range(45,630,24) if x<95 or x>345]+[(x,TOP-86) for x in range(345,630,25)]):top.shrub(x,y,400+i)
+ top.im.alpha_composite(c.im.crop((0,0,W,CORE_H)),(0,TOP))
+ merged=Image.new('RGBA',(W,H));merged.alpha_composite(fg.im.crop((0,0,W,CORE_H)),(0,TOP))
+ tf=City(stage);tf.foreground_mode=False;tf.im=Image.new('RGBA',(W,H));tf.d=ImageDraw.Draw(tf.im)
+ for a,b,wood in top.foreground_rails:tf.rail(a,b,wood)
+ merged.alpha_composite(tf.im)
+ foliage=c.foliage+[(im,x,y-TOP,base-TOP) for im,x,y,base in top.foliage]
+ labels=c.labels+[{**p,'y':p['y']-TOP} for p in top.labels]
  if review:
-  for im,x,y,base in sorted(c.foliage,key=lambda p:p[3]):c.im.alpha_composite(im,(x,y))
-  c.im.alpha_composite(fg.im)
-  for x,y,seed in [(276,388,1),(188,132,2),(174,520,3)]:c.person(x,y,seed)
+  for im,x,y,base in sorted(foliage,key=lambda p:p[3]):top.im.alpha_composite(im,(x,y+TOP))
+  top.im.alpha_composite(merged)
+  for x,y,seed in [(276,388,1),(188,132,2),(174,520,3)]:top.person(x,y+TOP,seed)
  global LAST_FOLIAGE,LAST_RAILS,LAST_LABELS
- LAST_FOLIAGE=c.foliage;LAST_RAILS=c.foreground_rails;LAST_LABELS=c.labels
- return Sprite(0,0,px=np.array(c.im)),Sprite(0,0,px=np.array(fg.im))
+ LAST_FOLIAGE=foliage;LAST_RAILS=c.foreground_rails+[((a[0],a[1]-TOP),(b[0],b[1]-TOP),wood) for a,b,wood in top.foreground_rails];LAST_LABELS=[{**p,'y':p['y']+TOP} for p in labels]
+ return Sprite(0,0,px=np.array(top.im)),Sprite(0,0,px=np.array(merged))
+
+def river_boat():
+ c=City();c.im=Image.new('RGBA',(98,38));c.d=ImageDraw.Draw(c.im)
+ c.poly([(1,22),(93,22),(85,32),(72,36),(15,36),(7,31)],P.walnut[0]);c.poly([(6,24),(87,24),(79,31),(17,32),(11,29)],P.wood[1])
+ for y in (26,29,32):c.line([(14,y),(81-(y-26),y)],P.walnut[0])
+ c.line([(4,22),(91,22)],P.oat[2],2);c.box(29,8,39,15,P.oat[0]);c.box(31,9,35,12,P.oat[2]);c.box(26,6,45,4,P.clay[1]);c.box(27,6,43,1,P.clay[3])
+ for x in (34,46,58):c.box(x,11,9,7,P.teal[0]);c.box(x+1,12,7,2,P.teal[2])
+ c.box(18,13,2,10,P.walnut[1]);c.box(18,13,9,2,P.wood[2]);c.box(75,15,2,8,P.walnut[1]);c.box(75,15,13,2,P.wood[2])
+ c.oval(73,24,5,5,P.clay[2]);c.oval(73,24,2,2,P.walnut[0]);c.box(72,19,2,2,P.oat[3]);c.box(72,27,2,2,P.oat[3]);c.box(13,19,10,3,P.wood[3])
+ c.box(53,1,3,5,P.steel[0]);c.box(52,0,5,2,P.steel[1]);c.line([(24,19),(30,12)],P.wood[1]);c.box(88,20,5,8,P.steel[0]);c.box(88,20,5,2,P.steel[2])
+ return Sprite(0,0,px=np.array(c.im))
 
 def polluted_city():return city_layers(0,True)[0]
 def detective_inside():
- import _furniture as F
+ import _furniture as Native
+ class OfficeFurniture:
+  def __getattr__(self,name):
+   def draw(*args,**kwargs):
+    piece=getattr(Native,name)(*args,**kwargs);px=np.array(piece.to_image());original=px.copy()
+    for old,new in [(Native.OAK,P.walnut),(Native.ASH,P.wood),(Native.OAT,P.sage)]:
+     for a,b in zip(old,new):px[np.all(original==ImageColor.getcolor(a,"RGBA"),axis=2)]=ImageColor.getcolor(b,"RGBA")
+    return Sprite(0,0,px=px)
+   return draw
+ F=OfficeFurniture()
  room=Sprite(342,236,P.cut[0]);room.rect(16,20,310,200,P.oat[0])
- for x,y,w,h in [(20,24,113,78),(137,24,185,78),(20,126,302,90)]:
+ for x,y,w,h in [(20,24,113,78),(137,24,185,78),(20,106,302,110)]:
   room.rect(x,y,w,h,P.plaster_study[2]);room.rect(x,y+h-18,w,18,P.wood[2])
   for yy in range(y+h-18,y+h,5):room.hline(x,x+w-1,yy,P.wood[1])
  # Tile wainscot and wood paneling give the compact rooms material detail.
@@ -432,7 +498,7 @@ def detective_inside():
  return room
 
 def build():
- out={'autumn_city_polluted':polluted_city(),'autumn_detective_inside':detective_inside()}
+ out={'autumn_city_polluted':polluted_city(),'autumn_detective_inside':detective_inside(),'autumn_river_boat':river_boat()}
  # Inspection/download PNG: pixel scenery enlarged nearest-neighbour; only letters smooth.
  review=out['autumn_city_polluted'].to_image().resize((W*4,H*4),Image.Resampling.NEAREST);rd=ImageDraw.Draw(review)
  for p in LAST_LABELS:
@@ -450,7 +516,7 @@ def build():
   for i,(im,x,y,base) in enumerate(LAST_FOLIAGE):
    im=im.resize((max(1,round(im.width*SCALE_X)),max(1,round(im.height*SCALE_Y))),Image.Resampling.NEAREST)
    assert im.width<=64 and im.height<=96
-   atlas.alpha_composite(im,(i*64,0));xx,yy=map_point(x,y);meta.append(dict(x=xx,y=yy,w=im.width,h=im.height,base=round(base*SCALE_Y),frame=i,kind='tree' if im.height>26 else 'shrub'))
+   atlas.alpha_composite(im,(i*64,0));xx,yy=map_point(x,y);meta.append(dict(x=xx,y=yy,w=im.width,h=im.height,base=round(base*SCALE_Y)+TOP,frame=i,kind='tree' if im.height>26 else 'shrub'))
   out['autumn_foliage_atlas_'+str(stage)]=Sprite(0,0,px=np.array(atlas))
   if stage==0:
    target=Path(__file__).resolve().parents[2]/'out/concept/autumn_foliage_world.json';target.parent.mkdir(parents=True,exist_ok=True);target.write_text(json.dumps(meta,separators=(',',':')))
