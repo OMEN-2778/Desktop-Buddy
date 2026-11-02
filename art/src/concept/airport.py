@@ -46,14 +46,30 @@ def planter(s,x,y):
     for dx,dy,r in ((3,4,5),(10,0,6),(15,6,5),(7,8,6)):
         s.ellipse(x+dx,y+dy,r,r,P.sage[1]);s.ellipse(x+dx-1,y+dy-2,r-1,r-2,P.sage[2]);s.hline(x+dx-2,x+dx,y+dy-3,P.sage[3])
 
-def terminal():
+GLASS=(9,14,333,87)   # the window opening: the moving plane goes behind everything else
+
+def vista():
+    """Apron vista through tall glass (sky, clouds, apron), the layer behind the plane."""
     s=Sprite(W,H,P.plaster_bath[2])
-    # Apron vista through tall glass, mullions and softly rounded lintel.
     rr(s,7,12,328,78,10,P.snow[0]);rr(s,9,14,324,73,8,P.sky_soft[2])
     cloud(s,77,28);cloud(s,214,23)
     s.rect(10,55,322,32,P.pave[2]);s.rect(10,57,322,2,P.pave[3])
     for x in range(20,330,33):s.rect(x,72,15,1,P.sand[3])
-    plane(s,222,45)
+    return s
+
+def plane_sprite():
+    s=Sprite(84,36);plane(s,1,3);return s   # blit at (x, 42): same height as the old parked plane
+
+def terminal_front():
+    """The terminal with the bare vista pixels cut out of the window, drawn over the plane."""
+    t,v=terminal(),vista();px=t.px.copy();x0,y0,x1,y1=GLASS
+    same=np.all(px[y0:y1,x0:x1]==v.px[y0:y1,x0:x1],axis=2)
+    px[y0:y1,x0:x1,3][same]=0
+    return Sprite(0,0,px=px)
+
+def terminal():
+    s=vista()
+    # Mullions and softly rounded lintel. (The plane is a live layer now, owner 2026-11-02.)
     for x in (66,127,188,249,310):
         s.rect(x,17,4,69,P.snow[0]);s.vline(x,17,84,P.snow[3]);s.vline(x+4,19,85,P.snow[1])
     s.rect(10,83,322,5,P.porcelain[1]);s.hline(12,329,83,P.porcelain[3])
@@ -131,4 +147,4 @@ def build():
     tr=Sprite(W,H,P.marble[3]);ic=icon();tr.blit(ic,101,43)
     for x in (151,161,171,181,191,201):tr.rect(x,58,2,2,P.snow[0])
     tr.blit(hero().crop(0,0,20,16),216,50)
-    return {'airport_terminal':terminal(),'airport_terminal_preview':t,'airport_cabin':cabin(),'airport_cabin_front':front(),'airport_cabin_preview':c,'trip_airport':ic,'airport_transition_preview':tr,'airport_hero_seated':hero('sit'),'airport_hero':hero()}
+    return {'airport_terminal':terminal(),'airport_vista':vista(),'airport_terminal_front':terminal_front(),'airport_plane':plane_sprite(),'airport_terminal_preview':t,'airport_cabin':cabin(),'airport_cabin_front':front(),'airport_cabin_preview':c,'trip_airport':ic,'airport_transition_preview':tr,'airport_hero_seated':hero('sit'),'airport_hero':hero()}

@@ -64,9 +64,9 @@ def main():
     autumn=(ROOT/'prototype/autumn/story.js').read_text()+(ROOT/'prototype/autumn/game.js').read_text()+'\nconst AUTUMN_MAP_DATA='+json.dumps(autumn_data(),ensure_ascii=False,separators=(',',':'))+';\n'
     source=autumn+(ROOT/'prototype/season/effects.js').read_text()+controller('spring',SP.runtime_data(bare_farm=True))+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(ROOT/'prototype/map-test/cheats.js').read_text()+(ROOT/'prototype/map-test/adapter.js').read_text()
     import base64
-    airport_images={k:'data:image/png;base64,'+base64.b64encode((ROOT/('art/out/concept/'+k+'.png')).read_bytes()).decode() for k in ['airport_terminal','airport_cabin','airport_cabin_front','trip_airport']}
+    airport_images={k:'data:image/png;base64,'+base64.b64encode((ROOT/('art/out/concept/'+k+'.png')).read_bytes()).decode() for k in ['airport_terminal','airport_vista','airport_terminal_front','airport_plane','airport_cabin','airport_cabin_front','trip_airport']}
     source+=farm_story_source()
-    source+='\nconst AIRPORT_IMAGES='+json.dumps(airport_images)+';\n'+(ROOT/'prototype/airport/flight.js').read_text()+'\n'+(ROOT/'prototype/map-test/airport.js').read_text()+'\n'+(ROOT/'prototype/map-test/spring_cards.js').read_text()+(ROOT/'prototype/map-test/spring_talk.js').read_text()+(ROOT/'prototype/map-test/spring_story.js').read_text()
+    source+='\nconst AIRPORT_IMAGES='+json.dumps(airport_images)+';\n'+(ROOT/'prototype/airport/flight.js').read_text()+(ROOT/'prototype/airport/planes.js').read_text()+'\n'+(ROOT/'prototype/map-test/airport.js').read_text()+'\n'+(ROOT/'prototype/map-test/spring_cards.js').read_text()+(ROOT/'prototype/map-test/spring_talk.js').read_text()+(ROOT/'prototype/map-test/spring_story.js').read_text()
     mark='(async function boot() {'
     assert page.count(mark)==1
     page=page.replace(mark,source+'\n'+mark)

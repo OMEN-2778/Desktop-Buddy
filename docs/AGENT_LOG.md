@@ -7,6 +7,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner: airport's parked plane removed; airport.py now exports airport_vista / airport_terminal_front /
+  airport_plane, and prototype/airport/planes.js slides a plane left->right out of the picture (landing:
+  fast->slow, touches down; take-off: slow->fast, lifts), behind mullions/counter; none under reduced motion.
+- flight.js: cloud-wall wipe sweeping right with wind streaks (in and out), cabin windows stream clouds
+  right in 3 layers, 1px bump. GIFs docs/design/airport-planes.gif, airport-flight-transition.gif.
+  Airport UI / season game / spring story pass. Used by /airport/ and /map-test/ only.
+
+## 2026-11-02 · Claude Code
 - Owner renames: 春季农庄/春季农场/春日农庄/春日花溪 → 茵菲谷; 丢丢电脑 → 丢丢平板电脑 (all UI text, tests, previews;
   mom's letter now names 茵菲谷). Code comments/older docs keep old names.
 
