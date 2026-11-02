@@ -1157,3 +1157,9 @@ pose, recoloured from current look at runtime; no enlarged replacement character
 Art first, review at `/airport/`, no formal-game wiring until approved. See AIRPORT.md.
 
 Owner follow-up (2026-11-02): airport→cabin and cabin→destination both use stepped-edge wipes. The fully revealed cabin holds for **two real visible seconds**, excluding the incoming/outgoing wipe duration. Same on return. Art review and test-shell integration now implemented; formal spring systems remain pending. See NEXT_AGENT_HANDOFF.md.
+
+### Farm / 丢丢币 UI (2026-11-02, owner)
+Owner was angry that a generated image was offered as UI. Farm screens must be built from the
+game's own components (ring menus, picker, social-sheet, story bubbles, letters) and pixelkit
+icons (`farm_icons.py`, 16×16, integer scale); reuse farm map sprites for crops/trees/animals.
+Generated images are reference only, never assets. Details: `docs/FARM_UI.md`.

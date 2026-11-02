@@ -6,6 +6,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-02 · Claude Code
+- Owner rejected generated concept board as implementation; drew game-ready farm UI: 25 pixelkit
+  icons (farm_icons.py) + farm_ui.js/.css using native ring / picker / social-sheet / story bubbles /
+  letters for all 12 screens. Review build make_farm_ui_preview.py + check_farm_ui.js; board
+  docs/design/farm-ui-board.png; handoff docs/FARM_UI.md. NOT wired into game; waiting for approval.
+- Checked 100/50/25% (25% scrolls inside sheets), no page errors. 75% and real clicks not tested.
+
 ## 2026-11-02 · Codex · 补交 UI 设计稿
 - 聊天生成的十二组 UI 总览已入库：docs/design/spring-ui-board.png；说明见同目录 README.md。
 - 此前图片仅在生成目录，Cloud 的美术审计看不到；现已由 Git 跟踪。

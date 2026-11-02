@@ -1,0 +1,113 @@
+/* 农庄 / 丢丢币 UI (farm_ui.js). Same palette, bevels and stepped pixel
+   corners as the ring, picker and social sheet; no smooth radius or blur. */
+.fu-ic { image-rendering: pixelated; image-rendering: crisp-edges; flex: none; vertical-align: middle; }
+.fu-ic.fu-empty { opacity: .28; filter: grayscale(1); }
+.fu-up { color: #2c6e52; }
+.fu-down { color: #a03c3c; }
+.fu-why { display: block; font-style: normal; font-weight: 400; color: var(--muted); font-size: var(--ui-font-caption); }
+
+/* rings: an icon before the word; a greyed pill says why not */
+.ring.fu-ring button { display: inline-flex; align-items: center; gap: 6px; padding-left: 10px; }
+.fu-ring-ic { width: 16px; height: 16px; image-rendering: pixelated; }
+.widget[data-ui-size="regular"] .fu-ring-ic { width: 32px; height: 32px; margin: -6px 0; }
+.ring.fu-ring button.fu-off { color: var(--muted); cursor: default; flex-direction: row; }
+.ring.fu-ring button.fu-off::after { background: var(--panel); }
+.ring.fu-ring button.fu-off .fu-ring-ic { opacity: .45; filter: grayscale(1); }
+.ring.fu-ring button .fu-why { margin-left: 2px; }
+
+/* shops in the pick-a-thing panel */
+.pk-head .fu-coin { margin-left: auto; }
+.fu-coin { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px 2px 4px; background: var(--panel-2); border: 2px solid var(--bevel-lo);
+  clip-path: var(--hud-small-clip); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fu-coin { color: var(--ink); }
+.fu-coin b { font-size: var(--ui-font-control); }
+.fu-coin small { color: var(--muted); font-size: var(--ui-font-caption); }
+.picker.fu-shop .pk-item.fu-off { cursor: default; }
+.picker.fu-shop .pk-item.fu-off img, .picker.fu-shop .pk-item.fu-off b { opacity: .5; }
+.picker.fu-shop .pk-item.fu-off:hover { background: none; }
+.picker.fu-shop .pk-item .fu-why { color: #a03c3c; font-weight: 700; }
+
+/* house-sized sheets */
+.social-sheet.fu-sheet { background: color-mix(in srgb, var(--panel) 96%, transparent); }
+.fu-sheet { --fu-gap: clamp(4px, calc(10px * var(--cs)), 12px); }
+.fu-sheet .social-sheet-content { display: flex; flex-direction: column; gap: var(--fu-gap); }
+.fu-sheet .social-sheet-content > * + * { margin-top: 0; }
+.fu-sheet h4 { margin: 0; font-size: var(--ui-font-heading); line-height: 1.25; }
+.fu-sheet h5 { margin: 0; font-size: var(--ui-font-label); color: var(--muted); font-weight: 700; }
+.fu-sheet .fu-sub { margin: 0; color: var(--muted); font-size: var(--ui-font-label); display: flex; align-items: center; gap: 6px; }
+.fu-sheet .fu-note { margin: 0; color: var(--muted); font-size: var(--ui-font-caption); }
+.fu-hero, .fu-pen { flex: none; display: grid; place-items: center; background: var(--panel-2); border: 2px solid var(--bevel-lo); clip-path: var(--hud-small-clip);
+  padding: calc(6px * var(--fu-k)); box-shadow: inset 2px 2px 0 var(--bevel-hi); }
+.fu-facts { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fu-plant-top, .fu-ranch-body { display: flex; gap: var(--fu-gap); align-items: center; }
+.fu-plant-top .fu-facts { flex: 0 1 auto; }
+.fu-stages { flex: 1; min-width: 0; list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; align-items: stretch; }
+.fu-stages li { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; padding: 4px 2px;
+  background: var(--panel-2); border: 2px solid transparent; clip-path: var(--hud-small-clip); color: var(--muted); font-size: var(--ui-font-caption); }
+.fu-stages li.now { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); font-weight: 700; }
+.fu-stages li:not(.done):not(.now) .fu-stage { opacity: .35; filter: grayscale(.6); }
+.fu-stages li + li::before { content: none; }
+.fu-stage { image-rendering: pixelated; }
+.fu-lines { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.fu-lines p { display: flex; align-items: center; gap: 6px; margin: 0; font-size: var(--ui-font-body); }
+.fu-lines p.fu-warn { color: #a03c3c; font-weight: 700; }
+.fu-bar { position: relative; height: max(18px, calc(var(--ui-font-label) * 1.5)); background: var(--panel-2); border: 2px solid var(--edge); clip-path: var(--hud-small-clip); }
+.fu-bar i { position: absolute; inset: 0 auto 0 0; background: var(--need-ok); box-shadow: inset 0 2px 0 #d7ecb7, inset 0 -2px 0 #87b05c; }
+.fu-bar span { position: relative; display: block; text-align: center; font-size: var(--ui-font-caption); line-height: max(14px, calc(var(--ui-font-label) * 1.5 - 4px)); font-variant-numeric: tabular-nums; }
+
+/* buttons along the bottom of a sheet */
+.fu-actions { flex: none; display: flex; gap: var(--fu-gap, 6px); justify-content: flex-end; flex-wrap: wrap; }
+.social-sheet .fu-btn { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+.social-sheet .fu-btn.fu-primary { background: #8bcba0; border-color: #4f8a6c; }
+.social-sheet .fu-btn:disabled { color: var(--muted); background: var(--panel); cursor: default; }
+.social-sheet .fu-btn:disabled .fu-ic { opacity: .45; filter: grayscale(1); }
+.social-sheet .fu-btn .fu-why { margin-left: 2px; }
+
+/* meters of whole icons (饮水 / 饲料) */
+.fu-meter { display: flex; align-items: center; gap: 8px; font-size: var(--ui-font-body); }
+.fu-meter .fu-label { min-width: 3em; color: var(--muted); }
+.fu-cells { display: inline-flex; gap: 2px; }
+
+/* tabs: segmented pills */
+.fu-tabs { display: flex; gap: 4px; flex: none; }
+.social-sheet .fu-tabs button { flex: 1; font-weight: 700; display: inline-flex; justify-content: center; align-items: center; gap: 6px; }
+.social-sheet .fu-tabs button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent-lo); }
+.social-sheet .fu-tabs button.fu-none:not(.on) { color: var(--muted); }
+.fu-animal { image-rendering: pixelated; }
+
+/* 丢丢电脑: a nav column, the page beside it */
+.fu-pc .social-sheet-content { flex-direction: row; align-items: stretch; }
+.fu-nav { flex: none; display: flex; flex-direction: column; gap: 4px; }
+.social-sheet .fu-nav button { display: flex; align-items: center; gap: 6px; text-align: left; font-weight: 700; }
+.social-sheet .fu-nav button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent-lo); }
+.widget[data-ui-size="compact"] .fu-nav span { display: none; }
+.fu-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--fu-gap); overflow-y: auto; padding: 2px calc(var(--fu-gap) + 2px);
+  background: color-mix(in srgb, var(--panel-2) 60%, transparent); border: 2px solid var(--bevel-lo); clip-path: var(--hud-small-clip); }
+.fu-balance { display: flex; align-items: center; gap: 8px; }
+.fu-balance b { font-size: calc(var(--ui-font-heading) * 1.6); font-variant-numeric: tabular-nums; line-height: 1; }
+.fu-balance span { color: var(--muted); font-size: var(--ui-font-label); }
+.fu-ledger { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.fu-ledger li { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center; padding: 2px 6px; background: var(--panel); clip-path: var(--hud-small-clip);
+  font-size: var(--ui-font-body); }
+.fu-ledger time { color: var(--muted); font-size: var(--ui-font-caption); font-variant-numeric: tabular-nums; }
+.fu-ledger b { font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: right; }
+.fu-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(7em, 1fr)); gap: 4px; }
+.fu-stats div { display: flex; flex-direction: column; padding: 4px 8px; background: var(--panel); clip-path: var(--hud-small-clip); min-width: 0; }
+.fu-stats small { color: var(--muted); font-size: var(--ui-font-caption); }
+.fu-stats b { font-size: var(--ui-font-control); font-variant-numeric: tabular-nums; }
+.fu-stats span { color: var(--muted); font-size: var(--ui-font-caption); }
+.fu-stats div.fu-up b { color: #2c6e52; } .fu-stats div.fu-down b { color: #a03c3c; }
+.fu-chart { display: block; image-rendering: pixelated; border: 2px solid var(--bevel-lo); flex: none; align-self: flex-start; }
+.fu-trade { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.fu-step { display: inline-flex; align-items: center; gap: 6px; }
+.fu-step b { min-width: 3.5em; text-align: center; font-variant-numeric: tabular-nums; }
+.fu-gifts { display: flex; gap: var(--fu-gap); min-height: 0; }
+.fu-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(16px * var(--fu-k) + 18px), 1fr)); gap: 4px; align-content: start; }
+.social-sheet .fu-cell { position: relative; display: grid; place-items: center; padding: 4px; aspect-ratio: 1; }
+.social-sheet .fu-cell.on { background: var(--accent-soft); border-color: var(--accent); }
+.fu-cell small { position: absolute; right: 2px; bottom: 0; font-size: var(--ui-font-caption); font-weight: 700; }
+.fu-cell .fu-q { color: var(--muted); font-weight: 700; }
+.fu-detail { flex: 0 0 38%; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 4px 8px; background: var(--panel); clip-path: var(--hud-small-clip); }
+.fu-detail p { font-size: var(--ui-font-label); color: var(--muted); }
+.fu-detail .fu-actions { margin-top: auto; align-self: stretch; }
+.fu-mini div { padding: 2px 6px; }
