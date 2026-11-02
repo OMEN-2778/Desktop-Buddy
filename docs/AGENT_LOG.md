@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-02 · Claude Code
+- Bug (owner): could not leave the spring farmhouse by its door. Inside, clicking the front door (screen
+  x 35–48) or the exit arrow now walks her out, via the stairs from upstairs. viewer.js (shared with /spring/).
+
 ## 2026-11-02 · Codex · 枫叶城完整脚本
 - 母稿 docs/story/MAPLE_FULL_SCRIPT.md：S00–S19、三居民任务、三保障、双结局、后日谈、触发/支持/存档机制。
 - 写作基于居民支持版；具体门槛与过渡期限为本稿设计值，未声称此前已确认。采用CC最新上下对白行/浅黄选项。
