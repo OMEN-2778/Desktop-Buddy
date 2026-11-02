@@ -7,6 +7,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner: story choice buttons pale yellow (#fffbe6→#fff1b8, edge #b8946a); 对方 quest box stays blue.
+
+## 2026-11-02 · Claude Code
 - Owner: story choices go in Buddy's own bubble row (same height/corners, split evenly), not under
   the 对方 box. story_bubbles.js + ui.css; autumn + airport regressions pass; board tile 2 updated.
 

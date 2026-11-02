@@ -863,8 +863,9 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 .story-choices button span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .story-choices button .bg, .story-choices button .bg::after { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--pe); clip-path: var(--choice-clip); }
 .story-choices button .bg::after { background: var(--pf); clip-path: var(--choice-in); }
-.story-choices.quest button { --pe: #6f8fa8; color: #2f4558; }
-.story-choices.quest button .bg::after { background: linear-gradient(155deg, #fff 0%, #edf7ff 48%, #d6ebfa 100%); }
+/* choices are pale yellow (owner), quest or not */
+.story-choices button, .story-choices.quest button { --pe: #b8946a; color: #5c3b1f; }
+.story-choices button .bg::after { background: linear-gradient(155deg, #fffbe6 0%, #fff6cc 50%, #fff1b8 100%); }
 .story-choices button:hover .bg::after { filter: brightness(1.05); }
 .story-choices button:hover { translate: 0 -1px; }
 .story-choices button:active { translate: 1px 1px; filter: drop-shadow(2px 2px 0 var(--shadow)); }
