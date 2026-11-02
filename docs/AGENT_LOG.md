@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-02 · Codex · 枫叶城完整脚本
+- 母稿 docs/story/MAPLE_FULL_SCRIPT.md：S00–S19、三居民任务、三保障、双结局、后日谈、触发/支持/存档机制。
+- 写作基于居民支持版；具体门槛与过渡期限为本稿设计值，未声称此前已确认。采用CC最新上下对白行/浅黄选项。
+- 导出 story-review/full-script.html 与 maple-full-script.docx，保留旧梗概；未改运行中的旧秋日剧情。
+- 检查导出完整、关键节点/互斥结局及触发链；没有游戏代码变更，不运行游戏回归。
+
 ## 2026-11-02 · Claude Code
 - Owner: story choice buttons pale yellow (flat #fff4c4, no gradient; edge #b8946a); 对方 quest box stays blue.
 
