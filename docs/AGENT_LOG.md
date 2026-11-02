@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner: story choices go in Buddy's own bubble row (same height/corners, split evenly), not under
+  the 对方 box. story_bubbles.js + ui.css; autumn + airport regressions pass; board tile 2 updated.
+
+## 2026-11-02 · Claude Code
 - Owner clarified: story dialogue = the upper 对方 row (peer_dialogue, name + avatar), Buddy's lines in
   her own bubble; supersedes the head-pill version an hour earlier. story_bubbles.js drives
   showPeerSay/showSay, holds rows open, click=next, ▼, choices under the box, Esc folds, quest tint.

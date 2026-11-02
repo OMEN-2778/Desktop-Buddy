@@ -1168,6 +1168,7 @@ Generated images are reference only, never assets. Details: `docs/FARM_UI.md`.
 Owner meant the existing upper 对方 dialogue box (peer_dialogue: wooden bubble, "妈妈：", avatar on
 the right), NOT a big story panel and NOT the small pill over NPC heads (both rejected the same day).
 Other speakers' story lines go there; Buddy's lines go in her own lower bubble. Click the box /
-Enter / Space = next line, a blinking pixel ▼ marks more; choices are pills right under the 对方
-box; Esc folds. Rows never time out while a talk waits. Quest lines: white→pale-blue fill.
+Enter / Space = next line, a blinking pixel ▼ marks more. Choices (owner follow-up) take Buddy's
+own bubble row while she is silent: same height and round ends as her bubble, the row split evenly
+by the number of choices; quest tint applies to them too. Esc folds. Rows never time out while a talk waits. Quest lines: white→pale-blue fill.
 `story_bubbles.js` drives `showPeerSay` / `showSay`; same API for autumn/spring/summer.

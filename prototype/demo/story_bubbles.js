@@ -2,13 +2,14 @@
 // other people speak in the upper 对方 row (peer_dialogue.js: wooden bubble, "妈妈：",
 // their avatar on the right), Buddy in her own lower bubble. No extra panel and no
 // 继续 button: click the bubble (or Enter / Space) for the next line; a blinking
-// pixel ▼ says there is more. Choices are pills right under the 对方 bubble. Esc
+// pixel ▼ says there is more. Choices take Buddy's own bubble row (she is not
+// speaking then): same height and round ends, the row split evenly between them. Esc
 // folds the talk away (onClose). Quest lines tint the bubble white -> pale blue.
 // While a talk is open the rows never time out. API kept for autumn/spring/summer.
 function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}}){
  const popSpan=popSay.querySelector('span'),peerSpan=peerBubble.querySelector('span');
  const more=document.createElement('i');more.className='story-more';more.setAttribute('aria-hidden','true');
- const choices=document.createElement('div');choices.className='story-choices';choices.hidden=true;peerHud.append(choices);
+ const choices=document.createElement('div');choices.className='story-choices';choices.hidden=true;document.getElementById('moodTalk').append(choices);
  let open=false,advance=null,hero=false,previous=null,keep=0,busyWas=0;
  function mark(){   // exactly one row carries the story classes (tests and styles find it)
   for(const [box,span,on] of [[peerHud,peerSpan,!hero],[popSay,popSpan,hero]]){
@@ -29,8 +30,10 @@ function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}})
   if(hero){if(peerSpeech.phase!=='idle')hidePeerSay();showSay(words);}
   else showPeerSay(words,speaker+'：');
   more.hidden=!!opts;
-  choices.replaceChildren(...(opts||[]).map(o=>{const b=document.createElement('button');b.type='button';b.textContent=o.label;b.onclick=e=>{e.stopPropagation();o.on?.();};return b;}));
-  choices.hidden=!opts||hero;
+  choices.replaceChildren(...(opts||[]).map(o=>{const b=document.createElement('button');b.type='button';b.innerHTML='<i class="bg" aria-hidden="true"></i><span></span>';b.lastChild.textContent=o.label;b.onclick=e=>{e.stopPropagation();o.on?.();};return b;}));
+  choices.hidden=!opts||hero;choices.classList.toggle('quest',special);
+  if(!choices.hidden){const H=popSay.offsetHeight||parseFloat(getComputedStyle(widget).getPropertyValue('--say-h'))||48,[outer,inner]=sayClip(Math.round(H/2)*2,0,12,12,2,0);
+   choices.style.setProperty('--choice-clip',outer);choices.style.setProperty('--choice-in',inner);popBubble(popSay,0);popSay.hidden=true;}
   const box=hero?popSay:peerBubble;box.tabIndex=0;box.setAttribute('role','button');
   box.setAttribute('aria-label',`${speaker}：${spokenText(words)}${opts?'':last?'（点一下结束）':'（点一下继续）'}`);
   mark();cancelAnimationFrame(keep);hold();
