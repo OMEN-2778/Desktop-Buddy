@@ -8,6 +8,7 @@ const seasonalTest=(function(){
  const ctl=()=>sim.place==='spring_test'?state.spring:sim.place==='summer_test'?state.summer:sim.place==='autumn_test'?state.autumn:null;
  const body=document.createElement('canvas');body.width=20;body.height=28;const bodyCtx=body.getContext('2d');
  function drawHero(ctx,x,y,s,sea){
+  if(s.hideHero&&!sea)return;
   const swimming=sea&&(sea.under||sea.floating)&&!s.inside,arm=Math.floor(s.time/.28)%2;
   const walking=s.walk,phase=Math.floor(s.time*7)%4;
   const f={expr:sim.mode==='down'?'sleepy':emotion().key==='happy'?'happy':'neutral',look:s.facing||1,bob:swimming?0:walking?phase%2:0,sway:swimming?0:walking?phase%2:0,wave:swimming?arm:null};
@@ -44,7 +45,7 @@ const seasonalTest=(function(){
   if(sim.mode!=='down'&&!sim.windup){sim.mode='act';sim.act='season_explore';sim.actEnd=Infinity;}
  }
  function start(dest){
-  if(dest==='home'){if(active())command('go_home');return;}
+  if(dest==='home'){if(active()){if(sim.place==='spring_test'&&window.infeiHome)infeiHome.leave();else command('go_home');}return;}
   const c=dest==='spring_test'?state.spring:dest==='autumn_test'?state.autumn:state.summer;
   if(!c.state.loaded){showHint('地图正在准备，请稍等片刻');return;}
   if(wiping)return;

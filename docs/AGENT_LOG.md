@@ -7,6 +7,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner: farmhouse not interactive, stairs off-centre, 回家 should mean the 茵菲谷 house, ranch full of animals at
+  start. New prototype/map-test/infei_home.js: furniture rings (bed/bath/toilet/stove/table/settee/wardrobe/jar;
+  parents' room look-only), needs fill while used, needs <25 walk her in by herself, 回家 = farmhouse,
+  离开茵菲谷 (ring + toolbar) is the only way out. viewer.js stair route x 51->61; decorative herd/coop always off.
+- check_infei_home.js new; spring story (forced clear weather: was flaky on random rain), life, seasons, farm,
+  airport walk/ui pass. /map-test/ only.
+
+## 2026-11-02 · Claude Code
 - Owner: airport menus flashed away on tap; signs must not be readable text. airport.js now opens rings/walks on
   click (pointerdown only swallowed), like the house. Board / gate carry meaningless pixel glyphs drawn in
   airport.py; canvas fillText and the preview HTML labels removed. Airport walk + UI tests pass.

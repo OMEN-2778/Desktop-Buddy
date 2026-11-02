@@ -173,7 +173,7 @@ const infeiFarm=(()=>{
  X.pcState=pcState;
  // ================================================================ hooks into the farm
  X.hooks.day.push(d=>{helpOff(d);treeDay(d);animalDay(d);fundDay(d);planHelp(d+1);});
- X.hooks.draw.push((ctx,info)=>{C().state.noHerd=se()===3;drawTrees(ctx,info);drawAnimals(ctx,info);if(!info.inside&&info.region===4)helpTick(info);drawParent(ctx,info);});
+ X.hooks.draw.push((ctx,info)=>{C().state.noHerd=true;drawTrees(ctx,info);drawAnimals(ctx,info);if(!info.inside&&info.region===4)helpTick(info);drawParent(ctx,info);});
  X.hooks.click.push((x,y,s)=>{if(s.inside)return false;
   if(s.scene===5){for(const i of D.pits.keys()){const [px,py]=pit(i);if(Math.abs(x-px)<12&&y>py-34&&y<py+4){openPit(i);return true;}}
    const a=se()!==3&&animalAt(x,y,5);if(a){openAnimal(a);return true;}

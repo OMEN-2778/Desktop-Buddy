@@ -11,7 +11,7 @@ function image(src){return images.get(src);}function paint(src,x=0,y=0){if(src)c
 function current(){return DATA.scenes[state.scene];}
 function go(index,entry=80){state.scene=Math.max(0,Math.min(DATA.scenes.length-1,index));state.inside=false;state.door=null;state.x=entry;state.y=103;state.target=null;state.route=[];state.after=null;state.camera=Math.max(0,Math.min(current().width-342,state.x-171));updateUI();}
 function updateUI(){[...maps.children].forEach((b,i)=>b.setAttribute('aria-current',String(i===state.scene&&!state.inside)));status.textContent=state.inside?'农舍内部':current().id==='ranch'?(state.x<342?'果园':'牧场'):current().name;document.getElementById('prev').disabled=state.inside||state.scene===0;document.getElementById('next').disabled=state.inside||state.scene===DATA.scenes.length-1;document.getElementById('enter').hidden=state.inside||current().id!=='home';document.getElementById('exit').hidden=!state.inside;}
-function target(x,y=103,after=null){state.route=[];state.after=after;if(state.inside&&Math.abs(y-state.y)>10)state.route=[{x:51,y:state.y},{x:51,y},{x,y}];else state.route=[{x,y}];state.target=state.route.shift();}
+function target(x,y=103,after=null){state.route=[];state.after=after;if(state.inside&&Math.abs(y-state.y)>10)state.route=[{x:61,y:state.y},{x:61,y},{x,y}];else state.route=[{x,y}];state.target=state.route.shift();}
 function enter(){target(182,103,()=>beginDoor(true));}
 function leave(){if(state.inside)target(51,108,()=>beginDoor(false));}
 function beginDoor(to){if(state.door)return;keys.clear();state.target=null;state.after=null;state.door={to,elapsed:0,duration:.65,mid:false};}
