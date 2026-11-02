@@ -210,3 +210,19 @@ validation and remaining gaps. Standalone reviews remain available.
   visual test selector. Never draw precipitation in the farmhouse.
 - Walk to entrance/exit + fade out/in transition; visible clickable indoor exit arrow;
   leaving from the upper floor must route down stairs. Remains `/map-test/` only.
+
+## 最新上线方向与父母来信（2026-11-02，用户确认）
+用户现在优先上线春季农庄，枫叶城剧情暂放。经济规则见 DIDI_CURRENCY.md。
+以下为正式入口设计，尚未接入；不代表现有测试适配器已经有了这些机制。
+- 版本更新后，玩家亲历的第一个写信日，由妈妈寄来农庄邀请：爸爸妈妈承包了
+  一小片农场，邀请孩子来帮忙。不能更新后直接解锁，也不能检查旧历史节日误触。
+- 记录持久化邀请投递/解锁状态，一次性发放，读档/再次更新不重复发。
+- 母亲来信之后才开放农庄航班。季节地图统一从家门→机场→购票/航班气泡菜单前往，
+  不再由家门直达各个季节地图。其他夏/秋/冬三个目的地目前显示问号且不可前往。
+- 父母从此以农舍为家，保留自己的卧室，主角不得使用父母床。家中同时最多3人。
+- 大多数时候父母外出忙、画面中不见人影；偶尔回来帮浇水，有具体走路/浇水表现，
+  不是常驻在田边。帮忙不扣玩家钱、不擅自买种子或出售产物，不重复浇同一块田。
+- 之前公共/私人区域无泛用NPC的规则保留。用户此次明确允许父母以特定家人身份
+  出现在农舍和农地，不表示开放给随机路人。父母不在时不要生成另一个分身。
+- 未确认：航班是否收费、农庄跨季开放规则和父母帮忙频率的具体数值。不要擅自
+  增加必须春末前抵达、错过永久失去农场等惩罚。旧设计中的截止表述需待确认。

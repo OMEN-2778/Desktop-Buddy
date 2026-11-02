@@ -51,3 +51,11 @@ spot for each of the six needs. Only the player or the story takes her out. (`AG
 - Animals: which (cows, sheep, chickens…), and what Buddy does with them.
 - Diving: what she does underwater (look at fish, collect, photograph, treasure…), and
   is there a limit like an oxygen meter?
+
+## 最新入口规则（2026-11-02，覆盖旧的家门直达设想）
+全部季节目的地统一：家门→机场→气泡式航班/购票选择。当前仅春季农庄筹备上线，
+其余三个目的地显示问号，不能购买或前往。春季航线须在本次更新后玩家经历的
+第一个写信日收到妈妈的承包农场邀请后解锁。投递与解锁状态需持久化，不追溯
+旧存档已过节日、不重复投递。父母今后住农舍，平时外出忙，偶尔出现帮浇水。
+这是用户确认的正式上线方向；当前已发布地图测试页尚未按该入口实现。
+丢丢币经济见 DIDI_CURRENCY.md；购票价格尚未定案，不擅自新增生活成本。

@@ -6,6 +6,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-02 · Codex
+- Confirmed design: postpone autumn writing, prioritize spring; record low-price economy
+  in DIDI_CURRENCY.md (56-day year, 8 starting coins, year-one progression, fund max±3/day).
+- First experienced 写信日 after update: mother's farm invitation unlocks airport route.
+  All season travel via house→airport→bubble flight menu; other 3 destinations show ?.
+- Parents live at farm, mostly absent working, occasionally water crops. Spring/season
+  handoffs updated; no game code/build/deployment changes. Ticket price not yet confirmed.
+
 ## 2026-11-02 · Claude Code
 - Desktop app diagnostics for Win10 players who see only the diary box: page errors now also go to
   `page.log` in the app config folder; 8 s after start a health check (loop running, house canvas
