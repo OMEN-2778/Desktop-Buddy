@@ -28,7 +28,7 @@ function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}})
   open=true;hero=speaker===nameOf();advance=opts?null:next;
   peerHud.classList.toggle('quest',!hero&&special);popSay.classList.toggle('quest',hero&&special);
   if(hero){if(peerSpeech.phase!=='idle')hidePeerSay();showSay(words);}
-  else showPeerSay(words,speaker+'：');
+  else{if(!popSay.hidden)popBubble(popSay,0);showPeerSay(words,speaker+'：');}   // her own row stays quiet while someone else talks
   more.hidden=!!opts;
   choices.replaceChildren(...(opts||[]).map(o=>{const b=document.createElement('button');b.type='button';b.innerHTML='<i class="bg" aria-hidden="true"></i><span></span>';b.lastChild.textContent=o.label;b.onclick=e=>{e.stopPropagation();o.on?.();};return b;}));
   choices.hidden=!opts||hero;choices.classList.toggle('quest',special);

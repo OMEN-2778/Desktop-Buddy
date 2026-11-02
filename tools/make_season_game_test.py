@@ -15,6 +15,7 @@ def controller(name,data):
     source=source.replace('dt*42','dt*opts.walkSpeed').replace('Math.abs(dy)>0?27:42','Math.abs(dy)>0?opts.walkSpeed*.7:opts.walkSpeed').replace('inSea()?30:42','inSea()?opts.walkSpeed*1.15:opts.walkSpeed')
     source=source.replace("const canvas=document.getElementById('scene'),ctx=canvas.getContext('2d'),images=new Map();","const canvas=document.getElementById('scene'),images=new Map();let ctx=canvas.getContext('2d');")
     exported='springPreview' if name=='spring' else 'summerPreview'
+    if name=='spring':source=source.replace('paint(DATA.inside,27,0);actor();','paint(DATA.inside,27,0);peopleRenderer?.(ctx,{region:-1,inside:true,time:state.time});actor();')
     extra="actor=()=>opts.drawHero(ctx,state.x,state.y,state,null);" if name=='spring' else "hero=(x,y)=>{if(state.inCabana)return;opts.drawHero(ctx,x,y,state,{under:under(),floating:floating(),sheet:img(DATA.heroes[state.gender][state.suit]),cell:cell()});};"
     ticks='if(!state.paused)state.time+=realDt;advanceDoor(state.paused?0:realDt);move(dt);draw();' if name=='spring' else 'if(!state.paused)fx.tickWater(realDt);if(!state.paused)state.time+=realDt;advanceDoor(state.paused?0:realDt);move(dt);camera(realDt);prepare();draw();updateUI();'
     return f'''function makeSeason_{name}(opts){{
@@ -37,6 +38,20 @@ def controller(name,data):
 }}
 '''
 
+def farm_story_source():
+    # Spring story + first farming loop (test page only): farm UI art, empty-bed crops, the farm module.
+    import make_farm_ui_preview as FU
+    import spring_fields as F
+    from pixelkit import Sprite
+    art=FU.art();art.pop('backs')
+    def crop_sprite(kind,stage):
+        s=Sprite(16,20);F.crop(s,kind,stage,8,19);return FU.uri(s.to_image())
+    hexc=lambda c:c if isinstance(c,str) else '#%02x%02x%02x'%tuple(c[:3])
+    data={'plots':F.PLOTS,'slots':[F.plot_slots(*p) for p in F.PLOTS],'soil':[hexc(c) for c in F.SOIL],
+          'crops':{k:[crop_sprite(k,i) for i in range(4)] for k in F.CROPS}}
+    return ('\nconst FARM_UI_ART='+json.dumps(art,separators=(',',':'))+';\nconst SPRING_FARM_DATA='+json.dumps(data,separators=(',',':'))+';\n'
+            +(ROOT/'prototype/demo/farm_ui.js').read_text()+'\n')
+
 def main():
     page=(ROOT/'prototype/demo/index.html').read_text()
     # Changes below apply to this page only. The public trial and EXE stay untouched.
@@ -47,14 +62,15 @@ def main():
     for key in ['buddy-save','buddy-settings','buddy-look-v2','buddy-look-at']:
         page=page.replace('"'+key+'"','"season-test-'+key+'"')
     autumn=(ROOT/'prototype/autumn/story.js').read_text()+(ROOT/'prototype/autumn/game.js').read_text()+'\nconst AUTUMN_MAP_DATA='+json.dumps(autumn_data(),ensure_ascii=False,separators=(',',':'))+';\n'
-    source=autumn+(ROOT/'prototype/season/effects.js').read_text()+controller('spring',SP.runtime_data())+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(ROOT/'prototype/map-test/cheats.js').read_text()+(ROOT/'prototype/map-test/adapter.js').read_text()
+    source=autumn+(ROOT/'prototype/season/effects.js').read_text()+controller('spring',SP.runtime_data(bare_farm=True))+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(ROOT/'prototype/map-test/cheats.js').read_text()+(ROOT/'prototype/map-test/adapter.js').read_text()
     import base64
     airport_images={k:'data:image/png;base64,'+base64.b64encode((ROOT/('art/out/concept/'+k+'.png')).read_bytes()).decode() for k in ['airport_terminal','airport_cabin','airport_cabin_front','trip_airport']}
-    source+='\nconst AIRPORT_IMAGES='+json.dumps(airport_images)+';\n'+(ROOT/'prototype/airport/flight.js').read_text()+'\n'+(ROOT/'prototype/map-test/airport.js').read_text()
+    source+=farm_story_source()
+    source+='\nconst AIRPORT_IMAGES='+json.dumps(airport_images)+';\n'+(ROOT/'prototype/airport/flight.js').read_text()+'\n'+(ROOT/'prototype/map-test/airport.js').read_text()+'\n'+(ROOT/'prototype/map-test/spring_story.js').read_text()
     mark='(async function boot() {'
     assert page.count(mark)==1
     page=page.replace(mark,source+'\n'+mark)
-    page=page.replace('</style>',(ROOT/'prototype/map-test/style.css').read_text()+'\n</style>',1)
+    page=page.replace('</style>',(ROOT/'prototype/map-test/style.css').read_text()+(ROOT/'prototype/demo/farm_ui.css').read_text()+'\n</style>',1)
     page=page.replace('<title>Buddy 小屋</title>','<title>Desktop Buddy · 季节地图测试</title>')
     start=page.index('<script>')+8;end=page.index('</script>',start)
     with tempfile.TemporaryDirectory(prefix='buddy-season-test-') as tmp:

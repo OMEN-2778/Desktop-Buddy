@@ -14,7 +14,8 @@ def uri(im):
     if isinstance(im,Path):im=Image.open(im)
     out=io.BytesIO();im.save(out,format='PNG');return 'data:image/png;base64,'+base64.b64encode(out.getvalue()).decode()
 
-def runtime_data():
+def runtime_data(bare_farm=False):
+    """bare_farm: the game-shell test draws its own crops, so its farm background has empty beds."""
     art=ROOT/'art/out/concept';zones={z['id']:z for z in F.ZONES};scenes=[]
     for key in ['brook','rape','tulip','home','farm','ranch']:
         if key=='ranch':
@@ -24,7 +25,7 @@ def runtime_data():
         else:
             z=zones[key];bg=F.background(z,mill_sails=False,with_clouds=False);tree=[uri(F.trees(z,i)) for i in (0,1)];front=None;width=342;cloud=Sprite(342,118)
             F.clouds(cloud,z)
-            if key=='farm':
+            if key=='farm' and not bare_farm:
                 for i,(x,y,w,h) in enumerate(F.PLOTS):
                     if i in (3,10):continue
                     for j,(cx,base) in enumerate(F.plot_slots(x,y,w,h)):F.crop(bg,F.CROPS[i%len(F.CROPS)],(3,3,2,3,1,2)[(i+j)%6],cx,base)

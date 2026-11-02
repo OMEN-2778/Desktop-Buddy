@@ -13,6 +13,16 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 - 检查导出完整、关键节点/互斥结局及触发链；没有游戏代码变更，不运行游戏回归。
 
 ## 2026-11-02 · Claude Code
+- Spring story + first farm loop on /map-test/ only (prototype/map-test/spring_story.js; not make_demo/EXE):
+  写信日 mom letter (toolbar test button) unlocks free 春季农庄 flight; first landing: mom at farmhouse,
+  choice 先看房间/去地里看看, room tour, two front beds, free carrot pack, sow+water with mom, she leaves.
+  Then beds all year: watered day = 1 growth day, harvest sells (DIDI_CURRENCY prices), seed shop, 丢丢电脑
+  (account/farm tabs live; 操盘/礼物 static), bed 3/4 clearing after 14/35 working days. Saved in snapshot.
+- story_bubbles: Buddy's bubble hides while someone else talks. check_spring_story.js (41 shots) PASS;
+  season-game, airport (now needs the letter), autumn, spring-preview pass. Not done: parents helping water,
+  rain watering beds, orchard/ranch, fund trading, seasons on crops.
+
+## 2026-11-02 · Claude Code
 - Owner: story choice buttons pale yellow (flat #fff4c4, no gradient; edge #b8946a); 对方 quest box stays blue.
 
 ## 2026-11-02 · Claude Code
