@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner bug: airport had no walking and no way home from Buddy. map-test/airport.js: click floor = walk, click
+  her = ring 选择航班/回家 (回家 walks out left, then home), board/gate = walk there + flights; arrival walks in.
+  View clicks no longer leak to the house's click handler. check_airport_walk.js + airport/season/story pass.
+
+## 2026-11-02 · Claude Code
 - Owner: airport's parked plane removed; airport.py now exports airport_vista / airport_terminal_front /
   airport_plane, and prototype/airport/planes.js slides a plane left->right out of the picture (landing:
   fast->slow, touches down; take-off: slow->fast, lifts), behind mullions/counter; none under reduced motion.

@@ -12,10 +12,10 @@ const airportTravel=(()=>{
  function enter(){if(!loaded||wiping)return;throughDoor('airport_test')}
  function flights(){if(wiping||sim.place!=='airport_test')return;openRing('airportFlights');[...ringEl.querySelectorAll('button')].slice(1).forEach(b=>{b.disabled=true;b.setAttribute('aria-label','尚未开放')});}
  root.querySelector('[data-flight]').onclick=flights;root.querySelector('[data-home]').onclick=()=>throughDoor('home');
- const oldRing=ringPick;ringPick=function(id){if(id==='airport:spring'){closeRing();throughDoor('spring_test');return;}if(id.startsWith('airport:locked'))return;return oldRing(id)};
- const oldCenter=ringCenter;ringCenter=function(){return sim.place==='airport_test'?{x:171,y:60}:oldCenter()};
- const oldRender=renderOutside;renderOutside=function(){if(sim.place!=='airport_test')return oldRender();if(!loaded)return;vctx.imageSmoothingEnabled=false;const now=performance.now(),dt=planeLast&&speed?Math.min(100,now-planeLast):0;planeLast=now;planes.draw(scene,dt,matchMedia('(prefers-reduced-motion:reduce)').matches);vctx.drawImage(sceneCanvas,0,0,view.width,view.height);vctx.save();const k=view.width/342;vctx.fillStyle='#ecf3ee';vctx.font=Math.max(12,6*k)+'px sans-serif';vctx.fillText('航班出发',34*k,34*k);vctx.fillText('登机口',275*k,34*k);vctx.fillStyle='#abc8c6';vctx.font=Math.max(12,5*k)+'px sans-serif';vctx.fillText('茵菲谷',34*k,46*k);vctx.restore();vctx.save();vctx.scale(view.width/342,view.height/118);vctx.drawImage(dollCanvas({expr:'neutral',look:0,bob:0,sway:0,wave:null}),183,76);vctx.restore();};
- const oldArrive=arriveAt;arriveAt=function(place){root.hidden=place!=='airport_test';if(place!=='airport_test')return oldArrive(place);seasonMapTest.people.cancel();life.npcs=[];clearNpcPills();for(const c of Object.values(seasonMapTest.state).filter(c=>c?.root))c.root.hidden=true;seasonMapTest.state.autumn.close();sim.mode='idle';sim.act=null;sim.idleUntil=Infinity;fit();};
+ const oldRing=ringPick;ringPick=function(id){if(id==='airport:menu'){closeRing();flights();return;}if(id==='airport:home'){goHome();return;}if(id==='airport:spring'){closeRing();throughDoor('spring_test');return;}if(id.startsWith('airport:locked'))return;return oldRing(id)};
+ const oldCenter=ringCenter;ringCenter=function(){return sim.place==='airport_test'?(ringOf==='airportHero'?{x:hero.x,y:76}:{x:171,y:60}):oldCenter()};
+ const oldRender=renderOutside;renderOutside=function(){if(sim.place!=='airport_test')return oldRender();if(!loaded)return;vctx.imageSmoothingEnabled=false;const now=performance.now(),dt=planeLast&&speed?Math.min(100,now-planeLast):0;planeLast=now;planes.draw(scene,dt,matchMedia('(prefers-reduced-motion:reduce)').matches);vctx.drawImage(sceneCanvas,0,0,view.width,view.height);vctx.save();const k=view.width/342;vctx.fillStyle='#ecf3ee';vctx.font=Math.max(12,6*k)+'px sans-serif';vctx.fillText('航班出发',34*k,34*k);vctx.fillText('登机口',275*k,34*k);vctx.fillStyle='#abc8c6';vctx.font=Math.max(12,5*k)+'px sans-serif';vctx.fillText('茵菲谷',34*k,46*k);vctx.restore();walkTick(dt);vctx.save();vctx.scale(view.width/342,view.height/118);const ph=Math.floor(now/140)%4,moving=hero.tx!=null;vctx.drawImage(dollCanvas({expr:'neutral',look:hero.facing,bob:moving?ph%2:0,sway:moving?ph%2:0,wave:null},moving?(ph===1?'walkL':ph===3?'walkR':'stand'):'stand'),Math.round(hero.x)-10,76);vctx.restore();};
+ const oldArrive=arriveAt;arriveAt=function(place){root.hidden=place!=='airport_test';if(place!=='airport_test')return oldArrive(place);Object.assign(hero,{x:40,tx:null,then:null,facing:1});walkTo(150);seasonMapTest.people.cancel();life.npcs=[];clearNpcPills();for(const c of Object.values(seasonMapTest.state).filter(c=>c?.root))c.root.hidden=true;seasonMapTest.state.autumn.close();sim.mode='idle';sim.act=null;sim.idleUntil=Infinity;fit();};
  const oldRestore=restore;restore=function(save){const result=oldRestore(save);root.hidden=sim.place!=='airport_test';if(sim.place==='airport_test'){sim.mode='idle';sim.act=null;sim.idleUntil=Infinity;fit();}return result;};
  const oldHeight=sceneHouseHeight;sceneHouseHeight=()=>sim.place==='airport_test'?118:oldHeight();
  const overlay=document.createElement('canvas');overlay.width=342;overlay.height=118;overlay.className='airport-flight-overlay';overlay.hidden=true;view.parentElement.append(overlay);
@@ -24,7 +24,21 @@ const airportTravel=(()=>{
  const oldHolds=cardHolds;cardHolds=()=>flight.busy||sim.place==='airport_test'||oldHolds();
  function snapshot(){const s=document.createElement('canvas');s.width=342;s.height=overlay.height;const ctx=s.getContext('2d');ctx.fillStyle='#e7e5e9';ctx.fillRect(0,0,s.width,s.height);ctx.drawImage(view,0,0,342,sceneHouseHeight());return s}
  const oldTrip=trip;trip=function(to,swap){if(to==='airport_test'&&IMG.trip)IMG.trip.airport=images.trip_airport;const outgoing=sim.place==='airport_test'&&['spring_test','summer_test','autumn_test'].includes(to),returning=seasonMapTest.active()&&to==='home';if(!outgoing&&!returning)return oldTrip(to,swap);if(!loaded||flight.busy)return;closeRing();render();overlay.height=sceneHouseHeight();const from=snapshot();wiping=true;overlay.hidden=false;position();flight.start(from,()=>{swap();render();return snapshot()},()=>{overlay.hidden=true;wiping=false;render()})};
- view.addEventListener('pointerdown',e=>{if(sim.place!=='airport_test')return;e.stopImmediatePropagation();if(!wiping)flights()},true);
- return {ready,enter,flights,flight,images,planes};
+ // Free walking in the hall (owner, 2026-11-02): click the floor to walk, click her for her ring
+ // (选择航班 / 回家), click the departures board or the gate for the flights. 回家 walks out left first.
+ const hero={x:193,tx:null,facing:1,then:null};
+ function walkTo(x,then=null){hero.tx=Math.max(16,Math.min(326,Math.round(x)));hero.then=then;}
+ function walkTick(dt){if(hero.tx==null||!speed)return;const d=hero.tx-hero.x,st=dt/1000*WALK*1.6;if(Math.abs(d)<=st){hero.x=hero.tx;hero.tx=null;const f=hero.then;hero.then=null;f?.();}else{hero.x+=Math.sign(d)*st;hero.facing=Math.sign(d);}}
+ const goHome=()=>{closeRing();walkTo(16,()=>throughDoor('home'));};
+ RINGS.airportHero=[['name',null,'label'],['airport:menu','选择航班'],['airport:home','回家']];
+ view.addEventListener('pointerdown',e=>{if(sim.place!=='airport_test')return;e.stopImmediatePropagation();if(wiping||flight.busy)return;
+  const r=view.getBoundingClientRect(),x=(e.clientX-r.left)*342/r.width,y=(e.clientY-r.top)*118/r.height;
+  if(Math.abs(x-hero.x)<11&&y>74&&y<106){hero.tx=null;openRing('airportHero');return;}
+  closeRing();
+  if(x>=29&&x<=121&&y>=20&&y<=52||x>=268&&x<=328&&y>=22&&y<=40){walkTo(x<200?110:283,flights);return;}
+  walkTo(x);
+ },true);
+ view.addEventListener('click',e=>{if(sim.place==='airport_test')e.stopImmediatePropagation();},true);   // the house's own click handler must not see airport clicks
+ return {ready,enter,flights,flight,images,planes,hero,walkTo,goHome};
 })();
 window.airportTravel=airportTravel;
