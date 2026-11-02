@@ -60,6 +60,19 @@ def vista():
 def plane_sprite():
     s=Sprite(84,36);plane(s,1,3);return s   # blit at (x, 42): same height as the old parked plane
 
+def glyphs(s,x,y,n,c,seed=0):
+    """Meaningless pixel 'writing' (owner 2026-11-02: no readable text on the signs): n 3x5 glyphs."""
+    import random
+    rnd=random.Random(seed)
+    for i in range(n):
+        gx=x+i*4
+        if rnd.random()<0.15:continue                               # a word gap now and then
+        rows=[rnd.choice((0b111,0b101,0b110,0b011,0b010,0b100,0b001)) for _ in range(5)]
+        rows[0]|=0b010 if rnd.random()<.5 else 0
+        for yy,bits in enumerate(rows):
+            for xx in range(3):
+                if bits>>(2-xx)&1:s.set(gx+xx,y+yy,c)
+
 def terminal_front():
     """The terminal with the bare vista pixels cut out of the window, drawn over the plane."""
     t,v=terminal(),vista();px=t.px.copy();x0,y0,x1,y1=GLASS
@@ -82,6 +95,7 @@ def terminal():
     # Suspended departures board: text rendered separately at display resolution.
     s.rect(36,15,2,10,P.steel[2]);s.rect(111,15,2,10,P.steel[2])
     rr(s,29,23,91,28,4,P.slate[0]);rr(s,30,24,89,26,3,P.teal[0]);s.hline(34,114,25,P.teal[2])
+    glyphs(s,36,29,12,P.mint[3],seed=1);glyphs(s,36,38,9,P.teal[3],seed=2);glyphs(s,82,38,5,P.teal[3],seed=3)
     # Ticket counter with curved stone end caps and recessed footwell.
     rr(s,31,88,91,7,3,P.tile[0]);rr(s,33,72,85,20,5,P.teal[0]);rr(s,33,72,83,16,4,P.teal[1]);s.hline(39,109,75,P.teal[2])
     rr(s,29,69,92,7,3,P.porcelain[0]);rr(s,29,67,92,6,3,P.porcelain[3]);s.hline(33,115,68,P.facade_white[4])
@@ -89,6 +103,7 @@ def terminal():
     rr(s,97,61,12,6,1,P.snow[1]);s.hline(99,106,62,P.snow[3])
     # Boarding entrance / reader, reachable open walk lane.
     rr(s,270,25,56,13,3,P.teal[0]);s.hline(274,320,26,P.teal[2])
+    glyphs(s,277,29,6,P.mint[3],seed=4);s.rect(315,30,5,3,P.mint[3]);s.set(314,31,P.mint[3])   # an arrow
     rr(s,283,75,12,19,3,P.snow[0]);rr(s,283,74,10,17,3,P.snow[2]);rr(s,284,73,8,5,1,P.teal[0]);s.rect(286,74,4,2,P.mint[3])
     for x in (244,270):
         s.ellipse(x,94,5,2,P.steel[2]);s.rect(x-1,79,3,15,P.steel[3]);s.vline(x-1,79,92,P.snow[3]);s.ellipse(x,78,2,2,P.steel[1])

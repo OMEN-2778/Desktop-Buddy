@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner: airport menus flashed away on tap; signs must not be readable text. airport.js now opens rings/walks on
+  click (pointerdown only swallowed), like the house. Board / gate carry meaningless pixel glyphs drawn in
+  airport.py; canvas fillText and the preview HTML labels removed. Airport walk + UI tests pass.
+
+## 2026-11-02 · Claude Code
 - Owner: rain waters beds, parents help water, seasonal crops, orchard, livestock, fund, gifts — "rich, like a farm
   life game" (genre reference only; all content ours). New infei_farm.js (orchard/ranch/help/fund/gifts/collection/
   10 cards/talk) on spring_story.js API; 11 seasonal crops incl. regrow; harvest -> 仓库 (sold from the tablet).

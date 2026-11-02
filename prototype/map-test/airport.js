@@ -14,7 +14,7 @@ const airportTravel=(()=>{
  root.querySelector('[data-flight]').onclick=flights;root.querySelector('[data-home]').onclick=()=>throughDoor('home');
  const oldRing=ringPick;ringPick=function(id){if(id==='airport:menu'){closeRing();flights();return;}if(id==='airport:home'){goHome();return;}if(id==='airport:spring'){closeRing();throughDoor('spring_test');return;}if(id.startsWith('airport:locked'))return;return oldRing(id)};
  const oldCenter=ringCenter;ringCenter=function(){return sim.place==='airport_test'?(ringOf==='airportHero'?{x:hero.x,y:76}:{x:171,y:60}):oldCenter()};
- const oldRender=renderOutside;renderOutside=function(){if(sim.place!=='airport_test')return oldRender();if(!loaded)return;vctx.imageSmoothingEnabled=false;const now=performance.now(),dt=planeLast&&speed?Math.min(100,now-planeLast):0;planeLast=now;planes.draw(scene,dt,matchMedia('(prefers-reduced-motion:reduce)').matches);vctx.drawImage(sceneCanvas,0,0,view.width,view.height);vctx.save();const k=view.width/342;vctx.fillStyle='#ecf3ee';vctx.font=Math.max(12,6*k)+'px sans-serif';vctx.fillText('航班出发',34*k,34*k);vctx.fillText('登机口',275*k,34*k);vctx.fillStyle='#abc8c6';vctx.font=Math.max(12,5*k)+'px sans-serif';vctx.fillText('茵菲谷',34*k,46*k);vctx.restore();walkTick(dt);vctx.save();vctx.scale(view.width/342,view.height/118);const ph=Math.floor(now/140)%4,moving=hero.tx!=null;vctx.drawImage(dollCanvas({expr:'neutral',look:hero.facing,bob:moving?ph%2:0,sway:moving?ph%2:0,wave:null},moving?(ph===1?'walkL':ph===3?'walkR':'stand'):'stand'),Math.round(hero.x)-10,76);vctx.restore();};
+ const oldRender=renderOutside;renderOutside=function(){if(sim.place!=='airport_test')return oldRender();if(!loaded)return;vctx.imageSmoothingEnabled=false;const now=performance.now(),dt=planeLast&&speed?Math.min(100,now-planeLast):0;planeLast=now;planes.draw(scene,dt,matchMedia('(prefers-reduced-motion:reduce)').matches);vctx.drawImage(sceneCanvas,0,0,view.width,view.height);walkTick(dt);vctx.save();vctx.scale(view.width/342,view.height/118);const ph=Math.floor(now/140)%4,moving=hero.tx!=null;vctx.drawImage(dollCanvas({expr:'neutral',look:hero.facing,bob:moving?ph%2:0,sway:moving?ph%2:0,wave:null},moving?(ph===1?'walkL':ph===3?'walkR':'stand'):'stand'),Math.round(hero.x)-10,76);vctx.restore();};
  const oldArrive=arriveAt;arriveAt=function(place){root.hidden=place!=='airport_test';if(place!=='airport_test')return oldArrive(place);Object.assign(hero,{x:40,tx:null,then:null,facing:1});walkTo(150);seasonMapTest.people.cancel();life.npcs=[];clearNpcPills();for(const c of Object.values(seasonMapTest.state).filter(c=>c?.root))c.root.hidden=true;seasonMapTest.state.autumn.close();sim.mode='idle';sim.act=null;sim.idleUntil=Infinity;fit();};
  const oldRestore=restore;restore=function(save){const result=oldRestore(save);root.hidden=sim.place!=='airport_test';if(sim.place==='airport_test'){sim.mode='idle';sim.act=null;sim.idleUntil=Infinity;fit();}return result;};
  const oldHeight=sceneHouseHeight;sceneHouseHeight=()=>sim.place==='airport_test'?118:oldHeight();
@@ -31,14 +31,16 @@ const airportTravel=(()=>{
  function walkTick(dt){if(hero.tx==null||!speed)return;const d=hero.tx-hero.x,st=dt/1000*WALK*1.6;if(Math.abs(d)<=st){hero.x=hero.tx;hero.tx=null;const f=hero.then;hero.then=null;f?.();}else{hero.x+=Math.sign(d)*st;hero.facing=Math.sign(d);}}
  const goHome=()=>{closeRing();walkTo(16,()=>throughDoor('home'));};
  RINGS.airportHero=[['name',null,'label'],['airport:menu','选择航班'],['airport:home','回家']];
- view.addEventListener('pointerdown',e=>{if(sim.place!=='airport_test')return;e.stopImmediatePropagation();if(wiping||flight.busy)return;
+ // Menus open on click, like at home: on a phone the press would otherwise be followed by the page's
+ // own click handling and the ring would vanish at once (owner bug report).
+ view.addEventListener('pointerdown',e=>{if(sim.place==='airport_test')e.stopImmediatePropagation();},true);
+ view.addEventListener('click',e=>{if(sim.place!=='airport_test')return;e.stopImmediatePropagation();e.preventDefault();if(wiping||flight.busy)return;
   const r=view.getBoundingClientRect(),x=(e.clientX-r.left)*342/r.width,y=(e.clientY-r.top)*118/r.height;
   if(Math.abs(x-hero.x)<11&&y>74&&y<106){hero.tx=null;openRing('airportHero');return;}
   closeRing();
   if(x>=29&&x<=121&&y>=20&&y<=52||x>=268&&x<=328&&y>=22&&y<=40){walkTo(x<200?110:283,flights);return;}
   walkTo(x);
  },true);
- view.addEventListener('click',e=>{if(sim.place==='airport_test')e.stopImmediatePropagation();},true);   // the house's own click handler must not see airport clicks
  return {ready,enter,flights,flight,images,planes,hero,walkTo,goHome};
 })();
 window.airportTravel=airportTravel;
