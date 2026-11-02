@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-02 · Codex · 补交 UI 设计稿
+- 聊天生成的十二组 UI 总览已入库：docs/design/spring-ui-board.png；说明见同目录 README.md。
+- 此前图片仅在生成目录，Cloud 的美术审计看不到；现已由 Git 跟踪。
+- 这是视觉概念稿，非可用素材/已实现UI；环形菜单、原生比例、错字等落地差异已标注。
+- 已保留 Claude 最新确认的0币航班/全年农场决定。本次仅图片和文档，无运行时代码变更。
+
 ## 2026-11-02 · Claude Code
 - Owner decisions recorded: farm open all year once unlocked; season flights cost 0 丢丢币.
   Updated DIDI_CURRENCY / SEASON_MAPS / SPRING_FARM / NEXT_AGENT_HANDOFF. Docs only, no code.
