@@ -1224,6 +1224,12 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 /* the pet's menu stands in one column (pet_hud.js petColumnLayout): pills one width */
 .ring.over-hud > button { min-width: 7.2em; text-align: center; }
 
+/* Story speech shares npcsay's pixel outline and pop-in, quest tint is opt-in. */
+.npcsay.quest-speech::after{background:linear-gradient(155deg,#fff 0%,#edf7ff 48%,#d6ebfa 100%)}
+.npcsay.story-speech{z-index:1800;pointer-events:auto;white-space:normal;box-sizing:border-box;padding:10px 13px;display:flex;flex-direction:column;gap:7px;font-size:max(13px,var(--ui-font-body));line-height:1.5;color:#344c60;overflow:visible}
+.story-speech[hidden]{display:none}.story-speaker{font-size:max(12px,var(--ui-font-caption));color:#42677f;flex:none}.story-words{overflow:auto;min-height:0;overflow-wrap:anywhere;font-weight:500}.story-actions{display:flex;justify-content:flex-end;gap:8px;flex:none}.story-actions button{font:inherit;font-size:max(12px,var(--ui-font-control));padding:4px 10px;background:#f7fbff;color:#344c60;border:2px solid #9db9ca;clip-path:var(--clip-btn);cursor:pointer}.story-actions button:focus-visible{outline:2px dashed #3c6e91;outline-offset:-4px}
+@media(prefers-reduced-motion:reduce){.story-speech{animation:none}}
+
 #petPanel{position:absolute;z-index:61;left:var(--pick-left);top:var(--pick-top);width:var(--pick-w);height:var(--pick-h);box-sizing:border-box;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden;font-size:var(--ui-font-body,14px);animation:pet-sheet-in .32s cubic-bezier(.2,.8,.2,1.12)}
 #petPanel[hidden],.pet-mini[hidden]{display:none}
 #petPanel header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;min-height:25px}
@@ -23923,6 +23929,29 @@ function sizeGameUi(width,height){
  style.setProperty('--say-fs',m.speech+'px');
  style.setProperty('--ring-fs',m.control+'px');style.setProperty('--mp-fs',m.pill+'px');style.setProperty('--contact-name-fs',m.name+'px');
  return m;
+}
+
+// Shared story speech uses the native NPC pill skin/motion; never a full-scene panel.
+function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}}){
+ const el=document.createElement('section');el.className='npcsay story-speech';el.hidden=true;
+ el.setAttribute('role','dialog');el.setAttribute('aria-label','剧情对话');
+ const name=document.createElement('strong'),text=document.createElement('div'),actions=document.createElement('div');
+ name.className='story-speaker';text.className='story-words';text.setAttribute('aria-live','polite');actions.className='story-actions';
+ const next=document.createElement('button'),exit=document.createElement('button');next.type=exit.type='button';exit.textContent='暂时收起';exit.onclick=onClose;actions.append(next,exit);el.append(name,text,actions);host.append(el);
+ let who='',previous=null;
+ function position(){if(el.hidden)return;const box=view.getBoundingClientRect(),parent=host.getBoundingClientRect(),s=box.width/342,p=anchor(who);
+  const visible=p&&p.x>=0&&p.x<=342&&p.y>=0&&p.y<=box.height/s;
+  name.textContent=who+(visible?'':' · 画外');el.dataset.remote=String(!visible);
+  el.style.width=Math.min(box.width-16,Math.max(250,box.width*.54))+'px';el.style.maxHeight=Math.max(90,box.height-12)+'px';
+  const x=visible?p.x*s:box.width/2,y=visible?(p.y-30)*s:box.height;
+  const w=el.offsetWidth,h=el.offsetHeight,left=Math.max(8,Math.min(box.width-w-8,x-w/2));
+  let top=y-h-7;if(top<6)top=Math.min(box.height-h-6,Math.max(6,y+34*s));
+  el.style.left=box.left-parent.left+left+w/2+'px';el.style.top=box.top-parent.top+Math.max(6,top)+h+'px';
+ }
+ function show(speaker,words,{special=true,last=false,advance}={}){if(el.hidden)previous=document.activeElement;who=speaker;el.hidden=false;el.classList.toggle('quest-speech',special);text.textContent=spokenText(words);next.textContent=last?'说完了':'继续';next.onclick=advance;position();next.focus({preventScroll:true});}
+ function hide(){el.hidden=true;next.onclick=null;if(previous?.isConnected)previous.focus({preventScroll:true});previous=null;}
+ const observer=new ResizeObserver(position);observer.observe(view);window.addEventListener('resize',position);
+ return {el,show,hide,position,get open(){return !el.hidden}};
 }
 
 // Three independent, stable traits. Appearance and gender never determine them.

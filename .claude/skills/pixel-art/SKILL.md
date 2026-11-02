@@ -1155,3 +1155,5 @@ transition with a silver-white ground and a matching terminal sticker icon. Refi
 rounded pixel contours, top-left light, broad shaded volume. Native 20×28 player seated
 pose, recoloured from current look at runtime; no enlarged replacement character.
 Art first, review at `/airport/`, no formal-game wiring until approved. See AIRPORT.md.
+
+Owner follow-up (2026-11-02): airport→cabin and cabin→destination both use stepped-edge wipes. The fully revealed cabin holds for **two real visible seconds**, excluding the incoming/outgoing wipe duration. Same on return. Art review and test-shell integration now implemented; formal spring systems remain pending. See NEXT_AGENT_HANDOFF.md.

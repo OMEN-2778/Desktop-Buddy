@@ -213,7 +213,13 @@ function makeSeason_autumn(opts, DATA) {
             automatic: automatic
         });
     }
+    const speech=createStorySpeech({view:opts.view,onClose:close,anchor:who=>{
+        if(who===opts.heroName())return {x:state.x-state.camX,y:state.y-state.camY};
+        const n=!state.inside&&npcRows().find(n=>n.name===who);
+        return n?{x:n.x-state.camX,y:n.y-state.camY}:null;
+    }});
     function pauseModal() {
+        speech.hide();dialog=null;
         lastFocus = document.activeElement;
         modal.hidden = false;
         modal.innerHTML = "";
@@ -227,6 +233,7 @@ function makeSeason_autumn(opts, DATA) {
         clearKeys();
     }
     function close() {
+        speech.hide();
         dialog = null;
         modal.hidden = true;
         modal.replaceChildren();
@@ -256,39 +263,12 @@ function makeSeason_autumn(opts, DATA) {
         modal.append(h, body, actions);
         actions.querySelector("button")?.focus();
     }
-    function talk(lines, done) {
-        pauseModal();
-        let i = 0;
-        dialog = {
-            lines: lines,
-            done: done
-        };
-        const h = document.createElement("h2"), body = document.createElement("div");
-        body.className = "autumn-panel-body";
-        const p = document.createElement("p");
-        body.append(p);
-        const actions = document.createElement("div");
-        actions.className = "autumn-actions";
-        const next = document.createElement("button");
-        actions.append(next);
-        modal.append(h, body, actions);
-        const show = () => {
-            const [who, text] = lines[i];
-            h.textContent = who === "我" ? opts.heroName() : who;
-            p.textContent = text;
-            next.textContent = i === lines.length - 1 ? "说完了" : "继续";
-        };
-        next.onclick = () => {
-            opts.record((lines[i][0] === "我" ? opts.heroName() : lines[i][0]) + "：" + lines[i][1]);
-            i++;
-            if (i >= lines.length) {
-                close();
-                done?.();
-                updateStatus();
-            } else show();
-        };
-        show();
-        next.focus();
+    function talk(lines, done, special=true) {
+        close();clearKeys();let i=0;dialog={lines,done};
+        const show=()=>{const [who,text]=lines[i];speech.show(who==='我'?opts.heroName():who,text,{special,last:i===lines.length-1,advance:()=>{
+            opts.record((who==='我'?opts.heroName():who)+'：'+text);
+            if(++i>=lines.length){close();done?.();updateStatus();}else show();
+        }});};show();
     }
     function chapter(q, stage, entry) {
         state.quest = q;
@@ -327,7 +307,7 @@ function makeSeason_autumn(opts, DATA) {
             f.ledger = true;
             opts.record("账本和检测报告准备好了，去市政厅，再到广场公开讨论。");
         });
-        return talk(AUTUMN_STORY.ambient[id]);
+        return talk(AUTUMN_STORY.ambient[id],null,false);
     }
     function beginService(need, location) {
         const names = {
@@ -476,7 +456,7 @@ function makeSeason_autumn(opts, DATA) {
     }
     function move(dt) {
         state.walk = false;
-        if (state.paused || state.door || modal.hidden === false || state.service || state.mapOpen) return;
+        if (state.paused || state.door || (modal.hidden === false || dialog) || state.service || state.mapOpen) return;
         if (!state.target && keys.size) {
             const dx = (keys.has("ArrowRight") || keys.has("d") ? 1 : 0) - (keys.has("ArrowLeft") || keys.has("a") ? 1 : 0), dy = (keys.has("ArrowDown") || keys.has("s") ? 1 : 0) - (keys.has("ArrowUp") || keys.has("w") ? 1 : 0), g = graph(), near = nearest(state.x, state.y, g);
             let best = null;
@@ -629,6 +609,7 @@ function makeSeason_autumn(opts, DATA) {
         ctx.globalAlpha = 1;
     }
     function draw() {
+        speech.position();
         canvas.height=state.inside?120:236;
         const vh=canvas.height, ratio = resolution;
         if (renderCanvas.width !== 342 * ratio || renderCanvas.height !== vh * ratio) {
@@ -834,7 +815,7 @@ function makeSeason_autumn(opts, DATA) {
             state.time += realDt;
             advanceDoor(realDt);
             move(dt);
-            if (!state.target && !state.goal && !state.service && !state.door && !state.mapOpen && modal.hidden && !state.inside && !keys.size && opts.now() >= state.autoAt) {
+            if (!state.target && !state.goal && !state.service && !state.door && !state.mapOpen && modal.hidden && !dialog && !state.inside && !keys.size && opts.now() >= state.autoAt) {
                 state.autoAt = opts.now() + 35 + Math.random() * 30;
                 const nearby = nodes.filter(n => dist(n, state) > 25 && dist(n, state) < 130);
                 if (nearby.length) {
@@ -907,12 +888,12 @@ function makeSeason_autumn(opts, DATA) {
         pick((e.clientX - b.left) * 342 / b.width + state.camX, (e.clientY - b.top) * canvas.height / b.height + state.camY);
     });
     window.addEventListener("keydown", e => {
-        if (opts.active() && e.key === "Escape" && !modal.hidden) {
+        if (opts.active() && e.key === "Escape" && (!modal.hidden || dialog)) {
             e.preventDefault();
             close();
             return;
         }
-        if (!opts.active() || /INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName) || !modal.hidden) return;
+        if (!opts.active() || /INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName) || !modal.hidden || dialog) return;
         if ([ "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d" ].includes(e.key)) {
             e.preventDefault();
             if (!keys.has(e.key)) {
@@ -956,6 +937,7 @@ function makeSeason_autumn(opts, DATA) {
         renderCanvas: renderCanvas,
         state: state,
         modal: modal,
+        speech: speech,
         DATA: DATA,
         foregroundAlpha: foregroundAlpha,
         windAmount: windAmount,
@@ -985,7 +967,7 @@ function makeSeason_autumn(opts, DATA) {
         setResolution: r => resolution = Math.max(1, r),
         setWeather: kind => weatherKind = kind,
         get modalOpen() {
-            return !modal.hidden;
+            return !modal.hidden || speech.open;
         },
         objective: objective
     };

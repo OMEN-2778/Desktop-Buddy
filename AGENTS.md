@@ -1,5 +1,7 @@
 # Notes for coding agents
 
+**接手先读 `docs/NEXT_AGENT_HANDOFF.md`（2026-11-02 转场/UI收尾）：包含已做、未解、后续和踩坑。用户本轮要求到此停止；后续开发等新指令。**
+
 Read `CLAUDE.md` first: project overview, where things are, and the steps after a change.
 The owner writes Chinese: answer in Chinese, briefly.
 

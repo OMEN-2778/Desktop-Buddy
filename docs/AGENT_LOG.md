@@ -6,6 +6,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-02 · Codex · 本轮收尾
+- 阶梯进入机舱→完全显示两秒→阶梯抵达目标，独立预览及游戏测试页往返共用状态机。
+- 测试页接原生机场入口/航班气泡（三个锁定），原生玩家坐姿，期间冻结需求、支持暂停。
+- 秋日对白改说话人气泡，任务白浅蓝渐变；春夏NPC统一原生皮肤。信息卡保留。
+- 已重建demo/web/两预览；机场专项、秋日完整剧情、春夏游戏回归通过；未作真实设备验证。
+- 正式春季/邀请/币制/父母仍待做，票价等未决。接手必须读 NEXT_AGENT_HANDOFF.md，AGENTS.md 已置顶入口；用户要求本轮到此停止。
+
 ## 2026-11-02 · Codex
 - Airport art review: silver rounded terminal, passenger cabin with native seated Buddy,
   shared-style terminal sticker and silver strip-transition preview. See AIRPORT.md.

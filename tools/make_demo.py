@@ -536,7 +536,7 @@ def main():
     html = html.replace("/*__MALL_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "mall_cards.json").read_text() + ");")
     html = html.replace("/*__STORM_CARDS_JS__*/", "CARDS.push(..." + (SRC.parent / "storm_cards.json").read_text() + ");")
     html = html.replace("/*__SOCIAL_HUD_CSS__*/", (SRC.parent / "social_hud.css").read_text()+"\n"+(SRC.parent / "peer_dialogue.css").read_text())
-    html = html.replace("/*__UI_LAYOUT_JS__*/", (SRC.parent / "ui_layout.js").read_text())
+    html = html.replace("/*__UI_LAYOUT_JS__*/", (SRC.parent / "ui_layout.js").read_text()+"\n"+(SRC.parent / "story_bubbles.js").read_text())
     html = html.replace("/*__NEED_CONSEQUENCES_JS__*/", (SRC.parent / "need_consequences.js").read_text())
     html = html.replace("/*__MEALS_JS__*/", (SRC.parent / "meals.js").read_text())
     html = html.replace("/*__PERSONALITY_JS__*/", (SRC.parent / "personality.js").read_text())

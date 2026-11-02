@@ -28,7 +28,9 @@ def main():
     elif combined.exists():sheet=Image.open(combined)
     sheet.save(out/'airport-review.png')
     (out/'signs.otf').write_bytes(fontpath.read_bytes());(out/'FONT-LICENSE.txt').write_bytes((fontpath.parent/'LICENSE.txt').read_bytes())
-    page=(ROOT/'prototype/airport/index.src.html').read_text();a=page.index('<script>')+8;b=page.index('</script>',a)
+    for name,source in [('spring-destination','spring_home_preview'),('home-destination','house_day')]:
+        (out/(name+'.png')).write_bytes((ROOT/('art/out/concept/'+source+'.png')).read_bytes())
+    page=(ROOT/'prototype/airport/index.src.html').read_text().replace('/*__FLIGHT_JS__*/',(ROOT/'prototype/airport/flight.js').read_text());a=page.index('<script>')+8;b=page.index('</script>',a)
     js=subprocess.run(['node',str(ROOT/'desktop/node_modules/terser/bin/terser'),'--compress','--mangle'],input=page[a:b],text=True,capture_output=True,check=True).stdout
     (out/'index.html').write_text(page[:a]+js+page[b:])
     print(out/'index.html')
