@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner clarified: story dialogue = the upper 对方 row (peer_dialogue, name + avatar), Buddy's lines in
+  her own bubble; supersedes the head-pill version an hour earlier. story_bubbles.js drives
+  showPeerSay/showSay, holds rows open, click=next, ▼, choices under the box, Esc folds, quest tint.
+- check_autumn_game + check_airport_ui pass (airport bounds now = window, the row sits above the house).
+
+## 2026-11-02 · Claude Code
 - Owner correction: story dialogue must be the native NPC pill, not a big box. story_bubbles.js/ui.css
   rewritten: pill over speaker's head, click/Enter = next, pixel ▼, choices as pills underneath, Esc
   folds. Same API (+choices); autumn/spring/summer callers unchanged. Tests switched to .story-bubble.

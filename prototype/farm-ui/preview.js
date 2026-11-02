@@ -20,7 +20,8 @@ const farmPreview = (() => {
   showCard = () => {};   // no chance card over the review shots
   let speech = null;
   function reset() {
-    speed = 0; closeRing(); closePicker(); closeSocialSheet(); setDiaryOpen(false); speech?.hide();
+    speed = 0; if (sim.mode === "act" && sim.act === "sleep") { sim.mode = "idle"; sim.act = null; sim.idleUntil = Infinity; }   // awake: talk rows hide while she sleeps
+    closeRing(); closePicker(); closeSocialSheet(); setDiaryOpen(false); speech?.hide();
     if (typeof guideOn !== "undefined" && guideOn) closeGuide();
     stage = null;
   }

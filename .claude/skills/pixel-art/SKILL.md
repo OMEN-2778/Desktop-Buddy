@@ -1164,9 +1164,10 @@ game's own components (ring menus, picker, social-sheet, story bubbles, letters)
 icons (`farm_icons.py`, 16×16, integer scale); reuse farm map sprites for crops/trees/animals.
 Generated images are reference only, never assets. Details: `docs/FARM_UI.md`.
 
-### Story dialogue = the NPC pill itself (2026-11-02, owner correction)
-The big rounded story box with 继续 / 暂时收起 buttons was rejected. Story lines use the SAME small
-pill as `.npcsay` over the speaker's head (edge, fill, corners, shadow, pop-in), wrapping long lines
-(balanced). Click the bubble / Enter / Space = next line; a blinking pixel ▼ marks more. Choices are
-pills directly under the bubble. Esc folds it away. Quest lines keep the white→pale-blue fill.
-Off-screen speakers: bubble at the scene top, named "X（画外）". `story_bubbles.js`, ui.css.
+### Story dialogue = the 对方 conversation row (2026-11-02, owner, final)
+Owner meant the existing upper 对方 dialogue box (peer_dialogue: wooden bubble, "妈妈：", avatar on
+the right), NOT a big story panel and NOT the small pill over NPC heads (both rejected the same day).
+Other speakers' story lines go there; Buddy's lines go in her own lower bubble. Click the box /
+Enter / Space = next line, a blinking pixel ▼ marks more; choices are pills right under the 对方
+box; Esc folds. Rows never time out while a talk waits. Quest lines: white→pale-blue fill.
+`story_bubbles.js` drives `showPeerSay` / `showSay`; same API for autumn/spring/summer.

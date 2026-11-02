@@ -1,39 +1,53 @@
-// Story speech IS the native NPC pill (owner, 2026-11-02): the same small rounded
-// bubble strangers talk in, over the speaker's head. No panel, no 继续 button: click
-// the bubble (or Enter / Space) for the next line; a blinking pixel ▼ says there is
-// more. Choices are pills right under the bubble. Esc folds it away (onClose).
-// Quest lines tint the bubble white -> pale blue. Off-screen speakers are named and
-// stay where they are (the bubble sits at the top of the scene), never teleported.
+// Story speech goes into the game's own conversation rows (owner, 2026-11-02):
+// other people speak in the upper 对方 row (peer_dialogue.js: wooden bubble, "妈妈：",
+// their avatar on the right), Buddy in her own lower bubble. No extra panel and no
+// 继续 button: click the bubble (or Enter / Space) for the next line; a blinking
+// pixel ▼ says there is more. Choices are pills right under the 对方 bubble. Esc
+// folds the talk away (onClose). Quest lines tint the bubble white -> pale blue.
+// While a talk is open the rows never time out. API kept for autumn/spring/summer.
 function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}}){
- const el=document.createElement('section');el.className='story-speech';el.hidden=true;
- el.setAttribute('role','dialog');el.setAttribute('aria-label','剧情对话');
- const bubble=document.createElement('div'),name=document.createElement('span'),text=document.createElement('span'),more=document.createElement('i'),choices=document.createElement('div');
- bubble.className='story-bubble';bubble.tabIndex=0;bubble.setAttribute('role','button');
- name.className='story-speaker';text.className='story-words';text.setAttribute('aria-live','polite');more.className='story-more';more.setAttribute('aria-hidden','true');choices.className='story-choices';
- bubble.append(name,text,more);el.append(bubble,choices);host.append(el);
- let who='',previous=null,advance=null;
- function position(){if(el.hidden)return;const box=view.getBoundingClientRect(),parent=host.getBoundingClientRect(),s=box.width/342,p=anchor(who);
-  const visible=!!p&&p.x>=0&&p.x<=342&&p.y>=0&&p.y<=box.height/s;
-  name.textContent=visible?'':who+'（画外）';name.hidden=visible;el.dataset.remote=String(!visible);
-  el.style.setProperty('--story-w',Math.round(Math.min(box.width-16,Math.max(170,box.width*.46)))+'px');
-  const w=el.offsetWidth,h=el.offsetHeight;
-  const x=Math.max(8+w/2,Math.min(box.width-8-w/2,visible?p.x*s:box.width/2));
-  const bottom=Math.max(h+4,visible?(p.y-29)*s:h+6*s);                            // just above the head
-  el.style.left=box.left-parent.left+x+'px';el.style.top=box.top-parent.top+Math.min(box.height-4,bottom)+'px';
+ const popSpan=popSay.querySelector('span'),peerSpan=peerBubble.querySelector('span');
+ const more=document.createElement('i');more.className='story-more';more.setAttribute('aria-hidden','true');
+ const choices=document.createElement('div');choices.className='story-choices';choices.hidden=true;peerHud.append(choices);
+ let open=false,advance=null,hero=false,previous=null,keep=0,busyWas=0;
+ function mark(){   // exactly one row carries the story classes (tests and styles find it)
+  for(const [box,span,on] of [[peerHud,peerSpan,!hero],[popSay,popSpan,hero]]){
+   box.classList.toggle('story-speech',open&&on);(box===peerHud?peerBubble:popSay).classList.toggle('story-bubble',open&&on);span.classList.toggle('story-words',open&&on);
+  }
+ }
+ function hold(){   // keep the rows up while the talk waits for a click
+  if(!open)return;
+  if(!hero)peerSpeech.until=performance.now()+6e4;else{clearTimeout(popSay._t);clearTimeout(popSay._t2);popSay.hidden=false;popSay.classList.remove('out');}
+  sayBusy=realClock+60;
+  const box=hero?popSay:peerBubble;if(more.parentElement!==box)box.append(more);
+  keep=requestAnimationFrame(hold);
  }
  function show(speaker,words,{special=true,last=false,advance:next,choices:opts=null}={}){
-  if(el.hidden)previous=document.activeElement;who=speaker;advance=opts?null:next;
-  el.hidden=false;el.classList.toggle('quest-speech',special);el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');
-  text.textContent=spokenText(words);more.hidden=!!opts;bubble.dataset.last=String(last);
-  bubble.setAttribute('aria-label',`${speaker}：${text.textContent}${opts?'':last?'（点一下结束）':'（点一下继续）'}`);
+  if(!open)previous=document.activeElement,busyWas=sayBusy;
+  open=true;hero=speaker===nameOf();advance=opts?null:next;
+  peerHud.classList.toggle('quest',!hero&&special);popSay.classList.toggle('quest',hero&&special);
+  if(hero){if(peerSpeech.phase!=='idle')hidePeerSay();showSay(words);}
+  else showPeerSay(words,speaker+'：');
+  more.hidden=!!opts;
   choices.replaceChildren(...(opts||[]).map(o=>{const b=document.createElement('button');b.type='button';b.textContent=o.label;b.onclick=e=>{e.stopPropagation();o.on?.();};return b;}));
-  choices.hidden=!opts;position();(opts?choices.querySelector('button'):bubble).focus({preventScroll:true,focusVisible:false});
+  choices.hidden=!opts||hero;
+  const box=hero?popSay:peerBubble;box.tabIndex=0;box.setAttribute('role','button');
+  box.setAttribute('aria-label',`${speaker}：${spokenText(words)}${opts?'':last?'（点一下结束）':'（点一下继续）'}`);
+  mark();cancelAnimationFrame(keep);hold();
+  (opts&&!hero?choices.querySelector('button'):box).focus({preventScroll:true,focusVisible:false});
  }
- const go=e=>{if(!advance)return;e?.preventDefault?.();e?.stopPropagation?.();advance();};
- bubble.addEventListener('click',go);
- bubble.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')go(e);});
- el.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();onClose();}});
- function hide(){el.hidden=true;advance=null;choices.replaceChildren();if(previous?.isConnected)previous.focus({preventScroll:true});previous=null;}
- const observer=new ResizeObserver(position);observer.observe(view);window.addEventListener('resize',position);
- return {el,show,hide,position,get open(){return !el.hidden}};
+ const go=e=>{if(!open||!advance)return;e.preventDefault();e.stopPropagation();advance();};
+ for(const box of [peerBubble,popSay]){
+  box.addEventListener('click',e=>{if(open&&box.classList.contains('story-bubble'))go(e);});
+  box.addEventListener('keydown',e=>{if(open&&box.classList.contains('story-bubble')&&(e.key==='Enter'||e.key===' '))go(e);});
+ }
+ document.addEventListener('keydown',e=>{if(open&&e.key==='Escape'){e.preventDefault();e.stopPropagation();onClose();}},true);
+ function hide(){
+  if(!open)return;open=false;advance=null;cancelAnimationFrame(keep);more.remove();choices.replaceChildren();choices.hidden=true;
+  peerHud.classList.remove('quest');popSay.classList.remove('quest');mark();
+  for(const box of [peerBubble,popSay]){box.removeAttribute('tabindex');box.removeAttribute('role');box.removeAttribute('aria-label');}
+  hidePeerSay();popBubble(popSay,0);sayBusy=busyWas;
+  if(previous?.isConnected)previous.focus({preventScroll:true});previous=null;
+ }
+ return {el:peerHud,show,hide,position(){},get open(){return open}};
 }
