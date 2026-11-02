@@ -19,7 +19,7 @@
 //!                            turns it on over its see-through parts)
 //!   set_on_top               "置顶游戏" (also ticks the tray item)
 //!   exit_app                 quit, once the page has saved
-//!   log_js                   the page's errors, printed to the app's stderr
+//!   log_js                   the page's errors: stderr + page.log in the config folder
 //!   app_version              this build's version
 //!   check_update             a newer version on GitHub? { version, current, notes } or null
 //!   download_update          fetch it (signature checked; progress: "update-progress"),
@@ -450,8 +450,18 @@ fn set_on_top(window: WebviewWindow, item: State<OnTopItem>, on: bool) -> Result
 }
 
 #[tauri::command]
-fn log_js(message: String) {
+fn log_js(app: AppHandle, message: String) {
     eprintln!("[page] {message}");
+    // also to page.log in the config folder, so a player can send it to us
+    use std::io::Write;
+    if let Ok(dir) = config_dir(&app) {
+        let path = dir.join("page.log");
+        if fs::metadata(&path).map(|m| m.len() > 256 * 1024).unwrap_or(false) { let _ = fs::remove_file(&path); }
+        if let Ok(mut f) = fs::OpenOptions::new().create(true).append(true).open(path) {
+            let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+            let _ = writeln!(f, "[{secs}] {message}");
+        }
+    }
 }
 
 /// latest.json's entry for the bare exe (the installer is "windows-x86_64")

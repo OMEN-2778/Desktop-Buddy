@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-02 · Claude Code
+- Desktop app diagnostics for Win10 players who see only the diary box: page errors now also go to
+  `page.log` in the app config folder; 8 s after start a health check (loop running, house canvas
+  ≥100×30, no errors) shows a red on-screen note with version/WebView/sizes/errors and enlarges the
+  window. Tested with a stubbed Tauri in Chromium (normal: no note; hidden house: note). Real Win10 untested.
+
 ## 2026-11-01 · Codex
 - iPad could not open chat sandbox download: published requested story DOCX via ordinary
   HTTPS plus readable `/story-review/` page. Static exported prose/document only; no game

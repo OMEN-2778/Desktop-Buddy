@@ -1509,9 +1509,28 @@ const TAURI = window.__TAURI__ && window.__TAURI__.core ? window.__TAURI__ : nul
 if (TAURI) {
   document.documentElement.classList.add("desktop");
   // no devtools in the app: page errors go to the app's log
-  const report = m => TAURI.core.invoke("log_js", { message: String(m) }).catch(() => {});
+  // (also kept in page.log next to the settings, and shown on screen if the
+  // game doesn't come up right: players on Windows 10 saw only the diary box)
+  const bootErr = [];
+  const report = m => { if (bootErr.length < 8) bootErr.push(String(m).slice(0, 300)); TAURI.core.invoke("log_js", { message: String(m) }).catch(() => {}); };
   window.addEventListener("error", e => report(`${e.message} @${e.lineno}:${e.colno}`));
   window.addEventListener("unhandledrejection", e => report(`unhandled: ${e.reason && (e.reason.stack || e.reason)}`));
+  // Health check a few seconds in: the loop must run and the house must have
+  // a real size on screen; else show what we know, so the player can send it.
+  const bootCheck = () => {
+    const v = document.getElementById("view"), r = v ? v.getBoundingClientRect() : { width: 0, height: 0 };
+    let ok = false; try { ok = booted; } catch (e) {}
+    if (ok && r.width >= 100 && r.height >= 30 && !bootErr.length) return;
+    const info = [`启动异常，请截图发给作者`, `版本 ${appVersion || "?"} · ${(navigator.userAgent.match(/Edg\/[\d.]+/) || ["WebView ?"])[0]}`,
+      `运行 ${ok ? "是" : "否"} · 小屋 ${Math.round(r.width)}×${Math.round(r.height)} · 窗口 ${innerWidth}×${innerHeight} · 缩放 ${devicePixelRatio}`, ...bootErr];
+    report("bootCheck: " + info.slice(1).join(" | "));
+    let el = document.getElementById("bootdiag");
+    if (!el) { el = document.createElement("pre"); el.id = "bootdiag"; document.body.appendChild(el); }
+    el.style.cssText = "position:fixed;left:0;top:0;z-index:99999;margin:0;padding:8px;max-width:460px;white-space:pre-wrap;font:12px/1.5 sans-serif;background:#fff;color:#a12;border:2px solid #a12;user-select:text";
+    el.textContent = info.join("\n");
+    TAURI.core.invoke("fit_window", { width: Math.ceil(480 * devicePixelRatio), height: Math.ceil(260 * devicePixelRatio), dx: 0, dy: 0 }).catch(() => {});
+  };
+  setTimeout(bootCheck, 8000);
 }
 // 界面大小 (% or "auto" = fit the page), 置顶游戏, 自动保存 (every 5 minutes, or never)
 const prefs = { scale: TAURI ? 100 : "auto", onTop: false, bgm: false, sfx: false, bgmVolume:0, sfxVolume:0, autosave: true, guided: false, autoUpdate: true, fontSize: "auto" };   // guided: the guide has been seen
