@@ -16,7 +16,7 @@ const out=process.argv[2]||'/tmp/infei-seasons';fs.mkdirSync(out,{recursive:true
  // late autumn: slow seeds greyed
  await at(38,4,110);await p.evaluate(()=>{springFarm.state.beds={};springFarm.openBed(9);});await p.waitForTimeout(300);await p.locator('#ring button',{hasText:'播种'}).click();await p.waitForTimeout(400);await shot('秋末-种子铺');
  const offs=await p.evaluate(()=>[...document.querySelectorAll('#picker .pk-item')].map(b=>b.classList.contains('fu-off')));await p.locator('#picker .x').click();
- assert.deepEqual(offs,[false,false,true,true]);   // 4 days to winter: carrot 2, cabbage 4 fit; corn 6, pumpkin 8 do not
+ assert.deepEqual(offs,[false,true,true,false,true]);   // 4 days to winter: 白菜 4, 萝卜 3 fit; 玉米 6, 南瓜 8, 茄子 5 do not
  // winter frost: an unripe crop is lost, a ripe one stays
  await p.evaluate(()=>{const F=springFarm.state;F.beds={9:{crop:'pumpkin',progress:2,watered:-1,at:sim.t},10:{crop:'carrot',progress:2,watered:-1,at:sim.t}};F.day=41;sim.t=42*1440+8*60;springFarm.roll();});
  const beds=await p.evaluate(()=>Object.keys(springFarm.state.beds));assert.deepEqual(beds,['10']);

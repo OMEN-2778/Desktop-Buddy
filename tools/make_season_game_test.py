@@ -71,11 +71,32 @@ def farm_story_source():
     import spring_fields as F
     from pixelkit import Sprite
     art=FU.art();art.pop('backs')
-    def crop_sprite(kind,stage):
-        s=Sprite(16,20);F.crop(s,kind,stage,8,19);return FU.uri(s.to_image())
     hexc=lambda c:c if isinstance(c,str) else '#%02x%02x%02x'%tuple(c[:3])
+    import infei_crops as IC, infei_seasons as IS, front_yard as FY, random as R
+    kinds=list(F.CROPS)+list(IC.NEW)
+    def crop_sprite(kind,stage):
+        s=Sprite(16,20);IC.crop(s,kind,stage,8,19);return FU.uri(s.to_image())
+    def stage_pic(kind,stage):   # the farm-UI stage strip: a bit of bed soil under the plant
+        s=Sprite(16,24);s.hline(1,14,23,F.SOIL[2]).hline(3,12,22,F.SOIL[3]);IC.crop(s,kind,stage,8,22);return FU.uri(s.to_image().crop((0,6,16,24)))
+    for k in IC.NEW:art['stages'][k]=[stage_pic(k,i) for i in range(4)]
+    def tree_pic(kind,season,stage):
+        # One fruit tree for a pit, per season and stage (0 sapling, 1 young, 2 grown, 3 with fruit).
+        x,base=60,80;at=(x,base-16,base,10,9)
+        s2=season if season!='winter' or kind!='orange' else 'summer'   # citrus keeps its leaves
+        if s2!='spring':IS._season(s2)
+        try:
+            if season=='winter' and kind!='orange' and stage>=2:t=FY.tree('fruit','winter',0,at=at)
+            elif stage==2 and season!='spring':t=FY.tree(kind if kind!='orange' else 'fruit',F.SEASON,0,at=at)
+            else:t=F.fruit_tree(kind,0,at,stage=stage)
+        finally:IS._restore()
+        if season=='winter':IS.snowcap(t,t.px[...,3]>0,R.Random(kind+str(stage)))
+        im=t.to_image();bb=im.getbbox();return {'src':FU.uri(im.crop(bb)),'dx':bb[0]-x,'dy':bb[1]-base}
+    trees={k:{se:[tree_pic(k,se,st) for st in range(4)] for se in ('spring','summer','autumn','winter')} for k in ('peach','pear','apple','orange')}
+    FS=F.FS;trim=lambda sp:(lambda im:im.crop(im.getbbox()))(sp.to_image() if hasattr(sp,'to_image') else sp)
+    animals={'cow':[FU.uri(trim(FS.cow(f))) for f in range(4)],'sheep':[FU.uri(trim(FS.sheep(f))) for f in range(4)],
+             'lamb':[FU.uri(trim(FS.sheep(f,lamb=True))) for f in range(4)],'chicken':[FU.uri(trim(FS.chicken(f,False))) for f in (0,1)]}
     data={'plots':F.PLOTS,'slots':[F.plot_slots(*p) for p in F.PLOTS],'soil':[hexc(c) for c in F.SOIL],
-          'crops':{k:[crop_sprite(k,i) for i in range(4)] for k in F.CROPS}}
+          'crops':{k:[crop_sprite(k,i) for i in range(4)] for k in kinds},'trees':trees,'pits':F.PITS,'animals':animals}
     return ('\nconst FARM_UI_ART='+json.dumps(art,separators=(',',':'))+';\nconst SPRING_FARM_DATA='+json.dumps(data,separators=(',',':'))+';\n'
             +(ROOT/'prototype/demo/farm_ui.js').read_text()+'\n')
 
@@ -96,7 +117,7 @@ def main():
     import base64
     airport_images={k:'data:image/png;base64,'+base64.b64encode((ROOT/('art/out/concept/'+k+'.png')).read_bytes()).decode() for k in ['airport_terminal','airport_vista','airport_terminal_front','airport_plane','airport_cabin','airport_cabin_front','trip_airport']}
     source+=farm_story_source()
-    source+='\nconst AIRPORT_IMAGES='+json.dumps(airport_images)+';\n'+(ROOT/'prototype/airport/flight.js').read_text()+(ROOT/'prototype/airport/planes.js').read_text()+'\n'+(ROOT/'prototype/map-test/airport.js').read_text()+'\n'+(ROOT/'prototype/map-test/spring_cards.js').read_text()+(ROOT/'prototype/map-test/spring_talk.js').read_text()+(ROOT/'prototype/map-test/spring_story.js').read_text()
+    source+='\nconst AIRPORT_IMAGES='+json.dumps(airport_images)+';\n'+(ROOT/'prototype/airport/flight.js').read_text()+(ROOT/'prototype/airport/planes.js').read_text()+'\n'+(ROOT/'prototype/map-test/airport.js').read_text()+'\n'+(ROOT/'prototype/map-test/spring_cards.js').read_text()+(ROOT/'prototype/map-test/spring_talk.js').read_text()+(ROOT/'prototype/map-test/spring_story.js').read_text()+(ROOT/'prototype/map-test/infei_farm.js').read_text()
     mark='(async function boot() {'
     assert page.count(mark)==1
     page=page.replace(mark,source+'\n'+mark)

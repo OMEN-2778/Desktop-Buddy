@@ -113,9 +113,9 @@ const FarmUI = (() => {
     p.stages.forEach((src, i) => { const li = el("li", i === p.stage ? "now" : i < p.stage ? "done" : ""); li.append(img(src, "fu-stage", houseK));
       li.append(el("span", null, p.stageNames[i])); stages.append(li); });
     const info = el("div", "fu-lines");
-    const water = el("p"); water.append(icon("drop"), el("span", null, p.watered ? "今天浇过水了" : "今天还没浇水"));
-    if (!p.watered) water.classList.add("fu-warn");
-    const sell = el("p"); sell.append(icon("coin"), el("span", null, `全部卖掉约 ${coins(p.sell)} 丢丢币`));
+    const water = el("p"); water.append(icon(p.waterIcon || "drop"), el("span", null, p.waterLine || (p.watered ? "今天浇过水了" : "今天还没浇水")));
+    if (!p.watered && !p.waterLine) water.classList.add("fu-warn");
+    const sell = el("p"); sell.append(icon("coin"), el("span", null, p.sellLine || `全部卖掉约 ${coins(p.sell)} 丢丢币`));
     info.append(water, sell);
     c.append(top, info, bar(p.days / p.total, `第 ${p.days} 天 · 共 ${p.total} 天`));
     s.append(actions(p.actions));
@@ -148,7 +148,7 @@ const FarmUI = (() => {
   }
 
   // ---------------------------------------------------------------- 丢丢平板电脑
-  const PC_TABS = [["farm", "农庄", "farm"], ["coin", "丢丢币", "coin"], ["fund", "每日操盘", "chart"], ["gift", "礼物与藏品", "gift"]];
+  const PC_TABS = [["farm", "农庄", "farm"], ["coin", "丢丢币", "coin"], ["fund", "每日操盘", "chart"], ["gift", "仓库与礼物", "gift"]];
   function computer(tab, st) {
     const s = sheet("丢丢平板电脑", "fu-pc"), c = socialContent(s);
     const nav = el("nav", "fu-nav"); nav.setAttribute("role", "tablist");
@@ -166,7 +166,7 @@ const FarmUI = (() => {
     m.append(el("h4", null, "农庄"));
     const grid = el("div", "fu-stats");
     for (const [name, v, sub] of [["田地", `${f.fields} / 4 块`, f.nextField], ["果树", `${f.trees} / 2 棵`, ""],
-      ["牲畜", f.animals, ""], ["家当", `约 ${f.assets} 币`, "田地、果树、牲畜"]]) {
+      ["牲畜", f.animals, f.animalsSub || ""], ["家当", `约 ${f.assets} 币`, "田地、果树、牲畜"], ...(f.more || [])]) {
       const d = el("div"); d.append(el("small", null, name), el("b", null, v)); if (sub) d.append(el("span", null, sub)); grid.append(d);
     }
     m.append(grid);
@@ -194,9 +194,10 @@ const FarmUI = (() => {
     const minus = el("button", "fu-btn", "−"), plus = el("button", "fu-btn", "+"), amt = el("b", null, `${f.amount} 币`);
     minus.type = plus.type = "button"; minus.setAttribute("aria-label", "少一点"); plus.setAttribute("aria-label", "多一点");
     step.append(minus, amt, plus);
-    const row = el("div", "fu-trade"); row.append(step, actions([{ label: "投入", primary: true, off: f.inLeft ? "" : "今天投满了" },
-      { label: "赎回", off: f.outLeft ? "" : "今天赎满了" }]));
-    m.append(head, chart, row, el("p", "fu-note", "满仓一天最多涨跌 3 币。今天投入的部分明天才能赎回。"));
+    if (f.onStep) { minus.onclick = () => f.onStep(-1); plus.onclick = () => f.onStep(1); }
+    const row = el("div", "fu-trade"); row.append(step, actions([{ label: "投入", primary: true, off: f.inOff ?? (f.inLeft ? "" : "今天投满了"), on: f.onIn },
+      { label: "赎回", off: f.outOff ?? (f.outLeft ? "" : "今天赎满了"), on: f.onOut }]));
+    m.append(head, chart, row, el("p", "fu-note", f.note || "满仓一天最多涨跌 3 币。今天投入的部分明天才能赎回。"));
     requestAnimationFrame(() => drawChart(chart, f.history));
   }
   // The trend on the house pixel grid: integer points, stair-step joins,
@@ -222,7 +223,7 @@ const FarmUI = (() => {
   }
   function pcGift(m, st) {
     const g = st.gifts, tabs = el("div", "fu-tabs"); tabs.setAttribute("role", "tablist");
-    for (const [id, name] of [["gift", "礼物"], ["keep", "藏品"]]) {
+    for (const [id, name] of g.tabs || [["gift", "礼物"], ["keep", "藏品"]]) {
       const b = el("button", id === g.tab ? "on" : "", name); b.type = "button"; b.setAttribute("role", "tab");
       b.onclick = () => computer("gift", { ...st, gifts: { ...g, tab: id } }); tabs.append(b);
     }
@@ -234,10 +235,11 @@ const FarmUI = (() => {
     });
     const it = list[g.sel] || list[0], side = el("div", "fu-detail");
     if (it && !it.locked) side.append(icon(it.icon), el("h4", null, it.name), el("p", null, it.line),
-      actions([{ label: g.tab === "keep" ? "摆到家里" : "送给…", primary: true }]));
+      actions(it.actions || [{ label: g.tab === "keep" ? "摆到家里" : "送给…", primary: true }]));
+    else if (!list.length && g.empty) side.append(el("p", null, g.empty));
     body.append(grid, side);
     m.append(tabs, body);
   }
 
-  return { ring, shop, plant, ranch, computer, icon, coinPill };
+  return { ring, shop, plant, ranch, computer, icon, coinPill, sheet, meter, actions, bar, img, el };
 })();

@@ -7,6 +7,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner: rain waters beds, parents help water, seasonal crops, orchard, livestock, fund, gifts — "rich, like a farm
+  life game" (genre reference only; all content ours). New infei_farm.js (orchard/ranch/help/fund/gifts/collection/
+  10 cards/talk) on spring_story.js API; 11 seasonal crops incl. regrow; harvest -> 仓库 (sold from the tablet).
+  Art: infei_crops.py (potato, watermelon, pepper, radish, eggplant + icons, heart). farm_ui.js: fund/gift handlers.
+- check_infei_farm.js + spring story/life/seasons pass. /map-test/ only.
+
+## 2026-11-02 · Claude Code
 - Owner chose plan C (winter fallow) + asked for the art. art/src/concept/infei_seasons.py renders 茵菲谷 in
   summer / autumn / winter from spring_fields (season ground ramps, fields -> green pods / stubble / snow,
   lavender / marigold, seasonal trees + fruit, winter snow caps from each layer's silhouette, snowy roofs and

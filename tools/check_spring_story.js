@@ -49,11 +49,12 @@ const out=process.argv[2]||'/tmp/spring-story',SCALE=+(process.argv[3]||50);fs.m
  await p.locator('.fu-btn',{hasText:'浇水'}).click();await p.waitForTimeout(6000);
  await p.evaluate(()=>{sim.t=(Math.floor(sim.t/1440)+1)*1440+7*60;springFarm.roll();});await shot('第三天-胡萝卜熟了');
  await clickHouse(40,88);await shot('熟了-可以收获');await ring('收获');await p.waitForTimeout(6000);await shot('收获后');
- await clickHouse(40,88);await ring('播种');await p.waitForTimeout(400);await shot('种子铺-四种种子');await p.locator('#picker .x').click();
+ await clickHouse(40,88);await ring('播种');await p.waitForTimeout(400);await shot('种子铺-春天的种子');await p.locator('#picker .x').click();
  await clickHouse(215,88);await shot('荒地-还不能整理');await p.evaluate(()=>closeRing());
  const v=await view();await p.mouse.click(v.x+5,v.y+5);
  await clickHouse(at[0]-0,at[1]-14).catch(()=>{});
- await p.evaluate(()=>{closeRing();FarmUI.computer('coin',springFarm.pcState());});await p.waitForTimeout(400);await shot('丢丢平板电脑-第一笔收入');await p.evaluate(()=>closeSocialSheet());
+ await p.evaluate(()=>{closeRing();FarmUI.computer('gift',springFarm.X.pcState());});await p.waitForTimeout(400);await shot('平板-仓库里的胡萝卜');await p.locator('.fu-btn',{hasText:'卖一份'}).click();await p.waitForTimeout(300);
+ await p.evaluate(()=>{FarmUI.computer('coin',springFarm.X.pcState());});await p.waitForTimeout(400);await shot('丢丢平板电脑-第一笔收入');await p.evaluate(()=>closeSocialSheet());
  const f=await p.evaluate(()=>springFarm.state);console.log('coins',f.coins,'beds',JSON.stringify(f.beds),'phase',f.phase,'ledger',f.ledger.map(r=>r.text+r.v).join(' / '));
  assert.equal(f.phase,'done');assert.equal(f.coins,10);
  // save + reload keeps the farm

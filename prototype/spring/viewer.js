@@ -37,8 +37,8 @@ function draw(){ctx.clearRect(0,0,342,120);ctx.fillStyle='#eee8dd';ctx.fillRect(
  for(const offset of [0,-w,w])paint(s.clouds,(t*1.5)%w+offset,0);
  if(s.wind){const f=reduced?0:Math.floor(t/.04)%72;ctx.drawImage(image(s.wind),f*342,0,342,118,0,0,342,118);ctx.drawImage(image(s.cleanTop),0,0,342,58,0,0,342,58);}else paint(s.bg);
  if(s.id==='tulip'){const f=Math.floor(t/.04)%144;ctx.drawImage(image(DATA.sails),f*50,0,50,50,211,2,50,50);}
- if(s.id==='home')for(const [x,y,f,r]of DATA.coop)paint(DATA.chickens[(r?2:0)+(Math.floor(t*3+f)%2)],x+Math.sin(t*.6+x)*2,y-11);
- if(s.id==='ranch')for(const [kind,x,y,f]of DATA.herd){const im=DATA.animals[kind][Math.floor(t*1.4+f)%4];paint(im,342+x+Math.sin(t*.5+x)*2,y-image(im).height);}
+ if(s.id==='home'&&!state.noHerd)for(const [x,y,f,r]of DATA.coop)paint(DATA.chickens[(r?2:0)+(Math.floor(t*3+f)%2)],x+Math.sin(t*.6+x)*2,y-11);
+ if(s.id==='ranch'&&!state.noHerd)for(const [kind,x,y,f]of DATA.herd){const im=DATA.animals[kind][Math.floor(t*1.4+f)%4];paint(im,342+x+Math.sin(t*.5+x)*2,y-image(im).height);}
  if(s.id==='tulip'&&!reduced){const a=Math.max(0,Math.sin((t%18)/18*Math.PI*2))**12;if(a>.01){ctx.globalAlpha=a*.12;paint(DATA.beam,90+(t%18)*6,0);ctx.globalAlpha=1;}}
  paint(s.trees[reduced?0:Math.sin(t*1.1)>0?1:0]);
  for(let i=0;i<(w>342?4:3);i++){const x=((70+i*116+t*(5+i))%(w+30))-15,y=12+i%3*6+Math.sin(t*.8+i)*2;paint(DATA.birds[Math.floor(t*6+i)%3],x,y);}
@@ -53,4 +53,4 @@ canvas.addEventListener('pointerdown',e=>{canvas.focus();const r=canvas.getBound
 window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','a','d','A','D'].includes(e.key)&&!['BUTTON','INPUT'].includes(document.activeElement.tagName)){e.preventDefault();keys.add(e.key);}});window.addEventListener('keyup',e=>keys.delete(e.key));window.addEventListener('blur',()=>keys.clear());document.addEventListener('visibilitychange',()=>{if(document.hidden)keys.clear();});
 load(DATA);Promise.all([...images.values()].map(im=>im.decode())).then(()=>{state.loaded=true;updateUI();let last=performance.now();function frame(now){const dt=document.hidden?0:Math.min(.05,(now-last)/1000);last=now;if(!state.paused)state.time+=dt;advanceDoor(state.paused?0:dt);move(dt);draw();requestAnimationFrame(frame);}requestAnimationFrame(frame);}).catch(e=>{const el=document.getElementById('error');el.hidden=false;el.textContent='地图加载失败，请刷新重试';console.error(e);});
 const springScenes=DATA.scenes;function setSeason(k){const next=(DATA.seasons&&DATA.seasons[k])||springScenes;if(DATA.scenes!==next){DATA.scenes=next;load(next);}state.season=k;}   // 茵菲谷 in other seasons (game-shell test passes DATA.seasons)
-window.springPreview={setSeason,state,go,target,enter,leave,draw,move,travel,advanceDoor,fx,setWeather:kind=>wetKind=weatherOverride||kind,getWeather:()=>wetKind,setPeopleRenderer:fn=>peopleRenderer=fn};
+window.springPreview={current,setSeason,state,go,target,enter,leave,draw,move,travel,advanceDoor,fx,setWeather:kind=>wetKind=weatherOverride||kind,getWeather:()=>wetKind,setPeopleRenderer:fn=>peopleRenderer=fn};
