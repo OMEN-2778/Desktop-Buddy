@@ -1147,3 +1147,11 @@ native pixel borders/corners, readable normal-sized text and established bubble 
 This UI gradient exception does not permit smooth vector scene art or blur. Offscreen/
 remote speakers must be identified/positioned coherently, never fake everyone standing
 in one place. Action-choice and information panels are distinct from spoken dialogue.
+
+### Airport and passenger-cabin transitions (2026-11-02)
+Owner requests an airport map and a separate seated-passenger cabin scene for BOTH
+outbound seasonal travel and the return home. Home→airport reuses the park/mall strip
+transition with a silver-white ground and a matching terminal sticker icon. Refined
+rounded pixel contours, top-left light, broad shaded volume. Native 20×28 player seated
+pose, recoloured from current look at runtime; no enlarged replacement character.
+Art first, review at `/airport/`, no formal-game wiring until approved. See AIRPORT.md.

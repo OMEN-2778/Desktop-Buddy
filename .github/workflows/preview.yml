@@ -57,6 +57,8 @@ jobs:
           PYTHONPATH=tools python tools/make_autumn_preview.py
           # Owner-authorized game-shell map test, separate from trial and EXE builds.
           PYTHONPATH=tools python tools/make_season_game_test.py
+          # Isolated airport/cabin art review; no live-game destination.
+          PYTHONPATH=tools python tools/make_airport_preview.py
           cp -R prototype/story-review desktop/dist/story-review
           touch desktop/dist/.nojekyll
       - uses: actions/upload-pages-artifact@v3

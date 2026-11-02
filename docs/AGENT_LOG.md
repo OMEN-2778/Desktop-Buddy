@@ -7,6 +7,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Codex
+- Airport art review: silver rounded terminal, passenger cabin with native seated Buddy,
+  shared-style terminal sticker and silver strip-transition preview. See AIRPORT.md.
+- Isolated /airport/ page shows outbound/return cabin, cloud motion, four flight bubbles
+  (three locked) and pause. Art only; no formal travel/charging/save logic integrated.
+- Pixel palette checked (existing sticker shadow exception), demo/web rebuilt; targeted
+  browser review exercised controls and pause, no page errors. Waiting for art approval.
+
+## 2026-11-02 · Codex
 - Owner UI decision: all story speech (incl. autumn) joins native hero/NPC bubbles,
   replacing the standalone white dialogue modal. Quest/special bubbles white→pale blue
   gradient, pixel borders/corners and native motion retained. Skill/season docs updated.
