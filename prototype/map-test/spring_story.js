@@ -33,7 +33,13 @@ const springFarm=(()=>{
  const bedOf=i=>F.beds[i]||null,total=b=>CROP[b.crop].days;
  const ripe=b=>b&&b.progress>=total(b);
  const stageOf=b=>ripe(b)?3:b.progress===0?0:b.progress/total(b)<.5?1:2;
- function roll(){const d=today();if(F.day<0)F.day=d;while(F.day<d){for(const b of Object.values(F.beds))if(b.watered===F.day&&!ripe(b))b.progress++;F.day++;}}
+ // Seasons (owner 2026-11-02, plan C): the beds work spring to autumn; winter lies fallow under snow.
+ // On the first morning of winter whatever is not ripe yet freezes; ripe crops can still be picked.
+ const seasonAt=d=>Math.floor(d/SEASON_DAYS)%4,winter=()=>seasonAt(today())===3,SEASON_KEY=['spring','summer','autumn','winter'];
+ const daysToWinter=d=>{const w=Math.floor(d/(SEASON_DAYS*4))*SEASON_DAYS*4+SEASON_DAYS*3;return d<w?w-d:0;};
+ function frost(){const lost=Object.entries(F.beds).filter(([,b])=>!ripe(b));for(const [i]of lost)delete F.beds[i];
+  log(lost.length?`入冬了，地里没熟的${[...new Set(lost.map(([,b])=>CROP[b.crop].name))].join('、')}冻坏了，菜地盖上了雪。`:'入冬了，菜地盖上了雪，开春再种。');}
+ function roll(){const d=today();if(F.day<0)F.day=d;while(F.day<d){for(const b of Object.values(F.beds))if(b.watered===F.day&&!ripe(b))b.progress++;F.day++;if(seasonAt(F.day)===3&&seasonAt(F.day-1)!==3)frost();}}
  function worked(){if(F.workDay!==today()){F.workDay=today();F.work++;}}
  function drawBeds(ctx,info){
   if(info.inside||info.region!==4)return;roll();
@@ -48,7 +54,7 @@ const springFarm=(()=>{
  const pics=new Map();function imgOf(src){let i=pics.get(src);if(!i){i=new Image();i.src=src;pics.set(src,i);}return i;}
  Object.values(D.crops).flat().forEach(imgOf);
  // ---------------------------------------------------------------- drawing hook (scene coords, camera applied)
- const oldPeople=T.people.draw;C().setPeopleRenderer((ctx,info)=>{if(info.region>=0)oldPeople(ctx,info);drawBeds(ctx,info);momTick(C().state.time);drawMom(ctx,info);});
+ const oldPeople=T.people.draw;C().setPeopleRenderer((ctx,info)=>{if(info.region>=0)oldPeople(ctx,info);C().setSeason?.(SEASON_KEY[seasonAt(today())]);drawBeds(ctx,info);momTick(C().state.time);drawMom(ctx,info);});
  // ---------------------------------------------------------------- story
  const speech=createStorySpeech({view,onClose:()=>speech.hide()});
  const oldHolds=cardHolds;cardHolds=()=>oldHolds()||speech.open;
@@ -125,7 +131,7 @@ const springFarm=(()=>{
   if(place==='spring_test'&&F.unlocked&&F.phase!=='done'){
    if(['sow','water','talk'].includes(F.phase)){C().go(4,90);Object.assign(mom,{on:true,scene:4,inside:false,x:150,y:103,tx:null,facing:-1});quiet();if(F.phase==='talk')afterWater();else showHint(F.phase==='sow'?'点一下有箭头的菜地，选「播种」':'再点一下菜地，选「浇水」');}
    else setTimeout(arrive,700);
-  }else mom.on=false;
+  }else{mom.on=false;if(place==='spring_test'&&F.phase==='done'){roll();if(winter())setTimeout(()=>showHint('冬天地都冻住了，开春再种'),900);else if(daysToWinter(today())<=3)setTimeout(()=>showHint(`再过 ${daysToWinter(today())} 天就入冬了，没熟的菜会冻坏`),900);}}
   return r;};
  // ---------------------------------------------------------------- clicking the beds
  function bedAt(x,y){return F.open.concat(MORE.map(m=>m[0])).find(i=>{const [bx,top,w,h]=D.plots[i];return x>=bx-2&&x<=bx+w+2&&y>=top-12&&y<=top+h+3;});}
@@ -137,7 +143,7 @@ const springFarm=(()=>{
    const off=!first?'先整理前一块':left?`再经营 ${left} 天`:F.coins<cost?`还差 ${coins(cost-F.coins)} 币`:'';
    return farmRing('荒着的地',[{id:'sf:clear:'+i,label:`整理 · ${cost} 币`,icon:'hoe',off}],i);}
   if(F.phase==='sow'&&!START.includes(i))return showHint('先种有箭头的那块');
-  if(!b)return farmRing(name,[{id:'sf:sow:'+i,label:'播种',icon:'seeds'},{id:'sf:look:'+i,label:'查看',icon:'lens',off:'还空着'}],i);
+  if(!b)return farmRing(name,[{id:'sf:sow:'+i,label:'播种',icon:'seeds',off:winter()&&F.phase!=='sow'?'冬天休耕，开春再种':''},{id:'sf:look:'+i,label:'查看',icon:'lens',off:'还空着'}],i);
   farmRing(name,[{id:'sf:water:'+i,label:'浇水',icon:'can',off:ripe(b)?'已经熟了':b.watered===today()?'今天浇过了':''},
    {id:'sf:harvest:'+i,label:'收获',icon:'basket',off:ripe(b)?'':'还没熟'},{id:'sf:look:'+i,label:'查看',icon:'lens'}],i);
  }
@@ -156,6 +162,8 @@ const springFarm=(()=>{
   const goods=story?[{group:'种子',note:'妈妈带来的',items:[{name:'胡萝卜',icon:'carrot',cost:0,info:'2 天',line:'妈妈给的一包，种满这一块。',crop:'carrot',bed:i}]}]
    :[{group:'种子',note:'一包种满一块田',items:Object.entries(CROP).map(([k,c])=>({name:c.name,icon:c.icon,cost:c.cost,info:`${c.days} 天`,line:`全部卖掉约 ${c.sell} 币。`,crop:k,bed:i}))}];
   if(!story&&F.coins<1&&!Object.keys(F.beds).length)goods[0].items.unshift({name:'胡萝卜 · 救急',icon:'carrot',cost:0,info:'2 天',line:'手头紧时种子铺送的一包，一次一包。',crop:'carrot',bed:i});
+  const left=daysToWinter(today());if(!story&&left)for(const it of goods[0].items)if(CROP[it.crop].days>left)it.off='入冬前来不及成熟';
+  if(!story&&left&&left<=8)goods[0].note=`离入冬还有 ${left} 天`;
   FarmUI.shop('sf_seed','种子铺 · 这块田种什么',F.coins,goods,{x:D.plots[i][0]+D.plots[i][2]/2,y:D.plots[i][1]});
  }
  function sow(item){
@@ -189,7 +197,11 @@ const springFarm=(()=>{
  for(const cd of SPRING_CARDS)for(const k of ['a','b'])cd[k].out.forEach((o,i)=>{if(o.mood)ML[o.id=`card${cd.n}${k}${i}`]={...o.mood};});
  for(const [key,pool]of Object.entries(SPRING_TALK))if(key!=='people')pool.forEach((t,i)=>{if(t.mood)ML[t.id=`spring_talk_${key}_${i}`]={...t.mood};});
  const growing=()=>Object.entries(F.beds).filter(([,b])=>!ripe(b));
- const oldFits=cardFits;cardFits=function(cd,c){if(cd.at==='spring_test'&&(F.phase!=='done'||cd.farmIf==='crop'&&!growing().length))return false;return oldFits(cd,c);};
+ // seasonal content: these only fit some seasons (0 spring … 3 winter)
+ const ONLY={'油菜花里的蜜蜂':[0,1],'樱花落满溪':[0],'采一把野菜':[0],'山谷里放风筝':[0,1,2],'风车下的午觉':[0,1,2],'一窝蚜虫':[0,1,2],'晨雾里的菜地':[0,1,2],'一场及时雨':[0,1,2],'种子铺打折':[0,1,2],'一只迷路的小鸡':[0,1,2],'井边的青蛙':[0,1],
+  '种什么好':[0,1,2],'兔子又来了':[0,1,2],'油菜花开了':[0],'晒黑了吧':[1],'菜浇了没':[0,1,2],'天气预报':[0,1,2],'寄点菜来':[0,1,2],'农场生活怎么样':[0,1,2]};
+ const inSeason=t=>!ONLY[t]||ONLY[t].includes(seasonAt(today()));
+ const oldFits=cardFits;cardFits=function(cd,c){if(cd.at==='spring_test'&&(!inSeason(cd.title)||F.phase!=='done'||cd.farmIf==='crop'&&!growing().length))return false;return oldFits(cd,c);};
  function applyFarm(f,title){
   if(f.coins){const v=f.coins<0?-Math.min(F.coins,-f.coins):f.coins;if(v)record('coin',title,v);}
   const g=growing();
@@ -203,7 +215,7 @@ const springFarm=(()=>{
   const it=oldChat(kind,who,via,contactId);
   if(!inSpring()||!['call','text','video'].includes(kind)||Math.random()<.3)return it;
   const c=contactId&&socialState.contacts.find(x=>x.id===contactId),key=c?.family||(c?'friend':who),pool=SPRING_TALK[key];if(!pool)return it;
-  const seen=((lifeFlags.talkSeen||={})['spring_'+key]||=[]);let fresh=pool.map((t,i)=>i).filter(i=>!seen.includes(i));if(!fresh.length){seen.length=0;fresh=pool.map((t,i)=>i);}
+  const seen=((lifeFlags.talkSeen||={})['spring_'+key]||=[]),ok=pool.map((t,i)=>i).filter(i=>inSeason(pool[i].title));if(!ok.length)return it;let fresh=ok.filter(i=>!seen.includes(i));if(!fresh.length){seen.length=0;fresh=ok;}
   const i=pick(fresh),t=pool[i];seen.push(i);it.talk.end=it.talk.end.replace(it.talk.title,t.title);Object.assign(it.talk,{title:t.title,lines:t.lines,mood:t.mood,id:t.id});if(c)c.lastTopic=t.title;return it;};
  NPC_TALK_TEXT.spring_test?.adult.push(...SPRING_TALK.people);
  withHeroHooks.push(id=>id==='mom'&&mom.on&&inSpring());   // 妈妈 beside her on the farm never phones her
@@ -216,6 +228,6 @@ const springFarm=(()=>{
  // ---------------------------------------------------------------- test toolbar
  const bar=T.root.querySelector('header');
  for(const [label,fn]of [['妈妈来信（测试）',()=>{if(!sendLetter())showHint('信已经寄过了');else if(!['home','front'].includes(sim.place))showHint('信在家门口，回家就能看到');}],['快进到明早（测试）',()=>{sim.t=(today()+1)*1440+7*60;roll();}]]){const b=document.createElement('button');b.textContent=label;b.onclick=fn;bar.append(b);}
- return {get lines(){return lines;},get state(){return F;},set state(v){F=v;},speech,mom,openBed,sendLetter,arrive,roll,pcState};
+ return {seasonAt,daysToWinter,get lines(){return lines;},get state(){return F;},set state(v){F=v;},speech,mom,openBed,sendLetter,arrive,roll,pcState};
 })();
 window.springFarm=springFarm;

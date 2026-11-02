@@ -7,6 +7,15 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner chose plan C (winter fallow) + asked for the art. art/src/concept/infei_seasons.py renders 茵菲谷 in
+  summer / autumn / winter from spring_fields (season ground ramps, fields -> green pods / stubble / snow,
+  lavender / marigold, seasonal trees + fruit, winter snow caps from each layer's silhouette, snowy roofs and
+  beds). Board docs/design/infei-seasons-board.png. /map-test/ swaps art by game season (viewer setSeason).
+- Rules (spring_story.js): first winter morning freezes unripe crops (ripe ones stay), no sowing in winter,
+  seeds that cannot ripen before winter greyed; seasonal filter on spring cards/talk. check_infei_seasons.js
+  PASS; spring story/life, season game, spring preview pass.
+
+## 2026-11-02 · Claude Code
 - Owner: transition clouds looked like drifting left. The wall still sweeps right, but its wake (torn puffs,
   wind lines) now trails BEHIND it (left) instead of ahead. flight.js; GIF updated.
 

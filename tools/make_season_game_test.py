@@ -38,6 +38,33 @@ def controller(name,data):
 }}
 '''
 
+def infei_seasons(spring):
+    """茵菲谷 in summer / autumn / winter (art/src/concept/infei_seasons.py): same scene list as spring."""
+    from PIL import Image
+    import numpy as np
+    art=ROOT/'art/out/concept';out={}
+    def masked(im,sky):
+        a=np.array(im.convert('RGBA'));s=np.array(sky.convert('RGBA'))
+        a[...,3][np.all(a[...,:3]==s[:a.shape[0],:a.shape[1],:3],axis=2)]=0;return Image.fromarray(a)
+    for season in ('summer','autumn','winter'):
+        scenes=[]
+        for sp in spring:
+            key=sp['id'];pre=f'infei_{season}_'
+            if key=='ranch':
+                def wide(names):
+                    im=Image.new('RGBA',(684,118))
+                    for i,n in enumerate(names):
+                        if (art/(n+'.png')).exists():im.paste(Image.open(art/(n+'.png')).convert('RGBA'),(i*342,0))
+                    return im
+                bg=wide([pre+'orchard',pre+'pasture']);trees=[SP.uri(wide([pre+'orchard_trees_'+str(f),pre+'pasture_trees_'+str(f)])) for f in (0,1)]
+                front=SP.uri(wide(['__none__',pre+'pasture_front']))
+            else:
+                bg=Image.open(art/(pre+key+'.png'));trees=[SP.uri(art/(pre+key+'_trees_'+str(f)+'.png')) for f in (0,1)];front=None
+            sky=Image.open(__import__('io').BytesIO(__import__('base64').b64decode(sp['sky'].split(',')[1])))
+            scenes.append({**{k:sp[k] for k in ('sky','id','name','width','clouds')},'bg':SP.uri(masked(bg,sky)),'trees':trees,'front':front})
+        out[season]=scenes
+    return out
+
 def farm_story_source():
     # Spring story + first farming loop (test page only): farm UI art, empty-bed crops, the farm module.
     import make_farm_ui_preview as FU
@@ -52,6 +79,9 @@ def farm_story_source():
     return ('\nconst FARM_UI_ART='+json.dumps(art,separators=(',',':'))+';\nconst SPRING_FARM_DATA='+json.dumps(data,separators=(',',':'))+';\n'
             +(ROOT/'prototype/demo/farm_ui.js').read_text()+'\n')
 
+def spring_data():
+    d=SP.runtime_data(bare_farm=True);d['seasons']=infei_seasons(d['scenes']);return d
+
 def main():
     page=(ROOT/'prototype/demo/index.html').read_text()
     # Changes below apply to this page only. The public trial and EXE stay untouched.
@@ -62,7 +92,7 @@ def main():
     for key in ['buddy-save','buddy-settings','buddy-look-v2','buddy-look-at']:
         page=page.replace('"'+key+'"','"season-test-'+key+'"')
     autumn=(ROOT/'prototype/autumn/story.js').read_text()+(ROOT/'prototype/autumn/game.js').read_text()+'\nconst AUTUMN_MAP_DATA='+json.dumps(autumn_data(),ensure_ascii=False,separators=(',',':'))+';\n'
-    source=autumn+(ROOT/'prototype/season/effects.js').read_text()+controller('spring',SP.runtime_data(bare_farm=True))+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(ROOT/'prototype/map-test/cheats.js').read_text()+(ROOT/'prototype/map-test/adapter.js').read_text()
+    source=autumn+(ROOT/'prototype/season/effects.js').read_text()+controller('spring',spring_data())+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(ROOT/'prototype/map-test/cheats.js').read_text()+(ROOT/'prototype/map-test/adapter.js').read_text()
     import base64
     airport_images={k:'data:image/png;base64,'+base64.b64encode((ROOT/('art/out/concept/'+k+'.png')).read_bytes()).decode() for k in ['airport_terminal','airport_vista','airport_terminal_front','airport_plane','airport_cabin','airport_cabin_front','trip_airport']}
     source+=farm_story_source()
