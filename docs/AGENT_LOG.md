@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-02 · Claude Code
+- Owner decisions recorded: farm open all year once unlocked; season flights cost 0 丢丢币.
+  Updated DIDI_CURRENCY / SEASON_MAPS / SPRING_FARM / NEXT_AGENT_HANDOFF. Docs only, no code.
+- Art audit: Codex made no new art since the airport round; farming-specific art still missing
+  (see chat summary / next entry when drawn).
+
 ## 2026-11-02 · Codex · 本轮收尾
 - 阶梯进入机舱→完全显示两秒→阶梯抵达目标，独立预览及游戏测试页往返共用状态机。
 - 测试页接原生机场入口/航班气泡（三个锁定），原生玩家坐姿，期间冻结需求、支持暂停。

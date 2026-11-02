@@ -44,7 +44,11 @@ spot for each of the six needs. Only the player or the story takes her out. (`AG
 ## 冬
 - Not decided yet.
 
-## Open questions for the owner
+## Owner answers (2026-11-02)
+- 农庄解锁后**全年开放**（不再只限春季，也没有“春末前必须到达”的截止）。
+- 机场航班**不收丢丢币**。
+
+## Open questions for the owner (older; the two above are answered)
 - Farm open only in spring, or all year once unlocked (crops/trees changing by season)?
 - What if Buddy doesn't reach the farm before spring ends?
 - Crop growth time; do fruit trees keep growing after spring?

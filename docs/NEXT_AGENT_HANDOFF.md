@@ -20,6 +20,9 @@
 - 测试：`node tools/check_airport_ui.js`、`node tools/check_autumn_game.js`、`node tools/check_season_game_test.js`。机场专项包含真实往返、两秒可见时长、暂停、冻结需求、机场恢复、气泡四档缩放、普通/特殊皮肤、关闭。
 - 本地截图 `/workspace/artifacts/airport-ui/`。独立预览 `/airport/`，游戏测试 `/map-test/`，公共域名 `https://omen-2778.github.io/Desktop-Buddy-Releases/`。
 
+## 用户新决定（2026-11-02 晚）
+- 农庄全年开放；机票不收丢丢币。下面关于“票价未定/全年开放未定”的条目以此为准。
+
 ## 没做 / 尚未解决（不能对用户说已上线）
 - 正式春季发布、写信日父母来信解锁、父母居住/偶尔浇水、丢丢币账户/商店/基金、作物树木畜牧经营：仍是设计，见 `DIDI_CURRENCY.md` / `SPRING_FARM.md` / `SEASON_MAPS.md`。此次没有扩展做这些系统。
 - 票价尚未确定；“父母预付/0币”只是建议，未获确认。测试航班没有扣币，不能默认把旅行当生活成本。
