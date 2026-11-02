@@ -1,7 +1,7 @@
 // Test-page-only adapter. This file is injected by make_season_game_test.py,
 // never imported by make_demo.py or either desktop release workflow.
 const seasonalTest=(function(){
- const root=document.createElement('section');root.id='seasonGameTest';root.innerHTML='<header><strong>季节地图 · 游戏本体测试</strong><button data-dest="home">回家</button><button data-dest="spring_test">去春季农庄</button><button data-dest="summer_test">去夏日海湾</button><button data-dest="autumn_test">去枫叶城</button></header><p class="season-note">点家中大门也可出发；地图使用本体主角、需求、日记与转场。仅测试页开放。</p>';
+ const root=document.createElement('section');root.id='seasonGameTest';root.innerHTML='<header><strong>季节地图 · 游戏本体测试</strong><button data-dest="home">回家</button><button data-dest="spring_test">去茵菲谷</button><button data-dest="summer_test">去夏日海湾</button><button data-dest="autumn_test">去枫叶城</button></header><p class="season-note">点家中大门也可出发；地图使用本体主角、需求、日记与转场。仅测试页开放。</p>';
  document.querySelector('.desk').append(root);view.tabIndex=0;
  const state={spring:null,summer:null,autumn:null,exitRequested:false,last:0,activeHeight:H,autoAt:0};
  const active=()=>['spring_test','summer_test','autumn_test'].includes(sim.place);
@@ -32,7 +32,7 @@ const seasonalTest=(function(){
  const people=installSeasonPeople(legacyActive,ctl),cheats=installSeasonCheats();
  state.spring.setPeopleRenderer(people.draw);state.summer.setPeopleRenderer(people.draw);
  const resizeRoot=()=>root.style.width=Math.max(300,view.clientWidth)+'px';window.addEventListener('resize',resizeRoot);resizeRoot();
- for(const [id,label,feet]of [['spring_test','春日花溪',103],['summer_test','夏日海湾',108],['autumn_test','枫叶城',240]]){
+ for(const [id,label,feet]of [['spring_test','茵菲谷',103],['summer_test','夏日海湾',108],['autumn_test','枫叶城',240]]){
   OUT[id]={img:{},kind:'walk',doorX:80,feet,walk:[30,310]};AWAY.add(id);TRIP_ICON[id]=id==='spring_test'?'park':'dock';TRIP_COL[id]=id==='spring_test'?'#86c98a':'#4a97c9';TRIP_MOTIF[id]=TRIP_MOTIF[id==='spring_test'?'park':'beach'];
   PLACE_LOG[id]=['来到'+label+'，先四处走走。'];ML[id]={name:'出来走走',emo:'happy',pts:1,min:120};
   RINGS.door.push(['go:'+id,'去'+label]);

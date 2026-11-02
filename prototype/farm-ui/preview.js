@@ -45,7 +45,7 @@ const farmPreview = (() => {
   };
   const SHOWS = {
     1() { stage = { back: "airport", hero: [171, 103] };
-      FarmUI.ring("选航班", [{ id: "fly:spring", label: "春季农庄 · 免费" }, { id: "fly:x1", label: "？", off: "还没开放" },
+      FarmUI.ring("选航班", [{ id: "fly:spring", label: "茵菲谷 · 免费" }, { id: "fly:x1", label: "？", off: "还没开放" },
         { id: "fly:x2", label: "？", off: "还没开放" }, { id: "fly:x3", label: "？", off: "还没开放" }], { x: 171, y: 80 }); },
     2() { stage = { back: "home", hero: [150, 103], mom: [196, 103] };
       speech ||= createStorySpeech({ view, anchor: who => who === "妈妈" ? { x: 196, y: 103 } : { x: 150, y: 103 } });

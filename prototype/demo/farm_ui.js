@@ -2,7 +2,7 @@
 // Owner: draw game-ready UI for the twelve farm screens, not generated
 // pictures. Everything here reuses the game's own pieces: ring menus for
 // actions on a thing (航班, 菜地, 果树), the pick-a-thing panel for shops,
-// the house-sized social sheet for details and the 丢丢电脑. Icons are
+// the house-sized social sheet for details and the 丢丢平板电脑. Icons are
 // pixelkit art (art/src/concept/farm_icons.py); crop/tree stages and animals
 // are the farm map's own sprites. State comes in as plain data: this module
 // only draws; the farm rules (DIDI_CURRENCY.md) live elsewhere.
@@ -147,10 +147,10 @@ const FarmUI = (() => {
     return s;
   }
 
-  // ---------------------------------------------------------------- 丢丢电脑
+  // ---------------------------------------------------------------- 丢丢平板电脑
   const PC_TABS = [["farm", "农庄", "farm"], ["coin", "丢丢币", "coin"], ["fund", "每日操盘", "chart"], ["gift", "礼物与藏品", "gift"]];
   function computer(tab, st) {
-    const s = sheet("丢丢电脑", "fu-pc"), c = socialContent(s);
+    const s = sheet("丢丢平板电脑", "fu-pc"), c = socialContent(s);
     const nav = el("nav", "fu-nav"); nav.setAttribute("role", "tablist");
     for (const [id, name, ic] of PC_TABS) {
       const b = el("button", id === tab ? "on" : ""); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", id === tab);

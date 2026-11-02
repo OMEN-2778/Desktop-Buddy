@@ -1,7 +1,7 @@
 // Spring farm story + first farming loop. Test page only (make_season_game_test.py);
 // never in make_demo.py or the release builds.
 // Story (owner, 2026-11-02): on 写信日 妈妈 writes: they leased a little farm and the
-// ticket is paid. The letter opens the 春季农庄 flight (free). First landing: 妈妈 waits
+// ticket is paid. The letter opens the 茵菲谷 flight (free). First landing: 妈妈 waits
 // at the farmhouse, shows the room (or not: the player picks), then the two front beds,
 // a pack of carrot seeds, sow + water together; then she goes to find 爸爸 in town.
 // After that the beds work all year: seeds cost 丢丢币, a watered day grows a crop one
@@ -106,18 +106,18 @@ const springFarm=(()=>{
   await say(hero(),'那我先赚它两个币。');
   await say('妈妈','口气不小。我去镇上找你爸，晚上见！');
   speech.hide();F.phase='done';momTo(400).then(()=>mom.on=false);
-  log('到了爸妈的农庄，在前头那块地里种下了第一垄胡萝卜。');
-  T.state.autoAt=sim.t+60;setTimeout(()=>showHint(`点一下${nameOf()}，可以打开丢丢电脑看账`),900);
+  log('到了茵菲谷爸妈的农庄，在前头那块地里种下了第一垄胡萝卜。');
+  T.state.autoAt=sim.t+60;setTimeout(()=>showHint(`点一下${nameOf()}，可以打开丢丢平板电脑看账`),900);
  }
  // ---------------------------------------------------------------- letter + flight
- const LETTER=['我和你爸在山谷里承包了一小片农庄，地方不大，有菜地、果园，还有几只鸡。','春天正是播种的时候，想请你来帮帮忙。机场有去农庄的航班，票我们买好了。','你的房间收拾好了，被子也晒过了。等你来！'];
+ const LETTER=['我和你爸在茵菲谷承包了一小片农庄，地方不大，有菜地、果园，还有几只鸡。','春天正是播种的时候，想请你来帮帮忙。机场有去农庄的航班，票我们买好了。','你的房间收拾好了，被子也晒过了。等你来！'];
  function sendLetter(){if(F.letter)return false;F.letter=1;const m=mailState();m.box.push({from:'mom',title:'妈妈寄来一封信',lines:[...LETTER],springFarm:true});return true;}
  const oldMail=mailTick;mailTick=function(){if(!F.letter&&festName()==='写信日'&&sim.t%1440>=9*60&&!asleep())sendLetter();return oldMail();};
- const oldRead=readMail;readMail=function(){const l=lifeFlags.mail?.box?.[0],r=oldRead();if(l?.springFarm&&!F.unlocked){F.unlocked=true;setTimeout(()=>showHint('机场的「春季农庄」航班开通了'),1200);}return r;};
+ const oldRead=readMail;readMail=function(){const l=lifeFlags.mail?.box?.[0],r=oldRead();if(l?.springFarm&&!F.unlocked){F.unlocked=true;setTimeout(()=>showHint('机场的「茵菲谷」航班开通了'),1200);}return r;};
  const oldOpen=openRing;openRing=function(which,at){
-  if(which==='away'&&inSpring()&&F.phase==='done'){const keep=RINGS.away;RINGS.away=[keep[0],['sf:pc','丢丢电脑'],...keep.slice(1)];try{return oldOpen(which,at);}finally{RINGS.away=keep;}}
+  if(which==='away'&&inSpring()&&F.phase==='done'){const keep=RINGS.away;RINGS.away=[keep[0],['sf:pc','丢丢平板电脑'],...keep.slice(1)];try{return oldOpen(which,at);}finally{RINGS.away=keep;}}
   const r=oldOpen(which,at);
-  if(which==='airportFlights'){const b=ringEl.querySelector('button');if(b){b.textContent=F.unlocked?'春季农庄 · 免费':'春季农庄';if(!F.unlocked){b.classList.add('sf-wait');b.title='等家里的消息';b.append(Object.assign(document.createElement('small'),{className:'fu-why',textContent:'等家里的消息'}));}}}
+  if(which==='airportFlights'){const b=ringEl.querySelector('button');if(b){b.textContent=F.unlocked?'茵菲谷 · 免费':'茵菲谷';if(!F.unlocked){b.classList.add('sf-wait');b.title='等家里的消息';b.append(Object.assign(document.createElement('small'),{className:'fu-why',textContent:'等家里的消息'}));}}}
   return r;
  };
  // ---------------------------------------------------------------- arrival
@@ -164,7 +164,7 @@ const springFarm=(()=>{
  }
  function water(i){const b=bedOf(i);if(!b||ripe(b)||b.watered===today())return;goBed(i,()=>{b.watered=today();worked();speak(pick(['浇透了','喝饱水，好好长','咕嘟咕嘟']),true);if(F.phase==='water')afterWater();});}
  function harvest(i){const b=bedOf(i);if(!ripe(b))return;const c=CROP[b.crop];goBed(i,()=>{delete F.beds[i];record(c.icon,`卖掉一田${c.name}`,c.sell);worked();speak(`拔了一大把${c.name}！`,true);
-  if(!F.firstHarvest){F.firstHarvest=true;log(`农庄第一次收成：一田${c.name}，卖了 ${c.sell} 个丢丢币。`);}});}
+  if(!F.firstHarvest){F.firstHarvest=true;log(`茵菲谷第一次收成：一田${c.name}，卖了 ${c.sell} 个丢丢币。`);}});}
  function look(i){const b=bedOf(i);if(!b)return;const c=CROP[b.crop],r=ripe(b);
   FarmUI.plant({kind:'crop',plot:`菜地 · 第 ${F.open.indexOf(i)+1} 块`,name:c.name,produce:c.icon,stages:FARM_UI_ART.stages[b.crop],stageNames:STAGE,stage:stageOf(b),days:Math.min(b.progress,c.days),total:c.days,watered:b.watered===today(),sell:c.sell,
    actions:[{label:'浇水',icon:'can',off:r?'已经熟了':b.watered===today()?'今天浇过了':'',on:()=>{closeSocialSheet();water(i);}},{label:'收获',icon:'basket',off:r?'':'还没熟',primary:true,on:()=>{closeSocialSheet();harvest(i);}}]});}

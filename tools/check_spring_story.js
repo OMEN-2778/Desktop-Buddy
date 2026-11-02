@@ -23,8 +23,8 @@ const out=process.argv[2]||'/tmp/spring-story',SCALE=+(process.argv[3]||50);fs.m
  // 2. airport
  await p.evaluate(()=>{sim.dest='airport_test';sim.outBack=null;sim.outWhy=null;command('go_out');sim.windup=null;startAct('go_out');sim.s=sim.target;arrive();});
  await p.waitForFunction(()=>sim.place==='airport_test'&&!wiping,null,{timeout:20000});await p.waitForTimeout(2000);
- await p.evaluate(()=>{springFarm.state.unlocked=false;airportTravel.flights();});await shot('机场-没收到信时');await p.evaluate(()=>{closeRing();springFarm.state.unlocked=true;airportTravel.flights();});await shot('机场-春季农庄免费');
- await ring('春季农庄');await p.waitForTimeout(2200);await shot('飞行中');
+ await p.evaluate(()=>{springFarm.state.unlocked=false;airportTravel.flights();});await shot('机场-没收到信时');await p.evaluate(()=>{closeRing();springFarm.state.unlocked=true;airportTravel.flights();});await shot('机场-茵菲谷免费');
+ await ring('茵菲谷');await p.waitForTimeout(2200);await shot('飞行中');
  await p.waitForFunction(()=>sim.place==='spring_test'&&!wiping,null,{timeout:20000});
  // 3. welcome
  await p.evaluate(()=>speed=4);
@@ -42,8 +42,8 @@ const out=process.argv[2]||'/tmp/spring-story',SCALE=+(process.argv[3]||50);fs.m
  await p.waitForTimeout(1500);await shot('妈妈走了-湿土和种子');
  // 5. playing on
  await p.evaluate(()=>speed=1);const at=await p.evaluate(()=>{const s=seasonMapTest.ctl().state;return [s.x,s.y];});
- await clickHouse(at[0],at[1]-14);await shot('点主角-丢丢电脑');await ring('丢丢电脑');await p.waitForTimeout(400);await shot('丢丢电脑-账本');
- await p.locator('.fu-nav button',{hasText:'农庄'}).click();await shot('丢丢电脑-农庄');await p.evaluate(()=>closeSocialSheet());
+ await clickHouse(at[0],at[1]-14);await shot('点主角-丢丢平板电脑');await ring('丢丢平板电脑');await p.waitForTimeout(400);await shot('丢丢平板电脑-账本');
+ await p.locator('.fu-nav button',{hasText:'农庄'}).click();await shot('丢丢平板电脑-农庄');await p.evaluate(()=>closeSocialSheet());
  await p.evaluate(()=>{springFarm.state.coins+=0;sim.t=(Math.floor(sim.t/1440)+1)*1440+7*60;springFarm.roll();});
  await clickHouse(40,88);await shot('第二天-菜地菜单');await ring('查看');await p.waitForTimeout(400);await shot('作物详情-长大中');
  await p.locator('.fu-btn',{hasText:'浇水'}).click();await p.waitForTimeout(6000);
@@ -53,7 +53,7 @@ const out=process.argv[2]||'/tmp/spring-story',SCALE=+(process.argv[3]||50);fs.m
  await clickHouse(215,88);await shot('荒地-还不能整理');await p.evaluate(()=>closeRing());
  const v=await view();await p.mouse.click(v.x+5,v.y+5);
  await clickHouse(at[0]-0,at[1]-14).catch(()=>{});
- await p.evaluate(()=>{closeRing();FarmUI.computer('coin',springFarm.pcState());});await p.waitForTimeout(400);await shot('丢丢电脑-第一笔收入');await p.evaluate(()=>closeSocialSheet());
+ await p.evaluate(()=>{closeRing();FarmUI.computer('coin',springFarm.pcState());});await p.waitForTimeout(400);await shot('丢丢平板电脑-第一笔收入');await p.evaluate(()=>closeSocialSheet());
  const f=await p.evaluate(()=>springFarm.state);console.log('coins',f.coins,'beds',JSON.stringify(f.beds),'phase',f.phase,'ledger',f.ledger.map(r=>r.text+r.v).join(' / '));
  assert.equal(f.phase,'done');assert.equal(f.coins,10);
  // save + reload keeps the farm

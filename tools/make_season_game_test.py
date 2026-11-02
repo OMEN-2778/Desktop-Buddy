@@ -56,7 +56,7 @@ def main():
     page=(ROOT/'prototype/demo/index.html').read_text()
     # Changes below apply to this page only. The public trial and EXE stay untouched.
     page=page.replace('const cardHolds =','let cardHolds =')
-    page=page.replace("bar:'酒吧'}","bar:'酒吧',spring_test:'春日农庄',summer_test:'夏日海湾',autumn_test:'枫叶城'}")
+    page=page.replace("bar:'酒吧'}","bar:'酒吧',spring_test:'茵菲谷',summer_test:'夏日海湾',autumn_test:'枫叶城'}")
     page=page.replace('const sceneHouseHeight=()=>','let sceneHouseHeight=()=>')
     page=page.replace("if(place==='park')","if(place==='autumn_test')return 'BGM/park/festival-streetlights.mp3';if(place==='spring_test')return 'BGM/park/festival-streetlights.mp3';if(place==='summer_test')return 'BGM/harbor/dragon-boat-day.mp3';if(place==='park')")
     for key in ['buddy-save','buddy-settings','buddy-look-v2','buddy-look-at']:

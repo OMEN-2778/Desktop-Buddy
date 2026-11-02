@@ -1,4 +1,6 @@
-# 春 · 山谷农场 (春日花溪): hand-off
+# 春 · 茵菲谷（原春日花溪 / 春季农庄）: hand-off
+
+2026-11-02 用户：春季农庄全部改名「茵菲谷」；丢丢电脑改名「丢丢平板电脑」。界面文字已改，代码注释与旧文档里的旧名不再追改。
 
 State on 2026-10-31: **art + isolated walk-through**. Nothing is wired into the main game. The owner reviews every
 art round, and decides when the map goes in. Plan and open questions:

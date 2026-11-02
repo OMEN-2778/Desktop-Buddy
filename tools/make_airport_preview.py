@@ -15,7 +15,7 @@ def main():
     candidates=list(Path('/usr/share/fonts').rglob('*CJK*'))
     font=ImageFont.truetype(str(candidates[0] if candidates else fontpath),22)
     im=assets['airport_terminal_preview'].to_image(4);d=ImageDraw.Draw(im)
-    d.text((137,103),'航班出发',font=font,fill='#ecf3ee');d.text((137,137),'春季农场   ·   ？ ？ ？',font=ImageFont.truetype(str(candidates[0] if candidates else fontpath),17),fill='#abc8c6');d.text((1098,108),'登机口 →',font=font,fill='#ecf3ee')
+    d.text((137,103),'航班出发',font=font,fill='#ecf3ee');d.text((137,137),'茵菲谷   ·   ？ ？ ？',font=ImageFont.truetype(str(candidates[0] if candidates else fontpath),17),fill='#abc8c6');d.text((1098,108),'登机口 →',font=font,fill='#ecf3ee')
     checked=ROOT/'art/out/concept/airport_terminal_review.png'
     if candidates:im.save(checked)
     elif checked.exists():im=Image.open(checked)

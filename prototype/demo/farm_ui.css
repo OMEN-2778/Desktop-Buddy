@@ -75,7 +75,7 @@
 .social-sheet .fu-tabs button.fu-none:not(.on) { color: var(--muted); }
 .fu-animal { image-rendering: pixelated; }
 
-/* 丢丢电脑: a nav column, the page beside it */
+/* 丢丢平板电脑: a nav column, the page beside it */
 .fu-pc .social-sheet-content { flex-direction: row; align-items: stretch; }
 .fu-nav { flex: none; display: flex; flex-direction: column; gap: 4px; }
 .social-sheet .fu-nav button { display: flex; align-items: center; gap: 6px; text-align: left; font-weight: 700; }

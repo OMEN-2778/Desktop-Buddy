@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner renames: 春季农庄/春季农场/春日农庄/春日花溪 → 茵菲谷; 丢丢电脑 → 丢丢平板电脑 (all UI text, tests, previews;
+  mom's letter now names 茵菲谷). Code comments/older docs keep old names.
+
+## 2026-11-02 · Claude Code
 - Owner: calls stay on in season maps (they already rang; spring now turns friend-home/visit invites into a
   plain call). Spring-only content on /map-test/: 28 chance cards (spring_cards.js; `farm` outcomes change
   coins / water / grow / pest / eat a bed; farmIf:'crop'), spring phone talk for mom/dad/friends + 8
