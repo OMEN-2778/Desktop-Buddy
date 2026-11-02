@@ -1,6 +1,6 @@
 // Shared by art review and game-shell adapter. Timings are real visible milliseconds.
 // Owner 2026-11-02: a finer transition with clouds rushing to the right. In and out, a wall of
-// pixel clouds sweeps left -> right across the picture with wind streaks ahead of it; in the
+// pixel clouds sweeps left -> right across the picture, its wake (puffs, wind lines) trailing behind; in the
 // cabin, window clouds stream right in three layers (far, near, streaks), the cabin bumps 1px now and then.
 function createCabinFlight({canvas,images,drawHero,onFrame=()=>{},paused=()=>false}){
  const ctx=canvas.getContext('2d');let run=null,last=0;const history=[];
@@ -29,8 +29,9 @@ function createCabinFlight({canvas,images,drawHero,onFrame=()=>{},paused=()=>fal
   if(typeof pic==='function')pic();else ctx.drawImage(pic,0,0,W,Hh);ctx.restore();
   for(let i=-1;i<=rows;i++){const off=Math.round(Math.sin(i*1.9)*9+Math.sin(i*.7)*5),r=9+(i*7%5);puff(edge-30+off,i*8+4,r+3,DEEP);}
   for(let i=-1;i<=rows;i++){const off=Math.round(Math.sin(i*1.9)*9+Math.sin(i*.7)*5),r=9+(i*7%5);cloud(edge-14+off,i*8+3,r);}
-  ctx.fillStyle=GLINT;for(let i=0;i<rows*2;i++){const len=10+(i*13%24),gap=8+(i*29%46);ctx.fillRect(edge+gap,Math.round(i*4+(i%3)),len,1);}
-  ctx.fillStyle=SHADE;for(let i=0;i<rows;i++){const len=6+(i*11%14);ctx.fillRect(edge+30+(i*37%60),i*8+6,len,1);}
+  // the wake trails BEHIND the wall (left): torn-off puffs shrinking away, then wind lines (owner: it must read as moving right)
+  for(let i=0;i<rows;i++){const off=Math.round(Math.sin(i*1.9)*9+Math.sin(i*.7)*5);for(let j=0;j<3;j++){const r=4-j-(i%2),x=edge-40+off-j*(14+i*5%9);if(r>0)puff(x,i*8+4+(j%2)*2,r,j?SHADE:WHITE);}}
+  for(let i=0;i<rows*2;i++){const len=14+(i*13%30),x=edge-64-(i*29%70)-len;ctx.fillStyle=i%3?GLINT:SHADE;ctx.fillRect(x,Math.round(i*4+(i%3)),len,1);ctx.fillRect(x+len,Math.round(i*4+(i%3)),3,1);}
  }
  function tick(now){if(!run)return;const dt=last&&!paused()&&!document.hidden?Math.min(100,now-last):0;last=now;run.elapsed+=dt;run.total+=dt;ctx.imageSmoothingEnabled=false;
   if(run.phase==='enter'){ctx.drawImage(run.from,0,0,canvas.width,canvas.height);sweep(()=>cabin(run.total),run.elapsed,700);if(run.elapsed>=700){cabin(run.total);run.phase='hold';run.elapsed=0;history.push({phase:'hold',at:now})}}

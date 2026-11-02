@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner: transition clouds looked like drifting left. The wall still sweeps right, but its wake (torn puffs,
+  wind lines) now trails BEHIND it (left) instead of ahead. flight.js; GIF updated.
+
+## 2026-11-02 · Claude Code
 - Owner bug: airport had no walking and no way home from Buddy. map-test/airport.js: click floor = walk, click
   her = ring 选择航班/回家 (回家 walks out left, then home), board/gate = walk there + flights; arrival walks in.
   View clicks no longer leak to the house's click handler. check_airport_walk.js + airport/season/story pass.
