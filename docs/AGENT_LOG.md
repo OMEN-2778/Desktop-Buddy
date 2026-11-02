@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner: dialogue-led side quests inside 茵菲谷 (funny / wistful / mystery, maybe giving crops). New
+  prototype/map-test/infei_quests.js: villagers 小满 / 王叔 / 阿婆 / 老周 (seeded looks, ! ? marks), 风车里的怪声,
+  溪边的阿婆, 菜地里的脚印 (rabbit lives by the coop, 小满 waters a bed a day), 老周的乱炖. Crops are given from
+  the 仓库 through dialogue choices. Buddy ring: 支线任务 list. check_infei_quests.js plays all four; home/farm/story pass.
+
+## 2026-11-02 · Claude Code
 - Owner: farmhouse not interactive, stairs off-centre, 回家 should mean the 茵菲谷 house, ranch full of animals at
   start. New prototype/map-test/infei_home.js: furniture rings (bed/bath/toilet/stove/table/settee/wardrobe/jar;
   parents' room look-only), needs fill while used, needs <25 walk her in by herself, 回家 = farmhouse,
