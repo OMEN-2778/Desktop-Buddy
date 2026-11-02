@@ -236,3 +236,4 @@ validation and remaining gaps. Standalone reviews remain available.
 - 地图：测试页的菜园背景不再烘焙作物（`runtime_data(bare_farm=True)`），作物按存档逐格画；浇过水的田土色深一档。Buddy 在田边空隙干活，不挡住田。
 - 测试：`node tools/check_spring_story.js <输出目录> 50` 走完整流程并截 41 张图。
 - 还没做：父母偶尔回来浇水、下雨自动浇水、果园/牧场经营、每日操盘、作物随季节变化。
+- 春季专属（2026-11-02）：`spring_cards.js` 28 张机会卡，只在春季地图抽到；结果可改丢丢币、浇水、长一天、虫害退一天、被吃掉一块田（`farm` 字段）。`spring_talk.js`：在农庄时七成电话换成农庄话题，另有 8 段路人对话。电话照常来；邀请去朋友家改成普通电话。妈妈就在身边时不会打电话。测试：`tools/check_spring_life.js`。

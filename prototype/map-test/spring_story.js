@@ -184,6 +184,31 @@ const springFarm=(()=>{
   ({sow:seedShop,water,harvest,look,clear})[act]?.(i);
  };
  const oldCommand=command;command=function(act,item){if(act==='sf_seed'){if(item&&!(item.cost>F.coins))sow(item);else if(item)showHint(`还差 ${coins(item.cost-F.coins)} 币`);return;}return oldCommand(act,item);};
+ // ---------------------------------------------------------------- spring-only cards, talk and calls (owner, 2026-11-02)
+ CARDS.push(...SPRING_CARDS);
+ for(const cd of SPRING_CARDS)for(const k of ['a','b'])cd[k].out.forEach((o,i)=>{if(o.mood)ML[o.id=`card${cd.n}${k}${i}`]={...o.mood};});
+ for(const [key,pool]of Object.entries(SPRING_TALK))if(key!=='people')pool.forEach((t,i)=>{if(t.mood)ML[t.id=`spring_talk_${key}_${i}`]={...t.mood};});
+ const growing=()=>Object.entries(F.beds).filter(([,b])=>!ripe(b));
+ const oldFits=cardFits;cardFits=function(cd,c){if(cd.at==='spring_test'&&(F.phase!=='done'||cd.farmIf==='crop'&&!growing().length))return false;return oldFits(cd,c);};
+ function applyFarm(f,title){
+  if(f.coins){const v=f.coins<0?-Math.min(F.coins,-f.coins):f.coins;if(v)record('coin',title,v);}
+  const g=growing();
+  if(f.water)for(const [,b]of g)b.watered=today();
+  if(f.grow){for(const [,b]of f.grow==='all'?g:g.slice(0,1).length?[pick(g)]:[])b.progress++;}
+  if(f.pest){const hit=g.filter(([,b])=>b.progress>0);if(hit.length)pick(hit)[1].progress--;}
+  if(f.eat&&g.length)delete F.beds[pick(g)[0]];
+ }
+ const oldNeeds=cardNeeds;cardNeeds=function(){const r=oldNeeds();if(card?.cd.at==='spring_test'&&card.o.farm)applyFarm(card.o.farm,fill(card.cd.title,card.vars));return r;};
+ const oldChat=chatItem;chatItem=function(kind,who,via,contactId){
+  const it=oldChat(kind,who,via,contactId);
+  if(!inSpring()||!['call','text','video'].includes(kind)||Math.random()<.3)return it;
+  const c=contactId&&socialState.contacts.find(x=>x.id===contactId),key=c?.family||(c?'friend':who),pool=SPRING_TALK[key];if(!pool)return it;
+  const seen=((lifeFlags.talkSeen||={})['spring_'+key]||=[]);let fresh=pool.map((t,i)=>i).filter(i=>!seen.includes(i));if(!fresh.length){seen.length=0;fresh=pool.map((t,i)=>i);}
+  const i=pick(fresh),t=pool[i];seen.push(i);it.talk.end=it.talk.end.replace(it.talk.title,t.title);Object.assign(it.talk,{title:t.title,lines:t.lines,mood:t.mood,id:t.id});if(c)c.lastTopic=t.title;return it;};
+ NPC_TALK_TEXT.spring_test?.adult.push(...SPRING_TALK.people);
+ withHeroHooks.push(id=>id==='mom'&&mom.on&&inSpring());   // 妈妈 beside her on the farm never phones her
+ const oldCan=canReceiveCall;canReceiveCall=function(){return oldCan()&&!speech.open;};
+ const oldReq=requestIncomingCall;requestIncomingCall=function(id,kind='call'){if(inSpring()&&['friend_home','visit'].includes(kind))kind='call';return oldReq(id,kind);};   // nobody can be visited from the farm
  // ---------------------------------------------------------------- saves
  const oldSnap=snapshot;snapshot=function(){const s=oldSnap();s.springFarm=JSON.parse(JSON.stringify(F));return s;};
  const oldRestore=restore;restore=function(save){const r=oldRestore(save);F=Object.assign(blank(),save?.springFarm||{});if(['arrive','room','field'].includes(F.phase))F.phase='none';   // an unfinished welcome replays on the next landing

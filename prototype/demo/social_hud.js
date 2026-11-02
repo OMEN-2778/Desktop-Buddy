@@ -110,7 +110,9 @@ function openContactActions(id){
       b.classList.add('parent-visit');b.style.setProperty('--x','72px');b.setAttribute('aria-disabled','true');b.title='老家离这里太远了。';b.setAttribute('aria-label',`${label}：${b.title}`);
       b.append(Object.assign(document.createElement('small'),{textContent:b.title}));
     }
-    if(['text','video'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
+    if(['text','video'].includes(action)&&contactWithHero(id)){
+      b.setAttribute('aria-disabled','true');b.title='就在身边，当面说吧';b.setAttribute('aria-label',`${label}：${b.title}`);
+    }else if(['text','video'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
       b.setAttribute('aria-disabled','true');b.title=asleep()?'等主角醒来再联系':sim.mode==='down'?'先唤醒晕倒的主角':'正在忙，稍后再联系';b.setAttribute('aria-label',`${label}：${b.title}`);
     }
     contactActions.append(b);
@@ -275,7 +277,12 @@ function finishContactTalk(id,kind){
   sim.needs.social=clamp(sim.needs.social+(kind==='text'?5:10));applyNeedConsequences();contactsSig='';if(moodrow.classList.contains('contacts-open'))fillContacts();
 }
 function canReceiveCall(){return !friendVisit&&!friendHousePreview&&ringOf!=='outing'&&!asleep()&&sim.mode!=='down'&&!wiping&&!guideOn&&!card&&!wardrobeOpen&&!socialBusy()&&!socialDialogHolds()&&!homeVisitActive();}
+// Someone in the same space as her never calls, texts or video-calls her (owner, 2026-11-02): a guest,
+// a friend she is out with or visiting, 爸爸妈妈 home for 春节, a parent beside her on the farm.
+const withHeroHooks=[];
 function contactWithHero(id){
+  if(['dad','mom'].includes(id)&&sim.place==='home'&&typeof cnyPresent==='function'&&cnyPresent())return true;
+  if(withHeroHooks.some(f=>f(id)))return true;
   return atFriendHome()&&friendVisit.id===id||friendOutingState?.id===id&&friendOutingState.phase!=='waiting'||socialState.guest?.id===id&&['entering','visiting','leaving'].includes(socialState.guest.phase);
 }
 function requestIncomingCall(id,kind='call'){

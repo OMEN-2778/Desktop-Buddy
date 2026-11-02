@@ -7,6 +7,15 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner: calls stay on in season maps (they already rang; spring now turns friend-home/visit invites into a
+  plain call). Spring-only content on /map-test/: 28 chance cards (spring_cards.js; `farm` outcomes change
+  coins / water / grow / pest / eat a bed; farmIf:'crop'), spring phone talk for mom/dad/friends + 8
+  passer-by talks (spring_talk.js, 70% of calls on the farm).
+- Owner bug: 春节 parents still phoned. contactWithHero (social_hud.js, formal game) now covers parents home
+  for 春节 and hooks (妈妈 beside her on the farm); text/video to someone beside her is greyed (就在身边).
+- check_spring_life.js PASS; spring story / season game / airport / autumn pass.
+
+## 2026-11-02 · Claude Code
 - Bug (owner): could not leave the spring farmhouse by its door. Inside, clicking the front door (screen
   x 35–48) or the exit arrow now walks her out, via the stairs from upstairs. viewer.js (shared with /spring/).
 
