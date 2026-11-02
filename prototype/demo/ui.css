@@ -865,7 +865,7 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 .story-choices button .bg::after { background: var(--pf); clip-path: var(--choice-in); }
 /* choices are pale yellow (owner), quest or not */
 .story-choices button, .story-choices.quest button { --pe: #b8946a; color: #5c3b1f; }
-.story-choices button .bg::after { background: linear-gradient(155deg, #fffbe6 0%, #fff6cc 50%, #fff1b8 100%); }
+.story-choices button .bg::after { background: #fff4c4; }
 .story-choices button:hover .bg::after { filter: brightness(1.05); }
 .story-choices button:hover { translate: 0 -1px; }
 .story-choices button:active { translate: 1px 1px; filter: drop-shadow(2px 2px 0 var(--shadow)); }
