@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Codex
+- Owner UI decision: all story speech (incl. autumn) joins native hero/NPC bubbles,
+  replacing the standalone white dialogue modal. Quest/special bubbles white→pale blue
+  gradient, pixel borders/corners and native motion retained. Skill/season docs updated.
+- Design record only; no UI implementation or deployment claimed.
+
+## 2026-11-02 · Codex
 - Confirmed design: postpone autumn writing, prioritize spring; record low-price economy
   in DIDI_CURRENCY.md (56-day year, 8 starting coins, year-one progression, fund max±3/day).
 - First experienced 写信日 after update: mother's farm invitation unlocks airport route.

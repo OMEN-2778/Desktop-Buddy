@@ -1137,3 +1137,13 @@ Owner remains dissatisfied with custom interior; directly reuse a smaller comple
 from the existing 30 homes. Selected `oak` 暖木小复式, native 242×120, no scaling or
 custom repaint. Room window contracts to native height; align every service/pose with
 existing furnishings. Current exterior remains 侦探事务所; owner's “律师事务所” refers here.
+
+### Unified story dialogue bubbles (2026-11-02, owner decision)
+Story dialogue across maps (including autumn) must use the existing protagonist/NPC
+speech-bubble system, attached to the actual speaker, rather than a standalone white
+story modal. Normal conversations retain existing bubble styling. Quest/special dialogue
+bubbles use a **white-to-pale-blue gradient**, explicitly requested by owner; retain
+native pixel borders/corners, readable normal-sized text and established bubble motion.
+This UI gradient exception does not permit smooth vector scene art or blur. Offscreen/
+remote speakers must be identified/positioned coherently, never fake everyone standing
+in one place. Action-choice and information panels are distinct from spoken dialogue.
