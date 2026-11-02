@@ -49,6 +49,9 @@ const farmPreview = (() => {
     2() { stage = { back: "home", hero: [150, 103], mom: [196, 103] };
       speech ||= createStorySpeech({ view, anchor: who => who === "妈妈" ? { x: 196, y: 103 } : { x: 150, y: 103 } });
       speech.show("妈妈", "来啦！路上累不累？爸爸去镇上买化肥了，先带你看看你的房间。", { special: true, advance: () => {} }); },
+    "2b"() { stage = { back: "home", hero: [150, 103], mom: [196, 103] };
+      speech ||= createStorySpeech({ view, anchor: who => who === "妈妈" ? { x: 196, y: 103 } : { x: 150, y: 103 } });
+      speech.show("妈妈", "先去看看你的房间，还是先去地里转转？", { special: true, choices: [{ label: "先看房间" }, { label: "去地里看看" }] }); },
     3() { log("妈妈寄来一封信", null, [["@letter", "妈妈"], ["", `${nameOf()}：`], ["", "我和你爸在山谷里承包了一小片农庄，地方不大，有菜地、果园，还有几只鸡。"],
         ["", "春天正是播种的时候，想请你来帮帮忙。机场有去农庄的航班，票我们已经买好了。"], ["", "你的房间收拾好了，被子也晒过了。等你来！"], ["", "—— 妈妈"]]);
       setDiaryOpen(true); setTimeout(() => document.querySelector("#diaryList .talk-btn")?.click(), 100); },

@@ -836,8 +836,35 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 /* the pet's menu stands in one column (pet_hud.js petColumnLayout): pills one width */
 .ring.over-hud > button { min-width: 7.2em; text-align: center; }
 
-/* Story speech shares npcsay's pixel outline and pop-in, quest tint is opt-in. */
-.npcsay.quest-speech::after{background:linear-gradient(155deg,#fff 0%,#edf7ff 48%,#d6ebfa 100%)}
-.npcsay.story-speech{z-index:1800;pointer-events:auto;white-space:normal;box-sizing:border-box;padding:10px 13px;display:flex;flex-direction:column;gap:7px;font-size:max(13px,var(--ui-font-body));line-height:1.5;color:#344c60;overflow:visible}
-.story-speech[hidden]{display:none}.story-speaker{font-size:max(12px,var(--ui-font-caption));color:#42677f;flex:none}.story-words{overflow:auto;min-height:0;overflow-wrap:anywhere;font-weight:500}.story-actions{display:flex;justify-content:flex-end;gap:8px;flex:none}.story-actions button{font:inherit;font-size:max(12px,var(--ui-font-control));padding:4px 10px;background:#f7fbff;color:#344c60;border:2px solid #9db9ca;clip-path:var(--clip-btn);cursor:pointer}.story-actions button:focus-visible{outline:2px dashed #3c6e91;outline-offset:-4px}
-@media(prefers-reduced-motion:reduce){.story-speech{animation:none}}
+/* Story speech = the native NPC pill over the speaker's head (owner 2026-11-02):
+   same edge, fill, corners, shadow and pop-in as .npcsay; it only wraps longer lines.
+   Choices are ring-style pills under it. Quest lines: white -> pale blue fill. */
+.story-speech { position: absolute; z-index: 1800; width: max-content; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+.story-speech[hidden] { display: none; }
+.story-speech.pop { animation: npcIn .32s cubic-bezier(.3, 1.6, .5, 1); }
+.story-bubble { position: relative; isolation: isolate; pointer-events: auto; cursor: pointer; width: max-content; max-width: var(--story-w, 260px); text-wrap: balance; box-sizing: border-box;
+  padding: 6px 14px; font-weight: 700; color: var(--ink); font-size: max(13px, var(--ui-font-body)); line-height: 1.45; white-space: normal; overflow-wrap: anywhere;
+  filter: drop-shadow(2px 2px 0 var(--shadow)); outline: none; }
+.story-bubble::before, .story-bubble::after { content: ""; position: absolute; z-index: -1; }
+.story-bubble::before { inset: 0; background: var(--edge); clip-path: var(--clip-btn); }
+.story-bubble::after { inset: 2px; background: var(--panel-2); clip-path: var(--clip-btn-in); }
+.story-speech.quest-speech .story-bubble::after { background: linear-gradient(155deg, #fff 0%, #edf7ff 48%, #d6ebfa 100%); }
+.story-bubble:focus-visible::before { background: #3c6e91; }
+.story-bubble .story-words { white-space: normal; overflow: visible; }
+.story-speaker { display: block; font-size: max(12px, var(--ui-font-caption)); color: var(--muted); }
+.story-speaker[hidden] { display: none; }
+/* a pixel ▼ (8x4 art px at 2x) blinking after the words: there is more */
+.story-more { display: inline-block; width: 8px; height: 6px; margin-left: 6px; vertical-align: middle; background: var(--muted);
+  clip-path: polygon(0 0, 8px 0, 8px 2px, 6px 2px, 6px 4px, 4px 4px, 4px 6px, 4px 6px, 4px 4px, 2px 4px, 2px 2px, 0 2px); animation: storyMore 1s steps(2, jump-none) infinite; }
+.story-more[hidden] { display: none; }
+@keyframes storyMore { 0% { opacity: 1; } 100% { opacity: .25; } }
+.story-choices { display: flex; gap: 8px; pointer-events: auto; }
+.story-choices[hidden] { display: none; }
+.story-choices button { position: relative; isolation: isolate; margin: 0; padding: 6px 16px; white-space: nowrap; background: none; border: 0; box-shadow: none; cursor: pointer;
+  font: inherit; font-weight: 700; color: var(--ink); font-size: max(13px, var(--ui-font-control)); filter: drop-shadow(2px 2px 0 var(--shadow)); }
+.story-choices button::before, .story-choices button::after { content: ""; position: absolute; z-index: -1; }
+.story-choices button::before { inset: 0; background: var(--edge); clip-path: var(--clip-btn); }
+.story-choices button::after { inset: 2px; background: var(--panel-2); clip-path: var(--clip-btn-in); box-shadow: inset 0 -2px 0 0 var(--bevel-lo), inset 0 2px 0 0 var(--bevel-hi); }
+.story-choices button:hover::after, .story-choices button:focus-visible::after { background: var(--panel); }
+.story-choices button:focus-visible::before { background: #3c6e91; }
+@media (prefers-reduced-motion: reduce) { .story-speech.pop { animation: none; } .story-more { animation: none; } }

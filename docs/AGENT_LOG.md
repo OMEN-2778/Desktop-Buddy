@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner correction: story dialogue must be the native NPC pill, not a big box. story_bubbles.js/ui.css
+  rewritten: pill over speaker's head, click/Enter = next, pixel ▼, choices as pills underneath, Esc
+  folds. Same API (+choices); autumn/spring/summer callers unchanged. Tests switched to .story-bubble.
+- check_autumn_game + check_airport_ui pass (4 scales); farm UI board tile 2 updated. Rule in pixel-art skill.
+
+## 2026-11-02 · Claude Code
 - Owner rejected generated concept board as implementation; drew game-ready farm UI: 25 pixelkit
   icons (farm_icons.py) + farm_ui.js/.css using native ring / picker / social-sheet / story bubbles /
   letters for all 12 screens. Review build make_farm_ui_preview.py + check_farm_ui.js; board

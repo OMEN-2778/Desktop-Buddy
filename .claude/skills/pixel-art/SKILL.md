@@ -1163,3 +1163,10 @@ Owner was angry that a generated image was offered as UI. Farm screens must be b
 game's own components (ring menus, picker, social-sheet, story bubbles, letters) and pixelkit
 icons (`farm_icons.py`, 16×16, integer scale); reuse farm map sprites for crops/trees/animals.
 Generated images are reference only, never assets. Details: `docs/FARM_UI.md`.
+
+### Story dialogue = the NPC pill itself (2026-11-02, owner correction)
+The big rounded story box with 继续 / 暂时收起 buttons was rejected. Story lines use the SAME small
+pill as `.npcsay` over the speaker's head (edge, fill, corners, shadow, pop-in), wrapping long lines
+(balanced). Click the bubble / Enter / Space = next line; a blinking pixel ▼ marks more. Choices are
+pills directly under the bubble. Esc folds it away. Quest lines keep the white→pale-blue fill.
+Off-screen speakers: bubble at the scene top, named "X（画外）". `story_bubbles.js`, ui.css.

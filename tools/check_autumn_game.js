@@ -18,7 +18,7 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  // Simulation acceleration below moves along real graph segments, never teleports a route.
  async function finishRoute(){await p.evaluate(()=>{const c=seasonMapTest.ctl();c.state.paused=false;for(let i=0;i<10000&&(c.state.target||c.state.door);i++)c.tick(.1,.01)});}
  async function talk(id){await p.evaluate(id=>seasonMapTest.ctl().converse(id),id);await drain();}
- async function drain(){for(let i=0;i<35;i++){if(await p.locator('.story-speech').isVisible())await p.locator('.story-actions button').first().click();else if(await p.locator('.autumn-panel').isVisible())await p.locator('.autumn-actions button').first().click();else return;}throw Error('dialog did not end')}
+ async function drain(){for(let i=0;i<35;i++){if(await p.locator('.story-speech').isVisible())await p.locator('.story-bubble').click();else if(await p.locator('.autumn-panel').isVisible())await p.locator('.autumn-actions button').first().click();else return;}throw Error('dialog did not end')}
  // The requested left ascent is continuous; arrival reveals the distant mountains smoothly.
  const summit=await p.evaluate(()=>{const c=seasonMapTest.ctl(),spot=c.DATA.landmarks.find(p=>p.id==='lookout');c.state.paused=false;c.goTo(spot.x,spot.y);let maxJump=0;for(let i=0;i<12000&&(c.state.target||i<50);i++){const prev=c.state.camY;c.tick(.05,.05);maxJump=Math.max(maxJump,Math.abs(c.state.camY-prev))}for(let i=0;i<100;i++)c.tick(.016,.016);const out={x:c.state.x,y:c.state.y,want:spot,cam:c.state.camY,maxJump};c.reset();return out});assert.equal(summit.x,summit.want.x);assert.equal(summit.y,summit.want.y);assert(summit.cam<1&&summit.maxJump<30,JSON.stringify(summit));
  // River-only pixels change over time, independently from tree motion elsewhere in view.
@@ -43,7 +43,7 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  await p.evaluate(()=>{const c=seasonMapTest.ctl();c.state.service=null;c.state.goal=null;sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,95]));sim.t=720});
  // Approved story can be completed explicitly, preserving every chapter effect.
  for(const who of ['qing','zhou'])await talk(who);await p.evaluate(()=>seasonMapTest.ctl().converse('doctor'));
- for(let i=0;i<25;i++){if((await p.locator('.story-words').textContent()).startsWith('诊所里好几个'))break;await p.locator('.story-actions button').first().click()}
+ for(let i=0;i<25;i++){if((await p.locator('.story-words').textContent()).startsWith('诊所里好几个'))break;await p.locator('.story-bubble').click()}
  await p.keyboard.press('Escape');assert(!await p.locator('.autumn-panel').isVisible());assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.quest),1);await talk('qing');assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.stage),1);
  await talk('father');assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.stage),2);
  await talk('doctor');await talk('zhou');await talk('qing');assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.stage),3);
