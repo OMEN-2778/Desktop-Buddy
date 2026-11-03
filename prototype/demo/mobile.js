@@ -28,9 +28,10 @@ function realH() { return mobileRect0.call(mobileProbe).height || document.docum
 function mobileTurn() {
   const w = realW(), h = realH(); mobileWH = [w, h];
   const touch = matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0 && !matchMedia("(pointer: fine)").matches;
-  mobileRot = touch && h > w;
+  const phone = touch && Math.min(w, h) < 520;   // a tablet (iPad, split view) is not turned: it gets the scaled view
+  mobileRot = phone && h > w;
   mobileFit = null;
-  if (!touch) {   // a mouse: always the phone's landscape proportions, scaled to the window (never stretched)
+  if (!phone) {   // a mouse or a tablet: always the phone's landscape proportions, scaled to the window (never stretched)
     const [VW, VH] = MOBILE_FIT, sc = Math.min(w / VW, h / VH);
     mobileFit = { s: sc, ox: Math.round((w - VW * sc) / 2), oy: Math.round((h - VH * sc) / 2) };
   }
