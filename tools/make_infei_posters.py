@@ -48,7 +48,7 @@ CROPS = ['carrot', 'strawberry', 'cabbage', 'potato', 'tomato', 'corn', 'waterme
 def p2():
     bg = backdrop(W, H, MINT, BUTTER, BL); head(bg, '春种 · 夏长 · 秋收', '自己种菜', G_GREEN, '11 种作物按季节播种，下雨天自动浇水')
     cardp(bg, fr('grow'), 1600, W / 2, 900, -1)
-    cardp(bg, fr('rain', 30, True).crop((0, int(CL.meta['clips']['rain']['view'][1] - 0), 99999, 99999)), 820, 1830, 1400, 4)
+    cardp(bg, fr('rain', 30), 820, 1830, 1430, 4)
     pill(bg, '浇过水的一天，长一天', (60, 150, 90), 640, 1370, -3)
     import math
     for i, c in enumerate(CROPS):

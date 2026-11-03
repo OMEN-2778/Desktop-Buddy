@@ -51,6 +51,11 @@ def put_card(bg, img, width, cx, cy, t, dur, delay=0., angle=0, tin=.6, ui=False
 
 
 STK = {}
+EVENTS, SEEN, NOW = [], set(), [0., 0]   # sound cues: (seconds, sound, gain); NOW = [absolute time, section]
+def cue(key, snd, g=.5, at=None):
+    k = (NOW[1],) + key
+    if k not in SEEN: SEEN.add(k); EVENTS.append((NOW[0] if at is None else at, snd, g))
+
 def stk(name, k, rim=7):
     key = (name, k)
     if key not in STK: STK[key] = sticker_img(art(name), k, rim)
@@ -60,6 +65,7 @@ def stk(name, k, rim=7):
 def put_sticker(bg, name, k, cx, cy, t, dur, delay=0., angle=0, bob=8, phase=0.):
     pin, pout = lift_env(t, dur, .5, .35, delay)
     if pin <= 0 or pout >= 1: return
+    cue(('stk', name, delay), 'infei-pop', .22)
     s = stk(name, k); sc = max(.05, min(pin, 1.12)) * (1 - pout)
     if sc <= .05: return
     im = s.resize((max(1, int(s.width * sc)), max(1, int(s.height * sc))), Image.BICUBIC)
@@ -68,7 +74,7 @@ def put_sticker(bg, name, k, cx, cy, t, dur, delay=0., angle=0, bob=8, phase=0.)
 
 
 _heads = {}
-def headline(bg, t, dur, kicker, big, sub, cols, y=120, bigpx=92):
+def headline(bg, t, dur, kicker, big, sub, cols, y=150, bigpx=92):
     key = (kicker, big, sub)
     if key not in _heads:
         bi = grad_text_img(big, bigpx, cols); f = font(bigpx)
@@ -78,7 +84,7 @@ def headline(bg, t, dur, kicker, big, sub, cols, y=120, bigpx=92):
     pout = quart((t - (dur - .4)) / .4); a_all = 1 - pout; dy_out = -24 * pout
     if ki:
         p = out_quart(t / .5); im = ki.copy(); im.putalpha(im.getchannel('A').point(lambda v: int(v * p * a_all)))
-        bg.alpha_composite(im, (int(W / 2 - im.width / 2), int(y - 66 + 20 * (1 - p) + dy_out)))
+        bg.alpha_composite(im, (int(W / 2 - im.width / 2), int(y - bi.height / 2 - im.height - 2 + 20 * (1 - p) + dy_out)))
     x0 = W / 2 - bi.width / 2
     for i in range(len(xs) - 1):           # characters rise in out of nothing, one after another
         p = out_back((t - .15 - i * .07) / .55, 1.2)
@@ -89,7 +95,7 @@ def headline(bg, t, dur, kicker, big, sub, cols, y=120, bigpx=92):
         bg.alpha_composite(sl, (int(x0 + xs[i]), int(y - bi.height / 2 + 40 * (1 - min(p, 1)) + dy_out)))
     if si:
         p = out_quart((t - .5 - len(big) * .07) / .5); im = si.copy(); im.putalpha(im.getchannel('A').point(lambda v: int(v * p * a_all)))
-        bg.alpha_composite(im, (int(W / 2 - im.width / 2), int(y + 62 + 16 * (1 - p) + dy_out)))
+        bg.alpha_composite(im, (int(W / 2 - im.width / 2), int(y + bi.height / 2 + 4 + 16 * (1 - p) + dy_out)))
 
 
 def put_img(bg, im, cx, cy, t, dur, delay=0., angle=0, shadow=50, tin=.5):
@@ -153,7 +159,7 @@ def s_title(bg, t, d):
     if 3.0 < t < 3.4:                                   # a soft cross-dissolve between the two fields
         a = clamp((t - 3.0) / .4); im = Image.blend(clip('fields', t), clip('tulips', 0), a)
     put_card(bg, im, 1300, W / 2, 660, t, d, .05)
-    headline(bg, t, d, '一座会过四季的山谷', '茵菲谷', '油菜花、风车、小溪，还有妈妈的农庄', G_SPRING, y=170, bigpx=130)
+    headline(bg, t, d, '一座会过四季的山谷', '茵菲谷', '油菜花、风车、小溪，还有妈妈的农庄', G_SPRING, y=180, bigpx=130)
     put_sticker(bg, 'quest_icon_flower', 6, 160, 380, t, d, 1.2, -10)
     put_sticker(bg, 'quest_icon_windmill', 6, 1290, 360, t, d, 1.4, 8, phase=1)
 
@@ -179,7 +185,7 @@ def s_farm(bg, t, d):
     for i, c in enumerate(CROPS):                      # the seeds pop up around the field, one by one
         ang = -math.pi * .95 + i * (math.pi * .9 / (len(CROPS) - 1)) if i < 6 else math.pi * .05 + (i - 6) * (math.pi * .9 / 4)
         x = W / 2 + math.cos(ang) * 640; y = 650 + math.sin(ang) * 330
-        put_sticker(bg, f'farm_icon_{c}', 4, x, y, t, d, .6 + i * .12, phase=i)
+        put_sticker(bg, f'farm_icon_{c}', 5, x, y, t, d, .6 + i * .12, phase=i)
     if t > 6.2: put_img(bg, pill_img('下雨天，地自己就浇好了', 30, (70, 130, 200)), W / 2, 965, t, d, 6.2)
     elif t > 3.4: put_img(bg, pill_img('浇过水的一天，长一天', 30, (60, 150, 90)), W / 2, 965, t, 6.0, 3.4)
 
@@ -189,9 +195,9 @@ def s_ranch(bg, t, d):
     put_card(bg, clip('orchard', t), 760, 470, 600, t, d, .15, -3)
     put_card(bg, clip('ranch', t), 760, 970, 740, t, d, .45, 3)
     for i, (n, k, x, y) in enumerate([('spring_cow_0', 4, 1230, 420), ('spring_sheep_0', 4, 130, 860), ('spring_hen_0', 6, 640, 960)]):
-        put_sticker(bg, n, k, x, y, t, d, .9 + i * .2, phase=i)
+        put_sticker(bg, n, k + 1, x, y, t, d, .9 + i * .2, phase=i)
     for i, (n, x, y) in enumerate([('farm_icon_peach', 210, 380), ('farm_icon_egg', 760, 400), ('farm_icon_milk', 1340, 620), ('farm_icon_wool', 330, 1000)]):
-        put_sticker(bg, n, 4, x, y, t, d, 1.3 + i * .15, phase=i + 3)
+        put_sticker(bg, n, 5, x, y, t, d, 1.3 + i * .15, phase=i + 3)
     for k in range(5):                                 # hearts float up from the cow
         u = (t - 1.6 - k * .45) % 2.2
         if t > 1.6 + k * .45 and t < d - .4:
@@ -246,18 +252,33 @@ def s_tablet(bg, t, d):
     headline(bg, t, d, '丢丢平板电脑', '仓库 · 送礼 · 每日操盘', '收来的菜和蛋，卖掉还是送人？', G_GREEN, bigpx=80)
     put_card(bg, clip('tablet', t, ui=True, speed=CL.n('tablet') / CFPS / (d - .2)), 1060, W / 2, 660, t, d, .1)
     for i, (n, x, y) in enumerate([('farm_icon_coin', 170, 470), ('farm_icon_basket', 1280, 450), ('farm_icon_gift', 200, 900), ('farm_icon_chart', 1270, 900)]):
-        put_sticker(bg, n, 5, x, y, t, d, .7 + i * .15, phase=i)
+        put_sticker(bg, n, 6, x, y, t, d, .7 + i * .15, phase=i)
 
 
 def s_end(bg, t, d):
     put_card(bg, clip('ending', t, speed=CL.n('ending') / CFPS / d), 1240, W / 2, 600, t, d + 9, .05)
-    headline(bg, t, d + 9, '', '茵菲谷', '', G_SPRING, y=150, bigpx=120)
+    headline(bg, t, d + 9, '', '茵菲谷', '', G_SPRING, y=170, bigpx=130)
     put_img(bg, pill_img('测试版现已开放', 34, (230, 110, 150)), W / 2, 960, t, d + 9, 1.4)
     b = brand_img(W); bg.alpha_composite(b, (int(W / 2 - b.width / 2), H - 70))
     if t > d - .8:
         f = Image.new('RGBA', (W, H), (255, 255, 255, int(255 * quart((t - (d - .8)) / .8)))); bg.alpha_composite(f)
 
 
+SECTION_SFX = {   # (seconds into the section, sound, gain)
+    's_letter': [(.9, 'infei-letter', .6), (1.5, 'infei-letter', .5)] + [(1.9 + k * .09, 'infei-type', .25) for k in range(26)],
+    's_airport': [(.3, 'infei-chime', .5), (.9, 'infei-plane', .7)],
+    's_flight': [(0, 'infei-cabin', .6)],
+    's_title': [(.2, 'infei-chime', .55), (1.5, 'birds', .5)],
+    's_welcome': [(.6, 'ui-message', .4), (2.0, 'ui-message', .4), (3.4, 'ui-message', .4)],
+    's_farm': [(.4, 'infei-sow', .7), (2.0, 'watering', .6), (3.6, 'infei-harvest', .45), (4.6, 'infei-harvest', .45), (5.5, 'infei-harvest', .5), (6.0, 'rain-soft-loop-cc0', .5)],
+    's_ranch': [(1.0, 'infei-moo', .55), (2.2, 'infei-cluck', .5), (3.3, 'infei-baa', .5), (4.2, 'infei-pat', .4)],
+    's_seasons': [(.3 + 1.15 * k, 'infei-whoosh', .3) for k in range(1, 4)] + [(3.8, 'wind', .35)],
+    's_house': [(.6, 'fabric', .5), (1.6, 'cook', .45)],
+    's_quests': [(.4, 'infei-quest', .45), (.9, 'infei-suona', .55), (3.0, 'infei-quest', .45), (3.4, 'infei-letter', .45), (5.6, 'infei-quest', .45), (6.0, 'real-night-cc0', .4)],
+    's_panel': [(.5, 'ui-open', .5), (1.2, 'infei-letter', .45), (2.4, 'page', .45)],
+    's_tablet': [(.5, 'ui-open', .5), (1.2, 'infei-coin', .5), (2.2, 'infei-coin', .5)],
+    's_end': [(.4, 'infei-done', .6), (1.4, 'birds', .4)],
+}
 SECTIONS = [  # (draw, seconds, background colours, blobs)
     (s_letter, 5.6, PINK, LAV), (s_airport, 4.4, SKY, LAV), (s_flight, 3.4, SKY, (236, 244, 255)), (s_title, 6.2, PINK, MINT),
     (s_welcome, 5.2, PEACH, PINK), (s_farm, 8.8, MINT, BUTTER), (s_ranch, 5.6, BUTTER, PEACH), (s_seasons, 5.2, SKY, MINT),
@@ -270,7 +291,9 @@ BLOBS = [(.15, .2, .22, (255, 255, 255)), (.85, .8, .25, (255, 255, 255)), (.8, 
 
 def render(t):
     i = max(k for k, s in enumerate(STARTS) if s <= t) if t >= 0 else 0
-    fn, dur, c0, c1 = SECTIONS[i]; lt = t - STARTS[i]
+    fn, dur, c0, c1 = SECTIONS[i]; lt = t - STARTS[i]; NOW[0], NOW[1] = t, i
+    cue(('enter',), 'infei-whoosh', .35)
+    for (a, snd, g) in SECTION_SFX.get(fn.__name__, []): cue(('fx', a, snd), snd, g, STARTS[i] + a) if lt >= a else None
     bg = bgfor(i, c0, c1, BLOBS).copy()
     if i > 0 and lt < .5:                              # backgrounds melt into each other
         prev = bgfor(i - 1, SECTIONS[i - 1][2], SECTIONS[i - 1][3], BLOBS); bg = Image.blend(prev, bg, quart(lt / .5))
@@ -284,10 +307,38 @@ if PREVIEW:
     for s in PREVIEW: render(s).save(OUT.with_name(f'{OUT.stem}_{s:05.1f}.jpg'), quality=88)
     sys.exit()
 N = int(TOTAL * FPS)
-ff = subprocess.Popen(['ffmpeg', '-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}', '-r', str(FPS), '-i', '-',
-                       '-i', str(MUSIC), '-af', f'afade=t=in:d=.6,afade=t=out:st={TOTAL - 3.2}:d=3.2', '-shortest', '-c:v', 'libx264', '-preset', 'medium',
-                       '-crf', '18', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', str(OUT)], stdin=subprocess.PIPE)
-for f in range(N):
-    ff.stdin.write(render(f / FPS).tobytes())
-    if f % 150 == 0: print(f'{f}/{N}', flush=True)
-ff.stdin.close(); ff.wait(); print('done', OUT, TOTAL)
+import numpy as np, tempfile
+SR = 48000
+def decode(path):
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', str(path), '-f', 'f32le', '-ac', '2', '-ar', str(SR), '-'], capture_output=True, check=True).stdout
+    return np.frombuffer(raw, np.float32).reshape(-1, 2)
+AUD = [ROOT / 'AUDIO_LIBRARY/INFEI/SFX', ROOT / 'AUDIO_LIBRARY/SFX/game', ROOT / 'AUDIO_LIBRARY/SFX/processed']
+def sfx(name):
+    for d in AUD:
+        if (d / f'{name}.mp3').exists(): return decode(d / f'{name}.mp3')
+    raise FileNotFoundError(name)
+with tempfile.TemporaryDirectory() as tmp:
+    vid = Path(tmp) / 'v.mp4'
+    ff = subprocess.Popen(['ffmpeg', '-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{W}x{H}', '-r', str(FPS), '-i', '-',
+                           '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', str(vid)], stdin=subprocess.PIPE)
+    for f in range(N):
+        ff.stdin.write(render(f / FPS).tobytes())
+        if f % 300 == 0: print(f'{f}/{N}', flush=True)
+    ff.stdin.close(); ff.wait()
+    L = int(TOTAL * SR); mixd = np.zeros((L, 2), np.float32)
+    mus = decode(MUSIC)[:L]; n = len(mus); fade = np.ones(n, np.float32)
+    fade[:int(.6 * SR)] = np.linspace(0, 1, int(.6 * SR)); k = int(3.2 * SR); fade[-k:] = np.linspace(1, 0, k)
+    mixd[:n] += mus * fade[:, None] * .72
+    cache = {}
+    for at, name, g in sorted(EVENTS):
+        if name not in cache: cache[name] = sfx(name)
+        a = cache[name]; k = int(at * SR); m = min(len(a), L - k, int(4.5 * SR))
+        if m > 0:
+            env = np.ones(m, np.float32); r = min(m, int(.4 * SR)); env[-r:] = np.linspace(1, 0, r)
+            mixd[k:k + m] += a[:m] * env[:, None] * g
+    mixd = np.tanh(mixd * 1.1) / 1.1
+    wav = Path(tmp) / 'a.wav'
+    from scipy.io.wavfile import write as wwrite
+    wwrite(wav, SR, (mixd * 32767).astype(np.int16))
+    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(vid), '-i', str(wav), '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', str(OUT)], check=True)
+print('done', OUT, round(TOTAL, 1), 's,', len(EVENTS), 'sound cues')

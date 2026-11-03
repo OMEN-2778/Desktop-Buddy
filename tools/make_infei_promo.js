@@ -37,7 +37,7 @@ const OUT = process.argv[2] || 'infei-promo', FPS = 15, ONLY = process.env.ONLY 
       await p.screenshot({ path: `${dir}/${String(i).padStart(3, '0')}.png`, clip: { x: r.x, y: r.y, width: r.width, height: r.height } });
     }
     meta.clips[name] = { frames, view: r.view.map(v => v * 2), size: [r.width * 2, r.height * 2] };
-    process.stdout.write(name + ' ');
+    process.stdout.write(name + ' '); fs.writeFileSync(OUT + '/clips.json', JSON.stringify(meta));
   };
   // ---- story helpers: click through dialogue every n frames, picking the first choice
   const talkEvery = n => async i => { if (i % n === n - 1) await at(() => { const c = document.querySelector('.story-choices:not([hidden]) button'); if (c) c.click(); else document.querySelector('.story-bubble')?.click(); }); };
@@ -47,6 +47,10 @@ const OUT = process.argv[2] || 'infei-promo', FPS = 15, ONLY = process.env.ONLY 
   const F = (o) => at(o => Object.assign(springFarm.state, o), o);
   const F0 = () => at(() => Object.assign(springFarm.state, { letter: 1, unlocked: true, phase: 'none' }));
 
+  if (ONLY && !ONLY.some(n => ['letter', 'airport', 'flight', 'welcome'].includes(n))) {   // re-recording later clips: start in the valley
+    await at(() => { Object.assign(springFarm.state, { letter: 1, unlocked: true, phase: 'done', coins: 60 }); seasonMapTest.start('spring_test'); sim.windup = null; startAct('go_out'); sim.s = sim.target; arrive(); });
+    await until(() => sim.place === 'spring_test' && !wiping);
+  }
   // 1. home: mom's letter arrives and is read
   await at(() => { let d = 2; while (true) { sim.t = d * 1440 + 9 * 60; if (!festName()) break; d++; } });
   await clip('letter', 60, async () => { await at(() => { springFarm.sendLetter(); }); await runFor(800); }, async i => { if (i === 18) await at(() => { while (lifeFlags.mail.box.length > 1 && !lifeFlags.mail.box[0].springFarm) lifeFlags.mail.box.shift(); readMail(); }); }, 170);
@@ -56,6 +60,7 @@ const OUT = process.argv[2] || 'infei-promo', FPS = 15, ONLY = process.env.ONLY 
   await F0();
   await clip('flight', 90, async () => { await at(() => ringPick('airport:spring')); }, null, 0, 1000 / 30);
   await until(() => sim.place === 'spring_test' && !wiping, null, 20000);
+  if (!ONLY || ONLY.includes('welcome')) await until(() => sim.place === 'spring_test' && !wiping, null, 20000);
   await clip('welcome', 120, async () => { await until(() => springFarm.speech.open, null, 15000); }, talkEvery(22));
   await at(() => { const s = springFarm.state; s.phase = 'done'; springFarm.speech.hide(); });
   // 4. the valley: 油菜花田 and the windmill
@@ -90,7 +95,8 @@ const OUT = process.argv[2] || 'infei-promo', FPS = 15, ONLY = process.env.ONLY 
   // 9. side quests
   await at(() => { const q = infeiQuests.Q(); q.mill.step = 1; });
   await clip('q_mill', 150, async () => { await day(6, 21); await go(2, 150); await at(() => infeiQuests.run('mill')); await until(() => springFarm.speech.open, null, 15000); }, talkEvery(20));
-  await until(() => !infeiQuests.busy, null, 30000, 0);
+  await at(() => { for (let k = 0; k < 40 && infeiQuests.busy; k++) { const c = document.querySelector('.story-choices:not([hidden]) button'); if (c) c.click(); else document.querySelector('.story-bubble')?.click(); } });
+  await until(() => !infeiQuests.busy, null, 20000);
   await at(() => { const q = infeiQuests.Q(); q.letter.step = 0; });
   await clip('q_apo', 150, async () => { await day(7, 15); await go(0, 130); await at(() => infeiQuests.talk('apo')); await until(() => springFarm.speech.open, null, 15000); }, talkEvery(20));
   await at(() => { for (let k = 0; k < 40 && infeiQuests.busy; k++) { const c = document.querySelector('.story-choices:not([hidden]) button'); if (c) c.click(); else document.querySelector('.story-bubble')?.click(); } });
@@ -100,14 +106,20 @@ const OUT = process.argv[2] || 'infei-promo', FPS = 15, ONLY = process.env.ONLY 
   await at(() => { for (let k = 0; k < 40 && infeiQuests.busy; k++) { const c = document.querySelector('.story-choices:not([hidden]) button'); if (c) c.click(); else document.querySelector('.story-bubble')?.click(); } });
   await until(() => !infeiQuests.busy, null, 20000);
   // 10. the 任务 panel: hover the diary, the button slides out, the panel opens, a quest replays
-  await day(9, 10); await go(3, 200);
+  await day(9, 10);
+  if (!(await at(() => (infeiQuests.Q().letter.log || []).length))) {   // re-recorded alone: play 阿婆's first scene so the replay has a story
+    await at(() => { infeiQuests.Q().letter.step = 0; }); await go(0, 130); await at(() => infeiQuests.talk('apo'));
+    for (let k = 0; k < 80 && await at(() => infeiQuests.busy); k++) { await at(() => { const c = document.querySelector('.story-choices:not([hidden]) button'); if (c) c.click(); else document.querySelector('.story-bubble')?.click(); }); await runFor(300); }
+  }
+  await go(3, 200);
   await at(() => { const q = infeiQuests.Q(); q.stew = { step: 1, got: ['carrot'] }; });
   await clip('panel', 90, null, async i => {
     const d = await p.locator('#diaryBox').boundingBox();
     if (i === 2) await p.mouse.move(d.x + 24, d.y + 24, { steps: 3 });
     if (i === 12) { const t = await p.locator('#questTrigger').boundingBox(); await p.mouse.move(t.x + 24, t.y + 24, { steps: 3 }); }
-    if (i === 40) await p.locator('.qb-card', { hasText: '溪边的阿婆' }).click();
-    if (i === 62) await p.locator('.qb-tl').evaluate(e => e.scrollTo({ top: 260 }));
+    if (i === 16) await at(() => { if (!questBoard.isOpen) questBoard.open(); });
+    if (i === 40) await at(() => { const c = [...document.querySelectorAll('.qb-card')].find(c => c.textContent.includes('溪边的阿婆')) || document.querySelector('.qb-card'); c?.click(); });
+    if (i === 62) await at(() => document.querySelector('.qb-tl')?.scrollTo({ top: 260 }));
   });
   await at(() => questBoard.close()); await p.mouse.move(5, 5);
   // 11. the tablet: 仓库 and 每日操盘

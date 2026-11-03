@@ -43,7 +43,8 @@ const out=process.argv[2]||'/tmp/infei-quests';fs.mkdirSync(out,{recursive:true}
  await nextDay();await at(3,120,10);await shot('兔子住在鸡窝边');
  await ev(()=>infeiQuests.list());await shot('支线任务列表');
  // replay: a finished quest opens its story — lines, choices, letters
- await p.locator('.qb-card',{hasText:'溪边的阿婆'}).click();await p.waitForTimeout(900);
+ {const pb=await p.locator('#questPanel').boundingBox();await p.mouse.move(pb.x+pb.width/2,pb.y+pb.height/2);}   // a player's pointer is over the panel she opened
+ await ev(()=>{if(!questBoard.isOpen)questBoard.open();});await p.locator('.qb-card',{hasText:'溪边的阿婆'}).click();await p.waitForTimeout(900);
  const pv=await p.locator('#questPanel').boundingBox();await p.screenshot({path:path.join(out,String(++n).padStart(2,'0')+'-任务回顾-阿婆.png'),clip:pv});
  const rv=await ev(()=>({ents:document.querySelectorAll('.qb-ent').length,letters:[...document.querySelectorAll('.qb-letter')].map(l=>l.textContent),picks:document.querySelectorAll('.qb-pick').length,says:document.querySelectorAll('.qb-say').length}));console.log(rv);
  assert(rv.letters.length===2&&rv.picks>=2&&rv.says>20);

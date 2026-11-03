@@ -1,0 +1,53 @@
+{
+ "license": "Original procedural audio; same license as game source",
+ "bgm": [
+  {
+   "id": "infei-spring",
+   "seconds": 89.8
+  },
+  {
+   "id": "infei-summer",
+   "seconds": 81.1
+  },
+  {
+   "id": "infei-autumn",
+   "seconds": 102.8
+  },
+  {
+   "id": "infei-winter",
+   "seconds": 120.2
+  },
+  {
+   "id": "infei-night",
+   "seconds": 102.1
+  },
+  {
+   "id": "infei-airport",
+   "seconds": 85.2
+  }
+ ],
+ "sfx": [
+  "infei-dig",
+  "infei-sow",
+  "infei-harvest",
+  "infei-fruit",
+  "infei-coin",
+  "infei-pat",
+  "infei-feed",
+  "infei-cluck",
+  "infei-moo",
+  "infei-baa",
+  "infei-suona",
+  "infei-letter",
+  "infei-quest",
+  "infei-done",
+  "infei-chime",
+  "infei-plane",
+  "infei-cabin",
+  "infei-brook",
+  "infei-windmill",
+  "infei-whoosh",
+  "infei-pop",
+  "infei-type"
+ ]
+}

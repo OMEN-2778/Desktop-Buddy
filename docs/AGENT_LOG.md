@@ -7,6 +7,15 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: 茵菲谷 posters + an MG-style story promo with real gameplay and its own sound; finish the valley's BGM/SFX.
+  Audio: AUDIO_LIBRARY/tools/build_infei_audio.py -> AUDIO_LIBRARY/INFEI (6 tracks: 4 seasons, night, airport; 22
+  sounds), outside make_demo's scan (not in releases); map-test copies it; infei_audio.js = beds + state-change cues.
+  Marketing: tools/make_infei_promo.js (records 26 clips of /map-test/), make_infei_promo.py (71 s 4:3 edit, 113 sound
+  cues over the spring theme), make_infei_posters.py (7 posters). Output marketing/infei/. Needs fonts-noto-cjk.
+- check_infei_audio.js new; quests (pointer over panel), home, farm, quest panel, spring story, airport UI pass.
+  Music was checked by loudness/spectrum only (no listening here): owner to judge by ear.
+
+## 2026-11-03 · Claude Code
 - Owner: delete the non-final autumn story. docs/AUTUMN_STORY.md removed; the only story is
   docs/story/MAPLE_FULL_SCRIPT.md. Still-valid owner decisions moved to SEASON_MAPS.md. NOTE: prototype/autumn/story.js
   still runs the old linear story (code kept so the test page works) until the full script is wired in.

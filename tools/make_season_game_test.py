@@ -116,7 +116,7 @@ def main():
     page=page.replace('const cardHolds =','let cardHolds =')
     page=page.replace("bar:'酒吧'}","bar:'酒吧',spring_test:'茵菲谷',summer_test:'夏日海湾',autumn_test:'枫叶城'}")
     page=page.replace('const sceneHouseHeight=()=>','let sceneHouseHeight=()=>')
-    page=page.replace("if(place==='park')","if(place==='autumn_test')return 'BGM/park/festival-streetlights.mp3';if(place==='spring_test')return 'BGM/park/festival-streetlights.mp3';if(place==='summer_test')return 'BGM/harbor/dragon-boat-day.mp3';if(place==='park')")
+    page=page.replace("if(place==='park')","if(place==='autumn_test')return 'BGM/park/festival-streetlights.mp3';if(place==='spring_test')return 'BGM/infei/infei-'+(night?'night':season)+'.mp3';if(place==='airport_test')return 'BGM/infei/infei-airport.mp3';if(place==='summer_test')return 'BGM/harbor/dragon-boat-day.mp3';if(place==='park')")
     for key in ['buddy-save','buddy-settings','buddy-look-v2','buddy-look-at']:
         page=page.replace('"'+key+'"','"season-test-'+key+'"')
     autumn=(ROOT/'prototype/autumn/story.js').read_text()+(ROOT/'prototype/autumn/game.js').read_text()+'\nconst AUTUMN_MAP_DATA='+json.dumps(autumn_data(),ensure_ascii=False,separators=(',',':'))+';\n'
@@ -124,7 +124,11 @@ def main():
     import base64
     airport_images={k:'data:image/png;base64,'+base64.b64encode((ROOT/('art/out/concept/'+k+'.png')).read_bytes()).decode() for k in ['airport_terminal','airport_vista','airport_terminal_front','airport_plane','airport_cabin','airport_cabin_front','trip_airport']}
     source+=farm_story_source()
-    source+='\nconst AIRPORT_IMAGES='+json.dumps(airport_images)+';\n'+(ROOT/'prototype/airport/flight.js').read_text()+(ROOT/'prototype/airport/planes.js').read_text()+'\n'+(ROOT/'prototype/map-test/airport.js').read_text()+'\n'+(ROOT/'prototype/map-test/spring_cards.js').read_text()+(ROOT/'prototype/map-test/spring_talk.js').read_text()+(ROOT/'prototype/map-test/spring_story.js').read_text()+(ROOT/'prototype/map-test/infei_farm.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_home.js').read_text()+'\nconst QUEST_ICONS='+json.dumps(quest_icons())+';\n'+'\n'+(ROOT/'prototype/map-test/quest_panel.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_quests.js').read_text()
+    source+='\nconst AIRPORT_IMAGES='+json.dumps(airport_images)+';\n'+(ROOT/'prototype/airport/flight.js').read_text()+(ROOT/'prototype/airport/planes.js').read_text()+'\n'+(ROOT/'prototype/map-test/airport.js').read_text()+'\n'+(ROOT/'prototype/map-test/spring_cards.js').read_text()+(ROOT/'prototype/map-test/spring_talk.js').read_text()+(ROOT/'prototype/map-test/spring_story.js').read_text()+(ROOT/'prototype/map-test/infei_farm.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_home.js').read_text()+'\nconst QUEST_ICONS='+json.dumps(quest_icons())+';\n'+'\n'+(ROOT/'prototype/map-test/quest_panel.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_quests.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_audio.js').read_text()
+    # 茵菲谷 audio (AUDIO_LIBRARY/INFEI, never in the release): served from /map-test/audio/ like the game's own files
+    infei=[f'BGM/infei/{f.name}' for f in sorted((ROOT/'AUDIO_LIBRARY/INFEI/BGM').glob('*.mp3'))]+[f'SFX/game/{f.name}' for f in sorted((ROOT/'AUDIO_LIBRARY/INFEI/SFX').glob('*.mp3'))]
+    k=page.index('const GAME_AUDIO_FILES = [')+len('const GAME_AUDIO_FILES = [')
+    page=page[:k]+','.join(json.dumps(f) for f in infei)+','+page[k:]
     mark='(async function boot() {'
     assert page.count(mark)==1
     page=page.replace(mark,source+'\n'+mark)
@@ -141,5 +145,7 @@ def main():
     # Full-game audio referenced relatively inside /map-test/, always kept under this page.
     import shutil
     for group in ['BGM','SFX/game','SFX/processed']:shutil.copytree(ROOT/'AUDIO_LIBRARY'/group,out.parent/'audio'/group,dirs_exist_ok=True)
+    shutil.copytree(ROOT/'AUDIO_LIBRARY/INFEI/BGM',out.parent/'audio/BGM/infei',dirs_exist_ok=True)
+    for f in (ROOT/'AUDIO_LIBRARY/INFEI/SFX').glob('*.mp3'):shutil.copy2(f,out.parent/'audio/SFX/game'/f.name)
     print(out,round(len(page)/1024),'KiB')
 if __name__=='__main__':main()
