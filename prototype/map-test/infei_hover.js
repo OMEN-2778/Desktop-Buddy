@@ -11,11 +11,10 @@ const infeiHover=(function(){
  let hv=null,region=null;
  // what is under the pointer, in scene coordinates (mirrors the click handlers)
  function hit(x,y){const s=C().state,f=F();
-  if(springFarm.speech.open||window.infeiQuests?.busy||cardHolds()||wiping||sim.mode==='down'||s.door)return null;
+  if(springFarm.speech.open||window.infeiQuests?.busy||storyLocked()||cardHolds()||wiping||sim.mode==='down'||s.door)return null;
   if(Math.abs(x-s.x)<10&&y<s.y&&y>s.y-28)return null;   // Buddy: her own ring
   if(f.phase==='meet'&&!s.inside&&s.scene===springFarm.mom.scene&&springFarm.momAt(x,y))return {mom:true};   // 妈妈 waiting with her "!"
   if(s.inside){
-   if(f.phase!=='done')return null;
    for(const p of Object.values(window.infeiHome?.SPOTS||{})){const [rx,ry,w,h]=p.rect;if(x>=rx&&x<rx+w&&y>=ry&&y<ry+h)return rect(rx,ry,w,h);}
    const [dx,dy,dw,dh]=INDOOR;if(x<50&&y>64)return rect(dx,dy,dw,dh);
    return null;}

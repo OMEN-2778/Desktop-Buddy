@@ -44,9 +44,10 @@ const infeiHome=(function(){
  // each frame: needs fill while she uses something; she walks in by herself when a need runs low
  X.hooks.draw.push((ctx,info)=>{
   const c=C(),s=c.state,dt=Math.max(0,Math.min(30,sim.t-lastT));lastT=sim.t;
-  if(s.inside&&!wasInside&&springFarm.state.phase==='done'&&!hinted){hinted=true;setTimeout(()=>showHint('点家具能睡觉、洗澡、做饭'),700);}
+  if(s.inside&&!wasInside&&!storyLocked()&&!hinted){hinted=true;setTimeout(()=>showHint('点家具能睡觉、洗澡、做饭'),700);}
   if(s.inside&&!wasInside)T.state.autoAt=Math.max(T.state.autoAt,sim.t+60);
   wasInside=s.inside;
+  if(info.inside)sleepers(ctx,!!svc&&svc.id==='bed'&&s.inside&&!s.target);
   if(svc){
    if(s.target||!s.inside){s.pose=null;s.hideHero=false;svc=null;return;}
    const p=SPOTS[svc.id];T.state.autoAt=sim.t+1e6;
@@ -59,6 +60,20 @@ const infeiHome=(function(){
   if(low){care(low[0]);return;}
   if(s.inside&&sim.t>=T.state.autoAt){T.state.autoAt=sim.t+40;c.leave();}   // nothing to do inside: back out to the yard
  });
+ // asleep in a 架子床 (owner 2026-11-03): a head on its side on the pillow, the bed's own quilt bulging over the body
+ // (art/src/concept/infei_bed_covers.py). Hers while she sleeps; 爸妈 in theirs at night (22:00-6:00), unless 妈妈 is up.
+ const BEDS={mine:[81,16],parents:[219,16]};let covers=null;   // INFEI_COVERS is injected after this file: load on first use
+ const lie=new Map();function lying(src){if(lie.has(src))return lie.get(src);const c=document.createElement('canvas');c.width=15;c.height=src.width;const g=c.getContext('2d');g.translate(0,src.width);g.rotate(-Math.PI/2);g.drawImage(src,0,0,src.width,15,0,0,src.width,15);lie.set(src,c);return c;}
+ let dadN=null;const npcOf=(id,preset)=>{const lk=socialState.contacts.find(c=>c.id===id)?.look||doll.PRESETS[preset];return {look:lk,ramps:doll.rampsOf(lk),cache:new Map()};};
+ const SLEEPY={expr:'sleepy',look:0,bob:0,sway:0,wave:null};
+ function sleepers(ctx,she){
+  if(!covers){covers={};for(const [k,u]of Object.entries(INFEI_COVERS)){const im=new Image();im.src=u;covers[k]=im;}}
+  const m=sim.t%1440,night=m>=22*60||m<6*60;
+  if(night&&!springFarm.mom.on&&covers.parents?.complete){const [bx,by]=BEDS.parents;dadN??=npcOf('dad','m');
+   ctx.drawImage(lying(npcCanvas(dadN,SLEEPY,'stand')),bx+HEAD[0]+4,by+HEAD[1]-5);ctx.drawImage(lying(npcCanvas(springFarm.momNpc(),SLEEPY,'stand')),bx+HEAD[0],by+HEAD[1]);ctx.drawImage(covers.parents,bx,by);}
+  if(she&&covers.mine?.complete){const [bx,by]=BEDS.mine;ctx.drawImage(lyingHead(SLEEPY),bx+HEAD[0],by+HEAD[1]);ctx.drawImage(covers.mine,bx,by);}
+ }
+ const HEAD=[2,8];   // the rotated head's place on the pillow, in bed-sprite coordinates
  const reduced=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
  // 回家 = the farmhouse; 离开茵菲谷 is the only way out (player only)
  const oldOpen=openRing;openRing=function(which,at){

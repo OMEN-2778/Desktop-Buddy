@@ -182,13 +182,14 @@ const springFarm=(()=>{
    {id:'sf:harvest:'+i,label:'收获',icon:'basket',off:ripe(b)?'':'还没熟'},{id:'sf:look:'+i,label:'查看',icon:'lens'}],i);
  }
  view.parentElement.addEventListener('pointerdown',e=>{
-  if(e.target!==view||!inSpring()||!['meet','sow','water','done'].includes(F.phase))return;const c=C(),s=c.state;
+  if(e.target!==view||!inSpring()||storyLocked())return;const c=C(),s=c.state;
   if(s.door||wiping||cardHolds()||sim.mode==='down')return;
   const r=view.getBoundingClientRect(),x=(e.clientX-r.left)*342/r.width+(s.camera||0),y=(e.clientY-r.top)*c.canvas.height/r.height;
   if(Math.abs(x-s.x)<10&&y<s.y&&y>s.y-28)return;   // clicks on her still open her own ring
-  if(F.phase==='meet'){if(!s.inside&&s.scene===mom.scene&&momAt(x,y)){e.stopPropagation();e.preventDefault();greet();}return;}
-  if(!s.inside&&s.scene===4){const i=bedAt(x,y);if(i==null)return;e.stopPropagation();e.preventDefault();openBed(i);return;}
-  if(F.phase==='done'&&X.hooks.click.some(f=>f(x,y,s))){e.stopPropagation();e.preventDefault();}
+  if(F.phase==='meet'&&!s.inside){if(s.scene===mom.scene&&momAt(x,y)){e.stopPropagation();e.preventDefault();greet();}return;}
+  if(!s.inside&&s.scene===4&&['sow','water','done'].includes(F.phase)){const i=bedAt(x,y);if(i==null)return;e.stopPropagation();e.preventDefault();openBed(i);return;}
+  if((F.phase==='done'||s.inside)&&X.hooks.click.some(f=>f(x,y,s))){   // the farmhouse works in every phase (owner 2026-11-03)
+   e.stopPropagation();e.preventDefault();}
  },true);
  // ---------------------------------------------------------------- actions
  function goBed(i,then){const [x,,w]=D.plots[i];closeRing();T.state.autoAt=sim.t+60;C().target(x+w+4,103,then);}   // she works from the gap after the bed, so the bed stays clickable

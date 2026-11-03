@@ -7,6 +7,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: farmhouse works in every phase (not only after the farm intro): spring_story clicks/infei_hover/hint gated
+  by storyLocked() instead of phase==='done'; beds outside still need sow/water/done. Sleepers (owner approved the
+  shot): art/src/concept/infei_bed_covers.py -> art/out/concept/infei_cover_{mine,parents}.png (bed's own quilt
+  ramp+pattern, mound, sheet at the neck), injected as INFEI_COVERS; infei_home draws her head on the pillow while
+  she sleeps, 爸妈 22:00-6:00. infei_home, infei_hover, spring_story, story_lock pass.
+
+## 2026-11-03 · Claude Code
 - Owner, 茵菲谷 + story talks (0.2.3): story_bubbles.js (whole game): a line moves on after 4 s, a click anywhere
   advances (swallowed, never reaches the scene); choices still wait. Gender-neutral 茵菲谷 lines (闺女 → 孩子, 7 spots).
   Landing: Buddy starts at the brook (scene 0, x110), 妈妈 waits at the farmhouse with a "!" (hover glow); clicking her
