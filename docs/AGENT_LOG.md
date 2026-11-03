@@ -6,6 +6,8 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-03 Claude: 平板（iPad 分屏等）不再旋转，改用等比缩放横屏视图；只有短边<520 的触屏手机才旋转。
+
 ## 2026-11-03 Claude: 手机版页面在平板（iPad 分屏等）上不再旋转，改用等比缩放的横屏视图；只有短边<520 的触屏手机才旋转。
 
 ## 2026-11-03 · Claude Code
