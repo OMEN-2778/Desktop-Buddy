@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: version should read 0.2.0. Cancelled run 138 (was 0.2.138); desktop.yml now sets VERSION=0.2.<run-139>
+  in a first step of the windows and macos jobs, so this push's run is 0.2.0.
+
+## 2026-11-03 · Claude Code
 - Owner: 0.2 big update with 茵菲谷, Windows + Mac. desktop.yml: version 0.2.<run>; web job runs
   make_season_game_test.py --release (茵菲谷 only via airport, no cheats/test panel, player's own save keys);
   copy-web.mjs adds AUDIO_LIBRARY/INFEI. Summer/autumn, 试玩版, web preview root unchanged. AGENTS/CLAUDE updated.

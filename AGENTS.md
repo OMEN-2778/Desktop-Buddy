@@ -46,7 +46,7 @@ Design docs: `docs/SEASON_MAPS.md`; 秋 story (final): `docs/story/MAPLE_FULL_SC
 
 ## Releases (do not change without the owner asking)
 - Pushes that touch the demo or `desktop/**` build the Windows app automatically
-  (`.github/workflows/desktop.yml`, full game, version 0.2.<run>) and the 试玩版
+  (`.github/workflows/desktop.yml`, full game, version 0.2.N from 0.2.0) and the 试玩版
   (`.github/workflows/trial.yml`, tag `trial-v0.1.<run>`, pre-release). Just push; the
   workflows do the rest.
 - Installers and the updater's `latest.json` are published to the public downloads-only

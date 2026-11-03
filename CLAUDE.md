@@ -43,7 +43,7 @@ first, else the nearest spot in the map. Details: `AGENTS.md` → "Season maps".
    top of `docs/AGENT_LOG.md`.
 4. If the user follows the live demo, republish it (artifact
    https://claude.ai/artifact/PAUM9uEkbffFBq7tUroHmb from `prototype/demo/index.html`).
-5. Pushes touching `desktop/**` or the demo build a new release (0.2.<run>; 0.2 ships 茵菲谷, see `AGENTS.md` → Releases)
+5. Pushes touching `desktop/**` or the demo build a new release (0.2.N counting from 0.2.0; 0.2 ships 茵菲谷, see `AGENTS.md` → Releases)
    that installed apps pick up by themselves; check the "Desktop app"
    workflow only when the user asks.
 

@@ -3,7 +3,7 @@
 # macOS (one universal .app for Intel and Apple chips, in a .dmg, ad-hoc
 # signed: not notarized, so players allow it once in 隐私与安全性).
 #
-# Updates: each build is version 0.2.<run number> (0.2 = 茵菲谷, owner 2026-11-03; was 0.1). With the signing key in
+# Updates: each build is version 0.2.<run number - 139> (0.2.0 = 茵菲谷, owner 2026-11-03; was 0.1.<run>). With the signing key in
 # the repo's secrets (TAURI_SIGNING_PRIVATE_KEY), the installer and the bare
 # exe are signed and published as a GitHub release (v0.2.N) with latest.json
 # (entries windows-x86_64 = installer, windows-x86_64-portable = exe; the macOS
@@ -53,9 +53,11 @@ jobs:
     env:
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
-      VERSION: 0.2.${{ github.run_number }}
       BUDDY_MINIFY: "1"   # shipped page minified (desktop/scripts/copy-web.mjs)
     steps:
+      - name: Version number (0.2.0 = run 139, owner 2026-11-03)
+        shell: bash
+        run: echo "VERSION=0.2.$(( ${{ github.run_number }} - 139 ))" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v4
@@ -158,9 +160,11 @@ jobs:
     env:
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
-      VERSION: 0.2.${{ github.run_number }}
       BUDDY_MINIFY: "1"
     steps:
+      - name: Version number (0.2.0 = run 139, owner 2026-11-03)
+        shell: bash
+        run: echo "VERSION=0.2.$(( ${{ github.run_number }} - 139 ))" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
