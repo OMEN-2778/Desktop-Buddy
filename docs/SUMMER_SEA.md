@@ -278,3 +278,11 @@ Owner 2026-11-01: irregular randomized fish schools (no rectangular ranks), rock
   reef.py (motion bend works on any Sprite), then enlarge the sea (EXT/DEEP in summer_bay.py).
 - Owner (2026-11-03): keep the ORIGINAL seabed (summer_bay strata/sand, smooth join with the
   beach). The flat sand in `make_reef_scene.py` is only a mock; v2 replaces fish and corals only.
+- Owner (2026-11-03): v2 approved and wired in; old small floor creatures (urchin, hermit crab, cowry,
+  cucumber, xmas worms, old corals, red algae) removed. Every swimmer now comes from reef.py through
+  `sea_life_motion.frames` (8-pose bend: tail sweep scales with size; manta wings beat; turtle flippers
+  stroke). `calm_decor` places reef corals/floor life on the seabed (`put`); old summer_sea corals gone,
+  seaweeds kept. Life is denser (a fish every 60 px in the new stretch, schools every other).
+- Owner (2026-11-03): the middle ridge (u≈1130) is now 最深海沟, the deepest and darkest place:
+  DEEP 250→380, basin depths kept as absolute rows, trench floor ≈712; water and earth sink to
+  reef_night below WL+470. Hotspot 海扇坡地 -> 最深海沟. Board: docs/design/summer-sea-v2.png.

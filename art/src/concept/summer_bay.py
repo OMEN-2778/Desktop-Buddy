@@ -22,8 +22,9 @@ import summer_sea as SS
 import _bay_parts as BP
 import beach as BE
 import sea_life as SL
+import reef as RF
 import sea_life_motion as MOT
-from pixelkit import P, Sprite
+from pixelkit import P, Sprite, rgba
 
 PREVIEW_SCALE = 1
 PRE = 684                        # 旅舍 screen (0-342) and 更衣室 screen (342-684) before the beach
@@ -31,7 +32,8 @@ LAND = PRE + 342                 # the beach ends / the dive map starts here
 SKY = 96                         # extra sky above the dive map
 SPLIT = 830                      # owner: the sea was too small. A new stretch is inserted into
 EXT = 2394                        # the dive map here (sea-local x), before the reef wall,
-DEEP = 250                       # and the whole sea gets DEEP more rows: a deep trench.
+DEEP = 380                       # and the whole sea gets DEEP more rows (owner 2026-11-03: the middle
+                                 # ridge became the deepest, darkest trench)
 SEA_W, SEA_H = SS.OW + EXT, SS.OH + DEEP
 GW, GH = LAND + SEA_W, SKY + SEA_H
 WL = SKY + SS.SURF               # waterline (global)
@@ -83,8 +85,9 @@ def smap(x):
 
 def _mid_keys():
     f0 = SS.FLOOR[SPLIT]
-    return [(0,f0),(180,260),(360,320),(530,SEA_H-55),(760,SEA_H-35),
-            (940,360),(1130,280),(1320,340),(1510,SEA_H-42),(1770,SEA_H-26),
+    # absolute rows (the basins kept their depth when DEEP grew); 1130 = 最深海沟
+    return [(0,f0),(180,260),(360,320),(530,549),(760,569),
+            (950,610),(1060,690),(1130,712),(1200,690),(1310,610),(1510,562),(1770,578),
             (1960,370),(2170,265),(EXT,f0)]
 
 
@@ -408,7 +411,8 @@ def hexrgb(h):
     return np.array(SS.C(h)[:3], float)
 
 
-WATER_STOPS = [(WL, P.sea[4]), (WL + 70, P.sea[3]), (WL + 170, P.sea[2]), (WL + 270, P.sea[1]), (GH, P.sea[0])]
+WATER_STOPS = [(WL, P.sea[4]), (WL + 70, P.sea[3]), (WL + 170, P.sea[2]), (WL + 270, P.sea[1]), (WL + 470, P.sea[0]),
+               (GH, P.reef_night[0])]       # the deepest trench goes nearly black-blue (owner)
 
 
 def water_rgb(y):
@@ -489,48 +493,55 @@ def calm_decor():
     through smap(); the new meadow and trench get their own few pieces."""
     d = Sprite(SEA_W, SEA_H)
     F = [GROUND[x + LAND] - SKY for x in range(SEA_W)]
-    kinds = list(SS.CORALS)
+    corals = [f for _, f in RF.CORAL.values() if f not in (RF.sea_star, RF.nudibranch, RF.giant_clam, RF.anemone)]
+    small = [RF.sea_star, RF.nudibranch, RF.mushroom_coral, RF.bubble_coral]
+
+    def put(fn, x, sink=2):
+        """A v2 reef piece standing on the seabed, centred on x (owner 2026-11-03)."""
+        spr = fn() if callable(fn) else fn
+        x0 = max(0, min(SEA_W - spr.w, x - spr.w // 2))
+        d.blit(spr, x0, min(F[x0:x0 + spr.w]) - spr.h + sink)
     for x0 in (40, 100):                                             # sea grass tufts on the beach slope
         for k in range(4):
             SS.seagrass(d, x0 + k * 4, F[x0 + k * 4] + 1, 4, 10 + k * 2, seed=x0 + k)
-    SS.starfish(d, 70, F[70] - 1, P.coral)
+    put(RF.sea_star, 70, 3)
     for cx in (200, 290):                                            # two coral heads, a cluster round each
         SS.bommie(d, cx, F[cx] + 2, 1.3, seed=cx)
-        for k, dx in enumerate((-22, -14, 16, 24)):
-            SS.coral(d, kinds[(cx + k) % len(kinds)], cx + dx, F[cx + dx] + 1, 0.9, seed=cx + k)
-    SS.sponge(d, 250, F[250] + 1, P.lilac, 2, seed=1)
+        for k, dx in enumerate((-24, -12, 14, 26)):
+            put(corals[(cx // 10 + k) % len(corals)], cx + dx)
+    put(RF.tube_sponges, 250)
+    put(RF.clown_home, 330)
     SS.shipwreck(d, 446, F[500] + 2)                                 # the wreck in its kelp
     for x in (420, 432, 560, 574, 588):
         SS.tall_weed(d, x, F[x] + 1, 40 + (x * 7) % 25, P.teal, seed=x)
     SS.anchor(d, 610, F[610] + 1)
     SS.bommie(d, 630, 112, 0.6, seed=630)
     SS.tiki(d, 800, F[800] + 2)
-    for x in (680, 700, smap(850), smap(870)):
-        SS.coral(d, kinds[x % len(kinds)], x, F[x] + 1, 1.0, seed=x)
-    for y in (60, 100, 150):
+    for i, x in enumerate((680, 700, smap(850), smap(870))):
+        put(corals[(i * 3 + 1) % len(corals)], x)
+    for i, y in enumerate((60, 100, 150)):
         x = next((xx for xx in range(smap(850), SEA_W) if F[xx] <= y), SEA_W - 1)
-        SS.coral(d, kinds[y % len(kinds)], x - 1, y + 2, 0.8, seed=y)
+        put(small[i % len(small)], x - 6, 3)
     # 海草草甸: a calm meadow of sea grass
     for x in range(SPLIT + 20, SPLIT + 170, 6):
         SS.seagrass(d, x, F[x] + 1, 5, 9 + (x * 7) % 8, R=P.green if x % 12 else P.sage, seed=x)
-    SS.clam(d, SPLIT + 120, F[SPLIT + 120] + 1)
+    put(RF.giant_clam, SPLIT + 120)
     # 深蓝海沟: kelp on both rims, a few corals down the walls, an old helmet at the bottom
     for u in (204, 212, 520, 530):
         SS.tall_weed(d, SPLIT + u, F[SPLIT + u] + 1, 46 + u % 20, P.teal, seed=u)
     for u in (236, 250, 486, 500):
-        SS.coral(d, kinds[u % len(kinds)], SPLIT + u, F[SPLIT + u] + 1, 0.8, seed=u)
+        put(corals[u % len(corals)], SPLIT + u)
     SS.treasure(d, SPLIT + 362, F[SPLIT + 362] + 1)
     SS.bommie(d, SPLIT + 560, F[SPLIT + 560] + 2, 1.1, seed=7)
     # New coral gardens and kelp groves throughout the expanded sea. Pieces sit
     # on the actual seabed; leave sandy channels between distinct habitats.
     rng=random.Random(714)
-    coral=list(SL.CORAL.values());floor=list(SL.FLOOR.values())
+    floor=[RF.anemone, RF.giant_clam, RF.sea_star, RF.nudibranch, RF.octopus, RF.moray, RF.clown_home]
     for i,cx in enumerate(range(SPLIT+40,SPLIT+EXT-40,85)):
         for j in range(3+(i%3)):
-            x=cx+rng.randint(-26,26);spr=coral[(i*3+j)%len(coral)][1]()
-            d.blit(spr,x-spr.w//2,F[x]-spr.h+2)
+            put(corals[(i*3+j)%len(corals)], cx+rng.randint(-26,26))
         if i%2==0:
-            spr=floor[i%len(floor)][1]();d.blit(spr,cx-spr.w//2,F[cx]-spr.h+1)
+            put(floor[(i//2)%len(floor)], cx, 3)
         if i%4==0:SS.tall_weed(d,cx+30,F[cx+30]+1,44+i%30,P.teal,seed=i+741)
     return d
 
@@ -555,15 +566,18 @@ def _life():
         L.append(("butterflyfish", lambda f: SS.fish("butterflyfish", f), x, y))
     L += [("turtle", SS.turtle, SPLIT + 90, 200), ("manta", SS.manta, SPLIT + 300, 120),
           ("shark", lambda f: SS.big_fish("shark", f), SPLIT + 300, 330),
-          ("grouper", lambda f: SS.big_fish("grouper", f), SPLIT + 400, SEA_H - 50),
+          ("grouper", lambda f: SS.big_fish("grouper", f), SPLIT + 400, 554),
           ("ulua", lambda f: SS.big_fish("ulua", f), SPLIT + 150, 150), ("ulua", lambda f: SS.big_fish("ulua", f), SPLIT + 180, 162)]
-    refined=list(SL.FISH.items());schools=list(SL.SCHOOLS.items())
-    for i,x in enumerate(range(SPLIT+40,SPLIT+EXT-25,80)):
+    refined=list(RF.FISH.items())+[(k,RF.BIG[k]) for k in ('parrotfish','barracuda','trevally','grouper')]
+    schools=list(RF.SCHOOLS.items())
+    for x, k in ((120, 'clownfish'), (190, 'regal_tang'), (260, 'flame_angel'), (340, 'butterflyfish'), (420, 'triggerfish'), (520, 'moorish_idol')):
+        L.append((k, None, x, 150 + (x * 7) % 40))
+    for i,x in enumerate(range(SPLIT+40,SPLIT+EXT-25,60)):
         key,(_,fn)=refined[i%len(refined)]
         ceiling=max(60,SEAFLOOR[x]-35)
         y=min(ceiling,75+(i*67)%max(80,ceiling-70))
         L.append((key,lambda f,fn=fn:fn(),x,y))
-        if i%3==0:
+        if i%2==0:
             key,(_,fn)=schools[(i//3)%len(schools)]
             L.append((key,lambda f,fn=fn:fn(),x+22,max(50,y-55)))
     return L
@@ -580,7 +594,7 @@ def _hotspots():
     for hid, name, u, dy in (("meadow", "海草草甸", 120, -6), ("trench", "深蓝海沟底", 362, -6), ("trench_rim", "海沟边缘", 214, -20)):
         x = LAND + SPLIT + u
         hs.append({"id": hid, "name": name, "x": x, "y": GROUND[x] + dy})
-    for i,(name,u) in enumerate([('珊瑚花园',260),('蓝洞沙谷',680),('海扇坡地',1030),('海藻森林',1350),('深海岩台',1690),('贝壳沙坪',2050)]):
+    for i,(name,u) in enumerate([('珊瑚花园',260),('蓝洞沙谷',680),('最深海沟',1130),('海藻森林',1350),('深海岩台',1690),('贝壳沙坪',2050)]):
         x=LAND+SPLIT+u;hs.append({'id':'expanded_'+str(i),'name':name,'x':x,'y':GROUND[x]-14})
     return hs
 
@@ -592,12 +606,17 @@ def fog(s):
     """Everything under the surface takes on the water colour with depth, so the
     floor, the earth and the creatures sit IN the water."""
     px = s.px[WL:, :, :3].astype(float)
-    f = np.clip(0.08 + (np.arange(WL, GH) - WL) / 420, 0, 0.62)[:, None, None]
+    f = np.clip(0.08 + (np.arange(WL, GH) - WL) / 420, 0, 0.62)
+    f = f[:, None, None]
     top = np.zeros_like(EARTH)                                       # the sand skin of the slope is IN the water
     for x in range(GW):
         top[GROUND[x]:GROUND[x] + 10, x] = True
     f = np.where((EARTH & ~top)[WL:, :, None], 0.0, f)
     s.px[WL:, :, :3] = (px * (1 - f) + WROWS[WL:, None, :] * f).astype(np.uint8)
+    # 最深海沟 (owner 2026-11-03): below the old basins everything, earth included, sinks into the dark
+    deep = np.clip((np.arange(GH) - WL - 470) / 150, 0, 0.8)[:, None, None]
+    night = np.array(rgba(P.reef_night[0])[:3], float)
+    s.px[:, :, :3] = (s.px[:, :, :3] * (1 - deep) + night * deep).astype(np.uint8)
 
 
 def bay(frame=0, clouds=True, life=True, plants=True, structures=True, sun=True):

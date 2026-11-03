@@ -1,7 +1,7 @@
 """Animated reef animals must remain connected and fit their sheet cells."""
 import sys
 from pathlib import Path
-sys.path[:0] = [str(Path(__file__).resolve().parents[1] / 'art/src/concept')]
+sys.path[:0] = [str(Path(__file__).resolve().parents[1] / 'art/src/concept'), str(Path(__file__).resolve().parents[1] / 'tools')]
 import sea_life as S
 import sea_life_motion as M
 
@@ -27,14 +27,14 @@ def components(sprite):
         sizes.append(size)
     return sizes
 
-for kind in list(S.FISH) + ['grouper', 'ulua', 'jelly']:
+for kind in list(M.REEF) + ['grouper', 'ulua', 'tang', 'shark', 'eagleray', 'jelly']:
     frames = M.frames(kind)
     assert len({f.px.tobytes() for f in frames}) >= 4, kind
     for i, f in enumerate(frames):
         assert len(components(f)) == 1, (kind, i, components(f))
         assert not f.px[0, :, 3].any() and not f.px[-1, :, 3].any(), (kind, 'vertical clipping')
         assert not f.px[:, 0, 3].any() and not f.px[:, -1, 3].any(), (kind, 'horizontal clipping')
-for kind in ['school', 'bluestripe', 'convict', 'bait_ball']:
+for kind in list(M.SCHOOL_FISH):
     expected = 14 if kind == 'bait_ball' else 8
     for f in M.frames(kind):
         assert len(components(f)) == expected, (kind, components(f))

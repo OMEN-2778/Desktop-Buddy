@@ -6,10 +6,13 @@ from functools import lru_cache
 import numpy as np
 from pixelkit import Sprite, Anim, P
 import sea_life as S
+import reef as RF
 import summer_sea as SS
 
-ALIASES={'tang':'yellow_tang','butterflyfish':'butterflyfish','shark':'whitetip','eagleray':'eagle_ray',
-         'ulua':'saddle_wrasse','grouper':'parrotfish','manta':'eagle_ray'}
+# owner 2026-11-03: every swimmer is a reef.py v2 sprite (the old sea_life fish are retired)
+REEF={**{k:f for k,(_,f) in RF.FISH.items()},**{k:f for k,(_,f) in RF.BIG.items() if k not in ('octopus','moray')}}
+ALIASES={'tang':'yellow_tang','shark':'whitetip','eagleray':'eagle_ray','ulua':'trevally'}
+SCHOOL_FISH={'school':RF.bait,'bait_ball':RF.bait,'bluestripe':RF.bluestripe_snapper,'convict':RF.convict_tang,'anthias':RF.anthias}
 
 def bend(s, phase, kind):
     """Inverse-sampled continuous flexion: intact torso, attached fins and tail.
@@ -19,22 +22,23 @@ def bend(s, phase, kind):
         flex=max(0,1-x/max(1,w*.68))**1.6
         for oy in range(h+10):
             y=oy-5
-            dy=math.sin(phase-x/w*1.8)*2.2*flex
+            dy=math.sin(phase-x/w*1.8)*(1.0 if w<14 else max(2.2,w*.04))*flex   # bigger animals sweep a wider tail, tiny bait barely
             if kind=='moorish_idol':
                 dy*=max(0,min(1,(y-h*.5)/max(1,h*.25)))
-            if kind in ('eagle_ray','manta','eagleray'):
+            if kind=='manta':                       # v2 manta faces us: the wing tips beat up and down
+                dy=math.sin(phase)*min(1,abs(x-w/2)/max(1,w/2))**1.5*3
+            elif kind in ('eagle_ray','eagleray'):
                 dy=math.sin(phase)*min(1,abs(y-h/2)/max(1,h/2))**1.5*2
-            elif kind=='turtle':
-                dy=math.sin(phase+(0 if y<h/2 else math.pi))*1.5*max(0,(abs(y-h/2)/max(1,h/2)-.35)/.65) if x<w*.7 else 0
+            elif kind=='turtle':                    # v2 turtle: the flippers (lower rows) stroke, front and back in turn
+                dy=math.sin(phase+(math.pi if x>w/2 else 0))*2*min(1,max(0,(y-h*.58)/(h*.42)))
             sy=round(y-dy)
             if 0<=sy<h:out.px[oy,x+4]=a[sy,x]
     return out
 
 @lru_cache(None)
 def frames(kind):
-    if kind in ('school','bluestripe','convict','bait_ball'):
-        species=S.bluestripe if kind=='bluestripe' else S.convict_tang if kind=='convict' else S.baitfish
-        spr=species() if kind in ('bluestripe','convict') else S.fish(7,3,P.sea_grey,T=2,TH=4,dorsal=(.3,.7,0),anal=(.3,.7,0),belly=P.porcelain)
+    if kind in SCHOOL_FISH:
+        spr=SCHOOL_FISH[kind]()
         cols=4 if kind=='bait_ball' else 3;rows=4 if kind=='bait_ball' else 3
         # Full padded swimmers fit in separate, staggered lanes without overlap/clipping.
         step_x,step_y=spr.w+12,spr.h+13;w,h=int(cols*step_x*1.35)+8,int(rows*step_y*1.35)+4
@@ -55,17 +59,9 @@ def frames(kind):
                 out.blit(fish,x,y)
             result.append(out)
         return tuple(result)
-    if kind in ('grouper','ulua'):
-        if kind=='grouper':
-            spr=S.fish(26,14,P.oak,peak=.61,blunt=1,T=6,tail='round',big_eye=True,
-                pattern=lambda t,v:P.walnut[1] if (int(t*43)+int(v*13))%9<2 else None)
-        else:
-            spr=S.fish(28,11,P.sea_grey,peak=.57,T=7,TH=14,tail='fork',fin=P.mustard,
-                pattern=lambda t,v:P.porcelain[2] if -.15<v<.1 else None)
-        return tuple(bend(spr,i*math.tau/8,kind) for i in range(8))
     key=ALIASES.get(kind,kind)
-    if key in S.FISH:
-        spr=S.FISH[key][1]();return tuple(bend(spr,i*math.tau/8,key) for i in range(8))
+    if key in REEF:
+        spr=REEF[key]();return tuple(bend(spr,i*math.tau/8,'manta' if key=='manta' else key) for i in range(8))
     if kind=='jelly':
         a=SS.jelly(0);result=[]
         for i in range(8):
@@ -83,5 +79,5 @@ def frames(kind):
     raise ValueError('No animated species: '+kind)
 
 def build():
-    keys=list(S.FISH)+['grouper','ulua']+['school','bluestripe','convict','bait_ball','jelly']
+    keys=list(REEF)+list(SCHOOL_FISH)+['jelly']
     return {'reef_motion_'+k:Anim(list(frames(k)),90) for k in keys}

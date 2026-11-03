@@ -1,8 +1,8 @@
 {
   "frame_w": 34,
-  "frame_h": 29,
+  "frame_h": 33,
   "anims": {
-    "reef_motion_humuhumu": {
+    "reef_motion_boxfish": {
       "row": 0,
       "frames": 8,
       "durations": [

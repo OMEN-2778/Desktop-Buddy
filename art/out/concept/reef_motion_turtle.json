@@ -1,6 +1,6 @@
 {
-  "frame_w": 44,
-  "frame_h": 32,
+  "frame_w": 72,
+  "frame_h": 40,
   "anims": {
     "reef_motion_turtle": {
       "row": 0,

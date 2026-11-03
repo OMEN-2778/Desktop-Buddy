@@ -1,0 +1,21 @@
+{
+  "frame_w": 129,
+  "frame_h": 117,
+  "anims": {
+    "reef_motion_anthias": {
+      "row": 0,
+      "frames": 8,
+      "durations": [
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90
+      ],
+      "loop": true
+    }
+  }
+}

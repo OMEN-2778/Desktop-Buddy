@@ -1,6 +1,6 @@
 {
-  "frame_w": 59,
-  "frame_h": 33,
+  "frame_w": 100,
+  "frame_h": 40,
   "anims": {
     "reef_motion_whitetip": {
       "row": 0,

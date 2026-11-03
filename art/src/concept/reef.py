@@ -59,6 +59,32 @@ def grow(mask):
     return g
 
 
+def keep_main(s):
+    """Drop stray pixel islands (8-connected): animated sprites must be one piece."""
+    m = s.px[..., 3] > 0
+    lab = np.zeros(m.shape, int)
+    best, best_n, n = 0, 0, 0
+    for y, x in zip(*np.nonzero(m)):
+        if lab[y, x]:
+            continue
+        n += 1
+        todo, cnt = [(y, x)], 0
+        lab[y, x] = n
+        while todo:
+            yy, xx = todo.pop()
+            cnt += 1
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    ny, nx = yy + dy, xx + dx
+                    if 0 <= ny < m.shape[0] and 0 <= nx < m.shape[1] and m[ny, nx] and not lab[ny, nx]:
+                        lab[ny, nx] = n
+                        todo.append((ny, nx))
+        if cnt > best_n:
+            best, best_n = n, cnt
+    s.px[m & (lab != best)] = 0
+    return s
+
+
 def paint(s, mask, colour):
     s.px[mask] = C(colour)
 
@@ -639,7 +665,7 @@ def whitetip():
     s.rect(ex, ey, 2, 2, P.ink[0])
     s.set(ex, ey, P.reef_pearl[4])
     s.hline(x0 + 60, x0 + 66, cy + 3, P.reef_pearl[1])
-    return s
+    return keep_main(s)
 
 
 def turtle():
@@ -860,7 +886,7 @@ def bait():
     s = Sprite(9, 4)
     s.hline(1, 6, 1, P.reef_grey[4])
     s.hline(1, 6, 2, P.reef_pearl[3])
-    s.set(0, 0, P.reef_grey[3]); s.set(0, 3, P.reef_grey[3])
+    s.set(0, 1, P.reef_grey[3]); s.set(0, 2, P.reef_grey[3])
     s.set(7, 1, P.reef_grey[2]); s.set(7, 2, P.reef_grey[2])
     s.set(6, 1, P.ink[0])
     return s

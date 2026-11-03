@@ -1,6 +1,6 @@
 {
-  "frame_w": 42,
-  "frame_h": 30,
+  "frame_w": 60,
+  "frame_h": 43,
   "anims": {
     "reef_motion_parrotfish": {
       "row": 0,

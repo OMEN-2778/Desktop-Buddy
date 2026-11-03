@@ -1,0 +1,21 @@
+{
+  "frame_w": 37,
+  "frame_h": 34,
+  "anims": {
+    "reef_motion_clownfish": {
+      "row": 0,
+      "frames": 8,
+      "durations": [
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90
+      ],
+      "loop": true
+    }
+  }
+}

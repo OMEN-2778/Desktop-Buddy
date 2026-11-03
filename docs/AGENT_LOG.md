@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Summer sea v2 wired: reef.py fish/corals replace sea_life ones (seaweeds kept, old small creatures removed),
+  animated via sea_life_motion (8 poses). Middle ridge -> 最深海沟 (DEEP 380, dark). check_sea_life_motion +
+  check_season_game_test/polish/living_world pass. Not in the 0.2 release (summer unreachable there).
+
+## 2026-11-03 · Claude Code
 - Owner: farmhouse furniture is one click (no ring menu; look-only spots walk + line; full need -> "现在不用");
   toilet: she sits (pose sit, no longer hidden); bath: head and shoulders above the tub rim. Chickens now live in the
   pasture fence (scene 5) with sheep and cows; older saves moved; 鸡窝 click/hover removed; animal sounds follow.

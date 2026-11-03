@@ -11,6 +11,7 @@ import summer_isle as SI
 import beach as BE
 import doll
 import sea_life as SL
+import reef as RF
 import sea_life_motion as MOT
 from pixelkit import Sprite, P
 
@@ -184,7 +185,7 @@ LIFE_TEXT = {
 
 
 def life():
-    speeds={'turtle':(60,4),'manta':(80,5),'jelly':(6,1),'eagleray':(50,5),'school':(70,9),'tang':(24,7),'butterflyfish':(20,6),'shark':(120,6),'grouper':(30,2),'ulua':(90,10)}
+    speeds={'turtle':(60,4),'manta':(80,5),'jelly':(6,1),'eagleray':(50,5),'school':(70,9),'tang':(24,7),'butterflyfish':(20,6),'shark':(120,6),'grouper':(30,2),'ulua':(90,10),'whitetip':(120,6),'trevally':(90,10),'barracuda':(110,9),'parrotfish':(50,5),'manta':(80,5),'turtle':(60,4),'anthias':(40,8),'clownfish':(10,4)}
     cache={}
     def poses(k):
         if k not in cache:cache[k]=[uri(f) for f in MOT.frames(k)]
@@ -214,7 +215,7 @@ def runtime_data():
         'solid': uri(solid_mask()),
         'chairs': [[cx, B.GROUND[cx] + 1] for cx, _ in B.CHAIRS],
         'hotspots': [dict(h, text=HOTSPOT_TEXT.get(h['id'],'沿着'+h['name']+'游了一圈，珊瑚和小鱼近得伸手就能碰到。')) for h in B.HOTSPOTS],
-        'lifeText': {**LIFE_TEXT,**{k:'在水中遇到了'+name+'，慢慢靠近看了一会儿。' for group in SL.GROUPS for k,(name,_) in group[1].items()}}, 'seal': [uri(SS.seal(0)), uri(SS.seal(1))], 'sealAt': [B.STACK[0] + 4, B.WL - 4],
+        'lifeText': {**LIFE_TEXT,**{k:'在水中遇到了'+name+'，慢慢靠近看了一会儿。' for group in RF.GROUPS for k,(name,_) in group[1].items()}}, 'seal': [uri(SS.seal(0)), uri(SS.seal(1))], 'sealAt': [B.STACK[0] + 4, B.WL - 4],
         'seaEnd': B.STACK[0] - 6,
     }
     return data

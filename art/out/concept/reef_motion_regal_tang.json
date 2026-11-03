@@ -1,0 +1,21 @@
+{
+  "frame_w": 40,
+  "frame_h": 36,
+  "anims": {
+    "reef_motion_regal_tang": {
+      "row": 0,
+      "frames": 8,
+      "durations": [
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90,
+        90
+      ],
+      "loop": true
+    }
+  }
+}

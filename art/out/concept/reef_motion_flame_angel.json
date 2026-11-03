@@ -1,8 +1,8 @@
 {
-  "frame_w": 45,
-  "frame_h": 29,
+  "frame_w": 35,
+  "frame_h": 37,
   "anims": {
-    "reef_motion_ulua": {
+    "reef_motion_flame_angel": {
       "row": 0,
       "frames": 8,
       "durations": [
