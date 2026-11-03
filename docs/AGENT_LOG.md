@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: no 搞笑/惆怅/悬疑 words on the 任务 panel; only the concrete place on the right; capsule frames. Cards and
+  place tags are pixel capsules (roundClip, radius = half height); place follows the current step (小溪边, 风车,
+  菜地…). Small houses (<200px tall, e.g. 25%) get a compact panel. check_quest_panel.js takes a scale; 25/50/100 pass.
+
+## 2026-11-03 · Claude Code
 - Owner: a 任务 panel like 人脉. New prototype/map-test/quest_panel.js (test page only, CSS injected): diary hover
   slides a 任务 button (pixel scroll icon, red count badge for new ones) out to its left; hovering it springs open a
   panel from the diary's top to the house's bottom; cards stagger in, unfinished first (big title, small next step,
