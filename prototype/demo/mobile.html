@@ -101594,6 +101594,13 @@ for (const ev of ["click", "pointerdown", "pointerenter", "keydown"]) document.q
   addEventListener("unhandledrejection", e => show(e.reason && (e.reason.message || e.reason)));
   setTimeout(() => { if (!booted) show("20 秒还没启动完：" + innerWidth + "×" + innerHeight); }, 20000);
 }
+// the desktop page makes room above the house for what opens there; on a phone every panel is a
+// full-frame sheet, and the fixed HUD never moves, so that loop only piled up --room-top (4000px+)
+// and pushed the page down on iPhone (owner: 点日记后画面下移、卡死)
+makeRoom = function () {
+  const desk = document.querySelector(".desk");
+  desk.style.removeProperty("--room-top"); desk.style.removeProperty("--room-left");
+};
 
 (async function boot() {
   let sv = null, st = null;

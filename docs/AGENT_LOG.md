@@ -6,6 +6,8 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-03 Claude: 主人说点日记后画面下移、卡死仍在。本地 Chromium + WebKit（iPhone 竖/横）都复现不出；发现手机版打开面板时 makeRoom 把 --room-top 累加到 4000px+（手机版不用，但每次都强制排版 12 次），已在 mobile.js 关掉。不确定是不是根因，等主人截图（出错提示条会显示报错）。
+
 ## 2026-11-03 Claude: 修启动崩溃：存档停在商场且正要去临时卫生间时，restoreMall 在图片加载前读 IMG.out.mall → 游戏起不来（主人 iPad 上的空白界面，靠新加的出错提示条定位）。改读 D.outside.mall.img。电脑版同样受影响，一并修好。用同类存档对比：旧版崩、新版正常。
 
 ## 2026-11-03 Claude: 主人在 iPad 分屏（Claude App 内）打开手机版：只有界面框，小屋/心情/时间条/日记都没出来＝启动卡在加载图片那段；Chromium 和 WebKit 本地都复现不出。手机版加了出错提示条（报错或 20 秒没启动完就显示原因），loadImg 报错带图片大小。等主人截图定位。
