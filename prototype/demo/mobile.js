@@ -142,8 +142,8 @@ const deskEl = document.querySelector(".desk");
     w.style.setProperty("--guide-h", gh + "px"); w.style.setProperty("--fig-h", Math.round(Math.min(gh * 0.3, (innerWidth - 40) * 0.42)) + "px");
   };
 }
-// settings that mean nothing on a phone (music: the one-file phone page carries only the short sounds)
-for (let i = SETTINGS.length - 1; i >= 0; i--) if (["界面大小", "置顶游戏", "更新", "背景音乐", "文字大小"].includes(SETTINGS[i].label)) SETTINGS.splice(i, 1);
+// settings that mean nothing on a phone (music stays: it streams from audio/BGM next to the page, owner 2026-11-03)
+for (let i = SETTINGS.length - 1; i >= 0; i--) if (["界面大小", "置顶游戏", "更新", "文字大小"].includes(SETTINGS[i].label)) SETTINGS.splice(i, 1);
 {
   const apply = applySettings;
   applySettings = function (st) { apply(st); prefs.scale = "auto"; };

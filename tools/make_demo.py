@@ -583,7 +583,7 @@ def main():
     html = html.replace("/*__PETS_CSS__*/", (SRC.parent / "pets.css").read_text())
     html = html.replace("/*__DEMO_DATA__*/null", blob)
     # the 手机版 page: the full game with a phone layout (mobile.js + mobile.css)
-    # (the phone page also travels as one file: every short game sound inside it, music stays out)
+    # (every short game sound inside it; the music streams from audio/BGM beside it, shipped with the page)
     inline_mobile = {name: base64.b64encode((audio_root / name).read_bytes()).decode("ascii") for name in audio_files if name.startswith("SFX/game/")}
     MOBILE.write_text(html.replace('<details class="console">', '<details class="console" hidden>').replace(json.dumps(inline_audio), json.dumps(inline_mobile)).replace("/*__TRIAL_JS__*/", "").replace("/*__MOBILE_JS__*/", "const MOBILE_CSS = " + json.dumps((SRC.parent / "mobile.css").read_text()) + ";\n" + (SRC.parent / "mobile.js").read_text()))
     print(f"{MOBILE.relative_to(ROOT)}: {len(MOBILE.read_text()) // 1024} KB")

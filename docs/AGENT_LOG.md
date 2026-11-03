@@ -6,6 +6,8 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-03 Claude: 手机版：人脉里点好友的操作菜单被人脉面板盖住（层级 60<70），已提到面板之上；check_mobile_frame.js 新增"新弹出的按钮被盖住"检查 + contactact 画面，全部画面通过（740x360）。手机版恢复「背景音乐」设置，BGM 从页面旁的 audio/BGM 流式加载（预览 artifact 已带上，除茵菲谷曲目）；H5 zip 仍不带音乐（10MB 限制）。
+
 ## 2026-11-03 Claude: 手机版新手教程独占整页（和其他面板一样填满手机画框）；图在左、字在右，长条图放上面，十页每页都不用滚动。mobile.css / mobile.js。
 
 ## 2026-11-03 Claude: 手机版页面在平板（iPad 分屏等）上不再旋转，改用等比缩放的横屏视图；只有短边<520 的触屏手机才旋转。

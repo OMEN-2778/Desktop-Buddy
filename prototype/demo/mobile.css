@@ -277,3 +277,5 @@ html.m .pop.say, html.m .peer-bubble, html.m .peer-bubble.story-bubble, html.m .
 html.m .peer-bubble span, html.m .pop.say span { color: #3d2a1e !important; }
 /* owner: the need bars + time bar stack exactly as tall as the house, top and bottom flush */
 html.m .status-row { bottom: auto !important; height: var(--m-house-h); }
+/* a friend's action ring opens over the 人脉 sheet, not under it */
+html.m .contact-actions { z-index: 74 !important; }
