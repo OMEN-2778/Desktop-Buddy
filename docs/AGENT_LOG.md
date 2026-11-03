@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: 茵菲谷 to 100 chance cards, 100 calls, 20 passers-by. New prototype/map-test/infei_more2.js (after
+  infei_more.js): +21 cards, calls 妈妈 +20 (36), 爸爸 +16 (28), friends +20 (36), passers-by +4. Totals checked in
+  the page: 100 cards (no duplicate titles, every outcome has its mood), 100 calls, 20 people; effects apply clean.
+  Friends have no written personas in the game, so friend calls vary by topic, not by person.
 - Summer seaweeds restored (straight 海草 = owner favourite, 2 per garden + old reef; 红藻/马尾藻), swimmers clamped
   above the seabed. check_season_living_world passes.
 
