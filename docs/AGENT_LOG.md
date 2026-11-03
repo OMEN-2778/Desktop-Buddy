@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-03 · Claude Code
+- Owner: 枫叶城 dialogue felt rough, no game feel. Rewrote every line of MAPLE_FULL_SCRIPT.md section 三 (live voices,
+  humour, a vivid protagonist, full punctuation); scene IDs, triggers, choices, branches, flags and both endings unchanged.
+  New tools/make_maple_script_docs.py rebuilds story-review full-script.html + maple-full-script.docx. Not wired into the game.
+
 ## 2026-11-03 Claude: 茵菲谷任务 NPC 出现时间放宽
 - 阿婆、老周 5–22 点；小满 6–21 点（原来分别 7–19、8–18、白天）。王叔仍只在夜里（磨坊剧情要夜里）。
 
