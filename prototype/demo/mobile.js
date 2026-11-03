@@ -127,6 +127,13 @@ const deskEl = document.querySelector(".desk");
       if (guideOn) sizeGuide();
     }
   };
+  // a wide picture (a strip) goes on top, a squarer one beside the words
+  const sp = showGuidePage;
+  showGuidePage = function (i, dir) {
+    sp(i, dir);
+    const pg = guideEl.querySelector(".gd-page"), im = pg.querySelector(".gd-fig img");
+    pg.classList.toggle("wide", !!im && im.getAttribute("width") / im.getAttribute("height") > 4);
+  };
   const sg = sizeGuide;
   sizeGuide = function () {
     sg();
