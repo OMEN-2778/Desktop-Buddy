@@ -7,6 +7,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: 0.2 big update with 茵菲谷, Windows + Mac. desktop.yml: version 0.2.<run>; web job runs
+  make_season_game_test.py --release (茵菲谷 only via airport, no cheats/test panel, player's own save keys);
+  copy-web.mjs adds AUDIO_LIBRARY/INFEI. Summer/autumn, 试玩版, web preview root unchanged. AGENTS/CLAUDE updated.
+- Release page passed: infei_home, infei_quests, spring_story (letter via test button), story_lock, quest_panel,
+  infei_hover, spring_life. Letter arrives on 写信日 in the real game. Not tested in the actual exe/mac app.
+
+## 2026-11-03 · Claude Code
 - Regression rerun after the story lock: 31 previously-passing main-game checks + 14 map-test checks
   (incl. check_story_lock) all pass. No code change.
 

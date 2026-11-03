@@ -42,3 +42,8 @@ if (process.env.BUDDY_TRIAL) {
   if (!existsSync(source)) throw new Error("Missing audio assets: " + source);
   cpSync(source, join(out, "audio", group), { recursive: true });
 }
+// 茵菲谷 (0.2, tools/make_season_game_test.py --release): its own music and sounds, only when the page uses them
+if (!process.env.BUDDY_TRIAL && readFileSync(src, "utf8").includes("BGM/infei/")) {
+  cpSync(join(audioSource, "INFEI", "BGM"), join(out, "audio", "BGM", "infei"), { recursive: true });
+  cpSync(join(audioSource, "INFEI", "SFX"), join(out, "audio", "SFX", "game"), { recursive: true });
+}

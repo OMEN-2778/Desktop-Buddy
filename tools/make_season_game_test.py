@@ -1,4 +1,8 @@
-"""Build a test-only full game with spring/summer scene adapters. Never changes EXE input."""
+"""Build the full game with the season-map adapters.
+  default: test-only page desktop/dist/map-test/index.html (all season maps, cheats, own save keys).
+  --release (owner 2026-11-03, version 0.2): the formal game with 茵菲谷 only (summer/autumn unreachable,
+  no cheats or test panel, the player's own save), written over prototype/demo/index.html for
+  desktop/scripts/copy-web.mjs. Run tools/make_demo.py first."""
 from pathlib import Path
 import json,sys,re,subprocess,tempfile
 ROOT=Path(__file__).resolve().parents[1]
@@ -110,17 +114,20 @@ def farm_story_source():
 def spring_data():
     d=SP.runtime_data(bare_farm=True);d['seasons']=infei_seasons(d['scenes']);return d
 
+RELEASE='--release' in sys.argv
+RELEASE_CHEATS='function installSeasonCheats(){return {flags:{},fillHero(){},fillPets(){},enforce(){}};}\n'
 def main():
     page=(ROOT/'prototype/demo/index.html').read_text()
+    assert 'seasonalTest' not in page,'run tools/make_demo.py first'
     # Changes below apply to this page only. The public trial and EXE stay untouched.
     page=page.replace('const cardHolds =','let cardHolds =')
     page=page.replace("bar:'酒吧'}","bar:'酒吧',spring_test:'茵菲谷',summer_test:'夏日海湾',autumn_test:'枫叶城'}")
     page=page.replace('const sceneHouseHeight=()=>','let sceneHouseHeight=()=>')
     page=page.replace("if(place==='park')","if(place==='autumn_test')return 'BGM/park/festival-streetlights.mp3';if(place==='spring_test')return 'BGM/infei/infei-'+(night?'night':season)+'.mp3';if(place==='airport_test')return 'BGM/infei/infei-airport.mp3';if(place==='summer_test')return 'BGM/harbor/dragon-boat-day.mp3';if(place==='park')")
-    for key in ['buddy-save','buddy-settings','buddy-look-v2','buddy-look-at']:
+    for key in ([] if RELEASE else ['buddy-save','buddy-settings','buddy-look-v2','buddy-look-at']):
         page=page.replace('"'+key+'"','"season-test-'+key+'"')
     autumn=(ROOT/'prototype/autumn/story.js').read_text()+(ROOT/'prototype/autumn/game.js').read_text()+'\nconst AUTUMN_MAP_DATA='+json.dumps(autumn_data(),ensure_ascii=False,separators=(',',':'))+';\n'
-    source=autumn+(ROOT/'prototype/season/effects.js').read_text()+controller('spring',spring_data())+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(ROOT/'prototype/map-test/cheats.js').read_text()+(ROOT/'prototype/map-test/adapter.js').read_text()
+    source=autumn+(ROOT/'prototype/season/effects.js').read_text()+controller('spring',spring_data())+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(RELEASE_CHEATS if RELEASE else (ROOT/'prototype/map-test/cheats.js').read_text())+(ROOT/'prototype/map-test/adapter.js').read_text()
     import base64
     airport_images={k:'data:image/png;base64,'+base64.b64encode((ROOT/('art/out/concept/'+k+'.png')).read_bytes()).decode() for k in ['airport_terminal','airport_vista','airport_terminal_front','airport_plane','airport_cabin','airport_cabin_front','trip_airport']}
     source+=farm_story_source()
@@ -129,10 +136,15 @@ def main():
     infei=[f'BGM/infei/{f.name}' for f in sorted((ROOT/'AUDIO_LIBRARY/INFEI/BGM').glob('*.mp3'))]+[f'SFX/game/{f.name}' for f in sorted((ROOT/'AUDIO_LIBRARY/INFEI/SFX').glob('*.mp3'))]
     k=page.index('const GAME_AUDIO_FILES = [')+len('const GAME_AUDIO_FILES = [')
     page=page[:k]+','.join(json.dumps(f) for f in infei)+','+page[k:]
+    if RELEASE:
+        source=source.replace('再测试季节地图吧','再出发吧').replace("label:'在季节地图探索'","label:'在茵菲谷'")
     mark='(async function boot() {'
     assert page.count(mark)==1
     page=page.replace(mark,source+'\n'+mark)
     page=page.replace('</style>',(ROOT/'prototype/map-test/style.css').read_text()+(ROOT/'prototype/demo/farm_ui.css').read_text()+'\n</style>',1)
+    if RELEASE:
+        page=page.replace('</style>','#seasonGameTest{display:none!important}\n</style>',1)
+        (ROOT/'prototype/demo/index.html').write_text(page);print('release page with 茵菲谷',round(len(page)/1024),'KiB');return
     page=page.replace('<title>Buddy 小屋</title>','<title>Desktop Buddy · 季节地图测试</title>')
     start=page.index('<script>')+8;end=page.index('</script>',start)
     with tempfile.TemporaryDirectory(prefix='buddy-season-test-') as tmp:

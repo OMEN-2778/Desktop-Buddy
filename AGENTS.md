@@ -46,7 +46,7 @@ Design docs: `docs/SEASON_MAPS.md`; 秋 story (final): `docs/story/MAPLE_FULL_SC
 
 ## Releases (do not change without the owner asking)
 - Pushes that touch the demo or `desktop/**` build the Windows app automatically
-  (`.github/workflows/desktop.yml`, full game, version 0.1.<run>) and the 试玩版
+  (`.github/workflows/desktop.yml`, full game, version 0.2.<run>) and the 试玩版
   (`.github/workflows/trial.yml`, tag `trial-v0.1.<run>`, pre-release). Just push; the
   workflows do the rest.
 - Installers and the updater's `latest.json` are published to the public downloads-only
@@ -58,6 +58,10 @@ Design docs: `docs/SEASON_MAPS.md`; 秋 story (final): `docs/story/MAPLE_FULL_SC
   never the minified output. Code must keep working when local names are mangled (global
   names are kept).
 - The public web preview root (`.github/workflows/preview.yml`) shows only the 试玩版.
+- **0.2 (owner 2026-11-03): 茵菲谷 is in the formal game.** The desktop workflow runs
+  `tools/make_season_game_test.py --release` after make_demo: same adapters as /map-test/ but only
+  茵菲谷 is reachable (airport), no cheats/test panel, the player's own save keys; copy-web.mjs adds
+  `AUDIO_LIBRARY/INFEI`. Summer/autumn stay test-only. The 试玩版 and the web preview root are unchanged.
 - Owner exception (2026-10-31): `/map-test/` is a separate **game-shell seasonal-map test**
   page (full game UI/needs/transition + test-only adapters). Owner explicitly said **do not
   put these maps into the formal version**. `make_season_game_test.py` injects them only
