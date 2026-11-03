@@ -279,3 +279,8 @@ html.m .peer-bubble span, html.m .pop.say span { color: #3d2a1e !important; }
 html.m .status-row { bottom: auto !important; height: var(--m-house-h); }
 /* a friend's action ring opens over the 人脉 sheet, not under it */
 html.m .contact-actions { z-index: 74 !important; }
+/* the diary sheet: its list fills the whole sheet (not the desktop pop's short scroller), plain rounded panel */
+html.m .diary-pop { display: flex; flex-direction: column; overflow: hidden !important; transform: none; transform-origin: 50% 50%; }
+html.m .diary-pop ol { flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto; overscroll-behavior: contain; }
+html.m .diary-pop::before { clip-path: none; border-radius: 16px; }
+html.m .diary-pop::after { clip-path: none; border-radius: 14px; }
