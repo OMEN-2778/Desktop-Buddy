@@ -286,3 +286,7 @@ Owner 2026-11-01: irregular randomized fish schools (no rectangular ranks), rock
 - Owner (2026-11-03): the middle ridge (u≈1130) is now 最深海沟, the deepest and darkest place:
   DEEP 250→380, basin depths kept as absolute rows, trench floor ≈712; water and earth sink to
   reef_night below WL+470. Hotspot 海扇坡地 -> 最深海沟. Board: docs/design/summer-sea-v2.png.
+- Owner (2026-11-03): "我的海草呢" — the sea_life seaweeds had been dropped with the old coral list; restored.
+  The straight 海草 (`SL.seagrass`) is the owner's favourite: two clumps in every garden plus five by
+  the old reef; 红藻/马尾藻 one per garden. Static swimmers are clamped above the seabed (shark/grouper
+  sat inside the earth).

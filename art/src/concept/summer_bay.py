@@ -510,6 +510,8 @@ def calm_decor():
         for k, dx in enumerate((-24, -12, 14, 26)):
             put(corals[(cx // 10 + k) % len(corals)], cx + dx)
     put(RF.tube_sponges, 250)
+    for x in (176, 236, 312, 690, 712):                               # the straight 海草 by the old reef too
+        put(SL.seagrass(x % 2), x, 2)
     put(RF.clown_home, 330)
     SS.shipwreck(d, 446, F[500] + 2)                                 # the wreck in its kelp
     for x in (420, 432, 560, 574, 588):
@@ -540,6 +542,11 @@ def calm_decor():
     for i,cx in enumerate(range(SPLIT+40,SPLIT+EXT-40,85)):
         for j in range(3+(i%3)):
             put(corals[(i*3+j)%len(corals)], cx+rng.randint(-26,26))
+        # the owner's seaweeds stay (sea_life 海草 / 红藻 / 马尾藻), one or two per garden
+        # the straight 海草 is the owner's favourite: two clumps in every garden
+        for j in range(2):
+            put(SL.seagrass(j), cx+rng.randint(-36,36), 2)
+        put([SL.limu, SL.sargassum][i%2], cx+rng.randint(-34,34), 2)
         if i%2==0:
             put(floor[(i//2)%len(floor)], cx, 3)
         if i%4==0:SS.tall_weed(d,cx+30,F[cx+30]+1,44+i%30,P.teal,seed=i+741)
@@ -580,7 +587,8 @@ def _life():
         if i%2==0:
             key,(_,fn)=schools[(i//3)%len(schools)]
             L.append((key,lambda f,fn=fn:fn(),x+22,max(50,y-55)))
-    return L
+    # every swimmer starts in open water, never inside the seabed (the shark and grouper sat in the earth)
+    return [(kind, f, x, min(y, SEAFLOOR[min(SEA_W - 1, x + 20)] - 44)) for kind, f, x, y in L]
 
 
 LIFE = _life()

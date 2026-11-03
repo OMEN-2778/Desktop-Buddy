@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Summer seaweeds restored (straight 海草 = owner favourite, 2 per garden + old reef; 红藻/马尾藻), swimmers clamped
+  above the seabed. check_season_living_world passes.
+
+## 2026-11-03 · Claude Code
 - Owner screenshot: passer-by bubble in 茵菲谷 squeezed to one character per line near the map's right edge.
   #seasonNpcBubble now width:max-content (max 300px) and people.js clamps its centre by half its width, so it stays
   whole and on the map. Checked at 25/50/100%: one line (was 3 lines, ~70px square).
