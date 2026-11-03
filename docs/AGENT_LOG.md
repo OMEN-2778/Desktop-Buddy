@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Regression rerun after the story lock: 31 previously-passing main-game checks + 14 map-test checks
+  (incl. check_story_lock) all pass. No code change.
+
+## 2026-11-03 · Claude Code
 - Owner: story talks must be immersive. Whole game (story_bubbles.js): storyLocked() = a story talk open or a
   STORY_HOLDS scene (茵菲谷 quest scene, mom's welcome round). Locked: no calls/texts/visits (canReceiveCall), no
   chance cards/moments/events, no stray speak(), no go_home/go_out; talk on screen stops the clock (cardHolds) so
