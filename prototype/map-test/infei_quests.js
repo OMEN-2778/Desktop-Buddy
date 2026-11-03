@@ -8,7 +8,7 @@
 const infeiQuests=(function(){
  const X=springFarm.X,T=seasonMapTest,C=()=>T.state.spring,S=()=>X.F,inSpring=()=>sim.place==='spring_test';
  const today=()=>Math.floor(sim.t/1440),hour=()=>sim.t%1440/60,night=()=>hour()>=19||hour()<4,me=()=>nameOf();
- const Q=()=>{const F=S();F.quests??={};for(const k of ['mill','letter','prints','stew'])F.quests[k]??={step:0};return F.quests;};
+ const Q=()=>{const F=S();F.quests??={};for(const k of Object.keys(RUN))F.quests[k]??={step:0};return F.quests;};
  // ---------------------------------------------------------------- villagers (fixed looks, seeded)
  function seeded(seed,f){const r=Math.random;let s=seed;Math.random=()=>(s=s*16807%2147483647)/2147483647;try{return f();}finally{Math.random=r;}}
  function villager(name,gender,seed,o={}){let lk;for(let k=0;k<60;k++){lk=seeded(seed+k*977,npcLook);if(lk.gender===gender)break;}
@@ -19,7 +19,7 @@ const infeiQuests=(function(){
   wang:villager('王叔','m',23,{scene:2,x:238}),
   apo:villager('阿婆','f',37,{scene:0,x:178,grey:true}),
   zhou:villager('老周','m',51,{scene:2,x:112})};
- const visible=v=>{const q=Q();
+ const visible=v=>{const q=Q();if(v.vis)return v.vis(q);
   if(v===V.wang)return q.mill.step===1&&night();
   if(v===V.xiaoman&&q.prints.step===3&&night())return 'farm';
   if(v===V.xiaoman)return hour()>=6&&hour()<21;
@@ -38,6 +38,7 @@ const infeiQuests=(function(){
   if(q.prints.step===1)g.push({id:'prints',spot:'reeds',mark:'?',hint:'顺着脚印往西找，小溪那边'});
   if(q.prints.step===2)g.push({id:'prints',v:V.xiaoman,mark:'?',hint:'问问小满'});
   if(q.prints.step===3)g.push({id:'prints',auto:4,hint:'晚上去菜地等着'});
+  for(const f of MORE_GOALS)g.push(...f(q));
   return g;}
  // ---------------------------------------------------------------- dialogue helpers (the story's own rows)
  const speech=springFarm.speech;let busy=false;
@@ -73,7 +74,7 @@ const infeiQuests=(function(){
  async function approach(v){const s=C().state,p=where(v);await walkTo(p.x+(s.x<p.x?-16:16));v.dir=s.x<p.x?-1:1;s.facing=-v.dir;}
  // ---------------------------------------------------------------- 风车里的怪声
  async function mill0(){
-  await say('小满','姐姐，你是新搬来那家的吧？');
+  await say('小满','你是新搬来那家的吧？');
   await say(me(),'嗯，前面那个农舍。');
   await say('小满','那我跟你说个事，你别告诉别人。');
   await say('小满','风车里头，一到晚上就有东西叫。');
@@ -228,11 +229,16 @@ const infeiQuests=(function(){
   sim.needs.hunger=Math.min(100,sim.needs.hunger+25);
   finish('stew','老周的茵菲谷乱炖做好了，咸了一点。');}
  const RUN={mill:[mill0,mill1,mill2],letter:[letter0,letter1,letter2],prints:[prints0,prints1,prints2,prints3],stew:[stew0,stew1,stew2]};
+ const MORE_GOALS=[];
+ const spotAt=(sc,x,y)=>busy?null:goals().find(g=>{const sp=g.spot&&SPOTS[g.spot];if(!sp||sp.scene!==sc)return false;const [rx,ry,w,h]=sp.rect;return x>=rx&&x<rx+w&&y>=ry&&y<ry+h;});
+ // more side quests from other files (infei_side.js): the same tables, filled in
+ function register(o){const id=o.id;RUN[id]=o.run;TITLE[id]=o.title;KIND[id]=o.kind;END[id]=o.end;HOME[id]=o.home;PLACE[id]=o.place;SCENE[id]=o.scenes;SCENE_ICON[id]=o.icons;
+  MOODS[id]=ML_(id,...o.mood);Object.assign(V,o.villagers||{});Object.assign(IDLE,o.idle||{});Object.assign(SPOTS,o.spots||{});if(o.goals)MORE_GOALS.push(o.goals);}
  const run=id=>{const st=Q()[id].step,fn=RUN[id][st];if(fn)scene(fn,id);};
  // ---------------------------------------------------------------- talking to someone with nothing new
  const IDLE={xiaoman:[['小满','你看见我妈没？'],['小满','我捉到一只蚂蚱，又跑了。']],apo:[['阿婆','坐会儿吧，石头不凉。'],['阿婆','今天水流得急，夜里上头下过雨。']],
   zhou:[['老周','饭馆中午忙，我出来透口气。'],['老周','你那胡萝卜，水灵。']],wang:[['王叔','嘘——']]};
- async function chat(key){const [who,line]=pick(IDLE[key]);await say(who,line);}
+ async function chat(key){const [who,line]=pick(IDLE[key]||[[V[key].name,'嗯？']]);await say(who,line);}
  function talk(key){const v=V[key],g=goals().find(g=>g.v===v);scene(async()=>{await approach(v);if(g)await RUN[g.id][Q()[g.id].step]();else await chat(key);},g?.id);}
  // ---------------------------------------------------------------- drawing: villagers, marks, the rabbit
  const rabbit={on:false};
@@ -244,7 +250,7 @@ const infeiQuests=(function(){
    const s=C().state;if(!busy&&Math.abs(s.x-p.x)<40)v.dir=s.x<p.x?-1:1;
    const f={expr:'neutral',look:v.dir,bob:0,sway:0,wave:null};ctx.drawImage(npcCanvas(v,f,'stand'),Math.round(p.x)-10,103-27);
    const g=gs.find(g=>g.v===v);if(g&&!busy)mark(ctx,p.x,103-30-(v.kid?-4:0)+Math.round(Math.sin(t*3)),g.mark);}
-  for(const g of gs)if(g.spot&&SPOTS[g.spot].scene===info.region&&!busy){const sp=SPOTS[g.spot];mark(ctx,sp.x,sp.rect[1]+18+Math.round(Math.sin(t*3)),'?');}
+  for(const g of gs)if(g.spot&&SPOTS[g.spot].scene===info.region&&!busy){const sp=SPOTS[g.spot];mark(ctx,sp.x,sp.rect[1]+18+Math.round(Math.sin(t*3)),g.mark||'?');}
   if(rabbit.on&&info.region===4)bunny(ctx,318,103,t);
   if(Q().prints.rabbit==='farm'&&info.region===3&&!night())bunny(ctx,104+Math.round(Math.sin(t*.4)*6),103,t);
   autoTick(info);});
@@ -255,11 +261,11 @@ const infeiQuests=(function(){
   // 小满 keeps her word: one dry bed watered a day once the rabbit lives on the farm
   if(q.prints.rabbit==='farm'&&q.prints.water!==today()&&hour()>=8){q.prints.water=today();const b=Object.values(S().beds).find(b=>b.watered!==today()&&!X.ripe(b));if(b){b.watered=today();log('小满来看兔子，顺手浇了一块地。');}}}
  // ---------------------------------------------------------------- clicks + the quest list
- X.hooks.click.push((x,y,s)=>{if(s.inside||busy)return false;
+ const hit=(x,y,s)=>{if(s.inside||busy)return false;
   for(const [key,v]of Object.entries(V)){if(!visible(v))continue;const p=where(v);if(p.scene===s.scene&&Math.abs(x-p.x)<10&&y>103-30&&y<104){talk(key);return true;}}
-  const q=Q(),[rx,ry,w,h]=SPOTS.mill.rect;if(s.scene===2&&q.mill.step===1&&x>=rx&&x<rx+w&&y>=ry&&y<ry+h){run('mill');return true;}
-  const r=SPOTS.reeds.rect;if(s.scene===0&&q.prints.step===1&&x>=r[0]&&x<r[0]+r[2]&&y>=r[1]&&y<r[1]+r[3]){run('prints');return true;}
-  return false;});
+  const g=spotAt(s.scene,x,y);if(g){run(g.id);return true;}
+  return false;};
+ X.hooks.click.push(hit);
  const TITLE={mill:'风车里的怪声',letter:'溪边的阿婆',prints:'菜地里的脚印',stew:'老周的乱炖'},KIND={mill:'windmill',letter:'letter',prints:'footprints',stew:'stew'};
  const END={mill:'原来是王叔在练唢呐',letter:'替阿婆回了一封信',prints:'小偷是一只伤了腿的兔子',stew:'乱炖咸了一点'};
  const STEP={letter:['','送阿婆一筐菜（仓库里拿）','明天去溪边吃阿婆的饼子'],stew:['','给老周送三样不同的菜','明天去找老周尝乱炖']};
@@ -277,6 +283,6 @@ const infeiQuests=(function(){
   // offered (someone has a "!") is not listed: only quests she has taken (owner 2026-11-03)
   return out;});
  X.hooks.pick.quests=()=>questBoard.open();
- return {V,Q,goals,run,talk,at:v=>visible(v)?where(v):null,spots:SPOTS,list:()=>questBoard.open(),get busy(){return busy;},rabbit};
+ return {V,Q,goals,run,talk,spotAt,hit,register,kit:{say,ask,walkTo,finish,crops,take,note,me,today,hour,night,villager,approach,X,S,C},at:v=>visible(v)?where(v):null,spots:SPOTS,list:()=>questBoard.open(),get busy(){return busy;},rabbit};
 })();
 window.infeiQuests=infeiQuests;

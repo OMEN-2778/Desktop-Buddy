@@ -187,6 +187,7 @@ const springFarm=(()=>{
   const r=view.getBoundingClientRect(),x=(e.clientX-r.left)*342/r.width+(s.camera||0),y=(e.clientY-r.top)*c.canvas.height/r.height;
   if(Math.abs(x-s.x)<10&&y<s.y&&y>s.y-28)return;   // clicks on her still open her own ring
   if(F.phase==='meet'&&!s.inside){if(s.scene===mom.scene&&momAt(x,y)){e.stopPropagation();e.preventDefault();greet();}return;}
+  if(!s.inside&&s.scene===4&&F.phase==='done'&&window.infeiQuests?.hit(x,y,s)){e.stopPropagation();e.preventDefault();return;}   // someone standing by the plots
   if(!s.inside&&s.scene===4&&['sow','water','done'].includes(F.phase)){const i=bedAt(x,y);if(i==null)return;e.stopPropagation();e.preventDefault();openBed(i);return;}
   if((F.phase==='done'||s.inside)&&X.hooks.click.some(f=>f(x,y,s))){   // the farmhouse works in every phase (owner 2026-11-03)
    e.stopPropagation();e.preventDefault();}

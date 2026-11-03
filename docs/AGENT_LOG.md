@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-03 Claude: 茵菲谷每个场景各加一条支线（infei_side.js）
+- 小吴的包裹(郁金香田)、林老师的速写(小溪边)、老蔡的蜂(油菜花田→果园)、门口的小狗(农舍门口)、刘婶借菜(菜地)、阿木的口琴(牧场/果园)。
+- 给任务的人按天随机出现（种子掷骰），接了任务后每天都在；完成后偶尔出来闲聊。
+- infei_quests.js 加了 register()/spotAt()/hit()，地点点击和悬停改为通用；菜地上站着的人先于菜畦接点击。小满不再叫“姐姐”。
+- 测试：tools/check_infei_side.js（6 条全走完）。
 ## 2026-11-03 · Claude Code
 - Owner: 枫叶城 dialogue felt rough, no game feel. Rewrote every line of MAPLE_FULL_SCRIPT.md section 三 (live voices,
   humour, a vivid protagonist, full punctuation); scene IDs, triggers, choices, branches, flags and both endings unchanged.

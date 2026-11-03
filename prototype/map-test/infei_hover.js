@@ -24,9 +24,7 @@ const infeiHover=(function(){
   if(f.phase!=='done')return null;
   const Q=window.infeiQuests;
   if(Q)for(const v of Object.values(Q.V)){const p=Q.at(v);if(p&&p.scene===sc&&Math.abs(x-p.x)<10&&y>103-30&&y<104)return {npc:v,x:p.x};}
-  if(Q){const q=Q.Q(),m=Q.spots.mill,r=Q.spots.reeds;
-   if(sc===2&&q.mill.step===1&&x>=m.rect[0]&&x<m.rect[0]+m.rect[2]&&y>=m.rect[1]&&y<m.rect[1]+m.rect[3])return rect(...m.rect);
-   if(sc===0&&q.prints.step===1&&x>=r.rect[0]&&x<r.rect[0]+r.rect[2]&&y>=r.rect[1]&&y<r.rect[1]+r.rect[3])return rect(...r.rect);}
+  if(Q){const g=Q.spotAt(sc,x,y);if(g)return rect(...Q.spots[g.spot].rect);}
   const winter=X.seasonAt(X.today?.()??Math.floor(sim.t/1440))===3,A=infeiFarm.ANIMAL;
   const animal=sce=>!winter&&[...(f.animals||[])].reverse().find(a=>a.x!=null&&5===sce&&Math.abs(x-a.x)<A[a.kind].size[0]/2+2&&y<=a.y+2&&y>=a.y-A[a.kind].size[1]-10);
   if(sc===5){
