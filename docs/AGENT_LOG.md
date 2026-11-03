@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: leaving the farmhouse always lands at its door (spring/viewer.js advanceDoor: scene 'home'), not in the
+  scene she went in from. Owner: double the 茵菲谷 chance cards and talk: new prototype/map-test/infei_more.js
+  (injected after infei_farm.js): 41 cards (beds, valley, animals, trees, family; season-neutral, farmIf where it
+  needs a crop/animal/tree), calls 妈妈 +8, 爸爸 +6, friends +8, passers-by +8. Now 79 cards, 44 calls, 16 people.
+  home, spring_story, infei_quests pass; all new outcomes load with moods and apply without errors.
 - Summer sea v2 wired: reef.py fish/corals replace sea_life ones (seaweeds kept, old small creatures removed),
   animated via sea_life_motion (8 poses). Middle ridge -> 最深海沟 (DEEP 380, dark). check_sea_life_motion +
   check_season_game_test/polish/living_world pass. Not in the 0.2 release (summer unreachable there).

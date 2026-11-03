@@ -15,7 +15,7 @@ function target(x,y=103,after=null){state.route=[];state.after=after;if(state.in
 function enter(){target(182,103,()=>beginDoor(true));}
 function leave(){if(state.inside)target(51,108,()=>beginDoor(false));}
 function beginDoor(to){if(state.door)return;keys.clear();state.target=null;state.after=null;state.door={to,elapsed:0,duration:.65,mid:false};}
-function advanceDoor(dt){const d=state.door;if(!d)return;d.elapsed+=dt;if(!d.mid&&d.elapsed>=d.duration/2){d.mid=true;state.inside=d.to;state.x=d.to?51:182;state.y=d.to?108:103;state.camera=0;updateUI();}if(d.elapsed>=d.duration)state.door=null;}
+function advanceDoor(dt){const d=state.door;if(!d)return;d.elapsed+=dt;if(!d.mid&&d.elapsed>=d.duration/2){d.mid=true;state.inside=d.to;state.x=d.to?51:182;state.y=d.to?108:103;state.camera=0;if(!d.to)state.scene=Math.max(0,DATA.scenes.findIndex(s=>s.id==='home'));updateUI();}if(d.elapsed>=d.duration)state.door=null;}
 function exitArrow(){ctx.fillStyle='#e9eee2';ctx.fillRect(7,88,22,22);ctx.strokeStyle='#526578';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(22,93);ctx.lineTo(14,99);ctx.lineTo(22,105);ctx.stroke();}
 function move(dt){state.walk=false;if(state.paused||!state.loaded||state.door)return;
  const dir=(keys.has('ArrowRight')||keys.has('d')||keys.has('D')?1:0)-(keys.has('ArrowLeft')||keys.has('a')||keys.has('A')?1:0);
