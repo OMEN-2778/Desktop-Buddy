@@ -1,0 +1,468 @@
+2026-10-19 10:15  3ae488f  Initial commit
+2026-10-19 04:35  c4fea67  Add pixelkit art toolchain, pixel-art skill, and style concept
+2026-10-19 04:40  eac2f24  Redesign the boy character
+2026-10-19 04:50  318d71d  Restore the boy's original hair; add player color system and creator prototype
+2026-10-19 04:52  8770b76  Restyle the character creator as pixel UI
+2026-10-19 04:59  200c7e6  Redesign the house: two storeys, five rooms, no roof
+2026-10-19 05:09  a242513  Calm, realistic house restyle
+2026-10-19 05:30  6a7411b  Switchback stairs, seamless closed walls, door animation
+2026-10-19 05:48  2f03eb6  Add playable life-sim demo
+2026-10-19 06:02  34122cb  Demo: house-only screen with hover-to-expand needs
+2026-10-19 06:11  d04a614  Needs bars open leftward only, flush with the house, with icons
+2026-10-19 06:15  cf25e7b  Needs bars: thicker ring, spring pop-out, crawling stripes
+2026-10-19 06:18  9da467c  Needs bars: icon on the left, fill starts after it
+2026-10-19 06:20  62700fe  Need icons: smaller, chibi style
+2026-10-19 06:36  3b347ac  Demo: click furniture to direct Buddy, richer activities
+2026-10-19 07:24  fd9a01c  Buddy 造型室: layered wardrobe with many more styles
+2026-10-19 07:36  a02df0b  Afro hairstyle; beanie and headphones no longer clip
+2026-10-19 08:14  066802b  Demo: sky bar with seasons and weather; body under the duvet when asleep
+2026-10-19 08:24  42ffd78  Sky bar overlaps the roof; crisp sun; taller body under the duvet
+2026-10-19 08:28  0331db7  Sleeping duvet: one soft round mound that rises above the head
+2026-10-19 08:29  40ce4ab  Sleeping duvet: left side beside the head stands taller than the head
+2026-10-19 08:36  403b2c7  Sleeping duvet crown level with its left edge; weather drawn behind Buddy
+2026-10-19 08:43  f626ca1  Night: Buddy's room lit like day; windows cycle with curtains; sky-only upstairs
+2026-10-19 08:46  40f9467  Sky bar back to its place just above the house
+2026-10-19 08:55  ed3b9f7  Sky bar a touch lower: 1px gap above the roof
+2026-10-19 10:51  d3910e5  Mood UI preview: emotion emoji frame with diary and thought bubbles
+2026-10-19 11:41  02ed84e  Mood UI: centred emoji, thought bubble to the house's right edge, bigger text, no diary bubble
+2026-10-19 12:00  5503d30  Mood UI: thought bubble text twice as big (24px on phones)
+2026-10-20 01:09  3fb7dc2  New house layout: stairwell in the middle, front-view stairs, back-view climbing
+2026-10-20 01:37  4cacf6b  Emotions, social + bladder needs, ring menu, collapse and revive
+2026-10-20 01:45  daf127d  Rounder ring-menu buttons and speech bubble
+2026-10-20 01:51  769c4ab  Settings gear at the top-right with a time-speed row
+2026-10-20 01:54  5548cda  Speed buttons as pixel glyphs: pause bars, one and two triangles
+2026-10-20 02:12  af132a6  Mood details as a row of pills in the speech bubble's place
+2026-10-20 02:18  275f637  Speech bubble tail drawn as part of one pixel outline
+2026-10-20 02:23  2f2513d  Conjured computer chair: she sits in it to use the computer
+2026-10-20 02:42  eced5c7  Naming: give Buddy a name, say it (and 她/他) everywhere
+2026-10-20 03:14  28cc7bd  Saves, interface size, always-on-top, and a desktop app (Tauri)
+2026-10-20 03:16  fa12b34  Export the save through claude.ai's download prompt
+2026-10-20 03:21  279b5a1  Notes: desktop app gotchas (charset, first size, hidden webview)
+2026-10-20 06:07  badf51e  Desktop app: drag the window by the house; sizes down to 1:1 screen pixels
+2026-10-20 06:37  030eec7  Settings over the mood emoji, opening right; autosave every 5 minutes or off
+2026-10-20 06:46  9693246  Mood row spans the house only, so the emoji and gear line up with its left edge
+2026-10-20 07:02  75034d3  造型室 and diary open upward without moving the house; slower pace
+2026-10-20 07:33  fd91ddc  Text x6 with variants and catalogs; tidier settings, diary box and sleep Zs
+2026-10-20 11:08  6c0146b  One 48px row for emoji, gear, diary and words; settings on a grid; 4 speeds
+2026-10-20 11:14  c07963d  Events: more condition tags (room, needs, mood), events that send her off to do something, event chains engine
+2026-10-20 11:19  3bc6369  Events at ~6x the doc's original: 46 new events and 8 event chains
+2026-10-20 11:33  5b2f427  Pick-a-thing panel with pixel pictures; dishes with their own fill, time and effects
+2026-10-20 11:47  7cf0a38  Panels cover the house exactly; fridge and table open the dish panel; 薄荷炸排骨
+2026-10-20 11:55  d4decb8  The cooked dish is the one on the table; panel items keep their full size
+2026-10-20 12:11  54d761f  Diary: an activity is written down when she gets there and starts, not when she sets off
+2026-10-20 12:13  2c254cc  Mood emoji: a dark grey sleeping face the whole time she's asleep
+2026-10-20 12:38  8581fdd  Pick-a-thing panel grows out of the clicked furniture and shrinks back into it
+2026-10-20 16:03  472304e  Time bar: today's festival (or birthday) in a little tag right of the sun / moon, fading when it no longer fits; festivals can send her off and have a later result
+2026-10-20 16:06  f9a445f  12 invented festivals (彩票日, 赖床节, 甜品节, 怪兽夜…) with tags on the time bar
+2026-10-20 16:39  fb597ce  Chance cards: the user's 100 cards pop out of Buddy with two choices
+2026-10-20 17:03  b935c48  Chance cards: dim the house instead of covering it, stop the clock, louder mood pill
+2026-10-20 17:05  50a3192  Chance cards: the result and its mood pill pop out within a second
+2026-10-20 17:18  8e97514  Chance cards speak, hit harder; emoji colours per emotion
+2026-10-20 17:23  e89e07f  Chance cards really grow out of Buddy
+2026-10-20 17:27  a88f5a3  Speech bubble: no tail, round at both ends, two little bubbles to the emoji
+2026-10-20 17:30  6706a56  Speech bubble text in bold
+2026-10-20 17:36  ba5683c  Chance cards: moment triggers (bath, toilet, cooking, stairs, windows...)
+2026-10-20 17:41  5365b36  100 more chance cards, most of them for a moment
+2026-10-20 17:53  fa3d284  Potted plants stay in front of the windows
+2026-10-21 01:00  88db137  Video chats with 爸爸 / 妈妈 / friends and four forums, 170 conversations
+2026-10-21 01:10  2bd0bb4  Ring menus: no overlapping pills, every label in full, kept in the house
+2026-10-21 01:45  b620d0c  Going out: the front door ring and 家门口, the street side of the house
+2026-10-21 01:45  041eb0b  家门口 art outputs
+2026-10-21 01:59  a33edea  家门口, redrawn: detailed, alive, changing with the seasons
+2026-10-21 02:40  0749412  公园, 商场, 海边: three new places to go
+2026-10-21 02:54  580d8a9  Park fuller, the seaside a simple dock, the mall in layers with shops
+2026-10-21 03:13  d83ae56  Strangers out there, and 1,400 lines of what's said
+2026-10-21 03:15  77c4cac  A little triangle over her head outside, in her lowest need's colour
+2026-10-21 05:52  0a051b9  Chance cards can come out and about (each place its own deck, cards to follow)
+2026-10-21 06:03  66e4b92  200 chance cards out and about: 50 each for the front, park, mall and dock
+2026-10-21 06:22  ac8b238  Trip transition to the park / dock / mall; no outdoor leftovers by the house
+2026-10-21 06:25  ba6b496  Trip icons redrawn: shaded, outlined stickers with more detail
+2026-10-21 06:29  478d24e  Trip screen: drifting place pattern, strip edges and a stitched frame
+2026-10-21 06:32  351b267  Trip screen: no frame, just the drifting pattern
+2026-10-21 07:01  51ac085  Her words and the diary line shrink, then wrap, instead of being cut off; both sit closer to the emoji
+2026-10-21 07:05  d5d88df  docs: every chance card (400) as Word + Markdown
+2026-10-21 07:20  2e611d7  Settings as in the user's sketch (desktop too, 导出 via a save dialog); bubble grows upward and the diary slides up; time tooltip above, animated; outdoor cards more often
+2026-10-21 07:58  9bde675  新手教程: an illustrated guide (real screenshots with numbered marks) that opens the first time and from 设置 → 存档 → 教程
+2026-10-21 08:13  a15f563  Shorter guide (8 brief pages); calls and video chats keep their whole conversation in the diary; others' lines in the name's colour; phone calls play real talks
+2026-10-21 08:24  501d732  Desktop app updates itself from GitHub releases: CI signs and publishes each build with latest.json; the app checks, offers 更新, installs and restarts
+2026-10-22 01:16  3bdaccf  Desktop app CI: a hand-started run publishes a release too
+2026-10-22 01:50  1089681  Updates for the portable exe too, and seamless: download quietly, swap the exe at a quiet moment, restart where the window was; 设置 → 更新 (自动更新 / 只提醒, 检查更新)
+2026-10-22 01:58  0f512fb  Settings open upward; 教程 under the 存档 label; the app keeps room above the house (no window moves, no flash) and lets clicks through its see-through parts
+2026-10-22 02:21  6366e24  Desktop app releases: also a zip of the portable exe (browsers block the bare .exe)
+2026-10-22 02:33  8ad9ed0  Settings over a small house: exactly as wide as the house, edge to edge (the phone rule no longer applies in the app)
+2026-10-22 02:40  4629b44  Update bar above the diary box, off the house
+2026-10-22 02:43  4b4243c  Updates: fall back to GitHub mirrors when the download fails, retry file moves, show why it failed and log it to update.log
+2026-10-22 03:06  e2bba11  Moodlets: pointing at 还有 N 个 shows them all, growing upward while the diary box slides up
+2026-10-22 03:16  37c03f8  Add the ponytail skill (smallest complete change, short replies), from DietrichGebert/ponytail v5.3.2 (MIT)
+2026-10-22 03:19  e4f1932  Add CLAUDE.md: what the game is, where things are, the after-a-change routine
+2026-10-22 03:28  22fb71f  Moodlets: the open list folds back only when the mouse leaves the whole box, not on gaps between pills or click-through spots
+2026-10-22 04:00  e0253f8  Phone calls get their own 打电话 menu (爸爸/妈妈/朋友) and CHATS.call; forum browsing is archived in the diary too; check_chats.js validates conversation files
+2026-10-22 04:01  4f75f37  Phone call conversations: 50 each with 爸爸, 妈妈 and a friend
+2026-10-22 04:04  487a462  Forums: 70 more posts each (now 100); all four forum visits are archived in the diary too; docs
+2026-10-22 04:23  1b6040a  She goes out to play by herself now and then: park, mall, beach or the doorstep by season, weather and hour, and comes home after a while
+2026-10-22 08:16  75b367a  Outings by night and by mood: sad she goes to the dock or park to be quiet; hundreds of new lines for leaving, musing and heading home
+2026-10-22 08:18  5413cba  App icon: the little house with its window lit (a heart in it) instead of Buddy's head, since her look is the player's choice
+2026-10-22 15:22  3586d7c  Add GitHub Pages browser preview workflow
+2026-10-22 15:41  9bb1095  Add a quiet bar scene to the browser preview
+2026-10-22 16:16  1e3d9a6  Bring After Hours to life with drinks, conversations and performances
+2026-10-22 16:28  7ec151f  Redraw the sky-bar moon as a pearly crescent
+2026-10-22 17:00  2de4958  Add guardian-angel rescue, sleep chance cards and true sitting poses
+2026-10-22 17:03  f2136c2  Package the latest game for Windows and in-app updates
+2026-10-23 01:49  da386da  Expand the park into five walkable areas with interactive benches
+2026-10-23 02:43  fcdba01  Add park restroom and cherry-grove oden stall with autonomous needs routes
+2026-10-23 03:02  5eb0e39  Fix bar return freeze, refine bar lighting and moon, package park services
+2026-10-23 03:13  b8d864d  Make the existing Ponytail skill discoverable by Codex
+2026-10-23 03:20  4bab488  Prioritize urgent needs throughout mall visits and keep collapsed shoppers visible
+2026-10-23 03:37  8cb9235  Unify interactive hover outlines around actual object silhouettes across all scenes
+2026-10-23 04:15  3d84bf2  Refine park scenery and lighting, fix pedestrian layers, add Japanese dishes and service cards
+2026-10-23 04:43  2ea9334  Add consistent outdoor dusk skies, occasional rose sunsets and a setting sun at the dock
+2026-10-23 06:08  24aa6ec  Add usable bar and mall restrooms with autonomous WC searches
+2026-10-23 06:55  a8e94f9  Add mall dining and cinema interiors, seasonal thunderstorms and quiet park transitions
+2026-10-23 07:05  375d7a7  Make lightning an instant white flash and intensify thunderstorm rainfall
+2026-10-23 07:24  3772e2a  Refine mall interior perspective and install Pixelorama scene tooling
+2026-10-23 07:42  cae4c12  Add slower multi-pulse lightning at 80% opacity with window light spill
+2026-10-23 07:55  838cd58  Restore soft indoor lightning and add outdoor bolt afterimages
+2026-10-23 08:50  bd13ac9  Install UI layout and motion design skills with source provenance
+2026-10-23 13:55  2111450  Add compact HUD, contacts and animated incoming calls
+2026-10-23 14:25  c0cc494  Unify social HUD pixel styling and stagger needs animations
+2026-10-23 14:40  325e715  Refine contacts icon and remove dark call button rims
+2026-10-23 14:55  05d948f  Add pixel relief and press feedback to social controls
+2026-10-23 15:06  5d47ca3  Add contacts for vertical scrolling and simplify HUD highlights
+2026-10-23 15:08  b48a5f9  Keep contact action bubbles within narrow screens
+2026-10-23 16:27  629bc4f  Add persistent NPC relationships, shared memories and home visits
+2026-10-23 16:39  a6b22a1  Fix silent home invitations and explain waiting states
+2026-10-23 17:09  9bf1c7d  Separate counterpart dialogue and animate diary handoff
+2026-10-24 00:57  c49ab68  Polish social invitations, real-time calls and pixel avatars
+2026-10-24 01:03  b30edc5  Remove park area numbers from all player-facing text
+2026-10-24 01:38  4ce1698  Add clickable NPC conversations with 270 scene-specific exchanges
+2026-10-24 01:54  b8f5ddf  Expand NPC dialogue to 540 exchanges with gender-aware variants
+2026-10-24 02:28  7ed5a76  Fix NPC dialogue conflicts, pause visibility and save restoration
+2026-10-24 03:22  7ffd853  Fit contact names at 25% zoom and use natural portraits
+2026-10-24 03:27  4b6d3fa  Nudge contact portraits and labels slightly right
+2026-10-24 05:21  9af1636  Add persistent three-axis personalities to Buddy and all NPCs
+2026-10-24 05:35  3636353  Restore card mood pill proportions and pause wardrobe-only personality editing
+2026-10-24 05:42  4c610fe  Restore prominent chance card titles and readable body typography
+2026-10-24 05:59  807f722  Embed personality beside wardrobe preview and align compact thumbnail grids
+2026-10-24 06:11  b772d7e  Unify wardrobe pixel corners and remove chance title scrollbars
+2026-10-24 07:26  dc42247  Centralize desktop UI layout policy and validate all four zoom levels
+2026-10-24 09:03  93a26da  Restore single-row springy needs and prevent positive-emotion collapse; build current Windows release
+2026-10-24 10:59  68398ee  Fix vertical window dragging after resizing the game
+2026-10-24 11:01  98db29a  Normalize Windows line endings in window-drag regression checks
+2026-10-24 12:16  ca6103c  扩充社交对话与局内表情，完善需求归零后果
+2026-10-24 13:44  459a174  加入朋友留宿与睡眠画面测试，完善来访、公园导航和日常对白
+2026-10-24 14:05  0a1b01e  调整双人同床为前后重叠卧姿与被褥透视
+2026-10-24 14:14  63e84ca  同床头像保持同高，仅让后方头像向左微移
+2026-10-24 16:50  aebc047  润色日常对白与机会卡，减少套话和强行升华
+2026-10-24 17:07  c623dee  提供可在 GitHub 在线阅读的对白与机会卡完整目录
+2026-10-24 17:09  9359721  将 Excel、完整文本包与搜索页面直接保存到 GitHub 仓库
+2026-10-24 17:14  dd0614c  客人在家时暂停自主出门，并拦住尚未出门的自主行程
+2026-10-24 17:19  5648b3d  洗澡如厕暂停远程聊天并在结束后续聊，避免活动对白抢断
+2026-10-24 17:33  f387878  准备完成后向玩家 QQ 邮箱发通知的流程
+2026-10-24 23:47  4659a20  实现朋友同行、双人座位与1300组场景对白，补充串门闲聊和专属机会卡
+2026-10-24 23:50  d21cbf0  同行时为朋友保留世界身份，读档生成路人和酒保时避免分身
+2026-10-25 00:17  9de8ab5  修复同行好友来电，增加慢半拍跟随与目的地气泡菜单，改用自然的休息时段婉拒
+2026-10-25 00:50  b90bebe  扩充32段随机电视动画，修复发光屏幕覆盖主角和来访朋友
+2026-10-25 09:12  a6f43e6  Add home four-season BGM synth scripts and track notes (audio to be uploaded separately)
+2026-10-25 09:17  eb9cb98  Add seasonal home BGM generator
+2026-10-25 02:40  2cda740  新增10种朋友房屋原型与隔离预览，支持日夜比例切换和增高时UI上移动画
+2026-10-25 02:45  4649853  直接打开房屋预览时跳过开局事件抽取，避免已有存档被机会卡挡住入口
+2026-10-25 03:02  e09495e  新增20种朋友房屋户型并精修可复用家具与绿植，统一材质配色
+2026-10-25 04:58  4a3654e  接入朋友家拜访与来电邀约，保存固定住所、家人闲聊及主动申请留宿
+2026-10-25 05:01  6ef5acd  让家人闲聊中的称呼跟随房主性别
+2026-10-25 05:28  f4de1f8  修复朋友房屋打包覆盖主角家夜景导致的错位重影，并校验昼夜房屋结构
+2026-10-25 13:51  530154d  Add audio library documentation and build manifest
+2026-10-25 05:54  d1ec925  补齐朋友家家具的像素轮廓与实际交互，继承窗外天气并统一转场头像大小
+2026-10-25 14:01  9906312  Add mall, bar, and harbor audio sources
+2026-10-25 14:03  161f8dd  Add park arrangement and daylight theme sources
+2026-10-25 14:05  6c5b68b  Add daylight and spring theme dependencies
+2026-10-25 14:08  a6642a9  Add editable home music generators
+2026-10-25 14:10  5e2e98c  Add shared park synthesis engine
+2026-10-25 14:18  4a6a0a3  Add melody data and audio rebuild script
+2026-10-25 14:22  ee79ecf  Correct legacy park melody source data
+2026-10-25 14:24  db663e8  Document current audio upload status
+2026-10-25 06:55  9c2c6d4  接入独立音乐音效开关、场景配乐与生活音效，校正设置排版 [skip ci]
+2026-10-25 11:41  15e6312  让首次点击、展开与来电提示音不再等待网络加载 [skip ci]
+2026-10-25 13:18  27881e1  移除室内外脚步声，保留其他声音
+2026-10-25 13:21  655ae2a  消除水声与烹饪拟音重复叠加，降低冲水音量
+2026-10-25 13:31  8799803  增加独立音量滑条，以授权实录替换公园环境与生活拟音
+2026-10-25 14:12  9a7be96  加入情绪短旋律与分层场景音效，修复桌面自动更新调度
+2026-10-26 00:55  7f94f3c  扩充日常八卦对话并修复音量稳定性、电视声音和做客对话
+2026-10-26 01:25  900fb34  添加六款应用图标候选图与离线预览包
+2026-10-26 01:44  916e9ff  父母拜访入口置灰并提示老家太远，阻止进入朋友家流程
+2026-10-26 01:45  60e47be  固定父母三维性格并同步旧存档
+2026-10-26 01:49  cd2d029  重绘短长波浪卷为上窄下宽的卷曲轮廓
+2026-10-26 02:00  6096d2c  保留餐桌剩饭与进度并优先续吃，来电等待延长至十秒
+2026-10-26 02:00  5212727  记录剩饭规则并同步十秒来电说明
+2026-10-26 02:44  08b4ba4  支持户外拜访、回家接客与定时会合，等待朋友时不自主出门
+2026-10-26 05:44  d491562  新增猫狗品种与动作素材及独立网页测试台
+2026-10-26 06:05  6983ef9  重绘猫头爪与自然毛色，加粗狗腿并修复动作头身连接
+2026-10-26 06:22  e0a1dba  修正猫狗爪尖前伸方向及正背面脚掌，补充朝向检查
+2026-10-26 06:31  728a9cb  参考像素猫造型柔化脸颊与耳朵，改用豆豆眼和放松表情
+2026-10-26 06:39  99636ef  将猫耳改为低矮宽根的柔和轮廓并细化内耳
+2026-10-26 07:40  fc5491e  接入宠物领养与自主生活，加入人宠及来访朋友互动
+2026-10-26 07:58  c95f6d3  居中领养确认与取名界面，增加百种宠物随机名字
+2026-10-26 08:21  9a7568b  统一宠物与音量更新界面的像素样式，拆分喂食机和睡垫互动
+2026-10-26 08:43  c732b50  复用回家转场小屋作为应用图标，修正音量滑块层级和像素胶囊
+2026-10-26 09:26  4f57f32  按草图重做顶层宠物状态卡，加入亲密值及遛宠零食陪玩互动
+2026-10-26 09:32  c7eb39c  修复遛宠途中拜访朋友时的宠物状态清理
+2026-10-26 12:02  c0f3d7b  修复场景BGM串场、慢加载及失败重试影响回家音乐
+2026-10-26 12:17  26fd612  替换翻炒与公园夜间蝉鸣录音，降低家中活动音量
+2026-10-26 12:24  3d00c62  削弱冬季家中BGM的低频嗡鸣并降低固定电平
+2026-10-26 12:33  a3382c7  新增原创海边印象曲与独立音乐试听页
+2026-10-26 12:37  b9b2ac5  完善线上试听的异步跳转与浏览器下载校验
+2026-10-26 12:55  7ee7c51  新增三首悠远叙事风格的码头季节曲，试听页简化为四个播放器
+2026-10-26 13:19  632fad2  重写码头三首新曲的歌唱性主题，加入海浪式伴奏与乐句留白
+2026-10-26 13:35  1d94dc3  新增三首热闹商场合奏曲，丰富至17种乐器与成组打击乐
+2026-10-26 16:02  01ddc0a  以扶梯副歌主题新增电子流行、放克与Bossa三种编配
+2026-10-26 16:19  660f630  组合扶梯主旋律与打烊桥段，新增霓虹电子商场候选曲
+2026-10-26 16:39  9218645  为霓虹扶梯加入抒情钢琴段、尾段转调和钢琴收尾
+2026-10-26 17:00  8ffc092  重写钢琴进出段与和声转接，让霓虹扶梯配器和转调更连贯
+2026-10-26 17:21  8c7b150  新增三首独立流行BGM，加入舞曲、UK Garage和电子放克编配
+2026-10-27 00:59  d9171ae  check_chats: only camera words count as visual in a phone call (看见/视频 in talk are fine)
+2026-10-27 01:10  dc07a60  Fix stuck states found in review: outings/visits/pet walks cancelled when she's sent elsewhere before the door, mall search dropped on another click, parents never arrive at night, a visit booked for tomorrow doesn't keep her in, resume button uses 一倍, cinema only fills fun when the film is seen
+2026-10-27 02:42  04ff2ae  Festivals, batch 1: 元宵 day 2 with 煮元宵, 七夕 day 14, 发呆节 gone; 赖床节 sleep and 读书日 reading moods; festival dishes; park market stalls for 甜品/端午/中秋/读书日 and book mats in the mall; quilt racks on 晒被子日; festival chatter and street talk
+2026-10-27 02:55  f335cd7  Festivals, batch 2: 元宵 灯谜树 with a crowd and 46 riddles, 彩票日 tickets (phone/computer, park 彩票站, mall cart) with a +5 win, 七夕 lights and a flower-heart arch in the park; 游戏马拉松 → 马拉松日; two-seat park bench, bin moved off the stall
+2026-10-27 03:03  1b968a6  灯谜树: one of the park's own lindens with a row of red lanterns and riddle slips, instead of the crude hand-drawn tree
+2026-10-27 03:12  81384c7  Festivals, batch 3: 写信日 — write letters from the phone or computer (to family, friends or your future self, 12 themes), replies and surprise letters arrive as an envelope bubble by the front door and open in the diary
+2026-10-27 05:47  d83c1fd  新增三首不同风格的试听音乐
+2026-10-27 05:50  f5450db  新增原创迪斯科舞厅试听曲
+2026-10-27 05:56  b891858  重新编写高能迪斯科舞厅版本
+2026-10-27 06:02  728f9b2  新增抒情钢琴曲与深夜舞池编配
+2026-10-27 06:10  2141ca4  Festivals, batches 4-7: 大雪, 雪人日, 怪兽夜, 端午 dragon boats, 马拉松日, the disco
+2026-10-27 06:11  c5c910e  Merge branch 'claude/awesome-einstein-wtzgsw' of https://github.com/OMEN-2778/Desktop-Buddy into claude/awesome-einstein-wtzgsw
+2026-10-27 06:33  e343176  Festivals polish: a disco light show, a dressed-up dock for 端午, giant costumes parading on 怪兽夜, festival jump buttons
+2026-10-27 06:44  f062b60  优化宠物表情、休息行为与交互面板
+2026-10-27 06:57  048f1ab  接入端午码头和节日公园背景音乐
+2026-10-27 07:06  0b2fa81  Art preview: 怪兽夜 giants v2 (volume shading, texture, more detail); not wired into the game yet
+2026-10-27 07:15  6dff65d  Giants v2 in the 怪兽夜 parade; a festival banner above the diary
+2026-10-27 07:31  32509d4  Festival bar with activity buttons and drifting motifs; the park dressed up for festivals
+2026-10-27 07:33  a3d4e6f  Build the demo: festivals batches 4-7, festival bar, park decorations
+2026-10-27 07:38  6f3eb76  Pet popup redone in the game's own UI: the shared ring around the pet, a needs-style status card
+2026-10-27 08:04  779ea4f  Festival bar: closer to the diary, pixel-stepped ends without soft shadow, rides above the open diary list and the settings rows
+2026-10-27 08:06  e160f04  Build the demo: pet ring and status card, pixel festival bar
+2026-10-27 08:07  c77dd6a  检查更新 says what it's doing when an update is already downloading quietly (it stayed silent), shows the progress and installs when done
+2026-10-27 08:09  8b26e4c  Festival bar rides above whichever is highest: the diary, its open list, settings, a friend's chat bubble, an incoming call (it covered the chat bubble)
+2026-10-27 08:12  dda5534  Festival bar: ask for room only when it is off the top of the page, not when the page is scrolled down (it kept scrolling the test page back up)
+2026-10-27 08:16  84d9d0e  Festival bar folds into a round badge with the festival's motif; pointing at it unrolls it sideways into the full capsule (wider than the house when needed), folding back after the pointer leaves; tap the badge on touch
+2026-10-27 08:19  0fa4e80  Festival bar stays whole; the activity buttons and the line about the day are folded into round icons that unroll into their label when pointed at (instead of folding the whole bar)
+2026-10-27 08:25  f28d3cf  Festival bar buttons: drop the generic button bevel, edge and margin (stray lines round the circles)
+2026-10-27 08:28  3b7389e  Disco trip: a mirror-ball sticker icon on purple with sparkles and notes; festivals no longer get a tag on the time bar (their own bar shows them)
+2026-10-27 08:47  6c7ce4c  Pet ring stays above the needs/time strip (its upper buttons slid under it), the time tooltip hides while it is open
+2026-10-27 08:50  a6e277d  Feeder popup: concentric pixel capsules (the 加满 button's ends follow the outer ones), springs out of the feeder and back; 加满 sends her to the feeder and it fills when she gets there
+2026-10-27 08:52  1055b35  Update pill redone: a pixel capsule at the very top of the stack (over the festival bar), following the UI below it; buttons as concentric capsules; the download fills the whole capsule as a translucent striped band; 已是最新版 names the version
+2026-10-27 09:02  ce2f531  Richer pet–human interactions: 亲近 ▸ (摸摸头, 挠肚皮, 亲一口, 抱起来, 聊聊天) and 玩耍 ▸ (逗逗它, 逗猫棒/扔球, 教它小动作, 拍张照 with a phone flash); hearts float up from the pet; the pet seeks her out by itself (greets her at the door, lies by her while she sits, comes to the desk, begs in the kitchen, waits outside the bathroom, sleeps by the bed, brings a toy when lonely); 226 new lines, cat/dog variants
+2026-10-27 11:26  56a1e9a  Updater: a failed install leaves nothing to install (the package was taken), so go back and download again instead of staying 'ready' (重试 said 'nothing downloaded')
+2026-10-27 11:27  5488750  Build: include any cards_more_*.json (more bed / dream / wake / bath chance cards)
+2026-10-27 11:28  3b27d7f  25 more wake-up chance cards
+2026-10-27 11:28  1cb4ff1  40 more dream chance cards
+2026-10-27 11:28  c744e53  25 more bedtime chance cards
+2026-10-27 11:30  47280d4  45 more bath chance cards; build with the new bed / dream / wake / bath cards (dream 57, bed 45, wake 44, bath 50)
+2026-10-27 11:43  3127298  Music preview: new nu-disco draft 镜球亮起来
+2026-10-27 11:45  c744890  BGM: mall plays 霓虹扶梯 · 连贯编配版, disco plays 镜球正在升温 · 深夜舞池版
+2026-10-27 11:51  7bd63fc  Music preview: catchier verse melody for 镜球亮起来
+2026-10-27 11:54  56f1ed9  Music preview: 镜球亮起来 verse v3, syncopated call-and-response over moving chords
+2026-10-27 12:16  c0eafcd  Music preview: 镜球亮起来 verse v4, topline with voice chops, stutters and half-time half
+2026-10-27 12:21  8c37678  Music preview: 镜球亮起来 fuller lead, doubled lines and a third-below harmony
+2026-10-27 12:24  5ecc23a  BGM: disco plays 镜球亮起来
+2026-10-27 12:35  ca1d674  Tests: update auto-update and volume-slider checks for the pixel UI
+2026-10-27 12:47  63b2aa6  Fix festival pickers' 随机 button crashing with no item
+2026-10-27 12:53  175d4af  Don't open the first-run guide if it was already dismissed before its timer fires
+2026-10-27 13:02  f0115ed  Disco: draw lasers behind the dancers so beams don't cut across faces
+2026-10-27 16:09  99dc8a0  Disco: twice the dancers, in back, middle and front rows
+2026-10-27 16:24  69c4def  Audio: real CC0 rain, thunder, cat and dog recordings from BigSoundBank
+2026-10-27 17:16  dd12f8f  Friend's bathroom and holding pets
+2026-10-27 17:25  04f156e  Pets climb onto furniture: sofa, fridge, dining table, bookcase, wardrobe, and a cat in the potted plant
+2026-10-27 17:43  32bbce6  Promo video tools: capture the real game on a virtual clock, composite on a desktop with camera moves
+2026-10-27 17:50  b09ddea  Promo: full-size house in the capture, one caption at a time
+2026-10-27 18:12  9f06462  Promo: house sits bottom-right above the taskbar
+2026-10-28 01:39  786aded  Trailer tools: beat-cut promo cue, clip recorder and editor
+2026-10-28 01:41  86b1d02  Trailer titles: TA / 小人 instead of 她 (Buddy's gender is the player's choice)
+2026-10-28 01:42  8bd5ca7  Trailer: several title gradients (sunset, candy, sky, fire, mint, aurora), darker backdrop under counters
+2026-10-28 01:47  cba3eff  Trailer: pet title reads 还能领养一只宠物
+2026-10-28 02:01  a49c50d  Trailer: smooth sub-pixel camera, edge-free 3D tilt without a jump, clips long enough for their shots
+2026-10-28 02:12  a5da117  App-Store-style 4:3 posters from trailer clips
+2026-10-28 02:13  1ca16c1  Posters: outfit line-up on the style poster, light daytime festival poster
+2026-10-28 02:18  fe88909  Posters: sticker dolls, pets, Buddy holding the cat, festival props, card-title pills; brighter night scenes
+2026-10-28 02:30  7c63de1  Posters: owner's copy, mixed-size pet stickers clear of the headline
+2026-10-28 02:42  8041c44  Posters: noon shots for places and festivals (trip no longer runs the clock into evening), prop stickers, card-title cloud, relationships poster; trailer recorder can re-record single clips
+2026-10-28 03:20  7c0c112  4:3 promo: clip recorder and poster-style editor (WIP)
+2026-10-28 03:25  1f1c598  4:3 promo: clamp the opening zoom, bigger house on the desktop, slow 怪兽夜 giants mid-shot
+2026-10-28 03:29  7bb5d2f  4:3 promo: 百变造型 section (live dressing room, stickers that keep changing outfit)
+2026-10-28 04:16  6adf0e1  4:3 promo: shorter home run, no box behind the game, orbiting place stickers, tidy final card layout, two rounds of chats, Windows-style icon selection, whiter ending with logo
+2026-10-28 05:08  db2200b  Marketing: 4:3 promo, 16:9 trailer and the seven posters
+2026-10-28 07:32  7ca1777  春节 with 爸爸妈妈 home all day (couplets, dumplings, red envelopes, dinner, gala, countdown), red house decor and fireworks; every festival dresses the front yard, the dock and the mall its own way
+2026-10-28 10:47  4a389d8  试玩版: life at home only (no festivals, contacts, pets, going out), no saves, no updates, no tutorial; its own Windows build and pre-release
+2026-10-28 12:30  24ba970  Anti-piracy groundwork: all-rights-reserved LICENSE, releases to a downloads-only repo once its token is set (updater checks it first), public web preview shows only the 试玩版; 试玩版 gets the park icon
+2026-10-28 12:30  3424638  LICENSE: point at the real third-party licence list
+2026-10-28 13:09  bbde636  Release builds minify the game script (terser); AGENTS.md notes on releases for other coding agents
+2026-10-28 15:04  288dfe4  手机版: portrait phone page (house pans sideways and follows Buddy, time and needs on top, mood/words/diary/gear at thumb reach, panels as bottom sheets, touch wording), built as one self-contained file
+2026-10-28 15:06  85f2ac8  新手教程: shorter text, no mechanics (user: concise); points sit side by side so a page needs no scrolling
+2026-10-28 15:24  6cd6aa0  手机试玩版 for H5 game platforms: the phone page cut down by trial.js, packed as index.html + game.js (no inline script, no web fonts or other outside resources) in a zip under 10 MB
+2026-10-28 15:38  9a846c7  手机版: the six needs always open at the top as sideways bars (user), safe areas from the H5 container's variables, top bar clear of the container's buttons (getWindowInfo)
+2026-10-28 15:46  3d4ff25  手机版: rounded corners on every panel and bar (user); 手机试玩版 packed to the 小红书小工具 rules: ES2017 + Chrome 61 CSS fallbacks, external style.css / compat.js / game.js, no network, unused pictures left out (1.5 MiB zip)
+2026-10-28 16:02  40dbb30  手机版: landscape layout, whole house on screen, no sideways panning
+2026-10-28 16:17  4813970  手机版: turn the page sideways when the phone or webview stays upright
+2026-10-28 17:21  0c3d8ee  手机版: measure the real screen box for the turned page; diary line back
+2026-10-29 02:03  5b08f5b  Diary: white round button that unfolds fast; gear rises above it on hover
+2026-10-29 02:04  686df36  Add the built need-stripes sprite
+2026-10-29 02:09  59de43d  Diary: springier unfold/fold, smaller icon that hops as it opens
+2026-10-29 02:39  627bc5d  Mall WC takes over a whole shop unit off screen; diary list on top
+2026-10-29 03:56  474b22c  Someone else's words outrank the diary: it steps aside, their bubble takes the row
+2026-10-29 04:46  d241d84  More chance cards (40 bath, 40 meal, 100 pet); pet menu beside a tall status card; pet over the duvet
+2026-10-29 04:50  212684e  试玩版: cut out what it never uses (outdoor, pets, contacts, festivals)
+2026-10-29 05:02  26eedb6  试玩版 under 10 MB: one light home song, home sounds only, no tutorial pictures
+2026-10-29 05:04  47935b5  Gear rides over today's festival bar instead of under it
+2026-10-29 15:09  081d1ff  春日山谷: a five-screen valley in bloom, open only in spring
+2026-10-29 15:20  94bb7d1  春日山谷 v2: painted for realism instead of flat cartoon fills
+2026-10-29 15:22  d0eba9f  春日山谷: a stepped cascade, layered knolls with cloud shadows, bigger petals
+2026-10-29 15:29  2690282  春日山谷: seven screens with a packed village, wood and farm; comic outlines
+2026-10-30 01:11  0e0efc3  Desktop: drag the window from the gear, festival bar and diary
+2026-10-30 01:14  27dd33e  Hide 春日山谷 from the game until the owner wants it
+2026-10-30 01:14  51428db  Note: 春日山谷 stays hidden until the owner says
+2026-10-30 01:17  6ffcbf8  Remove 春日山谷 entirely
+2026-10-30 01:42  9d9e71c  macOS: universal .app in a .dmg for the full and trial versions
+2026-10-30 01:45  267d46a  Desktop: no pinch / Ctrl+wheel zoom in the app
+2026-10-30 02:00  090a328  Desktop: the window is never taller than the screen
+2026-10-30 02:08  368c778  Desktop: size the window and read the mouse in the page's own pixel ratio
+2026-10-30 03:10  3d36bd5  Marketing: Mac poster (8-mac.jpg)
+2026-10-30 03:23  8c1d67c  Marketing: Mac poster, title and subtitle only, no feature cards
+2026-10-30 03:27  71aa168  Marketing: Mac poster, outdoor scenes in white frames behind the laptop
+2026-10-30 04:30  dcf2d9a  Always light scheme, 文字大小 setting, clean guide shots and updated guide text
+2026-10-30 05:21  30423ba  macOS disk image: first-launch steps as empty files in the window
+2026-10-30 06:31  f54cf32  Pets: keep two at once, play together, give one back
+2026-10-30 07:14  a6f0e63  Pets: shelter panels sit above the needs strip and fit a small house
+2026-10-30 08:48  b44c983  春日花溪 art: four spring screens in the park's style (brook bridge, rapeseed, tulips and windmill, wisteria pergola); not in the game yet
+2026-10-31 06:49  98a992e  春日花溪: the wisteria screen becomes a vegetable plot, an orchard screen to its right; crop and fruit-tree stages
+2026-10-31 07:30  61246f0  Private source repo: web preview also goes to the public releases repo's Pages; AGENTS.md says how to preview and share
+2026-10-31 07:35  e21bf31  Shared working rules for Claude Code and Codex, and a hand-off log
+2026-10-31 07:35  4bdcdc6  CLAUDE.md: read and write the shared agent log
+2026-10-31 08:12  2f81320  Plan: 四季地图 (spring valley farm, summer island and sea), open questions
+2026-10-31 08:51  42d7ab0  春日花溪: farmhouse with an inside, a pasture with barn and animals, bigger vegetable plot and orchard (art only)
+2026-10-31 09:08  7c87c8f  春日花溪: refined farmhouse and barn, livelier animals, one long orchard-and-pasture map, shrubs under the lane, sun shafts and birds (art only)
+2026-10-31 09:13  2300b73  春日花溪: Chinese farmhouse, granary and interior; one shared floor with a dining table for three (art only)
+2026-10-31 09:20  273e122  春日花溪: Chinese furniture inside, no lanterns, animals behind the fence, a single passing sun shaft (art only)
+2026-10-31 09:25  f095300  Hand-off for the spring farm (docs/SPRING_FARM.md), review-round rules in AGENTS.md, dead code removed
+2026-10-31 09:53  53cdd0f  铺满春日花田并平滑衔接果园牧场
+2026-10-31 09:55  d49d6b7  Summer Hawaiian getaway, art round 1: hostel and changing-hut shore, lodge inside, a big dive map with reef life (art only)
+2026-10-31 09:55  527362b  Merge remote-tracking branch 'origin/claude/awesome-einstein-wtzgsw' into claude/awesome-einstein-wtzgsw
+2026-10-31 10:04  5e529bc  Summer art round 2: lush shore, a beach with loungers and swimmers, a smaller and fuller dive map with NPC divers (art only)
+2026-10-31 10:09  fd13fa2  Summer lodge inside: refined hand-drawn furniture (art only)
+2026-10-31 10:19  c6a25ed  为春季两片花海增加随风摇曳循环动画
+2026-10-31 10:24  1e1b6ed  将花海摇曳动画提高至25帧每秒
+2026-10-31 10:31  c902ced  Summer sea round 3: layered parallax reef, dark foreground, caustics, marine snow, big fish and shoals (art only)
+2026-10-31 10:59  02a607a  为春季场景加入风车旋转与鸟蝶云影动态预览
+2026-10-31 11:40  266a575  Summer bay: one seamless side-view beach-to-sea map from the owner's sketch (art only)
+2026-10-31 11:44  a5920fa  提供可行走的春季农庄网页预览
+2026-10-31 11:46  b3a43d6  Summer bay round 2: calm floor, smooth water gradient with depth fog, smooth shore, far horizon (art only)
+2026-10-31 11:46  df7d974  Merge branch 'claude/awesome-einstein-wtzgsw' of https://github.com/OMEN-2778/Desktop-Buddy into claude/awesome-einstein-wtzgsw
+2026-10-31 11:51  9d5ecbf  Summer bay round 3: one seamless lodge-cabana-beach-sea side-view map (art only)
+2026-10-31 12:09  cc264a8  Summer bay round 4: anime clouds, fluted mountains, canopy trees, 3D cabana, natural beach profile, sea stack (art only)
+2026-10-31 12:15  db7672f  Summer bay: use the game's own drifting clouds (art only)
+2026-10-31 12:16  deb1c13  Summer bay: earth layers run on under the whole seabed, no hard fault line (art only)
+2026-10-31 12:28  0285695  Summer bay web walk-through (/summer/): walk, surface swim, click-to-dive, lodge interior
+2026-10-31 12:44  61694e9  Summer preview gameplay: swimwear and swim poses, cabana changing, breath, rock collision, discoveries, loungers
+2026-10-31 12:50  7d8c4ef  Summer: bigger sea (meadow, deep trench), redrawn swimwear for girls and boys, 泳衣 naming
+2026-10-31 12:52  fb3a2ab  Summer: front-facing beach chairs; Buddy sits instead of lying
+2026-10-31 12:59  9576cfd  Summer: smaller beach chairs
+2026-10-31 13:03  240fe34  Refined Hawaiian reef life sprites: fish, schools, floor creatures, corals, seaweed (art only)
+2026-10-31 14:04  c9fa047  在独立游戏测试页接入春季与夏季地图
+2026-10-31 15:45  196c0ec  扩展海底并打磨季节地图测试页的镜头、更衣室与NPC交互
+2026-10-31 15:47  e40c0c0  修复季节测试中更衣室跨场景残留及NPC被打断后停步
+2026-10-31 16:43  e3866ca  重做季节地图的游泳与海洋动效，补齐天气和进出门
+2026-10-31 17:08  0e2f087  恢复原小人泳姿，将海洋和天气动效改回像素绘制
+2026-10-31 19:08  8ad99aa  优化海底像素光斑，修复鱼类断裂压缩并减少气泡
+2026-11-01 00:57  f076141  鱼群改为自然散布，增加岩石阻挡并更新男女泳装
+2026-11-01 01:43  8fd5e82  秋季枫叶城剧情草案；季节地图内小人不主动离开的规则
+2026-11-01 01:44  329f3c2  秋季剧情 v2：无绝对善恶，5 个 NPC 各有立场
+2026-11-01 01:56  77c970a  秋季剧情：侦探改名阿简
+2026-11-01 01:59  d17d128  秋季剧情方案 B
+2026-11-01 02:54  29c1bc2  秋季剧情定为方案 B：程铁山、程青
+2026-11-01 03:01  b456ebf  秋季剧情：通关后全年开放、办公室可选、冬天可续玩
+2026-11-01 03:23  ade9791  绘制污染状态枫叶城整幅山城地图并提供缩放预览
+2026-11-01 03:26  8052e6a  枫叶城预览直接发布已审阅像素图，解除服务器字体依赖
+2026-11-01 04:03  282d673  枫叶城接入门口测试，完善直角街巷、当地生活与前景淡化
+2026-11-01 04:09  4af0cd5  完善枫叶城对话中断恢复，保持办公室访问不改变数值
+2026-11-01 06:05  3002fff  修缮枫叶城山体石阶与入口，丰富枫树街景并修复穿楼路线
+2026-11-01 06:36  ed5b765  将枫叶城重做为紧凑平顶房箱庭并保留全部剧情地点
+2026-11-01 11:09  b8028f5  充实阿简家、增加摇曳树木与大飞机，招牌改用思源黑体
+2026-11-01 12:17  425a48e  修缮侦探事务所门窗与河岸，接通林间瞭望台和平滑远景
+2026-11-01 12:27  0303aab  细修山城台面石角与飞机弧形轮廓，移除全部室外长椅
+2026-11-01 12:30  0701568  去除飞机纹路，改用机身明暗和机翼厚度塑造体积
+2026-11-01 12:41  3891852  侦探事务所直接复用现成暖木小复式，适配紧凑室内与生活动线
+2026-11-01 13:44  d526e7c  删除枫叶城树苗支线，尾声改为广场交谈
+2026-11-01 17:28  a407977  为剧情文档提供 iPad 可访问的阅读页和普通下载链接
+2026-11-02 07:42  2def19c  桌面版：启动异常时屏幕上显示诊断信息，错误写入 page.log
+2026-11-02 08:55  0ee558d  记录丢丢币经济与春季来信、机场解锁及父母农庄行为设计
+2026-11-02 08:56  4cf7e39  统一剧情对白使用人物气泡，记录任务对白白蓝渐变样式
+2026-11-02 09:14  fa96ea4  绘制机场与往返机舱、银白航站楼转场预览
+2026-11-02 12:41  5ed65ee  完成两秒机舱阶梯转场与剧情气泡UI并记录交接
+2026-11-02 13:57  d72e4fb  记录用户决定：农庄全年开放、机票免费
+2026-11-02 15:26  996215e  补交春季玩法十二组UI视觉设计稿及Cloud接手说明
+2026-11-02 15:42  7f04a98  画可进游戏的农庄与丢丢币界面（12 组，像素图标+原生组件），审图用
+2026-11-02 16:00  22ff4a6  剧情对白改用 NPC 头顶小气泡：点气泡继续，选项画在气泡下面
+2026-11-02 16:05  296841e  剧情对白放进对方对话框（名字+头像），主角用自己的气泡，选项画在对话框下面
+2026-11-02 16:09  4d9a860  剧情选项放进主角对话框那一排：同高同圆角，按选项个数平分
+2026-11-02 16:09  f8962a0  剧情选项改为淡黄色
+2026-11-02 16:14  b37ab33  剧情选项改为纯色淡黄，不用渐变
+2026-11-02 16:29  fd38a2d  补全枫叶城双结局对白脚本与任务触发机制
+2026-11-02 16:43  392d71c  春季农庄剧情与种菜玩法（测试页）：妈妈来信、机场开航、接机看房、教种胡萝卜，之后可种菜收菜记账
+2026-11-02 16:46  e783e99  修复：农舍里点大门可以走出户外（楼上会先下楼）
+2026-11-02 16:58  a1bf3b7  春季专属机会卡与农庄话题；同处一室的人不来电（春节爸妈在家不打电话）
+2026-11-02 17:01  9a0eec4  改名：春季农庄→茵菲谷，丢丢电脑→丢丢平板电脑
+2026-11-02 17:11  49271ee  机场：删掉静止飞机，改为会滑过窗外的飞机（降落先快后慢、起飞先慢后快）；机舱转场改为向右飞掠的云墙和三层流云
+2026-11-02 17:19  4035ed0  机场可以自由走动：点地面走路，点小人有「选择航班/回家」，点航班牌或登机口去看航班
+2026-11-02 17:22  e5057eb  机舱转场：风线和碎云改到云墙身后，云明显是向右飞
+2026-11-02 17:39  3dcf5ac  茵菲谷夏秋冬美术；冬天休耕：入冬冻坏没熟的菜、冬天不能播种、秋末种子铺提示来不及
+2026-11-02 18:07  e06d97a  茵菲谷农庄玩法：分季作物（含再生）、下雨自动浇水、爸妈回来帮浇水、果园、牧场（鸡羊牛，亲密度和产物，冬天进棚）、每日操盘、仓库送礼与藏品、10 张新卡
+2026-11-02 18:12  c6280ea  机场：菜单改在点击完成时弹出，不再一闪而过；航班牌和登机口换成无意义的像素字
+2026-11-02 18:28  729e0e3  茵菲谷农舍：家具可互动、楼梯走中线、回家=回农舍、需求低自己进屋；牧场开局无动物
+2026-11-02 18:51  d5a4c10  茵菲谷支线任务：风车里的怪声、溪边的阿婆、菜地里的脚印、老周的乱炖（对话演出，仓库送菜）
+2026-11-03 00:30  27bcb0c  剧情选项一行放不下时，其余选项换到第二行
+2026-11-03 00:47  1f93b1b  选项换行改为向上长出，不再被需求条盖住
+2026-11-03 01:18  18ba9ef  任务面板：鼠标移到日记按钮弹出任务按钮，再移上去展开任务列表（测试页）
+2026-11-03 01:33  eb34ede  任务面板：去掉类型字样，右边只写具体地点；卡片和地点改胶囊形；小尺寸紧凑排版
+2026-11-03 01:39  1e22761  任务回顾：点开任务可看每一段经过、对话记录、做过的选择和写过的信
+2026-11-03 01:42  ba15df0  任务图标：26 个像素图标（待确认后接入）
+2026-11-03 01:42  9f4b3b0  任务图标导出图
+2026-11-03 01:52  2022775  任务图标接入任务面板：卡片、回顾页和每一段经过
+2026-11-03 02:01  c37c74e  茵菲谷宣传片和海报脚本（制作中）
+2026-11-03 02:08  7a9f00d  枫叶城的老周改名为老郑，避免与茵菲谷重名
+2026-11-03 02:10  6d5d6e9  删除未定稿的秋季剧情文档，只保留完整剧本
+2026-11-03 02:27  dac0b0e  茵菲谷配乐与音效（测试页）、宣传片与 7 张海报
+2026-11-03 02:34  32e0f91  茵菲谷配乐试听页 /map-test/bgm.html
+2026-11-03 03:03  5d5c045  茵菲谷和机场：鼠标移到可交互的东西上显示像素描边（和主游戏一样）
+2026-11-03 03:06  fa5bd71  日志：发布前检查结果
+2026-11-03 03:14  9cf846c  剧情对话期间锁住打扰：不来电、不弹机会卡、不说无关话、不离开，需求静止；通话中剧情等电话结束再开始
+2026-11-03 03:24  c818ce4  AGENT_LOG: story-lock regression rerun passes
+2026-11-03 03:36  f745d7b  Desktop Buddy 0.2：春季地图茵菲谷开放
+2026-11-03 03:39  aa21621  Desktop Buddy 0.2.0：春季地图茵菲谷开放
+2026-11-03 03:48  6499566  Desktop Buddy 0.2.0：春季地图茵菲谷开放（接到新任务时任务按钮弹出并提示音）
+2026-11-03 04:29  2a158c0  Desktop Buddy 0.2.2：茵菲谷开放；任务接到后才显示
+2026-11-03 04:33  b2ada68  修复：有存档时 0.2 启动崩溃、小屋不显示
+2026-11-03 05:00  2bf4b32  启动出错时也能自动更新，不再被「存档还没保存好」拦住
+2026-11-03 05:23  daeb2ef  夏季海底 v2 美术：重画全部鱼类和珊瑚（待确认）
+2026-11-03 05:24  3e71cc7  夏季海底 v2 美术：导出图
+2026-11-03 05:47  9928d6b  Desktop Buddy 0.2.3：茵菲谷从小桥边出发找妈妈；对话4秒自动/点任意处跳过；点击地面黄色光圈；性别中立
+2026-11-03 06:01  dbfb67c  记录：海底 v2 保留原海床
+2026-11-03 06:07  814e3b9  Desktop Buddy 0.2：茵菲谷农舍随时可用；床上睡觉露侧头、被子鼓起（爸妈夜里也在床上）
+2026-11-03 06:16  2bb1590  Desktop Buddy 0.2：商店写清售价和余额；点击光圈改小、像素风
+2026-11-03 06:26  1623a31  Desktop Buddy 0.2：家具点一下就用；上厕所坐着、泡澡露头；鸡住进牧场围栏
+2026-11-03 06:27  ef4d38b  夏季海底 v2：新鱼和珊瑚接入并会游动，中间改为最深最暗的海沟
+2026-11-03 06:48  bc5c275  Desktop Buddy 0.2：出农舍回到门口；茵菲谷机会卡和电话扩充一倍
+2026-11-03 06:50  8099bbf  Desktop Buddy 0.2：茵菲谷路人聊天框不再被挤成竖条
+2026-11-03 06:53  71b2a3d  夏季海底：海草放回来，直直的海草每片珊瑚园两丛；鱼不再陷进海床
+2026-11-03 06:55  49acf96  Desktop Buddy 0.2：茵菲谷机会卡 100 张、电话 100 段、路人对话 20 段
+2026-11-03 07:01  cf8612c  夏季海底：陡坡上的东西不再悬空；宝箱挪到最深海沟底
+2026-11-03 07:59  4e2d076  茵菲谷：任务 NPC 出现时间放宽
+2026-11-03 08:42  2b911d8  枫叶城主线对白重写：更有活人感和幽默，主角更鲜活；结构、选项和双结局不变
+2026-11-03 08:45  66ff334  茵菲谷：每个场景各加一条随机出现的支线
+2026-11-03 11:19  b4b95bd  手机版 v2：按草图重排主界面，面板全屏加模糊背景，字体收小，所有界面不超出屏幕
+2026-11-03 11:29  188bae1  手机版：接入茵菲谷（剧情对话、任务、农场面板），新增手机超框检查脚本
+2026-11-03 11:35  f6aea71  手机版：人脉、设置、任务按钮改成规整圆形，不再变形
+2026-11-03 11:40  4269ed4  对外版本（手机版、试玩版）隐藏临时控制台，不依赖脚本
+2026-11-03 12:04  6327d0f  手机版：电脑上预览不再旋转，按手机横屏比例整体缩放，保持紧凑
+2026-11-03 12:23  2138a76  手机版：去掉茵菲谷/任务/丢丢币/机场；对话气泡改回淡棕黄；需求条和时间条总高度对齐小屋
+2026-11-03 12:30  2f94cf7  Mobile page: tablets get the scaled landscape view instead of rotation
+2026-11-03 12:32  e659f14  Mobile page: tablets get the scaled landscape view instead of rotation
+2026-11-03 12:34  dc53da5  Agent log: drop duplicate entry
+2026-11-03 12:43  cb1077d  check_mobile_frame: drop screens for features the phone page no longer has
