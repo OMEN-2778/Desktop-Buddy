@@ -96,9 +96,16 @@ const seasonalTest=(function(){
   closeRing();state.autoAt=sim.t+45;if(sim.place==='autumn_test'){view.focus();ripple(e);c.pick(x+(s.mapOpen?0:s.camX||0),y+(s.mapOpen?0:s.camY||0));sync();return;}if(people.click(x+(s.camera??s.camX??0),y+(s.camY||0)))return;people.cancel();c.canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:e.clientX,clientY:e.clientY,button:0}));sync();
  },true);
  // click feedback (owner 2026-11-03): where she is sent, a yellow ring spreads out on the ground (style.css .walk-ripple)
- function ripple(e){const r=view.getBoundingClientRect(),d=document.createElement('i');d.className='walk-ripple';d.setAttribute('aria-hidden','true');
-  d.style.left=(view.offsetLeft+e.clientX-r.left)+'px';d.style.top=(view.offsetTop+e.clientY-r.top)+'px';d.style.setProperty('--s',(r.width/W).toFixed(3));
-  view.parentElement.append(d);setTimeout(()=>d.remove(),900);}
+ // pixel style (owner: "too big, smaller, pixel-art"): a small ring drawn in house pixels, 4 frames growing and fading
+ const RIP=[[2,1],[4,2],[6,3],[7,3]],RIP_W=17,RIP_H=9;
+ function ripFrame(g,k){g.clearRect(0,0,RIP_W,RIP_H);const [rx,ry]=RIP[k],cx=8,cy=4,seen=new Set();
+  for(let a=0;a<64;a++){const t=a/64*Math.PI*2,x=Math.round(cx+Math.cos(t)*rx),y=Math.round(cy+Math.sin(t)*ry),key=x+','+y;if(seen.has(key))continue;seen.add(key);
+   g.globalAlpha=[1,1,1,.55][k];g.fillStyle=y>cy?'#b07a2a':'#ffe27a';g.fillRect(x,y,1,1);}   // lit on top, shaded below: reads on light paths and on grass
+  g.globalAlpha=1;}
+ function ripple(e){const r=view.getBoundingClientRect(),k=r.width/W,c=document.createElement('canvas');c.width=RIP_W;c.height=RIP_H;c.className='walk-ripple';c.setAttribute('aria-hidden','true');
+  c.style.width=RIP_W*k+'px';c.style.height=RIP_H*k+'px';c.style.left=(view.offsetLeft+e.clientX-r.left-8.5*k)+'px';c.style.top=(view.offsetTop+e.clientY-r.top-4.5*k)+'px';
+  const g=c.getContext('2d');view.parentElement.append(c);let f=0;ripFrame(g,0);
+  const still=matchMedia('(prefers-reduced-motion:reduce)').matches,next=()=>{f++;if(f>=RIP.length){c.remove();return;}ripFrame(g,still?0:f);setTimeout(next,90);};setTimeout(next,90);}
  // any click on the map that gives her a new walk route (whoever handles it: the map, a quest, the farm) gets the ring
  view.parentElement.addEventListener('pointerdown',e=>{if(e.target!==view||!active()||sim.place==='autumn_test'||e.button!==0)return;const c=ctl(),before=c?.state.route;
   requestAnimationFrame(()=>{const s=ctl()?.state;if(s&&s.route!==before&&(s.target||s.route?.length))ripple(e);});},true);

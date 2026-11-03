@@ -16,9 +16,5 @@
 .autumn-close{position:absolute;right:8px;top:8px;width:25px;height:25px;padding:0;font-size:18px;line-height:20px;color:var(--ink);background:var(--panel-2);border:2px solid var(--edge);cursor:pointer}
 .airport-flight-overlay{position:absolute;z-index:1900;image-rendering:pixelated;pointer-events:auto}.airport-flight-overlay[hidden],.airport-controls[hidden]{display:none}.airport-controls{display:flex;gap:8px;padding:8px}.airport-controls button{font:inherit;padding:6px 12px}.ring button:disabled{opacity:.55;cursor:default}
 
-/* click-to-walk feedback in the season maps (owner 2026-11-03): a yellow ring spreads on the ground */
-.walk-ripple{position:absolute;z-index:6;width:calc(16px*var(--s));height:calc(8px*var(--s));margin:calc(-4px*var(--s)) 0 0 calc(-8px*var(--s));pointer-events:none;border-radius:50%;
- border:calc(1px*var(--s)) solid #f6d36b;box-shadow:0 0 0 calc(1px*var(--s)) rgba(120,72,20,.45),inset 0 0 0 calc(1px*var(--s)) rgba(255,246,190,.9);animation:walk-ripple .6s cubic-bezier(.15,.7,.3,1) forwards}
-.walk-ripple::after{content:"";position:absolute;inset:calc(-1px*var(--s));border-radius:50%;border:calc(1px*var(--s)) solid #ffe27a;animation:walk-ripple .6s .14s cubic-bezier(.15,.7,.3,1) both}
-@keyframes walk-ripple{0%{transform:scale(.25);opacity:1}70%{opacity:.85}100%{transform:scale(2.6);opacity:0}}
-@media (prefers-reduced-motion:reduce){.walk-ripple,.walk-ripple::after{animation:walk-ripple-still .5s forwards}@keyframes walk-ripple-still{from{opacity:1}to{opacity:0}}}
+/* click-to-walk feedback in the season maps (owner 2026-11-03): a small pixel ring on the ground, drawn by adapter.js */
+.walk-ripple{position:absolute;z-index:6;pointer-events:none;image-rendering:pixelated}

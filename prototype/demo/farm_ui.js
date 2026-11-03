@@ -21,8 +21,8 @@ const FarmUI = (() => {
   const icon = name => img(IC.icons[name]);
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   function coinPill(balance) {
-    const p = el("span", "fu-coin"); p.append(icon("coin"), el("b", null, coins(balance)), el("small", null, "丢丢币"));
-    p.setAttribute("aria-label", `丢丢币 ${coins(balance)}`); return p;
+    const p = el("span", "fu-coin"); p.append(icon("coin"), el("small", null, "我有"), el("b", null, coins(balance)), el("small", null, "丢丢币"));
+    p.setAttribute("aria-label", `我有 ${coins(balance)} 丢丢币`); return p;
   }
 
   // ---------------------------------------------------------------- rings
@@ -53,7 +53,7 @@ const FarmUI = (() => {
   // goods: [{group, items: [{id, name, icon|pic, cost, info, line, off}]}]
   function shop(act, title, balance, goods, from) {
     PICK[act] = { title, groups: () => goods.map(g => ({ name: g.group, note: g.note, items: g.items.map(it => ({
-      title: it.name, icon: it.pic || IC.icons[it.icon], info: `${coins(it.cost)} 丢丢币${it.info ? " · " + it.info : ""}`, line: it.line || "", item: it })) })) };
+      title: it.name, icon: it.pic || IC.icons[it.icon], info: `售价 ${coins(it.cost)} 币${it.info ? " · " + it.info : ""}`, line: it.line || "", item: it })) })) };
     openPicker(act, from);
     const head = pickerEl.querySelector(".pk-head");
     head.querySelector(".fu-coin")?.remove();

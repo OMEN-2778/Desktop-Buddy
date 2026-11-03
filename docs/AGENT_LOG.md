@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: "coins out of sync" was a misread: tree/chicken prices are 8, shown as "8 丢丢币" on each card. farm_ui.js
+  shops now say 售价 N 币 on cards and 我有 N 丢丢币 in the balance pill (all farm shops). Click ripple smaller and
+  pixel-style: adapter.js draws a 17x9 house-pixel ring, 4 frames (90 ms), lit top/shaded bottom. infei_farm,
+  spring_story pass.
+
+## 2026-11-03 · Claude Code
 - Owner: farmhouse works in every phase (not only after the farm intro): spring_story clicks/infei_hover/hint gated
   by storyLocked() instead of phase==='done'; beds outside still need sow/water/done. Sleepers (owner approved the
   shot): art/src/concept/infei_bed_covers.py -> art/out/concept/infei_cover_{mine,parents}.png (bed's own quilt
