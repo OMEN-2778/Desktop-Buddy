@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: more quest icons for later. art/src/concept/quest_icons.py: 26 icons 16x16 (scroll, letter, windmill,
+  suona, footprints, rabbit, stew, heart, lantern, key, map, seedling, basket, fish, moon, phone, flower, note,
+  book, cake, star, smile, drop, lens, gift, house), farm_icons style. Board docs/design/quest-icons-board.png
+  (tools/make_quest_icons_board.py). NOT wired in yet: waiting on the owner (art is shown first).
+
+## 2026-11-03 · Claude Code
 - Owner: open one quest to look back at it. 任务 panel cards are clickable: a detail view slides in with a dotted
   timeline per scene (day + scene title), every line as chat bubbles (Buddy right), the choices she made, letters
   as paper notes (阿婆's son's letter + the reply), and 现在 / 结局 at the end. infei_quests.js records each scene
