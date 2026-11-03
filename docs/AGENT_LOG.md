@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Summer sea: no decor floating on steep slopes (put slides to flat ground or skips), swimmers clear of the floor,
+  treasure/trench hotspot moved to 最深海沟 bottom. Season checks pass.
+
+## 2026-11-03 · Claude Code
 - Owner: 茵菲谷 to 100 chance cards, 100 calls, 20 passers-by. New prototype/map-test/infei_more2.js (after
   infei_more.js): +21 cards, calls 妈妈 +20 (36), 爸爸 +16 (28), friends +20 (36), passers-by +4. Totals checked in
   the page: 100 cards (no duplicate titles, every outcome has its mood), 100 calls, 20 people; effects apply clean.

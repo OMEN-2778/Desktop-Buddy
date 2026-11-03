@@ -290,3 +290,7 @@ Owner 2026-11-01: irregular randomized fish schools (no rectangular ranks), rock
   The straight 海草 (`SL.seagrass`) is the owner's favourite: two clumps in every garden plus five by
   the old reef; 红藻/马尾藻 one per garden. Static swimmers are clamped above the seabed (shark/grouper
   sat inside the earth).
+- Owner (2026-11-03): pieces floated on steep slopes. `calm_decor.put` now slides each piece to the
+  flattest spot within ±40 px and skips it if the footprint still drops more than max(4, w/5); it sits
+  on the lowest point of its footprint. Swimmers start clear of the floor under their whole width.
+  Treasure + 最深海沟底 hotspot moved to the trench bottom (u 1130), 海沟边缘 at u 980.

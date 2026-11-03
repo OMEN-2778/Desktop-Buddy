@@ -499,8 +499,22 @@ def calm_decor():
     def put(fn, x, sink=2):
         """A v2 reef piece standing on the seabed, centred on x (owner 2026-11-03)."""
         spr = fn() if callable(fn) else fn
-        x0 = max(0, min(SEA_W - spr.w, x - spr.w // 2))
-        d.blit(spr, x0, min(F[x0:x0 + spr.w]) - spr.h + sink)
+        # owner: pieces floated on steep slopes. Slide to the flattest spot nearby; if
+        # it is still sloped, skip it (a flat base cannot sit on a cliff)
+        best = None
+        for dx in range(0, 41, 2):
+            for sx in ((x + dx, x - dx) if dx else (x,)):
+                x0 = max(0, min(SEA_W - spr.w, sx - spr.w // 2))
+                foot = F[x0 + 1:x0 + spr.w - 1] or F[x0:x0 + 1]
+                drop = max(foot) - min(foot)
+                if best is None or drop < best[0]:
+                    best = (drop, x0, foot)
+            if best[0] <= 2:
+                break
+        drop, x0, foot = best
+        if drop > max(4, spr.w // 5):
+            return
+        d.blit(spr, x0, max(foot) - spr.h + sink)
     for x0 in (40, 100):                                             # sea grass tufts on the beach slope
         for k in range(4):
             SS.seagrass(d, x0 + k * 4, F[x0 + k * 4] + 1, 4, 10 + k * 2, seed=x0 + k)
@@ -533,7 +547,7 @@ def calm_decor():
         SS.tall_weed(d, SPLIT + u, F[SPLIT + u] + 1, 46 + u % 20, P.teal, seed=u)
     for u in (236, 250, 486, 500):
         put(corals[u % len(corals)], SPLIT + u)
-    SS.treasure(d, SPLIT + 362, F[SPLIT + 362] + 1)
+    SS.treasure(d, SPLIT + 1130, F[SPLIT + 1130] + 1)                  # the helmet + chest lie at the bottom of 最深海沟
     SS.bommie(d, SPLIT + 560, F[SPLIT + 560] + 2, 1.1, seed=7)
     # New coral gardens and kelp groves throughout the expanded sea. Pieces sit
     # on the actual seabed; leave sandy channels between distinct habitats.
@@ -588,7 +602,11 @@ def _life():
             key,(_,fn)=schools[(i//3)%len(schools)]
             L.append((key,lambda f,fn=fn:fn(),x+22,max(50,y-55)))
     # every swimmer starts in open water, never inside the seabed (the shark and grouper sat in the earth)
-    return [(kind, f, x, min(y, SEAFLOOR[min(SEA_W - 1, x + 20)] - 44)) for kind, f, x, y in L]
+    def clear(kind, x, y):
+        fr = MOT.frames(kind)[0]
+        floor = min(SEAFLOOR[max(0, x):min(SEA_W, x + fr.w)] or [SEA_H])
+        return min(y, floor - fr.h - 4)
+    return [(kind, f, x, clear(kind, x, y)) for kind, f, x, y in L]
 
 
 LIFE = _life()
@@ -599,10 +617,10 @@ def _hotspots():
     for h in SS.HOTSPOTS:
         x = LAND + smap(h["x"])
         hs.append({"id": h["id"], "name": h["name"], "x": x, "y": min(SKY + h["y"], GROUND[x] - 6)})
-    for hid, name, u, dy in (("meadow", "海草草甸", 120, -6), ("trench", "深蓝海沟底", 362, -6), ("trench_rim", "海沟边缘", 214, -20)):
+    for hid, name, u, dy in (("meadow", "海草草甸", 120, -6), ("trench", "最深海沟底", 1130, -6), ("trench_rim", "海沟边缘", 980, -20)):
         x = LAND + SPLIT + u
         hs.append({"id": hid, "name": name, "x": x, "y": GROUND[x] + dy})
-    for i,(name,u) in enumerate([('珊瑚花园',260),('蓝洞沙谷',680),('最深海沟',1130),('海藻森林',1350),('深海岩台',1690),('贝壳沙坪',2050)]):
+    for i,(name,u) in enumerate([('珊瑚花园',260),('蓝洞沙谷',680),('暗礁斜坡',1250),('海藻森林',1350),('深海岩台',1690),('贝壳沙坪',2050)]):
         x=LAND+SPLIT+u;hs.append({'id':'expanded_'+str(i),'name':name,'x':x,'y':GROUND[x]-14})
     return hs
 
@@ -706,5 +724,5 @@ def build():
         "bay_view_beach": view(full, PRE + 171, WL - 50, (342, 118)),
         "bay_view_shore": view(full, LAND, WL + 30),
         "bay_view_dive": view(full, LAND + 200, WL + 90),
-        "bay_view_trench": view(full, LAND + SPLIT + 300, GH - 120),
+        "bay_view_trench": view(full, LAND + SPLIT + 1130, GH - 120),
     }
