@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: 枫叶城's 老周 renamed to **老郑** (茵菲谷 keeps 老周, it ships first). Changed in MAPLE_FULL_SCRIPT.md,
+  AUTUMN_STORY.md, prototype/autumn/{game,story}.js, story-review html + docx. Text-only rename, ids unchanged.
+
+## 2026-11-03 · Claude Code
 - Owner approved the quest icons and asked to wire them all in. make_season_game_test.py injects QUEST_ICONS (art/out
   quest_icon_*.png); quest_panel.js draws them as <img> (trigger, header, cards, replay head, 16px per replay scene).
   Quests: 风车 windmill, 阿婆 letter, 脚印 footprints, 乱炖 stew, 农庄 house; scene icons (suona, basket, moon, seedling…).

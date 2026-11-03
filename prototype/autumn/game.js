@@ -277,7 +277,7 @@ function makeSeason_autumn(opts, DATA) {
         state.autoAt = opts.now() + 25;
     }
     function npcRows() {
-        return [ [ "jian", "阿简", state.quest === 0 ? "airstrip" : "plaza", "m", 0 ], [ "qing", "程青", "mine_office", "f", 1 ], [ "zhou", "老周", "canteen", "m", 2 ], [ "doctor", "苏医生", "clinic", "f", 3 ], ...state.quest >= 2 ? [ [ "father", "程铁山", "hut", "m", 4 ] ] : [] ].map(([id, name, loc, gender, seed]) => ({
+        return [ [ "jian", "阿简", state.quest === 0 ? "airstrip" : "plaza", "m", 0 ], [ "qing", "程青", "mine_office", "f", 1 ], [ "zhou", "老郑", "canteen", "m", 2 ], [ "doctor", "苏医生", "clinic", "f", 3 ], ...state.quest >= 2 ? [ [ "father", "程铁山", "hut", "m", 4 ] ] : [] ].map(([id, name, loc, gender, seed]) => ({
             id: id,
             name: name,
             gender: gender,
@@ -295,7 +295,7 @@ function makeSeason_autumn(opts, DATA) {
             f["heard_" + id] = true;
             if ([ "qing", "zhou", "doctor" ].every(n => f["heard_" + n])) talk(AUTUMN_STORY.dust, () => chapter(2, 1, "运输车盖上了篷布，工人街开始洒水。山上的小屋也许有人。"));
         });
-        if (id === "father" && q === 2) return talk(AUTUMN_STORY.father, () => chapter(3, 2, "找到程铁山；旧排水口封住了，河水开始变清。老周少了一班活。"));
+        if (id === "father" && q === 2) return talk(AUTUMN_STORY.father, () => chapter(3, 2, "找到程铁山；旧排水口封住了，河水开始变清。老郑少了一班活。"));
         if (q === 3 && id === "doctor" && !f.letter) return talk(AUTUMN_STORY.doctor, () => {
             f.letter = true;
         });
@@ -391,7 +391,7 @@ function makeSeason_autumn(opts, DATA) {
         };
         if (services[id]) {
             const [label, need] = services[id];
-            return panel(p.name, id === "plaza" ? "长椅边有人歇脚，能坐下来聊几句。" : "走到地方了，先歇口气。", [ [ label, () => beginService(need, p.name) ], ...id === "canteen" ? [ [ "和老周聊聊", () => converse("zhou") ] ] : [], [ "离开" ] ]);
+            return panel(p.name, id === "plaza" ? "长椅边有人歇脚，能坐下来聊几句。" : "走到地方了，先歇口气。", [ [ label, () => beginService(need, p.name) ], ...id === "canteen" ? [ [ "和老郑聊聊", () => converse("zhou") ] ] : [], [ "离开" ] ]);
         }
         const discoveries = {
             nursery: "苗圃的叶片上积着一层灰。",
