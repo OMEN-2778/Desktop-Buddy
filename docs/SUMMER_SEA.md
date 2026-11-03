@@ -276,3 +276,5 @@ Owner 2026-11-01: irregular randomized fish schools (no rectangular ranks), rock
   scene mock `tools/make_reef_scene.py`; combined board `docs/design/reef-v2-preview.png`.
 - NOT wired in: waiting on the owner. After approval: swap `sea_life`/`sea_life_motion` users to
   reef.py (motion bend works on any Sprite), then enlarge the sea (EXT/DEEP in summer_bay.py).
+- Owner (2026-11-03): keep the ORIGINAL seabed (summer_bay strata/sand, smooth join with the
+  beach). The flat sand in `make_reef_scene.py` is only a mock; v2 replaces fish and corals only.
