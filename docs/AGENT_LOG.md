@@ -7,6 +7,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: release check + "do hovered things glow like the rest of the game?" They did not in 茵菲谷. New
+  prototype/map-test/infei_hover.js: house hover glow (drawObjectHover) on beds, villagers, trees, animals (in
+  infei_farm drawAnimals), barn, coop, farmhouse door, quest spots, farmhouse furniture/door; airport.js: board + gate.
+  check_infei_hover.js new. All 茵菲谷/map-test checks pass; check_spring_life made robust (a natural card was open).
+- Main-game suite (61 server checks): 32 pass, 29 fail on stale expectations (文字大小 setting, dropped full stops,
+  later layout decisions...). Being compared against a 10-30 build; not fixed here.
+
+## 2026-11-03 · Claude Code
 - Owner: put the 茵菲谷 BGM on the web preview to listen. prototype/map-test/bgm.html (copied by
   make_season_game_test.py to /map-test/bgm.html): 6 tracks with play/seek, 19 sound buttons. Tested in Chromium.
 

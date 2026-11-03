@@ -277,6 +277,6 @@ const infeiQuests=(function(){
   for(const g of gs)if(g.mark==='!'&&Q()[g.id].step===0)out.push({id:g.id,title:TITLE[g.id],kind:KIND[g.id],place:PLACE[g.id][0],done:false,step:`${g.v.name}好像有话想说`,isNew:true});
   return out;});
  X.hooks.pick.quests=()=>questBoard.open();
- return {V,Q,goals,run,talk,list:()=>questBoard.open(),get busy(){return busy;},rabbit};
+ return {V,Q,goals,run,talk,at:v=>visible(v)?where(v):null,spots:SPOTS,list:()=>questBoard.open(),get busy(){return busy;},rabbit};
 })();
 window.infeiQuests=infeiQuests;

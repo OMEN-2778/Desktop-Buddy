@@ -17,7 +17,7 @@ const out=process.argv[2]||'/tmp/spring-life';fs.mkdirSync(out,{recursive:true})
  await p.waitForFunction(()=>sim.place==='spring_test'&&!wiping,null,{timeout:20000});
  await p.evaluate(()=>{const c=seasonMapTest.ctl();c.go(4,120);springFarm.mom.on=false;});
  // natural rolls on the farm only draw spring cards
- const rolled=await p.evaluate(()=>{const seen=[];const real=showCard;showCard=cd=>seen.push(cd.at);for(let i=0;i<60;i++){lifeFlags.cards.last=-1e9;rollCard(lifeCtx());}showCard=real;return seen;});
+ const rolled=await p.evaluate(()=>{if(card){card=null;cardEl.hidden=true;}const seen=[];const real=showCard;showCard=cd=>seen.push(cd.at);for(let i=0;i<60;i++){lifeFlags.cards.last=-1e9;rollCard(lifeCtx());}showCard=real;return seen;});
  assert(rolled.length>10&&rolled.every(a=>a==='spring_test'),JSON.stringify(rolled));
  // three cards with farm effects, played by hand
  for(const [title,k]of [['跑出来的小羊','a'],['一场及时雨','a'],['卖菜的小摊','a']]){

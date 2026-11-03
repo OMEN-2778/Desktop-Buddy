@@ -74,7 +74,7 @@ const infeiFarm=(()=>{
    if(a.tx!=null){const d=a.tx-a.x,st=dt*(a.kind==='chicken'?9:5);if(Math.abs(d)<=st)a.tx=null;else{a.x+=Math.sign(d)*st;a.dir=Math.sign(d);}}
    const kind=baby(a)?'lamb':a.kind,frames=D.animals[kind],moving=a.tx!=null,fi=a.kind==='chicken'?Math.floor(t*3+a.f)%2:moving?[0,3][Math.floor(t*4)%2]:Math.floor(t*1.4+a.f)%3,pic=X.imgOf(frames[fi%frames.length]);
    const w=pic.width||ANIMAL[a.kind].size[0],h=pic.height||ANIMAL[a.kind].size[1],x=Math.round(a.x-w/2),y=a.y-h;
-   ctx.save();if((a.dir||1)<0){ctx.translate(x*2+w,0);ctx.scale(-1,1);}ctx.drawImage(pic,x,y);ctx.restore();
+   ctx.save();if((a.dir||1)<0){ctx.translate(x*2+w,0);ctx.scale(-1,1);}if(window.infeiHover?.animal===a.id)drawObjectHover(ctx,pic,x,y);ctx.drawImage(pic,x,y);ctx.restore();   // hover glow, like the house's furniture
    if(a.ready)bubble(ctx,Math.round(a.x),y-2,{egg:'#e8c88a',wool:'#d8d2e6',milk:'#9cc8ef'}[ANIMAL[a.kind].product],t);
   }
   if(info.region===5){const fr=C().current?.().front;if(fr)ctx.drawImage(X.imgOf(fr),0,0);}   // the fence stands in front of them
