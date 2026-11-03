@@ -268,14 +268,13 @@ const infeiQuests=(function(){
  const PLACE={mill:['油菜花田','风车','油菜花田'],letter:['小溪边','小溪边','小溪边'],prints:['菜地','小溪边','油菜花田','菜地'],stew:['郁金香田','郁金香田','郁金香田']};
  const HOME={mill:'风车',letter:'小溪边',prints:'菜地',stew:'郁金香田'};
  questBoard.add(()=>{const q=Q(),gs=goals(),out=[],F=S();
-  if(F.letter){const ph=F.phase,where=!F.unlocked?'家里信箱':ph==='none'?'机场':ph==='sow'||ph==='water'?'菜地':'农舍',step=!F.unlocked?'读妈妈寄来的信':ph==='none'?'去机场，坐去茵菲谷的航班':ph==='sow'?'在有箭头的菜地播种':ph==='water'?'给刚种下的菜地浇水':'跟着妈妈熟悉农庄';
+  if(F.unlocked){const ph=F.phase,where=!F.unlocked?'家里信箱':ph==='none'?'机场':ph==='sow'||ph==='water'?'菜地':'农舍',step=!F.unlocked?'读妈妈寄来的信':ph==='none'?'去机场，坐去茵菲谷的航班':ph==='sow'?'在有箭头的菜地播种':ph==='water'?'给刚种下的菜地浇水':'跟着妈妈熟悉农庄';
    out.push({id:'farm',title:'妈妈的农庄',kind:'house',place:ph==='done'?'茵菲谷':where,done:ph==='done',step,end:'菜地交给你了',isNew:!F.unlocked||ph==='none',log:F.storyLog||[]});}
   for(const id of Object.keys(TITLE)){const st=q[id].step;if(st===0)continue;const g=gs.find(g=>g.id===id);
    let step=g?.hint||(g?.v?`去找${g.v.name}聊聊`:'');
    if(STEP[id]&&st===2&&today()>q[id].day)step=id==='letter'?'去溪边找阿婆':'去郁金香田边找老周';
    out.push({id,title:TITLE[id],kind:KIND[id],place:st===9?HOME[id]:PLACE[id][st]||HOME[id],done:st===9,step,end:END[id],isNew:false,log:q[id].log||[]});}
-  // offered but not taken yet: someone with a "!" is waiting
-  for(const g of gs)if(g.mark==='!'&&Q()[g.id].step===0)out.push({id:g.id,title:TITLE[g.id],kind:KIND[g.id],place:PLACE[g.id][0],done:false,step:`${g.v.name}好像有话想说`,isNew:true,offer:true});
+  // offered (someone has a "!") is not listed: only quests she has taken (owner 2026-11-03)
   return out;});
  X.hooks.pick.quests=()=>questBoard.open();
  return {V,Q,goals,run,talk,at:v=>visible(v)?where(v):null,spots:SPOTS,list:()=>questBoard.open(),get busy(){return busy;},rabbit};

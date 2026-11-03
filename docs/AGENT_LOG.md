@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: quests show only once taken. infei_quests.js: no offered ("!") entries in the 任务 panel; 妈妈的农庄 appears
+  after the letter is read (F.unlocked). Releases: v0.2.0 (cancelled run 139, Windows only, no pop-out) and v0.2.1
+  (run 141, Windows only, offered quests listed) went out before being stopped; this push = 0.2.2, the full one + Mac.
+
+## 2026-11-03 · Claude Code
 - Owner: a newly taken quest pops the 任务 button out for 1s with the quest sound (quest_panel.js; offered "!"
   quests don't count, waits for the story talk to close, loaded quests don't announce; infei_audio skips 0→1).
   Cancelled run 139 so 0.2.0 includes it; version offset now run 140. quest_panel/infei_audio/infei_quests pass.
