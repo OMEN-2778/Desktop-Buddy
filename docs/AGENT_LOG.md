@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-03 Claude: 茵菲谷任务 NPC 出现时间放宽
+- 阿婆、老周 5–22 点；小满 6–21 点（原来分别 7–19、8–18、白天）。王叔仍只在夜里（磨坊剧情要夜里）。
+
 ## 2026-11-03 · Claude Code
 - Summer sea: no decor floating on steep slopes (put slides to flat ground or skips), swimmers clear of the floor,
   treasure/trench hotspot moved to 最深海沟 bottom. Season checks pass.

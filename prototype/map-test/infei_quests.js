@@ -22,9 +22,9 @@ const infeiQuests=(function(){
  const visible=v=>{const q=Q();
   if(v===V.wang)return q.mill.step===1&&night();
   if(v===V.xiaoman&&q.prints.step===3&&night())return 'farm';
-  if(v===V.xiaoman)return !night();
-  if(v===V.apo)return hour()>=7&&hour()<19;
-  if(v===V.zhou)return q.stew.step<3&&hour()>=8&&hour()<18;
+  if(v===V.xiaoman)return hour()>=6&&hour()<21;
+  if(v===V.apo)return hour()>=5&&hour()<22;
+  if(v===V.zhou)return q.stew.step<3&&hour()>=5&&hour()<22;
   return true;};
  const where=v=>visible(v)==='farm'?{scene:4,x:300}:{scene:v.scene,x:v.x};
  // what each quest waits for now: {v} a person, {spot} a place, {auto} a scene that plays by itself
