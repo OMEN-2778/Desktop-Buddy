@@ -6,6 +6,17 @@
 // speaking then): same height and round ends, the row split evenly between them. Esc
 // folds the talk away (onClose). Quest lines tint the bubble white -> pale blue.
 // While a talk is open the rows never time out. API kept for autumn/spring/summer.
+// Story lock (owner, 2026-11-03: "story talks must be immersive"). While a story talk is open, or a story
+// scene holds (STORY_HOLDS, e.g. a quest walking between lines), nothing interrupts: no calls, texts or visits,
+// no chance cards or events, no stray lines from her, no leaving; while the talk itself is on screen the clock
+// stops (cardHolds), so her needs stand still. A story never starts over a phone call: it waits for it to end.
+var STORY_SPEECHES=[],STORY_HOLDS=[];   // var: speak() may run before this line during boot
+function storySpeechOpen(){return !!STORY_SPEECHES&&STORY_SPEECHES.some(s=>s.open);}
+function storyLocked(){return storySpeechOpen()||!!STORY_HOLDS&&STORY_HOLDS.some(f=>{try{return !!f();}catch(e){return false;}});}
+function storyWaitsForPhone(){
+ if(typeof phoneCall!=='undefined'&&phoneCall.phase==='waiting'){phoneCall.phase='idle';phoneCall.contactId=null;socialState.nextCall=sim.t+120;}   // a call not yet ringing gives way
+ return (typeof phoneHolds==='function'&&phoneHolds())||(typeof remoteSocial!=='undefined'&&!!remoteSocial);
+}
 function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}}){
  const popSpan=popSay.querySelector('span'),peerSpan=peerBubble.querySelector('span');
  const more=document.createElement('i');more.className='story-more';more.setAttribute('aria-hidden','true');
@@ -23,7 +34,12 @@ function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}})
   const box=hero?popSay:peerBubble;if(more.parentElement!==box)box.append(more);
   keep=requestAnimationFrame(hold);
  }
- function show(speaker,words,{special=true,last=false,advance:next,choices:opts=null}={}){
+ let waiting=null,waitT=0;
+ function show(speaker,words,o){   // over a call: wait until it is over, then speak
+  if(!open&&storyWaitsForPhone()){waiting=[speaker,words,o];if(!waitT)waitT=setInterval(()=>{if(storyWaitsForPhone())return;clearInterval(waitT);waitT=0;const w=waiting;waiting=null;if(w)show0(...w);},250);return;}
+  return show0(speaker,words,o);
+ }
+ function show0(speaker,words,{special=true,last=false,advance:next,choices:opts=null}={}){
   if(!open)previous=document.activeElement,busyWas=sayBusy;
   open=true;hero=speaker===nameOf();advance=opts?null:next;
   peerHud.classList.toggle('quest',!hero&&special);popSay.classList.toggle('quest',hero&&special);
@@ -53,5 +69,5 @@ function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}})
   hidePeerSay();popBubble(popSay,0);sayBusy=busyWas;
   if(previous?.isConnected)previous.focus({preventScroll:true});previous=null;
  }
- return {el:peerHud,show,hide,position(){},get open(){return open}};
+ const api={el:peerHud,show,hide,position(){},get open(){return open},get waiting(){return !!waiting}};STORY_SPEECHES.push(api);return api;
 }

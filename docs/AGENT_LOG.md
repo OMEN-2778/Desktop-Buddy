@@ -7,6 +7,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: story talks must be immersive. Whole game (story_bubbles.js): storyLocked() = a story talk open or a
+  STORY_HOLDS scene (茵菲谷 quest scene, mom's welcome round). Locked: no calls/texts/visits (canReceiveCall), no
+  chance cards/moments/events, no stray speak(), no go_home/go_out; talk on screen stops the clock (cardHolds) so
+  needs stand still. A story never starts over a call: show() waits for the phone, a queued call gives way.
+  check_story_lock.js PASS. Regression rerun (main 31 + map-test 14) in progress when committed.
+
+## 2026-11-03 · Claude Code
 - Owner: release check + "do hovered things glow like the rest of the game?" They did not in 茵菲谷. New
   prototype/map-test/infei_hover.js: house hover glow (drawObjectHover) on beds, villagers, trees, animals (in
   infei_farm drawAnimals), barn, coop, farmhouse door, quest spots, farmhouse furniture/door; airport.js: board + gate.

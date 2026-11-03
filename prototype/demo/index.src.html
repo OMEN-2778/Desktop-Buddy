@@ -530,6 +530,7 @@ const EMO_PULL = {
   embarrassed: { bath: 15, go_out: 10 }, uncomfortable: { go_out: 15 }, dazed: { window: 10, go_out: 10 },
 };
 function startAct(name, quiet = false) {
+  if (storyLocked() && (name === "go_home" || name === "go_out")) return;   // she does not walk off mid-story
   if(!name.startsWith("pet_")&&!["tv","host"].includes(name))eachPet(p=>{if(p.carried)dropCarriedPet();});
   if(name.startsWith("pet_")&&!preparePetHumanAction(name))return;
   if(atFriendHome()){friendVisitCommand(name);return;}
@@ -1977,6 +1978,7 @@ function lifeCtx() {          // what the event / card conditions look at
 const eventLast = {};
 let lastHour = -1, lastFestivalDay = 0;
 function rollEvents() {
+  if(storyLocked())return;   // a story talk is on: nothing else happens
   if(atFriendHome())return;
   if (mallVisitInside()) return; // Rooms have their own context, dialogue and chance cards.
   const hNow = Math.floor(sim.t / 60);
@@ -2336,7 +2338,7 @@ let nextSay = 6, lastSaid = "", sayBusy = 0, sayShownAt = -Infinity;
 const sayQueue = [];
 // her words wait their turn: one bubble at a time, at most a few queued
 function speak(text, now = false) {
-  if (!text) return;
+  if (!text || storyLocked()) return;   // no stray lines in the middle of a story talk
   const npcReading=life.talkQ&&!life.talkQ.delivering||friendOutingState?.talk,barReading=sim.place==='bar'&&barScene?.chat?.t.to==='player';
   if(npcReading||barReading){if(sayQueue.length<2&&!sayQueue.includes(text))sayQueue.push(text);return;}
   if (now) { sayQueue.length = 0; showMoodTip(false); showSay(text); return; }
@@ -4338,7 +4340,7 @@ for (let i = 0; i < 20; i++) {                   // sparks around the moodlet pi
   crBurst.append(sp);
 }
 // while a card or its result is up the house dims a little and time stands still (user)
-const cardHolds = () => !petPanel.hidden || !!(card && card.hold) || guideOn || wardrobeOpen || phoneHolds() || socialDialogHolds() || !!friendHousePreview || ringOf==="outing";   // (the guide stops the clock too)
+const cardHolds = () => (typeof storySpeechOpen === "function" && storySpeechOpen()) || !petPanel.hidden || !!(card && card.hold) || guideOn || wardrobeOpen || phoneHolds() || socialDialogHolds() || !!friendHousePreview || ringOf==="outing";   // (the guide stops the clock too)
 const dimHouse = on => view.classList.toggle("dim", on);
 let quietUntil = 0;         // her card line isn't followed by a "new mood" thought
 let card = null;            // { cd, vars, phase: ask | wait | result | closing, k, o, auto, timer, lockUntil }
@@ -4357,7 +4359,7 @@ function rollCard(c, service = homeVisitActive()&&sim.act==='host'?'visit':sim.p
   if(friendOutingActive())service='friend_outing';
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   const out = sim.place !== "home";               // outside: that place's own cards (cd.at)
-  if (!prefs.guided || guideOn || card || !c.awake || parkInsideToilet() || (sim.place === "mall" && mallS.toilet) || (sim.place === "bar" && sim.bar?.toilet) || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside() && !mallVisitInside())
+  if (storyLocked() || !prefs.guided || guideOn || card || !c.awake || parkInsideToilet() || (sim.place === "mall" && mallS.toilet) || (sim.place === "bar" && sim.bar?.toilet) || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside() && !mallVisitInside())
     || sim.t - st.last < (out ? CARD_GAP_OUT : CARD_GAP) || Math.random() >= (out ? CARD_CHANCE_OUT : CARD_CHANCE)) return false;
   const any = CARDS.filter(cd => !cd.on && (cd.at === "storm" ? stormOutside() : (cd.at || "home") === sim.place)
     && (service ? cd.service === service : !cd.service));
@@ -4385,7 +4387,7 @@ const MOMENT_ODDS = { stairs: 0.1, passWindow: 0.06, toilet: 0.2, wash: 0.25, wa
 const ACT_MOMENT = act => act.startsWith("water_") ? "water" : act.startsWith("pc_") || act === "computer" ? "pc"
   : act.startsWith("phone_") ? "phone" : act;
 function cardMoment(tag) {
-  if (!tag || !prefs.guided || guideOn || (tag === "dream" && !asleep()) || card || sim.place !== "home" || sim.mode === "down" || pickOn || !CARDS.some(cd => cd.on === tag)) return false;
+  if (storyLocked() || !tag || !prefs.guided || guideOn || (tag === "dream" && !asleep()) || card || sim.place !== "home" || sim.mode === "down" || pickOn || !CARDS.some(cd => cd.on === tag)) return false;
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   if (sim.t - st.last < CARD_GAP || Math.random() >= (MOMENT_ODDS[tag] ?? 0.4)) return false;
   const c = lifeCtx(), pool = CARDS.filter(cd => cd.on === tag && cardFits(cd, c));

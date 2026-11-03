@@ -81,6 +81,7 @@ const springFarm=(()=>{
  // ---------------------------------------------------------------- story
  const speech=createStorySpeech({view,onClose:()=>speech.hide()});
  const oldHolds=cardHolds;cardHolds=()=>oldHolds()||speech.open;
+ STORY_HOLDS.push(()=>inSpring()&&mom.on&&['arrive','room','field','talk'].includes(F.phase));   // mom's welcome round is one story
  let lines=0;
  const say=(who,words)=>new Promise(res=>(lines++,speech.show(who,words,{special:true,advance:res})));
  const ask=(who,words,opts)=>new Promise(res=>(lines++,speech.show(who,words,{special:true,choices:opts.map((label,i)=>({label,on:()=>res(i)}))})));

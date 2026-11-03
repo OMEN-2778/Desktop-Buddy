@@ -41,6 +41,7 @@ const infeiQuests=(function(){
   return g;}
  // ---------------------------------------------------------------- dialogue helpers (the story's own rows)
  const speech=springFarm.speech;let busy=false;
+ STORY_HOLDS.push(()=>busy);   // a quest scene is a story: no calls, cards or stray lines until it ends
  const say=(who,words)=>new Promise(res=>speech.show(who,words,{special:true,advance:res}));
  const ask=(who,words,opts)=>new Promise(res=>speech.show(who,words,{special:true,choices:opts.map((label,i)=>({label,on:()=>res(i)}))}));
  const walkTo=x=>new Promise(res=>{speech.hide();C().target(x,103,res);});
