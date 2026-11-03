@@ -7,6 +7,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: put the 茵菲谷 BGM on the web preview to listen. prototype/map-test/bgm.html (copied by
+  make_season_game_test.py to /map-test/bgm.html): 6 tracks with play/seek, 19 sound buttons. Tested in Chromium.
+
+## 2026-11-03 · Claude Code
 - Owner: 茵菲谷 posters + an MG-style story promo with real gameplay and its own sound; finish the valley's BGM/SFX.
   Audio: AUDIO_LIBRARY/tools/build_infei_audio.py -> AUDIO_LIBRARY/INFEI (6 tracks: 4 seasons, night, airport; 22
   sounds), outside make_demo's scan (not in releases); map-test copies it; infei_audio.js = beds + state-change cues.

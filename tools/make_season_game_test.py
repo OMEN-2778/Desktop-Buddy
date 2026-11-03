@@ -146,6 +146,7 @@ def main():
     import shutil
     for group in ['BGM','SFX/game','SFX/processed']:shutil.copytree(ROOT/'AUDIO_LIBRARY'/group,out.parent/'audio'/group,dirs_exist_ok=True)
     shutil.copytree(ROOT/'AUDIO_LIBRARY/INFEI/BGM',out.parent/'audio/BGM/infei',dirs_exist_ok=True)
+    shutil.copy2(ROOT/'prototype/map-test/bgm.html',out.parent/'bgm.html')   # 茵菲谷 music listening page (/map-test/bgm.html)
     for f in (ROOT/'AUDIO_LIBRARY/INFEI/SFX').glob('*.mp3'):shutil.copy2(f,out.parent/'audio/SFX/game'/f.name)
     print(out,round(len(page)/1024),'KiB')
 if __name__=='__main__':main()

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>茵菲谷配乐试听</title>
+<style>
+:root{--bg:#f3f0f8;--panel:#fff;--ink:#22182a;--muted:#6b6680;--edge:#22182a;--accent:#e0739a;--soft:#f6e7c1}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif}
+main{max-width:760px;margin:0 auto;padding:32px 16px 48px}
+h1{margin:0 0 4px;font-size:28px;letter-spacing:2px}
+p.lead{margin:0 0 24px;color:var(--muted)}
+h2{margin:28px 0 10px;font-size:17px}
+.track{display:grid;grid-template-columns:52px 1fr;gap:4px 14px;align-items:center;background:var(--panel);border:2px solid var(--edge);border-radius:14px;padding:12px 16px;margin-bottom:10px;box-shadow:3px 3px 0 #0001}
+.track button{grid-row:1/3;width:52px;height:52px;border-radius:50%;border:2px solid var(--edge);background:var(--soft);font-size:20px;cursor:pointer}
+.track button:hover{background:#ffe9a6}
+.track.on button{background:var(--accent);color:#fff}
+.track b{font-size:16px}
+.track small{color:var(--muted)}
+.track progress{grid-column:2;width:100%;height:8px;accent-color:var(--accent)}
+.sfx{display:flex;flex-wrap:wrap;gap:8px}
+.sfx button{border:2px solid var(--edge);border-radius:999px;background:var(--panel);padding:4px 14px;font:inherit;cursor:pointer}
+.sfx button:hover{background:var(--soft)}
+footer{margin-top:32px;color:var(--muted);font-size:13px}
+</style>
+<main>
+<h1>茵菲谷配乐试听</h1>
+<p class="lead">同一段茵菲谷民谣主题，按季节换配器。游戏里白天按季节放，晚上 18 点后放夜晚版，机场单独一首。</p>
+<h2>配乐</h2>
+<div id="tracks"></div>
+<h2>音效（点一下播放）</h2>
+<div class="sfx" id="sfx"></div>
+<footer>原创程序合成，只在季节地图测试页使用。</footer>
+</main>
+<script>
+const T=[['spring','春 · 白天','长笛 + 拨弦，96 拍'],['summer','夏 · 白天','轻快拨弦 + 沙锤，106 拍'],['autumn','秋 · 白天','暖簧管，84 拍'],['winter','冬 · 白天','八音盒，72 拍'],['night','夜晚（四季共用）','柔和长笛 + 铺底，66 拍'],['airport','机场','轻爵士电钢琴，90 拍']];
+const S=[['sow','播种'],['dig','种树翻土'],['harvest','收菜'],['fruit','摘果'],['coin','收钱'],['cluck','鸡'],['baa','羊'],['moo','牛'],['pat','摸摸'],['feed','喂草'],['brook','小溪（环境）'],['windmill','风车（环境）'],['plane','飞机起飞'],['cabin','机舱（环境）'],['chime','机场提示音'],['letter','拆信'],['suona','风车里的唢呐'],['quest','任务新进展'],['done','任务完成']];
+let cur=null,row=null;
+const box=document.getElementById('tracks');
+for(const [k,name,info]of T){
+ const r=document.createElement('div');r.className='track';
+ r.innerHTML=`<button aria-label="播放 ${name}">▶</button><div><b>${name}</b> <small>${info}</small></div><progress value="0" max="1"></progress>`;
+ const a=new Audio(`audio/BGM/infei/infei-${k}.mp3`);a.preload='none';a.loop=true;
+ const btn=r.querySelector('button'),bar=r.querySelector('progress');
+ a.ontimeupdate=()=>{if(a.duration)bar.value=a.currentTime/a.duration;};
+ bar.onclick=e=>{if(a.duration){const x=e.offsetX/bar.clientWidth;a.currentTime=x*a.duration;}};
+ btn.onclick=()=>{if(cur===a&&!a.paused){a.pause();r.classList.remove('on');btn.textContent='▶';return;}
+  if(cur&&cur!==a){cur.pause();row.classList.remove('on');row.querySelector('button').textContent='▶';}
+  cur=a;row=r;a.play();r.classList.add('on');btn.textContent='❚❚';};
+ box.append(r);
+}
+const sb=document.getElementById('sfx');
+for(const [k,name]of S){const b=document.createElement('button');b.textContent=name;b.onclick=()=>{const a=new Audio(`audio/SFX/game/infei-${k}.mp3`);a.play();if(['brook','windmill','cabin'].includes(k))setTimeout(()=>a.pause(),6000);};sb.append(b);}
+</script>
+</html>
