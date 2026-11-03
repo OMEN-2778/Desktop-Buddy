@@ -6,6 +6,8 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-03 Claude: 存档持久化 + 安卓 APK。网页：启动时申请 navigator.storage.persist()。APK（android/，无 Gradle，build.sh 直接用 SDK 工具）：WebView 载入手机版，localStorage 换成 App 私有目录 files/store 里的文件（BuddyAndroid），onPause 自动存，系统备份包含存档；BGM 96k、不含茵菲谷，约 42MB。签名钥匙在 android/keystore（已 gitignore，已交给主人保管）。没有安卓模拟器，只在浏览器里模拟了存档桥（存-重开-恢复通过），未真机测试。
+
 ## 2026-11-03 Claude: 主人说点日记后画面下移、卡死仍在。本地 Chromium + WebKit（iPhone 竖/横）都复现不出；发现手机版打开面板时 makeRoom 把 --room-top 累加到 4000px+（手机版不用，但每次都强制排版 12 次），已在 mobile.js 关掉。不确定是不是根因，等主人截图（出错提示条会显示报错）。
 
 ## 2026-11-03 Claude: 修启动崩溃：存档停在商场且正要去临时卫生间时，restoreMall 在图片加载前读 IMG.out.mall → 游戏起不来（主人 iPad 上的空白界面，靠新加的出错提示条定位）。改读 D.outside.mall.img。电脑版同样受影响，一并修好。用同类存档对比：旧版崩、新版正常。

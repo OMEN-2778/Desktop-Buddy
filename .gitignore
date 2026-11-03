@@ -9,3 +9,11 @@ prototype/demo/audio/
 prototype/pets/index.html
 prototype/pets/assets/
 prototype/demo/mobile_trial.html
+
+# Android app (android/build.sh): build output, re-encoded music, the signing key (NEVER commit it)
+android/build/
+android/.audio-cache/
+android/keystore/
+android/*.apk
+*.jks
+android/*.idsig

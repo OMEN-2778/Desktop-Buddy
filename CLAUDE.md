@@ -29,6 +29,7 @@ tests, no unasked extras).
   resources): `cd desktop && node scripts/make-h5.mjs` → `desktop/desktop-buddy-h5.zip` (小红书小工具
   rules: `.claude/skills/minitool-zip-builder`; ES2017 via esbuild, Chrome 61 CSS fallbacks).
 - Desktop app: `desktop/` (`desktop/README.md`: updater, saves, window).
+- Android app (APK of the phone page): `android/` (`android/README.md`; saves are files in the app's private folder; the signing key is git-ignored, never commit it).
 - Tutorial text: `prototype/demo/guide_text.js`; shots: `tools/make_guide_shots.js`.
 - UI layout and motion skills: `docs/UI_SKILLS.md` lists installed skills and
   when to load them. Read only the skill needed for the current task. Existing

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="app.buddy.house">
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
+    <!-- allowBackup: Android's own backup keeps files/ (the save) across reinstalls where the phone supports it -->
+    <application android:label="Buddy 小屋" android:icon="@mipmap/ic_launcher" android:allowBackup="true"
+        android:fullBackupContent="@xml/backup" android:dataExtractionRules="@xml/extraction"
+        android:hardwareAccelerated="true" android:theme="@android:style/Theme.Material.Light.NoActionBar.Fullscreen">
+        <activity android:name="app.buddy.MainActivity" android:exported="true" android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

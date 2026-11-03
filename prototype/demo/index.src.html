@@ -133,6 +133,21 @@
 </details>
 
 <script>
+// Saves that stay (owner 2026-11-03). In the Android app (android/, MainActivity.java) every
+// localStorage key is a file in the app's private folder, so a WebView reset can't lose the save.
+// In a browser: ask for persistent storage, so the browser doesn't clear it when space runs low.
+if (window.BuddyAndroid) try {
+  const A = window.BuddyAndroid, keys = () => JSON.parse(A.keys());
+  Object.defineProperty(window, "localStorage", { configurable: true, value: {
+    getItem: k => { const v = A.get(String(k)); return v == null ? null : v; },
+    setItem: (k, v) => A.set(String(k), String(v)),
+    removeItem: k => A.remove(String(k)),
+    clear: () => keys().forEach(k => A.remove(k)),
+    key: i => keys()[i] ?? null,
+    get length() { return keys().length; },
+  } });
+} catch (e) { /* keep the WebView's own storage */ }
+else if (navigator.storage && navigator.storage.persist) navigator.storage.persisted().then(p => p || navigator.storage.persist()).catch(() => {});
 // Older Macs' WebKit (Safari < 15.4) has no .at(): the desktop app on macOS runs on it
 for (const C of [Array, String]) if (!C.prototype.at) Object.defineProperty(C.prototype, "at", { configurable: true, writable: true,
   value(i) { i = Math.trunc(i) || 0; if (i < 0) i += this.length; return i < 0 || i >= this.length ? undefined : this[i]; } });
