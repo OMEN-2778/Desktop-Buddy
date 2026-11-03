@@ -28,7 +28,7 @@ function installSeasonPeople(active,ctl){
   if(life.talkQ)advanceNpcTalk(dt);
   const q=life.talkQ,n=q?.n||life.npcs.find(n=>n.sayUntil>realClock);
   if(n&&(n.sayUntil>realClock||q?.lastOther)){
-   const text=q?.lastOther?q.lastText:n.sayText;if(text){if(bubble.textContent!==text)bubble.textContent=text;bubble.hidden=false;const s=c.state,x=n.x-(s.camera??s.camX??0),y=n.feet-(s.camY||0)-30;const scale=Number(view.style.width.replace('px',''))/342||view.width/342;bubble.style.left=Math.max(8,Math.min(342*scale-8,x*scale))+'px';bubble.style.top=(y*scale)+'px';}
+   const text=q?.lastOther?q.lastText:n.sayText;if(text){if(bubble.textContent!==text)bubble.textContent=text;bubble.hidden=false;const s=c.state,x=n.x-(s.camera??s.camX??0),y=n.feet-(s.camY||0)-30;const scale=Number(view.style.width.replace('px',''))/342||view.width/342;const half=bubble.offsetWidth/2+4;bubble.style.left=Math.max(half,Math.min(342*scale-half,x*scale))+'px';bubble.style.top=(y*scale)+'px';}
   }else bubble.hidden=true;
  }
  function draw(ctx){sync();const c=ctl(),s=c.state;for(const n of life.npcs){const cx=s.camera??s.camX??0,cy=s.camY||0;if(n.x<cx-60||n.x>cx+400||n.feet<cy-5||n.feet>cy+c.canvas.height+40)continue;const [f,pose]=npcFrame(n),water=n.seasonKind!=='walk';if(water){f.wave=Math.floor(s.time/.28+n.phase)%2;f.bob=0;f.sway=0;}const pic=npcCanvas(n,f,water?'stand':pose,false);

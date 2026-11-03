@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner screenshot: passer-by bubble in 茵菲谷 squeezed to one character per line near the map's right edge.
+  #seasonNpcBubble now width:max-content (max 300px) and people.js clamps its centre by half its width, so it stays
+  whole and on the map. Checked at 25/50/100%: one line (was 3 lines, ~70px square).
+
+## 2026-11-03 · Claude Code
 - Owner: leaving the farmhouse always lands at its door (spring/viewer.js advanceDoor: scene 'home'), not in the
   scene she went in from. Owner: double the 茵菲谷 chance cards and talk: new prototype/map-test/infei_more.js
   (injected after infei_farm.js): 41 cards (beds, valley, animals, trees, family; season-neutral, farmIf where it
