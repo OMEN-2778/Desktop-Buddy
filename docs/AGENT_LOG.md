@@ -7,6 +7,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: open one quest to look back at it. 任务 panel cards are clickable: a detail view slides in with a dotted
+  timeline per scene (day + scene title), every line as chat bubbles (Buddy right), the choices she made, letters
+  as paper notes (阿婆's son's letter + the reply), and 现在 / 结局 at the end. infei_quests.js records each scene
+  that moved a quest (q.log); the farm's main line is recorded from the story speech (F.storyLog).
+  check_infei_quests + check_quest_panel (25 / 50) + spring story pass.
+
+## 2026-11-03 · Claude Code
 - Owner: no 搞笑/惆怅/悬疑 words on the 任务 panel; only the concrete place on the right; capsule frames. Cards and
   place tags are pixel capsules (roundClip, radius = half height); place follows the current step (小溪边, 风车,
   菜地…). Small houses (<200px tall, e.g. 25%) get a compact panel. check_quest_panel.js takes a scale; 25/50/100 pass.

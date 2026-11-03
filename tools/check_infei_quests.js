@@ -42,5 +42,13 @@ const out=process.argv[2]||'/tmp/infei-quests';fs.mkdirSync(out,{recursive:true}
  await at(4,150,21);await play('脚印-夜里蹲守',[0]);assert.equal(await ev(()=>infeiQuests.Q().prints.rabbit),'farm');
  await nextDay();await at(3,120,10);await shot('兔子住在鸡窝边');
  await ev(()=>infeiQuests.list());await shot('支线任务列表');
+ // replay: a finished quest opens its story — lines, choices, letters
+ await p.locator('.qb-card',{hasText:'溪边的阿婆'}).click();await p.waitForTimeout(900);
+ const pv=await p.locator('#questPanel').boundingBox();await p.screenshot({path:path.join(out,String(++n).padStart(2,'0')+'-任务回顾-阿婆.png'),clip:pv});
+ const rv=await ev(()=>({ents:document.querySelectorAll('.qb-ent').length,letters:[...document.querySelectorAll('.qb-letter')].map(l=>l.textContent),picks:document.querySelectorAll('.qb-pick').length,says:document.querySelectorAll('.qb-say').length}));console.log(rv);
+ assert(rv.letters.length===2&&rv.picks>=2&&rv.says>20);
+ await p.locator('.qb-tl').evaluate(e=>e.scrollTop=e.scrollHeight);await p.waitForTimeout(300);await p.screenshot({path:path.join(out,String(++n).padStart(2,'0')+'-任务回顾-阿婆-下半.png'),clip:pv});
+ await p.locator('.qb-back').click();await p.waitForTimeout(400);assert(!(await ev(()=>questBoard.panel.classList.contains('detail'))));
+ await p.locator('.qb-card',{hasText:'菜地里的脚印'}).click();await p.waitForTimeout(900);await p.screenshot({path:path.join(out,String(++n).padStart(2,'0')+'-任务回顾-脚印.png'),clip:pv});
  assert.deepEqual(errors,[]);console.log('PASS',n,'shots in',out);
 }finally{await b.close();}})().catch(e=>{console.error(e);process.exit(1);});

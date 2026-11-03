@@ -46,7 +46,24 @@ const infeiQuests=(function(){
  const walkTo=x=>new Promise(res=>{speech.hide();C().target(x,103,res);});
  const ML_=(id,name,emo,pts=2)=>{ML['sq_'+id]={name,emo,pts,min:240};return 'sq_'+id;};
  const MOODS={mill:ML_('mill','风车怪声','playful'),letter:ML_('letter','阿婆的饼子','sad',1),prints:ML_('prints','菜地里的小偷','happy',3),stew:ML_('stew','咸了一点的乱炖','happy')};
- async function scene(fn){if(busy)return;busy=true;T.state.autoAt=sim.t+1e9;closeRing();try{await fn();}finally{speech.hide();busy=false;T.state.autoAt=sim.t+30;}}
+ // ---- quest log (owner 2026-11-03): every scene that moved a quest on is kept with its lines, choices and
+ // letters, so the 任务 panel can replay the whole story. The farm's main line is kept the same way.
+ const SCENE={mill:['小满的秘密','夜里的风车','告诉小满'],letter:['念信','送菜','回信'],prints:['菜叶被啃了','小溪边','问小满','夜里蹲守'],stew:['新菜','送菜','尝乱炖']};
+ const STORY={arrive:'到了茵菲谷',room:'看看房间',field:'去地里',sow:'第一次播种',water:'第一次浇水',talk:'妈妈的嘱咐'};
+ let rec=null;
+ const note=x=>{if(rec)rec.lines.push(x);};
+ const rawShow=speech.show.bind(speech);
+ speech.show=(who,words,o={})=>{
+  let to=rec?.lines;
+  if(!busy&&inSpring()&&STORY[S().phase]){const F=S();F.storyLog??=[];let g=F.storyLog[F.storyLog.length-1];
+   if(!g||g.title!==STORY[F.phase]){g={day:today(),title:STORY[F.phase],lines:[]};F.storyLog.push(g);}to=g.lines;}
+  if(to){if(words)to.push([who,String(words)]);if(o.choices)o={...o,choices:o.choices.map(c=>({...c,on:()=>{to.push(['>',c.label]);c.on?.();}}))};}
+  return rawShow(who,words,o);};
+ async function scene(fn,id){if(busy)return;busy=true;T.state.autoAt=sim.t+1e9;closeRing();
+  const before=id&&JSON.stringify(Q()[id]);rec=id?{id,step:Q()[id].step,lines:[]}:null;
+  try{await fn();}finally{speech.hide();busy=false;T.state.autoAt=sim.t+30;
+   if(rec&&JSON.stringify(Q()[id])!==before&&rec.lines.length){const q=Q()[id];q.log??=[];q.log.push({day:today(),title:SCENE[id][rec.step]||'',lines:rec.lines});if(q.log.length>12)q.log.shift();}
+   rec=null;}}
  function finish(id,text){Q()[id].step=9;Q()[id].day=today();addMood(MOODS[id]);log(text);showHint('支线完成');}
  const crops=(skip=[])=>Object.entries(S().inv).filter(([k,n])=>n>0&&X.CROP[k]&&!skip.includes(k)).map(([k])=>k);
  const take=k=>{S().inv[k]--;if(!S().inv[k])delete S().inv[k];};
@@ -103,6 +120,7 @@ const infeiQuests=(function(){
   await say('阿婆','帮我念念这个，我眼睛花了，字太小。');
   await say(me(),'我看看……是封信。');
   await say(me(),'“妈，城里活多，今年先不回了。明年春天一定回来，带小雨一起。”');
+  note({letter:'儿子的信 · 前年寄来',text:'妈：\n城里活多，今年先不回了。\n明年春天一定回来，带小雨一起。'});
   await say('阿婆','嗯，是这么写的。');
   await say(me(),'这是哪年寄的？');
   await say('阿婆','前年。');
@@ -128,6 +146,7 @@ const infeiQuests=(function(){
   await say('阿婆','闺女，你再帮我个忙，帮我回封信。');
   await say(me(),'您说，我写。');
   const i=await ask('阿婆','就写……',['“地里都好，别惦记”','“春天了，想你们”','“小雨长高了吧”']);
+  note({letter:'替阿婆写的回信',text:'儿子：\n'+['地里都好，别惦记。','春天了，想你们。','小雨长高了吧？上回说要学游泳，学会了没有。'][i]+'\n——妈'});
   await say('阿婆',['嗯。他忙，别让他惦记。','……写上吧。','对，问问小雨。上回电话里她说要学游泳。'][i]);
   if(i===1)await say('阿婆','写完我再看看，要是太那个了，就划掉。');
   await say(me(),'写好了。我帮您寄？');
@@ -206,12 +225,12 @@ const infeiQuests=(function(){
   sim.needs.hunger=Math.min(100,sim.needs.hunger+25);
   finish('stew','老周的茵菲谷乱炖做好了，咸了一点。');}
  const RUN={mill:[mill0,mill1,mill2],letter:[letter0,letter1,letter2],prints:[prints0,prints1,prints2,prints3],stew:[stew0,stew1,stew2]};
- const run=id=>{const st=Q()[id].step,fn=RUN[id][st];if(fn)scene(fn);};
+ const run=id=>{const st=Q()[id].step,fn=RUN[id][st];if(fn)scene(fn,id);};
  // ---------------------------------------------------------------- talking to someone with nothing new
  const IDLE={xiaoman:[['小满','你看见我妈没？'],['小满','我捉到一只蚂蚱，又跑了。']],apo:[['阿婆','坐会儿吧，石头不凉。'],['阿婆','今天水流得急，夜里上头下过雨。']],
   zhou:[['老周','饭馆中午忙，我出来透口气。'],['老周','你那胡萝卜，水灵。']],wang:[['王叔','嘘——']]};
  async function chat(key){const [who,line]=pick(IDLE[key]);await say(who,line);}
- function talk(key){const v=V[key],g=goals().find(g=>g.v===v);scene(async()=>{await approach(v);if(g)await RUN[g.id][Q()[g.id].step]();else await chat(key);});}
+ function talk(key){const v=V[key],g=goals().find(g=>g.v===v);scene(async()=>{await approach(v);if(g)await RUN[g.id][Q()[g.id].step]();else await chat(key);},g?.id);}
  // ---------------------------------------------------------------- drawing: villagers, marks, the rabbit
  const rabbit={on:false};
  function bunny(ctx,x,y,t){ctx.fillStyle='#e9e2d6';ctx.fillRect(x-4,y-5,8,5);ctx.fillRect(x+2,y-8,4,4);ctx.fillRect(x+3,y-12,1,4);ctx.fillRect(x+5,y-12,1,4);ctx.fillStyle='#b9ae9e';ctx.fillRect(x-4,y-1,8,1);ctx.fillStyle='#3a2a2e';ctx.fillRect(x+5,y-7,1,1);if(Math.floor(t*2)%2)ctx.fillRect(x-5,y-4,1,1);}
@@ -247,11 +266,11 @@ const infeiQuests=(function(){
  const HOME={mill:'风车',letter:'小溪边',prints:'菜地',stew:'郁金香田'};
  questBoard.add(()=>{const q=Q(),gs=goals(),out=[],F=S();
   if(F.letter){const ph=F.phase,where=!F.unlocked?'家里信箱':ph==='none'?'机场':ph==='sow'||ph==='water'?'菜地':'农舍',step=!F.unlocked?'读妈妈寄来的信':ph==='none'?'去机场，坐去茵菲谷的航班':ph==='sow'?'在有箭头的菜地播种':ph==='water'?'给刚种下的菜地浇水':'跟着妈妈熟悉农庄';
-   out.push({id:'farm',title:'妈妈的农庄',kind:'home',place:ph==='done'?'茵菲谷':where,done:ph==='done',step,end:'菜地交给你了',isNew:!F.unlocked||ph==='none'});}
+   out.push({id:'farm',title:'妈妈的农庄',kind:'home',place:ph==='done'?'茵菲谷':where,done:ph==='done',step,end:'菜地交给你了',isNew:!F.unlocked||ph==='none',log:F.storyLog||[]});}
   for(const id of Object.keys(TITLE)){const st=q[id].step;if(st===0)continue;const g=gs.find(g=>g.id===id);
    let step=g?.hint||(g?.v?`去找${g.v.name}聊聊`:'');
    if(STEP[id]&&st===2&&today()>q[id].day)step=id==='letter'?'去溪边找阿婆':'去郁金香田边找老周';
-   out.push({id,title:TITLE[id],kind:KIND[id],place:st===9?HOME[id]:PLACE[id][st]||HOME[id],done:st===9,step,end:END[id],isNew:false});}
+   out.push({id,title:TITLE[id],kind:KIND[id],place:st===9?HOME[id]:PLACE[id][st]||HOME[id],done:st===9,step,end:END[id],isNew:false,log:q[id].log||[]});}
   // offered but not taken yet: someone with a "!" is waiting
   for(const g of gs)if(g.mark==='!'&&Q()[g.id].step===0)out.push({id:g.id,title:TITLE[g.id],kind:KIND[g.id],place:PLACE[g.id][0],done:false,step:`${g.v.name}好像有话想说`,isNew:true});
   return out;});

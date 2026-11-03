@@ -14,6 +14,9 @@ const out=process.argv[2]||'/tmp/quest-panel',SCALE=+(process.argv[3]||50);fs.mk
  assert(v.y<=d.y&&Math.abs(v.y+v.height-house.y-house.height)<8,'panel spans diary top to house bottom');
  const rows=await p.evaluate(()=>[...document.querySelectorAll('.qb-card')].map(c=>[c.classList.contains('done'),c.querySelector('strong').textContent,c.querySelector('p').textContent]));console.log(rows);
  const firstDone=rows.findIndex(r=>r[0]);assert(firstDone>0&&rows.slice(firstDone).every(r=>r[0]),'unfinished first');
+ await p.evaluate(()=>{infeiQuests.Q().letter.log=[{day:3,title:'念信',lines:[['阿婆','闺女，你认字吧？'],[nameOf(),'认得。'],['阿婆','帮我念念这个。'],{letter:'儿子的信 · 前年寄来',text:'妈：\n城里活多，今年先不回了。\n明年春天一定回来，带小雨一起。'},['阿婆','我就是想再听一遍。'],['>','我再给您念一遍']]}];questBoard.fill();});
+ await p.locator('.qb-card',{hasText:'溪边的阿婆'}).click();await p.waitForTimeout(900);await p.screenshot({path:path.join(out,'任务回顾-'+SCALE+'.png'),clip:await p.locator('#questPanel').boundingBox()});
+ assert.equal(await p.locator('.qb-letter').count(),1);await p.locator('.qb-back').click();await p.waitForTimeout(300);
  await p.mouse.move(1300,950,{steps:4});await p.waitForTimeout(900);assert(!(await p.evaluate(()=>questBoard.isOpen)));
  assert.deepEqual(errs,[]);console.log('PASS');
 }finally{await b.close();}})().catch(e=>{console.error(e);process.exit(1);});
