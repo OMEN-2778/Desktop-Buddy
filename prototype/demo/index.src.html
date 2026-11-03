@@ -1083,7 +1083,7 @@ function fit() {
   if(typeof card !== "undefined" && card){placeCard(cardEl);placeCard(cardRes);}
   if (typeof fitSay === "function") { fitSay(); fitDiary(); if(typeof fitPeerSpeech === "function")fitPeerSpeech(); }   // a new size: refit both lines
   if (typeof guideOn !== "undefined" && guideOn) sizeGuide();
-  if (TAURI || friendHousePreview || wardrobeOpen || diaryOn || (typeof guideOn !== "undefined" && guideOn)) { studio.refit(); makeRoom(); }
+  if (TAURI || friendHousePreview || wardrobeOpen || diaryOn || (typeof guideOn !== "undefined" && guideOn)) { if (studio) studio.refit(); makeRoom(); }   // studio is made at boot: a save restored outdoors arrives before it (player crash, 0.2.1)
   if (pickOn) fitPicker();                          // (fit runs only after the page has loaded)   // what's open above the house got a new size
   fitPetPanel();
   if (TAURI) { fitWindow(); requestAnimationFrame(fitWindow); }   // the app window starts hidden: no frames until it's sized
@@ -2879,7 +2879,7 @@ function rename(raw) {
   if (!n || n === nameOf()) return;
   setLook({ ...look, name: n });
   saveLook();
-  if (wardrobeOpen) studio.setLook(look);
+  if (wardrobeOpen && studio) studio.setLook(look);
   announceName(0);
 }
 function announceName(delay) {

@@ -1224,11 +1224,44 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 /* the pet's menu stands in one column (pet_hud.js petColumnLayout): pills one width */
 .ring.over-hud > button { min-width: 7.2em; text-align: center; }
 
-/* Story speech shares npcsay's pixel outline and pop-in, quest tint is opt-in. */
-.npcsay.quest-speech::after{background:linear-gradient(155deg,#fff 0%,#edf7ff 48%,#d6ebfa 100%)}
-.npcsay.story-speech{z-index:1800;pointer-events:auto;white-space:normal;box-sizing:border-box;padding:10px 13px;display:flex;flex-direction:column;gap:7px;font-size:max(13px,var(--ui-font-body));line-height:1.5;color:#344c60;overflow:visible}
-.story-speech[hidden]{display:none}.story-speaker{font-size:max(12px,var(--ui-font-caption));color:#42677f;flex:none}.story-words{overflow:auto;min-height:0;overflow-wrap:anywhere;font-weight:500}.story-actions{display:flex;justify-content:flex-end;gap:8px;flex:none}.story-actions button{font:inherit;font-size:max(12px,var(--ui-font-control));padding:4px 10px;background:#f7fbff;color:#344c60;border:2px solid #9db9ca;clip-path:var(--clip-btn);cursor:pointer}.story-actions button:focus-visible{outline:2px dashed #3c6e91;outline-offset:-4px}
-@media(prefers-reduced-motion:reduce){.story-speech{animation:none}}
+/* Story speech lives in the conversation rows (story_bubbles.js, owner 2026-11-02):
+   the 对方 row above the house for other people, Buddy's own bubble below. Click = next;
+   a pixel ▼ blinks at the end; choices are pills under the 对方 bubble. Quest lines:
+   white -> pale blue fill inside the same outline. */
+.peer-bubble.story-bubble, .pop.say.story-bubble { pointer-events: auto; cursor: pointer; outline: none; }
+.story-bubble > span { padding-right: 14px; }
+.peer-hud.quest .peer-bubble .bg::after, .peer-hud.quest .peer-bubble .dot::after { background: linear-gradient(155deg, #fff 0%, #edf7ff 48%, #d6ebfa 100%); }
+.peer-hud.quest { --pe: #6f8fa8; }
+.peer-hud.quest .peer-bubble { color: #2f4558; }
+.peer-hud.quest .peer-bubble .who { color: #4f7896; }
+.pop.say.quest .bg::after { background: linear-gradient(155deg, #fff 0%, #edf7ff 48%, #d6ebfa 100%); }
+.story-bubble:focus-visible { filter: drop-shadow(3px 3px 0 #3c6e91); }
+/* a pixel ▼ (4 rows, 2px steps) at the bubble's right end: there is more */
+.story-more { position: absolute; right: 16px; bottom: 7px; width: 8px; height: 6px; background: currentColor; opacity: .55; pointer-events: none;
+  clip-path: polygon(0 0, 8px 0, 8px 2px, 6px 2px, 6px 4px, 4px 4px, 4px 6px, 4px 6px, 4px 4px, 2px 4px, 2px 2px, 0 2px); animation: storyMore 1s steps(2, jump-none) infinite; }
+.story-more[hidden] { display: none; }
+@keyframes storyMore { 0% { opacity: .7; } 100% { opacity: .15; } }
+/* choices in Buddy's bubble row: same height / round ends as her bubble, the row split evenly */
+.story-choices { position: absolute; z-index: 4; left: var(--tail, 16px); right: 0; top: 50%; height: var(--say-h, 48px); translate: 0 -50%; display: flex; gap: 8px; }
+.story-choices[hidden] { display: none; }
+.story-choices.wrap { flex-wrap: wrap; row-gap: 6px; height: auto; top: auto; bottom: calc(50% - var(--say-h, 48px) / 2); translate: none; }   /* grows upward over the diary row, never under the needs bar */
+.story-choices.wrap button { flex: 1 1 auto; height: var(--say-h, 48px); }
+.story-choices.wrap button span { overflow: visible; text-overflow: clip; }
+.story-choices button { --pe: #8a6446; --pf: #ecd5ad; flex: 1 1 0; min-width: 0; height: 100%; position: relative; isolation: isolate; margin: 0; padding: 0 18px; background: none; border: 0; box-shadow: none;
+  cursor: pointer; font: inherit; font-weight: 700; color: #3d2a1e; font-size: var(--say-fs, 20px); line-height: 1.2; filter: drop-shadow(3px 3px 0 var(--shadow));
+  animation: popin .42s cubic-bezier(.3, 1.6, .5, 1) both; }
+.story-choices button:nth-child(2) { animation-delay: .06s; } .story-choices button:nth-child(3) { animation-delay: .12s; }
+.story-choices button span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.story-choices button .bg, .story-choices button .bg::after { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--pe); clip-path: var(--choice-clip); }
+.story-choices button .bg::after { background: var(--pf); clip-path: var(--choice-in); }
+/* choices are pale yellow (owner), quest or not */
+.story-choices button, .story-choices.quest button { --pe: #b8946a; color: #5c3b1f; }
+.story-choices button .bg::after { background: #fff4c4; }
+.story-choices button:hover .bg::after { filter: brightness(1.05); }
+.story-choices button:hover { translate: 0 -1px; }
+.story-choices button:active { translate: 1px 1px; filter: drop-shadow(2px 2px 0 var(--shadow)); }
+.story-choices button:focus-visible .bg { background: #3c6e91; }
+@media (prefers-reduced-motion: reduce) { .story-more { animation: none; } }
 
 #petPanel{position:absolute;z-index:61;left:var(--pick-left);top:var(--pick-top);width:var(--pick-w);height:var(--pick-h);box-sizing:border-box;padding:10px;display:flex;flex-direction:column;gap:6px;overflow:hidden;font-size:var(--ui-font-body,14px);animation:pet-sheet-in .32s cubic-bezier(.2,.8,.2,1.12)}
 #petPanel[hidden],.pet-mini[hidden]{display:none}
@@ -2959,6 +2992,7 @@ const EMO_PULL = {
   embarrassed: { bath: 15, go_out: 10 }, uncomfortable: { go_out: 15 }, dazed: { window: 10, go_out: 10 },
 };
 function startAct(name, quiet = false) {
+  if (storyLocked() && (name === "go_home" || name === "go_out")) return;   // she does not walk off mid-story
   if(!name.startsWith("pet_")&&!["tv","host"].includes(name))eachPet(p=>{if(p.carried)dropCarriedPet();});
   if(name.startsWith("pet_")&&!preparePetHumanAction(name))return;
   if(atFriendHome()){friendVisitCommand(name);return;}
@@ -3559,7 +3593,7 @@ function fit() {
   if(typeof card !== "undefined" && card){placeCard(cardEl);placeCard(cardRes);}
   if (typeof fitSay === "function") { fitSay(); fitDiary(); if(typeof fitPeerSpeech === "function")fitPeerSpeech(); }   // a new size: refit both lines
   if (typeof guideOn !== "undefined" && guideOn) sizeGuide();
-  if (TAURI || friendHousePreview || wardrobeOpen || diaryOn || (typeof guideOn !== "undefined" && guideOn)) { studio.refit(); makeRoom(); }
+  if (TAURI || friendHousePreview || wardrobeOpen || diaryOn || (typeof guideOn !== "undefined" && guideOn)) { if (studio) studio.refit(); makeRoom(); }   // studio is made at boot: a save restored outdoors arrives before it (player crash, 0.2.1)
   if (pickOn) fitPicker();                          // (fit runs only after the page has loaded)   // what's open above the house got a new size
   fitPetPanel();
   if (TAURI) { fitWindow(); requestAnimationFrame(fitWindow); }   // the app window starts hidden: no frames until it's sized
@@ -10947,6 +10981,7 @@ function lifeCtx() {          // what the event / card conditions look at
 const eventLast = {};
 let lastHour = -1, lastFestivalDay = 0;
 function rollEvents() {
+  if(storyLocked())return;   // a story talk is on: nothing else happens
   if(atFriendHome())return;
   if (mallVisitInside()) return; // Rooms have their own context, dialogue and chance cards.
   const hNow = Math.floor(sim.t / 60);
@@ -11306,7 +11341,7 @@ let nextSay = 6, lastSaid = "", sayBusy = 0, sayShownAt = -Infinity;
 const sayQueue = [];
 // her words wait their turn: one bubble at a time, at most a few queued
 function speak(text, now = false) {
-  if (!text) return;
+  if (!text || storyLocked()) return;   // no stray lines in the middle of a story talk
   const npcReading=life.talkQ&&!life.talkQ.delivering||friendOutingState?.talk,barReading=sim.place==='bar'&&barScene?.chat?.t.to==='player';
   if(npcReading||barReading){if(sayQueue.length<2&&!sayQueue.includes(text))sayQueue.push(text);return;}
   if (now) { sayQueue.length = 0; showMoodTip(false); showSay(text); return; }
@@ -11847,7 +11882,7 @@ function rename(raw) {
   if (!n || n === nameOf()) return;
   setLook({ ...look, name: n });
   saveLook();
-  if (wardrobeOpen) studio.setLook(look);
+  if (wardrobeOpen && studio) studio.setLook(look);
   announceName(0);
 }
 function announceName(delay) {
@@ -52776,7 +52811,7 @@ for (let i = 0; i < 20; i++) {                   // sparks around the moodlet pi
   crBurst.append(sp);
 }
 // while a card or its result is up the house dims a little and time stands still (user)
-const cardHolds = () => !petPanel.hidden || !!(card && card.hold) || guideOn || wardrobeOpen || phoneHolds() || socialDialogHolds() || !!friendHousePreview || ringOf==="outing";   // (the guide stops the clock too)
+const cardHolds = () => (typeof storySpeechOpen === "function" && storySpeechOpen()) || !petPanel.hidden || !!(card && card.hold) || guideOn || wardrobeOpen || phoneHolds() || socialDialogHolds() || !!friendHousePreview || ringOf==="outing";   // (the guide stops the clock too)
 const dimHouse = on => view.classList.toggle("dim", on);
 let quietUntil = 0;         // her card line isn't followed by a "new mood" thought
 let card = null;            // { cd, vars, phase: ask | wait | result | closing, k, o, auto, timer, lockUntil }
@@ -52795,7 +52830,7 @@ function rollCard(c, service = homeVisitActive()&&sim.act==='host'?'visit':sim.p
   if(friendOutingActive())service='friend_outing';
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   const out = sim.place !== "home";               // outside: that place's own cards (cd.at)
-  if (!prefs.guided || guideOn || card || !c.awake || parkInsideToilet() || (sim.place === "mall" && mallS.toilet) || (sim.place === "bar" && sim.bar?.toilet) || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside() && !mallVisitInside())
+  if (storyLocked() || !prefs.guided || guideOn || card || !c.awake || parkInsideToilet() || (sim.place === "mall" && mallS.toilet) || (sim.place === "bar" && sim.bar?.toilet) || (!out && busyWith("bath", "toilet", "dress")) || pickOn || wiping || (out && mallInside() && !mallVisitInside())
     || sim.t - st.last < (out ? CARD_GAP_OUT : CARD_GAP) || Math.random() >= (out ? CARD_CHANCE_OUT : CARD_CHANCE)) return false;
   const any = CARDS.filter(cd => !cd.on && (cd.at === "storm" ? stormOutside() : (cd.at || "home") === sim.place)
     && (service ? cd.service === service : !cd.service));
@@ -52823,7 +52858,7 @@ const MOMENT_ODDS = { stairs: 0.1, passWindow: 0.06, toilet: 0.2, wash: 0.25, wa
 const ACT_MOMENT = act => act.startsWith("water_") ? "water" : act.startsWith("pc_") || act === "computer" ? "pc"
   : act.startsWith("phone_") ? "phone" : act;
 function cardMoment(tag) {
-  if (!tag || !prefs.guided || guideOn || (tag === "dream" && !asleep()) || card || sim.place !== "home" || sim.mode === "down" || pickOn || !CARDS.some(cd => cd.on === tag)) return false;
+  if (storyLocked() || !tag || !prefs.guided || guideOn || (tag === "dream" && !asleep()) || card || sim.place !== "home" || sim.mode === "down" || pickOn || !CARDS.some(cd => cd.on === tag)) return false;
   const st = (lifeFlags.cards ||= { seen: [], last: -1e9 });
   if (sim.t - st.last < CARD_GAP || Math.random() >= (MOMENT_ODDS[tag] ?? 0.4)) return false;
   const c = lifeCtx(), pool = CARDS.filter(cd => cd.on === tag && cardFits(cd, c));
@@ -60968,27 +61003,78 @@ function sizeGameUi(width,height){
  return m;
 }
 
-// Shared story speech uses the native NPC pill skin/motion; never a full-scene panel.
+// Story speech goes into the game's own conversation rows (owner, 2026-11-02):
+// other people speak in the upper 对方 row (peer_dialogue.js: wooden bubble, "妈妈：",
+// their avatar on the right), Buddy in her own lower bubble. No extra panel and no
+// 继续 button: click the bubble (or Enter / Space) for the next line; a blinking
+// pixel ▼ says there is more. Choices take Buddy's own bubble row (she is not
+// speaking then): same height and round ends, the row split evenly between them. Esc
+// folds the talk away (onClose). Quest lines tint the bubble white -> pale blue.
+// While a talk is open the rows never time out. API kept for autumn/spring/summer.
+// Story lock (owner, 2026-11-03: "story talks must be immersive"). While a story talk is open, or a story
+// scene holds (STORY_HOLDS, e.g. a quest walking between lines), nothing interrupts: no calls, texts or visits,
+// no chance cards or events, no stray lines from her, no leaving; while the talk itself is on screen the clock
+// stops (cardHolds), so her needs stand still. A story never starts over a phone call: it waits for it to end.
+var STORY_SPEECHES=[],STORY_HOLDS=[];   // var: speak() may run before this line during boot
+function storySpeechOpen(){return !!STORY_SPEECHES&&STORY_SPEECHES.some(s=>s.open);}
+function storyLocked(){return storySpeechOpen()||!!STORY_HOLDS&&STORY_HOLDS.some(f=>{try{return !!f();}catch(e){return false;}});}
+function storyWaitsForPhone(){
+ if(typeof phoneCall!=='undefined'&&phoneCall.phase==='waiting'){phoneCall.phase='idle';phoneCall.contactId=null;socialState.nextCall=sim.t+120;}   // a call not yet ringing gives way
+ return (typeof phoneHolds==='function'&&phoneHolds())||(typeof remoteSocial!=='undefined'&&!!remoteSocial);
+}
 function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}}){
- const el=document.createElement('section');el.className='npcsay story-speech';el.hidden=true;
- el.setAttribute('role','dialog');el.setAttribute('aria-label','剧情对话');
- const name=document.createElement('strong'),text=document.createElement('div'),actions=document.createElement('div');
- name.className='story-speaker';text.className='story-words';text.setAttribute('aria-live','polite');actions.className='story-actions';
- const next=document.createElement('button'),exit=document.createElement('button');next.type=exit.type='button';exit.textContent='暂时收起';exit.onclick=onClose;actions.append(next,exit);el.append(name,text,actions);host.append(el);
- let who='',previous=null;
- function position(){if(el.hidden)return;const box=view.getBoundingClientRect(),parent=host.getBoundingClientRect(),s=box.width/342,p=anchor(who);
-  const visible=p&&p.x>=0&&p.x<=342&&p.y>=0&&p.y<=box.height/s;
-  name.textContent=who+(visible?'':' · 画外');el.dataset.remote=String(!visible);
-  el.style.width=Math.min(box.width-16,Math.max(250,box.width*.54))+'px';el.style.maxHeight=Math.max(90,box.height-12)+'px';
-  const x=visible?p.x*s:box.width/2,y=visible?(p.y-30)*s:box.height;
-  const w=el.offsetWidth,h=el.offsetHeight,left=Math.max(8,Math.min(box.width-w-8,x-w/2));
-  let top=y-h-7;if(top<6)top=Math.min(box.height-h-6,Math.max(6,y+34*s));
-  el.style.left=box.left-parent.left+left+w/2+'px';el.style.top=box.top-parent.top+Math.max(6,top)+h+'px';
+ const popSpan=popSay.querySelector('span'),peerSpan=peerBubble.querySelector('span');
+ const more=document.createElement('i');more.className='story-more';more.setAttribute('aria-hidden','true');
+ const choices=document.createElement('div');choices.className='story-choices';choices.hidden=true;document.getElementById('moodTalk').append(choices);
+ let open=false,advance=null,hero=false,previous=null,keep=0,busyWas=0;
+ function mark(){   // exactly one row carries the story classes (tests and styles find it)
+  for(const [box,span,on] of [[peerHud,peerSpan,!hero],[popSay,popSpan,hero]]){
+   box.classList.toggle('story-speech',open&&on);(box===peerHud?peerBubble:popSay).classList.toggle('story-bubble',open&&on);span.classList.toggle('story-words',open&&on);
+  }
  }
- function show(speaker,words,{special=true,last=false,advance}={}){if(el.hidden)previous=document.activeElement;who=speaker;el.hidden=false;el.classList.toggle('quest-speech',special);text.textContent=spokenText(words);next.textContent=last?'说完了':'继续';next.onclick=advance;position();next.focus({preventScroll:true});}
- function hide(){el.hidden=true;next.onclick=null;if(previous?.isConnected)previous.focus({preventScroll:true});previous=null;}
- const observer=new ResizeObserver(position);observer.observe(view);window.addEventListener('resize',position);
- return {el,show,hide,position,get open(){return !el.hidden}};
+ function hold(){   // keep the rows up while the talk waits for a click
+  if(!open)return;
+  if(!hero)peerSpeech.until=performance.now()+6e4;else{clearTimeout(popSay._t);clearTimeout(popSay._t2);popSay.hidden=false;popSay.classList.remove('out');}
+  sayBusy=realClock+60;
+  const box=hero?popSay:peerBubble;if(more.parentElement!==box)box.append(more);
+  keep=requestAnimationFrame(hold);
+ }
+ let waiting=null,waitT=0;
+ function show(speaker,words,o){   // over a call: wait until it is over, then speak
+  if(!open&&storyWaitsForPhone()){waiting=[speaker,words,o];if(!waitT)waitT=setInterval(()=>{if(storyWaitsForPhone())return;clearInterval(waitT);waitT=0;const w=waiting;waiting=null;if(w)show0(...w);},250);return;}
+  return show0(speaker,words,o);
+ }
+ function show0(speaker,words,{special=true,last=false,advance:next,choices:opts=null}={}){
+  if(!open)previous=document.activeElement,busyWas=sayBusy;
+  open=true;hero=speaker===nameOf();advance=opts?null:next;
+  peerHud.classList.toggle('quest',!hero&&special);popSay.classList.toggle('quest',hero&&special);
+  if(hero){if(peerSpeech.phase!=='idle')hidePeerSay();showSay(words);}
+  else{if(!popSay.hidden)popBubble(popSay,0);showPeerSay(words,speaker+'：');}   // her own row stays quiet while someone else talks
+  more.hidden=!!opts;
+  choices.replaceChildren(...(opts||[]).map(o=>{const b=document.createElement('button');b.type='button';b.innerHTML='<i class="bg" aria-hidden="true"></i><span></span>';b.lastChild.textContent=o.label;b.onclick=e=>{e.stopPropagation();o.on?.();};return b;}));
+  choices.hidden=!opts||hero;choices.classList.toggle('quest',special);
+  choices.classList.remove('wrap');if(!choices.hidden&&[...choices.querySelectorAll('span')].some(s=>s.scrollWidth>s.clientWidth+1))choices.classList.add('wrap');   // too many to fit: the rest go on a second row
+  if(!choices.hidden){const H=popSay.offsetHeight||parseFloat(getComputedStyle(widget).getPropertyValue('--say-h'))||48,[outer,inner]=sayClip(Math.round(H/2)*2,0,12,12,2,0);
+   choices.style.setProperty('--choice-clip',outer);choices.style.setProperty('--choice-in',inner);popBubble(popSay,0);popSay.hidden=true;}
+  const box=hero?popSay:peerBubble;box.tabIndex=0;box.setAttribute('role','button');
+  box.setAttribute('aria-label',`${speaker}：${spokenText(words)}${opts?'':last?'（点一下结束）':'（点一下继续）'}`);
+  mark();cancelAnimationFrame(keep);hold();
+  (opts&&!hero?choices.querySelector('button'):box).focus({preventScroll:true,focusVisible:false});
+ }
+ const go=e=>{if(!open||!advance)return;e.preventDefault();e.stopPropagation();advance();};
+ for(const box of [peerBubble,popSay]){
+  box.addEventListener('click',e=>{if(open&&box.classList.contains('story-bubble'))go(e);});
+  box.addEventListener('keydown',e=>{if(open&&box.classList.contains('story-bubble')&&(e.key==='Enter'||e.key===' '))go(e);});
+ }
+ document.addEventListener('keydown',e=>{if(open&&e.key==='Escape'){e.preventDefault();e.stopPropagation();onClose();}},true);
+ function hide(){
+  if(!open)return;open=false;advance=null;cancelAnimationFrame(keep);more.remove();choices.replaceChildren();choices.hidden=true;
+  peerHud.classList.remove('quest');popSay.classList.remove('quest');mark();
+  for(const box of [peerBubble,popSay]){box.removeAttribute('tabindex');box.removeAttribute('role');box.removeAttribute('aria-label');}
+  hidePeerSay();popBubble(popSay,0);sayBusy=busyWas;
+  if(previous?.isConnected)previous.focus({preventScroll:true});previous=null;
+ }
+ const api={el:peerHud,show,hide,position(){},get open(){return open},get waiting(){return !!waiting}};STORY_SPEECHES.push(api);return api;
 }
 
 // Three independent, stable traits. Appearance and gender never determine them.
@@ -61186,7 +61272,9 @@ function openContactActions(id){
       b.classList.add('parent-visit');b.style.setProperty('--x','72px');b.setAttribute('aria-disabled','true');b.title='老家离这里太远了。';b.setAttribute('aria-label',`${label}：${b.title}`);
       b.append(Object.assign(document.createElement('small'),{textContent:b.title}));
     }
-    if(['text','video'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
+    if(['text','video'].includes(action)&&contactWithHero(id)){
+      b.setAttribute('aria-disabled','true');b.title='就在身边，当面说吧';b.setAttribute('aria-label',`${label}：${b.title}`);
+    }else if(['text','video'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
       b.setAttribute('aria-disabled','true');b.title=asleep()?'等主角醒来再联系':sim.mode==='down'?'先唤醒晕倒的主角':'正在忙，稍后再联系';b.setAttribute('aria-label',`${label}：${b.title}`);
     }
     contactActions.append(b);
@@ -61351,8 +61439,13 @@ function finishContactTalk(id,kind){
   if(['text','call','video'].includes(kind))addSocialMemory(c,{text:'互发消息',call:'通了电话',video:'视频见面'}[kind],`和${contactName(c)}聊起「${c.lastTopic||'彼此的近况'}」。`);
   sim.needs.social=clamp(sim.needs.social+(kind==='text'?5:10));applyNeedConsequences();contactsSig='';if(moodrow.classList.contains('contacts-open'))fillContacts();
 }
-function canReceiveCall(){return !friendVisit&&!friendHousePreview&&ringOf!=='outing'&&!asleep()&&sim.mode!=='down'&&!wiping&&!guideOn&&!card&&!wardrobeOpen&&!socialBusy()&&!socialDialogHolds()&&!homeVisitActive();}
+function canReceiveCall(){return !storyLocked()&&!friendVisit&&!friendHousePreview&&ringOf!=='outing'&&!asleep()&&sim.mode!=='down'&&!wiping&&!guideOn&&!card&&!wardrobeOpen&&!socialBusy()&&!socialDialogHolds()&&!homeVisitActive();}
+// Someone in the same space as her never calls, texts or video-calls her (owner, 2026-11-02): a guest,
+// a friend she is out with or visiting, 爸爸妈妈 home for 春节, a parent beside her on the farm.
+const withHeroHooks=[];
 function contactWithHero(id){
+  if(['dad','mom'].includes(id)&&sim.place==='home'&&typeof cnyPresent==='function'&&cnyPresent())return true;
+  if(withHeroHooks.some(f=>f(id)))return true;
   return atFriendHome()&&friendVisit.id===id||friendOutingState?.id===id&&friendOutingState.phase!=='waiting'||socialState.guest?.id===id&&['entering','visiting','leaving'].includes(socialState.guest.phase);
 }
 function requestIncomingCall(id,kind='call'){

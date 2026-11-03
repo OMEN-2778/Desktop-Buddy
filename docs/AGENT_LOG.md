@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Crash fix (player report, 0.2.1, via the boot diagnostics): with a save, the 茵菲谷 release wraps arriveAt and
+  calls fit() before the 造型室 exists -> studio.refit() on null, house never shown. fit() and changeLook now skip
+  a null studio. Reproduced with a stubbed-Tauri save on the --release page; fixed page boots clean.
+
+## 2026-11-03 · Claude Code
 - Owner: quests show only once taken. infei_quests.js: no offered ("!") entries in the 任务 panel; 妈妈的农庄 appears
   after the letter is read (F.unlocked). Releases: v0.2.0 (cancelled run 139, Windows only, no pop-out) and v0.2.1
   (run 141, Windows only, offered quests listed) went out before being stopped; this push = 0.2.2, the full one + Mac.
