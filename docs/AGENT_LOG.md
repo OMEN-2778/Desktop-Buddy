@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: delete the non-final autumn story. docs/AUTUMN_STORY.md removed; the only story is
+  docs/story/MAPLE_FULL_SCRIPT.md. Still-valid owner decisions moved to SEASON_MAPS.md. NOTE: prototype/autumn/story.js
+  still runs the old linear story (code kept so the test page works) until the full script is wired in.
+
+## 2026-11-03 · Claude Code
 - Owner: 枫叶城's 老周 renamed to **老郑** (茵菲谷 keeps 老周, it ships first). Changed in MAPLE_FULL_SCRIPT.md,
   AUTUMN_STORY.md, prototype/autumn/{game,story}.js, story-review html + docx. Text-only rename, ids unchanged.
 

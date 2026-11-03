@@ -32,13 +32,14 @@ Buddy never autonomously leaves a season map. Needs go to the map's house first 
 lodge·cabana / detective's house), else the nearest spot in the map. Every map must offer a
 spot for each of the six needs. Only the player or the story takes her out. (`AGENTS.md`)
 
-## 秋 · 枫叶城 (story 方案 B approved: `docs/AUTUMN_STORY.md`)
+## 秋 · 枫叶城 (final story: `docs/story/MAPLE_FULL_SCRIPT.md`; earlier drafts deleted)
 - A small vertical industrial city, story-driven. All autumn a detective NPC stands at the
   front door with a "!" over his head; miss him and wait for next autumn. Talking to him flies
   Buddy to 枫叶城 in his private plane. Buddy may use the detective's house there for all needs.
 - During the story, friend chats and invitations are muted (queued, delivered afterwards).
 - After the story: open all year; office job optional, no effect; an unfinished story
-  continues in winter. Full decisions in `docs/AUTUMN_STORY.md`.
+  continues in winter. Story rules: no absolute good/bad, few NPCs
+  (阿简 程青 程铁山 老郑 苏医生; 老郑 was 老周, renamed so 茵菲谷 keeps 老周).
 - Ending: the grey city turns sunny with falling maple leaves; Buddy gets an office job there.
 
 ## 冬

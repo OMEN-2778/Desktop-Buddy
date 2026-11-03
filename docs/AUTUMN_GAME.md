@@ -57,7 +57,7 @@ Current coordinates and owner rules: AUTUMN_CITY.md. Old large-map coordinates a
 - Serializable goal descriptors resume routes after restore; transient dialogs, pointer
   hover and door fades clear on reload. Local service locks its current need until
   finished, avoiding repeated switching when two needs are low. Pause stops service.
-- `story.js`: approved 方案 B (AUTUMN_STORY.md), five named NPCs, explicit reading and
+- `story.js`: OLD linear 方案 B (its doc is deleted; superseded by docs/story/MAPLE_FULL_SCRIPT.md, not wired yet), five named NPCs, explicit reading and
   interaction. Chapter progress only commits at the final line; conversation is not
   consumed halfway. History is written to native diary. All 4 environmental changes,
   final tree planting and optional office visit work. No moral-side scoring.

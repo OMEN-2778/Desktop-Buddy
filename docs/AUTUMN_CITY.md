@@ -3,7 +3,7 @@
 Current world: **640×944 native pixels**. The compact city is kept at its existing
 width; authoring core is now 640×720 (32px more river), with a 224px summit/panorama strip
 above it, explicitly requested on 2026-11-01. Only `/map-test/` is playable;
-`/autumn/` is a static inspector. Story remains AUTUMN_STORY.md.
+`/autumn/` is a static inspector. Story: docs/story/MAPLE_FULL_SCRIPT.md (final).
 
 ## Latest owner decisions (override the retired large-city composition)
 - Redo the map, much smaller, like a large miniature courtyard / diorama.

@@ -42,7 +42,7 @@ trigger a trip back to the desktop house.
   spot for every need (饱腹 精力 清洁 如厕 社交 开心) so this always works.
 - Only the player (or a story beat) takes her out of a season map.
 - Map-specific limits still apply (e.g. the parents' bedroom on the farm is not hers).
-Design docs: `docs/SEASON_MAPS.md`; 秋 story: `docs/AUTUMN_STORY.md`.
+Design docs: `docs/SEASON_MAPS.md`; 秋 story (final): `docs/story/MAPLE_FULL_SCRIPT.md`.
 
 ## Releases (do not change without the owner asking)
 - Pushes that touch the demo or `desktop/**` build the Windows app automatically
