@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner, 茵菲谷 + story talks (0.2.3): story_bubbles.js (whole game): a line moves on after 4 s, a click anywhere
+  advances (swallowed, never reaches the scene); choices still wait. Gender-neutral 茵菲谷 lines (闺女 → 孩子, 7 spots).
+  Landing: Buddy starts at the brook (scene 0, x110), 妈妈 waits at the farmhouse with a "!" (hover glow); clicking her
+  starts the welcome (phase meet → arrive); the farm quest appears from then. Season maps: yellow ground ring where a
+  click sends her (adapter.js ripple + style.css .walk-ripple). check_spring_story updated; spring_story, infei_quests,
+  story_lock, infei_home, quest_panel, infei_hover pass.
 - Owner: redraw all summer fish + corals (keep seaweeds), bigger sea. Art only, NOT wired: art/src/concept/reef.py
   (35 sprites), reef_* ramps in palette.py, tools/make_reef_scene.py, board docs/design/reef-v2-preview.png.
   Waiting on owner; sea enlargement comes after approval (SUMMER_SEA.md last section).

@@ -93,8 +93,15 @@ const seasonalTest=(function(){
   if(sim.mode==='down'){if(Math.abs(x-sx)<22&&Math.abs(y-sy+8)<18){holding={t0:realClock,pointerId:e.pointerId};view.setPointerCapture(e.pointerId);showHint('按住主角 5 秒即可唤醒');}return;}
   if(sim.place==='autumn_test'&&s.mapOpen){c.pick(x,y);sync();return;}
   if(Math.abs(x-sx)<10&&y<sy&&y>sy-28){openRing('away','buddy');return;}
-  closeRing();state.autoAt=sim.t+45;if(sim.place==='autumn_test'){view.focus();c.pick(x+(s.mapOpen?0:s.camX||0),y+(s.mapOpen?0:s.camY||0));sync();return;}if(people.click(x+(s.camera??s.camX??0),y+(s.camY||0)))return;people.cancel();c.canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:e.clientX,clientY:e.clientY,button:0}));sync();
+  closeRing();state.autoAt=sim.t+45;if(sim.place==='autumn_test'){view.focus();ripple(e);c.pick(x+(s.mapOpen?0:s.camX||0),y+(s.mapOpen?0:s.camY||0));sync();return;}if(people.click(x+(s.camera??s.camX??0),y+(s.camY||0)))return;people.cancel();c.canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:e.clientX,clientY:e.clientY,button:0}));sync();
  },true);
+ // click feedback (owner 2026-11-03): where she is sent, a yellow ring spreads out on the ground (style.css .walk-ripple)
+ function ripple(e){const r=view.getBoundingClientRect(),d=document.createElement('i');d.className='walk-ripple';d.setAttribute('aria-hidden','true');
+  d.style.left=(view.offsetLeft+e.clientX-r.left)+'px';d.style.top=(view.offsetTop+e.clientY-r.top)+'px';d.style.setProperty('--s',(r.width/W).toFixed(3));
+  view.parentElement.append(d);setTimeout(()=>d.remove(),900);}
+ // any click on the map that gives her a new walk route (whoever handles it: the map, a quest, the farm) gets the ring
+ view.parentElement.addEventListener('pointerdown',e=>{if(e.target!==view||!active()||sim.place==='autumn_test'||e.button!==0)return;const c=ctl(),before=c?.state.route;
+  requestAnimationFrame(()=>{const s=ctl()?.state;if(s&&s.route!==before&&(s.target||s.route?.length))ripple(e);});},true);
  view.addEventListener('click',e=>{if(active())e.stopImmediatePropagation();},true);
  view.addEventListener('pointerup',e=>{if(!active())return;e.stopImmediatePropagation();if(holding&&holding.pointerId===e.pointerId){const done=realClock-holding.t0>=REVIVE_S;cancelRescue();if(done)revive();}},true);
  view.addEventListener('pointermove',e=>{if(active()){e.stopImmediatePropagation();const c=ctl(),s=c.state,r=view.getBoundingClientRect();(sim.place==='autumn_test'?c.hover:people.hover)((e.clientX-r.left)*342/r.width+(s.camera??s.camX??0),(e.clientY-r.top)*c.canvas.height/r.height+(s.camY||0));view.title=sim.place==='autumn_test'?c.canvas.title:'';view.style.cursor='pointer';}},true);

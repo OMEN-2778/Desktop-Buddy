@@ -26,7 +26,12 @@ const out=process.argv[2]||'/tmp/spring-story',SCALE=+(process.argv[3]||50);fs.m
  await p.evaluate(()=>{springFarm.state.unlocked=false;airportTravel.flights();});await shot('机场-没收到信时');await p.evaluate(()=>{closeRing();springFarm.state.unlocked=true;airportTravel.flights();});await shot('机场-茵菲谷免费');
  await ring('茵菲谷');await p.waitForTimeout(2200);await shot('飞行中');
  await p.waitForFunction(()=>sim.place==='spring_test'&&!wiping,null,{timeout:20000});
- // 3. welcome
+ // 3. landing at the brook (scene 0); 妈妈 waits at the farmhouse with a "!"; clicking her starts the welcome
+ await p.waitForFunction(()=>springFarm.state.phase==='meet',null,{timeout:20000});await p.waitForTimeout(1000);await shot('落地-小桥流水');
+ assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.scene),0);assert.equal(await p.evaluate(()=>questBoard.panel.querySelectorAll('.qb-card').length),0);
+ await p.evaluate(()=>seasonMapTest.ctl().go(3,120));await p.waitForTimeout(600);await shot('农舍前-妈妈头顶感叹号');
+ {const v=await p.locator('#view').boundingBox(),[cam,h,mx]=await p.evaluate(()=>[seasonMapTest.ctl().state.camera||0,seasonMapTest.ctl().canvas.height,springFarm.mom.x]);await p.mouse.click(v.x+(mx-cam)/342*v.width,v.y+90/h*v.height);}
+ await p.waitForFunction(()=>springFarm.state.phase==='arrive',null,{timeout:5000});
  await p.evaluate(()=>speed=4);
  await line('妈妈-来啦');await line('主角-爸呢');await line('妈妈-买化肥');
  await speechOpen();await shot('选项-先看房间还是去地里');await p.locator('.story-choices button').first().click();

@@ -40,7 +40,10 @@ const springFarm=(()=>{
   if(!mom.on||(mom.inside?!info.inside:(info.inside||mom.scene!==info.region)))return;
   const walking=mom.tx!=null,ph=Math.floor(info.time*7)%4,f={expr:'happy',look:mom.facing,bob:walking?ph%2:0,sway:walking?ph%2:0,wave:null};
   ctx.drawImage(npcCanvas(momNpc(),f,walking?(ph===1?'walkL':ph===3?'walkR':'stand'):'stand'),Math.round(mom.x)-10,Math.round(mom.y)-27);
+  if(F.phase==='meet'){const x=Math.round(mom.x),y=Math.round(mom.y)-30+Math.round(Math.sin(info.time*3));   // her "!" (same as the villagers')
+   ctx.fillStyle='#22182a';ctx.fillRect(x-4,y-11,9,11);ctx.fillStyle='#f6d36b';ctx.fillRect(x-3,y-10,7,9);ctx.fillStyle='#22182a';ctx.fillRect(x,y-9,1,5);ctx.fillRect(x,y-3,1,1);}
  }
+ const momAt=(x,y)=>mom.on&&Math.abs(x-mom.x)<10&&y>mom.y-30&&y<mom.y+2;   // 妈妈 under the pointer (scene coordinates)
  const momTo=x=>new Promise(res=>{mom.tx=x;mom.done=res;});
  // ---------------------------------------------------------------- beds
  const bedOf=i=>F.beds[i]||null,total=b=>CROP[b.crop].days;
@@ -89,13 +92,19 @@ const springFarm=(()=>{
  const until=f=>new Promise(res=>{const t=setInterval(()=>{if(f()){clearInterval(t);res();}},80);});
  const quiet=()=>T.state.autoAt=sim.t+1e9;   // no wandering off while 妈妈 is showing her round
  async function arrive(){
-  F.phase='arrive';quiet();const c=C();c.go(3,96);Object.assign(mom,{on:true,scene:3,inside:false,x:205,y:103,tx:null,facing:-1});
+  // landing (owner 2026-11-03): she starts at the brook, the far left; 妈妈 waits at the farmhouse with a "!".
+  // The player walks her over and clicks 妈妈: only then the welcome talk (and the farm quest) starts (greet).
+  F.phase='meet';quiet();C().go(0,110);Object.assign(mom,{on:true,scene:3,inside:false,x:205,y:103,tx:null,facing:-1});
+  setTimeout(()=>{if(F.phase==='meet'&&inSpring())showHint('妈妈在农舍门前等你，往右走，点一下妈妈');},900);
+ }
+ async function greet(){
+  F.phase='arrive';quiet();
   await walk(170);
   await say('妈妈','来啦！路上累不累？');
   await say(hero(),'还行，飞机上睡了一觉。爸呢？');
   await say('妈妈','去镇上买化肥了，晚饭前回来。');
   const room=await ask('妈妈','先进屋看看你的房间，还是先去地里转转？',['先看房间','去地里看看']);
-  if(room===0)await showRoom();else await say('妈妈','行，先干活后歇着，像我闺女。');
+  if(room===0)await showRoom();else await say('妈妈','行，先干活后歇着，像我家孩子。');
   await toField();
  }
  async function showRoom(){
@@ -173,10 +182,11 @@ const springFarm=(()=>{
    {id:'sf:harvest:'+i,label:'收获',icon:'basket',off:ripe(b)?'':'还没熟'},{id:'sf:look:'+i,label:'查看',icon:'lens'}],i);
  }
  view.parentElement.addEventListener('pointerdown',e=>{
-  if(e.target!==view||!inSpring()||!['sow','water','done'].includes(F.phase))return;const c=C(),s=c.state;
+  if(e.target!==view||!inSpring()||!['meet','sow','water','done'].includes(F.phase))return;const c=C(),s=c.state;
   if(s.door||wiping||cardHolds()||sim.mode==='down')return;
   const r=view.getBoundingClientRect(),x=(e.clientX-r.left)*342/r.width+(s.camera||0),y=(e.clientY-r.top)*c.canvas.height/r.height;
   if(Math.abs(x-s.x)<10&&y<s.y&&y>s.y-28)return;   // clicks on her still open her own ring
+  if(F.phase==='meet'){if(!s.inside&&s.scene===mom.scene&&momAt(x,y)){e.stopPropagation();e.preventDefault();greet();}return;}
   if(!s.inside&&s.scene===4){const i=bedAt(x,y);if(i==null)return;e.stopPropagation();e.preventDefault();openBed(i);return;}
   if(F.phase==='done'&&X.hooks.click.some(f=>f(x,y,s))){e.stopPropagation();e.preventDefault();}
  },true);
@@ -260,6 +270,6 @@ const springFarm=(()=>{
  const bar=T.root.querySelector('header');
  for(const [label,fn]of [['妈妈来信（测试）',()=>{if(!sendLetter())showHint('信已经寄过了');else if(!['home','front'].includes(sim.place))showHint('信在家门口，回家就能看到');}],['快进到明早（测试）',()=>{sim.t=(today()+1)*1440+7*60;roll();}]]){const b=document.createElement('button');b.textContent=label;b.onclick=fn;bar.append(b);}
  Object.assign(X,{get F(){return F;},today,seasonAt,SEASON_NAME,record,addItem,ITEMS,CROP,worked,imgOf,C,D,inSpring,ring,offs:()=>offs,coins,clock,growing,ripe,winter,blank,rainedSoFar,wet,bedOf,say,speech,inSeason,pcStateBase:pcState});
- return {X,seasonAt,daysToWinter,get lines(){return lines;},get state(){return F;},set state(v){F=v;},speech,mom,openBed,sendLetter,arrive,roll,pcState};
+ return {X,momAt,momNpc,seasonAt,daysToWinter,get lines(){return lines;},get state(){return F;},set state(v){F=v;},speech,mom,openBed,sendLetter,arrive,roll,pcState};
 })();
 window.springFarm=springFarm;

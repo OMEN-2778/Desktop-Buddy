@@ -13,6 +13,7 @@ const infeiHover=(function(){
  function hit(x,y){const s=C().state,f=F();
   if(springFarm.speech.open||window.infeiQuests?.busy||cardHolds()||wiping||sim.mode==='down'||s.door)return null;
   if(Math.abs(x-s.x)<10&&y<s.y&&y>s.y-28)return null;   // Buddy: her own ring
+  if(f.phase==='meet'&&!s.inside&&s.scene===springFarm.mom.scene&&springFarm.momAt(x,y))return {mom:true};   // 妈妈 waiting with her "!"
   if(s.inside){
    if(f.phase!=='done')return null;
    for(const p of Object.values(window.infeiHome?.SPOTS||{})){const [rx,ry,w,h]=p.rect;if(x>=rx&&x<rx+w&&y>=ry&&y<ry+h)return rect(rx,ry,w,h);}
@@ -48,6 +49,7 @@ const infeiHover=(function(){
  X.hooks.draw.push((ctx,info)=>{
   if(!hv||(info.inside?-1:info.region)!==region)return;
   if(hv.npc){const v=hv.npc;drawObjectHover(ctx,npcCanvas(v,{expr:'neutral',look:v.dir,bob:0,sway:0,wave:null},'stand'),Math.round(hv.x)-10,103-27);return;}
+  if(hv.mom){const m=springFarm.mom;drawObjectHover(ctx,npcCanvas(springFarm.momNpc(),{expr:'happy',look:m.facing,bob:0,sway:0,wave:null},'stand'),Math.round(m.x)-10,Math.round(m.y)-27);return;}
   if(hv.img)drawObjectHover(ctx,hv.img,hv.x,hv.y);
  });
  return {get hv(){return hv;},hit};

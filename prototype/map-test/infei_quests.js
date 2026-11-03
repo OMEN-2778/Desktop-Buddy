@@ -88,7 +88,7 @@ const infeiQuests=(function(){
   await say('风车里','呜——呜哩哇——');
   await say(me(),'谁在里面？');
   await say('王叔','哎哟！吓我一跳。');
-  await say('王叔','你是……新来那家的闺女？');
+  await say('王叔','你是……新来那家的孩子？');
   await say(me(),'您在这儿干嘛呢？');
   await say('王叔','练唢呐。');
   await say('王叔','你婶子不让在家吹，说吵得鸡都不下蛋。');
@@ -97,7 +97,7 @@ const infeiQuests=(function(){
   await say('王叔','我这吹的是《百鸟朝凤》！');
   const q=Q().mill;
   if(await ask('王叔','这事你可别往外说啊。',['行，我帮您保密','吹给婶子听听呗？'])===0){
-   q.how='secret';await say('王叔','好闺女。这几个币拿去买糖，别嫌少。');X.record('coin','王叔塞的“封口费”',3);}
+   q.how='secret';await say('王叔','好孩子。这几个币拿去买糖，别嫌少。');X.record('coin','王叔塞的“封口费”',3);}
   else{q.how='tell';await say('王叔','吹给她听？上回吹完，她三天没跟我说话。');await say(me(),'那是上回没吹好。');await say('王叔','……你这孩子说话真直。行，我再练练。');}
   q.step=2;showHint('回去告诉小满');}
  async function mill2(){const how=Q().mill.how;
@@ -118,7 +118,7 @@ const infeiQuests=(function(){
   finish('mill','风车里的怪声原来是王叔在练唢呐。');}
  // ---------------------------------------------------------------- 溪边的阿婆
  async function letter0(){
-  await say('阿婆','闺女，你认字吧？');
+  await say('阿婆','孩子，你认字吧？');
   await say(me(),'认得。');
   await say('阿婆','帮我念念这个，我眼睛花了，字太小。');
   await say(me(),'我看看……是封信。');
@@ -146,7 +146,7 @@ const infeiQuests=(function(){
   await say('阿婆','来，趁热。');
   await say(me(),'好香！');
   await say('阿婆','他以前一顿能吃四个。');
-  await say('阿婆','闺女，你再帮我个忙，帮我回封信。');
+  await say('阿婆','孩子，你再帮我个忙，帮我回封信。');
   await say(me(),'您说，我写。');
   const i=await ask('阿婆','就写……',['“地里都好，别惦记”','“春天了，想你们”','“小雨长高了吧”']);
   note({letter:'替阿婆写的回信',text:'儿子：\n'+['地里都好，别惦记。','春天了，想你们。','小雨长高了吧？上回说要学游泳，学会了没有。'][i]+'\n——妈'});
@@ -185,7 +185,7 @@ const infeiQuests=(function(){
   const s=C().state;await walkTo(250);s.facing=1;
   await say(me(),'……');
   await say('小满','嘘——');
-  await say('小满','出来吧，没事，她是好人。');
+  await say('小满','出来吧，没事，是好人。');
   rabbit.on=true;
   await say(me(),'是只兔子？');
   await say('小满','它腿伤了，我在溪边捡的。');
@@ -268,7 +268,7 @@ const infeiQuests=(function(){
  const PLACE={mill:['油菜花田','风车','油菜花田'],letter:['小溪边','小溪边','小溪边'],prints:['菜地','小溪边','油菜花田','菜地'],stew:['郁金香田','郁金香田','郁金香田']};
  const HOME={mill:'风车',letter:'小溪边',prints:'菜地',stew:'郁金香田'};
  questBoard.add(()=>{const q=Q(),gs=goals(),out=[],F=S();
-  if(F.unlocked){const ph=F.phase,where=!F.unlocked?'家里信箱':ph==='none'?'机场':ph==='sow'||ph==='water'?'菜地':'农舍',step=!F.unlocked?'读妈妈寄来的信':ph==='none'?'去机场，坐去茵菲谷的航班':ph==='sow'?'在有箭头的菜地播种':ph==='water'?'给刚种下的菜地浇水':'跟着妈妈熟悉农庄';
+  if(F.unlocked&&!['none','meet'].includes(F.phase)){const ph=F.phase,where=!F.unlocked?'家里信箱':ph==='none'?'机场':ph==='sow'||ph==='water'?'菜地':'农舍',step=!F.unlocked?'读妈妈寄来的信':ph==='none'?'去机场，坐去茵菲谷的航班':ph==='sow'?'在有箭头的菜地播种':ph==='water'?'给刚种下的菜地浇水':'跟着妈妈熟悉农庄';
    out.push({id:'farm',title:'妈妈的农庄',kind:'house',place:ph==='done'?'茵菲谷':where,done:ph==='done',step,end:'菜地交给你了',isNew:!F.unlocked||ph==='none',log:F.storyLog||[]});}
   for(const id of Object.keys(TITLE)){const st=q[id].step;if(st===0)continue;const g=gs.find(g=>g.id===id);
    let step=g?.hint||(g?.v?`去找${g.v.name}聊聊`:'');
