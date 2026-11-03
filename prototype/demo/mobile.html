@@ -53958,7 +53958,7 @@ function restoreMall(raw) {
   if(!raw||!Number.isFinite(raw.x))return;
   mallS.x=raw.x;mallS.dir=raw.dir===1?1:-1;
   if(Number.isFinite(raw.emergency?.u)&&Number.isFinite(raw.emergency?.stop)){
-    const uw=IMG.out.mall.restroomW?.[raw.emergency.uw]?raw.emergency.uw:undefined;
+    const uw=D.outside.mall.img.restroomW?.[raw.emergency.uw]?raw.emergency.uw:undefined;   // restore runs before the pictures load
     mallS.emergency={id:'restroom',name:'卫生间',kind:'shop',dynamic:true,u:raw.emergency.u,stop:raw.emergency.stop,
       w:(uw||MALL.restroom.w)-5,uw,top:MALL.restroom.top,born:realClock-.5};
   }

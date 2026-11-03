@@ -6,6 +6,8 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-03 Claude: 修启动崩溃：存档停在商场且正要去临时卫生间时，restoreMall 在图片加载前读 IMG.out.mall → 游戏起不来（主人 iPad 上的空白界面，靠新加的出错提示条定位）。改读 D.outside.mall.img。电脑版同样受影响，一并修好。用同类存档对比：旧版崩、新版正常。
+
 ## 2026-11-03 Claude: 主人在 iPad 分屏（Claude App 内）打开手机版：只有界面框，小屋/心情/时间条/日记都没出来＝启动卡在加载图片那段；Chromium 和 WebKit 本地都复现不出。手机版加了出错提示条（报错或 20 秒没启动完就显示原因），loadImg 报错带图片大小。等主人截图定位。
 
 ## 2026-11-03 Claude: 手机版日记：列表还沿用电脑版的短滚动框（约 140px），打开就滚到底、顶部被切、下面空一大片；改为铺满整张日记面板，去掉像素切角改圆角。横竖屏都看过，画框检查通过。
