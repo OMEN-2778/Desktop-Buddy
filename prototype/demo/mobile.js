@@ -19,20 +19,37 @@ const mobileProbe = document.createElement("i");
 mobileProbe.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;visibility:hidden;pointer-events:none;z-index:-1";
 document.documentElement.appendChild(mobileProbe);   // outside <body>, so it never turns with it
 let mobileRot = false, mobileWH = [0, 0];
+// a mouse (a desktop browser, the artifact preview pane): never turn the page; the landscape game is drawn at a
+// fixed 740 x 360 (a phone held sideways) and scaled to fit the window, centred (owner: compact, horizontal)
+const MOBILE_FIT = [740, 360];
+let mobileFit = null;   // {s, ox, oy} while scaled
 function realW() { return mobileRect0.call(mobileProbe).width || document.documentElement.clientWidth; }
 function realH() { return mobileRect0.call(mobileProbe).height || document.documentElement.clientHeight; }
 function mobileTurn() {
   const w = realW(), h = realH(); mobileWH = [w, h];
-  mobileRot = h > w;
+  const touch = matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0 && !matchMedia("(pointer: fine)").matches;
+  mobileRot = touch && h > w;
+  mobileFit = null;
+  if (!touch) {   // a mouse: always the phone's landscape proportions, scaled to the window (never stretched)
+    const [VW, VH] = MOBILE_FIT, sc = Math.min(w / VW, h / VH);
+    mobileFit = { s: sc, ox: Math.round((w - VW * sc) / 2), oy: Math.round((h - VH * sc) / 2) };
+  }
   document.documentElement.classList.toggle("rot", mobileRot);
+  document.documentElement.classList.toggle("fitv", !!mobileFit);
   const st = document.documentElement.style;
   st.setProperty("--real-w", w + "px"); st.setProperty("--real-h", h + "px");
+  if (mobileFit) { st.setProperty("--fit-s", mobileFit.s); st.setProperty("--fit-x", mobileFit.ox + "px"); st.setProperty("--fit-y", mobileFit.oy + "px");
+    st.setProperty("--fit-w", MOBILE_FIT[0] + "px"); st.setProperty("--fit-h", MOBILE_FIT[1] + "px"); }
 }
 try {
-  Object.defineProperty(window, "innerWidth", { configurable: true, get: () => mobileRot ? mobileWH[1] : mobileWH[0] });
-  Object.defineProperty(window, "innerHeight", { configurable: true, get: () => mobileRot ? mobileWH[0] : mobileWH[1] });
+  Object.defineProperty(window, "innerWidth", { configurable: true, get: () => mobileFit ? MOBILE_FIT[0] : mobileRot ? mobileWH[1] : mobileWH[0] });
+  Object.defineProperty(window, "innerHeight", { configurable: true, get: () => mobileFit ? MOBILE_FIT[1] : mobileRot ? mobileWH[0] : mobileWH[1] });
   Element.prototype.getBoundingClientRect = function () {
     const r = mobileRect0.call(this);
+    if (mobileFit) {
+      const { s: k, ox, oy } = mobileFit, l = (r.left - ox) / k, t = (r.top - oy) / k, w = r.width / k, h = r.height / k;
+      return { left: l, top: t, right: l + w, bottom: t + h, width: w, height: h, x: l, y: t, toJSON() { return this; } };
+    }
     if (!mobileRot) return r;
     const H = mobileWH[1], l = H - r.bottom, t = r.left, w = r.height, h = r.width;
     return { left: l, top: t, right: l + w, bottom: t + h, width: w, height: h, x: l, y: t, toJSON() { return this; } };
@@ -41,11 +58,14 @@ try {
     if (!C) continue;
     const dx = Object.getOwnPropertyDescriptor(C.prototype, "clientX"), dy = Object.getOwnPropertyDescriptor(C.prototype, "clientY");
     if (!dx || !dx.get || !dy || !dy.get) continue;
-    Object.defineProperty(C.prototype, "clientX", { configurable: true, get() { return mobileRot ? mobileWH[1] - dy.get.call(this) : dx.get.call(this); } });
-    Object.defineProperty(C.prototype, "clientY", { configurable: true, get() { return mobileRot ? dx.get.call(this) : dy.get.call(this); } });
+    Object.defineProperty(C.prototype, "clientX", { configurable: true, get() { return mobileFit ? (dx.get.call(this) - mobileFit.ox) / mobileFit.s : mobileRot ? mobileWH[1] - dy.get.call(this) : dx.get.call(this); } });
+    Object.defineProperty(C.prototype, "clientY", { configurable: true, get() { return mobileFit ? (dy.get.call(this) - mobileFit.oy) / mobileFit.s : mobileRot ? dx.get.call(this) : dy.get.call(this); } });
   }
   const efp = document.elementFromPoint;
-  document.elementFromPoint = function (x, y) { return mobileRot ? efp.call(document, y, mobileWH[1] - x) : efp.call(document, x, y); };
+  document.elementFromPoint = function (x, y) {
+    if (mobileFit) return efp.call(document, x * mobileFit.s + mobileFit.ox, y * mobileFit.s + mobileFit.oy);
+    return mobileRot ? efp.call(document, y, mobileWH[1] - x) : efp.call(document, x, y);
+  };
 } catch (e) {}
 mobileTurn();
 // webviews resize without telling (an app's bars settling): keep checking the real size

@@ -253,3 +253,7 @@ html.m .set-gear, html.m .moodrow .network-trigger, html.m .quest-trigger {
 html.m .set-gear::before, html.m .set-gear::after, html.m .moodrow .network-trigger::before, html.m .moodrow .network-trigger::after,
 html.m .quest-trigger::before, html.m .quest-trigger::after { display: none !important; }
 html.m .set-gear img, html.m .moodrow .network-trigger img, html.m .quest-trigger img { width: 22px !important; height: 22px !important; margin: 0 !important; position: static !important; translate: none !important; transform: none !important; }
+/* a narrow desktop window / preview pane (mobile.js mobileFit): the landscape game at 740 x 360, scaled to fit */
+html.m.fitv { background: #d9d3e3; --sat: 0px; --sab: 0px; --sal: 0px; --sar: 0px; }
+html.m.fitv body { position: fixed; left: 0; top: 0; width: var(--fit-w); height: var(--fit-h); overflow: hidden; background: var(--bg, #ebe6f1);
+  transform-origin: 0 0; transform: translate(var(--fit-x), var(--fit-y)) scale(var(--fit-s)); }

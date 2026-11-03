@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- 手机版 on a mouse (desktop browser / artifact preview): never turned; drawn at 740x360 and scaled to the window
+  (mobileFit: innerWidth/rects/pointer mapped). Touch phones held upright still turn. Owner: it looked sideways and
+  stretched in the desktop preview. Artifact republished.
+
+## 2026-11-03 · Claude Code
 - Owner: the test console must never show in public builds. make_demo hides it in the markup (hidden attr) for
   mobile.html, mobile_trial.html, trial.html; copy-web.mjs does the same for the trial index and dist/mobile.html.
   The full test page keeps it. Phone preview published as artifact https://claude.ai/artifact/SbQbKotCeiTw4qcCezJ1Wc
