@@ -238,16 +238,21 @@ const infeiQuests=(function(){
   const q=Q(),[rx,ry,w,h]=SPOTS.mill.rect;if(s.scene===2&&q.mill.step===1&&x>=rx&&x<rx+w&&y>=ry&&y<ry+h){run('mill');return true;}
   const r=SPOTS.reeds.rect;if(s.scene===0&&q.prints.step===1&&x>=r[0]&&x<r[0]+r[2]&&y>=r[1]&&y<r[1]+r[3]){run('prints');return true;}
   return false;});
- const TITLE={mill:'风车里的怪声',letter:'溪边的阿婆',prints:'菜地里的脚印',stew:'老周的乱炖'};
- function list(){const s=FarmUI.sheet('茵菲谷 · 支线'),c=socialContent(s),q=Q(),gs=goals(),el=FarmUI.el;
-  for(const id of Object.keys(TITLE)){const st=q[id].step,g=gs.find(g=>g.id===id);
-   if(st===0&&!g)continue;
-   const row=el('div','fu-quest');row.append(el('b',null,TITLE[id]+(st===9?' · 完成':'')),el('p',null,st===9?'':g?.hint||(g?.v?`去找${g.v.name}聊聊`:'')));c.append(row);}
-  if(!c.children.length)c.append(el('p',null,'到处走走，和人聊聊，也许有人找你帮忙。'));}
- X.hooks.pick.quests=list;
- const oldOpen=openRing;openRing=function(which,at){
-  if(which==='away'&&inSpring()&&S().phase==='done'){const keep=RINGS.away;RINGS.away=[...keep,['sf:quests','支线任务']];try{return oldOpen(which,at);}finally{RINGS.away=keep;}}
-  return oldOpen(which,at);};
- return {V,Q,goals,run,talk,list,get busy(){return busy;},rabbit};
+ const TITLE={mill:'风车里的怪声',letter:'溪边的阿婆',prints:'菜地里的脚印',stew:'老周的乱炖'},KIND={mill:'funny',letter:'sad',prints:'mystery',stew:'gift'};
+ const END={mill:'原来是王叔在练唢呐',letter:'替阿婆回了一封信',prints:'小偷是一只伤了腿的兔子',stew:'乱炖咸了一点'};
+ const STEP={letter:['','送阿婆一筐菜（仓库里拿）','明天去溪边吃阿婆的饼子'],stew:['','给老周送三样不同的菜','明天去找老周尝乱炖']};
+ // the 任务 panel (quest_panel.js): started or finished quests, plus the farm's main line
+ questBoard.add(()=>{const q=Q(),gs=goals(),out=[],F=S();
+  if(F.letter){const ph=F.phase,step=!F.unlocked?'读妈妈寄来的信':ph==='none'?'去机场，坐去茵菲谷的航班':ph==='sow'?'在有箭头的菜地播种':ph==='water'?'给刚种下的菜地浇水':'跟着妈妈熟悉农庄';
+   out.push({id:'farm',title:'妈妈的农庄',kind:'home',place:'茵菲谷',done:ph==='done',step,end:'菜地交给你了',isNew:!F.unlocked||ph==='none'});}
+  for(const id of Object.keys(TITLE)){const st=q[id].step;if(st===0)continue;const g=gs.find(g=>g.id===id);
+   let step=g?.hint||(g?.v?`去找${g.v.name}聊聊`:'');
+   if(STEP[id]&&st===2&&today()>q[id].day)step=id==='letter'?'去溪边找阿婆':'去郁金香田边找老周';
+   out.push({id,title:TITLE[id],kind:KIND[id],place:'茵菲谷',done:st===9,step,end:END[id],isNew:false});}
+  // offered but not taken yet: someone with a "!" is waiting
+  for(const g of gs)if(g.mark==='!'&&Q()[g.id].step===0)out.push({id:g.id,title:TITLE[g.id],kind:KIND[g.id],place:'茵菲谷',done:false,step:`${g.v.name}好像有话想说`,isNew:true});
+  return out;});
+ X.hooks.pick.quests=()=>questBoard.open();
+ return {V,Q,goals,run,talk,list:()=>questBoard.open(),get busy(){return busy;},rabbit};
 })();
 window.infeiQuests=infeiQuests;

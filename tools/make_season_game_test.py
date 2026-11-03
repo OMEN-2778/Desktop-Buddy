@@ -117,7 +117,7 @@ def main():
     import base64
     airport_images={k:'data:image/png;base64,'+base64.b64encode((ROOT/('art/out/concept/'+k+'.png')).read_bytes()).decode() for k in ['airport_terminal','airport_vista','airport_terminal_front','airport_plane','airport_cabin','airport_cabin_front','trip_airport']}
     source+=farm_story_source()
-    source+='\nconst AIRPORT_IMAGES='+json.dumps(airport_images)+';\n'+(ROOT/'prototype/airport/flight.js').read_text()+(ROOT/'prototype/airport/planes.js').read_text()+'\n'+(ROOT/'prototype/map-test/airport.js').read_text()+'\n'+(ROOT/'prototype/map-test/spring_cards.js').read_text()+(ROOT/'prototype/map-test/spring_talk.js').read_text()+(ROOT/'prototype/map-test/spring_story.js').read_text()+(ROOT/'prototype/map-test/infei_farm.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_home.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_quests.js').read_text()
+    source+='\nconst AIRPORT_IMAGES='+json.dumps(airport_images)+';\n'+(ROOT/'prototype/airport/flight.js').read_text()+(ROOT/'prototype/airport/planes.js').read_text()+'\n'+(ROOT/'prototype/map-test/airport.js').read_text()+'\n'+(ROOT/'prototype/map-test/spring_cards.js').read_text()+(ROOT/'prototype/map-test/spring_talk.js').read_text()+(ROOT/'prototype/map-test/spring_story.js').read_text()+(ROOT/'prototype/map-test/infei_farm.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_home.js').read_text()+'\n'+(ROOT/'prototype/map-test/quest_panel.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_quests.js').read_text()
     mark='(async function boot() {'
     assert page.count(mark)==1
     page=page.replace(mark,source+'\n'+mark)
