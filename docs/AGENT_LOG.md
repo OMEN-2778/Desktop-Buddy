@@ -7,7 +7,7 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
-- Owner: story choices that do not fit one row go to a second row. story_bubbles.js adds .wrap when any choice
+- Owner: story choices that do not fit one row go to a second row. Fix: the wrap now grows upward over the diary row (was hidden under the needs bar). story_bubbles.js adds .wrap when any choice
   label is cut; ui.css wraps (row 1 stays on the speech row, the rest below, labels unclipped). Whole game (all
   story choices), not only /map-test/. Spring story + 茵菲谷 quests pass.
 
