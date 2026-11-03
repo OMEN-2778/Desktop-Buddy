@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner approved the quest icons and asked to wire them all in. make_season_game_test.py injects QUEST_ICONS (art/out
+  quest_icon_*.png); quest_panel.js draws them as <img> (trigger, header, cards, replay head, 16px per replay scene).
+  Quests: 风车 windmill, 阿婆 letter, 脚印 footprints, 乱炖 stew, 农庄 house; scene icons (suona, basket, moon, seedling…).
+  check_quest_panel (25/50) + check_infei_quests pass.
+
+## 2026-11-03 · Claude Code
 - Owner: more quest icons for later. art/src/concept/quest_icons.py: 26 icons 16x16 (scroll, letter, windmill,
   suona, footprints, rabbit, stew, heart, lantern, key, map, seedling, basket, fish, moon, phone, flower, note,
   book, cake, star, smile, drop, lens, gift, house), farm_icons style. Board docs/design/quest-icons-board.png

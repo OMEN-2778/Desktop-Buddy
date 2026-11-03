@@ -50,19 +50,21 @@ const infeiQuests=(function(){
  // letters, so the 任务 panel can replay the whole story. The farm's main line is kept the same way.
  const SCENE={mill:['小满的秘密','夜里的风车','告诉小满'],letter:['念信','送菜','回信'],prints:['菜叶被啃了','小溪边','问小满','夜里蹲守'],stew:['新菜','送菜','尝乱炖']};
  const STORY={arrive:'到了茵菲谷',room:'看看房间',field:'去地里',sow:'第一次播种',water:'第一次浇水',talk:'妈妈的嘱咐'};
+ const SCENE_ICON={mill:['windmill','suona','smile'],letter:['letter','basket','letter'],prints:['footprints','lens','smile','moon'],stew:['stew','basket','stew'],
+  story:{arrive:'heart',room:'house',field:'seedling',sow:'seedling',water:'drop',talk:'heart'}};
  let rec=null;
  const note=x=>{if(rec)rec.lines.push(x);};
  const rawShow=speech.show.bind(speech);
  speech.show=(who,words,o={})=>{
   let to=rec?.lines;
   if(!busy&&inSpring()&&STORY[S().phase]){const F=S();F.storyLog??=[];let g=F.storyLog[F.storyLog.length-1];
-   if(!g||g.title!==STORY[F.phase]){g={day:today(),title:STORY[F.phase],lines:[]};F.storyLog.push(g);}to=g.lines;}
+   if(!g||g.title!==STORY[F.phase]){g={day:today(),title:STORY[F.phase],icon:SCENE_ICON.story[F.phase],lines:[]};F.storyLog.push(g);}to=g.lines;}
   if(to){if(words)to.push([who,String(words)]);if(o.choices)o={...o,choices:o.choices.map(c=>({...c,on:()=>{to.push(['>',c.label]);c.on?.();}}))};}
   return rawShow(who,words,o);};
  async function scene(fn,id){if(busy)return;busy=true;T.state.autoAt=sim.t+1e9;closeRing();
   const before=id&&JSON.stringify(Q()[id]);rec=id?{id,step:Q()[id].step,lines:[]}:null;
   try{await fn();}finally{speech.hide();busy=false;T.state.autoAt=sim.t+30;
-   if(rec&&JSON.stringify(Q()[id])!==before&&rec.lines.length){const q=Q()[id];q.log??=[];q.log.push({day:today(),title:SCENE[id][rec.step]||'',lines:rec.lines});if(q.log.length>12)q.log.shift();}
+   if(rec&&JSON.stringify(Q()[id])!==before&&rec.lines.length){const q=Q()[id];q.log??=[];q.log.push({day:today(),title:SCENE[id][rec.step]||'',icon:SCENE_ICON[id][rec.step],lines:rec.lines});if(q.log.length>12)q.log.shift();}
    rec=null;}}
  function finish(id,text){Q()[id].step=9;Q()[id].day=today();addMood(MOODS[id]);log(text);showHint('支线完成');}
  const crops=(skip=[])=>Object.entries(S().inv).filter(([k,n])=>n>0&&X.CROP[k]&&!skip.includes(k)).map(([k])=>k);
@@ -257,7 +259,7 @@ const infeiQuests=(function(){
   const q=Q(),[rx,ry,w,h]=SPOTS.mill.rect;if(s.scene===2&&q.mill.step===1&&x>=rx&&x<rx+w&&y>=ry&&y<ry+h){run('mill');return true;}
   const r=SPOTS.reeds.rect;if(s.scene===0&&q.prints.step===1&&x>=r[0]&&x<r[0]+r[2]&&y>=r[1]&&y<r[1]+r[3]){run('prints');return true;}
   return false;});
- const TITLE={mill:'风车里的怪声',letter:'溪边的阿婆',prints:'菜地里的脚印',stew:'老周的乱炖'},KIND={mill:'funny',letter:'sad',prints:'mystery',stew:'gift'};
+ const TITLE={mill:'风车里的怪声',letter:'溪边的阿婆',prints:'菜地里的脚印',stew:'老周的乱炖'},KIND={mill:'windmill',letter:'letter',prints:'footprints',stew:'stew'};
  const END={mill:'原来是王叔在练唢呐',letter:'替阿婆回了一封信',prints:'小偷是一只伤了腿的兔子',stew:'乱炖咸了一点'};
  const STEP={letter:['','送阿婆一筐菜（仓库里拿）','明天去溪边吃阿婆的饼子'],stew:['','给老周送三样不同的菜','明天去找老周尝乱炖']};
  // the 任务 panel (quest_panel.js): started or finished quests, plus the farm's main line
@@ -266,7 +268,7 @@ const infeiQuests=(function(){
  const HOME={mill:'风车',letter:'小溪边',prints:'菜地',stew:'郁金香田'};
  questBoard.add(()=>{const q=Q(),gs=goals(),out=[],F=S();
   if(F.letter){const ph=F.phase,where=!F.unlocked?'家里信箱':ph==='none'?'机场':ph==='sow'||ph==='water'?'菜地':'农舍',step=!F.unlocked?'读妈妈寄来的信':ph==='none'?'去机场，坐去茵菲谷的航班':ph==='sow'?'在有箭头的菜地播种':ph==='water'?'给刚种下的菜地浇水':'跟着妈妈熟悉农庄';
-   out.push({id:'farm',title:'妈妈的农庄',kind:'home',place:ph==='done'?'茵菲谷':where,done:ph==='done',step,end:'菜地交给你了',isNew:!F.unlocked||ph==='none',log:F.storyLog||[]});}
+   out.push({id:'farm',title:'妈妈的农庄',kind:'house',place:ph==='done'?'茵菲谷':where,done:ph==='done',step,end:'菜地交给你了',isNew:!F.unlocked||ph==='none',log:F.storyLog||[]});}
   for(const id of Object.keys(TITLE)){const st=q[id].step;if(st===0)continue;const g=gs.find(g=>g.id===id);
    let step=g?.hint||(g?.v?`去找${g.v.name}聊聊`:'');
    if(STEP[id]&&st===2&&today()>q[id].day)step=id==='letter'?'去溪边找阿婆':'去郁金香田边找老周';

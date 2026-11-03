@@ -10,8 +10,8 @@ const questBoard=(function(){
 .quest-trigger::before,.quest-trigger::after{content:"";position:absolute;pointer-events:none}
 .quest-trigger::before{inset:0;z-index:-2;background:var(--ring,#bebdcc);clip-path:var(--hud-circle-clip)}
 .quest-trigger::after{inset:2px;z-index:-1;background:#fff4c4;clip-path:var(--hud-circle-in);box-shadow:inset 0 2px 0 #fff,inset 0 -2px 0 #e2c98f}
-.quest-trigger canvas{display:block;width:32px;height:32px;image-rendering:pixelated;transition:translate .12s var(--hud-settle)}
-.quest-trigger:hover{background:none}.quest-trigger:hover canvas{translate:0 -1px}.quest-trigger:active canvas{translate:0 2px}
+.quest-trigger img{display:block;width:32px;height:32px;image-rendering:pixelated;transition:translate .12s var(--hud-settle)}
+.quest-trigger:hover{background:none}.quest-trigger:hover img{translate:0 -1px}.quest-trigger:active img{translate:0 2px}
 .moodrow.quest-ready .quest-trigger,.moodrow.quests-open .quest-trigger,.quest-trigger:focus-visible{z-index:23;pointer-events:auto;transform:translateX(-62px) scale(1);opacity:1;visibility:visible;transition-delay:0s}
 .quest-trigger b{position:absolute;right:-2px;top:-2px;min-width:16px;height:16px;padding:0 3px;font:700 11px/16px var(--font);color:#fff;background:#d9534f;
  clip-path:var(--hud-small-clip);animation:qbPulse 1.6s ease-in-out infinite}
@@ -28,7 +28,7 @@ const questBoard=(function(){
 .quest-tail{position:absolute;left:-12px;top:20px;width:14px;height:20px;background:var(--edge);clip-path:polygon(100% 0,10px 0,10px 2px,8px 2px,8px 4px,6px 4px,6px 6px,4px 6px,4px 8px,2px 8px,2px 12px,4px 12px,4px 14px,6px 14px,6px 16px,8px 16px,8px 18px,10px 18px,10px 20px,100% 20px)}
 .quest-tail::after{content:"";position:absolute;inset:2px -2px 2px 2px;background:var(--panel);clip-path:inherit}
 .qb-head{display:flex;align-items:center;gap:10px;padding:0 4px 8px;border-bottom:2px dashed var(--bevel-lo)}
-.qb-head canvas{width:32px;height:32px;image-rendering:pixelated}
+.qb-head img{width:32px;height:32px;image-rendering:pixelated}
 .qb-head h3{margin:0;font:700 calc(20px * var(--fs,1))/1.1 var(--font);letter-spacing:2px}
 .qb-head small{margin-left:auto;color:var(--muted);font-size:calc(12px * var(--fs,1))}
 .qb-head small i{font-style:normal;color:#b5452f;font-weight:700}
@@ -43,8 +43,8 @@ const questBoard=(function(){
 .qb-card.live:hover{translate:0 -2px;--qb-edge:#b5452f}
 .qb-card.done{--qb-bg:var(--panel);filter:saturate(.35)}
 .qb-ico{grid-row:1/3;width:var(--qb-ico,32px);height:var(--qb-ico,32px);display:grid;place-items:center;position:relative}
-.qb-ico canvas{width:var(--qb-ico,32px);height:var(--qb-ico,32px);image-rendering:pixelated}
-.qb-card.live.new .qb-ico canvas{animation:qbBob 1.4s ease-in-out infinite}
+.qb-ico img{width:var(--qb-ico,32px);height:var(--qb-ico,32px);image-rendering:pixelated}
+.qb-card.live.new .qb-ico img{animation:qbBob 1.4s ease-in-out infinite}
 .qb-card strong{font:700 calc(var(--qb-t,17px) * var(--fs,1))/1.2 var(--font);min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .qb-card.done strong{color:var(--muted);text-decoration:line-through 2px #b9b6c8}
 .qb-card p{grid-column:2;margin:0;font-size:calc(var(--qb-s,13px) * var(--fs,1));line-height:1.3;color:var(--muted);display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap;overflow:hidden}
@@ -57,8 +57,8 @@ const questBoard=(function(){
 .qb-sep::after{content:"";flex:1;border-top:2px dotted var(--bevel-lo)}
 .qb-tags em{rotate:-8deg;padding:0 6px;font:700 12px/18px var(--font);font-style:normal;color:#b5452f;border:2px solid #b5452f;opacity:.75}
 .qb-card.done .qb-tags span{background:#a9a6b8}
-.quest-panel.compact{padding:10px 10px 8px;gap:6px;--qb-h:40px;--qb-ico:24px;--qb-t:14px;--qb-s:11px}
-.quest-panel.compact .qb-head{padding-bottom:5px}.quest-panel.compact .qb-head canvas{width:24px;height:24px}.quest-panel.compact .qb-head h3{font-size:calc(16px * var(--fs,1))}
+.quest-panel.compact{padding:10px 10px 8px;gap:6px;--qb-h:40px;--qb-ico:16px;--qb-t:14px;--qb-s:11px}
+.quest-panel.compact .qb-head{padding-bottom:5px}.quest-panel.compact .qb-head img{width:16px;height:16px}.quest-panel.compact .qb-head h3{font-size:calc(16px * var(--fs,1))}
 .quest-panel.compact .qb-list{gap:5px}.quest-panel.compact .qb-tags span{height:16px;line-height:16px;padding:0 7px;font-size:calc(11px * var(--fs,1))}.quest-panel.compact .qb-tags em{font-size:11px;line-height:14px}
 .qb-empty{margin:auto;text-align:center;color:var(--muted);font-size:calc(14px * var(--fs,1));line-height:1.8}
 .qb-card{cursor:pointer}
@@ -70,7 +70,7 @@ const questBoard=(function(){
 .qb-dhead{display:flex;align-items:center;gap:10px;padding:0 2px}
 .qb-back{height:28px;margin:0;padding:0 14px 0 10px;border:0;box-shadow:none;background:var(--bevel-lo);color:var(--ink);font:700 calc(13px * var(--fs,1)) var(--font);clip-path:var(--qb-pill-b);cursor:pointer;transition:translate .15s}
 .qb-back:hover{background:#d8d5e4;translate:-2px 0}
-.qb-dhead canvas{width:28px;height:28px;image-rendering:pixelated}
+.qb-dhead img{width:32px;height:32px;image-rendering:pixelated}
 .qb-dhead h4{margin:0;font:700 calc(18px * var(--fs,1))/1.2 var(--font);flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .qb-dhead span{height:20px;padding:0 10px;font-size:calc(12px * var(--fs,1));line-height:20px;color:#fff;background:#7aa86a;clip-path:var(--qb-pill)}
 .qb-tl{flex:1;min-height:0;overflow-y:auto;padding:4px 8px 6px 22px;position:relative;scrollbar-width:thin;scrollbar-color:var(--bevel-lo) transparent;overscroll-behavior:contain}
@@ -102,20 +102,14 @@ const questBoard=(function(){
 @keyframes qbBob{50%{translate:0 -2px}}
 @keyframes qbNudge{50%{translate:2px 0}}
 @keyframes qbPulse{50%{scale:1.12}}
-@media (prefers-reduced-motion:reduce){.quest-trigger,.quest-panel,.qb-card,.qb-sep{transition:none!important;animation:none!important;opacity:1;translate:none}.quest-trigger b,.qb-card canvas,.qb-card p::before{animation:none!important}}
-`;
+@media (prefers-reduced-motion:reduce){.quest-trigger,.quest-panel,.qb-card,.qb-sep{transition:none!important;animation:none!important;opacity:1;translate:none}.quest-trigger b,.qb-card img,.qb-card p::before{animation:none!important}}
+
+.qb-ent h5 img{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;margin-right:5px}
+.quest-panel.compact .qb-dhead img{width:16px;height:16px}`;
  document.head.append(Object.assign(document.createElement('style'),{textContent:css}));
- // ---------------------------------------------------------------- pixel icons (16x16, drawn 2x)
- const PAL={o:'#22182a',p:'#f6e7c1',s:'#dcc28e',l:'#a4865a',r:'#d9534f',R:'#9e3a3a',w:'#fffaf0',g:'#7aa86a',G:'#4f7a45',y:'#f6d36b',Y:'#c99a2e',b:'#6f9fd0',B:'#3f6f9e',k:'#b9b6c8',K:'#8a87a0'};
- const ICON={
-  scroll:['................','.oooooooooooooo.','osswwwwwwwwwwsso','.oooooooooooooo.','..owpppppppppo..','..opllllllppso..','..opppppppppso..','..oplllllllpso..','..opppppppppso..','..oplllllrrrso..','..opppppprRrso..','..opppppprrrso..','.oooooooooooooo.','osswwwwwwwwwwsso','.oooooooooooooo.','................'],
-  funny:['................','.....oooooo.....','...ooyyyyyyoo...','..oyyyyyyyyyYo..','..oyyoyyyyoyYo..','.oyyyoyyyyoyyYo.','.oyyyyyyyyyyyYo.','.oyyoyyyyyyoyYo.','.oyyyooooooyyYo.','.oyyyoRRRRoyyYo.','..oyyyoRRoyyYo..','..oYyyyooyyYYo..','...ooYYYYYYoo...','.....oooooo.....','................','................'],
-  sad:['................','.......oo.......','......obbo......','.....obbbbo.....','....obbbbbbo....','....obwbbbbo....','...obwbbbbbbo...','...obbbbbbbBo...','...obbbbbbbBo...','...obbbbbbBBo...','....obbbbBBo....','.....oBBBBo.....','......oooo......','................','................','................'],
-  mystery:['................','....oooo........','...okkkko.......','..okwkkkko......','.okwkkkkkko.....','.okkkkkkkko.....','.okkkkkkkko.....','.okkkkkkkko.....','..okkkkkKo......','...okkKKoo......','....oooooKo.....','.........oKo....','..........oKo...','...........oo...','................','................'],
-  gift:['................','.....oo..oo.....','....orro.orro...','.....orroRro....','..ooooooooooo...','..orrrrrRrrro...','..ooooooooooo...','...oggggRgggo...','...ogwggRgggo...','...oggggRgggo...','...oggggRggGo...','...oggggRgGGo...','...ooooooooo....','................','................','................'],
-  home:['................','.......oo.......','......orro......','.....orrrro.....','....orrrrrro....','...orrrrrrrro...','..oooooooooooo..','...oppppppppo...','...oplloppllo...','...oplloppllo...','...oppppppppo...','...opppoopppo...','...opppoYppo....','...oooooooooo...','................','................']};
- function iconCanvas(name){const rows=ICON[name]||ICON.scroll,c=document.createElement('canvas');c.width=c.height=16;const g=c.getContext('2d');
-  rows.forEach((r,y)=>[...r].forEach((ch,x)=>{if(PAL[ch]){g.fillStyle=PAL[ch];g.fillRect(x,y,1,1);}}));return c;}
+ // pixel icons: art/src/concept/quest_icons.py (16x16, shown at 2x), injected by make_season_game_test.py as QUEST_ICONS
+ const OLD={funny:'smile',sad:'drop',mystery:'lens',home:'house'};
+ function iconCanvas(name){const im=new Image();im.alt='';im.width=im.height=16;im.src=QUEST_ICONS[name]||QUEST_ICONS[OLD[name]]||QUEST_ICONS.scroll;return im;}
  // ---------------------------------------------------------------- DOM
  const moodrow=document.getElementById('moodrow'),diary=document.getElementById('diary'),col=moodrow.parentElement;
  const trigger=document.createElement('button');trigger.type='button';trigger.className='quest-trigger';trigger.id='questTrigger';trigger.setAttribute('aria-label','任务');trigger.title='任务';
@@ -157,7 +151,7 @@ const questBoard=(function(){
   detailEl.replaceChildren();const head=E('div','qb-dhead'),back=E('button','qb-back','‹ 返回');back.type='button';back.onclick=()=>{panel.classList.remove('detail');list.querySelector('.qb-card')?.focus({preventScroll:true});};
   head.append(back,iconCanvas(q.kind),E('h4',null,q.title));if(q.place)head.append(E('span',null,q.place));
   const tl=E('div','qb-tl');let i=0;
-  for(const ent of q.log||[]){const box=E('section','qb-ent');box.style.setProperty('--i',i++);const h=E('h5');h.append(E('small',null,`第 ${ent.day+1} 天`),document.createTextNode(ent.title||''));box.append(h);
+  for(const ent of q.log||[]){const box=E('section','qb-ent');box.style.setProperty('--i',i++);const h=E('h5');h.append(E('small',null,`第 ${ent.day+1} 天`));if(ent.icon)h.append(iconCanvas(ent.icon));h.append(document.createTextNode(ent.title||''));box.append(h);
    let last=null;for(const ln of ent.lines){
     if(ln.letter||ln[0]==='>')last=null;
     if(ln.letter){const l=E('div','qb-letter');l.append(E('i',null,ln.letter),document.createTextNode(ln.text));box.append(l);continue;}
