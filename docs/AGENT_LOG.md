@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Updates never blocked by a startup crash: the boot check starts update checks when the game did not boot,
+  and applyUpdate skips the pre-update save when not booted (disk save is the last good one). Save failures go
+  to page.log. Clients already stuck on 0.2.1 (crash before update checks) must reinstall by hand once.
+
+## 2026-11-03 · Claude Code
 - Crash fix (player report, 0.2.1, via the boot diagnostics): with a save, the 茵菲谷 release wraps arriveAt and
   calls fit() before the 造型室 exists -> studio.refit() on null, house never shown. fit() and changeLook now skip
   a null studio. Reproduced with a stubbed-Tauri save on the --release page; fixed page boots clean.

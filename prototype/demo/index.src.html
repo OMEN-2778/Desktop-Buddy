@@ -165,6 +165,8 @@ if (TAURI) {
     el.style.cssText = "position:fixed;left:0;top:0;z-index:99999;margin:0;padding:8px;max-width:460px;white-space:pre-wrap;font:12px/1.5 sans-serif;background:#fff;color:#a12;border:2px solid #a12;user-select:text";
     el.textContent = info.join("\n");
     TAURI.core.invoke("fit_window", { width: Math.ceil(480 * devicePixelRatio), height: Math.ceil(260 * devicePixelRatio), dx: 0, dy: 0 }).catch(() => {});
+    // a game stuck at startup still looks for updates: the fix reaches it by itself
+    if (!ok) try { startUpdateChecks(); } catch (e) { report("update after crash: " + e); }
   };
   setTimeout(bootCheck, 8000);
 }
@@ -4979,7 +4981,7 @@ async function saveGame() {
     if (!TAURI) try { localStorage.setItem("buddy-look-v2", JSON.stringify(look)); localStorage.setItem("buddy-look-at", String(Date.now())); } catch (e) { /* full */ }
     return true;
   }
-  catch (e) { console.warn("save failed", e); return false; }
+  catch (e) { console.warn("save failed", e); if (TAURI) TAURI.core.invoke("log_js", { message: `save failed: ${e}` }).catch(() => {}); return false; }
   finally { saving = false; }
 }
 // 自动保存 on: every 5 minutes, and when the window is hidden or closed.

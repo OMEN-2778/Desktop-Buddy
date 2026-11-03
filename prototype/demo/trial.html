@@ -1568,6 +1568,8 @@ if (TAURI) {
     el.style.cssText = "position:fixed;left:0;top:0;z-index:99999;margin:0;padding:8px;max-width:460px;white-space:pre-wrap;font:12px/1.5 sans-serif;background:#fff;color:#a12;border:2px solid #a12;user-select:text";
     el.textContent = info.join("\n");
     TAURI.core.invoke("fit_window", { width: Math.ceil(480 * devicePixelRatio), height: Math.ceil(260 * devicePixelRatio), dx: 0, dy: 0 }).catch(() => {});
+    // a game stuck at startup still looks for updates: the fix reaches it by itself
+    if (!ok) try { startUpdateChecks(); } catch (e) { report("update after crash: " + e); }
   };
   setTimeout(bootCheck, 8000);
 }
@@ -20778,7 +20780,7 @@ async function saveGame() {
     if (!TAURI) try { localStorage.setItem("buddy-look-v2", JSON.stringify(look)); localStorage.setItem("buddy-look-at", String(Date.now())); } catch (e) { /* full */ }
     return true;
   }
-  catch (e) { console.warn("save failed", e); return false; }
+  catch (e) { console.warn("save failed", e); if (TAURI) TAURI.core.invoke("log_js", { message: `save failed: ${e}` }).catch(() => {}); return false; }
   finally { saving = false; }
 }
 // 自动保存 on: every 5 minutes, and when the window is hidden or closed.
@@ -21070,7 +21072,8 @@ async function applyUpdate() {
   if (upd.state !== "ready") return;
   upd.state = "applying";
   showUpdate(`更新到 ${upd.version}，马上回来……`, { later: false });
-  if(!await saveGame()){upd.state="ready";updFailed("存档还没保存好，稍后再试更新");return;}                                     // always, even with 自动保存 off: it must come back as it was
+  // a game that never finished starting (a startup crash) has nothing new to save: the save on disk is the last good one; update anyway, the fix may be in it
+  if(booted&&!await saveGame()){upd.state="ready";updFailed("存档还没保存好，稍后再试更新");return;}                                     // always, even with 自动保存 off: it must come back as it was
   try { localStorage.setItem("buddy-updated", upd.version); } catch (e) { /* only for the note after */ }
   await new Promise(r => setTimeout(r, 1200));
   try { await TAURI.core.invoke("apply_update"); }      // swaps the exe and restarts (or runs the installer)

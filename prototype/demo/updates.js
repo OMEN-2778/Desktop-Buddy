@@ -116,7 +116,8 @@ async function applyUpdate() {
   if (upd.state !== "ready") return;
   upd.state = "applying";
   showUpdate(`更新到 ${upd.version}，马上回来……`, { later: false });
-  if(!await saveGame()){upd.state="ready";updFailed("存档还没保存好，稍后再试更新");return;}                                     // always, even with 自动保存 off: it must come back as it was
+  // a game that never finished starting (a startup crash) has nothing new to save: the save on disk is the last good one; update anyway, the fix may be in it
+  if(booted&&!await saveGame()){upd.state="ready";updFailed("存档还没保存好，稍后再试更新");return;}                                     // always, even with 自动保存 off: it must come back as it was
   try { localStorage.setItem("buddy-updated", upd.version); } catch (e) { /* only for the note after */ }
   await new Promise(r => setTimeout(r, 1200));
   try { await TAURI.core.invoke("apply_update"); }      // swaps the exe and restarts (or runs the installer)
