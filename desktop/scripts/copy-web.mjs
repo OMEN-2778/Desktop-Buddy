@@ -21,10 +21,13 @@ async function squash(page) {
   const r = await minify(page.slice(a, b), { compress: { passes: 1 }, mangle: true, format: { comments: false } });
   return page.slice(0, a) + r.code.replaceAll("</script", "<\\/script") + page.slice(b);
 }
+// the temporary test console never ships to players: hidden in the markup itself, so it stays hidden even where
+// the script cannot run (owner 2026-11-03). Only the full web page used for testing keeps it.
+const noConsole = page => page.replace('<details class="console">', '<details class="console" hidden>');
 const head = '<!doctype html>\n<html lang="zh-CN">\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n';
-writeFileSync(join(out, "index.html"), head + await squash(readFileSync(src, "utf8")) + "\n</html>\n", "utf8");
+writeFileSync(join(out, "index.html"), head + await squash((process.env.BUDDY_TRIAL ? noConsole : x => x)(readFileSync(src, "utf8"))) + "\n</html>\n", "utf8");
 // BUDDY_MOBILE=1: also the 手机版 page (prototype/demo/mobile.html, one file that works on its own) as dist/mobile.html
-if (process.env.BUDDY_MOBILE) writeFileSync(join(out, "mobile.html"), head.replace("initial-scale=1", "initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover") + await squash(readFileSync(join(dirname(src), "mobile.html"), "utf8")) + "\n</html>\n", "utf8");
+if (process.env.BUDDY_MOBILE) writeFileSync(join(out, "mobile.html"), head.replace("initial-scale=1", "initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover") + await squash(noConsole(readFileSync(join(dirname(src), "mobile.html"), "utf8"))) + "\n</html>\n", "utf8");
 console.log("copied", src, "->", join(out, "index.html"));
 
 // External audio is shared by Pages and the packaged app, so both work offline

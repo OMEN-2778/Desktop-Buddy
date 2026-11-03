@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: the test console must never show in public builds. make_demo hides it in the markup (hidden attr) for
+  mobile.html, mobile_trial.html, trial.html; copy-web.mjs does the same for the trial index and dist/mobile.html.
+  The full test page keeps it. Phone preview published as artifact https://claude.ai/artifact/SbQbKotCeiTw4qcCezJ1Wc
+  (opening the .html in a chat/file previewer runs no script: only the console showed).
+
+## 2026-11-03 · Claude Code
 - 手机版 now carries 茵菲谷 (make_season_game_test.py --mobile). Phone layout for story talk (对方 row takes row 1,
   choices grid from row 2 down), 任务 button in row 1 whenever a quest exists (questBoard.count), quest list, farm
   sheets/tablet/shops full-screen. New tools/check_mobile_frame.js (fails if any element leaves the screen); passes.
