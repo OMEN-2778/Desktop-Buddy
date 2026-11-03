@@ -117,3 +117,94 @@ html.m .pk-item, html.m .studio .st-thumb, html.m #petPanel .pet-offer { border-
 html.m .pk-head button, html.m .st-tabs button, html.m .st-chips button, html.m .gd-foot button, html.m #petPanel button, html.m .social-sheet button { border-radius: 10px; }
 html.m .sky-tip { border-radius: 12px; box-shadow: 0 0 0 2px var(--edge), 3px 3px 0 2px var(--shadow); padding: 4px 12px; }
 html.m .card-res .cr-box { border-radius: 14px; }
+
+/* ================================================================ 手机版 v2 (owner sketch, 2026-11-03)
+   One virtual phone frame: nothing may leave it (--m-x0 .. right --m-x1r, --m-y0 .. bottom --m-y1b).
+   Row 1: diary line + 人脉 + gear. Row 2: mood face + her words. Left: six upright need bars, the
+   time bar under them. Right: the house, in a box that never changes, so it never moves.
+   Sheets (settings, cards, pickers, diary, 人脉, pets, studio, guide) fill the frame over a blurred game. */
+html.m .moodrow { position: static; inset: auto; width: auto; height: auto; }
+html.m .moodrow > * { translate: none !important; transform: none; margin: 0; }
+html.m .settings { position: fixed; z-index: 42; left: auto; right: var(--m-x1r); top: var(--m-row1); width: var(--m-r1); height: var(--m-r1); }
+html.m .set-gear, html.m .moodrow .network-trigger { translate: none !important; }
+html.m .set-gear { position: absolute; inset: 0; width: var(--m-r1); height: var(--m-r1); margin: 0; }
+html.m .set-gear img { width: 22px; height: 22px; }
+html.m .moodrow .network-trigger { position: fixed; z-index: 42; left: auto !important; right: calc(var(--m-x1r) + var(--m-r1) + 6px); top: var(--m-row1) !important;
+  width: var(--m-r1); height: var(--m-r1); }
+html.m .moodrow .network-trigger img { width: 24px; height: 24px; }
+html.m .diary { position: fixed; z-index: 41; left: var(--m-x0) !important; right: calc(var(--m-x1r) + 2 * var(--m-r1) + 12px) !important; top: var(--m-row1); width: auto; height: var(--m-r1); }
+html.m.trial .diary { right: calc(var(--m-x1r) + var(--m-r1) + 6px) !important; }
+html.m .diary-box { width: 100% !important; height: var(--m-r1) !important; min-height: 0; font-size: 13px !important; }
+html.m .diary-box .diary-ico img { width: 22px; height: 22px; }
+html.m .mood-face { position: fixed; z-index: 41; left: var(--m-x0); top: var(--m-row2); width: var(--m-r2); height: var(--m-r2); }
+html.m .mood-face canvas { width: var(--m-r2) !important; height: var(--m-r2) !important; }
+html.m .mood-talk { position: fixed; z-index: 41; left: calc(var(--m-x0) + var(--m-r2) + 8px); right: var(--m-x1r); top: var(--m-row2); width: auto; height: var(--m-r2); }
+/* her words: a plain rounded bar, two lines at most */
+html.m .pop.say { position: absolute; inset: 0; width: auto !important; height: auto !important; max-width: none; padding: 0 14px; display: flex; align-items: center;
+  background: var(--panel, #fffaf2); border: 2px solid var(--edge, #3a3046); border-radius: 20px; box-shadow: 3px 3px 0 var(--shadow, #0002); clip-path: none; }
+html.m .pop.say .bg, html.m .pop.say .dot { display: none; }
+html.m .pop.say span { font-size: 13px !important; line-height: 1.35; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; padding: 0; }
+html.m .pop.say[hidden] { display: none; }
+html.m .incoming-call { position: absolute; inset: 0; min-height: 0; height: auto; border-radius: 20px; padding: 0 8px; display: flex; align-items: center; gap: 8px; }
+html.m .incoming-call .caller-copy { flex: 1; min-width: 0; font-size: 13px; }
+html.m .incoming-call .caller-copy strong, html.m .incoming-call .caller-copy span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+html.m .incoming-call button { min-height: 30px; height: 30px; font-size: 13px; padding: 0 12px; border-radius: 15px; }
+html.m .mood-list { position: fixed; left: calc(var(--m-x0) + var(--m-r2) + 8px); right: var(--m-x1r); top: calc(var(--m-row2) + var(--m-r2) + 6px); bottom: auto; max-height: 40vh; overflow: auto; }
+html.m .peer-hud { position: fixed; z-index: 43; left: var(--m-hl) !important; right: var(--m-x1r); top: var(--m-top); width: auto; }
+
+/* left column: six upright need bars, the time bar under them */
+html.m .status-row { position: fixed; left: var(--m-x0); width: var(--m-col); top: var(--m-top); bottom: var(--m-y1b); display: flex; flex-direction: column; gap: 6px; }
+html.m .needs { flex: 1 1 auto; min-height: 0; height: auto; }
+html.m .needs .needs-panel, html.m .needs.open .needs-panel { display: flex !important; flex-direction: row; justify-content: space-between; align-items: stretch;
+  height: 100%; box-sizing: border-box; padding: 10px 10px 8px; gap: 0; grid-template-columns: none;
+  background: var(--panel, #fffaf2); border-radius: 16px; box-shadow: 0 0 0 2px var(--edge, #3a3046), 3px 3px 0 2px var(--shadow, #0002); clip-path: none; }
+html.m .needs-panel::before, html.m .needs-panel::after { display: none !important; }
+html.m .need { flex-direction: column !important; align-items: center; justify-content: flex-end; height: 100%; width: 18px; gap: 4px; }
+html.m .need > * + * { margin-left: 0; }
+html.m .need-label { display: none; }
+html.m .need-well, html.m .needs.open .need-well { order: 1; flex: 1 1 auto; width: 12px !important; height: auto; min-height: 20px; border-radius: 6px; }
+html.m .need .fill { top: auto !important; bottom: 0; left: 0; right: 0; width: auto !important; height: calc(var(--v) * 100%); min-height: 4px; min-width: 0; }
+html.m .need img, html.m .needs.open .need img { order: 2; width: 18px; height: 18px; padding: 0; }
+html.m .status-row .skybar { position: relative; top: auto; left: auto; width: 100% !important; height: auto; flex: none; z-index: 30; }
+html.m .status-row .skybar canvas#sky { width: 100% !important; height: auto !important; display: block; }
+
+/* today's festival: a strip right under the house (its box keeps room for it) */
+html.m .fest-bar { left: var(--m-house-left) !important; width: var(--house-w) !important; top: var(--m-fest-top) !important; bottom: auto; height: 26px; }
+
+/* ---- sheets: the whole phone frame, over a blurred game */
+html.m .m-scrim { position: fixed; inset: 0; z-index: 64; background: rgba(28, 22, 38, .32); -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px); opacity: 0; pointer-events: none; transition: opacity .2s; }
+html.m.sheet .m-scrim { opacity: 1; pointer-events: auto; }
+html.m .picker, html.m .card, html.m .social-sheet, html.m #petPanel, html.m .set-pop, html.m .diary-pop, html.m .contacts-panel {
+  position: fixed !important; z-index: 70 !important; inset: calc(var(--m-y0)) var(--m-x1r) var(--m-y1b) var(--m-x0) !important;
+  width: auto !important; height: auto !important; max-width: none !important; max-height: none !important; box-sizing: border-box; }
+html.m .set-pop, html.m .diary-pop, html.m .contacts-panel { overflow-y: auto; border-radius: 16px; }
+html.m .card { --cs: 1 !important; }
+html.m .card h3 { font-size: 18px !important; }
+html.m .card p { font-size: 14px !important; max-width: 34em; }
+html.m .card .cd-opt { font-size: 14px !important; min-height: 40px; }
+html.m .card-res { z-index: 71 !important; }
+html.m .studio-slot.open { inset: var(--m-y0) var(--m-x1r) var(--m-y1b) var(--m-x0) !important; z-index: 70 !important; }
+html.m .studio-slot:not(.open) { pointer-events: none; }
+html.m .studio-slot.open::before { display: none; }
+html.m .guide { z-index: 70 !important; }
+html.m .card { background: rgba(27, 19, 34, .6) !important; }
+html.m .settings { opacity: 1 !important; visibility: visible !important; scale: none !important; transform: none !important; pointer-events: auto; }
+html.m .diary-box { clip-path: none !important; background: var(--panel, #fffaf2) !important; border: 2px solid var(--edge, #3a3046) !important; border-radius: 17px !important;
+  box-shadow: 3px 3px 0 var(--shadow, #0002) !important; padding: 0 12px 0 6px !important; display: flex !important; align-items: center; gap: 6px; box-sizing: border-box; }
+html.m .diary-box::before, html.m .diary-box::after { display: none !important; }
+html.m .diary-box .diary-ico { position: static !important; flex: none; background: none !important; clip-path: none !important; width: 24px; height: 24px; display: grid; place-items: center; }
+html.m .diary-box span { flex: 1; min-width: 0; font-size: 13px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the sheets' parents must not trap them under the scrim (a z-indexed flex item is its own stacking context) */
+html.m .moodrow { z-index: auto !important; }
+html.m.s-set .settings, html.m.s-diary .diary { z-index: 72 !important; }
+html.m .contacts-panel .contacts-list { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)) !important; grid-auto-rows: 92px !important; align-content: start; height: 100%; }
+html.m .contacts-panel .contact-card { height: 100% !important; }
+/* one ✕ for the light sheets (settings, diary, 人脉): the sheet covers the scrim */
+html.m .m-close { position: fixed; z-index: 80; top: calc(var(--m-y0) + 8px); right: calc(var(--m-x1r) + 8px); width: 32px; height: 32px; border-radius: 16px;
+  border: 2px solid var(--edge, #3a3046); background: var(--panel, #fffaf2); color: var(--ink, #2a2333); font: 700 15px/1 sans-serif; display: none; padding: 0; }
+html.m.s-set .m-close, html.m.s-diary .m-close, html.m.s-contacts .m-close { display: grid; place-items: center; }
+html.m.s-set .set-pop, html.m.s-diary .diary-pop, html.m.s-contacts .contacts-panel { padding-right: 52px !important; }
+html.m .set-pop { align-content: start !important; row-gap: 14px !important; }
+html.m .ring { z-index: 55 !important; }
+html.m .nametag { z-index: 55; }
+html.m .diary-box span { white-space: nowrap !important; display: block !important; -webkit-line-clamp: unset !important; line-height: 1.2 !important; max-height: 1.3em; }

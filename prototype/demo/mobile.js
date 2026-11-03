@@ -52,18 +52,24 @@ mobileTurn();
 setInterval(() => { const w = realW(), h = realH(); if (w !== mobileWH[0] || h !== mobileWH[1]) { mobileTurn(); try { if (booted) fit(); } catch (e) {} } }, 400);
 document.head.insertAdjacentHTML("beforeend", `<meta name="theme-color" content="#ebe6f1">`);
 
-// the left column (needs, then the gear row) and the house's free box on screen
-const MOBILE_COL = 170;
+// 手机版 v2 (owner sketch 2026-11-03): one virtual phone frame, nothing may leave it.
+// Row 1: the diary line across, 人脉 + gear circles on the right. Row 2: the mood face, her words
+// across. Below: the six needs as upright bars (time bar under them) on the left, the house on the
+// right. The house's box never depends on what is open, so the house never moves.
 function mobileInset(v) { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(v)) || 0; }
-function mobileTop() {
-  const sky = document.getElementById("skybar"), fb = document.getElementById("festBanner");
-  const sh = sky ? sky.offsetHeight : 28, fh = fb && !fb.hidden ? fb.offsetHeight + 8 : 0;
-  document.documentElement.style.setProperty("--m-sky-h", sh + "px");
-  return mobileInset("--sat") + 8 + sh + 8 + fh;
+function mobileGeom() {
+  const W = innerWidth, H = innerHeight, pad = 10;
+  const x0 = mobileInset("--sal") + pad, x1 = W - mobileInset("--sar") - pad;
+  const y0 = mobileInset("--sat") + pad, y1 = H - mobileInset("--sab") - pad;
+  const col = Math.round(Math.max(132, Math.min(200, (x1 - x0) * 0.22)));
+  const r1 = 34, r2 = 40, gap = 6;
+  const row1 = y0, row2 = row1 + r1 + gap, top = row2 + r2 + 8;
+  return { W, H, x0, x1, y0, y1, col, r1, r2, row1, row2, top, fest: 32, hl: x0 + col + 10 };
 }
-function mobileBottom() { const m = document.getElementById("moodrow"); return mobileInset("--sab") + 10 + (m ? m.offsetHeight : 52) + 58 + 8; }   // + the gear / diary row
+let MOBILE_COL = 170;
 function mobileBox() {
-  return { left: mobileInset("--sal") + 12 + MOBILE_COL + 12, right: innerWidth - mobileInset("--sar") - 12, top: mobileTop(), bottom: innerHeight - mobileBottom() };
+  const g = mobileGeom();
+  return { left: g.hl, right: g.x1, top: g.top, bottom: g.y1 - g.fest };
 }
 // CSS px per house pixel: the whole house fits the free box (no panning), at most 4,
 // whole device pixels when that is close
@@ -73,11 +79,17 @@ function mobileScale() {
   const dpr = devicePixelRatio || 1, n = Math.floor(s * dpr);
   return n / dpr >= s * 0.92 ? n / dpr : s;
 }
-// the house's place on screen: centred in the free box
+// the house's place on screen: top of its box, centred across; every HUD position goes to CSS
 function mobileLayout() {
-  const root = document.documentElement.style, b = mobileBox();
-  root.setProperty("--m-house-left", Math.round(b.left + Math.max(0, (b.right - b.left - view.offsetWidth) / 2)) + "px");
-  root.setProperty("--m-house-top", Math.round(b.top + Math.max(0, (b.bottom - b.top - view.offsetHeight) / 2)) + "px");
+  const root = document.documentElement.style, g = mobileGeom(), b = mobileBox();
+  const left = Math.round(b.left + Math.max(0, (b.right - b.left - view.offsetWidth) / 2)), top = Math.round(b.top);
+  MOBILE_COL = g.col;
+  root.setProperty("--m-house-left", left + "px");
+  root.setProperty("--m-house-top", top + "px");
+  root.setProperty("--m-fest-top", top + view.offsetHeight + 6 + "px");
+  for (const k of ["x0", "y0", "col", "r1", "r2", "row1", "row2", "top", "hl"]) root.setProperty("--m-" + k, g[k] + "px");
+  root.setProperty("--m-x1r", g.W - g.x1 + "px");                 // right edge, as a distance from the right
+  root.setProperty("--m-y1b", g.H - g.y1 + "px");                 // bottom edge, as a distance from the bottom
   root.setProperty("--app-h", innerHeight + "px");   // the visible height (100vh can include browser bars)
 }
 const deskEl = document.querySelector(".desk");
@@ -102,7 +114,7 @@ const deskEl = document.querySelector(".desk");
   };
 }
 // settings that mean nothing on a phone (music: the one-file phone page carries only the short sounds)
-for (let i = SETTINGS.length - 1; i >= 0; i--) if (["界面大小", "置顶游戏", "更新", "背景音乐"].includes(SETTINGS[i].label)) SETTINGS.splice(i, 1);
+for (let i = SETTINGS.length - 1; i >= 0; i--) if (["界面大小", "置顶游戏", "更新", "背景音乐", "文字大小"].includes(SETTINGS[i].label)) SETTINGS.splice(i, 1);
 {
   const apply = applySettings;
   applySettings = function (st) { apply(st); prefs.scale = "auto"; };
@@ -115,15 +127,32 @@ addEventListener("orientationchange", () => setTimeout(() => { mobileTurn(); fit
   const um = uiMetrics;
   uiMetrics = function (w, h) {
     const m = um(Math.min(w, innerWidth - 16), h);
-    for (const k of ["body", "control", "pill", "name"]) m[k] = Math.max(14, m[k]);
-    m.label = Math.max(13, m.label); m.cardBody = Math.max(16, m.cardBody); m.cardTitle = Math.max(21, m.cardTitle); m.speech = Math.max(17, m.speech);
+    // owner: phone type must never get big. Clamp both ways
+    for (const k of ["body", "control", "pill", "name"]) m[k] = Math.min(14, Math.max(13, m[k]));
+    m.label = Math.min(13, Math.max(12, m.label)); m.cardBody = Math.min(15, Math.max(14, m.cardBody));
+    m.cardTitle = Math.min(18, Math.max(16, m.cardTitle)); m.speech = 13;
     return m;
   };
 }
 const MOBILE_PANELS = "#petPanel:not([hidden]),.card:not([hidden]),.card-res:not([hidden]),.picker:not([hidden]),.social-sheet:not([hidden])";
+// sheets that fill the phone frame get a blurred scrim behind them; a tap on it closes the light ones
+const MOBILE_SHEETS = MOBILE_PANELS + ",#setPop:not([hidden]),#diaryPop:not([hidden]),.contacts-panel[aria-hidden=false],.studio-slot.open,.guide-slot.open";
+const mScrim = document.createElement("div"); mScrim.className = "m-scrim"; deskEl.appendChild(mScrim);   // (inside .desk: a fixed .desk is its own stacking context)
+const mClose = document.createElement("button"); mClose.type = "button"; mClose.className = "m-close"; mClose.textContent = "✕"; mClose.setAttribute("aria-label", "关闭");
+deskEl.appendChild(mClose); mClose.addEventListener("click", () => mScrim.click());
+mScrim.addEventListener("click", () => {
+  if (!document.getElementById("setPop").hidden) document.getElementById("setGear").click();
+  else if (!document.getElementById("diaryPop").hidden) document.getElementById("diaryBox").click();
+  else if (document.querySelector(".contacts-panel[aria-hidden=false]")) document.getElementById("networkTrigger").click();
+  else if (!document.getElementById("picker").hidden) document.querySelector("#picker .x").click();
+});
 let mobileFest = null;
 (function lockLoop() {
   document.documentElement.classList.toggle("lock", !!document.querySelector(MOBILE_PANELS));
+  document.documentElement.classList.toggle("sheet", !!document.querySelector(MOBILE_SHEETS));
+  document.documentElement.classList.toggle("s-set", !document.getElementById("setPop").hidden);
+  document.documentElement.classList.toggle("s-diary", !document.getElementById("diaryPop").hidden);
+  document.documentElement.classList.toggle("s-contacts", !!document.querySelector(".contacts-panel[aria-hidden=false]"));
   const f = !document.getElementById("festBanner").hidden;   // the festival strip takes room from the house
   if (f !== mobileFest) { mobileFest = f; fit(); }
   setTimeout(lockLoop, 200);

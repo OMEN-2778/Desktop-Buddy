@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-03 · Claude Code
+- 手机版 v2 per owner sketch (mobile.js/mobile.css only): new HUD rows, upright need bars, fixed house box, full-screen
+  sheets over a blurred scrim (card, pickers, settings, diary, 人脉, pets, studio, guide), ✕ for light sheets,
+  文字大小 removed on phone, type clamped 13-18px. Checked 568x320..932x430 + portrait (auto-turn): main, sheets,
+  ring, outdoor places, no element outside the screen. 茵菲谷 on phone: next.
+
 ## 2026-11-03 Claude: 茵菲谷每个场景各加一条支线（infei_side.js）
 - 小吴的包裹(郁金香田)、林老师的速写(小溪边)、老蔡的蜂(油菜花田→果园)、门口的小狗(农舍门口)、刘婶借菜(菜地)、阿木的口琴(牧场/果园)。
 - 给任务的人按天随机出现（种子掷骰），接了任务后每天都在；完成后偶尔出来闲聊。

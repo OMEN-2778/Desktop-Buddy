@@ -17,8 +17,10 @@ tests, no unasked extras).
 - Art and the house/UI style rules: `.claude/skills/pixel-art/SKILL.md`
   (read before touching art or UI; it records every past user decision).
 - Demo page: `prototype/demo/index.src.html` → built into `index.html`.
-- 手机版 (owner asked for it): `prototype/demo/mobile.js` + `mobile.css` → `mobile.html`
-  (landscape: whole house on screen, needs column on the left, panels over the house). One-file build:
+- 手机版 (owner asked for it): `prototype/demo/mobile.js` + `mobile.css` → `mobile.html`. v2 layout (owner sketch
+  2026-11-03): row 1 diary line + 人脉 + gear, row 2 mood face + her words, six upright need bars + time bar on
+  the left, the house on the right in a box that never moves; settings/cards/pickers/diary/人脉/studio/guide
+  fill the screen over a blurred game. Nothing may leave the phone frame; type stays small (13-18px). One-file build:
   `cd desktop && BUDDY_MOBILE=1 BUDDY_MINIFY=1 npm run web` → `dist/mobile.html`.
   手机试玩版 for H5 platforms (zip ≤ 10 MB, index.html + game.js, no inline JS, no outside
   resources): `cd desktop && node scripts/make-h5.mjs` → `desktop/desktop-buddy-h5.zip` (小红书小工具
