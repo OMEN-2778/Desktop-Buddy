@@ -10,20 +10,13 @@ const args=process.argv.slice(2);const si=args.indexOf('--shots');const shots=si
 const page='prototype/demo/mobile.html';const [W='740',H='360',only='']=args;let failed=0;
 const screens={
  main:'0',
- pcfarm:"(async()=>{throughDoor('spring_test');await new Promise(r=>setTimeout(r,5000));FarmUI.computer('farm',springFarm.X.pcState())})()",
- pcfund:"(async()=>{throughDoor('spring_test');await new Promise(r=>setTimeout(r,5000));FarmUI.computer('fund',springFarm.X.pcState())})()",
- shop:"(async()=>{throughDoor('spring_test');await new Promise(r=>setTimeout(r,5000));FarmUI.shop('sf_seed','种子铺 · 这块田种什么',20,[{group:'种子',items:[{name:'胡萝卜',cost:2,note:'4 天'},{name:'番茄',cost:3,note:'6 天'}]}],{x:100,y:60})})()",
  storypeer:"(()=>{asleep=()=>false;window.__sp=createStorySpeech({view});__sp.show('妈妈','你那边下雨了吗？我看天气预报说今天降温，记得多穿点，别又跟上次一样感冒了。',{advance:()=>{}})})()",
  storychoice:"(()=>{asleep=()=>false;window.__sp=createStorySpeech({view});__sp.show('妈妈','周末回来吃饭吗？你爸念叨好几天了。',{choices:[{label:'好啊，我想吃红烧肉'},{label:'这周有点忙'},{label:'下周吧'}]})})()",
- quests:"questBoard.open()",
- spring_test:"(async()=>{try{throughDoor('spring_test')}catch(e){sim.place='spring_test';arriveAt('spring_test')}await new Promise(r=>setTimeout(r,7000))})()",
- airport_test:"(async()=>{try{throughDoor('airport_test')}catch(e){sim.place='airport_test';arriveAt('airport_test')}await new Promise(r=>setTimeout(r,7000))})()",
 
  front:"(async()=>{throughDoor('front');await new Promise(r=>setTimeout(r,6000))})()",
  park:"(async()=>{throughDoor('park');await new Promise(r=>setTimeout(r,6000))})()",
  mall:"(async()=>{throughDoor('mall');await new Promise(r=>setTimeout(r,6000))})()",
  beach:"(async()=>{throughDoor('beach');await new Promise(r=>setTimeout(r,6000))})()",
- dock:"(async()=>{throughDoor('dock');await new Promise(r=>setTimeout(r,6000))})()",
  bar:"(async()=>{throughDoor('bar');await new Promise(r=>setTimeout(r,6000))})()",
  disco:"(async()=>{throughDoor('disco');await new Promise(r=>setTimeout(r,6000))})()",
 
