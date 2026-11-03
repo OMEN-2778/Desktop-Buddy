@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- 手机版 (owner): 茵菲谷 / 任务 / 丢丢币 / 机场 removed from the phone page (no --mobile injection; desktop release
+  untouched). Speech bubbles (hers, others, story lines, choices) back to light tan #ecd5ad. Need bars + time bar are
+  exactly the house height (--m-house-h). Artifact republished.
+
+## 2026-11-03 · Claude Code
 - 手机版 on a mouse (desktop browser / artifact preview): never turned; drawn at 740x360 and scaled to the window
   (mobileFit: innerWidth/rects/pointer mapped). Touch phones held upright still turn. Owner: it looked sideways and
   stretched in the desktop preview. Artifact republished.

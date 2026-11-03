@@ -107,6 +107,7 @@ function mobileLayout() {
   root.setProperty("--m-house-left", left + "px");
   root.setProperty("--m-house-top", top + "px");
   root.setProperty("--m-fest-top", top + view.offsetHeight + 6 + "px");
+  root.setProperty("--m-house-h", view.offsetHeight + "px");
   for (const k of ["x0", "y0", "col", "r1", "r2", "row1", "row2", "top", "hl"]) root.setProperty("--m-" + k, g[k] + "px");
   root.setProperty("--m-x1r", g.W - g.x1 + "px");                 // right edge, as a distance from the right
   root.setProperty("--m-y1b", g.H - g.y1 + "px");                 // bottom edge, as a distance from the bottom

@@ -257,3 +257,9 @@ html.m .set-gear img, html.m .moodrow .network-trigger img, html.m .quest-trigge
 html.m.fitv { background: #d9d3e3; --sat: 0px; --sab: 0px; --sal: 0px; --sar: 0px; }
 html.m.fitv body { position: fixed; left: 0; top: 0; width: var(--fit-w); height: var(--fit-h); overflow: hidden; background: var(--bg, #ebe6f1);
   transform-origin: 0 0; transform: translate(var(--fit-x), var(--fit-y)) scale(var(--fit-s)); }
+/* owner: every speech bubble (hers, other people's, story lines and choices) is the game's light tan */
+html.m .pop.say, html.m .peer-bubble, html.m .peer-bubble.story-bubble, html.m .peer-hud.quest .peer-bubble, html.m .story-choices button {
+  background: #ecd5ad !important; border-color: #8a6446 !important; color: #3d2a1e !important; }
+html.m .peer-bubble span, html.m .pop.say span { color: #3d2a1e !important; }
+/* owner: the need bars + time bar stack exactly as tall as the house, top and bottom flush */
+html.m .status-row { bottom: auto !important; height: var(--m-house-h); }
