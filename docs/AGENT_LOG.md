@@ -12,7 +12,8 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
   infei_farm drawAnimals), barn, coop, farmhouse door, quest spots, farmhouse furniture/door; airport.js: board + gate.
   check_infei_hover.js new. All 茵菲谷/map-test checks pass; check_spring_life made robust (a natural card was open).
 - Main-game suite (61 server checks): 32 pass, 29 fail on stale expectations (文字大小 setting, dropped full stops,
-  later layout decisions...). Being compared against a 10-30 build; not fixed here.
+  later layout decisions...). Same 27 also fail on the 10-30 build (b44c983) = stale tests, not regressions;
+  check_friend_visits / check_park failed once under load and pass on rerun. Stale tests not updated (not asked).
 
 ## 2026-11-03 · Claude Code
 - Owner: put the 茵菲谷 BGM on the web preview to listen. prototype/map-test/bgm.html (copied by
