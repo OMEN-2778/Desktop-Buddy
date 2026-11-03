@@ -2677,7 +2677,7 @@ function emoteCanvas(name) {
 
 // ================================================================ house assets
 const IMG = {};
-function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error("图片加载失败（" + Math.round(src.length / 1024) + " KB）")); i.src = src; }); }
 async function loadAssets() {
   IMG.day = await loadImg(D.bg.day);
   IMG.night = await loadImg(D.bg.night);

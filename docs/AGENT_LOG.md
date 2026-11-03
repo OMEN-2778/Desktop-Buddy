@@ -6,6 +6,8 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-03 Claude: 主人在 iPad 分屏（Claude App 内）打开手机版：只有界面框，小屋/心情/时间条/日记都没出来＝启动卡在加载图片那段；Chromium 和 WebKit 本地都复现不出。手机版加了出错提示条（报错或 20 秒没启动完就显示原因），loadImg 报错带图片大小。等主人截图定位。
+
 ## 2026-11-03 Claude: 手机版日记：列表还沿用电脑版的短滚动框（约 140px），打开就滚到底、顶部被切、下面空一大片；改为铺满整张日记面板，去掉像素切角改圆角。横竖屏都看过，画框检查通过。
 
 ## 2026-11-03 Claude: 手机版：人脉里点好友的操作菜单被人脉面板盖住（层级 60<70），已提到面板之上；check_mobile_frame.js 新增"新弹出的按钮被盖住"检查 + contactact 画面，全部画面通过（740x360）。手机版恢复「背景音乐」设置，BGM 从页面旁的 audio/BGM 流式加载（预览 artifact 已带上，除茵菲谷曲目）；H5 zip 仍不带音乐（10MB 限制）。

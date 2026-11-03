@@ -258,3 +258,19 @@ skyHit.addEventListener("click", () => { clearTimeout(skyHit._mt); skyHit._mt = 
 
 // the needs are always open on a phone: tapping them does nothing
 for (const ev of ["click", "pointerdown", "pointerenter", "keydown"]) document.querySelector(".status-row").addEventListener(ev, e => { if (e.target.closest && e.target.closest("#needs")) e.stopPropagation(); }, true);
+
+// if the page breaks on a phone, say so on screen (owner tests in the Claude app, no console there)
+{
+  let box = null;
+  const show = msg => {
+    if (!box) {
+      box = document.createElement("div");
+      box.style.cssText = "position:fixed;z-index:9999;left:8px;right:8px;bottom:8px;padding:8px 12px;border-radius:12px;background:#3a3046;color:#fff;font:13px/1.4 sans-serif;white-space:pre-wrap;pointer-events:none";
+      document.body.append(box);
+    }
+    if (box.textContent.split("\n").length < 4) box.textContent += (box.textContent ? "\n" : "出错了（截图发给开发者）：\n") + String(msg).slice(0, 160);
+  };
+  addEventListener("error", e => show(e.message || e.error));
+  addEventListener("unhandledrejection", e => show(e.reason && (e.reason.message || e.reason)));
+  setTimeout(() => { if (!booted) show("20 秒还没启动完：" + innerWidth + "×" + innerHeight); }, 20000);
+}
