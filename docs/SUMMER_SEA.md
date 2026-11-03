@@ -265,3 +265,14 @@ Rain/snow corrected too. Motion timing remains continuous; camera/other art unch
 - Applies only to `/summer/` and `/map-test/`; does not enable formal game seasonal maps.
 
 Owner 2026-11-01: irregular randomized fish schools (no rectangular ranks), rock avoidance; female bikini and male bare-chested briefs for hero and NPC alike. Test-only.
+
+### Owner request · 2026-11-03: redraw every fish and coral (v2), bigger sea
+- Owner: the playable sea is still too small and life too sparse; redraw ALL fish and corals,
+  lively and refined, a diving-game feel (reference for feel only: big readable sprites, vivid
+  colours; all art original). **Keep the seaweeds** (`sea_life.seagrass / limu / sargassum`).
+- New: `art/src/concept/reef.py` (fish engine with round shading, fin rays, cartoon eyes;
+  11 small reef fish, 10 big animals, 4 schools, 14 corals/floor life) + 12 `reef_*` ramps in
+  `tools/pixelkit/palette.py`. Review: `tools/make_sea_life_sheet.py out.png reef 3`,
+  scene mock `tools/make_reef_scene.py`; combined board `docs/design/reef-v2-preview.png`.
+- NOT wired in: waiting on the owner. After approval: swap `sea_life`/`sea_life_motion` users to
+  reef.py (motion bend works on any Sprite), then enlarge the sea (EXT/DEEP in summer_bay.py).
