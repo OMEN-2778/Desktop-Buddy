@@ -245,3 +245,11 @@ html.m .story-choices, html.m .story-choices.wrap { position: fixed !important; 
   display: grid !important; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; height: auto !important; translate: none !important; }
 html.m .story-choices button, html.m .story-choices.wrap button { height: auto !important; min-height: var(--m-r2); flex: none; }
 html.m .story-choices button span { white-space: normal !important; display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.25; }
+/* row-1 circles (gear, 人脉, 任务): plain round buttons, icon centred (the desktop pixel rings are drawn for 48px
+   and came out crooked at 34px) */
+html.m .set-gear, html.m .moodrow .network-trigger, html.m .quest-trigger {
+  clip-path: none !important; border-radius: 50% !important; background: var(--panel, #fffaf2) !important; border: 2px solid var(--edge, #3a3046) !important;
+  box-shadow: 2px 2px 0 var(--shadow, #0002) !important; box-sizing: border-box !important; padding: 0 !important; display: grid !important; place-items: center !important; filter: none !important; }
+html.m .set-gear::before, html.m .set-gear::after, html.m .moodrow .network-trigger::before, html.m .moodrow .network-trigger::after,
+html.m .quest-trigger::before, html.m .quest-trigger::after { display: none !important; }
+html.m .set-gear img, html.m .moodrow .network-trigger img, html.m .quest-trigger img { width: 22px !important; height: 22px !important; margin: 0 !important; position: static !important; translate: none !important; transform: none !important; }
