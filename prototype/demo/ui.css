@@ -856,6 +856,9 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 /* choices in Buddy's bubble row: same height / round ends as her bubble, the row split evenly */
 .story-choices { position: absolute; z-index: 4; left: var(--tail, 16px); right: 0; top: 50%; height: var(--say-h, 48px); translate: 0 -50%; display: flex; gap: 8px; }
 .story-choices[hidden] { display: none; }
+.story-choices.wrap { flex-wrap: wrap; row-gap: 6px; height: auto; top: 0; translate: none; }
+.story-choices.wrap button { flex: 1 1 auto; height: var(--say-h, 48px); }
+.story-choices.wrap button span { overflow: visible; text-overflow: clip; }
 .story-choices button { --pe: #8a6446; --pf: #ecd5ad; flex: 1 1 0; min-width: 0; height: 100%; position: relative; isolation: isolate; margin: 0; padding: 0 18px; background: none; border: 0; box-shadow: none;
   cursor: pointer; font: inherit; font-weight: 700; color: #3d2a1e; font-size: var(--say-fs, 20px); line-height: 1.2; filter: drop-shadow(3px 3px 0 var(--shadow));
   animation: popin .42s cubic-bezier(.3, 1.6, .5, 1) both; }

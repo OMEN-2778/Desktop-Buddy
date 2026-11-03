@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-02 · Claude Code
+- Owner: story choices that do not fit one row go to a second row. story_bubbles.js adds .wrap when any choice
+  label is cut; ui.css wraps (row 1 stays on the speech row, the rest below, labels unclipped). Whole game (all
+  story choices), not only /map-test/. Spring story + 茵菲谷 quests pass.
+
+## 2026-11-02 · Claude Code
 - Owner: dialogue-led side quests inside 茵菲谷 (funny / wistful / mystery, maybe giving crops). New
   prototype/map-test/infei_quests.js: villagers 小满 / 王叔 / 阿婆 / 老周 (seeded looks, ! ? marks), 风车里的怪声,
   溪边的阿婆, 菜地里的脚印 (rabbit lives by the coop, 小满 waters a bed a day), 老周的乱炖. Crops are given from

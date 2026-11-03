@@ -32,6 +32,7 @@ function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}})
   more.hidden=!!opts;
   choices.replaceChildren(...(opts||[]).map(o=>{const b=document.createElement('button');b.type='button';b.innerHTML='<i class="bg" aria-hidden="true"></i><span></span>';b.lastChild.textContent=o.label;b.onclick=e=>{e.stopPropagation();o.on?.();};return b;}));
   choices.hidden=!opts||hero;choices.classList.toggle('quest',special);
+  choices.classList.remove('wrap');if(!choices.hidden&&[...choices.querySelectorAll('span')].some(s=>s.scrollWidth>s.clientWidth+1))choices.classList.add('wrap');   // too many to fit: the rest go on a second row
   if(!choices.hidden){const H=popSay.offsetHeight||parseFloat(getComputedStyle(widget).getPropertyValue('--say-h'))||48,[outer,inner]=sayClip(Math.round(H/2)*2,0,12,12,2,0);
    choices.style.setProperty('--choice-clip',outer);choices.style.setProperty('--choice-in',inner);popBubble(popSay,0);popSay.hidden=true;}
   const box=hero?popSay:peerBubble;box.tabIndex=0;box.setAttribute('role','button');
