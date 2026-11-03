@@ -16,6 +16,7 @@ const questBoard=(function(){
 .quest-trigger b{position:absolute;right:-2px;top:-2px;min-width:16px;height:16px;padding:0 3px;font:700 11px/16px var(--font);color:#fff;background:#d9534f;
  clip-path:var(--hud-small-clip);animation:qbPulse 1.6s ease-in-out infinite}
 .quest-trigger b:empty{display:none}
+.moodrow.quest-peek .quest-trigger img{animation:qb-peek .5s var(--hud-settle,ease-out)}@keyframes qb-peek{0%{scale:.6;rotate:-12deg}60%{scale:1.15;rotate:6deg}100%{scale:1;rotate:0deg}}
 .quest-bridge{position:absolute;z-index:22;width:72px;height:52px;display:none}
 .moodrow.quest-ready .quest-bridge,.moodrow.quests-open .quest-bridge{display:block}
 .quest-panel{position:absolute;z-index:70;padding:14px 14px 12px;opacity:0;visibility:hidden;pointer-events:none;isolation:isolate;color:var(--ink);
@@ -102,7 +103,7 @@ const questBoard=(function(){
 @keyframes qbBob{50%{translate:0 -2px}}
 @keyframes qbNudge{50%{translate:2px 0}}
 @keyframes qbPulse{50%{scale:1.12}}
-@media (prefers-reduced-motion:reduce){.quest-trigger,.quest-panel,.qb-card,.qb-sep{transition:none!important;animation:none!important;opacity:1;translate:none}.quest-trigger b,.qb-card img,.qb-card p::before{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.quest-trigger,.quest-panel,.qb-card,.qb-sep{transition:none!important;animation:none!important;opacity:1;translate:none}.quest-trigger b,.quest-trigger img,.qb-card img,.qb-card p::before{animation:none!important}}
 
 .qb-ent h5 img{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;margin-right:5px}
 .quest-panel.compact .qb-dhead img{width:16px;height:16px}`;
@@ -165,6 +166,15 @@ const questBoard=(function(){
   requestAnimationFrame(()=>{tl.scrollTop=0;});}
  function badge(){const n=all().filter(q=>!q.done&&q.isNew).length;trigger.querySelector('b').textContent=n?String(n):'';}
  setInterval(badge,1500);
+ // a new quest (owner 2026-11-03): the 任务 button slides out for a second with the quest sound, then tucks back.
+ // Waits until the story talk that gave it has closed; quests already in a loaded save do not announce.
+ let known=null,peekT=0,pending=false;
+ function peek(){pending=false;place();moodrow.classList.add('quest-ready','quest-peek');try{gameAudio.sound('infei-quest',.5);}catch(e){}
+  clearTimeout(peekT);peekT=setTimeout(()=>{moodrow.classList.remove('quest-peek');if(!isOpen&&!trigger.matches(':hover'))queueHide();},1000);}
+ setInterval(()=>{if(typeof booted==='undefined'||!booted)return;const ids=all().filter(q=>!q.done&&!q.offer).map(q=>q.id);   // offered ("!") is not taken yet
+  if(!known){known=new Set(ids);return;}
+  for(const id of ids)if(!known.has(id)){known.add(id);pending=true;}
+  if(pending&&!(typeof storySpeechOpen==='function'&&storySpeechOpen())&&!wiping)peek();},400);
  // ---------------------------------------------------------------- open / close (人脉 timings)
  let closeT=0,hideT=0,isOpen=false;
  function reveal(){clearTimeout(hideT);place();moodrow.classList.add('quest-ready');}

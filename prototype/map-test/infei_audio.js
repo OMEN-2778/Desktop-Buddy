@@ -42,7 +42,8 @@ const infeiAudio=(function(){
    if(an.fed!==o.fed)play('infei-feed',.45,{gap:.5});
    if(o.ready&&!an.ready)play('infei-harvest',.45);}
   if(now.coins>a.coins+.05)play('infei-coin',.45,{gap:.3});
-  for(const [k,st]of Object.entries(now.q)){const o=a.q[k];if(o==null||st===o)continue;play(st===9?'infei-done':'infei-quest',.5);}
+  for(const [k,st]of Object.entries(now.q)){const o=a.q[k];if(o==null||st===o||o===0)continue;   // 0→1 = a new quest: quest_panel.js plays it with its pop-out
+  play(st===9?'infei-done':'infei-quest',.5);}
   const HOME={bed:'fabric',bath:'water',toilet:'flush',stove:'cook',table:'cutlery',jar:'drink',settee:'seat',wardrobe:'fabric'};
   if(now.svc&&now.svc!==a.svc)play(HOME[now.svc]||'seat',.45);
  }

@@ -275,7 +275,7 @@ const infeiQuests=(function(){
    if(STEP[id]&&st===2&&today()>q[id].day)step=id==='letter'?'去溪边找阿婆':'去郁金香田边找老周';
    out.push({id,title:TITLE[id],kind:KIND[id],place:st===9?HOME[id]:PLACE[id][st]||HOME[id],done:st===9,step,end:END[id],isNew:false,log:q[id].log||[]});}
   // offered but not taken yet: someone with a "!" is waiting
-  for(const g of gs)if(g.mark==='!'&&Q()[g.id].step===0)out.push({id:g.id,title:TITLE[g.id],kind:KIND[g.id],place:PLACE[g.id][0],done:false,step:`${g.v.name}好像有话想说`,isNew:true});
+  for(const g of gs)if(g.mark==='!'&&Q()[g.id].step===0)out.push({id:g.id,title:TITLE[g.id],kind:KIND[g.id],place:PLACE[g.id][0],done:false,step:`${g.v.name}好像有话想说`,isNew:true,offer:true});
   return out;});
  X.hooks.pick.quests=()=>questBoard.open();
  return {V,Q,goals,run,talk,at:v=>visible(v)?where(v):null,spots:SPOTS,list:()=>questBoard.open(),get busy(){return busy;},rabbit};

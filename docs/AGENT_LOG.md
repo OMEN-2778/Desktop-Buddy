@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: a newly taken quest pops the 任务 button out for 1s with the quest sound (quest_panel.js; offered "!"
+  quests don't count, waits for the story talk to close, loaded quests don't announce; infei_audio skips 0→1).
+  Cancelled run 139 so 0.2.0 includes it; version offset now run 140. quest_panel/infei_audio/infei_quests pass.
+
+## 2026-11-03 · Claude Code
 - Owner: version should read 0.2.0. Cancelled run 138 (was 0.2.138); desktop.yml now sets VERSION=0.2.<run-139>
   in a first step of the windows and macos jobs, so this push's run is 0.2.0.
 
