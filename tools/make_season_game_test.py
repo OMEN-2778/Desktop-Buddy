@@ -1,5 +1,6 @@
 """Build the full game with the season-map adapters.
   default: test-only page desktop/dist/map-test/index.html (all season maps, cheats, own save keys).
+  --mobile: the same 茵菲谷 release injected into prototype/demo/mobile.html (手机版, owner 2026-11-03).
   --release (owner 2026-11-03, version 0.2): the formal game with 茵菲谷 only (summer/autumn unreachable,
   no cheats or test panel, the player's own save), written over prototype/demo/index.html for
   desktop/scripts/copy-web.mjs. Run tools/make_demo.py first."""
@@ -114,10 +115,12 @@ def farm_story_source():
 def spring_data():
     d=SP.runtime_data(bare_farm=True);d['seasons']=infei_seasons(d['scenes']);return d
 
-RELEASE='--release' in sys.argv
+RELEASE='--release' in sys.argv or '--mobile' in sys.argv
+MOBILE='--mobile' in sys.argv
 RELEASE_CHEATS='function installSeasonCheats(){return {flags:{},fillHero(){},fillPets(){},enforce(){}};}\n'
 def main():
-    page=(ROOT/'prototype/demo/index.html').read_text()
+    src=ROOT/('prototype/demo/mobile.html' if MOBILE else 'prototype/demo/index.html')   # --mobile: the 手机版 page gets 茵菲谷 too
+    page=src.read_text()
     assert 'seasonalTest' not in page,'run tools/make_demo.py first'
     # Changes below apply to this page only. The public trial and EXE stay untouched.
     page=page.replace('const cardHolds =','let cardHolds =')
@@ -144,7 +147,7 @@ def main():
     page=page.replace('</style>',(ROOT/'prototype/map-test/style.css').read_text()+(ROOT/'prototype/demo/farm_ui.css').read_text()+'\n</style>',1)
     if RELEASE:
         page=page.replace('</style>','#seasonGameTest{display:none!important}\n</style>',1)
-        (ROOT/'prototype/demo/index.html').write_text(page);print('release page with 茵菲谷',round(len(page)/1024),'KiB');return
+        src.write_text(page);print(('mobile' if MOBILE else 'release')+' page with 茵菲谷',round(len(page)/1024),'KiB');return
     page=page.replace('<title>Buddy 小屋</title>','<title>Desktop Buddy · 季节地图测试</title>')
     start=page.index('<script>')+8;end=page.index('</script>',start)
     with tempfile.TemporaryDirectory(prefix='buddy-season-test-') as tmp:

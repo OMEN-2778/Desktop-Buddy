@@ -195,6 +195,6 @@ const questBoard=(function(){
  document.addEventListener('pointerdown',e=>{if(isOpen&&!panel.contains(e.target)&&!trigger.contains(e.target))setOpen(false);});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&isOpen){if(panel.classList.contains('detail'))panel.classList.remove('detail');else{setOpen(false);trigger.focus();}}});
  window.addEventListener('resize',()=>{if(isOpen||moodrow.classList.contains('quest-ready'))place();});
- return {add:f=>sources.push(f),detail,open:()=>setOpen(true),close:()=>setOpen(false),fill,get isOpen(){return isOpen;},panel,trigger};
+ return {add:f=>sources.push(f),detail,open:()=>setOpen(true),close:()=>setOpen(false),fill,get isOpen(){return isOpen;},get count(){return all().filter(q=>!q.offer).length;},panel,trigger};   // count: the 手机版 shows the button whenever there is one
 })();
 window.questBoard=questBoard;

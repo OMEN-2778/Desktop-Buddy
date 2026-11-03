@@ -150,7 +150,6 @@ html.m .incoming-call .caller-copy { flex: 1; min-width: 0; font-size: 13px; }
 html.m .incoming-call .caller-copy strong, html.m .incoming-call .caller-copy span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 html.m .incoming-call button { min-height: 30px; height: 30px; font-size: 13px; padding: 0 12px; border-radius: 15px; }
 html.m .mood-list { position: fixed; left: calc(var(--m-x0) + var(--m-r2) + 8px); right: var(--m-x1r); top: calc(var(--m-row2) + var(--m-r2) + 6px); bottom: auto; max-height: 40vh; overflow: auto; }
-html.m .peer-hud { position: fixed; z-index: 43; left: var(--m-hl) !important; right: var(--m-x1r); top: var(--m-top); width: auto; }
 
 /* left column: six upright need bars, the time bar under them */
 html.m .status-row { position: fixed; left: var(--m-x0); width: var(--m-col); top: var(--m-top); bottom: var(--m-y1b); display: flex; flex-direction: column; gap: 6px; }
@@ -202,9 +201,47 @@ html.m .contacts-panel .contact-card { height: 100% !important; }
 /* one ✕ for the light sheets (settings, diary, 人脉): the sheet covers the scrim */
 html.m .m-close { position: fixed; z-index: 80; top: calc(var(--m-y0) + 8px); right: calc(var(--m-x1r) + 8px); width: 32px; height: 32px; border-radius: 16px;
   border: 2px solid var(--edge, #3a3046); background: var(--panel, #fffaf2); color: var(--ink, #2a2333); font: 700 15px/1 sans-serif; display: none; padding: 0; }
-html.m.s-set .m-close, html.m.s-diary .m-close, html.m.s-contacts .m-close { display: grid; place-items: center; }
+html.m.s-set .m-close, html.m.s-diary .m-close, html.m.s-contacts .m-close, html.m.s-quests .m-close { display: grid; place-items: center; }
 html.m.s-set .set-pop, html.m.s-diary .diary-pop, html.m.s-contacts .contacts-panel { padding-right: 52px !important; }
 html.m .set-pop { align-content: start !important; row-gap: 14px !important; }
 html.m .ring { z-index: 55 !important; }
 html.m .nametag { z-index: 55; }
 html.m .diary-box span { white-space: nowrap !important; display: block !important; -webkit-line-clamp: unset !important; line-height: 1.2 !important; max-height: 1.3em; }
+
+/* someone else talking (story / visits): the 对方 row takes row 1 over the diary line; Buddy answers in row 2,
+   her story choices fill row 2 as round pills */
+html.m .peer-hud { position: fixed !important; z-index: 46 !important; left: var(--m-x0) !important; right: calc(var(--m-x1r) + 2 * var(--m-r1) + 12px) !important;
+  top: var(--m-row1) !important; bottom: auto !important; width: auto !important; height: var(--m-r1) !important; transform: none !important; translate: none !important; margin: 0 !important; display: flex; align-items: center; gap: 6px; }
+html.m .peer-hud .peer-avatar { order: -1; flex: none; width: var(--m-r1); height: var(--m-r1); position: static !important; }
+html.m .peer-hud .peer-avatar canvas { width: 100% !important; height: 100% !important; }
+html.m .peer-bubble { position: relative !important; inset: auto !important; flex: 1; min-width: 0; height: var(--m-r1) !important; width: auto !important; box-sizing: border-box; padding: 0 12px !important;
+  display: flex; align-items: center; background: #f6efe4; border: 2px solid var(--edge, #3a3046); border-radius: 17px; clip-path: none !important; box-shadow: 3px 3px 0 var(--shadow, #0002); }
+html.m .peer-bubble.story-bubble, html.m .peer-hud.quest .peer-bubble { background: linear-gradient(90deg, #fff, #e4f0ff); }
+html.m .peer-bubble .bg, html.m .peer-bubble .dot { display: none !important; }
+html.m .peer-bubble span { font-size: 13px !important; line-height: 1.25; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; padding: 0 !important; }
+html.m .story-choices { position: absolute !important; inset: 0 !important; display: flex !important; gap: 6px; flex-wrap: nowrap; height: auto !important; transform: none !important; }
+html.m .story-choices[hidden] { display: none !important; }
+html.m .story-choices button { flex: 1 1 0; min-width: 0; height: 100% !important; border-radius: 20px !important; clip-path: none !important; border: 2px solid var(--edge, #3a3046) !important;
+  background: #fff4c4 !important; font-size: 13px !important; padding: 0 8px !important; }
+html.m .story-choices button .bg { display: none !important; }
+html.m .story-choices button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+html.m .story-choices.wrap { flex-wrap: wrap; inset: auto 0 0 0 !important; }
+html.m .story-choices.wrap button { flex: 1 1 40%; height: var(--m-r2) !important; }
+/* 茵菲谷 任务: a circle in row 1 once a quest exists; the list fills the screen like the other sheets */
+html.m .quest-trigger { position: fixed !important; z-index: 42 !important; left: auto !important; right: calc(var(--m-x1r) + 2 * var(--m-r1) + 12px) !important; top: var(--m-row1) !important;
+  width: var(--m-r1) !important; height: var(--m-r1) !important; padding: 4px !important; transform: none !important; translate: none !important; }
+html.m .quest-trigger img { width: 24px !important; height: 24px !important; }
+html.m.has-quests .quest-trigger { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }
+html.m.has-quests .diary, html.m .moodrow.quests-open .diary { right: calc(var(--m-x1r) + 3 * var(--m-r1) + 18px) !important; }
+html.m .quest-bridge { display: none !important; }
+html.m .quest-panel { position: fixed !important; z-index: 70 !important; inset: var(--m-y0) var(--m-x1r) var(--m-y1b) var(--m-x0) !important; width: auto !important; height: auto !important;
+  max-width: none !important; max-height: none !important; transform: none !important; overflow-y: auto; box-sizing: border-box; border-radius: 16px; }
+html.m .quest-panel .quest-tail { display: none !important; }
+html.m .peer-hud { height: auto !important; min-height: var(--m-r1); }
+html.m .peer-bubble { height: auto !important; min-height: var(--m-r1); padding: 5px 12px !important; }
+/* story choices: from row 2 downward, as many columns as fit, each label whole (two lines at most) */
+html.m .story-choices, html.m .story-choices.wrap { position: fixed !important; z-index: 47 !important; inset: auto !important;
+  left: calc(var(--m-x0) + var(--m-r2) + 8px) !important; right: var(--m-x1r) !important; top: var(--m-row2) !important;
+  display: grid !important; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; height: auto !important; translate: none !important; }
+html.m .story-choices button, html.m .story-choices.wrap button { height: auto !important; min-height: var(--m-r2); flex: none; }
+html.m .story-choices button span { white-space: normal !important; display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.25; }

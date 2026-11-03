@@ -20,7 +20,9 @@ tests, no unasked extras).
 - 手机版 (owner asked for it): `prototype/demo/mobile.js` + `mobile.css` → `mobile.html`. v2 layout (owner sketch
   2026-11-03): row 1 diary line + 人脉 + gear, row 2 mood face + her words, six upright need bars + time bar on
   the left, the house on the right in a box that never moves; settings/cards/pickers/diary/人脉/studio/guide
-  fill the screen over a blurred game. Nothing may leave the phone frame; type stays small (13-18px). One-file build:
+  fill the screen over a blurred game. Nothing may leave the phone frame; type stays small (13-18px).
+  The phone page carries 茵菲谷: after make_demo run `PYTHONPATH=tools python3 tools/make_season_game_test.py --mobile`.
+  Check with `node tools/check_mobile_frame.js [W H]` (fails if anything sticks out of the screen). One-file build:
   `cd desktop && BUDDY_MOBILE=1 BUDDY_MINIFY=1 npm run web` → `dist/mobile.html`.
   手机试玩版 for H5 platforms (zip ≤ 10 MB, index.html + game.js, no inline JS, no outside
   resources): `cd desktop && node scripts/make-h5.mjs` → `desktop/desktop-buddy-h5.zip` (小红书小工具

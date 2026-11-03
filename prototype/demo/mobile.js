@@ -136,7 +136,7 @@ addEventListener("orientationchange", () => setTimeout(() => { mobileTurn(); fit
 }
 const MOBILE_PANELS = "#petPanel:not([hidden]),.card:not([hidden]),.card-res:not([hidden]),.picker:not([hidden]),.social-sheet:not([hidden])";
 // sheets that fill the phone frame get a blurred scrim behind them; a tap on it closes the light ones
-const MOBILE_SHEETS = MOBILE_PANELS + ",#setPop:not([hidden]),#diaryPop:not([hidden]),.contacts-panel[aria-hidden=false],.studio-slot.open,.guide-slot.open";
+const MOBILE_SHEETS = MOBILE_PANELS + ",#setPop:not([hidden]),#diaryPop:not([hidden]),.contacts-panel[aria-hidden=false],.studio-slot.open,.guide-slot.open,.moodrow.quests-open";
 const mScrim = document.createElement("div"); mScrim.className = "m-scrim"; deskEl.appendChild(mScrim);   // (inside .desk: a fixed .desk is its own stacking context)
 const mClose = document.createElement("button"); mClose.type = "button"; mClose.className = "m-close"; mClose.textContent = "✕"; mClose.setAttribute("aria-label", "关闭");
 deskEl.appendChild(mClose); mClose.addEventListener("click", () => mScrim.click());
@@ -145,6 +145,7 @@ mScrim.addEventListener("click", () => {
   else if (!document.getElementById("diaryPop").hidden) document.getElementById("diaryBox").click();
   else if (document.querySelector(".contacts-panel[aria-hidden=false]")) document.getElementById("networkTrigger").click();
   else if (!document.getElementById("picker").hidden) document.querySelector("#picker .x").click();
+  else if (document.querySelector(".moodrow.quests-open")) document.getElementById("questTrigger")?.click();
 });
 let mobileFest = null;
 (function lockLoop() {
@@ -153,6 +154,8 @@ let mobileFest = null;
   document.documentElement.classList.toggle("s-set", !document.getElementById("setPop").hidden);
   document.documentElement.classList.toggle("s-diary", !document.getElementById("diaryPop").hidden);
   document.documentElement.classList.toggle("s-contacts", !!document.querySelector(".contacts-panel[aria-hidden=false]"));
+  document.documentElement.classList.toggle("s-quests", !!document.querySelector(".moodrow.quests-open"));
+  try { document.documentElement.classList.toggle("has-quests", typeof questBoard !== "undefined" && questBoard.count > 0); } catch (e) {}
   const f = !document.getElementById("festBanner").hidden;   // the festival strip takes room from the house
   if (f !== mobileFest) { mobileFest = f; fit(); }
   setTimeout(lockLoop, 200);

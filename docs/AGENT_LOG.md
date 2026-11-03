@@ -7,6 +7,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- 手机版 now carries 茵菲谷 (make_season_game_test.py --mobile). Phone layout for story talk (对方 row takes row 1,
+  choices grid from row 2 down), 任务 button in row 1 whenever a quest exists (questBoard.count), quest list, farm
+  sheets/tablet/shops full-screen. New tools/check_mobile_frame.js (fails if any element leaves the screen); passes.
+
+## 2026-11-03 · Claude Code
 - 手机版 v2 per owner sketch (mobile.js/mobile.css only): new HUD rows, upright need bars, fixed house box, full-screen
   sheets over a blurred scrim (card, pickers, settings, diary, 人脉, pets, studio, guide), ✕ for light sheets,
   文字大小 removed on phone, type clamped 13-18px. Checked 568x320..932x430 + portrait (auto-turn): main, sheets,
