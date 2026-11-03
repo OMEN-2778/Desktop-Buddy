@@ -22,15 +22,15 @@ const out=process.argv[2]||'/tmp/infei-home';fs.mkdirSync(out,{recursive:true});
  await p.waitForFunction(()=>seasonMapTest.ctl().state.inside&&!seasonMapTest.ctl().state.door,null,{timeout:20000});await p.waitForTimeout(900);await shot('进屋-提示');
  assert(await ev(()=>document.body.innerText.includes('点家具')));
  // bed: ring, she climbs the stairs at their middle and sleeps
- await ev(()=>{sim.needs.energy=30;});await clickAt(105,35);await shot('床的菜单');await ring('睡一觉');
+ await ev(()=>{sim.needs.energy=30;});await clickAt(105,35);   // one click uses it (owner 2026-11-03: no second menu)
  await p.waitForFunction(()=>{const s=seasonMapTest.ctl().state;return s.y<100&&s.y>60;},null,{timeout:15000});
  const sx=await ev(()=>seasonMapTest.ctl().state.x);await shot('走楼梯');assert(Math.abs(sx-61)<1,'stairs x '+sx);
  await p.waitForFunction(()=>infeiHome.svc?.id==='bed',null,{timeout:20000});await shot('睡觉');
  const e0=await ev(()=>sim.needs.energy);await p.waitForTimeout(2500);assert(await ev(()=>sim.needs.energy)>e0);
  // stove downstairs: cancels sleep, cooks
- await ev(()=>{sim.needs.hunger=30;});await clickAt(250,90);await shot('灶台菜单');await ring('做顿饭');
+ await ev(()=>{sim.needs.hunger=30;});await clickAt(250,90);
  await p.waitForFunction(()=>infeiHome.svc?.id==='stove',null,{timeout:20000});await shot('做饭');
- // parents' room is look-only
+ // parents' room is look-only: no menu, she only looks
  await clickAt(250,30);const items=await ev(()=>[...document.querySelectorAll('#ring button')].map(b=>b.textContent));assert.deepEqual(items.filter(t=>t.includes('睡')),[]);await ev(()=>closeRing());
  // 回家 in her ring = the farmhouse; low needs walk her in by herself
  await ev(()=>{infeiHome.stop();sim.needs.hunger=80;const c=seasonMapTest.ctl();c.leave();});await idle();await p.waitForTimeout(800);await ev(()=>{seasonMapTest.ctl().go(4,150);seasonMapTest.state.autoAt=sim.t+1e9;});await p.waitForTimeout(300);

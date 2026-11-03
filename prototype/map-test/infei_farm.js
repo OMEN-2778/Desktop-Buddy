@@ -63,9 +63,11 @@ const infeiFarm=(()=>{
   if(!fed)a.love=Math.max(0,a.love-20);if(a.petDay!==d)a.love=Math.max(0,a.love-4);
   if(fed&&!a.ready&&!(a.kind==='sheep'&&d-a.day<k.baby)&&++a.prod>=k.every){a.ready=a.love>=400?k.best:k.product;a.prod=0;}}}
  // where they live: chickens by the farmhouse (home screen), sheep and cows behind the pasture fence
- const AREA={chicken:{scene:3,x:[78,124],y:[88,93]},sheep:{scene:5,x:[342+40,342+300],y:[78,90]},cow:{scene:5,x:[342+40,342+290],y:[80,90]}};
+ // chickens live in the pasture fence too (owner 2026-11-03: "I keep chickens, why can't I see them in the fence")
+ const AREA={chicken:{scene:5,x:[342+50,342+280],y:[82,88]},sheep:{scene:5,x:[342+40,342+300],y:[78,90]},cow:{scene:5,x:[342+40,342+290],y:[80,90]}};
  const rnd=(a,b)=>a+Math.random()*(b-a);
- function place(a){const r=AREA[a.kind];a.x??=rnd(...r.x);a.y??=Math.round(rnd(...r.y));a.tx=null;a.f=a.f||Math.random()*6;}
+ function place(a){const r=AREA[a.kind];if(a.x!=null&&(a.x<r.x[0]-5||a.x>r.x[1]+5))a.x=a.y=null;   // older saves: chickens by the farmhouse
+  a.x??=rnd(...r.x);a.y??=Math.round(rnd(...r.y));a.tx=null;a.f=a.f||Math.random()*6;}
  let lastT=0;
  function drawAnimals(ctx,info){if(info.inside||se()===3)return;const t=C().state.time,dt=Math.min(.1,Math.max(0,t-lastT));lastT=t;
   const mine=S().animals.filter(a=>AREA[a.kind].scene===info.region);if(!mine.length)return;
@@ -86,7 +88,7 @@ const infeiFarm=(()=>{
    {id:'sf:feed:'+a.id,label:'喂草料',icon:'hay',off:grazing()?'在外面吃草呢':a.fedDay===today()?'吃饱了':''},
    {id:'sf:collect:'+a.id,label:'收取',icon:'basket',off:a.ready?'':baby(a)?'还小呢':`再过 ${k.every-a.prod} 天`},{id:'sf:animal:'+a.id,label:'查看',icon:'lens'}],{x:Math.max(30,Math.min(312,at.x)),y:at.y});}
  const byId=id=>S().animals.find(a=>a.id===id);
- const near=(a,then)=>{if(se()===3||AREA[a.kind].scene!==C().state.scene){then();return;}walk(a.kind==='chicken'?a.x+14:Math.max(20,Math.min(C().current().width-20,a.x)),then);};
+ const near=(a,then)=>{if(se()===3||AREA[a.kind].scene!==C().state.scene){then();return;}walk(Math.max(20,Math.min(C().current().width-20,a.x)),then);};
  function pat(a){if(!a||a.petDay===today())return;near(a,()=>{a.petDay=today();a.love=Math.min(500,a.love+30);X.worked();speak(pick([`${a.name}乖`,`${a.name}的毛好暖`,'蹭蹭','它眯起眼睛了']),true);});}
  function feed(a){if(!a||grazing()||a.fedDay===today())return;a.fedDay=today();a.love=Math.min(500,a.love+10);X.worked();speak(`${a.name}，开饭啦`,true);}
  function collect(a){if(!a?.ready)return;near(a,()=>{const it=a.ready;a.ready=null;X.addItem(it);X.worked();speak(`收了${X.ITEMS[it].name}！`,true);});}
@@ -110,7 +112,7 @@ const infeiFarm=(()=>{
   const used=new Set(S().animals.map(a=>a.name)),name=NAMES[it.kind].find(n=>!used.has(n))||k.name;
   const a={id:'a'+Date.now().toString(36),kind:it.kind,name,day:today(),love:0,petDay:-1,fedDay:-1,prod:0,ready:null};S().animals.push(a);place(a);
   X.record('farm',`买了${k.name}「${name}」`,-it.cost);log(`牧场来了一只${k.name}，起名叫「${name}」。`);speak(`你好呀，${name}`,true);}
- const BARN=[342+110,342+290,30,88],COOP=[24,128,70,96];
+ const BARN=[342+110,342+290,30,88];
  const inRect=(x,y,[x0,x1,y0,y1])=>x>=x0&&x<=x1&&y>=y0&&y<=y1;
  // ================================================================ 爸妈帮忙浇水
  const parent={on:false,who:'mom',x:380,tx:null,done:null,t:0,n:null,water:0,bed:null};
@@ -178,8 +180,6 @@ const infeiFarm=(()=>{
   if(s.scene===5){for(const i of D.pits.keys()){const [px,py]=pit(i);if(Math.abs(x-px)<12&&y>py-34&&y<py+4){openPit(i);return true;}}
    const a=se()!==3&&animalAt(x,y,5);if(a){openAnimal(a);return true;}
    if(inRect(x,y,BARN)){X.ring('粮仓 · 牲畜',[{id:'sf:ashop:0',label:'牲畜铺',icon:'farm'},{id:'sf:herd:0',label:se()===3?'棚里的牲畜':'看看牲畜',icon:'lens',off:S().animals.length?'':'还没有'},...(se()===3?[{id:'sf:feedall:0',label:'都喂草料',icon:'hay',off:S().animals.some(a=>a.fedDay!==today())?'':'都喂过了'}]:[])],{x:x-(s.camera||0),y:60});return true;}}
-  if(s.scene===3){const a=se()!==3&&animalAt(x,y,3);if(a){openAnimal(a);return true;}
-   if(inRect(x,y,COOP)&&S().animals.some(a=>a.kind==='chicken')){X.ring('鸡窝',[{id:'sf:herd:0',label:'看看鸡',icon:'lens'},...(se()===3?[{id:'sf:feedall:0',label:'都喂草料',icon:'hay'}]:[])],{x,y:72});return true;}}
   return false;});
  Object.assign(X.hooks.pick,{plant:i=>treeShop(+i),fruit:i=>pickFruit(+i),treelook:i=>treeLook(+i),ashop:animalShop,herd:herdSheet,
   feedall:()=>{for(const a of S().animals)feed(a);showHint('都喂饱了');},pat:id=>pat(byId(id)),feed:id=>feed(byId(id)),collect:id=>collect(byId(id)),animal:id=>animalSheet(byId(id))});

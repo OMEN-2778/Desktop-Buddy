@@ -7,6 +7,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-03 · Claude Code
+- Owner: farmhouse furniture is one click (no ring menu; look-only spots walk + line; full need -> "现在不用");
+  toilet: she sits (pose sit, no longer hidden); bath: head and shoulders above the tub rim. Chickens now live in the
+  pasture fence (scene 5) with sheep and cows; older saves moved; 鸡窝 click/hover removed; animal sounds follow.
+  Tests updated (home: no ring; hover: chicken in pasture). home, hover, farm, audio, quests, spring_story pass.
+
+## 2026-11-03 · Claude Code
 - Owner: "coins out of sync" was a misread: tree/chicken prices are 8, shown as "8 丢丢币" on each card. farm_ui.js
   shops now say 售价 N 币 on cards and 我有 N 丢丢币 in the balance pill (all farm shops). Click ripple smaller and
   pixel-style: adapter.js draws a 17x9 house-pixel ring, 4 frames (90 ms), lit top/shaded bottom. infei_farm,

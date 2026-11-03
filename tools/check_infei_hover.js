@@ -25,7 +25,7 @@ const out=process.argv[2]||'/tmp/infei-hover';fs.mkdirSync(out,{recursive:true})
  await hover('桃树',5,300,()=>{const [x,y]=springFarm.X.D.pits[0];return [x,y-15];},null,'img');
  await hover('牛',5,560,()=>{const a=springFarm.state.animals.find(a=>a.kind==='cow');return [a.x,a.y-10];},null,'animal');
  await hover('粮仓',5,560,520,50,'img');
- await hover('鸡',3,171,()=>{const a=springFarm.state.animals.find(a=>a.kind==='chicken');return [a.x,a.y-4];},null,'animal');
+ await hover('鸡',5,560,()=>{const a=springFarm.state.animals.find(a=>a.kind==='chicken');return [a.x,a.y-4];},null,'animal');
  await hover('农舍门',3,171,182,85,'img');
  await hover('空地-无',4,171,200,40,null);
  await hover('屋里-床',3,171,105,35,'img',true);

@@ -51,7 +51,7 @@ const infeiAudio=(function(){
   if(!inSpring()||!speed)return;diff();
   // animals call now and then while she is near them
   const s=C().state;if(s.inside||performance.now()<nextVoice)return;nextVoice=performance.now()+9000+Math.random()*14000;
-  const here=(F().animals||[]).filter(a=>a.kind==='chicken'?s.scene===3:s.scene===5&&s.x>342);
+  const here=(F().animals||[]).filter(()=>s.scene===5&&s.x>342);   // all animals live in the pasture fence
   if(here.length&&seasonOf(sim.t).i!==3)play(VOICE[pick(here).kind],.22,{gap:4});
  });
  // ---------------------------------------------------------------- the airport, the letter, dialogue, the 任务 panel

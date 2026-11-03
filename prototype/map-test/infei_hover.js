@@ -28,15 +28,14 @@ const infeiHover=(function(){
    if(sc===2&&q.mill.step===1&&x>=m.rect[0]&&x<m.rect[0]+m.rect[2]&&y>=m.rect[1]&&y<m.rect[1]+m.rect[3])return rect(...m.rect);
    if(sc===0&&q.prints.step===1&&x>=r.rect[0]&&x<r.rect[0]+r.rect[2]&&y>=r.rect[1]&&y<r.rect[1]+r.rect[3])return rect(...r.rect);}
   const winter=X.seasonAt(X.today?.()??Math.floor(sim.t/1440))===3,A=infeiFarm.ANIMAL;
-  const animal=sce=>!winter&&[...(f.animals||[])].reverse().find(a=>a.x!=null&&(a.kind==='chicken'?3:5)===sce&&Math.abs(x-a.x)<A[a.kind].size[0]/2+2&&y<=a.y+2&&y>=a.y-A[a.kind].size[1]-10);
+  const animal=sce=>!winter&&[...(f.animals||[])].reverse().find(a=>a.x!=null&&5===sce&&Math.abs(x-a.x)<A[a.kind].size[0]/2+2&&y<=a.y+2&&y>=a.y-A[a.kind].size[1]-10);
   if(sc===5){
    for(const [i,[px,py]]of X.D.pits.entries()){if(Math.abs(x-px)<12&&y>py-34&&y<py+4){const t=f.trees?.[i];
      if(t){const SK=['spring','summer','autumn','winter'],st=t.grown<3?0:t.grown<8?1:t.ready?3:2,a=X.D.trees[t.kind]?.[SK[X.seasonAt(Math.floor(sim.t/1440))]]?.[st];if(a)return {x:px+a.dx,y:py+a.dy,img:X.imgOf(a.src)};}
      return rect(px-9,py-5,18,7);}}
    const a=animal(5);if(a)return {animal:a.id};
    if(x>=452&&x<=632&&y>=30&&y<=88)return rect(452,30,181,59);}
-  if(sc===3){const a=animal(3);if(a)return {animal:a.id};
-   if(x>=24&&x<=128&&y>=70&&y<=96&&(f.animals||[]).some(a=>a.kind==='chicken'))return rect(24,70,105,27);
+  if(sc===3){
    const [dx,dy,dw,dh]=FARMDOOR;if(Math.abs(x-182)<14&&y>62&&y<102)return rect(dx,dy,dw,dh);}
   return null;}
  view.parentElement.addEventListener('pointermove',e=>{
