@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: 软著正式材料放进仓库（主人要求）
+- `docs/软著申请材料/`：申请表信息.txt、代码前后各30页、操作手册。含著作权人身份证号，主人同意放进私有仓库；别复制到公开仓库或 Pages。
+
 ## 2026-11-04 Claude: 造型室 thumbnails swapped pictures on phones
 - Owner: names stayed but the option pictures changed at random. `studio.js` painted every thumbnail through one shared scratch canvas (putImageData then drawImage); some phone webviews copied it late, after the next option was already on it. Each thumbnail now gets its pixels with `putImageData` (dirty rect), no shared canvas. Same pixels as before.
 
