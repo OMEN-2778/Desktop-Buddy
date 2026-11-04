@@ -293,3 +293,23 @@ html.m #studio { overflow-y: auto !important; overscroll-behavior: contain; -web
 /* ...and its title bar (name, 性格, 随机搭配, ✕) stays put while the options scroll under it */
 html.m #studio .st-title { position: sticky; top: 0; z-index: 6; }
 html.m #studio .st-close { min-width: 34px; min-height: 30px; font-size: 16px; }
+
+/* ---- 造型室 on a phone (owner 2026-11-04): one framed panel like the chance card, the same round ✕ as the
+   other sheets; Buddy + name + a one-line 性格 on the left, the tabs and options on the right (only they scroll) */
+html.m.s-studio .m-close { display: grid; place-items: center; }
+html.m #studio { overflow: hidden !important; display: flex; flex-direction: column; height: 100% !important; box-sizing: border-box; }
+html.m #studio .st-close { display: none; }
+html.m #studio .st-title { position: static; flex: none; padding-right: 52px; }
+html.m #studio .st-body { flex: 1 1 auto; min-height: 0; display: grid !important; grid-template-columns: 196px minmax(0, 1fr); gap: 0 12px; padding: 8px 10px 8px 12px; box-sizing: border-box; overflow: hidden; }
+html.m #studio .st-summary { display: flex !important; flex-direction: column; gap: 6px; min-height: 0; margin: 0; width: auto; }
+html.m #studio .st-stage { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
+html.m #studio .st-screen { width: auto; height: auto; }
+html.m #studio .st-preview { width: 108px !important; height: 117px !important; }
+html.m #studio .st-namerow { width: 100%; display: flex; align-items: center; gap: 4px; }
+html.m #studio .st-namerow .st-nameinput { flex: 1; min-width: 0; width: auto; }
+html.m #studio .wardrobe-personality { width: auto !important; margin: 0; padding: 4px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; border-radius: 12px; font-size: 12px; }
+html.m #studio .wardrobe-personality h3 { margin: 0; font-size: 12px; }
+html.m #studio .wardrobe-personality p { margin: 0; font-size: 12px; }
+html.m #studio .wardrobe-personality small { display: none; }
+html.m #studio .st-main { min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; margin: 0; padding-right: 4px; }
+html.m.s-studio .m-close { top: calc(var(--m-y0) + 2px); }

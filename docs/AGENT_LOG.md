@@ -6,6 +6,8 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: 手机版造型室重排（主人：✕ 还是看不到，改成和机会卡一样的框；性格别占那么大）：整框面板，左栏 Buddy 预览 + 名字 + 一行性格，右栏页签 + 选项（只有右栏可滚），✕ 换成和日记/设置同款的圆形按钮（s-studio）。点衣柜打开、点 ✕ 关闭在 740×360 和 667×375 测过，六个页签都放得下；画框检查通过。TapTap 包重打。
+
 ## 2026-11-04 Claude: 手机版造型室不能上下滑、大半选项看不见：mobile.css 的"面板圆角"规则带了 overflow:hidden，盖掉了 #studio 的滚动。改为可滚动，标题栏（含 ✕）吸顶。check_mobile_frame.js 新增"内容被切掉又不能滚"检查（把 bug 放回去能报出 studio hides 110 buttons），全部画面通过。TapTap 包已重打。
 
 ## 2026-11-04 Claude: 主人决定 TapTap 用 H5 上架。TapTap 要求：zip ≤300MB、解压后只有一个文件夹、里面有 index.html。新增 tools/make_taptap_h5.sh → desktop/buddy-house-taptap.zip（36MB：完整手机版 + BGM 96k 无茵菲谷 + 音效），本地 http 测过能启动、家/公园音乐能加载。另修：BUDDY_H5_FULL 包之前把户外/宠物/好友家/教程图都换成了空白像素（试玩版逻辑），现在完整版保留（4.8MB）。

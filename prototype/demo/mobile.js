@@ -176,6 +176,7 @@ for (const ev of ["pointerdown", "mousedown", "touchstart"]) mClose.addEventList
 mScrim.addEventListener("click", () => {
   if (document.getElementById("setGear").getAttribute("aria-expanded") === "true") document.getElementById("setGear").click();
   else if (diaryOn) setDiaryOpen(false);
+  else if (wardrobeOpen) closeWardrobe();
   else if (document.querySelector(".contacts-panel[aria-hidden=false]")) document.getElementById("networkTrigger").click();
   else if (!document.getElementById("picker").hidden) document.querySelector("#picker .x").click();
   else if (document.querySelector(".moodrow.quests-open")) document.getElementById("questTrigger")?.click();
@@ -186,6 +187,7 @@ let mobileFest = null;
   document.documentElement.classList.toggle("sheet", !!document.querySelector(MOBILE_SHEETS));
   document.documentElement.classList.toggle("s-set", !document.getElementById("setPop").hidden);
   document.documentElement.classList.toggle("s-diary", !document.getElementById("diaryPop").hidden);
+  document.documentElement.classList.toggle("s-studio", !!wardrobeOpen);
   document.documentElement.classList.toggle("s-contacts", !!document.querySelector(".contacts-panel[aria-hidden=false]"));
   document.documentElement.classList.toggle("s-quests", !!document.querySelector(".moodrow.quests-open"));
   try { document.documentElement.classList.toggle("has-quests", typeof questBoard !== "undefined" && questBoard.count > 0); } catch (e) {}
