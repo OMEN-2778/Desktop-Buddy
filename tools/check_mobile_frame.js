@@ -55,6 +55,16 @@ let cut=false;for(let x=el.parentElement;x&&x!==document.body;x=x.parentElement)
 const hit=document.elementFromPoint(cx,cy);if(!hit||el.contains(hit)||hit.contains(el)||hit.closest('[role=menuitem]'))continue;
 o.push(((el.textContent||'').trim().slice(0,8)||el.className.toString().slice(0,20))+' under '+(hit.id||hit.className||hit.tagName).toString().slice(0,24))}return o.slice(0,8)},CLICKABLE);
 if(hid.length)bad.push(...hid.map(h=>'covered: '+h));
+// content cut off inside a panel with no way to scroll to it (owner: the 造型室 hid most of its options)
+const cut=await p.evaluate(()=>{const o=[];const vis=el=>{for(let x=el;x&&x!==document.body;x=x.parentElement){const cs=getComputedStyle(x);if(cs.display==='none'||cs.visibility==='hidden'||x.hidden)return false}return true};
+for(const el of document.querySelectorAll('body *')){if(el.closest('.console'))continue;const cs=getComputedStyle(el);if(cs.overflowY!=='hidden'&&cs.overflowY!=='clip')continue;if(el.scrollHeight<=el.clientHeight+24||el.clientHeight<60||!vis(el))continue;
+const r=el.getBoundingClientRect();if(r.width<120)continue;
+// fine if what sticks out sits in a child that scrolls itself
+const sc=[...el.querySelectorAll('*')].some(c=>{const s=getComputedStyle(c).overflowY;return (s==='auto'||s==='scroll')&&c.scrollHeight>c.clientHeight+2});if(sc)continue;
+// fine if nothing clickable is below the cut
+const cutY=r.bottom;const lost=[...el.querySelectorAll('button,input,[role=menuitem]')].filter(b=>{const q=b.getBoundingClientRect();return q.height>0&&q.top>=cutY-2});if(!lost.length)continue;
+o.push((el.id||el.className).toString().slice(0,26)+' hides '+lost.length+' buttons')}return o.slice(0,5)});
+if(cut.length)bad.push(...cut.map(c=>'cut off: '+c));
 if(shots)await p.screenshot({path:path.join(shots,`m_${name}.png`)});
 if(bad.length||e.length){failed++;console.log('FAIL',name,'errors',e.slice(0,2),'outside',bad)}else console.log('ok',name);await p.close()}
 await b.close();if(failed){console.log(failed+' screen(s) broke the phone frame');process.exit(1)}console.log('PASS: every screen stays inside the phone frame at '+W+'x'+H)})()

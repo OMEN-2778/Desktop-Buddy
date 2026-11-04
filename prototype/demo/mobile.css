@@ -288,3 +288,8 @@ html.m .diary-pop::after { clip-path: none; border-radius: 14px; }
 html.m .fest-bar::before, html.m .fest-bar .fb-deco, html.m .fest-bar .fb-sheen, html.m .fb-name, html.m .fb-pill { clip-path: none !important; border-radius: 999px; }
 html.m .fest-bar .fb-deco, html.m .fest-bar .fb-sheen { border-radius: 999px; }
 html.m .fb-name, html.m .fb-pill { height: 20px; min-height: 0; }
+/* the 造型室 scrolls inside its sheet (the rounded-panel rule above set overflow: hidden and cut its lower half off) */
+html.m #studio { overflow-y: auto !important; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+/* ...and its title bar (name, 性格, 随机搭配, ✕) stays put while the options scroll under it */
+html.m #studio .st-title { position: sticky; top: 0; z-index: 6; }
+html.m #studio .st-close { min-width: 34px; min-height: 30px; font-size: 16px; }

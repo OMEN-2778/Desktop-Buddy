@@ -6,6 +6,8 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: 手机版造型室不能上下滑、大半选项看不见：mobile.css 的"面板圆角"规则带了 overflow:hidden，盖掉了 #studio 的滚动。改为可滚动，标题栏（含 ✕）吸顶。check_mobile_frame.js 新增"内容被切掉又不能滚"检查（把 bug 放回去能报出 studio hides 110 buttons），全部画面通过。TapTap 包已重打。
+
 ## 2026-11-04 Claude: 主人决定 TapTap 用 H5 上架。TapTap 要求：zip ≤300MB、解压后只有一个文件夹、里面有 index.html。新增 tools/make_taptap_h5.sh → desktop/buddy-house-taptap.zip（36MB：完整手机版 + BGM 96k 无茵菲谷 + 音效），本地 http 测过能启动、家/公园音乐能加载。另修：BUDDY_H5_FULL 包之前把户外/宠物/好友家/教程图都换成了空白像素（试玩版逻辑），现在完整版保留（4.8MB）。
 
 ## 2026-11-04 Claude: 手机版：轻点 ✕ 关不掉日记（要长按）。原因：桌面版“点外面关闭”在按下时先关了，✕ 的 click 再 toggle 又打开。✕ 不再冒泡按下事件，关面板改按状态关（不 toggle）。日记/设置/人脉轻点 ✕ 都能关。H5 两个包已重打。
