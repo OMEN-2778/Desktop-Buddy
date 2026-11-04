@@ -322,3 +322,5 @@ html.m #studio .st-persrow .st-personality { flex: none; padding: 4px 8px; font-
 html.m .studio-slot.open { width: auto !important; height: auto !important; max-width: none; }
 html.m .studio-slot.open .studio-clip { width: 100% !important; height: 100% !important; }
 html.m .studio-slot.open #studio { width: 100% !important; max-width: 100% !important; box-sizing: border-box; }
+/* 造型室 (owner 2026-11-04: taps picked another option): the tab row stays pinned above the options */
+html.m #studio .st-main .st-tabs { position: sticky; top: 0; z-index: 4; background: var(--panel, #f4f2f8); padding-top: 4px; }

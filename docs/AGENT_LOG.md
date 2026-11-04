@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: phone 造型室 taps
+- Owner: tapping an option turned it into another one. Phone only: the tab row is pinned (sticky) above the option list, and a tap landing within 300 ms of the list scrolling is ignored (some webviews turn the end of a swipe into a tap). Emulated iPhone taps pick exactly the tapped option.
+
 ## 2026-11-04 Claude: 装了软著材料 skill，开始拟软著申请资料
 - `.claude/skills/software-copyright-materials`（Fokkyp/SoftwareCopyright-Skill，AGPL-3.0，去掉了 tests）。
 - 草稿在 `docs/软件著作权申请资料/`：业务理解、代码文件选择（17 个文件）。等主人确认名称、版本、著作权人等再继续。

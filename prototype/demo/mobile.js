@@ -181,6 +181,15 @@ mScrim.addEventListener("click", () => {
   else if (!document.getElementById("picker").hidden) document.querySelector("#picker .x").click();
   else if (document.querySelector(".moodrow.quests-open")) document.getElementById("questTrigger")?.click();
 });
+// 造型室 (owner 2026-11-04: "点任何头型都会瞬间变成其他的"): a swipe through the option list that ends on a
+// button counts as a tap in some phone webviews. Ignore taps that land within 300 ms of the list scrolling.
+(function () {
+  let scrolledAt = 0;
+  document.addEventListener("scroll", e => { if (e.target.closest && e.target.closest("#studio")) scrolledAt = performance.now(); }, true);
+  document.addEventListener("click", e => {
+    if (performance.now() - scrolledAt < 300 && e.target.closest && e.target.closest("#studio .st-panels button")) { e.stopImmediatePropagation(); e.preventDefault(); }
+  }, true);
+})();
 let mobileFest = null;
 (function lockLoop() {
   document.documentElement.classList.toggle("lock", !!document.querySelector(MOBILE_PANELS));
