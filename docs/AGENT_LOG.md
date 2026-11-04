@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: TapTap H5 package drops Google Fonts
+- `tools/make_taptap_h5.sh` strips the fonts.googleapis/gstatic links: blocked in China, the page waited on the stylesheet and TapTap sat on its loading screen (a plain test page opened fine).
+
 ## 2026-11-04 Claude: 电脑正式版"更新后任务不见了"：任务和丢丢币本来就在个人存档里（springFarm），没丢；是任务按钮平时藏着（只在新任务到来时弹 1 秒或鼠标移到日记上才出来），读档后已有任务不提示，玩家以为没了。quest_panel.js：有进行中的任务时按钮常驻。release 页本地测过。丢丢币两处数字不一致：代码里各面板都读 F.coins，未复现，等主人截图。
 
 ## 2026-11-04 Claude: 手机版造型室重排（主人：✕ 还是看不到，改成和机会卡一样的框；性格别占那么大）：整框面板，左栏 Buddy 预览 + 名字 + 一行性格，右栏页签 + 选项（只有右栏可滚），✕ 换成和日记/设置同款的圆形按钮（s-studio）。点衣柜打开、点 ✕ 关闭在 740×360 和 667×375 测过，六个页签都放得下；画框检查通过。TapTap 包重打。

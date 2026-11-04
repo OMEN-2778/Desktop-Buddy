@@ -8,7 +8,8 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd); D=$ROOT/desktop/dist; OUT=$ROOT/desktop/taptap-h5; DIR=$OUT/buddy-house
 CACHE=$ROOT/desktop/.h5-audio-cache; ZIP=$ROOT/desktop/buddy-house-taptap.zip
 rm -rf "$OUT" "$ZIP"; mkdir -p "$DIR/audio"
-cp "$D/mobile.html" "$DIR/index.html"
+# no Google Fonts: blocked in China, the page waited on it and TapTap sat on its loading screen (owner 2026-11-04)
+grep -v -E 'fonts\.(googleapis|gstatic)\.com' "$D/mobile.html" > "$DIR/index.html"
 ( cd "$D/audio" && find BGM -name '*.mp3' ! -path '*/infei/*' ) | while read -r f; do
   mkdir -p "$CACHE/$(dirname "$f")" "$DIR/audio/$(dirname "$f")"
   [ -s "$CACHE/$f" ] || ffmpeg -nostdin -loglevel error -y -i "$D/audio/$f" -b:a 96k "$CACHE/$f"
