@@ -324,3 +324,9 @@ html.m .studio-slot.open .studio-clip { width: 100% !important; height: 100% !im
 html.m .studio-slot.open #studio { width: 100% !important; max-width: 100% !important; box-sizing: border-box; }
 /* 造型室 (owner 2026-11-04: taps picked another option): the tab row stays pinned above the options */
 html.m #studio .st-main .st-tabs { position: sticky; top: 0; z-index: 4; background: var(--panel, #f4f2f8); padding-top: 4px; }
+/* 性格 editor (player report 2026-11-04: cut in half on iPhone, 确定性格 out of reach so nothing saved):
+   while editing it covers the whole 造型室 under the title bar and scrolls, its buttons pinned at the bottom */
+html.m #studio { position: relative; }
+html.m #studio .wardrobe-personality.editing { position: absolute; left: 0; right: 0; top: 30px; bottom: 0; z-index: 9; margin: 0; border-radius: 0 0 14px 14px;
+  display: block; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 10px 16px 0; background: var(--panel, #f4f2f8); font-size: 13px; }
+html.m #studio .wardrobe-personality.editing .personality-actions { position: sticky; bottom: 0; display: flex; gap: 10px; justify-content: flex-end; padding: 8px 0 10px; background: var(--panel, #f4f2f8); }
