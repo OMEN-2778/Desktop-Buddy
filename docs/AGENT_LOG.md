@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: summer map renamed 草帽湾
+- Owner named the summer map **草帽湾** (was 夏日海湾 in the test page). Renamed in adapter.js, make_season_game_test.py and the summer docs; discussion notes (own stall on the island, 图鉴 as a 丢丢平板 page) at the end of docs/SUMMER_PLAY.md.
+
 ## 2026-11-04 Claude: 软著正式材料放进仓库（主人要求）
 - `docs/软著申请材料/`：申请表信息.txt、代码前后各30页、操作手册。含著作权人身份证号，主人同意放进私有仓库；别复制到公开仓库或 Pages。
 

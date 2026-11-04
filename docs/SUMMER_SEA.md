@@ -6,7 +6,7 @@ in the game yet. Shared rules: `AGENTS.md`. The model for this doc is `docs/SPRI
 
 ## Owner decisions · 2026-11-04 (summer update)
 - Work in the web test page (`/map-test/`) first: settle ideas and gameplay there before the formal release.
-- Release unlock: 夏日海湾 opens from the first summer after the player updates; flights only in summer and autumn, other seasons show 「本季暂无航班」.
+- Release unlock: 草帽湾 opens from the first summer after the player updates; flights only in summer and autumn, other seasons show 「本季暂无航班」.
 
 ## Owner's brief
 - A short holiday map in Hawaiian style.
