@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: 离开茵菲谷 at any story phase
+- `infei_home.js`: the ring offered 离开茵菲谷 only once the story was done; before that its 回家 was swallowed (she just went indoors), so players were stuck. Now 离开茵菲谷 is always there (mid-story the swallowed 回家 is dropped). Tested phase sow -> home.
+
 ## 2026-11-04 Claude: save round-trip rule + check
 - Owner: everything the player changes must be in the save (switching computers = copy save.json). AGENTS.md rule added. New `tools/check_save_roundtrip.js` saves, reloads in a fresh page, saves again and fails on any lasting difference or a stale 茵菲谷 farm object (it fails on the pre-3c0257c build, passes now).
 

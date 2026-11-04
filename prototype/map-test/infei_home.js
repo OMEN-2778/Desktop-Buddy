@@ -81,8 +81,9 @@ const infeiHome=(function(){
  const reduced=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
  // 回家 = the farmhouse; 离开茵菲谷 is the only way out (player only)
  const oldOpen=openRing;openRing=function(which,at){
-  if(which==='away'&&inSpring()&&springFarm.state.phase==='done'){const keep=RINGS.away,inside=C().state.inside;
-   RINGS.away=keep.map(r=>r[0]==='go_home'?(inside?['sf:home:bed','回房间歇歇']:['sf:indoor','回家']):r).concat([['sf:leave','离开茵菲谷']]);
+  // owner 2026-11-04: the player can always leave, story finished or not (an unfinished welcome replays next time)
+  if(which==='away'&&inSpring()){const keep=RINGS.away,inside=C().state.inside,done=springFarm.state.phase==='done';
+   RINGS.away=(done?keep.map(r=>r[0]==='go_home'?(inside?['sf:home:bed','回房间歇歇']:['sf:indoor','回家']):r):keep.filter(r=>r[0]!=='go_home')).concat([['sf:leave','离开茵菲谷']]);
    try{return oldOpen(which,at);}finally{RINGS.away=keep;}}
   return oldOpen(which,at);};
  const oldHomeFor=homeFor;homeFor=function(k){if(inSpring()&&!leaving){speak(pick(['回屋里歇歇','先进屋一趟']),true);return;}return oldHomeFor(k);};
