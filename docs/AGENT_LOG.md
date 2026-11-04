@@ -6,6 +6,8 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: 手机版节日条改成圆胶囊（主人：之前是方角）。make-h5.mjs 加 BUDDY_H5_FULL=1 → 完整版 H5 包 desktop-buddy-h5-full.zip（2.5MB，原试玩版包 1.15MB 不变），两包本地都能启动。H5 包无背景音乐。
+
 ## 2026-11-04 Claude: TapTap 上架素材：图标（游戏里的小屋贴纸 + 模糊街景，1000²）、6 张实机截图（手机版 2220×1080）、实机录屏 27s、16:9 宣传图、竖版 30s 宣传片。新增 tools/make_phone_promo.js（录手机版片段，沿用 make_trailer.js 的镜头设置，去掉来电和测试日记）+ make_phone_promo.py（1080×1920 竖版剪辑，迪厅曲 122 BPM 卡点）。主人决定用 H5 包上架（不是 APK）。素材只发给主人，没进仓库。
 
 ## 2026-11-03 Claude: 存档持久化 + 安卓 APK。网页：启动时申请 navigator.storage.persist()。APK（android/，无 Gradle，build.sh 直接用 SDK 工具）：WebView 载入手机版，localStorage 换成 App 私有目录 files/store 里的文件（BuddyAndroid），onPause 自动存，系统备份包含存档；BGM 96k、不含茵菲谷，约 42MB。签名钥匙在 android/keystore（已 gitignore，已交给主人保管）。没有安卓模拟器，只在浏览器里模拟了存档桥（存-重开-恢复通过），未真机测试。

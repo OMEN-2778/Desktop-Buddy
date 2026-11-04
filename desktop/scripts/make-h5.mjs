@@ -11,9 +11,11 @@ import { transform } from "esbuild";
 
 var MODERN = /(^|[^a-z-])(clamp|min|max|color-mix|env)\(|\d[dsl]vh/;
 const here = dirname(fileURLToPath(import.meta.url));
-const src = join(here, "..", "..", "prototype", "demo", "mobile_trial.html");
+// BUDDY_H5_FULL=1: the whole game (prototype/demo/mobile.html) instead of the 试玩版 -> desktop-buddy-h5-full.zip
+const FULL = !!process.env.BUDDY_H5_FULL;
+const src = join(here, "..", "..", "prototype", "demo", FULL ? "mobile.html" : "mobile_trial.html");
 const out = join(here, "..", "dist-h5");
-const zip = join(here, "..", "desktop-buddy-h5.zip");
+const zip = join(here, "..", FULL ? "desktop-buddy-h5-full.zip" : "desktop-buddy-h5.zip");
 rmSync(out, { recursive: true, force: true });
 rmSync(zip, { force: true });
 mkdirSync(out, { recursive: true });
