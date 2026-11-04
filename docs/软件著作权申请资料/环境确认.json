@@ -1,0 +1,6 @@
+{
+  "environment_confirmed": true,
+  "confirmation_note": "用户同意在云端 Linux 机器安装 OfficeCLI 1.0.151（官方 GitHub release 固定版本）；无 Microsoft Word，页数需用户在 Word/WPS 复核",
+  "confirmed_at": "2026-11-04T09:50:29+00:00",
+  "confirmed_content_sha256": "46456dae7e9f6e74fa113dff55ed152712b61fe450e53f19ed5b3c7747ed00d9"
+}

@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: 装了软著材料 skill，开始拟软著申请资料
+- `.claude/skills/software-copyright-materials`（Fokkyp/SoftwareCopyright-Skill，AGPL-3.0，去掉了 tests）。
+- 草稿在 `docs/软件著作权申请资料/`：业务理解、代码文件选择（17 个文件）。等主人确认名称、版本、著作权人等再继续。
+
 ## 2026-11-04 Claude: 离开茵菲谷 at any story phase
 - `infei_home.js`: the ring offered 离开茵菲谷 only once the story was done; before that its 回家 was swallowed (she just went indoors), so players were stuck. Now 离开茵菲谷 is always there (mid-story the swallowed 回家 is dropped). Tested phase sow -> home.
 
