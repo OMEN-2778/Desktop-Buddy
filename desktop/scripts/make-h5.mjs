@@ -52,7 +52,7 @@ code = code.replace(streamed, "else throw new Error('offline package: no '+path)
   const data = JSON.parse(code.slice(st, e + 1));
   const pixel = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
   const blank = v => typeof v === "string" ? (v.startsWith("data:image/") ? pixel : v) : Array.isArray(v) ? v.map(blank) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([a, b]) => [a, blank(b)])) : v;
-  for (const key of ["pets", "outside", "friendHouses", "guide"]) if (key in data) data[key] = blank(data[key]);
+  if (!FULL) for (const key of ["pets", "outside", "friendHouses", "guide"]) if (key in data) data[key] = blank(data[key]);   // (the full game keeps them)
   code = code.slice(0, st) + JSON.stringify(data) + code.slice(e + 1);
 }
 

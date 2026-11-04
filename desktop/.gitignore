@@ -5,3 +5,6 @@ src-tauri/gen/
 dist-h5/
 desktop-buddy-h5.zip
 desktop-buddy-h5-full.zip
+taptap-h5/
+buddy-house-taptap.zip
+.h5-audio-cache/
