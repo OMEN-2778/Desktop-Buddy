@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: TapTap package built by CI
+- `preview.yml` job `taptap`: builds the phone page and `tools/make_taptap_h5.sh`, uploads `desktop/taptap-h5` as the run artifact **TapTap-H5** (private repo run page, 30 days; unzips to buddy-house/index.html). Never published to the public Pages.
+
 ## 2026-11-04 Claude: 软著材料生成完毕（不入库）
 - 材料含著作权人身份证号，放在仓库外 `/home/user/软件著作权申请资料/`，已发给主人；仓库里删掉了 docs/ 下的旧草稿。
 - 全称「桌面小屋软件」V1.0，开发完成与首次发表 2026-10-28，源程序量 28960（只算游戏本身代码）。

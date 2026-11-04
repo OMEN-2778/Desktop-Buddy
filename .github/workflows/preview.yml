@@ -75,6 +75,33 @@ jobs:
           git commit -qm "Web preview ${GITHUB_SHA::7}"
           git push -fq "https://x-access-token:${TOKEN}@github.com/OMEN-2778/Desktop-Buddy-Releases.git" gh-pages
 
+  # Owner 2026-11-04: the TapTap H5 package as a download on this (private) repo's run page, never on the public Pages.
+  # The artifact unzips to one folder buddy-house/ with index.html: upload that zip to TapTap as it is.
+  taptap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build the phone page and the TapTap package
+        run: |
+          python -m pip install Pillow numpy
+          sudo apt-get install -y -qq ffmpeg >/dev/null || true
+          PYTHONPATH=tools python tools/make_demo.py
+          npm ci --prefix desktop --no-audit --no-fund
+          (cd desktop && BUDDY_MOBILE=1 BUDDY_MINIFY=1 node scripts/copy-web.mjs)
+          bash tools/make_taptap_h5.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TapTap-H5
+          path: desktop/taptap-h5
+          retention-days: 30
+          if-no-files-found: error
+
   pages:
     needs: build
     if: ${{ !github.event.repository.private }}
