@@ -2367,16 +2367,15 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
   const nameInput = $(".st-nameinput");
 
   // ---------------------------------------------------------- thumbnails
-  const scratch = document.createElement("canvas");
-  scratch.width = doll.W; scratch.height = doll.H;
-  const sctx = scratch.getContext("2d");
+  // Each thumbnail gets its pixels written straight in (owner 2026-11-04: on phones the pictures swapped
+  // between options). A shared scratch canvas copied with drawImage was overwritten by the next option
+  // before some phone webviews had actually copied it.
   function paintThumb(btn) {
     const key = btn.dataset.key, v = btn.dataset.v, c = btn.querySelector("canvas");
     const [x, y, w, h] = cropOf(key, v);
-    sctx.putImageData(new ImageData(doll.pixels(variant(key, v), {}), doll.W, doll.H), 0, 0);
     const g = c.getContext("2d");
-    g.clearRect(0, 0, w, h);
-    g.drawImage(scratch, x, y, w, h, 0, 0, w, h);
+    g.clearRect(0, 0, c.width, c.height);
+    g.putImageData(new ImageData(doll.pixels(variant(key, v), {}), doll.W, doll.H), -x, -y, x, y, w, h);
   }
   function sizeThumbs() {
     const th = opts.thumbH || 44;

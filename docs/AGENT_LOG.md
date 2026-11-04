@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: 造型室 thumbnails swapped pictures on phones
+- Owner: names stayed but the option pictures changed at random. `studio.js` painted every thumbnail through one shared scratch canvas (putImageData then drawImage); some phone webviews copied it late, after the next option was already on it. Each thumbnail now gets its pixels with `putImageData` (dirty rect), no shared canvas. Same pixels as before.
+
 ## 2026-11-04 Claude: phone 性格 editor
 - Player report (iPhone): the 性格 editor in the phone 造型室 was cut in half, 随机一组/确定性格 sat outside the frame, so nothing could be saved. While editing it now covers the 造型室 under the title bar and scrolls, buttons pinned at the bottom. Tested: pick 外向 + 敏感, confirm -> saved in the snapshot.
 
