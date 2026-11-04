@@ -6,6 +6,8 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: 手机版：轻点 ✕ 关不掉日记（要长按）。原因：桌面版“点外面关闭”在按下时先关了，✕ 的 click 再 toggle 又打开。✕ 不再冒泡按下事件，关面板改按状态关（不 toggle）。日记/设置/人脉轻点 ✕ 都能关。H5 两个包已重打。
+
 ## 2026-11-04 Claude: 手机版节日条改成圆胶囊（主人：之前是方角）。make-h5.mjs 加 BUDDY_H5_FULL=1 → 完整版 H5 包 desktop-buddy-h5-full.zip（2.5MB，原试玩版包 1.15MB 不变），两包本地都能启动。H5 包无背景音乐。
 
 ## 2026-11-04 Claude: TapTap 上架素材：图标（游戏里的小屋贴纸 + 模糊街景，1000²）、6 张实机截图（手机版 2220×1080）、实机录屏 27s、16:9 宣传图、竖版 30s 宣传片。新增 tools/make_phone_promo.js（录手机版片段，沿用 make_trailer.js 的镜头设置，去掉来电和测试日记）+ make_phone_promo.py（1080×1920 竖版剪辑，迪厅曲 122 BPM 卡点）。主人决定用 H5 包上架（不是 APK）。素材只发给主人，没进仓库。

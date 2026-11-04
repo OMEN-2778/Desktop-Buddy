@@ -101504,9 +101504,13 @@ const MOBILE_SHEETS = MOBILE_PANELS + ",#setPop:not([hidden]),#diaryPop:not([hid
 const mScrim = document.createElement("div"); mScrim.className = "m-scrim"; deskEl.appendChild(mScrim);   // (inside .desk: a fixed .desk is its own stacking context)
 const mClose = document.createElement("button"); mClose.type = "button"; mClose.className = "m-close"; mClose.textContent = "✕"; mClose.setAttribute("aria-label", "关闭");
 deskEl.appendChild(mClose); mClose.addEventListener("click", () => mScrim.click());
+// the ✕ is not "outside" the open panel: the desktop's tap-outside-closes would shut the diary on the
+// finger-down and this click would then toggle it open again (owner: a tap didn't close it, a long press did)
+for (const ev of ["pointerdown", "mousedown", "touchstart"]) mClose.addEventListener(ev, e => e.stopPropagation(), { passive: true });
+// close by state, never by toggling (a toggle reopens whatever another handler already closed)
 mScrim.addEventListener("click", () => {
-  if (!document.getElementById("setPop").hidden) document.getElementById("setGear").click();
-  else if (!document.getElementById("diaryPop").hidden) document.getElementById("diaryBox").click();
+  if (document.getElementById("setGear").getAttribute("aria-expanded") === "true") document.getElementById("setGear").click();
+  else if (diaryOn) setDiaryOpen(false);
   else if (document.querySelector(".contacts-panel[aria-hidden=false]")) document.getElementById("networkTrigger").click();
   else if (!document.getElementById("picker").hidden) document.querySelector("#picker .x").click();
   else if (document.querySelector(".moodrow.quests-open")) document.getElementById("questTrigger")?.click();
