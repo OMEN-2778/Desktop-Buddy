@@ -266,12 +266,14 @@ const springFarm=(()=>{
  const oldReq=requestIncomingCall;requestIncomingCall=function(id,kind='call'){if(inSpring()&&['friend_home','visit'].includes(kind))kind='call';return oldReq(id,kind);};   // nobody can be visited from the farm
  // ---------------------------------------------------------------- saves
  const oldSnap=snapshot;snapshot=function(){const s=oldSnap();s.springFarm=JSON.parse(JSON.stringify(F));return s;};
- const oldRestore=restore;restore=function(save){const r=oldRestore(save);F=Object.assign(blank(),X.blank?.()||{},save?.springFarm||{});if(['arrive','room','field'].includes(F.phase))F.phase='none';   // an unfinished welcome replays on the next landing
+ const oldRestore=restore;restore=function(save){const r=oldRestore(save);F=Object.assign(blank(),X.blank?.()||{},save?.springFarm||{});if(!(F.coins>=0))F.coins=0;   // the stale-farm bug left some saves below zero (owner 2026-11-04)
+ if(['arrive','room','field'].includes(F.phase))F.phase='none';   // an unfinished welcome replays on the next landing
   speech.hide();mom.on=false;if(inSpring()&&F.unlocked&&F.phase!=='done'&&F.phase!=='none')arriveAt('spring_test');return r;};
  // ---------------------------------------------------------------- test toolbar
  const bar=T.root.querySelector('header');
  for(const [label,fn]of [['妈妈来信（测试）',()=>{if(!sendLetter())showHint('信已经寄过了');else if(!['home','front'].includes(sim.place))showHint('信在家门口，回家就能看到');}],['快进到明早（测试）',()=>{sim.t=(today()+1)*1440+7*60;roll();}]]){const b=document.createElement('button');b.textContent=label;b.onclick=fn;bar.append(b);}
- Object.assign(X,{get F(){return F;},today,seasonAt,SEASON_NAME,record,addItem,ITEMS,CROP,worked,imgOf,C,D,inSpring,ring,offs:()=>offs,coins,clock,growing,ripe,winter,blank,rainedSoFar,wet,bedOf,say,speech,inSeason,pcStateBase:pcState});
+ Object.defineProperty(X,"F",{get:()=>F,configurable:true});   // a live getter: Object.assign copied the first F, so after loading a save the farm (茵菲谷 tablet, animals, trees, fund) wrote to a stale, never-saved object (owner 2026-11-04)
+ Object.assign(X,{today,seasonAt,SEASON_NAME,record,addItem,ITEMS,CROP,worked,imgOf,C,D,inSpring,ring,offs:()=>offs,coins,clock,growing,ripe,winter,blank,rainedSoFar,wet,bedOf,say,speech,inSeason,pcStateBase:pcState});
  return {X,momAt,momNpc,seasonAt,daysToWinter,get lines(){return lines;},get state(){return F;},set state(v){F=v;},speech,mom,openBed,sendLetter,arrive,roll,pcState};
 })();
 window.springFarm=springFarm;

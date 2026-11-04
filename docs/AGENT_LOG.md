@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: 茵菲谷 farm wrote to a stale object after loading a save
+- `spring_story.js` exported `X.F` with `Object.assign(X,{get F(){...}})`, which copies the FIRST F: after `restore` replaced F, infei_farm/quests (tablet, animals, trees, fund) used the stale blank object, never saved, while addItem/coins used the live one. Players saw eggs missing from the tablet, coins differing between areas, chickens/trees/quests gone after a restart. Now `Object.defineProperty(X,"F",{get})`; coins below 0 (left by the bug) floor to 0 on load. Verified with a player save (4 eggs show in 仓库).
+
 ## 2026-11-04 Claude: outdoor draw order
 - Back-lane passers-by nearer than Buddy (feet below hers, e.g. while she sits on a park bench) are drawn in front of her (`drawNpcs(ctx,"backAhead")`, `heroGround`).
 - 怪兽夜 stoop pumpkins (and other stoop decor) are drawn before her and the passers-by (`drawFestStoop`), no longer over her.
