@@ -6,6 +6,8 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: 电脑正式版"更新后任务不见了"：任务和丢丢币本来就在个人存档里（springFarm），没丢；是任务按钮平时藏着（只在新任务到来时弹 1 秒或鼠标移到日记上才出来），读档后已有任务不提示，玩家以为没了。quest_panel.js：有进行中的任务时按钮常驻。release 页本地测过。丢丢币两处数字不一致：代码里各面板都读 F.coins，未复现，等主人截图。
+
 ## 2026-11-04 Claude: 手机版造型室重排（主人：✕ 还是看不到，改成和机会卡一样的框；性格别占那么大）：整框面板，左栏 Buddy 预览 + 名字 + 一行性格，右栏页签 + 选项（只有右栏可滚），✕ 换成和日记/设置同款的圆形按钮（s-studio）。点衣柜打开、点 ✕ 关闭在 740×360 和 667×375 测过，六个页签都放得下；画框检查通过。TapTap 包重打。
 
 ## 2026-11-04 Claude: 手机版造型室不能上下滑、大半选项看不见：mobile.css 的"面板圆角"规则带了 overflow:hidden，盖掉了 #studio 的滚动。改为可滚动，标题栏（含 ✕）吸顶。check_mobile_frame.js 新增"内容被切掉又不能滚"检查（把 bug 放回去能报出 studio hides 110 buttons），全部画面通过。TapTap 包已重打。

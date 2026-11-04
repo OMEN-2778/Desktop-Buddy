@@ -178,7 +178,11 @@ const questBoard=(function(){
  // ---------------------------------------------------------------- open / close (人脉 timings)
  let closeT=0,hideT=0,isOpen=false;
  function reveal(){clearTimeout(hideT);place();moodrow.classList.add('quest-ready');}
- function queueHide(){clearTimeout(hideT);hideT=setTimeout(()=>{if(!isOpen)moodrow.classList.remove('quest-ready');},300);}
+ function queueHide(){clearTimeout(hideT);hideT=setTimeout(()=>{if(!isOpen&&!active())moodrow.classList.remove('quest-ready');},300);}
+ // a quest she has taken and not finished keeps the button out (owner 2026-11-04: after an update players thought
+ // their quests were gone, the button only showed on hover or for a second when a quest arrived)
+ function active(){try{return all().some(q=>!q.done&&!q.offer);}catch(e){return false;}}
+ setInterval(()=>{if(typeof booted==='undefined'||!booted)return;if(active()){if(!moodrow.classList.contains('quest-ready'))reveal();}else if(!isOpen&&!trigger.matches(':hover'))queueHide();},1000);
  function setOpen(on){clearTimeout(closeT);clearTimeout(hideT);if(on===isOpen)return;isOpen=on;
   if(on){if(typeof phoneHolds==='function'&&phoneHolds()){isOpen=false;return;}reveal();try{setContactsOpen(false);setDiaryOpen(false);setNeedsOpen(false);}catch(e){}fill();badge();}
   moodrow.classList.toggle('quests-open',on);panel.classList.toggle('on',on);panel.inert=!on;panel.setAttribute('aria-hidden',String(!on));trigger.setAttribute('aria-expanded',String(on));
