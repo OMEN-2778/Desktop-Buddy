@@ -6,6 +6,8 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: TapTap 上架素材：图标（游戏里的小屋贴纸 + 模糊街景，1000²）、6 张实机截图（手机版 2220×1080）、实机录屏 27s、16:9 宣传图、竖版 30s 宣传片。新增 tools/make_phone_promo.js（录手机版片段，沿用 make_trailer.js 的镜头设置，去掉来电和测试日记）+ make_phone_promo.py（1080×1920 竖版剪辑，迪厅曲 122 BPM 卡点）。主人决定用 H5 包上架（不是 APK）。素材只发给主人，没进仓库。
+
 ## 2026-11-03 Claude: 存档持久化 + 安卓 APK。网页：启动时申请 navigator.storage.persist()。APK（android/，无 Gradle，build.sh 直接用 SDK 工具）：WebView 载入手机版，localStorage 换成 App 私有目录 files/store 里的文件（BuddyAndroid），onPause 自动存，系统备份包含存档；BGM 96k、不含茵菲谷，约 42MB。签名钥匙在 android/keystore（已 gitignore，已交给主人保管）。没有安卓模拟器，只在浏览器里模拟了存档桥（存-重开-恢复通过），未真机测试。
 
 ## 2026-11-03 Claude: 主人说点日记后画面下移、卡死仍在。本地 Chromium + WebKit（iPhone 竖/横）都复现不出；发现手机版打开面板时 makeRoom 把 --room-top 累加到 4000px+（手机版不用，但每次都强制排版 12 次），已在 mobile.js 关掉。不确定是不是根因，等主人截图（出错提示条会显示报错）。
