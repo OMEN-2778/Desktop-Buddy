@@ -313,3 +313,12 @@ html.m #studio .wardrobe-personality p { margin: 0; font-size: 12px; }
 html.m #studio .wardrobe-personality small { display: none; }
 html.m #studio .st-main { min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; margin: 0; padding-right: 4px; }
 html.m.s-studio .m-close { top: calc(var(--m-y0) + 2px); }
+/* 造型室 (owner 2026-11-04): no 随机搭配 on the phone; 性格 button beside the 性格 pill */
+html.m #studio .st-random { display: none; }
+html.m #studio .st-persrow { display: flex; align-items: center; gap: 6px; min-width: 0; }
+html.m #studio .st-persrow .wardrobe-personality { flex: 1 1 auto; min-width: 0; }
+html.m #studio .st-persrow .st-personality { flex: none; padding: 4px 8px; font-size: 12px; }
+/* the studio never takes the house's width on the phone: exactly the frame (TapTap iPhone ran off the right edge) */
+html.m .studio-slot.open { width: auto !important; height: auto !important; max-width: none; }
+html.m .studio-slot.open .studio-clip { width: 100% !important; height: 100% !important; }
+html.m .studio-slot.open #studio { width: 100% !important; max-width: 100% !important; box-sizing: border-box; }

@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: phone 造型室 title bar
+- Phone only: 随机搭配 hidden, the 性格 button moved beside the 性格 pill (the round ✕ covered both); the studio is pinned to the frame width (ran off the right edge on an iPhone in TapTap).
+
 ## 2026-11-04 Claude: TapTap H5 package drops Google Fonts
 - `tools/make_taptap_h5.sh` strips the fonts.googleapis/gstatic links: blocked in China, the page waited on the stylesheet and TapTap sat on its loading screen (a plain test page opened fine).
 

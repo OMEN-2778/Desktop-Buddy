@@ -188,6 +188,9 @@ let mobileFest = null;
   document.documentElement.classList.toggle("s-set", !document.getElementById("setPop").hidden);
   document.documentElement.classList.toggle("s-diary", !document.getElementById("diaryPop").hidden);
   document.documentElement.classList.toggle("s-studio", !!wardrobeOpen);
+  // 造型室 (owner 2026-11-04): the 性格 button sits beside the 性格 pill, not in the title bar the ✕ covers
+  const stP = document.querySelector("#studio .st-tools .st-personality"), wp = document.getElementById("wardrobePersonality");
+  if (stP && wp) { const row = document.createElement("div"); row.className = "st-persrow"; wp.before(row); row.append(wp, stP); }
   document.documentElement.classList.toggle("s-contacts", !!document.querySelector(".contacts-panel[aria-hidden=false]"));
   document.documentElement.classList.toggle("s-quests", !!document.querySelector(".moodrow.quests-open"));
   try { document.documentElement.classList.toggle("has-quests", typeof questBoard !== "undefined" && questBoard.count > 0); } catch (e) {}
