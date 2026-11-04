@@ -3330,9 +3330,15 @@ function updateRoomLights(room, on) {
     if (Math.abs(want - roomGlow[i]) < 0.01) roomGlow[i] = want;
   }
 }
+// Read the frame through a scratch canvas that is never written back to: some phone webviews (owner 2026-11-04,
+// 小红书/TapTap on iPhone) now and then hand getImageData the last putImageData result, so the night got applied
+// twice and the house flashed darker. The scratch copy only ever holds an ungraded frame.
+const gradeTmp = document.createElement("canvas"); gradeTmp.width = W; gradeTmp.height = H;
+const gradeTmpCtx = gradeTmp.getContext("2d", { willReadFrequently: true });
 function grade(ctx, f, lit) {
   if (f <= 0) return;
-  const img = ctx.getImageData(0, 0, W, H), d = img.data;
+  gradeTmpCtx.clearRect(0, 0, W, H); gradeTmpCtx.drawImage(ctx.canvas, 0, 0);
+  const img = gradeTmpCtx.getImageData(0, 0, W, H), d = img.data;
   const L = lit.map(id => [LIGHT_G[id], D.lights[id][3]]);
   for (let i = 0, p = 0; i < W * H; i++, p += 4) {
     const r = d[p], g = d[p + 1], b = d[p + 2];
@@ -12308,7 +12314,8 @@ function drawWalkMark(ctx) {
 }
 function gradeOutside(ctx, f) {                  // the night pass without rooms: cool, glass keeps its glow
   if (f <= 0) return;
-  const img = ctx.getImageData(0, 0, W, H), d = img.data;
+  gradeTmpCtx.clearRect(0, 0, W, H); gradeTmpCtx.drawImage(ctx.canvas, 0, 0);   // read a clean copy (see grade)
+  const img = gradeTmpCtx.getImageData(0, 0, W, H), d = img.data;
   for (let p = 0; p < d.length; p += 4) {
     if (EMISSIVE.has((d[p] << 16) | (d[p + 1] << 8) | d[p + 2])) continue;
     d[p] += (d[p] * 0.40 - d[p]) * f; d[p + 1] += (d[p + 1] * 0.42 - d[p + 1]) * f; d[p + 2] += (d[p + 2] * 0.62 - d[p + 2]) * f;

@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: night flicker on phones
+- Owner video (iPhone webview): the house flashed darker now and then at night = the night grade applied twice (getImageData returned the previous putImageData result). `grade` and `gradeOutside` now read a scratch-canvas copy of the frame that is never written back. Desktop/emulated brightness unchanged.
+
 ## 2026-11-04 Claude: phone 造型室 taps
 - Owner: tapping an option turned it into another one. Phone only: the tab row is pinned (sticky) above the option list, and a tap landing within 300 ms of the list scrolling is ignored (some webviews turn the end of a swipe into a tap). Emulated iPhone taps pick exactly the tapped option.
 
