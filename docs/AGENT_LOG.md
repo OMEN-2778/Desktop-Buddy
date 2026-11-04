@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: save round-trip rule + check
+- Owner: everything the player changes must be in the save (switching computers = copy save.json). AGENTS.md rule added. New `tools/check_save_roundtrip.js` saves, reloads in a fresh page, saves again and fails on any lasting difference or a stale 茵菲谷 farm object (it fails on the pre-3c0257c build, passes now).
+
 ## 2026-11-04 Claude: 茵菲谷 farm wrote to a stale object after loading a save
 - `spring_story.js` exported `X.F` with `Object.assign(X,{get F(){...}})`, which copies the FIRST F: after `restore` replaced F, infei_farm/quests (tablet, animals, trees, fund) used the stale blank object, never saved, while addItem/coins used the live one. Players saw eggs missing from the tablet, coins differing between areas, chickens/trees/quests gone after a restart. Now `Object.defineProperty(X,"F",{get})`; coins below 0 (left by the bug) floor to 0 on load. Verified with a player save (4 eggs show in 仓库).
 

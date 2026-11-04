@@ -44,6 +44,15 @@ trigger a trip back to the desktop house.
 - Map-specific limits still apply (e.g. the parents' bedroom on the farm is not hers).
 Design docs: `docs/SEASON_MAPS.md`; 秋 story (final): `docs/story/MAPLE_FULL_SCRIPT.md`.
 
+## ⚠️ Saves: everything the player changes lives in the save (owner rule, 2026-11-04)
+Copying `save.json` to another computer must continue the game seamlessly. Any new state that lasts
+(progress, items, coins, animals, quests, flags, unlocks…) goes into `snapshot()` / `restore()` (or a
+module's own snapshot/restore wrapper). Only device preferences stay outside it (`settings.json`:
+window size, volume, always-on-top, update toggle). Never export live state with
+`Object.assign(X,{get f(){…}})` (it copies the value once); use `Object.defineProperty`.
+Check after touching state: build the formal page (`make_demo.py` then `make_season_game_test.py --release`),
+run `node tools/check_save_roundtrip.js`, then `git checkout prototype/demo/index.html`.
+
 ## Releases (do not change without the owner asking)
 - Pushes that touch the demo or `desktop/**` build the Windows app automatically
   (`.github/workflows/desktop.yml`, full game, version 0.2.N from 0.2.0) and the 试玩版
