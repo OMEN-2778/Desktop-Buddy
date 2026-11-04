@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-04 Claude: outdoor draw order
+- Back-lane passers-by nearer than Buddy (feet below hers, e.g. while she sits on a park bench) are drawn in front of her (`drawNpcs(ctx,"backAhead")`, `heroGround`).
+- 怪兽夜 stoop pumpkins (and other stoop decor) are drawn before her and the passers-by (`drawFestStoop`), no longer over her.
+
 ## 2026-11-04 Claude: phone 造型室 title bar
 - Phone only: 随机搭配 hidden, the 性格 button moved beside the 性格 pill (the round ✕ covered both); the studio is pinned to the frame width (ran off the right edge on an iPhone in TapTap).
 

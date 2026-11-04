@@ -217,11 +217,14 @@ function drawFestScenery(ctx, offN = 0) {
     else if (kind === "ceil") scCeil(ctx, a, b, offN);
     else if (kind === "doorLanterns" || kind === "couplets") scDoor(ctx, kind);
     else if (kind === "door") scDoor(ctx, a);
-    else if (kind === "stoop") scStoop(ctx, a);
     else if (kind === "cobwebs") scCobwebs(ctx);
     else if (["kites", "planes", "petals", "confetti", "bubbles", "notes", "bats", "bits"].includes(kind)) scAir(ctx, kind, a);
     else if (kind === "water") scWater(ctx, 0);
   }
+}
+// things standing on the front stoop sit behind her and the passers-by (owner 2026-11-04: 怪兽夜 pumpkins were drawn over her)
+function drawFestStoop(ctx) {
+  for (const [kind, a] of sceneryHere() || []) if (kind === "stoop") scStoop(ctx, a);
 }
 function drawFestSceneryNight(ctx, f) {
   const C = sceneryHere();

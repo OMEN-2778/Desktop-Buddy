@@ -12440,7 +12440,8 @@ function renderOutside() {
   bctx.drawImage(treeImg, 0, 0);
   if (weather.snowCover > 0.02) { bctx.globalAlpha = Math.min(1, weather.snowCover); bctx.drawImage(O.snow, 0, 0); bctx.globalAlpha = 1; }
   drawOutsideLife(bctx);
-  if (sim.place === "front") { drawFestFront(bctx); drawMailBubble(bctx); drawSnowmen(bctx); }
+  if (sim.place === "front") { drawFestFront(bctx); drawMailBubble(bctx); drawSnowmen(bctx); drawFestStoop(bctx); }
+  heroGround = sim.mode === "down" ? null : here().y;
   drawNpcs(bctx, "back");
   const ms = realClock * 1000, fr = activityFrame(ms);
   const full = { expr: "neutral", look: 0, bob: 0, sway: 0, wave: null, ...fr.f };
@@ -12462,6 +12463,8 @@ function renderOutside() {
     }
     emoteAt = [x + 13, y - 15];
   }
+  drawNpcs(bctx, "backAhead");
+  heroGround = null;
   drawNpcs(bctx, "front");
   drawMarathon(bctx);
   drawFestScenery(bctx);
@@ -14943,13 +14946,15 @@ function npcFrame(n) {
 }
 const npcX = n => n.u != null ? onScreen(n.u) : n.x;
 const npcFeet = n => n.feet - (n.sit ? n.seatLift || 0 : 0);
+let heroGround = null;
 function drawNpcs(ctx, layer) {
-  drawOutingFriend(ctx,layer);
-  drawPetOutside(ctx,layer);
+  if (layer !== "backAhead") { drawOutingFriend(ctx,layer); drawPetOutside(ctx,layer); }
   if(stormOutside())return;
   if (layer === "back") drawParade(ctx);           // 怪兽夜: giants pass behind everyone
   for (const n of life.npcs || []) {
-    if (n.layer !== layer || n.gone) continue;
+    // back-lane people nearer than her (she sits on a bench set back from the path: owner 2026-11-04) go in front of her
+    const ahead = n.layer === "back" && heroGround != null && n.feet > heroGround;
+    if (n.gone || (layer === "backAhead" ? !ahead : n.layer !== layer || ahead)) continue;
     if (sim.place === "mall" && n.item && mallCoveredByService(MALL.items.find(it=>it.id===n.item))) continue;
     const x = npcX(n);
     if (x < -20 || x > W + 20) continue;
@@ -23739,11 +23744,14 @@ function drawFestScenery(ctx, offN = 0) {
     else if (kind === "ceil") scCeil(ctx, a, b, offN);
     else if (kind === "doorLanterns" || kind === "couplets") scDoor(ctx, kind);
     else if (kind === "door") scDoor(ctx, a);
-    else if (kind === "stoop") scStoop(ctx, a);
     else if (kind === "cobwebs") scCobwebs(ctx);
     else if (["kites", "planes", "petals", "confetti", "bubbles", "notes", "bats", "bits"].includes(kind)) scAir(ctx, kind, a);
     else if (kind === "water") scWater(ctx, 0);
   }
+}
+// things standing on the front stoop sit behind her and the passers-by (owner 2026-11-04: 怪兽夜 pumpkins were drawn over her)
+function drawFestStoop(ctx) {
+  for (const [kind, a] of sceneryHere() || []) if (kind === "stoop") scStoop(ctx, a);
 }
 function drawFestSceneryNight(ctx, f) {
   const C = sceneryHere();
