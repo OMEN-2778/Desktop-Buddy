@@ -355,7 +355,8 @@
   c.state.target=null;}   /* the timer below walks her there, swimming ashore first */
  const oHome=homeFor;homeFor=function(k){if(sim.place==='summer_test'&&!leavingBay){lodgeCare();return;}return oHome(k);};
  const oStart=startAct;startAct=function(name,quiet){if(sim.place==='summer_test'&&name==='go_home'&&!leavingBay){lodgeCare();return;}return oStart(name,quiet);};
- const oArrive=arriveAt;arriveAt=function(p){leavingBay=false;care=null;return oArrive(p);};
+ const oArrive=arriveAt;arriveAt=function(p){leavingBay=false;care=null;if(p==='summer_test'){sim.outBack=null;sim.outWhy=null;}return oArrive(p);};   /* the city outing's "home by …" timer (set when she walked to the airport) must not follow her onto the island */
+ setInterval(()=>{if(sim.place==='summer_test'&&!leavingBay&&sim.outBack!=null){sim.outBack=null;sim.outWhy=null;}},1000);
  let careT=0,careStuck=0;setInterval(()=>{if(!care||sim.place!=='summer_test'||wiping)return;   // a timer: the bay's draw hooks stop while she is inside
   const s=C().state;if(!s.inside){if(!s.target&&!s.door&&!L.isBusy()&&!storyLocked()){if(s.market)C().beginDoor('bay');else if(s.y>SURF+3)C().goTo(1050,'dive',SURF);else C().enter();careStuck=Date.now();}else if(s.target&&Date.now()-careStuck>15000){s.target=null;careStuck=Date.now();}return;}   /* from the sea she swims ashore first */
   if(sim.needs[care.need]<90&&window.summerLodge){const sl=summerLodge,id=sl.NEED_SPOT[care.need];if(id){careT=0;if(!sl.svc&&!s.target)sl.use(id,true);return;}}   /* the lodge's own furniture: bed, shower, stove... */

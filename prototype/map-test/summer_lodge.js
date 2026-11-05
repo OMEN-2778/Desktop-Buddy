@@ -26,8 +26,7 @@ const summerLodge=(function(){
  function stop(){if(!svc)return;const s=C().state;s.pose=null;s.hideHero=false;s.iy=0;svc=null;}
  function use(id,auto){const p=SPOTS[id],c=C();if(!p)return;stop();closeRing();
   if(p.look){c.goTo(p.x,'walk',0,()=>speak(pick(p.look),true));return;}
-  if(!auto&&sim.needs[p.need]>=(p.max||97)){speak(pick(['现在不用','等会儿再说']),true);return;}
-  c.goTo(p.x,'walk',0,()=>{const s=c.state;s.facing=p.x>170?1:-1;svc={id,need:p.need};s.pose=p.pose||null;s.hideHero=!!p.hide;s.iy=p.iy||0;speak(pick(p.line),true);});}
+  c.goTo(p.x,'walk',0,()=>{const s=c.state;s.facing=p.x>170?1:-1;svc={id,need:p.need,until:sim.t+20};s.pose=p.pose||null;s.hideHero=!!p.hide;s.iy=p.iy||0;speak(pick(p.line),true);});}
  // clicks: the adapter asks summerLife first; inside the lodge that is us
  const oClick=summerLife.click;summerLife.click=function(x,y){
   const s=C().state;if(inBay()&&s.inside&&!s.door){const id=hitSpot(x,y);if(id){use(id);return true;}stop();return false;}
@@ -49,7 +48,7 @@ const summerLodge=(function(){
   if(svc.id==='bed'){const h=lyingHead(SLEEPY);ctx.drawImage(h,52,66-h.height);if(!coverImg){coverImg=new Image();coverImg.src=SUMMER_LIFE_ART.cover;}if(coverImg.complete)ctx.drawImage(coverImg,40,28);ctx.fillStyle='#5d6176';ctx.font='8px monospace';const k=Math.floor(t*1.5)%3;ctx.fillText('z'.repeat(k+1),p.zz[0],p.zz[1]-k*2);}
   if(svc.id==='shower'){ctx.fillStyle='#bfe3f2';for(let i=0;i<6;i++){const y=38+((t*40+i*7)%36);ctx.fillRect(264+(i*5)%10,Math.round(y),1,2);}}
   const n=sim.needs;n[svc.need]=Math.min(100,n[svc.need]+(p.rate||RATE[svc.need])*dt);
-  if(n[svc.need]>=(p.max||97)){stop();log(pick(['歇好了。','舒服多了。']));}}
+  if(n[svc.need]>=(p.max||97)&&sim.t>=svc.until){stop();log(pick(['歇好了。','舒服多了。']));}}
  const oArrive=arriveAt;arriveAt=function(pl){stop();hinted=false;return oArrive(pl);};
  return {SPOTS,NEED_SPOT,use,stop,draw,get svc(){return svc;}};
 })();

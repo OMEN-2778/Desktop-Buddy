@@ -23,7 +23,7 @@ const infeiHome=(function(){
  function stop(){if(!svc)return;const s=C().state;s.pose=null;s.hideHero=false;svc=null;T.state.autoAt=sim.t+30;}
  function use(id,auto){
   const p=SPOTS[id],c=C();if(!p||!p.need)return;stop();closeRing();T.state.autoAt=sim.t+60;
-  const begin=()=>{const s=c.state;s.x=p.x;s.facing=p.x>170?1:-1;svc={id,need:p.need,auto};s.pose=p.pose||null;s.hideHero=!!p.hide;speak(pick(p.line),true);};
+  const begin=()=>{const s=c.state;s.x=p.x;s.facing=p.x>170?1:-1;svc={id,need:p.need,auto,until:sim.t+20};s.pose=p.pose||null;s.hideHero=!!p.hide;speak(pick(p.line),true);};
   if(!c.state.inside){c.state.target=null;c.state.after=null;c.state.door={to:true,elapsed:0,duration:.65,mid:false};
    const wait=()=>{if(!inSpring())return;if(c.state.door||!c.state.inside)return setTimeout(wait,120);c.target(p.x,p.y,begin);};setTimeout(wait,120);}
   else c.target(p.x,p.y,begin);
@@ -33,7 +33,6 @@ const infeiHome=(function(){
  // the computer have a menu). Look-only spots: she walks over and says her line.
  function openSpot(id){const p=SPOTS[id];closeRing();
   if(p.look){C().target(p.x,p.y,()=>speak(pick(p.look),true));return;}
-  if(sim.needs[p.need]>=(p.max||97)){speak(pick(['现在不用','等会儿再说']),true);return;}
   use(id);}
  X.hooks.click.push((x,y,s)=>{if(!s.inside)return false;
   for(const [id,p]of Object.entries(SPOTS))if(inRect(x,y,p.rect)){openSpot(id);return true;}
@@ -56,7 +55,7 @@ const infeiHome=(function(){
    const p=SPOTS[svc.id];T.state.autoAt=sim.t+1e6;
    if(info.inside&&p.zz&&!reduced()){const k=Math.floor(s.time*1.5)%3;ctx.fillStyle='#5d6176';ctx.font='8px monospace';ctx.fillText('z'.repeat(k+1),p.zz[0],p.zz[1]-k*2);}
    const n=sim.needs;n[svc.need]=Math.min(100,n[svc.need]+(p.rate||RATE[svc.need])*dt);
-   if(n[svc.need]>=(p.max||97)){stop();log(pick(['歇好了。','舒服多了。','好了，接着干活。']));}
+   if(n[svc.need]>=(p.max||97)&&sim.t>=svc.until){stop();log(pick(['歇好了。','舒服多了。','好了，接着干活。']));}
    return;}
   if(!inSpring()||springFarm.state.phase!=='done'||s.door||s.target||wiping||cardHolds()||ringOf||sim.mode==='down'||life.talkQ)return;
   const low=Object.entries(sim.needs).filter(([k,v])=>v<25&&NEED_SPOT[k]).sort((a,b)=>a[1]-b[1])[0];

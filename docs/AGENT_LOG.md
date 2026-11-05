@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: she no longer flies home from 草帽湾 by herself; lodge/farmhouse furniture always usable
+- Walking to the airport is a city outing and sets `sim.outBack` ("home by …"); it followed her onto the island, so chooseOut sent her home when it ran out. summer_more clears outBack/outWhy on arriving at summer_test and drops any left over (old saves) every second while there (unless the player chose 回家).
+- summer_lodge.js / infei_home.js: no more "现在不用" — a click always uses the piece; with the need already full it is a short use (at least 20 game minutes).
+
 ## 2026-11-05 Claude: island winter festivals moved to autumn
 - Owner: 草帽湾 is only reachable in summer and autumn. 鲸歌节 秋 5, 追浪节 秋 12 (no city festival those days); the humpback swims in autumn (and on 鲸歌节).
 
