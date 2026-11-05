@@ -1,13 +1,13 @@
 // 草帽湾, part 2 (owner 2026-11-05: "do all the rest"), test page only. Built on summerLife (summer_life.js hooks).
 //   1. Underwater camera + 图鉴: click a creature while diving, she swims over and takes a photo (flash, photo card).
 //      Four pages (浅滩 / 珊瑚花园 / 沉船与拱门 / 深沟) + 地点 (the old hotspots); rare ones need a moment: night
-//      (发光水母, 萤光虾), rain (雨中的蝠鲼), the trench (灯笼鱼, 深海章鱼), calendar winter (座头鲸). A full page gives
+//      (发光水母, 萤光虾), rain (雨中的蝠鲼), the trench (灯笼鱼, 深海章鱼), calendar autumn (座头鲸). A full page gives
 //      a mood and 3 coins. Opened from her ring: 草帽湾图鉴. Photos are tiny PNGs kept in the save (F.bay.album).
 //   2. Beach life: sun loungers (energy, sunburn after long noon sun), the open-air shower (hygiene), the evening
 //      bonfire (social), surfing (falls first, stands from the third time), sand castles (washed away at high tide),
 //      night dives in a glowing sea.
 //   3. Ten commissions (委托): each person shows up on some days only; once taken, they are there every day.
-//   4. Island festivals: five of its own (3 in calendar summer, 2 in calendar winter, never on a city festival day).
+//   4. Island festivals: five of its own (3 in calendar summer, 2 in calendar autumn (the bay is only reachable in summer and autumn), never on a city festival day).
 //      On the island city festivals neither apply nor show; the festival bar shows the island's.
 // Everything lasting lives in F.bay (save rule).
 (function(){
@@ -33,7 +33,7 @@
  const NAMES={turtle:'绿海龟',manta:'蝠鲼',jelly:'小水母',eagleray:'斑点鹞鲼',school:'银色鱼群',tang:'刺尾鲷',butterflyfish:'蝴蝶鱼',shark:'白鳍礁鲨',grouper:'大石斑鱼',ulua:'浪人鲹'};
  const RARE={glow_jelly:['发光水母','夜里才有','一碰就亮的水母，像一盏会游泳的小灯。'],glow_shrimp:['萤光虾','夜里才有','一群小虾在珊瑚里一闪一闪，像有人撒了把星星。'],
   rain_manta:['雨中的蝠鲼','下雨天才有','雨点打在海面上，蝠鲼在下面慢慢翻了个身。'],lanternfish:['灯笼鱼','只在最深的海沟','头顶挂着小灯的鱼，在漆黑的海沟里一晃一晃。'],
-  deep_octopus:['深海章鱼','只在最深的海沟','红色的章鱼缩在石缝里，八条腿慢慢地卷。'],humpback:['座头鲸','冬天才会远远游过','远处的海面喷出一道水柱，巨大的尾巴抬起来又落下。']};
+  deep_octopus:['深海章鱼','只在最深的海沟','红色的章鱼缩在石缝里，八条腿慢慢地卷。'],humpback:['座头鲸','秋天才会远远游过','远处的海面喷出一道水柱，巨大的尾巴抬起来又落下。']};
  // 图鉴 second batch (owner 2026-11-05): 33 more, only at some times. When text shows on the empty card.
  const WHEN2={day:'白天',night:'夜里才有',rain:'下雨天才有',dawn:'清晨才有',dusk:'傍晚才有',rare:'偶尔出现',vrare:'极其罕见'};
  const NEW2=k=>(C()?.data?.life||[]).find(c=>c.k===k)?.when;
@@ -68,7 +68,7 @@
  (function hook(){const c=C();if(c?.setPhoto){c.setPhoto(o=>{const k=o.k==='manta'&&rain()?'rain_manta':o.k;if(k==='rain_manta'&&!M().dex.manta)M().dex.manta=1;snap(k,o.cx,o.cy);});return;}setTimeout(hook,300);})();
  // the rare ones the base sea doesn't have: drawn here, clicked here
  const RARE_AT={glow_jelly:[[1330,172],[1490,192],[1705,160]],glow_shrimp:[[1420,252],[2120,330]],lanternfish:[[2870,722],[2955,758],[3045,736]],deep_octopus:[[2992,792]]};
- const rareOn=k=>k.startsWith('glow')?night():k==='humpback'?cal().i===3||fest()?.n==='鲸歌节':true;
+ const rareOn=k=>k.startsWith('glow')?night():k==='humpback'?cal().i===2||fest()?.n==='鲸歌节':true;
  function rarePos(k,i,t){const [x,y]=RARE_AT[k][i];return k==='lanternfish'?[x+Math.sin(t*.5+i)*14,y+Math.sin(t*.8+i*2)*5]:k==='glow_jelly'?[x+Math.sin(t*.3+i)*6,y+Math.sin(t*.9+i)*7]:[x,y];}
  function whalePos(t){const p=(t/90)%1;return [1300+p*2600,WL+1];}
  function drawRare(ctx,t){const gl=G(ctx);
@@ -288,8 +288,8 @@
  const FESTS=[{n:'草帽节',se:1,day:4,c:['#d9a441','#f6dc8a'],line:'满天飞着草帽，风越大越热闹',flags:['#e35b4f','#f2d36b','#7fc4e8']},
   {n:'椰灯夜',se:1,day:9,c:['#3a3f7a','#f0a95b'],line:'椰壳里点上小灯，晚上放进海里许个愿',flags:['#f0a95b','#f6dc8a','#e57a5a']},
   {n:'花环节',se:1,day:12,c:['#d0577f','#f6b3cb'],line:'人人戴花环，广场上跳草裙舞',flags:['#f28fb0','#f6dc8a','#9fdc8a']},
-  {n:'鲸歌节',se:3,day:5,c:['#36557a','#9bd3df'],line:'座头鲸经过海湾，海里能听到它们唱歌',flags:['#5d84b8','#e8f2fa','#9bd3df']},
-  {n:'追浪节',se:3,day:12,c:['#2f7aa0','#f2d36b'],line:'一年最大的浪，冲浪手都来了',flags:['#2f7aa0','#f2d36b','#ffffff']}];
+  {n:'鲸歌节',se:2,day:5,c:['#36557a','#9bd3df'],line:'座头鲸经过海湾，海里能听到它们唱歌',flags:['#5d84b8','#e8f2fa','#9bd3df']},
+  {n:'追浪节',se:2,day:12,c:['#2f7aa0','#f2d36b'],line:'一年最大的浪，冲浪手都来了',flags:['#2f7aa0','#f2d36b','#ffffff']}];
  const fest=()=>{const se=cal();return FESTS.find(f=>f.se===se.i&&f.day===se.day)||null;};
  // city festivals stay in the city: on the island the bar and the time-bar tag show only the island's own
  const oldFT=festToday;festToday=function(){if(sim.place==='summer_test'){const f=fest();return f?{name:f.n,season:f.se,day:f.day,island:true,announce:()=>announce(f)}:null;}return oldFT();};

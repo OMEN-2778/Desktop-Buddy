@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: island winter festivals moved to autumn
+- Owner: 草帽湾 is only reachable in summer and autumn. 鲸歌节 秋 5, 追浪节 秋 12 (no city festival those days); the humpback swims in autumn (and on 鲸歌节).
+
 ## 2026-11-05 Claude: island festival names
 - Owner: island-style names. 海灯夜 → 椰灯夜 (coconut-shell lamps), 大浪节 → 追浪节 (summer_more.js, SUMMER_PLAY.md).
 
