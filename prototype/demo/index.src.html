@@ -186,7 +186,7 @@ if (TAURI) {
   setTimeout(bootCheck, 8000);
 }
 // 界面大小 (% or "auto" = fit the page), 置顶游戏, 自动保存 (every 5 minutes, or never)
-const prefs = { scale: TAURI ? 100 : "auto", onTop: false, bgm: false, sfx: false, bgmVolume:0, sfxVolume:0, autosave: true, guided: false, autoUpdate: true, fontSize: "auto" };   // guided: the guide has been seen
+const prefs = { speedNudge05: true, scale: TAURI ? 100 : "auto", onTop: false, bgm: false, sfx: false, bgmVolume:0, sfxVolume:0, autosave: true, guided: false, autoUpdate: true, fontSize: "auto" };   // guided: the guide has been seen
 let appVersion = "";
 // 界面大小 counts SCREEN pixels: 25% = one game pixel is one pixel of the
 // monitor (at any Windows display scaling), 100% = 4 of them; every step is
@@ -2650,11 +2650,13 @@ const settingsStore = TAURI ? {
   save: async o => localStorage.setItem("buddy-settings", JSON.stringify(o)),
 };
 function saveSettings() {
-  settingsStore.save({ speed, scale: prefs.scale, onTop: prefs.onTop, bgm: prefs.bgm, sfx: prefs.sfx, bgmVolume:prefs.bgmVolume, sfxVolume:prefs.sfxVolume, autosave: prefs.autosave, guided: prefs.guided, autoUpdate: prefs.autoUpdate, fontSize: prefs.fontSize }).catch(() => {});
+  settingsStore.save({ speed, speedNudge05: prefs.speedNudge05, scale: prefs.scale, onTop: prefs.onTop, bgm: prefs.bgm, sfx: prefs.sfx, bgmVolume:prefs.bgmVolume, sfxVolume:prefs.sfxVolume, autosave: prefs.autosave, guided: prefs.guided, autoUpdate: prefs.autoUpdate, fontSize: prefs.fontSize }).catch(() => {});
 }
 function applySettings(st) {
   if (!st || typeof st !== "object") return;
   if ([0, 1.5, 3, 6].includes(st.speed)) speed = st.speed;
+  // owner 2026-11-05: once, after this update, everyone plays at 0.5 倍 (one arrow); a speed picked after that is kept
+  if (st.speedNudge05 !== true) { speed = 1.5; prefs.speedNudge05 = true; setTimeout(saveSettings, 0); }
   if (st.scale === "auto" ? !TAURI : SCALES.includes(st.scale)) prefs.scale = st.scale;
   if (typeof st.onTop === "boolean") prefs.onTop = st.onTop;
   if (typeof st.autosave === "boolean") prefs.autosave = st.autosave;
@@ -4703,7 +4705,10 @@ function makeRoom() {
   // a high display scaling, where the screen is only ~540-720px tall)
   if (TAURI) {
     const below = document.getElementById("widget").getBoundingClientRect().bottom - mTop + 60;
-    need = Math.max(need, Math.min(APP_HEADROOM, (screen.availHeight || 1e5) - below));
+    // a taller scene (swimming in 草帽湾) grows UP into this room: the house's bottom stays put on screen and the
+    // UI above it rises with it (owner 2026-11-05: never grow downward); fitWindow keeps the window where it is
+    const extra = sceneExtraPx();
+    need = Math.max(need, Math.min(APP_HEADROOM, (screen.availHeight || 1e5) - below + extra) - extra);
   }
   need += 8;
   // the smallest room that fits it (a centred page moves by half: iterate)
@@ -4896,7 +4901,7 @@ function snapshot() {
   return {
     version: SAVE_VERSION, savedAt: Date.now(),
     look,
-    settings: { speed, scale: prefs.scale, onTop: prefs.onTop, bgm: prefs.bgm, sfx: prefs.sfx, bgmVolume:prefs.bgmVolume, sfxVolume:prefs.sfxVolume },
+    settings: { speed, speedNudge05: prefs.speedNudge05, scale: prefs.scale, onTop: prefs.onTop, bgm: prefs.bgm, sfx: prefs.sfx, bgmVolume:prefs.bgmVolume, sfxVolume:prefs.sfxVolume },
     sim: { t: sim.t, needs: sim.needs, mode: sim.mode, act: sim.act, actEnd: sim.actEnd, nap: !!sim.nap,
            at: [Math.round(p.x), storeyOfY(p.y)], facing: sim.facing, queue: sim.windup ? [sim.windup.act] : sim.queue, recent: sim.recent,
            lastDay: sim.lastDay, sleepPlace:sim.sleepPlace||null, sleptTonight: sim.sleptTonight, meal: sim.meal, down: sim.down,
@@ -5078,6 +5083,10 @@ async function resetSave() {
 
 // ---------- the desktop window: sized to the game, tray menu events
 let lastWin = "", lastTop = null, lastLeft = null, lifted = 0, shifted = 0;
+const sceneExtraPx = () => Math.max(0, view.getBoundingClientRect().height - H * (scale || 1));   // how much taller than the house the scene is, as laid out right now
+let lastVB = null;
+// the house's bottom as laid out, without a running slide of the widget (its transform would fool the window)
+function viewBottomLaid() { const w = document.getElementById("widget"), t = getComputedStyle(w).transform; let ty = 0; if (t && t !== "none") { try { ty = new DOMMatrixReadOnly(t).m42; } catch (e) { } } return view.getBoundingClientRect().bottom - ty; }
 let desktopDragging = false, desktopFitPending = false;
 function fitWindow() {
   if (!TAURI) return;
@@ -5095,8 +5104,11 @@ function fitWindow() {
   // the window really moved (it stops at the top of the screen)
   // (and the same leftward for the pick-a-thing panel)
   const mr = moodrow.getBoundingClientRect(), top = mr.top, left = mr.left;
-  let dy = lastTop === null ? 0 : top - lastTop, dx = lastLeft === null ? 0 : left - lastLeft;
-  lastTop = top; lastLeft = left;
+  // follow the house's BOTTOM edge: room made above it, or a scene growing up into that room (swimming), must
+  // leave the house where it is on screen (owner 2026-11-05)
+  const vb = viewBottomLaid();
+  let dy = lastVB === null ? 0 : vb - lastVB, dx = lastLeft === null ? 0 : left - lastLeft;
+  lastTop = top; lastVB = vb; lastLeft = left;
   if (dy < 0) dy = -Math.min(-dy, lifted);
   if (dx < 0) dx = -Math.min(-dx, shifted);
   if (`${width}x${height}` === lastWin && !dy && !dx) return;
@@ -5132,7 +5144,7 @@ async function dragWindow() {
       // A monitor/DPI/layout change during a drag must resize without snapping
       // the newly chosen screen position back to an old layout anchor.
       const mr = moodrow.getBoundingClientRect();
-      lastTop = mr.top; lastLeft = mr.left; lastWin = "";
+      lastTop = mr.top; lastLeft = mr.left; lastVB = viewBottomLaid(); lastWin = "";
       requestAnimationFrame(fitWindow);
     }
   }
@@ -5192,7 +5204,8 @@ if (TAURI) {
   document.addEventListener("keydown", () => { eatClick = false; }, true);
 }
 if (TAURI) {
-  const ro = new ResizeObserver(fitWindow);
+  const widgetEl0 = document.getElementById("widget");
+  const ro = new ResizeObserver(() => { const a = widgetEl0.getAnimations(); if (a.length) { Promise.all(a.map(x => x.finished.catch(() => {}))).then(() => makeRoom()); return; } makeRoom(); });   // measured without a running slide (rects include transforms)   // re-measure the room above first (makeRoom ends in fitWindow): a scene that grew must take it from there, not move the window
   ro.observe(document.getElementById("widget")); ro.observe(setPop);
   TAURI.event.listen("app-quit", async () => { await autoSave(); TAURI.core.invoke("exit_app"); });
   TAURI.event.listen("on-top-changed", e => { prefs.onTop = !!e.payload; saveSettings(); buildSettings(); });

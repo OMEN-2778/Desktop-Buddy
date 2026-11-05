@@ -12,7 +12,7 @@ const TOTAL=DATA.hotspots.length+new Set(DATA.life.map(c=>c.k)).size;
 const state={x:120,y:0,vy:0,target:null,after:null,facing:1,camX:0,camY:0,viewH:LAND_H,time:0,paused:false,inside:false,walk:false,loaded:false,
  suit:'clothes',gender:'f',moveSpeed:0,camVX:0,camVY:0,diveBlend:0,inCabana:false,lying:null,changing:0,found:new Set(),wasSea:false,warned:0,market:false};
 // 市集 (owner 2026-11-05): an optional district left of the lodge, drawn and clicked by a hook (setMarket).
-let market=null,photo=null;   // photo: the underwater camera (summer_life.js) takes over a creature clickconst MARKET_FEET=104;
+let market=null,photo=null;/* photo: the underwater camera (summer_more.js) takes over a creature click */const MARKET_FEET=104;
 const fx=makeSeasonEffects(DATA.skinRamp);let wetKind='clear',weatherOverride=null;
 const wxLabel=document.createElement('label');wxLabel.className='season-weather';wxLabel.innerHTML='天气 <select aria-label="地图测试天气"><option value="">跟随游戏</option><option value="clear">晴天</option><option value="rain">小雨</option><option value="storm">大雨</option><option value="snow">小雪</option><option value="blizzard">大雪</option></select>';canvas.parentElement.parentElement.querySelector('.controls').append(wxLabel);wxLabel.querySelector('select').onchange=e=>{weatherOverride=e.target.value||null;wetKind=weatherOverride||'clear';};
 const keys=new Set(),parts=[];let peopleRenderer=null;

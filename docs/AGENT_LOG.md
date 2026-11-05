@@ -9,6 +9,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ## 2026-11-05 Claude: 手机版躲开刘海/灵动岛，需求栏变瘦
 - mobile.js：触屏手机左右两边至少留 30px（很多 webview 不报 safe-area），需求列宽 132–200 → 112–150；需求条 18→16px。
 - 全屏面板（造型室、任务、各 sheet）用 --m-sx0/--m-sx1r，保持原来的边距（否则造型室按钮被挤掉）。check_mobile_frame 740x360 全过。
+## 2026-11-05 Claude: window grows UP when she swims; market black screen; 0.5x once; commission goals
+- Desktop app: a taller scene (草帽湾 sea, 118→236) takes its height from the room the app keeps above the house (makeRoom: headroom minus `sceneExtraPx()`), so the house's bottom stays put and the UI above rises; fitWindow now follows the view's laid-out bottom (`viewBottomLaid()`, transform-free), the ResizeObserver re-runs makeRoom (after any running widget slide). The adapter's widget slide is the animation. Browser pages still grow downward (no headroom there).
+- Market went black at night/any time: a `//` comment I put mid-line in summer/viewer.js hid `const MARKET_FEET=104` (ReferenceError every frame). Fixed; scanned my files for the same pattern.
+- 旅舍老板 / all commissions: clearer reminder lines + a goal hint (`委托「…」：…`) after every talk while a commission is open.
+- Settings: `speedNudge05` — once after this update everyone is set to 0.5 倍; a speed picked later is kept (flag in settings and in the save's settings copy).
+
 ## 2026-11-05 Claude: a save the code can't read no longer stops the game from starting
 - Owner: the 内测 page came up with only the diary icon and the need bar (boot aborted). boot(): restore() and applySettings() are try/caught (the raw save is kept under `<SAVE_KEY>-unreadable` in the browser, logged in the app); adapter.js season restore try/caught. Could not reproduce the owner's save here (fly to 草帽湾, photos, market, lodge, reload all fine); a deliberately broken save now boots.
 

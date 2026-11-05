@@ -197,6 +197,12 @@
  const IDLE={whistle:['今天浪不大，适合下水。','别游出黄色浮标外面哦。'],surf:['看浪要看第三道。','站起来那一下，膝盖别硬。'],coco:['今天的冰咖啡加了椰奶。','坐会儿吧，不急。'],
   turtle:['海龟不喜欢被追，等它游过来。','潜水别憋气，慢慢吐。'],bucket:['孩子玩疯了，喊都喊不回来。','这里的沙子真细。'],bottle:['今天的鱼还行。','年轻时我也天天下海。'],
   paint:['海的颜色每个钟头都不一样。','我在调一种蓝，还没调出来。'],lamp:['房间都收拾好了，随时回来住。','晚上门口的灯我一直留着。'],castle:['我的沙堡最高！','你看我挖的护城河！'],deep:['海沟底下的温度只有几度。','我又多了一页数据。']};
+ // the goal in one line, shown when a commission is taken and whenever its giver is asked again (owner 2026-11-05:
+ // 旅舍老板 repeating his reminder looked like a stuck talk)
+ const GOAL={whistle:'退潮时（6–9 点、17–19 点）去浅滩找红绳子的哨子',surf:'在沙滩的冲浪板架冲三次浪（教练在场时算一节课）',coco:'在椰子树下捡 3 个椰子交给米娅',
+  turtle:'潜水时点海龟，拍 3 张照片',bucket:'在浅水里找到小红桶',bottle:'去沉船谷的沉船宝箱找漂流瓶，再交给旅舍老板',paint:'拍一张珊瑚花园页里的鱼',
+  lamp:'晚上 8 点后下水，在浅滩给发光水母拍照',castle:'和阿乐堆沙堡，第二天再来看',deep:'潜到深蓝海沟底，给灯笼鱼拍照'};
+ const goalHint=id=>{const s=st(id);if(s.step&&!s.done&&GOAL[id])showHint(`委托「${Q[id].title}」：${GOAL[id]}`);};
  async function talk(id){const q=Q[id],s=st(id),P_=whoP(id),N=P_.name,me=nameOf();
   if(s.done){await say(N,IDLE[id][today()%2]);return;}
   if(id==='whistle'){if(!s.step){if(await ask(N,'哎，你会潜水吧？我的哨子早上掉海里了，退潮的时候浅滩那边能看见。帮我捞一下？',['我去找找','下次吧'])===0){s.step=1;await say(me,'退潮是早上和傍晚吧，我留意着。');}return;}
@@ -222,9 +228,9 @@
    if(!s.shot){await say(N,'珊瑚花园那一页里的鱼都可以。');return;}
    await say(N,'就是这个颜色！你等我一下……');await say(N,'送你，画得不像别笑我。');X.addItem('painting',1);finish(id,'画画的姐姐照着照片画了一条鱼，送了一幅给我。');return;}
   if(id==='lamp'){if(s.step===0&&st('bottle').step===2){await say(N,'这是……老周的字。');await say(N,'四十年前我们说好一起开旅舍，他后来去打鱼了。招牌上的“周”字，我一直没摘。');await say(N,'你帮我告诉他吧，就说……旅舍还缺个钓鱼的。');st('bottle').step=3;return;}
-   if(!s.step){if(await ask(N,'晚上海里有会发光的水母，你见过没？我年纪大了下不去了，你帮我看看，回来讲给我听。',['好，晚上去','我怕黑'])===0){s.step=1;await say(N,'晚上八点以后，浅滩那边。');}return;}
+   if(!s.step){if(await ask(N,'晚上海里有会发光的水母，你见过没？我年纪大了下不去了，你帮我拍张照片回来给我看看。',['好，晚上去','我怕黑'])===0){s.step=1;await say(N,'晚上八点以后，换上泳衣下水，浅滩那边一亮一亮的就是。');}return;}
    if(st('bottle').step===2){await say(N,'这是……老周的字。');await say(N,'四十年前我们说好一起开旅舍，他后来去打鱼了。招牌上的“周”字，我一直没摘。');await say(N,'你帮我告诉他吧，就说……旅舍还缺个钓鱼的。');st('bottle').step=3;return;}
-   if(!s.shot){await say(N,'晚上八点以后，浅滩那边，一亮一亮的。');return;}
+   if(!s.shot){await say(N,'晚上八点以后去浅滩，看到一亮一亮的水母，点它给它拍张照片，再回来给我看。');return;}
    await say(me,'像一盏会游泳的小灯，一碰它就亮。');await say(N,'对对对，跟我年轻时看到的一模一样。');finish(id,'给旅舍老板讲了夜里的发光水母。');return;}
   if(id==='castle'){if(!s.step){if(await ask(N,'一起堆沙堡吗！比谁的高！',['来！','下次吧'])===0){s.step=1;await buildCastle(true);s.step=2;s.day=today();await say(N,'明天来看看，它还在不在！');}return;}
    if(!ready.castle()){await say(N,'明天再来看哦！');return;}
@@ -258,9 +264,9 @@
  hooks.draw.push(drawPeople);
  hooks.mdraw.push(ctx=>{for(const [id,q]of Object.entries(Q)){if(!q.market)continue;const m=markOf(id);if(!m)continue;const x=id==='coco'?L.CAFE_X-30:L.FISH_X+4;markAt(ctx,x,L.FEET-(id==='coco'?36:45),m);}if(fest())drawFestMarket(ctx);});
  hooks.click.push((x,y)=>{const c=C();for(const [id,q]of Object.entries(Q)){if(q.market||!present(id))continue;const g=c.gr(q.x);if(Math.abs(x-q.x)<9&&y>g-(q.kid?22:28)&&y<g+3){
-  scene(async()=>{await walk(q.x+(c.state.x<q.x?-14:14));await talk(id);});return true;}}return false;});
+  scene(async()=>{await walk(q.x+(c.state.x<q.x?-14:14));await talk(id);goalHint(id);});return true;}}return false;});
  hooks.mclick.push((x,y)=>{for(const [id,q]of Object.entries(Q)){if(!q.market)continue;const px=id==='coco'?L.CAFE_X-30:L.FISH_X+4,m=markOf(id);if(!m)continue;
-  if(Math.abs(x-px)<10&&y>L.FEET-34&&y<L.FEET+3){scene(async()=>{await walk(px+14);await talk(id);});return true;}}return false;});
+  if(Math.abs(x-px)<10&&y>L.FEET-34&&y<L.FEET+3){scene(async()=>{await walk(px+14);await talk(id);goalHint(id);});return true;}}return false;});
 
  // ================================================================ 4. island festivals
  const FESTS=[{n:'草帽节',se:1,day:4,c:['#d9a441','#f6dc8a'],line:'满天飞着草帽，风越大越热闹',flags:['#e35b4f','#f2d36b','#7fc4e8']},
