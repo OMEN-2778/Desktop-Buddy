@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: 我的小摊 panel redesign; card blur 18px
+- openStall(): big sheet sized like the quest panel (diary row → view bottom), banner with the stall picture + status chips + coins, a 6-slot wooden counter with 48px goods and price tags, recipe cards (48px icon, tags 冷饮/热食/纪念品, price tag, ingredient chips with icons, red when short). Styles `.st-*` in map-test/style.css.
+- Chance card backdrop blur 7px → 18px (owner).
+
 ## 2026-11-05 Claude: frosted chance cards; panels grow out of the click
 - ui.css: `.card` is translucent with `backdrop-filter: blur(7px)` (pixel frame kept), house dim lighter. Pickers opened without `from` and every social sheet (FarmUI sheets too) get `--from-x/y` from the last pointerdown (`popFrom()` in index.src.html) and pop out of it with a springy scale.
 

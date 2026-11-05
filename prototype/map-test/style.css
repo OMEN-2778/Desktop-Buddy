@@ -34,3 +34,41 @@
 .fu-stall .fu-stall-recipe .fu-actions{margin:0}
 .fu-stall .fu-stall-recipe .fu-btn{padding:3px 10px;font-size:12px}
 .fu-stall .fu-stall-recipe .fu-why{display:block;font-size:10px}
+/* 我的小摊, big picture panel (owner 2026-11-05): as big as the quest panel, pictures + words */
+.social-sheet.fu-big-sheet{overflow-y:auto;padding:14px 16px 12px}
+.fu-big-sheet .social-sheet-content{gap:10px}
+.fu-big-sheet h4{margin:4px 0 0;font-size:14px;letter-spacing:.05em;color:var(--ink)}
+.fu-big-sheet img.fu-big{image-rendering:pixelated}
+.st-banner{display:flex;align-items:center;gap:14px;padding:10px 14px;background:linear-gradient(180deg,#fdf3dc,#f6e2bb);border:2px solid #c99f5a;box-shadow:3px 3px 0 #0002,inset 0 2px 0 #fffbe9}
+.st-pic{height:72px;image-rendering:pixelated;filter:drop-shadow(2px 2px 0 #0003)}
+.st-info{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.st-name{font-size:18px;color:#5b3a1e;letter-spacing:.06em}
+.st-where{font-size:12px;color:#8a6a46}
+.st-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.st-chip{font-size:12px;font-weight:700;padding:2px 9px;background:#fffaf0;border:2px solid #e2c48c;color:#6b4a2a}
+.st-chip.st-open{background:#d9f2df;border-color:#7cbf8e;color:#2f6b43}
+.st-chip.st-shut{background:#ece6f2;border-color:#b6aac6;color:#5e5470}
+.st-shelf{display:flex;flex-direction:column;gap:6px}
+.st-counter{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:10px;background:linear-gradient(180deg,#b98552 0 8px,#9a6a3f 8px);border:2px solid #6e4729;box-shadow:3px 3px 0 #0002}
+.st-slot{position:relative;display:grid;place-items:center;height:68px;background:#fff6e4;border:2px solid #e3c58f;box-shadow:inset 0 -3px 0 #ecd6ab}
+.st-slot.st-empty{background:#a87648;border:2px dashed #d6b083;box-shadow:none}
+.st-plus{font-size:20px;font-weight:700;color:#d6b083}
+.st-tag{position:absolute;right:-4px;bottom:-6px;font-size:11px;font-weight:700;padding:0 6px;background:#ffd36e;border:2px solid #b8872a;color:#5b3a1e}
+.st-tip{margin:0;font-size:12px;color:#6b6676}
+.st-recipes{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.st-card{display:flex;flex-direction:column;gap:6px;padding:8px 10px;background:var(--panel-2,#f4f1f8);border:2px solid var(--edge,#cfc6dc);box-shadow:2px 2px 0 #0002}
+.st-card.st-off{opacity:.6}
+.st-card-top{display:flex;align-items:center;gap:8px}
+.st-card-top img.fu-big{padding:2px;background:#fff;border:2px solid #e6dff0}
+.st-card-name{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.st-card-name b{font-size:14px}
+.st-tags{display:flex;gap:4px;flex-wrap:wrap}
+.st-t{font-size:10px;font-weight:700;padding:0 5px;background:#ece6f2;color:#5e5470}
+.st-t.st-cold{background:#d8eefa;color:#2e6a8e}.st-t.st-hot{background:#fde1d4;color:#9a4526}.st-t.st-keep{background:#f6e6fb;color:#7b3c8e}
+.st-price{font-size:13px;font-weight:700;padding:1px 8px;background:#ffd36e;border:2px solid #b8872a;color:#5b3a1e;white-space:nowrap}
+.st-need{display:flex;flex-wrap:wrap;gap:4px}
+.st-ing{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:1px 6px 1px 2px;background:#fff;border:2px solid #d9eedd;color:#3d6b4a}
+.st-ing img{width:16px!important;height:16px!important;image-rendering:pixelated}
+.st-ing.st-miss{border-color:#f1c9c1;color:#a0473a}
+.st-card .fu-actions{margin:0;justify-content:flex-end}
+.st-card .fu-btn{padding:3px 12px;font-size:12px}
