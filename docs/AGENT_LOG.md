@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: 市集 sun shafts at screen resolution
+- Owner: shafts must be real smooth gradient light, not pixel trapezoids. `summerLife.overlay(vctx,W,H)` (called by adapter.js after upscaling) draws parallel slanted bands with soft gradient edges at screen resolution, fading toward the street, masked by the near layer + stall sprites (people are not masked). Normal blend (screen vanished on the bright haze).
+
 ## 2026-11-05 Claude: 市集 haze lighter + mid-ground sun rays
 - Far headland sand instead of green; veils are near-white sky blue (far .5, mid .22). `sunRays()` in summer_life.js: 7 slanted shafts (screen blend) that drift with parallax .6 and breathe, plus dappled glints on the town; off at night and in rain/cloud.
 
