@@ -20,7 +20,8 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  assert(await p.evaluate(()=>seasonMapTest.ctl().canvas.height)>118);
  await p.locator('#view').screenshot({path:'/workspace/artifacts/season-game/summer.png'});await p.locator('#widget').screenshot({path:'/workspace/artifacts/season-game/summer-game-ui.png'});
  const t=await p.evaluate(()=>{speed=0;return seasonMapTest.ctl().state.time;});await p.waitForTimeout(120);assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.time),t);await p.evaluate(()=>speed=1);
- await p.evaluate(async()=>{await store.save(snapshot());});await p.reload();await p.waitForFunction(()=>booted&&seasonMapTest.state.summer.state.loaded);await p.evaluate(()=>closeGuide());assert.equal(await p.evaluate(()=>sim.place),'summer_test');
+ await p.evaluate(async()=>{if(window.summerLife){summerLife.B().met=true;summerLife.B().stallSeen=true;}await store.save(snapshot());});await p.reload();   // 草帽湾's guide already met (summer_life.js)
+ await p.waitForFunction(()=>booted&&seasonMapTest.state.summer.state.loaded);await p.evaluate(()=>closeGuide());assert.equal(await p.evaluate(()=>sim.place),'summer_test');
  await p.evaluate(()=>{sim.needs.hunger=14;speed=1;});await p.waitForFunction(()=>sim.place==='home'&&!wiping,{timeout:20000});assert.equal(await p.evaluate(()=>sceneHouseHeight()),118);
  assert.equal(await p.evaluate(()=>JSON.stringify(look)),initial.look);assert.deepEqual(errors,[]);console.log('PASS actual game: airport door and direct test-toolbar destinations, native travel/home, live time/needs, same protagonist, all spring zones, summer height/swim, pause, separate saves/reload, emergency self-care home; no page errors');
  }finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1});

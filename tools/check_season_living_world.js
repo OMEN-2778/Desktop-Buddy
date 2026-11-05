@@ -11,6 +11,7 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  // Exit from the upper floor: route down stairs, then a real two-phase transition.
  await p.evaluate(()=>{const c=seasonMapTest.ctl();c.target(120,50);for(let i=0;i<400;i++)c.tick(.05,.01);});assert.equal(Math.round(await p.evaluate(()=>seasonMapTest.ctl().state.y)),50);await p.locator('#season-spring-exit').click();await p.waitForFunction(()=>!seasonMapTest.ctl().state.inside&&!seasonMapTest.ctl().state.door,{timeout:15000});
  for(const wx of ['rain','storm','snow','blizzard']){await p.locator('[data-kind="spring"] .season-weather select').selectOption(wx);await p.waitForTimeout(100);assert.equal(await p.evaluate(()=>seasonMapTest.ctl().getWeather()),wx);await p.locator('#view').screenshot({path:`/workspace/artifacts/season-living-world/spring-${wx}.png`});}
+ await p.evaluate(()=>{if(window.summerLife)summerLife.B().met=true;});   // 草帽湾's guide already met (summer_life.js)
  await depart('summer_test');await p.evaluate(()=>{const c=seasonMapTest.ctl();c.state.x=170;c.state.y=c.gr(170);c.enter();});await p.waitForFunction(()=>seasonMapTest.ctl().state.inside&&!seasonMapTest.ctl().state.door,{timeout:12000});
  await p.evaluate(()=>seasonMapTest.ctl().goTo(215));await p.waitForFunction(()=>seasonMapTest.ctl().state.x>205);
  const box=await p.locator('#view').boundingBox();await p.mouse.click(box.x+box.width*22/342,box.y+box.height*76/118);await p.waitForFunction(()=>!seasonMapTest.ctl().state.inside&&!seasonMapTest.ctl().state.door,{timeout:15000});

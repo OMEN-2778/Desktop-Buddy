@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: 草帽湾 gameplay (test page)
+- New `prototype/map-test/summer_life.js` + art `art/src/concept/summer_stall.py`: guide 阿洛 on the first visit, her straw-hat stall (12 goods made from the 仓库, customers walk up and buy 10-18h, prices/limits per docs/SUMMER_PLAY.md), sea/beach gathering, the 蕾拉妮/卡伊诺 couple stories with the "左边" twist finale, 10 summer chance cards with small coin effects. Saved in springFarm F.bay. Wired via make_season_game_test.py (SUMMER_LIFE_ART) and adapter.js (draw/click hooks). check_season_game_test/living_world mark the guide as met before their timing-sensitive steps.
+
 ## 2026-11-04 Claude: summer map renamed 草帽湾
 - Owner named the summer map **草帽湾** (was 夏日海湾 in the test page). Renamed in adapter.js, make_season_game_test.py and the summer docs; discussion notes (own stall on the island, 图鉴 as a 丢丢平板 page) at the end of docs/SUMMER_PLAY.md.
 
