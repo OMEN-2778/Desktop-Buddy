@@ -74,3 +74,4 @@
 .st-card .fu-btn{padding:3px 12px;font-size:12px}
 .social-sheet.fu-big-sheet{display:flex;flex-direction:column;overflow:hidden}
 .fu-big-sheet .social-sheet-content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:4px}
+.social-sheet.fu-big-sheet{background:var(--panel)}

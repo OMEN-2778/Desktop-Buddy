@@ -64,17 +64,17 @@ const summerLife=(function(){
   const z=Math.max(.75,Math.min(2,vr.width/1000));s.querySelectorAll('.social-sheet-content,h3').forEach(e=>e.style.zoom=z);   /* contents follow 界面大小 */
   Object.assign(s.style,{left:(Math.min(dr.left,vr.left)-pr.left-6)+'px',top:(dr.top-pr.top-6)+'px',width:(vr.right-Math.min(dr.left,vr.left)+12)+'px',height:(vr.bottom-dr.top+12)+'px'});window.popFrom?.(s);}
  function openStall(){const b=B();if(!b.stallSeen){b.stallSeen=true;}
-  const s=FarmUI.sheet('我的小摊 · 草帽湾','fu-stall');s.classList.add('fu-big-sheet');const c=socialContent(s),el=FarmUI.el,h=hour(),open=h>=10&&h<18;
+  const s=FarmUI.sheet('草帽湾 · 市集','fu-stall');s.classList.add('fu-big-sheet');const c=socialContent(s),el=FarmUI.el,h=hour(),open=h>=10&&h<18;
   const ban=el('div','st-banner'),pic=document.createElement('img');pic.src=ART.stall;pic.className='st-pic';pic.alt='';
-  const info=el('div','st-info');info.append(el('b','st-name','我的草帽小摊'),el('span','st-where','草帽湾 · 市集 · 喷泉旁边'));
+  const info=el('div','st-info');info.append(el('b','st-name','我的草帽小摊'));
   const chips=el('div','st-chips');
-  for(const [t,cls]of [[open?'营业中':'打烊了',open?'st-open':'st-shut'],['10:00–18:00',''],[`今天来了 ${b.sold} 位客人`,''],[`摊上 ${b.stock.length}/${STOCK_MAX}`,'']])chips.append(el('span','st-chip '+cls,t));
+  for(const [t,cls]of [[open?'营业中':'打烊 · 10 点开张',open?'st-open':'st-shut'],[`今天 ${b.sold} 位客人`,'']])chips.append(el('span','st-chip '+cls,t));
   info.append(chips);ban.append(pic,info,FarmUI.coinPill(S().coins));c.append(ban);
   const counter=el('div','st-counter');
   for(let i=0;i<STOCK_MAX;i++){const k=b.stock[i],slot=el('div','st-slot'+(k?'':' st-empty'));
    if(k){slot.append(bigIcon(RECIPES[k].icon),el('span','st-tag',fmt(priceNow(k))+' 币'));slot.title=RECIPES[k].name;}else slot.append(el('span','st-plus','+'));counter.append(slot);}
-  const shelf=el('div','st-shelf');shelf.append(el('h4',null,'柜台'),counter,el('p','st-tip',b.stock.length?'客人路过会挑一样买走；同一样卖得越多越便宜，中午冷饮贵一点。':'柜台还空着。从下面挑一样做好摆上去，客人就会来买。'));c.append(shelf);
-  c.append(el('h4',null,'做一份摆上柜台'));
+  const shelf=el('div','st-shelf');shelf.append(el('h4',null,`柜台 ${b.stock.length}/${STOCK_MAX}`),counter);c.append(shelf);
+  c.append(el('h4',null,'做一份'));
   const list=el('div','st-recipes');
   for(const [k,r]of Object.entries(RECIPES)){const ok=canMake(r),card=el('div','st-card'+(ok?'':' st-off'));
    const top=el('div','st-card-top');top.append(bigIcon(r.icon));const nm=el('div','st-card-name');nm.append(el('b',null,r.name));
@@ -83,7 +83,7 @@ const summerLife=(function(){
    const need=el('div','st-need');
    for(const [keys,n]of r.need){const got=Math.min(have(keys),n),chip=el('span','st-ing'+(got>=n?'':' st-miss'));chip.append(FarmUI.icon(keys[0]),el('span',null,(keys.length>1?(keys===FRUIT?'水果':keys===EGG?'鸡蛋':'牛奶'):nameOf2(keys[0]))+` ${got}/${n}`));need.append(chip);}
    card.append(need,FarmUI.actions([{label:'做一份',off:b.stock.length>=STOCK_MAX?'柜台摆满了':ok?'':'材料不够',on:()=>{if(make(k)){speakBay(`做好了${r.name}，摆上摊～`);openStall();}}}]));list.append(card);}
-  c.append(list,el('p','st-tip','原料在海里、沙滩上能找到，市集摊贩也卖；茵菲谷的水果、鸡蛋、牛奶也能带来。做好的东西只能在摊上卖，比单卖原料值钱得多。'));
+  c.append(list);
   requestAnimationFrame(()=>fitBig(s));}
  // ---------------------------------------------------------------- gathering
  let wasUnder=false,lastT=0,pearlTold=false;
