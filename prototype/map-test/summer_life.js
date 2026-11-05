@@ -61,6 +61,7 @@ const summerLife=(function(){
  function bigIcon(k,px=48){const im=FarmUI.icon(k);im.classList.add('fu-big');const set=()=>{im.style.width=im.style.height=px+'px';};im.onload=set;set();return im;}   // whole 3x of a 16px icon
  function fitBig(s){const d=document.querySelector('.diary'),v=document.getElementById('view'),par=s.offsetParent;if(!d||!v||!par)return;
   const dr=d.getBoundingClientRect(),vr=v.getBoundingClientRect(),pr=par.getBoundingClientRect();
+  const z=Math.max(.75,Math.min(2,vr.width/1000));s.querySelectorAll('.social-sheet-content,h3').forEach(e=>e.style.zoom=z);   /* contents follow 界面大小 */
   Object.assign(s.style,{left:(Math.min(dr.left,vr.left)-pr.left-6)+'px',top:(dr.top-pr.top-6)+'px',width:(vr.right-Math.min(dr.left,vr.left)+12)+'px',height:(vr.bottom-dr.top+12)+'px'});window.popFrom?.(s);}
  function openStall(){const b=B();if(!b.stallSeen){b.stallSeen=true;}
   const s=FarmUI.sheet('我的小摊 · 草帽湾','fu-stall');s.classList.add('fu-big-sheet');const c=socialContent(s),el=FarmUI.el,h=hour(),open=h>=10&&h<18;

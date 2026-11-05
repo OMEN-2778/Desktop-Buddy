@@ -72,3 +72,5 @@
 .st-ing.st-miss{border-color:#f1c9c1;color:#a0473a}
 .st-card .fu-actions{margin:0;justify-content:flex-end}
 .st-card .fu-btn{padding:3px 12px;font-size:12px}
+.social-sheet.fu-big-sheet{display:flex;flex-direction:column;overflow:hidden}
+.fu-big-sheet .social-sheet-content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:4px}
