@@ -2,6 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('playwright');
 (async()=>{const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});try{
  const p=await browser.newPage({viewport:{width:1600,height:1250},reducedMotion:'no-preference',ignoreHTTPSErrors:true}),errors=[];p.on('pageerror',e=>errors.push(e.message));
+ await p.addInitScript(()=>{window.__noBayGuide=true;});   // 草帽湾's guide (summer_life.js) would walk her into the market
  if(process.argv[2])await p.goto(process.argv[2]);else{await p.route('http://season.test/',r=>r.fulfill({contentType:'text/html; charset=utf-8',body:fs.readFileSync('desktop/dist/map-test/index.html')}));await p.goto('http://season.test/');}
  await p.waitForFunction(()=>typeof booted!=='undefined'&&booted&&seasonMapTest.state.summer.state.loaded&&seasonMapTest.state.spring.state.loaded);
  await p.evaluate(()=>{closeGuide();prefs.guided=true;prefs.autosave=false;prefs.scale=50;fit();speed=1;sim.t=720;socialState.nextCall=socialState.nextVisit=1e12;cardMoment=rollCard=rollEvents=()=>false;seasonMapTest.cheats.flags.hero=true;seasonMapTest.cheats.enforce();});

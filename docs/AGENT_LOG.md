@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: 草帽湾 市集 district (test page)
+- Left of the lodge: 市集 (2 screens, Mediterranean town bg, art `art/src/concept/summer_market.py`). Fruit/fish/hat vendors sell items, 米娅's café (coffee/seafood rice/chat), fountain wish, walkers. Her stall and 蕾拉妮's flower stall moved here; the guide walks her in. viewer.js: `state.market`, `setMarket`, `beginDoor('market'|'bay')`.
+- The island is summer all year: city snow shows as rain there (adapter.js). Season checks set `window.__noBayGuide`.
+- Tested: couple stories to the finale, market sales/purchase/exit, 3 season checks, release save round-trip.
+
 ## 2026-11-05 Claude: 草帽湾 gameplay (test page)
 - New `prototype/map-test/summer_life.js` + art `art/src/concept/summer_stall.py`: guide 阿洛 on the first visit, her straw-hat stall (12 goods made from the 仓库, customers walk up and buy 10-18h, prices/limits per docs/SUMMER_PLAY.md), sea/beach gathering, the 蕾拉妮/卡伊诺 couple stories with the "左边" twist finale, 10 summer chance cards with small coin effects. Saved in springFarm F.bay. Wired via make_season_game_test.py (SUMMER_LIFE_ART) and adapter.js (draw/click hooks). check_season_game_test/living_world mark the guide as met before their timing-sensitive steps.
 

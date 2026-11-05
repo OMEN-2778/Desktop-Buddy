@@ -294,9 +294,17 @@ def pearl_necklace():
               "................"], {"b": P.blossom[3], "o": P.reef_pearl[0], "h": P.porcelain[-1], "l": P.reef_pearl[3], "m": P.reef_pearl[2]})
 
 
+def hat():
+    """A straw hat with a coral band, seen a little from above."""
+    return g(["................", "................", "................", "......oooo......", ".....olhllo.....",
+              "....olhlllmo....", "....ollllmmo....", "..ooRRRRRRRRoo..", ".oyhllllllmmmyo.", "oyyhlllllllmmmyo",
+              ".oyyyyyyyyyyyyo.", "..oooooooooooo..", "................", "................", "................",
+              "................"], {"o": P.mustard[0], "h": P.mustard[-1], "l": P.mustard[3], "m": P.mustard[2], "y": P.mustard[2], "R": P.coral[2]})
+
+
 ICONS = {
     "seaweed": seaweed, "fish": fish, "shrimp": shrimp, "crab": crab, "pearl": pearl, "shell": shell,
-    "seaglass": seaglass, "coconut": coconut,
+    "seaglass": seaglass, "coconut": coconut, "hat": hat,
     "coconut_water": coconut_water, "seaweed_salad": seaweed_salad, "fish_skewer": fish_skewer,
     "salted_shrimp": salted_shrimp, "spicy_crab": spicy_crab, "seafood_stew": seafood_stew,
     "egg_pancake": egg_pancake, "juice": juice, "milk_smoothie": milk_smoothie, "shave_ice": shave_ice,

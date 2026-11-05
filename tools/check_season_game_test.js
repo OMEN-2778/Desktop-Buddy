@@ -2,6 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('playwright');
 (async()=>{const b=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});try{
  const p=await b.newPage({viewport:{width:1500,height:1200},ignoreHTTPSErrors:true,reducedMotion:'reduce'}),errors=[];p.on('pageerror',e=>{errors.push(e.message);console.error('PAGE:',e.message);});
+ await p.addInitScript(()=>{window.__noBayGuide=true;});   // 草帽湾's guide (summer_life.js) would walk her into the market
  if(process.argv[2])await p.goto(process.argv[2]);else{await p.route('http://season.test/',r=>r.fulfill({contentType:'text/html; charset=utf-8',body:fs.readFileSync('desktop/dist/map-test/index.html')}));await p.goto('http://season.test/');}
  await p.waitForFunction(()=>typeof booted!=='undefined'&&booted&&window.seasonMapTest?.state.spring.state.loaded&&seasonMapTest.state.summer.state.loaded);
  await p.evaluate(()=>{closeGuide();prefs.guided=true;prefs.autosave=false;prefs.scale=50;fit();speed=1;sim.t=720;socialState.nextCall=socialState.nextVisit=1e12;cardMoment=rollCard=rollEvents=()=>false;sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,90]));});

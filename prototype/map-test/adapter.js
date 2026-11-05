@@ -72,7 +72,7 @@ const seasonalTest=(function(){
  const originalRender=renderOutside;renderOutside=function(){
   if(!active())return originalRender();const c=ctl();if(!c.state.loaded)return;
   const dt=Math.min(.1,Math.max(0,realClock-state.last));state.last=realClock;
-  c.setWeather(weather.force==='blizzard'||weather.kind==='snow'&&weather.heavy?'blizzard':weather.kind);people.sync();c.setResolution(Math.max(1,view.width/W));const run=!!speed&&!cardHolds()&&!wiping&&sim.mode!=='down';
+  {const wk=weather.force==='blizzard'||weather.kind==='snow'&&weather.heavy?'blizzard':weather.kind;c.setWeather(sim.place==='summer_test'&&(wk==='snow'||wk==='blizzard')?'rain':wk);}/* 草帽湾 is summer all year (owner 2026-11-05): the city's snow falls as rain there */people.sync();c.setResolution(Math.max(1,view.width/W));const run=!!speed&&!cardHolds()&&!wiping&&sim.mode!=='down';
   c.state.paused=!run;c.state.gender=look.gender||'f';
   if(run){
    if(!life.talkQ&&!c.state.door&&!c.state.inCabana&&!c.state.target&&sim.t>=state.autoAt&&!ringOf){state.autoAt=sim.t+20+Math.random()*25;

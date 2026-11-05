@@ -7,7 +7,7 @@ function installSeasonPeople(active,ctl){
  summer_test:[['海风','>这海风吹得，头发都不用做造型了','免费的造型师，就是有点随意','>哈哈，回去估计梳不开'],['沙子','>鞋里全是沙，走一步响一下','你这是把沙滩打包带走了','>还没收我行李超重费呢'],['游泳','>看着岸挺近，游起来真不是一回事','慢慢来，别急','>嗯，我先在这儿漂会儿'],['浪花','>刚才一个浪过来，我喝了一口','味道怎么样？','>不推荐，也没得退'],['海底','>那边的鱼一转弯就不见了','我刚也看见了，颜色好亮','>它们这拐弯技术，比我好多了'],['晒太阳','>我带了防晒，结果忘了带毛巾','各有各的忘法，我忘了拖鞋','>咱俩凑一凑，刚好都不齐全'],['漂浮','>我就想安静漂着，什么也不干','这也挺好啊','>对，今天不努力了，努力也游不快'],['潜水','>那边珊瑚缝里有只小家伙','我等会儿绕过去看看','>别追它哈，它胆子可小了']]
  };
  for(const [key,adult]of Object.entries(lines))NPC_TALK_TEXT[key]={adult,kid:adult};
- function key(){const c=ctl();return sim.place+':'+(sim.place==='spring_test'?c.state.inside?'inside':c.state.scene:c.state.inside?'inside':'bay');}
+ function key(){const c=ctl();return sim.place+':'+(sim.place==='spring_test'?c.state.inside?'inside':c.state.scene:c.state.inside?'inside':c.state.market?'market':'bay');}   // 市集 people come from summer_life.js
  function make(x,kind,range=38){const n=makeNpc('adult',{x,feet:103,seasonKind:kind,origin:x,range,v:6,dir:Math.random()<.5?-1:1});n.phase=Math.random()*6;return n;}
  function sync(force=false){
   if(force)region='';
@@ -16,7 +16,7 @@ function installSeasonPeople(active,ctl){
   if(!cache.has(k)){
    const c=ctl(),s=c.state;let rows=[];
    if(!s.inside&&sim.place==='spring_test'&&s.scene<3)rows=[make(112,'walk'),make(245,'walk',45)];
-   if(!s.inside&&sim.place==='summer_test')rows=[make(165,'walk'),make(510,'walk'),make(855,'walk'),...Array.from({length:4},(_,i)=>make(1230+i*88,'swim',26)),make(1510,'dive',45),make(1970,'dive',60)];
+   if(!s.inside&&!s.market&&sim.place==='summer_test')rows=[make(165,'walk'),make(510,'walk'),make(855,'walk'),...Array.from({length:4},(_,i)=>make(1230+i*88,'swim',26)),make(1510,'dive',45),make(1970,'dive',60)];
    cache.set(k,rows);
   }life.npcs=cache.get(k);
  }
