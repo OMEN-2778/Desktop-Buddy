@@ -86,3 +86,22 @@
 .st-slot,.st-card-top img.fu-big{border-radius:6px}
 .st-chip,.st-tag,.st-price,.st-ing,.st-t{border-radius:5px}
 body:has(.social-sheet.fu-big-sheet:not([hidden])) #diaryBox{visibility:hidden}   /* the big panel covers the diary row: its text must not ghost through */
+/* 草帽湾 camera + 图鉴 (summer_more.js) */
+.bay-flash{position:absolute;z-index:60;pointer-events:none;background:#fff;animation:bayFlash .5s ease-out forwards}
+@keyframes bayFlash{0%{opacity:.9}100%{opacity:0}}
+.bay-photo{position:absolute;z-index:61;width:188px;display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:center;padding:6px 8px;background:#fffaf0;border:2px solid #c99f5a;border-radius:8px;box-shadow:3px 3px 0 #0003;text-align:left;cursor:pointer;animation:bayPhoto .4s cubic-bezier(.2,.9,.3,1.3)}
+.bay-photo img{grid-row:span 2;width:84px;height:59px;image-rendering:pixelated;border:2px solid #fff;box-shadow:0 0 0 1px #c99f5a;border-radius:3px;transform:rotate(-3deg)}
+.bay-photo b{font-size:12px;color:#5b3a1e}.bay-photo small{font-size:10px;color:#7a6a5c;line-height:1.3;max-height:3.9em;overflow:hidden}
+@keyframes bayPhoto{0%{opacity:0;transform:translateY(16px) scale(.8)}100%{opacity:1;transform:none}}
+.dex-head{margin:0;font-weight:700;color:#5b3a1e}
+.dex-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.dex-tab{font-size:13px;font-weight:700;padding:3px 12px;border-radius:14px;background:#f1ebdc;border:2px solid #e2c48c;color:#6b4a2a;cursor:pointer}
+.dex-tab.on{background:#2f7aa0;border-color:#1f557a;color:#fff}
+.dex-sum{margin:2px 0 6px;font-size:12px;color:#6b6676}
+.dex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.dex-tile{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;background:#eaf5fa;border:2px solid #b9dcea;border-radius:8px;text-align:center}
+.dex-tile img{width:100%;max-width:120px;aspect-ratio:60/42;image-rendering:pixelated;border-radius:4px;background:#1f557a}
+.dex-tile b{font-size:12px}.dex-tile small{font-size:10px;color:#6b6676;line-height:1.3}
+.dex-tile.dex-no{background:#eef0f3;border-color:#d6dbe2}
+.dex-q{display:grid;place-items:center;width:100%;aspect-ratio:60/42;max-width:120px;border-radius:4px;background:#c9d3dc;color:#fff;font-size:22px;font-weight:700}
+.dex-places .dex-tile{align-items:flex-start;text-align:left}

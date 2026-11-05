@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: 草帽湾 part 2 (test page) — camera/图鉴, beach life, 10 commissions, island festivals, night
+- New `prototype/map-test/summer_more.js` on summerLife.hooks (draw/mdraw/click/mclick/tick); viewer.js `setPhoto`, `hotspots`, `lifeText`, `toast` in its API. Stall prices -12%.
+- Night pass for 草帽湾 only (adapter → summerMore.nightPass): multiply blue + a glow layer (bonfire, glowing sea, glow jellies, lanterns). Island festivals override festToday/festivalToday on summer_test (city festivals hidden there), FEST_BAR entries added.
+- adapter.js: underwater idle wander now swims at her depth (a walk target there left her stuck).
+- Details in docs/SUMMER_PLAY.md「第二批」. Tested: photo from a real dive, dex sheet, commissions accept/hand-in, 5 festival days, night sea.
+
 ## 2026-11-05 Claude: story choices never covered; windmill sails
 - liftDiary(): while story choices show, if the NPC row would reach into them (small 界面大小 / big font), the NPC row and diary lift by the overlap (measured without the lift animation); story_bubbles.js re-runs it after laying out choices.
 - spring_fields.sails(): solid framed cream panels + 2px spar (the dotted lattice made two blades vanish against the sky, owner). Sheet rebuilt by tools/make_spring_life_review.py.

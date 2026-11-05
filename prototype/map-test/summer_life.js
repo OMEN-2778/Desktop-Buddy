@@ -34,19 +34,19 @@ const summerLife=(function(){
   coconut:{name:'一个椰子',icon:'coconut',price:.5,line:'椰子树下捡的，摇一摇有水声。'}});
  const FRUIT=['peach','pear','apple','orange','strawberry'],EGG=['egg_big','egg'],MILK=['milk_rich','milk'];
  const R=(name,icon,price,need,o={})=>({name,icon,price,need,...o});
- const RECIPES={
+ const RECIPES={   // prices -12% (owner 2026-11-05: a little too high)
   coconut_water:R('鲜椰子水','coconut_water',1.5,[[['coconut'],1]],{cold:true}),
-  seaweed_salad:R('凉拌海草','seaweed_salad',3,[[['seaweed'],2]]),
-  fish_skewer:R('烤小鱼串','fish_skewer',3,[[['fish'],2]],{hot:true}),
-  salted_shrimp:R('椒盐虾米','salted_shrimp',3,[[['shrimp'],2]],{hot:true}),
-  spicy_crab:R('香辣小螃蟹','spicy_crab',4.5,[[['crab'],1],[['pepper'],1]],{hot:true}),
-  seafood_stew:R('海鲜杂烩','seafood_stew',7.5,[[['fish'],1],[['shrimp'],1],[['crab'],1],[['seaweed'],1]],{hot:true}),
-  egg_pancake:R('海苔鸡蛋饼','egg_pancake',3.5,[[EGG,1],[['seaweed'],1]],{hot:true}),
-  juice:R('鲜榨果汁','juice',7,[[FRUIT,2]],{cold:true}),
-  milk_smoothie:R('牛奶冰沙','milk_smoothie',7,[[MILK,1],[FRUIT,1]],{cold:true}),
-  shave_ice:R('西瓜刨冰','shave_ice',4,[[['watermelon'],1]],{cold:true,makes:4}),
-  shell_chime:R('贝壳风铃','shell_chime',7,[[['shell'],3],[['seaglass'],1]],{keep:true}),
-  pearl_necklace:R('珍珠项链','pearl_necklace',14,[[['pearl'],1],[['shell'],3]],{keep:true})};
+  seaweed_salad:R('凉拌海草','seaweed_salad',2.5,[[['seaweed'],2]]),
+  fish_skewer:R('烤小鱼串','fish_skewer',2.5,[[['fish'],2]],{hot:true}),
+  salted_shrimp:R('椒盐虾米','salted_shrimp',2.5,[[['shrimp'],2]],{hot:true}),
+  spicy_crab:R('香辣小螃蟹','spicy_crab',4,[[['crab'],1],[['pepper'],1]],{hot:true}),
+  seafood_stew:R('海鲜杂烩','seafood_stew',6.5,[[['fish'],1],[['shrimp'],1],[['crab'],1],[['seaweed'],1]],{hot:true}),
+  egg_pancake:R('海苔鸡蛋饼','egg_pancake',3,[[EGG,1],[['seaweed'],1]],{hot:true}),
+  juice:R('鲜榨果汁','juice',6,[[FRUIT,2]],{cold:true}),
+  milk_smoothie:R('牛奶冰沙','milk_smoothie',6,[[MILK,1],[FRUIT,1]],{cold:true}),
+  shave_ice:R('西瓜刨冰','shave_ice',3.5,[[['watermelon'],1]],{cold:true,makes:4}),
+  shell_chime:R('贝壳风铃','shell_chime',6,[[['shell'],3],[['seaglass'],1]],{keep:true}),
+  pearl_necklace:R('珍珠项链','pearl_necklace',12,[[['pearl'],1],[['shell'],3]],{keep:true})};
  const STOCK_MAX=6,nameOf2=k=>X.ITEMS[k]?.name.replace(/^一(片|条|只|颗|个|块|篮|团|桶)/,'')||(X.CROP?.[k]?.name)||k;
  const have=keys=>keys.reduce((a,k)=>a+(S().inv[k]||0),0);
  const canMake=r=>r.need.every(([keys,n])=>have(keys)>=n);
@@ -204,7 +204,8 @@ const summerLife=(function(){
  let clock=0;
  function drawPerson(ctx,v,x,y,o={}){const pic=pose(v,realClock*1000,o);ctx.drawImage(pic,Math.round(x-10),Math.round(y-27));
   const m=mark(v);if(m){const by=Math.round(y-36+Math.sin(realClock*4)*1.5);ctx.fillStyle='#2b2236';ctx.fillRect(x-3,by-1,7,9);ctx.fillStyle='#f6c45a';ctx.fillRect(x-2,by,5,7);ctx.fillStyle='#2b2236';if(m==='!'){ctx.fillRect(x,by+1,1,3);ctx.fillRect(x,by+5,1,1);}else{ctx.fillRect(x-1,by+1,3,1);ctx.fillRect(x+1,by+2,1,1);ctx.fillRect(x,by+3,1,1);ctx.fillRect(x,by+5,1,1);}}}
- function tick(){const now=realClock,dt=Math.min(.1,now-(clock||now));clock=now;const c=C(),s=c.state,b=B();
+ const hooks={draw:[],mdraw:[],click:[],mclick:[],tick:[]};   // summer_more.js: photos, beach activities, commissions, festivals
+ function tick(){const now=realClock,dt=Math.min(.1,now-(clock||now));clock=now;const c=C(),s=c.state,b=B();for(const f of hooks.tick)try{f(dt)}catch(e){console.warn(e)}
   if(busy)return;gather();spawn();tickCusts(dt);tickWalkers(dt);if(!b.met&&!s.target&&!s.market&&!storyLocked()&&!window.__noBayGuide)arrive();   // __noBayGuide: automated checks only
   const q=b.q;if(!s.market&&q.lei.step>=4&&q.kai.step>=5&&!q.done&&hour()>=16&&hour()<20&&Math.abs(s.x-SHORE_X)<120&&!storyLocked())finale();
   if(!s.market&&q.lei.step===1&&night()&&s.x>990&&s.x<1330&&!storyLocked())scene(async()=>{await say(me(),'（岸边放着一双拖鞋……水里有人？）');await say(me(),'是卡伊诺！他一个人潜进了夜里的海，在巨蚌那一带找什么。');q.lei.step=2;log('夜里看见卡伊诺一个人下海，在巨蚌那一带找东西。');showHint('傍晚去海边听听卡伊诺弹琴');});}
@@ -231,7 +232,7 @@ const summerLife=(function(){
  setInterval(()=>{if(!inMarket()&&pills.size)sayPills([],0);},500);
  function bubble(ctx,x,y,text){ctx.font='7px sans-serif';const tw=Math.min(116,ctx.measureText(text).width+8);const bx=Math.round(x-tw/2);ctx.fillStyle='rgba(247,241,226,.96)';ctx.fillRect(bx,y,tw,11);ctx.fillStyle='#4a3b30';ctx.fillText(text,bx+4,y+8,tw-8);}
  // ---- the bay (beach and sea): coconuts, shells, seaweed glints, 阿洛, 卡伊诺, the finale on the shore
- function draw(ctx,info){if(!inBay())return;tick();const now=realClock,c=C(),s=c.state,b=B();
+ function draw(ctx,info){if(!inBay())return;tick();const now=realClock,c=C(),s=c.state,b=B();for(const f of hooks.draw)try{f(ctx,info)}catch(e){console.warn(e)}
   if(b.met&&!b.stallSeen&&s.x<260&&!s.inside)arrow(ctx,24,72,now);   // which way the market is
   for(let i=0;i<(b.coco||0);i++){const ic=icon('coconut');if(ic?.complete)ctx.drawImage(ic,0,0,16,16,PALM_X+i*7,100,8,8);}
   for(const sh of shells()){if(sh.got)continue;const ic=icon(sh.glass?'seaglass':'shell');if(ic?.complete)ctx.drawImage(ic,0,0,16,16,sh.x-3,101,7,7);if(Math.sin(now*3+sh.x)>.6){ctx.fillStyle='#fffbe6';ctx.fillRect(sh.x,98,1,3);ctx.fillRect(sh.x-1,99,3,1);}}
@@ -267,6 +268,7 @@ const summerLife=(function(){
   if(b.met&&!b.stallSeen)arrow(ctx,STALL_X,40,now);
   for(const n of walkers)drawNpc(ctx,n);
   for(const n of custs){const [f,p]=npcFrame(n);const pic=npcCanvas(n,f,n.shop.state==='buy'?'stand':p,false);ctx.drawImage(pic,Math.round(n.x-10),Math.round(FEET-27));}
+  for(const f of hooks.mdraw)try{f(ctx,info)}catch(e){console.warn(e)}
   info.hero();
   sayPills(custs.filter(n=>n.shop.state==='buy'&&n.say),cx);
   pop(ctx);ctx.restore();}
@@ -289,7 +291,7 @@ const summerLife=(function(){
   c.append(FarmUI.actions(opts.map(([label,cost,fx,line])=>({label:label+(cost?` (${cost} 币)`:''),off:cost>S().coins?'丢丢币不够':'',on:()=>{if(cost)X.record('coin','咖啡座：'+label.slice(2),-cost);for(const [k,v]of Object.entries(fx))sim.needs[k]=Math.min(100,sim.needs[k]+v);closeSocialSheet();speakBay(line);}}))));}
  function wish(){if(S().coins<1)return showHint('身上没有丢丢币可以许愿');X.record('coin','往喷泉里扔了一枚丢丢币',-1);
   speakBay(pick(['许了个愿：明天也是晴天','许了个愿：小摊天天卖光','许了个愿……不能说出来','硬币沉下去的时候闪了一下']));addMood(MOOD.wish);}
- function marketPick(x,y){if(busy)return true;const c=C(),hit=(px,w=24)=>Math.abs(x-px)<w&&y>FEET-46&&y<FEET+4;
+ function marketPick(x,y){if(busy)return true;for(const f of hooks.mclick)if(f(x,y))return true;const c=C(),hit=(px,w=24)=>Math.abs(x-px)<w&&y>FEET-46&&y<FEET+4;
   if(where().lei&&hit(FLOWER_X,26)){c.goTo(FLOWER_X-30,'walk',0,()=>{c.state.facing=1;leiTalk();});return true;}
   if(hit(STALL_X,28)){c.goTo(STALL_X+30,'walk',0,()=>{c.state.facing=-1;openStall();});return true;}
   for(const [id,px]of [['fruit',FRUIT_X],['fish',FISH_X],['hat',HAT_X]])if(hit(px)){c.goTo(px+30,'walk',0,()=>{c.state.facing=-1;if(hour()>=7&&hour()<20)openShop(id);else showHint('摊子收了，明天早上再来');});return true;}
@@ -298,7 +300,7 @@ const summerLife=(function(){
   return false;}
  (function register(){const c=C();if(c?.setMarket){c.setMarket({w:MW,draw:marketDraw,pick:marketPick});return;}setTimeout(register,300);})();
  // ---------------------------------------------------------------- clicks (world coordinates)
- function click(x,y){if(!inBay()||busy||C().state.market)return false;const c=C(),s=c.state,b=B(),g=c.gr(x),w=where();
+ function click(x,y){if(!inBay()||busy||C().state.market)return false;for(const f of hooks.click)if(f(x,y))return true;const c=C(),s=c.state,b=B(),g=c.gr(x),w=where();
   const hitP=(px,py)=>Math.abs(x-px)<10&&y>py-30&&y<py+3;
   if(w.alo&&hitP(w.alo.x,c.gr(w.alo.x))){arrive();return true;}
   if(w.kai&&!w.kai.dive&&hitP(w.kai.x,c.gr(w.kai.x))){c.goTo(w.kai.x-16,'walk',0,()=>{c.state.facing=1;kaiTalk();});return true;}
@@ -324,6 +326,6 @@ const summerLife=(function(){
   if(f.item)for(const [k,v]of Object.entries(f.item))X.addItem(k,v);
   if(f.loseStock&&b.stock.length)b.stock.splice(Math.floor(Math.random()*b.stock.length),1);}}catch(e){console.error(e);}return r;};
  const oldFits=cardFits;cardFits=function(cd,c){if(cd.at==='summer_test'&&!inBay())return false;return oldFits(cd,c);};
- return {draw,click,openStall,openCafe,make,RECIPES,priceNow,B,P,arrive,leiTalk,kaiTalk,finale,custs,spawn,buy};
+ return {hooks,say,ask,walk,scene,speakBay,drawPerson,person,pose,ML_,MOOD,hour,night,today,under,inBay,inMarket,C,S,X,icon,img,fitBig,scrollBar,bigIcon,isBusy:()=>busy,where,FEET,MW,STALL_X,CAFE_X,FISH_X,FLOWER_X,FOUNTAIN_X,HAT_X,SHORE_X,PALM_X,V,draw,click,openStall,openCafe,make,RECIPES,priceNow,B,P,arrive,leiTalk,kaiTalk,finale,custs,spawn,buy};
 })();
 window.summerLife=summerLife;

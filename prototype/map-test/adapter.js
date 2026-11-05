@@ -77,12 +77,12 @@ const seasonalTest=(function(){
   if(run){
    if(!life.talkQ&&!c.state.door&&!c.state.inCabana&&!c.state.target&&sim.t>=state.autoAt&&!ringOf){state.autoAt=sim.t+20+Math.random()*25;
     if(sim.place==='spring_test'&&!c.state.inside)c.target(Math.max(20,Math.min((c.state.scene===5?684:342)-20,c.state.x+(Math.random()<.5?-1:1)*(30+Math.random()*70))));
-    else if(sim.place==='summer_test'&&!c.state.inside&&c.state.lying===null)c.goTo(Math.max(50,c.state.x+(Math.random()<.5?-1:1)*45));
+    else if(sim.place==='summer_test'&&!c.state.inside&&c.state.lying===null){const nx=Math.max(50,c.state.x+(Math.random()<.5?-1:1)*45);if(!c.state.market&&c.state.y>132)c.goTo(nx,'dive',c.state.y);else c.goTo(nx);}   /* underwater she drifts at her depth: a plain walk target there left her stuck */
    }
    people.tick(dt);c.tick(life.talkQ?0:dt*Math.min(speed,4),dt);if(active()&&sim.act==='season_explore')sync();
   }else{c.clearKeys();c.tick(0);}
   if(state.activeHeight!==c.canvas.height){const before=widget.getBoundingClientRect();state.activeHeight=c.canvas.height;fit();resizeRoot();const after=widget.getBoundingClientRect();if(!matchMedia('(prefers-reduced-motion:reduce)').matches)widget.animate([{transform:`translateY(${before.top-after.top}px)`},{transform:'translateY(0)'}],{duration:460,easing:'cubic-bezier(.22,1,.36,1)'});}
-  vctx.imageSmoothingEnabled=false;vctx.clearRect(0,0,view.width,view.height);vctx.drawImage(c.renderCanvas,0,0,view.width,view.height);
+  vctx.imageSmoothingEnabled=false;vctx.clearRect(0,0,view.width,view.height);vctx.drawImage(c.renderCanvas,0,0,view.width,view.height);if(sim.place==='summer_test')window.summerMore?.nightPass?.(vctx,view.width,view.height);
 
  };
  const oldCenter=ringCenter;ringCenter=function(){if(!active())return oldCenter();const c=ctl(),s=c.state;return {x:s.x-(s.camera??s.camX??0),y:s.y-(s.camY??0)-13};};
