@@ -119,8 +119,8 @@ async function applyUpdate() {
   // a game that never finished starting (a startup crash) has nothing new to save: the save on disk is the last good one; update anyway, the fix may be in it
   // a save that keeps failing (file locked by antivirus / cloud sync…) must not trap the player (owner 2026-11-05):
   // the second failure in a row offers 仍然更新, which keeps the save on disk (the last autosave)
-  if(booted&&!updForce&&!await saveGame()){upd.state="ready";updSaveFails++;
-   TAURI.core.invoke("log_js",{message:`update blocked by save: ${saveWhy}`}).catch(()=>{});
+  if((typeof booted==="undefined"||booted)&&!updForce&&!await saveGame()){upd.state="ready";updSaveFails++;const saveWhy=typeof window.saveWhy==="string"?window.saveWhy:(typeof globalThis.saveWhyNow==="function"?globalThis.saveWhyNow():"");
+   try{Promise.resolve(TAURI.core.invoke("log_js",{message:`update blocked by save: ${saveWhy}`})).catch(()=>{});}catch(e){}
    if(updSaveFails>=2){showUpdate(`存档没存上（${saveWhy||"原因不明"}）`.slice(0,20),{go:"仍然更新"});updEl.title=`存档没存上：${saveWhy}\n「仍然更新」会用上次自动保存的存档（最多差几分钟）`;updForceNext=true;}
    else updFailed("存档还没保存好，再点一次重试");return;}                                     // always, even with 自动保存 off: it must come back as it was
   try { localStorage.setItem("buddy-updated", upd.version); } catch (e) { /* only for the note after */ }

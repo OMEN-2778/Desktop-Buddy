@@ -5012,6 +5012,7 @@ function restore(sv) {
   restorePetActivityLocation();
 }
 let saveWhy = "";                                   // why the last save failed (the updater shows it)
+function saveWhyNow() { return saveWhy; }
 async function saveGame() {
   if (!booted) { saveWhy = "游戏还没开好"; return false; }
   if (visitSleepPreview || friendHousePreview) { saveWhy = "正在预览别人家"; return false; }

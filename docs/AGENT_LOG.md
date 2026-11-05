@@ -9,6 +9,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ## 2026-11-05 Claude: 手机版躲开刘海/灵动岛，需求栏变瘦
 - mobile.js：触屏手机左右两边至少留 30px（很多 webview 不报 safe-area），需求列宽 132–200 → 112–150；需求条 18→16px。
 - 全屏面板（造型室、任务、各 sheet）用 --m-sx0/--m-sx1r，保持原来的边距（否则造型室按钮被挤掉）。check_mobile_frame 740x360 全过。
+## 2026-11-05 Claude: full bug sweep
+- Ran all 88 tools/check_*.js (demo checks through a UTF-8 server on :8770; Python's plain http.server sends no charset and breaks the page). Compared the failures with the build from a9906ef: only check_social_polish and check_friend_visits were new. Fixed: social sheet pop-in no longer overshoots (it poked out of the house); updates.js tolerates a missing `booted`/`saveWhy` (check_auto_updates harness). friend_visits passes again.
+- Still failing on the old build too (not from this work): ~29 demo checks with stale expectations (25% fonts, dialogue counts, CSS selector rule, endpoints count 7≠4), check_infei_hover (an animal stands in front of the granary), farm-ui/spring/autumn preview pages not built locally.
+- Moved the sand-castle bucket off the bonfire spot (summer_more.js).
+
 ## 2026-11-05 Claude: 草帽湾 part 2 (test page) — camera/图鉴, beach life, 10 commissions, island festivals, night
 - New `prototype/map-test/summer_more.js` on summerLife.hooks (draw/mdraw/click/mclick/tick); viewer.js `setPhoto`, `hotspots`, `lifeText`, `toast` in its API. Stall prices -12%.
 - Night pass for 草帽湾 only (adapter → summerMore.nightPass): multiply blue + a glow layer (bonfire, glowing sea, glow jellies, lanterns). Island festivals override festToday/festivalToday on summer_test (city festivals hidden there), FEST_BAR entries added.

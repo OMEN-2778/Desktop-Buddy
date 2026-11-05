@@ -111,7 +111,7 @@
  function nightPass(v,W,H){const a=dark()*(rain()?.9:.82);if(a>0){v.save();v.globalCompositeOperation='multiply';v.fillStyle=`rgb(${255-a*190|0},${255-a*170|0},${255-a*100|0})`;v.fillRect(0,0,W,H);v.restore();}
   if(glowUsed){v.save();v.imageSmoothingEnabled=false;v.drawImage(glowC,0,0,W,H);v.restore();glowUsed=false;}}
  // ================================================================ 2. beach life
- const SHOWER_X=650,FIRE_X=822,RACK_X=1010,CASTLE_X=806;
+ const SHOWER_X=650,FIRE_X=830,RACK_X=1010,CASTLE_X=784;   // castle bucket at 800, clear of the fire
  const fireOn=()=>{const h=hour();return (h>=18.5||h<0.5)&&!rain();};
  let lastT=0,showerUntil=0,surfFx=null,trail=[],castleFx=0;
  hooks.tick.push(dt=>{if(!inBay())return;const s=C().state,b=M(),gm=lastT?Math.max(0,Math.min(30,sim.t-lastT)):0;lastT=sim.t;
@@ -182,7 +182,7 @@
   bottle:{who:'fish',market:true,title:'漂流瓶',off:2},
   paint:{who:'art',x:742,title:'画一条鱼',off:0},
   lamp:{who:'inn',x:212,title:'晚上的灯',off:1,late:true},
-  castle:{who:'le',x:792,title:'沙堡比赛',off:2,kid:true},
+  castle:{who:'le',x:768,title:'沙堡比赛',off:2,kid:true},
   deep:{who:'sci',x:935,title:'最深的地方',off:1}};
  const st=id=>{const b=M();b.cq[id]??={step:0};return b.cq[id];};
  const cqOn=id=>st(id).step>0&&!st(id).done;
