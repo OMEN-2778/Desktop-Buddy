@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: season maps — drag empty ground to move the window
+- adapter.js swallowed the view's pointerdown, so the house's press-and-drag window move never ran in season maps. A ground press now records `seasonPress`; moving >3px (window capture listener) calls off the walk and runs `dragWindow()` (desktop app only). Tested with a stubbed Tauri: drag → 1 call, target cleared; plain click still walks.
+
 ## 2026-11-05 Claude: stall panel polish
 - Removed redundant notes (place line, hours chip, tips); title 草帽湾 · 市集, chips 营业中 / 今天 N 位客人, 柜台 n/6.
 - Small round corners on all panel boxes; custom always-visible scroll bar on the right (`scrollBar()`, native one hidden, Mac overlay bars don't show); diary box hidden while the big panel covers it (its text ghosted through).

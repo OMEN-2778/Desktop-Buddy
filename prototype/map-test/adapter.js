@@ -93,8 +93,14 @@ const seasonalTest=(function(){
   if(sim.mode==='down'){if(Math.abs(x-sx)<22&&Math.abs(y-sy+8)<18){holding={t0:realClock,pointerId:e.pointerId};view.setPointerCapture(e.pointerId);showHint('按住主角 5 秒即可唤醒');}return;}
   if(sim.place==='autumn_test'&&s.mapOpen){c.pick(x,y);sync();return;}
   if(Math.abs(x-sx)<10&&y<sy&&y>sy-28){openRing('away','buddy');return;}
-  closeRing();state.autoAt=sim.t+45;s.rush=performance.now();if(sim.place==='autumn_test'){view.focus();ripple(e);c.pick(x+(s.mapOpen?0:s.camX||0),y+(s.mapOpen?0:s.camY||0));sync();return;}if(sim.place==='summer_test'&&window.summerLife?.click(x+(s.camX||0),y+(s.camY||0)))return;if(people.click(x+(s.camera??s.camX??0),y+(s.camY||0)))return;people.cancel();c.canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:e.clientX,clientY:e.clientY,button:0}));sync();
+  closeRing();state.autoAt=sim.t+45;s.rush=performance.now();if(sim.place==='autumn_test'){view.focus();ripple(e);c.pick(x+(s.mapOpen?0:s.camX||0),y+(s.mapOpen?0:s.camY||0));sync();return;}if(sim.place==='summer_test'&&window.summerLife?.click(x+(s.camX||0),y+(s.camY||0)))return;if(people.click(x+(s.camera??s.camX??0),y+(s.camY||0)))return;people.cancel();if(e.pointerType==='mouse')seasonPress={x:e.clientX,y:e.clientY};c.canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:e.clientX,clientY:e.clientY,button:0}));sync();
  },true);
+ /* desktop app: pressing empty ground and dragging moves the window, as in the house (owner 2026-11-05);
+    the walk the press started is called off */
+ let seasonPress=null;
+ addEventListener('pointermove',e=>{if(!seasonPress||!(e.buttons&1)||Math.hypot(e.clientX-seasonPress.x,e.clientY-seasonPress.y)<=3)return;seasonPress=null;
+  if(typeof TAURI==='undefined'||!TAURI||!active())return;const s=ctl()?.state;if(s){s.target=null;s.after=null;s.rush=0;}dragWindow();},true);
+ addEventListener('pointerup',()=>{seasonPress=null;});
  // click feedback (owner 2026-11-03): where she is sent, a yellow ring spreads out on the ground (style.css .walk-ripple)
  // pixel style (owner: "too big, smaller, pixel-art"): a small ring drawn in house pixels, 4 frames growing and fading
  const RIP=[[2,1],[4,2],[6,3],[7,3]],RIP_W=17,RIP_H=9;
