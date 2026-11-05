@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: 修读档崩溃（0.2.7 玩家反馈：Cannot read properties of undefined (reading 'mall')）
+- restoreMall 在图片加载前读 D.outside.mall.img → 改成可选链；index.src.html 里 restoreMall 包 try/catch，商场这段坏了也能开游戏。
+
 ## 2026-11-05 Claude: 手机版躲开刘海/灵动岛，需求栏变瘦
 - mobile.js：触屏手机左右两边至少留 30px（很多 webview 不报 safe-area），需求列宽 132–200 → 112–150；需求条 18→16px。
 - 全屏面板（造型室、任务、各 sheet）用 --m-sx0/--m-sx1r，保持原来的边距（否则造型室按钮被挤掉）。check_mobile_frame 740x360 全过。

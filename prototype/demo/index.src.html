@@ -4979,7 +4979,7 @@ function restore(sv) {
       sim.route = [[seat.x, seat.feet]]; sim.mode = "act"; sim.act = "bench"; sim.actEnd = Infinity;
     } else if (sim.place === "park") sim.park.seated = false;
     arriveAt(sim.place);
-    if (sim.place === "mall") restoreMall(m.mall);
+    if (sim.place === "mall") try { restoreMall(m.mall); } catch (e) { console.warn("mall restore skipped", e); }   // a bad mall section must not stop the game from opening
   }
   // Social identities are restored earlier; a companion must be reconciled only
   // after the saved location and its seats have replaced the startup house.
