@@ -155,15 +155,15 @@ html.m .mood-list { position: fixed; left: calc(var(--m-x0) + var(--m-r2) + 8px)
 html.m .status-row { position: fixed; left: var(--m-x0); width: var(--m-col); top: var(--m-top); bottom: var(--m-y1b); display: flex; flex-direction: column; gap: 6px; }
 html.m .needs { flex: 1 1 auto; min-height: 0; height: auto; }
 html.m .needs .needs-panel, html.m .needs.open .needs-panel { display: flex !important; flex-direction: row; justify-content: space-between; align-items: stretch;
-  height: 100%; box-sizing: border-box; padding: 10px 10px 8px; gap: 0; grid-template-columns: none;
+  height: 100%; box-sizing: border-box; padding: 10px 7px 8px; gap: 0; grid-template-columns: none;
   background: var(--panel, #fffaf2); border-radius: 16px; box-shadow: 0 0 0 2px var(--edge, #3a3046), 3px 3px 0 2px var(--shadow, #0002); clip-path: none; }
 html.m .needs-panel::before, html.m .needs-panel::after { display: none !important; }
-html.m .need { flex-direction: column !important; align-items: center; justify-content: flex-end; height: 100%; width: 18px; gap: 4px; }
+html.m .need { flex-direction: column !important; align-items: center; justify-content: flex-end; height: 100%; width: 16px; gap: 4px; }
 html.m .need > * + * { margin-left: 0; }
 html.m .need-label { display: none; }
 html.m .need-well, html.m .needs.open .need-well { order: 1; flex: 1 1 auto; width: 12px !important; height: auto; min-height: 20px; border-radius: 6px; }
 html.m .need .fill { top: auto !important; bottom: 0; left: 0; right: 0; width: auto !important; height: calc(var(--v) * 100%); min-height: 4px; min-width: 0; }
-html.m .need img, html.m .needs.open .need img { order: 2; width: 18px; height: 18px; padding: 0; }
+html.m .need img, html.m .needs.open .need img { order: 2; width: 16px; height: 16px; padding: 0; }
 html.m .status-row .skybar { position: relative; top: auto; left: auto; width: 100% !important; height: auto; flex: none; z-index: 30; }
 html.m .status-row .skybar canvas#sky { width: 100% !important; height: auto !important; display: block; }
 
@@ -174,7 +174,7 @@ html.m .fest-bar { left: var(--m-house-left) !important; width: var(--house-w) !
 html.m .m-scrim { position: fixed; inset: 0; z-index: 64; background: rgba(28, 22, 38, .32); -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px); opacity: 0; pointer-events: none; transition: opacity .2s; }
 html.m.sheet .m-scrim { opacity: 1; pointer-events: auto; }
 html.m .picker, html.m .card, html.m .social-sheet, html.m #petPanel, html.m .set-pop, html.m .diary-pop, html.m .contacts-panel {
-  position: fixed !important; z-index: 70 !important; inset: calc(var(--m-y0)) var(--m-x1r) var(--m-y1b) var(--m-x0) !important;
+  position: fixed !important; z-index: 70 !important; inset: calc(var(--m-y0)) var(--m-sx1r) var(--m-y1b) var(--m-sx0) !important;
   width: auto !important; height: auto !important; max-width: none !important; max-height: none !important; box-sizing: border-box; }
 html.m .set-pop, html.m .diary-pop, html.m .contacts-panel { overflow-y: auto; border-radius: 16px; }
 html.m .card { --cs: 1 !important; }
@@ -182,7 +182,7 @@ html.m .card h3 { font-size: 18px !important; }
 html.m .card p { font-size: 14px !important; max-width: 34em; }
 html.m .card .cd-opt { font-size: 14px !important; min-height: 40px; }
 html.m .card-res { z-index: 71 !important; }
-html.m .studio-slot.open { inset: var(--m-y0) var(--m-x1r) var(--m-y1b) var(--m-x0) !important; z-index: 70 !important; }
+html.m .studio-slot.open { inset: var(--m-y0) var(--m-sx1r) var(--m-y1b) var(--m-sx0) !important; z-index: 70 !important; }
 html.m .studio-slot:not(.open) { pointer-events: none; }
 html.m .studio-slot.open::before { display: none; }
 html.m .guide { z-index: 70 !important; }
@@ -213,7 +213,7 @@ html.m.s-set .settings, html.m.s-diary .diary { z-index: 72 !important; }
 html.m .contacts-panel .contacts-list { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)) !important; grid-auto-rows: 92px !important; align-content: start; height: 100%; }
 html.m .contacts-panel .contact-card { height: 100% !important; }
 /* one ✕ for the light sheets (settings, diary, 人脉): the sheet covers the scrim */
-html.m .m-close { position: fixed; z-index: 80; top: calc(var(--m-y0) + 8px); right: calc(var(--m-x1r) + 8px); width: 32px; height: 32px; border-radius: 16px;
+html.m .m-close { position: fixed; z-index: 80; top: calc(var(--m-y0) + 8px); right: calc(var(--m-sx1r) + 8px); width: 32px; height: 32px; border-radius: 16px;
   border: 2px solid var(--edge, #3a3046); background: var(--panel, #fffaf2); color: var(--ink, #2a2333); font: 700 15px/1 sans-serif; display: none; padding: 0; }
 html.m.s-set .m-close, html.m.s-diary .m-close, html.m.s-contacts .m-close, html.m.s-quests .m-close { display: grid; place-items: center; }
 html.m.s-set .set-pop, html.m.s-diary .diary-pop, html.m.s-contacts .contacts-panel { padding-right: 52px !important; }
@@ -248,7 +248,7 @@ html.m .quest-trigger img { width: 24px !important; height: 24px !important; }
 html.m.has-quests .quest-trigger { opacity: 1 !important; visibility: visible !important; pointer-events: auto !important; }
 html.m.has-quests .diary, html.m .moodrow.quests-open .diary { right: calc(var(--m-x1r) + 3 * var(--m-r1) + 18px) !important; }
 html.m .quest-bridge { display: none !important; }
-html.m .quest-panel { position: fixed !important; z-index: 70 !important; inset: var(--m-y0) var(--m-x1r) var(--m-y1b) var(--m-x0) !important; width: auto !important; height: auto !important;
+html.m .quest-panel { position: fixed !important; z-index: 70 !important; inset: var(--m-y0) var(--m-sx1r) var(--m-y1b) var(--m-sx0) !important; width: auto !important; height: auto !important;
   max-width: none !important; max-height: none !important; transform: none !important; overflow-y: auto; box-sizing: border-box; border-radius: 16px; }
 html.m .quest-panel .quest-tail { display: none !important; }
 html.m .peer-hud { height: auto !important; min-height: var(--m-r1); }

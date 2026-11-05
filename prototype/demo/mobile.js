@@ -80,12 +80,16 @@ document.head.insertAdjacentHTML("beforeend", `<meta name="theme-color" content=
 function mobileInset(v) { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(v)) || 0; }
 function mobileGeom() {
   const W = innerWidth, H = innerHeight, pad = 10;
-  const x0 = mobileInset("--sal") + pad, x1 = W - mobileInset("--sar") - pad;
+  // owner 2026-11-05: notches / 灵动岛 cover the left column, and many webviews report no safe area at all:
+  // on a touch phone keep at least 30px clear on both long sides (the notch is on whichever side it was turned to)
+  const notch = matchMedia("(pointer: coarse)").matches ? 30 : 0;
+  const x0 = Math.max(mobileInset("--sal"), notch) + pad, x1 = W - Math.max(mobileInset("--sar"), notch) - pad;
   const y0 = mobileInset("--sat") + pad, y1 = H - mobileInset("--sab") - pad;
-  const col = Math.round(Math.max(132, Math.min(200, (x1 - x0) * 0.22)));
+  const col = Math.round(Math.max(112, Math.min(150, (x1 - x0) * 0.16)));   // slimmer (owner 2026-11-05)
   const r1 = 34, r2 = 40, gap = 6;
   const row1 = y0, row2 = row1 + r1 + gap, top = row2 + r2 + 8;
-  return { W, H, x0, x1, y0, y1, col, r1, r2, row1, row2, top, fest: 32, hl: x0 + col + 10 };
+  const sx0 = mobileInset("--sal") + pad, sx1 = W - mobileInset("--sar") - pad;   // full-screen sheets keep the old edges
+  return { W, H, x0, x1, sx0, sx1, y0, y1, col, r1, r2, row1, row2, top, fest: 32, hl: x0 + col + 10 };
 }
 let MOBILE_COL = 170;
 function mobileBox() {
@@ -110,7 +114,8 @@ function mobileLayout() {
   root.setProperty("--m-fest-top", top + view.offsetHeight + 6 + "px");
   root.setProperty("--m-house-h", view.offsetHeight + "px");
   for (const k of ["x0", "y0", "col", "r1", "r2", "row1", "row2", "top", "hl"]) root.setProperty("--m-" + k, g[k] + "px");
-  root.setProperty("--m-x1r", g.W - g.x1 + "px");                 // right edge, as a distance from the right
+  root.setProperty("--m-x1r", g.W - g.x1 + "px");
+  root.setProperty("--m-sx0", g.sx0 + "px"); root.setProperty("--m-sx1r", g.W - g.sx1 + "px");                 // right edge, as a distance from the right
   root.setProperty("--m-y1b", g.H - g.y1 + "px");                 // bottom edge, as a distance from the bottom
   root.setProperty("--app-h", innerHeight + "px");   // the visible height (100vh can include browser bars)
 }
