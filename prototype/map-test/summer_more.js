@@ -213,6 +213,11 @@
  const GOAL={whistle:'退潮时（6–9 点、17–19 点）去浅滩找红绳子的哨子',surf:'在沙滩的冲浪板架冲三次浪（教练在场时算一节课）',coco:'在椰子树下捡 3 个椰子交给米娅',
   turtle:'潜水时点海龟，拍 3 张照片',bucket:'在浅水里找到小红桶',bottle:'去沉船谷的沉船宝箱找漂流瓶，再交给旅舍老板',paint:'拍一张珊瑚花园页里的鱼',
   lamp:'晚上 8 点后下水，在浅滩给发光水母拍照',castle:'和阿乐堆沙堡，第二天再来看',deep:'潜到深蓝海沟底，给灯笼鱼拍照'};
+ // owner 2026-11-05: "use what exists": taken commissions show in the same 任务 panel as 茵菲谷's quests
+ const QICON={whistle:'note',surf:'star',coco:'basket',turtle:'lens',bucket:'gift',bottle:'letter',paint:'fish',lamp:'lantern',castle:'house',deep:'map'};
+ const zoneAt=x=>{let n='草帽湾';for(const [zx,name]of C()?.data?.zones||[])if(x>=zx)n=name;return n;};
+ if(typeof questBoard!=='undefined')questBoard.add(()=>Object.entries(Q).filter(([id])=>st(id).step>0).map(([id,q])=>{const s=st(id);
+  return {id:'bay_'+id,title:q.title,kind:QICON[id]||'scroll',place:q.market?'海棠集市':zoneAt(q.x),done:!!s.done,step:s.done?'':(GOAL[id]||''),end:'委托完成了',isNew:false,log:s.log||[]};}));
  const goalHint=id=>{const s=st(id);if(s.step&&!s.done&&GOAL[id])showHint(`委托「${Q[id].title}」：${GOAL[id]}`);};
  async function talk(id){const q=Q[id],s=st(id),P_=whoP(id),N=P_.name,me=nameOf();
   if(s.done){await say(N,IDLE[id][today()%2]);return;}
@@ -287,7 +292,10 @@
   {n:'大浪节',se:3,day:12,c:['#2f7aa0','#f2d36b'],line:'一年最大的浪，冲浪手都来了',flags:['#2f7aa0','#f2d36b','#ffffff']}];
  const fest=()=>{const se=cal();return FESTS.find(f=>f.se===se.i&&f.day===se.day)||null;};
  // city festivals stay in the city: on the island the bar and the time-bar tag show only the island's own
- const oldFT=festToday;festToday=function(){if(sim.place==='summer_test'){const f=fest();return f?{name:f.n,season:f.se,day:f.day,island:true}:null;}return oldFT();};
+ const oldFT=festToday;festToday=function(){if(sim.place==='summer_test'){const f=fest();return f?{name:f.n,season:f.se,day:f.day,island:true,announce:()=>announce(f)}:null;}return oldFT();};
+ // the day's start, the same way a city festival starts it: a diary line, her own words, the festival mood
+ const FEST_SAY={草帽节:['帽子要抓紧！','今天风好大，好热闹'],海灯夜:['晚上要放海灯！','先想好许什么愿'],花环节:['好香的花环','今天要学草裙舞'],鲸歌节:['今天能听到鲸鱼唱歌吗','去岸边等着'],大浪节:['浪好大！','今天有冲浪比赛']};
+ function announce(f){log(`今天是草帽湾的${f.n}。${f.line}。`);speak(pick(FEST_SAY[f.n]||['过节啦']));mood(MOOD.fest);}
  const oldFT2=festivalToday;festivalToday=function(){if(sim.place==='summer_test'){const f=fest();if(f)return f.n;const d=Math.floor(sim.t/1440)+1;return d===30?'生日':d===14||d===56?'纪念日':null;}return oldFT2();};
  const festDone=k=>{const b=M();return b.fest[k+'@'+today()];},festMark=k=>{const b=M();b.fest[k+'@'+today()]=1;for(const o of Object.keys(b.fest))if(+o.split('@')[1]<today()-30)delete b.fest[o];};
  const goBay=async x=>{if(C().state.market){C().beginDoor('bay');await new Promise(r=>setTimeout(r,1400));}await walk(x);};
@@ -305,6 +313,7 @@
   watch:()=>scene(async()=>{await goBay(960);await say('解说员','第三号选手上浪了！——完美的转身！');await say(nameOf(),'好厉害！！');need('fun',20);if(!festDone('watch')){festMark('watch');mood(MOOD.wave);}}),
   contest:()=>{if((M().act.surf||0)<3)return showHint('先多冲几次浪，能站起来了再来报名');if(festDone('contest'))return showHint('今天已经比过了');
    scene(async()=>{festMark('contest');await say('解说员','下一位选手——来自草帽湾的新人！');surf();await new Promise(r=>setTimeout(r,9500));await say('解说员','漂亮！新人奖！');coins(5,'大浪节新人奖');mood(MOOD.wave);log('大浪节：参加冲浪比赛，拿了新人奖。');});}};
+ if(typeof FB_MOTIFS!=='undefined')Object.assign(FB_MOTIFS,{草帽节:['star','flower','heart'],海灯夜:['lantern','moon','star'],花环节:['flower','heart','note'],鲸歌节:['wave','note','star'],大浪节:['wave','star','ball']});   // the festival bar's own drifting motifs
  Object.assign(FEST_BAR,{
   草帽节:['#d9a441','#f6dc8a','满天飞着草帽，风越大越热闹',['抛草帽','fn',A.hat],['领一顶草帽','fn',A.freehat]],
   海灯夜:['#3a3f7a','#f0a95b','晚上把海灯放进海里，许个愿',['放一盏海灯','fn',A.lantern]],
@@ -312,7 +321,7 @@
   鲸歌节:['#36557a','#9bd3df','座头鲸经过海湾，海里能听到它们唱歌',['岸边听鲸歌','fn',A.whale]],
   大浪节:['#2f7aa0','#f2d36b','一年最大的浪，冲浪手都来了',['看冲浪比赛','fn',A.watch],['报名比赛','fn',A.contest]]});
  let hatFx=[],myLantern=null,festHello=-1;
- hooks.tick.push(()=>{if(!inBay())return;const f=fest();if(f&&festHello!==today()){festHello=today();setTimeout(()=>{showHint(`今天是草帽湾的「${f.n}」！${f.line}`);log(`草帽湾过节：${f.n}。`);},1200);}
+ hooks.tick.push(()=>{if(!inBay())return;const f=fest();
   if(f?.n==='草帽节'&&Math.random()<.02&&hatFx.length<14)hatFx.push({x:C().state.x-200+Math.random()*120,y:20+Math.random()*50,t0:realClock});});
  function bunting(ctx,x0,x1,y,f,t){const sag=6;for(let x=x0;x<=x1;x++){const u=(x-x0)/(x1-x0),yy=Math.round(y+sag*4*u*(1-u));ctx.fillStyle='#6b5a4a';ctx.fillRect(x,yy,1,1);
   if((x-x0)%7===0&&x+5<=x1){ctx.fillStyle=f.flags[((x-x0)/7|0)%f.flags.length];const sway=Math.round(Math.sin(t*2+x)*.6);for(let k=0;k<5;k++)ctx.fillRect(x+Math.floor(k/2)+sway*(k>2?1:0),yy+1+k,Math.max(1,5-k-Math.floor(k/2)),1);}}}

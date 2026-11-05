@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: reuse — bay commissions in the 任务 panel, island festivals start like city ones
+- Owner: "use what exists instead of new UI". summer_more registers taken commissions with `questBoard.add` (title, quest icon, place, current goal). Island festival day start goes through the same hourly festival code: index.src.html now takes `festToday()` (the island overrides it) and calls its `announce()` (diary line, her words, festival mood) instead of a toast; FB_MOTIFS entries for the five island festivals. City festivals unchanged.
+
 ## 2026-11-05 Claude: quest marks clickable; 草帽湾 图鉴 doubled (33 timed species)
 - infei_quests/infei_hover/summer_more: an NPC's click/hover area now reaches the !/? box above the head (it stopped at the head, so clicking the mark did nothing).
 - New art `art/src/concept/reef2.py` (SPECIES: name, draw, when, page, x, y, line; review sheet reef2_sheet.png). sea_life_motion animates them, summer_bay places them, make_summer_preview passes `when`/`page` + lifeText. Viewer skips a swimmer whose `when` is off (`globalThis.summerLifeOn`, defined in summer_more: day/night/rain/dawn/dusk, rare 25% / vrare 6% of days by a daily roll). Pages grow to 66; empty cards show the time hint.

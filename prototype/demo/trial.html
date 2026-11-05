@@ -11017,7 +11017,8 @@ function rollEvents() {
   const day = Math.floor(sim.t / 1440) + 1;
   if (h >= 9 && c.awake && lastFestivalDay !== day) {
     lastFestivalDay = day;
-    const f = T.festivals.find(f => f.season === c.se.i && f.day === c.se.day);
+    const f0 = festToday(), f = f0 && !f0.island ? f0 : null;   // a season map may swap in its own festival (草帽湾): it announces that itself
+    if (f0?.island) f0.announce?.();
     if (f) {
       const line = fill(one(f.diary));
       log(line.includes(f.name) ? line : `今天是${f.name}。` + line);   // no "今天是彩票日。彩票日…"
