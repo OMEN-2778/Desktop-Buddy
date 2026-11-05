@@ -106,7 +106,7 @@ function sparkle(x,y,t){const a=(Math.sin(t*3+x)+1)/2;if(a<.3)return;ctx.fillSty
 function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,VW,vh);if(!state.loaded)return;
  const t=reduced?0:state.time;
  if(state.market&&market){market.draw(ctx,{time:t,camX:state.camX,hero:()=>hero(state.x,MARKET_FEET)});drawTravelArrows();fx.transition(ctx,state.door,VW,vh);return;}
- if(state.inside){ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,VW,vh);ctx.drawImage(img(DATA.inside),40,28);hero(state.x,84);exitArrow();fx.transition(ctx,state.door,VW,vh);return;}
+ if(state.inside){ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,VW,vh);ctx.drawImage(img(DATA.inside),40,28);if(!state.hideHero)hero(state.x,84+(state.iy||0));globalThis.summerLodge?.draw(ctx);exitArrow();fx.transition(ctx,state.door,VW,vh);return;}
  const cx=state.camX,cy=state.camY;
  ctx.drawImage(img(DATA.sky),cx,cy,VW,vh,0,0,VW,vh);
  ctx.save();ctx.translate(-cx,-cy);

@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: 草帽湾 lodge furniture works like home
+- New `prototype/map-test/summer_lodge.js` (in make_season_game_test.py): bed (head on the pillow + quilt mound, Zs), sofa, coffee-table fruit, ukulele, sink, stove, shower (hidden + drops), basin, toilet (hidden); look-only lamp, print, surfboard, plant. Click = walk over and use; hover = house glow; needs fill per piece.
+- Low needs: summer_more's lodge care now sends her to the matching piece (bed/shower/toilet/stove/sofa). Viewer: inside draw calls `globalThis.summerLodge` (the shell shadows `window`), honours `hideHero`, `state.iy` seat offset.
+
 ## 2026-11-05 Claude: 修读档崩溃（0.2.7 玩家反馈：Cannot read properties of undefined (reading 'mall')）
 - restoreMall 在图片加载前读 D.outside.mall.img → 改成可选链；index.src.html 里 restoreMall 包 try/catch，商场这段坏了也能开游戏。
 

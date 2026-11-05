@@ -338,6 +338,7 @@
  const oArrive=arriveAt;arriveAt=function(p){leavingBay=false;care=null;return oArrive(p);};
  let careT=0,careStuck=0;setInterval(()=>{if(!care||sim.place!=='summer_test'||wiping)return;   // a timer: the bay's draw hooks stop while she is inside
   const s=C().state;if(!s.inside){if(!s.target&&!s.door&&!L.isBusy()&&!storyLocked()){if(s.market)C().beginDoor('bay');else if(s.y>SURF+3)C().goTo(1050,'dive',SURF);else C().enter();careStuck=Date.now();}else if(s.target&&Date.now()-careStuck>15000){s.target=null;careStuck=Date.now();}return;}   /* from the sea she swims ashore first */
+  if(sim.needs[care.need]<90&&window.summerLodge){const sl=summerLodge,id=sl.NEED_SPOT[care.need];if(id){careT=0;if(!sl.svc&&!s.target)sl.use(id,true);return;}}   /* the lodge's own furniture: bed, shower, stove... */
   const gm=careT?Math.max(0,Math.min(30,sim.t-careT)):0;careT=sim.t;need(care.need,gm*.6);for(const k of Object.keys(sim.needs))if(k!==care.need)need(k,gm*.05);
   if(sim.needs[care.need]>=90){care=null;careT=0;sim.actEnd=sim.t;speakBay('歇好了，出去玩～');setTimeout(()=>{try{C().leave();}catch(e){}},900);}},500);
  window.summerMore={nightPass,dark,snap,openDex,M,fest,FESTS,Q,st,talk,surf,buildCastle,PAGES,A,present};
