@@ -508,7 +508,7 @@ body {
   width: 360px; height: var(--pick-h, 360px); display: flex; flex-direction: column;
   background: var(--panel); color: var(--ink);
   box-shadow: 0 -2px 0 0 var(--edge), 0 2px 0 0 var(--edge), -2px 0 0 0 var(--edge), 2px 0 0 0 var(--edge), 5px 5px 0 0 var(--shadow);
-  transform-origin: 100% 50%; transform: translateX(16px) scale(.92); opacity: 0;
+  transform-origin: var(--from-x, 100%) var(--from-y, 50%); transform: translateX(16px) scale(.92); opacity: 0;
   transition: transform .3s cubic-bezier(.3, 1.5, .5, 1), opacity .18s;
 }
 .picker.on { transform: none; opacity: 1; }
@@ -560,8 +560,8 @@ body {
 }
 .card[hidden], .card-res[hidden] { display: none; }
 
-#view.dim { filter: brightness(.52) saturate(.8); }   /* just the house's own pixels, not a box around it */
-.card { --rim: #f7f6fb; --outline: 2px 0 0 #1b1322, -2px 0 0 #1b1322, 0 2px 0 #1b1322, 0 -2px 0 #1b1322, 2px 2px 0 #1b1322, -2px 2px 0 #1b1322, 2px -2px 0 #1b1322, -2px -2px 0 #1b1322, 4px 4px 0 rgba(27, 19, 34, .55); flex-direction: column; justify-content: center; text-align: center; overflow: hidden; color: #fff; transform-origin: var(--from-x, 50%) var(--from-y, 50%); transform: scale(.04); opacity: 0; transition: transform .28s cubic-bezier(.45, 0, .8, .5), opacity .12s .16s; /* closing: back into her */; display:grid; grid-template-rows:auto minmax(0,1fr) auto; align-items:center; justify-items:center; gap:clamp(3px,calc(8px * var(--cs)),10px); padding:clamp(4px,calc(12px * var(--cs)),16px); border:2px solid #f7f6fb; background:rgba(27,19,34,.86); box-shadow:inset 2px 2px 0 #ffffff22; }
+#view.dim { filter: brightness(.86) saturate(.9); }   /* just the house's own pixels, not a box around it */
+.card { --rim: #f7f6fb; --outline: 2px 0 0 #1b1322, -2px 0 0 #1b1322, 0 2px 0 #1b1322, 0 -2px 0 #1b1322, 2px 2px 0 #1b1322, -2px 2px 0 #1b1322, 2px -2px 0 #1b1322, -2px -2px 0 #1b1322, 4px 4px 0 rgba(27, 19, 34, .55); flex-direction: column; justify-content: center; text-align: center; overflow: hidden; color: #fff; transform-origin: var(--from-x, 50%) var(--from-y, 50%); transform: scale(.04); opacity: 0; transition: transform .28s cubic-bezier(.45, 0, .8, .5), opacity .12s .16s; /* closing: back into her */; display:grid; grid-template-rows:auto minmax(0,1fr) auto; align-items:center; justify-items:center; gap:clamp(3px,calc(8px * var(--cs)),10px); padding:clamp(4px,calc(12px * var(--cs)),16px); border:2px solid #f7f6fb; background:rgba(27,19,34,.5); -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); box-shadow:inset 2px 2px 0 #ffffff22; }   /* frosted like the phone (owner 2026-11-05); the pixel frame stays */
 .card.on { transform: none; opacity: 1; animation: cardIn .62s linear; transition: none; }
 /* opening: a springy pop with a couple of wobbles */
 @keyframes cardIn {
@@ -958,7 +958,7 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
 
 @media (prefers-reduced-motion:reduce) { .needs-panel,.needs-summary,.need-well,.need img,.need-label,.network-trigger,.contacts-panel,.contact-card,.contact-actions,.contact-actions button,.network-trigger img,.incoming-call button,.need .fill { transition:none !important; } .incoming-call,.caller-avatar canvas,.caller-avatar i { animation:none; } .incoming-call.accepting,.incoming-call.declining { animation:none; opacity:0; } .caller-avatar i { display:none; } }
 /* Shared, scrollable diary surface for memories and personal invitations. */
-.social-sheet { z-index:90; overscroll-behavior:contain; color:var(--ink); box-shadow:inset 2px 2px 0 var(--bevel-hi),inset -2px -2px 0 var(--bevel-lo); animation:social-sheet-in .3s cubic-bezier(.2,.8,.2,1); position:absolute; left:var(--pick-left); top:var(--pick-top); width:var(--pick-w); height:var(--pick-h); max-height:none; transform:none; display:flex; flex-direction:column; overflow:hidden; clip-path:none; background:color-mix(in srgb,var(--panel) 86%,transparent); border:2px solid var(--edge); font-size:var(--ui-font-body); gap:var(--ui-gap); padding:var(--ui-padding); }
+.social-sheet { z-index:90; overscroll-behavior:contain; color:var(--ink); box-shadow:inset 2px 2px 0 var(--bevel-hi),inset -2px -2px 0 var(--bevel-lo); animation:social-sheet-in .42s linear; position:absolute; left:var(--pick-left); top:var(--pick-top); width:var(--pick-w); height:var(--pick-h); max-height:none; transform:none; display:flex; flex-direction:column; overflow:hidden; clip-path:none; background:color-mix(in srgb,var(--panel) 86%,transparent); border:2px solid var(--edge); font-size:var(--ui-font-body); gap:var(--ui-gap); padding:var(--ui-padding); }
 .social-sheet[hidden],.home-guest-say[hidden] { display:none; }
 .social-sheet.overnight-sheet { background:color-mix(in srgb,var(--panel) 92%,transparent); border-color:#8599bc; justify-content:center; align-items:center; gap:4px; }
 .social-sheet.overnight-sheet h3 { margin:0; width:100%; text-align:center; overflow-wrap:anywhere; flex:0 1 auto; min-height:0; overflow:auto; }
@@ -999,7 +999,9 @@ button:focus-visible, summary:focus-visible { outline: var(--u) dashed var(--foc
 .contacts-panel.stacked .contact-copy { width:100%; align-items:center; }
 .contacts-panel.stacked .affinity { grid-row:4; width:100%; }
 
-@keyframes social-sheet-in { from { opacity:0; scale:.96; } to { opacity:1; scale:1; } }
+/* sheets pop out of what was clicked (owner 2026-11-05): --from-x/y set by popFrom() */
+.social-sheet { transform-origin: var(--from-x, 50%) var(--from-y, 50%); }
+@keyframes social-sheet-in { 0% { opacity:0; scale:.08; animation-timing-function:cubic-bezier(.2,.7,.4,1); } 15% { opacity:1; } 55% { scale:1.015; animation-timing-function:ease-in-out; } 78% { scale:.995; } 100% { opacity:1; scale:1; } }
 @media(prefers-reduced-motion:reduce) { .social-sheet { animation:none; } }
 
 /* Each fill retains its own colour; faint pixel stripes drift inside it. */
@@ -12025,6 +12027,15 @@ function pickFrom(id) {
   const c = CLICK[id];
   return c ? { x: c.x + c.w / 2, y: c.y + c.h / 2 } : null;
 }
+/* every panel opened by a click grows out of that click (owner 2026-11-05) */
+let lastTap = null;
+addEventListener("pointerdown", e => { lastTap = { x: e.clientX, y: e.clientY, t: performance.now() }; }, true);
+function popFrom(el) {
+  const r = el.getBoundingClientRect();
+  if (!lastTap || performance.now() - lastTap.t > 4000 || !r.width) { el.style.removeProperty("--from-x"); el.style.removeProperty("--from-y"); return; }
+  el.style.setProperty("--from-x", Math.round(lastTap.x - r.left) + "px"); el.style.setProperty("--from-y", Math.round(lastTap.y - r.top) + "px");
+}
+window.popFrom = popFrom;
 function openPicker(act, from = null) {
   const P_ = PICK[act];
   if (!P_ || sim.mode === "down" || card) return;
@@ -12054,7 +12065,7 @@ function openPicker(act, from = null) {
   pickBody.scrollTop = 0;
   fitPicker();
   if (from) { pickerEl.style.setProperty("--from-x", from.x * scale + "px"); pickerEl.style.setProperty("--from-y", from.y * scale + "px"); }
-  else { pickerEl.style.removeProperty("--from-x"); pickerEl.style.removeProperty("--from-y"); }
+  else popFrom(pickerEl);
   if(["snack","friend_snack"].includes(act))gameAudio.sound("real-fridge-cc0",.20);
   pickerEl.hidden = false;
   pickerEl.classList.remove("on"); void pickerEl.offsetWidth; pickerEl.classList.add("on");
@@ -24640,7 +24651,7 @@ function openSocialSheet(title){
   cancelVisitOffer();socialSheet.className='social-sheet';fitSocialSheet();
   sheetReturnFocus=document.activeElement;setContactsOpen(false);closeRing();closePicker();setDiaryOpen(false);setSettingsOpen(false);socialSheet.replaceChildren();
   const heading=document.createElement('h3');heading.id='socialSheetTitle';heading.textContent=title;socialSheet.append(heading);
-  const close=document.createElement('button');close.type='button';close.className='social-sheet-close';close.textContent='关闭';close.onclick=closeSocialSheet;socialSheet.append(close);socialSheet.hidden=false;close.focus({preventScroll:true});return socialSheet;
+  const close=document.createElement('button');close.type='button';close.className='social-sheet-close';close.textContent='关闭';close.onclick=closeSocialSheet;socialSheet.append(close);socialSheet.hidden=false;window.popFrom?.(socialSheet);close.focus({preventScroll:true});return socialSheet;
 }
 socialSheet.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();e.preventDefault();if(!visitOffer.id&&!socialSheet.classList.contains('overnight-sheet'))closeSocialSheet();}if(e.key==='Tab'){const buttons=[...socialSheet.querySelectorAll('button')],i=buttons.indexOf(document.activeElement);if(e.shiftKey&&i===0){e.preventDefault();buttons.at(-1).focus();}else if(!e.shiftKey&&i===buttons.length-1){e.preventDefault();buttons[0].focus();}}});
 function socialContent(sheet){const content=document.createElement('div');content.className='social-sheet-content';sheet.append(content);return content;}

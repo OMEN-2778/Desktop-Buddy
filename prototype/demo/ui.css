@@ -502,7 +502,7 @@ body {
   width: 360px; height: var(--pick-h, 360px); display: flex; flex-direction: column;
   background: var(--panel); color: var(--ink);
   box-shadow: 0 -2px 0 0 var(--edge), 0 2px 0 0 var(--edge), -2px 0 0 0 var(--edge), 2px 0 0 0 var(--edge), 5px 5px 0 0 var(--shadow);
-  transform-origin: 100% 50%; transform: translateX(16px) scale(.92); opacity: 0;
+  transform-origin: var(--from-x, 100%) var(--from-y, 50%); transform: translateX(16px) scale(.92); opacity: 0;
   transition: transform .3s cubic-bezier(.3, 1.5, .5, 1), opacity .18s;
 }
 .picker.on { transform: none; opacity: 1; }
@@ -554,8 +554,8 @@ body {
 }
 .card[hidden], .card-res[hidden] { display: none; }
 
-#view.dim { filter: brightness(.52) saturate(.8); }   /* just the house's own pixels, not a box around it */
-.card { --rim: #f7f6fb; --outline: 2px 0 0 #1b1322, -2px 0 0 #1b1322, 0 2px 0 #1b1322, 0 -2px 0 #1b1322, 2px 2px 0 #1b1322, -2px 2px 0 #1b1322, 2px -2px 0 #1b1322, -2px -2px 0 #1b1322, 4px 4px 0 rgba(27, 19, 34, .55); flex-direction: column; justify-content: center; text-align: center; overflow: hidden; color: #fff; transform-origin: var(--from-x, 50%) var(--from-y, 50%); transform: scale(.04); opacity: 0; transition: transform .28s cubic-bezier(.45, 0, .8, .5), opacity .12s .16s; /* closing: back into her */; display:grid; grid-template-rows:auto minmax(0,1fr) auto; align-items:center; justify-items:center; gap:clamp(3px,calc(8px * var(--cs)),10px); padding:clamp(4px,calc(12px * var(--cs)),16px); border:2px solid #f7f6fb; background:rgba(27,19,34,.86); box-shadow:inset 2px 2px 0 #ffffff22; }
+#view.dim { filter: brightness(.86) saturate(.9); }   /* just the house's own pixels, not a box around it */
+.card { --rim: #f7f6fb; --outline: 2px 0 0 #1b1322, -2px 0 0 #1b1322, 0 2px 0 #1b1322, 0 -2px 0 #1b1322, 2px 2px 0 #1b1322, -2px 2px 0 #1b1322, 2px -2px 0 #1b1322, -2px -2px 0 #1b1322, 4px 4px 0 rgba(27, 19, 34, .55); flex-direction: column; justify-content: center; text-align: center; overflow: hidden; color: #fff; transform-origin: var(--from-x, 50%) var(--from-y, 50%); transform: scale(.04); opacity: 0; transition: transform .28s cubic-bezier(.45, 0, .8, .5), opacity .12s .16s; /* closing: back into her */; display:grid; grid-template-rows:auto minmax(0,1fr) auto; align-items:center; justify-items:center; gap:clamp(3px,calc(8px * var(--cs)),10px); padding:clamp(4px,calc(12px * var(--cs)),16px); border:2px solid #f7f6fb; background:rgba(27,19,34,.5); -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px); box-shadow:inset 2px 2px 0 #ffffff22; }   /* frosted like the phone (owner 2026-11-05); the pixel frame stays */
 .card.on { transform: none; opacity: 1; animation: cardIn .62s linear; transition: none; }
 /* opening: a springy pop with a couple of wobbles */
 @keyframes cardIn {

@@ -22,7 +22,7 @@ function openSocialSheet(title){
   cancelVisitOffer();socialSheet.className='social-sheet';fitSocialSheet();
   sheetReturnFocus=document.activeElement;setContactsOpen(false);closeRing();closePicker();setDiaryOpen(false);setSettingsOpen(false);socialSheet.replaceChildren();
   const heading=document.createElement('h3');heading.id='socialSheetTitle';heading.textContent=title;socialSheet.append(heading);
-  const close=document.createElement('button');close.type='button';close.className='social-sheet-close';close.textContent='关闭';close.onclick=closeSocialSheet;socialSheet.append(close);socialSheet.hidden=false;close.focus({preventScroll:true});return socialSheet;
+  const close=document.createElement('button');close.type='button';close.className='social-sheet-close';close.textContent='关闭';close.onclick=closeSocialSheet;socialSheet.append(close);socialSheet.hidden=false;window.popFrom?.(socialSheet);close.focus({preventScroll:true});return socialSheet;
 }
 socialSheet.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();e.preventDefault();if(!visitOffer.id&&!socialSheet.classList.contains('overnight-sheet'))closeSocialSheet();}if(e.key==='Tab'){const buttons=[...socialSheet.querySelectorAll('button')],i=buttons.indexOf(document.activeElement);if(e.shiftKey&&i===0){e.preventDefault();buttons.at(-1).focus();}else if(!e.shiftKey&&i===buttons.length-1){e.preventDefault();buttons[0].focus();}}});
 function socialContent(sheet){const content=document.createElement('div');content.className='social-sheet-content';sheet.append(content);return content;}

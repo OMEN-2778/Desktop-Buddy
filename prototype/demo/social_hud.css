@@ -105,7 +105,7 @@
 
 @media (prefers-reduced-motion:reduce) { .needs-panel,.needs-summary,.need-well,.need img,.need-label,.network-trigger,.contacts-panel,.contact-card,.contact-actions,.contact-actions button,.network-trigger img,.incoming-call button,.need .fill { transition:none !important; } .incoming-call,.caller-avatar canvas,.caller-avatar i { animation:none; } .incoming-call.accepting,.incoming-call.declining { animation:none; opacity:0; } .caller-avatar i { display:none; } }
 /* Shared, scrollable diary surface for memories and personal invitations. */
-.social-sheet { z-index:90; overscroll-behavior:contain; color:var(--ink); box-shadow:inset 2px 2px 0 var(--bevel-hi),inset -2px -2px 0 var(--bevel-lo); animation:social-sheet-in .3s cubic-bezier(.2,.8,.2,1); position:absolute; left:var(--pick-left); top:var(--pick-top); width:var(--pick-w); height:var(--pick-h); max-height:none; transform:none; display:flex; flex-direction:column; overflow:hidden; clip-path:none; background:color-mix(in srgb,var(--panel) 86%,transparent); border:2px solid var(--edge); font-size:var(--ui-font-body); gap:var(--ui-gap); padding:var(--ui-padding); }
+.social-sheet { z-index:90; overscroll-behavior:contain; color:var(--ink); box-shadow:inset 2px 2px 0 var(--bevel-hi),inset -2px -2px 0 var(--bevel-lo); animation:social-sheet-in .42s linear; position:absolute; left:var(--pick-left); top:var(--pick-top); width:var(--pick-w); height:var(--pick-h); max-height:none; transform:none; display:flex; flex-direction:column; overflow:hidden; clip-path:none; background:color-mix(in srgb,var(--panel) 86%,transparent); border:2px solid var(--edge); font-size:var(--ui-font-body); gap:var(--ui-gap); padding:var(--ui-padding); }
 .social-sheet[hidden],.home-guest-say[hidden] { display:none; }
 .social-sheet.overnight-sheet { background:color-mix(in srgb,var(--panel) 92%,transparent); border-color:#8599bc; justify-content:center; align-items:center; gap:4px; }
 .social-sheet.overnight-sheet h3 { margin:0; width:100%; text-align:center; overflow-wrap:anywhere; flex:0 1 auto; min-height:0; overflow:auto; }
@@ -146,7 +146,9 @@
 .contacts-panel.stacked .contact-copy { width:100%; align-items:center; }
 .contacts-panel.stacked .affinity { grid-row:4; width:100%; }
 
-@keyframes social-sheet-in { from { opacity:0; scale:.96; } to { opacity:1; scale:1; } }
+/* sheets pop out of what was clicked (owner 2026-11-05): --from-x/y set by popFrom() */
+.social-sheet { transform-origin: var(--from-x, 50%) var(--from-y, 50%); }
+@keyframes social-sheet-in { 0% { opacity:0; scale:.08; animation-timing-function:cubic-bezier(.2,.7,.4,1); } 15% { opacity:1; } 55% { scale:1.015; animation-timing-function:ease-in-out; } 78% { scale:.995; } 100% { opacity:1; scale:1; } }
 @media(prefers-reduced-motion:reduce) { .social-sheet { animation:none; } }
 
 /* Each fill retains its own colour; faint pixel stripes drift inside it. */

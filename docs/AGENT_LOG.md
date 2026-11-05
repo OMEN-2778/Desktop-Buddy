@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: frosted chance cards; panels grow out of the click
+- ui.css: `.card` is translucent with `backdrop-filter: blur(7px)` (pixel frame kept), house dim lighter. Pickers opened without `from` and every social sheet (FarmUI sheets too) get `--from-x/y` from the last pointerdown (`popFrom()` in index.src.html) and pop out of it with a springy scale.
+
 ## 2026-11-05 Claude: 市集 vendors have daily stock
 - Owner: buying to resell could farm coins. `LIMIT` per item per day (西瓜 1, 草帽 1, 小螃蟹/海玻璃 2, others 3), counted in `F.bay.bought` (resets daily, saved). The shop shows 今天还剩 N 个 / 今天卖完了.
 
