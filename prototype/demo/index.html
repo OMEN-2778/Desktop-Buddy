@@ -53507,7 +53507,7 @@ function restore(sv) {
       sim.route = [[seat.x, seat.feet]]; sim.mode = "act"; sim.act = "bench"; sim.actEnd = Infinity;
     } else if (sim.place === "park") sim.park.seated = false;
     arriveAt(sim.place);
-    if (sim.place === "mall") restoreMall(m.mall);
+    if (sim.place === "mall") try { restoreMall(m.mall); } catch (e) { console.warn("mall restore skipped", e); }   // a bad mall section must not stop the game from opening
   }
   // Social identities are restored earlier; a companion must be reconciled only
   // after the saved location and its seats have replaced the startup house.
@@ -53732,8 +53732,7 @@ if (TAURI) {
   document.addEventListener("keydown", () => { eatClick = false; }, true);
 }
 if (TAURI) {
-  const widgetEl0 = document.getElementById("widget");
-  const ro = new ResizeObserver(() => { const a = widgetEl0.getAnimations(); if (a.length) { Promise.all(a.map(x => x.finished.catch(() => {}))).then(() => makeRoom()); return; } makeRoom(); });   // measured without a running slide (rects include transforms)   // re-measure the room above first (makeRoom ends in fitWindow): a scene that grew must take it from there, not move the window
+  const ro = new ResizeObserver(() => { const a = document.getElementById("widget").getAnimations(); if (a.length) { Promise.all(a.map(x => x.finished.catch(() => {}))).then(() => makeRoom()); return; } makeRoom(); });   // measured without a running slide (rects include transforms)   // re-measure the room above first (makeRoom ends in fitWindow): a scene that grew must take it from there, not move the window
   ro.observe(document.getElementById("widget")); ro.observe(setPop);
   TAURI.event.listen("app-quit", async () => { await autoSave(); TAURI.core.invoke("exit_app"); });
   TAURI.event.listen("on-top-changed", e => { prefs.onTop = !!e.payload; saveSettings(); buildSettings(); });
@@ -54021,7 +54020,7 @@ function restoreMall(raw) {
   if(!raw||!Number.isFinite(raw.x))return;
   mallS.x=raw.x;mallS.dir=raw.dir===1?1:-1;
   if(Number.isFinite(raw.emergency?.u)&&Number.isFinite(raw.emergency?.stop)){
-    const uw=D.outside.mall.img.restroomW?.[raw.emergency.uw]?raw.emergency.uw:undefined;   // restore runs before the pictures load
+    const uw=D.outside?.mall?.img?.restroomW?.[raw.emergency.uw]?raw.emergency.uw:undefined;   // restore runs before the pictures load
     mallS.emergency={id:'restroom',name:'卫生间',kind:'shop',dynamic:true,u:raw.emergency.u,stop:raw.emergency.stop,
       w:(uw||MALL.restroom.w)-5,uw,top:MALL.restroom.top,born:realClock-.5};
   }

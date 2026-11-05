@@ -121,6 +121,7 @@ const summerLife=(function(){
   for(const p of pops)p.t+=dt;while(pops.length&&pops[0].t>1.6)pops.shift();}
  // ---------------------------------------------------------------- people of the bay
  function seeded(seed,f){const r=Math.random;let s=seed;Math.random=()=>(s=s*16807%2147483647)/2147483647;try{return f();}finally{Math.random=r;}}
+ const drawnPeople=[];
  function person(name,gender,seed){let lk;for(let k=0;k<60;k++){lk=seeded(seed+k*977,npcLook);if(lk.gender===gender)break;}return {name,look:lk,ramps:doll.rampsOf(lk),cache:new Map(),dir:-1,x:0,feet:106};}
  const P={alo:person('阿洛','m',301),lei:person('蕾拉妮','f',433),kai:person('卡伊诺','m',577)};
  function pose(v,ms,o={}){const f={expr:o.expr||'neutral',look:0,bob:Math.floor(ms/600)%2,sway:0,wave:o.wave?Math.floor(ms/240)%2:null};if(Math.floor(ms/2600)%6===0)f.expr='blink';return npcCanvas(v,f,o.walk?'walk'+(Math.floor(ms/180)%2):'stand',false);}
@@ -202,7 +203,7 @@ const summerLife=(function(){
   await say('蕾拉妮','谢谢你。下次来，婚礼花环我送你一串。');showHint('支线完成：他耳边的花 · 一串花环');});
  // ---------------------------------------------------------------- drawing
  let clock=0;
- function drawPerson(ctx,v,x,y,o={}){const pic=pose(v,realClock*1000,o);ctx.drawImage(pic,Math.round(x-10),Math.round(y-27));
+ function drawPerson(ctx,v,x,y,o={}){const pic=pose(v,realClock*1000,o);ctx.drawImage(pic,Math.round(x-10),Math.round(y-27));drawnPeople.push({pic,x:Math.round(x-10),y:Math.round(y-27)});   /* summer_hover.js outlines the one under the pointer */
   const m=mark(v);if(m){const by=Math.round(y-36+Math.sin(realClock*4)*1.5);ctx.fillStyle='#2b2236';ctx.fillRect(x-3,by-1,7,9);ctx.fillStyle='#f6c45a';ctx.fillRect(x-2,by,5,7);ctx.fillStyle='#2b2236';if(m==='!'){ctx.fillRect(x,by+1,1,3);ctx.fillRect(x,by+5,1,1);}else{ctx.fillRect(x-1,by+1,3,1);ctx.fillRect(x+1,by+2,1,1);ctx.fillRect(x,by+3,1,1);ctx.fillRect(x,by+5,1,1);}}}
  const hooks={draw:[],mdraw:[],click:[],mclick:[],tick:[]};   // summer_more.js: photos, beach activities, commissions, festivals
  function tick(){const now=realClock,dt=Math.min(.1,now-(clock||now));clock=now;const c=C(),s=c.state,b=B();for(const f of hooks.tick)try{f(dt)}catch(e){console.warn(e)}
@@ -326,6 +327,6 @@ const summerLife=(function(){
   if(f.item)for(const [k,v]of Object.entries(f.item))X.addItem(k,v);
   if(f.loseStock&&b.stock.length)b.stock.splice(Math.floor(Math.random()*b.stock.length),1);}}catch(e){console.error(e);}return r;};
  const oldFits=cardFits;cardFits=function(cd,c){if(cd.at==='summer_test'&&!inBay())return false;return oldFits(cd,c);};
- return {hooks,say,ask,walk,scene,speakBay,drawPerson,person,pose,ML_,MOOD,hour,night,today,under,inBay,inMarket,C,S,X,icon,img,fitBig,scrollBar,bigIcon,isBusy:()=>busy,where,FEET,MW,STALL_X,CAFE_X,FISH_X,FLOWER_X,FOUNTAIN_X,HAT_X,SHORE_X,PALM_X,V,draw,click,openStall,openCafe,make,RECIPES,priceNow,B,P,arrive,leiTalk,kaiTalk,finale,custs,spawn,buy};
+ return {drawnPeople,hooks,say,ask,walk,scene,speakBay,drawPerson,person,pose,ML_,MOOD,hour,night,today,under,inBay,inMarket,C,S,X,icon,img,fitBig,scrollBar,bigIcon,isBusy:()=>busy,where,FEET,MW,STALL_X,CAFE_X,FISH_X,FLOWER_X,FOUNTAIN_X,HAT_X,SHORE_X,PALM_X,V,draw,click,openStall,openCafe,make,RECIPES,priceNow,B,P,arrive,leiTalk,kaiTalk,finale,custs,spawn,buy};
 })();
 window.summerLife=summerLife;

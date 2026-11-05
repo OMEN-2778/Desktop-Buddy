@@ -121,20 +121,22 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
  fx.waves(ctx,t,cx,VW,WL,DATA.shore,DATA.seaEnd);
  const sim=img(DATA.seal[Math.floor(t*.7)%2]);ctx.drawImage(sim,DATA.sealAt[0],DATA.sealAt[1]-sim.height);
  for(const h of DATA.hotspots)if(!state.found.has(h.id))sparkle(h.x,h.y,t);
- for(const c of DATA.life){const ph=t*c.v/Math.max(1,c.r)+c.x*.031,proposedX=c.x+Math.sin(ph)*c.r+(c.ox||0),proposedY=c.y+Math.sin(t*.7+c.x)*2+(c.oy||0),left=Math.cos(ph)<0,im=img(c.f[Math.floor(t*10+c.x)%c.f.length]);
-  c.w=im.width;c.h=im.height;
-  // Whole sprite bounds must remain in open water, including through turns.
-  const free=(xx,yy)=>{const x0=Math.floor(xx),y0=Math.floor(yy),x1=Math.ceil(xx+im.width),y1=Math.ceil(yy+im.height),stride=W+1;if(x0<0||x1>W||y0<=WL+3||y1>H)return false;return solidSum[y1*stride+x1]-solidSum[y0*stride+x1]-solidSum[y1*stride+x0]+solidSum[y0*stride+x0]===0;};
-  let x=proposedX,y=proposedY;
-  if(!free(x,y)){
-   if(c.safeX!==undefined){x=c.safeX;y=c.safeY;}
-   else{for(let up=1;up<300;up++){if(free(x,y-up)){y-=up;break;}}}
-  }
-  if(!free(x,y))continue;
-  c.safeX=x;c.safeY=y;
-  c.cx=x+im.width/2;c.cy=y+im.height/2;c.w=im.width;c.h=im.height;
+ // Fish swim back and forth inside a lane worked out ONCE from open water (owner 2026-11-05: fish popped in/out and
+ // jerked when the old per-frame test met rock: frozen, snapped back, or skipped). The lane fits the largest frame
+ // plus the 2px bob, so the whole sprite always stays in water and the motion is one smooth sine.
+ const free=(xx,yy,w,h)=>{const x0=Math.floor(xx),y0=Math.floor(yy),x1=Math.ceil(xx+w),y1=Math.ceil(yy+h),stride=W+1;if(x0<0||x1>W||y0<=WL+3||y1>H)return false;return solidSum[y1*stride+x1]-solidSum[y0*stride+x1]-solidSum[y1*stride+x0]+solidSum[y0*stride+x0]===0;};
+ for(const c of DATA.life){
+  if(c.lane===undefined){const ims=c.f.map(img);if(ims.some(m=>!m.width))continue;
+   const w=Math.max(...ims.map(m=>m.width)),h=Math.max(...ims.map(m=>m.height)),ok=(x,y)=>free(x,y-2,w,h+4);
+   let y=c.y+(c.oy||0),x0=c.x+(c.ox||0);
+   if(!ok(x0,y)){let hit=null;for(let d=1;d<120&&!hit;d++)for(const [dx,dy]of [[0,-d],[0,d],[-d,0],[d,0],[-d,-d],[d,-d],[-d,d],[d,d]])if(ok(x0+dx,y+dy)){hit=[x0+dx,y+dy];break;}if(hit)[x0,y]=hit;else y=null;}   /* nearest open water around its spot */
+   if(y===null)c.lane=null;
+   else{let lo=0,hi=0;while(lo<c.r&&ok(x0-lo-1,y))lo++;while(hi<c.r&&ok(x0+hi+1,y))hi++;c.lane={mid:x0+(hi-lo)/2,half:(hi+lo)/2,y};}}
+  if(!c.lane)continue;const L=c.lane;
+  const ph=t*c.v/Math.max(1,L.half)+c.x*.031,x=L.mid+Math.sin(ph)*L.half,y=L.y+Math.sin(t*.7+c.x)*2,left=Math.cos(ph)<0&&L.half>1,im=img(c.f[Math.floor(t*10+c.x)%c.f.length]);
+  c.cx=x+im.width/2;c.cy=y+im.height/2;c.w=im.width;c.h=im.height;c.im=im;c.px=Math.round(x+im.width/2)-Math.round(im.width/2);c.py=Math.round(y+im.height/2)-Math.round(im.height/2);c.flip=left;
   if(x+im.width<cx||x>cx+VW||y+im.height<cy||y>cy+vh)continue;
-  ctx.save();ctx.translate(x+im.width/2,y+im.height/2);ctx.scale(left?-1:1,1);ctx.drawImage(im,-im.width/2,-im.height/2);ctx.restore();}
+  ctx.save();ctx.translate(Math.round(x+im.width/2),Math.round(y+im.height/2));ctx.scale(left?-1:1,1);ctx.drawImage(im,-Math.round(im.width/2),-Math.round(im.height/2));ctx.restore();}
  peopleRenderer?.(ctx,{time:t,inside:state.inside,under:under()});
  if(state.lying!==null){const [lx,ly]=DATA.chairs[state.lying];state.facing=1;hero(lx,ly);}else hero(state.x,state.y);
  fx.drawWater(ctx,WL,{x:cx,y:cy,w:VW,h:vh});
@@ -185,4 +187,4 @@ load(DATA);Promise.all([...images.values()].map(im=>im.decode())).then(()=>{
  state.y=standY(state.x);state.loaded=true;ctx.imageSmoothingEnabled=false;toast('先去更衣室换上泳装，再去海里玩吧～ 发光的小星星是可以探索的地方。',5);
  let last=performance.now();function frame(now){const dt=document.hidden?0:clamp((now-last)/1000,0,.05);last=now;if(!state.paused)state.time+=dt;advanceDoor(dt);fx.tickWater(state.paused?0:dt);move(dt);camera(dt);draw();updateUI();requestAnimationFrame(frame);}requestAnimationFrame(frame);})
  .catch(e=>{const el=document.getElementById('error');el.hidden=false;el.textContent='地图加载失败，请刷新重试';console.error(e);});
-window.summerPreview={state,seaLife:DATA.life,plants:DATA.plants,kelp:DATA.kelp,goTo,pick,move,camera,draw,gr,deep,isSolid,enterCabana,leaveCabana,travel,wardrobe,enter,leave,advanceDoor,fx,setWeather:kind=>wetKind=weatherOverride||kind,getWeather:()=>wetKind,setPeopleRenderer:fn=>peopleRenderer=fn,setMarket:m=>market=m,beginDoor,setPhoto:f=>photo=f,discover,hotspots:DATA.hotspots,lifeText:DATA.lifeText,toast};
+window.summerPreview={state,seaLife:DATA.life,plants:DATA.plants,kelp:DATA.kelp,goTo,pick,move,camera,draw,gr,deep,isSolid,enterCabana,leaveCabana,travel,wardrobe,enter,leave,advanceDoor,fx,setWeather:kind=>wetKind=weatherOverride||kind,getWeather:()=>wetKind,setPeopleRenderer:fn=>peopleRenderer=fn,setMarket:m=>market=m,beginDoor,setPhoto:f=>photo=f,discover,hotspots:DATA.hotspots,data:DATA,lifeText:DATA.lifeText,toast};

@@ -82,7 +82,7 @@ const seasonalTest=(function(){
    people.tick(dt);c.tick(life.talkQ?0:dt*Math.min(speed,4),dt);if(active()&&sim.act==='season_explore')sync();
   }else{c.clearKeys();c.tick(0);}
   if(state.activeHeight!==c.canvas.height){const before=widget.getBoundingClientRect();state.activeHeight=c.canvas.height;fit();resizeRoot();const after=widget.getBoundingClientRect();if(!matchMedia('(prefers-reduced-motion:reduce)').matches)widget.animate([{transform:`translateY(${before.top-after.top}px)`},{transform:'translateY(0)'}],{duration:460,easing:'cubic-bezier(.22,1,.36,1)'});}
-  vctx.imageSmoothingEnabled=false;vctx.clearRect(0,0,view.width,view.height);vctx.drawImage(c.renderCanvas,0,0,view.width,view.height);if(sim.place==='summer_test')window.summerMore?.nightPass?.(vctx,view.width,view.height);
+  vctx.imageSmoothingEnabled=false;vctx.clearRect(0,0,view.width,view.height);vctx.drawImage(c.renderCanvas,0,0,view.width,view.height);if(sim.place==='summer_test')window.summerMore?.nightPass?.(vctx,view.width,view.height);if(sim.place==='summer_test')window.summerHover?.draw(vctx,view.width/c.canvas.width,view.height/c.canvas.height);
 
  };
  const oldCenter=ringCenter;ringCenter=function(){if(!active())return oldCenter();const c=ctl(),s=c.state;return {x:s.x-(s.camera??s.camX??0),y:s.y-(s.camY??0)-13};};

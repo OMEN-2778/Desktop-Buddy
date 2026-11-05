@@ -5204,8 +5204,7 @@ if (TAURI) {
   document.addEventListener("keydown", () => { eatClick = false; }, true);
 }
 if (TAURI) {
-  const widgetEl0 = document.getElementById("widget");
-  const ro = new ResizeObserver(() => { const a = widgetEl0.getAnimations(); if (a.length) { Promise.all(a.map(x => x.finished.catch(() => {}))).then(() => makeRoom()); return; } makeRoom(); });   // measured without a running slide (rects include transforms)   // re-measure the room above first (makeRoom ends in fitWindow): a scene that grew must take it from there, not move the window
+  const ro = new ResizeObserver(() => { const a = document.getElementById("widget").getAnimations(); if (a.length) { Promise.all(a.map(x => x.finished.catch(() => {}))).then(() => makeRoom()); return; } makeRoom(); });   // measured without a running slide (rects include transforms)   // re-measure the room above first (makeRoom ends in fitWindow): a scene that grew must take it from there, not move the window
   ro.observe(document.getElementById("widget")); ro.observe(setPop);
   TAURI.event.listen("app-quit", async () => { await autoSave(); TAURI.core.invoke("exit_app"); });
   TAURI.event.listen("on-top-changed", e => { prefs.onTop = !!e.payload; saveSettings(); buildSettings(); });

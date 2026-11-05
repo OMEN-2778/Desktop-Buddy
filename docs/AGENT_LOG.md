@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: release CI fixed; smooth fish; 草帽湾 hover glow
+- Desktop app CI had failed since e711058: check_window_drag.js looks for `if (TAURI) {\n  const ro = new ResizeObserver`; I had put a const in between. Fixed (owner's app never got the 4-sail windmill etc. because no release was built).
+- summer/viewer.js fish: each fish gets an open-water lane once (fits its largest frame + bob, nearest water if its spot is rock); smooth sine inside it. No more freeze/snap/skip (97/97 placed, max 0.5px/frame).
+- New `prototype/map-test/summer_hover.js`: people the bay drew this frame (summerLife.drawnPeople), fish (c.im/px/py/flip), lodge door, cabana chairs, sparkle spots get the house's marching outline, drawn after the night pass (adapter).
+
 ## 2026-11-05 Claude: lodge bed quilt bulges
 - Owner: the quilt didn't bulge. New art `art/src/concept/summer_lodge_cover.py` → `summer_lodge_cover.png` (coral quilt over one round mound taller than her head, sheet at the neck, appliqué), in SUMMER_LIFE_ART.cover; summer_lodge.js draws it over her head on the pillow.
 
