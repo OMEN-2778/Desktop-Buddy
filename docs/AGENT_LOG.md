@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: 市集 haze lighter + mid-ground sun rays
+- Far headland sand instead of green; veils are near-white sky blue (far .5, mid .22). `sunRays()` in summer_life.js: 7 slanted shafts (screen blend) that drift with parallax .6 and breathe, plus dappled glints on the town; off at night and in rain/cloud.
+
 ## 2026-11-05 Claude: 草帽湾 市集 backdrop in layers
 - summer_market.py: sky / far (sea on the left, headland, small town) / mid (terraced town, houses stand on the slope) / near (wall with cap, pilasters, shadow; perspective cobbles; olive trees, oleanders). Parallax 0, .3, .6, 1 and a pale blue veil over far (.55) and mid (.3) in summer_life.js. Fountain redrawn round (elliptic rim, water, drum shading, shadow).
 - Market customers talk in the shared `.npcsay` pill instead of a canvas box.

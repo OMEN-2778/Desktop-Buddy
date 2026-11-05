@@ -154,8 +154,8 @@ def far_layer():
         s.hline(x := rnd.randint(0, 200), x + rnd.randint(1, 3), rnd.randint(hz + 2, 80), P.sea[4])
     S = surface(FW, 54, 20, 11, 70, 17, lift=.32, lend=230)           # a headland rising out of the sea
     for x in range(FW):
-        s.vline(x, S[x], MH - 1, P.leaf[2])
-        s.set(x, S[x], P.leaf[3])
+        s.vline(x, S[x], MH - 1, P.sand[3])                            # sunlit dry headland, not green (owner)
+        s.set(x, S[x], P.sand[4])
     s.blit(hill_town(FW, 66, 14, 21, .6, 3, 6, 0, lift=.4, lend=200), 0, 0)
     return s                                                          # the game veils it in pale blue (owner)
 
