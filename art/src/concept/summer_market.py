@@ -239,10 +239,15 @@ def background():
     s = Sprite(MW, MH)
     rnd = random.Random(4)
     for tx in (388, 664):                                             # olive trees in gardens behind the wall
-        olive_tree(s, tx, 84, 34, rnd)
+        t = Sprite(MW, MH)
+        olive_tree(t, tx, 84, 34, rnd)
+        s.blit(t.outline(P.sage[0], grow=False), 0, 0, blend=True)     # outlined like the main world's trees (owner)
     street(s)
     for bx in (132, 282, 470):                                        # oleanders in the gaps between stalls
-        bush(s, bx, 93, 16, rnd)
+        t = Sprite(MW, MH)
+        bush(t, bx, 93, 16, rnd)
+        s.blit(t.outline(P.leaf[0], grow=False), 0, 0, blend=True)
+        s.hline(bx - 7, bx + 10, 95, STONE[1])                        # contact shadow
     arch(s)
     return s
 
@@ -373,16 +378,21 @@ def olive_tree(s, x, ground, h=30, rnd=None):
         tx = x + round(1.5 * math.sin(k / 4))
         s.hline(tx - 1, tx + 1, ground - k, P.wood[2]).set(tx - 1, ground - k, P.wood[3]).set(tx + 1, ground - k, P.wood[1])
     top = ground - h
+    cell = {}
+    def leafy(gx, gy):                                                # 2x2 leaf clumps: each bumps light up or down
+        k = (gx // 2, gy // 2)
+        if k not in cell:
+            cell[k] = rnd.uniform(-.28, .28)
+        return cell[k]
     for ox, oy, r in ((-9, 8, 7), (8, 7, 7), (0, 3, 8), (-4, 11, 6), (5, 12, 6), (-13, 12, 5), (13, 12, 5)):
         for yy in range(-r, r + 1):
             for xx in range(-r - 2, r + 3):
                 if (xx / (r + 2)) ** 2 + (yy / r) ** 2 <= 1:
-                    lit = xx + yy < -r * .5
-                    dark = xx + yy > r * .7 or yy > r * .6
-                    c = P.sage[3] if lit else P.sage[1] if dark else P.sage[2]
-                    if lit and xx + yy < -r * 1.1:
-                        c = P.sage[4]
-                    s.set(x + ox + xx, top + oy + yy, c)
+                    gx, gy = x + ox + xx, top + oy + yy
+                    v = -(xx / (r + 2) + yy / r) * .55 - max(0, yy / r) * .25   # round clump lit top-left
+                    v += leafy(gx, gy) + rnd.uniform(-.1, .1)              # leaf texture noise (owner)
+                    c = P.sage[4] if v > .66 else P.sage[3] if v > .26 else P.sage[2] if v > -.18 else P.sage[1]
+                    s.set(gx, gy, c)
 
 
 def bush(s, x, ground, w=16, rnd=None):
@@ -392,13 +402,11 @@ def bush(s, x, ground, w=16, rnd=None):
         for xx in range(-w // 2 - 1, w // 2 + 2):
             if (xx / (w / 2 + 1)) ** 2 + ((yy - h + 1) / h) ** 2 <= 1:
                 y = ground - h + 1 + yy
-                lit = xx < -w // 4 and yy < h * .6
-                c = P.leaf[3] if lit else P.leaf[1] if yy > h - 3 or xx > w // 3 else P.leaf[2]
+                v = -(xx / (w / 2 + 1)) * .45 - (yy - h * .4) / h * .7 + rnd.uniform(-.3, .3)
+                c = P.leaf[4] if v > .6 else P.leaf[3] if v > .2 else P.leaf[2] if v > -.35 else P.leaf[1]
                 if rnd.random() < .14 and yy < h - 2:
                     c = BOUG[3] if rnd.random() < .6 else BOUG[4]
                 s.set(x + xx, y, c)
-    for xx in range(-w // 2, w // 2 + 3):                              # contact shadow
-        s.set(x + xx + 1, ground + 1, STONE[1])
 
 
 def cafe() -> Sprite:
