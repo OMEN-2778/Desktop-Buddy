@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: island festival names
+- Owner: island-style names. 海灯夜 → 椰灯夜 (coconut-shell lamps), 大浪节 → 追浪节 (summer_more.js, SUMMER_PLAY.md).
+
 ## 2026-11-05 Claude: 茵菲谷 panels in the 海棠集市 stall look
 - New `prototype/map-test/infei_ui.js` (in make_season_game_test.py): while in 茵菲谷, every FarmUI sheet (watched on the social sheet's class) gets `infei-ui fu-big-sheet` + the stall's fitBig/scroll bar; shops (picker) get `infei-ui`. style.css `.infei-ui`: cream banner for the plant/ranch/balance tops, wood counter for growth stages, chips for the info lines, rounded stall cards for tabs/stats/shop items, 32px shop icons. Contents and FarmUI itself unchanged (main world untouched).
 

@@ -26,7 +26,7 @@
  const MOOD={snap:ML_('snap','第一张照片','happy'),page:ML_('page','图鉴集满一页','confident',3),sun:ML_('sun','晒得暖洋洋','happy',1),burn:ML_('burn','晒红了','embarrassed',1),
   shower:ML_('shower','冲掉一身海盐','happy',1),fire:ML_('fire','篝火旁的晚上','happy',2),surf_fall:ML_('surf_fall','喝了一大口海水','embarrassed',1),surf_up:ML_('surf_up','站上浪了！','confident',3),
   castle:ML_('castle','沙堡','happy',1),glow:ML_('glow','荧光海','dazed',3),quest:ML_('quest','帮上忙了','happy',2),letter:ML_('letter','四十年前的信','sad',2),
-  fest:ML_('fest','草帽湾过节','happy',3),lantern:ML_('lantern','一盏海灯','dazed',2),whale:ML_('whale','鲸歌','dazed',3),wave:ML_('wave','大浪节','confident',2)};
+  fest:ML_('fest','草帽湾过节','happy',3),lantern:ML_('lantern','一盏椰灯','dazed',2),whale:ML_('whale','鲸歌','dazed',3),wave:ML_('wave','追浪节','confident',2)};
  const mood=(id)=>{try{addMood(id);}catch(e){}};
 
  // ================================================================ 1. camera + 图鉴
@@ -286,15 +286,15 @@
 
  // ================================================================ 4. island festivals
  const FESTS=[{n:'草帽节',se:1,day:4,c:['#d9a441','#f6dc8a'],line:'满天飞着草帽，风越大越热闹',flags:['#e35b4f','#f2d36b','#7fc4e8']},
-  {n:'海灯夜',se:1,day:9,c:['#3a3f7a','#f0a95b'],line:'晚上把海灯放进海里，许个愿',flags:['#f0a95b','#f6dc8a','#e57a5a']},
+  {n:'椰灯夜',se:1,day:9,c:['#3a3f7a','#f0a95b'],line:'椰壳里点上小灯，晚上放进海里许个愿',flags:['#f0a95b','#f6dc8a','#e57a5a']},
   {n:'花环节',se:1,day:12,c:['#d0577f','#f6b3cb'],line:'人人戴花环，广场上跳草裙舞',flags:['#f28fb0','#f6dc8a','#9fdc8a']},
   {n:'鲸歌节',se:3,day:5,c:['#36557a','#9bd3df'],line:'座头鲸经过海湾，海里能听到它们唱歌',flags:['#5d84b8','#e8f2fa','#9bd3df']},
-  {n:'大浪节',se:3,day:12,c:['#2f7aa0','#f2d36b'],line:'一年最大的浪，冲浪手都来了',flags:['#2f7aa0','#f2d36b','#ffffff']}];
+  {n:'追浪节',se:3,day:12,c:['#2f7aa0','#f2d36b'],line:'一年最大的浪，冲浪手都来了',flags:['#2f7aa0','#f2d36b','#ffffff']}];
  const fest=()=>{const se=cal();return FESTS.find(f=>f.se===se.i&&f.day===se.day)||null;};
  // city festivals stay in the city: on the island the bar and the time-bar tag show only the island's own
  const oldFT=festToday;festToday=function(){if(sim.place==='summer_test'){const f=fest();return f?{name:f.n,season:f.se,day:f.day,island:true,announce:()=>announce(f)}:null;}return oldFT();};
  // the day's start, the same way a city festival starts it: a diary line, her own words, the festival mood
- const FEST_SAY={草帽节:['帽子要抓紧！','今天风好大，好热闹'],海灯夜:['晚上要放海灯！','先想好许什么愿'],花环节:['好香的花环','今天要学草裙舞'],鲸歌节:['今天能听到鲸鱼唱歌吗','去岸边等着'],大浪节:['浪好大！','今天有冲浪比赛']};
+ const FEST_SAY={草帽节:['帽子要抓紧！','今天风好大，好热闹'],椰灯夜:['晚上要放椰灯！','先想好许什么愿'],花环节:['好香的花环','今天要学草裙舞'],鲸歌节:['今天能听到鲸鱼唱歌吗','去岸边等着'],追浪节:['浪好大！','今天有冲浪比赛']};
  function announce(f){log(`今天是草帽湾的${f.n}。${f.line}。`);speak(pick(FEST_SAY[f.n]||['过节啦']));mood(MOOD.fest);}
  const oldFT2=festivalToday;festivalToday=function(){if(sim.place==='summer_test'){const f=fest();if(f)return f.n;const d=Math.floor(sim.t/1440)+1;return d===30?'生日':d===14||d===56?'纪念日':null;}return oldFT2();};
  const festDone=k=>{const b=M();return b.fest[k+'@'+today()];},festMark=k=>{const b=M();b.fest[k+'@'+today()]=1;for(const o of Object.keys(b.fest))if(+o.split('@')[1]<today()-30)delete b.fest[o];};
@@ -303,8 +303,8 @@
   hat:()=>scene(async()=>{await goBay(C().state.x<700?C().state.x:880);hatFx.push({x:C().state.x,y:C().gr(C().state.x)-24,t0:realClock,me:1});speakBay('飞吧——！');
    if(!festDone('hat')){festMark('hat');mood(MOOD.fest);log('草帽节：把草帽抛向风里，看它飞过了整片海湾。');}}),
   freehat:()=>{if(festDone('freehat'))return showHint('今天已经领过草帽了');festMark('freehat');X.addItem('strawhat',1);showHint('草帽爷爷送了一顶草帽，放进仓库了');},
-  lantern:()=>{if(hour()<18&&hour()>=5)return showHint('海灯要等太阳落山以后才放');scene(async()=>{await goBay(1012);myLantern={t0:sim.t};speakBay('希望明天也是好天气……');
-   if(!festDone('lantern')){festMark('lantern');mood(MOOD.lantern);log('海灯夜：把一盏小灯放进海里，看它漂远了。');}});},
+  lantern:()=>{if(hour()<18&&hour()>=5)return showHint('椰灯要等太阳落山以后才放');scene(async()=>{await goBay(1012);myLantern={t0:sim.t};speakBay('希望明天也是好天气……');
+   if(!festDone('lantern')){festMark('lantern');mood(MOOD.lantern);log('椰灯夜：把一盏椰壳小灯放进海里，看它漂远了。');}});},
   hula:()=>scene(async()=>{await goBay(860);await say(L.P.lei.name,'手像海浪一样，左边——右边——');await say(nameOf(),'左边……右边……哈哈，我同手同脚了！');need('fun',20);need('social',15);
    if(!festDone('hula')){festMark('hula');mood(MOOD.fest);log('花环节：戴着花环跟蕾拉妮学了草裙舞。');}}),
   lei:()=>{if(festDone('lei'))return showHint('花环已经戴上啦');festMark('lei');need('fun',8);showHint('戴上了一串鸡蛋花花环');log('花环节：戴上了一串鸡蛋花花环，香了一整天。');},
@@ -312,14 +312,14 @@
    if(!festDone('whale')){festMark('whale');mood(MOOD.whale);log('鲸歌节：坐在岸边听了很久的鲸歌。');}}),
   watch:()=>scene(async()=>{await goBay(960);await say('解说员','第三号选手上浪了！——完美的转身！');await say(nameOf(),'好厉害！！');need('fun',20);if(!festDone('watch')){festMark('watch');mood(MOOD.wave);}}),
   contest:()=>{if((M().act.surf||0)<3)return showHint('先多冲几次浪，能站起来了再来报名');if(festDone('contest'))return showHint('今天已经比过了');
-   scene(async()=>{festMark('contest');await say('解说员','下一位选手——来自草帽湾的新人！');surf();await new Promise(r=>setTimeout(r,9500));await say('解说员','漂亮！新人奖！');coins(5,'大浪节新人奖');mood(MOOD.wave);log('大浪节：参加冲浪比赛，拿了新人奖。');});}};
- if(typeof FB_MOTIFS!=='undefined')Object.assign(FB_MOTIFS,{草帽节:['star','flower','heart'],海灯夜:['lantern','moon','star'],花环节:['flower','heart','note'],鲸歌节:['wave','note','star'],大浪节:['wave','star','ball']});   // the festival bar's own drifting motifs
+   scene(async()=>{festMark('contest');await say('解说员','下一位选手——来自草帽湾的新人！');surf();await new Promise(r=>setTimeout(r,9500));await say('解说员','漂亮！新人奖！');coins(5,'追浪节新人奖');mood(MOOD.wave);log('追浪节：参加冲浪比赛，拿了新人奖。');});}};
+ if(typeof FB_MOTIFS!=='undefined')Object.assign(FB_MOTIFS,{草帽节:['star','flower','heart'],椰灯夜:['lantern','moon','star'],花环节:['flower','heart','note'],鲸歌节:['wave','note','star'],追浪节:['wave','star','ball']});   // the festival bar's own drifting motifs
  Object.assign(FEST_BAR,{
   草帽节:['#d9a441','#f6dc8a','满天飞着草帽，风越大越热闹',['抛草帽','fn',A.hat],['领一顶草帽','fn',A.freehat]],
-  海灯夜:['#3a3f7a','#f0a95b','晚上把海灯放进海里，许个愿',['放一盏海灯','fn',A.lantern]],
+  椰灯夜:['#3a3f7a','#f0a95b','椰壳里点上小灯，晚上放进海里许个愿',['放一盏椰灯','fn',A.lantern]],
   花环节:['#d0577f','#f6b3cb','人人戴花环，广场上跳草裙舞',['戴花环','fn',A.lei],['学草裙舞','fn',A.hula]],
   鲸歌节:['#36557a','#9bd3df','座头鲸经过海湾，海里能听到它们唱歌',['岸边听鲸歌','fn',A.whale]],
-  大浪节:['#2f7aa0','#f2d36b','一年最大的浪，冲浪手都来了',['看冲浪比赛','fn',A.watch],['报名比赛','fn',A.contest]]});
+  追浪节:['#2f7aa0','#f2d36b','一年最大的浪，冲浪手都来了',['看冲浪比赛','fn',A.watch],['报名比赛','fn',A.contest]]});
  let hatFx=[],myLantern=null,festHello=-1;
  hooks.tick.push(()=>{if(!inBay())return;const f=fest();
   if(f?.n==='草帽节'&&Math.random()<.02&&hatFx.length<14)hatFx.push({x:C().state.x-200+Math.random()*120,y:20+Math.random()*50,t0:realClock});});
@@ -331,19 +331,19 @@
   bunting(ctx,560,760,34,f,t);bunting(ctx,770,1000,30,f,t);bunting(ctx,140,330,38,f,t);
   for(const x of [560,760,770,1000,140,330]){ctx.fillStyle='#7a5636';ctx.fillRect(x,30,1,c.gr(x)-30);}
   if(f.n==='草帽节')drawHats(ctx,t);
-  if(f.n==='海灯夜'){const ev=hour()>=18||hour()<2;if(ev){const ctx_=ctx;{const ctx=G(ctx_);for(let k=0;k<16;k++){const x=1030+((k*67+t*3)%700),y=WL+Math.round(Math.sin(t*1.3+k)*1);ctx.fillStyle='rgba(255,190,90,.25)';ctx.fillRect(x-3,y-5,7,6);ctx.fillStyle='#f6c45a';ctx.fillRect(x-1,y-3,3,3);ctx.fillStyle='#fff1c0';ctx.fillRect(x,y-2,1,1);}
+  if(f.n==='椰灯夜'){const ev=hour()>=18||hour()<2;if(ev){const ctx_=ctx;{const ctx=G(ctx_);for(let k=0;k<16;k++){const x=1030+((k*67+t*3)%700),y=WL+Math.round(Math.sin(t*1.3+k)*1);ctx.fillStyle='rgba(255,190,90,.25)';ctx.fillRect(x-3,y-5,7,6);ctx.fillStyle='#f6c45a';ctx.fillRect(x-1,y-3,3,3);ctx.fillStyle='#fff1c0';ctx.fillRect(x,y-2,1,1);}
     for(let k=0;k<6;k++){const x=900+k*90+Math.sin(t*.3+k)*10,y=110-((t*4+k*30)%110);ctx.fillStyle='rgba(255,200,110,.3)';ctx.fillRect(x-2,y-3,5,6);ctx.fillStyle='#f0a95b';ctx.fillRect(x-1,y-2,3,4);}
     if(myLantern){const age=(sim.t-myLantern.t0),x=1020+age*1.2,y=WL+Math.round(Math.sin(t*1.5));if(age<240){ctx.fillStyle='rgba(255,140,180,.3)';ctx.fillRect(x-4,y-6,9,7);ctx.fillStyle='#f28fb0';ctx.fillRect(x-1,y-3,3,3);}}}}}
   if(f.n==='花环节'){for(const [i,x]of [[0,846],[1,874]]){const p=i?L.P.lei:L.P.alo,bob=Math.round(Math.sin(t*4+i)*1.5);drawPerson(ctx,p,x+Math.round(Math.sin(t*2+i)*2),c.gr(x)+bob,{wave:true});}
    for(let x=600;x<1000;x+=9){ctx.fillStyle=['#f28fb0','#f6dc8a','#ffffff'][(x/9|0)%3];ctx.fillRect(x,40+Math.round(Math.sin(x)*2),2,2);}}
   if(f.n==='鲸歌节'){const n=Math.floor(t)%6;if(n<2){ctx.fillStyle='rgba(255,255,255,.7)';for(let k=0;k<3;k++)ctx.fillRect(1040+k*6,WL-8-k*3-(t*4%4|0),3,1);}}
-  if(f.n==='大浪节'){for(let k=0;k<3;k++){const p=((t*.12+k/3)%1),x=1400-p*370,h=Math.round(10*(1-p)+3);ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(x-20,WL-h,40,2);ctx.fillStyle='rgba(180,230,245,.8)';ctx.fillRect(x-24,WL-h+2,48,h);
+  if(f.n==='追浪节'){for(let k=0;k<3;k++){const p=((t*.12+k/3)%1),x=1400-p*370,h=Math.round(10*(1-p)+3);ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(x-20,WL-h,40,2);ctx.fillStyle='rgba(180,230,245,.8)';ctx.fillRect(x-24,WL-h+2,48,h);
     if(k===0){const sp=WAVE[0];drawPerson(ctx,sp,x,WL-h-1);ctx.fillStyle='#f2d36b';ctx.fillRect(x-7,WL-h-1,14,2);}}
    for(let i=0;i<3;i++)drawPerson(ctx,WAVE[i+1],930+i*16,c.gr(930+i*16),{wave:Math.sin(t*3+i)>.3});}}
  const WAVE=[person('冲浪选手','m',2203),person('观众','f',2309),person('观众','m',2411),person('观众','f',2503)];
  function drawFestMarket(ctx){const f=fest(),t=realClock;bunting(ctx,40,300,26,f,t);bunting(ctx,300,560,22,f,t);bunting(ctx,560,680,28,f,t);
   if(f.n==='草帽节')drawHats(ctx,t);if(f.n==='花环节')for(let x=60;x<660;x+=11){ctx.fillStyle=['#f28fb0','#f6dc8a','#ffffff'][(x/11|0)%3];ctx.fillRect(x,30+Math.round(Math.sin(x*.7)*2),2,2);}
-  if(f.n==='海灯夜'&&(hour()>=18||hour()<2)){const ctx_=ctx;const ctx2=G(ctx_);for(let x=50;x<680;x+=40){const ctx=ctx2;ctx.fillStyle='rgba(255,190,90,.25)';ctx.fillRect(x-3,26,7,9);ctx.fillStyle='#f0a95b';ctx.fillRect(x-1,28,3,5);}}}
+  if(f.n==='椰灯夜'&&(hour()>=18||hour()<2)){const ctx_=ctx;const ctx2=G(ctx_);for(let x=50;x<680;x+=40){const ctx=ctx2;ctx.fillStyle='rgba(255,190,90,.25)';ctx.fillRect(x-3,26,7,9);ctx.fillStyle='#f0a95b';ctx.fillRect(x-1,28,3,5);}}}
  // ================================================================ 5. needs are met in the lodge
  // Owner rule (AGENTS.md → Season maps): she never decides to go home from a season map. Low needs send her into
  // 阿洛's lodge, where she rests until the lowest need is back up. Only the player's own 回家 flies her home.
