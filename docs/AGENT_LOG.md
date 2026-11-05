@@ -9,6 +9,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ## 2026-11-05 Claude: 手机版躲开刘海/灵动岛，需求栏变瘦
 - mobile.js：触屏手机左右两边至少留 30px（很多 webview 不报 safe-area），需求列宽 132–200 → 112–150；需求条 18→16px。
 - 全屏面板（造型室、任务、各 sheet）用 --m-sx0/--m-sx1r，保持原来的边距（否则造型室按钮被挤掉）。check_mobile_frame 740x360 全过。
+## 2026-11-05 Claude: 任务 button tucks back like the gear (release bug)
+- quest_panel.js: an unfinished quest no longer keeps the 任务 button out (2026-11-04 rule reverted by the owner); it shows on diary hover / a new quest's peek and tucks back 300 ms after the pointer leaves. check_quest_panel asserts the tuck.
+
 ## 2026-11-05 Claude: 内测 fixes — airport flight to 草帽湾, door freeze, lodge needs, seaweed 20%
 - 内测 page only (`SEASON_TEST_PAGE`, not in --release): the airport lists 草帽湾 (flies any time; the release will fly only in calendar summer/autumn). check_airport_ui expects 2 locked flights now.
 - Freeze: answering a call mid-door paused the season map and the door transition (advanceDoor(paused?0:dt)) stopped half black. Doors now always finish (spring/summer viewers + make_season_game_test ticks). City trip swap is try/caught so an error never leaves the curtain up.
