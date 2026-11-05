@@ -96,7 +96,7 @@ const summerLife=(function(){
  function gather(){const c=C(),s=c.state,b=B();
   if(under()&&!wasUnder){if(Math.random()<.45){const r=Math.random(),k=r<.45?'fish':r<.78?'shrimp':'crab';X.addItem(k);speakBay(pick({fish:['抓到一条小鱼！','小鱼溜进手心了'],shrimp:['一只小虾米跳进了手里','抓到小虾米～'],crab:['一只小螃蟹夹住了手指！','抓到小螃蟹，嘶——'],}[k]));}}
   wasUnder=under();
-  if(under())for(const [i,k]of (c.kelp||[]).entries()){if(b.weed[i])continue;if(Math.abs(k.x-s.x)<10&&Math.abs((k.y-k.h/2)-s.y)<k.h/2+12){b.weed[i]=1;X.addItem('seaweed');showHint('采到一片海草');break;}}
+  if(under())for(const [i,k]of (c.kelp||[]).entries()){if(b.weed[i])continue;/* each clump gets one try a day */if(Math.abs(k.x-s.x)<10&&Math.abs((k.y-k.h/2)-s.y)<k.h/2+12){b.weed[i]=1;if(Math.random()<.2){X.addItem('seaweed');showHint('采到一片海草');}break;}}   /* 20% per clump per day (owner 2026-11-05: too easy) */
   if(under()&&Math.hypot(s.x-1306,s.y-269)<26&&today()-(b.pearlDay??-99)>=3){b.pearlDay=today();X.addItem('pearl');speakBay('巨蚌张开了一条缝，里面有一颗珍珠！');}}
  function shells(){const b=B(),h=hour();if(!((h>=6&&h<9)||(h>=17&&h<19)))return [];
   if(!b.shells){b.shells=SHELL_SPOTS.filter((_,i)=>(today()*7+i*3)%5<3).map(x=>({x,glass:(today()+x)%4===0}));}return b.shells;}
@@ -149,7 +149,7 @@ const summerLife=(function(){
   pearl:ML_('pearl','帮了个大忙','happy'),flower:ML_('flower','插花小助手','confident'),propose:ML_('propose','海边的求婚','happy',4),oops:ML_('oops','好心办坏事','embarrassed',2),wish:ML_('wish','喷泉许愿','happy',1)};
  const arrive=()=>scene(async()=>{const b=B(),v=P.alo;await walk(ARRIVE_X-18);C().state.facing=1;
   await say('阿洛','Aloha～欢迎来到草帽湾！我是导游阿洛。');
-  await say('阿洛','这儿只有三条规矩：慢慢走、多吃水果、帽子要戴好——这边的风专偷帽子。');
+  await say('阿洛','这儿只有三条规矩：慢慢走、多吃水果、帽子要戴好。');
   await say('阿洛','海边的花，插左耳是“有人了”，插右耳是“还单着”，可别插错了。');
   await say('阿洛','对了，旅舍再往左是市集，那儿有个插着草帽小旗的小摊，是给你留的。做点好吃的摆上去，客人自己会来。');
   await say(me(),'我的小摊？好耶！');

@@ -12208,7 +12208,7 @@ function tripFrame(now) {
   } else if (ms < T_IN + T_LOAD) {
     fill(0, 0, W, tripHeight); x.restore();
     drawTripLoad(x, (ms - T_IN) / T_LOAD, r);
-    if (!r.swapped) { r.swapped = true; r.swap(); render(); }    // the new scene waits behind the strips
+    if (!r.swapped) { r.swapped = true; try { r.swap(); render(); } catch (e) { console.error('trip swap', e); } }    // the new scene waits behind the strips (an error must never leave the curtain up)
   } else if (ms < T_IN + T_LOAD + T_OUT) {
     const m = ms - T_IN - T_LOAD, starts = [];
     for (let i = 0; i < STRIPS; i++) { const x0 = Math.round(W * span(m, i)); fill(x0, i * rowH, W - x0, rowH); starts.push(x0); }

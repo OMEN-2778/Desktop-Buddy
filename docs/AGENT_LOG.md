@@ -9,6 +9,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ## 2026-11-05 Claude: 手机版躲开刘海/灵动岛，需求栏变瘦
 - mobile.js：触屏手机左右两边至少留 30px（很多 webview 不报 safe-area），需求列宽 132–200 → 112–150；需求条 18→16px。
 - 全屏面板（造型室、任务、各 sheet）用 --m-sx0/--m-sx1r，保持原来的边距（否则造型室按钮被挤掉）。check_mobile_frame 740x360 全过。
+## 2026-11-05 Claude: 内测 fixes — airport flight to 草帽湾, door freeze, lodge needs, seaweed 20%
+- 内测 page only (`SEASON_TEST_PAGE`, not in --release): the airport lists 草帽湾 (flies any time; the release will fly only in calendar summer/autumn). check_airport_ui expects 2 locked flights now.
+- Freeze: answering a call mid-door paused the season map and the door transition (advanceDoor(paused?0:dt)) stopped half black. Doors now always finish (spring/summer viewers + make_season_game_test ticks). City trip swap is try/caught so an error never leaves the curtain up.
+- 草帽湾 low needs sent her to the city home: summer_more.js now intercepts startAct('go_home')/homeFor on summer_test → she swims ashore if needed, walks into 阿洛's lodge, rests until the low need ≥90, then walks out. The player's own 回家 still flies home. check_season_game_test updated (lodge first, then 回家; waitForFunction timeout was passed as arg).
+- Seaweed: each clump one try a day, 20% success. Guide line drops「这边的风专偷帽子」.
+
 ## 2026-11-05 Claude: full bug sweep
 - Ran all 88 tools/check_*.js (demo checks through a UTF-8 server on :8770; Python's plain http.server sends no charset and breaks the page). Compared the failures with the build from a9906ef: only check_social_polish and check_friend_visits were new. Fixed: social sheet pop-in no longer overshoots (it poked out of the house); updates.js tolerates a missing `booted`/`saveWhy` (check_auto_updates harness). friend_visits passes again.
 - Still failing on the old build too (not from this work): ~29 demo checks with stale expectations (25% fonts, dialogue counts, CSS selector rule, endpoints count 7≠4), check_infei_hover (an animal stands in front of the granary), farm-ui/spring/autumn preview pages not built locally.
