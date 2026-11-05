@@ -27789,8 +27789,13 @@ document.title = "Desktop Buddy 试玩版";
   let sv = null, st = null;
   try { sv = migrate(await store.load()); } catch (e) { sv = null; }
   try { st = await settingsStore.load(); } catch (e) { st = null; }
-  if (sv) restore(sv);
-  applySettings(st);
+  // a save the code can't fully read must never stop the game from starting (owner 2026-11-05: the 内测 page came up
+  // with no house at all); keep what was restored, keep a copy of the raw save, and go on
+  if (sv) try { restore(sv); } catch (e) {
+    console.error("restore failed", e);
+    try { if (TAURI) TAURI.core.invoke("log_js", { message: `restore failed: ${e && e.stack || e}` }).catch(() => {}); else localStorage.setItem(SAVE_KEY + "-unreadable", JSON.stringify(sv)); } catch (e2) { /* full */ }
+  }
+  try { applySettings(st); } catch (e) { console.error("settings failed", e); }
   await refreshSaveDir();
   // her look may have been changed on the 造型室 page since (browser only)
   let shared = null, sharedAt = 0;
