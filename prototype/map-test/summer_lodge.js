@@ -37,8 +37,7 @@ const summerLodge=(function(){
  view.parentElement.addEventListener('pointermove',e=>{if(e.target!==view||!inBay()||!C().state.inside){hv=null;return;}
   const r=view.getBoundingClientRect(),id=hitSpot((e.clientX-r.left)*342/r.width,(e.clientY-r.top)*C().canvas.height/r.height);hv=id&&SPOTS[id].rect;},true);
  view.addEventListener('pointerleave',()=>{hv=null;});
- // her body under the 夏威夷 quilt: one soft mound, tallest by her shoulders, sloping to the feet
- function quilt(ctx){for(let x=64;x<90;x++){const k=(x-64)/26,h=Math.round(9-6*k*k-(x<66?66-x:0)),top=67-h;ctx.fillStyle='#b94b4b';ctx.fillRect(x,top,1,h);ctx.fillStyle='#e1725b';ctx.fillRect(x,top,1,1);ctx.fillStyle='#7e2f3b';ctx.fillRect(x,66,1,1);if(x%7===3){ctx.fillStyle='#f4f2ee';ctx.fillRect(x,top+3,1,1);}}}
+ let coverImg=null;   // art/src/concept/summer_lodge_cover.py: the quilt bulging over her, in lodge-picture coords
  const SLEEPY={expr:'sleepy',look:0,bob:0,sway:0,wave:null};
  // drawn by the summer viewer every frame she is inside (after her)
  function draw(ctx){if(!inBay())return;const c=C(),s=c.state,dt=Math.max(0,Math.min(30,sim.t-lastT));lastT=sim.t;
@@ -47,7 +46,7 @@ const summerLodge=(function(){
   if(!svc)return;
   if(s.target||!s.inside||s.door){stop();return;}
   const p=SPOTS[svc.id],t=s.time;
-  if(svc.id==='bed'){const h=lyingHead(SLEEPY);ctx.drawImage(h,51,66-h.height);quilt(ctx);ctx.fillStyle='#5d6176';ctx.font='8px monospace';const k=Math.floor(t*1.5)%3;ctx.fillText('z'.repeat(k+1),p.zz[0],p.zz[1]-k*2);}
+  if(svc.id==='bed'){const h=lyingHead(SLEEPY);ctx.drawImage(h,52,66-h.height);if(!coverImg){coverImg=new Image();coverImg.src=SUMMER_LIFE_ART.cover;}if(coverImg.complete)ctx.drawImage(coverImg,40,28);ctx.fillStyle='#5d6176';ctx.font='8px monospace';const k=Math.floor(t*1.5)%3;ctx.fillText('z'.repeat(k+1),p.zz[0],p.zz[1]-k*2);}
   if(svc.id==='shower'){ctx.fillStyle='#bfe3f2';for(let i=0;i<6;i++){const y=38+((t*40+i*7)%36);ctx.fillRect(264+(i*5)%10,Math.round(y),1,2);}}
   const n=sim.needs;n[svc.need]=Math.min(100,n[svc.need]+(p.rate||RATE[svc.need])*dt);
   if(n[svc.need]>=(p.max||97)){stop();log(pick(['歇好了。','舒服多了。']));}}
