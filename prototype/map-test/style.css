@@ -105,3 +105,36 @@ body:has(.social-sheet.fu-big-sheet:not([hidden])) #diaryBox{visibility:hidden} 
 .dex-tile.dex-no{background:#eef0f3;border-color:#d6dbe2}
 .dex-q{display:grid;place-items:center;width:100%;aspect-ratio:60/42;max-width:120px;border-radius:4px;background:#c9d3dc;color:#fff;font-size:22px;font-weight:700}
 .dex-places .dex-tile{align-items:flex-start;text-align:left}
+/* ---- 茵菲谷 panels in the 海棠集市 look (infei_ui.js; owner 2026-11-05) ---- */
+.social-sheet.infei-ui{border-radius:10px;background:var(--panel)}
+.infei-ui .fu-plant-top,.infei-ui .fu-ranch-body,.infei-ui .fu-balance{display:flex;align-items:center;gap:14px;padding:10px 14px;background:linear-gradient(180deg,#fdf3dc,#f6e2bb);border:2px solid #c99f5a;border-radius:8px;box-shadow:3px 3px 0 #0002,inset 0 2px 0 #fffbe9}
+.infei-ui .fu-hero,.infei-ui .fu-pen{padding:6px;background:#fff6e4;border:2px solid #e3c58f;border-radius:8px;box-shadow:inset 0 -3px 0 #ecd6ab}
+.infei-ui .fu-facts h4{font-size:18px;color:#5b3a1e;letter-spacing:.06em;margin:0}
+.infei-ui .fu-sub{color:#8a6a46}
+.infei-ui .fu-stages{gap:8px;padding:8px;background:linear-gradient(180deg,#b98552 0 8px,#9a6a3f 8px);border:2px solid #6e4729;border-radius:8px}
+.infei-ui .fu-stages li{background:#fff6e4;border:2px solid #e3c58f;border-radius:6px;box-shadow:inset 0 -3px 0 #ecd6ab;color:#6b4a2a}
+.infei-ui .fu-stages li.now{background:#d9f2df;border-color:#7cbf8e;color:#2f6b43;box-shadow:inset 0 -3px 0 #b9e2c4}
+.infei-ui .fu-stages li.done{opacity:.75}
+.infei-ui .fu-lines{display:flex;flex-wrap:wrap;gap:6px}
+.infei-ui .fu-lines p{display:inline-flex;align-items:center;gap:4px;margin:0;font-size:12px;font-weight:700;padding:2px 9px;background:#fffaf0;border:2px solid #e2c48c;border-radius:5px;color:#6b4a2a}
+.infei-ui .fu-lines p.fu-warn{background:#fdeee9;border-color:#f1c9c1;color:#a0473a}
+.infei-ui .fu-bar{border:2px solid #6e4729;border-radius:6px;background:#a87648;overflow:hidden}
+.infei-ui .fu-bar i{background:linear-gradient(180deg,#9fdc8a,#6fb35e)}
+.infei-ui .fu-bar span{color:#fff;text-shadow:1px 1px 0 #6e4729}
+.infei-ui .fu-meter .fu-label{color:#6b4a2a}
+.infei-ui .fu-tabs button,.infei-ui .fu-nav button{border-radius:8px;background:var(--panel-2,#f4f1f8);border:2px solid var(--edge,#cfc6dc);box-shadow:2px 2px 0 #0002}
+.social-sheet.infei-ui .fu-tabs button.on,.social-sheet.infei-ui .fu-nav button.on{background:linear-gradient(180deg,#fdf3dc,#f6e2bb);border-color:#c99f5a;color:#5b3a1e}
+.infei-ui .fu-main{border-radius:8px;border:2px solid var(--edge,#cfc6dc);background:var(--panel-2,#f4f1f8);box-shadow:2px 2px 0 #0002}
+.infei-ui .fu-stats>div{border-radius:8px;background:#fff;border:2px solid #e6dff0;box-shadow:2px 2px 0 #0001}
+.infei-ui .fu-ledger li{border-radius:6px}
+.infei-ui .fu-note{color:#8a6a46}
+/* shops (the picker): a cream banner head and stall-style cards with a price tag */
+.picker.infei-ui{border-radius:10px;overflow:hidden}
+.picker.infei-ui .pk-head{background:linear-gradient(180deg,#fdf3dc,#f6e2bb);border-bottom:2px solid #c99f5a;color:#5b3a1e}
+.picker.infei-ui .pk-head h3{color:#5b3a1e}
+.picker.infei-ui .pk-head .x{color:#5b3a1e}
+.picker.infei-ui .pk-item{border-radius:8px;background:var(--panel-2,#f4f1f8);border:2px solid var(--edge,#cfc6dc);box-shadow:2px 2px 0 #0002}
+.picker.infei-ui .pk-item:hover{border-color:#c99f5a;background:#fffaf0}
+.picker.infei-ui .pk-item img{padding:2px;background:#fff;border:2px solid #e6dff0;border-radius:6px}
+.picker.infei-ui .fu-why{border-radius:5px}
+.picker.infei-ui .pk-item img{width:32px!important;height:32px!important;image-rendering:pixelated}

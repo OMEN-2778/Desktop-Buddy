@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: 茵菲谷 panels in the 海棠集市 stall look
+- New `prototype/map-test/infei_ui.js` (in make_season_game_test.py): while in 茵菲谷, every FarmUI sheet (watched on the social sheet's class) gets `infei-ui fu-big-sheet` + the stall's fitBig/scroll bar; shops (picker) get `infei-ui`. style.css `.infei-ui`: cream banner for the plant/ranch/balance tops, wood counter for growth stages, chips for the info lines, rounded stall cards for tabs/stats/shop items, 32px shop icons. Contents and FarmUI itself unchanged (main world untouched).
+
 ## 2026-11-05 Claude: reuse — bay commissions in the 任务 panel, island festivals start like city ones
 - Owner: "use what exists instead of new UI". summer_more registers taken commissions with `questBoard.add` (title, quest icon, place, current goal). Island festival day start goes through the same hourly festival code: index.src.html now takes `festToday()` (the island overrides it) and calls its `announce()` (diary line, her words, festival mood) instead of a toast; FB_MOTIFS entries for the five island festivals. City festivals unchanged.
 
