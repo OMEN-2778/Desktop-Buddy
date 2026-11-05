@@ -93,7 +93,7 @@ const seasonalTest=(function(){
   if(sim.mode==='down'){if(Math.abs(x-sx)<22&&Math.abs(y-sy+8)<18){holding={t0:realClock,pointerId:e.pointerId};view.setPointerCapture(e.pointerId);showHint('按住主角 5 秒即可唤醒');}return;}
   if(sim.place==='autumn_test'&&s.mapOpen){c.pick(x,y);sync();return;}
   if(Math.abs(x-sx)<10&&y<sy&&y>sy-28){openRing('away','buddy');return;}
-  closeRing();state.autoAt=sim.t+45;if(sim.place==='autumn_test'){view.focus();ripple(e);c.pick(x+(s.mapOpen?0:s.camX||0),y+(s.mapOpen?0:s.camY||0));sync();return;}if(sim.place==='summer_test'&&window.summerLife?.click(x+(s.camX||0),y+(s.camY||0)))return;if(people.click(x+(s.camera??s.camX??0),y+(s.camY||0)))return;people.cancel();c.canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:e.clientX,clientY:e.clientY,button:0}));sync();
+  closeRing();state.autoAt=sim.t+45;s.rush=performance.now();if(sim.place==='autumn_test'){view.focus();ripple(e);c.pick(x+(s.mapOpen?0:s.camX||0),y+(s.mapOpen?0:s.camY||0));sync();return;}if(sim.place==='summer_test'&&window.summerLife?.click(x+(s.camX||0),y+(s.camY||0)))return;if(people.click(x+(s.camera??s.camX??0),y+(s.camY||0)))return;people.cancel();c.canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:e.clientX,clientY:e.clientY,button:0}));sync();
  },true);
  // click feedback (owner 2026-11-03): where she is sent, a yellow ring spreads out on the ground (style.css .walk-ripple)
  // pixel style (owner: "too big, smaller, pixel-art"): a small ring drawn in house pixels, 4 frames growing and fading

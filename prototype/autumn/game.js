@@ -481,7 +481,8 @@ function makeSeason_autumn(opts, DATA) {
             }
             if (best) goTo(best.x, best.y);
         }
-        let remaining = opts.walkSpeed * dt;
+        if(state.target)state.rushWalk=1;else if(state.rushWalk||state.rush&&performance.now()-state.rush>3000){state.rush=0;state.rushWalk=0;} // player-sent walks go 2x (owner 2026-11-05)
+        let remaining = opts.walkSpeed * dt * (state.rush ? 2 : 1);
         while (state.target && remaining > 0) {
             const p = state.target;
             if (p.kind === "lift" && !state.riding) {

@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: season maps — player-sent walks at 2x
+- A click in a season map (ground, object, NPC) sets `state.rush` (adapter.js); spring/summer viewers and autumn game.js walk at 2x until she arrives (cleared after 3 s if no walk starts). Her own walks keep the old speed.
+- Tested: 茵菲谷 click walk 112 px/s vs 56 auto; season checks, autumn check, release save round-trip pass.
+
 ## 2026-11-05 Claude: 草帽湾 市集 district (test page)
 - Left of the lodge: 市集 (2 screens, Mediterranean town bg, art `art/src/concept/summer_market.py`). Fruit/fish/hat vendors sell items, 米娅's café (coffee/seafood rice/chat), fountain wish, walkers. Her stall and 蕾拉妮's flower stall moved here; the guide walks her in. viewer.js: `state.market`, `setMarket`, `beginDoor('market'|'bay')`.
 - The island is summer all year: city snow shows as rain there (adapter.js). Season checks set `window.__noBayGuide`.

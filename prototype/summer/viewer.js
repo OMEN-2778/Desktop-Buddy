@@ -40,20 +40,20 @@ function discover(id,text){const first=!state.found.has(id);state.found.add(id);
 function splash(x,y,n=10){for(let i=0;i<n;i++)parts.push({x:x+(Math.random()-.5)*8,y,vx:(Math.random()-.5)*30,vy:-20-Math.random()*30,life:.7,c:'#f4fbff',g:80});}
 // ------------------------------------------------------------- movement
 function step(px,py,tx,ty,sp){const dx=tx-px,dy=ty-py,d=Math.hypot(dx,dy);if(d<=sp)return [tx,ty,true];return [px+dx/d*sp,py+dy/d*sp,false];}
-function walkTo(tx,dt){const sp=dt*(inSea()?30:42);let [x,,ok]=step(state.x,0,tx,0,sp);
+function walkTo(tx,dt){const sp=dt*(inSea()?30:42)*(state.rush?2:1);let [x,,ok]=step(state.x,0,tx,0,sp);
  if(gr(x)>wadeLimit()){if(state.warned<=0){toast('穿着便装只能在浅水边踩踩水，先去更衣室换上泳装吧～');state.warned=6;}return true;}
  state.x=x;state.y+=(standY(state.x)-state.y)*Math.min(1,dt*10);return ok&&Math.abs(state.y-standY(state.x))<1;}
 function swimTo(tx,ty,dt){                               // free swimming with rock collision (slides along walls)
- const distance=Math.hypot(tx-state.x,ty-state.y),limit=state.target?.kind==='up'?18:12;state.moveSpeed+=(Math.min(limit,Math.sqrt(distance*28))-state.moveSpeed)*(1-Math.exp(-9*dt));const [nx,ny,ok]=step(state.x,state.y,tx,ty,dt*state.moveSpeed);let x=state.x,y=state.y;
+ const distance=Math.hypot(tx-state.x,ty-state.y),limit=state.target?.kind==='up'?18:12;state.moveSpeed+=(Math.min(limit,Math.sqrt(distance*28))-state.moveSpeed)*(1-Math.exp(-9*dt));const [nx,ny,ok]=step(state.x,state.y,tx,ty,dt*state.moveSpeed*(state.rush?2:1));let x=state.x,y=state.y;
  const free=(a,b)=>!isSolid(a,b)&&!isSolid(a,b-10)&&b>=SURF_Y&&a<=RIGHT;
  if(free(nx,ny)){x=nx;y=ny;}else if(free(nx,state.y)){x=nx;}else if(free(state.x,ny)){y=ny;}else return true;
  state.vy=(y-state.y)/Math.max(dt,1e-3);state.x=x;state.y=y;return ok;}
-function move(dt){state.walk=false;if(state.paused||!state.loaded)return;
+function move(dt){state.walk=false;if(state.paused||!state.loaded)return;if(state.target)state.rushWalk=1;else if(state.rushWalk||state.rush&&performance.now()-state.rush>3000){state.rush=0;state.rushWalk=0;}/* player-sent walks go 2x (owner 2026-11-05) */
  state.warned-=dt;if(sayTimer>0&&(sayTimer-=dt)<=0)say.hidden=true;
  if(state.door)return;
  if(state.changing>0){state.changing-=dt;return;}
- if(state.market){if(state.target){const [x,,done]=step(state.x,0,clamp(state.target.x,14,(market?.w||684)-14),0,dt*42);state.walk=!done;if(Math.abs(state.target.x-state.x)>.1)state.facing=Math.sign(state.target.x-state.x);state.x=x;state.y=MARKET_FEET;if(done){state.target=null;if(state.after){const f=state.after;state.after=null;f();}}}return;}
- if(state.inside){if(state.target){const [x,,done]=step(state.x,0,state.target.x,0,dt*42);state.walk=!done;if(Math.abs(state.target.x-state.x)>.1)state.facing=Math.sign(state.target.x-state.x);state.x=x;if(done){state.target=null;if(state.after){const f=state.after;state.after=null;f();}}}return;}
+ if(state.market){if(state.target){const [x,,done]=step(state.x,0,clamp(state.target.x,14,(market?.w||684)-14),0,dt*42*(state.rush?2:1));state.walk=!done;if(Math.abs(state.target.x-state.x)>.1)state.facing=Math.sign(state.target.x-state.x);state.x=x;state.y=MARKET_FEET;if(done){state.target=null;if(state.after){const f=state.after;state.after=null;f();}}}return;}
+ if(state.inside){if(state.target){const [x,,done]=step(state.x,0,state.target.x,0,dt*42*(state.rush?2:1));state.walk=!done;if(Math.abs(state.target.x-state.x)>.1)state.facing=Math.sign(state.target.x-state.x);state.x=x;if(done){state.target=null;if(state.after){const f=state.after;state.after=null;f();}}}return;}
  const dir=(keys.has('ArrowRight')||keys.has('d')||keys.has('D')?1:0)-(keys.has('ArrowLeft')||keys.has('a')||keys.has('A')?1:0);
  const vdir=(keys.has('ArrowDown')||keys.has('s')||keys.has('S')?1:0)-(keys.has('ArrowUp')||keys.has('w')||keys.has('W')?1:0);
  if(dir||vdir){state.after=null;if(state.suit!=='clothes'&&(under()||(vdir>0&&deep(state.x))))goTo(state.x+dir*30,'dive',state.y+vdir*30);else if(dir)goTo(state.x+dir*40);}
