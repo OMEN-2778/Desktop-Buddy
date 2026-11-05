@@ -190,6 +190,14 @@ const summerLife=(function(){
   if(!s.market&&q.lei.step===1&&night()&&s.x>990&&s.x<1330&&!storyLocked())scene(async()=>{await say(me(),'（岸边放着一双拖鞋……水里有人？）');await say(me(),'是卡伊诺！他一个人潜进了夜里的海，在巨蚌那一带找什么。');q.lei.step=2;log('夜里看见卡伊诺一个人下海，在巨蚌那一带找东西。');showHint('傍晚去海边听听卡伊诺弹琴');});}
  function arrow(ctx,x,y0,now){const ay=Math.round(y0+Math.sin(now*5)*2);ctx.fillStyle='#2b2236';ctx.fillRect(x-4,ay-1,9,6);ctx.fillRect(x-2,ay+5,5,2);ctx.fillRect(x-1,ay+7,3,1);ctx.fillStyle='#f6c45a';ctx.fillRect(x-3,ay,7,4);ctx.fillRect(x-1,ay+4,3,2);}
  function pop(ctx){for(const p of pops){ctx.globalAlpha=Math.max(0,1-p.t/1.6);ctx.font='bold 8px sans-serif';ctx.fillStyle='#2b2236';ctx.fillText(p.text,p.x-6+1,p.y-p.t*10+1);ctx.fillStyle='#f6c45a';ctx.fillText(p.text,p.x-6,p.y-p.t*10);ctx.globalAlpha=1;}}
+ /* customers talk in the same DOM pill as every other NPC (.npcsay, people.js / the city), owner 2026-11-05 */
+ const pills=new Map();
+ function sayPills(list,camX){const scale=Number(view.style.width.replace('px',''))/342||view.width/342;
+  for(const [n,el]of pills)if(!list.includes(n)||!inMarket()){el.remove();pills.delete(n);}
+  if(!inMarket())return;
+  for(const n of list){let el=pills.get(n);if(!el){el=document.createElement('div');el.className='npcsay';widget.append(el);pills.set(n,el);}
+   if(el.textContent!==n.say)el.textContent=n.say;const half=el.offsetWidth/2+4;el.style.left=Math.max(half,Math.min(342*scale-half,(n.x-camX)*scale))+'px';el.style.top=((FEET-30)*scale)+'px';}}
+ setInterval(()=>{if(!inMarket()&&pills.size)sayPills([],0);},500);
  function bubble(ctx,x,y,text){ctx.font='7px sans-serif';const tw=Math.min(116,ctx.measureText(text).width+8);const bx=Math.round(x-tw/2);ctx.fillStyle='rgba(247,241,226,.96)';ctx.fillRect(bx,y,tw,11);ctx.fillStyle='#4a3b30';ctx.fillText(text,bx+4,y+8,tw-8);}
  // ---- the bay (beach and sea): coconuts, shells, seaweed glints, 阿洛, 卡伊诺, the finale on the shore
  function draw(ctx,info){if(!inBay())return;tick();const now=realClock,c=C(),s=c.state,b=B();
@@ -214,7 +222,7 @@ const summerLife=(function(){
  function put(ctx,k,cx,w,h){const im=sprite(k);if(im?.complete)ctx.drawImage(im,Math.round(cx-im.width/2),FEET+1-im.height);}
  function drawNpc(ctx,n){const [f,p]=npcFrame(n);const pic=npcCanvas(n,f,p,false);ctx.drawImage(pic,Math.round(n.x-10),Math.round(FEET-27));}
  function marketDraw(ctx,info){tick();const now=realClock,c=C(),s=c.state,b=B(),cx=info.camX||0,h=hour(),open=h>=7&&h<20;
-  const bg=sprite('mbg');if(bg?.complete)ctx.drawImage(bg,Math.round(cx),0,342,118,0,0,342,118);
+  /* layers (owner 2026-11-05): sky still, hazy far town at 0.3, mid town at 0.6, street at 1 */for(const [k,f,veil]of [['msky',0,0],['mfar',.3,.55],['mmid',.6,.3],['mbg',1,0]]){const im=sprite(k);if(im?.complete)ctx.drawImage(im,-Math.round(cx*f),0);if(veil){ctx.fillStyle=`rgba(196,224,246,${veil})`;ctx.fillRect(0,0,342,118);}}/* a pale blue veil over each distant layer: the further, the lighter (owner) */
   ctx.save();ctx.translate(-Math.round(cx),0);
   // vendors stand behind their counters
   if(open){for(const [v,x]of [[V.fruit,FRUIT_X],[V.fish,FISH_X],[V.hat,HAT_X]])drawPerson(ctx,v,x+4,FEET-9);drawPerson(ctx,V.cafe,CAFE_X-30,FEET);}
@@ -229,7 +237,7 @@ const summerLife=(function(){
   for(const n of walkers)drawNpc(ctx,n);
   for(const n of custs){const [f,p]=npcFrame(n);const pic=npcCanvas(n,f,n.shop.state==='buy'?'stand':p,false);ctx.drawImage(pic,Math.round(n.x-10),Math.round(FEET-27));}
   info.hero();
-  for(const n of custs)if(n.shop.state==='buy'&&n.say)bubble(ctx,n.x,FEET-44,n.say);
+  sayPills(custs.filter(n=>n.shop.state==='buy'&&n.say),cx);
   pop(ctx);ctx.restore();}
  // shops (buying costs about twice the selling price, so only cooking at the stall turns a profit)
  const SHOPS={

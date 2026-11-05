@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: 草帽湾 市集 backdrop in layers
+- summer_market.py: sky / far (sea on the left, headland, small town) / mid (terraced town, houses stand on the slope) / near (wall with cap, pilasters, shadow; perspective cobbles; olive trees, oleanders). Parallax 0, .3, .6, 1 and a pale blue veil over far (.55) and mid (.3) in summer_life.js. Fountain redrawn round (elliptic rim, water, drum shading, shadow).
+- Market customers talk in the shared `.npcsay` pill instead of a canvas box.
+- Tested: market screenshots, customer pill, season game/polish checks.
+
 ## 2026-11-05 Claude: season maps — player-sent walks at 2x
 - A click in a season map (ground, object, NPC) sets `state.rush` (adapter.js); spring/summer viewers and autumn game.js walk at 2x until she arrives (cleared after 3 s if no walk starts). Her own walks keep the old speed.
 - Tested: 茵菲谷 click walk 112 px/s vs 56 auto; season checks, autumn check, release save round-trip pass.

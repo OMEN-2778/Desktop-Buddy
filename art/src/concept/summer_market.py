@@ -7,8 +7,12 @@ fountain, the café tables. Her own straw-hat stall and 蕾拉妮's flower stall
 Layout (x of the stall centres): arch 26 | fruit 96 | fish 168 | flowers 240 | fountain 336 | hers 432 |
 hats 508 | café 600. Light from the top-left."""
 
+import math
 import random
+
+import numpy as np
 from pixelkit import P, Sprite
+from pixelkit.palette import ALL_COLORS
 
 PREVIEW_SCALE = 3
 MW, MH, FEET = 684, 118, 104
@@ -23,114 +27,222 @@ BOUG = P.blossom
 CYP = P.leaf
 
 
-def sky(s):
+FAR, MIDF = 0.3, 0.6                                                  # parallax factors (owner 2026-11-05)
+FW = 342 + round((MW - 342) * FAR)                                    # a layer is as wide as the camera sees of it
+MIDW = 342 + round((MW - 342) * MIDF)
+
+
+def _rgb(h):
+    return np.array([int(h[i:i + 2], 16) for i in (1, 3, 5)], float)
+
+
+def haze(s, amount, pool=None, toward=None):
+    """Atmospheric depth: blend every pixel toward the sky colour, then snap back to the palette
+    (far layer: only pale sky/stone tones, so distance reads blue-grey)."""
+    toward = _rgb(toward or SKY[2])
+    cols = sorted(pool or ALL_COLORS)
+    arr = np.array([_rgb(c) for c in cols])
+    px = s.px
+    m = px[..., 3] > 0
+    rgb = px[..., :3][m].astype(float) * (1 - amount) + toward * amount
+    d = ((rgb[:, None, :] - arr[None, :, :]) ** 2).sum(-1)
+    px[..., :3][m] = arr[d.argmin(1)].astype(px.dtype)
+    return s
+
+
+def sky_layer():
+    s = Sprite(342, MH)
     for y in range(MH):
-        c = SKY[0] if y < 6 else SKY[1] if y < 30 else SKY[2] if y < 52 else SKY[3]
-        s.hline(0, MW - 1, y, c)
-    for y in (6, 30, 52):                                             # soft hand-off between bands
-        for x in range(0, MW, 2):
-            s.set(x + (y // 2) % 2, y, SKY[0] if y == 6 else SKY[1] if y == 30 else SKY[2])
+        c = SKY[0] if y < 8 else SKY[1] if y < 34 else SKY[2] if y < 58 else SKY[3]
+        s.hline(0, 341, y, c)
+    for y in (8, 34, 58):                                             # soft hand-off between bands
+        for x in range(0, 342, 2):
+            s.set(x + (y // 2) % 2, y, SKY[0] if y == 8 else SKY[1] if y == 34 else SKY[2])
+    rnd = random.Random(5)
+    for _ in range(4):                                                # thin summer clouds
+        cx, cy, w = rnd.randint(10, 330), rnd.randint(12, 40), rnd.randint(18, 34)
+        s.hline(cx, cx + w, cy, SKY[3]).hline(cx + 4, cx + w - 6, cy - 1, SKY[3]).hline(cx + 2, cx + w - 2, cy + 1, SKY[2])
+    return s
 
 
-def hill(s, base, amp, seed, R):
+def surface(w, base, amp, seed, f1=90, f2=23, lift=0.0, lend=0):
     rnd = random.Random(seed)
     ph = rnd.random() * 6
-    import math
-    for x in range(MW):
-        h = int(base - amp * (0.55 + 0.45 * math.sin(x / 90 + ph)) - 4 * math.sin(x / 23 + ph * 2))
-        s.vline(x, h, MH - 1, R)
-    return
+    return [int(base - amp * (0.55 + 0.45 * math.sin(x / f1 + ph)) - 4 * math.sin(x / f2 + ph * 2) + max(0, lend - x) * lift) for x in range(w)]
 
 
-def house(s, x, y, w, h, dome=False, roof=False, rnd=None):
-    """A white cube house; flat roof edge, a door/window or two; maybe a blue dome or a terracotta roof."""
-    s.rect(x, y, w, h, WHITE[3]).hline(x, x + w - 1, y, WHITE[4])
-    sd = max(2, w // 4)                                               # the shaded side faces right
-    s.rect(x + w - sd, y + 1, sd, h - 1, WHITE[2]).vline(x + w, y + 1, y + h, WHITE[1]).hline(x, x + w, y + h, WHITE[1])
-    for wx in range(x + 2, x + w - 2, 5):
+def house(s, x, top, w, h, ground, dome=False, roof=False, rnd=None):
+    """A white cube house standing on the slope: its walls run down to the lowest ground under it,
+    so no house floats. Lit from the top-left, shaded side faces right, a cast shadow on the right."""
+    bot = ground                                                      # lowest surface row under the house
+    s.rect(x + w, top + 3, 2, bot - top - 3, None) if False else None
+    for yy in range(top + 3, bot + 1):                                # cast shadow onto the slope/next wall
+        if s.inside(x + w + 1, yy):
+            s.set(x + w + 1, yy, WHITE[1] if s.get(x + w + 1, yy) in (WHITE[3], WHITE[4], WHITE[2]) else P.sand[1])
+    s.rect(x, top, w, bot - top + 1, WHITE[3]).hline(x, x + w - 1, top, WHITE[4])
+    sd = max(2, w // 4)
+    s.rect(x + w - sd, top + 1, sd, bot - top, WHITE[2]).vline(x + w, top + 1, bot, WHITE[1])
+    s.hline(x, x + w - 1, top + 1, WHITE[2])                          # parapet lip shadow
+    for wx in range(x + 2, x + w - 3, 5):
         if rnd.random() < .6:
-            s.rect(wx, y + 3, 2, 2, DOME[2] if rnd.random() < .5 else WHITE[1])
+            s.rect(wx, top + 4, 2, 2, DOME[1] if rnd.random() < .5 else WHITE[1]).set(wx, top + 4, DOME[2])
     if rnd.random() < .5 and h > 8:
-        s.rect(x + w // 2 - 1, y + h - 5, 3, 5, DOME[1])            # door
+        s.rect(x + w // 2 - 1, top + h - 5, 3, 5, DOME[1]).set(x + w // 2 - 1, top + h - 5, DOME[2])
     if dome:
         cx = x + w // 2
         for k in range(5):
             hw = [1, 3, 4, 4, 5][k]
-            s.hline(cx - hw, cx + hw, y - 5 + k, DOME[3] if k < 2 else DOME[2])
-        s.set(cx - 2, y - 3, DOME[4]).set(cx, y - 7, WHITE[3]).set(cx, y - 6, WHITE[2])
+            s.hline(cx - hw, cx + hw, top - 5 + k, DOME[2])
+            s.hline(cx - hw, cx - hw + max(1, hw // 2), top - 5 + k, DOME[3])
+            s.set(cx + hw, top - 5 + k, DOME[1])
+        s.set(cx - 2, top - 3, DOME[4]).set(cx, top - 7, WHITE[3]).set(cx, top - 6, WHITE[2])
     if roof:
         for k in range(3):
-            s.hline(x - 1 + k, x + w - k, y - 1 - k, ROOF[3] if k == 0 else ROOF[2])
+            s.hline(x - 1 + k, x + w - k, top - 1 - k, ROOF[3] if k == 0 else ROOF[2])
+            s.set(x + w - k, top - 1 - k, ROOF[1])
 
 
-def town(s):
-    rnd = random.Random(7)
-    hill(s, 70, 22, 3, P.sand[2])
-    # houses stacked on the hill, back rows first (smaller, paler)
-    for row, (yb, scale) in enumerate(((52, .7), (62, .85), (74, 1.0))):
-        x = rnd.randint(-10, 10)
-        while x < MW:
-            w = int(rnd.randint(10, 18) * scale)
-            h = int(rnd.randint(8, 13) * scale)
-            y = yb - h + rnd.randint(-4, 4)
-            house(s, x, y, w, h, dome=rnd.random() < .16, roof=rnd.random() < .18, rnd=rnd)
-            x += w + rnd.randint(1, 6)
-        # stairs/lanes between rows
-    # bougainvillea spilling over walls, cypress trees
-    for _ in range(26):
-        bx, by = rnd.randint(0, MW - 6), rnd.randint(52, 80)
+def hill_town(w, base, amp, seed, scale, rows, trees, boug, lift=0.0, lend=0):
+    """Terraced slope: solid hill, then rows of houses from the top terrace down (back to front)."""
+    s = Sprite(w, MH)
+    rnd = random.Random(seed)
+    S = surface(w, base, amp, seed, lift=lift, lend=lend)
+    top_off = (rows - 1) * 9
+    for x in range(w):                                                # the hill, lit on its upper edge
+        s.vline(x, S[x] - top_off, MH - 1, P.sand[2])
+        s.set(x, S[x] - top_off, P.sand[3])
+    for r in range(rows):                                             # terrace r sits on S - (rows-1-r)*9
+        off = (rows - 1 - r) * 9
+        for x in range(w):                                            # retaining wall lip of each terrace
+            if r and s.inside(x, S[x] - off):
+                s.set(x, S[x] - off, P.sand[1]).set(x, S[x] - off - 1, P.sand[3])
+        x = rnd.randint(-8, 4)
+        while x < w:
+            hw = int(rnd.randint(10, 18) * scale)
+            hh = int(rnd.randint(8, 13) * scale)
+            xs = range(max(0, x), min(w, x + hw))
+            if xs:
+                ground = max(S[i] for i in xs) - off
+                top = min(S[i] for i in xs) - off - hh
+                house(s, x, top, hw, hh, ground, dome=rnd.random() < .16, roof=rnd.random() < .18, rnd=rnd)
+            x += hw + rnd.randint(1, 7)
+    for _ in range(boug):                                             # bougainvillea over the walls
+        bx = rnd.randint(0, w - 6)
+        by = S[bx] - rnd.randint(4, top_off + 8)
         for k in range(rnd.randint(5, 10)):
             s.set(bx + rnd.randint(0, 6), by + rnd.randint(0, 4), BOUG[rnd.randint(2, 4)])
-    for _ in range(9):
-        cx, base = rnd.randint(4, MW - 4), rnd.randint(70, 82)
-        hgt = rnd.randint(14, 22)
+    for _ in range(trees):                                            # cypresses rooted on the slope
+        cx = rnd.randint(4, w - 4)
+        base_y = S[cx] - rnd.choice(range(0, top_off + 1, 9))
+        hgt = int(rnd.randint(14, 22) * scale)
         for k in range(hgt):
-            hw = 1 if k < 3 else 2 if k < hgt - 4 else 1
-            s.hline(cx - hw, cx + hw, base - k, CYP[1] if k % 3 else CYP[2])
-            s.set(cx - hw, base - k, CYP[2])
+            hw = 1 if k < 3 or k > hgt - 4 else 2
+            s.hline(cx - hw, cx + hw, base_y - k, CYP[1])
+            s.set(cx - hw, base_y - k, CYP[3] if k % 3 else CYP[2])
+            s.set(cx + hw, base_y - k, CYP[0])
+    return s
+
+
+def far_layer():
+    s = Sprite(FW, MH)
+    hz = 64                                                           # the open sea on the left: it is a bay
+    for y in range(hz, MH):
+        s.hline(0, FW - 1, y, P.sea[3] if y < hz + 3 else P.sea[2])
+    s.hline(0, FW - 1, hz, P.sea[4])
+    rnd = random.Random(9)
+    for _ in range(40):
+        s.hline(x := rnd.randint(0, 200), x + rnd.randint(1, 3), rnd.randint(hz + 2, 80), P.sea[4])
+    S = surface(FW, 54, 20, 11, 70, 17, lift=.32, lend=230)           # a headland rising out of the sea
+    for x in range(FW):
+        s.vline(x, S[x], MH - 1, P.leaf[2])
+        s.set(x, S[x], P.leaf[3])
+    s.blit(hill_town(FW, 66, 14, 21, .6, 3, 6, 0, lift=.4, lend=200), 0, 0)
+    return s                                                          # the game veils it in pale blue (owner)
+
+
+def mid_layer():
+    s = hill_town(MIDW, 87, 12, 3, 1.0, 2, 8, 18, lift=.3, lend=170)   # the slope falls away to the sea on the left
+    return s
 
 
 def street(s):
-    # low white wall with a cap, planters; then the cobbled street
+    """Low white wall with a stone cap (top surface, overhang, front face, pilasters) and its shadow
+    on the cobbles; a cobbled street whose stones grow toward the viewer."""
     top = 82
-    s.rect(0, top, MW, 10, WALL[3]).hline(0, MW - 1, top, WALL[4]).hline(0, MW - 1, top + 1, WALL[3]).hline(0, MW - 1, top + 9, WALL[1])
-    for x in range(0, MW, 12):
-        s.vline(x, top + 2, top + 9, WALL[2])
-    for x in range(14, MW, 58):                                      # terracotta pots with flowers on the wall
-        s.rect(x, top - 4, 6, 4, ROOF[3]).hline(x, x + 5, top - 4, ROOF[4]).hline(x, x + 5, top - 1, ROOF[2])
+    y0 = top + 10
+    # front face: lit at the top, darker toward the ground
+    for y in range(top + 3, y0):
+        s.hline(0, MW - 1, y, WALL[3] if y < top + 6 else WALL[2])
+    for x in range(0, MW, 2):
+        s.set(x + (top // 2) % 2, top + 6, WALL[3])
+    for row, y in enumerate(range(top + 4, y0, 3)):                    # ashlar joints with a lit lower lip
+        s.hline(0, MW - 1, y, WALL[1] if y > top + 4 else WALL[2])
+        for x in range((row % 2) * 7, MW, 14):
+            s.vline(x, y + 1, min(y + 2, y0 - 1), WALL[1]).vline(x + 1, y + 1, min(y + 2, y0 - 1), WALL[4])
+    # cap: 2px top surface seen from above, a lit front edge, an overhang shadow under it
+    s.hline(0, MW - 1, top, WALL[4]).hline(0, MW - 1, top + 1, WALL[3]).hline(0, MW - 1, top + 2, WALL[1])
+    for px in range(30, MW, 64):                                      # pilasters stand forward of the wall
+        s.rect(px, top - 2, 6, y0 - top + 2, WALL[3])
+        s.hline(px - 1, px + 6, top - 3, WALL[4]).hline(px - 1, px + 6, top - 2, WALL[3]).hline(px - 1, px + 6, top - 1, WALL[1])
+        s.vline(px, top, y0 - 1, WALL[4]).vline(px + 5, top, y0 - 1, WALL[1]).vline(px + 4, top, y0 - 1, WALL[2])
+    for x in range(14, MW, 64):                                       # terracotta pots on the cap
+        s.rect(x, top - 4, 6, 4, ROOF[3]).vline(x + 5, top - 4, top - 1, ROOF[2]).hline(x, x + 5, top - 4, ROOF[4]).set(x, top - 3, ROOF[4])
         for k in range(5):
             s.set(x + k + (k % 2), top - 6 - (k % 2), BOUG[3] if k % 2 else P.leaf[3])
-    y0 = top + 10
-    for y in range(y0, MH):
+    # cobbles in perspective: rows 2px tall at the wall, 6px in front
+    y, row = y0, 0
+    while y < MH:
+        rh = min(6, 2 + row)
+        sw = 4 + rh * 2
+        off = (row % 2) * (sw // 2)
+        for x in range(-sw, MW, sw):
+            x0 = x + off
+            for yy in range(y, min(MH, y + rh)):
+                for xx in range(max(0, x0), min(MW, x0 + sw)):
+                    gap = xx == x0 or yy == y
+                    if gap:
+                        c = STONE[1]
+                    elif yy == y + 1 and xx < x0 + sw - 2 or xx == x0 + 1 and yy < y + rh - 1:
+                        c = STONE[4]                                  # lit top-left of each stone
+                    elif yy == y + rh - 1 or xx == x0 + sw - 1:
+                        c = STONE[2]                                  # shaded bottom-right
+                    else:
+                        c = STONE[3]
+                    s.set(xx, yy, c)
+        y += rh
+        row += 1
+    for y in range(y0, y0 + 3):                                       # the wall's shadow on the street
         for x in range(MW):
-            row = (y - y0) // 3
-            off = (row % 2) * 3
-            edge = (x + off) % 6 == 0 or (y - y0) % 3 == 0
-            s.set(x, y, STONE[2] if edge else (STONE[3] if (x // 6 + row) % 4 else STONE[4]))
-    s.hline(0, MW - 1, y0, STONE[1])
+            if y < y0 + 2 or (x + y) % 2:
+                s.set(x, y, STONE[1] if s.get(x, y) == STONE[1] else STONE[2] if y > y0 else STONE[1])
 
 
 def arch(s):
     """A whitewashed gateway at the far left: the district's end."""
     x0 = 4
     s.rect(x0, 34, 44, FEET - 34, WHITE[3]).hline(x0, x0 + 43, 34, WHITE[4]).vline(x0 + 43, 34, FEET - 1, WHITE[1])
-    for k in range(14):                                               # rounded opening
-        hw = int((1 - ((k - 13) / 13) ** 2) ** .5 * 11) if k < 13 else 11
-        s.hline(x0 + 22 - hw, x0 + 22 + hw, FEET - 30 + k if False else 0, WHITE[3])
+    s.vline(x0 + 42, 35, FEET - 1, WHITE[2]).vline(x0, 34, FEET - 1, WHITE[4])
     for y in range(FEET - 34, FEET):
         t = (y - (FEET - 34)) / 12
         hw = int(min(1, t) ** .5 * 11) if t < 1 else 11
         s.hline(x0 + 22 - hw, x0 + 22 + hw, y, SKY[2] if y < FEET - 20 else P.sand[3])
+        s.set(x0 + 22 - hw - 1, y, WHITE[1]).set(x0 + 22 + hw + 1, y, WHITE[4])     # depth of the opening
     for k in range(5):
         s.hline(x0 + 12 - k, x0 + 32 + k, 30 + k, DOME[3] if k < 3 else DOME[2])
-    s.set(x0 + 22, 27, WHITE[3]).vline(x0 + 22, 24, 26, P.mustard[3])   # bell tower tip
+    s.set(x0 + 22, 27, WHITE[3]).vline(x0 + 22, 24, 26, P.mustard[3])
+    for y in range(FEET, FEET + 3):                                   # shadow at its foot
+        s.hline(x0 + 44, x0 + 47 - (y - FEET), y, STONE[1])
 
 
 def background():
+    """The near layer: wall, street and gateway. Transparent above the wall."""
     s = Sprite(MW, MH)
-    sky(s)
-    town(s)
+    rnd = random.Random(4)
+    for tx in (388, 664):                                             # olive trees in gardens behind the wall
+        olive_tree(s, tx, 84, 34, rnd)
     street(s)
+    for bx in (132, 282, 470):                                        # oleanders in the gaps between stalls
+        bush(s, bx, 93, 16, rnd)
     arch(s)
     return s
 
@@ -199,28 +311,94 @@ def hat_stall():
 
 
 def fountain() -> Sprite:
-    """The plaza fountain: a wide round basin, a pedestal bowl, a little dolphin spout on top.
+    """The plaza fountain, seen slightly from above so it reads round (owner: needs volume): an elliptic
+    basin rim with water inside, a curved front wall shaded across like a drum, a cylindrical pedestal,
+    an upper bowl and a dolphin spout; its shadow falls to the lower right.
     The game animates the falling water over it."""
-    W, H = 70, 44
+    W, H = 72, 48
     s = Sprite(W, H)
-    base = H - 1
-    for k in range(9):                                                # basin wall, lit top-left
-        y = base - k
-        s.hline(3, W - 4, y, WALL[3] if k > 5 else WALL[2])
-        s.set(3, y, WALL[4]).set(W - 4, y, WALL[1])
-    s.hline(2, W - 3, base - 9, WALL[4]).hline(2, W - 3, base - 8, WALL[3]).hline(3, W - 4, base, WALL[1])
-    s.rect(5, base - 7, W - 10, 2, P.sea[3]).hline(5, W - 6, base - 7, P.sea[4])
-    for x in range(8, W - 8, 9):                                      # basin panels
-        s.vline(x, base - 5, base - 1, WALL[1])
-    cx = W // 2
-    s.rect(cx - 3, base - 24, 7, 16, WALL[3]).vline(cx + 3, base - 24, base - 9, WALL[1]).vline(cx - 3, base - 24, base - 9, WALL[4])
-    for k in range(4):                                                # upper bowl
-        hw = 12 - k * 2
-        s.hline(cx - hw, cx + hw, base - 25 + k, WALL[4] if k == 0 else WALL[2])
-    s.hline(cx - 10, cx + 10, base - 25, P.sea[3])
-    s.rect(cx - 1, base - 33, 3, 8, WALL[3]).set(cx + 1, base - 33, WALL[1])
-    s.hline(cx - 3, cx + 3, base - 35, P.teal[3]).hline(cx - 2, cx + 2, base - 36, P.teal[4]).set(cx + 3, base - 37, P.teal[3])   # dolphin
+    cx, rx, ry = 35, 31, 6
+    rim = H - 15                                                      # rim centre row
+    wall = 8
+    for y in range(H - 6, H):                                         # cast shadow on the cobbles
+        for x in range(8, W):
+            t = ((x - cx - 6) / (rx + 2)) ** 2 + ((y - (H - 4)) / 3.2) ** 2
+            if t <= 1 and ((x + y) % 2 or t < .6):
+                s.set(x, y, STONE[1])
+    def tone(x):                                                      # a drum lit from the left
+        u = (x - (cx - rx)) / (2 * rx)
+        return WALL[4] if u < .12 else WALL[3] if u < .5 else WALL[2] if u < .85 else WALL[1]
+    for x in range(cx - rx, cx + rx + 1):
+        k = (1 - ((x - cx) / rx) ** 2) ** .5
+        yt = round(rim + ry * k)
+        s.vline(x, yt, yt + wall, tone(x))
+        s.set(x, yt + wall, WALL[1])
+        if (x - cx + rx) % 10 == 5 and abs(x - cx) < rx - 3:          # panels follow the curve
+            s.vline(x, yt + 2, yt + wall - 2, WALL[1])
+            s.vline(x - 1, yt + 2, yt + wall - 2, WALL[4] if x < cx else tone(x))
+    for x in range(cx - rx, cx + rx + 1):                             # rim: a 2px ring seen from above
+        k = (1 - ((x - cx) / rx) ** 2) ** .5
+        s.set(x, round(rim - ry * k), WALL[3]).set(x, round(rim - ry * k) - 1, WALL[4])
+        s.set(x, round(rim + ry * k), WALL[4]).set(x, round(rim + ry * k) - 1, WALL[3])
+    for y in range(rim - ry + 1, rim + ry - 1):                       # water inside the rim
+        for x in range(cx - rx + 2, cx + rx - 1):
+            if ((x - cx) / (rx - 2)) ** 2 + ((y - rim) / (ry - 1.4)) ** 2 <= 1:
+                back = ((x - cx) / (rx - 2)) ** 2 + ((y - rim + 1.5) / (ry - 1.4)) ** 2 > 1 and y < rim
+                s.set(x, y, P.sea[2] if back else P.sea[3])
+    for x0, y0, w in ((cx - 20, rim + 1, 6), (cx + 8, rim + 2, 5), (cx - 8, rim + 3, 4), (cx + 18, rim, 3)):
+        s.hline(x0, x0 + w, y0, P.sea[4])                              # ripples
+    pt, pb = rim - 22, rim + 1                                         # pedestal, a lit cylinder
+    for i, c in enumerate((WALL[4], WALL[3], WALL[3], WALL[2], WALL[2], WALL[1])):
+        s.vline(cx - 3 + i, pt, pb, c)
+    s.hline(cx - 3, cx + 2, pb, P.sea[2])
+    by, brx = pt - 1, 12                                              # upper bowl: rim ellipse + curved underside
+    for x in range(cx - brx, cx + brx + 1):
+        k = (1 - ((x - cx) / brx) ** 2) ** .5
+        d = round(4 * k)
+        for yy in range(by + 1, by + 1 + d):
+            s.set(x, yy, tone(cx - rx + round((x - cx + brx) / (2 * brx) * 2 * rx)))
+        s.set(x, by + d, WALL[1])
+        s.set(x, by - round(1.6 * k), WALL[4]).set(x, by + round(1.6 * k), WALL[3])
+    s.hline(cx - brx + 2, cx + brx - 2, by, P.sea[3]).hline(cx - 6, cx - 2, by, P.sea[4])
+    for i, c in enumerate((WALL[4], WALL[3], WALL[1])):                # spout column
+        s.vline(cx - 1 + i, by - 7, by - 1, c)
+    s.hline(cx - 3, cx + 3, by - 9, P.teal[3]).hline(cx - 2, cx + 2, by - 10, P.teal[4]).set(cx + 3, by - 11, P.teal[3])
+    s.hline(cx - 3, cx + 3, by - 8, P.teal[2]).set(cx - 4, by - 9, P.teal[2])   # dolphin
     return s
+
+
+def olive_tree(s, x, ground, h=30, rnd=None):
+    """A gnarled olive tree, rooted behind the wall: twisted trunk, soft grey-green crown in clumps."""
+    for k in range(h - 12):
+        tx = x + round(1.5 * math.sin(k / 4))
+        s.hline(tx - 1, tx + 1, ground - k, P.wood[2]).set(tx - 1, ground - k, P.wood[3]).set(tx + 1, ground - k, P.wood[1])
+    top = ground - h
+    for ox, oy, r in ((-9, 8, 7), (8, 7, 7), (0, 3, 8), (-4, 11, 6), (5, 12, 6), (-13, 12, 5), (13, 12, 5)):
+        for yy in range(-r, r + 1):
+            for xx in range(-r - 2, r + 3):
+                if (xx / (r + 2)) ** 2 + (yy / r) ** 2 <= 1:
+                    lit = xx + yy < -r * .5
+                    dark = xx + yy > r * .7 or yy > r * .6
+                    c = P.sage[3] if lit else P.sage[1] if dark else P.sage[2]
+                    if lit and xx + yy < -r * 1.1:
+                        c = P.sage[4]
+                    s.set(x + ox + xx, top + oy + yy, c)
+
+
+def bush(s, x, ground, w=16, rnd=None):
+    """An oleander shrub at the foot of the wall: a round green mound with pink flowers, shaded below."""
+    h = w // 2 + 2
+    for yy in range(h):
+        for xx in range(-w // 2 - 1, w // 2 + 2):
+            if (xx / (w / 2 + 1)) ** 2 + ((yy - h + 1) / h) ** 2 <= 1:
+                y = ground - h + 1 + yy
+                lit = xx < -w // 4 and yy < h * .6
+                c = P.leaf[3] if lit else P.leaf[1] if yy > h - 3 or xx > w // 3 else P.leaf[2]
+                if rnd.random() < .14 and yy < h - 2:
+                    c = BOUG[3] if rnd.random() < .6 else BOUG[4]
+                s.set(x + xx, y, c)
+    for xx in range(-w // 2, w // 2 + 3):                              # contact shadow
+        s.set(x + xx + 1, ground + 1, STONE[1])
 
 
 def cafe() -> Sprite:
@@ -249,14 +427,19 @@ def cafe() -> Sprite:
 
 def board():
     s = Sprite(MW, MH + 60)
-    s.blit(background(), 0, 0)
-    for spr, x, y in ((fruit_stall(), 96 - 24, FEET - 44 + 1), (fish_stall(), 168 - 24, FEET - 44 + 1), (fountain(), 336 - 35, FEET - 44 + 1),
+    s.blit(sky_layer(), 0, 0)
+    s.blit(sky_layer(), 342, 0)
+    s.blit(far_layer(), 0, 0, blend=True)
+    s.blit(mid_layer(), 0, 0, blend=True)
+    s.blit(background(), 0, 0, blend=True)
+    for spr, x, y in ((fruit_stall(), 96 - 24, FEET - 44 + 1), (fish_stall(), 168 - 24, FEET - 44 + 1), (fountain(), 336 - 35, FEET - 48 + 1),
                       (hat_stall(), 508 - 24, FEET - 44 + 1), (cafe(), 600 - 48, FEET - 50 + 1)):
         s.blit(spr, x, y)
     return s
 
 
 def build():
-    return {"summer_market_bg": background(), "summer_market_fruit": fruit_stall(), "summer_market_fish": fish_stall(),
+    return {"summer_market_bg": background(), "summer_market_sky": sky_layer(), "summer_market_far": far_layer(),
+            "summer_market_mid": mid_layer(), "summer_market_fruit": fruit_stall(), "summer_market_fish": fish_stall(),
             "summer_market_hat": hat_stall(), "summer_market_fountain": fountain(), "summer_market_cafe": cafe(),
             "summer_market_board": board()}
