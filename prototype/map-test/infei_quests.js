@@ -262,7 +262,7 @@ const infeiQuests=(function(){
   if(q.prints.rabbit==='farm'&&q.prints.water!==today()&&hour()>=8){q.prints.water=today();const b=Object.values(S().beds).find(b=>b.watered!==today()&&!X.ripe(b));if(b){b.watered=today();log('小满来看兔子，顺手浇了一块地。');}}}
  // ---------------------------------------------------------------- clicks + the quest list
  const hit=(x,y,s)=>{if(s.inside||busy)return false;
-  for(const [key,v]of Object.entries(V)){if(!visible(v))continue;const p=where(v);if(p.scene===s.scene&&Math.abs(x-p.x)<10&&y>103-30&&y<104){talk(key);return true;}}
+  for(const [key,v]of Object.entries(V)){if(!visible(v))continue;const p=where(v);if(p.scene===s.scene&&Math.abs(x-p.x)<10&&y>103-44&&y<104){talk(key);return true;}   /* up to the !/? mark above the head (owner: clicking the mark did nothing) */}
   const g=spotAt(s.scene,x,y);if(g){run(g.id);return true;}
   return false;};
  X.hooks.click.push(hit);

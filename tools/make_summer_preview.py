@@ -12,6 +12,7 @@ import beach as BE
 import doll
 import sea_life as SL
 import reef as RF
+import reef2 as R2
 import sea_life_motion as MOT
 from pixelkit import Sprite, P
 
@@ -190,7 +191,8 @@ def life():
     def poses(k):
         if k not in cache:cache[k]=[uri(f) for f in MOT.frames(k)]
         return cache[k]
-    return [{'f':poses(k),'x':B.LAND+x,'y':B.SKY+y,'r':speeds.get(k,(35,5))[0],'v':speeds.get(k,(35,5))[1],'k':k} for k,fn,x,y in B.LIFE if k!='diver']
+    speeds.update({'whale_shark':(140,3),'sunfish':(30,1),'hammerhead':(120,6),'tiger_shark':(120,5),'oarfish':(60,2),'spinner_dolphin':(140,12),'seahorse':(4,1),'frogfish':(6,1),'ribbon_eel':(8,1),'glass_shrimp':(10,2),'flying_fish':(120,14),'needlefish':(90,10),'wahoo':(140,12),'mahimahi':(110,10),'squid':(30,4)})
+    return [{'f':poses(k),'x':B.LAND+x,'y':B.SKY+y,'r':speeds.get(k,(35,5))[0],'v':speeds.get(k,(35,5))[1],'k':k,**({'when':R2.SPECIES[k][2],'page':R2.SPECIES[k][3]} if k in R2.SPECIES else {})} for k,fn,x,y in B.LIFE if k!='diver']
 
 
 def runtime_data():
@@ -215,7 +217,7 @@ def runtime_data():
         'solid': uri(solid_mask()),
         'chairs': [[cx, B.GROUND[cx] + 1] for cx, _ in B.CHAIRS],
         'hotspots': [dict(h, text=HOTSPOT_TEXT.get(h['id'],'沿着'+h['name']+'游了一圈，珊瑚和小鱼近得伸手就能碰到。')) for h in B.HOTSPOTS],
-        'lifeText': {**LIFE_TEXT,**{k:'在水中遇到了'+name+'，慢慢靠近看了一会儿。' for group in RF.GROUPS for k,(name,_) in group[1].items()}}, 'seal': [uri(SS.seal(0)), uri(SS.seal(1))], 'sealAt': [B.STACK[0] + 4, B.WL - 4],
+        'lifeText': {**LIFE_TEXT,**{k:'在水中遇到了'+v[0]+'，'+v[6] for k,v in R2.SPECIES.items()},**{k:'在水中遇到了'+name+'，慢慢靠近看了一会儿。' for group in RF.GROUPS for k,(name,_) in group[1].items()}}, 'seal': [uri(SS.seal(0)), uri(SS.seal(1))], 'sealAt': [B.STACK[0] + 4, B.WL - 4],
         'seaEnd': B.STACK[0] - 6,
     }
     return data

@@ -34,12 +34,23 @@
  const RARE={glow_jelly:['发光水母','夜里才有','一碰就亮的水母，像一盏会游泳的小灯。'],glow_shrimp:['萤光虾','夜里才有','一群小虾在珊瑚里一闪一闪，像有人撒了把星星。'],
   rain_manta:['雨中的蝠鲼','下雨天才有','雨点打在海面上，蝠鲼在下面慢慢翻了个身。'],lanternfish:['灯笼鱼','只在最深的海沟','头顶挂着小灯的鱼，在漆黑的海沟里一晃一晃。'],
   deep_octopus:['深海章鱼','只在最深的海沟','红色的章鱼缩在石缝里，八条腿慢慢地卷。'],humpback:['座头鲸','冬天才会远远游过','远处的海面喷出一道水柱，巨大的尾巴抬起来又落下。']};
+ // 图鉴 second batch (owner 2026-11-05): 33 more, only at some times. When text shows on the empty card.
+ const WHEN2={day:'白天',night:'夜里才有',rain:'下雨天才有',dawn:'清晨才有',dusk:'傍晚才有',rare:'偶尔出现',vrare:'极其罕见'};
+ const NEW2=k=>(C()?.data?.life||[]).find(c=>c.k===k)?.when;
  const nameK=k=>RARE[k]?.[0]||NAMES[k]||((C().lifeText?.[k]||'').match(/遇到了(.+?)，/)||[])[1]||k;
  const lineK=k=>RARE[k]?.[2]||C().lifeText?.[k]||'';
  const PAGES=[['浅滩',['turtle','jelly','school','clownfish','yellow_tang','anthias','convict','bait_ball','eagleray','glow_jelly','glow_shrimp']],
   ['珊瑚花园',['butterflyfish','tang','regal_tang','flame_angel','moorish_idol','lionfish','boxfish','triggerfish']],
   ['沉船与拱门',['manta','rain_manta','ulua','bluestripe','grouper','shark','pufferfish','saddle_wrasse']],
   ['深沟',['parrotfish','barracuda','trevally','lanternfish','deep_octopus','humpback']]];
+ // the batch-2 species join their pages (reef2.py SPECIES: page index) and swim only at their times
+ (function addBatch2(){const life=C()?.data?.life;if(!life){setTimeout(addBatch2,300);return;}const seen=new Set();
+  for(const c of life)if(c.when&&!seen.has(c.k)){seen.add(c.k);const pg=PAGES[c.page??0]||PAGES[0];if(!pg[1].includes(c.k))pg[1].push(c.k);}})();
+ const roll=(k,p)=>{let h=Math.imul(today()+7,2654435761)^[...k].reduce((a,ch)=>Math.imul(a,31)+ch.charCodeAt(0)|0,11);h=Math.imul(h^h>>>15,2246822507)>>>0;return h%1000<p*1000;};
+ globalThis.summerLifeOn=(w,k)=>{const h=hour();
+  if(w==='day')return h>=6&&h<19;if(w==='night')return h>=19||h<5;if(w==='rain')return rain();
+  if(w==='dawn')return h>=5&&h<8;if(w==='dusk')return h>=17&&h<20;
+  if(w==='rare')return roll(k,.25);if(w==='vrare')return roll(k,.06)&&(h<6||h>=16);return true;};
  const photoHooks=[];
  function crop(cx,cy){try{const c=C(),v=document.getElementById('view'),k=v.width/342,ky=v.height/c.canvas.height,s=c.state,cv=document.createElement('canvas');cv.width=60;cv.height=42;   // what is on screen right now
   const g=cv.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(v,(cx-(s.camX||0)-30)*k,(cy-(s.camY||0)-21)*ky,60*k,42*ky,0,0,60,42);return cv.toDataURL('image/png');}catch(e){return '';}}
@@ -91,7 +102,7 @@
    if(i<PAGES.length){const [name,ks]=PAGES[i],n=ks.filter(k=>b.dex[k]).length;body.append(el('p','dex-sum',`${name} · 拍到 ${n}/${ks.length}${b.pages[i]?' · 已集满 ✦':' · 集满奖励 3 丢丢币'}`));
     const g=el('div','dex-grid');for(const k of ks){const t=el('div','dex-tile'+(b.dex[k]?'':' dex-no'));
      if(b.dex[k]&&b.album[k]){const im=new Image();im.src=b.album[k];t.append(im);}else t.append(el('span','dex-q','?'));
-     t.append(el('b',null,b.dex[k]?nameK(k):'？？？'),el('small',null,b.dex[k]?`拍了 ${b.dex[k]} 张`:(RARE[k]?.[1]||'在这片海里')));if(b.dex[k])t.title=lineK(k);g.append(t);}body.append(g);}
+     t.append(el('b',null,b.dex[k]?nameK(k):'？？？'),el('small',null,b.dex[k]?`拍了 ${b.dex[k]} 张`:(RARE[k]?.[1]||WHEN2[NEW2(k)]||'在这片海里')));if(b.dex[k])t.title=lineK(k);g.append(t);}body.append(g);}
    else{const hs=C().hotspots||[],found=C().state.found||new Set(),n=hs.filter(h=>found.has(h.id)).length;body.append(el('p','dex-sum',`地点 · 去过 ${n}/${hs.length}`));
     const g=el('div','dex-grid dex-places');for(const h of hs){const ok=found.has(h.id),t=el('div','dex-tile dex-place'+(ok?'':' dex-no'));t.append(el('b',null,ok?h.name:'？？？'),el('small',null,ok?h.text:'还没去过'));g.append(t);}body.append(g);}
    body.scrollTop=0;};
@@ -263,7 +274,7 @@
   if(fest())drawFest(ctx);}
  hooks.draw.push(drawPeople);
  hooks.mdraw.push(ctx=>{for(const [id,q]of Object.entries(Q)){if(!q.market)continue;const m=markOf(id);if(!m)continue;const x=id==='coco'?L.CAFE_X-30:L.FISH_X+4;markAt(ctx,x,L.FEET-(id==='coco'?36:45),m);}if(fest())drawFestMarket(ctx);});
- hooks.click.push((x,y)=>{const c=C();for(const [id,q]of Object.entries(Q)){if(q.market||!present(id))continue;const g=c.gr(q.x);if(Math.abs(x-q.x)<9&&y>g-(q.kid?22:28)&&y<g+3){
+ hooks.click.push((x,y)=>{const c=C();for(const [id,q]of Object.entries(Q)){if(q.market||!present(id))continue;const g=c.gr(q.x);if(Math.abs(x-q.x)<9&&y>g-(q.kid?32:40)&&y<g+3){   /* includes the !/? mark above the head */
   scene(async()=>{await walk(q.x+(c.state.x<q.x?-14:14));await talk(id);goalHint(id);});return true;}}return false;});
  hooks.mclick.push((x,y)=>{for(const [id,q]of Object.entries(Q)){if(!q.market)continue;const px=id==='coco'?L.CAFE_X-30:L.FISH_X+4,m=markOf(id);if(!m)continue;
   if(Math.abs(x-px)<10&&y>L.FEET-34&&y<L.FEET+3){scene(async()=>{await walk(px+14);await talk(id);goalHint(id);});return true;}}return false;});

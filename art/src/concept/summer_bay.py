@@ -601,6 +601,9 @@ def _life():
         if i%2==0:
             key,(_,fn)=schools[(i//3)%len(schools)]
             L.append((key,lambda f,fn=fn:fn(),x+22,max(50,y-55)))
+    import reef2 as R2
+    for k, (_, _, _, _, x, y, _) in R2.SPECIES.items():   # 图鉴 second batch: swim only at their times (runtime decides)
+        L.append((k, None, SPLIT + int(x[1:]) if isinstance(x, str) else x, y))
     # every swimmer starts in open water, never inside the seabed (the shark and grouper sat in the earth)
     def clear(kind, x, y):
         fr = MOT.frames(kind)[0]

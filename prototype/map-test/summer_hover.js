@@ -14,7 +14,7 @@ const summerHover=(function(){
   if(Math.abs(x-s.x)<10&&y<s.y&&y>s.y-28)return null;   // Buddy herself: her ring
   const people=L.drawnPeople;for(let i=people.length-1;i>=0;i--){const p=people[i];if(solid(p.pic,x-p.x,y-p.y))return {img:p.pic,x:p.x,y:p.y};}
   if(s.market)return null;
-  for(const f of c.seaLife)if(f.im&&f.lane&&x>=f.px-3&&x<f.px+f.im.width+3&&y>=f.py-3&&y<f.py+f.im.height+3)return {img:f.flip?flipped(f.im):f.im,x:f.px,y:f.py};
+  for(const f of c.seaLife)if(f.im&&f.lane&&f.cx&&x>=f.px-3&&x<f.px+f.im.width+3&&y>=f.py-3&&y<f.py+f.im.height+3)return {img:f.flip?flipped(f.im):f.im,x:f.px,y:f.py};
   const D=c.data||{},g=c.gr(x);
   if(D.lodgeDoor!==undefined&&Math.abs(x-D.lodgeDoor)<16&&y>g-42&&y<g+5)return {img:box(28,42),x:D.lodgeDoor-14,y:c.gr(D.lodgeDoor)-40};
   for(const [lx,ly]of D.chairs||[])if(Math.abs(x-lx)<14&&y>ly-32&&y<ly+3)return {img:box(26,18),x:lx-13,y:ly-16};

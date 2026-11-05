@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: quest marks clickable; 草帽湾 图鉴 doubled (33 timed species)
+- infei_quests/infei_hover/summer_more: an NPC's click/hover area now reaches the !/? box above the head (it stopped at the head, so clicking the mark did nothing).
+- New art `art/src/concept/reef2.py` (SPECIES: name, draw, when, page, x, y, line; review sheet reef2_sheet.png). sea_life_motion animates them, summer_bay places them, make_summer_preview passes `when`/`page` + lifeText. Viewer skips a swimmer whose `when` is off (`globalThis.summerLifeOn`, defined in summer_more: day/night/rain/dawn/dusk, rare 25% / vrare 6% of days by a daily roll). Pages grow to 66; empty cards show the time hint.
+
 ## 2026-11-05 Claude: release CI fixed; smooth fish; 草帽湾 hover glow
 - Desktop app CI had failed since e711058: check_window_drag.js looks for `if (TAURI) {\n  const ro = new ResizeObserver`; I had put a const in between. Fixed (owner's app never got the 4-sail windmill etc. because no release was built).
 - summer/viewer.js fish: each fish gets an open-water lane once (fits its largest frame + bob, nearest water if its spot is rock); smooth sine inside it. No more freeze/snap/skip (97/97 placed, max 0.5px/frame).

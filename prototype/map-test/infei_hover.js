@@ -23,7 +23,7 @@ const infeiHover=(function(){
    for(const i of f.open.concat([11,12])){const [bx,top,w,h]=X.D.plots[i];if(x>=bx-2&&x<=bx+w+2&&y>=top-12&&y<=top+h+3)return rect(bx-1,top-1,w+2,h+2);}}
   if(f.phase!=='done')return null;
   const Q=window.infeiQuests;
-  if(Q)for(const v of Object.values(Q.V)){const p=Q.at(v);if(p&&p.scene===sc&&Math.abs(x-p.x)<10&&y>103-30&&y<104)return {npc:v,x:p.x};}
+  if(Q)for(const v of Object.values(Q.V)){const p=Q.at(v);if(p&&p.scene===sc&&Math.abs(x-p.x)<10&&y>103-44&&y<104)return {npc:v,x:p.x};}
   if(Q){const g=Q.spotAt(sc,x,y);if(g)return rect(...Q.spots[g.spot].rect);}
   const winter=X.seasonAt(X.today?.()??Math.floor(sim.t/1440))===3,A=infeiFarm.ANIMAL;
   const animal=sce=>!winter&&[...(f.animals||[])].reverse().find(a=>a.x!=null&&5===sce&&Math.abs(x-a.x)<A[a.kind].size[0]/2+2&&y<=a.y+2&&y>=a.y-A[a.kind].size[1]-10);

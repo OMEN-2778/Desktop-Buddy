@@ -126,6 +126,7 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
  // plus the 2px bob, so the whole sprite always stays in water and the motion is one smooth sine.
  const free=(xx,yy,w,h)=>{const x0=Math.floor(xx),y0=Math.floor(yy),x1=Math.ceil(xx+w),y1=Math.ceil(yy+h),stride=W+1;if(x0<0||x1>W||y0<=WL+3||y1>H)return false;return solidSum[y1*stride+x1]-solidSum[y0*stride+x1]-solidSum[y1*stride+x0]+solidSum[y0*stride+x0]===0;};
  for(const c of DATA.life){
+  if(c.when&&!(globalThis.summerLifeOn?.(c.when,c.k)??true)){c.cx=0;continue;}   /* 图鉴 batch 2: night / rain / dawn / dusk / rare ones */
   if(c.lane===undefined){const ims=c.f.map(img);if(ims.some(m=>!m.width))continue;
    const w=Math.max(...ims.map(m=>m.width)),h=Math.max(...ims.map(m=>m.height)),ok=(x,y)=>free(x,y-2,w,h+4);
    let y=c.y+(c.oy||0),x0=c.x+(c.ox||0);

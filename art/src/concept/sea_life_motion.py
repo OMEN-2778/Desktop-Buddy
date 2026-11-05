@@ -8,9 +8,11 @@ from pixelkit import Sprite, Anim, P
 import sea_life as S
 import reef as RF
 import summer_sea as SS
+import reef2 as R2
 
 # owner 2026-11-03: every swimmer is a reef.py v2 sprite (the old sea_life fish are retired)
 REEF={**{k:f for k,(_,f) in RF.FISH.items()},**{k:f for k,(_,f) in RF.BIG.items() if k not in ('octopus','moray')}}
+REEF.update({k:v[1] for k,v in R2.SPECIES.items()})   # 图鉴 second batch (owner 2026-11-05)
 ALIASES={'tang':'yellow_tang','shark':'whitetip','eagleray':'eagle_ray','ulua':'trevally'}
 SCHOOL_FISH={'school':RF.bait,'bait_ball':RF.bait,'bluestripe':RF.bluestripe_snapper,'convict':RF.convict_tang,'anthias':RF.anthias}
 
