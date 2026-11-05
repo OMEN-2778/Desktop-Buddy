@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: stall panel polish
+- Removed redundant notes (place line, hours chip, tips); title 草帽湾 · 市集, chips 营业中 / 今天 N 位客人, 柜台 n/6.
+- Small round corners on all panel boxes; custom always-visible scroll bar on the right (`scrollBar()`, native one hidden, Mac overlay bars don't show); diary box hidden while the big panel covers it (its text ghosted through).
+
 ## 2026-11-05 Claude: 我的小摊 panel redesign; card blur 18px
 - openStall(): big sheet sized like the quest panel (diary row → view bottom), banner with the stall picture + status chips + coins, a 6-slot wooden counter with 48px goods and price tags, recipe cards (48px icon, tags 冷饮/热食/纪念品, price tag, ingredient chips with icons, red when short). Styles `.st-*` in map-test/style.css.
 - Chance card backdrop blur 7px → 18px (owner).

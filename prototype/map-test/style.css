@@ -75,3 +75,14 @@
 .social-sheet.fu-big-sheet{display:flex;flex-direction:column;overflow:hidden}
 .fu-big-sheet .social-sheet-content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:4px}
 .social-sheet.fu-big-sheet{background:var(--panel)}
+/* owner 2026-11-05: a visible scrollbar on the right when the panel scrolls; small round corners everywhere */
+.fu-big-sheet .social-sheet-content{scrollbar-width:none;padding-right:14px}
+.fu-big-sheet .social-sheet-content::-webkit-scrollbar{display:none}
+.st-scroll{position:absolute;right:6px;width:6px;border-radius:3px;background:#e9e1d0;pointer-events:none}
+.st-scroll[hidden]{display:none}
+.st-scroll i{position:absolute;left:0;right:0;border-radius:3px;background:#b39b6b;box-shadow:inset 0 1px 0 #d6c39b}
+.social-sheet.fu-big-sheet{border-radius:10px}
+.st-banner,.st-counter,.st-card{border-radius:8px}
+.st-slot,.st-card-top img.fu-big{border-radius:6px}
+.st-chip,.st-tag,.st-price,.st-ing,.st-t{border-radius:5px}
+body:has(.social-sheet.fu-big-sheet:not([hidden])) #diaryBox{visibility:hidden}   /* the big panel covers the diary row: its text must not ghost through */

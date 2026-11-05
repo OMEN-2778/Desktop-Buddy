@@ -84,7 +84,12 @@ const summerLife=(function(){
    for(const [keys,n]of r.need){const got=Math.min(have(keys),n),chip=el('span','st-ing'+(got>=n?'':' st-miss'));chip.append(FarmUI.icon(keys[0]),el('span',null,(keys.length>1?(keys===FRUIT?'水果':keys===EGG?'鸡蛋':'牛奶'):nameOf2(keys[0]))+` ${got}/${n}`));need.append(chip);}
    card.append(need,FarmUI.actions([{label:'做一份',off:b.stock.length>=STOCK_MAX?'柜台摆满了':ok?'':'材料不够',on:()=>{if(make(k)){speakBay(`做好了${r.name}，摆上摊～`);openStall();}}}]));list.append(card);}
   c.append(list);
-  requestAnimationFrame(()=>fitBig(s));}
+  requestAnimationFrame(()=>{fitBig(s);scrollBar(s,c);});}
+ /* an always-visible scroll bar on the right when the panel scrolls (owner 2026-11-05) */
+ function scrollBar(s,c){const bar=FarmUI.el('div','st-scroll'),th=document.createElement('i');bar.append(th);s.append(bar);
+  const upd=()=>{const over=c.scrollHeight>c.clientHeight+2;bar.hidden=!over;if(!over)return;const top=c.offsetTop,h=c.clientHeight;bar.style.top=top+'px';bar.style.height=h+'px';
+   const th_h=Math.max(18,h*c.clientHeight/c.scrollHeight);th.style.height=th_h+'px';th.style.top=((h-th_h)*c.scrollTop/(c.scrollHeight-c.clientHeight))+'px';};
+  c.addEventListener('scroll',upd,{passive:true});new ResizeObserver(upd).observe(c);upd();}
  // ---------------------------------------------------------------- gathering
  let wasUnder=false,lastT=0,pearlTold=false;
  const SHELL_SPOTS=[700,742,800,858,930,996];
