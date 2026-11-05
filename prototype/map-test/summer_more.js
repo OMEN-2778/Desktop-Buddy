@@ -26,7 +26,7 @@
  const MOOD={snap:ML_('snap','第一张照片','happy'),page:ML_('page','图鉴集满一页','confident',3),sun:ML_('sun','晒得暖洋洋','happy',1),burn:ML_('burn','晒红了','embarrassed',1),
   shower:ML_('shower','冲掉一身海盐','happy',1),fire:ML_('fire','篝火旁的晚上','happy',2),surf_fall:ML_('surf_fall','喝了一大口海水','embarrassed',1),surf_up:ML_('surf_up','站上浪了！','confident',3),
   castle:ML_('castle','沙堡','happy',1),glow:ML_('glow','荧光海','dazed',3),quest:ML_('quest','帮上忙了','happy',2),letter:ML_('letter','四十年前的信','sad',2),
-  fest:ML_('fest','草帽湾过节','happy',3),lantern:ML_('lantern','一盏椰灯','dazed',2),whale:ML_('whale','鲸歌','dazed',3),wave:ML_('wave','追浪节','confident',2)};
+  fest:ML_('fest','草帽湾过节','happy',3),lantern:ML_('lantern','一盏椰灯','dazed',2),whale:ML_('whale','鲸歌','dazed',3),wave:ML_('wave','冲浪日','confident',2)};
  const mood=(id)=>{try{addMood(id);}catch(e){}};
 
  // ================================================================ 1. camera + 图鉴
@@ -289,12 +289,12 @@
   {n:'椰灯夜',se:1,day:9,c:['#3a3f7a','#f0a95b'],line:'椰壳里点上小灯，晚上放进海里许个愿',flags:['#f0a95b','#f6dc8a','#e57a5a']},
   {n:'花环节',se:1,day:12,c:['#d0577f','#f6b3cb'],line:'人人戴花环，广场上跳草裙舞',flags:['#f28fb0','#f6dc8a','#9fdc8a']},
   {n:'鲸歌节',se:2,day:5,c:['#36557a','#9bd3df'],line:'座头鲸经过海湾，海里能听到它们唱歌',flags:['#5d84b8','#e8f2fa','#9bd3df']},
-  {n:'追浪节',se:2,day:12,c:['#2f7aa0','#f2d36b'],line:'一年最大的浪，冲浪手都来了',flags:['#2f7aa0','#f2d36b','#ffffff']}];
+  {n:'冲浪日',se:2,day:12,c:['#2f7aa0','#f2d36b'],line:'一年最大的浪，冲浪手都来了',flags:['#2f7aa0','#f2d36b','#ffffff']}];
  const fest=()=>{const se=cal();return FESTS.find(f=>f.se===se.i&&f.day===se.day)||null;};
  // city festivals stay in the city: on the island the bar and the time-bar tag show only the island's own
  const oldFT=festToday;festToday=function(){if(sim.place==='summer_test'){const f=fest();return f?{name:f.n,season:f.se,day:f.day,island:true,announce:()=>announce(f)}:null;}return oldFT();};
  // the day's start, the same way a city festival starts it: a diary line, her own words, the festival mood
- const FEST_SAY={草帽节:['帽子要抓紧！','今天风好大，好热闹'],椰灯夜:['晚上要放椰灯！','先想好许什么愿'],花环节:['好香的花环','今天要学草裙舞'],鲸歌节:['今天能听到鲸鱼唱歌吗','去岸边等着'],追浪节:['浪好大！','今天有冲浪比赛']};
+ const FEST_SAY={草帽节:['帽子要抓紧！','今天风好大，好热闹'],椰灯夜:['晚上要放椰灯！','先想好许什么愿'],花环节:['好香的花环','今天要学草裙舞'],鲸歌节:['今天能听到鲸鱼唱歌吗','去岸边等着'],冲浪日:['浪好大！','今天有冲浪比赛']};
  function announce(f){log(`今天是草帽湾的${f.n}。${f.line}。`);speak(pick(FEST_SAY[f.n]||['过节啦']));mood(MOOD.fest);}
  const oldFT2=festivalToday;festivalToday=function(){if(sim.place==='summer_test'){const f=fest();if(f)return f.n;const d=Math.floor(sim.t/1440)+1;return d===30?'生日':d===14||d===56?'纪念日':null;}return oldFT2();};
  const festDone=k=>{const b=M();return b.fest[k+'@'+today()];},festMark=k=>{const b=M();b.fest[k+'@'+today()]=1;for(const o of Object.keys(b.fest))if(+o.split('@')[1]<today()-30)delete b.fest[o];};
@@ -312,14 +312,14 @@
    if(!festDone('whale')){festMark('whale');mood(MOOD.whale);log('鲸歌节：坐在岸边听了很久的鲸歌。');}}),
   watch:()=>scene(async()=>{await goBay(960);await say('解说员','第三号选手上浪了！——完美的转身！');await say(nameOf(),'好厉害！！');need('fun',20);if(!festDone('watch')){festMark('watch');mood(MOOD.wave);}}),
   contest:()=>{if((M().act.surf||0)<3)return showHint('先多冲几次浪，能站起来了再来报名');if(festDone('contest'))return showHint('今天已经比过了');
-   scene(async()=>{festMark('contest');await say('解说员','下一位选手——来自草帽湾的新人！');surf();await new Promise(r=>setTimeout(r,9500));await say('解说员','漂亮！新人奖！');coins(5,'追浪节新人奖');mood(MOOD.wave);log('追浪节：参加冲浪比赛，拿了新人奖。');});}};
- if(typeof FB_MOTIFS!=='undefined')Object.assign(FB_MOTIFS,{草帽节:['star','flower','heart'],椰灯夜:['lantern','moon','star'],花环节:['flower','heart','note'],鲸歌节:['wave','note','star'],追浪节:['wave','star','ball']});   // the festival bar's own drifting motifs
+   scene(async()=>{festMark('contest');await say('解说员','下一位选手——来自草帽湾的新人！');surf();await new Promise(r=>setTimeout(r,9500));await say('解说员','漂亮！新人奖！');coins(5,'冲浪日新人奖');mood(MOOD.wave);log('冲浪日：参加冲浪比赛，拿了新人奖。');});}};
+ if(typeof FB_MOTIFS!=='undefined')Object.assign(FB_MOTIFS,{草帽节:['star','flower','heart'],椰灯夜:['lantern','moon','star'],花环节:['flower','heart','note'],鲸歌节:['wave','note','star'],冲浪日:['wave','star','ball']});   // the festival bar's own drifting motifs
  Object.assign(FEST_BAR,{
   草帽节:['#d9a441','#f6dc8a','满天飞着草帽，风越大越热闹',['抛草帽','fn',A.hat],['领一顶草帽','fn',A.freehat]],
   椰灯夜:['#3a3f7a','#f0a95b','椰壳里点上小灯，晚上放进海里许个愿',['放一盏椰灯','fn',A.lantern]],
   花环节:['#d0577f','#f6b3cb','人人戴花环，广场上跳草裙舞',['戴花环','fn',A.lei],['学草裙舞','fn',A.hula]],
   鲸歌节:['#36557a','#9bd3df','座头鲸经过海湾，海里能听到它们唱歌',['岸边听鲸歌','fn',A.whale]],
-  追浪节:['#2f7aa0','#f2d36b','一年最大的浪，冲浪手都来了',['看冲浪比赛','fn',A.watch],['报名比赛','fn',A.contest]]});
+  冲浪日:['#2f7aa0','#f2d36b','一年最大的浪，冲浪手都来了',['看冲浪比赛','fn',A.watch],['报名比赛','fn',A.contest]]});
  let hatFx=[],myLantern=null,festHello=-1;
  hooks.tick.push(()=>{if(!inBay())return;const f=fest();
   if(f?.n==='草帽节'&&Math.random()<.02&&hatFx.length<14)hatFx.push({x:C().state.x-200+Math.random()*120,y:20+Math.random()*50,t0:realClock});});
@@ -337,7 +337,7 @@
   if(f.n==='花环节'){for(const [i,x]of [[0,846],[1,874]]){const p=i?L.P.lei:L.P.alo,bob=Math.round(Math.sin(t*4+i)*1.5);drawPerson(ctx,p,x+Math.round(Math.sin(t*2+i)*2),c.gr(x)+bob,{wave:true});}
    for(let x=600;x<1000;x+=9){ctx.fillStyle=['#f28fb0','#f6dc8a','#ffffff'][(x/9|0)%3];ctx.fillRect(x,40+Math.round(Math.sin(x)*2),2,2);}}
   if(f.n==='鲸歌节'){const n=Math.floor(t)%6;if(n<2){ctx.fillStyle='rgba(255,255,255,.7)';for(let k=0;k<3;k++)ctx.fillRect(1040+k*6,WL-8-k*3-(t*4%4|0),3,1);}}
-  if(f.n==='追浪节'){for(let k=0;k<3;k++){const p=((t*.12+k/3)%1),x=1400-p*370,h=Math.round(10*(1-p)+3);ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(x-20,WL-h,40,2);ctx.fillStyle='rgba(180,230,245,.8)';ctx.fillRect(x-24,WL-h+2,48,h);
+  if(f.n==='冲浪日'){for(let k=0;k<3;k++){const p=((t*.12+k/3)%1),x=1400-p*370,h=Math.round(10*(1-p)+3);ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(x-20,WL-h,40,2);ctx.fillStyle='rgba(180,230,245,.8)';ctx.fillRect(x-24,WL-h+2,48,h);
     if(k===0){const sp=WAVE[0];drawPerson(ctx,sp,x,WL-h-1);ctx.fillStyle='#f2d36b';ctx.fillRect(x-7,WL-h-1,14,2);}}
    for(let i=0;i<3;i++)drawPerson(ctx,WAVE[i+1],930+i*16,c.gr(930+i*16),{wave:Math.sin(t*3+i)>.3});}}
  const WAVE=[person('冲浪选手','m',2203),person('观众','f',2309),person('观众','m',2411),person('观众','f',2503)];
