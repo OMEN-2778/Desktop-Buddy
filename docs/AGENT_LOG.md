@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: story choices never covered; windmill sails
+- liftDiary(): while story choices show, if the NPC row would reach into them (small 界面大小 / big font), the NPC row and diary lift by the overlap (measured without the lift animation); story_bubbles.js re-runs it after laying out choices.
+- spring_fields.sails(): solid framed cream panels + 2px spar (the dotted lattice made two blades vanish against the sky, owner). Sheet rebuilt by tools/make_spring_life_review.py.
+
 ## 2026-11-05 Claude: update no longer blocked forever by a failed save
 - Player report: 「存档还没保存好，稍后再试更新」 on every 重试. saveGame(): `saving` is a timestamp (a save stuck >15 s no longer blocks), store.save has a 12 s timeout, the reason goes to `saveWhy` + update.log. updates.js: the 2nd failure in a row shows the reason and 仍然更新 (uses the save on disk). lib.rs write_save: if the rename onto save.json fails (file held by antivirus / cloud sync / an editor), copy over it, then write in place.
 - Not tested in the real app (no Windows here); browser release build saves fine with a card open and in 茵菲谷. Old installs still have the old updater: restarting the app clears a stuck save.

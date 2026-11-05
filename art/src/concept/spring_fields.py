@@ -335,17 +335,25 @@ def windmill(s, cx, base, draw_sails=True):
 
 
 def sails(s, hx, hy, phase=0.0):
+    """Four clear blades (owner 2026-11-05: two of the old dotted lattices vanished against the sky):
+    a 2px spar, a solid cream sail panel with a dark frame and cross bars, lit on the side facing up."""
     for k in range(4):
         a = phase + k * math.pi / 2 + 0.35
-        for r in range(2, 25):
-            x, y = hx + math.cos(a) * r, hy - math.sin(a) * r
-            s.set(int(round(x)), int(round(y)), P.walnut[1])
-            if r > 6:                                      # the lattice sail beside the stock
-                for w in range(1, 5):
-                    px, py = x + math.cos(a + math.pi / 2) * w, y - math.sin(a + math.pi / 2) * w
-                    c = P.linen[3] if (r + w) % 3 else P.walnut[2]
-                    s.set(int(round(px)), int(round(py)), c)
-    s.rect(hx - 1, hy - 1, 3, 3, P.walnut[0])
+        ca, sa = math.cos(a), math.sin(a)
+        nx, ny = math.cos(a + math.pi / 2), -math.sin(a + math.pi / 2)
+        for r in range(7, 25):                                 # the sail panel beside the spar
+            x, y = hx + ca * r, hy - sa * r
+            for w in range(1, 6):
+                px, py = x + nx * w, y + ny * w
+                edge = w == 5 or r in (7, 24)
+                bar = r % 4 == 0
+                c = P.walnut[1] if edge else P.walnut[2] if bar else (P.linen[3] if ny < 0 else P.linen[2])
+                s.set(int(round(px)), int(round(py)), c)
+        for r in range(2, 25):                                 # the spar, 2px
+            x, y = hx + ca * r, hy - sa * r
+            s.set(int(round(x)), int(round(y)), P.walnut[0])
+            s.set(int(round(x - nx)), int(round(y - ny)), P.walnut[1])
+    s.rect(hx - 2, hy - 2, 5, 5, P.walnut[0]).rect(hx - 1, hy - 1, 3, 3, P.walnut[2])
 
 
 def tulip_pick(i, y):

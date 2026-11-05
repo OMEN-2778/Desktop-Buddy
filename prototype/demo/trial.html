@@ -11391,7 +11391,10 @@ const SAY_FS = () => parseFloat(getComputedStyle(widget).getPropertyValue("--say
 // box slides up out of its way; it slides back when her words go
 let sayGrow = 0, diaryGrow = 0;
 function liftDiary() {
-  const growth=listOpen?moodGrow:sayGrow,peer=document.getElementById('peerHud'),diary=document.getElementById('diary');
+  let growth=listOpen?moodGrow:sayGrow;const peer=document.getElementById('peerHud'),diary=document.getElementById('diary');
+  // story choices sit in her row and can be taller than it (small 界面大小, big font): the rows above make room (owner 2026-11-05)
+  const ch=document.querySelector('.story-choices:not([hidden])');
+  if(ch&&peer&&!peer.hidden){const ty=parseFloat((getComputedStyle(peer).translate||'0 0').split(' ')[1])||0,over=peer.getBoundingClientRect().bottom-ty-growth+6-ch.getBoundingClientRect().top;if(over>0)growth+=Math.ceil(over);}   // measured without the running lift animation
   peer?.style.setProperty('--peer-lift',-growth+'px');diary.style.setProperty('--lift',-(growth+diaryGrow)+'px');
   moodrow.style.setProperty('--buddy-lift',growth/2+'px');
   // Align each left-hand icon with the centre of its actual, wrapped text row.
@@ -24072,6 +24075,7 @@ function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}})
   choices.classList.remove('wrap');if(!choices.hidden&&[...choices.querySelectorAll('span')].some(s=>s.scrollWidth>s.clientWidth+1))choices.classList.add('wrap');   // too many to fit: the rest go on a second row
   if(!choices.hidden){const H=popSay.offsetHeight||parseFloat(getComputedStyle(widget).getPropertyValue('--say-h'))||48,[outer,inner]=sayClip(Math.round(H/2)*2,0,12,12,2,0);
    choices.style.setProperty('--choice-clip',outer);choices.style.setProperty('--choice-in',inner);popBubble(popSay,0);popSay.hidden=true;}
+  requestAnimationFrame(()=>{if(typeof liftDiary==='function')liftDiary();});
   const box=hero?popSay:peerBubble;box.tabIndex=0;box.setAttribute('role','button');
   box.setAttribute('aria-label',`${speaker}：${spokenText(words)}${opts?'':last?'（点一下结束）':'（点一下继续）'}`);
   mark();cancelAnimationFrame(keep);hold();

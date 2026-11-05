@@ -2387,7 +2387,10 @@ const SAY_FS = () => parseFloat(getComputedStyle(widget).getPropertyValue("--say
 // box slides up out of its way; it slides back when her words go
 let sayGrow = 0, diaryGrow = 0;
 function liftDiary() {
-  const growth=listOpen?moodGrow:sayGrow,peer=document.getElementById('peerHud'),diary=document.getElementById('diary');
+  let growth=listOpen?moodGrow:sayGrow;const peer=document.getElementById('peerHud'),diary=document.getElementById('diary');
+  // story choices sit in her row and can be taller than it (small 界面大小, big font): the rows above make room (owner 2026-11-05)
+  const ch=document.querySelector('.story-choices:not([hidden])');
+  if(ch&&peer&&!peer.hidden){const ty=parseFloat((getComputedStyle(peer).translate||'0 0').split(' ')[1])||0,over=peer.getBoundingClientRect().bottom-ty-growth+6-ch.getBoundingClientRect().top;if(over>0)growth+=Math.ceil(over);}   // measured without the running lift animation
   peer?.style.setProperty('--peer-lift',-growth+'px');diary.style.setProperty('--lift',-(growth+diaryGrow)+'px');
   moodrow.style.setProperty('--buddy-lift',growth/2+'px');
   // Align each left-hand icon with the centre of its actual, wrapped text row.
