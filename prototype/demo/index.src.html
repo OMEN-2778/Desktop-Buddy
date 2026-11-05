@@ -5008,17 +5008,20 @@ function restore(sv) {
   syncDiary();
   restorePetActivityLocation();
 }
+let saveWhy = "";                                   // why the last save failed (the updater shows it)
 async function saveGame() {
-  if (!booted || saving || visitSleepPreview || friendHousePreview) return false;
-  saving = true;
+  if (!booted) { saveWhy = "游戏还没开好"; return false; }
+  if (visitSleepPreview || friendHousePreview) { saveWhy = "正在预览别人家"; return false; }
+  if (saving && Date.now() - saving < 15000) { saveWhy = "正在保存"; return false; }   // a save that never came back no longer blocks every later one
+  saving = Date.now(); saveWhy = "";
   try {
-    await store.save(snapshot());
+    await Promise.race([store.save(snapshot()), new Promise((_, no) => setTimeout(() => no(new Error("写存档超时")), 12000))]);
     // the 造型室 page (prototype/creator) shares her look through these two keys
     if (!TAURI) try { localStorage.setItem("buddy-look-v2", JSON.stringify(look)); localStorage.setItem("buddy-look-at", String(Date.now())); } catch (e) { /* full */ }
     return true;
   }
-  catch (e) { console.warn("save failed", e); if (TAURI) TAURI.core.invoke("log_js", { message: `save failed: ${e}` }).catch(() => {}); return false; }
-  finally { saving = false; }
+  catch (e) { saveWhy = String(e && e.message || e); console.warn("save failed", e); if (TAURI) TAURI.core.invoke("log_js", { message: `save failed: ${e}` }).catch(() => {}); return false; }
+  finally { saving = 0; }
 }
 // 自动保存 on: every 5 minutes, and when the window is hidden or closed.
 // Off: only the 保存 button saves.

@@ -203,7 +203,18 @@ fn write_save(app: AppHandle, data: String) -> Result<(), String> {
     if file.exists() {
         let _ = fs::copy(&file, file.with_extension("json.bak"));
     }
-    fs::rename(&tmp, &file).map_err(|e| e.to_string())
+    // Windows refuses the swap while something holds save.json (antivirus, cloud sync, an editor):
+    // then copy over it, and as a last resort write it in place
+    if fs::rename(&tmp, &file).is_ok() {
+        return Ok(());
+    }
+    if fs::copy(&tmp, &file).is_ok() {
+        let _ = fs::remove_file(&tmp);
+        return Ok(());
+    }
+    fs::write(&file, data.as_bytes()).map_err(|e| format!("存档文件被占用：{e}"))?;
+    let _ = fs::remove_file(&tmp);
+    Ok(())
 }
 
 #[tauri::command]

@@ -117,7 +117,12 @@ async function applyUpdate() {
   upd.state = "applying";
   showUpdate(`更新到 ${upd.version}，马上回来……`, { later: false });
   // a game that never finished starting (a startup crash) has nothing new to save: the save on disk is the last good one; update anyway, the fix may be in it
-  if(booted&&!await saveGame()){upd.state="ready";updFailed("存档还没保存好，稍后再试更新");return;}                                     // always, even with 自动保存 off: it must come back as it was
+  // a save that keeps failing (file locked by antivirus / cloud sync…) must not trap the player (owner 2026-11-05):
+  // the second failure in a row offers 仍然更新, which keeps the save on disk (the last autosave)
+  if(booted&&!updForce&&!await saveGame()){upd.state="ready";updSaveFails++;
+   TAURI.core.invoke("log_js",{message:`update blocked by save: ${saveWhy}`}).catch(()=>{});
+   if(updSaveFails>=2){showUpdate(`存档没存上（${saveWhy||"原因不明"}）`.slice(0,20),{go:"仍然更新"});updEl.title=`存档没存上：${saveWhy}\n「仍然更新」会用上次自动保存的存档（最多差几分钟）`;updForceNext=true;}
+   else updFailed("存档还没保存好，再点一次重试");return;}                                     // always, even with 自动保存 off: it must come back as it was
   try { localStorage.setItem("buddy-updated", upd.version); } catch (e) { /* only for the note after */ }
   await new Promise(r => setTimeout(r, 1200));
   try { await TAURI.core.invoke("apply_update"); }      // swaps the exe and restarts (or runs the installer)
@@ -136,7 +141,8 @@ function updFailed(e) {
   showUpdate(head.length > 18 ? head.slice(0, 18) + "…" : head, { go: "重试" });
   updEl.title = msg ? `${msg}\n（详细记录在 update.log）` : "";
 }
-updEl.querySelector(".up-go").addEventListener("click", () => { if (upd.state === "ready") applyUpdate(); else { updLater = false; checkUpdate(true); } });
+let updSaveFails = 0, updForce = false, updForceNext = false;
+updEl.querySelector(".up-go").addEventListener("click", () => { if (upd.state === "ready") { updForce = updForceNext; applyUpdate(); } else { updLater = false; checkUpdate(true); } });
 updEl.querySelector(".up-later").addEventListener("click", () => { updLater = true;updDeferredUntil=Date.now()+UPDATE_CHECK_EVERY; if (upd.state === "offered") upd.state = "idle"; hideUpdate(); });
 if (TAURI) {
   TAURI.event.listen("check-update", () => { updLater = false; checkUpdate(true); });

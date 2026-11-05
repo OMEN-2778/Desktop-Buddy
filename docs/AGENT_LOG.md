@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: update no longer blocked forever by a failed save
+- Player report: 「存档还没保存好，稍后再试更新」 on every 重试. saveGame(): `saving` is a timestamp (a save stuck >15 s no longer blocks), store.save has a 12 s timeout, the reason goes to `saveWhy` + update.log. updates.js: the 2nd failure in a row shows the reason and 仍然更新 (uses the save on disk). lib.rs write_save: if the rename onto save.json fails (file held by antivirus / cloud sync / an editor), copy over it, then write in place.
+- Not tested in the real app (no Windows here); browser release build saves fine with a card open and in 茵菲谷. Old installs still have the old updater: restarting the app clears a stuck save.
+
 ## 2026-11-05 Claude: season maps — drag empty ground to move the window
 - adapter.js swallowed the view's pointerdown, so the house's press-and-drag window move never ran in season maps. A ground press now records `seasonPress`; moving >3px (window capture listener) calls off the walk and runs `dragWindow()` (desktop app only). Tested with a stubbed Tauri: drag → 1 call, target cleared; plain click still walks.
 
