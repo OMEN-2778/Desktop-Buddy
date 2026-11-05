@@ -19,7 +19,7 @@ const summerLife=(function(){
  const STALL_X=432,FLOWER_X=240,FRUIT_X=96,FISH_X=168,FOUNTAIN_X=336,HAT_X=508,CAFE_X=600,MW=684,FEET=104;
  const SHORE_X=1004,PALM_X=764,ARRIVE_X=232,inMarket=()=>inBay()&&!!C().state.market;
  const B=()=>{const F=S();F.bay??={};const b=F.bay;b.stock??=[];b.kinds??={};b.weed??={};b.q??={};b.q.lei??={step:0};b.q.kai??={step:0};
-  if(b.day!==today()){b.day=today();b.sold=0;b.kinds={};b.weed={};b.coco=2;b.shells=null;b.nextAt=0;}return b;};
+  if(b.day!==today()){b.day=today();b.sold=0;b.kinds={};b.bought={};b.weed={};b.coco=2;b.shells=null;b.nextAt=0;}return b;};
  const img=src=>{if(!src)return null;img.c??=new Map();if(!img.c.has(src)){const i=new Image();i.src=src;img.c.set(src,i);}return img.c.get(src);};
  const icon=k=>img(FARM_UI_ART.icons[k]);
  // ---------------------------------------------------------------- items and recipes
@@ -251,15 +251,17 @@ const summerLife=(function(){
   sayPills(custs.filter(n=>n.shop.state==='buy'&&n.say),cx);
   pop(ctx);ctx.restore();}
  // shops (buying costs about twice the selling price, so only cooking at the stall turns a profit)
+ /* daily stock per vendor item (owner 2026-11-05): buying to resell must not farm coins */
+ const LIMIT={watermelon:1,peach:3,orange:3,apple:3,fish:3,shrimp:3,crab:2,strawhat:1,shell:3,seaglass:2},left=k=>(LIMIT[k]??3)-((B().bought||{})[k]||0);
  const SHOPS={
   fruit:{title:'果果阿姨的水果摊',lines:['挑一个吧，今天的都甜！','西瓜是早上刚到的。'],goods:[['watermelon',10],['peach',3],['orange',3],['apple',3]]},
   fish:{title:'老渔夫的鱼摊',lines:['早上刚捞的，新鲜着呢。','小螃蟹别拿手指逗它。'],goods:[['fish',1],['shrimp',1],['crab',2]]},
   hat:{title:'草帽爷爷的草帽铺',lines:['在草帽湾，没有草帽可不行。','这顶编了三天。'],goods:[['strawhat',8],['shell',1],['seaglass',2]]}};
  X.ITEMS.strawhat={name:'一顶草帽',icon:'hat',price:4,line:'草帽爷爷编的，戴上就是草帽湾的人了。'};
  function openShop(id){const sh=SHOPS[id];speakBay(pick(sh.lines));
-  FarmUI.shop('bay_shop_'+id,sh.title+' · 买点什么',S().coins,[{group:'今天有',note:'丢丢币买',items:sh.goods.map(([k,cost])=>({name:X.ITEMS[k]?.name||X.CROP?.[k]?.name||k,icon:k==='strawhat'?'hat':k,pic:FARM_UI_ART.icons[k==='strawhat'?'hat':k],cost,key:k,line:X.ITEMS[k]?.line||''}))}]);}
+  FarmUI.shop('bay_shop_'+id,sh.title+' · 买点什么',S().coins,[{group:'今天有',note:'丢丢币买',items:sh.goods.map(([k,cost])=>({info:left(k)>0?`今天还剩 ${left(k)} 个`:'今天卖完了',name:X.ITEMS[k]?.name||X.CROP?.[k]?.name||k,icon:k==='strawhat'?'hat':k,pic:FARM_UI_ART.icons[k==='strawhat'?'hat':k],cost,key:k,line:X.ITEMS[k]?.line||''}))}]);}
  const oldCommand=command;command=function(act,item){
-  if(typeof act==='string'&&act.startsWith('bay_shop_')){if(item&&item.cost<=S().coins){X.record('coin','在市集买了'+item.name.replace(/^一(片|条|只|颗|个|块|篮|团|桶|顶)/,''),-item.cost);X.addItem(item.key);speakBay('买到了'+item.name.replace(/^一(片|条|只|颗|个|块|篮|团|桶|顶)/,''));}else if(item)showHint('丢丢币不够');return;}
+  if(typeof act==='string'&&act.startsWith('bay_shop_')){if(item&&left(item.key)<=0){showHint('今天卖完了，明天再来');return;}if(item&&item.cost<=S().coins){B().bought=B().bought||{};B().bought[item.key]=(B().bought[item.key]||0)+1;X.record('coin','在市集买了'+item.name.replace(/^一(片|条|只|颗|个|块|篮|团|桶|顶)/,''),-item.cost);X.addItem(item.key);speakBay('买到了'+item.name.replace(/^一(片|条|只|颗|个|块|篮|团|桶|顶)/,''));}else if(item)showHint('丢丢币不够');return;}
   return oldCommand(act,item);};
  function openCafe(){const s=FarmUI.sheet('咖啡店的米娅 · 露天座','fu-stall'),c=socialContent(s),el=FarmUI.el;
   c.append(el('p','fu-sub','米娅：坐下歇歇吧，今天的海风刚刚好。'),FarmUI.coinPill(S().coins));

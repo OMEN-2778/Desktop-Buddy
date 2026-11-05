@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-05 Claude: 市集 vendors have daily stock
+- Owner: buying to resell could farm coins. `LIMIT` per item per day (西瓜 1, 草帽 1, 小螃蟹/海玻璃 2, others 3), counted in `F.bay.bought` (resets daily, saved). The shop shows 今天还剩 N 个 / 今天卖完了.
+
 ## 2026-11-05 Claude: 市集 back to the pixel sun shafts; tree texture; shop title
 - Owner preferred the earlier low-res shafts: summer_life.js/adapter.js back to 568657a (screen-res overlay removed).
 - Olive trees / oleanders outlined (sage[0] / leaf[0]) like main-world trees; crowns shaded per 2x2 leaf clump + noise.
