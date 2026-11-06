@@ -1,0 +1,78 @@
+[
+  {
+    "duration": 107.857,
+    "peak": 0.671,
+    "rms_db": -20.0,
+    "notes": 321,
+    "id": "far-shore-sun",
+    "title": "风停在海天之间",
+    "style": "五声长线条 · 晴朗辽阔",
+    "bpm": 84,
+    "chorus_at": 45.71,
+    "sections": [
+      {
+        "name": "intro",
+        "at": 0.0
+      },
+      {
+        "name": "A",
+        "at": 11.43
+      },
+      {
+        "name": "bridge",
+        "at": 34.29
+      },
+      {
+        "name": "B",
+        "at": 45.71
+      },
+      {
+        "name": "A2",
+        "at": 68.57
+      },
+      {
+        "name": "outro",
+        "at": 91.43
+      }
+    ],
+    "preview_only": true
+  },
+  {
+    "duration": 113.0,
+    "peak": 0.5721,
+    "rms_db": -20.0,
+    "notes": 305,
+    "id": "far-shore-tide",
+    "title": "潮水缓缓走向远方",
+    "style": "多利亚慢下行 · 温柔海风",
+    "bpm": 80,
+    "chorus_at": 60.0,
+    "sections": [
+      {
+        "name": "intro",
+        "at": 0.0
+      },
+      {
+        "name": "A",
+        "at": 12.0
+      },
+      {
+        "name": "A2",
+        "at": 36.0
+      },
+      {
+        "name": "B",
+        "at": 60.0
+      },
+      {
+        "name": "bridge",
+        "at": 84.0
+      },
+      {
+        "name": "outro",
+        "at": 96.0
+      }
+    ],
+    "preview_only": true
+  }
+]
