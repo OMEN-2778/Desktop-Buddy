@@ -1,0 +1,256 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#e9e4f2}
+body{font-family:"Noto Sans CJK SC",sans-serif}
+#root{position:absolute;inset:0;overflow:hidden;background:radial-gradient(circle at 30% 20%,#f6f1fb,#ddd5ea)}
+#cam{position:absolute;inset:0;transform-origin:0 0}
+#home{position:absolute;image-rendering:pixelated}
+#adwrap{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+#ad{position:absolute;inset:0;overflow:hidden;background:#3fd3c9}
+.layer{position:absolute;inset:0}
+.it{position:absolute;left:0;top:0;transform-origin:50% 50%}
+/* postcards / polaroids */
+.card{background:#fffaf0;padding:16px 16px 16px;border-radius:4px;box-shadow:0 18px 30px #0004,12px 12px 0 #0f6e6e}
+.card img.shot{display:block;image-rendering:pixelated;border-radius:2px}
+.card.pol{padding:14px 14px 56px;box-shadow:0 14px 24px #0004,10px 10px 0 #ff4f5e}
+.card .cap{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-weight:900;font-size:30px;color:#0f6e6e}
+.tape{position:absolute;width:140px;height:40px;background:var(--tc,#ffc23dcc);opacity:.9;box-shadow:0 2px 4px #0002}
+.tape::before,.tape::after{content:"";position:absolute;top:0;bottom:0;width:8px;background:repeating-linear-gradient(180deg,transparent 0 4px,#fff8 4px 8px)}
+.tape::before{left:-4px}.tape::after{right:-4px}
+.stamp{position:absolute;width:110px;height:130px;padding:8px;background:#fff;-webkit-mask:radial-gradient(circle 5px at 50% 50%,#0000 98%,#000) -5px -5px/14px 14px;box-shadow:none}
+.stamp i{display:block;width:100%;height:100%;background:var(--sc,#ff7eb6);display:grid;place-items:center;font-style:normal;font-weight:900;color:#fff;font-size:22px;text-align:center;line-height:1.1}
+.post{position:absolute;width:130px;height:130px;border:5px solid #0f6e6ecc;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#0f6e6ecc;font-size:22px;text-align:center;line-height:1.1;transform:rotate(-14deg)}
+/* type */
+.big{font-weight:900;color:#fff;white-space:nowrap;line-height:1;letter-spacing:.04em;-webkit-text-stroke:16px #0f6e6e;paint-order:stroke fill;
+ filter:drop-shadow(8px 9px 0 #ff4f5e) drop-shadow(0 0 0 #fff)}
+.big span{display:inline-block}
+.rib{padding:18px 70px;font-weight:900;color:#fff;white-space:nowrap;font-size:56px;background:#ff4f5e;box-shadow:0 8px 0 #c7303f;
+ clip-path:polygon(0 0,100% 0,96% 50%,100% 100%,0 100%,4% 50%)}
+.badge{display:grid;place-items:center;text-align:center;font-weight:900;line-height:1.08;white-space:nowrap;color:#5b2a00;isolation:isolate}
+.badge::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--c,#ffc23d);border-radius:50%;
+ -webkit-mask:radial-gradient(circle at 50% 50%,#000 60%,#0000 61%),conic-gradient(from 0deg,#000 0 5%,#0000 5% 10%) ;
+ mask:none;box-shadow:none;clip-path:polygon(50% 0%,61% 9%,75% 6%,80% 20%,94% 25%,91% 39%,100% 50%,91% 61%,94% 75%,80% 80%,75% 94%,61% 91%,50% 100%,39% 91%,25% 94%,20% 80%,6% 75%,9% 61%,0% 50%,9% 39%,6% 25%,20% 20%,25% 6%,39% 9%)}
+.badge::after{content:"";position:absolute;inset:14%;z-index:-1;border-radius:50%;border:4px dashed #fff9}
+.chip{font-weight:900;font-size:40px;color:#0f6e6e;background:#fff;padding:10px 28px;border-radius:999px;border:5px solid #0f6e6e;box-shadow:7px 7px 0 #ffc23d;white-space:nowrap}
+.tag{font-weight:900;font-size:44px;color:#5b3a1e;background:#ffd36e;border:6px solid #b8872a;border-radius:14px;padding:6px 22px;box-shadow:8px 8px 0 #0f6e6e;white-space:nowrap}
+.px{image-rendering:pixelated;filter:drop-shadow(5px 0 0 #fff) drop-shadow(-5px 0 0 #fff) drop-shadow(0 5px 0 #fff) drop-shadow(0 -5px 0 #fff) drop-shadow(6px 8px 0 #0003)}
+.vec{filter:drop-shadow(5px 0 0 #fff) drop-shadow(-5px 0 0 #fff) drop-shadow(0 5px 0 #fff) drop-shadow(0 -5px 0 #fff) drop-shadow(6px 8px 0 #0003)}
+.marq{position:absolute;left:-200px;white-space:nowrap;font-weight:900;font-size:40px;padding:10px 0;color:#fff;letter-spacing:.08em}
+.bub{position:absolute;padding:20px 34px;background:#fffaf0;border:6px solid #3b2f4a;border-radius:26px;font-weight:900;font-size:52px;color:#3b2f4a;white-space:nowrap}
+.bub::after{content:"";position:absolute;left:60px;bottom:-30px;border:16px solid transparent;border-top:24px solid #3b2f4a}
+#crt{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 140px #0004;border-radius:30px}
+</style></head><body><div id="root"><div id="cam"><img id="home"><div id="adwrap"><div id="ad">
+<canvas id="bg" class="layer" width="1920" height="1080"></canvas><canvas id="mid" class="layer" width="1920" height="1080"></canvas>
+<div id="items" class="layer"></div><canvas id="fg" class="layer" width="1920" height="1080"></canvas>
+<div id="m1" class="marq"></div><div id="m2" class="marq"></div><div id="crt"></div></div></div></div><div id="over" class="layer"></div></div>
+<script>
+const INFO=__INFO__;
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v)),lerp=(a,b,p)=>a+(b-a)*p;
+const backOut=(p,s=1.9)=>{p=clamp(p);return 1+(s+1)*(p-1)**3+s*(p-1)**2;};
+const elastic=p=>{p=clamp(p);return p===0?0:p===1?1:2**(-10*p)*Math.sin((p*10-.75)*2*Math.PI/3)+1;};
+const inQ=p=>clamp(p)**2,outQ=p=>1-(1-clamp(p))**2,ioC=p=>{p=clamp(p);return p<.5?4*p*p*p:1-(-2*p+2)**3/2;};
+const H=(n,k=0)=>{const x=Math.sin(n*127.1+k*311.7)*43758.5453;return x-Math.floor(x);};
+// ================================================================ vector stickers (SVG → images)
+const P={red:'#ff4f5e',coral:'#ff8a5c',mango:'#ffc23d',lime:'#9ad94a',leaf:'#2f9e6a',deep:'#0f6e6e',turq:'#3fd3c9',sand:'#ffe9b8',sea:'#2a7fd1',pink:'#ff7eb6',white:'#fff',purple:'#9b6bd6'};
+const svg=(w,h,body)=>`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>`;
+const V={
+ hibiscus:(c=P.red,c2=P.mango)=>svg(200,200,`<g transform="translate(100,100)">${[0,72,144,216,288].map(a=>`<path transform="rotate(${a})" d="M0 0 C-48 -30 -46 -92 0 -92 C46 -92 48 -30 0 0Z" fill="${c}" stroke="#0002" stroke-width="3"/>`).join('')}<circle r="16" fill="${c2}"/>${[0,60,120,180,240,300].map(a=>`<circle transform="rotate(${a}) translate(0,-26)" r="5" fill="${P.mango}"/>`).join('')}<path d="M0 0 L0 -40" stroke="${c2}" stroke-width="6"/></g>`),
+ monstera:(c=P.leaf)=>{const id='m'+Math.random().toString(36).slice(2,7);const slits=[];for(const sd of [-1,1])for(const [y,a] of [[-80,-.55],[-40,-.35],[0,-.15],[40,.05],[80,.25]])slits.push(`<path d="M${sd*18} ${y} L${sd*160} ${y+a*160}" stroke="#000" stroke-width="13" stroke-linecap="round"/>`);
+  const holes=[[-55,-55],[50,-20],[-45,25],[55,55]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="11" ry="7" fill="#000"/>`).join('');
+  return svg(280,320,`<defs><mask id="${id}"><rect x="-200" y="-200" width="400" height="400" fill="#fff" transform="translate(140,160)"/><g transform="translate(140,160)">${slits.join('')}${holes}</g></mask></defs><g mask="url(#${id})"><path transform="translate(140,160)" d="M0 150 C-30 150 -128 120 -132 20 C-136 -80 -60 -140 0 -118 C60 -140 136 -80 132 20 C128 120 30 150 0 150Z" fill="${c}"/></g><g transform="translate(140,160)"><path d="M0 -118 L0 150" stroke="#1c6b45" stroke-width="7"/><path d="M0 150 L0 190" stroke="#1c6b45" stroke-width="9"/></g>`);},
+ palm:(c=P.leaf)=>svg(320,140,`<path d="M10 120 Q160 0 310 30" stroke="#1c6b45" stroke-width="8" fill="none"/>${Array.from({length:14},(_,i)=>{const t=i/13,x=10+300*t,y=120-110*Math.sin(t*2.6)*.9+20*t;return `<path d="M${x} ${y} q${10+t*10} ${-50+t*10} ${30} ${-70}" stroke="${c}" stroke-width="14" stroke-linecap="round" fill="none"/><path d="M${x} ${y} q${20} ${30} ${40} ${44}" stroke="${c}" stroke-width="14" stroke-linecap="round" fill="none"/>`;}).join('')}`),
+ starfish:(c=P.coral)=>svg(160,160,`<path transform="translate(80,84)" d="${Array.from({length:10},(_,i)=>{const r=i%2?28:72,a=i*Math.PI/5-Math.PI/2;return (i?'L':'M')+(Math.cos(a)*r).toFixed(1)+' '+(Math.sin(a)*r).toFixed(1);}).join('')}Z" fill="${c}" stroke="#c4502b" stroke-width="5" stroke-linejoin="round"/>${[0,1,2,3,4].map(i=>{const a=i*Math.PI*2/5-Math.PI/2;return `<circle cx="${80+Math.cos(a)*36}" cy="${84+Math.sin(a)*36}" r="5" fill="#ffd9c4"/>`;}).join('')}`),
+ pineapple:()=>svg(140,220,`<g transform="translate(70,0)">${[-28,-14,0,14,28].map((x,i)=>`<path d="M0 90 Q${x*.6} 40 ${x} ${10+Math.abs(x)}" stroke="${P.leaf}" stroke-width="14" stroke-linecap="round" fill="none"/>`).join('')}<ellipse cy="150" rx="52" ry="66" fill="${P.mango}" stroke="#c98a10" stroke-width="5"/>${[-1,0,1].map(k=>`<path d="M-50 ${120+k*30} L50 ${150+k*30} M50 ${120+k*30} L-50 ${150+k*30}" stroke="#c98a10" stroke-width="4"/>`).join('')}</g>`),
+ melon:()=>svg(200,120,`<path d="M10 10 A90 90 0 0 0 190 10Z" fill="${P.lime}"/><path d="M22 10 A78 78 0 0 0 178 10Z" fill="#fff"/><path d="M30 10 A70 70 0 0 0 170 10Z" fill="${P.red}"/>${[50,80,110,140,95,65,125].map((x,i)=>`<ellipse cx="${x}" cy="${26+(i%3)*14}" rx="4" ry="7" fill="#3b2f4a"/>`).join('')}`),
+ drink:()=>svg(160,240,`<path d="M30 80 L130 80 L112 220 L48 220Z" fill="${P.pink}" stroke="#c44f86" stroke-width="5"/><path d="M36 110 L124 110" stroke="#fff8" stroke-width="10"/><circle cx="120" cy="80" r="26" fill="${P.lime}" stroke="#5aa020" stroke-width="5"/><path d="M80 80 L100 10" stroke="${P.sea}" stroke-width="6"/><path d="M60 40 Q100 -10 140 40Z" fill="${P.mango}" stroke="#c98a10" stroke-width="4"/>`),
+ board:(c=P.turq)=>svg(90,300,`<path d="M45 6 C90 70 86 230 45 294 C4 230 0 70 45 6Z" fill="${c}" stroke="${P.deep}" stroke-width="6"/><path d="M45 20 L45 280" stroke="#fff" stroke-width="10"/><path d="M45 20 L45 280" stroke="${P.red}" stroke-width="4"/>`),
+ shades:()=>svg(220,90,`<path d="M10 20 L210 20" stroke="#3b2f4a" stroke-width="8"/><path d="M18 20 Q20 80 70 76 Q102 72 100 22Z" fill="#3b2f4a"/><path d="M120 22 Q118 72 150 76 Q200 80 202 20Z" fill="#3b2f4a"/><path d="M34 30 L60 30" stroke="#fff8" stroke-width="6"/><path d="M136 30 L162 30" stroke="#fff8" stroke-width="6"/>`),
+ shell:()=>svg(160,150,`<path d="M80 140 C10 120 0 40 80 10 C160 40 150 120 80 140Z" fill="#ffd2dc" stroke="#e48aa0" stroke-width="5"/>${[-50,-25,0,25,50].map(a=>`<path d="M80 136 L${80+a*1.3} 24" stroke="#e48aa0" stroke-width="4"/>`).join('')}`),
+ sun:()=>svg(300,300,`<g transform="translate(150,150)">${Array.from({length:16},(_,i)=>`<path transform="rotate(${i*22.5})" d="M-14 -88 L0 -140 L14 -88Z" fill="${P.mango}"/>`).join('')}<circle r="84" fill="#ffd84d" stroke="#ffb020" stroke-width="8"/><circle cx="-26" cy="-10" r="8" fill="#5b2a00"/><circle cx="26" cy="-10" r="8" fill="#5b2a00"/><path d="M-30 22 Q0 50 30 22" stroke="#5b2a00" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="-44" cy="16" r="10" fill="#ff8a5c88"/><circle cx="44" cy="16" r="10" fill="#ff8a5c88"/></g>`),
+ lei:()=>svg(420,120,Array.from({length:12},(_,i)=>{const x=20+i*35,y=20+Math.sin(i/11*Math.PI)*70;const c=[P.red,P.mango,P.pink,P.white,P.coral][i%5];return `<g transform="translate(${x},${y}) rotate(${i*30})">${[0,72,144,216,288].map(a=>`<ellipse transform="rotate(${a}) translate(0,-11)" rx="9" ry="12" fill="${c}" stroke="#0002" stroke-width="2"/>`).join('')}<circle r="5" fill="${P.mango}"/></g>`;}).join('')),
+ wave:()=>svg(200,120,`<path d="M10 100 C10 40 60 10 110 20 C160 30 190 70 170 90 C150 110 120 80 130 60 C110 70 100 100 120 110Z" fill="${P.sea}" stroke="#fff" stroke-width="6"/>`),
+ bird:()=>svg(120,60,`<path d="M10 40 Q35 10 60 36 Q85 10 110 40" stroke="#fff" stroke-width="7" fill="none" stroke-linecap="round"/>`),
+};
+const IMG={};const vimg=(key,svgText)=>{if(IMG[key])return IMG[key];const im=new Image();im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgText);return IMG[key]=im;};
+// pre-make the vector images used on canvas
+const VI={hibR:vimg('hibR',V.hibiscus(P.red)),hibP:vimg('hibP',V.hibiscus(P.pink,P.mango)),hibM:vimg('hibM',V.hibiscus(P.mango,P.red)),hibW:vimg('hibW',V.hibiscus('#fff',P.pink)),
+ mon:vimg('mon',V.monstera()),monL:vimg('monL',V.monstera('#46b77f')),palm:vimg('palm',V.palm()),palmL:vimg('palmL',V.palm('#46b77f')),sun:vimg('sun',V.sun()),bird:vimg('bird',V.bird()),star:vimg('star',V.starfish()),shell:vimg('shell',V.shell())};
+// ================================================================ items
+const items=[],SND=[];
+function add(o){const el=o.el=document.createElement('div');el.className='it '+(o.cls||'');if(o.html!=null)el.innerHTML=o.html;if(o.style)Object.assign(el.style,o.style);
+ if(o.clip){const c=INFO[o.clip],im=new Image();im.className='shot';im.width=Math.round(c.w*o.k);im.height=Math.round(c.h*o.k);o.img=im;el.className='it card '+(o.pol?'pol':'');el.append(im);
+  if(o.cap)el.append(Object.assign(document.createElement('div'),{className:'cap',textContent:o.cap}));
+  const W=im.width+32,Hh=im.height+(o.pol?70:32);
+  for(const [x,y,r,c] of (o.tapes||[[-30,-14,-30,'#ffc23dcc'],[W-110,Hh-26,-28,'#3fd3c9cc']])){const t=document.createElement('i');t.className='tape';Object.assign(t.style,{left:x+'px',top:y+'px',transform:`rotate(${r}deg)`,'--tc':c});el.append(t);}
+  if(o.stamp){const s=document.createElement('div');s.className='stamp';s.style.cssText=`right:-40px;top:-50px;transform:rotate(9deg);--sc:${o.stamp[1]}`;s.innerHTML=`<i>${o.stamp[0]}</i>`;el.append(s);}
+  if(o.post){const s=document.createElement('div');s.className='post';s.style.cssText='left:-50px;bottom:-40px';s.innerHTML=o.post;el.append(s);}}
+ if(o.px){const im=new Image();im.src='st/'+o.px+'.png';im.className='px';im.style.width=o.w+'px';el.append(im);}
+ if(o.vec){const im=new Image();im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(o.vec);im.className='vec';im.style.width=o.w+'px';el.append(im);}
+ if(o.cls==='big'&&o.y<230)o.y+=70;document.getElementById('items').append(el);o.dIn??=.55;o.dOut??=.28;o.in??='pop';o.r??=0;o.s??=1;
+ if(o.snd!==null&&o.snd!==undefined)SND.push([o.t0+(o.sndAt||0),o.snd]);items.push(o);return o;}
+const big=(text,size,o)=>add({snd:'ping',...o,cls:'big',html:[...text].map(c=>`<span>${c===' '?'&nbsp;':c}</span>`).join(''),style:{fontSize:size+'px'},chars:true,in:o.in||'drop'});
+const rib=(text,o)=>add({snd:'pop',...o,cls:'rib',html:text,style:{background:o.c||'#ff4f5e',boxShadow:`0 8px 0 ${o.c2||'#c7303f'}`,fontSize:(o.size||56)+'px'}});
+const badge=(text,size,w,o)=>add({snd:'ping',...o,cls:'badge',html:text,style:{width:w+'px',height:w+'px',fontSize:size+'px','--c':o.c||'#ffc23d',color:o.ink||'#5b2a00'}});
+const chip=(text,o)=>add({snd:'pop',...o,cls:'chip',html:text,style:o.style});
+const px=(name,w,o)=>add({snd:'pop',...o,px:name,w});
+const vec=(key,w,o)=>add({snd:'pop',...o,vec:typeof key==='string'?V[key]():key,w});
+const clip=(name,k,o)=>add({snd:'whoosh',...o,clip:name,k});
+// a cloud of stickers around a scene (maximalism)
+function scatter(t0,t1,list){list.forEach(([kind,name,w,x,y,r],i)=>{const o={t0:t0+.25+i*.11,t1,x,y,r,snd:i%2?'pop':null,bob:i%3===0?1:0,spin:i%4===1?1:0};kind==='px'?px(name,w,o):vec(name,w,o);});}
+// ================================================================ timeline
+const SC=[];const scene=(t0,t1,o)=>SC.push({t0,t1,...o});
+const HOME_IN=0,ZOOM_IN=[4.9,6.3],ZOOM_OUT=[50.4,51.6],END=55.2;
+SND.push([4.35,'tv'],[4.9,'zoom'],[50.4,'zoom'],[52.2,'pop']);
+// 0 title
+scene(5,10,{pal:['#3fd3c9','#2fb8ae'],fol:1,waves:1,sun:1});
+badge('夏季<br>新地图',58,280,{t0:6.6,t1:9.9,x:330,y:300,r:-14,c:P.mango});
+big('草',300,{t0:6.5,t1:9.9,x:720,y:420,r:-6});big('帽',300,{t0:6.65,t1:9.9,x:1000,y:400,r:3});big('湾',300,{t0:6.8,t1:9.9,x:1280,y:430,r:-3});
+rib('欢迎来到海岛',{t0:7.4,t1:9.9,x:1000,y:690,r:-3,c:P.red});
+vec('lei',520,{t0:7.1,t1:9.9,x:1000,y:200,r:0,snd:'pop'});
+scatter(6.6,9.9,[['px','hat',150,600,170,-24],['vec','pineapple',120,1560,330,12],['vec','drink',120,1700,700,-8],['vec','starfish',130,260,820,20],['px','coconut',100,1450,860,-12],['vec','shades',190,560,880,-8],['vec','shell',110,1760,190,14],['px','s_hero',120,820,880,0],['vec','board',80,1820,880,-20]]);
+// 1 the island
+scene(10,14.4,{pal:['#ffe9b8','#ffd88a'],fol:1,waves:1,sun:1});
+big('全新海岛地图',140,{t0:10.05,t1:14.3,x:660,y:150,r:-4,in:'slideL'});
+clip('beach',.98,{t0:10.2,t1:14.3,x:900,y:580,r:-3,in:'slideR',stamp:['草帽湾<br>夏',P.red],post:'草帽湾<br>邮戳'});
+clip('float',.4,{t0:11.6,t1:14.3,x:1600,y:220,r:8,pol:1,cap:'坐游泳圈',in:'pop',tapes:[[150,-18,-6,'#ff7eb6cc']]});
+chip('椰子树 · 小木屋 · 海风',{t0:11.2,t1:14.3,x:1420,y:930,r:3});
+scatter(10.2,14.3,[['vec','hibiscus',130,200,380,-10],['px','crab',110,300,930,8],['vec','starfish',110,520,990,-16],['px','shell',80,1100,990,14],['vec','pineapple',100,1820,560,8],['px','coconut',90,120,640,-6]]);
+// 2 surf
+scene(14.4,18.4,{pal:['#2a7fd1','#2470bd'],waves:1,speed:1,fol:1});
+clip('surf',1.0,{t0:14.4,t1:18.3,x:880,y:600,r:3,in:'slideL',stamp:['冲浪<br>!!!',P.mango]});
+big('冲浪！',250,{t0:14.7,t1:18.3,x:1480,y:210,r:-8,shake:1});
+badge('冲浪日<br>比赛',52,260,{t0:15.6,t1:18.3,x:290,y:230,r:12,c:P.pink});
+scatter(14.6,18.3,[['vec','board',100,1800,760,18],['vec','wave',180,200,900,-6],['vec','shades',170,1600,960,-6],['px','s_hero',110,560,990,-6],['vec','drink',100,1200,980,10]]);
+// 3 dive
+scene(18.4,23.2,{pal:['#0f8c8c','#0c7a7a'],bubbles:1,fol:1});
+clip('dive',.95,{t0:18.4,t1:20.9,x:880,y:560,r:-3,in:'slideR',post:'珊瑚海<br>海底'});
+clip('dive2',.95,{t0:20.9,t1:23.1,x:880,y:560,r:-3,in:'cut',seek:20,snd:null,post:'珊瑚海<br>海底'});
+big('潜进珊瑚海',150,{t0:18.6,t1:23.1,x:640,y:150,r:-4,in:'slideL'});
+badge('66 种<br>海洋生物',48,270,{t0:19.4,t1:23.1,x:1640,y:200,r:10,c:P.turq,ink:'#073c3c'});
+clip('photo1',.34,{t0:21.2,t1:23.1,x:1560,y:850,r:7,pol:1,cap:'咔嚓！',in:'pop',snd:'flash',tapes:[[160,-18,4,'#ffc23dcc']]});
+scatter(18.6,23.1,[['px','fish',110,240,860,-10],['px','shrimp',90,420,960,12],['px','seaweed',90,1260,990,-6],['vec','starfish',100,140,560,-14],['vec','shell',100,1800,560,10],['px','pearl',70,600,990,0]]);
+// 4 market + stall
+scene(23.2,28,{pal:['#ff8a5c','#ff7a4a'],fol:1,bunting:1});
+clip('market',.7,{t0:23.2,t1:27.9,x:560,y:360,r:-5,in:'slideL',stamp:['集市<br>开张',P.leaf]});
+big('海边集市',130,{t0:23.5,t1:27.9,x:1420,y:170,r:4});
+clip('stall',.6,{t0:24.6,t1:27.9,x:1300,y:700,r:3,in:'grow',snd:'open',tapes:[[-20,-16,-20,'#9ad94acc'],[740,-16,18,'#ff7eb6cc']]});
+rib('摆个小摊',{t0:25.2,t1:27.9,x:470,y:800,r:-5,c:P.leaf,c2:'#1c6b45',size:70});
+add({cls:'tag',html:'2.5 币',t0:25.8,t1:27.9,x:900,y:610,r:-10,snd:'coin'});
+scatter(23.5,27.9,[['px','coconut_water',110,180,640,-8],['px','juice',100,1840,420,12],['px','shave_ice',110,1840,980,-10],['vec','melon',150,330,980,6],['vec','pineapple',100,1000,990,-8],['px','fish_skewer',90,860,880,10]]);
+// 5 lodge
+scene(28,32,{pal:['#9ad94a','#8ccc3c'],fol:1});
+clip('menu',.58,{t0:28,t1:31.9,x:560,y:580,r:-4,in:'grow',snd:'open',stamp:['夏威夷<br>菜单',P.red]});
+clip('cook',.6,{t0:29,t1:31.9,x:1420,y:700,r:5,in:'slideR',pol:1,cap:'旅舍厨房'});
+big('旅舍里做夏威夷菜',112,{t0:28.3,t1:31.9,x:1250,y:170,r:-3,in:'slideR'});
+badge('9 道<br>夏威夷菜',44,240,{t0:29.6,t1:31.9,x:1720,y:420,r:-12,c:P.mango});
+scatter(28.3,31.9,[['px','fish_skewer',100,220,960,10],['px','egg_pancake',100,1000,990,-8],['vec','pineapple',100,1820,980,8],['vec','hibiscus',120,140,200,-10],['px','coconut',80,1160,320,10]]);
+// 6 dusk
+scene(32,35.4,{pal:['#c45bc8','#b04ab6'],dusk:1,fol:1,waves:1});
+clip('dusk',1.0,{t0:32,t1:35.3,x:960,y:600,r:-2,in:'slideL',post:'晚霞<br>18:40'});
+big('粉紫色的晚霞',140,{t0:32.3,t1:35.3,x:960,y:170,r:3});
+scatter(32.3,35.3,[['px','shell_chime',100,180,300,-10],['px','pearl',80,1760,960,8],['vec','hibiscus',120,1780,300,14],['vec','drink',100,180,900,-10]]);
+// 7 festivals
+scene(35.4,41.2,{pal:['#ff7eb6','#ff6aa8'],bunting:1,fol:1,confetti:1});
+big('5 个海岛节日',140,{t0:35.45,t1:41.1,x:960,y:170,r:-3});
+[['fest_hat','草帽节',P.mango],['fest_lamp','椰灯夜',P.coral],['fest_lei','花环节',P.pink],['fest_whale','鲸歌节',P.turq],['fest_surf','冲浪日',P.lime]].forEach(([c,n,col],i)=>{
+ const t0=35.8+i*1.06,t1=i===4?41.1:t0+1.06;
+ clip(c,.86,{t0,t1,x:960,y:620,r:i%2?3:-3,in:i?'cut':'pop',seek:5,dIn:.3,dOut:i===4?.28:.02,stamp:[n,col]});
+ badge(n,56,250,{t0:t0+.05,t1,x:i%2?1690:240,y:i%2?880:860,r:i%2?10:-10,c:col,dOut:i===4?.28:.02});});
+scatter(35.6,41.1,[['vec','lei',360,300,330,-8],['px','hat',110,1700,330,14],['vec','hibiscus',110,1500,980,10]]);
+// 8 dex
+scene(41.2,45,{pal:['#3fd3c9','#2fc2b8'],bubbles:1,fol:1});
+clip('dex',.6,{t0:41.2,t1:44.9,x:700,y:580,r:-3,in:'grow',snd:'open',stamp:['图鉴<br>66',P.sea]});
+big('拍照收集图鉴',120,{t0:41.5,t1:44.9,x:1350,y:180,r:4,in:'slideR'});
+clip('photo0',.32,{t0:42.3,t1:44.9,x:1540,y:640,r:7,pol:1,cap:'新发现！',in:'pop',snd:'flash'});
+scatter(41.5,44.9,[['px','fish',100,1700,930,-12],['px','seaglass',80,1280,990,14],['vec','starfish',100,140,940,-10],['vec','shell',100,1840,200,10]]);
+// 9 end card
+scene(45,51.7,{pal:['#3fd3c9','#2fb8ae'],fol:1,waves:1,sun:1,confetti:1});
+big('草帽湾',290,{t0:45.1,t1:51.7,x:960,y:330,r:-4});
+rib('慢慢走 · 多吃水果 · 帽子要戴好',{t0:45.8,t1:51.7,x:960,y:560,r:-1,c:P.red,size:50});
+['s_hero','s_alo','s_lei','s_kai','s_mia'].forEach((n,i)=>px(n,130,{t0:46.3+i*.15,t1:51.7,x:560+i*200,y:820,r:(i%2?6:-6),bob:1}));
+badge('夏天和秋天<br>机场有航班',38,290,{t0:47.3,t1:51.7,x:1650,y:300,r:12,c:P.turq,ink:'#073c3c'});
+chip('Desktop Buddy',{t0:47.8,t1:51.7,x:960,y:990,style:{fontSize:'34px'}});
+scatter(45.3,50.3,[['px','hat',140,280,280,-18],['vec','pineapple',100,1820,640,8],['vec','drink',100,140,640,-10],['vec','lei',360,1000,110,0]]);
+// ================================================================ per frame: items
+function place(o,t){
+ const vis=t>=o.t0&&t<o.t1;o.el.style.display=vis?'':'none';if(!vis)return;
+ const a=t-o.t0,b=o.t1-t;let x=o.x,y=o.y,r=o.r,s=o.s,op=1;const pin=a/o.dIn,pout=1-b/o.dOut;
+ switch(o.in){case 'pop':s*=backOut(pin,2.8);r+=(1-outQ(pin))*-30;break;
+  case 'grow':s*=backOut(pin,1.7);op=clamp(pin*4);break;
+  case 'drop':y-=(1-elastic(pin*.8))*520;r+=(1-outQ(pin))*16;break;
+  case 'slideL':x-=(1-backOut(pin,1.5))*1500;r-=(1-outQ(pin))*10;break;
+  case 'slideR':x+=(1-backOut(pin,1.5))*1500;r+=(1-outQ(pin))*10;break;
+  case 'cut':s*=1+(1-outQ(a/.18))*.07;break;}
+ if(b<o.dOut){s*=1-inQ(pout)*.9;op*=1-inQ(pout);}
+ if(o.shake&&a>o.dIn)r+=Math.sin(a*38)*1.6;
+ if(o.bob)y-=Math.abs(Math.sin((a+o.t0)*4.5))*16*clamp(pin);
+ if(o.spin)r+=Math.sin((a+o.t0)*2.4)*10;
+ r+=Math.sin((a+o.t0*3)*2.1)*.8;
+ o.el.style.transform=`translate(${x}px,${y}px) translate(-50%,-50%) rotate(${r}deg) scale(${s})`;o.el.style.opacity=op;
+ if(o.chars)[...o.el.children].forEach((sp,i)=>{const q=clamp((a-.06*i)/.5);sp.style.transform=`translateY(${(1-elastic(q))*-130+Math.sin(t*5+i*.9)*8}px) rotate(${(1-q)*-24+Math.sin(t*3+i)*3}deg)`;});
+ if(o.img){const c=INFO[o.clip],f=clamp(Math.floor(a*30)+(o.seek||0)+1,1,c.n),src=`clips/${o.clip}/${String(f).padStart(4,'0')}.jpg`;if(o.img.getAttribute('src')!==src)o.img.src=src;}}
+// ================================================================ the island decor on canvas (background print, foliage, waves, petals)
+const bg=document.getElementById('bg').getContext('2d'),mid=document.getElementById('mid').getContext('2d'),fg=document.getElementById('fg').getContext('2d');
+const tiles={};
+function printTile(c1,c2){const k=c1;if(tiles[k])return tiles[k];const cv=document.createElement('canvas');cv.width=cv.height=480;const g=cv.getContext('2d');
+ g.fillStyle=c1;g.fillRect(0,0,480,480);
+ const put=(im,x,y,w,r,a=1)=>{g.save();g.globalAlpha=a;g.translate(x,y);g.rotate(r);g.drawImage(im,-w/2,-w/2*(im.height/im.width),w,w*(im.height/im.width));g.restore();};
+ for(const [dx,dy]of [[0,0],[480,0],[0,480],[480,480],[-480,0],[0,-480],[-480,-480],[480,-480],[-480,480]]){
+  put(VI.mon,90+dx,120+dy,170,.6,.28);put(VI.monL,330+dx,350+dy,160,-2.3,.25);put(VI.palm,360+dx,90+dy,220,.3,.22);
+  put(VI.hibW,250+dx,200+dy,90,.3,.35);put(VI.hibW,80+dx,380+dy,70,1.2,.32);put(VI.hibW,420+dx,260+dy,60,.8,.3);}
+ g.fillStyle=c2;for(let i=0;i<40;i++){g.globalAlpha=.5;g.beginPath();g.arc(H(i,1)*480,H(i,2)*480,4+H(i,3)*5,0,7);g.fill();}
+ return tiles[k]=cv;}
+function drawLeaf(g,im,x,y,w,rot,sway,t,ph){g.save();g.translate(x,y);g.rotate(rot+Math.sin(t*1.6+ph)*sway);g.drawImage(im,-w*.5,-w*(im.height/im.width),w,w*(im.height/im.width));g.restore();}
+function decor(t,sc){
+ const a=t-sc.t0;
+ // background: an aloha-shirt print, sliding diagonally
+ const tile=printTile(sc.pal[0],sc.pal[1]);const off=(t*40)%480;bg.save();bg.fillStyle=bg.createPattern(tile,'repeat');bg.translate(-off,-off*.5);bg.fillRect(0,0,1920+480,1080+480);bg.restore();
+ if(sc.dusk){const gr=bg.createLinearGradient(0,0,0,1080);gr.addColorStop(0,'#5b2a9a88');gr.addColorStop(.6,'#ff7eb666');gr.addColorStop(1,'#ffc23d66');bg.fillStyle=gr;bg.fillRect(0,0,1920,1080);}
+ mid.clearRect(0,0,1920,1080);fg.clearRect(0,0,1920,1080);
+ if(sc.sun){mid.save();mid.translate(1720,170);mid.rotate(t*.4);mid.drawImage(VI.sun,-150,-150,300,300);mid.restore();}
+ if(sc.speed){mid.fillStyle='#fff';for(let k=0;k<36;k++){const yy=(k*97)%1080,len=180+(k*53)%380,xx=1920-((t*2600+k*311)%2600);mid.globalAlpha=.45;mid.fillRect(xx,yy,len,7);}mid.globalAlpha=1;}
+ if(sc.bubbles){mid.strokeStyle='#ffffffb0';mid.lineWidth=4;for(let k=0;k<50;k++){const xx=(k*173)%1920+Math.sin(t*2+k)*22,yy=1080-((t*170+k*137)%1240),r=6+(k%5)*5;mid.beginPath();mid.arc(xx,yy,r,0,7);mid.stroke();}}
+ // birds across the sky
+ for(let k=0;k<3;k++){const xx=((t*90+k*700)%2400)-200,yy=120+k*40+Math.sin(t*2+k)*10;mid.drawImage(VI.bird,xx,yy,70,35);}
+ if(sc.bunting){const cols=[P.red,P.mango,'#fff',P.lime,P.turq,P.pink];for(let row=0;row<2;row++){const y0=40+row*80;fg.strokeStyle='#3b2f4a';fg.lineWidth=4;fg.beginPath();fg.moveTo(0,y0);fg.quadraticCurveTo(960,y0+60,1920,y0);fg.stroke();
+  for(let k=0;k<25;k++){const xx=k*80+40+row*40,yy=y0+Math.sin(xx/1920*Math.PI)*45+Math.sin(t*6+k)*3;fg.fillStyle=cols[(k+row)%6];fg.beginPath();fg.moveTo(xx-28,yy);fg.lineTo(xx+28,yy);fg.lineTo(xx,yy+52);fg.closePath();fg.fill();}}}
+ // waves along the bottom
+ if(sc.waves){for(const [i,c] of [[0,'#2a7fd1'],[1,'#3fd3c9'],[2,'#ffffffdd']]){fg.fillStyle=c;fg.beginPath();fg.moveTo(0,1080);for(let x=0;x<=1920;x+=20)fg.lineTo(x,1040-i*-12+Math.sin(x*.012+t*(2+i)+i)*14-(2-i)*22);fg.lineTo(1920,1080);fg.fill();}}
+ // foliage framing the corners, swaying
+ if(sc.fol){drawLeaf(fg,VI.mon,-20,1120,340,.6,.05,t,0);drawLeaf(fg,VI.monL,90,1140,260,1.1,.06,t,1);drawLeaf(fg,VI.palm,-60,260,420,-.2,.05,t,2);
+  drawLeaf(fg,VI.mon,1960,1130,340,-.6,.05,t,3);drawLeaf(fg,VI.palmL,1980,240,420,Math.PI+.15,.05,t,4);drawLeaf(fg,VI.monL,1880,1150,240,-1.2,.06,t,5);
+  for(const [x,y,w,im] of [[120,1010,120,VI.hibR],[1800,1010,110,VI.hibM],[60,140,90,VI.hibP],[1870,120,90,VI.hibR]]){fg.save();fg.translate(x,y);fg.rotate(t*.6);fg.drawImage(im,-w/2,-w/2,w,w);fg.restore();}}
+ // petals and confetti drifting down
+ const n=sc.confetti?46:22;for(let k=0;k<n;k++){const sp=60+H(k,1)*90,xx=(H(k,2)*2100+Math.sin(t*1.3+k)*60)%2000-40,yy=((t*sp+H(k,3)*1300)%1300)-120,rot=t*(1+H(k,4)*2)+k;
+  fg.save();fg.translate(xx,yy);fg.rotate(rot);if(k%3===0){fg.drawImage([VI.hibR,VI.hibP,VI.hibM,VI.hibW][k%4],-22,-22,44,44);}else{fg.fillStyle=[P.red,P.mango,P.pink,'#fff',P.lime,P.turq][k%6];fg.beginPath();fg.ellipse(0,0,12,7,0,0,7);fg.fill();}fg.restore();}
+ // a flash of sunlight on every cut
+ if(a<.12&&sc.t0>5.5){fg.fillStyle=`rgba(255,250,230,${(1-a/.12)*.75})`;fg.fillRect(0,0,1920,1080);}}
+// marquee ribbons
+const m1=document.getElementById('m1'),m2=document.getElementById('m2');
+m1.textContent=('草帽湾 ✿ 夏天到啦 ✿ 冲浪 ✿ 潜水 ✿ 摆摊 ✿ 过节 ✿ 夏威夷菜 ✿ ').repeat(6);m2.textContent=('慢慢走 ✿ 多吃水果 ✿ 帽子要戴好 ✿ 海风 ✿ 椰子 ✿ 晚霞 ✿ ').repeat(6);
+Object.assign(m1.style,{top:'-12px',background:'#ff4f5e',transform:'rotate(-2deg)',boxShadow:'0 6px 0 #c7303f'});Object.assign(m2.style,{bottom:'-6px',background:'#0f6e6e',transform:'rotate(1.5deg)',boxShadow:'0 -6px 0 #ffc23d'});
+// ================================================================ camera: the living room, the TV, into the screen and back out
+const home=document.getElementById('home'),cam=document.getElementById('cam'),adw=document.getElementById('adwrap');
+const HK=1920/1368,HY=(1080-472*HK)/2;home.style.cssText=`left:0;top:${HY}px;width:1920px;height:${472*HK}px`;
+const TVC={x:552*HK,y:HY+357*HK},TVW=84*HK;   // the TV screen in the stage (house px 125,82,26,15 ×4)
+function camera(t){
+ let z=null,clipName=null,ct=0;
+ if(t<ZOOM_IN[1]){clipName='home_tv';ct=Math.min(t*1.15+.8,6.9);z=clamp((t-ZOOM_IN[0])/(ZOOM_IN[1]-ZOOM_IN[0]));}
+ else if(t>=ZOOM_OUT[0]){clipName='home_happy';ct=(t-ZOOM_OUT[0])+.2;z=1-clamp((t-ZOOM_OUT[0])/(ZOOM_OUT[1]-ZOOM_OUT[0]));}
+ if(z===null){home.style.display='none';cam.style.transform='';adw.style.transform='';adw.style.opacity=1;return false;}
+ home.style.display='';const c=INFO[clipName],f=clamp(Math.floor(ct*30)+1,1,c.n),src=`clips/${clipName}/${String(f).padStart(4,'0')}.jpg`;if(home.getAttribute('src')!==src)home.src=src;
+ const e=ioC(z),Z=1920/TVW,s=Math.pow(Z,e),px=lerp(TVC.x,960,e),py=lerp(TVC.y,540,e);
+ cam.style.transform=`translate(${px}px,${py}px) scale(${s}) translate(${-TVC.x}px,${-TVC.y}px)`;
+ const k=TVW/1920;adw.style.transform=`translate(${TVC.x-960*k}px,${TVC.y-540*k}px) scale(${k})`;adw.style.opacity=clamp(z*6);
+ return true;}
+// the closing line over her head (the game's own speech bubble look)
+const bub=document.createElement('div');bub.className='bub';bub.textContent='好想去草帽湾！';document.getElementById('over').append(bub);
+function render(t){
+ const sc=SC.find(s=>t>=s.t0&&t<s.t1)||(t<5?SC[0]:SC[SC.length-1]);decor(t,sc);for(const o of items)place(o,t);
+ m1.style.transform=`translateX(${-(t*160)%900}px) rotate(-2deg)`;m2.style.transform=`translateX(${-900+(t*140)%900}px) rotate(1.5deg)`;
+ const inHome=camera(t);
+ const bt=t-(ZOOM_OUT[1]+.4);bub.style.display=bt>0?'':'none';if(bt>0){const s=backOut(bt/.5,2.6);bub.style.transform=`translate(${260}px,${HY+270}px) scale(${s}) rotate(${-3+Math.sin(t*4)*1.5}deg)`;}
+ const all=[...items.filter(o=>o.img&&o.el.style.display!=='none').map(o=>o.img),...(inHome?[home]:[])];
+ return Promise.all(all.map(im=>im.complete&&im.naturalWidth?null:im.decode().catch(()=>{})));}
+window.PROMO={render,END,SND};
+</script></body></html>
