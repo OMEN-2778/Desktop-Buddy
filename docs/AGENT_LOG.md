@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 · Codex · 夏日波斯湾四首试听
+- 新写四套旋律：海湾舞曲、阿拉伯风情 R&B、热带电子、海湾电影管弦；gulf-four.json 与四组 MP3/MIDI，约103–133秒。
+- compose_gulf_four.py 使用共用编配器；新增可选随机种子/主音/回归音，旧曲默认不变。海湾音色为GM近似，非传统乐器实录。
+- /music/#gulf-four 置顶；只更新试听，不替换游戏 BGM。电平及浏览器播放检查，听感待用户反馈。
+
 ## 2026-11-06 Claude — 草帽湾认识的人进人脉；岛上男性角色外观修正
 - 新增 prototype/map-test/bay_friends.js：阿洛、蕾拉妮、卡伊诺、米娅、阿海、小麦、诺亚第一次和她说话时走主世界 meetWorldNpc
   交换联系方式（面熟 8、日记、第一次认识记忆、性格）；之后电话/消息/视频/做客/约出去都用主世界社交系统；岛上再见算“见面”（每天一次）。

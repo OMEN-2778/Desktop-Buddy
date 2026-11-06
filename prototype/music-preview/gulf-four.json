@@ -1,0 +1,50 @@
+[
+  {
+    "duration": 109.727,
+    "peak": 0.7613,
+    "rms_db": -20.0,
+    "notes": 2334,
+    "id": "gulf-sails",
+    "title": "暖风吹过白帆",
+    "style": "海湾流行舞曲",
+    "bpm": 110,
+    "preview_only": true,
+    "chorus_at": 34.91
+  },
+  {
+    "duration": 133.0,
+    "peak": 0.7521,
+    "rms_db": -20.0,
+    "notes": 1844,
+    "id": "gulf-moon",
+    "title": "月光落在海湾",
+    "style": "阿拉伯风情 R&B",
+    "bpm": 90,
+    "preview_only": true,
+    "chorus_at": 42.67
+  },
+  {
+    "duration": 102.627,
+    "peak": 0.6475,
+    "rms_db": -20.0,
+    "notes": 2380,
+    "id": "gulf-blue",
+    "title": "蓝色海岸线",
+    "style": "热带电子 / 海湾拨弦",
+    "bpm": 118,
+    "preview_only": true,
+    "chorus_at": 32.54
+  },
+  {
+    "duration": 117.941,
+    "peak": 0.6773,
+    "rms_db": -20.0,
+    "notes": 1758,
+    "id": "gulf-horizon",
+    "title": "海与金色地平线",
+    "style": "海湾电影管弦",
+    "bpm": 102,
+    "preview_only": true,
+    "chorus_at": 37.65
+  }
+]

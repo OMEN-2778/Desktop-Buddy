@@ -36,7 +36,7 @@ CONFIGS=[dict(id='bay-citypop',title='沿海公路开着窗',style='海岛 City 
  hook=[[(0,67,1.5),(2,74,.75),(3,71,.75)],[(.5,69,1),(2,66,1.5)],[(0,67,1),(1.5,71,.75),(2.5,74,1)],[(0,76,1.5),(2,74,.75),(3,71,.75)],[(0,74,1),(1.5,79,1.75)],[(.5,78,.75),(1.5,74,1),(3,71,.75)],[(0,72,1.5),(2,71,.75),(3,67,.75)],[(0,69,2.5),(3,66,.75)]])]
 
 def compose(c):
- B=c['beats'];R.BPM=c['bpm'];R.EIGHTH=60/R.BPM/4;R.BAR=60/R.BPM*B;R.EVENTS=[];R.RNG=np.random.default_rng(98760+CONFIGS.index(c));R.PROGRAMS=c['programs']
+ B=c['beats'];R.BPM=c['bpm'];R.EIGHTH=60/R.BPM/4;R.BAR=60/R.BPM*B;R.EVENTS=[];R.RNG=np.random.default_rng(c['seed'] if 'seed' in c else 98760+CONFIGS.index(c));R.PROGRAMS=c['programs']
  progression=c['intro']+c['verse']+c['pre']+c['chorus']+c['bridge']+c['chorus'][:12]
  bounds=np.cumsum([len(c[k]) for k in ['intro','verse','pre','chorus','bridge']]);a,v,p,h,m=map(int,bounds)
  for ch,pg in c['programs'].items():
@@ -91,7 +91,7 @@ def compose(c):
     if verse:
      if j==len(phrase)-1 and bar%2:continue
      pitch-=12 if which!='bay-bossa' else 0
-    if bar>=m and local==7 and j==0:pitch={'bay-citypop':76,'bay-bossa':65,'bay-cinema':74,'bay-sunset':67}[which]
+    if bar>=m and local==7 and j==0:pitch=c.get('return_note',{'bay-citypop':76,'bay-bossa':65,'bay-cinema':74,'bay-sunset':67}[which])
     lead=0
     if which=='bay-bossa' and (verse and bar%8>=4 or pre):lead=4
     if which=='bay-cinema' and chorus:lead=7
@@ -121,7 +121,7 @@ def compose(c):
   if bar%8==7 and chorus:
    for j in range(3):note(9,[50,47,45][j],base+B-.75+j*.25,.15,30+j*5)
  # Resolve to tonic regardless of the preceding turnaround, with a natural tail.
- tonic=c['chords'][{'bay-citypop':'E','bay-bossa':'F','bay-cinema':'D','bay-sunset':'G'}[c['id']]][1]
+ tonic=c['chords'][c.get('tonic',{'bay-citypop':'E','bay-bossa':'F','bay-cinema':'D','bay-sunset':'G'}[c['id']])][1]
  chord(1,tonic,(len(progression)-1)*B+B-1,2.5,42)
  return sorted(R.EVENTS,key=lambda e:e[0]),len(progression),dict(zip(['intro_end','verse_end','pre_end','chorus_end','bridge_end'],map(int,bounds)))
 
