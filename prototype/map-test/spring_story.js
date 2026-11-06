@@ -23,6 +23,7 @@ const springFarm=(()=>{
  const ITEMS=Object.fromEntries(Object.entries(CROP).map(([k,c])=>[k,{name:c.name,icon:k,price:c.sell,line:`一筐自家种的${c.name}，${SEASON_NAME[c.seasons[0]]}天的菜。`}]));
  function addItem(k,n=1){F.inv[k]=(F.inv[k]||0)+n;if(F.seen[k]==null)F.seen[k]=today();}
  const X={hooks:{day:[],draw:[],click:[],pick:{},arrive:[]}};   // the farm's own API for infei_farm.js
+ X.CROP=CROP;   // the seed shop's cards read growth, price and seasons (infei_ui.js)
  const START=[9,10],MORE=[[11,14,6],[12,35,10]];   // front-row beds; [bed, working days, cost] to clear more
  const STAGE=['种子','发芽','长大','成熟'];
  const blank=()=>({letter:0,unlocked:false,phase:'none',coins:8,beds:{},open:[...START],ledger:[],day:-1,work:0,workDay:-1,firstHarvest:false,inv:{},seen:{}});

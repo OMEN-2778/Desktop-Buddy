@@ -49,5 +49,18 @@
   "infei-whoosh",
   "infei-pop",
   "infei-type"
+ ],
+ "season_ui": [
+  "infei-ui-open",
+  "infei-ui-close",
+  "infei-ui-tab",
+  "infei-ui-click",
+  "pad-on",
+  "pad-off",
+  "pad-tab",
+  "bay-ui-open",
+  "bay-ui-close",
+  "bay-ui-tab",
+  "bay-ui-click"
  ]
 }

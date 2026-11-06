@@ -6,6 +6,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 面板从点的地方弹出；季节 UI 音效；种子铺卡片
+- style.css + season_motion.js：茵菲谷/草帽湾的面板（摊位、市集、咖啡馆、田地、牧场……）从点击处弹出、轻微回弹，关上缩回原处；平板从小人身上弹出。
+- 新音效 AUDIO_LIBRARY/tools/build_season_ui_sfx.py → INFEI/SFX（11 个，原创合成）：茵菲谷木琴声、平板玻璃提示音、草帽湾尤克里里/钢鼓/气泡；
+  通过 RECORDED_FOLEY 的 getter 换掉 ui-open/close/click（按地图、平板、分页按钮区分），主世界不变。没法试听，只验证了路由。
+- 种子铺（播种）改成小摊式卡片：作物大图、金色价签、成熟天数/再收/季节标签、卖价。spring_story 暴露 X.CROP。
+- 测试：infei_farm、infei_home、summer smoke 通过。
+
 ## 2026-11-06 Claude — 每日操盘：每天都有波动
 - infei_farm.js：原来 24% 的日子 0%、大多 ±1–2%，新存档前 14 天是一条平线。改成每天都动（不会 0%），多数 1–4%，偶尔 6–9% 的大涨大跌，带一位小数；
   空的或一条平线的历史换成随机起伏。20 天实测：-8.7 0.7 -4.4 -6.3 4.6 -3.7 …，平板里截图看过。

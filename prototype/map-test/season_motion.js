@@ -23,7 +23,7 @@
  const oClose=closeSocialSheet;closeSocialSheet=function(){
   if(socialSheet.hidden||reduced()||socialSheet.classList.contains('ios-out'))return oClose.apply(this,arguments);
   const t=++tok,args=arguments,pc=socialSheet.classList.contains('fu-pc');if(pc)fromHero(socialSheet);socialSheet.classList.add('ios-out');socialSheet.inert=true;
-  setTimeout(()=>{socialSheet.inert=false;if(t!==tok){socialSheet.classList.remove('ios-out');return;}socialSheet.classList.remove('ios-out');oClose.apply(this,args);},pc?280:200);};
+  setTimeout(()=>{socialSheet.inert=false;if(t!==tok){socialSheet.classList.remove('ios-out');return;}socialSheet.classList.remove('ios-out');oClose.apply(this,args);},pc?280:240);};
  // ---------------------------------------------------------------- 丢丢平板电脑
  const APP={farm:'#7fcf8a',coin:'#f4c95d',fund:'#7fb8ee',gift:'#f2a0c2'};
  function tablet(s){
@@ -45,4 +45,20 @@
   Object.assign(s.style,{left:left+'px',top:top+'px',right:'auto',bottom:'auto',width:(vr.right-pr.left-left)+'px',height:(vr.bottom-pr.top-top+6)+'px'});}
  addEventListener('resize',()=>{if(!socialSheet.hidden&&socialSheet.classList.contains('fu-pc'))placeTablet(socialSheet);});
  // ---------------------------------------------------------------- the pick-a-thing panel and quest cards: same press feel (CSS)
+})();
+// ---------------------------------------------------------------- sounds (owner 2026-11-06: 春天、夏天的新 UI 都要有音效)
+// The game's UI sounds (ui-open / ui-close / ui-click, audio.js) are looked up through RECORDED_FOLEY: in the season maps
+// they become the map's own (AUDIO_LIBRARY/tools/build_season_ui_sfx.py): 茵菲谷 wood, 丢丢平板 glass, 草帽湾 ukulele / steel drum / bubble.
+(function(){
+ if(typeof RECORDED_FOLEY==='undefined')return;
+ let lastDown=null;addEventListener('pointerdown',e=>{lastDown=e.target;},true);
+ const where=()=>sim.place==='spring_test'?'infei':sim.place==='summer_test'?'bay':null;
+ const pad=()=>!socialSheet.hidden&&socialSheet.classList.contains('fu-pc');
+ let padClosing=0;const oc=closeSocialSheet;closeSocialSheet=function(){if(!socialSheet.hidden&&socialSheet.classList.contains('fu-pc'))padClosing=performance.now();return oc.apply(this,arguments);};
+ const tab=()=>!!lastDown?.closest?.('.fu-nav button,.fu-tabs button,.dex-tab,[role=tab]');
+ const pick={
+  'ui-open':()=>{const w=where();return !w?null:pad()?'pad-on':w+'-ui-open';},
+  'ui-close':()=>{const w=where();return !w?null:performance.now()-padClosing<800?'pad-off':w+'-ui-close';},
+  'ui-click':()=>{const w=where();if(!w)return null;if(lastDown?.closest?.('.fu-pc'))return 'pad-tab';return w+(tab()?'-ui-tab':'-ui-click');}};
+ for(const [id,f]of Object.entries(pick)){const keep=RECORDED_FOLEY[id];Object.defineProperty(RECORDED_FOLEY,id,{configurable:true,enumerable:true,get(){try{return f()||keep;}catch(e){return keep;}}});}
 })();
