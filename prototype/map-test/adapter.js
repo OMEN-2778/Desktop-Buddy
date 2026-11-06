@@ -13,7 +13,7 @@ const seasonalTest=(function(){
   const walking=s.walk,phase=Math.floor(s.time*7)%4;
   const f={expr:sim.mode==='down'?'sleepy':emotion().key==='happy'?'happy':'neutral',look:s.facing||1,bob:swimming?0:walking?phase%2:0,sway:swimming?0:walking?phase%2:0,wave:swimming?arm:null};
   let dc=dollCanvas(f,s.pose|| (sea&&s.lying!==null?'sit':swimming?'stand':walking?(phase===1?'walkL':phase===3?'walkR':'stand'):'stand'));
-  if(sea&&window.__surfHero&&!s.inside){window.__surfHero.args={dc,skin:ramps.skin,sheet:sea.sheet};return;}   // riding a wave: summer_more draws her on the board, above the water
+  if(sea&&window.__surfHero&&!s.inside){const h=window.__surfHero;let d=dc;if(h.pose){d=dollCanvas(f,h.pose);if(s.suit!=='clothes'){bodyCtx.clearRect(0,0,20,28);bodyCtx.drawImage(sea.sheet,4,14,20,14,0,14,20,14);bodyCtx.drawImage(d,0,0,20,15,0,0,20,15);d=body;}}h.args={dc:d,skin:ramps.skin,sheet:sea.sheet};return;}   // riding a wave: summer_more draws her on the board, above the water
   if(sea&&(sea.under||sea.floating)&&!s.inside){state.summer.fx.swimmer(ctx,{head:dc,skinRamp:ramps.skin,sheet:sea.sheet,x,y,time:s.time,facing:s.facing,diving:sea.under,moving:s.walk,wetsuit:s.suit==='wetsuit',waterline:116});return;}
   if(sea&&s.suit!=='clothes'){
    bodyCtx.clearRect(0,0,20,28);bodyCtx.drawImage(sea.sheet,4,14,20,14,0,14,20,14);bodyCtx.drawImage(dc,0,0,20,15,0,0,20,15);dc=body;
@@ -76,8 +76,9 @@ const seasonalTest=(function(){
   {const wk=weather.force==='blizzard'||weather.kind==='snow'&&weather.heavy?'blizzard':weather.kind;c.setWeather(sim.place==='summer_test'&&(wk==='snow'||wk==='blizzard')?'rain':wk);}/* 草帽湾 is summer all year (owner 2026-11-05): the city's snow falls as rain there */people.sync();c.setResolution(Math.max(1,view.width/W));const run=!!speed&&!cardHolds()&&!wiping&&sim.mode!=='down';
   c.state.paused=!run;c.state.gender=look.gender||'f';
   if(run){
-   if(!life.talkQ&&!c.state.door&&!c.state.inCabana&&!c.state.target&&sim.t>=state.autoAt&&!ringOf){state.autoAt=sim.t+20+Math.random()*25;
-    if(sim.place==='spring_test'&&!c.state.inside)c.target(Math.max(20,Math.min((c.state.scene===5?684:342)-20,c.state.x+(Math.random()<.5?-1:1)*(30+Math.random()*70))));
+   if(!life.talkQ&&!c.state.door&&!c.state.inCabana&&!c.state.target&&sim.t>=state.autoAt&&!ringOf&&!(sim.place==='summer_test'&&window.summerFloat?.busy())){state.autoAt=sim.t+20+Math.random()*25;
+    if(window.seasonAuto?.act(c)){}   /* season_auto.js: her own plans (owner 2026-11-06); a plain stroll otherwise */
+    else if(sim.place==='spring_test'&&!c.state.inside)c.target(Math.max(20,Math.min((c.state.scene===5?684:342)-20,c.state.x+(Math.random()<.5?-1:1)*(30+Math.random()*70))));
     else if(sim.place==='summer_test'&&!c.state.inside&&c.state.lying===null){const nx=Math.max(50,c.state.x+(Math.random()<.5?-1:1)*45);if(!c.state.market&&c.state.y>132)c.goTo(nx,'dive',c.state.y);else c.goTo(nx);}   /* underwater she drifts at her depth: a plain walk target there left her stuck */
    }
    people.tick(dt);c.tick(life.talkQ?0:dt*Math.min(speed,4),dt);if(active()&&sim.act==='season_explore')sync();
@@ -94,7 +95,7 @@ const seasonalTest=(function(){
   if(sim.mode==='down'){if(Math.abs(x-sx)<22&&Math.abs(y-sy+8)<18){holding={t0:realClock,pointerId:e.pointerId};view.setPointerCapture(e.pointerId);showHint('按住主角 5 秒即可唤醒');}return;}
   if(sim.place==='autumn_test'&&s.mapOpen){c.pick(x,y);sync();return;}
   if(Math.abs(x-sx)<10&&y<sy&&y>sy-28){openRing('away','buddy');return;}
-  closeRing();state.autoAt=sim.t+45;s.rush=performance.now();if(sim.place==='autumn_test'){view.focus();ripple(e);c.pick(x+(s.mapOpen?0:s.camX||0),y+(s.mapOpen?0:s.camY||0));sync();return;}if(sim.place==='summer_test'&&window.summerLife?.click(x+(s.camX||0),y+(s.camY||0)))return;if(people.click(x+(s.camera??s.camX??0),y+(s.camY||0)))return;people.cancel();if(e.pointerType==='mouse')seasonPress={x:e.clientX,y:e.clientY};c.canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:e.clientX,clientY:e.clientY,button:0}));sync();
+  closeRing();state.autoAt=sim.t+45;window.seasonAuto?.cancel();s.rush=performance.now();if(sim.place==='autumn_test'){view.focus();ripple(e);c.pick(x+(s.mapOpen?0:s.camX||0),y+(s.mapOpen?0:s.camY||0));sync();return;}if(sim.place==='summer_test'&&window.summerLife?.click(x+(s.camX||0),y+(s.camY||0)))return;if(people.click(x+(s.camera??s.camX??0),y+(s.camY||0)))return;people.cancel();if(e.pointerType==='mouse')seasonPress={x:e.clientX,y:e.clientY};c.canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:e.clientX,clientY:e.clientY,button:0}));sync();
  },true);
  /* desktop app: pressing empty ground and dragging moves the window, as in the house (owner 2026-11-05);
     the walk the press started is called off */

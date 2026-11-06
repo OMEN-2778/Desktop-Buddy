@@ -229,6 +229,6 @@ const infeiFarm=(()=>{
  SPRING_TALK.dad.push({title:'牛认人',mood:{name:'牛认人',emo:'playful',pts:2,min:120},lines:['>你那头牛认你了没？','好像认了，看见我就叫。','>那是饿了。','……爸。','>开玩笑，它是想你了。']});
  SPRING_TALK.friend.push({title:'你家羊叫什么',mood:{name:'羊的名字',emo:'happy',pts:2,min:120},lines:['>听说你养羊了？叫什么名字？','棉花。','>好听！我能去摸摸吗？','能，它特别爱让人挠下巴。','>那我下周就去！']});
  for(const [key,pool]of Object.entries(SPRING_TALK))if(key!=='people')pool.forEach((t,i)=>{if(t.mood&&!t.id)ML[t.id=`spring_talk_${key}_${i}`]={...t.mood};});
- return {pcState,TREE,ANIMAL,give,sell,buy,parent,fundDay,treeDay,animalDay,planHelp,openPit,openAnimal};
+ return {pcState,TREE,ANIMAL,give,sell,buy,parent,fundDay,treeDay,animalDay,planHelp,openPit,openAnimal,pat,feed,collect,pickFruit,AREA,pit,S};
 })();
 window.infeiFarm=infeiFarm;

@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude: 草帽湾气垫/自由冲浪/只能「离开草帽湾」；两张地图的自主行动；飞机 3 秒
+- New `summer_float.js`: 4 floats (小黄鸭/甜甜圈/火烈鸟/西瓜, x 1530-2010) on the water line; click → swims over, sits (sit pose, float rim over her legs); tourists sit in some (9-18h, ~1/3), then no interaction. Ring at the surface: 冲浪 → rides on her own (46 px/s, turns at the sea's ends), any click only turns her (no diving), ring 取消冲浪, ends by itself after 30 s. Ring: 回家 → 离开草帽湾; trip('home') from the bay is refused unless it came from that button.
+- adapter drawHero hands her picture over while `window.__surfHero` is set (by:'rack'|'free'|'float', pose for the float).
+- New `season_auto.js` (adapter asks it when she is idle; a player click cancels): 茵菲谷 strolls / goes in (settee, wardrobe, table, jar) / waters a dry bed / pets, feeds, collects animals / sometimes harvests a ripe bed or tree — never sows or buys. 草帽湾 strolls / changes at the cabana then swims (surface or down) / sits in a free float / walks the market — never the stall. Any need < 40: no plans (house/lodge care). spring_story X gets water/harvest; infeiFarm exports pat/feed/collect/pickFruit.
+- airport flight.js: cabin hold 2 → 3 s. check_season_game_test leaves via bay:leave. check_infei_hover's 牛 step fails also without these changes (pre-existing).
+
 ## 2026-11-06 Claude: 冲浪站在板上；海岛卡几乎不扣币
 - Owner: surf = the swimming pose on a board, soles / board / water surface on one line. adapter drawHero hands her drawing to summer_more while `window.__surfHero` is set; summer_more draws the board (top at WL) and fx.swimmer upright with feet on it, above the water, plus spray; on a fall she drops back into the water.
 - Owner: chance cards should rarely touch 丢丢币, mostly +, very few −. summer_cards.js: all coins:-1 removed (14 of 106 cards change coins; only the old 珍珠贩子 can cost 1).

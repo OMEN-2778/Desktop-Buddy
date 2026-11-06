@@ -35,7 +35,7 @@ function createCabinFlight({canvas,images,drawHero,onFrame=()=>{},paused=()=>fal
  }
  function tick(now){if(!run)return;const dt=last&&!paused()&&!document.hidden?Math.min(100,now-last):0;last=now;run.elapsed+=dt;run.total+=dt;ctx.imageSmoothingEnabled=false;
   if(run.phase==='enter'){ctx.drawImage(run.from,0,0,canvas.width,canvas.height);sweep(()=>cabin(run.total),run.elapsed,700);if(run.elapsed>=700){cabin(run.total);run.phase='hold';run.elapsed=0;history.push({phase:'hold',at:now})}}
-  else if(run.phase==='hold'){cabin(run.total);if(run.elapsed>=2000){run.target=run.arrive();run.phase='exit';run.elapsed=0;history.push({phase:'exit',at:now})}}
+  else if(run.phase==='hold'){cabin(run.total);if(run.elapsed>=3000){run.target=run.arrive();run.phase='exit';run.elapsed=0;history.push({phase:'exit',at:now})}}
   else{cabin(run.total);sweep(run.target,run.elapsed,700);if(run.elapsed>=700){ctx.drawImage(run.target,0,0,canvas.width,canvas.height);const done=run.done;run=null;history.push({phase:'done',at:now});onFrame();done?.();return}}
   onFrame();requestAnimationFrame(tick);
  }

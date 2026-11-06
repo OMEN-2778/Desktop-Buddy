@@ -154,12 +154,12 @@
   // the surf ride
   // owner 2026-11-06: the swimming pose standing on the board; soles, board and the water surface on one line
   if(surfFx){const p=(realClock-surfFx.t0)/surfFx.dur,x=Math.round(s.x),fell=surfFx.fall&&p>.6,bob=Math.round(Math.sin(p*9)),top=WL-2+bob;
-   window.__surfHero=fell?null:(window.__surfHero||{});
+   window.__surfHero=fell?null:(window.__surfHero?.by==='rack'?window.__surfHero:{by:'rack'});
    if(!fell){ctx.fillStyle='#e35b4f';ctx.fillRect(x-10,top,20,1);ctx.fillStyle='#f2d36b';ctx.fillRect(x-11,top+1,22,1);ctx.fillRect(x+10*(s.facing||1),top,1,1);   // the board, its top at the waterline
     const a=window.__surfHero.args;if(a)seasonMapTest.state.summer.fx.swimmer(ctx,{head:a.dc,skinRamp:a.skin,sheet:a.sheet,x,y:top,time:s.time,facing:s.facing,diving:false,moving:true,waterline:WL});}
    ctx.fillStyle='rgba(255,255,255,.85)';for(let k=0;k<10;k++)ctx.fillRect(x-12-k*2*(s.facing||1),WL-Math.round(3*Math.abs(Math.sin(k/3+p*6))),2,1);   // spray behind the board
    if(fell){ctx.fillStyle='rgba(235,250,255,.9)';for(let k=0;k<8;k++)ctx.fillRect(x-6+k*2,WL-4-((k*7+p*30)%9|0),1,2);}}
-  else if(window.__surfHero)window.__surfHero=null;
+  else if(window.__surfHero?.by==='rack')window.__surfHero=null;
   // glowing sea at night
   if(night()){const gl=G(ctx);for(const p of trail){gl.fillStyle=`rgba(110,255,230,${p.a*.9})`;gl.fillRect(p.x|0,p.y|0,1,1);}
    for(let k=0;k<26;k++){const x=1030+((k*97)%900),on=Math.sin(t*2.2+k*1.3)>.5;if(on){gl.fillStyle='rgba(120,255,235,.7)';gl.fillRect(x+((t*4+k)%6|0),WL+1+(k%3),2,1);}}}
