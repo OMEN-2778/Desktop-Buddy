@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 草帽湾上线前冒烟测试
+- 新增 tools/check_summer_smoke.js（38 项）：导游、人脉、市集/小摊/咖啡座、10 个委托（按点击方式包在 scene 里）、旅舍 15 件家具、
+  气垫、冲浪、潜水、图鉴、早中晚夜、雨、5 个节日、106 张机会卡两种选项、离开草帽湾回家、无页面报错。全部通过。
+- 草帽湾仍只在测试页；进正式版等主人拍板（AGENTS.md → Releases）。
 ## 2026-11-06 · Codex · 阳光沙滩四套重写作曲
 - 用户否定前组旋律走向相似，要求真正不同作曲、主旋律尾音更长、夏日阳光沙滩感；新四首独立旋律/和声/结构，不再调用旧编配器。
 - compose_sunlit_four.py：C大调海岸流行、D Mixolydian海湾、6/8 F Lydian管弦、降E Soul；跨小节长音及独立尾奏。
