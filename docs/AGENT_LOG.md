@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 任务对话只靠点击推进；旅社上厕所显示坐姿
+- story_bubbles.js：去掉 4 秒自动翻页（所有任务 / 剧情对话），新一句出现 300 ms 内的点击不跳过。
+- summer_lodge.js：马桶从 hide 改成 pose:'sit'（iy -6），和茵菲谷农舍一致。
+- check_infei_side 通过；旅社坐姿截图看过。
+
 ## 2026-11-06 · Codex · 草帽湾白天BGM试听
 - 原创《草帽借给风》：112 BPM/A大调/125秒，滑音吉他主旋律、岛屿扫弦、Rhodes、贝斯、铜管及丰富打击乐；56小节有主副歌与间奏。
 - compose_strawhat_day.py + MP3/MIDI/元数据/音色署名入库；/music/#strawhat 页面置顶。

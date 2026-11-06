@@ -16,7 +16,7 @@ const summerLodge=(function(){
   stove:{rect:[237,52,19,26],x:246,need:'hunger',rate:3,line:['烧水、煮面……','自己做的就是香']},
   shower:{rect:[262,35,15,43],x:268,need:'hygiene',hide:true,line:['冲掉一身沙子','凉水澡真舒服']},
   basin:{rect:[281,44,14,18],x:288,need:'hygiene',max:70,line:['洗把脸，清醒了']},
-  toilet:{rect:[276,62,14,16],x:283,need:'bladder',hide:true,line:['马上出来']}
+  toilet:{rect:[276,62,14,16],x:283,need:'bladder',pose:'sit',iy:-6,line:['马上出来']}
  };
  const RATE={hunger:2.4,energy:.45,hygiene:3,bladder:8,fun:1.3};
  const NEED_SPOT={energy:'bed',hygiene:'shower',bladder:'toilet',hunger:'stove',fun:'sofa'};

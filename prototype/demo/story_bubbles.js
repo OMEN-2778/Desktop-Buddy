@@ -35,7 +35,7 @@ function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}})
   keep=requestAnimationFrame(hold);
  }
  let waiting=null,waitT=0;
- const AUTO_MS=4000;let autoT=0;
+ let autoT=0,shownAt=0;
  function show(speaker,words,o){   // over a call: wait until it is over, then speak
   if(!open&&storyWaitsForPhone()){waiting=[speaker,words,o];if(!waitT)waitT=setInterval(()=>{if(storyWaitsForPhone())return;clearInterval(waitT);waitT=0;const w=waiting;waiting=null;if(w)show0(...w);},250);return;}
   return show0(speaker,words,o);
@@ -58,9 +58,9 @@ function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}})
   mark();cancelAnimationFrame(keep);hold();
   (opts&&!hero?choices.querySelector('button'):box).focus({preventScroll:true,focusVisible:false});
 
-  clearTimeout(autoT);if(advance){const mine=advance;autoT=setTimeout(()=>{if(open&&advance===mine)advance();},AUTO_MS);}   // a line moves on by itself after 4 s
+  clearTimeout(autoT);shownAt=performance.now();   // owner 2026-11-06: a line waits for a click, it never moves on by itself
  }
- const go=e=>{if(!open||!advance)return;e.preventDefault();e.stopPropagation();advance();};
+ const go=e=>{if(!open||!advance)return;e.preventDefault();e.stopPropagation();if(performance.now()-shownAt<300)return;advance();};   // a click right as a line appears does not skip it
  // a click anywhere moves the talk on (owner 2026-11-03), and goes no further (the scene does not get it); choices take their own clicks
  let swallow=false;
  document.addEventListener('pointerdown',e=>{swallow=false;if(!open||!advance||e.button!==0)return;swallow=true;go(e);},true);
