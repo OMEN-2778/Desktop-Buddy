@@ -83,6 +83,21 @@
   return oldPick(id);};
  // nothing but 离开草帽湾 takes her off the island
  const oldTrip=trip;trip=function(to,swap){if(sim.place==='summer_test'&&to==='home'&&!leaving)return;return oldTrip(to,swap);};
- const oldArrive=arriveAt;arriveAt=function(p){leaving=false;surf=null;sit=null;if(window.__surfHero?.by!=='rack')window.__surfHero=null;return oldArrive(p);};
+ const oldArrive=arriveAt;arriveAt=function(p){leaving=false;if(p==='summer_test')arrivedIn=seasonOf(sim.t).i;surf=null;sit=null;if(window.__surfHero?.by!=='rack')window.__surfHero=null;return oldArrive(p);};
+ // 草帽湾 has flights only in summer and autumn (SUMMER_PLAY.md). Owner 2026-11-06: when autumn turns to winter while
+ // she is on the island, she says why and flies home at once (the one time the island sends her home). A save
+ // made in autumn and opened in winter does the same; the test toolbar may still drop her there in any season. Waits for a talk, a card or a door to finish first.
+ const flightSeason=()=>[1,2].includes(seasonOf(sim.t).i);
+ let lastSeasonGo=-1e9,arrivedIn=null;   // only a season that ends while she is there (the test toolbar may drop her in any season)
+ setInterval(()=>{try{
+  if(sim.place!=='summer_test'||flightSeason()||![1,2].includes(arrivedIn)||leaving||wiping||typeof booted==='undefined'||!booted)return;
+  if(card||cardHolds()||L.isBusy()||storyLocked()||C().state.door||C().state.changing>0||airportTravel?.flight?.busy)return;
+  if(sim.mode==='down')return;   // passed out: once the player has woken her
+  if(performance.now()-lastSeasonGo<8000)return;lastSeasonGo=performance.now();
+  closeRing();endSurf();stand();window.summerLodge?.stop();C().state.inCabana=false;
+  speakBay(pick(['再不回家就没航班了！','冬天要来了，最后一班飞机，快走快走！','航班要停了，我得赶紧回家！']));
+  log('入冬了，草帽湾的航班要停，赶最后一班飞机回了家。');
+  setTimeout(()=>{if(sim.place==='summer_test'&&!flightSeason()){leaving=true;command('go_home');}},1200);
+ }catch(e){console.warn('bay season',e);}},1000);
  window.summerFloat={FLOATS,sitter,startSurf,endSurf,goFloat,stand,get surfing(){return !!surf;},get sitting(){return sit;},busy:()=>!!(surf||sit),atSurface,floatAt};
 })();
