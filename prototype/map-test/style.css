@@ -190,3 +190,10 @@ body:has(.social-sheet.fu-big-sheet:not([hidden])) #diaryBox{visibility:hidden} 
 .social-sheet.fu-pc.fu-pc .fu-main button:disabled{background:#f3f2f7;color:#a7a4b2}
 .social-sheet.fu-pc.fu-pc .fu-main button::before,.social-sheet.fu-pc.fu-pc .fu-main button::after{display:none}
 .social-sheet.fu-pc.fu-pc .fu-main .fu-cell.on{background:#eaf6ee;border-color:#6fc28e}
+/* 丢丢平板 pops out of Buddy (transform-origin = her, set by season_motion.js) with a small spring past full size, and goes back into her */
+.social-sheet.fu-pc.fu-pc{animation:pcPop .56s cubic-bezier(.34,1.36,.5,1) both}
+.social-sheet.fu-pc.ios-keep{animation:none}
+.social-sheet.fu-pc.ios-out{animation:pcBack .28s cubic-bezier(.5,0,.9,.5) forwards!important}
+@keyframes pcPop{0%{opacity:0;transform:scale(.04)}35%{opacity:1}100%{opacity:1;transform:none}}
+@keyframes pcBack{0%{opacity:1;transform:none}70%{opacity:1}100%{opacity:0;transform:scale(.04)}}
+@media(prefers-reduced-motion:reduce){.social-sheet.fu-pc.fu-pc{animation:none!important}}

@@ -22,8 +22,8 @@
  // ---------------------------------------------------------------- close: fade and shrink, then hide
  const oClose=closeSocialSheet;closeSocialSheet=function(){
   if(socialSheet.hidden||reduced()||socialSheet.classList.contains('ios-out'))return oClose.apply(this,arguments);
-  const t=++tok,args=arguments;socialSheet.classList.add('ios-out');socialSheet.inert=true;
-  setTimeout(()=>{socialSheet.inert=false;if(t!==tok){socialSheet.classList.remove('ios-out');return;}socialSheet.classList.remove('ios-out');oClose.apply(this,args);},200);};
+  const t=++tok,args=arguments,pc=socialSheet.classList.contains('fu-pc');if(pc)fromHero(socialSheet);socialSheet.classList.add('ios-out');socialSheet.inert=true;
+  setTimeout(()=>{socialSheet.inert=false;if(t!==tok){socialSheet.classList.remove('ios-out');return;}socialSheet.classList.remove('ios-out');oClose.apply(this,args);},pc?280:200);};
  // ---------------------------------------------------------------- 丢丢平板电脑
  const APP={farm:'#7fcf8a',coin:'#f4c95d',fund:'#7fb8ee',gift:'#f2a0c2'};
  function tablet(s){
@@ -32,7 +32,10 @@
    const c=s.querySelector('.social-sheet-content');if(!c)return;s.insertBefore(scr,c);scr.append(bar,c);
    const cam=document.createElement('i');cam.className='pc-cam';s.append(cam);}
   s.querySelectorAll('.fu-nav button').forEach((b,i)=>{b.style.setProperty('--app',Object.values(APP)[i]||'#ccc');});
-  clock();placeTablet(s);}
+  clock();placeTablet(s);fromHero(s);}
+ // owner 2026-11-06: 平板从小人身上弹出来，关上时缩回她身上
+ function fromHero(s){try{const v=document.getElementById('view'),c=ringCenter(),vr=v.getBoundingClientRect(),r=s.getBoundingClientRect();if(!vr.width||!r.width)return;
+  const x=vr.left+c.x*vr.width/342,y=vr.top+c.y*vr.height/v.height;s.style.transformOrigin=`${Math.round(x-r.left)}px ${Math.round(y-r.top)}px`;}catch(e){}}
  const clock=()=>{const t=socialSheet.querySelector('.pc-status time');if(t)t.textContent=fmt(sim.t);};
  setInterval(()=>{if(!socialSheet.hidden&&socialSheet.classList.contains('fu-pc'))clock();},500);
  // the quest panel's box: from the diary's top to the house's bottom, right of the diary circle
