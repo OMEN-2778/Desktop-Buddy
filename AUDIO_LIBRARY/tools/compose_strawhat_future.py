@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Strawhat Bay v2: orchestral/piano topline with original broken electronic beat.
+"""Strawhat Bay v3: orchestral/piano topline with original broken electronic beat.
 Reuses v1's original tune; replaces drum score and lead orchestration. MIDI holds
 pitched parts; the complete electronic percussion is synthesized by this script.
 """
@@ -59,31 +59,25 @@ def percussion(n):
   b=bar*4;chorus=24<=bar<40 or bar>=48;bridge=40<=bar<48
   if bar<2:continue
   level=.60 if bar<4 or bridge else 1
-  kicks=[[0,1.375,2.75],[0,.75,2.5,3.625],[.0,1.75,2.625],[0,1.5,3.25]][bar%4]
-  for x in kicks:add('kick',b+x,.24*level)
-  # Offset snares and quiet ghosts: no four-on-floor or repeated stock backbeat.
-  for x in ([1.125,3] if bar%2==0 else [1,3.125]):add('snap',b+x,.13*level,.08)
-  if bar%2:add('snap',b+2.6875,.027,-.3)
-  for j in range(16):
-   if j in [0,3,6,8,11,14] or chorus and j in [5,15]:
-    add('hat',b+j*.25+(.055 if j%2 else 0),(.045 if j%4 else .059)*level,(-.48 if j%3 else .4))
-  for j,x in enumerate([.375,1.875,2.25,3.75]):
-   if bridge and j%2:continue
-   add('grain',b+x,.043*level,[-.7,.6,-.4,.7][j],j)
-  if bar%2==0:
-   for j,x in enumerate([.75,2.375,3.5]):add('wood',b+x,.042*level,(-.5+j*.45),j)
+  # Stable half-note kick and exact backbeat; syncopation stays in quiet layers.
+  kicks=[0,2]+([3.5] if chorus and bar%2 else [])
+  for x in kicks:add('kick',b+x,(.22 if x in [0,2] else .12)*level)
+  for x in [1,3]:add('snap',b+x,.125*level,.04)
+  for j in range(8):
+   add('hat',b+j*.5+(.018 if j%2 else 0),(.032 if j%2 else .042)*level,(-.25 if j%2 else .25))
+  for j,x in enumerate([.5,2.5]):add('grain',b+x,.025*level,[-.4,.4][j],j)
+  if bar%2==0 and not bridge:
+   for j,x in enumerate([1.75,3.75]):add('wood',b+x,.023*level,-.25+j*.5,j)
   if bar%8==7:
-   for j in range(5):add('grain',b+3+j*.1875,.023+j*.006,-.6+j*.3,j)
+   for j,x in enumerate([3.5,3.75]):add('grain',b+x,.025+j*.005,-.25+j*.5,j)
   if bar in [16,24,48]:add('air',b,.07,0)
- # A little room and short ping-pong delay, no long wash hiding transients.
- for seconds,gain in [(.11,.10),(.23,.065)]:
-  d=int(seconds*SR);mix[d:]+=mix[:-d,::-1]*gain
+ # No delayed drum repeats: clear transients keep the meter unambiguous.
  return mix
 
 def main():
- p=argparse.ArgumentParser();p.add_argument('--soundfont',required=True,type=Path);a=p.parse_args();out=Path('prototype/music-preview');ident='strawhat-summer-future';ev=score();R.save_midi(ev,out/'audio'/(ident+'.mid'),meter=(4,2),key=3)
+ p=argparse.ArgumentParser();p.add_argument('--soundfont',required=True,type=Path);a=p.parse_args();out=Path('prototype/music-preview');ident='strawhat-summer-future-v3';ev=score();R.save_midi(ev,out/'audio'/(ident+'.mid'),meter=(4,2),key=3)
  with tempfile.TemporaryDirectory() as tmp:
-  wav=Path(tmp)/'orchestra.wav';R.render(ev,a.soundfont,wav,title='草帽借给风 · 潮汐错拍',target_db=-23,reverb=.18,room=.4,bars=56)
+  wav=Path(tmp)/'orchestra.wav';R.render(ev,a.soundfont,wav,title='草帽借给风 · 海风正拍',target_db=-23,reverb=.18,room=.4,bars=56)
   sr,x=wavfile.read(wav);music=x.astype(np.float32)/32768;drums=percussion(len(music))
   # Subtle beat-linked space leaves woodwinds and piano intelligible.
   envelope=np.ones(len(music));beat=BEAT*SR
@@ -93,7 +87,7 @@ def main():
   mix=music*envelope[:,None]+drums;mix=sosfilt(butter(2,32,fs=SR,btype='highpass',output='sos'),mix,axis=0)
   mix*=min(10**(-20/20)/np.sqrt(np.mean(mix*mix)),.83/abs(mix).max());mix[-2*SR:]*=np.linspace(1,0,2*SR)[:,None]
   assert np.isfinite(mix).all() and abs(mix).max()<.84
-  wavfile.write(wav,SR,(mix*32767).astype(np.int16));subprocess.run(['ffmpeg','-v','error','-y','-i',str(wav),'-codec:a','libmp3lame','-b:a','192k','-metadata','title=草帽借给风 · 潮汐错拍',str(out/'audio'/(ident+'.mp3'))],check=True)
-  info=dict(id=ident,title='草帽借给风 · 潮汐错拍',bpm=112,duration=125,version=2,style='管弦钢琴 × Broken Beat / UK Garage',peak=float(abs(mix).max()),rms_db=float(20*np.log10(np.sqrt(np.mean(mix*mix)))),instruments=['钢琴主旋律','长笛','双簧管','弦乐合奏','圆号','Rhodes','合成贝斯','空气音垫','晶体点缀','原创电子鼓/颗粒打击'],preview_only=True,soundfont_sha256=hashlib.sha256(a.soundfont.read_bytes()).hexdigest(),midi_note='MIDI包含有音高乐器，完整电子打击乐由工程合成')
+  wavfile.write(wav,SR,(mix*32767).astype(np.int16));subprocess.run(['ffmpeg','-v','error','-y','-i',str(wav),'-codec:a','libmp3lame','-b:a','192k','-metadata','title=草帽借给风 · 海风正拍',str(out/'audio'/(ident+'.mp3'))],check=True)
+  info=dict(id=ident,title='草帽借给风 · 海风正拍',bpm=112,duration=125,version=3,style='管弦钢琴 × 稳拍电子律动',peak=float(abs(mix).max()),rms_db=float(20*np.log10(np.sqrt(np.mean(mix*mix)))),instruments=['钢琴主旋律','长笛','双簧管','弦乐合奏','圆号','Rhodes','合成贝斯','空气音垫','晶体点缀','原创电子鼓/颗粒打击'],preview_only=True,soundfont_sha256=hashlib.sha256(a.soundfont.read_bytes()).hexdigest(),midi_note='MIDI包含有音高乐器，完整电子打击乐由工程合成')
  (out/(ident+'.json')).write_text(json.dumps(info,ensure_ascii=False,indent=2)+'\n');print(json.dumps(info,ensure_ascii=False))
 if __name__=='__main__':main()
