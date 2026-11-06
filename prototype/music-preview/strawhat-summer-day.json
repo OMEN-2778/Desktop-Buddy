@@ -1,0 +1,56 @@
+{
+  "id": "strawhat-summer-day",
+  "title": "草帽借给风",
+  "bpm": 112,
+  "key": "A大调",
+  "meter": "4/4",
+  "bars": 56,
+  "duration": 125.0,
+  "file": "audio/strawhat-summer-day.mp3",
+  "midi": "audio/strawhat-summer-day.mid",
+  "peak": 0.82,
+  "rms_db": -20.43,
+  "notes": 4076,
+  "instruments": [
+    "滑音电吉他",
+    "高把位尼龙吉他（尤克里里式扫弦）",
+    "钢弦吉他",
+    "Rhodes电钢琴",
+    "指弹贝斯",
+    "铜管",
+    "马林巴",
+    "弦乐",
+    "风琴",
+    "鼓组与沙锤康加",
+    "长笛",
+    "钢鼓点缀"
+  ],
+  "soundfont_sha256": "9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe",
+  "preview_only": true,
+  "sections": [
+    {
+      "at": 0.0,
+      "title": "海风前奏"
+    },
+    {
+      "at": 8.57,
+      "title": "沿着海岸走"
+    },
+    {
+      "at": 34.29,
+      "title": "浪花渐近"
+    },
+    {
+      "at": 51.43,
+      "title": "草帽借给风"
+    },
+    {
+      "at": 85.71,
+      "title": "树荫下的间奏"
+    },
+    {
+      "at": 102.86,
+      "title": "副歌回归"
+    }
+  ]
+}

@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 · Codex · 草帽湾白天BGM试听
+- 原创《草帽借给风》：112 BPM/A大调/125秒，滑音吉他主旋律、岛屿扫弦、Rhodes、贝斯、铜管及丰富打击乐；56小节有主副歌与间奏。
+- compose_strawhat_day.py + MP3/MIDI/元数据/音色署名入库；/music/#strawhat 页面置顶。
+- 仅更新试听页，未替换草帽湾现用端午白天曲；音源不分发。音频电平/时长与浏览器播放检查。
+
 ## 2026-11-06 Claude — 草帽湾：远山压低、去掉中景山、集市去雾
 - summer_bay.py：FAR_PEAKS 高度减半（山顶在云带下面）；mid_layer 只剩帆船，灰色山脊去掉。
 - summer_life.js：集市远景楼房的淡蓝薄纱 0.5→0.16，中景的 0.22→0（这就是“雾蒙蒙”）。
