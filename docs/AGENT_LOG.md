@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 桌面版：更新重启后小屋不再掉到屏幕外
+- 玩家截图：只看到页面上半截（日记按钮、需求条贴着屏幕下沿、“换个线路下载……”），小屋在任务栏下面拖不回来。
+- lib.rs：更新重启回到原位置（restart_pos）时改用 place_back，夹住窗口底部（小屋）和左右不出工作区。未在本机编译（CI 构建）。
+
 ## 2026-11-06 Claude — 季节房子生活精度对标主世界；旅社厨房加餐桌
 - 新增 prototype/map-test/season_house.js：农舍 / 旅社家具直接跑主世界的 ACTS/EFFECT/lifeArrive/lifeFinish/activityFrame
   （时长、需求、表情、气泡、日记、心情、做饭→上桌→吃饭、如厕中断）；做的饭各留在各自的地方；锅和饭菜用主世界的图。

@@ -286,7 +286,7 @@ fn fit_window(window: WebviewWindow, width: f64, height: f64, dx: Option<f64>, d
             let mut config = read_config(app);
             match config.get("restart_pos").and_then(|p| Some((p.get(0)?.as_i64()?, p.get(1)?.as_i64()?))) {
                 Some((x, y)) => {
-                    let _ = window.set_position(PhysicalPosition::new(x as i32, y as i32));
+                    place_back(&window, x as i32, y as i32);
                     if let Some(obj) = config.as_object_mut() {
                         obj.remove("restart_pos");
                     }
@@ -314,6 +314,22 @@ fn place_centred(window: &WebviewWindow) {
     let (ww, wh) = (wa.size.width as i32, wa.size.height as i32);
     let x = wa.position.x + (ww - w) / 2;
     let y = (wa.position.y + (wh - h) / 2).min(wa.position.y + wh - h);
+    let _ = window.set_position(PhysicalPosition::new(x, y));
+}
+
+/// Back where it was before an update restarted it, but never with the house (the
+/// window's bottom) off the screen: the new version's window can be taller (more
+/// headroom above the house), and a player saw only the top of the page, the house
+/// hanging under the taskbar, with no way to drag it back (owner 2026-11-06).
+fn place_back(window: &WebviewWindow, x: i32, y: i32) {
+    let (Ok(size), Ok(Some(m))) = (window.outer_size(), window.current_monitor()) else {
+        let _ = window.set_position(PhysicalPosition::new(x, y));
+        return;
+    };
+    let (wa, (w, h)) = (m.work_area(), (size.width as i32, size.height as i32));
+    let (ww, wh) = (wa.size.width as i32, wa.size.height as i32);
+    let x = x.min(wa.position.x + ww - w).max(wa.position.x);
+    let y = y.min(wa.position.y + wh - h);
     let _ = window.set_position(PhysicalPosition::new(x, y));
 }
 
