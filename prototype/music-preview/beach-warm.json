@@ -1,0 +1,82 @@
+[
+  {
+    "duration": 95.0,
+    "peak": 0.6249,
+    "rms_db": -20.0,
+    "notes": 1114,
+    "id": "beach-warm-wind",
+    "title": "风停在海天之间 · 暖阳海滩版",
+    "style": "热带海岸 · 温暖轻律动",
+    "bpm": 96,
+    "sections": [
+      {
+        "name": "intro",
+        "at": 0.0
+      },
+      {
+        "name": "A",
+        "at": 10.0
+      },
+      {
+        "name": "bridge",
+        "at": 30.0
+      },
+      {
+        "name": "B",
+        "at": 40.0
+      },
+      {
+        "name": "A2",
+        "at": 60.0
+      },
+      {
+        "name": "outro",
+        "at": 80.0
+      }
+    ],
+    "chorus_at": 40.0,
+    "preview_only": true
+  },
+  {
+    "duration": 129.615,
+    "peak": 0.5066,
+    "rms_db": -20.0,
+    "notes": 1903,
+    "id": "beach-warm-coast",
+    "title": "沿着晴天走很远 · 热带海岸版",
+    "style": "热带海岸 · 温暖轻律动",
+    "bpm": 104,
+    "sections": [
+      {
+        "name": "intro",
+        "at": 0.0
+      },
+      {
+        "name": "A",
+        "at": 9.23
+      },
+      {
+        "name": "B",
+        "at": 36.92
+      },
+      {
+        "name": "bridge",
+        "at": 55.38
+      },
+      {
+        "name": "B",
+        "at": 64.62
+      },
+      {
+        "name": "A2",
+        "at": 83.08
+      },
+      {
+        "name": "outro",
+        "at": 110.77
+      }
+    ],
+    "chorus_at": 36.92,
+    "preview_only": true
+  }
+]
