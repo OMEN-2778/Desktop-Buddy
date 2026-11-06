@@ -1,0 +1,116 @@
+[
+  {
+    "id": "bay-citypop",
+    "title": "沿海公路开着窗",
+    "style": "海岛 City Pop",
+    "bpm": 106,
+    "meter": "4/4",
+    "duration": 113.679,
+    "peak": 0.7263872613556064,
+    "rms_db": -20.00000002536006,
+    "instruments": [
+      "Rhodes电钢琴",
+      "清音吉他",
+      "指弹贝斯",
+      "次中音萨克斯",
+      "铜管",
+      "弦乐",
+      "模拟音垫",
+      "原声鼓组"
+    ],
+    "sections": {
+      "intro_end": 9.057,
+      "verse_end": 27.17,
+      "pre_end": 36.226,
+      "chorus_end": 63.396,
+      "bridge_end": 81.509
+    },
+    "preview_only": true,
+    "soundfont_sha256": "9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe"
+  },
+  {
+    "id": "bay-bossa",
+    "title": "海盐与青柠",
+    "style": "海边 Bossa Nova",
+    "bpm": 96,
+    "meter": "4/4",
+    "duration": 125.0,
+    "peak": 0.7287855661819632,
+    "rms_db": -20.00000001461339,
+    "instruments": [
+      "尼龙吉他",
+      "钢琴",
+      "长笛",
+      "单簧管",
+      "原声贝斯",
+      "轻弦乐",
+      "刷感沙锤与边鼓"
+    ],
+    "sections": {
+      "intro_end": 10.0,
+      "verse_end": 30.0,
+      "pre_end": 40.0,
+      "chorus_end": 70.0,
+      "bridge_end": 90.0
+    },
+    "preview_only": true,
+    "soundfont_sha256": "9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe"
+  },
+  {
+    "id": "bay-cinema",
+    "title": "白帆越过地平线",
+    "style": "海洋电影配乐 · 6/8",
+    "bpm": 120,
+    "meter": "6/8（附点四分=80）",
+    "duration": 101.0,
+    "peak": 0.6269433081379283,
+    "rms_db": -20.000000017372162,
+    "instruments": [
+      "钢琴",
+      "长笛",
+      "双簧管",
+      "弦乐",
+      "圆号",
+      "大提琴",
+      "竖琴",
+      "管弦打击"
+    ],
+    "sections": {
+      "intro_end": 6.0,
+      "verse_end": 24.0,
+      "pre_end": 36.0,
+      "chorus_end": 60.0,
+      "bridge_end": 78.0
+    },
+    "preview_only": true,
+    "soundfont_sha256": "9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe"
+  },
+  {
+    "id": "bay-sunset",
+    "title": "把日落留在海上",
+    "style": "日落 Chill / 后摇",
+    "bpm": 82,
+    "meter": "4/4",
+    "duration": 145.488,
+    "peak": 0.83,
+    "rms_db": -20.76146551332219,
+    "instruments": [
+      "清音延迟吉他",
+      "钢琴",
+      "电钢琴",
+      "电贝斯",
+      "低弦乐",
+      "空气音垫",
+      "渐进鼓组"
+    ],
+    "sections": {
+      "intro_end": 11.707,
+      "verse_end": 35.122,
+      "pre_end": 46.829,
+      "chorus_end": 81.951,
+      "bridge_end": 105.366
+    },
+    "preview_only": true,
+    "soundfont_sha256": "9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe"
+  }
+]
