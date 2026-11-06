@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 极端测试补两项：累倒时入冬、冲凉时入冬
+- check_summer_extremes.js 加：水下累倒时入冬（等玩家叫醒，醒来马上飞回家）、没憋住后在旅舍冲凉时入冬（打断冲凉飞回家）；
+  水下没憋住→旅舍冲凉的等待放宽到 80 秒（从深海游回来路远）。19 项全部通过。
+
 ## 2026-11-06 · Codex · 按长音悠远旋律建议新写两曲
 - 用户给出下行、跳进后回落、五声、多利亚、长音留白规则；原创《风停在海天之间》《潮水缓缓走向远方》，84/80BPM，约108/113秒。
 - compose_far_shore.py、far-shore.json、两组MP3/MIDI；五声晴朗/多利亚下行两方向，主旋律慢长音，稀疏钢琴竖琴弦乐承接。

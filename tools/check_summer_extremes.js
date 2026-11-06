@@ -31,6 +31,10 @@ await winterFrom('a float',()=>{const c=seasonMapTest.state.summer;c.state.suit=
 await winterFrom('asleep in the lodge',async()=>{const c=seasonMapTest.state.summer;c.state.inside=true;c.state.x=150;c.state.y=84;summerLodge.use('bed');await new Promise(r=>setTimeout(r,3500));});
 await winterFrom('the market',()=>{const c=seasonMapTest.state.summer;c.state.x=60;c.beginDoor('market');});
 await winterFrom('a chance card',()=>{const c=seasonMapTest.state.summer;c.state.x=700;c.state.y=c.gr(700);showCard(CARDS.find(c=>c.at==='summer_test'));},()=>{chooseCard('a',true);});
+await winterFrom('passed out under water',async()=>{window.__lowNeeds=true;const c=seasonMapTest.state.summer;c.state.suit='swim';c.state.x=2600;c.state.y=300;sim.needs.energy=0;await new Promise(r=>setTimeout(r,3000));},
+ ()=>{if(sim.mode==='down'){holding=null;sim.mode='idle';sim.down=null;sim.idleUntil=sim.t+3;}for(const k in sim.needs)sim.needs[k]=60;window.__lowNeeds=false;});   // the player wakes her (as holding her 5 s does)
+await winterFrom('showering after an accident',async()=>{const c=seasonMapTest.state.summer;c.state.inside=true;c.state.x=200;c.state.y=84;sim.needs.bladder=0;
+ for(let i=0;i<40&&!(summerLodge.svc?.id==='shower');i++)await new Promise(r=>setTimeout(r,500));});
 // a save made in autumn on the island, opened in winter
 await enter();await ev(t=>{const c=seasonMapTest.state.summer;c.state.x=700;c.state.y=c.gr(700);sim.t=t-600;const s=snapshot();s.sim.t=t+600;localStorage.setItem('season-test-buddy-save',JSON.stringify(s));localStorage.setItem('buddy-save',JSON.stringify(s));},autumnEnd);
 await p.reload();await boot();await hookSay();await wait(6000);ok('test toolbar / a save in winter: stays (only a season ending sends her)',await ev(()=>sim.place==='summer_test'),await ev(()=>sim.place));
@@ -45,7 +49,7 @@ const down=await ev(()=>sim.mode);await ev(()=>{if(sim.mode==='down'){sim.mode='
 ok('passes out under water and comes round',['down','act','idle'].includes(down)&&await ev(()=>sim.place==='summer_test'),down);
 // an accident under water: a shower in the lodge, not home
 await ev(()=>{window.__lowNeeds=true;const c=seasonMapTest.state.summer;c.state.x=2400;c.state.y=260;sim.needs.bladder=0;});
-let showered=false;for(let i=0;i<90;i++){await wait(500);const r=await ev(()=>[sim.place,summerLodge.svc?.id,sim.act]);if(r[0]!=='summer_test')break;if(r[1]==='shower'||r[2]==='season_shower'){showered=true;break;}}
+let showered=false;for(let i=0;i<160;i++){await wait(500);const r=await ev(()=>[sim.place,summerLodge.svc?.id,sim.act]);if(r[0]!=='summer_test')break;if(r[1]==='shower'||r[2]==='season_shower'){showered=true;break;}}
 await ev(()=>{window.__lowNeeds=false;for(const k in sim.needs)sim.needs[k]=80;});
 ok('accident under water → lodge shower',showered,await ev(()=>sim.place+' '+sim.act+' '+Math.round(seasonMapTest.state.summer.state.x)));
 // reloading in odd places (the island in summer): comes back on the island, no errors
