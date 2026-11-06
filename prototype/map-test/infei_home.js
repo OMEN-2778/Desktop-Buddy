@@ -87,7 +87,9 @@ const infeiHome=(function(){
   return oldOpen(which,at);};
  const oldHomeFor=homeFor;homeFor=function(k){if(inSpring()&&!leaving){speak(pick(['回屋里歇歇','先进屋一趟']),true);return;}return oldHomeFor(k);};
  const oldStart=startAct;startAct=function(name,quiet){
-  if(inSpring()&&name==='go_home'&&!leaving){const low=Object.entries(sim.needs).sort((a,b)=>a[1]-b[1])[0];if(low[1]<40)care(low[0]);sim.mode='act';sim.act='season_explore';sim.actEnd=Infinity;return;}
+  // indoor acts (bath after an accident, sleep, cook…) would send her home first: in 茵菲谷 the farmhouse does them
+  const indoor=name!=='go_home'&&!OUT_ACTS.has(name)&&ACTS[name]?.spot,byAct={bath:'hygiene',wash:'hygiene',toilet:'bladder',sleep:'energy',cook:'hunger',eat:'hunger',snack:'hunger'}[name];
+  if(inSpring()&&(name==='go_home'||indoor)&&!leaving){const low=Object.entries(sim.needs).sort((a,b)=>a[1]-b[1])[0];if(byAct)care(byAct);else if(low[1]<40)care(low[0]);sim.mode='act';sim.act='season_explore';sim.actEnd=Infinity;return;}
   return oldStart(name,quiet);};
  const oldArrive=arriveAt;arriveAt=function(place){leaving=false;stop();hinted=false;if(place==='spring_test'){sim.outBack=null;sim.outWhy=null;}return oldArrive(place);};
  return {SPOTS,use,care,stop,get svc(){return svc;},leave:()=>X.hooks.pick.leave()};

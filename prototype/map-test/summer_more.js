@@ -359,7 +359,7 @@
   sim.mode='act';sim.act='season_explore';sim.actEnd=Infinity;const c=C();
   c.state.target=null;}   /* the timer below walks her there, swimming ashore first */
  const oHome=homeFor;homeFor=function(k){if(sim.place==='summer_test'&&!leavingBay){lodgeCare();return;}return oHome(k);};
- const oStart=startAct;startAct=function(name,quiet){if(sim.place==='summer_test'&&name==='go_home'&&!leavingBay){lodgeCare();return;}return oStart(name,quiet);};
+ const oStart=startAct;startAct=function(name,quiet){if(sim.place==='summer_test'&&(name==='go_home'||!OUT_ACTS.has(name)&&ACTS[name]?.spot)&&!leavingBay){lodgeCare();return;}return oStart(name,quiet);};
  const oArrive=arriveAt;arriveAt=function(p){leavingBay=false;care=null;if(p==='summer_test'){sim.outBack=null;sim.outWhy=null;}return oArrive(p);};   /* the city outing's "home by …" timer (set when she walked to the airport) must not follow her onto the island */
  setInterval(()=>{if(sim.place==='summer_test'&&!leavingBay&&sim.outBack!=null){sim.outBack=null;sim.outWhy=null;}},1000);
  let careT=0,careStuck=0;setInterval(()=>{if(!care||sim.place!=='summer_test'||wiping)return;   // a timer: the bay's draw hooks stop while she is inside

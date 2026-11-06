@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 季节地图：需求见底不再自己回主世界
+- 根因：膀胱见底的“没憋住”会直接 startAct('bath')，室内动作在外面会先插一个 go_home；季节地图只拦了 go_home。
+- infei_home.js / summer_more.js 的 startAct 包装同时拦截室内动作（洗澡、睡觉、做饭等），交给农舍 / 小屋照料。
+- 正式版构建（--release）实测：需求全红 / 膀胱见底都留在茵菲谷；草帽湾同样。
+
 ## 2026-11-06 Claude: 草帽湾远景/中景/近景视差
 - art/src/concept/summer_bay.py: `far_layer()` (pale mountains + distant islands) and `mid_layer()` (grey ridge + sailboat) are their own pictures; `bay(layers=True)` leaves them out of bg. Their things are placed with `lay(x,k)` so each stands at its old map x when the camera is centred on it (FAR_K .35, MID_K .65).
 - make_summer_preview.py: DATA.far / DATA.mid; prototype/summer/viewer.js draws them after the clouds at x = camX*(1-k). Checked: lodge, cabana, beach (ridge ends at the shore), near and far sea (islands + sailboat only).
