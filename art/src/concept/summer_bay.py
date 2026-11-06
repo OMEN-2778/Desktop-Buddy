@@ -341,8 +341,15 @@ def cabana_screen(t, plants=True):
 CHAIRS = [(PRE + 190, P.hydrangea), (PRE + 222, P.mustard)]
 
 
-def land(s, frame=0, plants=True, structures=True):
-    BP.mountains(s, 0, PRE + 236, WL - 9, [(170, 60, 74), (440, 80, 56), (PRE + 40, 60, 66), (PRE + 180, 40, 30)], 9)
+RIDGE = [(170, 60, 74), (440, 80, 56), (PRE + 40, 60, 66), (PRE + 180, 40, 30)]          # 中景: the grey volcanic ridge
+FAR_PEAKS = [(80, 80, 70), (300, 60, 52), (560, 90, 64), (PRE + 120, 60, 40)]           # 远景: the pale mountains
+ISLANDS = ((PRE + 420, 90, 16), (PRE + 520, 50, 9), (PRE + 980, 120, 22), (PRE + 1110, 60, 11), (PRE + 1290, 80, 14),
+           (PRE + 1620, 100, 18), (PRE + 1760, 50, 10), (PRE + 1950, 70, 12))
+
+
+def land(s, frame=0, plants=True, structures=True, ridge=True):
+    if ridge:
+        BP.mountains(s, 0, PRE + 236, WL - 9, RIDGE, 9)
     gy = lambda x: GROUND[max(0, min(GW - 1, x))]
     if plants:
         BP.jungle(s, 0, PRE + 170, gy, 31)
@@ -427,22 +434,57 @@ def water_rgb(y):
 WROWS = np.array([water_rgb(y) for y in range(GH)])
 
 
-def horizon(s):
-    """远景 above the water: the far sea as a pale band behind everything, distant
-    islands standing on it, a sailboat."""
-    s.px[WL - 7:WL, :, :3] = C(P.sea[3])[:3]
-    s.px[WL - 7, :, :3] = C(P.sea[4])[:3]
-    for cx, w, h in ((PRE + 420, 90, 16), (PRE + 520, 50, 9), (PRE + 980, 120, 22), (PRE + 1110, 60, 11), (PRE + 1290, 80, 14),
-                     (PRE + 1620, 100, 18), (PRE + 1760, 50, 10), (PRE + 1950, 70, 12)):
+def islands(s):
+    """The distant islands standing on the far sea (远景)."""
+    for cx, w, h in ISLANDS:
         for x in range(cx - w // 2, cx + w // 2):
             u = (x - cx) / (w / 2)
             top = int(WL - 7 - h * max(0.0, 1 - u * u) ** 0.7 - 1.5 * math.sin(x * 0.3))
             for y in range(top, WL - 7):
                 s.set(x, y, P.sky_soft[2] if u < -0.1 or y - top < 2 else P.sky_soft[1])
+
+
+FAR_K, MID_K = 0.35, 0.65   # how fast each layer scrolls with the camera (the page uses the same numbers)
+
+
+def lay(x, k):
+    """Where a thing goes in a slow layer so that it stands at map x when the camera is centred on it."""
+    return int(round(x * k + 171 * (1 - k)))
+
+
+def far_layer():
+    """远景 (owner 2026-11-06: near / mid / far scroll at different speeds): pale mountains + distant islands."""
+    s = Sprite(GW, GH)
+    BP.mountains(s, 0, lay(PRE + 250, FAR_K), WL - 8, [(lay(x, FAR_K), w, h) for x, w, h in FAR_PEAKS], 5, far=True)
+    for cx, w, h in ISLANDS:
+        for x in range(lay(cx, FAR_K) - w // 2, lay(cx, FAR_K) + w // 2):
+            u = (x - lay(cx, FAR_K)) / (w / 2)
+            top = int(WL - 7 - h * max(0.0, 1 - u * u) ** 0.7 - 1.5 * math.sin(x * 0.3))
+            for y in range(top, WL - 7):
+                s.set(x, y, P.sky_soft[2] if u < -0.1 or y - top < 2 else P.sky_soft[1])
+    return s
+
+
+def mid_layer():
+    """中景: the grey ridge behind the land and the sailboat on the sea."""
+    s = Sprite(GW, GH)
+    BP.mountains(s, 0, lay(PRE + 236, MID_K), WL - 9, [(lay(x, MID_K), w, h) for x, w, h in RIDGE], 9)
+    sailboat(s, lay(PRE + 760, MID_K), WL - 4)
+    return s
+
+
+def horizon(s, layers=False):
+    """远景 above the water: the far sea as a pale band behind everything, distant
+    islands standing on it, a sailboat."""
+    s.px[WL - 7:WL, :, :3] = C(P.sea[3])[:3]
+    s.px[WL - 7, :, :3] = C(P.sea[4])[:3]
+    if not layers:
+        islands(s)
     for x in range(0, GW, 9):                                        # glints on the far water
         if (x * 13) % 7 < 2:
             s.hline(x, x + 2, WL - 4 - (x % 3), P.sea[4])
-    sailboat(s, PRE + 760, WL - 4)
+    if not layers:
+        sailboat(s, PRE + 760, WL - 4)
 
 
 def seabed_mask():
@@ -648,7 +690,7 @@ def fog(s):
     s.px[:, :, :3] = (s.px[:, :, :3] * (1 - deep) + night * deep).astype(np.uint8)
 
 
-def bay(frame=0, clouds=True, life=True, plants=True, structures=True, sun=True):
+def bay(frame=0, clouds=True, life=True, plants=True, structures=True, sun=True, layers=False):
     """clouds/life=False: the static backdrop for the web preview, which
     drifts the clouds and swims the creatures itself."""
     s = Sprite(GW, GH)
@@ -659,8 +701,9 @@ def bay(frame=0, clouds=True, life=True, plants=True, structures=True, sun=True)
         k, dx, y = rnd.randrange(3), rnd.randint(-30, 30), rnd.randint(4, 40)
         if clouds:
             s.blit(BE.cloud(k), x + dx, y)
-    BP.mountains(s, 0, PRE + 250, WL - 8, [(80, 80, 70), (300, 60, 52), (560, 90, 64), (PRE + 120, 60, 40)], 5, far=True)
-    horizon(s)
+    if not layers:   # layers=True: far / mid come as their own pictures (far_layer, mid_layer)
+        BP.mountains(s, 0, PRE + 250, WL - 8, FAR_PEAKS, 5, far=True)
+    horizon(s, layers)
     s.px[WL:, :, :3] = WROWS[WL:, None, :].astype(np.uint8)          # the water
     s.px[WL:, :, 3] = 255
     for mask_layer, k in ((stitch(SS.far2(), True), 0.86), (stitch(SS.far1(), True), 0.76)):   # far reef ranges
@@ -674,7 +717,7 @@ def bay(frame=0, clouds=True, life=True, plants=True, structures=True, sun=True)
     cx, cy = BP.sea_stack(s, STACK[0] + 6, GW + 10, WL, GH, 3)
     if plants:SI.palm2(s, cx + 2, cy, 34, lean=-1, seed=21)
     foam(s, STACK[0] - 2, GW, WL)
-    land(s, frame, plants, structures)
+    land(s, frame, plants, structures, ridge=not layers)
     s.blit(calm_decor(), LAND, SKY)
     if life:
         s.blit(calm_life(), LAND, SKY)

@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude: 草帽湾远景/中景/近景视差
+- art/src/concept/summer_bay.py: `far_layer()` (pale mountains + distant islands) and `mid_layer()` (grey ridge + sailboat) are their own pictures; `bay(layers=True)` leaves them out of bg. Their things are placed with `lay(x,k)` so each stands at its old map x when the camera is centred on it (FAR_K .35, MID_K .65).
+- make_summer_preview.py: DATA.far / DATA.mid; prototype/summer/viewer.js draws them after the clouds at x = camX*(1-k). Checked: lodge, cabana, beach (ridge ends at the shore), near and far sea (islands + sailboat only).
+
 ## 2026-11-06 Claude: 草帽湾海里的鱼：近岸无大鱼、不扎堆
 - tools/make_summer_preview.py `spread()` on B.LIFE (game + preview): big ones (frame ≥26 wide or ≥18 tall) start at sea-x ≥ 400 (past 海湾) and ≥70 px under the surface; every creature keeps 34×18 px from the others (shifted along x, kept above the seabed). Near-shore big fish 25 → 0, close pairs 117 → 0.
 

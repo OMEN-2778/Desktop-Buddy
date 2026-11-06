@@ -112,6 +112,8 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
  ctx.save();ctx.translate(-cx,-cy);
  // Clouds belong behind mountains, trees, buildings and every actor.
  for(let i=0;i<42;i++){const c=img(DATA.clouds[i%3]),x=((i*113+t*(1.2+i%4*.5))%(W+60))-40,y=4+(i*17)%36;if(x+c.width>cx&&x<cx+VW)ctx.drawImage(c,x,y);}
+ // 远景 / 中景 scroll slower than the land and water (owner 2026-11-06): drawn shifted by part of the camera move
+ for(const [k,key] of [[.35,'far'],[.65,'mid']])if(DATA[key])ctx.drawImage(img(DATA[key]),Math.round(cx*(1-k)),0);
  ctx.drawImage(img(DATA.bg),0,0);
  for(const p of DATA.plants){const im=img(p.img);if(!p.kind.endsWith('-front')&&p.x+im.width>cx-4&&p.x<cx+VW+4&&p.y+im.height>cy&&p.y<cy+vh)fx.plant(ctx,im,p,t);}
  ctx.drawImage(img(DATA.structures),0,0);
