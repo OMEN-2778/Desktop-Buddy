@@ -52,7 +52,7 @@ function meetWorldNpc(n){
   const person=socialState.world.find(c=>c.id===n.personId);if(!person)return null;
   let c=socialState.contacts.find(c=>c.id===person.id);
   if(!c){c={...person,family:null,affinity:8,lastContact:sim.t,lastSeen:sim.t,metAt:sim.t,memories:[...(socialState.archive[person.id]?.memories||[])]};const returning=!!socialState.archive[person.id];socialState.contacts.push(c);delete socialState.archive[person.id];
-    const text=`在${({park:'公园',bar:'酒吧',mall:'商场',front:'街边',beach:'码头'})[sim.place]||'路上'}和${c.name}聊了几句，${returning?'重新':'第一次'}交换了联系方式。`;log(text);addSocialMemory(c,returning?'再次遇见':'第一次认识',text);discoverPersonality(c);
+    const text=`在${({park:'公园',bar:'酒吧',mall:'商场',front:'街边',beach:'码头',summer_test:'草帽湾',spring_test:'茵菲谷'})[sim.place]||'路上'}和${c.name}聊了几句，${returning?'重新':'第一次'}交换了联系方式。`;log(text);addSocialMemory(c,returning?'再次遇见':'第一次认识',text);discoverPersonality(c);
   }else{c.lastSeen=sim.t;c.forgotten=false;finishContactTalk(c.id,'meet');}
   contactsSig='';return c;
 }

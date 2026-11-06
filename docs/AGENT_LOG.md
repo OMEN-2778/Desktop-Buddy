@@ -6,6 +6,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 草帽湾认识的人进人脉；岛上男性角色外观修正
+- 新增 prototype/map-test/bay_friends.js：阿洛、蕾拉妮、卡伊诺、米娅、阿海、小麦、诺亚第一次和她说话时走主世界 meetWorldNpc
+  交换联系方式（面熟 8、日记、第一次认识记忆、性格）；之后电话/消息/视频/做客/约出去都用主世界社交系统；岛上再见算“见面”（每天一次）。
+  临时放进 socialState.world 再移除，不会变成别处的路人。social_life.js 地点名加 草帽湾 / 茵菲谷。
+- summer_life.js person()：小种子第一次随机总抽到女，岛上所有男性角色原来都是女性外观；女性外观不变，男性改用打散的种子重抽。
+- 第 2 步（主世界朋友约到草帽湾）未做，等主人确认。
+
 ## 2026-11-06 · Codex · 草帽湾四首不同风格新曲
 - 用户认为前曲不耐听，要求多首完全不同风格；新写City Pop/Bossa/6拍电影管弦/日落Chill后摇四套旋律、和声与编配。
 - compose_bay_alternatives.py，4首MP3+完整MIDI+bay-alternatives.json，曲长101–145秒；/music/#bay-alternatives 集中置顶并标主题时间。

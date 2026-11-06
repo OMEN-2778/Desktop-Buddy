@@ -122,7 +122,10 @@ const summerLife=(function(){
  // ---------------------------------------------------------------- people of the bay
  function seeded(seed,f){const r=Math.random;let s=seed;Math.random=()=>(s=s*16807%2147483647)/2147483647;try{return f();}finally{Math.random=r;}}
  const drawnPeople=[];
- function person(name,gender,seed){let lk;for(let k=0;k<60;k++){lk=seeded(seed+k*977,npcLook);if(lk.gender===gender)break;}return {name,look:lk,ramps:doll.rampsOf(lk),cache:new Map(),dir:-1,x:0,feet:106};}
+ function person(name,gender,seed){let lk;for(let k=0;k<60;k++){lk=seeded(seed+k*977,npcLook);if(lk.gender===gender)break;}
+  // small seeds always rolled 'f' first (the generator's first draw is tiny), so every man on the island had a woman's
+  // body; women keep the look above, men get one from a scrambled seed (owner 2026-11-06)
+  for(let k=0;lk.gender!==gender&&k<60;k++)lk=seeded((seed*48271+k*7919)%2147483647||1,npcLook);return {name,look:lk,ramps:doll.rampsOf(lk),cache:new Map(),dir:-1,x:0,feet:106};}
  const P={alo:person('阿洛','m',301),lei:person('蕾拉妮','f',433),kai:person('卡伊诺','m',577)};
  function pose(v,ms,o={}){const f={expr:o.expr||'neutral',look:0,bob:Math.floor(ms/600)%2,sway:0,wave:o.wave?Math.floor(ms/240)%2:null};if(Math.floor(ms/2600)%6===0)f.expr='blink';return npcCanvas(v,f,o.walk?'walk'+(Math.floor(ms/180)%2):'stand',false);}
  function where(){const q=B().q,h=hour(),out={};
