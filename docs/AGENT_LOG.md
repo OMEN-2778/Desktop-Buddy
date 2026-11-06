@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 · Codex · 季节地图BGM定稿接入
+- 用户定稿：夏季《向着海风出发》、全季节室内《赤脚走过星期天》、秋季《沿着晴天走很远·热带海岸版》。
+- 正式MP3复制到 BGM/seasons；季节页构建路由按当前地图/inside切换，春季室外/机场维持原曲，冬季待地图实现。
+- 更新 SEASON_MAP_STANDARD 与试听页选定标记；游戏壳构建与定向音乐路由检查。
+
 ## 2026-11-06 · Codex · 选中主题热带暖阳版
 - 用户认为悠远稿太寂寥，较喜欢《风停》；明确称赞《沿着晴天走很远》0–20秒旋律。两曲追加吉他/轻贝斯/手鼓/沙锤热带编配，后者开头旋律事件保留检查。
 - compose_beach_warm.py、beach-warm.json、两组MP3/MIDI；原 /music/ 置顶，旧稿保留，仅试听。

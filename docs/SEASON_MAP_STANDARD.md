@@ -73,3 +73,6 @@
 4. 跑 `tools/check_season_game_test.js`、`tools/check_infei_side.js` 等相关测试。
 5. 存档、读档后状态正确。
 6. 在 `docs/AGENT_LOG.md` 写一条记录，推送，然后把网页预览链接发给主人。
+
+## 音乐定稿（用户 2026-11-06）
+夏季室外：《向着海风出发·全新管弦流行曲》；全季节地图室内：《赤脚走过星期天》；秋季室外：《沿着晴天走很远·热带海岸版》。正式音频在 AUDIO_LIBRARY/BGM/seasons，游戏壳路由由 make_season_game_test.py 注入；进出室内沿用音频系统淡入淡出。春季室外与机场保留现有音乐；冬季地图尚未实现，未来室内沿用共同曲。
