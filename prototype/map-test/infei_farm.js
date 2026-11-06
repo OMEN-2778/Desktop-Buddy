@@ -135,8 +135,10 @@ const infeiFarm=(()=>{
   ctx.drawImage(npcCanvas(parent.n,f,walking?(ph===1?'walkL':ph===3?'walkR':'stand'):'stand'),Math.round(parent.x)-10,76);}
  withHeroHooks.push(id=>parent.on&&id===parent.who&&inSpring());
  // ================================================================ 每日操盘
- const MOVES=[[-5,2],[-3,6],[-2,12],[-1,18],[0,24],[1,18],[2,12],[3,6],[5,2]];
+ // owner 2026-11-06: 波动太平滑 → every day moves (never 0), mostly 1-4 %, now and then a big day of 6-9 %
+ const MOVES=[[-8,3],[-6,6],[-4,11],[-3,13],[-2,11],[-1,6],[1,6],[2,11],[3,13],[4,11],[6,6],[8,3]];
  function fundDay(d){const f=S().fund;let r=Math.random()*100,pct=0;for(const [p,w]of MOVES){if((r-=w)<0){pct=p;break;}}
+  pct=Math.round((pct+(Math.random()-.5)*(Math.abs(pct)>1?1.6:.8))*10)/10||(Math.random()<.5?-.5:.5);   // a decimal, like a real price
   f.pct=pct;f.held=Math.round(f.held*(1+pct/100)*100)/100;f.locked=0;const last=f.history.at(-1)??10;f.history.push(Math.round(last*(1+pct/100)*100)/100);if(f.history.length>14)f.history.shift();}
  function fundLeft(){const f=S().fund,d=today();if(f.inDay!==d){f.inDay=d;f.inToday=0;}if(f.outDay!==d){f.outDay=d;f.outToday=0;}
   return {inLeft:Math.max(0,Math.floor(Math.min(10-f.inToday,60-f.held,X.F.coins))),outLeft:Math.max(0,Math.floor(Math.min(10-f.outToday,f.held-f.locked)*10)/10)};}
@@ -155,7 +157,7 @@ const infeiFarm=(()=>{
   log(`把${it.name}送给了${name}。${line}`);if(typeof addSocialMemory==='function')addSocialMemory(c,'收到茵菲谷的礼物',`收到了${it.name}`);
   if(contactRelation(c)!==before)log(`和${name}从${before}成为了${contactRelation(c)}。`);speak(liked?'TA 好像很喜欢':'送出去啦',true);}
  // ================================================================ 丢丢平板电脑
- function pcState(){const f=S(),left=fundLeft(),fund=f.fund;if(!fund.history.length)fund.history=Array(14).fill(10);
+ function pcState(){const f=S(),left=fundLeft(),fund=f.fund;if(!fund.history.length||fund.history.length>=14&&fund.history.every(v=>v===fund.history[0])){let v=10;fund.history=Array.from({length:14},()=>v=Math.round(v*(1+((Math.random()-.5)*8)/100)*100)/100);}   // no flat line before the first real day
   const base=X.pcStateBase(),inv=Object.entries(f.inv).filter(([,n])=>n>0),value=r2(inv.reduce((a,[k,n])=>a+X.ITEMS[k].price*n,0));
   const animals=Object.keys(ANIMAL).map(k=>`${ANIMAL[k].name} ${f.animals.filter(a=>a.kind===k).length}`).join(' · ');
   base.farm.trees=Object.keys(f.trees).length;base.farm.animals=animals;base.farm.animalsSub=f.animals.length?`最亲的：${[...f.animals].sort((a,b)=>b.love-a.love)[0].name}`:'去牧场的粮仓看看';
