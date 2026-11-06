@@ -255,7 +255,7 @@ const summerLife=(function(){
  function put(ctx,k,cx,w,h){const im=sprite(k);if(im?.complete)ctx.drawImage(im,Math.round(cx-im.width/2),FEET+1-im.height);}
  function drawNpc(ctx,n){const [f,p]=npcFrame(n);const pic=npcCanvas(n,f,p,false);ctx.drawImage(pic,Math.round(n.x-10),Math.round(FEET-27));}
  function marketDraw(ctx,info){tick();const now=realClock,c=C(),s=c.state,b=B(),cx=info.camX||0,h=hour(),open=h>=7&&h<20;
-  /* layers (owner 2026-11-05): sky still, hazy far town at 0.3, mid town at 0.6, street at 1 */for(const [k,f,veil]of [['msky',0,0],['mfar',.3,.5],['mmid',.6,.22],['mbg',1,0]]){if(k==='mbg')sunRays(ctx,cx,now);const im=sprite(k);if(im?.complete)ctx.drawImage(im,-Math.round(cx*f),0);if(veil){ctx.fillStyle=`rgba(236,245,252,${veil})`;ctx.fillRect(0,0,342,118);}}/* a pale blue veil over each distant layer: the further, the lighter (owner) */
+  /* layers (owner 2026-11-05): sky still, hazy far town at 0.3, mid town at 0.6, street at 1 */for(const [k,f,veil]of [['msky',0,0],['mfar',.3,.16],['mmid',.6,0],['mbg',1,0]]){if(k==='mbg')sunRays(ctx,cx,now);const im=sprite(k);if(im?.complete)ctx.drawImage(im,-Math.round(cx*f),0);if(veil){ctx.fillStyle=`rgba(236,245,252,${veil})`;ctx.fillRect(0,0,342,118);}}/* a pale blue veil over each distant layer: the further, the lighter (owner) */
   ctx.save();ctx.translate(-Math.round(cx),0);
   // vendors stand behind their counters
   if(open){for(const [v,x]of [[V.fruit,FRUIT_X],[V.fish,FISH_X],[V.hat,HAT_X]])drawPerson(ctx,v,x+4,FEET-9);drawPerson(ctx,V.cafe,CAFE_X-30,FEET);}

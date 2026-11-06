@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 草帽湾：远山压低、去掉中景山、集市去雾
+- summer_bay.py：FAR_PEAKS 高度减半（山顶在云带下面）；mid_layer 只剩帆船，灰色山脊去掉。
+- summer_life.js：集市远景楼房的淡蓝薄纱 0.5→0.16，中景的 0.22→0（这就是“雾蒙蒙”）。
+
 ## 2026-11-06 Claude — 季节地图：需求见底不再自己回主世界
 - 根因：膀胱见底的“没憋住”会直接 startAct('bath')，室内动作在外面会先插一个 go_home；季节地图只拦了 go_home。
 - infei_home.js / summer_more.js 的 startAct 包装同时拦截室内动作（洗澡、睡觉、做饭等），交给农舍 / 小屋照料。

@@ -342,7 +342,7 @@ CHAIRS = [(PRE + 190, P.hydrangea), (PRE + 222, P.mustard)]
 
 
 RIDGE = [(170, 60, 74), (440, 80, 56), (PRE + 40, 60, 66), (PRE + 180, 40, 30)]          # 中景: the grey volcanic ridge
-FAR_PEAKS = [(80, 80, 70), (300, 60, 52), (560, 90, 64), (PRE + 120, 60, 40)]           # 远景: the pale mountains
+FAR_PEAKS = [(80, 80, 36), (300, 60, 27), (560, 90, 33), (PRE + 120, 60, 21)]   # owner 2026-11-06: low, under the clouds           # 远景: the pale mountains
 ISLANDS = ((PRE + 420, 90, 16), (PRE + 520, 50, 9), (PRE + 980, 120, 22), (PRE + 1110, 60, 11), (PRE + 1290, 80, 14),
            (PRE + 1620, 100, 18), (PRE + 1760, 50, 10), (PRE + 1950, 70, 12))
 
@@ -468,7 +468,7 @@ def far_layer():
 def mid_layer():
     """中景: the grey ridge behind the land and the sailboat on the sea."""
     s = Sprite(GW, GH)
-    BP.mountains(s, 0, lay(PRE + 236, MID_K), WL - 9, [(lay(x, MID_K), w, h) for x, w, h in RIDGE], 9)
+    # owner 2026-11-06: no mid ridge any more, only the sailboat
     sailboat(s, lay(PRE + 760, MID_K), WL - 4)
     return s
 
