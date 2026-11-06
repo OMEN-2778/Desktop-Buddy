@@ -127,7 +127,7 @@ def main():
     page=page.replace('const cardHolds =','let cardHolds =')
     page=page.replace("bar:'酒吧'}","bar:'酒吧',spring_test:'茵菲谷',summer_test:'草帽湾',autumn_test:'枫叶城'}")
     page=page.replace('const sceneHouseHeight=()=>','let sceneHouseHeight=()=>')
-    page=page.replace("if(place==='park')","if(['spring_test','summer_test','autumn_test'].includes(place)&&typeof seasonMapTest!=='undefined'&&seasonMapTest.state[place.replace('_test','')]?.state.inside)return 'BGM/seasons/indoor-all-seasons.mp3';if(place==='autumn_test')return 'BGM/seasons/autumn-day.mp3';if(place==='spring_test')return 'BGM/infei/infei-'+(night?'night':season)+'.mp3';if(place==='airport_test')return 'BGM/infei/infei-airport.mp3';if(place==='summer_test')return 'BGM/seasons/summer-day.mp3';if(place==='park')")
+    page=page.replace("if(place==='park')","if(place==='summer_test'){if(typeof seasonMapTest!=='undefined'&&seasonMapTest.state.summer?.state.inside)return 'BGM/seasons/indoor-all-seasons.mp3';return season==='autumn'?'BGM/seasons/autumn-day.mp3':'BGM/seasons/summer-day.mp3';}if(place==='autumn_test')return 'BGM/park/festival-streetlights.mp3';if(place==='spring_test')return 'BGM/infei/infei-'+(night?'night':season)+'.mp3';if(place==='airport_test')return 'BGM/infei/infei-airport.mp3';if(place==='park')")
     for key in ([] if RELEASE else ['buddy-save','buddy-settings','buddy-look-v2','buddy-look-at']):
         page=page.replace('"'+key+'"','"season-test-'+key+'"')
     autumn=(ROOT/'prototype/autumn/story.js').read_text()+(ROOT/'prototype/autumn/game.js').read_text()+'\nconst AUTUMN_MAP_DATA='+json.dumps(autumn_data(),ensure_ascii=False,separators=(',',':'))+';\n'
