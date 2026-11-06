@@ -192,7 +192,44 @@ def life():
         if k not in cache:cache[k]=[uri(f) for f in MOT.frames(k)]
         return cache[k]
     speeds.update({'whale_shark':(140,3),'sunfish':(30,1),'hammerhead':(120,6),'tiger_shark':(120,5),'oarfish':(60,2),'spinner_dolphin':(140,12),'seahorse':(4,1),'frogfish':(6,1),'ribbon_eel':(8,1),'glass_shrimp':(10,2),'flying_fish':(120,14),'needlefish':(90,10),'wahoo':(140,12),'mahimahi':(110,10),'squid':(30,4)})
-    return [{'f':poses(k),'x':B.LAND+x,'y':B.SKY+y,'r':speeds.get(k,(35,5))[0],'v':speeds.get(k,(35,5))[1],'k':k,**({'when':R2.SPECIES[k][2],'page':R2.SPECIES[k][3]} if k in R2.SPECIES else {})} for k,fn,x,y in B.LIFE if k!='diver']
+    return [{'f':poses(k),'x':B.LAND+x,'y':B.SKY+y,'r':speeds.get(k,(35,5))[0],'v':speeds.get(k,(35,5))[1],'k':k,**({'when':R2.SPECIES[k][2],'page':R2.SPECIES[k][3]} if k in R2.SPECIES else {})} for k,x,y in spread([(k,x,y) for k,fn,x,y in B.LIFE if k!='diver'])]
+
+
+def spread(items):
+    """Owner 2026-11-06: no big fish in the shallows (they live farther out and deeper), and no piles of fish: every
+    creature keeps some room from the others. Sea-local coordinates; the page still finds open water around each spot."""
+    NEAR, DEEP_Y, GAP_X, GAP_Y = 400, SS.SURF + 70, 34, 18
+    size = {}
+    def wh(k):
+        if k not in size:
+            fr = MOT.frames(k)[0]
+            size[k] = (fr.w, fr.h)
+        return size[k]
+    def floor_y(k, x):
+        w, h = wh(k)
+        return min(B.SEAFLOOR[max(0, x):min(B.SEA_W, x + w)] or [B.SEA_H]) - h - 4
+    out = []
+    for i, (k, x, y) in enumerate(items):
+        w, h = wh(k)
+        if w >= 26 or h >= 18:   # a big one: out past the bay, and well under the surface
+            if x < NEAR:
+                x = NEAR + 40 + (i * 97) % 900
+            y = max(y, DEEP_Y)
+        out.append([k, x, min(y, max(SS.SURF + 20, floor_y(k, x)))])
+    placed = []
+    for it in sorted(out, key=lambda t: (t[1], t[2])):
+        k, x, y = it
+        for _ in range(60):
+            if not any(abs(x - px) < GAP_X and abs(y - py) < GAP_Y for px, py in placed):
+                break
+            x += GAP_X
+            if x >= B.SEA_W - 40:
+                x = 40 + (x % 300)
+                y += GAP_Y
+        y = min(y, max(SS.SURF + 20, floor_y(k, x)))
+        it[1], it[2] = x, y
+        placed.append((x, y))
+    return [tuple(t) for t in out]
 
 
 def runtime_data():

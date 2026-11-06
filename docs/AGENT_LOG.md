@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude: 草帽湾海里的鱼：近岸无大鱼、不扎堆
+- tools/make_summer_preview.py `spread()` on B.LIFE (game + preview): big ones (frame ≥26 wide or ≥18 tall) start at sea-x ≥ 400 (past 海湾) and ≥70 px under the surface; every creature keeps 34×18 px from the others (shifted along x, kept above the seabed). Near-shore big fish 25 → 0, close pairs 117 → 0.
+
 ## 2026-11-06 Claude: 草帽湾气垫/自由冲浪/只能「离开草帽湾」；两张地图的自主行动；飞机 3 秒
 - New `summer_float.js`: 4 floats (小黄鸭/甜甜圈/火烈鸟/西瓜, x 1530-2010) on the water line; click → swims over, sits (sit pose, float rim over her legs); tourists sit in some (9-18h, ~1/3), then no interaction. Ring at the surface: 冲浪 → rides on her own (46 px/s, turns at the sea's ends), any click only turns her (no diving), ring 取消冲浪, ends by itself after 30 s. Ring: 回家 → 离开草帽湾; trip('home') from the bay is refused unless it came from that button.
 - adapter drawHero hands her picture over while `window.__surfHero` is set (by:'rack'|'free'|'float', pose for the float).
