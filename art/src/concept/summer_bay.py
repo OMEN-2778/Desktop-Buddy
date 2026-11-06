@@ -455,7 +455,7 @@ def lay(x, k):
 def far_layer():
     """远景 (owner 2026-11-06: near / mid / far scroll at different speeds): pale mountains + distant islands."""
     s = Sprite(GW, GH)
-    BP.mountains(s, 0, lay(PRE + 250, FAR_K), WL - 8, [(lay(x, FAR_K), w, h) for x, w, h in FAR_PEAKS], 5, far=True)
+    BP.mountains(s, 0, lay(PRE + 250, FAR_K) + 260, WL - 8, [(lay(x, FAR_K), w, h) for x, w, h in FAR_PEAKS], 5, far=True)
     for cx, w, h in ISLANDS:
         for x in range(lay(cx, FAR_K) - w // 2, lay(cx, FAR_K) + w // 2):
             u = (x - lay(cx, FAR_K)) / (w / 2)

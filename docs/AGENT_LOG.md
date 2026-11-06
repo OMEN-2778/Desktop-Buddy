@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 草帽湾夏季海报；远山不再被切断
+- marketing/summer/caomaowan-summer.jpg（2400×1800）：热烈风格（放射日光、橙红撞青、粗描边大标题、粗边框斜放实机截图、飞草帽像素贴纸）。
+  版式源 poster.html（截图素材取自测试页，未入库）。等主人看。
+- summer_bay.py far_layer：远山画到 lay(...)+260，让山脊自然落到海平面，之前在沙滩背后被齐刷刷切成一块竖条纹。
+
 ## 2026-11-06 · Codex · 纠正BGM仅限草帽湾
 - 上一条范围理解错误，用户明确三首只用于草帽湾；已撤回茵菲谷室内/枫叶城改曲。
 - summer_test 按日历季节选择夏季/秋季室外曲，湾内 inside 优先全年室内曲；其他地图保持原音乐。标准文档与试听标记已纠正。
