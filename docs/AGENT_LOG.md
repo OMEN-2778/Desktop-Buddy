@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 发光水母的光改成圆形
+- summer_more.js halo()：发光水母（半径 10）和提灯鱼的光晕从方块改成圆形径向渐变，边缘渐淡。截图看过。
+
 ## 2026-11-06 Claude — 草帽湾：鱼不再凭空出现或消失
 - viewer.js：按时间/天气出现的鱼（夜/雨/晨/昏/稀有日）切换时 ~1.5 s 渐显渐隐（c.fa），半透明时不能拍。
 - summer_more.js：发光水母/发光虾跟 dark() 一起亮起、暗下（点击要 dark()>.6）；座头鲸改成来回游，到两头潜下去（渐隐）再浮上来，

@@ -72,13 +72,15 @@
  function rarePos(k,i,t){const [x,y]=RARE_AT[k][i];return k==='lanternfish'?[x+Math.sin(t*.5+i)*14,y+Math.sin(t*.8+i*2)*5]:k==='glow_jelly'?[x+Math.sin(t*.3+i)*6,y+Math.sin(t*.9+i)*7]:[x,y];}
  function whalePos(t){const p=(t/90)%2,u=p<1?p:2-p;return [1300+u*2600,WL+1,p<1?1:-1,Math.min(1,Math.min(u,1-u)/.05)];}   // to and fro; at each end it dives (fades) and comes up again
  let hbA=null,hbT=0;const hbFade=t=>{const want=rareOn('humpback')?1:0,dt=Math.min(.2,Math.max(0,t-hbT));hbT=t;hbA??=want;hbA=Math.max(0,Math.min(1,hbA+(want?1:-1)*dt/1.5));return hbA;};
+ // a round, soft glow (owner 2026-11-06: the jellyfish's light was a square)
+ function halo(g,x,y,r,c){const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,c);gr.addColorStop(1,c.replace(/[\d.]+\)$/,'0)'));g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fill();}
  function drawRare(ctx,t){const gl=G(ctx);
   const gk=dark();   // the glowing ones light up with the dusk and fade out at dawn (no popping)
-  if(gk>0){gl.save();gl.globalAlpha=gk;for(let i=0;i<3;i++){const [x,y]=rarePos('glow_jelly',i,t);const a=.35+.25*Math.sin(t*2+i);gl.fillStyle=`rgba(120,255,240,${a*.35})`;gl.fillRect(x-6,y-6,13,12);
+  if(gk>0){gl.save();gl.globalAlpha=gk;for(let i=0;i<3;i++){const [x,y]=rarePos('glow_jelly',i,t);const a=.35+.25*Math.sin(t*2+i);halo(gl,x+.5,y-1,10,`rgba(120,255,240,${Math.min(1,a*.9).toFixed(3)})`);
     gl.fillStyle='#bafff4';gl.fillRect(x-3,y-3,7,3);gl.fillRect(x-2,y-4,5,1);gl.fillStyle='#7ff0e0';for(let k=0;k<3;k++)gl.fillRect(x-2+k*2,y,1,3+((t*3+k)|0)%2);}
    for(let i=0;i<2;i++){const [x,y]=RARE_AT.glow_shrimp[i];for(let k=0;k<7;k++){if(Math.sin(t*4+k*1.7+i)>.2){gl.fillStyle='#d6ffb0';gl.fillRect(x+(k*5%13)-6,y+(k*3%7)-3,1,1);}}}gl.restore();}
   for(let i=0;i<3;i++){const [x,y]=rarePos('lanternfish',i,t),d=Math.cos(t*.5+i)>0?1:-1;ctx.fillStyle='#2a2140';ctx.fillRect(x-3,y-1,6,3);ctx.fillRect(x-3*d-1*d,y,1,1);ctx.fillStyle='#4a3a66';ctx.fillRect(x-2,y-1,4,1);
-   ctx.fillStyle='#3a2a52';ctx.fillRect(x+2*d,y-3,1,2);gl.fillStyle=`rgba(255,230,120,${.6+.4*Math.sin(t*3+i)})`;gl.fillRect(x+3*d,y-4,2,2);gl.fillStyle='rgba(255,230,120,.18)';gl.fillRect(x+3*d-3,y-7,8,8);}
+   ctx.fillStyle='#3a2a52';ctx.fillRect(x+2*d,y-3,1,2);gl.fillStyle=`rgba(255,230,120,${.6+.4*Math.sin(t*3+i)})`;gl.fillRect(x+3*d,y-4,2,2);halo(gl,x+3*d+1,y-3,5,'rgba(255,230,120,.3)');}
   {const [x,y]=RARE_AT.deep_octopus[0];ctx.fillStyle='#8a2f2f';ctx.fillRect(x-4,y-6,8,5);ctx.fillStyle='#b4483a';ctx.fillRect(x-3,y-7,6,2);ctx.fillStyle='#fff';ctx.fillRect(x-2,y-4,1,1);ctx.fillRect(x+1,y-4,1,1);
    ctx.fillStyle='#8a2f2f';for(let k=0;k<4;k++)ctx.fillRect(x-4+k*2+Math.round(Math.sin(t*1.5+k)),y-1,1,3);}
   {const hf=hbFade(t),[x,y,dir,ef]=whalePos(t),wa=hf*ef;if(wa>0){ctx.save();ctx.globalAlpha=wa;ctx.translate(x,0);ctx.scale(dir,1);ctx.translate(-x,0);const ph=(t%12)/12;ctx.fillStyle='#3c4a63';ctx.fillRect(x-14,y-2,28,3);ctx.fillRect(x-10,y-3,18,1);ctx.fillStyle='#53627e';ctx.fillRect(x-12,y-2,20,1);
