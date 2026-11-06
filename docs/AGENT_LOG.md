@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 草帽湾潜水画面不再扩展；海报文案无厘头
+- 主人：画面不扩展了（百分百大小容易超出界面）。viewer.js wantH 固定 LAND_H，水下镜头跟着她往下走；adapter.js 网页版不再预留 --scene-room。实测潜到 y=212 视图尺寸不变。
+- 海报文案：风一大，全岛的草帽都在天上飞 / 站上浪尖三秒，然后被浪拍回沙滩 / 跟鱼打了招呼，鱼没理我 / 摆摊一下午，卖出去一个椰子 /
+  夏天秋天有航班，冬天？冬天在家躺着；阿洛气泡“花插左耳是有人了，插右耳是还单着，千万别插错！”。
+
 ## 2026-11-06 Claude — 季节地图夜晚按房间开灯；茵菲谷补夜色晚霞；潜水展开 0.5 s；海报绿色悠闲版
 - 新增 prototype/map-test/season_night.js：茵菲谷原来完全没有夜晚（23 点还是白天）。屋外照主世界 duskState 晚霞 + outdoorNightness 夜色；
   农舍 / 旅社室内照主世界：夜里只有她所在的房间亮灯（渐亮渐灭），其它房间按主屋夜色变暗，上床睡觉关灯。summer_more nightPass 不再管室内。

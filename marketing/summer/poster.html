@@ -18,6 +18,8 @@ body{position:relative;font-family:"Noto Sans CJK SC","Noto Sans CJK TC",sans-se
 .sub{position:absolute;left:156px;top:520px;font-weight:800;font-size:54px;color:#fff;background:#2fa48f;padding:14px 42px;border-radius:999px;letter-spacing:6px;box-shadow:0 12px 26px rgba(20,80,70,.2)}
 .foot{position:absolute;right:80px;bottom:56px;padding:14px 36px;background:#fff;border-radius:999px;font-weight:800;font-size:40px;color:#2a7d6f;box-shadow:0 10px 24px rgba(20,80,70,.15)}
 .foot b{color:#e8875a}
+.bubble{position:absolute;left:1070px;top:300px;padding:20px 30px;background:#fff;border-radius:28px;font-weight:800;font-size:32px;line-height:1.5;color:#2a7d6f;box-shadow:0 14px 28px rgba(20,80,70,.22);transform:rotate(-2deg);z-index:2;white-space:nowrap}
+.bubble:after{content:'';position:absolute;left:40px;bottom:-30px;border:18px solid transparent;border-top:22px solid #fff;border-right:24px solid #fff}
 </style></head><body>
 <div class="dots"></div><div class="sun"></div>
 <div class="beach"><svg viewBox="0 0 2400 420" preserveAspectRatio="none">
@@ -32,16 +34,17 @@ body{position:relative;font-family:"Noto Sans CJK SC","Noto Sans CJK TC",sans-se
 <img class="px" src="palm1.png" style="left:1880px;top:880px;width:690px">
 
 <!-- photos -->
-<div class="photo" style="left:1030px;top:250px;width:1180px;transform:rotate(2deg)"><div class="tape"></div><img src="surf.png"><p>站上浪尖，海风是咸的</p></div>
-<div class="photo" style="left:200px;top:720px;width:780px;transform:rotate(-3deg)"><div class="tape"></div><img src="sea.png"><p>潜进珊瑚海，和鱼打招呼</p></div>
-<div class="photo" style="left:1080px;top:930px;width:720px;transform:rotate(3.5deg)"><div class="tape"></div><img src="market.png"><p>集市上，有她的草帽小摊</p></div>
+<div class="photo" style="left:1030px;top:250px;width:1180px;transform:rotate(2deg)"><div class="tape"></div><img src="surf.png"><p>站上浪尖三秒，然后被浪拍回沙滩</p></div>
+<div class="photo" style="left:200px;top:720px;width:780px;transform:rotate(-3deg)"><div class="tape"></div><img src="sea.png"><p>跟鱼打了招呼，鱼没理我</p></div>
+<div class="photo" style="left:1080px;top:930px;width:720px;transform:rotate(3.5deg)"><div class="tape"></div><img src="market.png"><p>摆摊一下午，卖出去一个椰子</p></div>
 
 <div class="label">Desktop Buddy · 夏季新地图</div>
 <div class="title">草帽湾</div>
-<div class="sub">慢慢走 · 多吃水果 · 帽子要戴好</div>
+<div class="sub">风一大，全岛的草帽都在天上飞</div>
 
 <!-- island people -->
 <img class="st" src="s_alo.png" style="left:870px;top:640px;width:200px">
+<div class="bubble">花插左耳是有人了，插右耳是还单着<br>千万别插错！——阿洛</div>
 <img class="st" src="s_hero.png" style="left:860px;top:1380px;width:250px">
 <img class="st" src="s_lei.png" style="left:1830px;top:1330px;width:180px">
 <img class="st sm" src="s_kai.png" style="left:2030px;top:1390px;width:130px">
@@ -63,5 +66,5 @@ body{position:relative;font-family:"Noto Sans CJK SC","Noto Sans CJK TC",sans-se
 <img class="st sm" src="shell_chime.png" style="left:2230px;top:720px;width:110px;transform:rotate(6deg)">
 <img class="st sm" src="seaweed.png" style="left:1170px;top:1660px;width:90px;transform:rotate(-6deg)">
 
-<div class="foot">夏天和秋天，<b>机场有航班</b></div>
+<div class="foot">夏天秋天有航班，<b>冬天？冬天在家躺着</b></div>
 </body></html>

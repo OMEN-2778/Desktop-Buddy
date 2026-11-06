@@ -75,7 +75,7 @@ function move(dt){state.walk=false;if(state.paused||!state.loaded)return;if(stat
 function follow(value,velocity,target,omega,dt){const delta=value-target,e=Math.exp(-omega*dt),temp=(velocity+omega*delta)*dt;return [target+(delta+temp)*e,(velocity-omega*temp)*e];}
 function camera(dt){
  if(state.market){if(canvas.height!==LAND_H){canvas.height=LAND_H;ctx.imageSmoothingEnabled=false;}state.viewH=LAND_H;const lead=state.walk?state.facing*14:0;[state.camX,state.camVX]=follow(state.camX,state.camVX,clamp(state.x-VW/2+lead,0,(market?.w||684)-VW),7,dt);state.camX=clamp(state.camX,0,(market?.w||684)-VW);state.camY=0;state.diveBlend=0;return;}
- const sea=!state.inside&&((inSea()&&gr(state.x)>WL+8)||under()),wantH=sea?SEA_H:LAND_H;
+ const sea=!state.inside&&((inSea()&&gr(state.x)>WL+8)||under()),wantH=LAND_H;   // owner 2026-11-06: the view keeps its size under water too (a taller one ran off small screens); the camera follows her down
  // Resize once per mode switch, not once per animated height pixel.
  if(canvas.height!==wantH){canvas.height=wantH;ctx.imageSmoothingEnabled=false;}
  state.viewH+=(wantH-state.viewH)*(1-Math.exp(-6*dt));

@@ -45,7 +45,7 @@ const seasonalTest=(function(){
  ACTS.season_explore={label:'在季节地图探索',spot:null,dur:Infinity,log:null};OUT_ACTS.add('season_explore');EFFECT.season_explore={fun:.08};
  const oldHeight=sceneHouseHeight;sceneHouseHeight=()=>active()?(state.activeHeight||ctl()?.canvas.height||H):oldHeight();
  // web page: keep the room the sea view grows into free above the house, so diving opens upward (the app moves its window)
- function sceneRoom(h){if(TAURI)return;const d=document.querySelector('.desk');if(!active()||sim.place!=='summer_test'||!h){d.style.removeProperty('--scene-room');return;}d.style.setProperty('--scene-room',(Math.max(0,236-h)*(view.getBoundingClientRect().height/h)).toFixed(1)+'px');}
+ function sceneRoom(h){if(TAURI)return;const d=document.querySelector('.desk');if(true){d.style.removeProperty('--scene-room');return;}   /* the sea view no longer grows (owner 2026-11-06) */d.style.setProperty('--scene-room',(Math.max(0,236-h)*(view.getBoundingClientRect().height/h)).toFixed(1)+'px');}
  function sync(){
   const c=ctl();if(!c)return;const s=c.state;sim.route=[[s.x,s.y]];sim.s=sim.target=0;sim.crossing=[];sim.facing=s.facing;
   if(sim.mode!=='down'&&!sim.windup){sim.mode='act';sim.act='season_explore';sim.actEnd=Infinity;}
