@@ -1,0 +1,170 @@
+[
+  {
+    "duration": 107.857,
+    "peak": 0.6035,
+    "rms_db": -20.0,
+    "notes": 1727,
+    "id": "sunlit-window",
+    "title": "阳光从车窗跳进来",
+    "style": "明亮海岸流行",
+    "bpm": 112,
+    "sections": [
+      {
+        "name": "intro",
+        "at": 0.0
+      },
+      {
+        "name": "A",
+        "at": 8.57
+      },
+      {
+        "name": "B",
+        "at": 25.71
+      },
+      {
+        "name": "A",
+        "at": 42.86
+      },
+      {
+        "name": "bridge",
+        "at": 60.0
+      },
+      {
+        "name": "B",
+        "at": 68.57
+      },
+      {
+        "name": "outro",
+        "at": 85.71
+      }
+    ],
+    "preview_only": true,
+    "chorus_at": 25.71
+  },
+  {
+    "duration": 110.6,
+    "peak": 0.4332,
+    "rms_db": -20.0,
+    "notes": 1189,
+    "id": "sunlit-dhow",
+    "title": "白帆驶过碧绿海湾",
+    "style": "海湾调式 / 轻盈手鼓",
+    "bpm": 100,
+    "sections": [
+      {
+        "name": "intro",
+        "at": 0.0
+      },
+      {
+        "name": "A",
+        "at": 4.8
+      },
+      {
+        "name": "A",
+        "at": 24.0
+      },
+      {
+        "name": "bridge",
+        "at": 43.2
+      },
+      {
+        "name": "B",
+        "at": 52.8
+      },
+      {
+        "name": "A",
+        "at": 72.0
+      },
+      {
+        "name": "outro",
+        "at": 91.2
+      }
+    ],
+    "preview_only": true,
+    "chorus_at": 52.8
+  },
+  {
+    "duration": 79.483,
+    "peak": 0.4678,
+    "rms_db": -20.0,
+    "notes": 1163,
+    "id": "sunlit-tide",
+    "title": "浪花把天空托起来",
+    "style": "六拍海洋管弦",
+    "bpm": 116,
+    "sections": [
+      {
+        "name": "intro",
+        "at": 0.0
+      },
+      {
+        "name": "A",
+        "at": 6.21
+      },
+      {
+        "name": "bridge",
+        "at": 18.62
+      },
+      {
+        "name": "B",
+        "at": 24.83
+      },
+      {
+        "name": "A",
+        "at": 37.24
+      },
+      {
+        "name": "B",
+        "at": 49.66
+      },
+      {
+        "name": "outro",
+        "at": 62.07
+      }
+    ],
+    "preview_only": true,
+    "chorus_at": 24.83
+  },
+  {
+    "duration": 117.34,
+    "peak": 0.78,
+    "rms_db": -20.01,
+    "notes": 1669,
+    "id": "sunlit-sand",
+    "title": "赤脚走过星期天",
+    "style": "沙滩 Soul / 爵士流行",
+    "bpm": 94,
+    "sections": [
+      {
+        "name": "intro",
+        "at": 0.0
+      },
+      {
+        "name": "A",
+        "at": 10.21
+      },
+      {
+        "name": "bridge",
+        "at": 30.64
+      },
+      {
+        "name": "B",
+        "at": 40.85
+      },
+      {
+        "name": "A",
+        "at": 61.28
+      },
+      {
+        "name": "B",
+        "at": 81.7
+      },
+      {
+        "name": "outro",
+        "at": 102.13
+      }
+    ],
+    "preview_only": true,
+    "chorus_at": 40.85
+  }
+]

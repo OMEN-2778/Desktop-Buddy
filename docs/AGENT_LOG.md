@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 · Codex · 阳光沙滩四套重写作曲
+- 用户否定前组旋律走向相似，要求真正不同作曲、主旋律尾音更长、夏日阳光沙滩感；新四首独立旋律/和声/结构，不再调用旧编配器。
+- compose_sunlit_four.py：C大调海岸流行、D Mixolydian海湾、6/8 F Lydian管弦、降E Soul；跨小节长音及独立尾奏。
+- sunlit-four.json + 四组MP3/MIDI；/music/#sunlit-four 置顶，旧稿保留。只更新试听；浏览器播放/切歌及渲染电平检查，听感由用户反馈。
+
 ## 2026-11-06 · Codex · 夏日波斯湾四首试听
 - 新写四套旋律：海湾舞曲、阿拉伯风情 R&B、热带电子、海湾电影管弦；gulf-four.json 与四组 MP3/MIDI，约103–133秒。
 - compose_gulf_four.py 使用共用编配器；新增可选随机种子/主音/回归音，旧曲默认不变。海湾音色为GM近似，非传统乐器实录。
