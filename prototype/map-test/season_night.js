@@ -11,7 +11,8 @@ const seasonNight=(function(){
   spring:{stairs:[30,5,77,111],mine:[77,5,167,53],bath:[171,5,211,53],parents:[215,5,309,53],living:[77,63,309,111]},
   summer:{bed:[46,33,118,81],living:[122,33,204,81],kitchen:[208,33,274,81],bath:[278,33,312,81]}};
  const glow={};let last=0;
- const roomOf=(rooms,x,y)=>{for(const [k,[x0,y0,x1,y1]] of Object.entries(rooms))if(x>=x0&&x<x1&&y>=y0-30&&y<=y1+2)return k;return null;};
+ // which room she stands in: by x, and (the farmhouse has two floors) by which floor her feet are on
+ const roomOf=(rooms,x,y)=>{for(const [k,[x0,y0,x1,y1]] of Object.entries(rooms))if(x>=x0&&x<x1&&y>=y0&&y<=y1+8)return k;return null;};
  const mul=(f,k=1)=>{const a=f*k;return `rgb(${Math.round(255*(1-a*(1-NIGHT[0])))},${Math.round(255*(1-a*(1-NIGHT[1])))},${Math.round(255*(1-a*(1-NIGHT[2])))})`;};
  function draw(v,W,H,c,which){
   const s=c.state,h=hour(),now=performance.now(),dt=Math.min(.2,(now-last)/1000);last=now;

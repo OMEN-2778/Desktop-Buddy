@@ -40,6 +40,7 @@ for(const id of Object.keys(await ev(()=>Object.fromEntries(Object.keys(summerMo
 await ev(()=>{const c=seasonMapTest.state.summer;c.state.market=false;c.state.inside=true;c.state.x=150;c.state.y=84;});
 for(const id of Object.keys(await ev(()=>Object.fromEntries(Object.keys(summerLodge.SPOTS).map(k=>[k,1]))))){
  await ev(id=>{summerLodge.stop();summerLodge.use(id);},id);let used=false;
+ if(id==='stove'||id==='dine'){await wait(500);const m=await ev(()=>pickOn);await ev(()=>closePicker());await wait(400);ok('lodge '+id+' opens the 夏威夷菜 menu',m==='cook_bay',String(m));continue;}
  for(let i=0;i<30;i++){await wait(300);used=await ev(id=>{const p=summerLodge.SPOTS[id];return p.look?!seasonMapTest.state.summer.state.target:summerLodge.svc?.id===id||(id==='dine'&&summerLodge.svc?.id==='stove');},id);if(used)break;}
  ok('lodge '+id,used);}
 await ev(()=>{summerLodge.stop();seasonMapTest.state.summer.state.inside=false;seasonMapTest.state.summer.state.x=700;});

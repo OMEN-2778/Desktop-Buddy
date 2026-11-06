@@ -29,6 +29,8 @@ const out=process.argv[2]||'/tmp/infei-home';fs.mkdirSync(out,{recursive:true});
  const e0=await ev(()=>sim.needs.energy);await p.waitForTimeout(2500);assert(await ev(()=>sim.needs.energy)>e0);
  // stove downstairs: cancels sleep, cooks
  await ev(()=>{sim.needs.hunger=30;});await clickAt(250,90);
+ // the stove opens the home's dish menu (owner 2026-11-06); pick the first dish
+ await p.waitForFunction(()=>pickOn==='cook_farm',null,{timeout:5000});await p.locator('#picker .pk-item').first().click();
  await p.waitForFunction(()=>infeiHome.svc?.id==='stove',null,{timeout:20000});await shot('做饭');
  // parents' room is look-only: no menu, she only looks
  await clickAt(250,30);const items=await ev(()=>[...document.querySelectorAll('#ring button')].map(b=>b.textContent));assert.deepEqual(items.filter(t=>t.includes('睡')),[]);await ev(()=>closeRing());

@@ -21,7 +21,9 @@ const seasonHouse=(function(){
  function explore(){sim.mode='act';sim.act='season_explore';sim.actEnd=Infinity;sim.item=null;sim.talk=null;}
  // the home's arrive() for this act, minus the walking (the house has walked her there)
  function start(act,o={}){const a=ACTS[act];if(!a)return;
-  sim.mode='act';sim.act=act;sim.player=!o.auto;sim.chosen=null;
+  sim.mode='act';sim.act=act;sim.player=!o.auto;
+  if(act==='cook'&&sim.place==='summer_test'&&sim.chosen?.act!=='cook')sim.chosen={act:'cook',item:dishItem(BAY,pick(BAY.dishes))};   // the lodge's kitchen cooks Hawaiian
+  if(sim.chosen&&sim.chosen.act!==act)sim.chosen=null;   // lifeArrive takes the dish picked from the menu
   if(act==='sleep'){const h=hour();sim.nap=!(h>=21||h<6);}
   sim.actEnd=sim.t+(act==='sleep'?900:a.dur*(0.8+Math.random()*0.4));
   sim.recent=[act,...sim.recent].slice(0,3);
@@ -46,6 +48,35 @@ const seasonHouse=(function(){
   if(pic&&pic.complete)ctx.drawImage(pic,x+3-(pic.width>>1),y+13-pic.height+1);else ctx.drawImage(frameOf(IMG.fx.meal,4),x,y);}
  function sleepFx(ctx,x,y){const cyc=Math.floor(realClock/26),inDream=realClock%26>19;   // the home's: Zs, now and then a dream bubble
   if(inDream)ctx.drawImage(emoteCanvas(DREAMS[cyc%DREAMS.length]),x,y);else ctx.drawImage(frameOf(IMG.fx.sleep_z,4),x-2,y-6);}
- return {start,drop,running,busy,explore,frame,emote,cookFx,meal,sleepFx,inSeason};
+ // ---------------------------------------------------------------- the kitchen's menu (owner 2026-11-06)
+ // Clicking the stove opens the home's own dish picker. The 草帽湾 lodge cooks only 夏威夷菜 (pictures: the home's dishes).
+ const BAY={name:'夏威夷菜',spicy:false,sweet:false,dishes:[
+  {name:'夏威夷生鱼饭',look:'sushi',fill:45,time:15,blurb:'金枪鱼丁拌上酱油和芝麻，铺在热米饭上'},
+  {name:'洛可莫可',look:'rice',fill:60,time:25,blurb:'米饭、汉堡肉、煎蛋，再浇一大勺肉汁'},
+  {name:'午餐肉饭团',look:'sandwich',fill:35,time:12,blurb:'煎得焦香的午餐肉压在饭团上，海苔一裹'},
+  {name:'卡鲁瓦烤猪',look:'meat',fill:55,time:40,blurb:'香蕉叶包着慢慢烤，筷子一碰就散'},
+  {name:'蒜香黄油虾',look:'shrimp',fill:45,time:20,blurb:'一大块黄油、一大把蒜，满屋子都是香味'},
+  {name:'菠萝炒饭',look:'rice',fill:50,time:20,blurb:'菠萝挖空当碗，炒饭里一粒粒都是甜的'},
+  {name:'胡里胡里烤鸡',look:'skewer',fill:50,time:30,blurb:'边烤边翻边刷酱，甜咸甜咸的'},
+  {name:'椰奶冻',look:'pudding',fill:20,time:15,blurb:'椰奶冻得滑滑的，切成一块一块'},
+  {name:'彩虹刨冰',look:'icecream',fill:15,time:8,blurb:'三种颜色的糖浆，从上往下慢慢化'}]};
+ const menuItems=c=>c.dishes.map(d=>({title:d.name,line:d.blurb||'',info:`饱食 ${d.fill} · ${d.time}分钟`,icon:dishIcon(d),item:dishItem(c,d)}));
+ PICK.cook_bay={title:'旅舍厨房 · 做什么菜',groups:()=>[{name:BAY.name,note:'',items:menuItems(BAY)}]};
+ PICK.cook_farm={title:'农舍灶台 · 做什么菜',groups:PICK.cook.groups};
+ function menu(which){openPicker(which==='summer'?'cook_bay':'cook_farm');}
+ const oCommand=command;command=function(act,item){
+  if(act==='cook_bay'||act==='cook_farm'){
+   if(!item){const all=act==='cook_bay'?menuItems(BAY):PICK.cook.groups().flatMap(g=>g.items);item=pick(all).item;}
+   sim.chosen={act:'cook',item};(act==='cook_bay'?window.summerLodge:window.infeiHome)?.use('stove','menu');return;}
+  return oCommand.apply(this,arguments);};
+ // ---------------------------------------------------------------- 草帽湾 hidden rule (owner 2026-11-06): in the sea
+ // (swimming on the surface, surfing or diving) every need runs down at half speed
+ let seaT=null;setInterval(()=>{try{
+  const sm=window.seasonMapTest?.state?.summer,st=sm?.state,t=sim.t;
+  const wet=sim.place==='summer_test'&&st&&!st.inside&&!st.market&&(window.summerFloat?.surfing||window.summerLife?.under?.()||sm.deep(st.x)&&st.suit&&st.suit!=='clothes');
+  if(wet&&seaT!==null&&t>seaT&&t-seaT<30){const dt=t-seaT,eff=sim.mode==='act'?(EFFECT[sim.act]||{}):{};
+   for(const k of Object.keys(sim.needs))if(!(eff[k]>0))sim.needs[k]=clamp(sim.needs[k]+DECAY[k]*.5*dt);}
+  seaT=t;}catch(e){}},250);
+ return {start,drop,running,busy,explore,frame,emote,cookFx,meal,sleepFx,inSeason,menu,BAY};
 })();
 window.seasonHouse=seasonHouse;

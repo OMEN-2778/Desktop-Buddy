@@ -27,6 +27,7 @@ const summerLodge=(function(){
  const ALIAS={bath:'shower',eat:'dine'};   // the home's act → this lodge's furniture
  function useAct(name){if(!inBay()||!C().state.inside)return false;const id=ALIAS[name]||Object.keys(SPOTS).find(k=>SPOTS[k].act===name);if(!id)return false;use(id,true);return true;}
  function use(id,auto){if(id==='dine'&&!homeMeal())id='stove';   // nothing on the table: cook first, then eat (as at home)
+  if(id==='stove'&&!auto){closeRing();seasonHouse.menu('summer');return;}   // the player clicked the stove (or an empty table): the menu
   const p=SPOTS[id],c=C();if(!p)return;stop();closeRing();
   if(p.look){c.goTo(p.x,'walk',0,()=>speak(pick(p.look),true));return;}
   c.goTo(p.x,'walk',0,()=>{const s=c.state;s.facing=p.face||(p.x>170?1:-1);svc={id,act:p.act,need:p.need};s.pose=null;s.hideHero=!!p.hide;s.iy=p.iy||0;speak(pick(p.line),true);seasonHouse.start(p.act,{auto,log:p.log});});}

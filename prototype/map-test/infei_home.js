@@ -23,6 +23,7 @@ const infeiHome=(function(){
  function stop(){if(!svc)return;const s=C().state;s.pose=null;s.hideHero=false;seasonHouse.drop(svc.act);svc=null;T.state.autoAt=sim.t+30;}
  function use(id,auto){
   if(id==='table'&&!homeMeal())id='stove';   // nothing on the table: cook first, then eat (as at home)
+  if(id==='stove'&&!auto){closeRing();seasonHouse.menu('spring');return;}   // the player clicked the stove (or an empty table): the menu
   const p=SPOTS[id],c=C();if(!p||!p.act)return;stop();closeRing();T.state.autoAt=sim.t+60;
   const begin=()=>{const s=c.state;s.x=p.x;s.facing=p.face||(p.x>170?1:-1);svc={id,act:p.act,need:p.need,auto};s.pose=null;s.hideHero=!!p.hide;speak(pick(p.line),true);seasonHouse.start(p.act,{auto,log:p.log});};
   if(!c.state.inside){c.state.target=null;c.state.after=null;c.state.door={to:true,elapsed:0,duration:.65,mid:false};
