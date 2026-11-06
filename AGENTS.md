@@ -33,6 +33,7 @@ either can pick up the other's work:
   next steps as one-commit pieces, gotchas. Keep it current when you change the feature.
 
 ## ⚠️ Season maps: Buddy never leaves on her own (owner rule, applies to EVERY season map)
+Full must-have checklist for every season-map feature (owner 2026-11-06): `docs/SEASON_MAP_STANDARD.md`.
 While Buddy is in a season map (春 farm, 夏 island + sea, 秋 枫叶城, 冬 later), her autonomous
 behaviour never chooses to leave the map or "go home". No want, wish, moodlet or need may
 trigger a trip back to the desktop house.

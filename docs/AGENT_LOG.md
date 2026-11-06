@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 季节地图必要标准
+- 新增 docs/SEASON_MAP_STANDARD.md（主人要求：所有茵菲谷 / 草帽湾要求整理成硬标准）；CLAUDE.md、AGENTS.md 指向它。
+- 待主人确认：旅社厨房餐桌草图（补丁在会话 scratchpad），吃饭动作 + 桌上饭菜，茵菲谷农舍饭桌同补。
+
 ## 2026-11-06 · Codex · 试听页单独发布
 - 常规preview受前一轮taptap手机打包占用并发而排队，未取消或修改其他打包任务。
 - 已把现有music页、署名及新曲MP3/MIDI/元数据单独提交公共gh-pages，提交98449ae；仅静态试听内容，无私有游戏源码。

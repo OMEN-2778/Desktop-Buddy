@@ -40,6 +40,8 @@ tests, no unasked extras).
 ## Season maps (owner rule)
 In any season map Buddy never decides to leave or go home; needs are met in the map's own house
 first, else the nearest spot in the map. Details: `AGENTS.md` → "Season maps".
+**Before any season-map work read `docs/SEASON_MAP_STANDARD.md`** (owner's must-have checklist: every
+feature meets all of it or it is not done).
 
 ## After a change
 0. Codex works on the same branch: `git pull` and read the top of `docs/AGENT_LOG.md`
