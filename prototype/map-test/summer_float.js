@@ -61,7 +61,8 @@
  // ---------------------------------------------------------------- surfing
  function startSurf(){if(!atSurface())return;stand();surf={dir:s().facing>=0?1:-1,until:performance.now()+SURF_MS};window.__surfHero={by:'free'};
   T().autoAt=sim.t+1e9;speakBay(pick(['冲浪咯！','看我的～','浪来了！']));}
- function endSurf(timeUp){if(!surf)return;surf=null;if(window.__surfHero?.by==='free')window.__surfHero=null;const st=s();st.walk=false;st.y=SURF_Y;T().autoAt=sim.t+30;
+ function endSurf(timeUp){if(!surf)return;if(performance.now()-(surf.until-SURF_MS)>4000){const m=window.summerMore?.M?.();if(m)m.act.surf=(m.act.surf||0)+1;}   // free surfing counts for 冲浪日's entry too
+  surf=null;if(window.__surfHero?.by==='free')window.__surfHero=null;const st=s();st.walk=false;st.y=SURF_Y;T().autoAt=sim.t+30;
   if(timeUp){addMood('bay_surf_free');speakBay(pick(['玩够了，歇一会儿','腿有点软了','刚才那道浪真好']));}}
  const T=()=>seasonMapTest.state,speakBay=w=>L.speakBay?L.speakBay(w):speak(w,true);
  // clicks: while surfing every click only turns her; on a float, a click elsewhere gets her up
