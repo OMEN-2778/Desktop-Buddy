@@ -6,6 +6,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 季节房子生活精度对标主世界；旅社厨房加餐桌
+- 新增 prototype/map-test/season_house.js：农舍 / 旅社家具直接跑主世界的 ACTS/EFFECT/lifeArrive/lifeFinish/activityFrame
+  （时长、需求、表情、气泡、日记、心情、做饭→上桌→吃饭、如厕中断）；做的饭各留在各自的地方；锅和饭菜用主世界的图。
+- infei_home.js / summer_lodge.js / summer_more.js / adapter.js 接入；旧的“需求涨到多少就停”逻辑删除。
+- 旅社图加宽 16px（IN_W 278），厨房换成主世界同款餐桌和椅子，浴室右移；坐标全部更新，室内可走到 312。
+- 标准文档补“生活精度完全对标主世界”。测试：check_infei_home、season_game_test、infei_side、正式版需求压红；做饭/吃饭/如厕截图看过。
+
 ## 2026-11-06 Claude — 季节地图必要标准
 - 新增 docs/SEASON_MAP_STANDARD.md（主人要求：所有茵菲谷 / 草帽湾要求整理成硬标准）；CLAUDE.md、AGENTS.md 指向它。
 - 待主人确认：旅社厨房餐桌草图（补丁在会话 scratchpad），吃饭动作 + 桌上饭菜，茵菲谷农舍饭桌同补。

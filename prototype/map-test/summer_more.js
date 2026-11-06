@@ -354,17 +354,22 @@
  // 阿洛's lodge, where she rests until the lowest need is back up. Only the player's own 回家 flies her home.
  let leavingBay=false,care=null;
  const oCmd=command;command=function(act,item){if(sim.place==='summer_test'&&act==='go_home')leavingBay=true;return oCmd(act,item);};
- function lodgeCare(){if(care)return;const low=Object.entries(sim.needs).sort((a,b)=>a[1]-b[1])[0];care={need:low[0]};
+ function lodgeCare(){if(care||window.summerLodge?.svc)return;const low=Object.entries(sim.needs).sort((a,b)=>a[1]-b[1])[0];care={need:low[0]};
   speakBay(pick({hunger:['回旅舍吃点东西','肚子饿了，回旅舍'],energy:['回旅舍睡一会儿','好困，回旅舍歇歇'],hygiene:['回旅舍洗个澡','一身沙子，回旅舍冲冲'],bladder:['去旅舍上个厕所'],social:['回旅舍和阿洛聊聊天'],fun:['回旅舍歇一会儿']}[care.need]||['回旅舍歇一会儿']));
   sim.mode='act';sim.act='season_explore';sim.actEnd=Infinity;const c=C();
   c.state.target=null;}   /* the timer below walks her there, swimming ashore first */
- const oHome=homeFor;homeFor=function(k){if(sim.place==='summer_test'&&!leavingBay){lodgeCare();return;}return oHome(k);};
- const oStart=startAct;startAct=function(name,quiet){if(sim.place==='summer_test'&&(name==='go_home'||!OUT_ACTS.has(name)&&ACTS[name]?.spot)&&!leavingBay){lodgeCare();return;}return oStart(name,quiet);};
+ const oHome=homeFor;homeFor=function(k){if(sim.place==='summer_test'&&!leavingBay){if(window.summerLodge?.svc)return;lodgeCare();return;}return oHome(k);};
+ const oStart=startAct;startAct=function(name,quiet){if(sim.place==='summer_test'&&(name==='go_home'||!OUT_ACTS.has(name)&&ACTS[name]?.spot)&&!leavingBay){
+  if(name==='go_home'&&summerLodge.svc&&seasonHouse.busy())return;   /* using the lodge: carry on, as at home */
+  seasonHouse.explore();if(name!=='go_home'&&summerLodge.useAct(name))return;   /* the home's next step (cook → eat, the toilet) at the lodge's own furniture */
+  lodgeCare();return;}return oStart(name,quiet);};
  const oArrive=arriveAt;arriveAt=function(p){leavingBay=false;care=null;if(p==='summer_test'){sim.outBack=null;sim.outWhy=null;}return oArrive(p);};   /* the city outing's "home by …" timer (set when she walked to the airport) must not follow her onto the island */
  setInterval(()=>{if(sim.place==='summer_test'&&!leavingBay&&sim.outBack!=null){sim.outBack=null;sim.outWhy=null;}},1000);
  let careT=0,careStuck=0;setInterval(()=>{if(!care||sim.place!=='summer_test'||wiping)return;   // a timer: the bay's draw hooks stop while she is inside
   const s=C().state;if(!s.inside){if(!s.target&&!s.door&&!L.isBusy()&&!storyLocked()){if(s.market)C().beginDoor('bay');else if(s.y>SURF+3)C().goTo(1050,'dive',SURF);else C().enter();careStuck=Date.now();}else if(s.target&&Date.now()-careStuck>15000){s.target=null;careStuck=Date.now();}return;}   /* from the sea she swims ashore first */
-  if(sim.needs[care.need]<90&&window.summerLodge){const sl=summerLodge,id=sl.NEED_SPOT[care.need];if(id){careT=0;if(!sl.svc&&!s.target)sl.use(id,true);return;}}   /* the lodge's own furniture: bed, shower, stove... */
+  {const sl=summerLodge,id=sl.NEED_SPOT[care.need];if(id){careT=0;if(sl.svc||s.target||seasonHouse.busy())return;
+   if(!care.used){care.used=true;sl.use(id,true);return;}
+   care=null;speakBay('歇好了，出去玩～');setTimeout(()=>{try{C().leave();}catch(e){}},900);return;}}   /* the lodge's furniture runs the home's own act; once it is over she heads out again */   /* the lodge's own furniture: bed, shower, stove... */
   const gm=careT?Math.max(0,Math.min(30,sim.t-careT)):0;careT=sim.t;need(care.need,gm*.6);for(const k of Object.keys(sim.needs))if(k!==care.need)need(k,gm*.05);
   if(sim.needs[care.need]>=90){care=null;careT=0;sim.actEnd=sim.t;speakBay('歇好了，出去玩～');setTimeout(()=>{try{C().leave();}catch(e){}},900);}},500);
  window.summerMore={nightPass,dark,snap,openDex,M,fest,FESTS,Q,st,talk,surf,buildCastle,PAGES,A,present};

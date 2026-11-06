@@ -833,8 +833,8 @@ def trees(zone, frame):
 
 # ------------------------------------------------------------- lodge inside
 
-IN_W, IN_H = 262, 62
-INSIDE_DATA = {"rooms": {"living": (50, 92), "kitchen": (146, 50), "bath": (200, 26), "bedroom": (6, 40)}}
+IN_W, IN_H = 278, 62   # owner 2026-11-06: kitchen 16px wider for a real dining table
+INSIDE_DATA = {"rooms": {"living": (50, 92), "kitchen": (146, 66), "bath": (216, 26), "bedroom": (6, 40)}}
 
 
 def lodge_inside():
@@ -843,7 +843,7 @@ def lodge_inside():
     (owner: refined): koa wood with grain, rattan weave, hibiscus prints, a
     Hawaiian quilt, louvred windows with a palm outside, plants in woven
     baskets, a ukulele and a surfboard on the walls."""
-    plan = ("lodge", "海岛旅舍", IN_W, "", "garden", [[("laundry", 6, 72), ("laundry", 82, 82), ("laundry", 168, 50), ("laundry", 222, 34)]])
+    plan = ("lodge", "海岛旅舍", IN_W, "", "garden", [[("laundry", 6, 72), ("laundry", 82, 82), ("laundry", 168, 66), ("laundry", 238, 34)]])
     data, bg, front = FH.draw_plan(plan)
     s = bg.copy()
     top, fl = 5, 50
@@ -901,8 +901,8 @@ def lodge_inside():
 
     room(6, 72, wall=P.plaster_bed)
     room(82, 82)
-    room(168, 50, floor="tile")
-    room(222, 34, floor="tile", wall=P.plaster_bath)
+    room(168, 66, floor="tile")
+    room(238, 34, floor="tile", wall=P.plaster_bath)
     # rush mats on the wooden floors
     for x0, x1 in ((12, 70), (88, 156)):
         for x in range(x0, x1):
@@ -976,41 +976,43 @@ def lodge_inside():
     s.vline(ux - 1, uy + 3, uy + 12, P.oat[3])
     basket_plant(151, fl, "monstera")
 
-    # ---- kitchen: koa cabinets, a sink under the window, two-burner stove with a kettle, shelf
-    louvre(178, top + 6, 14, 9)
-    kx0, kx1 = 170, 216
+    # ---- kitchen (owner 2026-11-06): the home's dining table and a chair on the left; koa cabinets with a sink and a
+    #      two-burner stove with a kettle on the right; louvred window over the table, open shelf with bananas
+    louvre(186, top + 6, 14, 9)
+    HS.on_floor(s, F.chair("right"), 172, 1, 1)
+    HS.on_floor(s, F.dining_table(), 181, 1, 1)
+    kx0, kx1 = 206, 232
     s.rect(kx0, fl - 15, kx1 - kx0, 15, K[2]).hline(kx0, kx1 - 1, fl - 1, K[0])
-    for dx in range(kx0 + 1, kx1 - 1, 11):                                     # cabinet doors with brass knobs
-        s.rect(dx, fl - 12, 10, 10, K[1]).rect(dx + 1, fl - 11, 8, 8, K[2]).hline(dx + 1, dx + 8, fl - 11, K[3])
-        s.set(dx + 8, fl - 7, P.mustard[3])
+    for dx in range(kx0 + 1, kx1 - 1, 12):                                     # cabinet doors with brass knobs
+        s.rect(dx, fl - 12, 11, 10, K[1]).rect(dx + 1, fl - 11, 9, 8, K[2]).hline(dx + 1, dx + 9, fl - 11, K[3])
+        s.set(dx + 9, fl - 7, P.mustard[3])
     s.rect(kx0 - 1, fl - 16, kx1 - kx0 + 2, 2, P.porcelain[3]).hline(kx0 - 1, kx1, fl - 15, P.porcelain[1])   # counter top
-    s.rect(180, fl - 16, 12, 1, P.steel[2])                                    # sink + tap
-    s.vline(186, fl - 21, fl - 17, P.steel[3]).hline(186, 189, fl - 21, P.steel[3])
-    s.rect(200, fl - 17, 12, 1, P.slate[1]).set(203, fl - 18, P.slate[2]).set(209, fl - 18, P.slate[2])   # burners
-    s.ellipse(204, fl - 20, 3, 2.5, P.coral[2]).hline(202, 206, fl - 22, P.coral[3]).set(207, fl - 21, P.coral[1])   # kettle
-    s.rect(196, top + 6, 20, 2, K[3]).hline(196, 215, top + 7, K[1])        # open shelf
+    s.rect(208, fl - 16, 8, 1, P.steel[2])                                     # sink + tap
+    s.vline(212, fl - 21, fl - 17, P.steel[3]).hline(212, 214, fl - 21, P.steel[3])
+    s.rect(219, fl - 17, 11, 1, P.slate[1]).set(221, fl - 18, P.slate[2]).set(227, fl - 18, P.slate[2])   # burners
+    s.ellipse(224, fl - 20, 3, 2.5, P.coral[2]).hline(222, 226, fl - 22, P.coral[3]).set(227, fl - 21, P.coral[1])   # kettle
+    s.rect(210, top + 6, 20, 2, K[3]).hline(210, 229, top + 7, K[1])        # open shelf
     for k, C in enumerate((P.porcelain, P.teal, P.porcelain, P.coral)):
-        s.rect(197 + k * 5, top + 2, 4, 4, C[2]).hline(197 + k * 5, 200 + k * 5, top + 2, C[3])
+        s.rect(211 + k * 5, top + 2, 4, 4, C[2]).hline(211 + k * 5, 214 + k * 5, top + 2, C[3])
     for k in range(4):                                                        # bananas hanging under the shelf
-        s.ellipse(213 - k, top + 13 + k, 1.2, 2.6, P.mustard[3])
-    s.vline(213, top + 8, top + 11, K[1])
-    s.ellipse(173, fl - 19, 3, 2, R[2]).set(172, fl - 21, P.coral[3]).set(174, fl - 20, P.mustard[3]).set(173, fl - 21, P.green[3])   # fruit bowl
+        s.ellipse(227 - k, top + 13 + k, 1.2, 2.6, P.mustard[3])
+    s.vline(227, top + 8, top + 11, K[1])
 
     # ---- bath: tiled shower with a curtain, toilet, vanity with mirror, towel, orchid
     for yy in range(top + 2, fl, 4):                                           # wall tiles
-        s.hline(222, 255, yy, P.porcelain[2])
-        for xx in range(222 + (yy // 4) % 2 * 3, 256, 6):
+        s.hline(238, 271, yy, P.porcelain[2])
+        for xx in range(238 + (yy // 4) % 2 * 3, 272, 6):
             s.vline(xx, yy, yy + 3, P.porcelain[2])
-    s.hline(223, 236, top + 4, P.steel[3])                                     # shower rail + curtain
-    for x in range(223, 230):
+    s.hline(239, 252, top + 4, P.steel[3])                                     # shower rail + curtain
+    for x in range(239, 246):
         s.vline(x, top + 5, fl - 3, P.sea[3] if (x % 2) else P.sea[4])
-    s.vline(234, top + 6, top + 9, P.steel[2]).rect(232, top + 9, 5, 2, P.steel[3])
-    HS.on_floor(s, F.toilet(), 238, 1, 1)
-    s.rect(244, top + 12, 9, 10, K[2]).rect(245, top + 13, 7, 8, P.glass[2]).set(246, top + 14, P.glass[4])   # mirror
-    s.rect(242, top + 26, 12, 3, P.porcelain[3]).hline(242, 253, top + 28, P.porcelain[1])   # basin shelf
-    s.vline(248, top + 23, top + 25, P.steel[3])
-    s.rect(231, top + 18, 3, 9, P.coral[3]).vline(233, top + 18, top + 26, P.coral[1])   # towel
-    s.rect(250, top + 23, 3, 3, P.porcelain[3]).set(251, top + 21, P.lilac[3]).set(252, top + 20, P.lilac[2])   # orchid
+    s.vline(250, top + 6, top + 9, P.steel[2]).rect(248, top + 9, 5, 2, P.steel[3])
+    HS.on_floor(s, F.toilet(), 254, 1, 1)
+    s.rect(260, top + 12, 9, 10, K[2]).rect(261, top + 13, 7, 8, P.glass[2]).set(262, top + 14, P.glass[4])   # mirror
+    s.rect(258, top + 26, 12, 3, P.porcelain[3]).hline(258, 269, top + 28, P.porcelain[1])   # basin shelf
+    s.vline(264, top + 23, top + 25, P.steel[3])
+    s.rect(247, top + 18, 3, 9, P.coral[3]).vline(249, top + 18, top + 26, P.coral[1])   # towel
+    s.rect(266, top + 23, 3, 3, P.porcelain[3]).set(267, top + 21, P.lilac[3]).set(268, top + 20, P.lilac[2])   # orchid
     s.blit(front, 0, 0)
     return s, INSIDE_DATA
 

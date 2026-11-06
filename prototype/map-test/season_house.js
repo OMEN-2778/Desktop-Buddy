@@ -1,0 +1,51 @@
+// 季节地图里的房子（茵菲谷农舍、草帽湾旅社）：直接跑主世界的动作（owner 2026-11-06：“生活精度要完全完全对标主世界”）。
+// A piece of furniture starts the home's own act (ACTS / EFFECT / lifeArrive / lifeFinish / activityFrame): the same
+// durations, need changes, face and pose, emote bubbles, diary lines, moods, cooked dish on the table, cook → eat, a
+// break for the toilet, and so on. The houses (infei_home.js, summer_lodge.js) only walk her to the spot and draw the
+// home's effects at their own furniture. Standard: docs/SEASON_MAP_STANDARD.md.
+const seasonHouse=(function(){
+ const PLACES=['spring_test','summer_test'],inSeason=()=>PLACES.includes(sim.place);
+ // acts the home has no twin for, built like the home's own (durations take PACE like the rest)
+ const own=(id,a,eff)=>{ACTS[id]={spot:'season',...a,dur:a.dur*PACE};EFFECT[id]={...eff};};
+ own('season_sofa',{label:'坐着歇会儿',emote:'star',dur:40,log:null},EFFECT.tv);
+ own('season_uke',{label:'弹尤克里里',emote:'note',dur:15,log:'借阿洛的尤克里里弹了一会儿。'},EFFECT.phone_game);
+ own('season_shower',{label:'冲凉',emote:'soap',dur:25,log:'冲了个凉水澡。'},EFFECT.bath);
+ own('season_tidy',{label:'整理衣柜',emote:'star',dur:6,log:'把衣柜里的衣服叠整齐。'},EFFECT.dress);
+ const oFrame=baseActivityFrame;baseActivityFrame=function(ms){
+  const a=sim.act,ph=Math.floor(ms/600)%2,showEm=sim.mode==='act'&&ACTS[a]?.emote&&Math.floor(ms/2400)%2===0;
+  if(sim.mode==='act'&&a==='season_sofa'&&!(typeof reaction!=='undefined'&&reaction&&realClock<reaction.until))return {f:{expr:Math.floor(ms/2000)%3===0?'happy':'neutral',look:1},pose:'sit',emote:showEm?ACTS[a].emote:null};
+  if(sim.mode==='act'&&a==='season_uke'&&!(typeof reaction!=='undefined'&&reaction&&realClock<reaction.until))return {f:{expr:'happy',bob:ph,sway:ph},pose:'stand',emote:showEm?'note':null};
+  return oFrame(ms);};
+ const running=act=>inSeason()&&sim.mode==='act'&&sim.act===act;
+ const busy=()=>inSeason()&&sim.mode==='act'&&!!sim.act&&sim.act!=='season_explore'&&!!ACTS[sim.act];
+ function explore(){sim.mode='act';sim.act='season_explore';sim.actEnd=Infinity;sim.item=null;sim.talk=null;}
+ // the home's arrive() for this act, minus the walking (the house has walked her there)
+ function start(act,o={}){const a=ACTS[act];if(!a)return;
+  sim.mode='act';sim.act=act;sim.player=!o.auto;sim.chosen=null;
+  if(act==='sleep'){const h=hour();sim.nap=!(h>=21||h<6);}
+  sim.actEnd=sim.t+(act==='sleep'?900:a.dur*(0.8+Math.random()*0.4));
+  sim.recent=[act,...sim.recent].slice(0,3);
+  const line=o.log!==undefined?o.log:a.log;if(line)log(line);
+  lifeArrive(act);}
+ // a stop for good (the player sent her elsewhere): the home simply drops what she was doing
+ function drop(act){if(running(act))explore();}
+ // the home's act ends → its next step (cook → eat, a queued meal after the toilet) is routed by the season wrappers
+ const oFinish=finishAct;finishAct=function(){const was=inSeason();const r=oFinish.apply(this,arguments);
+  if(was&&inSeason()&&sim.mode==='idle'){const q=sim.queue.shift();sim.queue=[];explore();if(q)startAct(q);}
+  return r;};
+ // a need running red outside sends her home: never in a season map, and never while she is using the house
+ const oRed=redNeed;redNeed=function(){if(busy())return null;return oRed.apply(this,arguments);};
+ // one table per place: a dish cooked in the lodge stays in the lodge, the home's stays at home
+ const meals={};
+ const oArrive=arriveAt;arriveAt=function(p){const from=sim.place;if(from!==p){meals[from]=sim.meal;sim.meal=meals[p]||null;delete meals[p];}return oArrive.apply(this,arguments);};
+ // ---------------------------------------------------------------- the home's pictures at the house's furniture
+ function frame(){return busy()?activityFrame(realClock*1000):null;}
+ function emote(ctx,x,y){const fr=frame();if(fr?.emote)ctx.drawImage(emoteCanvas(fr.emote),x,y);}
+ function cookFx(ctx,x,y){if(running('cook'))ctx.drawImage(frameOf(IMG.fx.cook,8),x,y);}
+ function meal(ctx,x,y){if(!homeMeal())return;const pic=sim.meal.pic&&dishPic(sim.meal.pic);
+  if(pic&&pic.complete)ctx.drawImage(pic,x+3-(pic.width>>1),y+13-pic.height+1);else ctx.drawImage(frameOf(IMG.fx.meal,4),x,y);}
+ function sleepFx(ctx,x,y){const cyc=Math.floor(realClock/26),inDream=realClock%26>19;   // the home's: Zs, now and then a dream bubble
+  if(inDream)ctx.drawImage(emoteCanvas(DREAMS[cyc%DREAMS.length]),x,y);else ctx.drawImage(frameOf(IMG.fx.sleep_z,4),x-2,y-6);}
+ return {start,drop,running,busy,explore,frame,emote,cookFx,meal,sleepFx,inSeason};
+})();
+window.seasonHouse=seasonHouse;

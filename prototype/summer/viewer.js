@@ -180,7 +180,7 @@ document.getElementById('gender').onclick=e=>{state.gender=state.gender==='f'?'m
 document.getElementById('exit').onclick=leave;
 document.getElementById('pause').onclick=e=>{state.paused=!state.paused;e.target.textContent=state.paused?'继续':'暂停';e.target.setAttribute('aria-pressed',String(state.paused));};
 canvas.addEventListener('pointerdown',e=>{canvas.focus();const r=canvas.getBoundingClientRect(),sx=(e.clientX-r.left)*VW/r.width,sy=(e.clientY-r.top)*canvas.height/r.height;
- if(state.changing>0||state.inCabana||state.door)return;if(!state.inside&&sy>canvas.height*.56-20&&sy<canvas.height*.56+20&&(sx<25||sx>VW-25)){travel(sx<25?-1:1);return;}if(state.inside){if(sx<43&&sy>55)return leave();goTo(clamp(sx,46,296));return;}pick(sx+state.camX,sy+state.camY);});
+ if(state.changing>0||state.inCabana||state.door)return;if(!state.inside&&sy>canvas.height*.56-20&&sy<canvas.height*.56+20&&(sx<25||sx>VW-25)){travel(sx<25?-1:1);return;}if(state.inside){if(sx<43&&sy>55)return leave();goTo(clamp(sx,46,312));return;}pick(sx+state.camX,sy+state.camY);});
 window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','a','d','w','s','A','D','W','S'].includes(e.key)&&!['BUTTON','INPUT'].includes(document.activeElement.tagName)){e.preventDefault();keys.add(e.key);state.lying=null;}});
 window.addEventListener('keyup',e=>keys.delete(e.key));window.addEventListener('blur',()=>keys.clear());
 load(DATA);Promise.all([...images.values()].map(im=>im.decode())).then(()=>{
