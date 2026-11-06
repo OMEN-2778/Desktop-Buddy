@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude: 冲浪站在板上；海岛卡几乎不扣币
+- Owner: surf = the swimming pose on a board, soles / board / water surface on one line. adapter drawHero hands her drawing to summer_more while `window.__surfHero` is set; summer_more draws the board (top at WL) and fx.swimmer upright with feet on it, above the water, plus spray; on a fall she drops back into the water.
+- Owner: chance cards should rarely touch 丢丢币, mostly +, very few −. summer_cards.js: all coins:-1 removed (14 of 106 cards change coins; only the old 珍珠贩子 can cost 1).
+
 ## 2026-11-06 Claude: 草帽湾机会卡 10 → 106
 - New `prototype/map-test/summer_cards.js` (after summer_more.js in make_season_game_test.py): 96 cards, n 9601+, same `bay` effects as BAY_CARDS. New field `zone` (sea / land / market, none = anywhere on the island) checked in a cardFits wrapper; time/weather via the game's `when`/`weather`. Beach 46, sea 14, market 16, anywhere 20.
 - Tested: 106 summer cards, all moods registered, none fit at home, beach shows only land+any, a card's coin effect applies.

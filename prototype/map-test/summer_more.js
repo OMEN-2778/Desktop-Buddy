@@ -152,9 +152,14 @@
   {const x=CASTLE_X+16,y=g(x);ctx.fillStyle='#e35b4f';ctx.fillRect(x-2,y-5,5,5);ctx.fillStyle='#b9473d';ctx.fillRect(x-2,y-5,5,1);ctx.fillStyle='#8c6238';ctx.fillRect(x+4,y-8,1,8);ctx.fillStyle='#9aa3ad';ctx.fillRect(x+3,y-9,3,2);}
   if(realClock<castleFx){ctx.fillStyle='#e8cf98';for(let k=0;k<6;k++)ctx.fillRect(CASTLE_X-8+((t*40+k*5)%16|0),g(CASTLE_X)-4-((t*30+k*3)%8|0),1,1);}
   // the surf ride
-  if(surfFx){const p=(realClock-surfFx.t0)/surfFx.dur,x=s.x,y=s.y;ctx.fillStyle='#f2d36b';ctx.fillRect(x-7,y-4,14,2);ctx.fillStyle='#e35b4f';ctx.fillRect(x-6,y-4,12,1);
-   ctx.fillStyle='rgba(255,255,255,.85)';for(let k=0;k<10;k++)ctx.fillRect(x+10+k*2,y-2-Math.round(5*Math.sin(k/3+p*6)),2,1);
-   if(surfFx.fall&&p>.6){ctx.fillStyle='rgba(235,250,255,.9)';for(let k=0;k<8;k++)ctx.fillRect(x-6+k*2,y-6-((k*7+p*30)%9|0),1,2);}}
+  // owner 2026-11-06: the swimming pose standing on the board; soles, board and the water surface on one line
+  if(surfFx){const p=(realClock-surfFx.t0)/surfFx.dur,x=Math.round(s.x),fell=surfFx.fall&&p>.6,bob=Math.round(Math.sin(p*9)),top=WL-2+bob;
+   window.__surfHero=fell?null:(window.__surfHero||{});
+   if(!fell){ctx.fillStyle='#e35b4f';ctx.fillRect(x-10,top,20,1);ctx.fillStyle='#f2d36b';ctx.fillRect(x-11,top+1,22,1);ctx.fillRect(x+10*(s.facing||1),top,1,1);   // the board, its top at the waterline
+    const a=window.__surfHero.args;if(a)seasonMapTest.state.summer.fx.swimmer(ctx,{head:a.dc,skinRamp:a.skin,sheet:a.sheet,x,y:top,time:s.time,facing:s.facing,diving:false,moving:true,waterline:WL});}
+   ctx.fillStyle='rgba(255,255,255,.85)';for(let k=0;k<10;k++)ctx.fillRect(x-12-k*2*(s.facing||1),WL-Math.round(3*Math.abs(Math.sin(k/3+p*6))),2,1);   // spray behind the board
+   if(fell){ctx.fillStyle='rgba(235,250,255,.9)';for(let k=0;k<8;k++)ctx.fillRect(x-6+k*2,WL-4-((k*7+p*30)%9|0),1,2);}}
+  else if(window.__surfHero)window.__surfHero=null;
   // glowing sea at night
   if(night()){const gl=G(ctx);for(const p of trail){gl.fillStyle=`rgba(110,255,230,${p.a*.9})`;gl.fillRect(p.x|0,p.y|0,1,1);}
    for(let k=0;k<26;k++){const x=1030+((k*97)%900),on=Math.sin(t*2.2+k*1.3)>.5;if(on){gl.fillStyle='rgba(120,255,235,.7)';gl.fillRect(x+((t*4+k)%6|0),WL+1+(k%3),2,1);}}}
