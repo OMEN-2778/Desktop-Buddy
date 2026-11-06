@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 · Codex · 试听页单独发布
+- 常规preview受前一轮taptap手机打包占用并发而排队，未取消或修改其他打包任务。
+- 已把现有music页、署名及新曲MP3/MIDI/元数据单独提交公共gh-pages，提交98449ae；仅静态试听内容，无私有游戏源码。
+- 后续源仓库preview包含同一新曲，可正常覆盖；试听地址 /music/#strawhat。
+
 ## 2026-11-06 Claude — 任务对话只靠点击推进；旅社上厕所显示坐姿
 - story_bubbles.js：去掉 4 秒自动翻页（所有任务 / 剧情对话），新一句出现 300 ms 内的点击不跳过。
 - summer_lodge.js：马桶从 hide 改成 pose:'sit'（iy -6），和茵菲谷农舍一致。
