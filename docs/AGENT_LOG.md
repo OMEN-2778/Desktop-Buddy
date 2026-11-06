@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 草帽湾宣传视频
+- 1920×1080、47.5 秒、80 年代电视广告风（夕阳网格、放射线、粗描边斜体字、扫描线、贴纸回弹弹出、电视开关机），配《向着海风出发》+ 音效。
+  内容：海岛风景、游泳圈、冲浪、潜水拍照、集市和摆摊 UI、旅舍夏威夷菜、粉紫晚霞、5 个节日、图鉴、结尾标题和副标题。
+- 制作脚本在 marketing/summer/promo/（README 写了步骤），成片只发给主人，没进仓库。
+
 ## 2026-11-06 Claude — 面板从点的地方弹出；季节 UI 音效；种子铺卡片
 - style.css + season_motion.js：茵菲谷/草帽湾的面板（摊位、市集、咖啡馆、田地、牧场……）从点击处弹出、轻微回弹，关上缩回原处；平板从小人身上弹出。
 - 新音效 AUDIO_LIBRARY/tools/build_season_ui_sfx.py → INFEI/SFX（11 个，原创合成）：茵菲谷木琴声、平板玻璃提示音、草帽湾尤克里里/钢鼓/气泡；
