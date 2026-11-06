@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 季节地图夜晚按房间开灯；茵菲谷补夜色晚霞；潜水展开 0.5 s；海报绿色悠闲版
+- 新增 prototype/map-test/season_night.js：茵菲谷原来完全没有夜晚（23 点还是白天）。屋外照主世界 duskState 晚霞 + outdoorNightness 夜色；
+  农舍 / 旅社室内照主世界：夜里只有她所在的房间亮灯（渐亮渐灭），其它房间按主屋夜色变暗，上床睡觉关灯。summer_more nightPass 不再管室内。
+- adapter.js：潜水展开改为 500 ms 缓动逐帧；逐帧检查上方 UI 与画面零重叠（网页版）。
+- marketing/summer/caomaowan-summer.jpg 重做：薄荷绿到湖蓝渐变、沙滩、拍立得白边照片配胶带、白描边像素贴纸大大小小（小人、阿洛、蕾拉妮等、草帽、椰子、贝壳…）。
+
 ## 2026-11-06 Claude — 草帽湾：鱼减半、粉紫晚霞、机会卡按区域、潜水画面向上展开（带过渡）
 - make_summer_preview.py thin()：每种生物留一条（图鉴都能拍到），银色鱼群 14 → 3，共 130 → 62。
 - 晚霞：summer_more.js bayDusk 用主世界 IMG.dusk.rose（固定粉紫）、duskState 的时间曲线（晴天 16:30–20:15），viewer.js 在天空后画；

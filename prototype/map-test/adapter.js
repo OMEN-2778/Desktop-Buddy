@@ -62,13 +62,13 @@ const seasonalTest=(function(){
  root.querySelectorAll('[data-dest]').forEach(b=>b.onclick=()=>start(b.dataset.dest));
  const originalArrive=arriveAt;arriveAt=function(place){
   state.summer.wardrobe.hidden=true;state.summer.state.inCabana=false;state.autumn.close();state.exitRequested=false;
-  if(!active()){people.cancel();people.sync();state.spring.root.hidden=state.summer.root.hidden=state.autumn.root.hidden=true;state.autumn.close();const r=originalArrive(place);state.activeHeight=H;state.shownH=null;sceneRoom(0);fit();return r;}
+  if(!active()){people.cancel();people.sync();state.spring.root.hidden=state.summer.root.hidden=state.autumn.root.hidden=true;state.autumn.close();const r=originalArrive(place);state.activeHeight=H;state.shownH=null;state.tween=null;sceneRoom(0);fit();return r;}
   people.cancel();life.npcs=[];life.talkQ=null;clearNpcPills();const c=ctl();
   state.spring.root.hidden=sim.place!=='spring_test';state.summer.root.hidden=sim.place!=='summer_test';state.autumn.root.hidden=sim.place!=='autumn_test';
   if(sim.place==='spring_test')c.go(0,80);
   else if(sim.place==='autumn_test')c.reset();
   else{c.state.x=120;c.state.y=c.gr(120);c.state.target=null;c.state.inside=false;c.state.lying=null;c.state.camX=c.state.camY=0;c.state.viewH=118;c.canvas.height=118;}
-  c.state.door=null;c.state.inCabana=false;people.sync(true);c.state.gender=look.gender||'f';state.last=realClock;state.autoAt=sim.t+25;sync();state.activeHeight=state.shownH=c.canvas.height;fit();sceneRoom(c.canvas.height);
+  c.state.door=null;c.state.inCabana=false;people.sync(true);c.state.gender=look.gender||'f';state.last=realClock;state.autoAt=sim.t+25;sync();state.activeHeight=state.shownH=c.canvas.height;state.tween=null;fit();sceneRoom(c.canvas.height);
  };
  const originalThrough=throughDoor;throughDoor=function(dest){if(['spring_test','summer_test','autumn_test'].includes(dest)&&(friendOutingActive()||homeGuestPresent()||petWalkActive())){showHint('先结束当前同行或来访，再测试季节地图吧');sim.dest=null;sim.mode='idle';sim.act=null;sim.idleUntil=sim.t+5;return;}return originalThrough(dest);};
  const originalStart=startAct;startAct=function(name,quiet){
@@ -91,13 +91,15 @@ const seasonalTest=(function(){
   // diving (owner, many times): the scene opens UPWARD, smoothly. The shown height follows the scene's height over
   // ~0.4 s, cropped from the bottom, so the top edge rises (or sinks) while the ground / sea floor stays put; on the
   // web page the room above is kept free (--scene-room), so nothing below moves either.
-  {const ch=c.canvas.height,red=matchMedia('(prefers-reduced-motion:reduce)').matches;state.shownH??=ch;
-   state.shownH=red||Math.abs(ch-state.shownH)<.6?ch:state.shownH+(ch-state.shownH)*(1-Math.exp(-dt*9));
+  {const ch=c.canvas.height,red=matchMedia('(prefers-reduced-motion:reduce)').matches,now=performance.now();state.shownH??=ch;
+   if(state.tween?.to!==ch)state.tween={from:state.shownH,to:ch,t0:now};   // ~0.5 s, eased, frame by frame (owner 2026-11-06)
+   {const tw=state.tween,u=red?1:Math.min(1,(now-tw.t0)/500),e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;state.shownH=tw.from+(tw.to-tw.from)*e;}
    const h=Math.round(state.shownH);
    if(state.activeHeight!==h){state.activeHeight=h;fit();resizeRoot();
     sceneRoom(h);}}
   vctx.imageSmoothingEnabled=false;vctx.clearRect(0,0,view.width,view.height);{const R=c.renderCanvas,ch=c.canvas.height,h=state.activeHeight||ch,k=view.height/h,rs=R.height/ch;   /* the bottom h rows (renderCanvas is drawn at rs x); while shrinking, the sky's top row fills the gap */
-   if(h<=ch)vctx.drawImage(R,0,Math.round((ch-h)*rs),R.width,Math.round(h*rs),0,0,view.width,view.height);else{vctx.drawImage(R,0,0,R.width,Math.max(1,Math.round(rs)),0,0,view.width,Math.ceil((h-ch)*k)+1);vctx.drawImage(R,0,0,R.width,R.height,0,Math.round((h-ch)*k),view.width,Math.round(ch*k));}}if(sim.place==='summer_test')window.summerMore?.nightPass?.(vctx,view.width,view.height);if(sim.place==='summer_test')window.summerHover?.draw(vctx,view.width/c.canvas.width,view.height/c.canvas.height);
+   if(h<=ch)vctx.drawImage(R,0,Math.round((ch-h)*rs),R.width,Math.round(h*rs),0,0,view.width,view.height);else{vctx.drawImage(R,0,0,R.width,Math.max(1,Math.round(rs)),0,0,view.width,Math.ceil((h-ch)*k)+1);vctx.drawImage(R,0,0,R.width,R.height,0,Math.round((h-ch)*k),view.width,Math.round(ch*k));}}if(sim.place==='spring_test'||sim.place==='summer_test'&&c.state.inside)window.seasonNight?.draw(vctx,view.width,view.height,c,sim.place==='spring_test'?'spring':'summer');   /* night + room lights (season_night.js) */
+  if(sim.place==='summer_test')window.summerMore?.nightPass?.(vctx,view.width,view.height);if(sim.place==='summer_test')window.summerHover?.draw(vctx,view.width/c.canvas.width,view.height/c.canvas.height);
 
  };
  const oldCenter=ringCenter;ringCenter=function(){if(!active())return oldCenter();const c=ctl(),s=c.state;return {x:s.x-(s.camera??s.camX??0),y:s.y-(s.camY??0)-13};};

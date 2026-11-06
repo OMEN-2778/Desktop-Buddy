@@ -123,7 +123,8 @@
  const duskK=()=>typeof duskState==='function'&&typeof IMG!=='undefined'&&IMG.dusk?.rose?.complete!==false?duskState(sim.t,rain()?'rain':weather.kind).strength:0;
  window.bayDusk={sky(ctx,cx,cy,VW,vh,WL){const k=duskK();if(!k||!L.inBay()||C().state.market||C().state.inside)return;const h=WL-cy;if(h<=0)return;
    ctx.save();ctx.globalAlpha=k;ctx.drawImage(IMG.dusk.rose,0,0,IMG.dusk.rose.width,IMG.dusk.rose.height,0,0,VW,h);ctx.restore();}};
- function nightPass(v,W,H){{const k=duskK();if(k&&!C().state.inside){v.save();v.globalCompositeOperation='soft-light';v.fillStyle=`rgba(214,120,200,${(k*.55).toFixed(3)})`;v.fillRect(0,0,W,H);v.restore();}}   // the evening light on sand and sea
+ function nightPass(v,W,H){if(C().state.inside)return;   // the lodge: room by room (season_night.js)
+  {const k=duskK();if(k&&!C().state.inside){v.save();v.globalCompositeOperation='soft-light';v.fillStyle=`rgba(214,120,200,${(k*.55).toFixed(3)})`;v.fillRect(0,0,W,H);v.restore();}}   // the evening light on sand and sea
   const a=dark()*(rain()?.9:.82);if(a>0){v.save();v.globalCompositeOperation='multiply';v.fillStyle=`rgb(${255-a*190|0},${255-a*170|0},${255-a*100|0})`;v.fillRect(0,0,W,H);v.restore();}
   if(glowUsed){v.save();v.imageSmoothingEnabled=false;v.drawImage(glowC,0,0,W,H);v.restore();glowUsed=false;}}
  // ================================================================ 2. beach life

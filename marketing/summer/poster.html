@@ -1,51 +1,67 @@
 <!doctype html><html><head><meta charset="utf-8"><style>
 *{box-sizing:border-box;margin:0}
 html,body{width:2400px;height:1800px;overflow:hidden}
-body{position:relative;font-family:"Noto Sans CJK SC","Noto Sans CJK TC",sans-serif;background:#ff8a2b}
-.rays{position:absolute;inset:0;background:repeating-conic-gradient(from 0deg at 1960px 300px,#ff9a2e 0deg 9deg,#ffb53f 9deg 18deg)}
-.heat{position:absolute;inset:0;background:radial-gradient(1500px 1100px at 0% 100%,rgba(255,61,110,.92),rgba(255,61,110,0) 70%),radial-gradient(900px 700px at 1960px 300px,rgba(255,240,170,.9),rgba(255,240,170,0) 60%)}
-.sun{position:absolute;left:1790px;top:130px;width:340px;height:340px;border-radius:50%;background:#fff6c2;box-shadow:0 0 0 26px rgba(255,246,194,.55),0 0 0 60px rgba(255,246,194,.25)}
-.sea{position:absolute;left:0;right:0;bottom:0;height:560px}
-.sea svg{position:absolute;left:0;top:-60px;width:2400px;height:640px}
-.card{position:absolute;border:14px solid #1b2660;border-radius:10px;overflow:hidden;background:#1b2660}
-.card img{display:block;width:100%;image-rendering:pixelated}
-.tag{position:absolute;padding:14px 34px;font-weight:900;font-size:58px;color:#1b2660;background:#ffe23d;border:8px solid #1b2660;border-radius:999px;white-space:nowrap;box-shadow:10px 10px 0 #1b2660}
-.badge{position:absolute;left:150px;top:96px;transform:rotate(-6deg);padding:14px 40px;background:#1b2660;color:#ffe23d;font-weight:900;font-size:62px;border-radius:14px;letter-spacing:6px}
-.title{position:absolute;left:120px;top:150px;transform:rotate(-6deg);font-weight:900;font-size:330px;line-height:1.1;color:#fff;-webkit-text-stroke:22px #1b2660;paint-order:stroke fill;text-shadow:20px 20px 0 #ff3d6e,20px 20px 0 #ff3d6e;letter-spacing:10px}
-.sub{position:absolute;left:150px;top:600px;transform:rotate(-6deg);font-weight:900;font-size:66px;color:#fff;background:#ff3d6e;border:10px solid #1b2660;padding:12px 40px;border-radius:16px;box-shadow:12px 12px 0 #1b2660;letter-spacing:4px}
-.st{position:absolute;image-rendering:pixelated;filter:drop-shadow(8px 8px 0 rgba(27,38,96,.85))}
-.foot{position:absolute;right:70px;bottom:46px;font-weight:900;font-size:50px;color:#fff;text-align:right;line-height:1.35;text-shadow:5px 5px 0 #1b2660}
-.foot b{display:block;font-size:40px;color:#ffe23d}
+body{position:relative;font-family:"Noto Sans CJK SC","Noto Sans CJK TC",sans-serif;background:linear-gradient(180deg,#effcf4 0%,#d3f3e4 34%,#aee6d9 58%,#8fdccf 70%)}
+.dots{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.55) 3px,transparent 4px);background-size:46px 46px;opacity:.6}
+.sun{position:absolute;left:1880px;top:-120px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,#fffbe2 0 38%,rgba(255,251,226,.55) 39% 52%,rgba(255,251,226,0) 70%)}
+.beach{position:absolute;left:0;right:0;bottom:0;height:420px}
+.beach svg{position:absolute;inset:0;width:100%;height:100%}
+.px{image-rendering:pixelated;position:absolute}
+.st{image-rendering:pixelated;position:absolute;filter:drop-shadow(5px 0 0 #fff) drop-shadow(-5px 0 0 #fff) drop-shadow(0 5px 0 #fff) drop-shadow(0 -5px 0 #fff) drop-shadow(0 14px 14px rgba(25,90,80,.28))}
+.st.sm{filter:drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 8px 8px rgba(25,90,80,.25))}
+.photo{position:absolute;background:#fff;padding:18px 18px 76px;border-radius:16px;box-shadow:0 26px 50px rgba(20,80,70,.22),0 4px 0 rgba(20,80,70,.06)}
+.photo img{display:block;width:100%;border-radius:8px;image-rendering:pixelated}
+.photo p{position:absolute;left:0;right:0;bottom:18px;text-align:center;font-weight:800;font-size:40px;color:#2a7d6f;letter-spacing:2px}
+.tape{position:absolute;width:150px;height:44px;background:rgba(255,236,170,.85);top:-20px;left:50%;margin-left:-75px;transform:rotate(-4deg);border-radius:4px}
+.label{position:absolute;left:150px;top:92px;padding:12px 34px;background:#fff;color:#2a7d6f;font-weight:800;font-size:44px;border-radius:999px;letter-spacing:4px;box-shadow:0 10px 24px rgba(20,80,70,.15)}
+.title{position:absolute;left:128px;top:150px;font-weight:900;font-size:300px;line-height:1.08;color:#1f7a6c;-webkit-text-stroke:20px #fff;paint-order:stroke fill;letter-spacing:16px;text-shadow:0 18px 0 rgba(31,122,108,.16)}
+.sub{position:absolute;left:156px;top:520px;font-weight:800;font-size:54px;color:#fff;background:#2fa48f;padding:14px 42px;border-radius:999px;letter-spacing:6px;box-shadow:0 12px 26px rgba(20,80,70,.2)}
+.foot{position:absolute;right:80px;bottom:56px;padding:14px 36px;background:#fff;border-radius:999px;font-weight:800;font-size:40px;color:#2a7d6f;box-shadow:0 10px 24px rgba(20,80,70,.15)}
+.foot b{color:#e8875a}
 </style></head><body>
-<div class="rays"></div><div class="heat"></div><div class="sun"></div>
-<div class="sea"><svg viewBox="0 0 2400 640" preserveAspectRatio="none">
- <path d="M0 80 Q150 20 300 80 T600 80 T900 80 T1200 80 T1500 80 T1800 80 T2100 80 T2400 80 V640 H0Z" fill="#14c3c9"/>
- <path d="M0 80 Q150 20 300 80 T600 80 T900 80 T1200 80 T1500 80 T1800 80 T2100 80 T2400 80" fill="none" stroke="#fff" stroke-width="16"/>
- <path d="M0 200 Q200 150 400 200 T800 200 T1200 200 T1600 200 T2000 200 T2400 200 V640 H0Z" fill="#0b9fb4"/>
+<div class="dots"></div><div class="sun"></div>
+<div class="beach"><svg viewBox="0 0 2400 420" preserveAspectRatio="none">
+ <path d="M0 60 Q300 10 600 60 T1200 60 T1800 60 T2400 60 V420 H0Z" fill="#7fd3c6"/>
+ <path d="M0 150 Q300 100 600 150 T1200 150 T1800 150 T2400 150" fill="none" stroke="#fff" stroke-width="10" opacity=".8"/>
+ <path d="M0 170 Q320 125 640 170 T1280 170 T1920 170 T2400 165 V420 H0Z" fill="#f7ead0"/>
+ <path d="M0 250 Q400 220 800 250 T1600 250 T2400 250 V420 H0Z" fill="#f1dfbb" opacity=".7"/>
 </svg></div>
 
-<!-- the island, big: standing on a wave -->
-<div class="card" style="left:1010px;top:520px;width:1300px;transform:rotate(3deg);box-shadow:22px 22px 0 #ffe23d"><img src="surf.png"></div>
-<div class="tag" style="left:1720px;top:470px;transform:rotate(7deg)">站上浪尖！</div>
-<div class="card" style="left:90px;top:830px;width:930px;transform:rotate(-4deg);box-shadow:20px 20px 0 #ff3d6e"><img src="sea.png"></div>
-<div class="tag" style="left:110px;top:1300px;transform:rotate(-6deg)">潜进珊瑚海</div>
-<div class="card" style="left:1080px;top:1110px;width:760px;transform:rotate(-3deg);box-shadow:18px 18px 0 #1b2660"><img src="market.png"></div>
-<div class="tag" style="left:1210px;top:1440px;transform:rotate(4deg);background:#fff">海边集市摆个摊</div>
+<!-- palms framing the page -->
+<img class="px" src="palm0.png" style="left:-60px;top:1010px;width:420px;transform:scaleX(-1)">
+<img class="px" src="palm1.png" style="left:1880px;top:880px;width:690px">
 
-<div class="badge">夏季新地图</div>
+<!-- photos -->
+<div class="photo" style="left:1030px;top:250px;width:1180px;transform:rotate(2deg)"><div class="tape"></div><img src="surf.png"><p>站上浪尖，海风是咸的</p></div>
+<div class="photo" style="left:200px;top:720px;width:780px;transform:rotate(-3deg)"><div class="tape"></div><img src="sea.png"><p>潜进珊瑚海，和鱼打招呼</p></div>
+<div class="photo" style="left:1080px;top:930px;width:720px;transform:rotate(3.5deg)"><div class="tape"></div><img src="market.png"><p>集市上，有她的草帽小摊</p></div>
+
+<div class="label">Desktop Buddy · 夏季新地图</div>
 <div class="title">草帽湾</div>
-<div class="sub">冲浪 · 潜水 · 摆摊 · 草帽节</div>
+<div class="sub">慢慢走 · 多吃水果 · 帽子要戴好</div>
 
-<!-- straw hats flying in the sea wind, and a few things from the island -->
-<img class="st" src="hat.png" style="left:1080px;top:110px;width:200px;transform:rotate(-18deg)">
-<img class="st" src="hat.png" style="left:1300px;top:60px;width:150px;transform:rotate(22deg)">
-<img class="st" src="hat.png" style="left:1560px;top:250px;width:120px;transform:rotate(-8deg)">
-<img class="st" src="hat.png" style="left:600px;top:1560px;width:150px;transform:rotate(30deg)">
+<!-- island people -->
+<img class="st" src="s_alo.png" style="left:870px;top:640px;width:200px">
+<img class="st" src="s_hero.png" style="left:860px;top:1380px;width:250px">
+<img class="st" src="s_lei.png" style="left:1830px;top:1330px;width:180px">
+<img class="st sm" src="s_kai.png" style="left:2030px;top:1390px;width:130px">
+<img class="st sm" src="s_mia.png" style="left:560px;top:1460px;width:140px">
+<!-- big and small stickers -->
+<img class="st" src="hat.png" style="left:-6px;top:-4px;width:150px;transform:rotate(-16deg)">
+<img class="st sm" src="hat.png" style="left:1230px;top:60px;width:110px;transform:rotate(18deg)">
+<img class="st sm" src="hat.png" style="left:1720px;top:1700px;width:90px;transform:rotate(-20deg)">
+<img class="st" src="coconut_water.png" style="left:2150px;top:120px;width:180px;transform:rotate(10deg)">
+<img class="st sm" src="juice.png" style="left:2010px;top:60px;width:100px;transform:rotate(-8deg)">
+<img class="st" src="crab.png" style="left:330px;top:1520px;width:170px;transform:rotate(-6deg)">
+<img class="st sm" src="shell.png" style="left:150px;top:1440px;width:96px;transform:rotate(14deg)">
+<img class="st sm" src="seaglass.png" style="left:1370px;top:1610px;width:80px;transform:rotate(20deg)">
+<img class="st sm" src="pearl.png" style="left:1500px;top:1680px;width:66px">
+<img class="st" src="fish.png" style="left:640px;top:610px;width:150px;transform:rotate(-10deg)">
+<img class="st sm" src="shrimp.png" style="left:110px;top:660px;width:90px;transform:rotate(12deg)">
+<img class="st" src="hat.png" style="left:860px;top:20px;width:150px;transform:rotate(12deg)">
+<img class="st sm" src="coconut.png" style="left:1950px;top:1180px;width:110px;transform:rotate(-12deg)">
+<img class="st sm" src="shell_chime.png" style="left:2230px;top:720px;width:110px;transform:rotate(6deg)">
+<img class="st sm" src="seaweed.png" style="left:1170px;top:1660px;width:90px;transform:rotate(-6deg)">
 
-<img class="st" src="coconut_water.png" style="left:2100px;top:1050px;width:170px;transform:rotate(-12deg)">
-<img class="st" src="crab.png" style="left:900px;top:1550px;width:170px;transform:rotate(-6deg)">
-<img class="st" src="shell.png" style="left:1940px;top:1250px;width:130px;transform:rotate(15deg)">
-
-
-<div class="foot">Desktop Buddy<b>夏天和秋天，机场有航班</b></div>
+<div class="foot">夏天和秋天，<b>机场有航班</b></div>
 </body></html>
