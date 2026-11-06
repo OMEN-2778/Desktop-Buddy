@@ -1,0 +1,25 @@
+{
+  "id": "strawhat-summer-future",
+  "title": "草帽借给风 · 潮汐错拍",
+  "bpm": 112,
+  "duration": 125,
+  "version": 2,
+  "style": "管弦钢琴 × Broken Beat / UK Garage",
+  "peak": 0.6721214118268692,
+  "rms_db": -20.000000000062176,
+  "instruments": [
+    "钢琴主旋律",
+    "长笛",
+    "双簧管",
+    "弦乐合奏",
+    "圆号",
+    "Rhodes",
+    "合成贝斯",
+    "空气音垫",
+    "晶体点缀",
+    "原创电子鼓/颗粒打击"
+  ],
+  "preview_only": true,
+  "soundfont_sha256": "9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe",
+  "midi_note": "MIDI包含有音高乐器，完整电子打击乐由工程合成"
+}
