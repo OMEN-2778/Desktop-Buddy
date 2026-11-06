@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 · Codex · 室外辽远海岸三首新曲
+- 用户选《赤脚走过星期天》为室内曲方向；室外要求广阔辽远、夏日阳光，嫌先前旋律俗套。仅标试听选择，尚未接入游戏。
+- compose_open_sea.py 独立三套主题：3/3/2/4小节长句管弦、六拍白帆、5小节开篇原声后摇管弦；长尾音、疏朗伴奏。
+- 三组MP3/MIDI、open-sea.json；/music/#open-sea 置顶，旧曲保留。渲染电平及浏览器播放检查，旋律听感待用户试听反馈。
+
 ## 2026-11-06 Claude — 草帽湾：海里的鱼不再排成等距一排
 - make_summer_preview.py spread()：防扎堆时原来统一往右推 34px，同种鱼被推成同深度、等间距一排（四条黄鱼）；
   改为固定的不均匀偏移（深度 ±14，推开时距离和深度都错开），鱼群以外的鱼深度也错开一点。截图看过。

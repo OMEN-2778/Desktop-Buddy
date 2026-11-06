@@ -1,0 +1,124 @@
+[
+  {
+    "duration": 125.0,
+    "peak": 0.5169,
+    "rms_db": -20.0,
+    "notes": 700,
+    "id": "open-sea-distance",
+    "title": "海平线以外还有光",
+    "style": "辽远海面 / 抒情管弦",
+    "bpm": 96,
+    "sections": [
+      {
+        "name": "intro",
+        "at": 0.0
+      },
+      {
+        "name": "A",
+        "at": 10.0
+      },
+      {
+        "name": "bridge",
+        "at": 40.0
+      },
+      {
+        "name": "B",
+        "at": 50.0
+      },
+      {
+        "name": "A2",
+        "at": 70.0
+      },
+      {
+        "name": "outro",
+        "at": 100.0
+      }
+    ],
+    "chorus_at": 50.0,
+    "preview_only": true
+  },
+  {
+    "duration": 95.0,
+    "peak": 0.5504,
+    "rms_db": -20.0,
+    "notes": 1078,
+    "id": "open-sea-sails",
+    "title": "白帆经过风的背面",
+    "style": "海风白帆 / 六拍流动管弦",
+    "bpm": 108,
+    "sections": [
+      {
+        "name": "intro",
+        "at": 0.0
+      },
+      {
+        "name": "A",
+        "at": 6.67
+      },
+      {
+        "name": "B",
+        "at": 26.67
+      },
+      {
+        "name": "bridge",
+        "at": 40.0
+      },
+      {
+        "name": "A2",
+        "at": 46.67
+      },
+      {
+        "name": "B",
+        "at": 66.67
+      },
+      {
+        "name": "outro",
+        "at": 80.0
+      }
+    ],
+    "chorus_at": 26.67,
+    "preview_only": true
+  },
+  {
+    "duration": 129.615,
+    "peak": 0.5014,
+    "rms_db": -20.0,
+    "notes": 1214,
+    "id": "open-sea-coast",
+    "title": "沿着晴天走很远",
+    "style": "晴日海岸 / 原声后摇与管弦",
+    "bpm": 104,
+    "sections": [
+      {
+        "name": "intro",
+        "at": 0.0
+      },
+      {
+        "name": "A",
+        "at": 9.23
+      },
+      {
+        "name": "B",
+        "at": 36.92
+      },
+      {
+        "name": "bridge",
+        "at": 55.38
+      },
+      {
+        "name": "B",
+        "at": 64.62
+      },
+      {
+        "name": "A2",
+        "at": 83.08
+      },
+      {
+        "name": "outro",
+        "at": 110.77
+      }
+    ],
+    "chorus_at": 36.92,
+    "preview_only": true
+  }
+]
