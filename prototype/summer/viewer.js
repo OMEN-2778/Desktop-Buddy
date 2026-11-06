@@ -109,6 +109,7 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
  if(state.inside){ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,VW,vh);ctx.drawImage(img(DATA.inside),40,28);if(!state.hideHero)hero(state.x,84+(state.iy||0));globalThis.summerLodge?.draw(ctx);exitArrow();fx.transition(ctx,state.door,VW,vh);return;}
  const cx=state.camX,cy=state.camY;
  ctx.drawImage(img(DATA.sky),cx,cy,VW,vh,0,0,VW,vh);
+ globalThis.bayDusk?.sky(ctx,cx,cy,VW,vh,WL);   // the game shell's evening sky (pink-purple, owner 2026-11-06)
  ctx.save();ctx.translate(-cx,-cy);
  // Clouds belong behind mountains, trees, buildings and every actor.
  for(let i=0;i<42;i++){const c=img(DATA.clouds[i%3]),x=((i*113+t*(1.2+i%4*.5))%(W+60))-40,y=4+(i*17)%36;if(x+c.width>cx&&x<cx+VW)ctx.drawImage(c,x,y);}

@@ -6,6 +6,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 草帽湾：鱼减半、粉紫晚霞、机会卡按区域、潜水画面向上展开（带过渡）
+- make_summer_preview.py thin()：每种生物留一条（图鉴都能拍到），银色鱼群 14 → 3，共 130 → 62。
+- 晚霞：summer_more.js bayDusk 用主世界 IMG.dusk.rose（固定粉紫）、duskState 的时间曲线（晴天 16:30–20:15），viewer.js 在天空后画；
+  nightPass 加一层淡粉紫 soft-light。
+- 机会卡：没标区域的 30 张归类（小摊的 5 张 → 市集，其余 → 陆地）；陆地卡只在脚踩地面时（不在水里、不在市集）。两张卡的“小摊”改成“沙滩椅”。
+- 潜水展开：adapter.js 显示高度逐帧跟随场景高度（~0.4 s），从画面底部裁，顶边上升、底边不动；网页版 .desk 加 --scene-room
+  预留上方空间（ui.css）；renderCanvas 按实际渲染倍率裁。实测顶边 543→189、底边固定 897。
+
 ## 2026-11-06 Claude — 草帽湾夏季海报；远山不再被切断
 - marketing/summer/caomaowan-summer.jpg（2400×1800）：热烈风格（放射日光、橙红撞青、粗描边大标题、粗边框斜放实机截图、飞草帽像素贴纸）。
   版式源 poster.html（截图素材取自测试页，未入库）。等主人看。

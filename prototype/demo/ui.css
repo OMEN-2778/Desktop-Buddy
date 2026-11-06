@@ -21,7 +21,7 @@ body {
   grid-template-rows: 1fr auto;
   grid-template-columns: minmax(0, 1fr);
 }
-.desk { display: grid; place-items: center; padding-block: calc(var(--row-h, 42px) + 24px + var(--room-top, 0px)) 32px; /* top: the gear + diary row, and room for what opens above it */
+.desk { display: grid; place-items: center; padding-block: calc(var(--row-h, 42px) + 24px + var(--room-top, 0px) + var(--scene-room, 0px)) 32px; /* top: the gear + diary row, and room for what opens above it */
   padding-left: calc(max(16px, env(safe-area-inset-left, 0px)) + var(--room-left, 0px)); /* + room for the pick-a-thing panel */
   padding-right: max(16px, env(safe-area-inset-right, 0px)); min-width: 0; padding-left:max(76px,env(safe-area-inset-left,0px)); }
 .widget { position: relative; display:block; padding-left:0; }

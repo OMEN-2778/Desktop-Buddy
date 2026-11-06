@@ -119,7 +119,12 @@
  function dark(){const h=hour();return h>=20.5||h<4.5?1:h>=18&&h<20.5?(h-18)/2.5:h>=4.5&&h<6.5?1-(h-4.5)/2:0;}
  function G(ctx){if(dark()<.12)return ctx;if(glowC.width!==ctx.canvas.width||glowC.height!==ctx.canvas.height){glowC.width=ctx.canvas.width;glowC.height=ctx.canvas.height;}
   const g=glowC.getContext('2d');if(!glowUsed){g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,glowC.width,glowC.height);glowUsed=true;}g.setTransform(ctx.getTransform());g.imageSmoothingEnabled=false;return g;}
- function nightPass(v,W,H){const a=dark()*(rain()?.9:.82);if(a>0){v.save();v.globalCompositeOperation='multiply';v.fillStyle=`rgb(${255-a*190|0},${255-a*170|0},${255-a*100|0})`;v.fillRect(0,0,W,H);v.restore();}
+ // 晚霞 (owner 2026-11-06): like the main world's evening sky, always the pink-purple one; clear days, 16:30-20:15
+ const duskK=()=>typeof duskState==='function'&&typeof IMG!=='undefined'&&IMG.dusk?.rose?.complete!==false?duskState(sim.t,rain()?'rain':weather.kind).strength:0;
+ window.bayDusk={sky(ctx,cx,cy,VW,vh,WL){const k=duskK();if(!k||!L.inBay()||C().state.market||C().state.inside)return;const h=WL-cy;if(h<=0)return;
+   ctx.save();ctx.globalAlpha=k;ctx.drawImage(IMG.dusk.rose,0,0,IMG.dusk.rose.width,IMG.dusk.rose.height,0,0,VW,h);ctx.restore();}};
+ function nightPass(v,W,H){{const k=duskK();if(k&&!C().state.inside){v.save();v.globalCompositeOperation='soft-light';v.fillStyle=`rgba(214,120,200,${(k*.55).toFixed(3)})`;v.fillRect(0,0,W,H);v.restore();}}   // the evening light on sand and sea
+  const a=dark()*(rain()?.9:.82);if(a>0){v.save();v.globalCompositeOperation='multiply';v.fillStyle=`rgb(${255-a*190|0},${255-a*170|0},${255-a*100|0})`;v.fillRect(0,0,W,H);v.restore();}
   if(glowUsed){v.save();v.imageSmoothingEnabled=false;v.drawImage(glowC,0,0,W,H);v.restore();glowUsed=false;}}
  // ================================================================ 2. beach life
  const SHOWER_X=650,FIRE_X=830,RACK_X=1010,CASTLE_X=784;   // castle bucket at 800, clear of the fire

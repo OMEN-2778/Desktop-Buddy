@@ -116,10 +116,14 @@
  CARDS.push(...CARDS_);
  for(const cd of CARDS_)for(const k of ['a','b'])cd[k].out.forEach((oo,i)=>{if(oo.mood)ML[oo.id=`card${cd.n}${k}${i}`]={...oo.mood};});
  // where on the island a card belongs
+ // owner 2026-11-06: every card has its place (no market card under water). The first ten and the island's
+ // weather / 阿洛 cards had none: the stall ones go to the market, the rest to land. land = on foot, not in the water.
+ const ZONE={9501:'market',9502:'market',9505:'market',9507:'market',9508:'market'};
+ for(const cd of CARDS)if(cd.at==='summer_test'&&!cd.zone)cd.zone=ZONE[cd.n]||'land';
  const oldFits=cardFits;cardFits=function(cd,c){
-  if(cd.at==='summer_test'&&cd.zone){if(!L.inBay())return false;
-   const sea=L.under(),mk=L.inMarket();
-   if(cd.zone==='sea'&&!sea)return false;if(cd.zone==='market'&&!mk)return false;if(cd.zone==='land'&&(sea||mk))return false;}
+  if(cd.at==='summer_test'){if(!L.inBay())return false;
+   const st=seasonMapTest.state.summer.state,sea=L.under(),mk=L.inMarket(),wet=!st.inside&&!mk&&seasonMapTest.state.summer.deep(st.x);
+   if(cd.zone==='sea'&&!sea)return false;if(cd.zone==='market'&&!mk)return false;if(cd.zone==='land'&&(wet||mk))return false;}
   return oldFits(cd,c);};
  window.summerCards=CARDS_;
 })();

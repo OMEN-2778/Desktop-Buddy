@@ -192,7 +192,18 @@ def life():
         if k not in cache:cache[k]=[uri(f) for f in MOT.frames(k)]
         return cache[k]
     speeds.update({'whale_shark':(140,3),'sunfish':(30,1),'hammerhead':(120,6),'tiger_shark':(120,5),'oarfish':(60,2),'spinner_dolphin':(140,12),'seahorse':(4,1),'frogfish':(6,1),'ribbon_eel':(8,1),'glass_shrimp':(10,2),'flying_fish':(120,14),'needlefish':(90,10),'wahoo':(140,12),'mahimahi':(110,10),'squid':(30,4)})
-    return [{'f':poses(k),'x':B.LAND+x,'y':B.SKY+y,'r':speeds.get(k,(35,5))[0],'v':speeds.get(k,(35,5))[1],'k':k,**({'when':R2.SPECIES[k][2],'page':R2.SPECIES[k][3]} if k in R2.SPECIES else {})} for k,x,y in spread([(k,x,y) for k,fn,x,y in B.LIFE if k!='diver'])]
+    return [{'f':poses(k),'x':B.LAND+x,'y':B.SKY+y,'r':speeds.get(k,(35,5))[0],'v':speeds.get(k,(35,5))[1],'k':k,**({'when':R2.SPECIES[k][2],'page':R2.SPECIES[k][3]} if k in R2.SPECIES else {})} for k,x,y in spread(thin([(k,x,y) for k,fn,x,y in B.LIFE if k!='diver']))]
+
+
+def thin(items):
+    """Owner 2026-11-06: the sea was too crowded, at least half as many. One of each kind stays (every species can
+    still be photographed for the dex); of the silver schools, 3 of the 14, spread along the sea."""
+    seen, out = {}, []
+    for k, x, y in items:
+        n = seen[k] = seen.get(k, 0) + 1
+        if n == 1 or (k == 'school' and n in (6, 11)):
+            out.append((k, x, y))
+    return out
 
 
 def spread(items):
