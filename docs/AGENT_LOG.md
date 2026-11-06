@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude: 草帽湾机会卡 10 → 106
+- New `prototype/map-test/summer_cards.js` (after summer_more.js in make_season_game_test.py): 96 cards, n 9601+, same `bay` effects as BAY_CARDS. New field `zone` (sea / land / market, none = anywhere on the island) checked in a cardFits wrapper; time/weather via the game's `when`/`weather`. Beach 46, sea 14, market 16, anywhere 20.
+- Tested: 106 summer cards, all moods registered, none fit at home, beach shows only land+any, a card's coin effect applies.
+
 ## 2026-11-06 Claude: release can never show 草帽湾
 - Owner saw the summer map in the formal game. A fresh --release build has no way there (airport: 茵菲谷 only, toolbar hidden); the likely way in is a save that has her on the island. make_season_game_test.py --release now starts the script with `var SEASON_RELEASE=true` (first: adapter reads it at load); adapter.js then sends her home whenever the place is summer_test/autumn_test. Checked: a save restored on the island lands her home; airport still 茵菲谷 only.
 
