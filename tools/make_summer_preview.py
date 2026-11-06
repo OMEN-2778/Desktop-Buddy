@@ -217,16 +217,22 @@ def spread(items):
             y = max(y, DEEP_Y)
         out.append([k, x, min(y, max(SS.SURF + 20, floor_y(k, x)))])
     placed = []
-    for it in sorted(out, key=lambda t: (t[1], t[2])):
+    def jit(n, k, x, span):   # a fixed, uneven offset (the same every build): no tidy rows of the same fish
+        h = (n * 2654435761 + x * 40503 + sum(map(ord, k)) * 977) & 0xffff
+        return h % span - span // 2
+    for n, it in enumerate(sorted(out, key=lambda t: (t[1], t[2]))):
         k, x, y = it
-        for _ in range(60):
+        if k != 'school':
+            y += jit(n, k, x, 29)
+        for m in range(60):
             if not any(abs(x - px) < GAP_X and abs(y - py) < GAP_Y for px, py in placed):
                 break
-            x += GAP_X
+            x += GAP_X + abs(jit(m, k, x, 41))
+            y += jit(m + 7, k, x, 2 * GAP_Y + 1)
             if x >= B.SEA_W - 40:
                 x = 40 + (x % 300)
                 y += GAP_Y
-        y = min(y, max(SS.SURF + 20, floor_y(k, x)))
+        y = min(max(y, SS.SURF + 20), max(SS.SURF + 20, floor_y(k, x)))
         it[1], it[2] = x, y
         placed.append((x, y))
     return [tuple(t) for t in out]

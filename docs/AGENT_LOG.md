@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude — 草帽湾：海里的鱼不再排成等距一排
+- make_summer_preview.py spread()：防扎堆时原来统一往右推 34px，同种鱼被推成同深度、等间距一排（四条黄鱼）；
+  改为固定的不均匀偏移（深度 ±14，推开时距离和深度都错开），鱼群以外的鱼深度也错开一点。截图看过。
+
 ## 2026-11-06 Claude — 草帽湾上线前冒烟测试
 - 新增 tools/check_summer_smoke.js（38 项）：导游、人脉、市集/小摊/咖啡座、10 个委托（按点击方式包在 scene 里）、旅舍 15 件家具、
   气垫、冲浪、潜水、图鉴、早中晚夜、雨、5 个节日、106 张机会卡两种选项、离开草帽湾回家、无页面报错。全部通过。
