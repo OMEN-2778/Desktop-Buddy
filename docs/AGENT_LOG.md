@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-06 Claude: release can never show 草帽湾
+- Owner saw the summer map in the formal game. A fresh --release build has no way there (airport: 茵菲谷 only, toolbar hidden); the likely way in is a save that has her on the island. make_season_game_test.py --release now starts the script with `var SEASON_RELEASE=true` (first: adapter reads it at load); adapter.js then sends her home whenever the place is summer_test/autumn_test. Checked: a save restored on the island lands her home; airport still 茵菲谷 only.
+
 ## 2026-11-05 Claude: 追浪节 → 冲浪日 (owner)
 
 ## 2026-11-05 Claude: she no longer flies home from 草帽湾 by herself; lodge/farmhouse furniture always usable

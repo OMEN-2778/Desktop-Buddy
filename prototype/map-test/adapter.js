@@ -136,6 +136,8 @@ const seasonalTest=(function(){
  const oldSocialTick=tickSocial;tickSocial=function(...args){if(inCity()&&state.autumn.state.quest<6)return;return oldSocialTick(...args);};
  // No actual updater on a browser test page. Persistent test saves use a separate key.
  startUpdateChecks=()=>{};
+ // the formal game has only 茵菲谷: a save made on the 内测 page (or by an older build) must never leave her on the island
+ if(typeof SEASON_RELEASE!=='undefined'){let sentAt=-1e9;setInterval(()=>{try{if(['summer_test','autumn_test'].includes(sim.place)&&!wiping&&typeof booted!=='undefined'&&booted&&performance.now()-sentAt>8000){sentAt=performance.now();start('home');}}catch(e){}},1000);}
  return {start,active,ctl,state,root,sync,people,cheats};
 })();
 window.seasonMapTest=seasonalTest;
