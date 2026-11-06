@@ -103,6 +103,7 @@ function leave(){if(state.inside)goTo(48,'walk',0,()=>beginDoor(false));}
 function exitArrow(){ctx.fillStyle='#e9eee2';ctx.fillRect(12,64,22,24);ctx.strokeStyle='#526578';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(27,69);ctx.lineTo(19,76);ctx.lineTo(27,83);ctx.stroke();}
 
 function sparkle(x,y,t){const a=(Math.sin(t*3+x)+1)/2;if(a<.3)return;ctx.fillStyle=`rgba(255,250,220,${a})`;ctx.fillRect(x,y-2,1,5);ctx.fillRect(x-2,y,5,1);}
+const realNow=()=>performance.now()/1000;
 function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,VW,vh);if(!state.loaded)return;
  const t=reduced?0:state.time;
  if(state.market&&market){market.draw(ctx,{time:t,camX:state.camX,hero:()=>hero(state.x,MARKET_FEET)});drawTravelArrows();fx.transition(ctx,state.door,VW,vh);return;}
@@ -128,8 +129,12 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
  // jerked when the old per-frame test met rock: frozen, snapped back, or skipped). The lane fits the largest frame
  // plus the 2px bob, so the whole sprite always stays in water and the motion is one smooth sine.
  const free=(xx,yy,w,h)=>{const x0=Math.floor(xx),y0=Math.floor(yy),x1=Math.ceil(xx+w),y1=Math.ceil(yy+h),stride=W+1;if(x0<0||x1>W||y0<=WL+3||y1>H)return false;return solidSum[y1*stride+x1]-solidSum[y0*stride+x1]-solidSum[y1*stride+x0]+solidSum[y0*stride+x0]===0;};
+ const fdt=Math.min(.2,Math.max(0,realNow()-(state.lifeT??realNow())));state.lifeT=realNow();
  for(const c of DATA.life){
-  if(c.when&&!(globalThis.summerLifeOn?.(c.when,c.k)??true)){c.cx=0;continue;}   /* 图鉴 batch 2: night / rain / dawn / dusk / rare ones */
+  // 图鉴 batch 2 (night / rain / dawn / dusk / rare ones) come and go by FADING over ~1.5 s, never popping in or out
+  // in front of her (owner 2026-11-06: 鱼会不会凭空出现或凭空消失)
+  const want=!c.when||(globalThis.summerLifeOn?.(c.when,c.k)??true);c.fa??=want?1:0;c.fa=Math.max(0,Math.min(1,c.fa+(want?1:-1)*fdt/1.5));
+  if(c.fa<=0){c.cx=0;continue;}
   if(c.lane===undefined){const ims=c.f.map(img);if(ims.some(m=>!m.width))continue;
    const w=Math.max(...ims.map(m=>m.width)),h=Math.max(...ims.map(m=>m.height)),ok=(x,y)=>free(x,y-2,w,h+4);
    let y=c.y+(c.oy||0),x0=c.x+(c.ox||0);
@@ -139,8 +144,9 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
   if(!c.lane)continue;const L=c.lane;
   const ph=t*c.v/Math.max(1,L.half)+c.x*.031,x=L.mid+Math.sin(ph)*L.half,y=L.y+Math.sin(t*.7+c.x)*2,left=Math.cos(ph)<0&&L.half>1,im=img(c.f[Math.floor(t*10+c.x)%c.f.length]);
   c.cx=x+im.width/2;c.cy=y+im.height/2;c.w=im.width;c.h=im.height;c.im=im;c.px=Math.round(x+im.width/2)-Math.round(im.width/2);c.py=Math.round(y+im.height/2)-Math.round(im.height/2);c.flip=left;
+  if(c.fa<.6)c.cx=0;   // half-faded: not yet / no longer there to photograph
   if(x+im.width<cx||x>cx+VW||y+im.height<cy||y>cy+vh)continue;
-  ctx.save();ctx.translate(Math.round(x+im.width/2),Math.round(y+im.height/2));ctx.scale(left?-1:1,1);ctx.drawImage(im,-Math.round(im.width/2),-Math.round(im.height/2));ctx.restore();}
+  ctx.save();ctx.globalAlpha=c.fa;ctx.translate(Math.round(x+im.width/2),Math.round(y+im.height/2));ctx.scale(left?-1:1,1);ctx.drawImage(im,-Math.round(im.width/2),-Math.round(im.height/2));ctx.restore();}
  peopleRenderer?.(ctx,{time:t,inside:state.inside,under:under()});
  if(state.lying!==null){const [lx,ly]=DATA.chairs[state.lying];state.facing=1;hero(lx,ly);}else hero(state.x,state.y);
  fx.drawWater(ctx,WL,{x:cx,y:cy,w:VW,h:vh});
