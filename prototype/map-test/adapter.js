@@ -13,7 +13,7 @@ const seasonalTest=(function(){
   const walking=s.walk,phase=Math.floor(s.time*7)%4;
   let f={expr:sim.mode==='down'?'sleepy':emotion().key==='happy'?'happy':'neutral',look:s.facing||1,bob:swimming?0:walking?phase%2:0,sway:swimming?0:walking?phase%2:0,wave:swimming?arm:null};
   let dc=dollCanvas(f,s.pose|| (sea&&s.lying!==null?'sit':swimming?'stand':walking?(phase===1?'walkL':phase===3?'walkR':'stand'):'stand'));
-  const hf=s.inside&&!walking&&sim.mode!=='down'&&window.seasonHouse?.frame();   // using a season house: the home's own face, pose and bubble for that act
+  const hf=(s.inside||['phone_feed','phone_game'].includes(sim.act))&&!walking&&sim.mode!=='down'&&window.seasonHouse?.frame();   // using a season house: the home's own face, pose and bubble for that act
   if(hf){f={...f,...hf.f,look:hf.f.look===0?0:(s.facing||1)};dc=dollCanvas(f,s.pose||hf.pose);}
   if(sea&&window.__surfHero&&!s.inside){const h=window.__surfHero;let d=dc;if(h.pose){d=dollCanvas(f,h.pose);if(s.suit!=='clothes'){bodyCtx.clearRect(0,0,20,28);bodyCtx.drawImage(sea.sheet,4,14,20,14,0,14,20,14);bodyCtx.drawImage(d,0,0,20,15,0,0,20,15);d=body;}}h.args={dc:d,skin:ramps.skin,sheet:sea.sheet};return;}   // riding a wave: summer_more draws her on the board, above the water
   if(sea&&(sea.under||sea.floating)&&!s.inside){state.summer.fx.swimmer(ctx,{head:dc,skinRamp:ramps.skin,sheet:sea.sheet,x,y,time:s.time,facing:s.facing,diving:sea.under,moving:s.walk,wetsuit:s.suit==='wetsuit',waterline:116});return;}
@@ -26,6 +26,7 @@ const seasonalTest=(function(){
   else ctx.drawImage(dc,-10,-DH+1);
   ctx.restore();
   if(hf?.emote)ctx.drawImage(emoteCanvas(hf.emote),Math.round(x)+3,Math.round(y)-DH-14);
+  else if(!hf&&remoteSocial&&!swimming&&sim.mode!=='down'&&Math.floor(s.time/2.4)%2===0)ctx.drawImage(emoteCanvas('friend'),Math.round(x)+3,Math.round(y)-DH-14);   // on the phone: the home's chat bubble
  }
  state.spring=makeSeason_spring({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='spring_test'});
  state.summer=makeSeason_summer({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='summer_test'});

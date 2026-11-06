@@ -25,6 +25,12 @@ const summerLodge=(function(){
  const hitSpot=(x,y)=>{for(const [id,p]of Object.entries(SPOTS))if(inRect(x,y,p.rect))return id;return null;};
  function stop(){if(!svc)return;const s=C().state;s.pose=null;s.hideHero=false;s.iy=0;seasonHouse.drop(svc.act);svc=null;}
  const ALIAS={bath:'shower',eat:'dine'};   // the home's act → this lodge's furniture
+ // from anywhere on the island (the sea, the market): ashore, in through the door, then the furniture
+ let goGen=0;function goUse(id,auto=true){const g=++goGen,t0=Date.now(),c=C();
+  const step=()=>{if(g!==goGen||!inBay()||Date.now()-t0>60000)return;const s=c.state;
+   if(s.inside&&!s.door){if(!s.target)use(id,auto);else setTimeout(step,300);return;}
+   if(!s.door&&!s.target&&!s.inCabana&&!summerLife.isBusy()){if(s.market)c.beginDoor('bay');else if(s.y>131)c.goTo(1050,'dive',128);else c.enter();}
+   setTimeout(step,400);};step();}
  function useAct(name){if(!inBay()||!C().state.inside)return false;const id=ALIAS[name]||Object.keys(SPOTS).find(k=>SPOTS[k].act===name);if(!id)return false;use(id,true);return true;}
  function use(id,auto){if(id==='dine'&&!homeMeal())id='stove';   // nothing on the table: cook first, then eat (as at home)
   if(id==='stove'&&!auto){closeRing();seasonHouse.menu('summer');return;}   // the player clicked the stove (or an empty table): the menu
@@ -55,6 +61,6 @@ const summerLodge=(function(){
   if(svc.id==='shower'){ctx.fillStyle='#bfe3f2';for(let i=0;i<6;i++){const y=38+((t*40+i*7)%36);ctx.fillRect(280+(i*5)%10,Math.round(y),1,2);}seasonHouse.emote(ctx,p.x+3,40);}}
  const COOK_FX=[258,39],MEAL_AT=[227,53];   // the home's pan steam over the burners, the dish on the dining table
  const oArrive=arriveAt;arriveAt=function(pl){stop();hinted=false;return oArrive(pl);};
- return {SPOTS,NEED_SPOT,use,useAct,stop,draw,get svc(){return svc;}};
+ return {SPOTS,NEED_SPOT,use,useAct,goUse,stop,draw,get svc(){return svc;}};
 })();
 window.summerLodge=summerLodge;

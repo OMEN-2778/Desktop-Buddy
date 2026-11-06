@@ -116,7 +116,7 @@ const infeiFarm=(()=>{
  const inRect=(x,y,[x0,x1,y0,y1])=>x>=x0&&x<=x1&&y>=y0&&y<=y1;
  // ================================================================ 爸妈帮忙浇水
  const parent={on:false,who:'mom',x:380,tx:null,done:null,t:0,n:null,water:0,bed:null};
- function planHelp(d){if(X.seasonAt(d)!==3&&Math.random()<.35)S().help={day:d,at:d*1440+Math.round((9+Math.random()*7)*60),who:Math.random()<.5?'mom':'dad',done:false};}
+ function planHelp(d){if(X.seasonAt(d)!==3&&Math.random()<.7)S().help={day:d,at:d*1440+Math.round((9+Math.random()*7)*60),who:Math.random()<.5?'mom':'dad',done:false};}
  const pName=w=>w==='mom'?'妈妈':'爸爸';
  function dryBed(day){return X.F.open.find(i=>{const b=X.bedOf(i);return b&&!X.ripe(b)&&b.watered!==day;});}
  function helpOff(d){const h=S().help;if(!h||h.day!==d||h.done)return;h.done=true;const i=dryBed(d);if(i==null)return;X.bedOf(i).watered=d;log(`${pName(h.who)}回来了一趟，帮你给第 ${X.F.open.indexOf(i)+1} 块田浇了水。`);}

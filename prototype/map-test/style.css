@@ -138,3 +138,55 @@ body:has(.social-sheet.fu-big-sheet:not([hidden])) #diaryBox{visibility:hidden} 
 .picker.infei-ui .pk-item img{padding:2px;background:#fff;border:2px solid #e6dff0;border-radius:6px}
 .picker.infei-ui .fu-why{border-radius:5px}
 .picker.infei-ui .pk-item img{width:32px!important;height:32px!important;image-rendering:pixelated}
+/* ---- iOS motion (season_motion.js; owner 2026-11-06: 所有 UI 动效对标 iOS) ----
+   One curve everywhere (iOS sheets/springs): fast start, long soft settle, no bounce past the edge. */
+:root{--ios:cubic-bezier(.32,.72,0,1);--ios-out:cubic-bezier(.4,0,.9,.4)}
+.social-sheet.fu-sheet,.social-sheet.fu-big-sheet{animation:iosIn .46s var(--ios) both;transform-origin:50% 60%}
+.social-sheet.ios-keep{animation:none}
+.social-sheet.ios-out{animation:iosOut .2s var(--ios-out) forwards!important;pointer-events:none}
+@keyframes iosIn{from{opacity:0;transform:translateY(16px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes iosOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(8px) scale(.97)}}
+.ios-swap{animation:iosSwap .34s var(--ios) both}
+@keyframes iosSwap{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.social-sheet:not(.ios-keep) :is(.st-card,.st-slot,.dex-tile,.fu-stats>div,.fu-ledger li,.fu-stages li,.fu-cell,.st-banner,.fu-plant-top,.fu-ranch-body,.fu-balance),
+.ios-swap :is(.st-card,.st-slot,.dex-tile,.fu-stats>div,.fu-ledger li,.fu-cell,.fu-balance){animation:iosItem .5s var(--ios) both;animation-delay:calc(.05s + var(--k,0) * 28ms)}
+@keyframes iosItem{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+/* press: sink a little, spring back */
+.social-sheet button,.picker .pk-item,.picker button,.dex-tab,.st-card,.bay-wardrobe button,.autumn-panel button,.airport-controls button,.qb-card{
+ transition:transform .38s var(--ios),background-color .22s,border-color .22s,color .22s,box-shadow .22s,opacity .22s}
+:is(.social-sheet button,.picker .pk-item,.picker button,.dex-tab,.bay-wardrobe button,.autumn-panel button,.airport-controls button):not([disabled]):not([aria-disabled=true]):active{transform:scale(.95);transition-duration:.09s}
+@media(hover:hover){.st-card:hover,.dex-tile:hover{transform:translateY(-2px)}.dex-tile{transition:transform .38s var(--ios)}}
+.social-sheet-content,.qb-list{scroll-behavior:smooth}
+.bay-wardrobe:not([hidden]),.autumn-panel:not([hidden]){animation:iosIn .46s var(--ios) both}
+.bay-photo{animation:iosIn .5s var(--ios) both}
+@media(prefers-reduced-motion:reduce){.social-sheet.fu-sheet,.social-sheet.fu-big-sheet,.ios-swap,.social-sheet :is(.st-card,.st-slot,.dex-tile,.fu-stats>div,.fu-ledger li,.fu-stages li,.fu-cell,.st-banner,.fu-plant-top,.fu-ranch-body,.fu-balance),.bay-wardrobe,.autumn-panel,.bay-photo{animation:none!important}}
+/* ---- 丢丢平板电脑 (owner 2026-11-06: 要看得出是平板，又不能太仿真，好读第一): graphite bezel, camera, status bar, app tiles ---- */
+.social-sheet.fu-pc.fu-pc{position:absolute;box-sizing:border-box;display:flex;flex-direction:column;padding:12px 14px 12px 26px;background:linear-gradient(160deg,#3a3844,#26252d)!important;
+ border:0;border-radius:24px;box-shadow:0 0 0 2px #17161c,inset 0 0 0 2px #55525f,inset 0 2px 0 3px #6a6676,5px 7px 0 #0003;overflow:hidden;clip-path:none}
+.social-sheet.fu-pc>h3{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.fu-pc .pc-cam{position:absolute;left:10px;top:50%;width:7px;height:7px;margin-top:-3px;border-radius:50%;background:#121116;box-shadow:inset 0 0 0 1.5px #4a4756,inset 1px 1px 0 2px #2a3550}
+.fu-pc .pc-screen{flex:1;min-height:0;display:flex;flex-direction:column;border-radius:14px;overflow:hidden;background:linear-gradient(170deg,#f3f8f2 0%,#eaf2f7 55%,#f6efe6 100%);box-shadow:inset 0 0 0 1px #0002}
+.fu-pc .pc-status{flex:none;display:flex;align-items:center;gap:8px;height:24px;padding:0 74px 0 14px;font-size:12px;font-weight:700;color:#3b3946;font-variant-numeric:tabular-nums}
+.fu-pc .pc-status b{flex:1;text-align:center;font-size:12px;color:#6b6878;letter-spacing:.08em}
+.fu-pc .pc-sig{display:inline-flex;align-items:flex-end;gap:2px;height:10px}.fu-pc .pc-sig i{width:3px;border-radius:1px;background:#3b3946}
+.fu-pc .pc-sig i:nth-child(1){height:4px}.fu-pc .pc-sig i:nth-child(2){height:7px}.fu-pc .pc-sig i:nth-child(3){height:10px}
+.fu-pc .pc-bat{position:relative;width:20px;height:10px;border:1.5px solid #3b3946;border-radius:3px;box-sizing:border-box}
+.fu-pc .pc-bat::after{content:"";position:absolute;right:-4px;top:2px;width:2px;height:3px;border-radius:0 1px 1px 0;background:#3b3946}
+.fu-pc .pc-bat i{position:absolute;inset:1px 5px 1px 1px;border-radius:1px;background:#5cb85c}
+.social-sheet.fu-pc .social-sheet-close{position:absolute;z-index:3;top:14px;right:20px;height:20px;padding:0 10px;font-size:12px;border-radius:10px;background:#fff;border:1px solid #0002;box-shadow:0 1px 2px #0002;clip-path:none}
+.social-sheet.fu-pc .social-sheet-content{flex:1;min-height:0;display:flex;flex-direction:row;gap:12px;padding:6px 12px 12px;overflow:hidden}
+.social-sheet.fu-pc.fu-pc .fu-nav{flex:none;display:flex;flex-direction:column;gap:6px;padding:8px 6px;border-radius:14px;background:#ffffff8c;box-shadow:inset 0 0 0 1px #0000000d}
+.social-sheet.fu-pc.fu-pc .fu-nav button{display:flex;flex-direction:column;align-items:center;gap:3px;width:66px;padding:6px 2px;background:none;border:0;box-shadow:none;border-radius:12px;clip-path:none;color:#4a4756;font-size:11px;font-weight:700}
+.social-sheet.fu-pc.fu-pc .fu-nav button .fu-ic{box-sizing:content-box;width:24px;height:24px;padding:7px;border-radius:10px;background:var(--app,#ddd);box-shadow:inset 0 -2px 0 #0002,inset 0 1px 0 #fff8,0 1px 2px #0002}
+.social-sheet.fu-pc.fu-pc .fu-nav button.on{background:#fff;color:#2b2a33;box-shadow:0 1px 3px #0002}
+.social-sheet.fu-pc.fu-pc .fu-nav button:hover:not(.on){background:#ffffff80}
+.social-sheet.fu-pc.fu-pc .fu-nav span{display:block!important;white-space:nowrap}
+.social-sheet.fu-pc.fu-pc .fu-main{border:0;border-radius:14px;background:#fffffff0;box-shadow:0 1px 3px #0001,inset 0 0 0 1px #0000000a;padding:12px 14px;clip-path:none}
+.social-sheet.fu-pc.fu-pc .fu-stats>div{border-radius:10px;background:#f6f5f9;border:0;box-shadow:inset 0 0 0 1px #0000000d}
+.social-sheet.fu-pc.fu-pc .fu-balance{border-radius:12px}
+.social-sheet.fu-pc.fu-pc .fu-chart{max-width:100%;height:auto;border-radius:10px;border:0;box-shadow:inset 0 0 0 1px #0000000f;align-self:stretch}
+.social-sheet.fu-pc.fu-pc .fu-main button{border-radius:10px;clip-path:none;border:1px solid #00000014;background:#f3f2f7;box-shadow:0 1px 1px #0000000f;color:#2f2d38}
+.social-sheet.fu-pc.fu-pc .fu-main button.fu-primary{background:#6fc28e;border-color:#4f9c6e;color:#fff}
+.social-sheet.fu-pc.fu-pc .fu-main button:disabled{background:#f3f2f7;color:#a7a4b2}
+.social-sheet.fu-pc.fu-pc .fu-main button::before,.social-sheet.fu-pc.fu-pc .fu-main button::after{display:none}
+.social-sheet.fu-pc.fu-pc .fu-main .fu-cell.on{background:#eaf6ee;border-color:#6fc28e}

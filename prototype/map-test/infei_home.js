@@ -63,7 +63,7 @@ const infeiHome=(function(){
   if(!inSpring()||springFarm.state.phase!=='done'||s.door||s.target||wiping||cardHolds()||ringOf||sim.mode==='down'||life.talkQ)return;
   const low=Object.entries(sim.needs).filter(([k,v])=>v<25&&NEED_SPOT[k]).sort((a,b)=>a[1]-b[1])[0];
   if(low){care(low[0]);return;}
-  if(s.inside&&sim.t>=T.state.autoAt){T.state.autoAt=sim.t+40;c.leave();}   // nothing to do inside: back out to the yard
+  if(s.inside&&sim.t>=T.state.autoAt){T.state.autoAt=sim.t+40;const m=sim.t%1440;if(m>=19*60||m<6*60)return;c.leave();}   // (evenings and nights she stays in: season_auto.js)   // nothing to do inside: back out to the yard
  });
  // asleep in a 架子床 (owner 2026-11-03): a head on its side on the pillow, the bed's own quilt bulging over the body
  // (art/src/concept/infei_bed_covers.py). Hers while she sleeps; 爸妈 in theirs at night (22:00-6:00), unless 妈妈 is up.
@@ -74,7 +74,7 @@ const infeiHome=(function(){
  function sleepers(ctx,she){
   if(!covers){covers={};for(const [k,u]of Object.entries(INFEI_COVERS)){const im=new Image();im.src=u;covers[k]=im;}}
   const m=sim.t%1440,night=m>=22*60||m<6*60;
-  if(night&&!springFarm.mom.on&&covers.parents?.complete){const [bx,by]=BEDS.parents;dadN??=npcOf('dad','m');
+  if(night&&!springFarm.mom.on&&!window.seasonParents?.farmCny()&&covers.parents?.complete){const [bx,by]=BEDS.parents;dadN??=npcOf('dad','m');
    ctx.drawImage(lying(npcCanvas(dadN,SLEEPY,'stand')),bx+HEAD[0]+4,by+HEAD[1]-5);ctx.drawImage(lying(npcCanvas(springFarm.momNpc(),SLEEPY,'stand')),bx+HEAD[0],by+HEAD[1]);ctx.drawImage(covers.parents,bx,by);}
   if(she&&covers.mine?.complete){const [bx,by]=BEDS.mine;ctx.drawImage(lyingHead(SLEEPY),bx+HEAD[0],by+HEAD[1]);ctx.drawImage(covers.mine,bx,by);}
  }

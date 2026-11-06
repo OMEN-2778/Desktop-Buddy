@@ -18,11 +18,11 @@ const enter=async()=>{await ev(()=>{window.__home=0;if(sim.place!=='home'){sim.p
  await p.waitForFunction(()=>sim.place==='summer_test'&&!wiping&&!airportTravel.flight.busy,null,{timeout:40000});await ev(()=>{summerLife.B().met=true;seasonMapTest.state.autoAt=sim.t+1e9;});await wait(600);};
 const goneHome=async(max=60)=>{for(let i=0;i<max;i++){await wait(500);if(await ev(()=>window.__home&&!airportTravel.flight.busy&&!wiping))return true;}return false;};
 const said=()=>ev(()=>[...document.querySelectorAll('#say span,.say span,#popSay span')].map(e=>e.textContent).join('|')+' '+(window.__lastSay||''));
-const hookSay=()=>ev(()=>{if(window.__hooked)return;window.__hooked=1;const oa=arriveAt;arriveAt=function(pl){if(pl==='home')window.__home=1;return oa.apply(this,arguments);};const o=speak;speak=function(w){window.__lastSay=w;return o.apply(this,arguments);};const o2=summerLife.speakBay;if(o2)summerLife.speakBay=function(w){window.__lastSay=w;return o2.apply(this,arguments);};});await hookSay();
+const hookSay=()=>ev(()=>{if(window.__hooked)return;window.__hooked=1;const oa=arriveAt;arriveAt=function(pl){if(pl==='home')window.__home=1;return oa.apply(this,arguments);};const o=speak;speak=function(w){window.__lastSay=w;(window.__says||=[]).push(w);return o.apply(this,arguments);};const o2=summerLife.speakBay;if(o2)summerLife.speakBay=function(w){window.__lastSay=w;(window.__says||=[]).push(w);return o2.apply(this,arguments);};});await hookSay();
 const winterFrom=async(name,setup,after)=>{await enter();await ev(setup);await wait(1500);
- await ev(t=>{sim.t=t;window.__lastSay='';},autumnEnd);
+ await ev(t=>{sim.t=t;window.__lastSay='';window.__says=[];},autumnEnd);
  if(after){await wait(4000);ok('waits while '+name,await ev(()=>sim.place==='summer_test'));await ev(after);}
- const home=await goneHome(50);const line=await ev(()=>/航班|飞机/.test(window.__lastSay||''));
+ const home=await goneHome(50);const line=await ev(()=>/航班|飞机/.test((window.__says||[]).join('|')));   // any line since: at home she may already have said something else
  ok('winter → home from '+name,home&&line,await ev(()=>sim.place+' '+(window.__lastSay||'')));};
 await winterFrom('the beach',()=>{const c=seasonMapTest.state.summer;c.state.x=700;c.state.y=c.gr(700);});
 await winterFrom('deep sea',()=>{const c=seasonMapTest.state.summer;c.state.suit='swim';c.state.x=3000;c.state.y=340;});

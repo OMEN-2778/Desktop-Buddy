@@ -6,7 +6,7 @@
 // adapter.js asks act(c) when she is idle; anything the player does calls cancel().
 (function(){
  const T=()=>seasonMapTest.state;let gen=0;
- const cancel=()=>{gen++;};
+ let playerAt=-1e9;const cancel=()=>{gen++;playerAt=sim.t;};
  const pickW=list=>{const ok=list.filter(o=>o[1]>0);let r=Math.random()*ok.reduce((a,o)=>a+o[1],0);for(const o of ok)if((r-=o[1])<0)return o[0];return ok[0]?.[0];};
  // ---------------------------------------------------------------- 茵菲谷
  const sp=()=>T().spring,X=()=>springFarm.X,F=()=>springFarm.state,today=()=>Math.floor(sim.t/1440);
@@ -39,7 +39,7 @@
   setTimeout(()=>{if(g!==gen||sim.place!=='summer_test'){s.inCabana=false;return;}c.leaveCabana('swim');setTimeout(()=>{if(g===gen)then();},900);},1600);});}
  function swimSomewhere(c){const x=SEA[0]+Math.random()*(SEA[1]-SEA[0]),g=c.gr(x),down=Math.random()<.5&&g>SURF_Y+40;
   c.goTo(x,'dive',down?SURF_Y+20+Math.random()*Math.min(120,g-SURF_Y-30):SURF_Y);}
- function bay(c){const L=summerLife;if(L.isBusy()||summerFloat.busy()||c.state.inCabana||c.state.lying!==null||storyLocked())return false;
+ function bay(c){const L=summerLife;if(window.summerLodge?.svc||L.isBusy()||summerFloat.busy()||c.state.inCabana||c.state.lying!==null||storyLocked())return false;
   const s=c.state,swim=s.suit&&s.suit!=='clothes',wet=c.deep(s.x),free=summerFloat.FLOATS.map((f,i)=>i).filter(i=>!summerFloat.sitter(i));
   if(s.market){const what=pickW([['stroll',60],['back',40]]);
    if(what==='back'){c.beginDoor('bay');return true;}c.goTo(40+Math.random()*(L.MW-80));return true;}
@@ -52,7 +52,30 @@
   return false;}
  // a float she sat down in by herself: she gets up again after a while
  setInterval(()=>{const f=window.summerFloat;if(sim.place==='summer_test'&&f?.sitting?.on&&f.sitting.auto&&performance.now()>f.sitting.auto){f.stand();}},1000);
- function act(c){if(Object.values(sim.needs).some(v=>v<40))return true;   // low needs: the house / lodge care takes her, no plans of her own
+ // ---------------------------------------------------------------- 夜里（owner 2026-11-06：夜里更偏向于在家，偶尔夜潜）
+ // like the home: in bed from 22:30 to 6:00; in the evening mostly in the house, now and then a walk or (草帽湾) a night dive
+ const mins=()=>((sim.t%1440)+1440)%1440,bedtime=()=>mins()>=22*60+30||mins()<6*60,evening=()=>mins()>=19*60;
+ function night(c){const s=c.state,bay=sim.place==='summer_test';
+  if(bay?window.summerLodge?.svc:infeiHome.svc)return true;   // using the house already
+  if(bedtime()){if(sim.mode==='act'&&sim.act==='sleep')return true;if(bay)summerLodge.goUse('bed');else infeiHome.use('bed',true);return true;}
+  if(!evening())return false;
+  if(bay){if(summerLife.isBusy()||summerFloat.busy()||s.inCabana||s.lying!==null||storyLocked())return true;
+   const swim=s.suit&&s.suit!=='clothes',wet=c.deep(s.x);
+   const what=pickW([['home',72],['dive',12],['shore',wet?0:16]]);
+   if(what==='dive'){const go=()=>{const x=SEA[0]+Math.random()*(SEA[1]-SEA[0]),g=c.gr(x);c.goTo(x,'dive',g>SURF_Y+40?SURF_Y+30+Math.random()*Math.min(110,g-SURF_Y-40):SURF_Y);};if(!swim)change(c,go);else go();return true;}
+   if(what==='shore'){if(s.inside){c.leave();return true;}c.goTo(820+Math.random()*200);return true;}
+   summerLodge.goUse(pick(['sofa','sofa','uke','table','dine'].filter(k=>k!=='dine'||homeMeal())));return true;}
+  if(window.infeiQuests?.busy||storyLocked()||springFarm.state.phase!=='done')return false;
+  if(Math.random()<.8){infeiHome.use(pick(['settee','settee','table','jar','wardrobe']),true);return true;}
+  if(s.inside){c.leave();return true;}return false;}
+ // bedtime is checked every second (act() only runs every 20-45 minutes): she heads for bed right at 22:30
+ setInterval(()=>{try{if(!['spring_test','summer_test'].includes(sim.place)||!speed||!bedtime()||wiping||cardHolds()||life.talkQ||storyLocked()||sim.mode==='down'||ringOf)return;
+  if(sim.mode==='act'&&sim.act==='sleep')return;if(seasonHouse.busy())return;const c=sim.place==='summer_test'?sm():sp();if(c.state.door||sim.t-playerAt<45)return;   // the player just sent her somewhere: let her get there first
+  if(Object.entries(sim.needs).some(([k,v])=>v<25&&k!=='energy'))return;   // the toilet, a meal first (the house care)
+  night(c);}catch(e){}},1000);
+ function act(c){
+  try{if(['spring_test','summer_test'].includes(sim.place)&&!Object.entries(sim.needs).some(([k,v])=>v<25&&k!=='energy')&&night(c))return true;}catch(e){console.warn('season night',e);}
+  if(Object.values(sim.needs).some(v=>v<40))return true;   // low needs: the house / lodge care takes her, no plans of her own
   try{if(sim.place==='spring_test')return spring(c);if(sim.place==='summer_test')return bay(c);}catch(e){console.warn('season auto',e);}return false;}
  window.seasonAuto={act,cancel,toScene};
 })();

@@ -44,12 +44,89 @@ const CNY_STEPS = [
   { at: 24 * 60 + 15, id: "bedtime", pos: { dad: [196, "stand"], mom: [206, "stand"] }, leave: true,
     lines: [["mom", "不早了，我们先去睡啦。"], ["dad", "你也早点睡，明天睡个懒觉。"]] },
 ];
-const CNY_TALK = {
-  morning: [["mom", "早饭吃了吗？我给你煮了鸡蛋。"], ["dad", "这屋子收拾得不错，比我想的干净。"], ["mom", "冰箱里我塞满了，记得吃。"]],
-  day: [["dad", "最近工作累不累？别太拼。"], ["mom", "瘦了，是不是没好好吃饭？"], ["dad", "你小时候过年，总抢着放鞭炮。"], ["mom", "隔壁王阿姨家孩子都结婚了……我就随便一说。"], ["dad", "来，陪爸下盘棋。"], ["mom", "这件衣服好看，过年就该穿得喜庆点。"]],
-  night: [["mom", "被子够不够厚？晚上别着凉。"], ["dad", "守岁守到零点，来年精神好。"], ["mom", "明天早上吃汤圆，妈给你煮。"]],
+// Owner 2026-11-06: 爸妈每年春节都说一样的话 → every step has several versions; each new year picks one per step it
+// didn't play last year (cnyVariant). "farm" versions are for 茵菲谷, where the parents live (infei: season_parents.js);
+// a version marked home:true only fits the city flat.
+const CNY_ALTS = {
+  arrive: [
+    { lines: [["mom", "开门开门，手冻僵了！"], ["me", "快进来！路上冷吧？"], ["dad", "车站人挤人，你妈差点把年货落车上。"]], diary: "爸妈挤了一路车，拎着年货进了门。" },
+    { lines: [["dad", "这楼道灯怎么还没修？"], ["me", "报修好几回了……"], ["mom", "先别管灯，快接东西，鸡蛋别磕了。"]], diary: "爸妈到了，妈妈一路护着那篮土鸡蛋。" },
+    { lines: [["mom", "我们到啦——你是不是刚起？"], ["me", "……没有，早起来了。"], ["mom", "头发还翘着呢。"], ["dad", "过年嘛，睡个懒觉怎么了。"]], diary: "爸妈到的时候我刚起床，头发还翘着。" },
+    { lines: [["dad", "给，你最爱吃的那家腊肠，排了半小时队。"], ["me", "爸你还记得！"], ["mom", "他念叨一路了。"]], diary: "爸爸排了半小时队，买了我从小爱吃的那家腊肠。" }],
+  couplets: [
+    { lines: [["mom", "糨糊抹匀点，边角也抹上。"], ["me", "抹好了！"], ["dad", "我扶着，你看歪没歪。"], ["me", "……有一点点。"], ["dad", "那就是你看歪了。"]], diary: "贴春联时，爸爸坚持是我看歪了。" },
+    { lines: [["me", "今年这副写的什么？"], ["dad", "我自己写的，家和万事兴。"], ["mom", "字是你爸写的，纸是我挑的。"], ["me", "那我负责贴！"]], diary: "今年的春联是爸爸亲手写的。" },
+    { lines: [["dad", "上联贴右边还是左边？"], ["mom", "右边！年年问。"], ["dad", "年年问，年年忘。"], ["me", "我拍下来，明年给你看。"]], diary: "爸爸又忘了上联贴哪边，我拍了张照片留着明年用。" },
+    { lines: [["me", "福字我来贴！"], ["mom", "倒着贴啊。"], ["me", "知道知道。"], ["dad", "……你那是横着的。"]], diary: "贴福字的时候一紧张贴横了，又撕下来重贴。" }],
+  dumplings: [
+    { lines: [["mom", "馅儿是白菜猪肉的，你小时候就爱吃这个。"], ["me", "现在也爱。"], ["dad", "我来擀皮，擀皮我是专业的。"], ["mom", "上回擀得跟鞋垫似的。"]], diary: "和爸妈一起包饺子，爸爸擀的皮有大有小。" },
+    { lines: [["me", "妈，这个褶怎么捏？"], ["mom", "大拇指压住，一推一捏。"], ["me", "……它漏了。"], ["mom", "没事，漏的煮了你吃。"]], diary: "学捏饺子褶，漏馅的那几个都归我了。" },
+    { lines: [["dad", "硬币我放这个里头了，捏个记号。"], ["mom", "做了记号还叫什么惊喜？"], ["dad", "我是怕吃不着。"]], diary: "爸爸偷偷给包了硬币的饺子捏了个记号。" },
+    { lines: [["mom", "包完这些下锅，剩下的冻起来。"], ["me", "一共包了多少个啊？"], ["dad", "一百二十个，我数了。"], ["me", "三个人吃得完吗？"], ["mom", "过年就是要剩。"]], diary: "三个人包了一百二十个饺子，妈妈说过年就是要剩。" }],
+  lunch: [
+    { lines: [["me", "咯……妈，我又咬到了。"], ["dad", "又是你？"], ["mom", "这孩子福气好。"]], diary: "又咬到了包硬币的饺子，爸爸不服气。" },
+    { lines: [["dad", "蘸醋还是蘸酱油？"], ["me", "醋！"], ["mom", "跟你爸一个口味。"], ["dad", "那必须的。"]], diary: "饺子蘸醋，和爸爸一个口味。" },
+    { lines: [["mom", "多吃点，下午还要忙呢。"], ["me", "我吃了十五个了……"], ["dad", "才十五个，我当年……"], ["mom", "你当年吃完就躺下了。"]], diary: "中午吃了十五个饺子，还被说吃得少。" },
+    { lines: [["dad", "我咬到了！硬币是我的！"], ["mom", "你做了记号，你当然咬得到。"], ["me", "爸，这不公平。"]], diary: "今年的硬币被爸爸吃到了，因为他做了记号。" }],
+  envelope: [
+    { lines: [["dad", "压岁钱，拿着。"], ["me", "我都工作了，该我给你们才对。"], ["mom", "你给你的，我们给我们的。"], ["me", "那……谢谢爸妈！"]], diary: "说好今年该我给爸妈红包，结果还是被塞了一个。" },
+    { lines: [["mom", "红包里还有张纸条，回头再看。"], ["me", "写的什么呀？"], ["mom", "回头再看。"]], diary: "压岁钱的红包里夹着一张妈妈写的纸条。" },
+    { lines: [["me", "爸妈，这是我给你们的！"], ["dad", "哎哟，孩子长大了。"], ["mom", "这钱我们给你存着。"], ["me", "那不还是我的……"]], diary: "给爸妈包了红包，妈妈说替我存着。" },
+    { lines: [["dad", "来，新票子，我专门去银行换的。"], ["me", "还是连号的！"], ["mom", "你爸排了一上午队。"]], diary: "爸爸专门去银行换了新票子包压岁钱。" }],
+  questions: [
+    { lines: [["mom", "最近睡得好吗？"], ["me", "挺好的。"], ["mom", "眼圈都是黑的。"], ["me", "那是……新年妆。"], ["dad", "噗。"]], diary: "妈妈一眼就看出我最近熬夜。" },
+    { lines: [["dad", "工资涨了没？"], ["me", "涨了一点点。"], ["dad", "一点点是多少？"], ["mom", "孩子的事你别问那么细。"]], diary: "爸爸问工资，妈妈帮我挡了回去。" },
+    { lines: [["mom", "那个……隔壁刘阿姨给介绍了个……"], ["me", "妈！吃瓜子吃瓜子。"], ["dad", "我觉得那小伙子挺好。"], ["me", "你见过？"], ["dad", "……没有。"]], diary: "过年又被问对象，爸爸还假装见过人家。" },
+    { home: true, lines: [["dad", "这房子住得惯吗？冬天冷不冷？"], ["me", "不冷，有暖气。"], ["mom", "有暖气也得多穿点。"], ["me", "知道啦。"]], diary: "爸妈问东问西，问的都是冷不冷、吃得好不好。" },
+    { farm: true, lines: [["dad", "山里冬天冷，晚上炕烧热点。"], ["me", "我会烧了，上回烧得太热，半夜热醒。"], ["mom", "那就少添一把柴。"]], diary: "爸妈教我烧炕，说少添一把柴就刚好。" }],
+  feast: [
+    { lines: [["mom", "红烧鱼，八宝饭，还有你爸炖了一下午的排骨。"], ["me", "哇——"], ["dad", "排骨我炖的，你先尝。"], ["me", "爸，好吃！"]], diary: "年夜饭一大桌，爸爸炖了一下午的排骨。" },
+    { lines: [["dad", "来，咱家干一个。"], ["me", "我喝橙汁。"], ["mom", "橙汁也算。"], ["dad", "新年快乐！"]], diary: "一家人举杯，我拿的是橙汁。" },
+    { lines: [["mom", "今年最高兴的事是什么？"], ["me", "嗯……你们来了。"], ["dad", "那明年接着来。"], ["mom", "你爸这句说得像样。"]], diary: "年夜饭上，妈妈问我今年最高兴的事。" },
+    { lines: [["dad", "鱼不能吃完，留着。"], ["me", "我就吃一口鱼尾巴。"], ["mom", "鱼尾巴也不行！"], ["me", "……好吧。"]], diary: "年夜饭的鱼没让吃完，说是年年有余。" }],
+  gala: [
+    { home: true, lines: [["mom", "这个主持人去年也是他。"], ["dad", "每年都是他。"], ["me", "你们记性真好。"]], diary: "看春晚，爸妈把主持人认得一清二楚。" },
+    { home: true, lines: [["dad", "这魔术怎么变的？"], ["me", "肯定有托。"], ["dad", "我再看一遍，我就不信。"]], diary: "春晚的魔术爸爸看了三遍，还是没看出门道。" },
+    { lines: [["mom", "这首歌我年轻时候唱过。"], ["me", "妈你唱两句？"], ["mom", "……不唱。"], ["dad", "她在厨房偷偷唱过。"]], diary: "春晚放了妈妈年轻时唱过的歌，她不肯唱。" },
+    { lines: [["me", "爸，你又睡着了。"], ["dad", "没有，我闭着眼听。"], ["mom", "呼噜都打上了。"]], diary: "爸爸听春晚听睡着了，还说自己在闭眼听。" },
+    { farm: true, lines: [["dad", "收音机我从镇上借来的，就为听个春晚。"], ["mom", "只有声儿也挺好，跟我小时候一样。"], ["me", "那我闭着眼睛想画面！"]], diary: "山里没有电视，一家人围着收音机听春晚。" },
+    { farm: true, lines: [["me", "手机信号就一格，春晚卡住了。"], ["dad", "卡住正好，聊聊天。"], ["mom", "那你说说，这一年都干啥了。"]], diary: "春晚卡住了，一家人干脆聊起了这一年。" }],
+  countdown: [
+    { lines: [["dad", "十、九、八……"], ["mom", "你数快了！"], ["me", "三、二、一——新年快乐！"]], diary: "零点倒数时爸爸数快了，我们又重数了一遍。" },
+    { home: true, lines: [["me", "新年快乐！"], ["mom", "新年快乐，今年要好好的。"], ["dad", "走，看烟花去！"], ["me", "去窗边看吧，外面冷。"]], diary: "零点到了，一家人挤在窗边看烟花。" },
+    { lines: [["mom", "许个愿吧。"], ["me", "许好了。"], ["dad", "许的什么？"], ["me", "不能说。"], ["dad", "我猜，是想要个大红包。"]], diary: "零点许了个愿，没告诉爸妈。" },
+    { lines: [["dad", "新的一年，祝你……嗯……"], ["mom", "顺顺利利！"], ["dad", "对，顺顺利利！我刚要说。"]], diary: "零点爸爸的祝福说到一半卡住了，妈妈替他说完。" },
+    { farm: true, lines: [["dad", "镇上捎来的两挂鞭，零点放！"], ["me", "我来点！"], ["mom", "点完就跑，站远点！"], ["me", "新年快乐——！"]], diary: "零点在院子里放了鞭炮，山谷里回声响了好久。" }],
+  bedtime: [
+    { lines: [["mom", "被子给你铺好了。"], ["dad", "明早别叫我们。"]] },
+    { lines: [["dad", "我先去睡了，守岁守不动了。"], ["mom", "你每年都这么说。"]] },
+    { lines: [["mom", "早点睡，明天还要去拜年。"], ["me", "好～晚安！"]] }],
 };
-const CNY_REPLY = ["嗯嗯！", "知道啦～", "爸妈最好了", "哈哈哈", "好嘞！", "放心吧"];
+// 茵菲谷: the parents live there, so they don't arrive with luggage
+const CNY_FARM_ARRIVE = [
+  { lines: [["mom", "起来啦？今天过年，早上吃汤圆。"], ["me", "芝麻的吗？"], ["mom", "芝麻的。"], ["dad", "我去把院子扫一扫。"]], diary: "在茵菲谷过年，一早妈妈就煮了汤圆。" },
+  { lines: [["dad", "鸡我喂过了，你多睡会儿也行。"], ["me", "今天过年哪还睡得着！"], ["mom", "那来帮我剥蒜。"]], diary: "过年这天爸爸早早喂了鸡，妈妈喊我剥蒜。" },
+  { lines: [["mom", "今年在山里过年，安静是安静，就是买不着鞭炮。"], ["dad", "我托镇上捎了两挂。"], ["me", "爸你最会了！"]], diary: "第一次在山里过年，爸爸托镇上捎了鞭炮。" }];
+// which version of a step this year: never the one played last time
+function cnyVariant(step, where = "home") {
+  const key = where + ":" + step.id;
+  if ((cny.v ||= {})[key]) return cny.v[key];
+  const base = { lines: step.lines, diary: step.diary, home: step.id === "gala" || step.id === "arrive" }, other = where === "farm" ? "home" : "farm";
+  const pool = (where === "farm" && step.id === "arrive" ? CNY_FARM_ARRIVE : [base, ...(CNY_ALTS[step.id] || [])]).filter(v => !v[other]);
+  const last = ((lifeFlags.cnyLast ||= {})[key]), i = pool.length > 1 ? pick(pool.map((v, i) => i).filter(i => i !== last)) : 0;
+  lifeFlags.cnyLast[key] = i;
+  return (cny.v[key] = pool[i]);
+}
+const CNY_TALK = {
+  morning: [["mom", "早饭吃了吗？我给你煮了鸡蛋。"], ["dad", "这屋子收拾得不错，比我想的干净。"], ["mom", "冰箱里我塞满了，记得吃。"], ["mom", "今天穿新衣服啊，我给你买的那件。"], ["dad", "粥煮好了，多喝一碗。"],
+    ["mom", "头发梳梳，等会儿拍全家福。"], ["dad", "昨晚睡得好不？"], ["mom", "汤圆是芝麻馅的，你最爱的那种。"]],
+  day: [["dad", "最近工作累不累？别太拼。"], ["mom", "瘦了，是不是没好好吃饭？"], ["dad", "你小时候过年，总抢着放鞭炮。"], ["mom", "隔壁王阿姨家孩子都结婚了……我就随便一说。"], ["dad", "来，陪爸下盘棋。"], ["mom", "这件衣服好看，过年就该穿得喜庆点。"],
+    ["dad", "瓜子你放哪儿了？"], ["mom", "过完年我给你把窗帘洗了。"], ["dad", "手机上怎么发红包？你教教我。"], ["mom", "你那个好朋友过年回家没？"], ["dad", "你妈又在偷吃糖。"],
+    ["mom", "你爸刚才是不是偷偷抽烟了？"], ["dad", "这盘棋你让着我点。"], ["mom", "过年别光玩手机，陪你爸说说话。"], ["dad", "你小时候过年非要穿那双红靴子，夏天都不肯脱。"], ["mom", "饿不饿？锅里还有饺子。"]],
+  night: [["mom", "被子够不够厚？晚上别着凉。"], ["dad", "守岁守到零点，来年精神好。"], ["mom", "明天早上吃汤圆，妈给你煮。"], ["dad", "今晚守岁，谁先睡谁输。"], ["mom", "被子我给你加了一床。"],
+    ["dad", "明天带你去逛庙会。"], ["mom", "你小时候守岁，十点就睡着了。"], ["dad", "外头烟花真亮啊。"]],
+};
+const CNY_REPLY = ["嗯嗯！", "知道啦～", "爸妈最好了", "哈哈哈", "好嘞！", "放心吧", "等会儿啊～", "真的假的？", "我也想你们", "嘿嘿"];
 
 const cny = { day: null, done: new Set(), q: [], qAt: 0, actors: null, couplets: false, envelopeUntil: 0, dish: null, tickAt: 0, lastT: 0 };
 const cnyRect = id => { const c = CLICK[id]; return [c.x, c.y, c.w ?? c.img?.width ?? 0, c.h ?? c.img?.height ?? 0]; };
@@ -64,7 +141,7 @@ const cnyMin = () => sim.t - cny.day * 1440;
 function cnyPresent() {
   const b = cnyBase();
   if (b === null) return false;
-  if (cny.day !== b) { cny.day = b; cny.done = new Set(); cny.q = []; cny.couplets = false; cny.actors = null; cny.dish = null; cny.greet = false; cny.gone = false; }
+  if (cny.day !== b) { cny.day = b; cny.v = {}; cny.done = new Set(); cny.q = []; cny.couplets = false; cny.actors = null; cny.dish = null; cny.greet = false; cny.gone = false; }
   return cnyMin() >= CNY_STEPS[0].at && !cny.gone && cnyParents().length;
 }
 function cnyFree() {
@@ -91,6 +168,7 @@ function cnyRun(step, live) {
   if (step.leave) cny.leaving = true;
   if (!live) return;
   if (step.act && cnyFree()) { sim.player = true; startAct(step.act, true); sim.player = false; }
+  step = { ...step, ...cnyVariant(step) };
   cny.q.push(...step.lines.map(([who, text]) => ({ who, text: fill(text, {}) })));
   if (step.envelope) cny.envelopeUntil = realClock + 6;
   const talk = step.lines.map(([who, text]) => [who === "me" ? nameOf() + "：" : contactName(A[who]?.c || { name: who }) + "：", text]);
