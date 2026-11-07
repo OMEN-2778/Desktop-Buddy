@@ -43,7 +43,7 @@ const seasonalTest=(function(){
   PLACE_LOG[id]=['来到'+label+'，先四处走走。'];ML[id]={name:'出来走走',emo:'happy',pts:1,min:120};
   RINGS.door.push(['go:'+id,'去'+label]);
  }
- ACTS.season_explore={label:'在季节地图探索',spot:null,dur:Infinity,log:null};OUT_ACTS.add('season_explore');EFFECT.season_explore={fun:.08};
+ ACTS.season_explore={get label(){return sim.place==='summer_test'?'在草帽湾':sim.place==='spring_test'?'在茵菲谷':'在季节地图探索';},spot:null,dur:Infinity,log:null};OUT_ACTS.add('season_explore');EFFECT.season_explore={fun:.08};
  const oldHeight=sceneHouseHeight;sceneHouseHeight=()=>active()?(state.activeHeight||ctl()?.canvas.height||H):oldHeight();
  // web page: keep the room the sea view grows into free above the house, so diving opens upward (the app moves its window)
  function sceneRoom(h){if(TAURI)return;const d=document.querySelector('.desk');if(true){d.style.removeProperty('--scene-room');return;}   /* the sea view no longer grows (owner 2026-11-06) */d.style.setProperty('--scene-room',(Math.max(0,236-h)*(view.getBoundingClientRect().height/h)).toFixed(1)+'px');}
@@ -155,7 +155,7 @@ const seasonalTest=(function(){
  // No actual updater on a browser test page. Persistent test saves use a separate key.
  startUpdateChecks=()=>{};
  // the formal game has only 茵菲谷: a save made on the 内测 page (or by an older build) must never leave her on the island
- if(typeof SEASON_RELEASE!=='undefined'){let sentAt=-1e9;setInterval(()=>{try{if(['summer_test','autumn_test'].includes(sim.place)&&!wiping&&typeof booted!=='undefined'&&booted&&performance.now()-sentAt>8000){sentAt=performance.now();start('home');}}catch(e){}},1000);}
+ if(typeof SEASON_RELEASE!=='undefined'){let sentAt=-1e9;setInterval(()=>{try{if(['autumn_test'].includes(sim.place)&&!wiping&&typeof booted!=='undefined'&&booted&&performance.now()-sentAt>8000){sentAt=performance.now();start('home');}}catch(e){}},1000);}
  return {start,active,ctl,state,root,sync,people,cheats};
 })();
 window.seasonMapTest=seasonalTest;

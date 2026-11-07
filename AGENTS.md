@@ -56,7 +56,7 @@ run `node tools/check_save_roundtrip.js`, then `git checkout prototype/demo/inde
 
 ## Releases (do not change without the owner asking)
 - Pushes that touch the demo or `desktop/**` build the Windows app automatically
-  (`.github/workflows/desktop.yml`, full game, version 0.2.N from 0.2.0) and the 试玩版
+  (`.github/workflows/desktop.yml`, full game, version 0.3.N from 0.3.0 = run 227; 0.2.N was 茵菲谷) and the 试玩版
   (`.github/workflows/trial.yml`, tag `trial-v0.1.<run>`, pre-release). Just push; the
   workflows do the rest.
 - Installers and the updater's `latest.json` are published to the public downloads-only
@@ -71,7 +71,9 @@ run `node tools/check_save_roundtrip.js`, then `git checkout prototype/demo/inde
 - **0.2 (owner 2026-11-03): 茵菲谷 is in the formal game.** The desktop workflow runs
   `tools/make_season_game_test.py --release` after make_demo: same adapters as /map-test/ but only
   茵菲谷 is reachable (airport), no cheats/test panel, the player's own save keys; copy-web.mjs adds
-  `AUDIO_LIBRARY/INFEI`. Summer/autumn stay test-only. The 试玩版 and the web preview root are unchanged.
+  `AUDIO_LIBRARY/INFEI`. The 试玩版 and the web preview root are unchanged.
+- **0.3 (owner 2026-11-07): 草帽湾 is in the formal game.** The airport flies there in calendar summer/autumn only
+  (airport.js); a save in 枫叶城 is still sent home (adapter.js, `SEASON_RELEASE`). 枫叶城 stays test-only.
 - Owner exception (2026-10-31): `/map-test/` is a separate **game-shell seasonal-map test**
   page (full game UI/needs/transition + test-only adapters). Owner explicitly said **do not
   put these maps into the formal version**. `make_season_game_test.py` injects them only

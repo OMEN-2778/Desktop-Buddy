@@ -1,7 +1,7 @@
 """Build the full game with the season-map adapters.
   default: test-only page desktop/dist/map-test/index.html (all season maps, cheats, own save keys).
   --mobile: the same 茵菲谷 release injected into prototype/demo/mobile.html (手机版, owner 2026-11-03).
-  --release (owner 2026-11-03, version 0.2): the formal game with 茵菲谷 only (summer/autumn unreachable,
+  --release (owner 2026-11-03 → 0.2 茵菲谷; 2026-11-07 → 0.3 adds 草帽湾): the formal game with 茵菲谷 and 草帽湾 (autumn unreachable,
   no cheats or test panel, the player's own save), written over prototype/demo/index.html for
   desktop/scripts/copy-web.mjs. Run tools/make_demo.py first."""
 from pathlib import Path
@@ -135,7 +135,7 @@ def main():
     import base64
     airport_images={k:'data:image/png;base64,'+base64.b64encode((ROOT/('art/out/concept/'+k+'.png')).read_bytes()).decode() for k in ['airport_terminal','airport_vista','airport_terminal_front','airport_plane','airport_cabin','airport_cabin_front','trip_airport']}
     source+=farm_story_source()
-    if RELEASE:source='var SEASON_RELEASE=true;   /* the formal game: only 茵菲谷 (owner 2026-11-06: 草帽湾 is still being tested); first, so every file sees it */\n'+source
+    if RELEASE:source='var SEASON_RELEASE=true;   /* the formal game: 茵菲谷 + 草帽湾 (0.3, owner 2026-11-07), not 枫叶城; first, so every file sees it */\n'+source
     if not RELEASE:source+='\nconst SEASON_TEST_PAGE=true;   /* 内测: 草帽湾 flights from the airport */\n'
     source+='\nconst AIRPORT_IMAGES='+json.dumps(airport_images)+';\n'+(ROOT/'prototype/airport/flight.js').read_text()+(ROOT/'prototype/airport/planes.js').read_text()+'\n'+(ROOT/'prototype/map-test/airport.js').read_text()+'\n'+(ROOT/'prototype/map-test/spring_cards.js').read_text()+(ROOT/'prototype/map-test/spring_talk.js').read_text()+(ROOT/'prototype/map-test/spring_story.js').read_text()+(ROOT/'prototype/map-test/infei_farm.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_more.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_more2.js').read_text()+'\n'+(ROOT/'prototype/map-test/season_night.js').read_text()+'\n'+(ROOT/'prototype/map-test/season_house.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_home.js').read_text()+'\nconst QUEST_ICONS='+json.dumps(quest_icons())+';\nconst INFEI_COVERS='+json.dumps({k:SP.uri(ROOT/f'art/out/concept/infei_cover_{k}.png') for k in ('mine','parents')})+';\n'+'\n'+(ROOT/'prototype/map-test/quest_panel.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_quests.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_side.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_audio.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_hover.js').read_text()+'\nconst SUMMER_LIFE_ART='+json.dumps({'stall':SP.uri(ROOT/'art/out/concept/summer_hero_stall.png'),'cover':SP.uri(ROOT/'art/out/concept/summer_lodge_cover.png'),'flower':SP.uri(ROOT/'art/out/concept/summer_flower_stall.png'),**{k:SP.uri(ROOT/f'art/out/concept/summer_market_{v}.png') for k,v in (('mbg','bg'),('msky','sky'),('mfar','far'),('mmid','mid'),('fruit','fruit'),('fish','fish'),('hat','hat'),('fountain','fountain'),('cafe','cafe'))}})+';\n'+(ROOT/'prototype/map-test/summer_life.js').read_text()+'\n'+(ROOT/'prototype/map-test/summer_more.js').read_text()+'\n'+(ROOT/'prototype/map-test/bay_friends.js').read_text()+'\n'+(ROOT/'prototype/map-test/summer_cards.js').read_text()+'\n'+(ROOT/'prototype/map-test/summer_float.js').read_text()+'\n'+(ROOT/'prototype/map-test/season_auto.js').read_text()+'\n'+(ROOT/'prototype/map-test/summer_lodge.js').read_text()+'\n'+(ROOT/'prototype/map-test/season_social.js').read_text()+'\n'+(ROOT/'prototype/map-test/season_parents.js').read_text()+'\n'+(ROOT/'prototype/map-test/season_motion.js').read_text()+'\n'+(ROOT/'prototype/map-test/summer_hover.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_ui.js').read_text()
     # 茵菲谷 audio (AUDIO_LIBRARY/INFEI, never in the release): served from /map-test/audio/ like the game's own files
@@ -143,7 +143,7 @@ def main():
     k=page.index('const GAME_AUDIO_FILES = [')+len('const GAME_AUDIO_FILES = [')
     page=page[:k]+','.join(json.dumps(f) for f in infei)+','+page[k:]
     if RELEASE:
-        source=source.replace('再测试季节地图吧','再出发吧').replace("label:'在季节地图探索'","label:'在茵菲谷'")
+        source=source.replace('再测试季节地图吧','再出发吧')
     mark='(async function boot() {'
     assert page.count(mark)==1
     page=page.replace(mark,source+'\n'+mark)

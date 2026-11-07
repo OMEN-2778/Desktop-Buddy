@@ -5,14 +5,14 @@ const airportTravel=(()=>{
  PLACE_LOG.airport_test=['来到机场，看看今天的航班。'];ML.airport_test={name:'准备出发',emo:'happy',pts:1,min:120};
  RINGS.door=RINGS.door.filter(([id])=>!['go:spring_test','go:summer_test','go:autumn_test'].includes(id));RINGS.door.push(['go:airport_test','去机场']);
  RINGS.airportFlights=[['airport:spring','茵菲谷'],['airport:locked1','？'],['airport:locked2','？'],['airport:locked3','？']];
- // 内测 page (owner 2026-11-05): 草帽湾 straight from the airport. The release will fly there only in calendar summer/autumn.
- if(typeof SEASON_TEST_PAGE!=='undefined')RINGS.airportFlights[1]=['airport:summer','草帽湾'];
+ // 0.3 (owner 2026-11-07): 草帽湾 is in the formal game; its flight runs only in calendar summer/autumn (ringPick below).
+ RINGS.airportFlights[1]=['airport:summer','草帽湾'];
  const root=document.createElement('div');root.className='airport-controls';root.hidden=true;root.innerHTML='<button data-flight>选择航班</button><button data-home>返回家中</button>';seasonMapTest.root.prepend(root);
  const launch=document.createElement('button');launch.textContent='去机场';launch.onclick=()=>enter();seasonMapTest.root.querySelector('header').append(launch);
  let loaded=false;ready.then(()=>loaded=true);
  const planes=createAirportPlanes(images),sceneCanvas=document.createElement('canvas');sceneCanvas.width=342;sceneCanvas.height=118;const scene=sceneCanvas.getContext('2d');let planeLast=0;   // live plane outside the glass
  function enter(){if(!loaded||wiping)return;throughDoor('airport_test')}
- function flights(){if(wiping||sim.place!=='airport_test')return;openRing('airportFlights');[...ringEl.querySelectorAll('button')].slice(typeof SEASON_TEST_PAGE!=='undefined'?2:1).forEach(b=>{b.disabled=true;b.setAttribute('aria-label','尚未开放')});}
+ function flights(){if(wiping||sim.place!=='airport_test')return;openRing('airportFlights');[...ringEl.querySelectorAll('button')].slice(2).forEach(b=>{b.disabled=true;b.setAttribute('aria-label','尚未开放')});}
  root.querySelector('[data-flight]').onclick=flights;root.querySelector('[data-home]').onclick=()=>throughDoor('home');
  const oldRing=ringPick;ringPick=function(id){if(id==='airport:menu'){closeRing();flights();return;}if(id==='airport:home'){goHome();return;}if(id==='airport:spring'){closeRing();throughDoor('spring_test');return;}if(id==='airport:summer'){closeRing();if(![1,2].includes(seasonOf(sim.t).i)){showHint('草帽湾本季暂无航班，夏天和秋天再来');speak('草帽湾的航班要等夏天了。',true);return;}throughDoor('summer_test');return;}if(id.startsWith('airport:locked'))return;return oldRing(id)};
  const oldCenter=ringCenter;ringCenter=function(){return sim.place==='airport_test'?(ringOf==='airportHero'?{x:hero.x,y:76}:{x:171,y:60}):oldCenter()};
