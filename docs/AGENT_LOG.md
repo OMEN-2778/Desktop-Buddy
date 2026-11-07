@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-07 Claude — 音乐压成 96 kbps（安装包变小）
+- 主人：更新老下载失败，压缩音乐。desktop/bgm-lite：BGM + INFEI/BGM 共 29 首，ffmpeg 96 kbps 立体声、去封面元数据，67 MB → 35 MB；
+  AUDIO_LIBRARY 原件不动（以后要重压从原件来）。copy-web.mjs 打包时用 bgm-lite 覆盖（试玩版不变）。新加/换歌要同步重压一份进 bgm-lite。
+
 ## 2026-11-07 Claude — 更新下载老失败：放宽时限、慢线路自动换
 - 原因：exe 现在约 90 MB（音乐），每个下载源只给 5 分钟（按 10 MB 定的），国内慢线路必超时，GitHub + 3 个镜像全失败。
 - lib.rs download_update：每个源最长 25 分钟；45 秒内下载不到 256 KB 就换下一个源（tokio::select，Cargo.toml 加 tokio time/macros）。

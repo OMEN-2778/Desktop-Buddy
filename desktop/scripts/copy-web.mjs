@@ -45,8 +45,15 @@ if (process.env.BUDDY_TRIAL) {
   if (!existsSync(source)) throw new Error("Missing audio assets: " + source);
   cpSync(source, join(out, "audio", group), { recursive: true });
 }
+// owner 2026-11-07 (updates kept failing at ~90 MB): the music ships as 96 kbps copies (desktop/bgm-lite, same paths as
+// AUDIO_LIBRARY; ffmpeg -b:a 96k from the 160-192 kbps originals, which stay untouched for re-encoding)
+const lite = join(here, "..", "bgm-lite");
 // 茵菲谷 (0.2, tools/make_season_game_test.py --release): its own music and sounds, only when the page uses them
 if (!process.env.BUDDY_TRIAL && readFileSync(src, "utf8").includes("BGM/infei/")) {
   cpSync(join(audioSource, "INFEI", "BGM"), join(out, "audio", "BGM", "infei"), { recursive: true });
   cpSync(join(audioSource, "INFEI", "SFX"), join(out, "audio", "SFX", "game"), { recursive: true });
+}
+if (!process.env.BUDDY_TRIAL && existsSync(lite)) {
+  if (existsSync(join(lite, "BGM"))) cpSync(join(lite, "BGM"), join(out, "audio", "BGM"), { recursive: true });
+  if (existsSync(join(out, "audio", "BGM", "infei")) && existsSync(join(lite, "INFEI", "BGM"))) cpSync(join(lite, "INFEI", "BGM"), join(out, "audio", "BGM", "infei"), { recursive: true });
 }
