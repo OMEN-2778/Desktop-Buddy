@@ -93,6 +93,8 @@ const infeiHome=(function(){
  const oldStart=startAct;startAct=function(name,quiet){
   // indoor acts (bath after an accident, sleep, cook…) would send her home first: in 茵菲谷 the farmhouse does them
   const indoor=name!=='go_home'&&!OUT_ACTS.has(name)&&ACTS[name]?.spot,byAct={bath:'hygiene',wash:'hygiene',toilet:'bladder',sleep:'energy',cook:'hunger',eat:'hunger',snack:'hunger'}[name];
+  // owner 2026-11-07: hungry, a meal on the stove or on her plate is never dropped for something else
+  if(inSpring()&&sim.needs.hunger<50&&(seasonHouse.running('cook')&&name!=='eat'||seasonHouse.running('eat')))return;
   if(inSpring()&&(name==='go_home'||indoor)&&!leaving){
    if(name==='go_home'&&svc&&seasonHouse.busy())return;   // using the house: carry on, as at home
    seasonHouse.explore();const low=Object.entries(sim.needs).sort((a,b)=>a[1]-b[1])[0],spot=Object.keys(SPOTS).find(k=>SPOTS[k].act===name);

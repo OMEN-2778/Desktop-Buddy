@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-07 Claude — 饿到 10 以下吃速食；饿着时做饭吃饭不被打断（玩家反馈：茵菲谷做饭不吃、饿晕两次）
+- 复现：茵菲谷饱食 12 时进屋做饭，做饭一个多小时里饱食掉到 0，端上桌前就饿晕了。
+- index.src.html：quickFood()——饱食 <10 且没在吃饭，直接拿速食 +20（屋里“冰箱”，外面“包里”），60 分钟冷却；全游戏通用。
+- infei_home.js / summer_more.js：饱食 <50 时，正在做饭/吃饭不会被别的自动动作换掉（做完照常接吃饭）。
+- 测过：复现脚本（12 → 30 → 做饭 → 吃到 97，没晕倒）、check_infei_home 通过。没测草帽湾 smoke。
+
 ## 2026-11-07 Claude — 旅舍客厅改沙发电视（主人点头）
 - summer_isle.py：沙发改两座、矮柜上放主世界同款电视、尤克里里挂到电视上方，去掉龟背竹盆栽；重出 summer_lodge_inside.png。
 - summer_lodge.js：新增 tv（主世界的 tv 动作，坐沙发上看，屏幕播主世界的节目 nextTvFrame）；沙发/茶几/尤克里里热区跟着改；娱乐需求优先看电视；

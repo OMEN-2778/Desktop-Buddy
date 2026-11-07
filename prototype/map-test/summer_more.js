@@ -376,7 +376,7 @@
   sim.mode='act';sim.act='season_explore';sim.actEnd=Infinity;const c=C();
   c.state.target=null;}   /* the timer below walks her there, swimming ashore first */
  const oHome=homeFor;homeFor=function(k){if(sim.place==='summer_test'&&!leavingBay){if(window.summerLodge?.svc)return;lodgeCare();return;}return oHome(k);};
- const oStart=startAct;startAct=function(name,quiet){if(sim.place==='summer_test'&&(name==='go_home'||!OUT_ACTS.has(name)&&ACTS[name]?.spot)&&!leavingBay){
+ const oStart=startAct;startAct=function(name,quiet){if(sim.place==='summer_test'&&sim.needs.hunger<50&&(seasonHouse.running('cook')&&name!=='eat'||seasonHouse.running('eat')))return;   /* owner 2026-11-07: hungry, a meal is never dropped */if(sim.place==='summer_test'&&(name==='go_home'||!OUT_ACTS.has(name)&&ACTS[name]?.spot)&&!leavingBay){
   if(name==='go_home'&&summerLodge.svc&&seasonHouse.busy())return;   /* using the lodge: carry on, as at home */
   seasonHouse.explore();if(name!=='go_home'&&summerLodge.useAct(name))return;   /* the home's next step (cook → eat, the toilet) at the lodge's own furniture */
   lodgeCare();return;}return oStart(name,quiet);};

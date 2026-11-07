@@ -2053,9 +2053,19 @@ function rollEvents() {
 const EXTREME = ["angry", "sad", "scared", "embarrassed", "tense", "uncomfortable"];
 function checkCollapse() {
   if (sim.mode === "down" || asleep() || sim.t < (sim.graceUntil || 0)) return;
+  quickFood();
   const n = sim.needs, e = emotion(true);
   const cause = n.hunger <= 0 ? "hunger" : n.energy <= 0 ? "energy" : e.pts >= 8 && EXTREME.includes(e.key) ? e.key : null;
   if (cause) collapse(cause);
+}
+// owner 2026-11-07: hunger under 10 and nothing on the way to her mouth: she grabs something ready-made (+20) instead of fainting
+function quickFood() {
+  if (sim.needs.hunger >= 10 || sim.mode === "act" && sim.act === "eat" || sim.t < (sim.quickFoodAt || 0)) return;
+  sim.quickFoodAt = sim.t + 60;
+  sim.needs.hunger = Math.min(100, sim.needs.hunger + 20);
+  const indoor = ["home", "spring_test", "summer_test"].includes(sim.place);
+  log(indoor ? one(["饿得发慌，从冰箱里拿了份速食垫垫肚子。", "等不及了，先撕开一包速食面。", "从冰箱里摸出个饭团，三口吃完。"]) : one(["饿得发慌，从包里摸出块面包垫垫肚子。", "包里还有包饼干，先垫一垫。"]));
+  speak(one(["先垫垫肚子", "饿扁了，先吃点"]), true);
 }
 function collapse(cause) {
   if (!["hunger","energy",...EXTREME].includes(cause)) return false;
