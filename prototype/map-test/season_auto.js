@@ -64,7 +64,7 @@
    const what=pickW([['home',72],['dive',12],['shore',wet?0:16]]);
    if(what==='dive'){const go=()=>{const x=SEA[0]+Math.random()*(SEA[1]-SEA[0]),g=c.gr(x);c.goTo(x,'dive',g>SURF_Y+40?SURF_Y+30+Math.random()*Math.min(110,g-SURF_Y-40):SURF_Y);};if(!swim)change(c,go);else go();return true;}
    if(what==='shore'){if(s.inside){c.leave();return true;}c.goTo(820+Math.random()*200);return true;}
-   summerLodge.goUse(pick(['sofa','sofa','uke','table','dine'].filter(k=>k!=='dine'||homeMeal())));return true;}
+   summerLodge.goUse(pick(['tv','tv','sofa','uke','table','dine'].filter(k=>k!=='dine'||homeMeal())));return true;}
   if(window.infeiQuests?.busy||storyLocked()||springFarm.state.phase!=='done')return false;
   if(Math.random()<.8){infeiHome.use(pick(['settee','settee','table','jar','wardrobe']),true);return true;}
   if(s.inside){c.leave();return true;}return false;}

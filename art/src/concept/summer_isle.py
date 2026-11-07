@@ -940,41 +940,50 @@ def lodge_inside():
     s.rect(43, top + 9, 13, 10, K[1]).rect(44, top + 10, 11, 8, P.sea[3])     # framed print: a wave
     s.hline(44, 54, top + 15, P.porcelain[3]).hline(46, 52, top + 14, P.sea[4]).rect(44, top + 16, 11, 2, P.sand[3])
 
-    # ---- living room: rattan sofa (3 seats) with hibiscus cushions, koa table, ukulele, surfboard, plants
+    # ---- living room (owner 2026-11-06: 客厅改成沙发电视): a two-seat rattan sofa with hibiscus cushions and a koa
+    #      coffee table on the left, the home's TV on a low koa cabinet on the right, surfboard and ukulele on the walls
     louvre(118, top + 7, 22, 13)
-    sx, sw = 90, 46
+    sx, sw = 90, 31
     weave(sx, fl - 20, sw, 9)                                                  # backrest
     s.hline(sx, sx + sw - 1, fl - 20, R[4]).hline(sx, sx + sw - 1, fl - 21, R[1])
     for ax in (sx - 3, sx + sw):                                               # rolled arms
         weave(ax, fl - 15, 4, 8)
         s.ellipse(ax + 2, fl - 15, 2, 1.5, R[3])
     s.rect(sx, fl - 11, sw, 4, P.teal[2]).hline(sx, sx + sw - 1, fl - 11, P.teal[4]).hline(sx, sx + sw - 1, fl - 8, P.teal[1])   # seat cushion
-    for k in range(3):
+    for k in range(2):
         cx = sx + 2 + k * 15
         s.rect(cx, fl - 18, 12, 7, P.porcelain[3]).hline(cx, cx + 11, fl - 12, P.porcelain[1]).vline(cx + 11, fl - 18, fl - 12, P.porcelain[2])
-        hibiscus_dot(cx + 4, fl - 15, (P.coral, P.blossom, P.coral)[k])
+        hibiscus_dot(cx + 4, fl - 15, (P.coral, P.blossom)[k])
         s.set(cx + 8, fl - 14, P.green[3]).set(cx + 9, fl - 15, P.green[2])
-        s.vline(sx + 15 * (k + 1) - 1, fl - 11, fl - 8, P.teal[1]) if k < 2 else None
+    s.vline(sx + 15 - 1, fl - 11, fl - 8, P.teal[1])
     for lx in (sx, sx + sw - 2):
         s.rect(lx, fl - 7, 2, 7, R[1])
-    tx = sx + 10                                                               # koa coffee table, glass bowl of limes
-    s.rect(tx, fl - 5, 26, 2, K[3]).hline(tx, tx + 25, fl - 5, K[4]).hline(tx, tx + 25, fl - 4, K[1])
-    s.vline(tx + 2, fl - 3, fl, K[1]).vline(tx + 23, fl - 3, fl, K[1]).hline(tx + 2, tx + 23, fl - 1, K[0])
-    s.ellipse(tx + 8, fl - 7, 3, 1.5, P.glass[3]).set(tx + 7, fl - 8, P.green[3]).set(tx + 9, fl - 8, P.mustard[3])
-    s.ellipse(tx + 18, fl - 8, 1.8, 2.5, P.mustard[3]).set(tx + 17, fl - 9, P.mustard[4])   # pineapple
+    tx = sx + 6                                                                # koa coffee table, glass bowl of limes
+    s.rect(tx, fl - 5, 19, 2, K[3]).hline(tx, tx + 18, fl - 5, K[4]).hline(tx, tx + 18, fl - 4, K[1])
+    s.vline(tx + 2, fl - 3, fl, K[1]).vline(tx + 16, fl - 3, fl, K[1]).hline(tx + 2, tx + 16, fl - 1, K[0])
+    s.ellipse(tx + 6, fl - 7, 3, 1.5, P.glass[3]).set(tx + 5, fl - 8, P.green[3]).set(tx + 7, fl - 8, P.mustard[3])
+    s.ellipse(tx + 14, fl - 8, 1.8, 2.5, P.mustard[3]).set(tx + 13, fl - 9, P.mustard[4])   # pineapple
     for k in range(3):
-        s.set(tx + 17 + k, fl - 11 - (k % 2), P.green[3])
+        s.set(tx + 13 + k, fl - 11 - (k % 2), P.green[3])
+    cbx, cbw = 131, 30                                                          # low koa TV cabinet: two doors, rattan panels
+    s.rect(cbx, fl - 9, cbw, 9, K[2]).hline(cbx, cbx + cbw - 1, fl - 9, K[4]).hline(cbx, cbx + cbw - 1, fl - 8, K[3])
+    for d in range(2):
+        dx = cbx + 2 + d * 14
+        weave(dx, fl - 7, 12, 5)
+        s.set(dx + (11 if d == 0 else 0), fl - 5, K[4])
+    s.hline(cbx, cbx + cbw - 1, fl - 1, K[0]).vline(cbx + 1, fl - 1, fl, K[0]).vline(cbx + cbw - 2, fl - 1, fl, K[0])
+    s.blit(F.tv(), cbx + 2, fl - 9 - 15)                                        # the home's TV (lit by the game when on)
+    s.ellipse(cbx + cbw - 3, fl - 11, 1.5, 1.5, P.coral[3]).set(cbx + cbw - 3, fl - 13, P.green[3])   # a little potted hibiscus
     for y in range(top + 5, top + 32):                                         # surfboard on the wall
         t = (y - top - 5) / 27
         hw = int(2.6 * math.sin(math.pi * t) + 0.4)
         s.hline(87 - hw, 87 + hw, y, P.hydrangea[3])
         s.set(87 - hw, y, P.hydrangea[4]).set(87 + hw, y, P.hydrangea[1])
     s.vline(87, top + 7, top + 30, P.porcelain[3])
-    ux, uy = 147, top + 10                                                      # ukulele
+    ux, uy = 151, top + 4                                                       # ukulele, over the TV
     s.ellipse(ux, uy + 10, 3, 3.5, K[3]).ellipse(ux, uy + 6, 2.5, 2.5, K[3]).set(ux, uy + 9, K[0])
     s.vline(ux, uy - 2, uy + 4, K[1]).rect(ux - 1, uy - 4, 3, 2, K[2])
     s.vline(ux - 1, uy + 3, uy + 12, P.oat[3])
-    basket_plant(151, fl, "monstera")
 
     # ---- kitchen (owner 2026-11-06): the home's dining table and a chair on the left; koa cabinets with a sink and a
     #      two-burner stove with a kettle on the right; louvred window over the table, open shelf with bananas

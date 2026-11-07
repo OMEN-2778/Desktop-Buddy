@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-07 Claude — 旅舍客厅改沙发电视（主人点头）
+- summer_isle.py：沙发改两座、矮柜上放主世界同款电视、尤克里里挂到电视上方，去掉龟背竹盆栽；重出 summer_lodge_inside.png。
+- summer_lodge.js：新增 tv（主世界的 tv 动作，坐沙发上看，屏幕播主世界的节目 nextTvFrame）；沙发/茶几/尤克里里热区跟着改；娱乐需求优先看电视；
+  season_auto 晚上在旅舍多半看电视。smoke 通过（lodge tv ok），截图看过。
+
 ## 2026-11-07 Claude — 0.3.0：草帽湾进正式版（Windows + macOS）
 - 主人决定上线草帽湾。airport.js：机场正式版也有草帽湾航班（只在夏、秋）；adapter.js：正式版不再把在草帽湾的存档送回家（枫叶城照旧）；
   在外状态显示“在草帽湾/在茵菲谷”。desktop.yml：版本改成 0.3.(run-227)，这次推送 = 0.3.0。AGENTS.md / CLAUDE.md 同步。
