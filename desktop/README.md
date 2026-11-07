@@ -87,7 +87,7 @@ Desktop app → Run workflow) publishes too.
 Downloads are tried from GitHub, then through public GitHub mirrors
 (`MIRRORS` in `src-tauri/src/lib.rs`; also as extra `endpoints` for
 latest.json) since GitHub is often slow or cut off in mainland China; the
-signature check makes the source irrelevant to safety. Problems are logged
+signature check makes the source irrelevant to safety. Each source gets up to 25 minutes (the exe is ~90 MB with the music), but one that crawls (under 256 KB in 45 s) is dropped for the next. Problems are logged
 to `update.log` in the config folder (Windows: `%APPDATA%\com.desktopbuddy.app`).
 
 The Windows release workflow builds the game page from the current source on

@@ -582,33 +582,51 @@ async fn download_update(app: AppHandle, pending: State<'_, Pending>) -> Result<
         found = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?;
     }
     let Some(mut update) = found else { return Ok(None) };
-    // GitHub first, then the mirrors; each try has 5 minutes (9-10 MB)
+    // GitHub first, then the mirrors. The exe is ~90 MB now (music): 5 minutes per source timed out on slow
+    // lines in mainland China (owner 2026-11-07: "更新老是下载失败"), so each try gets 25 minutes
     let direct = update.download_url.to_string();
     let sources: Vec<String> = std::iter::once(direct.clone()).chain(MIRRORS.iter().map(|m| format!("{m}{direct}"))).collect();
-    update.timeout = Some(Duration::from_secs(300));
+    update.timeout = Some(Duration::from_secs(1500));
     let (mut bytes, mut errors) = (None, Vec::new());
+    // a line that crawls (under 256 KB in 45 s) is dropped for the next one instead of eating the whole 25 minutes
+    let got = std::sync::Arc::new(std::sync::atomic::AtomicU64::new(0));
     for src in &sources {
         let Ok(url) = src.parse() else { continue };
         update.download_url = url;
-        let (mut done, progress) = (0u64, app.clone());
+        got.store(0, std::sync::atomic::Ordering::Relaxed);
+        let (counter, progress) = (got.clone(), app.clone());
         let _ = app.emit("update-progress", serde_json::json!({ "done": 0, "total": null, "source": src }));
-        match update
-            .download(
-                move |chunk, total| {
-                    done += chunk as u64;
-                    let _ = progress.emit("update-progress", serde_json::json!({ "done": done, "total": total }));
-                },
-                || {},
-            )
-            .await
-        {
-            Ok(b) => {
+        let dl = update.download(
+            move |chunk, total| {
+                let done = counter.fetch_add(chunk as u64, std::sync::atomic::Ordering::Relaxed) + chunk as u64;
+                let _ = progress.emit("update-progress", serde_json::json!({ "done": done, "total": total }));
+            },
+            || {},
+        );
+        tokio::pin!(dl);
+        let mut seen = 0u64;
+        let result = loop {
+            tokio::select! {
+                r = &mut dl => break Some(r),
+                _ = tokio::time::sleep(Duration::from_secs(45)) => {
+                    let now = got.load(std::sync::atomic::Ordering::Relaxed);
+                    if now.saturating_sub(seen) < 256 * 1024 { break None; }
+                    seen = now;
+                }
+            }
+        };
+        match result {
+            Some(Ok(b)) => {
                 bytes = Some(b);
                 break;
             }
-            Err(e) => {
+            Some(Err(e)) => {
                 update_log(&app, &format!("download {src}: {e}"));
                 errors.push(e.to_string());
+            }
+            None => {
+                update_log(&app, &format!("download {src}: too slow, next source"));
+                errors.push("线路太慢".to_string());
             }
         }
     }

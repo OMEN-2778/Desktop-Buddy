@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-07 Claude — 更新下载老失败：放宽时限、慢线路自动换
+- 原因：exe 现在约 90 MB（音乐），每个下载源只给 5 分钟（按 10 MB 定的），国内慢线路必超时，GitHub + 3 个镜像全失败。
+- lib.rs download_update：每个源最长 25 分钟；45 秒内下载不到 256 KB 就换下一个源（tokio::select，Cargo.toml 加 tokio time/macros）。
+- 本机缺 webkit，没法 cargo check，靠 CI 编译验证。
+
 ## 2026-11-07 Claude — 饿到 10 以下吃速食；饿着时做饭吃饭不被打断（玩家反馈：茵菲谷做饭不吃、饿晕两次）
 - 复现：茵菲谷饱食 12 时进屋做饭，做饭一个多小时里饱食掉到 0，端上桌前就饿晕了。
 - index.src.html：quickFood()——饱食 <10 且没在吃饭，直接拿速食 +20（屋里“冰箱”，外面“包里”），60 分钟冷却；全游戏通用。
