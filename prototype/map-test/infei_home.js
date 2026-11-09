@@ -60,9 +60,12 @@ const infeiHome=(function(){
    if(info.inside&&svc.id==='bed'&&!reduced())seasonHouse.sleepFx(ctx,BEDS.mine[0]+HEAD[0]+10,BEDS.mine[1]+HEAD[1]-14);
    if(info.inside&&svc.id==='bath')seasonHouse.emote(ctx,SPOTS.bath.x+3,TUB_RIM-29);
    return;}
-  if(!inSpring()||springFarm.state.phase!=='done'||s.door||s.target||wiping||cardHolds()||ringOf||sim.mode==='down'||life.talkQ)return;
+  if(!inSpring()||springFarm.state.phase!=='done'||s.door||wiping||cardHolds()||ringOf||sim.mode==='down'||life.talkQ)return;
   const low=Object.entries(sim.needs).filter(([k,v])=>v<25&&NEED_SPOT[k]).sort((a,b)=>a[1]-b[1])[0];
-  if(low){care(low[0]);return;}
+  // soak test 2026-11-09: always on the move (strolls, helping in the fields) she never got round to it (如厕 12 for two hours):
+  // under 18 the walk is dropped for the need
+  if(s.target&&!(low&&low[1]<18&&!s.inside))return;
+  if(low){if(s.target){window.seasonAuto?.cancel();s.target=null;s.after=null;}care(low[0]);return;}
   if(s.inside&&sim.t>=T.state.autoAt){T.state.autoAt=sim.t+40;const m=sim.t%1440;if(m>=19*60||m<6*60)return;c.leave();}   // (evenings and nights she stays in: season_auto.js)   // nothing to do inside: back out to the yard
  });
  // asleep in a 架子床 (owner 2026-11-03): a head on its side on the pillow, the bed's own quilt bulging over the body

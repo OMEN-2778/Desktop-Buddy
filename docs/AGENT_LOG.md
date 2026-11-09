@@ -6,6 +6,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-09 Claude — 游泳圈卡死修复；季节地图自主生活全面排查
+- bug：玩家点游泳圈后她永远不下来（只有她自己坐的才有定时），需求掉光；晕倒后人还画在游泳圈上，长按判定按脚的位置，按头按不中。
+  season_auto.js：游泳圈/沙滩椅都不再是陷阱——需求（饱/精/洁/厕）<30、坐够 60-120 游戏分钟、或晕倒，就起来；adapter.js 晕倒长按判定覆盖整个身体（脚上 42px）。
+- 主人新增：草帽湾她会自己去换潜水服下海，绕 2-3 丛海草/巨蚌采集（dive()，90 秒兜底浮上来）；茵菲谷浇水、收菜、摘果权重大幅提高。
+- 排查（无人操作连跑 30-40 游戏小时：主世界/茵菲谷/草帽湾）：都没晕倒。修了：茵菲谷一直在走路时轮不到上厕所（<18 打断走路去处理）；
+  季节地图没朋友时夜里没人发消息导致社交掉到 14（夜里给家人发消息）；睡前没吃饱半夜饱食 16（傍晚饱食<60 先做晚饭）。
+- check_infei_home、check_summer_smoke PASS。
+
 ## 2026-11-09 Claude — 日记跟随电脑深色/浅色模式
 - 之前根本没有深色模式（全仓库没有 prefers-color-scheme）。index.src.html：html.dark-ui 跟 prefers-color-scheme 走，桌面版另外读窗口主题
   （TAURI.window.getCurrentWindow().theme() + onThemeChanged，切换系统模式即时生效）。ui.css 末尾：深色时日记条和展开的日记黑底白字，时间/日期浅灰，聊天记录、信件配色跟着换。

@@ -65,10 +65,10 @@
   if(wet())return false;
   const h=hour(),night=h>=22||h<8;
   const friends=socialState.contacts.filter(c=>!c.family&&!c.child&&!String(c.id).startsWith('bay_')&&!contactWithHero(c.id)&&(c.affinity??0)>=10);
-  const family=night?[]:socialState.contacts.filter(c=>c.family&&!contactWithHero(c.id));
+  const family=socialState.contacts.filter(c=>c.family&&!contactWithHero(c.id));   // at night only a text (soak test 2026-11-09: no friends yet + no family at night = social ran down to 14)
   const list=[...family.map(c=>[c,c.id==='mom'?3:1.5]),...friends.map(c=>[c,1])];if(!list.length)return false;
   let r=Math.random()*list.reduce((a,x)=>a+x[1],0),c=list[0][0];for(const [x,w]of list)if((r-=w)<0){c=x;break;}
-  const kind=c.family?(Math.random()<.75?'call':'text'):night?'text':weighted([['text',3],['video',1.5],['call',1.5]]);
+  const kind=c.family?(night?'text':Math.random()<.75?'call':'text'):night?'text':weighted([['text',3],['video',1.5],['call',1.5]]);
   return startContactTalk(c.id,kind);}
  setInterval(()=>{try{
   if(!inSeason()||!speed||sim.t<nextTry)return;
