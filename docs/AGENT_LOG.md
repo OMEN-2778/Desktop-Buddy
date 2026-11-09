@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-09 Claude — 草帽湾旅舍冲凉：黑影 + 水蒸气
+- 主人：洗澡时没立绘，做水蒸气加黑影。summer_lodge.js showerShadow：当前小人的轮廓填深蓝、半透明、裁在淋浴间内，轻轻晃；
+  前面白色蒸汽往上飘渐隐，原来的水滴保留。截图看过（smoke 流程里用淋浴时截的）。
+
 ## 2026-11-09 Claude — 草帽湾下海：娱乐涨、清洁和社交不动
 - 主人（正式版）：冲浪/游泳/潜水时娱乐值增加，清洁、社交静止。season_house.js 海里规则：清洁、社交完全不掉，娱乐约 +30/小时，其余照旧半速。
 - 测过：模拟冲浪 7 分钟——清洁 0、社交 0、娱乐 +3.5，其余半速下降。

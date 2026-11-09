@@ -59,7 +59,16 @@ const summerLodge=(function(){
   if(!seasonHouse.running(svc.act)){s.pose=null;s.hideHero=false;s.iy=0;svc=null;return;}   // the home's act is over
   const p=SPOTS[svc.id],t=s.time;
   if(svc.id==='bed'){const h=lyingHead(SLEEPY);ctx.drawImage(h,52,66-h.height);if(!coverImg){coverImg=new Image();coverImg.src=SUMMER_LIFE_ART.cover;}if(coverImg.complete)ctx.drawImage(coverImg,40,28);seasonHouse.sleepFx(ctx,62,52);}
-  if(svc.id==='shower'){ctx.fillStyle='#bfe3f2';for(let i=0;i<6;i++){const y=38+((t*40+i*7)%36);ctx.fillRect(280+(i*5)%10,Math.round(y),1,2);}seasonHouse.emote(ctx,p.x+3,40);}}
+  if(svc.id==='shower'){showerShadow(ctx,t);ctx.fillStyle='#bfe3f2';for(let i=0;i<6;i++){const y=38+((t*40+i*7)%36);ctx.fillRect(280+(i*5)%10,Math.round(y),1,2);}seasonHouse.emote(ctx,p.x+3,40);}}
+ // owner 2026-11-09: in the shower a dark figure behind the steam (no plain empty stall)
+ const shade=document.createElement('canvas');shade.width=20;shade.height=28;const shadeCtx=shade.getContext('2d');
+ function showerShadow(ctx,t){
+  shadeCtx.globalCompositeOperation='source-over';shadeCtx.clearRect(0,0,20,28);shadeCtx.drawImage(dollCanvas({expr:'happy',look:1,bob:0,sway:Math.floor(t*1.5)%2,wave:null},'stand'),0,0);
+  shadeCtx.globalCompositeOperation='source-in';shadeCtx.fillStyle='#2b3550';shadeCtx.fillRect(0,0,20,28);
+  ctx.save();ctx.beginPath();ctx.rect(278,35,15,43);ctx.clip();ctx.globalAlpha=.55;ctx.drawImage(shade,275,50);ctx.restore();   // kept inside the stall
+  // steam: soft puffs rising out of the stall and fading at the top
+  for(let i=0;i<9;i++){const k=(t*.35+i/9)%1,x=Math.round(276+((i*7)%12)+Math.sin(t*1.3+i)*2),y=Math.round(76-k*44);
+   ctx.fillStyle=`rgba(255,255,255,${(.85*(1-k)*Math.min(1,k*4)).toFixed(2)})`;const w=2+(i%3);ctx.fillRect(x,y,w,w-1||1);}}
  const COOK_FX=[258,39],MEAL_AT=[227,53],TV_AT=[174,55];   // TV_AT: the screen of the home's TV on its cabinet (24×12)   // the home's pan steam over the burners, the dish on the dining table
  const oArrive=arriveAt;arriveAt=function(pl){stop();hinted=false;return oArrive(pl);};
  return {SPOTS,NEED_SPOT,use,useAct,goUse,stop,draw,get svc(){return svc;}};
