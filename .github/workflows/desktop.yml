@@ -20,6 +20,11 @@ on:
       - "tools/check_window_drag.js"
       - "prototype/demo/index.html"
       - "prototype/map-test/**"
+      - "prototype/summer/**"      # the season maps' viewers are built into the release page too
+      - "prototype/spring/**"
+      - "prototype/autumn/**"
+      - "prototype/airport/**"
+      - "prototype/season/**"
       - "tools/make_season_game_test.py"
       - ".github/workflows/desktop.yml"
   workflow_dispatch:
