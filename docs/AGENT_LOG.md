@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-09 Claude — 托盘“兼容模式”（Win11 只看到日记图标、看不到小屋）
+- 玩家 Win11 最新版：只显示日记图标和心情行，没有小屋，也没出红色启动异常提示（说明游戏在跑，画布没画出来，疑似显卡/WebView2 合成）。
+- lib.rs：主窗口改在 setup 里用 from_config 创建（tauri.conf.json "create": false）；config.json 的 compat_gpu=true 时
+  WebView2 加 --disable-gpu --disable-gpu-compositing。托盘新增勾选项“兼容模式（看不到小屋时打开）”：页面先存档（app-restart → restart_app），再重启生效。
+- 本机不能编译 Rust，靠 CI；玩家那边是否解决待反馈。
+
 ## 2026-11-07 Claude — 音乐压成 96 kbps（安装包变小）
 - 主人：更新老下载失败，压缩音乐。desktop/bgm-lite：BGM + INFEI/BGM 共 29 首，ffmpeg 96 kbps 立体声、去封面元数据，67 MB → 35 MB；
   AUDIO_LIBRARY 原件不动（以后要重压从原件来）。copy-web.mjs 打包时用 bgm-lite 覆盖（试玩版不变）。新加/换歌要同步重压一份进 bgm-lite。

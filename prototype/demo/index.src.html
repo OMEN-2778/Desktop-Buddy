@@ -5218,6 +5218,7 @@ if (TAURI) {
   const ro = new ResizeObserver(() => { const a = document.getElementById("widget").getAnimations(); if (a.length) { Promise.all(a.map(x => x.finished.catch(() => {}))).then(() => makeRoom()); return; } makeRoom(); });   // measured without a running slide (rects include transforms)   // re-measure the room above first (makeRoom ends in fitWindow): a scene that grew must take it from there, not move the window
   ro.observe(document.getElementById("widget")); ro.observe(setPop);
   TAURI.event.listen("app-quit", async () => { await autoSave(); TAURI.core.invoke("exit_app"); });
+  TAURI.event.listen("app-restart", async () => { await autoSave(); TAURI.core.invoke("restart_app"); });   // tray 兼容模式
   TAURI.event.listen("on-top-changed", e => { prefs.onTop = !!e.payload; saveSettings(); buildSettings(); });
 }
 

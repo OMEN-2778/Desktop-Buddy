@@ -752,6 +752,12 @@ fn mac_menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
     Menu::with_items(app, &[&app_menu, &edit])
 }
 
+/// 兼容模式 was switched in the tray: the page has saved, start again.
+#[tauri::command]
+fn restart_app(app: AppHandle) {
+    app.restart();
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default();
@@ -767,11 +773,24 @@ pub fn run() {
         .manage(Pending(Mutex::new(None)))
         .setup(|app| {
             clean_after_update();
+            // the window is made here, not from the config: 兼容模式 (tray) starts WebView2 without the graphics card.
+            // Players on Windows 10/11 saw only the diary icon and mood line, no house (canvas not drawn by their GPU).
+            let compat = read_config(app.handle()).get("compat_gpu").and_then(|v| v.as_bool()).unwrap_or(false);
+            let wc = app.config().app.windows.iter().find(|w| w.label == "main").cloned().expect("main window config");
+            let wb = tauri::WebviewWindowBuilder::from_config(app.handle(), &wc)?;
+            #[cfg(windows)]
+            let wb = if compat {
+                wb.additional_browser_args("--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --disable-gpu --disable-gpu-compositing")
+            } else {
+                wb
+            };
+            wb.build()?;
             let show = MenuItem::with_id(app, "show", "显示 / 隐藏", true, None::<&str>)?;
             let on_top = CheckMenuItem::with_id(app, "on_top", "置顶游戏", true, false, None::<&str>)?;
             let update = MenuItem::with_id(app, "update", "检查更新", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-            let menu = if TRIAL { Menu::with_items(app, &[&show, &on_top, &quit])? } else { Menu::with_items(app, &[&show, &on_top, &update, &quit])? };
+            let compat_item = CheckMenuItem::with_id(app, "compat", "兼容模式（看不到小屋时打开）", cfg!(windows), compat, None::<&str>)?;
+            let menu = if TRIAL { Menu::with_items(app, &[&show, &on_top, &compat_item, &quit])? } else { Menu::with_items(app, &[&show, &on_top, &compat_item, &update, &quit])? };
             app.manage(OnTopItem(on_top.clone()));
             let mut tray = TrayIconBuilder::with_id("main")
                 .tooltip(if TRIAL { "Desktop Buddy 试玩版" } else { "Desktop Buddy" })
@@ -793,6 +812,19 @@ pub fn run() {
                             let _ = w.set_always_on_top(on);
                         }
                         let _ = app.emit("on-top-changed", on);
+                    }
+                    "compat" => {
+                        // takes effect on a fresh start: save, then restart
+                        let mut config = read_config(app);
+                        config["compat_gpu"] = serde_json::json!(!compat);
+                        let _ = write_config(app, &config);
+                        // the page saves, then calls restart_app; if it doesn't answer, restart anyway
+                        let _ = app.emit("app-restart", ());
+                        let app = app.clone();
+                        thread::spawn(move || {
+                            thread::sleep(Duration::from_secs(6));
+                            app.restart();
+                        });
                     }
                     "update" => {
                         if let Some(w) = app.get_webview_window("main") {
@@ -844,6 +876,7 @@ pub fn run() {
             set_click_through,
             set_on_top,
             exit_app,
+            restart_app,
             log_js,
             app_version,
             check_update,
