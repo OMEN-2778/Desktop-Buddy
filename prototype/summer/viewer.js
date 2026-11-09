@@ -79,6 +79,8 @@ function camera(dt){
  // Resize once per mode switch, not once per animated height pixel.
  if(canvas.height!==wantH){canvas.height=wantH;ctx.imageSmoothingEnabled=false;}
  state.viewH+=(wantH-state.viewH)*(1-Math.exp(-6*dt));
+ // the lodge is drawn without a camera: keep it at 0, or clicks inside land 70+ px off (owner 2026-11-09: 厨房、餐桌点了没反应)
+ if(state.inside){state.camX=state.camY=state.camVX=state.camVY=0;return;}
  const lead=state.walk?state.facing*14:0,tx=clamp(state.x-VW/2+lead,0,W-VW);
  [state.camX,state.camVX]=follow(state.camX,state.camVX,tx,7,dt);
  const ty=sea?clamp(state.y-state.viewH*.48,0,H-wantH):clamp(gr(state.x)-104,0,H-wantH);

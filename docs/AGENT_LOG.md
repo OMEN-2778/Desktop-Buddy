@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-09 Claude — 草帽湾旅舍点厨房/餐桌没反应
+- 原因：旅舍里画面不带镜头，但 summer/viewer.js 的 camera() 进屋后还在跟着她算 camX（走到厨房时约 77），点击坐标加上 camX 就偏到别的家具（餐桌→厕所），
+  她的头顶菜单判定也偏。修：屋里 camX/camY 固定 0。
+- 测过：做饭→上菜→点餐桌吃饭正常；check_summer_smoke PASS。
+
 ## 2026-11-09 Claude — 草帽湾旅舍冲凉：黑影 + 水蒸气
 - 主人：洗澡时没立绘，做水蒸气加黑影。summer_lodge.js showerShadow：当前小人的轮廓填深蓝、半透明、裁在淋浴间内，轻轻晃；
   前面白色蒸汽往上飘渐隐，原来的水滴保留。截图看过（smoke 流程里用淋浴时截的）。
