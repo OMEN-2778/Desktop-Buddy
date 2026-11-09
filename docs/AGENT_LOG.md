@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-09 Claude — 来电时“接听”不再出橙色虚线框
+- social_hud.js：来电自动聚焦接听按钮时用 focusVisible:false，鼠标用户不再看到焦点框；键盘 Tab 过去照常显示。
+
 ## 2026-11-09 Claude — 草帽湾旅舍点厨房/餐桌没反应
 - 原因：旅舍里画面不带镜头，但 summer/viewer.js 的 camera() 进屋后还在跟着她算 camX（走到厨房时约 77），点击坐标加上 camX 就偏到别的家具（餐桌→厕所），
   她的头顶菜单判定也偏。修：屋里 camX/camY 固定 0。

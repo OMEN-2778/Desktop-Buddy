@@ -301,7 +301,7 @@ function showIncomingCall(){
   incomingCall.querySelector('.caller-copy span').textContent=phoneCall.kind==='friend_home'?pick(FRIEND_VISIT_TEXT.invitations):phoneCall.kind==='video'?'打来视频':'打来电话';
   drawContactAvatar(incomingCall.querySelector('canvas'),c);incomingCall.classList.remove('accepting','declining');incomingCall.hidden=false;
   moodTalk.classList.add('phone-active');phoneCall.phase='ringing';gameAudio.tick(true);phoneCall.deadline=now+INCOMING_RING_MS;incomingCall.style.setProperty('--call-remaining',1);
-  phoneCall.returnFocus=document.activeElement;incomingCall.querySelector('.call-answer').focus({preventScroll:true});
+  phoneCall.returnFocus=document.activeElement;incomingCall.querySelector('.call-answer').focus({preventScroll:true,focusVisible:false});   // owner 2026-11-09: no dashed focus box on 接听 unless the keyboard moves there
   phoneCall.timeout=setTimeout(()=>finishIncomingCall(false,true),INCOMING_RING_MS);
   c.lastIncoming=sim.t;socialState.nextCall=sim.t+180+Math.random()*300;
 }
