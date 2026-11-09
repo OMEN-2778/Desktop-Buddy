@@ -874,3 +874,17 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 .story-choices button:active { translate: 1px 1px; filter: drop-shadow(2px 2px 0 var(--shadow)); }
 .story-choices button:focus-visible .bg { background: #3c6e91; }
 @media (prefers-reduced-motion: reduce) { .story-more { animation: none; } }
+
+/* ---------- 深色模式 (owner 2026-11-09: the diary follows the computer's dark / light mode, text always readable)
+   html.dark-ui is set from prefers-color-scheme (and the desktop app's window theme, see index.src.html) */
+html.dark-ui .diary { --pe: #5b566e; --pf: #1e1c27; --wood-ink: #f4f2fa; }
+html.dark-ui .diary-box:hover::after, html.dark-ui .diary-box[aria-expanded="true"]::after { background: #2b2838; }
+html.dark-ui .diary-pop { color: #f4f2fa; }
+html.dark-ui .diary-pop time, html.dark-ui .diary-pop li.day, html.dark-ui .diary-pop li.empty { color: #bdb8cf; }
+html.dark-ui .diary-pop .talk-btn { background: #4a3d2c; color: #f6dcb4; }
+html.dark-ui .diary-pop .talk-btn:hover { background: #5c4b35; }
+html.dark-ui .diary-pop .talk-log { border-left-color: #8a6d4a; }
+html.dark-ui .diary-pop .talk-log .other { color: #f0c48e; }
+html.dark-ui .diary-pop .talk-log.letter { background: #2e2a22; border-left-color: #a8875a; color: #f3e6cf; }
+html.dark-ui .diary-pop .talk-log.letter p:last-child { color: #f0c48e; }
+html.dark-ui .diary-pop ol { scrollbar-color: #5b566e transparent; }

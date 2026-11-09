@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-09 Claude — 日记跟随电脑深色/浅色模式
+- 之前根本没有深色模式（全仓库没有 prefers-color-scheme）。index.src.html：html.dark-ui 跟 prefers-color-scheme 走，桌面版另外读窗口主题
+  （TAURI.window.getCurrentWindow().theme() + onThemeChanged，切换系统模式即时生效）。ui.css 末尾：深色时日记条和展开的日记黑底白字，时间/日期浅灰，聊天记录、信件配色跟着换。
+- 测过：Chromium colorScheme light/dark 各截一张（白底黑字 / 黑底白字）。真机 Windows/Mac 没测。
+
 ## 2026-11-09 Claude — 来电时“接听”不再出橙色虚线框
 - social_hud.js：来电自动聚焦接听按钮时用 focusVisible:false，鼠标用户不再看到焦点框；键盘 Tab 过去照常显示。
 

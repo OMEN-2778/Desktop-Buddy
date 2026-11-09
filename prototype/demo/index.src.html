@@ -185,6 +185,15 @@ if (TAURI) {
   };
   setTimeout(bootCheck, 8000);
 }
+// 深色 / 浅色 (owner 2026-11-09): the diary follows the computer's mode. The page's own media query, and in the
+// desktop app also the window's theme (WebView2 / WKWebView may not pass the system mode to the page)
+(function(){
+  const root=document.documentElement,mq=matchMedia("(prefers-color-scheme: dark)");let win=null;
+  const apply=()=>root.classList.toggle("dark-ui",win?win==="dark":mq.matches);
+  mq.addEventListener?.("change",apply);apply();
+  try{const w=TAURI&&TAURI.window&&TAURI.window.getCurrentWindow&&TAURI.window.getCurrentWindow();
+    if(w){w.theme().then(t=>{win=t||null;apply();}).catch(()=>{});w.onThemeChanged(({payload})=>{win=payload||null;apply();});}}catch(e){}
+})();
 // 界面大小 (% or "auto" = fit the page), 置顶游戏, 自动保存 (every 5 minutes, or never)
 const prefs = { speedNudge05: true, scale: TAURI ? 100 : "auto", onTop: false, bgm: false, sfx: false, bgmVolume:0, sfxVolume:0, autosave: true, guided: false, autoUpdate: true, fontSize: "auto" };   // guided: the guide has been seen
 let appVersion = "";
