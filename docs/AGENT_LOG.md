@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-09 Claude — 草帽湾下海：娱乐涨、清洁和社交不动
+- 主人（正式版）：冲浪/游泳/潜水时娱乐值增加，清洁、社交静止。season_house.js 海里规则：清洁、社交完全不掉，娱乐约 +30/小时，其余照旧半速。
+- 测过：模拟冲浪 7 分钟——清洁 0、社交 0、娱乐 +3.5，其余半速下降。
+
 ## 2026-11-09 Claude — 托盘“兼容模式”（Win11 只看到日记图标、看不到小屋）
 - 玩家 Win11 最新版：只显示日记图标和心情行，没有小屋，也没出红色启动异常提示（说明游戏在跑，画布没画出来，疑似显卡/WebView2 合成）。
 - lib.rs：主窗口改在 setup 里用 from_config 创建（tauri.conf.json "create": false）；config.json 的 compat_gpu=true 时

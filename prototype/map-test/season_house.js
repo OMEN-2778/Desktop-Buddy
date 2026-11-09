@@ -70,12 +70,15 @@ const seasonHouse=(function(){
    sim.chosen={act:'cook',item};(act==='cook_bay'?window.summerLodge:window.infeiHome)?.use('stove','menu');return;}
   return oCommand.apply(this,arguments);};
  // ---------------------------------------------------------------- 草帽湾 hidden rule (owner 2026-11-06): in the sea
- // (swimming on the surface, surfing or diving) every need runs down at half speed
+ // (swimming on the surface, surfing or diving) every need runs down at half speed; since 2026-11-09 fun rises (~+30/h)
+ // and cleanliness and social do not move
  let seaT=null;setInterval(()=>{try{
   const sm=window.seasonMapTest?.state?.summer,st=sm?.state,t=sim.t;
   const wet=sim.place==='summer_test'&&st&&!st.inside&&!st.market&&(window.summerFloat?.surfing||window.summerLife?.under?.()||sm.deep(st.x)&&st.suit&&st.suit!=='clothes');
   if(wet&&seaT!==null&&t>seaT&&t-seaT<30){const dt=t-seaT,eff=sim.mode==='act'?(EFFECT[sim.act]||{}):{};
-   for(const k of Object.keys(sim.needs))if(!(eff[k]>0))sim.needs[k]=clamp(sim.needs[k]+DECAY[k]*.5*dt);}
+   // owner 2026-11-09: in the sea fun goes up, cleanliness and social stand still; the rest at half speed
+   for(const k of Object.keys(sim.needs))if(!(eff[k]>0))sim.needs[k]=clamp(sim.needs[k]+DECAY[k]*(k==='hygiene'||k==='social'?1:.5)*dt);
+   sim.needs.fun=clamp(sim.needs.fun+.4*dt);}
   seaT=t;}catch(e){}},250);
  return {start,drop,running,busy,explore,frame,emote,cookFx,meal,sleepFx,inSeason,menu,BAY};
 })();
