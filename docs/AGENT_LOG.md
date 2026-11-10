@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-10 Claude — 季节地图转场跟主世界一样
+- 原来：季节地图进出屋/旅舍/集市是画布上一层暗色淡入淡出、没有门声；茵菲谷走到地图边是硬切。主世界是两边竖条合拢再打开（wipe）+ 门声。
+- adapter.js：季节地图里门一开始就交给主世界 wipe()，竖条合上后才换场景（门不再变暗）；spring/viewer.js 走出地图边经 globalThis.sceneEdge 也走 wipe。
+- 测过：茵菲谷进屋（wipe shut→open，换到屋里）、出屋、走到下一块地；check_infei_home PASS。
+
 ## 2026-11-10 Claude — 茵菲谷点不动修复；任务面板一点就去；爸妈在家有来有回；宠物第一次快跑掉时朋友帮忙；做饭进度保留；写信日新信；他/她
 - 点不动的原因：任务剧情走路中，需求<18 时 infei_home.js 把她的路线清掉，剧情的 walkTo 永远等不到 → 剧情 busy 卡死 → storyLocked 一直为真，所有点击都被拦。
   修：infei_home 剧情中不插手；infei_quests / spring_story 的 walk 被别人接管时自己往下走。另修 season_auto.js toScene 里 `const s` 被写进注释的老 bug（跨场景走路一直没生效）。

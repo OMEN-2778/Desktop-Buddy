@@ -156,6 +156,14 @@ const seasonalTest=(function(){
  startUpdateChecks=()=>{};
  // the formal game has only 茵菲谷: a save made on the 内测 page (or by an older build) must never leave her on the island
  if(typeof SEASON_RELEASE!=='undefined'){let sentAt=-1e9;setInterval(()=>{try{if(['autumn_test'].includes(sim.place)&&!wiping&&typeof booted!=='undefined'&&booted&&performance.now()-sentAt>8000){sentAt=performance.now();start('home');}}catch(e){}},1000);}
+ // owner 2026-11-10: in the season maps, in/out of a house, bay⇄market and field to field use the main world's wipe
+ // (bars closing in from both sides, the door sound) instead of a dark fade / a hard cut
+ window.sceneEdge=swap=>{if(!active()){swap();return;}wipe(swap);};
+ const doorSeen=new WeakSet();
+ (function poll(){requestAnimationFrame(poll);try{if(!active())return;const c=ctl(),d=c?.state?.door;if(!d||doorSeen.has(d)||!c.advanceDoor)return;doorSeen.add(d);
+  const dur=d.duration;d.duration=1e9;   // the door waits (no dark fade) until the bars are shut
+  wipe(()=>{d.duration=dur;d.elapsed=dur/2;c.advanceDoor(0);d.elapsed=dur;});}catch(e){console.warn('season wipe',e);}})();
+
  return {start,active,ctl,state,root,sync,people,cheats};
 })();
 window.seasonMapTest=seasonalTest;

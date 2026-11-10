@@ -17,6 +17,8 @@ function leave(){if(state.inside)target(51,108,()=>beginDoor(false));}
 function beginDoor(to){if(state.door)return;keys.clear();state.target=null;state.after=null;state.door={to,elapsed:0,duration:.65,mid:false};}
 function advanceDoor(dt){const d=state.door;if(!d)return;d.elapsed+=dt;if(!d.mid&&d.elapsed>=d.duration/2){d.mid=true;state.inside=d.to;state.x=d.to?51:182;state.y=d.to?108:103;state.camera=0;if(!d.to)state.scene=Math.max(0,DATA.scenes.findIndex(s=>s.id==='home'));updateUI();}if(d.elapsed>=d.duration)state.door=null;}
 function exitArrow(){ctx.fillStyle='#e9eee2';ctx.fillRect(7,88,22,22);ctx.strokeStyle='#526578';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(22,93);ctx.lineTo(14,99);ctx.lineTo(22,105);ctx.stroke();}
+// walking off a field's edge: the game page may cover the cut with its own transition (window.sceneEdge, the main world's wipe)
+function edge(swap){if(!globalThis.sceneEdge){swap();return;}state.edge=true;globalThis.sceneEdge(()=>{state.edge=false;swap();});}
 function move(dt){state.walk=false;if(state.paused||!state.loaded||state.door)return;if(state.target)state.rushWalk=1;else if(state.rushWalk||state.rush&&performance.now()-state.rush>3000){state.rush=0;state.rushWalk=0;}/* player-sent walks go 2x (owner 2026-11-05) */
  const dir=(keys.has('ArrowRight')||keys.has('d')||keys.has('D')?1:0)-(keys.has('ArrowLeft')||keys.has('a')||keys.has('A')?1:0);
  if(dir){state.after=null;state.route=[];state.target={x:state.x+dir*40,y:state.y};}
@@ -24,7 +26,7 @@ function move(dt){state.walk=false;if(state.paused||!state.loaded||state.door)re
  if(state.target){const dx=state.target.x-state.x,dy=state.target.y-state.y,dist=Math.hypot(dx,dy),step=dt*(Math.abs(dy)>0?27:42)*(state.rush?2:1);state.walk=dist>.1;if(Math.abs(dx)>.1)state.facing=Math.sign(dx);
  if(dist<=step){state.x=state.target.x;state.y=state.target.y;state.target=state.route.shift()||null;if(!state.target&&state.after){const f=state.after;state.after=null;f();}}
  else{state.x+=dx/dist*step;state.y+=dy/dist*step;}}
- if(!state.inside){const width=current().width;if(state.x>=width-14&&intentX>=width-14&&state.scene<DATA.scenes.length-1){go(state.scene+1,0);target(35);}else if(state.x<=14&&intentX<=14&&state.scene>0){const i=state.scene-1;go(i,DATA.scenes[i].width);target(state.x-35);}else state.x=Math.max(state.scene===0?10:-10,Math.min(width+(state.scene===DATA.scenes.length-1?-10:10),state.x));
+ if(!state.inside){const width=current().width;if(state.edge){}else if(state.x>=width-14&&intentX>=width-14&&state.scene<DATA.scenes.length-1){edge(()=>{go(state.scene+1,0);target(35);});}else if(state.x<=14&&intentX<=14&&state.scene>0){const i=state.scene-1;edge(()=>{go(i,DATA.scenes[i].width);target(DATA.scenes[i].width-35);});}else state.x=Math.max(state.scene===0?10:-10,Math.min(width+(state.scene===DATA.scenes.length-1?-10:10),state.x));
  state.camera+= (Math.max(0,Math.min(width-342,state.x-171))-state.camera)*Math.min(1,dt*7);
  }else state.x=Math.max(37,Math.min(303,state.x));
  if(state.target&&((!state.inside&&((state.scene===0&&state.x<=10&&state.target.x<10)||(state.scene===DATA.scenes.length-1&&state.x>=current().width-10&&state.target.x>current().width-10)))||(state.inside&&((state.x<=37&&state.target.x<37)||(state.x>=303&&state.target.x>303))))){state.target=null;state.walk=false;}updateUI();}
