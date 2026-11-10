@@ -23,7 +23,8 @@ const infeiHome=(function(){
  const inRect=(x,y,[rx,ry,w,h])=>x>=rx&&x<rx+w&&y>=ry&&y<ry+h;
  function stop(){if(!svc)return;const s=C().state;s.pose=null;s.hideHero=false;seasonHouse.drop(svc.act);svc=null;T.state.autoAt=sim.t+30;}
  function use(id,auto){
-  if(id==='table'&&!homeMeal())id='stove';   // nothing on the table: cook first, then eat (as at home)
+  if(id==='table'&&!homeMeal())id='stove';
+  if(id==='stove'&&auto&&homeMeal())id='table';   // a cooked meal waits on the table: eat it, don't cook another (owner 2026-11-10)   // nothing on the table: cook first, then eat (as at home)
   if(id==='stove'&&!auto){closeRing();seasonHouse.menu('spring');return;}   // the player clicked the stove (or an empty table): the menu
   const p=SPOTS[id],c=C();if(!p||!p.act)return;stop();closeRing();T.state.autoAt=sim.t+60;
   const begin=()=>{const s=c.state;s.x=p.x;s.facing=p.face||(p.x>170?1:-1);svc={id,act:p.act,need:p.need,auto};s.pose=null;s.hideHero=!!p.hide;speak(pick(p.line),true);seasonHouse.start(p.act,{auto,log:p.log});};

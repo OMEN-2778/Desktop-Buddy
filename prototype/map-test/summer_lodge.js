@@ -33,7 +33,7 @@ const g=++goGen,t0=Date.now(),c=C();
    if(!s.door&&!s.target&&!s.inCabana&&!summerLife.isBusy()){if(s.market)c.beginDoor('bay');else if(s.y>131)c.goTo(1050,'dive',128);else c.enter();}
    setTimeout(step,400);};step();}
  function useAct(name){if(!inBay()||!C().state.inside)return false;const id=ALIAS[name]||Object.keys(SPOTS).find(k=>SPOTS[k].act===name);if(!id)return false;use(id,true);return true;}
- function use(id,auto){if(id==='dine'&&!homeMeal())id='stove';   // nothing on the table: cook first, then eat (as at home)
+ function use(id,auto){if(id==='dine'&&!homeMeal())id='stove';if(id==='stove'&&auto&&homeMeal())id='dine';   // nothing on the table: cook first, then eat (as at home)
   if(id==='stove'&&!auto){closeRing();seasonHouse.menu('summer');return;}   // the player clicked the stove (or an empty table): the menu
   const p=SPOTS[id],c=C();if(!p)return;stop();closeRing();
   if(p.look){c.goTo(p.x,'walk',0,()=>speak(pick(p.look),true));return;}

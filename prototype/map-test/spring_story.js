@@ -160,7 +160,7 @@ const springFarm=(()=>{
  const oldMail=mailTick;mailTick=function(){if(!F.letter&&festName()==='写信日'&&sim.t%1440>=9*60&&!asleep())sendLetter();return oldMail();};
  const oldRead=readMail;readMail=function(){const l=lifeFlags.mail?.box?.[0],r=oldRead();if(l?.springFarm&&!F.unlocked){F.unlocked=true;setTimeout(()=>showHint('机场的「茵菲谷」航班开通了'),1200);}return r;};
  const oldOpen=openRing;openRing=function(which,at){
-  if(which==='away'&&inSpring()&&F.phase==='done'){const keep=RINGS.away;RINGS.away=[keep[0],['sf:pc','丢丢平板电脑'],...keep.slice(1)];try{return oldOpen(which,at);}finally{RINGS.away=keep;}}
+  if(which==='away'&&inSpring()&&F.unlocked){const keep=RINGS.away;RINGS.away=[keep[0],['sf:pc','丢丢平板电脑'],...keep.slice(1)];try{return oldOpen(which,at);}finally{RINGS.away=keep;}}
   const r=oldOpen(which,at);
   if(which==='airportFlights'){const b=ringEl.querySelector('button');if(b){b.textContent=F.unlocked?'茵菲谷 · 免费':'茵菲谷';if(!F.unlocked){b.classList.add('sf-wait');b.title='等家里的消息';b.append(Object.assign(document.createElement('small'),{className:'fu-why',textContent:'等家里的消息'}));}}}
   return r;
@@ -199,7 +199,7 @@ const springFarm=(()=>{
   if(!s.inside&&s.scene===4&&F.phase==='done'&&window.infeiQuests?.hit(x,y,s)){e.stopPropagation();e.preventDefault();return;}   // someone standing by the plots
   if(!s.inside&&s.scene===4&&['sow','water','done'].includes(F.phase)){const i=bedAt(x,y);if(i==null)return;e.stopPropagation();e.preventDefault();openBed(i);return;}
   if(!s.inside&&s.scene===4&&bedAt(x,y)!=null){e.stopPropagation();e.preventDefault();showHint(F.phase==='meet'?'先去农舍门口点一下妈妈':'先跟着妈妈把开场走完');return;}   // never a silent click on a bed
-  if((F.phase==='done'||s.inside)&&X.hooks.click.some(f=>f(x,y,s))){   // the farmhouse works in every phase (owner 2026-11-03)
+  if((F.phase==='done'||s.inside||F.unlocked&&!['none','meet'].includes(F.phase))&&X.hooks.click.some(f=>f(x,y,s))){   // orchard / ranch / farmhouse never wait on the welcome (owner 2026-11-10)   // the farmhouse works in every phase (owner 2026-11-03)
    e.stopPropagation();e.preventDefault();}
  },true);
  // ---------------------------------------------------------------- actions

@@ -119,9 +119,9 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
  // 远景 / 中景 scroll slower than the land and water (owner 2026-11-06): drawn shifted by part of the camera move
  for(const [k,key] of [[.35,'far'],[.65,'mid']])if(DATA[key])ctx.drawImage(img(DATA[key]),Math.round(cx*(1-k)),0);
  ctx.drawImage(img(DATA.bg),0,0);
- for(const p of DATA.plants){const im=img(p.img);if(!p.kind.endsWith('-front')&&p.x+im.width>cx-4&&p.x<cx+VW+4&&p.y+im.height>cy&&p.y<cy+vh)fx.plant(ctx,im,p,t);}
+ for(const p of DATA.plants){const im=img(p.img);if(!String(p.kind||'').endsWith('-front')&&p.x+im.width>cx-4&&p.x<cx+VW+4&&p.y+im.height>cy&&p.y<cy+vh)fx.plant(ctx,im,p,t);}
  ctx.drawImage(img(DATA.structures),0,0);
- for(const p of DATA.plants)if(p.kind.endsWith('-front')){const im=img(p.img);if(p.x+im.width>cx-4&&p.x<cx+VW+4&&p.y+im.height>cy&&p.y<cy+vh)fx.plant(ctx,im,p,t);}
+ for(const p of DATA.plants)if(String(p.kind||'').endsWith('-front')){const im=img(p.img);if(p.x+im.width>cx-4&&p.x<cx+VW+4&&p.y+im.height>cy&&p.y<cy+vh)fx.plant(ctx,im,p,t);}
  fx.sunlight(ctx,t,cx,cy,VW,vh,WL,ground,wetKind!=='clear');
  fx.kelp(ctx,t,DATA.kelp,cx,cy,VW,vh);
  fx.waves(ctx,t,cx,VW,WL,DATA.shore,DATA.seaEnd);

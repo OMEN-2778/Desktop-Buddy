@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-10 Claude — 做好饭不吃 / 果园牧场点不动 / 平板随时能开 / 转场防卡 / 0.3.10 启动报错
+- 做好饭被打断（如上厕所）回来又去做一顿：infei_home use()/summer_lodge use() 桌上有饭时 stove→table/dine。实测 cook→toilet→eat。
+- spring_story.js：开场没走完（如 sow）时果园、牧场、农舍点击照常；她的菜单里「丢丢平板电脑」只要解锁就有（做饭、坐着时也在）。
+- index.src.html wipe()：swap 出错也一定收起竖条（否则 wiping 卡 true，所有点击失效）。adapter.js 季节地图闲时自己找事做的间隔 20-45 → 8-20 游戏分钟。
+- 玩家截图 0.3.10「reading 'endsWith'」：audio.js sfx() 和 summer/viewer.js 植物 kind 加防空（猜测来源，没复现）；最新版没收到同样报错。
 ## 2026-11-10 · Codex · 空音效编号不再触发 endsWith 异常
 - 用户截图0.3.10运行异常：undefined.endsWith；当前正式音频sfx解析器存在同类空值崩溃入口，截图无法确认最初调用者。
 - audio.js 在音效编号解析/单次播放/循环入口校验空值和非字符串；无效循环停止旧声并跳过，不阻断正常音效或后续游戏tick。

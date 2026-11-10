@@ -3180,7 +3180,7 @@ function wipe(swap) {
   wipeEl.hidden = false; wipeEl.className = "wipe"; void wipeEl.offsetWidth;
   wipeEl.classList.add("shut");                                   // bars close in from both sides
   setTimeout(() => {
-    swap(); render();
+    try { swap(); render(); } catch (e) { console.warn("wipe swap", e); }   // a failing swap never leaves every click locked behind the bars
     wipeEl.classList.add("open"); wipeEl.classList.remove("shut");   // ...and open on the other side
     setTimeout(() => { wipeEl.hidden = true; wiping = false; }, 300);
   }, 230);
