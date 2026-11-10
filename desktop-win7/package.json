@@ -1,0 +1,31 @@
+{
+  "name": "desktop-buddy-win7",
+  "private": true,
+  "version": "0.3.0",
+  "description": "桌面小屋 Win7 兼容版: the same game page in an Electron 22 window (the last Electron that runs on Windows 7).",
+  "main": "main.js",
+  "author": "Desktop Buddy",
+  "scripts": {
+    "app": "node copy-app.js",
+    "start": "npm run app && electron .",
+    "dist": "npm run app && electron-builder --win nsis --x64 --ia32 --publish never"
+  },
+  "devDependencies": {
+    "electron": "22.3.27",
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "com.desktopbuddy.win7",
+    "productName": "Desktop Buddy Win7",
+    "artifactName": "Desktop-Buddy_${version}_win7-setup.${ext}",
+    "files": ["main.js", "preload.js", "app/**"],
+    "directories": { "output": "release" },
+    "win": { "icon": "../desktop/src-tauri/icons/icon.ico" },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "language": "2052",
+      "shortcutName": "桌面小屋 (Win7)"
+    }
+  }
+}

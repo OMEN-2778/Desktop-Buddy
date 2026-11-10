@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-10 Claude — 桌面小屋 Win7 兼容版（Electron 22）
+- 新目录 desktop-win7/：Electron 22 外壳，preload.js 提供 window.__TAURI__（invoke/listen/getCurrentWindow），main.js 按 lib.rs 实现
+  存档/设置（同一个 %APPDATA%\com.desktopbuddy.app）、fit_window、拖动、穿透、置顶、托盘、兼容模式、退出前存档；没有自动更新（托盘「下载新版本」）。
+- desktop.yml 新 job win7：打 32+64 位一个安装包 Desktop-Buddy_<版本>_win7-setup.exe，传到同一个 release。
+- 测过：Linux xvfb 里 Electron 22 启动，游戏加载、无报错、窗口按页面大小显示、存档写进同一文件夹。真 Win7 没测；CI 的 win7 job 第一次跑待看。
+
 ## 2026-11-10 Claude — 季节地图转场跟主世界一样
 - 原来：季节地图进出屋/旅舍/集市是画布上一层暗色淡入淡出、没有门声；茵菲谷走到地图边是硬切。主世界是两边竖条合拢再打开（wipe）+ 门声。
 - adapter.js：季节地图里门一开始就交给主世界 wipe()，竖条合上后才换场景（门不再变暗）；spring/viewer.js 走出地图边经 globalThis.sceneEdge 也走 wipe。

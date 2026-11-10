@@ -17,6 +17,7 @@ on:
   push:
     paths:
       - "desktop/**"
+      - "desktop-win7/**"
       - "tools/check_window_drag.js"
       - "prototype/demo/index.html"
       - "prototype/demo/*.js"       # the game's sources (index.html is built from them in CI)
@@ -230,4 +231,49 @@ jobs:
         with:
           name: Desktop-Buddy-macos
           path: Desktop-Buddy_*_mac.dmg
+          if-no-files-found: error
+
+  # 桌面小屋 Win7 兼容版 (owner 2026-11-10): the same page in Electron 22 (desktop-win7/), one installer for
+  # 32- and 64-bit Windows 7/8/10/11. No self-update: it goes into the same release for a manual download.
+  win7:
+    needs: windows       # adds itself to the release the Windows job made
+    runs-on: windows-latest
+    env:
+      BUDDY_MINIFY: "1"
+    steps:
+      - name: Version number (0.3.0 = run 227, 草帽湾, owner 2026-11-07)
+        shell: bash
+        run: echo "VERSION=0.3.$(( ${{ github.run_number }} - 227 ))" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: current-game-page
+          path: prototype/demo
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Game page (desktop/dist, as the Tauri app ships it)
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run web
+      - name: Build the Win7 installer
+        working-directory: desktop-win7
+        shell: bash
+        run: |
+          npm ci
+          npm pkg set version="$VERSION"
+          npm run dist
+      - name: Add to the release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN || github.token }}
+          REPO: ${{ secrets.RELEASES_TOKEN && 'OMEN-2778/Desktop-Buddy-Releases' || github.repository }}
+        shell: bash
+        run: |
+          f="desktop-win7/release/Desktop-Buddy_${VERSION}_win7-setup.exe"
+          if gh release view "v$VERSION" --repo "$REPO" >/dev/null 2>&1; then gh release upload "v$VERSION" "$f" --repo "$REPO" --clobber; else echo "::warning::no release v$VERSION"; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Desktop-Buddy-win7
+          path: desktop-win7/release/*_win7-setup.exe
           if-no-files-found: error
