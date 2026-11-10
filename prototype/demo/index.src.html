@@ -4378,7 +4378,8 @@ function chatItem(kind, who, via = "pc", contactId = null) {
   let fresh = eligible.map(({i})=>i).filter(i => !seen.includes(i));
   if (!fresh.length) { seen.splice(0, seen.length - 3); fresh = eligible.map(({i})=>i).filter(i => !seen.includes(i)); }
   const candidates=fresh.length?fresh:eligible.map(({i})=>i),personal=candidates.filter(i=>g.talks[i].personalityTopic),ordinary=candidates.filter(i=>!g.talks[i].personalityTopic);
-  const i = pick(personal.length&&Math.random()<.12?personal:ordinary.length?ordinary:candidates), baseTalk = g.talks[i]||{title:"问个好",lines:[">没有急事，就是想问问你最近怎么样。","挺好的，你也照顾好自己。"]}, t = contact&&kind!=="forum"&&!baseTalk.early?{...baseTalk,lines:personalityTalk(baseTalk.lines,contact,kind)}:baseTalk, vars = { 主角:nameOf(),朋友: contact?contactName(contact):pick(T.fill.朋友) };
+  const long=ordinary.filter(i=>g.talks[i].lines?.length>=10);   // the longer talks (owner 2026-11-10: too many 3-4 line ones) come up often
+  const i = pick(personal.length&&Math.random()<.12?personal:long.length&&Math.random()<.4?long:ordinary.length?ordinary:candidates), baseTalk = g.talks[i]||{title:"问个好",lines:[">没有急事，就是想问问你最近怎么样。","挺好的，你也照顾好自己。"]}, t = contact&&kind!=="forum"&&!baseTalk.early?{...baseTalk,lines:personalityTalk(baseTalk.lines,contact,kind)}:baseTalk, vars = { 主角:nameOf(),朋友: contact?contactName(contact):pick(T.fill.朋友) };
   seen.push(i);if(contact)contact.lastTopic=t.title;
   const name = contact?contactName(contact):fill(g.name, vars);
   return { vars, contactId:contact?.id, talk: { ...t, kind, who, name,

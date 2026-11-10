@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-10 Claude — 朋友聊天加长
+- social_text.json conversations：friend/close/best 各加 8–10 段 10–16 句的长对话（吐槽、讲事被插话、电话里一起做饭、开着电话不说话、半路被打断等，不再都是问-追问-答）。
+- index.src.html chatItem：还没聊过的长对话有 40% 优先抽到（lines ≥ 10）。测过：40 次抽取里 8 次是长对话。
+
 ## 2026-11-10 Claude — 桌面小屋 Win7 兼容版（Electron 22）
 - 新目录 desktop-win7/：Electron 22 外壳，preload.js 提供 window.__TAURI__（invoke/listen/getCurrentWindow），main.js 按 lib.rs 实现
   存档/设置（同一个 %APPDATA%\com.desktopbuddy.app）、fit_window、拖动、穿透、置顶、托盘、兼容模式、退出前存档；没有自动更新（托盘「下载新版本」）。
