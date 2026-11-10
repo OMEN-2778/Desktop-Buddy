@@ -276,7 +276,7 @@ const infeiQuests=(function(){
  const PLACE={mill:['油菜花田','风车','油菜花田'],letter:['小溪边','小溪边','小溪边'],prints:['菜地','小溪边','油菜花田','菜地'],stew:['郁金香田','郁金香田','郁金香田']};
  const HOME={mill:'风车',letter:'小溪边',prints:'菜地',stew:'郁金香田'};
  questBoard.add(()=>{const q=Q(),gs=goals(),out=[],F=S();
-  if(F.unlocked&&!['none','meet'].includes(F.phase)){const ph=F.phase,where=!F.unlocked?'家里信箱':ph==='none'?'机场':ph==='sow'||ph==='water'?'菜地':'农舍',step=!F.unlocked?'读妈妈寄来的信':ph==='none'?'去机场，坐去茵菲谷的航班':ph==='sow'?'在有箭头的菜地播种':ph==='water'?'给刚种下的菜地浇水':'跟着妈妈熟悉农庄';
+  if(F.unlocked&&!['none','meet'].includes(F.phase)){const ph=F.phase,where=!F.unlocked?'家里信箱':ph==='none'?'机场':ph==='sow'||ph==='water'?'菜地':'农舍',step=!F.unlocked?'读妈妈寄来的信':ph==='none'?'去机场，坐去茵菲谷的航班':ph==='sow'||ph==='water'||ph==='field'?'去菜地看看':ph==='room'?'进屋看看':'跟着妈妈熟悉农庄';
    out.push({id:'farm',title:'妈妈的农庄',kind:'house',place:ph==='done'?'茵菲谷':where,done:ph==='done',step,end:'菜地交给你了',isNew:!F.unlocked||ph==='none',log:F.storyLog||[],go:ph==='done'?null:farmGo});}
   for(const id of Object.keys(TITLE)){const st=q[id].step;if(st===0)continue;const g=gs.find(g=>g.id===id);
    let step=g?.hint||(g?.v?`去找${g.v.name}聊聊`:'');
@@ -305,7 +305,7 @@ const infeiQuests=(function(){
   if(g.spot){const sp=SPOTS[g.spot];if(id==='mill'&&!night())return '请等到天黑（晚上 7 点后）';goTo(sp.scene,sp.x-10);return {say:`去${PLACE[id]?.[q.step]||SCENE_NAME[sp.scene]||'那边'}看看`};}
   if(g.auto!=null){if(id==='prints'&&!night())return '请等到晚上（7 点后）再去菜地等着';goTo(g.auto,200);return {say:'去菜地等着'};}
   return '现在没有要做的，过一阵再看看';}
- function farmGo(){const F=S();if(!inSpring())return '先坐飞机去茵菲谷';if(['sow','water'].includes(F.phase)){if(sim.mode==='down')return `先把${ta()}叫醒（长按${ta()}）`;goTo(4,150);return {say:'去菜地'};}
+ function farmGo(){const F=S();if(!inSpring())return '先坐飞机去茵菲谷';if(['sow','water','field'].includes(F.phase)){if(sim.mode==='down')return `先把${ta()}叫醒（长按${ta()}）`;goTo(4,150);return {say:'去菜地'};}
   return '跟着妈妈把开场走完就好';}
  X.hooks.pick.quests=()=>questBoard.open();
  return {V,Q,goals,run,talk,spotAt,hit,register,kit:{say,ask,walkTo,finish,crops,take,note,me,today,hour,night,villager,approach,X,S,C},at:v=>visible(v)?where(v):null,spots:SPOTS,list:()=>questBoard.open(),get busy(){return busy;},rabbit};

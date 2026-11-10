@@ -132,7 +132,8 @@ const springFarm=(()=>{
   await say('妈妈','先种胡萝卜吧，浇两天水就能拔。');
   await say('妈妈','种子我给你带了一包，喏。');
   await say(hero(),'行，我试试。');
-  speech.hide();F.phase='sow';showHint('点一下有箭头的菜地，选「播种」');
+  // owner 2026-11-10: seeing the field is the step — no forced sowing / watering before the farm is hers
+  await afterWater();
  }
  async function afterSow(){
   F.phase='water';await say('妈妈','种下了？还得浇水，不浇不长。');speech.hide();showHint('再点一下菜地，选「浇水」');
@@ -146,7 +147,7 @@ const springFarm=(()=>{
   await say(hero(),'那我先赚它两个币。');
   await say('妈妈','口气不小。我去镇上找你爸，晚上见！');
   speech.hide();F.phase='done';momTo(400).then(()=>mom.on=false);
-  log('到了茵菲谷爸妈的农庄，在前头那块地里种下了第一垄胡萝卜。');
+  log('到了茵菲谷爸妈的农庄，妈妈把前头两块地交给了我。');
   T.state.autoAt=sim.t+60;setTimeout(()=>showHint(`点一下${nameOf()}，可以打开丢丢平板电脑看账`),900);
  }
  // ---------------------------------------------------------------- letter + flight
@@ -162,9 +163,10 @@ const springFarm=(()=>{
  };
  // ---------------------------------------------------------------- arrival
  const oldArrive=arriveAt;arriveAt=function(place){const r=oldArrive(place);
-  if(place==='spring_test'&&!F.unlocked){F.unlocked=true;F.letter=Math.max(1,F.letter||0);}   // here without the letter on record (a player 2026-11-10: no 妈妈的农庄, beds dead): she is here, so it is unlocked
+  if(place==='spring_test'&&!F.unlocked){F.unlocked=true;F.letter=Math.max(1,F.letter||0);}
+  if(place==='spring_test'&&F.phase!=='done'&&(Object.keys(F.beds||{}).length||F.firstHarvest||(F.ledger||[]).length>1||F.work>1))F.phase='done';   // the farm was run before (owner 2026-11-10: the welcome replayed on a farm she had)   // here without the letter on record (a player 2026-11-10: no 妈妈的农庄, beds dead): she is here, so it is unlocked
   if(place==='spring_test'&&F.unlocked&&F.phase!=='done'){
-   if(['sow','water','talk'].includes(F.phase)){C().go(4,90);Object.assign(mom,{on:true,scene:4,inside:false,x:150,y:103,tx:null,facing:-1});quiet();if(F.phase==='talk')afterWater();else showHint(F.phase==='sow'?'点一下有箭头的菜地，选「播种」':'再点一下菜地，选「浇水」');}
+   if(['sow','water','talk'].includes(F.phase)){C().go(4,90);Object.assign(mom,{on:true,scene:4,inside:false,x:150,y:103,tx:null,facing:-1});quiet();afterWater();}   // an old save mid-tutorial: she is at the field, that is enough
    else setTimeout(arrive,700);
   }else{mom.on=false;if(place==='spring_test'&&F.phase==='done'){roll();for(const f of X.hooks.arrive)f();if(winter())setTimeout(()=>showHint('冬天地都冻住了，开春再种'),900);else if(daysToWinter(today())<=3)setTimeout(()=>showHint(`再过 ${daysToWinter(today())} 天就入冬了，没熟的菜会冻坏`),900);}}
   return r;};
@@ -274,7 +276,7 @@ const springFarm=(()=>{
  // update: the save said 'field' with beds planted, so the beds and her own life in 茵菲谷 never switched on, 2026-11-10)
  if(inSpring()&&!F.unlocked){F.unlocked=true;F.letter=Math.max(1,F.letter||0);}
  const worked=Object.keys(F.beds||{}).length||F.firstHarvest||(F.ledger||[]).length||F.work>0;
- if(['none','meet','arrive','room','field'].includes(F.phase)&&F.unlocked&&worked)F.phase='done';
+ if(F.phase!=='done'&&F.unlocked&&worked)F.phase='done';
  if(['arrive','room','field'].includes(F.phase))F.phase='none';
   speech.hide();mom.on=false;if(inSpring()&&F.unlocked&&F.phase!=='done')arriveAt('spring_test');return r;};
  // ---------------------------------------------------------------- test toolbar

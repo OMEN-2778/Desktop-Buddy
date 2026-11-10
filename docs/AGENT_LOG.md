@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-10 Claude — 妈妈的农庄：不再强制播种/浇水；做过的不再重放
+- 主人：任务卡在「在有箭头的菜地播种」，可菜地早种过了；之前做完的任务又要做一遍。原因：存档没记 unlocked，0.3.19 在家读档时没判断“种过地”，飞去茵菲谷后从头重放了开场。
+- spring_story.js：到茵菲谷时只要有菜地/收获/账本记录就直接 done；开场里妈妈带到地里说完就结束（afterWater），不再要求播种、浇水；旧存档停在 sow/water 的到菜地即完成。
+  任务栏步骤改「去菜地看看」/「进屋看看」。测过：主人这种存档 → done；新玩家点妈妈走完对话 → done，没种地。
+
 ## 2026-11-10 Claude — Win7 兼容版停更
 - 主人：Win7 版以后不再更新。desktop.yml 的 win7 job 加 `if: false`（最后一版 0.3.19），desktop-win7/ 留着备用。
 
