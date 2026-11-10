@@ -20,7 +20,7 @@
    if(!s.target)c.travel(sc>s.scene?1:-1);setTimeout(step,300);};
   step();}
  function spring(c){const f=F();if(f.phase!=='done'||window.infeiQuests?.busy||storyLocked()||infeiHome.svc)return false;
-  const s=c.state,Fm=infeiFarm,beds=f.open||[],dry=beds.filter(i=>{const b=X().bedOf(i);return b&&!X().ripe(b)&&b.watered!==today();}),
+  const s=c.state,Fm=infeiFarm,beds=f.open||[],dry=beds.filter(i=>{const b=X().bedOf(i);return b&&!X().CROP[b.crop]?.dry&&!X().ripe(b)&&b.watered!==today();}),
    ripe=beds.filter(i=>X().ripe(X().bedOf(i))),trees=Object.entries(f.trees||{}).filter(([,t])=>t.ready).map(([i])=>+i),
    winter=X().seasonAt(today())===3,animals=f.animals||[],
    pet=animals.filter(a=>a.petDay!==today()),ready=animals.filter(a=>a.ready),hungry=winter?animals.filter(a=>a.fedDay!==today()):[];

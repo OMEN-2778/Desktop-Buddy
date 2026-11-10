@@ -10,10 +10,34 @@ from farm_icons import g, _round_fruit
 
 PREVIEW_SCALE = 6
 L = P.green
-NEW = ("potato", "watermelon", "pepper", "radish", "eggplant")
+NEW = ("potato", "watermelon", "pepper", "radish", "eggplant", "mushroom")   # mushroom: owner 2026-11-10, free, every season, no watering
+
+
+def mushroom_plant(s, stage, x, base):
+    """0 a few white specks, 1 a tiny button, 2 a small cap, 3 a red-capped mushroom with white dots (plus a little one)."""
+    C, S = P.coral, P.porcelain
+    col = {"o": C[0], "C": C[2], "H": C[3], "W": P.light[1], "S": S[2], "s": S[1]}
+    def paint(rows, left):
+        top = base - len(rows)
+        for j, r in enumerate(rows):
+            for i, ch in enumerate(r):
+                if ch in col:
+                    s.set(left + i, top + j, col[ch])
+    if stage == 0:
+        for dx in (-3, 0, 3):
+            s.set(x + dx, base - 1, S[3])
+    elif stage == 1:
+        paint([".o.", "oHo", ".S."], x - 1)
+    elif stage == 2:
+        paint([".ooo.", "oHWCo", "ooooo", "..S..", "..s.."], x - 2)
+    else:
+        paint(["..ooooo..", ".oHCWCCo.", "oCWCCCWCo", "oCCCWCCCo", "ooooooooo", "...SSs...", "...SSs...", "...SSs..."], x - 4)
+        paint([".o.", "oCo", ".S."], x + 4)
 
 
 def crop(s, kind, stage, x, base):
+    if kind == "mushroom":
+        return mushroom_plant(s, stage, x, base)
     if kind not in NEW or stage < 2:
         return F.crop(s, kind if kind not in NEW else "carrot", stage, x, base)
     big = stage == 3
@@ -96,6 +120,14 @@ def eggplant():
     return g(rows, {"o": R[0], "C": R[1], "H": R[2], "W": R[3], "D": R[0], "l": L[2], "L": L[3]})
 
 
+def mushroom():
+    rows = ["................", "................", ".....oooooo.....", "...ooCHCCCCoo...", "..oCWCCCWCCCCo..",
+            "..oCCCCCCCWCCo..", ".oCCWCCCCCCCCDo.", ".oDDDDDDDDDDDDo.", "..ooooSSSSoooo..", ".....oSSSSo.....",
+            ".....oSSSDo.....", ".....oSSSDo.....", "......oooo......", "................", "................", "................"]
+    R = P.coral
+    return g(rows, {"o": R[0], "C": R[2], "H": R[3], "W": P.light[1], "D": R[1], "S": P.porcelain[2]})
+
+
 def heart():
     rows = ["................", "................", "................", "...ooo...ooo....", "..oHWCo.oCCCo...",
             "..oHCCCoCCCDo...", "..oCCCCCCCCDo...", "...oCCCCCCDo....", "....oCCCCDo.....", ".....oCCDo......",
@@ -104,7 +136,7 @@ def heart():
     return g(rows, {"o": R[0], "C": R[2], "H": R[3], "W": R[4], "D": R[1]})
 
 
-ICONS = {"potato": potato, "watermelon": watermelon, "pepper": pepper, "radish": radish, "eggplant": eggplant, "heart": heart}
+ICONS = {"mushroom": mushroom, "potato": potato, "watermelon": watermelon, "pepper": pepper, "radish": radish, "eggplant": eggplant, "heart": heart}
 
 
 def stages():

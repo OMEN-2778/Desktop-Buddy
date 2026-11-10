@@ -16,11 +16,13 @@ const springFarm=(()=>{
   strawberry:{name:'草莓',cost:3,days:5,sell:2,seasons:[0],regrow:3},potato:{name:'土豆',cost:2,days:5,sell:5,seasons:[0]},
   tomato:{name:'番茄',cost:3,days:5,sell:2,seasons:[1],regrow:3},corn:{name:'玉米',cost:2,days:6,sell:5,seasons:[1,2]},
   watermelon:{name:'西瓜',cost:4,days:8,sell:9,seasons:[1]},pepper:{name:'辣椒',cost:2,days:4,sell:1,seasons:[1],regrow:2},
-  pumpkin:{name:'南瓜',cost:3,days:8,sell:7,seasons:[2]},radish:{name:'萝卜',cost:1,days:3,sell:2,seasons:[2]},eggplant:{name:'茄子',cost:2,days:5,sell:1.5,seasons:[2],regrow:3}};
+  pumpkin:{name:'南瓜',cost:3,days:8,sell:7,seasons:[2]},radish:{name:'萝卜',cost:1,days:3,sell:2,seasons:[2]},eggplant:{name:'茄子',cost:2,days:5,sell:1.5,seasons:[2],regrow:3},
+  mushroom:{name:'小蘑菇',cost:0,days:3,sell:1,seasons:[0,1,2,3],dry:true,auto:true}};   // owner 2026-11-10: free, every season (winter too), no watering, picks itself on day 3
  for(const [k,c]of Object.entries(CROP))c.icon=k;
  const SEASON_NAME=['春','夏','秋','冬'];
  // Everything she gathers goes to the 仓库 (sold or given away from the 丢丢平板电脑); first finds go to 藏品.
  const ITEMS=Object.fromEntries(Object.entries(CROP).map(([k,c])=>[k,{name:c.name,icon:k,price:c.sell,line:`一筐自家种的${c.name}，${SEASON_NAME[c.seasons[0]]}天的菜。`}]));
+ ITEMS.mushroom.line='林子边捡的菌种，种下就不用管，三天自己冒出一个。';
  function addItem(k,n=1){F.inv[k]=(F.inv[k]||0)+n;if(F.seen[k]==null)F.seen[k]=today();}
  const X={hooks:{day:[],draw:[],click:[],pick:{},arrive:[]}};   // the farm's own API for infei_farm.js
  X.CROP=CROP;   // the seed shop's cards read growth, price and seasons (infei_ui.js)
@@ -66,7 +68,9 @@ const springFarm=(()=>{
  const rained=d=>seasonAt(d)!==3&&(weather.force?rainy(weather.force):planDay(d).some(e=>rainy(e.kind)));
  const rainedSoFar=()=>!winter()&&(weather.force?rainy(weather.force):planDay(today()).some(e=>rainy(e.kind)&&e.from<=sim.t));
  const wet=b=>b.watered===today()||rainedSoFar();
- function roll(){const d=today();if(F.day<0)F.day=d;while(F.day<d){for(const f of X.hooks.day)f(F.day);for(const b of Object.values(F.beds))if((b.watered===F.day||rained(F.day))&&!ripe(b))b.progress++;F.day++;if(seasonAt(F.day)!==seasonAt(F.day-1))seasonChange();}}
+ function roll(){const d=today();if(F.day<0)F.day=d;while(F.day<d){for(const f of X.hooks.day)f(F.day);for(const b of Object.values(F.beds))if((b.watered===F.day||rained(F.day)||CROP[b.crop]?.dry)&&!ripe(b))b.progress++;
+   for(const [i,b] of Object.entries(F.beds))if(CROP[b.crop]?.auto&&ripe(b)){delete F.beds[i];addItem(b.crop);log(`菜地里的${CROP[b.crop].name}自己长好了，收了 1 个进仓库。`);}
+   F.day++;if(seasonAt(F.day)!==seasonAt(F.day-1))seasonChange();}}
  function worked(){if(F.workDay!==today()){F.workDay=today();F.work++;}}
  function drawBeds(ctx,info){
   if(info.inside||info.region!==4)return;roll();
@@ -168,7 +172,7 @@ const springFarm=(()=>{
   if(place==='spring_test'&&F.unlocked&&F.phase!=='done'){
    if(['sow','water','talk'].includes(F.phase)){C().go(4,90);Object.assign(mom,{on:true,scene:4,inside:false,x:150,y:103,tx:null,facing:-1});quiet();afterWater();}   // an old save mid-tutorial: she is at the field, that is enough
    else setTimeout(arrive,700);
-  }else{mom.on=false;if(place==='spring_test'&&F.phase==='done'){roll();for(const f of X.hooks.arrive)f();if(winter())setTimeout(()=>showHint('冬天地都冻住了，开春再种'),900);else if(daysToWinter(today())<=3)setTimeout(()=>showHint(`再过 ${daysToWinter(today())} 天就入冬了，没熟的菜会冻坏`),900);}}
+  }else{mom.on=false;if(place==='spring_test'&&F.phase==='done'){roll();for(const f of X.hooks.arrive)f();if(winter())setTimeout(()=>showHint('冬天地冻住了，只能种小蘑菇'),900);else if(daysToWinter(today())<=3)setTimeout(()=>showHint(`再过 ${daysToWinter(today())} 天就入冬了，没熟的菜会冻坏`),900);}}
   return r;};
  // ---------------------------------------------------------------- clicking the beds
  function bedAt(x,y){return F.open.concat(MORE.map(m=>m[0])).find(i=>{const [bx,top,w,h]=D.plots[i];return x>=bx-2&&x<=bx+w+2&&y>=top-12&&y<=top+h+3;});}
@@ -181,7 +185,8 @@ const springFarm=(()=>{
    const off=!first?'先整理前一块':left?`再经营 ${left} 天`:F.coins<cost?`还差 ${coins(cost-F.coins)} 币`:'';
    return farmRing('荒着的地',[{id:'sf:clear:'+i,label:`整理 · ${cost} 币`,icon:'hoe',off}],i);}
   if(F.phase==='sow'&&!START.includes(i))return showHint('先种有箭头的那块');
-  if(!b)return farmRing(name,[{id:'sf:sow:'+i,label:'播种',icon:'seeds',off:winter()&&F.phase!=='sow'?'冬天休耕，开春再种':''},{id:'sf:look:'+i,label:'查看',icon:'lens',off:'还空着'}],i);
+  if(!b)return farmRing(name,[{id:'sf:sow:'+i,label:'播种',icon:'seeds'},{id:'sf:look:'+i,label:'查看',icon:'lens',off:'还空着'}],i);
+  if(CROP[b.crop]?.auto)return farmRing(name,[{id:'sf:water:'+i,label:'浇水',icon:'can',off:'不用浇水'},{id:'sf:harvest:'+i,label:'收获',icon:'basket',off:'长好会自己收'},{id:'sf:look:'+i,label:'查看',icon:'lens'}],i);
   farmRing(name,[{id:'sf:water:'+i,label:'浇水',icon:'can',off:ripe(b)?'已经熟了':b.watered===today()?'今天浇过了':rainedSoFar()?'下过雨了':''},
    {id:'sf:harvest:'+i,label:'收获',icon:'basket',off:ripe(b)?'':'还没熟'},{id:'sf:look:'+i,label:'查看',icon:'lens'}],i);
  }
@@ -204,7 +209,7 @@ const springFarm=(()=>{
   const story=F.phase==='sow';
   const se=seasonAt(today());
   const goods=story?[{group:'种子',note:'妈妈带来的',items:[{name:'胡萝卜',icon:'carrot',cost:0,info:'2 天',line:'妈妈给的一包，种满这一块。',crop:'carrot',bed:i}]}]
-   :[{group:`${SEASON_NAME[se]}天的种子`,note:'一包种满一块田',items:Object.entries(CROP).filter(([,c])=>c.seasons.includes(se)).map(([k,c])=>({name:c.name,icon:c.icon,cost:c.cost,info:`${c.days} 天${c.regrow?` · 之后每 ${c.regrow} 天再收`:''}`,line:`${c.regrow?'每收一次':'一筐'}约 ${c.sell} 币；${c.seasons.map(n=>SEASON_NAME[n]).join('、')}天能种。`,crop:k,bed:i}))}];
+   :[{group:`${SEASON_NAME[se]}天的种子`,note:'一包种满一块田',items:Object.entries(CROP).filter(([,c])=>c.seasons.includes(se)).map(([k,c])=>({name:c.name,icon:c.icon,cost:c.cost,info:c.auto?`${c.days} 天 · 不用浇水 · 自己收`:`${c.days} 天${c.regrow?` · 之后每 ${c.regrow} 天再收`:''}`,line:`${c.regrow?'每收一次':'一筐'}约 ${c.sell} 币；${c.seasons.map(n=>SEASON_NAME[n]).join('、')}天能种。`,crop:k,bed:i}))}];
   if(!story&&F.coins<1&&!Object.keys(F.beds).length)goods[0].items.unshift({name:'胡萝卜 · 救急',icon:'carrot',cost:0,info:'2 天',line:'手头紧时种子铺送的一包，一次一包。',crop:'carrot',bed:i});
   if(!story)for(const it of goods[0].items){const c=CROP[it.crop],left=daysLeft(c,today());if(c.days>left)it.off=seasonAt(today()+left)===3?'入冬前来不及成熟':'换季前来不及成熟';}
   const end=SEASON_DAYS-today()%SEASON_DAYS;if(!story&&end<=8)goods[0].note=`离换季还有 ${end} 天`;

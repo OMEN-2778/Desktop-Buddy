@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-10 Claude — 茵菲谷新作物：小蘑菇（主人看图通过）
+- infei_crops.py：mushroom 四阶段 + farm_icon_mushroom；spring_story.js CROP.mushroom（免费、四季含冬、dry 不用浇水、auto 第 3 天自动收 1 个、卖 1）。
+  冬天菜地可播种（只有小蘑菇）；地块菜单浇水/收获置灰；season_auto / infei_farm 浇水跳过蘑菇地。测过：冬天种下第 3 天进仓库。
+
 ## 2026-11-10 Claude — 妈妈的农庄：不再强制播种/浇水；做过的不再重放
 - 主人：任务卡在「在有箭头的菜地播种」，可菜地早种过了；之前做完的任务又要做一遍。原因：存档没记 unlocked，0.3.19 在家读档时没判断“种过地”，飞去茵菲谷后从头重放了开场。
 - spring_story.js：到茵菲谷时只要有菜地/收获/账本记录就直接 done；开场里妈妈带到地里说完就结束（afterWater），不再要求播种、浇水；旧存档停在 sow/water 的到菜地即完成。
