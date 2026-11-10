@@ -108,7 +108,14 @@
   night(c);}catch(e){}},1000);
  function act(c){
   try{if(['spring_test','summer_test'].includes(sim.place)&&!Object.entries(sim.needs).some(([k,v])=>v<25&&k!=='energy')&&night(c))return true;}catch(e){console.warn('season night',e);}
-  if(Object.values(sim.needs).some(v=>v<40))return true;   // low needs: the house / lodge care takes her, no plans of her own
+  // owner 2026-11-10: she stood still while a need sat between 25 and 40 (the house care only starts at 25, plans stopped at 40).
+  // Now she tops needs up herself before they go red: the lowest one under its mark, most of the time.
+  const MARK={hunger:60,bladder:55,hygiene:50,social:50,energy:40},lowNeed=Object.entries(sim.needs).filter(([k,v])=>MARK[k]&&v<MARK[k]).sort((a,b)=>a[1]-b[1])[0];
+  if(lowNeed&&!storyLocked()&&Math.random()<.8){const k=lowNeed[0];
+   if(k==='social'){if(typeof homeFor==='function')homeFor('social');return true;}
+   if(sim.place==='spring_test'&&springFarm.state.phase==='done'&&!infeiHome.svc){infeiHome.care(k);return true;}
+   if(sim.place==='summer_test'&&!window.summerLodge?.svc&&summerLodge.NEED_SPOT[k]){summerLodge.goUse(summerLodge.NEED_SPOT[k]);return true;}}
+  if(Object.values(sim.needs).some(v=>v<25))return true;   // red: the house / lodge care takes her
   try{if(sim.place==='spring_test')return spring(c);if(sim.place==='summer_test')return bay(c);}catch(e){console.warn('season auto',e);}return false;}
  window.seasonAuto={act,cancel,toScene,dive:()=>dive(sm())};
 })();

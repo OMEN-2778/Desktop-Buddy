@@ -93,13 +93,16 @@
  const ctl=()=>sim.place==='summer_test'?seasonMapTest.state.summer:sim.place==='spring_test'?seasonMapTest.state.spring:null;
  const wet=()=>{if(!inBay())return false;const c=ctl(),s=c.state;return !s.inside&&!s.market&&(window.summerFloat?.surfing||window.summerLife?.under?.()||c.deep(s.x));};
  let nextTry=0,lastChat=0;
+ // owner 2026-11-10: while 爸妈 are right there in 茵菲谷 they do not phone or video her (and she does not phone them)
+ const parentsHere=()=>sim.place==='spring_test'&&!!window.seasonParents?.here?.().length;
+ const oTalk=startContactTalk;startContactTalk=function(id,kind,incoming){const c=socialState.contacts.find(c=>c.id===id);if(c?.family&&['mom','dad'].includes(c.id)&&parentsHere())return false;return oTalk.apply(this,arguments);};
  function phoneSomeone(){
   if(!inSeason()||remoteSocial||sim.mode==='down'||asleep()||wiping||cardHolds()||socialBusy()||storyLocked())return false;
   if(seasonHouse.busy()&&['bath','toilet','season_shower','sleep'].includes(sim.act))return false;
   if(wet())return false;
   const h=hour(),night=h>=22||h<8;
   const friends=socialState.contacts.filter(c=>!c.family&&!c.child&&!String(c.id).startsWith('bay_')&&!contactWithHero(c.id)&&(c.affinity??0)>=10);
-  const family=socialState.contacts.filter(c=>c.family&&!contactWithHero(c.id));   // at night only a text (soak test 2026-11-09: no friends yet + no family at night = social ran down to 14)
+  const family=socialState.contacts.filter(c=>c.family&&!contactWithHero(c.id)&&!(parentsHere()&&['mom','dad'].includes(c.id)));   // at night only a text (soak test 2026-11-09: no friends yet + no family at night = social ran down to 14)
   const list=[...family.map(c=>[c,c.id==='mom'?3:1.5]),...friends.map(c=>[c,1])];if(!list.length)return false;
   let r=Math.random()*list.reduce((a,x)=>a+x[1],0),c=list[0][0];for(const [x,w]of list)if((r-=w)<0){c=x;break;}
   const kind=c.family?(night?'text':Math.random()<.75?'call':'text'):night?'text':weighted([['text',3],['video',1.5],['call',1.5]]);

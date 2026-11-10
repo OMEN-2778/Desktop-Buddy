@@ -26,7 +26,8 @@ const summerLodge=(function(){
  function stop(){if(!svc)return;const s=C().state;s.pose=null;s.hideHero=false;s.iy=0;seasonHouse.drop(svc.act);svc=null;}
  const ALIAS={bath:'shower',eat:'dine'};   // the home's act → this lodge's furniture
  // from anywhere on the island (the sea, the market): ashore, in through the door, then the furniture
- let goGen=0;function goUse(id,auto=true){const g=++goGen,t0=Date.now(),c=C();
+ let goGen=0;function goUse(id,auto=true){if(id==='stove'&&auto&&sim.needs.hunger<25&&!homeMeal()){sim.quickMeal=true;id='sink';}   // owner 2026-11-10: red hunger → a ready meal, no cooking
+const g=++goGen,t0=Date.now(),c=C();
   const step=()=>{if(g!==goGen||!inBay()||Date.now()-t0>60000)return;const s=c.state;
    if(s.inside&&!s.door){if(!s.target)use(id,auto);else setTimeout(step,300);return;}
    if(!s.door&&!s.target&&!s.inCabana&&!summerLife.isBusy()){if(s.market)c.beginDoor('bay');else if(s.y>131)c.goTo(1050,'dive',128);else c.enter();}

@@ -557,6 +557,8 @@ const EMO_PULL = {
 };
 function startAct(name, quiet = false) {
   if (storyLocked() && (name === "go_home" || name === "go_out")) return;   // she does not walk off mid-story
+  // owner 2026-11-10: hunger red and nothing on the table — no cooking: grab something ready from the fridge, then eat it at the table
+  if (name === "cook" && !sim.player && sim.place === "home" && sim.needs.hunger < 25 && !homeMeal()) { sim.quickMeal = true; name = "snack"; }
   if(!name.startsWith("pet_")&&!["tv","host"].includes(name))eachPet(p=>{if(p.carried)dropCarriedPet();});
   if(name.startsWith("pet_")&&!preparePetHumanAction(name))return;
   if(atFriendHome()){friendVisitCommand(name);return;}
@@ -1871,7 +1873,14 @@ function lifeFinish(act) {
       sim.meal = null;
       break;
     }
-    case "snack": addMood(weighted(T.outcomes.snack), { vars: sim.item?.vars || { 零食: pick(T.snacks) } }); break;
+    case "snack":
+      if (sim.quickMeal) {   // the ready meal from the fridge goes on the table, and she sits down to it
+        sim.quickMeal = false;
+        sim.meal = { vars: { 食物: "速食" }, cooked: false, quick: true, createdAt: sim.t, quality: "plain", fill: 50, pic: null };
+        log(sim.place === "summer_test" ? "饿坏了，拿了份旅舍备着的现成饭。" : sim.place === "spring_test" ? "端着碗坐到饭桌前。" : one(["饿坏了，从冰箱拿了份速食，端到桌上吃。", "等不及做饭了，热了份现成的饭。", "冰箱里还有份饺子，热一热就能吃。"]));
+        sim.queue.unshift("eat"); break;
+      }
+      addMood(weighted(T.outcomes.snack), { vars: sim.item?.vars || { 零食: pick(T.snacks) } }); break;
     case "tv": case "phone_game": {
       const it = sim.item || pickItem(act);
       addMood(weighted(it.kind.moods), { vars: it.vars });

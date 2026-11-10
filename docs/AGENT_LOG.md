@@ -6,6 +6,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-10 Claude — 季节地图不再发呆；点爸妈当场聊（各 100 段）；爸妈在场不打电话；饿红先吃现成的；蘑菇手动收
+- season_auto.js act()：原来任一需求 <40 就“交给房子照顾”但房子只在 <25 才管 → 25-40 之间原地站着。现在需求低于各自标线（饱 60、厕 55、洁 50、社交 50、精力 40）时 80% 先去补。
+- season_parents.js：LIVE.mom / LIVE.dad 各 100 段（'|' 分行、'~' 是她、{rain|dry|day|night|hot} 条件），点爸妈立刻按顺序说（不重复，打电话时只提示）；
+  season_social.js：爸妈在农舍（here()）时 startContactTalk 拦掉爸妈的电话/视频，她也不给爸妈打。
+- 饿红（<25）且桌上没饭：家里 cook→冰箱 snack→桌上速食→eat（index.src.html startAct/lifeFinish，sim.quickMeal）；茵菲谷 care 去灶台边「碗柜」再到饭桌；旅舍 goUse stove→sink 再 dine。
+- 主人说茵菲谷做饭进度没保留：实测（做饭中被叫去睡、回来点灶台）能接着做同一道菜，没复现；饿+困都红：她先睡到一半再去做饭吃，现在饿红改走现成饭更快。
+- 小蘑菇改手动收（不再第 3 天自动收）。旅舍现成饭没在测试页实测（开场剧情挡住），逻辑同茵菲谷。
+
 ## 2026-11-10 Claude — 茵菲谷新作物：小蘑菇（主人看图通过）
 - infei_crops.py：mushroom 四阶段 + farm_icon_mushroom；spring_story.js CROP.mushroom（免费、四季含冬、dry 不用浇水、auto 第 3 天自动收 1 个、卖 1）。
   冬天菜地可播种（只有小蘑菇）；地块菜单浇水/收获置灰；season_auto / infei_farm 浇水跳过蘑菇地。测过：冬天种下第 3 天进仓库。

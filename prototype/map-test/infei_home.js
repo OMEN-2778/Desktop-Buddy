@@ -14,6 +14,7 @@ const infeiHome=(function(){
   settee:{name:'长椅',rect:[90,84,48,25],x:114,y:108,need:'fun',act:'season_sofa',label:'坐着歇会儿',line:['坐一会儿，看看窗外','这椅子坐着真舒服'],max:90},
   table:{name:'饭桌',rect:[176,80,52,29],x:184,y:108,face:1,need:'hunger',act:'eat',label:'吃饭',line:['开饭咯','真香']},
   stove:{name:'灶台',rect:[226,66,46,43],x:276,y:108,face:-1,need:'hunger',act:'cook',label:'做顿饭',line:['生火、切菜……','自己做的就是香'],rate:3},
+  cupboard:{name:'碗柜',rect:[0,0,0,0],x:262,y:108,face:-1,need:'hunger',act:'snack',log:'饿坏了，从碗柜里拿了妈妈留的饭。',label:'拿现成的',line:['先吃点现成的','妈妈留了饭']},   // no art of its own: the corner by the stove (quick meal only)
   jar:{name:'水缸',rect:[272,82,34,27],x:285,y:108,need:'hunger',act:'snack',log:'舀了口井水喝。',label:'喝口水',line:['井水凉丝丝的']}
  };
  const RATE={hunger:2.4,energy:.45,hygiene:3,bladder:8,fun:1.3,social:1.6};
@@ -30,7 +31,9 @@ const infeiHome=(function(){
    const wait=()=>{if(!inSpring())return;if(c.state.door||!c.state.inside)return setTimeout(wait,120);c.target(p.x,p.y,begin);};setTimeout(wait,120);}
   else c.target(p.x,p.y,begin);
  }
- function care(need){const id=NEED_SPOT[need],c=C();if(!id||svc||c.state.door||c.state.inside&&c.state.target)return;use(id,true);}
+ function care(need){const id=NEED_SPOT[need],c=C();if(!id||svc||c.state.door||c.state.inside&&c.state.target)return;
+  if(need==='hunger'&&sim.needs.hunger<25&&!homeMeal()){sim.quickMeal=true;use('cupboard',true);return;}   // owner 2026-11-10: red hunger → something ready from the cupboard, eaten at the table
+  use(id,true);}
  // one click uses the furniture (owner 2026-11-03: "no second menu, click the furniture and use it"; only things like
  // the computer have a menu). Look-only spots: she walks over and says her line.
  function openSpot(id){const p=SPOTS[id];closeRing();
