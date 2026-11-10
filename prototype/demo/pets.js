@@ -69,7 +69,7 @@ function petEvent(type,p){if(type==='arrival'){p.position={x:D.spots.front_door[
 function tickPets(from,to){if(!(to>from)||friendHousePreview||visitSleepPreview)return;const p=petState.pet;if(!p)return;
  tickPetActivities(from,to);
  const point=petPoint(),near=petNearby(),atFeeder=Math.hypot(point.x-119,point.y-FLOOR_Y[0])<4;
- PetRules.tick(petState,from,to,{nearby:near,atFeeder,pal:petState.pets.some(q=>q!==p&&q.status==='home'),rescue:q=>typeof petRescue==='function'&&petRescue(q)},petEvent);
+ PetRules.tick(petState,from,to,{nearby:near,atFeeder,pal:petState.pets.some(q=>q!==p&&q.status==='home'),rescue:q=>typeof petRescue==='function'&&petRescue(q),slow:typeof petAwaySlow==='function'?petAwaySlow():1,lowHelp:(q,k)=>typeof petLowHelp==='function'&&petLowHelp(q,k)},petEvent);
  if(p.status!=='home')return;
  p.animTime=(p.animTime||0)+(to-from);
  if(p.walk||p.carried){/* Walking/carrying owns the actor, needs still advance above. */}

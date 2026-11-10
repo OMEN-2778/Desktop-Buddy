@@ -6,6 +6,14 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-10 Claude — 玩家存档：茵菲谷没解锁也能进 → 菜地/自主生活全失效；UI 打开时时间静止；宠物在家宽松
+- 玩家反馈（截图）：在茵菲谷很久但任务栏「没有任务」、菜地点不了、做完饭不吃。原因：存档里 springFarm.unlocked=false（或开场 phase 卡在 none/arrive/room/field），
+  菜地只认 sow/water/done，infei_home 自主只在 done 时跑。spring_story.js：人在茵菲谷就补 unlocked；开场没走完但已种过地/有账本 → 直接 done；
+  否则重放开场（妈妈「!」）。菜地在开场前点击给提示，不再没反应。
+- index.src.html uiPauses()：丢丢平板/季节地图面板（fu-sheet）/季节地图里的选单（种子、商店等）/元宵猜灯谜选单打开时时钟停，关了继续。
+- 宠物：她在季节地图时家里宠物需求按 1/3 掉；任一需求 <5 时好友度最高的朋友发消息并补满该项（每只宠物每项一次，season_social.js petLowHelp + pets_state.js lowHelp/slow）。
+- 测过：平板/种子选单打开 0 分钟流逝、关了恢复；坏存档恢复为 done / 重放开场；petLowHelp 每项一次。
+
 ## 2026-11-10 Claude — 短对话改口语（第一轮：手机/视频/文字）
 - 主人：短对话太冷，要口语、分场景，但别太情绪化。social_text conversations（128）、social_dialogue relationship（128）、phone call/video（200）、
   early（120）全部重写：语气词、口头省略、八卦从“陈述句”改成边说边接；同题不同池子用同一版（池子按标题去重，后来的覆盖前面的）。

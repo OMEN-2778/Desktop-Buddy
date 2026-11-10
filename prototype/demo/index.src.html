@@ -4431,7 +4431,16 @@ for (let i = 0; i < 20; i++) {                   // sparks around the moodlet pi
   crBurst.append(sp);
 }
 // while a card or its result is up the house dims a little and time stands still (user)
-const cardHolds = () => (typeof storySpeechOpen === "function" && storySpeechOpen()) || !petPanel.hidden || !!(card && card.hold) || guideOn || wardrobeOpen || phoneHolds() || socialDialogHolds() || !!friendHousePreview || ringOf==="outing";   // (the guide stops the clock too)
+// owner 2026-11-10: the clock stands still while the 丢丢平板 / a season-map panel or picker (seeds, shop, ranch, the plot) /
+// the 元宵节 riddle picker is open — she no longer wanders off while the player is choosing
+function uiPauses() {
+  try {
+    if (!pickerEl.hidden && (pickOn === "fest_riddle" || ["spring_test", "summer_test"].includes(sim.place))) return true;
+    if (typeof socialSheet !== "undefined" && !socialSheet.hidden && socialSheet.classList.contains("fu-sheet")) return true;
+  } catch (e) {}
+  return false;
+}
+const cardHolds = () => uiPauses() || (typeof storySpeechOpen === "function" && storySpeechOpen()) || !petPanel.hidden || !!(card && card.hold) || guideOn || wardrobeOpen || phoneHolds() || socialDialogHolds() || !!friendHousePreview || ringOf==="outing";   // (the guide stops the clock too)
 const dimHouse = on => view.classList.toggle("dim", on);
 let quietUntil = 0;         // her card line isn't followed by a "new mood" thought
 let card = null;            // { cd, vars, phase: ask | wait | result | closing, k, o, auto, timer, lockUntil }

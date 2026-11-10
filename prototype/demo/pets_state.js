@@ -39,11 +39,12 @@ const PetRules = (()=>{
    if(p.status==='pending'){if(t>=p.arrivalAt){p.status='home';p.nextEvent=t+90;emit('arrival',p);}continue;}
    if(p.status==='away'){if(t>=p.returnAt){p.status=p.willReturn?'home':'lost';p.motion=null;p.activityNow='idle';if(p.willReturn){p.needs={hunger:45,energy:45,company:45};p.low={hunger:0,energy:0,company:0};p.warned={};}emit(p.willReturn?'return':'lost',p);}continue;}
    if(p.status!=='home')continue;
-   const n=p.needs;n.hunger=clamp(n.hunger-dt/18);const sleeping=['sleep','rest','lie_down'].includes(p.activityNow);
-   n.energy=clamp(n.energy+dt*(sleeping?.28:-(p.activity==='active'?.055:.04)));
-   n.company=clamp(n.company+dt*(context.nearby?.085:-(p.attachment==='clingy'?.045:.026)*(context.pal?.6:1)));   // a second pet at home keeps it some company
+   const n=p.needs,slow=context.slow||1;n.hunger=clamp(n.hunger-dt/18*slow);const sleeping=['sleep','rest','lie_down'].includes(p.activityNow);   // slow: 1/3 while she is in a season map (owner 2026-11-10)
+   n.energy=clamp(n.energy+dt*(sleeping?.28:-(p.activity==='active'?.055:.04)*slow));
+   n.company=clamp(n.company+dt*(context.nearby?.085:-(p.attachment==='clingy'?.045:.026)*(context.pal?.6:1)*slow));   // a second pet at home keeps it some company
    if(p.activityNow==='eat'&&context.atFeeder&&s.feeder>0){const food=Math.min(s.feeder,dt*4,100-n.hunger);s.feeder-=food;n.hunger=clamp(n.hunger+food);}
    for(const k of Object.keys(n)){
+    if(n[k]<5&&context.lowHelp?.(p,k)){n[k]=MAX;p.low[k]=0;delete p.warned[k];continue;}   // a friend steps in, once per need per pet (owner 2026-11-10)
     if(n[k]<10)p.low[k]+=dt;else p.low[k]=0;
     if(n[k]<20&&!p.warned[k]){p.warned[k]=true;emit('warning:'+k,p);}if(n[k]>=25)delete p.warned[k];
     if(p.low[k]>=DAY){if(context.rescue?.(p)){p.low={hunger:0,energy:0,company:0};p.warned={};break;}escape(s,t,emit,p);break;}   // rescue: a friend fed it (owner 2026-11-10, once, while she is away)

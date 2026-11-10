@@ -162,6 +162,7 @@ const springFarm=(()=>{
  };
  // ---------------------------------------------------------------- arrival
  const oldArrive=arriveAt;arriveAt=function(place){const r=oldArrive(place);
+  if(place==='spring_test'&&!F.unlocked){F.unlocked=true;F.letter=Math.max(1,F.letter||0);}   // here without the letter on record (a player 2026-11-10: no 妈妈的农庄, beds dead): she is here, so it is unlocked
   if(place==='spring_test'&&F.unlocked&&F.phase!=='done'){
    if(['sow','water','talk'].includes(F.phase)){C().go(4,90);Object.assign(mom,{on:true,scene:4,inside:false,x:150,y:103,tx:null,facing:-1});quiet();if(F.phase==='talk')afterWater();else showHint(F.phase==='sow'?'点一下有箭头的菜地，选「播种」':'再点一下菜地，选「浇水」');}
    else setTimeout(arrive,700);
@@ -190,6 +191,7 @@ const springFarm=(()=>{
   if(F.phase==='meet'&&!s.inside){if(s.scene===mom.scene&&momAt(x,y)){e.stopPropagation();e.preventDefault();greet();}return;}
   if(!s.inside&&s.scene===4&&F.phase==='done'&&window.infeiQuests?.hit(x,y,s)){e.stopPropagation();e.preventDefault();return;}   // someone standing by the plots
   if(!s.inside&&s.scene===4&&['sow','water','done'].includes(F.phase)){const i=bedAt(x,y);if(i==null)return;e.stopPropagation();e.preventDefault();openBed(i);return;}
+  if(!s.inside&&s.scene===4&&bedAt(x,y)!=null){e.stopPropagation();e.preventDefault();showHint(F.phase==='meet'?'先去农舍门口点一下妈妈':'先跟着妈妈把开场走完');return;}   // never a silent click on a bed
   if((F.phase==='done'||s.inside)&&X.hooks.click.some(f=>f(x,y,s))){   // the farmhouse works in every phase (owner 2026-11-03)
    e.stopPropagation();e.preventDefault();}
  },true);
@@ -268,8 +270,13 @@ const springFarm=(()=>{
  // ---------------------------------------------------------------- saves
  const oldSnap=snapshot;snapshot=function(){const s=oldSnap();s.springFarm=JSON.parse(JSON.stringify(F));return s;};
  const oldRestore=restore;restore=function(save){const r=oldRestore(save);F=Object.assign(blank(),X.blank?.()||{},save?.springFarm||{});if(!(F.coins>=0))F.coins=0;   // the stale-farm bug left some saves below zero (owner 2026-11-04)
- if(['arrive','room','field'].includes(F.phase))F.phase='none';   // an unfinished welcome replays on the next landing
-  speech.hide();mom.on=false;if(inSpring()&&F.unlocked&&F.phase!=='done'&&F.phase!=='none')arriveAt('spring_test');return r;};
+ // an unfinished welcome replays on the next landing; a farm that already has crops / takings is past it (a player after an
+ // update: the save said 'field' with beds planted, so the beds and her own life in 茵菲谷 never switched on, 2026-11-10)
+ if(inSpring()&&!F.unlocked){F.unlocked=true;F.letter=Math.max(1,F.letter||0);}
+ const worked=Object.keys(F.beds||{}).length||F.firstHarvest||(F.ledger||[]).length||F.work>0;
+ if(['none','meet','arrive','room','field'].includes(F.phase)&&F.unlocked&&worked)F.phase='done';
+ if(['arrive','room','field'].includes(F.phase))F.phase='none';
+  speech.hide();mom.on=false;if(inSpring()&&F.unlocked&&F.phase!=='done')arriveAt('spring_test');return r;};
  // ---------------------------------------------------------------- test toolbar
  const bar=T.root.querySelector('header');
  for(const [label,fn]of [['妈妈来信（测试）',()=>{if(!sendLetter())showHint('信已经寄过了');else if(!['home','front'].includes(sim.place))showHint('信在家门口，回家就能看到');}],['快进到明早（测试）',()=>{sim.t=(today()+1)*1440+7*60;roll();}]]){const b=document.createElement('button');b.textContent=label;b.onclick=fn;bar.append(b);}

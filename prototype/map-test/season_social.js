@@ -59,6 +59,19 @@
  // the first time a pet would run off while she is in 茵菲谷 / 草帽湾 it stays: her closest friend let themselves in with the
  // spare key and filled the bowls. A quest-style bubble says so; 「我马上回家」 flies her home as soon as nothing else is on.
  let rescueTalk=null,homeAsked=false;
+ // owner 2026-11-10: while she is in a season map her pets at home get by slower (1/3), and the first time any need of a pet
+ // drops under 5 her closest friend drops by, sorts it and texts her (once per need, per pet)
+ window.petAwaySlow=()=>inSeason()?1/3:1;
+ const HELP={hunger:['{宠物}的碗空了，我拿你家备用钥匙进去添满了，放心哈。','路过你家听见{宠物}在叫，一看饭碗见底了，给它倒满了。','你家{宠物}饿得直扒门，我给它添了粮，吃得可香了。'],
+  energy:['去你家看了眼{宠物}，它好像一直没睡踏实，我把窝挪到太阳底下了，这会儿睡得呼呼的。','{宠物}看着蔫蔫的，我把屋里灯关了让它好好睡一觉。'],
+  company:['去你家陪{宠物}玩了一下午，它一直往我怀里钻，估计是想你了。','{宠物}一个人在家闷坏了，我陪它玩了会儿球，现在高兴多了。','我去你家坐了会儿，{宠物}黏了我一下午，你快点回来哈。']};
+ const THANKS=['谢谢！回去请你吃饭','哎呀太谢谢了','欠你一顿饭'];
+ window.petLowHelp=(p,k)=>{if(!inSeason()||!HELP[k])return false;p.helped??={};if(p.helped[k])return false;p.helped[k]=true;
+  const f=socialState.contacts.filter(c=>!c.family&&!c.child&&!String(c.id).startsWith('bay_')).sort((a,b)=>(b.affinity??0)-(a.affinity??0))[0];
+  const who=f?contactName(f):'邻居',line=pick(HELP[k]).replaceAll('{宠物}',p.name||'小家伙');
+  setTimeout(()=>{try{gameAudio?.sound?.('bell',.2,{gap:4});}catch(e){}if(!storyLocked()&&!asleep())showSay(line,who+'：',f||null);
+   log(`${who}发来消息：帮忙照看了家里的${p.name||'宠物'}。`,null,[[who+'：',line],[nameOf()+'：',pick(THANKS)]]);},0);
+  return true;};
  window.petRescue=p=>{if(!inSeason()||p.rescued)return false;p.rescued=true;
   p.needs.hunger=Math.max(p.needs.hunger,90);p.needs.company=Math.max(p.needs.company,50);p.needs.energy=Math.max(p.needs.energy,50);petState.feeder=900;
   const f=socialState.contacts.filter(c=>!c.family&&!c.child&&!String(c.id).startsWith('bay_')).sort((a,b)=>(b.affinity??0)-(a.affinity??0))[0];
