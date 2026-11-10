@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-10 Claude — Win7 兼容版停更
+- 主人：Win7 版以后不再更新。desktop.yml 的 win7 job 加 `if: false`（最后一版 0.3.19），desktop-win7/ 留着备用。
+
 ## 2026-11-10 Claude — 玩家存档：茵菲谷没解锁也能进 → 菜地/自主生活全失效；UI 打开时时间静止；宠物在家宽松
 - 玩家反馈（截图）：在茵菲谷很久但任务栏「没有任务」、菜地点不了、做完饭不吃。原因：存档里 springFarm.unlocked=false（或开场 phase 卡在 none/arrive/room/field），
   菜地只认 sow/water/done，infei_home 自主只在 done 时跑。spring_story.js：人在茵菲谷就补 unlocked；开场没走完但已种过地/有账本 → 直接 done；

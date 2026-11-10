@@ -17,7 +17,6 @@ on:
   push:
     paths:
       - "desktop/**"
-      - "desktop-win7/**"
       - "tools/check_window_drag.js"
       - "prototype/demo/index.html"
       - "prototype/demo/*.js"       # the game's sources (index.html is built from them in CI)
@@ -237,6 +236,7 @@ jobs:
   # 32- and 64-bit Windows 7/8/10/11. No self-update: it goes into the same release for a manual download.
   win7:
     needs: windows       # adds itself to the release the Windows job made
+    if: false            # owner 2026-11-10: no more Win7 builds (0.3.16-0.3.19 have one); flip to re-enable
     runs-on: windows-latest
     env:
       BUDDY_MINIFY: "1"
