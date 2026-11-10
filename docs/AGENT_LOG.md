@@ -7,7 +7,7 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 ---
 
 ## 2026-11-10 Claude — 朋友聊天加长
-- social_text.json conversations：friend/close/best 各加 8–10 段 10–16 句的长对话（吐槽、讲事被插话、电话里一起做饭、开着电话不说话、半路被打断等，不再都是问-追问-答）。
+- social_text.json conversations：friend/close/best 各加 8 段 12–16 句的长对话（主人说太冷静，已改得口语些：语气词、口头省略、打岔）（吐槽、讲事被插话、电话里一起做饭、开着电话不说话、半路被打断等，不再都是问-追问-答）。
 - index.src.html chatItem：还没聊过的长对话有 40% 优先抽到（lines ≥ 10）。测过：40 次抽取里 8 次是长对话。
 
 ## 2026-11-10 Claude — 桌面小屋 Win7 兼容版（Electron 22）
