@@ -13,7 +13,7 @@ const gameAudio = (() => {
   const stats={played:0,loads:0,errors:[],last:[],music:''};
   // Both raw demo and packaged app use their own sibling audio directory.
   const url=path=>new URL('audio/'+path+'?v='+GAME_AUDIO_VERSION,document.baseURI).href;
-  const sfx=id=>{id=RECORDED_FOLEY[id]||id;return id.endsWith('-cc0')?'SFX/processed/'+id+'.mp3':'SFX/game/'+id+'.mp3';};
+  const sfx=id=>{if(typeof id!=='string'||!id.trim())return null;id=RECORDED_FOLEY[id]||id;return id.endsWith('-cc0')?'SFX/processed/'+id+'.mp3':'SFX/game/'+id+'.mp3';};
   const ready=()=>unlocked&&ctx?.state==='running'&&!muted;
   const now=()=>performance.now()/1000;
   function ramp(node,value,seconds=.15){const at=ctx.currentTime;if(node.gain.cancelAndHoldAtTime)node.gain.cancelAndHoldAtTime(at);else{const value=node.gain.value;node.gain.cancelScheduledValues(at);node.gain.setValueAtTime(value,at);}node.gain.linearRampToValueAtTime(value,at+seconds);}
@@ -60,7 +60,7 @@ const gameAudio = (() => {
     source.start(0,loop&&options.ambient?Math.random()*Math.max(.1,b.duration-1):0);if(!loop&&b.duration>8)source.stop(ctx.currentTime+6);return v;
   }
   function sound(id,volume=1,options={}){
-    if(!prefs.sfx||!ready())return;
+    if(!prefs.sfx||!ready()||!sfx(id))return;
     const time=now(),tag=options.tag||id;
     if(time-(cooldown.get(tag)??-Infinity)<(options.gap??.12))return;
     cooldown.set(tag,time);const token=epoch;
@@ -75,6 +75,7 @@ const gameAudio = (() => {
   function stopTag(tag){for(const v of voices)if(v.tag===tag)stopVoice(v,.025);}
   function setLoop(key,id,volume,spatial={}){
     const path=sfx(id),old=loops.get(key);
+    if(!path){if(old){loops.delete(key);stopVoice(old.voice,.4);}return;}
     if(old?.path===path){old.volume=volume;old.spatial=spatial;if(old.voice){old.voice.volume=volume;old.voice.spatial=spatial;placeVoice(old.voice,.35);}return;}
     if(old){loops.delete(key);stopVoice(old.voice,.4);}
     const entry={path,voice:null,volume,spatial};loops.set(key,entry);const token=epoch;

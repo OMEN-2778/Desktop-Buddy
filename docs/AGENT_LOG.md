@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-10 · Codex · 空音效编号不再触发 endsWith 异常
+- 用户截图0.3.10运行异常：undefined.endsWith；当前正式音频sfx解析器存在同类空值崩溃入口，截图无法确认最初调用者。
+- audio.js 在音效编号解析/单次播放/循环入口校验空值和非字符串；无效循环停止旧声并跳过，不阻断正常音效或后续游戏tick。
+- make_demo + npm web完成；check_audio_missing_id.js Chromium验证空值/坏类型、无效环境音与有效音隔离、正常音效播放、无页面错误。
+- 仅验证本地网页；旧0.3.10安装包需更新后才能含修复，未实测玩家存档或Windows客户端。
+
 ## 2026-11-10 Claude — 季节地图不再发呆；点爸妈当场聊（各 100 段）；爸妈在场不打电话；饿红先吃现成的；蘑菇手动收
 - season_auto.js act()：原来任一需求 <40 就“交给房子照顾”但房子只在 <25 才管 → 25-40 之间原地站着。现在需求低于各自标线（饱 60、厕 55、洁 50、社交 50、精力 40）时 80% 先去补。
 - season_parents.js：LIVE.mom / LIVE.dad 各 100 段（'|' 分行、'~' 是她、{rain|dry|day|night|hot} 条件），点爸妈立刻按顺序说（不重复，打电话时只提示）；
