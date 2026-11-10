@@ -43,7 +43,7 @@
             <button type="button" class="call-answer">接听</button><button type="button" class="call-decline">拒绝</button>
             <i class="call-countdown" aria-hidden="true"></i>
           </section>
-          <div class="mood-list" id="moodTip" role="list" aria-label="她现在的心情" hidden></div>
+          <div class="mood-list" id="moodTip" role="list" aria-label="小人现在的心情" hidden></div>
         </div>
       </div>
       <div class="status-row">
@@ -72,8 +72,8 @@
       <div class="wipe" id="wipe" hidden aria-hidden="true"><i></i><i></i></div>
       <canvas class="trip" id="trip" hidden aria-hidden="true"></canvas>
       <div class="card-res" id="cardRes" hidden aria-live="polite"><div class="cr-moodwrap"><i class="cr-burst" aria-hidden="true"></i><span class="mp cr-mood"></span></div><div class="cr-box"></div></div>
-      <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让她去做事，点衣柜打开造型室，点她弹出互动菜单。"></canvas>
-      <div class="ring" id="ring" role="menu" aria-label="和她互动" hidden></div>
+      <canvas id="view" width="342" height="118" aria-label="小屋剖面，小人在里面生活。点家具让小人去做事，点衣柜打开造型室，点小人弹出互动菜单。"></canvas>
+      <div class="ring" id="ring" role="menu" aria-label="和小人互动" hidden></div>
       <div class="nametag" id="nametag" aria-hidden="true"></div>
       <div class="fest-bar" id="festBanner" hidden role="toolbar" aria-label="今日节日"><span class="fb-deco" aria-hidden="true"></span><span class="fb-sheen" aria-hidden="true"></span><span class="fb-name"></span><span class="fb-acts"></span></div>
       <div class="update" id="update" role="status" hidden><span></span><button type="button" class="up-go">更新</button><button type="button" class="up-later">以后</button><i class="up-bar"></i></div>
@@ -123,7 +123,7 @@
       </div>
       <div class="label">节日（测试用：跳到当天早上 6 点）</div>
       <div class="row" id="festJump" role="group" aria-label="跳到节日"></div>
-      <p class="note">点家具让她去做事：床、衣柜（打开造型室）、浴缸、马桶、洗手台、毛巾、书架、电脑（会弹出菜单）、沙发、电视、灶台、餐桌、冰箱、绿植；台灯和窗户可以开关。点她本人弹出互动菜单；她晕倒时长按她 5 秒。</p>
+      <p class="note">点家具让小人去做事：床、衣柜（打开造型室）、浴缸、马桶、洗手台、毛巾、书架、电脑（会弹出菜单）、沙发、电视、灶台、餐桌、冰箱、绿植；台灯和窗户可以开关。点小人本人弹出互动菜单；晕倒时长按 5 秒。</p>
     </div>
     <div class="box" style="grid-column: span 2">
       <div class="label">日记</div>
@@ -942,6 +942,7 @@ function useFurniture(id, glowOnly = false) {
     return;
   }
   if(id==='table'&&homeMeal()){command('eat');return;}
+  if (id === "stove" && cookSaved()) { const it = cookItemOf(cookSaved()); if (it) { command("cook", it); return; } }   // a half-done dish: carry on
   if (id === "stove" || id === "fridge" || id === "table") { openPicker("cook", pickFrom(id)); return; }
   if (PICK[CLICK_ACT[id]]) { openPicker(CLICK_ACT[id], pickFrom(id)); return; }   // books, shows: choose in the panel
   if (CLICK_ACT[id]) command(CLICK_ACT[id]);
@@ -1396,6 +1397,7 @@ function render() {
   }
   if (act && act.startsWith("pc_")) bctx.drawImage(frameOf(IMG.app[act.slice(3)], act === "pc_video" ? 2 : 3), D.screens.monitor.x, D.screens.monitor.y);
   if (act === "cook") bctx.drawImage(frameOf(IMG.fx.cook, 8), D.fx.cook.x, D.fx.cook.y);
+  else if (cookSaved("home") || cookWatch?.k === "home") bctx.drawImage(potStill(), D.fx.cook.x, D.fx.cook.y);   // the half-done dish's pot stays on the stove
   if (homeMeal()) {   // Keep the same dish visible while the player does other things.
     const pic = sim.meal && sim.meal.pic && dishPic(sim.meal.pic);
     if (pic && pic.complete) bctx.drawImage(pic, D.fx.meal.x + 3 - (pic.width >> 1), D.fx.meal.y + 13 - pic.height + 1);
@@ -1803,12 +1805,36 @@ function pickItem(act) {
   const [list, items, key] = CATALOG[act](), kind = pick(T[list]);
   return { kind, vars: { [key]: pick(kind[items]) }, screen: kind.screen };
 }
+// cooking keeps its progress (owner 2026-11-10): a dish left half-done (she went off to do something else) waits in that
+// kitchen's pot — home, the 茵菲谷 farmhouse, the 草帽湾 lodge — and the next cook there carries on with it.
+// Picking a different dish from the menu starts over; the pot stays on the stove meanwhile.
+const kitchenKey = () => (typeof atFriendHome === "function" && atFriendHome()) ? null : sim.place === "home" ? "home" : ["spring_test", "summer_test"].includes(sim.place) ? sim.place : null;
+function cookSaved(k = kitchenKey()) { return k && lifeFlags.cookSaved?.[k] || null; }
+function cookItemOf(sv) {
+  const all = [...(typeof festCuisines === "function" ? festCuisines() : []), ...T.cuisines, ...(window.seasonHouse?.BAY ? [seasonHouse.BAY] : [])];
+  const c = all.find(c => c.name === sv.c), d = c && c.dishes.find(d => (typeof d === "string" ? d : d.name) === sv.d);
+  return d ? { ...dishItem(c, d), resume: true } : null;
+}
+let cookWatch = null, potCanvas = null;
+function potStill() {   // the pot alone, lid on, no flame or smoke (cook_fx: pot rows 10-17, trivet legs at x 2 / 11, base row 23)
+  if (potCanvas) return potCanvas;
+  const src = IMG.fx.cook[0], c = document.createElement("canvas"); c.width = src.width; c.height = src.height; const g = c.getContext("2d");
+  g.drawImage(src, 0, 10, 14, 8, 0, 10, 14, 8); g.drawImage(src, 2, 18, 1, 5, 2, 18, 1, 5); g.drawImage(src, 11, 18, 1, 5, 11, 18, 1, 5); g.drawImage(src, 0, 23, 14, 1, 0, 23, 14, 1);
+  return potCanvas = c;
+}
+setInterval(() => {
+  if (sim.mode === "act" && sim.act === "cook" && sim.item?.vars?.食物) { const k = kitchenKey(); if (k) cookWatch = { k, c: sim.item.vars.菜系, d: sim.item.vars.食物, left: Math.max(1, Math.round(sim.actEnd - sim.t)) }; return; }
+  if (cookWatch) { const { k, ...sv } = cookWatch; (lifeFlags.cookSaved ||= {})[k] = sv; cookWatch = null; }
+}, 250);
 function lifeArrive(act) {
+  const picked = !!(sim.chosen && sim.chosen.act === act);
   sim.item = sim.chosen && sim.chosen.act === act ? sim.chosen.item : pickItem(act);
   sim.chosen = null;
   sim.talk = sim.item && sim.item.talk ? { i: 0, wait: 1 } : null;
   const dish = sim.item && sim.item.dish;
   if (act === "cook" && dish && dish.time) sim.actEnd = sim.t + dish.time;          // each dish its own cooking time
+  if (act === "cook") { const sv = cookSaved(); if (sv) { delete lifeFlags.cookSaved[kitchenKey()]; const it = sim.item?.resume ? sim.item : picked ? null : cookItemOf(sv);
+    if (it) { sim.item = it; sim.actEnd = sim.t + sv.left; log(`接着做锅里没做完的${sv.d}。`); } } }
   if (act === "eat") beginHomeMeal();
   if (act === "sleep" && !sim.nap && emotion().key === "tense" && Math.random() < 0.3) sim.insomnia = true;
 }
@@ -1817,6 +1843,7 @@ function lifeFinish(act) {
   const n = sim.needs, h = hour(), r = Math.random();
   switch (act) {
     case "cook": {
+      cookWatch = null; if (lifeFlags.cookSaved) delete lifeFlags.cookSaved[kitchenKey()];
       const it = sim.item || pickItem("cook"), c = it.kind, vars = it.vars;
       // how it turned out: a clear head cooks better, a foggy one burns things
       const e = emotion().key, sharp = ["focused", "inspired", "confident", "happy"].includes(e), foggy = ["dazed", "tense", "angry"].includes(e);

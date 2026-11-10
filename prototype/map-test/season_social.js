@@ -55,10 +55,31 @@
   if(!t)return it;
   const pet=hasPet()?petName():'',f=s=>s.replaceAll('{宠物}',pet),title=f(t.title);
   it.talk.end=it.talk.end.replace(it.talk.title,title);Object.assign(it.talk,{title,lines:t.lines.map(f),mood:t.mood,id:t.id});if(c)c.lastTopic=title;return it;};
+ // ---------------------------------------------------------------- 宠物快跑了（owner 2026-11-10）
+ // the first time a pet would run off while she is in 茵菲谷 / 草帽湾 it stays: her closest friend let themselves in with the
+ // spare key and filled the bowls. A quest-style bubble says so; 「我马上回家」 flies her home as soon as nothing else is on.
+ let rescueTalk=null,homeAsked=false;
+ window.petRescue=p=>{if(!inSeason()||p.rescued)return false;p.rescued=true;
+  p.needs.hunger=Math.max(p.needs.hunger,90);p.needs.company=Math.max(p.needs.company,50);p.needs.energy=Math.max(p.needs.energy,50);petState.feeder=900;
+  const f=socialState.contacts.filter(c=>!c.family&&!c.child&&!String(c.id).startsWith('bay_')).sort((a,b)=>(b.affinity??0)-(a.affinity??0))[0];
+  rescueTalk={who:f?contactName(f):'邻居',name:p.name};log(`${rescueTalk.who}用备用钥匙进了家门，给${p.name}添满了粮。`);return true;};
+ setInterval(()=>{try{
+  if(!rescueTalk||!inSeason()||!speed||storyLocked()||cardHolds()||wiping||sim.mode==='down'||asleep()||springFarm.speech.open)return;
+  const r=rescueTalk;rescueTalk=null;const sp=springFarm.speech;
+  sp.show(r.who,'你一定是忘记喂你的小宠物了，所以原谅我拿了你家的备用钥匙，给你的小家伙们放满了粮食。',{special:true,choices:[
+   {label:'多谢！我会注意的',on:()=>{sp.hide();speak('回头得好好谢谢人家',true);}},
+   {label:'我马上回家！',on:()=>{sp.hide();homeAsked=true;}}]});
+ }catch(e){console.warn('pet rescue',e);}},1000);
+ // 「我马上回家」: leave as soon as no story / event / card is going on
+ setInterval(()=>{try{
+  if(!homeAsked)return;if(!inSeason()){homeAsked=false;return;}
+  if(!speed||storyLocked()||cardHolds()||wiping||sim.mode==='down'||springFarm.speech.open||socialBusy()||typeof remoteSocial!=='undefined'&&remoteSocial)return;
+  homeAsked=false;closeRing();if(sim.place==='spring_test')infeiHome.leave();else ringPick('bay:leave');
+ }catch(e){console.warn('pet rescue home',e);}},1000);
  // ---------------------------------------------------------------- 社交低了：拿手机找人聊（像主世界一样，不回屋）
  const ctl=()=>sim.place==='summer_test'?seasonMapTest.state.summer:sim.place==='spring_test'?seasonMapTest.state.spring:null;
  const wet=()=>{if(!inBay())return false;const c=ctl(),s=c.state;return !s.inside&&!s.market&&(window.summerFloat?.surfing||window.summerLife?.under?.()||c.deep(s.x));};
- let nextTry=0;
+ let nextTry=0,lastChat=0;
  function phoneSomeone(){
   if(!inSeason()||remoteSocial||sim.mode==='down'||asleep()||wiping||cardHolds()||socialBusy()||storyLocked())return false;
   if(seasonHouse.busy()&&['bath','toilet','season_shower','sleep'].includes(sim.act))return false;
@@ -72,7 +93,9 @@
   return startContactTalk(c.id,kind);}
  setInterval(()=>{try{
   if(!inSeason()||!speed||sim.t<nextTry)return;
-  if(sim.needs.social<35){nextTry=sim.t+20;if(phoneSomeone())nextTry=sim.t+90;}
+  // owner 2026-11-10: she should reach for the phone by herself here, not only when social is red
+  if(sim.needs.social<45){nextTry=sim.t+20;if(phoneSomeone())nextTry=sim.t+90;}
+  else if(sim.needs.social<75&&sim.t-lastChat>200&&Math.random()<.5){nextTry=sim.t+30;if(phoneSomeone()){lastChat=sim.t;nextTry=sim.t+90;}}
  }catch(e){console.warn('season social',e);}},1000);
  // a red social need: never into the house for it, the phone instead
  const oHome=homeFor;homeFor=function(k){if(inSeason()&&k==='social'){phoneSomeone();return;}return oHome.apply(this,arguments);};

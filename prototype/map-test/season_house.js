@@ -22,7 +22,7 @@ const seasonHouse=(function(){
  // the home's arrive() for this act, minus the walking (the house has walked her there)
  function start(act,o={}){const a=ACTS[act];if(!a)return;
   sim.mode='act';sim.act=act;sim.player=!o.auto;
-  if(act==='cook'&&sim.place==='summer_test'&&sim.chosen?.act!=='cook')sim.chosen={act:'cook',item:dishItem(BAY,pick(BAY.dishes))};   // the lodge's kitchen cooks Hawaiian
+  if(act==='cook'&&sim.place==='summer_test'&&sim.chosen?.act!=='cook'&&!cookSaved())sim.chosen={act:'cook',item:dishItem(BAY,pick(BAY.dishes))};   // the lodge's kitchen cooks Hawaiian
   if(sim.chosen&&sim.chosen.act!==act)sim.chosen=null;   // lifeArrive takes the dish picked from the menu
   if(act==='sleep'){const h=hour();sim.nap=!(h>=21||h<6);}
   sim.actEnd=sim.t+(act==='sleep'?900:a.dur*(0.8+Math.random()*0.4));
@@ -43,7 +43,7 @@ const seasonHouse=(function(){
  // ---------------------------------------------------------------- the home's pictures at the house's furniture
  function frame(){return busy()?activityFrame(realClock*1000):null;}
  function emote(ctx,x,y){const fr=frame();if(fr?.emote)ctx.drawImage(emoteCanvas(fr.emote),x,y);}
- function cookFx(ctx,x,y){if(running('cook'))ctx.drawImage(frameOf(IMG.fx.cook,8),x,y);}
+ function cookFx(ctx,x,y){if(running('cook'))ctx.drawImage(frameOf(IMG.fx.cook,8),x,y);else if(cookSaved()||cookWatch?.k===sim.place)ctx.drawImage(potStill(),x,y);}   // a half-done dish keeps its pot
  function meal(ctx,x,y){if(!homeMeal())return;const pic=sim.meal.pic&&dishPic(sim.meal.pic);
   if(pic&&pic.complete)ctx.drawImage(pic,x+3-(pic.width>>1),y+13-pic.height+1);else ctx.drawImage(frameOf(IMG.fx.meal,4),x,y);}
  function sleepFx(ctx,x,y){const cyc=Math.floor(realClock/26),inDream=realClock%26>19;   // the home's: Zs, now and then a dream bubble
@@ -63,7 +63,8 @@ const seasonHouse=(function(){
  const menuItems=c=>c.dishes.map(d=>({title:d.name,line:d.blurb||'',info:`饱食 ${d.fill} · ${d.time}分钟`,icon:dishIcon(d),item:dishItem(c,d)}));
  PICK.cook_bay={title:'旅舍厨房 · 做什么菜',groups:()=>[{name:BAY.name,note:'',items:menuItems(BAY)}]};
  PICK.cook_farm={title:'农舍灶台 · 做什么菜',groups:PICK.cook.groups};
- function menu(which){openPicker(which==='summer'?'cook_bay':'cook_farm');}
+ function menu(which){const sv=cookSaved(),it=sv&&cookItemOf(sv);if(it){sim.chosen={act:'cook',item:it};(which==='summer'?window.summerLodge:window.infeiHome)?.use('stove','menu');return;}   // a half-done dish: carry on
+  openPicker(which==='summer'?'cook_bay':'cook_farm');}
  const oCommand=command;command=function(act,item){
   if(act==='cook_bay'||act==='cook_farm'){
    if(!item){const all=act==='cook_bay'?menuItems(BAY):PICK.cook.groups().flatMap(g=>g.items);item=pick(all).item;}

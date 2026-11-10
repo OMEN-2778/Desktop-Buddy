@@ -21,16 +21,24 @@
   if(m>=6*60+30&&m<8*60)o.mom=cook;if(m>=7*60&&m<8*60)o.dad='tableR';
   if(m>=17*60+30&&m<19*60)o.mom=cook;if(m>=18*60&&m<19*60)o.dad='tableR';
   if(m>=19*60&&m<21*60+30){o.mom=today()%3===0?'tableL':'setteeL';o.dad='setteeR';}
+  // owner 2026-11-10: they live here too — lunch at home, and a slow afternoon in now and then (rain: both stay in)
+  if(m>=11*60+30&&m<12*60+40){o.mom=cook;if(today()%2===0)o.dad='tableR';}
+  if(m>=12*60+40&&m<13*60+30&&today()%2===0){o.mom='tableL';o.dad='tableR';}
+  if(m>=14*60&&m<16*60&&today()%3===1)o.mom=Math.floor(m/40)%2?'jar':'setteeL';
+  if(typeof weather!=='undefined'&&weather.kind==='rain'&&m>=8*60&&m<17*60+30){o.mom=Math.floor(m/50)%3===0?cook:'setteeL';o.dad=Math.floor(m/70)%2?'tableR':'setteeR';}
   if(v&&m>=8*60&&m<17*60+30){o.mom=Math.floor(m/90)%2?'tableL':cook;o.dad=Math.floor(m/120)%2?'tableR':'setteeR';}
   if(infeiHome.svc?.id==='settee'&&o.dad==='setteeR')o.dad='tableR';   // she took the middle of the bench: 爸爸 moves to the table
   return o;}
  // who is in the house right now (and where)
  const pos={};
- function here(){const p=plan(),out=[];for(const id of ['mom','dad']){const k=p[id];if(!k){delete pos[id];continue;}
-  const [x,pose]=AT[k];const q=pos[id]||(pos[id]={x,born:realClock});if(q.k!==k){q.k=k;q.tx=x;}out.push({id,q,pose,k});}return out;}
+ // owner 2026-11-10: no popping in and out — they come in through the door and walk to their place, and walk out again
+ const DOOR=60;
+ function here(all){const p=plan(),out=[];for(const id of ['mom','dad']){const k=p[id];
+  if(!k){const q=pos[id];if(!q)continue;if(!C().state.inside||!speed||Math.abs(q.x-DOOR)<1){delete pos[id];continue;}q.k=null;q.tx=DOOR;q.out=true;if(all)out.push({id,q,pose:'stand',k:null});continue;}
+  const [x,pose]=AT[k];const q=pos[id]||(pos[id]={x:C().state.inside&&speed?DOOR:x,born:realClock});q.out=false;if(q.k!==k){q.k=k;q.tx=x;}out.push({id,q,pose,k});}return out;}
  // ---------------------------------------------------------------- drawing (inside the farmhouse)
  function drawIn(ctx){
-  if(!ready())return;const list=here(),dt=Math.min(.1,realClock-(drawIn.t||realClock));drawIn.t=realClock;
+  if(!ready())return;const list=here(true),dt=Math.min(.1,realClock-(drawIn.t||realClock));drawIn.t=realClock;
   const s=C().state;
   for(const {id,q,pose}of list){const d=q.tx-q.x,moving=Math.abs(d)>.5;if(moving&&speed)q.x+=Math.sign(d)*Math.min(Math.abs(d),34*dt);
    const sit=!moving&&pose==='sit',a=Math.min(1,(realClock-q.born)/.6);
@@ -57,6 +65,45 @@
    talkAt=0;if(sim.needs.social!=null)sim.needs.social=Math.min(100,sim.needs.social+3);return true;}
   return false;}
  X.hooks.click.unshift(click);
+ // ---------------------------------------------------------------- 爸妈自己找她说话（owner 2026-11-10：在家要有来有回）
+ // when she is in the house with one of them and nothing else is going on, every hour or so one of them starts a little chat
+ const CHATS=[
+  ['mom','今天地里累不累？',['me','还行，就是腰有点酸'],['mom','晚上给你贴块膏药。']],
+  ['mom','你小时候最怕那只大白鹅，还记得吗？',['me','它追了我半个村子！'],['mom','哈哈，后来它见你就跑了。']],
+  ['mom','城里那边房租贵不贵？',['me','还行，能付得起'],['mom','不够就说，家里有。']],
+  ['mom','隔壁婶子问你有没有对象。',['me','妈——'],['mom','我就说你忙，没空想这个。']],
+  ['mom','这菜是你种的那块地里的吧？',['me','嗯，今早刚摘的'],['mom','嫩，炒着好吃。']],
+  ['mom','你那几个朋友，有空叫来家里玩。',['me','他们说想来看看牛'],['mom','那我多蒸一屉包子。']],
+  ['mom','衣服给你洗了，晾在后院。',['me','我自己洗就行'],['mom','顺手的事。']],
+  ['mom','鸡今天又少下了一个蛋。',['me','是不是被黄鼠狼惦记上了'],['dad','我晚上去看看鸡笼。']],
+  ['mom','尝尝这个咸菜，今年腌得好。',['me','嗯，下饭！'],['mom','走的时候带一罐。']],
+  ['mom','你手机老看，眼睛要看坏了。',['me','我就看一会儿'],['mom','一会儿是多久？']],
+  ['mom','下礼拜镇上有集，去不去？',['me','去！想吃那家糖糕'],['mom','那早点起。']],
+  ['mom','这几天睡得好不好？',['me','山里安静，睡得香'],['mom','那就多住几天。']],
+  ['dad','来，看看我新编的筐。',['me','爸你手真巧'],['dad','你爷爷教的，比我编得还好。']],
+  ['dad','牛今天吃了两捆草，胃口真好。',['me','比我还能吃'],['dad','那可不，它干的活也多。']],
+  ['dad','你那块地垄沟挖浅了，下雨要积水。',['me','那明天我再挖挖'],['dad','我跟你一起。']],
+  ['dad','今年的柿子挂得多。',['me','能做柿饼吗？'],['dad','能，等霜降了晒。']],
+  ['dad','城里工作顺不顺心？',['me','还行，有时候挺累'],['dad','累了就回来，地里有你吃的。']],
+  ['dad','你看这天，明天准下雨。',['me','你怎么知道？'],['dad','山那边起云了，八九不离十。']],
+  ['dad','老屋那根梁该换了。',['me','要我帮忙吗'],['dad','你递钉子就行。']],
+  ['dad','你小时候爬那棵枣树，下不来哭了一下午。',['me','这事能不能别提了'],['dad','哈哈，好好，不提。']],
+  ['dad','镇上新开了家修车铺。',['me','咱家又没车'],['dad','先认识认识，以后用得上。']],
+  ['dad','喝茶不？今年的新茶。',['me','来一杯'],['dad','烫，慢点喝。']],
+  ['dad','你妈今天念叨你一上午。',['me','念叨我啥？'],['dad','说你瘦了。']],
+  ['dad','晚上风凉，窗户我关小点。',['me','好，谢谢爸']]];
+ const TOPICS={morning:[0,4,6,10,13,16,21],day:[2,3,5,7,8,9,12,14,15,17,18,20],evening:[1,3,5,9,11,15,19,22,23]};
+ let chatAt=sim.t+30;const used=[];
+ setInterval(()=>{try{
+  if(!inSpring()||!ready()||!speed||talkQ.length||sim.t<chatAt)return;const s=C().state;
+  if(!s.inside||asleep()||storyLocked()||cardHolds()||ringOf||sim.mode==='down'||farmCny()||typeof remoteSocial!=='undefined'&&remoteSocial)return;
+  if(['bath','toilet','season_shower','sleep'].includes(sim.act))return;
+  const by=here().filter(p=>!p.q.out&&Math.abs(p.q.x-p.q.tx)<1).map(p=>p.id);if(!by.length)return;
+  const m=mins(),pool=TOPICS[m<9*60?'morning':m<18*60?'day':'evening'].filter(i=>by.includes(CHATS[i][0])&&CHATS[i].slice(1).every(l=>!Array.isArray(l)||l[0]==='me'||by.includes(l[0]))&&!used.includes(i));
+  chatAt=sim.t+50+Math.random()*40;if(!pool.length){used.length=0;return;}
+  const i=pick(pool);used.push(i);if(used.length>12)used.shift();const c=CHATS[i];
+  talkQ.push([c[0],c[1]],...c.slice(2));talkAt=0;sim.needs.social=Math.min(100,sim.needs.social+8);
+ }catch(e){console.warn('parents chat',e);}},1000);
  // with them in the house: social slowly fills (as with guests at home)
  let lastT=sim.t;setInterval(()=>{const dt=Math.max(0,Math.min(30,sim.t-lastT));lastT=sim.t;if(!inSpring()||!C().state.inside||asleep()||!here().length)return;sim.needs.social=Math.min(100,sim.needs.social+dt*(farmCny()?.12:.05));},500);
  // ================================================================ 春节 in 茵菲谷

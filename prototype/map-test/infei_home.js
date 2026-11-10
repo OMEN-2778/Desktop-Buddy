@@ -60,7 +60,7 @@ const infeiHome=(function(){
    if(info.inside&&svc.id==='bed'&&!reduced())seasonHouse.sleepFx(ctx,BEDS.mine[0]+HEAD[0]+10,BEDS.mine[1]+HEAD[1]-14);
    if(info.inside&&svc.id==='bath')seasonHouse.emote(ctx,SPOTS.bath.x+3,TUB_RIM-29);
    return;}
-  if(!inSpring()||springFarm.state.phase!=='done'||s.door||wiping||cardHolds()||ringOf||sim.mode==='down'||life.talkQ)return;
+  if(!inSpring()||springFarm.state.phase!=='done'||s.door||wiping||cardHolds()||storyLocked()||ringOf||sim.mode==='down'||life.talkQ)return;   // never inside a quest scene: dropping its walk left the scene (and every click) stuck
   const low=Object.entries(sim.needs).filter(([k,v])=>v<25&&NEED_SPOT[k]).sort((a,b)=>a[1]-b[1])[0];
   // soak test 2026-11-09: always on the move (strolls, helping in the fields) she never got round to it (如厕 12 for two hours):
   // under 18 the walk is dropped for the need

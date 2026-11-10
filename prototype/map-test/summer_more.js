@@ -232,7 +232,28 @@
  const QICON={whistle:'note',surf:'star',coco:'basket',turtle:'lens',bucket:'gift',bottle:'letter',paint:'fish',lamp:'lantern',castle:'house',deep:'map'};
  const zoneAt=x=>{let n='草帽湾';for(const [zx,name]of C()?.data?.zones||[])if(x>=zx)n=name;return n;};
  if(typeof questBoard!=='undefined')questBoard.add(()=>Object.entries(Q).filter(([id])=>st(id).step>0).map(([id,q])=>{const s=st(id);
-  return {id:'bay_'+id,title:q.title,kind:QICON[id]||'scroll',place:q.market?'海棠集市':zoneAt(q.x),done:!!s.done,step:s.done?'':(GOAL[id]||''),end:'委托完成了',isNew:false,log:s.log||[]};}));
+  return {id:'bay_'+id,title:q.title,kind:QICON[id]||'scroll',place:q.market?'海棠集市':zoneAt(q.x),done:!!s.done,step:s.done?'':(GOAL[id]||''),end:'委托完成了',isNew:false,log:s.log||[],go:()=>bayGo(id)};}));
+ // 任务 panel (owner 2026-11-10): click a commission → she heads to the giver; if it can't be done now, why not
+ function bayWalk(x,market){const c=C(),t0=Date.now();window.seasonAuto?.cancel?.();seasonMapTest.state.autoAt=sim.t+90;closeRing();
+  const step=()=>{if(!inBay()||Date.now()-t0>60000||L.isBusy())return;const s=c.state;
+   if(s.door){setTimeout(step,300);return;}
+   if(s.inside){if(!s.target)c.leave();setTimeout(step,400);return;}
+   if(s.market&&!market){if(!s.target)c.beginDoor('bay');setTimeout(step,400);return;}
+   if(!s.market&&market){if(!s.target)c.goTo(50,'walk',0,()=>c.beginDoor('market'));setTimeout(step,400);return;}
+   if(s.y>SURF+3){if(!s.target)c.goTo(s.x,'dive',SURF);setTimeout(step,400);return;}
+   if(x!=null)c.goTo(x,'walk',0);};
+  step();}
+ const tideOn=()=>{const h=hour();return h>=6&&h<9||h>=17&&h<19;};
+ function bayGo(id){if(!inBay())return '先去草帽湾';if(L.isBusy()||storyLocked())return '等这段对话说完';if(sim.mode==='down')return `先把${ta()}叫醒（长按${ta()}）`;
+  if(asleep())return `${ta()}在睡觉，等${ta()}醒了再去`;if(wiping||cardHolds())return '等眼前的事忙完';
+  const q=Q[id],s=st(id),P_=whoP(id);
+  if(id==='castle'&&s.step===2&&today()<=s.day)return '请等到明天再来看沙堡';
+  if(!ready[id]?.()){
+   if(id==='whistle'&&!tideOn())return '请等到退潮（早上 6–9 点、傍晚 5–7 点）';
+   if(id==='lamp'&&hour()<20&&hour()>=4)return '请等到晚上 8 点后再下水';
+  }
+  if(!q.market&&!present(id)){const lt=q.late;return `${P_.name}现在不在，请等到 ${lt?'7–23':'8–19'} 点`;}
+  bayWalk(q.market?null:q.x-14,!!q.market);return {say:q.market?'去海棠集市':`去找${P_.name}`};}
  const goalHint=id=>{const s=st(id);if(s.step&&!s.done&&GOAL[id])showHint(`委托「${Q[id].title}」：${GOAL[id]}`);};
  async function talk(id){const q=Q[id],s=st(id),P_=whoP(id),N=P_.name,me=nameOf();
   if(s.done){await say(N,IDLE[id][today()%2]);return;}

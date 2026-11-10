@@ -45,7 +45,9 @@ const infeiQuests=(function(){
  STORY_HOLDS.push(()=>busy);   // a quest scene is a story: no calls, cards or stray lines until it ends
  const say=(who,words)=>new Promise(res=>speech.show(who,words,{special:true,advance:res}));
  const ask=(who,words,opts)=>new Promise(res=>speech.show(who,words,{special:true,choices:opts.map((label,i)=>({label,on:()=>res(i)}))}));
- const walkTo=x=>new Promise(res=>{speech.hide();C().target(x,103,res);});
+ // if anything else takes over her walk the scene still goes on (owner 2026-11-10: a dropped walk locked every click in 茵菲谷)
+ const walkTo=x=>new Promise(res=>{speech.hide();let done=false;const fin=()=>{if(!done){done=true;clearInterval(w);res();}};C().target(x,103,fin);
+  const w=setInterval(()=>{const s=C().state;if(s.after!==fin&&!done)fin();},400);});
  const ML_=(id,name,emo,pts=2)=>{ML['sq_'+id]={name,emo,pts,min:240};return 'sq_'+id;};
  const MOODS={mill:ML_('mill','风车怪声','playful'),letter:ML_('letter','阿婆的饼子','sad',1),prints:ML_('prints','菜地里的小偷','happy',3),stew:ML_('stew','咸了一点的乱炖','happy')};
  // ---- quest log (owner 2026-11-03): every scene that moved a quest on is kept with its lines, choices and
@@ -275,13 +277,36 @@ const infeiQuests=(function(){
  const HOME={mill:'风车',letter:'小溪边',prints:'菜地',stew:'郁金香田'};
  questBoard.add(()=>{const q=Q(),gs=goals(),out=[],F=S();
   if(F.unlocked&&!['none','meet'].includes(F.phase)){const ph=F.phase,where=!F.unlocked?'家里信箱':ph==='none'?'机场':ph==='sow'||ph==='water'?'菜地':'农舍',step=!F.unlocked?'读妈妈寄来的信':ph==='none'?'去机场，坐去茵菲谷的航班':ph==='sow'?'在有箭头的菜地播种':ph==='water'?'给刚种下的菜地浇水':'跟着妈妈熟悉农庄';
-   out.push({id:'farm',title:'妈妈的农庄',kind:'house',place:ph==='done'?'茵菲谷':where,done:ph==='done',step,end:'菜地交给你了',isNew:!F.unlocked||ph==='none',log:F.storyLog||[]});}
+   out.push({id:'farm',title:'妈妈的农庄',kind:'house',place:ph==='done'?'茵菲谷':where,done:ph==='done',step,end:'菜地交给你了',isNew:!F.unlocked||ph==='none',log:F.storyLog||[],go:ph==='done'?null:farmGo});}
   for(const id of Object.keys(TITLE)){const st=q[id].step;if(st===0)continue;const g=gs.find(g=>g.id===id);
    let step=g?.hint||(g?.v?`去找${g.v.name}聊聊`:'');
    if(STEP[id]&&st===2&&today()>q[id].day)step=id==='letter'?'去溪边找阿婆':'去郁金香田边找老周';
-   out.push({id,title:TITLE[id],kind:KIND[id],place:st===9?HOME[id]:PLACE[id][st]||HOME[id],done:st===9,step,end:END[id],isNew:false,log:q[id].log||[]});}
+   out.push({id,title:TITLE[id],kind:KIND[id],place:st===9?HOME[id]:PLACE[id][st]||HOME[id],done:st===9,step,end:END[id],isNew:false,log:q[id].log||[],go:()=>questGo(id)});}
   // offered (someone has a "!") is not listed: only quests she has taken (owner 2026-11-03)
   return out;});
+ // ---------------------------------------------------------------- 任务 panel: click a quest → she walks there, or a bubble says why not (owner 2026-11-10)
+ const HRS={xiaoman:[6,21],apo:[5,22],zhou:[5,22]};
+ const SCENE_NAME=['小溪边','油菜花田','风车','农舍','菜地','果园牧场'];
+ function canGo(){if(!inSpring())return '先坐飞机去茵菲谷';if(busy||storyLocked())return '等这段对话说完';if(sim.mode==='down')return `先把${ta()}叫醒（长按${ta()}）`;
+  if(asleep())return `${ta()}在睡觉，等${ta()}醒了再去`;if(wiping||cardHolds())return '等眼前的事忙完';return '';}
+ function goTo(sc,x){const c=C(),s=c.state;window.seasonAuto?.cancel();T.state.autoAt=sim.t+90;closeRing();
+  const fin=()=>{if(x!=null)C().target(Math.round(x),103);};
+  if(!s.inside&&s.scene===sc){fin();return;}window.seasonAuto?.toScene(sc,fin);}
+ function questGo(id){const no=canGo();if(no)return no;const q=Q()[id],g=goals().find(g=>g.id===id);
+  if(!g)return '现在没有要做的，过一阵再看看';
+  if(/^明天/.test(g.hint||'')||(STEP[id]&&q.step===2&&today()<=q.day))return '请等到明天再去';
+  if(id==='letter'&&q.step===1&&!crops().length)return '仓库里还没有菜，先收获一些';
+  if(id==='stew'&&q.step===1&&!crops(q.got).length)return '仓库里没有还没送过的菜，先去收获';
+  if(g.v){const vis=visible(g.v);
+   if(!vis){const key=Object.keys(V).find(k=>V[k]===g.v),h=g.v.hours||HRS[key];
+    if(key==='wang'||id==='mill')return '请等到天黑（晚上 7 点后）';
+    return h?`${g.v.name}现在不在，请等到 ${h[0]}–${h[1]} 点`:`${g.v.name}今天没出来，换一天再去`;}
+   const p=where(g.v),s=C().state;goTo(p.scene,p.x+(s.scene===p.scene&&!s.inside&&s.x>p.x?16:-16));return {say:`去${PLACE[id]?.[q.step]||HOME[id]||SCENE_NAME[p.scene]||'那边'}找${g.v.name}`};}
+  if(g.spot){const sp=SPOTS[g.spot];if(id==='mill'&&!night())return '请等到天黑（晚上 7 点后）';goTo(sp.scene,sp.x-10);return {say:`去${PLACE[id]?.[q.step]||SCENE_NAME[sp.scene]||'那边'}看看`};}
+  if(g.auto!=null){if(id==='prints'&&!night())return '请等到晚上（7 点后）再去菜地等着';goTo(g.auto,200);return {say:'去菜地等着'};}
+  return '现在没有要做的，过一阵再看看';}
+ function farmGo(){const F=S();if(!inSpring())return '先坐飞机去茵菲谷';if(['sow','water'].includes(F.phase)){if(sim.mode==='down')return `先把${ta()}叫醒（长按${ta()}）`;goTo(4,150);return {say:'去菜地'};}
+  return '跟着妈妈把开场走完就好';}
  X.hooks.pick.quests=()=>questBoard.open();
  return {V,Q,goals,run,talk,spotAt,hit,register,kit:{say,ask,walkTo,finish,crops,take,note,me,today,hour,night,villager,approach,X,S,C},at:v=>visible(v)?where(v):null,spots:SPOTS,list:()=>questBoard.open(),get busy(){return busy;},rabbit};
 })();

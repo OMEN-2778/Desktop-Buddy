@@ -12,7 +12,8 @@
  const sp=()=>T().spring,X=()=>springFarm.X,F=()=>springFarm.state,today=()=>Math.floor(sim.t/1440);
  // walk to scene sc (through the edges), then run then(); gives up if the player steps in or 60 s pass
  function toScene(sc,then){const g=gen,c=sp(),t0=performance.now();
-  const step=()=>{if(g!==gen||sim.place!=='spring_test'||performance.now()-t0>60000||T().autoAt>sim.t+1e8)return;   // a story / quest scene holds her (autoAt pushed far out)const s=c.state;
+  const step=()=>{if(g!==gen||sim.place!=='spring_test'||performance.now()-t0>60000||T().autoAt>sim.t+1e8)return;   // a story / quest scene holds her (autoAt pushed far out)
+   const s=c.state;
    if(s.door){setTimeout(step,300);return;}
    if(s.inside){if(!s.target)c.leave();setTimeout(step,500);return;}
    if(s.scene===sc){if(!s.target)then();else setTimeout(step,300);return;}

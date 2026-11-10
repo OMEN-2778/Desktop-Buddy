@@ -63,6 +63,14 @@ const questBoard=(function(){
 .quest-panel.compact .qb-list{gap:5px}.quest-panel.compact .qb-tags span{height:16px;line-height:16px;padding:0 7px;font-size:calc(11px * var(--fs,1))}.quest-panel.compact .qb-tags em{font-size:11px;line-height:14px}
 .qb-empty{margin:auto;text-align:center;color:var(--muted);font-size:calc(14px * var(--fs,1));line-height:1.8}
 .qb-card{cursor:pointer}
+.qb-log{height:20px;margin:0;padding:0 9px;border:0;box-shadow:none;background:var(--bevel-lo);color:var(--ink);font:700 calc(11px * var(--fs,1))/20px var(--font);clip-path:var(--qb-pill);cursor:pointer}
+.qb-log:hover{background:#d8d5e4}
+.qb-tip{position:absolute;z-index:5;max-width:80%;padding:6px 12px;font-size:calc(13px * var(--fs,1));line-height:1.4;color:#fff;background:linear-gradient(#6f9ed8,#4f7fc0);border:2px solid #34588d;
+ box-shadow:2px 2px 0 #0002;pointer-events:none;animation:qbTip .22s var(--hud-spring,ease-out)}
+.qb-tip.ok{background:linear-gradient(#8cc67a,#68a85a);border-color:#4b7d40}
+.qb-tip::after{content:"";position:absolute;left:18px;top:-8px;border:6px solid transparent;border-bottom-color:inherit;border-top:0}
+.qb-tip.out{opacity:0;transition:opacity .25s}
+@keyframes qbTip{from{opacity:0;translate:0 6px}to{opacity:1;translate:0 0}}
 .qb-card:focus-visible{outline:2px dashed var(--focus,#3c6e91);outline-offset:2px}
 .qb-list,.qb-detail{transition:opacity .22s,translate .32s var(--hud-settle)}
 .quest-panel.detail .qb-list{opacity:0;translate:-24px 0;pointer-events:none;position:absolute;visibility:hidden}
@@ -141,12 +149,21 @@ const questBoard=(function(){
    const tags=document.createElement('span');tags.className='qb-tags';
    if(q.done){const st=document.createElement('em');st.textContent='完成';tags.append(st);}
    if(q.place){const s=document.createElement('span');s.textContent=q.place;tags.append(s);}
-   c.tabIndex=0;c.onclick=()=>detail(q);c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();detail(q);}};
+   // owner 2026-11-10: clicking a live quest sends her there; if she can't go yet, a bubble says why (the panel stays open)
+   const act=q.go&&!q.done?()=>go(q,c):()=>detail(q);
+   if(q.go&&!q.done&&q.log?.length){const b=document.createElement('button');b.type='button';b.className='qb-log';b.textContent='记录';b.onclick=e=>{e.stopPropagation();detail(q);};tags.prepend(b);}
+   c.tabIndex=0;c.onclick=act;c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act();}};
    c.append(ico,t,tags,p);return c;};
   live.forEach(q=>list.append(card(q)));
   if(done.length){const s=document.createElement('div');s.className='qb-sep';s.style.setProperty('--i',i++);s.textContent='已完成';list.append(s);done.forEach(q=>list.append(card(q)));}
   if(!qs.length)list.innerHTML='<p class="qb-empty">还没有任务。<br>到处走走，和人聊聊，也许有人需要帮忙。</p>';
  }
+ let tipEl=null,tipT=0;
+ function tip(card,text,ok){tipEl?.remove();clearTimeout(tipT);const t=document.createElement('div');t.className='qb-tip'+(ok?' ok':'');t.textContent=text;panel.append(t);
+  const pr=panel.getBoundingClientRect(),cr=card.getBoundingClientRect();t.style.left=Math.max(8,cr.left-pr.left+20)+'px';t.style.top=(cr.bottom-pr.top+6)+'px';tipEl=t;
+  tipT=setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),250);},ok?1600:3200);}
+ function go(q,card){let r;try{r=q.go();}catch(e){console.warn('quest go',e);r='现在去不了';}
+  if(typeof r==='string')tip(card,r,false);else tip(card,typeof r?.say==='string'?r.say:'这就过去～',true);}
  // ---------------------------------------------------------------- one quest, replayed: what happened, what was said, letters
  function detail(q){const me=typeof nameOf==='function'?nameOf():'我',E=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};
   detailEl.replaceChildren();const head=E('div','qb-dhead'),back=E('button','qb-back','‹ 返回');back.type='button';back.onclick=()=>{panel.classList.remove('detail');list.querySelector('.qb-card')?.focus({preventScroll:true});};

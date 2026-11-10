@@ -10,6 +10,15 @@ ML.fest_letter_sent = { name: "寄出一封信", emo: "happy", pts: 1, min: 240 
 ML.fest_letter_read = { name: "收到一封信", emo: "happy", pts: 2, min: 360 };
 const LETTER_MAX = 6;   // letters she writes a day
 const mailState = () => (lifeFlags.mail ||= { queue: [], box: [], day: -1, sent: 0, planned: -1 });
+// owner 2026-11-10: too many repeats — letters already read are skipped until a pool runs out; a parent's letter
+// is in that parent's voice (who: mom / dad)
+function freshLetter(pool, key, id) {
+  const ok = pool.map((l, i) => i).filter(i => !pool[i].who || !id || pool[i].who === id);
+  const seen = ((lifeFlags.letterSeen ||= {})[key] ||= []);
+  let left = ok.filter(i => !seen.includes(i));
+  if (!left.length) { seen.length = 0; left = ok; }
+  const i = pick(left); if (i == null) return null; seen.push(i); return pool[i];
+}
 const letterFill = (t, who) => fill(t, { 收信人: who, 寄信人: who, 名字: nameOf() });
 function letterContacts() {
   return sortedContacts().filter(c => c.family || c.affinity > 0).slice(0, 10);
@@ -41,7 +50,7 @@ function writeLetter(item) {
   const self = item.id === "@self", c = self ? null : socialState.contacts.find(c => c.id === item.id);
   if (!self && !c) return;
   const who = self ? "未来的自己" : contactName(c), theme = FEST_TEXT3.themes.find(t => t.id === item.theme);
-  const body = self ? pick(FEST_TEXT3.self) : pick(FEST_TEXT3.mine[item.theme] || []);
+  const body = self ? freshLetter(FEST_TEXT3.self, "self") : freshLetter(FEST_TEXT3.mine[item.theme] || [], "mine_" + item.theme);
   if (!body) return;
   const lines = [...body.lines.map(l => letterFill(l, who)), `—— ${nameOf()}`];
   log(self ? "给未来的自己写了一封信，封好藏进了抽屉。" : `给${who}写了一封信：「${theme?.name || "近况"}」。`, null, [["@letter", ""], ...lines.map(l => ["", l])]);
@@ -49,7 +58,7 @@ function writeLetter(item) {
   addMood("fest_letter_sent", { diary: false, words: false });
   sim.needs.social = clamp(sim.needs.social + 6);
   if (!self) {   // the reply, a few hours later
-    const kind = c.family ? "family" : "friend", r = pick(FEST_TEXT3.replies[item.theme]?.[kind] || []);
+    const kind = c.family ? "family" : "friend", r = freshLetter(FEST_TEXT3.replies[item.theme]?.[kind] || [], `r_${item.theme}_${kind}`, c.family ? c.id : null);
     if (r) m.queue.push({ at: sim.t + 60 + Math.random() * 300, from: c.id, title: `${who}回信了`, lines: r.lines });
   }
 }
@@ -60,9 +69,9 @@ function planLetters() {
   m.planned = festDay();
   const day0 = festDay() * 1440, at = () => day0 + (9 + Math.random() * 12) * 60;
   const fam = sortedContacts().filter(c => c.family), fr = sortedContacts().filter(c => !c.family && c.affinity > 10);
-  if (fam.length) { const l = pick(FEST_TEXT3.incoming.family); m.queue.push({ at: at(), from: pick(fam).id, title: l.title, lines: l.lines }); }
-  for (const c of fr.sort(() => Math.random() - 0.5).slice(0, 2)) { const l = pick(FEST_TEXT3.incoming.friend); m.queue.push({ at: at(), from: c.id, title: l.title, lines: l.lines }); }
-  const o = pick(FEST_TEXT3.incoming.other); m.queue.push({ at: at(), from: null, name: o.from, title: o.title, lines: o.lines });
+  if (fam.length) { const f = pick(fam), l = freshLetter(FEST_TEXT3.incoming.family, "in_family", f.id); if (l) m.queue.push({ at: at(), from: f.id, title: l.who ? l.title : `${contactName(f)}寄来一封信`, lines: l.lines }); }
+  for (const c of fr.sort(() => Math.random() - 0.5).slice(0, 2)) { const l = freshLetter(FEST_TEXT3.incoming.friend, "in_friend"); m.queue.push({ at: at(), from: c.id, title: l.title, lines: l.lines }); }
+  const o = freshLetter(FEST_TEXT3.incoming.other, "in_other"); m.queue.push({ at: at(), from: null, name: o.from, title: o.title, lines: o.lines });
 }
 function mailTick() {
   planLetters();

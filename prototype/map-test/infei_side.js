@@ -22,6 +22,7 @@
   wu:vl('小吴','m',97,{scene:2,x:175},giver('parcel',9,16,q=>q.dog.step===1)),
   liu:vl('刘婶','f',109,{scene:4,x:296},giver('borrow',7,18)),
   amu:vl('阿木','m',127,{scene:5,x:290,kid:true},giver('harp',8,18))};
+ Object.assign(V.lin,{hours:[8,17]});Object.assign(V.cai,{hours:[6,18]});Object.assign(V.wu,{hours:[9,16]});Object.assign(V.liu,{hours:[7,18]});Object.assign(V.amu,{hours:[8,18]});   // for the 任务 panel's "not here now" bubble
  const reg=(o)=>Q0.register(o);
  // ---------------------------------------------------------------- 小吴的包裹 (first: its goal on 林老师 comes before hers)
  reg({id:'parcel',title:'小吴的包裹',kind:'gift',end:'把颜料送到了林老师手里',home:'郁金香田',place:['郁金香田','小溪边'],scenes:['链子掉了','送包裹'],icons:['gift','gift'],

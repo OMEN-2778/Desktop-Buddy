@@ -46,7 +46,7 @@ const PetRules = (()=>{
    for(const k of Object.keys(n)){
     if(n[k]<10)p.low[k]+=dt;else p.low[k]=0;
     if(n[k]<20&&!p.warned[k]){p.warned[k]=true;emit('warning:'+k,p);}if(n[k]>=25)delete p.warned[k];
-    if(p.low[k]>=DAY){escape(s,t,emit,p);break;}
+    if(p.low[k]>=DAY){if(context.rescue?.(p)){p.low={hunger:0,energy:0,company:0};p.warned={};break;}escape(s,t,emit,p);break;}   // rescue: a friend fed it (owner 2026-11-10, once, while she is away)
    }
   }
  }

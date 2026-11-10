@@ -89,7 +89,7 @@ const springFarm=(()=>{
  let lines=0;
  const say=(who,words)=>new Promise(res=>(lines++,speech.show(who,words,{special:true,advance:res})));
  const ask=(who,words,opts)=>new Promise(res=>(lines++,speech.show(who,words,{special:true,choices:opts.map((label,i)=>({label,on:()=>res(i)}))})));
- const walk=(x,y=103)=>new Promise(res=>{speech.hide();C().target(x,y,res);});
+ const walk=(x,y=103)=>new Promise(res=>{speech.hide();let done=false;const fin=()=>{if(!done){done=true;clearInterval(w);res();}};C().target(x,y,fin);const w=setInterval(()=>{if(C().state.after!==fin)fin();},400);});   // a dropped walk never stalls the story
  const until=f=>new Promise(res=>{const t=setInterval(()=>{if(f()){clearInterval(t);res();}},80);});
  const quiet=()=>T.state.autoAt=sim.t+1e9;   // no wandering off while 妈妈 is showing her round
  async function arrive(){

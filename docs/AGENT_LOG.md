@@ -6,6 +6,16 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-10 Claude — 茵菲谷点不动修复；任务面板一点就去；爸妈在家有来有回；宠物第一次快跑掉时朋友帮忙；做饭进度保留；写信日新信；他/她
+- 点不动的原因：任务剧情走路中，需求<18 时 infei_home.js 把她的路线清掉，剧情的 walkTo 永远等不到 → 剧情 busy 卡死 → storyLocked 一直为真，所有点击都被拦。
+  修：infei_home 剧情中不插手；infei_quests / spring_story 的 walk 被别人接管时自己往下走。另修 season_auto.js toScene 里 `const s` 被写进注释的老 bug（跨场景走路一直没生效）。
+- quest_panel.js：卡片有 go() 就点卡片=出发（面板不关，绿色气泡），条件不满足蓝色气泡说原因（等到几点/明天/先收获）；有记录的卡片多一个「记录」按钮看详情。茵菲谷支线、主线、草帽湾委托都接了；以后新剧情的条目也要给 go。
+- season_parents.js：午饭、隔天下午、雨天也在家；从门口走进走出不再闪现；她在屋里时爸妈每 50-90 分钟主动聊一段（24 段）。season_social.js：社交<45 就打电话，<75 时也会隔几小时主动联系。
+- 宠物：茵菲谷/草帽湾里第一次要跑路时不跑，好友度最高的朋友用任务气泡说备用钥匙那句，两个选项；「我马上回家！」等没剧情时自动离开回家（pets_state.js rescue 钩子）。
+- 做饭：中途被打断，菜和剩余时间按厨房（家/农舍/旅舍）存在 lifeFlags.cookSaved，锅（不带火）留在灶上，点灶台直接接着做；从菜单选别的菜就重新开始。
+- 写信日 festival_text3.json：回信每类 2→5 封、家人来信 6→16、朋友来信 10→20，读过的不重复；爸妈的信按 who 对上寄信人。卡片 cards_more_bath/bed/dream/wake 里指主角的「她」改 {她}；帮助文字改「小人」。
+- 测过：点菜地、剧情走路被打断、任务面板气泡、爸妈午饭走进来+主动聊天、做饭打断再接着做、男性代词、宠物救援+回家；check_infei_home PASS。
+
 ## 2026-11-10 Claude — 头顶菜单气泡不再被需求条挡住
 - index.src.html openRing：over-hud（z-index 60，盖过需求条/时间条/节日条）原来只给宠物菜单，现在所有菜单都加。茵菲谷里把菜单挪到需求条上实测，气泡在最上层。
 
