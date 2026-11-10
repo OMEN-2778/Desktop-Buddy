@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-10 Claude — 小人没有工作：删掉暗示她上班的台词
+- 写信日去掉「吐槽工作」主题（mine/replies），其余信里她加班/上班/同事的句子改掉；爸妈（春节、茵菲谷）不再问工作；她自己的手机评论、宠物文本、酒吧饮品台词改掉；
+  长对话删「想换工作」，朋友出游「今天不聊工作」改「不聊烦心事」。朋友、路人自己的工作照旧。
+
 ## 2026-11-10 Claude — 朋友聊天加长
 - social_text.json conversations：friend/close/best 各加 8 段 12–16 句的长对话（主人说太冷静，已改得口语些：语气词、口头省略、打岔）（吐槽、讲事被插话、电话里一起做饭、开着电话不说话、半路被打断等，不再都是问-追问-答）。
 - index.src.html chatItem：还没聊过的长对话有 40% 优先抽到（lines ≥ 10）。测过：40 次抽取里 8 次是长对话。
