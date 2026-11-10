@@ -122,6 +122,8 @@ def doll_data() -> dict:
         "headAcc": doll.HEAD_ACC_ORDER,
         "eyewear": list(doll.EYEWEAR),
         "hats": list(doll.HATS),
+        "bodyAcc": list(doll.BODY_ACC),
+        "longBottoms": list(doll.LONG_BOTTOMS),
         "swatches": {**SWATCHES, "eye": [["棕", RAMPS["hair_brown"][2]], ["黑", RAMPS["hair_black"][2]],
                                          ["蓝", RAMPS["blue"][2]], ["绿", RAMPS["green"][2]], ["紫", "#7a5aa6"],
                                          ["琥珀", RAMPS["mustard"][2]], ["粉", "#c75f81"]]},

@@ -11,8 +11,8 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
   const O = DATA.options;
   let look = doll.normalize(opts.look);
   let tab = "hair", mode = "idle";
-  const COVERS_SOCKS = ["trousers", "jeans", "maxi"];
-  const HIDES_HAIR = ["beanie", "cap", "headphones"];
+  const COVERS_SOCKS = DATA.longBottoms || ["trousers", "jeans", "maxi"];
+  const HIDES_HAIR = [...(DATA.hats || ["beanie", "cap"]), "headphones"];
 
   const TABS = [
     { id: "hair", name: "发型", groups: [{ kind: "thumbs", key: "style", opt: "style", label: "发型" }, { kind: "colors", key: "hair", label: "发色" }] },

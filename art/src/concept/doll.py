@@ -377,7 +377,7 @@ def draw_back_hair(s: Sprite, d: "Doll", bob: int = 0, sway: int = 0):
     """Hair that sits behind the body/head."""
     h = d.hair
     shape = Sprite(W, H)
-    style = d.hair_style
+    style = BACK_ALIAS.get(d.hair_style, d.hair_style)
     if style in ("long", "hime"):
         # a curtain from the crown to mid-back, a bit wider than the head
         shape.rect(2, 6, 16, 9, h[2])           # beside the face
@@ -414,6 +414,10 @@ def draw_back_hair(s: Sprite, d: "Doll", bob: int = 0, sway: int = 0):
         shape.rect(3, 8, 14, 7, h[1])
     elif style == "bob":
         shape.rect(3, 8, 14, 8, h[1])           # the inside of the bob, behind the neck
+    elif style == "low_buns":
+        for cx in (3, 16):
+            shape.ellipse(cx, 13, 2, 2, h[2])
+            shape.set(cx - 1, 12, h[3]).set(cx + 1, 14, h[1])
     elif style == "buns":
         for cx in (4, 15):
             shape.ellipse(cx, 4, 2.5, 2.5, h[2])
@@ -654,7 +658,7 @@ def seated_lower(d):
         s.rect(x, 24, 5, 2, lg["n"])
         s.hline(x + 1, x + 3, 24, lg["R"])
         s.hline(x + 1, x + 3, 25, lg["P"])
-    long = d.bottom_style in ("trousers", "jeans", "maxi")
+    long = d.bottom_style in LONG_BOTTOMS
     for x in (5, 12):
         s.rect(x, 25, 2, 2, lg["p"] if long else lg["S"])
         s.set(x, 25, lg["P"] if long else lg["L"])
@@ -852,6 +856,8 @@ def _grid(src, legend):
 
 
 def draw_accessory(s: Sprite, d: "Doll", name: str, dy: int = 0):
+    if name in NEW_ACC:
+        return draw_new_accessory(s, d, name, dy)
     if name == "glasses":
         f = P.coral[1]
         for ex in EYE_X:  # round frames: open corners read as round at this size
@@ -1289,6 +1295,325 @@ def emote(name: str) -> Sprite:
 # ------------------------------------------------------------------ doll
 
 
+# ------------------------------------------------------------------ 2026-11-10: a big wardrobe batch (owner: "增加大量造型")
+# Everything below follows the rules above: 20x28 frame, role letters, lit from the upper left.
+_MID = """
+......OOOOOOOO
+....OOHHHkkHhhOO
+...OHHYYhkkHHhhkO
+..OHHYhhhkkhHhhhkO
+..OhHhhhhkkhhhhhkO
+..OhhhhhkLLkhhhhkO
+..OhhhhkLLLLkhhhkO
+..OhhhkLLLLLLkhhkO
+"""
+_SIDE = """
+..OhhhhhhhhhhhLhkO
+..OhhhhhhhhLLLLhkO
+"""
+_LONG_FACE = """
+..OhLLLLLLLLLLLLhO
+..OkLLLLLLLLLLLLkO
+..OkLLLLLLLLLLLLkO
+..OhSLLLLLLLLLLShO
+..OhqqSLLLLLLSqqkO
+..Ohk.........OkO
+...OO..........OO
+"""
+_BOB_FACE = """
+..OhLLLLLLLLLLLLhO
+.OhkLLLLLLLLLLLLkhO
+.OhkLLLLLLLLLLLLkhO
+.OhhSLLLLLLLLLLShkO
+.OkkqqSLLLLLLSqqkkO
+..OOO.........OOO
+"""
+_KNOT = """
+........OOOO
+.......OHhkO
+"""
+HEADS.update({
+    # --- short
+    "bowl": rows(_TOP + _CROWN + """
+..OhhhhhhhhhhhhhkO
+..OhkkkkkkkkkkkhkO
+""" + _FACE),
+    "slick": rows(_TOP + """
+......OOOOOOOO
+....OOHHkHHkhhOO
+...OHHYkHHkhhkhkO
+..OHHYkHHkhhkhhhkO
+..OhHkhhkhhkhhhhkO
+..OhkkkkkkkkkkkhkO
+..OhLLLLLLLLLLLLkO
+..OkLLLLLLLLLLLLkO
+""" + _FACE),
+    "side_fringe": rows(_TOP + _CROWN + _SIDE + _FACE),
+    "topknot": rows(_KNOT + _CROWN + """
+..OhkLLLLLLLLLLkkO
+..OkLLLLLLLLLLLLkO
+""" + _FACE),
+    "undercut": rows(_TOP + """
+......OOOOOOOO
+....OOHHHhhhhhOO
+...OHHYYhhhhhhhkO
+...OHHhhhhhhhhhkO
+...OhhhhhhhhkhhkO
+..OkkkhhhhhhhkkkO
+..OkLLhhhLLLLLLkO
+..OkLLLLLLLLLLLLkO
+""" + _FACE),
+    "fluffy": rows("""
+.
+......OO..OOO
+....OOHHOOHhhOO
+...OHHYYHhhhhhhkO
+.OOHHYhhhhhhhhhhkO
+.OhHhhhhhhhhhhhhkOO
+..OhhhhhhhhhhhhhhkO
+.OhhhkhhhhhkhhhhkO
+..OhkLLhkLLLhkLLkO
+..OhLLLLLLLLLLLLkO
+""" + _FACE),
+    # --- long
+    "long_mid": rows(_TOP + _MID + _LONG_FACE),
+    "long_side": rows(_TOP + _CROWN + _SIDE + _LONG_FACE),
+    "bob_mid": rows(_TOP + _MID + _BOB_FACE),
+    "half_up": rows(_KNOT + _CROWN + _BANGS + _LONG_FACE),
+    "pixie": rows(_TOP + _CROWN + """
+..OhhkhhhLhhhkhhkO
+..OhLLhLLLLLhLLhkO
+""" + _FACE),
+    "low_buns": rows(_TOP + _CROWN + _BANGS + _FACE),
+})
+SHORT_STYLES += ["bowl", "slick", "side_fringe", "topknot", "undercut", "fluffy"]
+LONG_STYLES += ["long_mid", "long_side", "bob_mid", "half_up", "pixie", "low_buns"]
+# back hair: these reuse an existing curtain / bob; low_buns has its own
+BACK_ALIAS = {"long_mid": "long", "long_side": "long", "half_up": "long", "bob_mid": "bob"}
+BACK_STYLES = {"long", "bob", "buns", "hime", "wave_short", "wave_long", "mullet", "twist", "braid", "low_buns", *BACK_ALIAS}
+
+TOPS.update({
+    "polo": rows("""
+.......uW..Wu
+....uTTTWuuWCCcu
+...uTTcTCWwCCcCcu
+...uuucTCWwCCcuuu
+......cTCCCCCc
+......cCCCCCCc
+......uccccccu
+"""),
+    # white body, sleeves in the picked colour
+    "raglan": rows("""
+.
+....uTTWWWWWWCcu
+...uTTcWWWWWWcCcu
+...uTTcWWGGWWcCcu
+...uTTcWWWWWWcCcu
+......wWWWWWWw
+......uwwwwwwu
+"""),
+    "sailor": rows("""
+.......uC..Cu
+....uWWCCuuCCWwu
+...uWWwWCCCCWwWwu
+...uWWwWWGGWWwWwu
+...uCCcWWGGWWcCcu
+......wWWWWWWw
+......uccccccu
+"""),
+    "varsity": rows("""
+......uW....Wu
+....uTTTCuuCCCcu
+...uTTcTCuuCCcCcu
+...uTTcTCGuCCcCcu
+...uWWwTCuuCCwWwu
+......cTCuuCCc
+......uWwWwWwu
+"""),
+    "turtleneck": rows("""
+.......uTCCcu
+....uTTTTCCCCCcu
+...uTTcTCCCCCcCcu
+...uTTcTCCCCCcCcu
+...uTTcTCCCCCcCcu
+......cTCCCCCc
+......uccccccu
+"""),
+    "puffer": rows("""
+......uTT..ccu
+....uTTTTuuCCCcu
+...uccccCuucccccu
+...uTTcTCuuCCcCcu
+...uccccCuucccccu
+......cTCuuCCc
+......uccccccu
+"""),
+    "hawaiian": rows("""
+.......uT..Tu
+....uTGTTu.uCWcu
+...uTTcWCCuGCcCcu
+...uuucTGCuCWcuuu
+......cWCCuCGc
+......cCGCuWCc
+......uccccccu
+"""),
+    "sport_tank": rows("""
+.
+......uTu..uCu
+......uTTuuCCu
+......WTCGGCcW
+......WTCGGCcW
+......uCCCCCcu
+......uWWWWWWu
+"""),
+    "suit": rows("""
+......uT....cu
+....uTTTcWWcCCcu
+...uTTcTTcGcCcCcu
+...uTTcTTcGcCcCcu
+...uTTcTTCcCCcCcu
+......cTTCuCCc
+......ucccuccu
+"""),
+})
+SLEEVES.update({"polo": "short", "raglan": "long", "sailor": "long", "varsity": "long", "turtleneck": "long",
+                "puffer": "long", "hawaiian": "short", "sport_tank": "none", "suit": "long"})
+
+BOTTOMS.update({
+    "wide": rows("""
+.....nPPPPPPPpn
+....nPPPpnnPPPpn
+....nPPPpnnPPPpn
+....nPPPpnnPPPpn
+"""),
+    "track": rows("""
+.....nWPPPPPPWn
+.....nWPpnnPpWn
+.....nWPpnnPpWn
+.....nWPpnnPpWn
+"""),
+    "leggings": rows("""
+......nPPPPPpn
+......nPpnnPpn
+......nPpnnPpn
+......nPpnnPpn
+"""),
+    "long_overalls": BOTTOMS["trousers"],
+    "cargo": rows("""
+......nPRPPRpn
+......nPpnnPpn
+"""),
+    "pencil": rows("""
+......nRPPPPpn
+......nRPPPPpn
+"""),
+    "tutu": rows("""
+....nRPRPRPRPRpn
+...nRPRPPRPPRPPpn
+"""),
+    "tiered": rows("""
+.....nRPPPPPPpn
+....nRPPPPPPPPpn
+....nnWnWnWnWnnn
+"""),
+})
+BIBS["long_overalls"] = BIBS["overalls"]
+BOTTOM_POSE.update({
+    "wide": ("sneaker", 23, (23, 24)), "track": ("sneaker", 23, (23, 24)), "leggings": ("sneaker", 23, (23, 24)),
+    "long_overalls": ("canvas", 23, (23, 24)), "cargo": ("canvas", 24, (23, 24)), "pencil": ("loafer", 24, (23, 24)),
+    "tutu": ("loafer", 24, (23, 24)), "tiered": ("loafer", 25, (22, 25)),
+})
+LONG_BOTTOMS = ("trousers", "jeans", "maxi", "wide", "track", "leggings", "long_overalls")
+
+ACCESSORIES += ["crown", "cat_ears", "bunny_ears", "headband", "flower_crown", "halo", "mask", "heart_glasses",
+                "straw_hat", "beret", "bucket_hat", "necktie", "bowtie", "necklace", "backpack"]
+EYEWEAR = (*EYEWEAR, "heart_glasses")
+HATS = (*HATS, "straw_hat", "beret", "bucket_hat")
+BODY_ACC = ["backpack", "necklace", "necktie", "bowtie", "scarf"]   # drawn over the top, under the head
+HEAD_ACC_ORDER = ["beanie", "cap", "straw_hat", "beret", "bucket_hat", "headband", "flower_crown", "star", "bow", "ribbon", "bow_small",
+                  "flower_clip", "heart_clip", "barrette", "cat_ears", "bunny_ears", "crown", "halo", "headphones", "mask",
+                  "glasses", "sunglasses", "half_glasses", "flat_glasses", "heart_glasses"]
+
+
+def _band_points():
+    """A hairband's arc over the crown (rows 3-7), hugging the round head."""
+    return [(2, 7), (2, 6), (3, 5), (4, 4), (5, 4), (6, 3), (7, 3), (8, 3), (9, 3), (10, 3), (11, 3), (12, 3), (13, 3), (14, 4), (15, 4), (16, 5), (17, 6), (17, 7)]
+
+
+def draw_new_accessory(s: Sprite, d: "Doll", name: str, dy: int = 0):
+    m, c, l, g = P.mustard, P.coral, P.linen, P.green
+    if name == "crown":
+        s.blit(_grid("o.o.o.o\noYoHoYo\noHYYYSo\nooooooo", {"o": m[0], "Y": m[3], "H": m[4], "S": m[2]}), 6, dy)
+    elif name == "cat_ears":
+        h = d.hair
+        ear = _grid("..oo\n.oHo\noHCo\noHHo", {"o": h[0], "H": h[2], "C": c[3]})
+        s.blit(ear.flip_h(), 3, dy)
+        s.blit(ear, 13, dy)
+    elif name == "bunny_ears":
+        ear = _grid(".oo.\noWwo\noWCo\noWCo\noWwo\noWwo", {"o": l[0], "W": l[3], "w": l[2], "C": c[3]})
+        s.blit(ear, 5, max(0, dy - 1) if dy else 0)
+        s.blit(ear.flip_h(), 11, max(0, dy - 1) if dy else 0)
+    elif name in ("headband", "flower_crown"):
+        pts = _band_points()
+        for i, (x, y) in enumerate(pts):
+            if name == "headband":
+                s.set(x, y + dy, c[3] if 3 <= i <= 8 else c[2] if i < 14 else c[1])
+            else:
+                s.set(x, y + dy, g[2] if i % 3 else g[3])
+        if name == "flower_crown":
+            for (x, y), col in zip([(3, 5), (6, 3), (9, 3), (12, 3), (15, 4)], [c[3], l[3], m[3], c[2], l[3]]):
+                s.set(x, y + dy, col).set(x, y - 1 + dy, col)
+                s.set(x + 1, y - 1 + dy, m[3] if col != m[3] else c[3])
+    elif name == "halo":
+        s.hline(7, 12, 0, m[4]).set(6, 1, m[3]).set(13, 1, m[2]).hline(7, 12, 2, m[2]) if dy == 0 else s.hline(7, 12, 1, m[4]).set(6, 2, m[3]).set(13, 2, m[2])
+    elif name == "mask":
+        y = 12 + dy
+        s.rect(5, y, 10, 3, l[3]).hline(5, 14, y, l[2]).hline(6, 13, y + 2, l[2])
+        s.set(5, y + 2, (0, 0, 0, 0)).set(14, y + 2, (0, 0, 0, 0))
+        s.set(4, y, l[1]).set(15, y, l[1]).hline(8, 11, y + 1, l[2])
+    elif name == "heart_glasses":
+        y = EYE_Y + dy
+        for x in (5, 11):
+            s.rect(x, y, 4, 2, c[2]).hline(x + 1, x + 2, y + 2, c[1])
+            s.set(x + 1, y - 1, c[2]).set(x + 2, y - 1, (0, 0, 0, 0)).set(x, y - 1, c[2]).set(x + 3, y - 1, c[2])
+            s.set(x + 1, y - 1, (0, 0, 0, 0)).set(x + 1, y, c[4]).set(x, y, c[3])
+        s.hline(9, 10, y, c[0])
+    elif name == "straw_hat":
+        hat = Sprite(W, H)
+        _shade_dome(hat, 9.5, 5, 6.5, 4.6, range(1, 6), m)
+        hat.hline(4, 15, 5, c[2]).hline(4, 9, 5, c[3])                # the ribbon
+        hat.hline(1, 18, 6, m[3]).hline(0, 19, 7, m[2]).hline(1, 8, 6, m[4]).hline(12, 19, 7, m[1])
+        for x in range(2, 18, 3):
+            hat.set(x, 7, m[1])
+        s.blit(hat.outline(m[0], grow=True).crop(1, 1, W, H), 0, dy)
+    elif name == "beret":
+        hat = Sprite(W, H)
+        _shade_dome(hat, 8.5, 4.5, 8, 3.6, range(1, 8), c)
+        hat.hline(4, 15, 7, c[1]).set(11, 0, c[1]).set(11, 1, c[0])
+        s.blit(hat.outline(c[0], grow=True).crop(1, 1, W, H), 0, dy)
+    elif name == "bucket_hat":
+        hat = Sprite(W, H)
+        _shade_dome(hat, 9.5, 5, 6.2, 4.4, range(1, 5), g)
+        hat.rect(3, 5, 14, 1, g[2]).hline(3, 8, 5, g[3]).hline(2, 17, 6, g[2]).hline(1, 18, 7, g[1]).hline(2, 7, 6, g[3]).hline(4, 15, 4, g[1])
+        s.blit(hat.outline(g[0], grow=True).crop(1, 1, W, H), 0, dy)
+    elif name == "necktie":
+        s.blit(_grid("oCCo\n.CS.\n.CS.\n.CS.\noCSo\n.oo.", {"o": c[0], "C": c[2], "S": c[1]}), 8, 15)
+    elif name == "bowtie":
+        b = P.blue
+        s.blit(_grid("oo..oo\noHooCo\noHooCo\noo..oo", {"o": b[0], "H": b[3], "C": b[2]}), 7, 15)
+    elif name == "necklace":
+        s.set(7, 15, m[2]).set(8, 16, m[3]).set(11, 16, m[2]).set(12, 15, m[2])
+        s.rect(9, 17, 2, 2, m[3]).set(10, 18, m[1]).set(9, 17, m[4])
+    elif name == "backpack":
+        w = P.wood
+        for x in (6, 13):
+            s.vline(x, 16, 20, w[1]).set(x, 16, w[2]).set(x, 18, w[3])
+
+
+NEW_ACC = set(ACCESSORIES[ACCESSORIES.index('crown'):])
+
+
+# ------------------------------------------------------------------ the doll
 @dataclass(frozen=True)
 class Doll:
     gender: str = "m"            # "m" | "f": lashes vs brows, smirk, presets
@@ -1337,7 +1662,7 @@ class Doll:
             return lambda s: s.blit(Sprite.from_grid("\n".join(src), lg), 0, y)
 
         out = []
-        if self.hair_style in ("long", "bob", "buns", "hime", "wave_short", "wave_long", "mullet", "twist", "braid"):
+        if self.hair_style in BACK_STYLES:
             back = lambda s: draw_back_hair(s, self, bob, sway % 2)
             out.append((f"back/{self.hair_style}/{bob}/{sway % 2}/{hat}", under_hat(back, bob) if hat else back))
         base = lower_arm_removed(BASE, 15, "q") if arm else BASE
@@ -1352,8 +1677,9 @@ class Doll:
         out.append((f"top/{self.top_style}/{int(arm)}", grid_at(top, 15)))
         if self.bottom_style in BIBS:
             out.append((f"bib/{self.bottom_style}", grid_at(BIBS[self.bottom_style], 16)))
-        if "scarf" in acc:
-            out.append(("acc/scarf/0", lambda s: draw_accessory(s, self, "scarf")))
+        for a in BODY_ACC:
+            if a in acc:
+                out.append((f"acc/{a}/0", lambda s, a=a: draw_accessory(s, self, a)))
         extra = HEAD_EXTRA.get(self.hair_style)
         head = lambda s: (grid_at(HEADS[self.hair_style], bob)(s), extra and extra(s, self, bob))
         out.append((f"head/{self.hair_style}/{bob}/{hat}", under_hat(head, bob) if hat else head))
@@ -1419,16 +1745,16 @@ VARIANTS = [
 # Option lists with the names the dressing room shows (order = UI order).
 OPTIONS = {
     "style": [("messy", "呆毛短发"), ("afro", "爆炸头"), ("neat", "侧分"), ("buzz", "寸头"), ("mid", "中分"), ("curly", "卷毛"),
-              ("long", "长直发"), ("bob", "波波头"), ("buns", "丸子头"), ("pony", "侧马尾"), ("twin", "双马尾"), ("crop", "碎刘海"), ("hime", "姬发"), ("split_spike", "微分前刺"), ("part37", "三七分"), ("hedgehog", "刺猬头"), ("quiff", "飞机头"), ("flat_top", "平头"), ("wave_short", "短波浪卷"), ("wave_long", "长波浪卷"), ("mullet", "鲻鱼头"), ("updo", "盘发"), ("twist", "挽发"), ("braid", "编发")],
+              ("long", "长直发"), ("bob", "波波头"), ("buns", "丸子头"), ("pony", "侧马尾"), ("twin", "双马尾"), ("crop", "碎刘海"), ("hime", "姬发"), ("split_spike", "微分前刺"), ("part37", "三七分"), ("hedgehog", "刺猬头"), ("quiff", "飞机头"), ("flat_top", "平头"), ("wave_short", "短波浪卷"), ("wave_long", "长波浪卷"), ("mullet", "鲻鱼头"), ("updo", "盘发"), ("twist", "挽发"), ("braid", "编发"), ("bowl", "锅盖头"), ("slick", "大背头"), ("side_fringe", "斜刘海"), ("topknot", "小揪揪"), ("undercut", "铲青"), ("fluffy", "蓬蓬头"), ("long_mid", "中分长发"), ("long_side", "长斜刘海"), ("bob_mid", "中分波波"), ("half_up", "半扎发"), ("pixie", "精灵短发"), ("low_buns", "低丸子")],
     "eyes": [("round", "圆眼"), ("bean", "豆豆眼"), ("sparkle", "闪亮眼"), ("droopy", "下垂眼"),
              ("cat", "猫眼"), ("smile", "眯眯眼"), ("almond", "杏仁眼"), ("sleepy", "半月眼")],
     "top": [("hoodie", "卫衣"), ("jacket", "夹克"), ("sweater", "翻领毛衣"), ("tee", "T恤"),
-            ("stripe", "条纹衫"), ("shirt", "衬衫"), ("tank", "背心"), ("vest", "衬衫马甲"), ("cardigan", "针织开衫")],
+            ("stripe", "条纹衫"), ("shirt", "衬衫"), ("tank", "背心"), ("vest", "衬衫马甲"), ("cardigan", "针织开衫"), ("polo", "Polo衫"), ("raglan", "插肩衫"), ("sailor", "水手服"), ("varsity", "棒球夹克"), ("turtleneck", "高领毛衣"), ("puffer", "羽绒服"), ("hawaiian", "花衬衫"), ("sport_tank", "运动背心"), ("suit", "西装")],
     "bottom": [("jeans", "卷边牛仔裤"), ("trousers", "长裤"), ("shorts", "短裤"), ("overalls", "背带短裤"),
-               ("mini", "A字短裙"), ("pleated", "百褶裙"), ("maxi", "长裙")],
+               ("mini", "A字短裙"), ("pleated", "百褶裙"), ("maxi", "长裙"), ("wide", "阔腿裤"), ("track", "运动裤"), ("leggings", "紧身裤"), ("long_overalls", "背带长裤"), ("cargo", "工装短裤"), ("pencil", "包臀裙"), ("tutu", "蓬蓬裙"), ("tiered", "蛋糕裙")],
     "socks": [("none", "不穿"), ("short", "短袜"), ("long", "长袜")],
     "acc": [("glasses", "眼镜"), ("sunglasses", "墨镜"), ("bow", "蝴蝶结"), ("star", "星星发夹"),
-            ("headphones", "耳机"), ("beanie", "毛线帽"), ("scarf", "围巾"), ("half_glasses", "半框眼镜"), ("flat_glasses", "扁框眼镜"), ("ribbon", "缎带蝴蝶结"), ("bow_small", "小蝴蝶结"), ("flower_clip", "花朵发夹"), ("heart_clip", "爱心发夹"), ("barrette", "一字发夹"), ("cap", "鸭舌帽")],
+            ("headphones", "耳机"), ("beanie", "毛线帽"), ("scarf", "围巾"), ("half_glasses", "半框眼镜"), ("flat_glasses", "扁框眼镜"), ("ribbon", "缎带蝴蝶结"), ("bow_small", "小蝴蝶结"), ("flower_clip", "花朵发夹"), ("heart_clip", "爱心发夹"), ("barrette", "一字发夹"), ("cap", "鸭舌帽"), ("straw_hat", "草帽"), ("beret", "贝雷帽"), ("bucket_hat", "渔夫帽"), ("crown", "小皇冠"), ("cat_ears", "猫耳"), ("bunny_ears", "兔耳"), ("headband", "发箍"), ("flower_crown", "花环"), ("halo", "光环"), ("mask", "口罩"), ("heart_glasses", "爱心墨镜"), ("necktie", "领带"), ("bowtie", "领结"), ("necklace", "项链"), ("backpack", "背包带")],
 }
 
 

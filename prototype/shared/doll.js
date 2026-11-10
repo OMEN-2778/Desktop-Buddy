@@ -532,7 +532,7 @@ function BuddyDoll(DATA) {
     add(`bottom/${look.bottomStyle}`);
     add(`top/${look.topStyle}/${arm ? 1 : 0}`);
     add(`bib/${look.bottomStyle}`);
-    if (acc.has("scarf")) add("acc/scarf/0");
+    for (const a of DATA.bodyAcc || ["scarf"]) if (acc.has(a)) add(`acc/${a}/0`);
     add(`head/${look.style}/${f.bob}/${hat}`);
     if (!hat) add(`ahoge/${look.style}/${f.sway % 2}/${f.bob}`);
     const eyes = ["neutral","confused","unimpressed","dazed","focused","angry","embarrassed"].includes(f.expr) ? look.eyes : "-";
