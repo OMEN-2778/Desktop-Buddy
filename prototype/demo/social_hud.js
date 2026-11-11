@@ -130,7 +130,7 @@ function placeContactActions(){
 contactActions.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b||b.getAttribute('aria-disabled')==='true')return;
   const id=selectedContact;closeContactActions();if(b.dataset.action==='cancel')return;
-  setContactsOpen(false);if(b.dataset.action==='memories')showSocialMemories(id);else if(b.dataset.action==='invite'){if(socialState.guest?.id===id)endHomeVisit('主角和客人道别，约好下次再聚。');else inviteHome(id);}else if(b.dataset.action==='visit')requestFriendVisit(id);else if(b.dataset.action==='outing')openFriendOuting(id);else startContactTalk(id,b.dataset.action);
+  setContactsOpen(false);if(b.dataset.action==='memories')showSocialMemories(id);else if(b.dataset.action==='invite'){if(socialState.guest?.id===id)endHomeVisit('主角和客人道别，约好下次再聚。');else inviteHome(id);}else if(b.dataset.action==='visit')requestFriendVisit(id);else if(b.dataset.action==='outing')openFriendOuting(id);else{playerCall=true;try{startContactTalk(id,b.dataset.action);}finally{playerCall=false;}}
 });
 document.addEventListener('pointerdown',e=>{if(!contactsPanel.contains(e.target)&&!contactActions.contains(e.target)&&!networkTrigger.contains(e.target)&&!moodFace.contains(e.target))setContactsOpen(false);});
 document.addEventListener('keydown',e=>{
@@ -257,20 +257,25 @@ for(const who of ['dad','mom','friend'])CHATS.text[who]={name:who==='dad'?'爸�
  const id=`contact_text_${who}_${i}`;ML[id]={name:'互相惦记',emo:'happy',pts:1,min:90};return {title,lines,id};
 })};
 function socialBusy(){return friendVisit?.talk||friendOutingState?.talk||socialState.guest?.talk||socialState.guest?.bedTalk||npcInteraction||life.talkQ||(sim.place==='bar'&&barScene?.chat)||remoteSocial||sim.talk||sim.chosen?.item?.talk||sim.windup&&CHAT_ACT[sim.windup.act];}
+let playerCall=false,keepCallId=null;   // who started a phone talk: the player (人脉), her keep-in-touch round (social_life.js)
 function startContactTalk(id,kind='text',incoming=false){
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return false;
   if(sim.mode==='down'||asleep()||wiping||cardHolds()||socialBusy())return false;
   const who=c.family||'friend',item=chatItem(kind,who,kind==='video'?'phone':'call',id);
+  item.how=incoming?'incoming':playerCall?'player':keepCallId===id?'keep':'self';
   if(incoming)item.talk.start=`接听了${contactName(c)}的${kind==='video'?'视频':'电话'}。`;
   // This session accompanies daily life; it owns no route, action or needs lock.
   remoteSocial={item,i:0,wait:.5,said:[]};log(item.talk.start);
   return true;
 }
-function finishContactTalk(id,kind){
+function finishContactTalk(id,kind,how){
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return;
   const day=Math.floor(sim.t/1440);if(c.gainDay!==day){c.gainDay=day;c.dailyGain=0;}
-  const before=c.affinity;const previous=contactRelation(c),gain=Math.min(['meet','visit-chat'].includes(kind)?1:kind==='text'?2:4,Math.max(0,6-(c.dailyGain||0)));
-  c.affinity=clamp(c.affinity+gain);c.dailyGain=(c.dailyGain||0)+gain;c.lastContact=sim.t;c.contactCounts||={};c.contactCounts[kind]=(c.contactCounts[kind]||0)+1;discoverPersonality(c,c.affinity-before);if(c.affinity>before)showFriendshipGain(c,c.affinity-before);
+  const phone=['text','call','video'].includes(kind),player=phone&&how==='player',keep=phone&&how==='keep'&&!c.family;
+  // the player's own call counts for more (owner 2026-11-11); her keep-in-touch call only holds the line
+  const base=['meet','visit-chat'].includes(kind)?1:kind==='text'?(player?3:2):(player?6:4),cap=player?10:6;
+  const before=c.affinity;const previous=contactRelation(c),gain=keep?(c.byPlayer?1:pick([-1,0,0,1])):Math.min(base,Math.max(0,cap-(c.dailyGain||0)));
+  c.affinity=Math.max(1,clamp(c.affinity+gain));c.dailyGain=(c.dailyGain||0)+Math.max(0,gain);c.lastContact=sim.t;c.contactCounts||={};c.contactCounts[kind]=(c.contactCounts[kind]||0)+1;discoverPersonality(c,c.affinity-before);if(c.affinity>before)showFriendshipGain(c,c.affinity-before);
   if(kind==='video'||kind==='meet'||kind==='visit'){c.forgotten=false;c.lastSeen=sim.t;}
   if(previous!==contactRelation(c)){const message=`和${contactName(c)}从${previous}成为了${contactRelation(c)}。`;log(message);addSocialMemory(c,'关系更近了一步',message);}
   if(['text','call','video'].includes(kind))addSocialMemory(c,{text:'互发消息',call:'通了电话',video:'视频见面'}[kind],`和${contactName(c)}聊起「${c.lastTopic||'彼此的近况'}」。`);
@@ -360,13 +365,13 @@ function tickSocial(dt,now){
     session.wait-=dt;if(session.wait>0)return;
     const tk=session.item.talk;
     if(session.i>=tk.lines.length){
-      log(fill(tk.end,session.item.vars),null,session.said);if(tk.id)addMood(tk.id,{vars:session.item.vars,diary:false,words:false});finishContactTalk(session.item.contactId,tk.kind);remoteSocial=null;return;
+      log(fill(tk.end,session.item.vars),null,session.said);if(tk.id)addMood(tk.id,{vars:session.item.vars,diary:false,words:false});finishContactTalk(session.item.contactId,tk.kind,session.item.how);remoteSocial=null;return;
     }
     const raw=tk.lines[session.i++],other=raw.startsWith('>'),text=fill(other?raw.slice(1).trim():raw,session.item.vars),who=other?`${tk.name}：`:'';
     showSay(text,who,socialState.contacts.find(c=>c.id===session.item.contactId));session.said.push([who,text]);session.wait=Math.min(4.6,Math.max(2.6,1.4+(who+text).length*.13));
   }
 }
-function socialSnapshot(){return {...socialLifeSnapshot(),rosterVersion:socialState.rosterVersion,contacts:socialState.contacts.map(c=>({personality:{...personalityOf(c)},personalityBond:{gain:c.personalityBond?.gain||0,days:[...(c.personalityBond?.days||[])]},parentVisitRoll:c.parentVisitRoll||null,parentLastVisit:c.parentLastVisit??null,bedTalkSeen:c.bedTalkSeen||[],contactCounts:Object.fromEntries(SOCIAL_CHANNELS.map(k=>[k,c.contactCounts?.[k]||0])),personalityTalks:c.personalityTalks||0,personalitySeen:c.personalitySeen||[],personalityTextSeen:c.personalityTextSeen||{},id:c.id,name:c.name,family:c.family||null,affinity:c.affinity,look:doll.normalize(c.look),lastContact:c.lastContact??null,gainDay:c.gainDay??null,dailyGain:c.dailyGain||0,memories:c.memories||[],metAt:c.metAt??null,lastSeen:c.lastSeen??null,forgotten:!!c.forgotten,lastIncoming:c.lastIncoming??null,rejectDay:c.rejectDay??null,rejectLoss:c.rejectLoss||0,farewellTried:!!c.farewellTried,farewellPending:!!c.farewellPending,lastVisitOffer:c.lastVisitOffer??null})),nextCall:socialState.nextCall};}
+function socialSnapshot(){return {...socialLifeSnapshot(),rosterVersion:socialState.rosterVersion,contacts:socialState.contacts.map(c=>({personality:{...personalityOf(c)},personalityBond:{gain:c.personalityBond?.gain||0,days:[...(c.personalityBond?.days||[])]},parentVisitRoll:c.parentVisitRoll||null,parentLastVisit:c.parentLastVisit??null,bedTalkSeen:c.bedTalkSeen||[],contactCounts:Object.fromEntries(SOCIAL_CHANNELS.map(k=>[k,c.contactCounts?.[k]||0])),personalityTalks:c.personalityTalks||0,personalitySeen:c.personalitySeen||[],personalityTextSeen:c.personalityTextSeen||{},id:c.id,name:c.name,family:c.family||null,affinity:c.affinity,look:doll.normalize(c.look),lastContact:c.lastContact??null,gainDay:c.gainDay??null,dailyGain:c.dailyGain||0,memories:c.memories||[],metAt:c.metAt??null,lastSeen:c.lastSeen??null,forgotten:!!c.forgotten,lastIncoming:c.lastIncoming??null,rejectDay:c.rejectDay??null,rejectLoss:c.rejectLoss||0,farewellTried:!!c.farewellTried,farewellPending:!!c.farewellPending,byPlayer:!!c.byPlayer,lastVisitOffer:c.lastVisitOffer??null})),nextCall:socialState.nextCall};}
 function restoreSocial(data,sourceIsDesktop=!!TAURI){
   hidePeerSay(true);
   clearTimeout(phoneCall.timeout);clearTimeout(phoneCall.exitTimer);phoneCall.phase='idle';phoneCall.contactId=null;incomingCall.hidden=true;moodTalk.classList.remove('phone-active');remoteSocial=null;
@@ -376,7 +381,7 @@ function restoreSocial(data,sourceIsDesktop=!!TAURI){
   const seen=new Set();socialState.contacts=[];
   for(const c of list){
     if(!c||typeof c.id!=='string'||!/^[-a-zA-Z0-9_]{1,64}$/.test(c.id)||seen.has(c.id)||typeof c.name!=='string'||!c.name.trim())continue;
-    seen.add(c.id);socialState.contacts.push({id:c.id,name:c.name.slice(0,24),family:c.id==='dad'?'dad':c.id==='mom'?'mom':null,affinity:Number.isFinite(c.affinity)?clamp(c.affinity):50,look:doll.normalize(c.look||doll.PRESETS.m),lastContact:Number.isFinite(c.lastContact)?c.lastContact:null,gainDay:Number.isInteger(c.gainDay)?c.gainDay:null,dailyGain:Number.isFinite(c.dailyGain)?Math.max(0,Math.min(6,c.dailyGain)):0});
+    seen.add(c.id);socialState.contacts.push({id:c.id,name:c.name.slice(0,24),family:c.id==='dad'?'dad':c.id==='mom'?'mom':null,affinity:Number.isFinite(c.affinity)?clamp(c.affinity):50,look:doll.normalize(c.look||doll.PRESETS.m),lastContact:Number.isFinite(c.lastContact)?c.lastContact:null,gainDay:Number.isInteger(c.gainDay)?c.gainDay:null,dailyGain:Number.isFinite(c.dailyGain)?Math.max(0,Math.min(10,c.dailyGain)):0});
   }
   // New saves start with two friends; never re-add a friend removed by later gameplay.
   const additions=data?.rosterVersion>=2?DEFAULT_CONTACTS.slice(0,2):DEFAULT_CONTACTS;

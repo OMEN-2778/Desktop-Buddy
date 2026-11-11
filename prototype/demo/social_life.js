@@ -51,7 +51,7 @@ function worldNpcIdentity(role){
 function meetWorldNpc(n){
   const person=socialState.world.find(c=>c.id===n.personId);if(!person)return null;
   let c=socialState.contacts.find(c=>c.id===person.id);
-  if(!c){c={...person,family:null,affinity:8,lastContact:sim.t,lastSeen:sim.t,metAt:sim.t,memories:[...(socialState.archive[person.id]?.memories||[])]};const returning=!!socialState.archive[person.id];socialState.contacts.push(c);delete socialState.archive[person.id];
+  if(!c){c={...person,family:null,affinity:8,lastContact:sim.t,lastSeen:sim.t,metAt:sim.t,byPlayer:!!(life.talkQ?.manual&&life.talkQ.n===n),memories:[...(socialState.archive[person.id]?.memories||[])]};const returning=!!socialState.archive[person.id];socialState.contacts.push(c);delete socialState.archive[person.id];
     const text=`在${({park:'公园',bar:'酒吧',mall:'商场',front:'街边',beach:'码头',summer_test:'草帽湾',spring_test:'茵菲谷'})[sim.place]||'路上'}和${c.name}聊了几句，${returning?'重新':'第一次'}交换了联系方式。`;log(text);addSocialMemory(c,returning?'再次遇见':'第一次认识',text);discoverPersonality(c);
   }else{c.lastSeen=sim.t;c.forgotten=false;finishContactTalk(c.id,'meet');}
   contactsSig='';return c;
@@ -121,7 +121,7 @@ function restoreSocialLife(data){
   for(const c of socialState.contacts){const saved=(Array.isArray(data?.contacts)?data.contacts:[]).find(p=>p&&p.id===c.id)||{};c.memories=memories(saved.memories);for(const key of ['metAt','lastSeen','lastIncoming','rejectDay','rejectLoss','lastVisitOffer'])c[key]=Number.isFinite(saved[key])?saved[key]:key==='rejectLoss'?0:null;
     c.contactCounts={};for(const key of SOCIAL_CHANNELS)c.contactCounts[key]=Number.isFinite(saved.contactCounts?.[key])?Math.max(0,Math.min(10000,Math.floor(saved.contactCounts[key]))):0;
     c.parentVisitRoll=saved.parentVisitRoll&&Number.isInteger(saved.parentVisitRoll.period)?{period:saved.parentVisitRoll.period,available:saved.parentVisitRoll.available===true}:null;c.parentLastVisit=Number.isFinite(saved.parentLastVisit)?saved.parentLastVisit:null;c.bedTalkSeen=Array.isArray(saved.bedTalkSeen)?saved.bedTalkSeen.filter(t=>typeof t==='string').slice(-100):[];
-    c.child=!!socialState.world.find(p=>p.id===c.id)?.child;c.forgotten=!c.family&&!!saved.forgotten;c.farewellTried=!!saved.farewellTried;c.farewellPending=!!saved.farewellPending;
+    c.child=!!socialState.world.find(p=>p.id===c.id)?.child;c.forgotten=!c.family&&!!saved.forgotten;c.farewellTried=!!saved.farewellTried;c.farewellPending=!!saved.farewellPending;c.byPlayer=!!saved.byPlayer;
   }
   socialState.decayDay=Number.isInteger(data?.decayDay)?data.decayDay:null;
   socialState.nextVisit=Number.isFinite(data?.nextVisit)?data.nextVisit:null;socialState.guest=null;
@@ -241,10 +241,25 @@ function tickHomeVisit(dt){
   if(Math.random()<.35){const [title,text,say,emo]=nextGuestText(SOCIAL_TEXT.visitEvents.filter(socialTalkFits),g.usedEvents),vars={朋友:contactName(c)};log(fill(text,vars));showSay(say);addMood('home_guest_event_'+SOCIAL_TEXT.visitEvents.findIndex(row=>row[0]===title),{diary:false,words:false});addSocialMemory(c,title,fill(text,vars));g.next=realClock+14;}
   else {const [title,...lines]=nextGuestText(homeGuestTalkPool(g,c),g.usedTalks);g.talk={title,lines:personalityTalk(lines,c,'visit'),i:0,wait:.4,said:[]};}
 }
+// owner 2026-11-11: left idle for days, friendships must not all fade. Wherever she is, when free she
+// phones the friend she hasn't talked to longest (≥2.5 days, before the 4-day decay starts). Such a call
+// only keeps things as they are: friends she met by herself wobble (-1/0/+1), friends the player
+// introduced her to (byPlayer) creep up +1. A call the player starts from 人脉 gives more (finishContactTalk).
+let keepNext=0;
+function tickKeepInTouch(){
+  if(sim.t<keepNext)return;keepNext=sim.t+45;
+  const h=hour();if(h<9||h>=22||remoteSocial||phoneCall.phase!=='idle'||!canReceiveCall()||['bath','toilet','sleep','season_shower'].includes(sim.act))return;
+  const since=c=>sim.t-(c.lastContact??c.metAt??sim.t);
+  const due=socialState.contacts.filter(c=>!c.family&&c.id!=='preview_friend'&&since(c)>=3600&&!contactWithHero(c.id)).sort((a,b)=>since(b)-since(a));
+  if(!due.length)return;
+  const kid=due.find(c=>c.child);if(kid){kid.lastContact=sim.t;contactsSig='';return;}   // no phone calls to children: she says hi next time she sees them
+  const c=due[0],kind=weighted([['text',3],['call',2],['video',1]]);
+  keepCallId=c.id;try{if(startContactTalk(c.id,kind))keepNext=sim.t+120;}finally{keepCallId=null;}
+}
 function tickSocialLife(dt){
   if(socialDialogHolds()||phoneHolds()||!speed||cardHolds()||wiping)return;
   const day=Math.floor(sim.t/1440);if(socialState.decayDay===null){socialState.decayDay=day;for(const c of socialState.contacts){c.metAt??=sim.t;c.lastSeen??=sim.t;}}
-  tickSocialDecay();tickHomeVisit(dt);
+  tickSocialDecay();tickKeepInTouch();tickHomeVisit(dt);
   if(!Number.isFinite(socialState.nextVisit))socialState.nextVisit=sim.t+1440;
   if(friendVisit||friendOutingState||sim.t<socialState.nextVisit||socialState.guest||!canReceiveCall()||sim.place!=='home'||hour()<10||hour()>=20)return;
   socialState.nextVisit=sim.t+720+Math.random()*720;

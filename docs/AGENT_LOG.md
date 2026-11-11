@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 Claude — 挂机时友谊不再全掉：她闲时主动联系老朋友；玩家打电话加更多
+- social_life.js tickKeepInTouch()：任何地方 9-22 点、她能接电话时，挑最久没联系（≥2.5 天，早于 4 天开始的衰减）的朋友发消息/打电话/视频（item.how='keep'）；小孩不打电话，只悄悄刷新 lastContact。
+- social_hud.js finishContactTalk(id,kind,how)：keep 电话——她自己认识的 -1/0/+1 波动，玩家点 NPC 认识的（contact.byPlayer，meetWorldNpc 时 talkQ.manual）+1；玩家从人脉打：消息 3、电话/视频 6，每日上限 10（原 2/4/6）。byPlayer 存档。
+- 旧存档里的朋友都算“她自己认识的”。测过：主页 keep 电话轮到超期朋友、增益分布、存档；茵菲谷里也会打。没跑多天长挂机。
+
 ## 2026-11-10 Claude — 做好饭不吃 / 果园牧场点不动 / 平板随时能开 / 转场防卡 / 0.3.10 启动报错
 - 做好饭被打断（如上厕所）回来又去做一顿：infei_home use()/summer_lodge use() 桌上有饭时 stove→table/dine。实测 cook→toilet→eat。
 - spring_story.js：开场没走完（如 sow）时果园、牧场、农舍点击照常；她的菜单里「丢丢平板电脑」只要解锁就有（做饭、坐着时也在）。
