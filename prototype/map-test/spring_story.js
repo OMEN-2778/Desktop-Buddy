@@ -26,7 +26,12 @@ const springFarm=(()=>{
  function addItem(k,n=1){F.inv[k]=(F.inv[k]||0)+n;if(F.seen[k]==null)F.seen[k]=today();}
  const X={hooks:{day:[],draw:[],click:[],pick:{},arrive:[]}};   // the farm's own API for infei_farm.js
  X.CROP=CROP;   // the seed shop's cards read growth, price and seasons (infei_ui.js)
- const START=[9,10],MORE=[[11,14,6],[12,35,10]];   // front-row beds; [bed, working days, cost] to clear more
+ const START=[9,10],MORE=[[11,14,6],[12,35,10],   // front-row beds; [bed, working days, cost] to clear more
+  // owner 2026-11-11: the back rows can be cleared too, one at a time, middle row then the far one
+  [5,40,14],[6,45,18],[7,50,22],[8,55,26],[0,60,30],[1,65,34],[2,70,38],[3,75,42],[4,80,46]];
+ // owner 2026-11-11: each bed can be upgraded on its own; every level adds one more basket per harvest
+ // (level 1 = x2, level 5 = x6), seeds cost the same. Each level costs more.
+ const LV_COST=[10,25,50,90,150],lvOf=i=>F.lv?.[i]||0,yieldOf=i=>1+lvOf(i);
  const STAGE=['种子','发芽','长大','成熟'];
  const blank=()=>({letter:0,unlocked:false,phase:'none',coins:8,beds:{},open:[...START],ledger:[],day:-1,work:0,workDay:-1,firstHarvest:false,inv:{},seen:{}});
  let F=blank();
@@ -69,13 +74,13 @@ const springFarm=(()=>{
  const rainedSoFar=()=>!winter()&&(weather.force?rainy(weather.force):planDay(today()).some(e=>rainy(e.kind)&&e.from<=sim.t));
  const wet=b=>b.watered===today()||rainedSoFar();
  function roll(){const d=today();if(F.day<0)F.day=d;while(F.day<d){for(const f of X.hooks.day)f(F.day);for(const b of Object.values(F.beds))if((b.watered===F.day||rained(F.day)||CROP[b.crop]?.dry)&&!ripe(b))b.progress++;
-   for(const [i,b] of Object.entries(F.beds))if(CROP[b.crop]?.auto&&ripe(b)){delete F.beds[i];addItem(b.crop);log(`菜地里的${CROP[b.crop].name}自己长好了，收了 1 个进仓库。`);}
+   for(const [i,b] of Object.entries(F.beds))if(CROP[b.crop]?.auto&&ripe(b)){delete F.beds[i];addItem(b.crop,yieldOf(i));log(`菜地里的${CROP[b.crop].name}自己长好了，收了 ${yieldOf(i)} 个进仓库。`);}
    F.day++;if(seasonAt(F.day)!==seasonAt(F.day-1))seasonChange();}}
  function worked(){if(F.workDay!==today()){F.workDay=today();F.work++;}}
  function drawBeds(ctx,info){
   if(info.inside||info.region!==4)return;roll();
   const soil=D.soil;
-  for(const i of F.open){const b=bedOf(i),[x,top,w,h]=D.plots[i];
+  for(const i of [...F.open].sort((a,b)=>a-b)){const b=bedOf(i),[x,top,w,h]=D.plots[i];   // far rows first
    if(b&&wet(b)){ctx.fillStyle=soil[1];ctx.fillRect(x,top,w,h);for(let yy=top;yy<top+h;yy+=3){ctx.fillStyle=soil[2];ctx.fillRect(x,yy,w,1);if(yy+2<top+h){ctx.fillStyle=soil[0];ctx.fillRect(x,yy+2,w,1);}}}   // wet soil: the bed's furrows one shade darker
    if(b){const pic=imgOf(D.crops[b.crop][stageOf(b)]);for(const [cx,base]of D.slots[i])ctx.drawImage(pic,cx-8,base-19);}
   }
@@ -162,7 +167,7 @@ const springFarm=(()=>{
  const oldOpen=openRing;openRing=function(which,at){
   if(which==='away'&&inSpring()&&F.unlocked){const keep=RINGS.away;RINGS.away=[keep[0],['sf:pc','丢丢平板电脑'],...keep.slice(1)];try{return oldOpen(which,at);}finally{RINGS.away=keep;}}
   const r=oldOpen(which,at);
-  if(which==='airportFlights'){const b=ringEl.querySelector('button');if(b){b.textContent=F.unlocked?'茵菲谷 · 免费':'茵菲谷';if(!F.unlocked){b.classList.add('sf-wait');b.title='等家里的消息';b.append(Object.assign(document.createElement('small'),{className:'fu-why',textContent:'等家里的消息'}));}}}
+  if(which==='airportFlights'){const b=ringEl.querySelector('button');if(b){b.textContent='茵菲谷';if(!F.unlocked){b.classList.add('sf-wait');b.title='等家里的消息';b.append(Object.assign(document.createElement('small'),{className:'fu-why',textContent:'等家里的消息'}));}}}
   return r;
  };
  // ---------------------------------------------------------------- arrival
@@ -175,20 +180,28 @@ const springFarm=(()=>{
   }else{mom.on=false;if(place==='spring_test'&&F.phase==='done'){roll();for(const f of X.hooks.arrive)f();if(winter())setTimeout(()=>showHint('冬天地冻住了，只能种小蘑菇'),900);else if(daysToWinter(today())<=3)setTimeout(()=>showHint(`再过 ${daysToWinter(today())} 天就入冬了，没熟的菜会冻坏`),900);}}
   return r;};
  // ---------------------------------------------------------------- clicking the beds
- function bedAt(x,y){return F.open.concat(MORE.map(m=>m[0])).find(i=>{const [bx,top,w,h]=D.plots[i];return x>=bx-2&&x<=bx+w+2&&y>=top-12&&y<=top+h+3;});}
+ // the rows sit close: a click on a bed's own soil wins, else the nearest row whose crops reach up there
+ function bedAt(x,y){const all=F.open.concat(MORE.map(m=>m[0])).filter(i=>{const [bx,top,w,h]=D.plots[i];return x>=bx-2&&x<=bx+w+2&&y>=top-12&&y<=top+h+3;});
+  return all.find(i=>{const [,top,,h]=D.plots[i];return y>=top-1&&y<=top+h+2;})??all.sort((a,b)=>b-a)[0];}
  let offs=new Map();
  function ring(title,items,at){offs=new Map(items.filter(it=>it.off).map(it=>[it.id,it.off]));FarmUI.ring(title,items,at);}
  function farmRing(title,items,i){const [x,top,w]=D.plots[i];ring(title,items,{x:x+w/2,y:top-4});}
+ const bedName=i=>`菜地 · 第 ${F.open.indexOf(i)+1} 块${lvOf(i)?` · ${lvOf(i)} 级`:''}`;
+ const lvItem=i=>{const l=lvOf(i),cost=LV_COST[l];return {id:'sf:up:'+i,label:cost==null?'已满级':`升级 · ${cost} 币`,icon:'hoe',off:cost==null?`每次收 ${yieldOf(i)} 筐`:F.coins<cost?`还差 ${coins(cost-F.coins)} 币`:''};};
+ const needWater=()=>F.open.filter(i=>{const b=bedOf(i);return b&&!ripe(b)&&!CROP[b.crop]?.dry&&b.watered!==today();}).sort((a,b)=>D.plots[a][0]-D.plots[b][0]);
+ const ripeBeds=()=>F.open.filter(i=>ripe(bedOf(i))).sort((a,b)=>D.plots[a][0]-D.plots[b][0]);
+ const allItems=()=>{const w=needWater(),r=ripeBeds();return [{id:'sf:waterall:0',label:'全部浇水',icon:'can',off:rainedSoFar()?'下过雨了':w.length?'':'没有要浇的'},{id:'sf:harvestall:0',label:'全部收获',icon:'basket',off:r.length?'':'还没有熟的'}];};
  function openBed(i){
-  const name=`菜地 · 第 ${F.open.indexOf(i)+1} 块`,b=bedOf(i);
+  const name=bedName(i),b=bedOf(i);
   if(!F.open.includes(i)){const [,days,cost]=MORE.find(m=>m[0]===i),left=Math.max(0,days-F.work),first=MORE.find(m=>!F.open.includes(m[0]))[0]===i;
    const off=!first?'先整理前一块':left?`再经营 ${left} 天`:F.coins<cost?`还差 ${coins(cost-F.coins)} 币`:'';
    return farmRing('荒着的地',[{id:'sf:clear:'+i,label:`整理 · ${cost} 币`,icon:'hoe',off}],i);}
   if(F.phase==='sow'&&!START.includes(i))return showHint('先种有箭头的那块');
-  if(!b)return farmRing(name,[{id:'sf:sow:'+i,label:'播种',icon:'seeds'},{id:'sf:look:'+i,label:'查看',icon:'lens',off:'还空着'}],i);
-  if(CROP[b.crop]?.dry)return farmRing(name,[{id:'sf:water:'+i,label:'浇水',icon:'can',off:'不用浇水'},{id:'sf:harvest:'+i,label:'收获',icon:'basket',off:ripe(b)?'':'还没熟'},{id:'sf:look:'+i,label:'查看',icon:'lens'}],i);
+  const more=F.phase==='done'?[lvItem(i),...allItems()]:[];
+  if(!b)return farmRing(name,[{id:'sf:sow:'+i,label:'播种',icon:'seeds'},{id:'sf:look:'+i,label:'查看',icon:'lens',off:'还空着'},...more],i);
+  if(CROP[b.crop]?.dry)return farmRing(name,[{id:'sf:water:'+i,label:'浇水',icon:'can',off:'不用浇水'},{id:'sf:harvest:'+i,label:'收获',icon:'basket',off:ripe(b)?'':'还没熟'},{id:'sf:look:'+i,label:'查看',icon:'lens'},...more],i);
   farmRing(name,[{id:'sf:water:'+i,label:'浇水',icon:'can',off:ripe(b)?'已经熟了':b.watered===today()?'今天浇过了':rainedSoFar()?'下过雨了':''},
-   {id:'sf:harvest:'+i,label:'收获',icon:'basket',off:ripe(b)?'':'还没熟'},{id:'sf:look:'+i,label:'查看',icon:'lens'}],i);
+   {id:'sf:harvest:'+i,label:'收获',icon:'basket',off:ripe(b)?'':'还没熟'},{id:'sf:look:'+i,label:'查看',icon:'lens'},...more],i);
  }
  view.parentElement.addEventListener('pointerdown',e=>{
   if(e.target!==view||!inSpring()||storyLocked())return;const c=C(),s=c.state;
@@ -219,14 +232,20 @@ const springFarm=(()=>{
   if(item.cost>F.coins||bedOf(item.bed))return;const c=CROP[item.crop];
   goBed(item.bed,()=>{F.beds[item.bed]={crop:item.crop,progress:0,watered:-1,at:sim.t,picks:0};if(item.cost)record('seeds',`买${c.name}种子`,-item.cost);worked();speak(pick(['一颗一颗埋好了','种下去了，快点长呀','嗯，土挺松的']),true);if(F.phase==='sow')afterSow();});
  }
- function water(i){const b=bedOf(i);if(!b||ripe(b)||b.watered===today()||CROP[b.crop]?.dry)return;goBed(i,()=>{b.watered=today();worked();speak(pick(['浇透了','喝饱水，好好长','咕嘟咕嘟']),true);if(F.phase==='water')afterWater();});}
- function harvest(i){const b=bedOf(i);if(!ripe(b))return;const c=CROP[b.crop];goBed(i,()=>{
+ function water(i,then,quiet){const b=bedOf(i);if(!b||ripe(b)||b.watered===today()||CROP[b.crop]?.dry)return then?.();goBed(i,()=>{b.watered=today();worked();if(!quiet)speak(pick(['浇透了','喝饱水，好好长','咕嘟咕嘟']),true);then?.();if(F.phase==='water')afterWater();});}
+ function harvest(i,then,quiet){const b=bedOf(i);if(!ripe(b))return then?.();const c=CROP[b.crop];goBed(i,()=>{
   if(c.regrow&&c.seasons.includes(seasonAt(today()))){b.progress=c.days-c.regrow;b.picks=(b.picks||0)+1;}else delete F.beds[i];   // regrowing plants stay for the next pick
-  addItem(b.crop);worked();speak(pick([`收了一筐${c.name}！`,`${c.name}真不错`,`又是一筐${c.name}`]),true);
+  const n=yieldOf(i);addItem(b.crop,n);worked();if(!quiet)speak(n>1?pick([`收了 ${n} 筐${c.name}！`,`${c.name}收了一大堆`]):pick([`收了一筐${c.name}！`,`${c.name}真不错`,`又是一筐${c.name}`]),true);then?.();
   if(!F.firstHarvest){F.firstHarvest=true;log(`茵菲谷第一次收成：一筐${c.name}，收进了仓库。`);setTimeout(()=>showHint('收进仓库了，在丢丢平板电脑里能卖或送人'),700);}});}
  function look(i){const b=bedOf(i);if(!b)return;const c=CROP[b.crop],r=ripe(b);
-  FarmUI.plant({kind:'crop',plot:`菜地 · 第 ${F.open.indexOf(i)+1} 块`,name:c.name,produce:c.icon,stages:FARM_UI_ART.stages[b.crop],stageNames:STAGE,stage:stageOf(b),days:Math.min(b.progress,c.days),total:c.days,watered:wet(b),sell:c.sell,
-   actions:[{label:'浇水',icon:'can',off:r?'已经熟了':b.watered===today()?'今天浇过了':rainedSoFar()?'下过雨了':'',on:()=>{closeSocialSheet();water(i);}},{label:'收获',icon:'basket',off:r?'':'还没熟',primary:true,on:()=>{closeSocialSheet();harvest(i);}}]});}
+  FarmUI.plant({kind:'crop',plot:bedName(i),name:c.name,produce:c.icon,stages:FARM_UI_ART.stages[b.crop],stageNames:STAGE,stage:stageOf(b),days:Math.min(b.progress,c.days),total:c.days,watered:wet(b),sell:c.sell*yieldOf(i),sellLine:yieldOf(i)>1?`每次收 ${yieldOf(i)} 筐，全部卖掉约 ${coins(c.sell*yieldOf(i))} 丢丢币`:null,
+   actions:[{label:'浇水',icon:'can',off:r?'已经熟了':b.watered===today()?'今天浇过了':rainedSoFar()?'下过雨了':'',on:()=>{closeSocialSheet();water(i);}},{label:'收获',icon:'basket',off:r?'':'还没熟',primary:true,on:()=>{closeSocialSheet();harvest(i);}},{...lvItem(i),on:()=>{closeSocialSheet();upgrade(i);}}]});}
+ function upgrade(i){const l=lvOf(i),cost=LV_COST[l];if(!F.open.includes(i)||cost==null||F.coins<cost)return;
+  goBed(i,()=>{if(F.coins<cost||lvOf(i)!==l)return;(F.lv||={})[i]=l+1;record('hoe',`升级第 ${F.open.indexOf(i)+1} 块地到 ${l+1} 级`,-cost);worked();speak(pick(['土翻得更松了','加了肥，这块地更壮了','下回能多收不少']),true);});}
+ // 全部浇水 / 全部收获: bed by bed from left to right; a click elsewhere just ends the round
+ function round(list,f,end){let n=0;const step=()=>{const i=list.shift();if(i==null){if(n)end(n);return;}n++;f(i,step,true);};step();}
+ function waterAll(){if(rainedSoFar())return;round(needWater(),water,n=>speak(n>1?`${n} 块地都浇好了`:'浇透了',true));}
+ function harvestAll(){let got=0;round(ripeBeds(),(i,next,q)=>{got+=yieldOf(i);harvest(i,next,q);},()=>speak(`收了 ${got} 筐，全进仓库了`,true));}
  function clear(i){const [,days,cost]=MORE.find(m=>m[0]===i);if(F.work<days||F.coins<cost||F.open.includes(i))return;goBed(i,()=>{F.open.push(i);record('hoe','整理一块新田',-cost);speak('又多了一块地！',true);});}
  function pcState(){
   const dayStart=today()*1440,todayV=F.ledger.filter(r=>r.t>=dayStart).reduce((a,r)=>a+r.v,0),next=MORE.find(m=>!F.open.includes(m[0]));
@@ -241,7 +260,7 @@ const springFarm=(()=>{
   const [,act,n]=id.split(':'),i=+n;closeRing();
   if(act==='pc')return FarmUI.computer('coin',X.pcState?X.pcState():pcState());
   if(X.hooks.pick[act])return X.hooks.pick[act](n);
-  ({sow:seedShop,water,harvest,look,clear})[act]?.(i);
+  ({sow:seedShop,water,harvest,look,clear,up:upgrade,waterall:waterAll,harvestall:harvestAll})[act]?.(i);
  };
  const oldCommand=command;command=function(act,item){if(act==='sf_seed'){if(item&&!(item.cost>F.coins))sow(item);else if(item)showHint(`还差 ${coins(item.cost-F.coins)} 币`);return;}return oldCommand(act,item);};
  // ---------------------------------------------------------------- spring-only cards, talk and calls (owner, 2026-11-02)
@@ -288,7 +307,7 @@ const springFarm=(()=>{
  const bar=T.root.querySelector('header');
  for(const [label,fn]of [['妈妈来信（测试）',()=>{if(!sendLetter())showHint('信已经寄过了');else if(!['home','front'].includes(sim.place))showHint('信在家门口，回家就能看到');}],['快进到明早（测试）',()=>{sim.t=(today()+1)*1440+7*60;roll();}]]){const b=document.createElement('button');b.textContent=label;b.onclick=fn;bar.append(b);}
  Object.defineProperty(X,"F",{get:()=>F,configurable:true});   // a live getter: Object.assign copied the first F, so after loading a save the farm (茵菲谷 tablet, animals, trees, fund) wrote to a stale, never-saved object (owner 2026-11-04)
- Object.assign(X,{today,seasonAt,SEASON_NAME,record,addItem,ITEMS,CROP,worked,imgOf,C,D,inSpring,ring,offs:()=>offs,coins,clock,growing,ripe,winter,blank,rainedSoFar,wet,bedOf,say,speech,inSeason,pcStateBase:pcState,water,harvest});
+ Object.assign(X,{bedAt,today,seasonAt,SEASON_NAME,record,addItem,ITEMS,CROP,worked,imgOf,C,D,inSpring,ring,offs:()=>offs,coins,clock,growing,ripe,winter,blank,rainedSoFar,wet,bedOf,say,speech,inSeason,pcStateBase:pcState,water,harvest});
  return {X,momAt,momNpc,seasonAt,daysToWinter,get lines(){return lines;},get state(){return F;},set state(v){F=v;},speech,mom,openBed,sendLetter,arrive,roll,pcState};
 })();
 window.springFarm=springFarm;

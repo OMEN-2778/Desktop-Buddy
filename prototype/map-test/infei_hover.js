@@ -20,7 +20,7 @@ const infeiHover=(function(){
    return null;}
   const sc=s.scene;
   if(sc===4&&['sow','water','done'].includes(f.phase)){
-   for(const i of f.open.concat([11,12])){const [bx,top,w,h]=X.D.plots[i];if(x>=bx-2&&x<=bx+w+2&&y>=top-12&&y<=top+h+3)return rect(bx-1,top-1,w+2,h+2);}}
+   const i=X.bedAt(x,y);if(i!=null){const [bx,top,w,h]=X.D.plots[i];return rect(bx-1,top-1,w+2,h+2);}}
   if(f.phase!=='done')return null;
   const Q=window.infeiQuests;
   if(Q)for(const v of Object.values(Q.V)){const p=Q.at(v);if(p&&p.scene===sc&&Math.abs(x-p.x)<10&&y>103-44&&y<104)return {npc:v,x:p.x};}

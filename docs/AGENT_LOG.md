@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 Claude — 茵菲谷后排田能开垦；每块地单独升级（收成 x2…x6）；全部浇水/全部收获；机场去掉「免费」
+- spring_story.js MORE 加后排 9 块（中排 5-8 再远排 0-4，经营 40-80 天、14-46 币，依次开）；bedAt 先认点中的土、再认最近一排（行挨得近）；画作物按远到近；infei_hover 用 X.bedAt。
+- F.lv[i]：升级 10/25/50/90/150 币，最多 5 级，每收一次拿 1+级 筐（种子价不变）；菜单和「查看」里都有「升级」，标题带「· N 级」。
+- 地块菜单加「全部浇水」「全部收获」：从左到右一块块走过去做。机场气泡「茵菲谷 · 免费」→「茵菲谷」。
+- 测过：开后排第 5 块、升级、1 级地收 2 筐、全部收获/浇水、点中排荒地出「整理」、6 项菜单截图。没测冬天和季节自动收获。
+
 ## 2026-11-11 Claude — 挂机时友谊不再全掉：她闲时主动联系老朋友；玩家打电话加更多
 - social_life.js tickKeepInTouch()：任何地方 9-22 点、她能接电话时，挑最久没联系（≥2.5 天，早于 4 天开始的衰减）的朋友发消息/打电话/视频（item.how='keep'）；小孩不打电话，只悄悄刷新 lastContact。
 - social_hud.js finishContactTalk(id,kind,how)：keep 电话——她自己认识的 -1/0/+1 波动，玩家点 NPC 认识的（contact.byPlayer，meetWorldNpc 时 talkQ.manual）+1；玩家从人脉打：消息 3、电话/视频 6，每日上限 10（原 2/4/6）。byPlayer 存档。
