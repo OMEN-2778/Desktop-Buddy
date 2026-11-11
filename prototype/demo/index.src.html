@@ -427,9 +427,9 @@ const EFFECT = {   // per game minute while doing it
 const PACE = 2;
 for (const [k, a] of Object.entries(ACTS)) if (k !== "sleep") a.dur *= PACE;
 for (const [k, e] of Object.entries(EFFECT)) if (k !== "sleep") for (const n in e) if (e[n] > 0) e[n] /= PACE;
-// per game minute. Social runs dry in two days (user); the bladder in ~9 hours (owner 2026-11-11: was ~6)
+// per game minute. Social runs dry in two days (user); the bladder in ~18 hours (owner 2026-11-11: was ~6)
 // Baseline needs drain 10% more slowly; activity recovery and urgency thresholds stay meaningful.
-const DECAY = { hunger: 0.1035, energy: 0.0585, hygiene: 0.0405, bladder: 0.18, social: 90 / 2880, fun: 0.099 };
+const DECAY = { hunger: 0.1035, energy: 0.0585, hygiene: 0.0405, bladder: 0.0926, social: 90 / 2880, fun: 0.099 };
 const NEED_NAMES = { hunger: "饱腹", energy: "精力", hygiene: "清洁", bladder: "如厕", social: "社交", fun: "娱乐" };
 
 const sim = {

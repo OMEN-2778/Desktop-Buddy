@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 Claude — 如厕满到空改 18 小时（主人定）
+- DECAY.bladder 0.18→0.0926（100/1080 每游戏分钟）。
+
 ## 2026-11-11 Claude — 上厕所没那么频繁，做任务不再半路跑回去
 - 玩家反馈：总在做事/做任务一半自动去厕所再走回来。DECAY.bladder 0.27→0.18（满到空 ~6h→~9h）。
 - index.src.html：活动中途去厕所 <15 → <12；玩家点的事只在 <6 才打断。
