@@ -1,0 +1,32 @@
+[
+  {
+    "duration": 49.444,
+    "peak": 0.6876,
+    "rms_db": -20.0,
+    "notes": 480,
+    "id": "melody-study-a",
+    "title": "无主题旋律试作 A",
+    "bpm": 108,
+    "preview_only": true
+  },
+  {
+    "duration": 55.0,
+    "peak": 0.7482,
+    "rms_db": -20.0,
+    "notes": 474,
+    "id": "melody-study-b",
+    "title": "无主题旋律试作 B",
+    "bpm": 96,
+    "preview_only": true
+  },
+  {
+    "duration": 46.379,
+    "peak": 0.719,
+    "rms_db": -20.0,
+    "notes": 476,
+    "id": "melody-study-c",
+    "title": "无主题旋律试作 C",
+    "bpm": 116,
+    "preview_only": true
+  }
+]

@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 · Codex · 无主题旋律试作三首
+- 用户最喜欢舞厅曲的旋律，要求无主题BGM；阅读 compose_disco_glitter 的HOOK/VERSE写法后新写三套主题，统一钢琴方便比较。
+- compose_melody_studies.py、三组MP3/MIDI和metadata，46–55秒；原 /music/ 置顶，仅试听，未改游戏配乐。
+- 渲染电平和浏览器播放检查；耐听与旋律选择待用户反馈。
+
 ## 2026-11-11 Claude — 枫叶城润色③：房子重画（去掉深色粗描边）
 - 主人：房子都有深色粗线描边，观感差；要立体（不要三维视图）、精致、融入环境、有秋意。autumn_city.py 重写 window()/roof()/building()，尺寸和门窗位置不变（geometry PASS）。
 - 不再有胡桃色边框：墙面左亮右暗、檐下阴影、楼层间石腰线、石勒脚；窗是凹进去的（浅石窗套、内侧阴影、亮窗台+投影、部分有百叶）；门有石门套、凹影、镶板、气窗、两级亮台阶，门色多样；阳台改石板+细铁栏；砖房画错缝砖；屋顶女儿墙浅色压顶、圆柱明暗的水箱和陶烟囱帽；招牌去黑框。
