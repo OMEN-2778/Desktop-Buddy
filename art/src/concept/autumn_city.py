@@ -939,6 +939,9 @@ FALLS=[(48,270,374,15),(30,392,524,15),(42,541,698,16)]   # x, top, foot, width 
 MARSH=[(168,1004),(214,986),(280,980),(338,988),(392,978),(452,984),(508,976),(566,988),(604,1008),(612,1032),(590,1054),(540,1064),(486,1058),(440,1070),(380,1074),(316,1064),(262,1072),(206,1062),(170,1042),(158,1020)]
 ISLET=[(650,1012),(690,1002),(730,1010),(742,1030),(720,1046),(676,1048),(652,1034)]
 JETTY=(300,326,890,986)
+# reed beds standing in the water (owner 2026-11-11: plenty on the water, but not covering it): centre, half sizes
+WATER_REEDS=[(58,958,34,13),(150,948,20,8),(96,1012,22,10),(120,1066,32,12),(36,1080,22,9),(420,940,30,8),(566,948,26,8),
+ (692,938,34,10),(792,982,40,14),(840,1040,22,10),(806,1078,36,11),(250,1088,30,6),(470,1090,36,6),(660,1082,26,8)]
 def outskirts(c):
  """Owner 2026-11-11: the map's left and right edges must not be ruler-straight: the mountainside carries on, with a
  waterfall and a viewing deck in the west, a pavilion on a spur and a small plaza with a shop in the east; below the
@@ -1053,6 +1056,7 @@ def marsh(c):
  else:                                                          # a rotting skiff left in the mud
   c.poly([(566,1066),(600,1064),(596,1072),(572,1073)],P.walnut[0]);c.box(570,1066,26,2,P.oak[1]);c.box(574,1068,18,3,P.walnut[1]);c.box(580,1064,2,8,P.walnut[0])
  jetty(c)
+ water_reeds(c)
  for x,y,z in [(232,1014,.8),(290,1044,.6),(372,1006,.9),(474,1040,.75),(548,1012,.85),(726,1015,.6)]:c.tree(x,y,z)
  for i,(x,y) in enumerate([(200,1030),(256,1036),(336,1040),(402,1052),(520,1046),(574,1040),(672,1036)]):c.shrub(x,y,880+i)
  # reeds: an even fringe round the shore, alternately in the water and on the bank
@@ -1071,6 +1075,23 @@ def marsh(c):
     c.reed(round(x+ux*6),round(y+uy*4)+3,9000+k,1.15 if k%2 else 1.0)       # in the shallows
     if k%3:c.reed(round(x-ux*5),round(y-uy*4)+1,19000+k,.85)                # and a lower row on the bank
    acc-=L
+def water_reeds(c):
+ """Reed beds out in the river: a pale shallow with a muddy edge, reeds thick in the middle and thinning to the rim,
+ open water left between the beds (channels for the eye and for the boat)."""
+ clear=c.stage>=2;r=random.Random(616)
+ for cx,cy,rx,ry in WATER_REEDS:
+  pts=[(cx+math.cos(a)*rx*r.uniform(.8,1.15),cy+math.sin(a)*ry*r.uniform(.8,1.15)) for a in [i*math.pi/7 for i in range(14)]]
+  o=c.rounded(pts,6)
+  c.poly([(x,y+2) for x,y in o],P.teal[1] if clear else P.walnut[0]);c.poly(o,P.teal[3] if clear else P.sage[1])
+  c.poly([(cx+(x-cx)*.75,cy+(y-cy)*.7) for x,y in o],P.walnut[2] if c.clean else P.walnut[1])
+  spots=[]
+  for gy in range(int(cy-ry),int(cy+ry)+1,4):
+   for gx in range(int(cx-rx),int(cx+rx)+1,6):
+    x=gx+r.randrange(-2,3)+(gy//4%2)*3;y=gy+r.randrange(-1,2);d=((x-cx)/rx)**2+((y-cy)/ry)**2
+    if d<1 and r.random()<1.05-d*.7:spots.append((x,y,d))
+  for x,y,d in sorted(spots,key=lambda q:q[1]):
+   c.box(x-3,y+1,7,1,P.teal[4] if clear else P.sage[2])                 # a ripple ring round each stand
+   c.reed(x,y,31000+x*7+y,1.05-.3*d)
 def jetty(c):
  """A plank jetty from the quay to the marsh: piles with lit heads, a shadow on the water, bollards for the boat."""
  x0,x1,y0,y1=JETTY;clear=c.stage>=2
@@ -1082,7 +1103,7 @@ def jetty(c):
 def runtime_water():
  """For the game: land inside the river band (no wavelets there) and the falls (animated streaks), world coordinates."""
  x0,x1,y0,y1=JETTY
- return dict(land=[MARSH,ISLET,[(x0-3,y0),(x1+3,y0),(x1+3,y1),(x0-3,y1)],[(0,798),(OX+12,798),(OX+12,896),(0,824)],[(OX+W-12,798),(FW,798),(FW,836),(OX+W-12,896)]],
+ return dict(land=[MARSH,ISLET,*[[(cx+math.cos(a)*rx*1.2,cy+math.sin(a)*ry*1.3) for a in [i*math.pi/6 for i in range(12)]] for cx,cy,rx,ry in WATER_REEDS],[(x0-3,y0),(x1+3,y0),(x1+3,y1),(x0-3,y1)],[(0,798),(OX+12,798),(OX+12,896),(0,824)],[(OX+W-12,798),(FW,798),(FW,836),(OX+W-12,896)]],
   falls=[list(f) for f in FALLS])
 def edges(c):
  """Over the core city: outcrops and planting where the terraces' straight ends would show."""
