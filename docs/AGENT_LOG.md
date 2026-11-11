@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 · Codex · 安装GitHub音乐技能
+- 用户要求找作曲skill；搜索并固定六个仓库源码，来源/commit记录在 docs/music-tools/sources.json。
+- 项目安装 MIT music-compose/music-evaluate，修Node24 CJS导入；外部安装Spectro Maestro器乐工具及独立venv，保留AGPL许可。
+- 舞厅MIDI/MP3检测、合成器测试导出通过；ACE-Step源码已下载但大模型未装、未测CPU推理；无GPU检测结果。
+- AGENTS增加入口；恢复安装及能力边界见 docs/music-tools/README.md。不改游戏或试听曲目。
+
 ## 2026-11-11 · Codex · 乐谱参考旋律试作
 - 用户不满意前三首，提供 The Fate Of Ophelia 简谱第1页；借鉴重复音/弱拍/长短句写法，新作旋律和和声，118BPM约66秒。
 - compose_rhythm_reference.py + rhythm-reference.json/MP3/MIDI；原试听页置顶；仅试听，不改正式游戏BGM。

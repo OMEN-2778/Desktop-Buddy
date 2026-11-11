@@ -109,3 +109,6 @@ copy source files, `art/src`, `tools/` or unminified game code into any public p
   minutes count 10x, Windows 2x). Every push touching the demo or `desktop/**` builds
   Windows + macOS. Batch your changes into fewer pushes; do not re-run builds for nothing.
   If the quota runs out, builds stop: tell the owner instead of retrying.
+
+## 音乐作曲技能（用户要求，2026-11-11）
+音乐任务先读 `.claude/skills/music-compose/SKILL.md`，评价读 `.claude/skills/music-evaluate/SKILL.md`；安装与外部合成引擎交接见 `docs/music-tools/README.md`。实际可用性以测试记录为准，勿把下载源码等同于已能运行音乐生成模型。

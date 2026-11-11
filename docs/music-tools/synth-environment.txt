@@ -1,0 +1,47 @@
+system  Linux 6.18.57 (x86_64)
+python  3.12.14  /workspace/extra-skills/music-venv/bin/python  [virtual environment]
+
+core (instrumental songs)
+  ok      numpy            2.3.5
+  ok      scipy            1.17.0
+  ok      PyYAML           6.0.3
+  ok      soundfile        0.14.0
+  ok      mido             
+  ok      matplotlib       3.10.8
+
+vocals (only for songs with a voice)
+  MISSING pyworld          -> needed for singing with speech voices, pitch pictures (ModuleNotFoundError: No module named 'pyworld')
+  MISSING onnxruntime      -> needed for all vocal engines (ModuleNotFoundError: No module named 'onnxruntime')
+  MISSING kokoro-onnx      -> needed for engine kokoro and its phonemiser (ModuleNotFoundError: No module named 'kokoro_onnx')
+  MISSING piper-tts        -> needed for engine piper (ModuleNotFoundError: No module named 'piper')
+  MISSING onnx             -> needed for engine piper (exposing phone durations) (ModuleNotFoundError: No module named 'onnx')
+  MISSING faster-whisper   -> needed for vocal-check and vocal-try (ModuleNotFoundError: No module named 'faster_whisper')
+  MISSING cmudict          -> needed for engine diffsinger: words missing from a voicebank dictionary (ModuleNotFoundError: No module named 'cmudict')
+
+optional
+  ok      lxml             6.1.1
+
+outside tools (all optional)
+  ok      mp3 export      written by the audio library
+  ok      C compiler      fast filter kernel will be built into the cache folder
+  ok      git             only for voicebanks handed over as repository links
+  ok      git-lfs         only for Git LFS voicebank repositories outside GitHub and Hugging Face, or private ones
+  absent  LMMS            not found: only needed to open or re-render an exported LMMS project
+
+settings (command line > environment variable SPECTRO_MAESTRO_<NAME> > config file > default)
+  cache_dir           /tmp/music-cache                                     [environment variable SPECTRO_MAESTRO_CACHE_DIR]
+  models_dir          /tmp/music-cache/models                              [default]
+  offline             False                                                [default]
+  download_timeout_s  60                                                   [default]
+  native              auto                                                 [default]
+  compiler            (not set)                                            [default]
+  ffmpeg              (not set)                                            [default]
+  lmms                (not set)                                            [default]
+  asr_model           base.en                                              [default]
+  kokoro_revision     (not set)                                            [default]
+  config files looked for: /workspace/Desktop-Buddy/spectro-maestro.json, /home/agent/.config/spectro-maestro/config.json
+  free space at the models folder: 17.8 GB (voice and recognition models take about 1 GB, downloaded on first vocal use)
+
+missing for vocal songs only: pyworld, onnxruntime, kokoro-onnx, piper-tts, onnx, faster-whisper, cmudict
+install into this virtual environment:  "/workspace/extra-skills/music-venv/bin/python" -m pip install -r "/workspace/extra-skills/spectro-maestro/requirements-vocal.txt"
+  never needs administrator rights; do not use sudo for this

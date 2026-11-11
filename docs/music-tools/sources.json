@@ -1,0 +1,38 @@
+[
+  {
+    "name": "claude-music",
+    "url": "https://github.com/AgriciDaniel/claude-music.git",
+    "commit": "5aa0173a6b329e059568bef4253e2a62efe8b412",
+    "local_path": "/workspace/extra-skills/music-sources/claude-music"
+  },
+  {
+    "name": "midi-skills",
+    "url": "https://github.com/smter/midi-skills.git",
+    "commit": "364b31aed64e898f5e02142e6203631581faabdf",
+    "local_path": "/workspace/extra-skills/music-sources/midi-skills"
+  },
+  {
+    "name": "music-agent-skills",
+    "url": "https://github.com/emdashsmoker/music-agent-skills.git",
+    "commit": "43cbab10349532894d8e3240a5050aff368baf31",
+    "local_path": "/workspace/extra-skills/music-sources/music-agent-skills"
+  },
+  {
+    "name": "music-production-skills",
+    "url": "https://github.com/sb-dev/music-production-skills.git",
+    "commit": "aa3933bc87f54a48ec018bb868bf6385b340db22",
+    "local_path": "/workspace/extra-skills/music-sources/music-production-skills"
+  },
+  {
+    "name": "musicxml-agent-skills",
+    "url": "https://github.com/PonderScore/musicxml-agent-skills.git",
+    "commit": "e6f16a7d837b6c52d0012928f0cf498f12076d4a",
+    "local_path": "/workspace/extra-skills/music-sources/musicxml-agent-skills"
+  },
+  {
+    "name": "orchestral-midi-skill",
+    "url": "https://github.com/grapeot/orchestral-midi-skill.git",
+    "commit": "d565870ec283cb8e4df25cf7a400adb5f3fdc925",
+    "local_path": "/workspace/extra-skills/music-sources/orchestral-midi-skill"
+  }
+]
