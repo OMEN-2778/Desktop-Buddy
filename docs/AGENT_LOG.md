@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 Claude — 家里也能开丢丢平板电脑
+- spring_story.js openRing：茵菲谷解锁后，buddy / away / bar / park_seated / mall_room 圈都加「丢丢平板电脑」（原来只在茵菲谷）。测过：家里点她有这项、能打开。
+
 ## 2026-11-11 Claude — 茵菲谷后排田能开垦；每块地单独升级（收成 x2…x6）；全部浇水/全部收获；机场去掉「免费」
 - spring_story.js MORE 加后排 9 块（中排 5-8 再远排 0-4，经营 40-80 天、14-46 币，依次开）；bedAt 先认点中的土、再认最近一排（行挨得近）；画作物按远到近；infei_hover 用 X.bedAt。
 - F.lv[i]：升级 10/25/50/90/150 币，最多 5 级，每收一次拿 1+级 筐（种子价不变）；菜单和「查看」里都有「升级」，标题带「· N 级」。

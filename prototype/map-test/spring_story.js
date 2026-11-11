@@ -165,7 +165,8 @@ const springFarm=(()=>{
  const oldMail=mailTick;mailTick=function(){if(!F.letter&&festName()==='写信日'&&sim.t%1440>=9*60&&!asleep())sendLetter();return oldMail();};
  const oldRead=readMail;readMail=function(){const l=lifeFlags.mail?.box?.[0],r=oldRead();if(l?.springFarm&&!F.unlocked){F.unlocked=true;setTimeout(()=>showHint('机场的「茵菲谷」航班开通了'),1200);}return r;};
  const oldOpen=openRing;openRing=function(which,at){
-  if(which==='away'&&inSpring()&&F.unlocked){const keep=RINGS.away;RINGS.away=[keep[0],['sf:pc','丢丢平板电脑'],...keep.slice(1)];try{return oldOpen(which,at);}finally{RINGS.away=keep;}}
+  // the pad wherever she is once 茵菲谷 is open: at home, out, on the farm, in 草帽湾 (owner 2026-11-11)
+  if(['away','buddy','bar','park_seated','mall_room'].includes(which)&&RINGS[which]&&F.unlocked){const keep=RINGS[which];RINGS[which]=[keep[0],['sf:pc','丢丢平板电脑'],...keep.slice(1)];try{return oldOpen(which,at);}finally{RINGS[which]=keep;}}
   const r=oldOpen(which,at);
   if(which==='airportFlights'){const b=ringEl.querySelector('button');if(b){b.textContent='茵菲谷';if(!F.unlocked){b.classList.add('sf-wait');b.title='等家里的消息';b.append(Object.assign(document.createElement('small'),{className:'fu-why',textContent:'等家里的消息'}));}}}
   return r;
