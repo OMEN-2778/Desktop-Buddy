@@ -1,0 +1,28 @@
+{
+  "artifact": "user-motif-01",
+  "lifecycle": "arranged listening draft",
+  "evidence": [
+    "source-motif.json",
+    "MIDI first ten note-on pitches and beats",
+    "Spectro Maestro lint, metrics, six QA plots"
+  ],
+  "preservation": "PASS against provisional screenshot transcription; source tempo/octave/grid duration unconfirmed",
+  "findings": [
+    {
+      "severity": "info",
+      "owner": "composition",
+      "detail": "Original G A C motif kept; added answer/augmentation/return."
+    },
+    {
+      "severity": "warn",
+      "owner": "mix",
+      "detail": "Crest 17.02 dB slightly above generic genre 16 dB guideline; retained plucked-note attacks. No clipped samples, true peak -1.5 dBTP, no measured gaps; waveform tapers cleanly."
+    }
+  ],
+  "visual_review": "Reviewed overview/spectrogram/spectrum/arrangement/pianoroll/stereo: intact tail, no visible clipping plateau, centered bass, no phase inversion; narrow stereo image retained.",
+  "recommendation": "User listening review; no aesthetic pass inferred from metrics.",
+  "not_checked": [
+    "Exact timing/BPM/octave of source audio: screenshot only",
+    "Subjective listening quality and user preference"
+  ]
+}

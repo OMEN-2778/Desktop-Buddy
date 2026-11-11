@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 · Codex · 用户截图动机发展成无主题BGM
+- 用户提供G A C G G A C G A C卷帘图；暂定16格/112BPM/G4-A4-C5，明确节拍长度/八度待试听确认。
+- music-compose/evaluate + Spectro Maestro实际渲染，44小节约95秒；核心、回应、展开、长句桥段、回归。工程和检查记录在 AUDIO_LIBRARY/projects/user-motif-01。
+- MIDI开头10音音高/落点保留验证通过；无削波，-16.04LUFS/-1.5dBTP，六张QA图已看；crest略高保留瞬态，非审美通过。
+- 原 /music/ 置顶 user-motif-01，MP3/MIDI入库；仅试听，游戏BGM未变。
+
 ## 2026-11-11 · Codex · 安装GitHub音乐技能
 - 用户要求找作曲skill；搜索并固定六个仓库源码，来源/commit记录在 docs/music-tools/sources.json。
 - 项目安装 MIT music-compose/music-evaluate，修Node24 CJS导入；外部安装Spectro Maestro器乐工具及独立venv，保留AGPL许可。

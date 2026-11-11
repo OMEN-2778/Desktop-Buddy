@@ -1,0 +1,272 @@
+{
+ "mix": {
+  "mix_style": "balanced",
+  "tracks": {
+   "theme": {
+    "role": "lead",
+    "bus": "music",
+    "raw_lufs": -16.63,
+    "target_lufs": -21.0,
+    "gain_db": -4.37,
+    "peak_db": -8.25
+   },
+   "keys": {
+    "role": "keys",
+    "bus": "music",
+    "raw_lufs": -10.06,
+    "target_lufs": -28.5,
+    "gain_db": -18.44,
+    "peak_db": -12.67
+   },
+   "bass": {
+    "role": "bass",
+    "bus": "bass",
+    "raw_lufs": -12.03,
+    "target_lufs": -26.0,
+    "gain_db": -13.97,
+    "peak_db": -12.21
+   },
+   "kick": {
+    "role": "kick",
+    "bus": "drums",
+    "raw_lufs": -19.4,
+    "target_lufs": -26.0,
+    "gain_db": -6.6,
+    "peak_db": -8.2
+   },
+   "snare": {
+    "role": "snare",
+    "bus": "drums",
+    "raw_lufs": -28.06,
+    "target_lufs": -27.0,
+    "gain_db": 1.06,
+    "peak_db": -2.46
+   },
+   "hat": {
+    "role": "hat",
+    "bus": "drums",
+    "raw_lufs": -24.78,
+    "target_lufs": -34.0,
+    "gain_db": -9.22,
+    "peak_db": -12.27
+   },
+   "pad": {
+    "role": "pad",
+    "bus": "music",
+    "raw_lufs": -7.7,
+    "target_lufs": -33.0,
+    "gain_db": -25.3,
+    "peak_db": -22.58
+   },
+   "shaker": {
+    "role": "perc",
+    "bus": "drums",
+    "raw_lufs": -28.98,
+    "target_lufs": -41.5,
+    "gain_db": -12.52,
+    "peak_db": -22.1
+   },
+   "counter": {
+    "role": "keys",
+    "bus": "music",
+    "raw_lufs": -12.64,
+    "target_lufs": -30.5,
+    "gain_db": -17.86,
+    "peak_db": -17.89
+   }
+  },
+  "buses_lufs": {
+   "drums": -21.35,
+   "bass": -22.99,
+   "music": -17.8,
+   "fx": -31.83
+  },
+  "master": {
+   "lufs": -16.04,
+   "true_peak_db": -1.5,
+   "gain_db": 2.59,
+   "limiter_p95_db": 0.0,
+   "limiter_max_db": 1.2,
+   "target_lufs": -16.0
+  },
+  "settings": {
+   "master": {
+    "lufs": -16,
+    "ceiling": -1.5,
+    "glue": true,
+    "clip": true,
+    "tail": 3,
+    "fade_out": 4,
+    "eq": [],
+    "vocal_carve": -2.5,
+    "sidechain_release": 0.5,
+    "mono_below": 110.0
+   },
+   "returns": {
+    "reverb": {
+     "decay": 1.4,
+     "predelay": 0.02,
+     "damp": 5500,
+     "lowcut": 250.0,
+     "duck": -4.0
+    },
+    "delay": {
+     "time": "1/8d",
+     "feedback": 0.18,
+     "damp": 4500.0,
+     "lowcut": 300.0,
+     "duck": -3.0
+    },
+    "vox_reverb": {
+     "decay": 1.8,
+     "predelay": 0.06,
+     "damp": 7000.0,
+     "lowcut": 300.0,
+     "duck": 0.0
+    },
+    "vox_delay": {
+     "time": "1/4",
+     "feedback": 0.28,
+     "damp": 3500.0,
+     "lowcut": 400.0,
+     "duck": 0.0
+    }
+   }
+  }
+ },
+ "metrics": {
+  "duration_s": 94.59,
+  "lufs": -16.04,
+  "true_peak_db": -1.5,
+  "crest_db": 17.02,
+  "loudness_range_lu": 3.26,
+  "clipped_samples": 0,
+  "dc_offset": 0.000104,
+  "correlation": 0.966,
+  "low_correlation": 0.998,
+  "mono_loss_db": -0.08,
+  "slope_db_per_octave": -2.46,
+  "bands_db": {
+   "sub": -11.68,
+   "bass": -4.74,
+   "low_mid": -5.34,
+   "mid": -5.63,
+   "high_mid": -13.99,
+   "high": -20.67
+  },
+  "low_share_db": -6.23,
+  "high_share_db": -20.67,
+  "limiter_p95_db": 0.0,
+  "start_peak_db": -5.2,
+  "end_level_db": -240.0,
+  "sections": [
+   {
+    "name": "opening",
+    "type": "intro",
+    "energy": 0.35,
+    "lufs": -16.55,
+    "centroid_hz": 477,
+    "buses_lufs": {
+     "bass": -21.9,
+     "music": -15.2,
+     "fx": -29.4
+    }
+   },
+   {
+    "name": "statement",
+    "type": "verse",
+    "energy": 0.58,
+    "lufs": -15.4,
+    "centroid_hz": 615,
+    "buses_lufs": {
+     "drums": -18.9,
+     "bass": -20.2,
+     "music": -14.9,
+     "fx": -29.2
+    }
+   },
+   {
+    "name": "lift",
+    "type": "prechorus",
+    "energy": 0.68,
+    "lufs": -16.19,
+    "centroid_hz": 655,
+    "buses_lufs": {
+     "drums": -18.9,
+     "bass": -20.2,
+     "music": -16.1,
+     "fx": -29.8
+    }
+   },
+   {
+    "name": "development",
+    "type": "chorus",
+    "energy": 0.86,
+    "lufs": -15.38,
+    "centroid_hz": 702,
+    "buses_lufs": {
+     "drums": -18.7,
+     "bass": -20.2,
+     "music": -14.8,
+     "fx": -28.7
+    }
+   },
+   {
+    "name": "long_answer",
+    "type": "bridge",
+    "energy": 0.48,
+    "lufs": -17.56,
+    "centroid_hz": 429,
+    "buses_lufs": {
+     "drums": -19.4,
+     "bass": -20.9,
+     "music": -17.8,
+     "fx": -31.3
+    }
+   },
+   {
+    "name": "return",
+    "type": "chorus",
+    "energy": 0.9,
+    "lufs": -15.39,
+    "centroid_hz": 702,
+    "buses_lufs": {
+     "drums": -18.7,
+     "bass": -20.2,
+     "music": -14.8,
+     "fx": -28.7
+    }
+   },
+   {
+    "name": "closing",
+    "type": "outro",
+    "energy": 0.3,
+    "lufs": -21.35,
+    "centroid_hz": 483,
+    "buses_lufs": {
+     "bass": -21.8,
+     "music": -15.3,
+     "fx": -29.4
+    }
+   }
+  ],
+  "energy_rank_correlation": 0.89,
+  "drums_vs_rest_db": -4.56,
+  "kick_vs_bass_db": 9.09,
+  "silences_s": []
+ },
+ "findings": [
+  {
+   "key": "crest_db",
+   "value": 17.02,
+   "range": [
+    6.0,
+    16.0
+   ],
+   "side": "high",
+   "message": "dynamics are high: low means over-compressed, high means spiky or under-filled",
+   "try": "ease the master target / tame the loudest transient, or fill the arrangement"
+  }
+ ],
+ "mix_style": "balanced"
+}

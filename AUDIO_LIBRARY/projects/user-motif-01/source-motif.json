@@ -1,0 +1,48 @@
+{
+  "source": "User piano-roll screenshot in conversation",
+  "pitch_classes": [
+    "G",
+    "A",
+    "C",
+    "G",
+    "G",
+    "A",
+    "C",
+    "G",
+    "A",
+    "C"
+  ],
+  "midi_notes": [
+    67,
+    69,
+    72,
+    67,
+    67,
+    69,
+    72,
+    67,
+    69,
+    72
+  ],
+  "step_indices": [
+    0,
+    2,
+    4,
+    7,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+  ],
+  "step_beats": 0.25,
+  "duration_beats": 0.24,
+  "tempo_bpm": 112,
+  "assumptions": [
+    "Grid column treated as a sixteenth note; screenshot snap value alone does not prove timeline zoom.",
+    "Octave and BPM not provided; inferred for this arrangement."
+  ],
+  "decisionState": "selected",
+  "rhythm_confirmation": "pending user listening"
+}

@@ -1,0 +1,276 @@
+title: Unthemed - Your Motif 01
+artist: Desktop Buddy / user motif
+genre: synthpop
+bpm: 112
+key: F major
+meter: 4
+seed: 201111
+humanize:
+  timing_ms: 0
+  velocity: 0
+notes: Source screenshot pitch order G A C G G A C G A C locked; step indices 0,2,4,7,9,10,11,12,13,14.
+  One step tentatively 1/16, octave and BPM inferred. User motif unchanged when quoted;
+  added answers/development original. Bridge uses rhythmic augmentation, contrasted
+  with changing key. Genre only selects production defaults, no narrative theme. No
+  vocals. Short BGM duration intentional. F/G/C tensions are intentional extensions.
+  Partial-render QA found percussion too quiet; raised drum roles 5 dB while preserving
+  melody.
+tracks:
+  theme:
+    inst:
+      base: pluck_fm
+      filter:
+        cutoff: 6500
+    role: lead
+    mix:
+      gain_db: 1
+      pan: -0.08
+      reverb: 0.14
+      delay: 0.06
+      duck: 0
+    parts:
+      intro:
+        line: G4:.25 r:.25 A4:.25 r:.25 C5:.25 r:.5 G4:.25 r:.25 G4:.25 A4:.25 C5:.25
+          G4:.25 A4:.25 C5:.25 r:.25 | D5:.75 C5:.25 A4:.5 G4:.5 F4:1 E4:.5 F4:.5
+          | G4:.25 r:.25 A4:.25 r:.25 C5:.25 r:.5 G4:.25 r:.25 G4:.25 A4:.25 C5:.25
+          G4:.25 A4:.25 C5:.25 r:.25 | G4:1 A4:1 C5:2
+        gate: 0.96
+      verse:
+        line: G4:.25 r:.25 A4:.25 r:.25 C5:.25 r:.5 G4:.25 r:.25 G4:.25 A4:.25 C5:.25
+          G4:.25 A4:.25 C5:.25 r:.25 | D5:.75 C5:.25 A4:.5 G4:.5 F4:1 E4:.5 F4:.5
+          | G4:.25 r:.25 A4:.25 r:.25 C5:.25 r:.5 G4:.25 r:.25 G4:.25 A4:.25 C5:.25
+          G4:.25 A4:.25 C5:.25 r:.25 | E5:.5 D5:.5 C5:1 A4:.75 G4:.25 F4:1 | G4:.25
+          r:.25 A4:.25 r:.25 D5:.5 C5:.25 A4:.25 r:.25 G4:.25 A4:.25 C5:.25 D5:.5
+          C5:.5 | D5:.75 C5:.25 A4:.5 G4:.5 F4:1 E4:.5 F4:.5 | G4:.25 r:.25 A4:.25
+          r:.25 C5:.25 r:.5 G4:.25 r:.25 G4:.25 A4:.25 C5:.25 G4:.25 A4:.25 C5:.25
+          r:.25 | Bb4:.5 A4:.5 G4:.75 F4:.25 E4:.5 G4:.5 F4:1
+        gate: 0.96
+      lift:
+        line: A4:.5 C5:.5 D5:1 C5:.5 A4:.5 G4:1 | Bb4:.5 D5:.5 F5:1 E5:.5 D5:.5 C5:1
+          | A4:.5 C5:.5 E5:1 D5:1 C5:1 | G4:2 r:1 G4:.25 A4:.25 C5:.5
+        gate: 0.96
+      hook:
+        line: G4:.25 r:.25 A4:.25 r:.25 C5:.25 r:.5 G4:.25 r:.25 G4:.25 A4:.25 C5:.25
+          G4:.25 A4:.25 C5:.25 r:.25 | F5:.75 E5:.25 D5:.5 C5:1 A4:.5 C5:1 | G4:.25
+          r:.25 A4:.25 r:.25 D5:.5 C5:.25 A4:.25 r:.25 G4:.25 A4:.25 C5:.25 D5:.5
+          C5:.5 | E5:1 D5:.5 C5:.5 A4:1 G4:1 | G4:.25 r:.25 A4:.25 r:.25 C5:.25 r:.5
+          G4:.25 r:.25 G4:.25 A4:.25 C5:.25 G4:.25 A4:.25 C5:.25 r:.25 | A4:.5 C5:.5
+          F5:1 E5:.5 D5:.5 C5:1 | Bb4:.5 D5:.5 C5:.75 A4:.25 G4:.5 A4:.5 C5:1 | G4:.5
+          A4:.5 C5:1 A4:.5 G4:.5 F4:1
+        gate: 0.96
+      bridge:
+        line: D5:1 C5:1 A4:1 G4:1 | F4:2 r:1 A4:.5 C5:.5 | E5:1 D5:.5 C5:.5 A4:1 G4:1
+          | A4:3 r:1 | G4:1 A4:1 C5:2 | D5:2 C5:1 A4:1 | Bb4:1 A4:1 G4:1 E4:1 | G4:2
+          r:1 A4:.5 C5:.5
+        gate: 0.96
+      outro:
+        line: G4:.25 r:.25 A4:.25 r:.25 C5:.25 r:.5 G4:.25 r:.25 G4:.25 A4:.25 C5:.25
+          G4:.25 A4:.25 C5:.25 r:.25 | D5:.75 C5:.25 A4:.5 G4:.5 F4:1 E4:.5 F4:.5
+          | A4:1 G4:1 F4:2 | F4:3 r:1
+        gate: 0.96
+  keys:
+    inst: keys_ep
+    role: keys
+    octave: 3
+    mix:
+      gain_db: -5
+      pan: -0.32
+      reverb: 0.13
+    parts:
+      hold:
+        grid: c - - - - - - -
+        step: 0.5
+        gate: 0.97
+      pulse:
+        grid: . c - . . c - .
+        step: 0.5
+        gate: 0.85
+  bass:
+    inst:
+      base: bass_moog
+      filter:
+        cutoff: 1000
+    role: bass
+    octave: 2
+    mix:
+      gain_db: -3
+      duck: -2
+    parts:
+      main:
+        grid: 1 - . 5 . 1' - 5
+        step: 0.5
+        gate: 0.8
+      held:
+        grid: 1 - - - - - - -
+        step: 0.5
+  pad:
+    inst: pad_warm
+    role: pad
+    octave: 4
+    mix:
+      gain_db: -6
+      width: 0.7
+      reverb: 0.22
+    parts:
+      hold:
+        grid: c - - - - - - -
+        step: 0.5
+        gate: 0.98
+  counter:
+    inst: keys_piano
+    role: keys
+    mix:
+      gain_db: -7
+      pan: 0.32
+      delay: 0
+    parts:
+      answer:
+        line: r:4 | r:2 C6:.5 A5:.5 G5:1 | r:4 | r:2 A5:1 F5:1
+        gate: 0.96
+  kick:
+    inst:
+      base: kick_linn
+      decay: 0.16
+    role: kick
+    mix:
+      gain_db: -2
+    parts:
+      main:
+        hits: X.....o...x.....|X.......x.....o.
+      hook:
+        hits: X.....x.x.......|X.......x..o....
+      half:
+        hits: X...............
+  snare:
+    inst: rim_808
+    role: snare
+    mix:
+      gain_db: -2
+      reverb: 0.05
+    parts:
+      back:
+        hits: '....x.......x...'
+      half:
+        hits: '........x.......'
+  hat:
+    inst: hat_closed_lofi
+    role: hat
+    mix:
+      gain_db: 0
+    parts:
+      main:
+        hits: ..x...o...x...o.
+      hook:
+        hits: x.o.x.o.x.o.x.oo
+  shaker:
+    inst: shaker
+    role: perc
+    mix:
+      gain_db: -9
+      pan: 0.35
+    parts:
+      main:
+        hits: '....o.....o..o..'
+sections:
+- name: opening
+  type: intro
+  bars: 4
+  chords: Fmaj9 | Fmaj9 | Dm7 | Cadd9
+  energy: 0.35
+  play:
+    theme: intro
+    keys: hold
+    bass: held
+- name: statement
+  type: verse
+  bars: 8
+  chords: Fmaj9 | Fmaj9 | Dm7 | Fmaj7/A | Gm7 | Bbmaj7 | C7sus4 | Fmaj9
+  energy: 0.58
+  play:
+    theme: verse
+    keys: pulse
+    bass: main
+    kick: main
+    snare: back
+    hat: main
+- name: lift
+  type: prechorus
+  bars: 4
+  chords: Dm7 | Bbmaj7 | Am7 | C7sus4
+  energy: 0.68
+  play:
+    theme: lift
+    keys: hold
+    bass: main
+    kick: main
+    snare: back
+    hat: main
+    pad: hold
+- name: development
+  type: chorus
+  bars: 8
+  chords: Bbmaj9 | Fmaj9 | Dm7 | Am7 | Gm7 | Dm7 | C7sus4 | Fmaj9
+  energy: 0.86
+  play:
+    theme: hook
+    keys: pulse
+    bass: main
+    kick: hook
+    snare: back
+    hat: hook
+    pad: hold
+    shaker: main
+- name: long_answer
+  type: bridge
+  bars: 8
+  chords: Dm7 | Dm7 | Am7 | Am7 | Gm7 | Bbmaj7 | C7sus4 | C7sus4
+  energy: 0.48
+  play:
+    theme: bridge
+    keys: hold
+    bass: held
+    kick: half
+    snare: half
+    counter: answer
+- name: return
+  type: chorus
+  bars: 8
+  chords: Bbmaj9 | Fmaj9 | Dm7 | Am7 | Gm7 | Dm7 | C7sus4 | Fmaj9
+  energy: 0.9
+  play:
+    theme: hook
+    keys: pulse
+    bass: main
+    kick: hook
+    snare: back
+    hat: hook
+    pad: hold
+    shaker: main
+- name: closing
+  type: outro
+  bars: 4
+  chords: Fmaj9 | Fmaj9 | Fmaj9 | Fmaj9
+  energy: 0.3
+  play:
+    theme: outro
+    keys: hold
+    bass: held
+  auto:
+    master:
+      volume:
+      - 0
+      - -20
+mix:
+  style: balanced
+  returns:
+    reverb:
+      decay: 1.4
+      damp: 5500
+    delay:
+      time: 1/8d
+      feedback: 0.18
+master:
+  lufs: -16
+  ceiling: -1.5
+  tail: 3
+  fade_out: 4

@@ -171,3 +171,6 @@ compose_melody_studies.py 原创作曲，参考舞厅曲动机发展与节奏组
 
 ## 节奏旋律试作01（2026-11-11）
 compose_rhythm_reference.py 原创旋律与和声；借鉴用户提供谱面的重复音、弱拍起句和长短乐句组织方式。GeneralUser GS 2.0.3 采样渲染，许可同上。
+
+## 你的动机01（2026-11-11）
+核心音符动机由用户提供；回应、发展、和声与编配依据截图解读创作。使用 music-compose/music-evaluate 流程和 Spectro Maestro 合成渲染，非 GeneralUser 音源。Spectro Maestro AGPL工具输出豁免见外部技能LICENSE/输出许可说明。完整工程在 AUDIO_LIBRARY/projects/user-motif-01。
