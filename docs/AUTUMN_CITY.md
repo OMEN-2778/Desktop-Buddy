@@ -135,3 +135,15 @@ wall and sign colours, maple-leaf banners on lamps (`banner()`), plaza bunting, 
 behind the map with their own camera factors (parallax). Sky is a pure row gradient; far and mid each carry a smooth
 haze, dense at the foot and thinning upward (owner: "不要波点渐变，要纯渐变" — an explicit exception to the no-gradient
 rule, for the sky and the distance haze only). Stage backgrounds are transparent above the near hill.
+
+## Outskirts and reed marsh (owner 2026-11-11)
+- World 864×1096 = core 640×944 + `OX`=112 on each side + `BOT`=152 below. Core authoring coordinates are unchanged;
+  `map_point` adds `(OX, TOP)`. Outskirts are drawn in world coordinates by `outskirts()` / `marsh()` / `jetty()` / `edges()`.
+- West: a three-leap waterfall in a natural rock gorge (`cliff`, `fall`, `pool`) and 观瀑台. East: 观云亭 on a spur off the
+  top street, a small plaza with 枫糖铺 off the workers' street. No ruler-straight map edge: outcrops (`crag`) and
+  planting cover the terrace ends; the hillside reaches the river in an uneven bank.
+- 芦苇荡: uneven low land below the pier, reached by the plank jetty; reeds stand in groups round the shore, each
+  clump its own foliage sprite (`kind:'reed'`, the game bends them together like a passing wave); pond, bench,
+  footbridge to an islet; an egret when clean, a rotting skiff when polluted.
+- New routes are listed in `NO_ART` (their ground is drawn by the outskirts, not as stone flights). Routes stay orthogonal.
+- Sign text needs the font subset: `python tools/subset_autumn_font.py SourceHanSansSC-Medium.otf` after adding characters.

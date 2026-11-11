@@ -391,6 +391,10 @@ function makeSeason_autumn(opts, DATA) {
             bath: [ "进去洗澡", "hygiene" ],
             toilet: [ "使用公厕", "bladder" ],
             lookout: [ "坐下看看远处", "fun" ],
+            falls: [ "看一会儿瀑布", "fun" ],
+            pavilion: [ "进亭子里坐坐", "fun" ],
+            reeds: [ "在长椅上吹吹风", "fun" ],
+            syrup: [ "买块枫糖", "hunger" ],
             plaza: [ "坐一会儿，聊聊天", "social" ]
         };
         if (services[id]) {
@@ -544,7 +548,7 @@ function makeSeason_autumn(opts, DATA) {
             state.camX = state.camY = 0;
             return;
         }
-        const viewProgress = !state.inside && state.x > 80 && state.x < 345 ? clamp((DATA.summit.triggerY-state.y)/65,0,1) : 0;
+        const viewProgress = !state.inside && state.x > 80 + (DATA.ox || 0) && state.x < 345 + (DATA.ox || 0) ? clamp((DATA.summit.triggerY-state.y)/65,0,1) : 0;
         const ease=viewProgress*viewProgress*(3-2*viewProgress);
         const x = clamp(state.x - 171, 0, DATA.width - 342), y = clamp(state.y - 130-ease*76, 0, DATA.height - 236), t = 1 - Math.exp(-dt * 5);
         state.camX += (x - state.camX) * t;
@@ -561,6 +565,7 @@ function makeSeason_autumn(opts, DATA) {
     // Cache warped native sprites; no per-frame rasterization once a wind shape exists.
     const windCache = new Map;
     function windAmount(p, time = state.time) {
+        if (p.kind === "reed") return Math.round((Math.sin(time * 1.5 - p.x * .045) + .3 * Math.sin(time * .6 + p.frame)) * 2.2 * 4) / 4;   // reeds bend together, a wave passing along the shore
         const phase = p.frame * 2.399963, rate = .9 + p.frame % 7 * .073;
         return Math.round((Math.sin(time * rate + phase) + .23 * Math.sin(time * .47 + phase * .7)) * (p.kind === "tree" ? 2.3 : .7) * 4) / 4;
     }
@@ -577,13 +582,31 @@ function makeSeason_autumn(opts, DATA) {
         if (windCache.size >= 384) windCache.delete(windCache.keys().next().value);
         windCache.set(key,c);return c;
     }
+    function drawFalls() {
+        // the waterfall's sheet keeps falling: bright streaks slide down each leap, foam flickers at the foot
+        if (!DATA.water) return;
+        const t = state.time, clear = state.stage >= 2;
+        for (const [x, y0, y1, w0] of DATA.water.falls) {
+            if (x > state.camX + 342 || x + 20 < state.camX || y1 < state.camY || y0 > state.camY + 236) continue;
+            const w = clear ? w0 : Math.max(5, w0 >> 1), fx = clear ? x : x + Math.floor(w0 / 3), h = y1 - y0;
+            for (let i = 0; i < w * 3; i++) {
+                const col = i % w, len = 4 + i * 5 % 9, y = y0 + (i * 37 + t * (46 + i % 5 * 9)) % h;
+                ctx.fillStyle = clear ? (i % 3 ? "#f6f9fd" : "#7fc4b6") : (i % 3 ? "#cbb99c" : "#8a8f6f");
+                ctx.fillRect(fx + col, Math.floor(y), 1, Math.min(len, y1 - Math.floor(y)));
+            }
+            ctx.fillStyle = clear ? "#f6f9fd" : "#cbb99c";
+            for (let i = 0; i < 5; i++) ctx.fillRect(fx - 3 + (i * 7 + Math.floor(t * 6 + i * 3) % 5) % (w + 6), y1 - 2 + (Math.floor(t * 4) + i) % 3, 2, 1);
+        }
+    }
     function drawRiver() {
         const r=DATA.river,t=state.time;
+        drawFalls();
         if(r.bottom<state.camY||r.top>state.camY+236)return;
         // Native pixel wavelets: move on the water only, avoiding baked shoreline rocks.
-        for(let i=0;i<65;i++){
-            const x=Math.floor((i*79+t*(2+i%3))%DATA.width),y=r.top+((i*13)%Math.max(1,r.bottom-r.top-2));
-            if(r.rocks.some(([rx,ry])=>Math.abs(x-rx)<24&&Math.abs(y-ry)<11))continue;
+        const land=DATA.water?DATA.water.land:[],inLand=(x,y)=>land.some(q=>{let on=false;for(let a=0,b=q.length-1;a<q.length;b=a++){const[xa,ya]=q[a],[xb,yb]=q[b];if(ya>y!==yb>y&&x<(xb-xa)*(y-ya)/(yb-ya)+xa)on=!on;}return on;});
+        for(let i=0;i<170;i++){
+            const x=Math.floor((i*79+t*(2+i%3))%DATA.width),y=r.top+((i*53)%Math.max(1,r.bottom-r.top-2));
+            if(y<state.camY-2||y>state.camY+238||r.rocks.some(([rx,ry])=>Math.abs(x-rx)<24&&Math.abs(y-ry)<11)||inLand(x-8,y)||inLand(x+14,y)||inLand(x+3,y-12)||inLand(x+3,y+10))continue;
             ctx.fillStyle=(state.stage>=2?r.clean:r.dirty)[i%3?0:1];
             const w=3+i%8;ctx.fillRect(x,y,w,1);if(i%4===0)ctx.fillRect(x+2,y+2,w-3,1);
         }
