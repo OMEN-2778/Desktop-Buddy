@@ -740,14 +740,23 @@ def _profile(seed,lo,hi,rough,n=W):
  return [round(lo+(y-mn)/(mx-mn+1e-6)*(hi-lo)) for y in ys]
 BACK_H=300
 BW=FW
-def _haze(c,col,y0,y1,d0,d1):
+def _haze(c,col,y0,y1,d0,d1,dirt=0,seed=0):
  """Aerial haze (owner 2026-11-11): the layer's pixels are mixed towards the horizon colour, d0 at row y0 rising to
- d1 at y1 and held below. A pure smooth gradient: no dots, no steps."""
- arr=np.array(c.im).astype(float);rgb=np.array(ImageColor.getrgb(col),float)
- for y in range(y0,c.im.height):
-  d=d0+(d1-d0)*min(1,(y-y0)/max(1,y1-y0))
-  if d>0:arr[y,:,:3]=arr[y,:,:3]*(1-d)+rgb*d
- c.im=Image.fromarray(arr.round().astype('uint8'),'RGBA');c.d=ImageDraw.Draw(c.im)
+ d1 at y1 and held below; a pure smooth gradient when clean. dirt>0 (polluted, owner: 再强很多、脏很多、有一点噪点):
+ smog blotches drift across it, the colour wanders between soot and dust, and a fine grain sits on top."""
+ arr=np.array(c.im).astype(float);rgb=np.array(ImageColor.getrgb(col),float);H_,W_=arr.shape[:2]
+ ys=np.arange(H_)[:,None];d=d0+(d1-d0)*np.clip((ys-y0)/max(1,y1-y0),0,1);d=np.where(ys<y0,0,d)*np.ones((1,W_))
+ tint=np.broadcast_to(rgb,(H_,W_,3)).copy()
+ if dirt:
+  g=np.random.default_rng(seed);xs=np.arange(W_)[None,:]
+  blot=sum(np.sin(xs*f+ys*v+g.uniform(0,6.3))*a for f,v,a in [(.011,.05,.5),(.027,-.08,.3),(.06,.13,.2)])   # drifting smog banks
+  d=np.clip(d+dirt*(.12*blot+g.normal(0,.05,(H_,W_))),0,.97)
+  soot=np.array(ImageColor.getrgb(P.walnut[2]),float);dust=np.array(ImageColor.getrgb(P.oat[1]),float)
+  k=np.clip(.5+.35*blot+g.normal(0,.12,(H_,W_)),0,1)[...,None]
+  tint=tint*.55+(soot*(1-k)+dust*k)*.45
+ a=arr[...,3]>0
+ arr[...,:3]=np.where(a[...,None],arr[...,:3]*(1-d[...,None])+tint*d[...,None],arr[...,:3])
+ c.im=Image.fromarray(arr.round().clip(0,255).astype('uint8'),'RGBA');c.d=ImageDraw.Draw(c.im)
 def _smooth(p,k):
  a=np.array(p,float);return np.convolve(np.pad(a,k,mode='edge'),np.ones(2*k+1)/(2*k+1),'valid')
 def _peaks(seed,lo,hi,rough,peaks):
@@ -804,7 +813,7 @@ def backdrop(stage):
  far=layer()
  a=layer();pa=_peaks(5,44,74,.5,[(96,20,.75,1.0),(118,26,1.5,.8),(418,14,.5,1.22),(455,25,1.9,.72),(742,24,.9,.95),(600,40,.25,1.3)])
  _relief(a,pa,(P.sky_soft[3],P.sky_soft[2],P.sky_soft[1]) if clean else (P.oat[3],P.oat[2],P.oat[1]),.9,(P.snow[3],P.snow[2]) if clean else None,38,3)
- _haze(a,hz,16,80,.45,.88);far.im.alpha_composite(a.im)
+ _haze(a,hz,16,80,.45,.88) if clean else _haze(a,hz,10,70,.72,.95,1,11);far.im.alpha_composite(a.im)
  b=layer();pb=_peaks(9,58,90,.55,[(24,40,.6,1.1),(232,34,1.4,.85),(262,43,.7,1.1),(330,52,.4,1.2),(548,37,.85,1.0),(668,50,.3,1.35),(838,44,1.0,.95)])
  _relief(b,pb,(P.sky_soft[2],P.sky_soft[1],P.sky_soft[0]) if clean else (P.oat[2],P.oat[1],P.oat[0]),.7,(P.snow[3],P.snow[2]) if clean else None,46,4)
  # smelter on the far plain (the story's old furnace country)
@@ -815,7 +824,7 @@ def backdrop(stage):
   b.box(sx,sb-sh,5,sh,dk);b.box(sx,sb-sh,1,sh,lt);b.box(sx-1,sb-sh,7,2,lt);b.box(sx,sb-sh+7,5,1,lt)
   if stage<3:
    for j in range(7):b.oval(sx+3+j*5+j*j*.3,sb-sh-4-j*2.2,2+j*.6,2+j*.35,P.oat[2])
- _haze(b,hz,40,100,.25,.85);far.im.alpha_composite(b.im)
+ _haze(b,hz,40,100,.25,.85) if clean else _haze(b,hz,30,90,.55,.93,1,12);far.im.alpha_composite(b.im)
  # ---- mid: three wooded hills, one behind the other, each with its own colouring; crowns smaller on the farther hills,
  # slopes facing the light brighter; conifer stands on the ridges; a cliff with a thread of water
  c=layer()
@@ -895,7 +904,7 @@ def backdrop(stage):
    y=96+j*7;x0=612+j*9;x1=800-j*5;c.box(x0,y,x1-x0,6,P.oat[1] if j%2 else P.oat[0]);c.box(x0,y,x1-x0,1,P.oat[2]);c.box(x0+3,y+5,x1-x0-6,1,P.pave[0])
   c.box(700,90,3,8,P.pave[0]);c.line([(701,90),(716,84)],P.pave[0]);c.line([(716,84),(716,90)],P.pave[0])   # a derrick over the pit
   for x,y in [(120,108),(300,112),(388,118),(430,124),(214,116),(520,120),(90,122)]:c.line([(x,y),(x,y-7)],P.walnut[1]);c.line([(x,y-5),(x+3,y-8)],P.walnut[1]);c.line([(x,y-4),(x-2,y-7)],P.walnut[1])
- _haze(c,hz,54,118,.3,.78)
+ _haze(c,hz,54,118,.3,.78) if clean else _haze(c,hz,40,105,.5,.9,1.2,13)
  return sky_im,far.im,c.im
 def far_view(c,stage):
  """Flat previews only (review sheet, 'polluted' picture): the three layers at rest."""
