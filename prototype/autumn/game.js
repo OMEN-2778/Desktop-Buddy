@@ -627,13 +627,23 @@ function makeSeason_autumn(opts, DATA) {
         }
         ctx.restore();
     }
+    // Plants and the split front rails are one depth list, ordered by where they stand (owner 2026-11-11: a tree
+    // standing in front of a rail covers it; reeds behind a maple stay behind it).
+    let depthList = null;
+    function depthItems() {
+        if (depthList) return depthList;
+        depthList = [ ...DATA.foliage.map(p => ({ p: p, base: p.base, rail: -1 })), ...DATA.foreground.map((p, i) => ({ p: p, base: Math.max(p.a[1], p.b[1]), rail: i })) ];
+        depthList.sort((u, v) => u.base - v.base);
+        return depthList;
+    }
     function drawFoliage(front) {
-        for (const p of DATA.foliage) {
-            if (p.base >= state.y - 3 !== front || p.x + p.w < state.camX || p.x > state.camX + 342 || p.y + p.h < state.camY || p.y > state.camY + 236) continue;
-            const overlap = front && state.x + 12 > p.x && state.x - 12 < p.x + p.w && state.y > p.y && state.y - 29 < p.y + p.h, key = "tree" + p.frame, target = overlap ? .3 : 1, prev = foregroundAlpha.get(key) ?? 1, alpha = prev + (target - prev) * (1 - Math.exp(-frameDt * 14));
+        for (const it of depthItems()) {
+            const p = it.p;
+            if (it.base >= state.y - 3 !== front || p.x + p.w < state.camX || p.x > state.camX + 342 || p.y + p.h < state.camY || p.y > state.camY + 236) continue;
+            const rail = it.rail >= 0, overlap = front && state.x + 12 > p.x && state.x - 12 < p.x + p.w && state.y > p.y && state.y - (rail ? 30 : 29) < p.y + p.h, key = rail ? "rail" + it.rail : "tree" + p.frame, target = overlap ? (rail ? .28 : .3) : 1, prev = foregroundAlpha.get(key) ?? 1, alpha = prev + (target - prev) * (1 - Math.exp(-frameDt * 14));
             foregroundAlpha.set(key, alpha);
             ctx.globalAlpha = alpha;
-            ctx.drawImage(windSprite(p), p.x - 3, p.y);
+            if (rail) ctx.drawImage(images.get(p.img), p.x, p.y); else ctx.drawImage(windSprite(p), p.x - 3, p.y);
         }
         ctx.globalAlpha = 1;
     }
@@ -738,15 +748,6 @@ function makeSeason_autumn(opts, DATA) {
             ctx.fillRect(lx - 16, ly + 1, 32, 3);
             ctx.globalAlpha = 1;
             drawFoliage(true);
-            for (const [index, p] of DATA.foreground.entries()) {
-                if (p.x + p.w < state.camX || p.x > state.camX + 342 || p.y + p.h < state.camY || p.y > state.camY + 236) continue;
-                const overlap = state.x + 12 > p.x && state.x - 12 < p.x + p.w && state.y > p.y && state.y - 30 < p.y + p.h;
-                const key = "rail" + index, target = overlap ? .28 : 1, prev = foregroundAlpha.get(key) ?? 1, alpha = prev + (target - prev) * (1 - Math.exp(-frameDt * 14));
-                foregroundAlpha.set(key, alpha);
-                ctx.globalAlpha = alpha;
-                ctx.drawImage(images.get(p.img), p.x, p.y);
-            }
-            ctx.globalAlpha = 1;
 
         }
         if (hover) {
