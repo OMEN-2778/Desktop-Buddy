@@ -628,8 +628,13 @@ function makeSeason_autumn(opts, DATA) {
         ctx.clearRect(0, 0, 342, vh);
         if (!state.loaded) return;
         const bg = images.get(DATA.scenes[state.stage]);
+        // Distance layers (owner 2026-11-11): sky, far range and mid hills are separate pictures behind the map and
+        // follow the camera at their own speeds (x, y factors); at the top-left rest position they sit as painted.
+        const back = DATA.backdrop && DATA.backdrop[state.stage >= 4 ? "clean" : state.stage >= 3 ? "clear" : "polluted"];
+        const PARALLAX = [ [ "sky", .08, .1 ], [ "far", .22, .3 ], [ "mid", .5, .6 ] ];
         if (state.mapOpen) {
             const sc = Math.min(342 / DATA.width, 236 / DATA.height), ox = (342 - DATA.width * sc) / 2;
+            if (back) for (const [k] of PARALLAX) { const im = images.get(back[k]); ctx.drawImage(im, ox, 0, im.width * sc, im.height * sc); }
             ctx.drawImage(bg, ox, 0, DATA.width * sc, DATA.height * sc);
             ctx.drawImage(images.get(DATA.boat),ox+DATA.river.boatX*sc,(DATA.river.boatY+Math.round(Math.sin(state.time*1.1)*1.5))*sc,98*sc,38*sc);
             ctx.save();ctx.translate(ox,0);ctx.scale(sc,sc);
@@ -641,6 +646,7 @@ function makeSeason_autumn(opts, DATA) {
             ctx.fillRect(ox + state.x * sc - 2, state.y * sc - 2, 4, 4);
             return;
         }
+        if (back && !state.inside) for (const [k, fx, fy] of PARALLAX) ctx.drawImage(images.get(back[k]), -state.camX * fx, -state.camY * fy);
         ctx.save();
         ctx.translate(-state.camX, -state.camY);
         ctx.drawImage(state.inside ? images.get(DATA.inside) : bg, 0, 0);
@@ -931,7 +937,7 @@ function makeSeason_autumn(opts, DATA) {
     root.querySelector("[data-exit]").onclick = opts.exit;
     const signFont = new FontFace("Buddy Autumn Signs", 'url("'+DATA.signFont+'")');
     const fontReady = signFont.load().then(face=>document.fonts.add(face));
-    Promise.all([fontReady, ...[ ...DATA.scenes, DATA.front, DATA.inside, DATA.boat, ...DATA.npcs.flat(), ...DATA.foreground.map(p => p.img), ...DATA.foliageSheets ].map(load)]).then(() => {
+    Promise.all([fontReady, ...[ ...DATA.scenes, ...Object.values(DATA.backdrop || {}).flatMap(b => Object.values(b)), DATA.front, DATA.inside, DATA.boat, ...DATA.npcs.flat(), ...DATA.foreground.map(p => p.img), ...DATA.foliageSheets ].map(load)]).then(() => {
         state.loaded = true;
         draw();
         updateStatus();

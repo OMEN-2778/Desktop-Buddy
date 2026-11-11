@@ -129,3 +129,9 @@ a few evergreens; dry and partly bare while polluted); shrubs = leaf-cluster bus
 jagged far peaks, wooded mid hills (open-pit benches + a far smelter while polluted) and mist; `hill_ground()` the
 slopes. `City.S` is the stone ramp (grey polluted, pale warm when clean). Creeper (`creeper()`), window boxes, varied
 wall and sign colours, maple-leaf banners on lamps (`banner()`), plaza bunting, slimmer rails, richer river.
+
+## Distance layers (owner 2026-11-11)
+`backdrop(stage)` → sky / far range / mid hills as separate 640×300 PNGs per look (`autumn_back_*`), drawn by the game
+behind the map with their own camera factors (parallax). Sky is a pure row gradient; far and mid each carry a smooth
+haze, dense at the foot and thinning upward (owner: "不要波点渐变，要纯渐变" — an explicit exception to the no-gradient
+rule, for the sky and the distance haze only). Stage backgrounds are transparent above the near hill.

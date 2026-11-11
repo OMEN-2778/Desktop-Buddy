@@ -542,17 +542,33 @@ def _profile(seed,lo,hi,rough,n=W):
   step=half;amp*=.55
  ys=[pts[x] for x in range(n+1)];mn,mx=min(ys),max(ys)
  return [round(lo+(y-mn)/(mx-mn+1e-6)*(hi-lo)) for y in ys]
-def far_view(c,stage):
- """Sky, two distant ranges, the forested hill behind the summit (owner 2026-11-11: "远景的山不好看，没有特色").
- Polluted: smog bands, a veiled sun, bare grey ranges, an open-pit scar and a far smelter with plumes.
- Clean: blue sky with clouds, bluish peaks, hills covered in autumn woods, mist in the valleys, birds."""
+BACK_H=300
+BAYER=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]]
+def _haze(c,col,y0,y1,d0,d1,levels=10):
+ """Aerial haze (owner 2026-11-11: a veil on each distant layer, thick at the foot and thinning upward): the layer's
+ pixels are mixed towards the horizon colour in a few flat steps (finite opacity levels, no smooth gradient),
+ d0 at row y0 rising to d1 at y1 and held below."""
+ arr=np.array(c.im).astype(float);rgb=np.array(ImageColor.getrgb(col),float)
+ for y in range(y0,c.im.height):
+  d=d0+(d1-d0)*min(1,(y-y0)/max(1,y1-y0))   # owner: a pure smooth gradient, no dots, no steps
+  if d>0:arr[y,:,:3]=arr[y,:,:3]*(1-d)+rgb*d
+ c.im=Image.fromarray(arr.round().astype('uint8'),'RGBA');c.d=ImageDraw.Draw(c.im)
+def backdrop(stage):
+ """Three separate distance layers, W x BACK_H each (owner 2026-11-11: sky / far range / mid hills move at different
+ speeds with the camera): returns (sky, far, mid) Images. far and mid are transparent above their ridge and carry
+ their own haze, thick at the foot and thinning upward. The near hill belongs to the map itself (hill_ground)."""
  clean=stage>=4;r=random.Random(77)
+ def layer(fill=None):
+  c=City(stage);c.im=Image.new('RGBA',(W,BACK_H),fill or (0,0,0,0));c.d=ImageDraw.Draw(c.im);return c
+ hz=P.sky_day[3] if clean else P.oat[3]
+ # ---- sky
+ c=layer(hz)
  sky=[P.sky_day[1],P.sky_day[2],P.sky_day[3]] if clean else [P.oat[1],P.oat[2],P.oat[3]]
- edges=[0,18,38,H]
- for i in range(3):c.box(0,edges[i],W,edges[i+1]-edges[i],sky[i])
- for i in (1,2):   # two-row checker transitions between sky bands
-  y=edges[i]
-  for x in range(0,W,2):c.box(x,y-2,1,1,sky[i]);c.box(x+1,y-1,1,1,sky[i]);c.box(x,y,1,1,sky[i-1]);c.box(x+1,y+1,1,1,sky[i-1])
+ stops=[(0,sky[0]),(22,sky[1]),(48,sky[2]),(BACK_H,sky[2])]   # owner 2026-11-11: a pure gradient, no dotted transitions
+ for y in range(BACK_H):
+  for (y0,c0),(y1,c1) in zip(stops,stops[1:]):
+   if y0<=y<y1:
+    t=(y-y0)/(y1-y0);a0=ImageColor.getrgb(c0);a1=ImageColor.getrgb(c1);c.box(0,y,W,1,tuple(round(a0[k]+(a1[k]-a0[k])*t) for k in range(3)));break
  if clean:
   for cx,cy,k in [(70,16,1),(250,10,.7),(395,22,1.1),(560,13,.85)]:   # flat-bottomed cumulus
    for dx,rr in [(-14,6),(-5,9),(6,11),(17,7),(26,5)]:c.oval(cx+dx*k,cy-rr*k*.55,rr*k,rr*k*.75,P.snow[3])
@@ -561,39 +577,38 @@ def far_view(c,stage):
  else:
   c.oval(468,24,11,11,P.oat[3]);c.oval(468,24,8,8,P.oat[4])   # the sun behind the smog
   for y,x0,x1 in [(19,430,520),(26,446,560),(31,400,500)]:c.box(x0,y,x1-x0,2,P.oat[2])
- # far range: separate jagged peaks, lit left flank, right flank in shadow along a stepped ridge line
+ sky_im=c.im
+ # ---- far range: separate jagged peaks, lit left flank, right flank in shadow along a stepped ridge line
+ c=layer()
  A,B,C2=((P.sky_soft[1],P.sky_soft[0],P.sky_soft[3]) if clean else (P.oat[1],P.oat[0],P.oat[2]))
  pr=random.Random(5);peaks=[(-10,40,70),(70,30,95),(150,44,70),(215,24,110),(300,40,80),(372,32,100),(455,46,75),(520,27,105),(600,38,90),(660,44,60)]
+ base=92
  for cx,topy,hw in sorted(peaks,key=lambda q:q[1]):
-  base=78;hgt=base-topy;lx=[];rx_=[];ridge=[]
-  jl=jr=0;rd=0
+  hgt=base-topy;lx=[];rx_=[];ridge=[];jl=jr=0;rd=0
   for i in range(hgt+1):
    t=i/hgt
    if i%3==0:jl+=pr.choice([-1,0,0,1]);jr+=pr.choice([-1,0,0,1]);rd+=pr.choice([0,1,1,2])
-   lx.append(round(cx-hw*t**1.15)+jl);rx_.append(round(cx+hw*.8*t**1.1)+jr);ridge.append(cx+rd-(2 if (i//4)%2 else 0))
+   lx.append(round(cx-hw*1.2*t**1.15)+jl);rx_.append(round(cx+hw*t**1.1)+jr);ridge.append(cx+rd-(2 if (i//4)%2 else 0))
   for i in range(hgt+1):
    y=topy+i;l,rr,m=lx[i],rx_[i],min(max(ridge[i],lx[i]+1),rx_[i])
    c.box(l,y,m-l,1,A);c.box(m,y,rr-m+1,1,B)
   for i in range(0,min(hgt,10)):c.box(lx[i],topy+i,max(1,(ridge[i]-lx[i])//2),1,C2)   # pale lit crest
- mid=_profile(23,60,102,.42)
+ c.box(0,base,W,BACK_H-base,A)                                  # the far plain
  # smelter on the far plain (the story's old furnace country)
- sb=min(mid[30:95])+1
+ sb=86
  for sx,sh in [(40,26),(55,33),(68,22)]:
   c.box(sx,sb-sh,5,sh,P.pave[0] if not clean else P.wall_sky[0]);c.box(sx-1,sb-sh,7,2,P.pave[1] if not clean else P.sky_soft[0])
   if stage<3:
    for j in range(9):c.oval(sx+4+j*6,sb-sh-6-j*2,4+j*.8,3+j*.4,P.oat[2] if j%2 else P.oat[3])
- c.box(28,sb-7,60,8,P.pave[0] if not clean else P.wall_sky[0])
- # haze / mist lying in the valley between the ranges: a dithered band, densest in the middle
- hz=P.sky_day[3] if clean else P.oat[2]
- def haze(y):
-  for x in range(0,W,4):c.box(x+(y%4),y-2,1,1,hz);c.box(x+2,y+2,1,1,hz)
-  for x in range(0,W,2):c.box(x,y-1,1,1,hz);c.box(x+1,y,1,1,hz);c.box(x,y+1,1,1,hz)
- haze(76)
- # mid range: wooded hills = rows of small tree crowns (lit top-left, dark underside), nearer rows over farther ones
+ c.box(28,sb-7,60,10,P.pave[0] if not clean else P.wall_sky[0])
+ _haze(c,hz,40,90,.1,.75)
+ far_im=c.im
+ # ---- mid range: wooded hills = rows of small tree crowns (lit top-left, dark underside), nearer rows over farther ones
+ c=layer();mid=_profile(23,60,102,.42)
  ramps=[P.clay,P.clay,P.oak,P.mustard,P.sage,P.sage,P.clay,P.oak] if clean else [P.pave,P.pave,P.oat,P.sage]
  dark=P.sage[1] if clean else P.pave[0]
- for x in range(W):c.box(x,mid[x]+2,1,H-mid[x],dark)
- for gy in range(58,232,3):
+ for x in range(W):c.box(x,mid[x]+2,1,BACK_H-mid[x],dark)
+ for gy in range(58,BACK_H,3):
   for gx in range(-3,W+3,5):
    x=gx+r.randrange(4)+(gy//3%2)*2;y=gy+r.randrange(2)
    if not(0<=x<W) or y<mid[x]:continue
@@ -602,13 +617,17 @@ def far_view(c,stage):
    if clean and zone<-.7 and r.random()<.6:R=P.mustard
    rr=r.choice([3,3,4]);t=(1,2,3) if clean else (0,1,2)
    c.oval(x,y,rr,rr-1,R[t[0]]);c.oval(x-1,y-1,rr-1,rr-2,R[t[1]]);c.box(x-2,y-2,2,1,R[t[2]])
- if not clean:   # open-pit benches cut into the right-hand hill, with a haul road
+ if not clean:   # open-pit benches cut into the right-hand hill
   for j in range(6):
    y=84+j*7;x0=452+j*9;x1=606-j*5;c.box(x0,y,x1-x0,6,P.oat[1] if j%2 else P.oat[0]);c.box(x0,y,x1-x0,1,P.oat[2]);c.box(x0+3,y+5,x1-x0-6,1,P.pave[0])
-   for x,y in [(120,100),(300,92),(388,104),(430,110),(214,106)]:c.line([(x,y),(x,y-7)],P.walnut[1]);c.line([(x,y-5),(x+3,y-8)],P.walnut[1]);c.line([(x,y-4),(x-2,y-7)],P.walnut[1])   # dead trunks
- haze(124)
- # the near hill the summit stands on
- hill_ground(c,0,126,W,H-126,stage,_profile(31,126,140,.3))
+  for x,y in [(120,100),(300,92),(388,104),(430,110),(214,106)]:c.line([(x,y),(x,y-7)],P.walnut[1]);c.line([(x,y-5),(x+3,y-8)],P.walnut[1]);c.line([(x,y-4),(x-2,y-7)],P.walnut[1])   # dead trunks
+ _haze(c,hz,70,140,.0,.55)
+ return sky_im,far_im,c.im
+def far_view(c,stage):
+ """Flat previews only (review sheet, 'polluted' picture): the three layers at rest, then the near hill."""
+ for im in backdrop(stage):c.im.alpha_composite(im,(0,0))
+ c.d=ImageDraw.Draw(c.im);near_hill(c,stage)
+def near_hill(c,stage):hill_ground(c,0,126,W,H-126,stage,_profile(31,126,140,.3))
 def hill_ground(c,x0,y0,w,h,stage,top=None):
  """Planted mountainside behind / between terraces: earth, rock strata and tufts (not a flat fill)."""
  clean=stage>=4;r=random.Random(x0*3+y0*5+w)
@@ -767,8 +786,8 @@ def city_layers(stage=0,review=False):
  fg=City(stage);fg.foreground_mode=False;fg.im=Image.new('RGBA',(W,H));fg.d=ImageDraw.Draw(fg.im)
  for a,b,wood in c.foreground_rails:fg.rail(a,b,wood)
  # Add just the summit strip above the compact city. Core coordinates stay authorable.
- top=City(stage);top.routes=runtime_routes();top.im=Image.new('RGBA',(W,H),P.sky_soft[2] if stage>=4 else P.oat[2]);top.d=ImageDraw.Draw(top.im)
- far_view(top,stage)
+ top=City(stage);top.routes=runtime_routes();top.im=Image.new('RGBA',(W,H));top.d=ImageDraw.Draw(top.im)   # transparent above the near hill: the game draws sky / far / mid behind
+ far_view(top,stage) if review else near_hill(top,stage)
  top.terrace([(102,TOP-118),(329,TOP-118),(329,TOP-20),(102,TOP-20)],18,77)
  top.riser(104,327,TOP-82,270);top.riser(104,327,TOP-46,112)
 
@@ -841,6 +860,8 @@ def build():
  target=Path(__file__).resolve().parents[2]/'out/concept/autumn_city_review.png';review.save(target)
  target.with_name('autumn_signs_world.json').write_text(json.dumps(LAST_LABELS,ensure_ascii=False,separators=(',',':')))
 
+ for name,stage in (('polluted',0),('clear',3),('clean',4)):   # distance layers (the smelter stops smoking at stage 3)
+  for part,im in zip(('sky','far','mid'),backdrop(stage)):out[f'autumn_back_{part}_{name}']=Sprite(0,0,px=np.array(im))
  for stage in range(5):
   bg,fg=city_layers(stage);out['autumn_city_stage_'+str(stage)]=bg
   if stage==0:

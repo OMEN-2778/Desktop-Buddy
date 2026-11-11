@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 Claude — 枫叶城远景分层 + 薄雾 + 视差
+- 主人：中景、远景各加一层从下到上变淡的薄雾，且两层分开、随镜头以不同速度移动；「不要波点渐变，要纯渐变」。
+- autumn_city.py backdrop(stage) 出三张独立图（640×300）：autumn_back_{sky,far,mid}_{polluted,clear,clean}.png（clear = 第 3 阶段，冶炼厂不冒烟）。天空是逐行纯渐变（去掉棋盘过渡）；far / mid 各自带 _haze()：向地平线色平滑混合，山脚浓、往上淡。阶段底图在近山以上透明。
+- autumn_runtime.py DATA.backdrop；autumn/game.js 画底图前先画 sky(.08,.1) / far(.22,.3) / mid(.5,.6)（x、y 视差系数），全城地图模式也叠上。镜头在左上原位时与画稿一致。
+- 测过：内测页山顶处镜头 0→88，中景、远景位移依次变小，无报错。纯渐变是主人对“像素网格、不用平滑渐变”旧规则的明确例外（仅天空和远景薄雾）。
+
 ## 2026-11-11 · Codex · 用户截图动机发展成无主题BGM
 - 用户提供G A C G G A C G A C卷帘图；暂定16格/112BPM/G4-A4-C5，明确节拍长度/八度待试听确认。
 - music-compose/evaluate + Spectro Maestro实际渲染，44小节约95秒；核心、回应、展开、长句桥段、回归。工程和检查记录在 AUDIO_LIBRARY/projects/user-motif-01。
