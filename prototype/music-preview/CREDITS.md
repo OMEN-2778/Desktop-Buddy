@@ -168,3 +168,6 @@ compose_beach_warm.py：在选中原创《风停在海天之间》《沿着晴�
 
 ## 无主题旋律试作 A/B/C（2026-11-11）
 compose_melody_studies.py 原创作曲，参考舞厅曲动机发展与节奏组织方法，未复用其旋律。GeneralUser GS 2.0.3 渲染，许可同上。
+
+## 节奏旋律试作01（2026-11-11）
+compose_rhythm_reference.py 原创旋律与和声；借鉴用户提供谱面的重复音、弱拍起句和长短乐句组织方式。GeneralUser GS 2.0.3 采样渲染，许可同上。

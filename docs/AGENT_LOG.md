@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 · Codex · 乐谱参考旋律试作
+- 用户不满意前三首，提供 The Fate Of Ophelia 简谱第1页；借鉴重复音/弱拍/长短句写法，新作旋律和和声，118BPM约66秒。
+- compose_rhythm_reference.py + rhythm-reference.json/MP3/MIDI；原试听页置顶；仅试听，不改正式游戏BGM。
+- 浏览器播放与渲染检查；音乐审美待用户试听。
+
 ## 2026-11-11 · Codex · 无主题旋律试作三首
 - 用户最喜欢舞厅曲的旋律，要求无主题BGM；阅读 compose_disco_glitter 的HOOK/VERSE写法后新写三套主题，统一钢琴方便比较。
 - compose_melody_studies.py、三组MP3/MIDI和metadata，46–55秒；原 /music/ 置顶，仅试听，未改游戏配乐。
