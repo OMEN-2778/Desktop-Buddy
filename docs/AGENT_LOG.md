@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 Claude — 上厕所没那么频繁，做任务不再半路跑回去
+- 玩家反馈：总在做事/做任务一半自动去厕所再走回来。DECAY.bladder 0.27→0.18（满到空 ~6h→~9h）。
+- index.src.html：活动中途去厕所 <15 → <12；玩家点的事只在 <6 才打断。
+- infei_home.js：任务进行中（infeiQuests.busy）不去，除非 <6；走路中打断 <18 → <8。season_auto 闲时补如厕的标线 55→40。
+- 测过：茵菲谷走路时如厕 15 不被打断、降到 5 会去上。没测草帽湾任务。
+
 ## 2026-11-11 Claude — 菜地圈按边分：收获在右、浇水在左
 - spring_story.js openBed：有作物 [收获,全部收获,查看,升级,全部浇水,浇水]（圈从右上顺时针排），空地 [全部收获,播种,升级,全部浇水]（去掉灰的「查看」）。截图看过。
 
