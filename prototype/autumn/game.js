@@ -572,7 +572,7 @@ function makeSeason_autumn(opts, DATA) {
         g.imageSmoothingEnabled = false;
         for (let y=0;y<p.h;y++) {
             const height = Math.max(0,1-y/root), dx = Math.round(wind*height*height);
-            g.drawImage(images.get(DATA.foliageSheets[state.stage]),p.frame*64,y,64,1,3+dx,y,64,1);
+            g.drawImage(images.get(DATA.foliageSheets[state.stage]),p.frame%128*64,Math.floor(p.frame/128)*96+y,64,1,3+dx,y,64,1);
         }
         if (windCache.size >= 384) windCache.delete(windCache.keys().next().value);
         windCache.set(key,c);return c;
@@ -635,7 +635,7 @@ function makeSeason_autumn(opts, DATA) {
             ctx.save();ctx.translate(ox,0);ctx.scale(sc,sc);
             ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#e6dfcf";
             for(const p of DATA.signs){ctx.font=p.size+'px "Buddy Autumn Signs"';ctx.fillText(p.text,p.x+p.w/2,p.y+p.h/2-1,p.w-6)}ctx.restore();
-            for (const p of DATA.foliage) ctx.drawImage(images.get(DATA.foliageSheets[state.stage]), p.frame * 64, 0, 64, 96, ox + p.x * sc, p.y * sc, 64 * sc, 96 * sc);
+            for (const p of DATA.foliage) ctx.drawImage(images.get(DATA.foliageSheets[state.stage]), p.frame % 128 * 64, Math.floor(p.frame / 128) * 96, 64, 96, ox + p.x * sc, p.y * sc, 64 * sc, 96 * sc);
             ctx.drawImage(images.get(DATA.front), ox, 0, DATA.width * sc, DATA.height * sc);
             ctx.fillStyle = "#efc452";
             ctx.fillRect(ox + state.x * sc - 2, state.y * sc - 2, 4, 4);

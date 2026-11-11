@@ -164,7 +164,13 @@ class City:
    for _ in range(max(8,(x1-x0)//30)):
     cx=r.randrange(x0+6,x1-6);cy=r.randrange(y0+6,y1-3)
     for k in range(r.randrange(3,8)):px(cx+r.randrange(-8,9),cy+r.randrange(-2,3),r.choice([1,2,3]),self.S[0] if k%2 else self.S[1])
-  for a,b in zip(front,front[1:]):self.line([(a[0]-5,a[1]),(b[0]+5,b[1])],P.oat[3],2)
+  for a,b in zip(front,front[1:]):
+   lo,hi=sorted((a[0],b[0]));self.box(lo-5,a[1]-1,hi-lo+10,2,self.S[4] if self.clean else P.oat[3]);self.box(lo-4,a[1]+1,hi-lo+8,1,self.S[2])   # coping: lit top, nosing
+   self.box(lo-3,a[1]+2,hi-lo+6,3,P.pave[0]);                                                                                        # its shadow on the face
+   for xx in range(lo-3,hi+3,2):self.box(xx,a[1]+5,1,1,P.pave[0])
+   self.box(lo,a[1]+drop-3,hi-lo,3,P.pave[0])                                                                                         # dark foot of the wall
+  # top plane: lit back/left edge, soft shade along the right edge
+  self.box(x0+3,y0+1,x1-x0-6,1,self.S[3]);self.box(x0+1,y0+3,1,y1-y0-6,self.S[3]);self.box(x1-2,y0+3,2,y1-y0-6,self.S[1])
   # Small dressed corner stones tie the coping to the retaining face.
   for x,y in front:
    inward=1 if x==min(p[0] for p in pts) else -1
@@ -175,6 +181,31 @@ class City:
   fx0,fx1=min(p[0] for p in front),max(p[0] for p in front);fy=front[0][1]
   for _ in range(max(2,(fx1-fx0)//(70 if self.clean else 150))):
    cx=r.randrange(fx0+14,fx1-14);self.creeper(cx,fy+1,fy+r.randrange(drop//2,drop-2),r.randrange(12,24),r.randrange(3,8),r)
+ def fringe(self,x0,x1,y,seed,dense=1.0,vertical=False):
+  """Soften a hard edge (owner 2026-11-11: "地形衔接太生硬"): grass tufts, weeds and stones straddling the line
+  from (x0,y) to (x1,y) (or down a side when vertical: x0=x, x1=length)."""
+  r=random.Random(seed);n=int((x1 if vertical else x1-x0)/9*dense)
+  G=[P.leaf[1],P.leaf[2],P.leaf[3],P.grass[3]] if self.clean else [P.walnut[2],P.oak[1],P.oat[1],P.oak[2]]
+  for _ in range(n):
+   if vertical:xx=x0+r.randrange(-3,4);yy=y+r.randrange(x1)
+   else:xx=r.randrange(x0,x1);yy=y+r.randrange(-2,3)
+   k=r.random()
+   if k<.55:                                    # tuft
+    for b in range(r.randrange(3,6)):
+     hx=xx+b*2-4;hh=r.randrange(2,6);self.box(hx,yy-hh,1,hh+1,G[1] if b%2 else G[0]);self.box(hx+(1 if b%2 else -1),yy-hh,1,1,G[2])
+    if self.clean and r.random()<.3:self.box(xx,yy-5,1,1,r.choice([P.mustard[3],P.linen[3],P.coral[3]]))
+   elif k<.8:                                   # stone
+    w=r.randrange(4,9);self.box(xx,yy-2,w,4,P.pave[0]);self.box(xx,yy-3,w-1,3,P.pave[2] if self.clean else P.pave[1]);self.box(xx,yy-3,w//2,1,P.oat[3] if self.clean else P.oat[1])
+   else:                                        # moss / low weed mat
+    w=r.randrange(6,13);self.box(xx,yy-1,w,2,G[0]);self.box(xx+1,yy-2,w-3,1,G[1]);self.box(xx+2,yy-2,2,1,G[2])
+ def riser(self,x0,x1,y,gap,h=9):
+  """A step up across a plaza (upper tier above y): coping, shaded stone face, cast shadow; open at the flight (gap x)."""
+  for l,rr in ((x0,gap-16),(gap+16,x1)):
+   if rr-l<4:continue
+   self.box(l,y-2,rr-l,2,self.S[4] if self.clean else self.S[3]);self.box(l,y,rr-l,h,P.pave[1] if self.clean else self.S[0])
+   for xx in range(l+((y*7)%11),rr,17):self.box(xx,y+1,1,h-1,P.pave[0]);self.box(xx+1,y+1,6,1,P.pave[2] if self.clean else self.S[1])
+   self.box(l,y+h-2,rr-l,2,P.pave[0]);self.box(l,y+h,rr-l,2,self.S[1])
+   for xx in range(l,rr,2):self.box(xx,y+h+2,1,1,self.S[1])
  def stairs(self,a,b,width=32):
   # Solid sandstone, open at both ends. Horizontal links are landings, never ladders.
   if a==b:return
@@ -232,7 +263,7 @@ class City:
   previous=self.start_foliage();r=random.Random(x*31+base*7);s=min(size,1.1)
   shape=r.choice(['round','round','tall','wide','small'])
   rx,ry={'round':(25,21),'tall':(19,25),'wide':(29,18),'small':(20,17)}[shape]
-  rx=max(9,round(rx*s*r.uniform(.9,1.08)));ry=max(8,round(ry*s*r.uniform(.9,1.08)));trunk=round((13 if shape!='tall' else 17)*s*r.uniform(.85,1.2))+3
+  rx=min(26,max(9,round(rx*s*r.uniform(.9,1.08))));ry=min(26,max(8,round(ry*s*r.uniform(.9,1.08))));trunk=round((13 if shape!='tall' else 17)*s*r.uniform(.85,1.2))+3
   kind=r.choice(['maple','maple','linden','cherry']);tx=40+r.randrange(260);fb=104;cy=fb-trunk-ry
   if self.stage>=4:
    R=P.autumn;G=[P.autumn[1],P.mustard[1],P.mustard[2],P.mustard[3],P.mustard[4]];C=[P.coral[0],P.coral[1],P.coral[2],P.autumn[2],P.autumn[3]]
@@ -247,6 +278,7 @@ class City:
   try:pic=FY.tree(kind,season,0,at=(tx,cy,fb,rx,ry))
   finally:FY.LEAVES[key]=keep
   im=pic.to_image().copy();box=im.getbbox()
+  box=(max(box[0],tx-31),max(box[1],fb-92),min(box[2],tx+31),box[3])   # the runtime atlas cell is 64x96
   if season=='winter':   # the bare skeleton keeps a few last dry leaves
    px=im.load()
    for _ in range(14):
@@ -377,15 +409,54 @@ class City:
  def pipe(self,pts):
   self.line(pts,P.steel[0],8);self.line([(x-1,y-1) for x,y in pts],P.steel[1],5);self.line([(x-2,y-2) for x,y in pts],P.steel[3],1)
   for x,y in pts:self.box(x-5,y-5,10,2,P.steel[0]);self.box(x-5,y+3,10,2,P.steel[0])
+ def planter(self,x,y):
+  # A timber planter box seen slightly from above: soil inside the lit rim, plank front, shaded right end, feet, cast shadow.
+  self.box(x-11,y+24,26,3,self.S[1]);self.box(x+13,y+12,5,14,self.S[1])
+  self.box(x-12,y,25,6,P.wood[0]);self.box(x-11,y,23,1,P.wood[4]);self.box(x-11,y+1,23,1,P.wood[3])        # back + rim
+  self.box(x-10,y+2,21,3,P.walnut[1]);self.box(x-10,y+2,21,1,P.walnut[0]);                                   # soil in shade of the rim
+  for k in range(5):self.box(x-8+k*4,y+3+(k%2),2,1,P.walnut[3])
+  self.box(x-12,y+5,25,2,P.wood[4]);self.box(x-12,y+7,25,16,P.wood[1])                                       # front rim (lit) and face
+  for xx in range(x-12,x+13,5):self.box(xx,y+7,1,16,P.wood[0])
+  self.box(x-12,y+7,2,16,P.wood[2]);self.box(x+9,y+7,4,16,P.wood[0]);self.box(x-12,y+13,25,2,P.steel[1]);self.box(x-12,y+13,10,1,P.steel[3])
+  self.box(x-12,y+22,25,1,P.walnut[0]);self.box(x-11,y+23,4,2,P.walnut[0]);self.box(x+8,y+23,4,2,P.walnut[0])
  def stall(self,x,y,ramp=P.clay):
-  self.box(x,y-23,37,25,P.wood[1]);self.box(x-3,y-24,44,4,P.wood[0]);self.poly([(x-6,y-21),(x+1,y-36),(x+35,y-36),(x+43,y-21)],ramp[1])
-  for xx in range(x-3,x+40,9):self.line([(xx,y-22),(xx+5,y-34)],ramp[3],4)
-  self.box(x-2,y-22,43,5,ramp[2]);self.box(x+4,y-15,30,8,P.walnut[0]);
-  for j in range(4):self.oval(x+7+j*7,y-7,3,2,P.oak[2] if j%2 else P.sage[2])
-  self.box(x+2,y,34,2,P.wood[3])
+  # Owner 2026-11-11 ("没有立体感"): a stall with depth: awning top + hanging valance, shaded interior, a counter
+  # with a lit top, baskets of produce, plank front, legs and a cast shadow.
+  self.box(x-4,y+1,48,3,self.S[1]);self.box(x+40,y-6,6,8,self.S[1])                      # ground + side cast shadow
+  for px_ in (x-1,x+37):self.box(px_,y-34,3,34,P.wood[0]);self.box(px_,y-34,1,34,P.wood[2])  # posts
+  self.box(x+2,y-26,35,14,P.walnut[0]);self.box(x+2,y-26,35,3,P.ink[1])                   # dark interior under the awning
+  for j in range(3):self.box(x+6+j*11,y-22,7,8,P.walnut[1]);self.box(x+6+j*11,y-22,7,1,P.walnut[3])   # crates stacked at the back
+  # awning: sloping top (lighter towards the ridge), then the front valance with scallops and its shadow
+  self.poly([(x-7,y-28),(x-1,y-41),(x+40,y-41),(x+46,y-28)],ramp[0])
+  self.poly([(x-6,y-29),(x,y-40),(x+39,y-40),(x+45,y-29)],ramp[2])
+  for i,xx in enumerate(range(x-4,x+44,8)):
+   if i%2==0:self.poly([(xx,y-29),(xx+4,y-40),(xx+8,y-40),(xx+5,y-29)],P.oat[4] if self.clean else P.oat[3])
+  self.line([(x,y-40),(x+39,y-40)],ramp[4]);self.box(x-7,y-28,54,5,ramp[1])
+  for i,xx in enumerate(range(x-7,x+47,6)):
+   col=ramp[3] if i%2 else (P.oat[4] if self.clean else P.oat[2]);self.box(xx,y-28,6,4,col);self.box(xx+1,y-24,4,2,col);self.box(xx+2,y-22,2,1,col)
+  self.box(x-7,y-28,54,1,ramp[4]);self.box(x-5,y-21,50,1,P.ink[1])
+  # counter: lit top, front planks, right edge in shade, feet
+  self.box(x-1,y-13,41,4,P.wood[4]);self.box(x-1,y-10,41,1,P.wood[2]);self.box(x,y-9,39,9,P.wood[1])
+  for xx in range(x+6,x+38,7):self.box(xx,y-9,1,9,P.wood[0])
+  self.box(x,y-9,39,1,P.wood[0]);self.box(x+35,y-9,4,9,P.wood[0]);self.box(x,y-9,2,9,P.wood[2])
+  self.box(x+1,y,3,2,P.walnut[0]);self.box(x+35,y,3,2,P.walnut[0])
+  for j,F in enumerate([P.autumn,P.sage,P.mustard,P.coral]):                               # baskets on the counter
+   bx=x+2+j*9;self.box(bx,y-16,8,4,P.oak[1]);self.box(bx,y-16,8,1,P.oak[3]);self.box(bx+7,y-15,1,3,P.oak[0])
+   for k in range(3):self.box(bx+1+k*2,y-18-(k==1),2,2,F[2]);self.box(bx+1+k*2,y-18-(k==1),1,1,F[3])
  def chimney(self,x,base,height):
-  self.box(x-10,base-height,21,height,P.clay[0]);self.box(x-7,base-height,12,height,P.clay[1]);self.box(x-6,base-height,3,height,P.clay[2]);
-  for y in range(base-height+4,base,8):self.line([(x-9,y),(x+9,y)],P.walnut[0]);self.box(x-13,base-height-3,27,6,P.steel[0]);self.box(x-11,base-height-3,23,2,P.steel[2])
+  # A round brick stack: lit from the left, core shadow to the right, staggered courses, iron hoops, stone plinth, open rim.
+  top=base-height;cols=[P.clay[0],P.clay[2],P.clay[2],P.clay[3],P.clay[4],P.clay[3],P.clay[2],P.clay[2],P.clay[2],P.clay[2],P.clay[1],P.clay[1],P.clay[1],P.clay[1],P.clay[0],P.clay[0],P.clay[0],P.clay[0],P.brick[0],P.brick[0],P.walnut[0]]
+  for i,col in enumerate(cols):self.box(x-10+i,top,1,height,col)
+  for row,yy in enumerate(range(top+3,base,4)):
+   for i in range(1,20):
+    if (i+row*3)%6==0:self.box(x-10+i,yy-3,1,3,P.clay[0] if i<14 else P.walnut[0])   # head joints
+   self.box(x-9,yy,8,1,P.clay[1]);self.box(x-1,yy,10,1,P.clay[0])                    # bed joint, darker on the shaded side
+  for yy in range(top+14,base-6,22):
+   self.box(x-11,yy,23,3,P.steel[0]);self.box(x-10,yy,6,1,P.steel[3]);self.box(x-4,yy,8,1,P.steel[2]);self.box(x-10,yy+1,14,1,P.steel[1])
+  self.box(x-14,base-7,29,8,self.S[0]);self.box(x-14,base-7,29,2,self.S[3]);self.box(x-13,base-5,18,5,self.S[2]);self.box(x+5,base-5,9,5,self.S[1])   # plinth
+  self.box(x+15,base-3,6,4,self.S[1])                                                                                         # its shadow
+  self.box(x-13,top-5,27,7,P.steel[0]);self.box(x-12,top-4,9,5,P.steel[3]);self.box(x-3,top-4,9,5,P.steel[2]);self.box(x+6,top-4,7,5,P.steel[1])
+  self.oval(x,top-5,11,3,P.steel[1]);self.oval(x,top-5,9,2,P.ink[0]);self.box(x-9,top-6,7,1,P.steel[4])                        # rim and the dark mouth
   # Hard-edged, shaded pixel clusters; haze remains in a separate logical layer.
   if self.stage>=3:return
   rnd=random.Random(x)
@@ -495,7 +566,6 @@ def hill_ground(c,x0,y0,w,h,stage,top=None):
   else:c.box(x,y,3,1,P.oak[1])
 def background(c):
  # Full-frame planted mountainside, with no unused skyline or vast blank river.
- hill_ground(c,0,0,W,H,c.stage)
  # Continuous narrow river at the foot of the model; it changes with the story.
  clear=c.stage>=2
  c.box(0,574,W,CORE_H-574,P.teal[2] if clear else P.teal[0])
@@ -516,19 +586,20 @@ def background(c):
    if j%3==0:c.box(x+w//3,y-1,w//3,1,P.oat[1])
 
 def city_layers(stage=0,review=False):
- c=City(stage);background(c)
+ c=City(stage);c.im=Image.new('RGBA',(W,H));c.d=ImageDraw.Draw(c.im);background(c);clear=stage>=2   # the hillside itself is painted once, on the full map (no seam)
  # Whole-city masonry platforms are only a few steps apart, each filled with frontage.
  for top,bottom,seed in [(22,146,1),(159,272,2),(286,402,3),(418,534,4)]:
   c.terrace([(8,top),(632,top),(632,bottom),(8,bottom)],30,seed)
   # Thin drainage channel and paving edging instead of empty slabs.
   c.box(10,bottom-4,620,2,P.pave[0])
   for x in range(12,630,9):c.box(x,bottom-4,4,1,P.oat[2])
+  c.fringe(44,600,top+3,seed*17,.5 if seed>1 else 1.3)   # weeds at the foot of the wall behind
  # Upper garden: nursery racks, a real cottage and flat-roof lookout.
  c.building(150,120,76,1,'old','山上小屋',8)
  c.building(242,120,65,1,'civic','山顶驿站',9)
  c.box(253,53,3,16,P.steel[0]);c.box(252,52,20,4,P.steel[1]);c.box(270,50,3,8,P.steel[2])
  for x in (53,83,113):
-  c.box(x-8,94,22,22,P.wood[1]);c.box(x-9,94,24,3,P.wood[3]);c.box(x-6,98,18,14,P.oak[0]);c.tree(x+3,95,.5)
+  c.planter(x+3,93);c.tree(x+3,96,.5)
  c.sign(52,53,80,'枫树苗圃',10)
  c.box(350,49,244,73,P.pave[0]);c.box(353,52,238,67,P.pave[1])
  for x in range(365,586,27):c.box(x,108,15,2,P.oat[3]);c.box(x,57,15,2,P.oat[3])
@@ -593,9 +664,12 @@ def city_layers(stage=0,review=False):
  c.box(175,611,22,17,P.wood[1]);c.box(179,608,14,5,P.oat[1]);c.oval(206,634,6,6,P.steel[0]);c.oval(206,634,3,3,P.wood[2])
  # River rocks, reed beds and moored craft fill the lower edge, not empty water.
  if review:c.im.alpha_composite(river_boat().to_image(),(84,673));c.d=ImageDraw.Draw(c.im)
- for x,y in [(230,677),(287,672),(394,680),(588,679)]:
-  c.oval(x,y,18,7,P.pave[0]);c.oval(x-3,y-2,12,4,P.oat[0])
-  for j in range(5):c.line([(x+j*3,y-2),(x+j*3-2,y-14-j%3*4)],P.oak[1]);c.box(x+j*3-3,y-16-j%3*4,3,4,P.mustard[1])
+ for x,y in [(230,684),(287,680),(394,688),(588,686)]:
+  c.oval(x+1,y+3,20,6,P.teal[0] if not clear else P.teal[1])                               # dark water round the rock
+  c.oval(x,y,18,7,P.pave[0]);c.oval(x-2,y-2,15,5,P.pave[1]);c.oval(x-5,y-3,9,3,P.pave[2] if not c.clean else P.pave[3]);c.box(x-9,y-5,6,1,P.oat[3] if c.clean else P.oat[1])
+  c.box(x+6,y+1,9,1,P.pave[0]);c.box(x-12,y+5,10,1,P.teal[3] if clear else P.sage[1]);c.box(x+4,y+6,9,1,P.teal[3] if clear else P.sage[1])   # crack, ripples at the waterline
+  for j in range(5):
+   c.line([(x+j*3,y-3),(x+j*3-2,y-15-j%3*4)],P.oak[0]);c.line([(x+j*3+1,y-3),(x+j*3-1,y-15-j%3*4)],P.oak[2]);c.box(x+j*3-3,y-18-j%3*4,3,5,P.walnut[2]);c.box(x+j*3-3,y-18-j%3*4,1,4,P.mustard[2])
  # Shared route artwork: stone flights first; landings second, with open rail mouths.
  for vertical in (True,False):
   for name,points in ROUTES:
@@ -603,6 +677,14 @@ def city_layers(stage=0,review=False):
    for a,b in zip(points,points[1:]):
     if (a[0]==b[0])==vertical:c.stairs(a,b,28)
  for a,b in [((608,258),(620,258)),((608,520),(620,520))]:c.stairs(a,b,28)
+ # Quay wall dropping into the river: coping, coursed face darkening towards the water, wet line, foam, mooring rings.
+ qy=661
+ c.masonry([(8,qy),(632,qy),(632,qy+15),(8,qy+15)],61);c.box(8,qy-1,624,2,c.S[4] if c.clean else c.S[3]);c.box(8,qy+1,624,2,P.pave[0])
+ c.box(8,qy+11,624,4,P.pave[0])
+ for x in range(8,632,2):c.box(x,qy+10,1,1,P.pave[0])
+ c.box(8,qy+15,624,2,P.teal[0]);c.box(8,qy+17,624,3,P.teal[1] if clear else P.teal[0])
+ for x in range(10,630,13):c.box(x+(x*7%5),qy+16,5+(x%4),1,P.teal[4] if clear else P.sage[2])
+ for x in range(60,620,96):c.box(x,qy+5,5,2,P.steel[0]);c.oval(x+2,qy+9,3,3,P.steel[0]);c.oval(x+2,qy+9,1,1,P.pave[0]);c.box(x,qy+5,3,1,P.steel[3])
  for x in (607,633):c.box(x,249,3,276,P.steel[0]);c.box(x+1,250,1,274,P.steel[2])
  for y in range(260,515,22):c.line([(610,y),(632,y+20)],P.steel[1])
  if review:c.box(606,485,29,35,P.wood[0]);c.box(608,487,25,29,P.steel[1])
@@ -627,6 +709,7 @@ def city_layers(stage=0,review=False):
  top=City(stage);top.routes=runtime_routes();top.im=Image.new('RGBA',(W,H),P.sky_soft[2] if stage>=4 else P.oat[2]);top.d=ImageDraw.Draw(top.im)
  far_view(top,stage)
  top.terrace([(102,TOP-118),(329,TOP-118),(329,TOP-20),(102,TOP-20)],18,77)
+ top.riser(104,327,TOP-82,270);top.riser(104,327,TOP-46,112)
 
  top.box(300,TOP-95,3,25,P.steel[0]);top.box(290,TOP-98,23,6,P.steel[1]);top.box(289,TOP-99,7,8,P.steel[2]);top.box(309,TOP-98,6,6,P.steel[0])
  top.rail((120,TOP-111),(313,TOP-111))
@@ -636,10 +719,24 @@ def city_layers(stage=0,review=False):
    if max(a[1],b[1])>0:continue
    top.stairs(map_point(*a),map_point(*b),28)
  top.sign(158,TOP-13,120,'山顶瞭望台',12)
- for i,(x,y) in enumerate([(x,y) for y in (TOP-72,TOP-34,TOP+7) for x in (53,78,362,400,443,487,531,574,614)]):
-  xx=x+(i%3-1)*4;yy=y+(i%4)*3
-  top.box(xx-11,yy-2,23,7,P.oat[0]);top.tree(xx,yy,.65+(i%3)*.1)
- for i,(x,y) in enumerate([(x,TOP-16) for x in range(45,630,24) if x<95 or x>345]+[(x,TOP-86) for x in range(345,630,25)]):top.shrub(x,y,400+i)
+ top.fringe(100,154,TOP-1,71,1.6);top.fringe(284,331,TOP-1,76,1.6);top.fringe(101,96,TOP-116,72,1.2,True);top.fringe(330,96,TOP-116,73,1.2,True);top.fringe(104,327,TOP-118,74,.7)
+ top.fringe(0,W,TOP+19,75,1.5)      # where the hillside meets the top street
+ # The wood round the summit (owner: "太稀疏太平直"): dense, staggered, uneven; smaller trees up the slope behind.
+ fr=random.Random(909);wood=[]
+ for row,y in enumerate(range(TOP-108,TOP+14,11)):
+  k=.5+.3*row/11
+  for x in range(338+(row%2)*12,W+8,24):
+   if fr.random()<.12:continue
+   wood.append((x+fr.randrange(-7,8),y+fr.randrange(-4,5),k*fr.uniform(.85,1.2)))
+  for x in range(36+(row%2)*10,98,22):
+   yy=y+fr.randrange(-4,5)
+   if fr.random()<.15 or (TOP-40<yy<TOP+2):continue          # keep the climbing path's landing clear
+   wood.append((x+fr.randrange(-6,7),yy,k*fr.uniform(.85,1.2)))
+ for x,y,z in sorted(wood,key=lambda q:q[1]):top.tree(x,y,min(.95,z))
+ for i in range(34):
+  x=fr.choice([fr.randrange(30,96),fr.randrange(340,636)]);y=fr.randrange(TOP-100,TOP+14)
+  if x<130 and TOP-40<y<TOP+2:continue
+  top.shrub(x,y,400+i)
  top.im.alpha_composite(c.im.crop((0,0,W,CORE_H)),(0,TOP))
  merged=Image.new('RGBA',(W,H));merged.alpha_composite(fg.im.crop((0,0,W,CORE_H)),(0,TOP))
  tf=City(stage);tf.foreground_mode=False;tf.im=Image.new('RGBA',(W,H));tf.d=ImageDraw.Draw(tf.im)
@@ -689,11 +786,11 @@ def build():
    out['autumn_city_front']=fg
    target=Path(__file__).resolve().parents[2]/'out/concept/autumn_rails_world.json'
    target.write_text(json.dumps([dict(a=map_point(*a),b=map_point(*b)) for a,b,wood in LAST_RAILS],separators=(',',':')))
-  atlas=Image.new('RGBA',(64*len(LAST_FOLIAGE),96));meta=[]
+  COLS=128;atlas=Image.new('RGBA',(64*min(COLS,len(LAST_FOLIAGE)),96*math.ceil(len(LAST_FOLIAGE)/COLS)));meta=[]   # rows of 128 cells: frame f sits at (f%128*64, f//128*96)
   for i,(im,x,y,base) in enumerate(LAST_FOLIAGE):
    im=im.resize((max(1,round(im.width*SCALE_X)),max(1,round(im.height*SCALE_Y))),Image.Resampling.NEAREST)
-   assert im.width<=64 and im.height<=96
-   atlas.alpha_composite(im,(i*64,0));xx,yy=map_point(x,y);meta.append(dict(x=xx,y=yy,w=im.width,h=im.height,base=round(base*SCALE_Y)+TOP,frame=i,kind='tree' if im.height>26 else 'shrub'))
+   assert im.width<=64 and im.height<=96,(im.size,x,y,base)
+   atlas.alpha_composite(im,(i%COLS*64,i//COLS*96));xx,yy=map_point(x,y);meta.append(dict(x=xx,y=yy,w=im.width,h=im.height,base=round(base*SCALE_Y)+TOP,frame=i,kind='tree' if im.height>26 else 'shrub'))
   out['autumn_foliage_atlas_'+str(stage)]=Sprite(0,0,px=np.array(atlas))
   if stage==0:
    target=Path(__file__).resolve().parents[2]/'out/concept/autumn_foliage_world.json';target.parent.mkdir(parents=True,exist_ok=True);target.write_text(json.dumps(meta,separators=(',',':')))
