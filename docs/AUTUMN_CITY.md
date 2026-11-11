@@ -122,3 +122,10 @@ This supersedes all earlier bespoke interior coordinates and recolouring instruc
 Latest story correction: removed all sapling/carrying/watering/planting plot content.
 Quest 5 now asks the player to converse in the plaza; epilogue remains a dialogue, no
 planting menu or planted marker. Old saved tree flags are discarded.
+
+## Polish pass (owner 2026-11-11: "枫树不好看、太重复，远山不好看，没有特色")
+Same geometry, new drawing. Trees = the home street's `front_yard.tree` (five shapes, mixed crimson / orange / gold /
+a few evergreens; dry and partly bare while polluted); shrubs = leaf-cluster bushes. `far_view()` paints the sky bands,
+jagged far peaks, wooded mid hills (open-pit benches + a far smelter while polluted) and mist; `hill_ground()` the
+slopes. `City.S` is the stone ramp (grey polluted, pale warm when clean). Creeper (`creeper()`), window boxes, varied
+wall and sign colours, maple-leaf banners on lamps (`banner()`), plaza bunting, slimmer rails, richer river.

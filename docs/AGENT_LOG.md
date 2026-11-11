@@ -6,6 +6,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 Claude — 枫叶城地图润色（污染/洁净两套），等主人看图
+- 主人：枫树不好看、太重复，远山不好看，场景没特色。只改 art/src/concept/autumn_city.py 的画法，路线/地标/坐标不变（check_autumn_geometry PASS，植物 164→158：去掉跑道上的灌木）。
+- 树：改用主世界 front_yard.tree（枝干骨架 + 叶团受光），5 种树形 × 多种配色（红/橙/金/少量常绿），污染时枯黄、约两成只剩枯枝；灌木用同款叶团（黄杨、红叶、菊花；污染时枯枝）。
+- 远景 far_view()：天空分带 + 云/鸟（洁净）或烟尘 + 朦胧太阳（污染）；锯齿远山（左受光右背光）；林海山丘（洁净是红金树冠，污染是灰秃 + 露天矿台阶 + 远处冒烟的冶炼厂）；谷间薄雾；hill_ground() 山坡不再是平涂。
+- 城里：石料 self.S（污染灰、洁净浅暖石）+ 错缝石板；挡土墙和部分墙角爬山虎（洁净绯红，污染枯藤）；外墙颜色多样、污染时有水渍；窗台花箱（洁净菊花）；招牌多色；路灯挂枫叶旗、广场彩旗；栏杆变细；河面（洁净有波光和漂叶，污染有褐色浮渣）。
+- 只影响内测页的枫叶城。预览图发给主人了，还没得到确认；没改 docs/AUTUMN_CITY.md 的坐标部分。
+
 ## 2026-11-11 Claude — 枫叶城生活精度①：侦探事务所家具走主世界动作，她自己的作息，打电话
 - 新 map-test/autumn_home.js（接在 summer_lodge.js 后）：事务所家具（床、衣柜、浴缸、洗手台、马桶、沙发、茶几、电视、水槽、灶台、冰箱；落地灯/窗户只说话）走 season_house.js（主世界 ACTS/EFFECT）；灶台点了开菜单（cook_city），做完端到茶几，她坐沙发吃（这房子没有餐桌）；床上只露头 + zz，浴缸露头 + 泡泡；悬停描边。
 - autumn/game.js 加 opts.home 接口（need/click/arrived/under/over/busy），没有 opts.home 时（/autumn/ 预览）照旧。adapter 传 get home()；城里低需求照料不再管 social（交给电话）。
