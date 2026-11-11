@@ -764,6 +764,7 @@ def backdrop(stage):
  HUMPS=[[(70,70,150),(250,60,120),(420,78,170),(610,58,140),(790,72,130)],
         [(-20,84,170),(170,92,120),(340,80,160),(540,96,150),(720,82,170),(880,94,90)],
         [(60,106,180),(280,112,140),(470,102,170),(660,114,150),(840,104,150)]]
+ TOWNS=[[(250,70,3),(612,56,2)],[(340,84,3),(730,60,3),(60,44,2)],[(470,96,3),(130,54,2),(820,50,2)]]
  for hi,(seed,rad,ramps,dark) in enumerate(hills):
   lo=min(q[1] for q in HUMPS[hi]);hi_=lo+34;n0=_profile(seed,0,5,.5,BW)
   prof=[int(round(min(min(top+((x-cx)/hw)**2*46 for cx,top,hw in HUMPS[hi]),lo+40)+n0[x])) for x in range(BW+1)]
@@ -779,6 +780,24 @@ def backdrop(stage):
     rr=rad+(hr.random()<.3)
     c.oval(x,y,rr,rr-1,R[t[0]]);c.oval(x-1,y-1,rr-1,max(1,rr-2),R[t[1]])
     if y-prof[x]<10 or hr.random()<.5:c.box(x-2,y-2,2,1,R[t[2]])
+  # Towns among the woods (owner 2026-11-11: 枫叶城的延伸): terraced rows of small flat-roofed houses stepping up the
+  # slope, each row a little higher and offset, with tree crowns grown in between and over their feet.
+  for cx,wid,rows in TOWNS[hi]:
+   tr=random.Random(seed*7+cx);walls=[P.wall_cream,P.wall_blush,P.wall_sage,P.wall_butter,P.oat] if clean else [P.pave,P.oat,P.pave]
+   for j in range(rows):
+    x=cx-wid//2+tr.randrange(0,6)+(j%2)*4
+    while x<cx+wid//2:
+     w=tr.randrange(5,10)+(hi>0);h=tr.randrange(4,7)+hi;xx=min(BW-1,max(0,x));by=prof[xx]+9+hi*2+j*(6+hi)+tr.randrange(-1,2)
+     if tr.random()<.82 and 0<x<BW-w:
+      W_=tr.choice(walls);lt,sh=(W_[3],W_[2]) if clean else (W_[2],W_[1]);rf=tr.choice([P.clay,P.clay,P.brick,P.walnut]) if clean else P.pave
+      c.box(x,by-h,w,h,lt);c.box(x+w-2,by-h,2,h,sh);c.box(x-1,by-h-2,w+2,2,rf[1] if clean else rf[0]);c.box(x-1,by-h-2,w,1,rf[3] if clean else rf[1])   # wall, shaded end, flat roof with a lit edge
+      for wx in range(x+1,x+w-2,3):c.box(wx,by-h+2,1,2 if h>5 else 1,P.teal[1] if clean else (P.mustard[2] if tr.random()<.4 else P.pave[0]))   # windows
+      if tr.random()<.3:c.box(x+1+tr.randrange(max(1,w-3)),by-h-4,1,2,rf[0])                                                              # chimney
+      if tr.random()<.12:c.box(x+w//2-1,by-h-7-hi,3,6+hi,lt);c.box(x+w//2+1,by-h-7-hi,1,6+hi,sh);c.box(x+w//2-2,by-h-9-hi,5,2,rf[1] if clean else rf[0])   # a tower
+     x+=w+tr.randrange(0,4)
+    for _ in range(wid//7):                                     # trees between the rows
+     x=cx-wid//2+tr.randrange(wid);xx=min(BW-1,max(0,x));y=prof[xx]+11+hi*2+j*(6+hi)+tr.randrange(0,3);R=tr.choice(ramps);rr=rad
+     c.oval(x,y,rr,rr-1,R[1]);c.oval(x-1,y-1,rr-1,max(1,rr-2),R[2]);c.box(x-2,y-2,2,1,R[3])
   # conifer stands along parts of the ridge
   for x in range(4,BW-4,4):
    if math.sin(x*.021+seed*1.7)>.45 and hr.random()<.7:
