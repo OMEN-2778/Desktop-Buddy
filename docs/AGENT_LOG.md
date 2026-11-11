@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 Claude — 菜地圈按边分：收获在右、浇水在左
+- spring_story.js openBed：有作物 [收获,全部收获,查看,升级,全部浇水,浇水]（圈从右上顺时针排），空地 [全部收获,播种,升级,全部浇水]（去掉灰的「查看」）。截图看过。
+
 ## 2026-11-11 Claude — 家里也能开丢丢平板电脑
 - spring_story.js openRing：茵菲谷解锁后，buddy / away / bar / park_seated / mall_room 圈都加「丢丢平板电脑」（原来只在茵菲谷）。测过：家里点她有这项、能打开。
 

@@ -198,11 +198,12 @@ const springFarm=(()=>{
    const off=!first?'先整理前一块':left?`再经营 ${left} 天`:F.coins<cost?`还差 ${coins(cost-F.coins)} 币`:'';
    return farmRing('荒着的地',[{id:'sf:clear:'+i,label:`整理 · ${cost} 币`,icon:'hoe',off}],i);}
   if(F.phase==='sow'&&!START.includes(i))return showHint('先种有箭头的那块');
-  const more=F.phase==='done'?[lvItem(i),...allItems()]:[];
-  if(!b)return farmRing(name,[{id:'sf:sow:'+i,label:'播种',icon:'seeds'},{id:'sf:look:'+i,label:'查看',icon:'lens',off:'还空着'},...more],i);
-  if(CROP[b.crop]?.dry)return farmRing(name,[{id:'sf:water:'+i,label:'浇水',icon:'can',off:'不用浇水'},{id:'sf:harvest:'+i,label:'收获',icon:'basket',off:ripe(b)?'':'还没熟'},{id:'sf:look:'+i,label:'查看',icon:'lens'},...more],i);
-  farmRing(name,[{id:'sf:water:'+i,label:'浇水',icon:'can',off:ripe(b)?'已经熟了':b.watered===today()?'今天浇过了':rainedSoFar()?'下过雨了':''},
-   {id:'sf:harvest:'+i,label:'收获',icon:'basket',off:ripe(b)?'':'还没熟'},{id:'sf:look:'+i,label:'查看',icon:'lens'},...more],i);
+  // the ring goes clockwise from the top right: harvesting on the right, watering on the left (owner 2026-11-11)
+  const done=F.phase==='done',[wAll,hAll]=done?allItems():[],lv=done?lvItem(i):null,look={id:'sf:look:'+i,label:'查看',icon:'lens'};
+  if(!b)return farmRing(name,done?[hAll,{id:'sf:sow:'+i,label:'播种',icon:'seeds'},lv,wAll]:[{id:'sf:sow:'+i,label:'播种',icon:'seeds'},{...look,off:'还空着'}],i);
+  const wat={id:'sf:water:'+i,label:'浇水',icon:'can',off:CROP[b.crop]?.dry?'不用浇水':ripe(b)?'已经熟了':b.watered===today()?'今天浇过了':rainedSoFar()?'下过雨了':''},
+   har={id:'sf:harvest:'+i,label:'收获',icon:'basket',off:ripe(b)?'':'还没熟'};
+  farmRing(name,done?[har,hAll,look,lv,wAll,wat]:[har,look,wat],i);
  }
  view.parentElement.addEventListener('pointerdown',e=>{
   if(e.target!==view||!inSpring()||storyLocked())return;const c=C(),s=c.state;
