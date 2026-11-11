@@ -93,7 +93,7 @@ class City:
   mask=mask.point(lambda v:255 if v>=100 else 0);self.im.paste(c or P.oat[3],(int(x),int(y)),mask)
  def sign(self,x,y,w,t,n=10):
   a,b,hi=[(P.teal[0],P.teal[1],P.sage[2]),(P.clay[0],P.clay[1],P.clay[3]),(P.walnut[0],P.walnut[2],P.oak[3]),(P.slate[0],P.slate[2],P.slate[4]),(P.teal[0],P.teal[1],P.sage[2])][sum(map(ord,t))%5]
-  self.box(x,y,w,n+8,a);self.box(x+1,y+1,w-2,n+5,b);self.line([(x+2,y+1),(x+w-3,y+1)],hi);self.box(x+2,y+n+5,w-4,1,a)
+  self.box(x,y,w,n+8,b);self.box(x,y,w,1,hi);self.box(x,y,1,n+8,hi);self.box(x,y+n+7,w,1,a);self.box(x+w-1,y,1,n+8,a);self.box(x+2,y+n+9,w-2,1,self.S[1])
   for xx in (x+3,x+w-5):self.box(xx,y+3,2,2,hi)   # bolt heads
   # Smooth Source Han Sans text is a separate high-DPI layer, never baked at 1x.
   self.labels.append(dict(x=x,y=y,w=w,h=n+8,text=t,size=n))
@@ -315,59 +315,120 @@ class City:
   b.px[bb+1:,:,:]=0
   im=b.outline(leaf[0],grow=False).to_image();self.im.alpha_composite(im,(int(x-cx),int(base-bb)));self.d=ImageDraw.Draw(self.im)
   self.finish_foliage(previous,base)
- def window(self,x,y,w=12,h=17,lit=False):
-  self.box(x-2,y-2,w+4,h+5,P.oat[0]);self.box(x,y,w,h,P.wood[0]);self.box(x+2,y+2,w-4,h-4,P.oat[2] if lit else P.teal[0]);self.box(x+2,y+2,w-4,3,P.mustard[3] if lit else P.teal[2]);self.box(x+w//2,y,1,h,P.walnut[1]);self.box(x,y+h//2,w,1,P.walnut[1]);self.box(x-3,y+h,w+6,2,P.oat[2])
+ def window(self,x,y,w=12,h=17,lit=False,wall=None,shutter=None):
+  # Owner 2026-11-11: no dark thick outlines. A window is a recess: pale stone surround lit from the top-left,
+  # the reveal's shadow inside the top and left, a lit sill casting a thin shadow on the wall.
+  wall=wall or P.oat;T=P.oat
+  self.box(x-1,y-2,w+2,2,T[4]);self.box(x-1,y-1,w+2,1,T[3])                 # lintel
+  self.box(x-1,y,1,h,T[4]);self.box(x+w,y,1,h,T[2])                         # jambs: lit / shaded
+  glass=P.teal[1] if not lit else P.mustard[3]
+  self.box(x,y,w,h,glass)
+  if lit:
+   self.box(x+2,y+3,w-4,h-5,P.light[0]);self.box(x,y,3,h,P.oat[4]);self.box(x+w-3,y,3,h,P.oat[3])   # warm room, curtains
+  else:
+   self.box(x+w-5,y+2,2,1,P.teal[3]);self.box(x+w-6,y+3,2,1,P.teal[3]);self.box(x+2,y+h-5,2,1,P.teal[2]);self.box(x+3,y+h-6,2,1,P.teal[2])   # sky glints
+  self.box(x,y,w,2,P.teal[0] if not lit else P.mustard[1]);self.box(x,y,1,h,P.teal[0] if not lit else P.mustard[2])   # reveal shadow
+  self.box(x+w//2,y,1,h,T[3]);self.box(x,y+h//2,w,1,T[3])                   # glazing bars, light
+  self.box(x-3,y+h,w+6,2,T[4]);self.box(x-3,y+h+1,w+6,1,T[2]);self.box(x-2,y+h+2,w+5,1,wall[1])   # sill + its shadow
+  if shutter:
+   for sx in (x-5,x+w+1):
+    self.box(sx,y-1,4,h+1,shutter[1]);self.box(sx,y-1,1,h+1,shutter[2])
+    for yy in range(y+1,y+h-1,3):self.box(sx+1,yy,3,1,shutter[0])
  def roof(self,x,y,w,depth=17,pitch=12):
-  # Shallow flat terrace, continuous parapet, brick coping: no pitched roof anywhere.
-  self.box(x-3,y-7,w+6,17,self.S[0]);self.box(x-1,y-5,w+2,12,P.oat[1])
-  for xx in range(x+3,x+w-2,12):self.box(xx,y-3,8,1,self.S[1])
-  self.box(x-4,y+6,w+8,5,P.oat[0]);self.box(x-4,y+5,w+8,2,P.oat[3])
-  self.box(x-3,y-8,w+6,3,P.oat[3]);self.box(x-3,y-7,3,14,P.oat[2]);self.box(x+w,y-7,3,14,self.S[1])
-  # Modest roof tank, vent and pots distinguish silhouettes without adding side walls.
-  if w>62:
-   self.box(x+8,y-17,13,13,P.steel[0]);self.box(x+9,y-16,11,11,P.steel[1]);self.oval(x+14,y-17,6,2,P.steel[2]);self.line([(x+21,y-10),(x+25,y-10),(x+25,y+5)],P.steel[0])
-   self.box(x+w-20,y-14,8,10,P.clay[0]);self.box(x+w-22,y-16,12,3,P.oat[1])
+  # Flat roof behind a stone parapet: lit coping, face in mid tone, soft shadow where it meets the wall. No dark frame.
+  T=P.oat
+  self.box(x-3,y-7,w+6,15,T[2]);self.box(x-3,y-7,w+6,2,T[4]);self.box(x-3,y-5,w+6,1,T[3])
+  self.box(x-3,y-7,2,15,T[3]);self.box(x+w+1,y-7,2,15,T[1])
+  for xx in range(x+4,x+w-2,13):self.box(xx,y-1,1,6,T[1]);self.box(xx+1,y-1,1,6,T[3])   # coursing of the parapet stones
+  self.box(x-4,y+6,w+8,3,T[3]);self.box(x-4,y+6,w+8,1,T[4]);self.box(x-4,y+9,w+8,1,T[1])  # cornice
+  r=random.Random(x*5+y)
+  if w>62:   # water tank on legs, a clay chimney pot: both shaded as round forms
+   tx=x+8;self.box(tx,y-18,13,12,P.steel[2]);self.box(tx,y-18,4,12,P.steel[4]);self.box(tx+9,y-18,4,12,P.steel[1]);self.box(tx,y-19,13,2,P.steel[3]);self.box(tx+1,y-6,2,2,P.steel[1]);self.box(tx+10,y-6,2,2,P.steel[1])
+   cx=x+w-20;self.box(cx,y-15,8,10,P.clay[2]);self.box(cx,y-15,2,10,P.clay[3]);self.box(cx+6,y-15,2,10,P.clay[1]);self.box(cx-1,y-17,10,3,P.clay[3]);self.box(cx-1,y-15,10,1,P.clay[1])
+  if self.clean:   # leaves caught on the parapet, a pot of mums
+   for _ in range(w//9):self.box(r.randrange(x-2,x+w),y-8+r.randrange(0,2),2,1,r.choice([P.autumn[2],P.autumn[3],P.mustard[3],P.autumn[1]]))
+   if w>50:
+    px_=x+w//2+r.randrange(-8,9);self.box(px_,y-11,6,4,P.clay[2]);self.box(px_,y-11,6,1,P.clay[4]);self.box(px_-1,y-15,8,4,P.leaf[2]);
+    for k in range(4):self.box(px_-1+k*2,y-16+(k%2),2,2,[P.mustard[3],P.coral[3]][px_%2])
+  else:
+   for _ in range(w//14):self.box(r.randrange(x-2,x+w),y-8,3,1,P.pave[0])
  def building(self,x,base,w,floors=2,kind='old',sign=None,seed=1):
-  r=random.Random(seed);floor=36;hh=floors*floor+(25 if floors==1 else 13);y=base-hh;side=18
-  wall=[P.oat,P.wall_butter,P.wall_blush,P.wall_cream][seed%4] if kind=='old' else P.clay if kind=='brick' else [P.sage,P.wall_sky][seed%2]
-  self.box(x,y,w,hh,wall[2]);self.box(x+2,y+3,w-4,hh-4,wall[1] if kind=='brick' else wall[2])
-  # Damp soot gathers immediately below eaves and around a leaking drainpipe.
-  self.box(x+1,y,w-2,7 if not self.clean else 3,wall[0] if not self.clean else wall[1]);self.box(x+w-7,y+7,5,hh-9,wall[1]);self.line([(x+w-4,y+5),(x+w-4,base-1)],P.steel[0],2)
-  if not self.clean:   # grime running down from the eaves
-   for _ in range(w//9):
-    gx=r.randrange(x+5,x+w-9);self.box(gx,y+7,1,r.randrange(5,18),wall[0]);self.box(gx+1,y+7,1,r.randrange(3,9),wall[1])
+  r=random.Random(seed);floor=36;hh=floors*floor+(25 if floors==1 else 13);y=base-hh
+  wall=[P.oat,P.wall_butter,P.wall_blush,P.wall_cream][seed%4] if kind=='old' else P.brick if kind=='brick' else [P.wall_sage,P.wall_sky][seed%2]
+  brick=kind=='brick';hi=wall[3];mid=wall[2];lo=wall[1];dk=wall[0]
+  self.box(x,y,w,hh,mid)
+  if brick:   # coursed brick: thin bed joints, staggered heads, a few paler / darker bricks
+   for row,yy in enumerate(range(y+3,base,4)):
+    self.box(x,yy,w,1,lo)
+    for xx in range(x+(row%2)*4,x+w,8):self.box(xx,yy-3,1,3,lo)
+   for _ in range(w*hh//90):
+    xx=x+r.randrange(0,w-7)//8*8+1;yy=y+r.randrange(0,hh-4)//4*4;self.box(xx,yy,7,3,r.choice([hi,hi,dk]) if False else r.choice([wall[3],wall[3],wall[1]]))
+  else:       # lime plaster: faint trowel patches
+   for _ in range(w*hh//160):
+    xx=r.randrange(x+4,x+w-10);yy=r.randrange(y+10,base-8);self.box(xx,yy,r.randrange(3,8),1,hi if r.random()<.6 else lo)
+  self.box(x,y,2,hh,hi);self.box(x+w-3,y,3,hh,lo);self.box(x+w-1,y,1,hh,dk)             # lit left edge, shaded right edge
+  # the eaves' shadow (deeper and stained while polluted)
+  self.box(x,y,w,4,lo)
+  for xx in range(x,x+w,2):self.box(xx,y+4,1,1,lo)
+  if not self.clean:
+   self.box(x,y,w,2,dk)
+   for _ in range(w//8):
+    gx=r.randrange(x+4,x+w-6);self.box(gx,y+4,1,r.randrange(5,18),lo);self.box(gx+1,y+4,1,r.randrange(2,8),dk)
+  # downpipe: a slim lit tube with brackets
+  self.box(x+w-7,y+3,2,hh-4,P.steel[3]);self.box(x+w-6,y+3,1,hh-4,P.steel[1])
+  for yy in range(y+14,base-4,22):self.box(x+w-8,yy,4,1,P.steel[1])
+  shut=None if brick else [None,P.sage,P.clay,None][seed%4]
   for fl in range(floors):
    yy=base-32-fl*floor
-   self.box(x,yy+27,w,3,P.walnut[1]);self.box(x,yy+26,w,1,wall[3]);
+   if fl>0 or floors>1 and fl==0:
+    pass
+   if fl<floors-1 or floors==1:
+    pass
+   if fl>0:   # stone string course between storeys
+    self.box(x,yy+27,w,1,P.oat[4]);self.box(x,yy+28,w,2,P.oat[3]);self.box(x,yy+30,w,1,lo)
    for xx in range(x+10,x+w-12,27):
     if fl==0 and xx+14>x+w//2-12 and xx-2<x+w//2+12:continue
-    self.window(xx,yy,12,18,r.random()<.23)
+    self.window(xx,yy,12,18,r.random()<(.3 if self.clean else .2),wall,shut)
     fb=r.random()
     if self.clean and fb<.55:     # window box of chrysanthemums
-     F=r.choice([P.mustard,P.coral,P.blossom,P.autumn]);self.box(xx-2,yy+19,16,4,P.clay[1]);self.box(xx-2,yy+19,16,1,P.clay[3])
+     F=r.choice([P.mustard,P.coral,P.blossom,P.autumn]);self.box(xx-2,yy+19,16,4,P.clay[2]);self.box(xx-2,yy+19,16,1,P.clay[4]);self.box(xx+12,yy+20,2,3,P.clay[1])
      for fx in range(xx-1,xx+13,3):self.box(fx,yy+16,2,3,P.leaf[2]);self.box(fx,yy+15,2,2,F[3]);self.box(fx+1,yy+16,1,1,F[2])
     elif not self.clean and fb<.2: # an abandoned one
-     self.box(xx-2,yy+19,16,4,P.clay[0]);self.line([(xx+3,yy+19),(xx+2,yy+15)],P.walnut[2]);self.line([(xx+9,yy+19),(xx+11,yy+16)],P.walnut[2])
-    if r.random()<.3:self.box(xx-1,yy-5,14,2,P.steel[1]);self.box(xx+2,yy-10,9,5,P.porcelain[0]);self.line([(xx+3,yy-8),(xx+9,yy-8)],P.steel[1])
-   if kind=='old' and fl>0:
-    self.box(x-3,yy+20,w+7,4,P.walnut[0]);self.rail((x-3,yy+21),(x+w+3,yy+21),True)
-    for xx in range(x+4,x+w,25):self.line([(xx,yy+24),(xx+3,yy+31)],P.walnut[0],2)
-  # Timber corner framing / worn plaster patches remain sparse.
-  for xx in (x+2,x+w-3):self.box(xx,y+5,3,hh-5,P.walnut[1])
-  for _ in range(12):
-   xx=r.randrange(x+6,x+w-8);yy=r.randrange(y+8,base-3);self.box(xx,yy,r.randrange(2,5),1,wall[1])
-  self.box(x+w//2-11,base-29,23,29,P.oat[0]);self.box(x+w//2-10,base-28,21,28,P.walnut[0])
-  self.box(x+w//2-7,base-25,15,24,P.wood[1]);self.box(x+w//2-6,base-24,13,9,P.teal[0]);self.box(x+w//2-5,base-23,11,2,P.teal[2]);self.box(x+w//2,base-24,1,9,P.wood[2])
-  self.box(x+w//2-5,base-12,11,9,P.walnut[0]);self.box(x+w//2-4,base-11,9,7,P.wood[2]);self.box(x+w//2+4,base-15,2,3,P.mustard[3]);self.box(x+w//2-13,base,27,3,self.S[3]);self.box(x+w//2-14,base+3,29,2,self.S[1])
+     self.box(xx-2,yy+19,16,4,P.clay[1]);self.line([(xx+3,yy+19),(xx+2,yy+15)],P.walnut[2]);self.line([(xx+9,yy+19),(xx+11,yy+16)],P.walnut[2])
+   if kind=='old' and fl>0:   # balcony: stone slab, slim iron rail, brackets
+    by=yy+21;self.box(x-3,by,w+6,2,P.oat[4]);self.box(x-3,by+2,w+6,2,P.oat[2]);self.box(x-3,by+4,w+6,1,lo)
+    for xx in range(x+6,x+w-4,24):self.box(xx,by+4,2,4,P.oat[2]);self.box(xx,by+4,1,4,P.oat[3])
+    self.box(x-3,by-10,w+6,1,P.steel[2]);self.box(x-3,by-9,w+6,1,P.steel[1])
+    for xx in range(x-3,x+w+3,4):self.box(xx,by-9,1,9,P.steel[1])
+    for xx in (x-3,x+w+2):self.box(xx,by-11,1,11,P.steel[2])
+  # plinth
+  self.box(x,base-5,w,5,self.S[2]);self.box(x,base-5,w,1,self.S[4] if self.clean else self.S[3]);self.box(x+w-3,base-4,3,4,self.S[1])
+  for xx in range(x+9,x+w-3,17):self.box(xx,base-4,1,4,self.S[1])
+  # door: stone surround, a recess in shadow, panelled leaf with a fanlight, two lit steps
+  dx=x+w//2;D=[P.wood,P.teal,P.sage,P.clay,P.wood][seed%5]
+  self.box(dx-11,base-30,23,30,P.oat[3]);self.box(dx-11,base-30,23,2,P.oat[4]);self.box(dx-11,base-30,2,30,P.oat[4]);self.box(dx+10,base-30,2,30,P.oat[2])
+  self.box(dx-8,base-27,17,27,P.walnut[1]);self.box(dx-7,base-25,15,25,D[2]);self.box(dx-7,base-25,15,1,D[0]);self.box(dx-7,base-25,1,25,D[1])
+  self.box(dx-5,base-23,11,7,P.teal[1]);self.box(dx-5,base-23,11,1,P.teal[0]);self.box(dx,base-23,1,7,D[3]);self.box(dx+2,base-21,2,1,P.teal[3])
+  for px_ in (dx-5,dx+1):self.box(px_,base-13,5,10,D[1]);self.box(px_+1,base-12,4,9,D[2]);self.box(px_+1,base-12,4,1,D[3])
+  self.box(dx+5,base-15,2,2,P.mustard[3]);self.box(dx+5,base-13,1,1,P.mustard[1])
+  self.box(dx-13,base,27,2,self.S[4] if self.clean else self.S[3]);self.box(dx-13,base+2,27,1,self.S[1]);self.box(dx-15,base+3,31,2,self.S[3]);self.box(dx-15,base+5,31,1,self.S[1])
+  if self.clean:   # autumn at the door: a leaf wreath, pumpkins or a basket of apples
+   for ax,ay in [(-2,-21),(0,-22),(2,-21),(3,-19),(2,-17),(0,-16),(-2,-17),(-3,-19)]:self.box(dx+ax,base+ay,2,2,[P.autumn[2],P.autumn[3],P.mustard[3],P.autumn[1]][(ax+ay)%4])
+   if seed%2:
+    px_=dx+15;self.oval(px_+3,base-3,4,3,P.autumn[2]);self.box(px_+1,base-5,3,1,P.autumn[3]);self.box(px_+3,base-7,1,2,P.leaf[1]);self.oval(px_+10,base-2,3,2,P.autumn[3]);self.box(px_+9,base-3,2,1,P.mustard[3]);self.box(px_+10,base-5,1,1,P.leaf[1])
+   else:
+    px_=dx-24;self.box(px_,base-6,9,6,P.oak[2]);self.box(px_,base-6,9,1,P.oak[4]);self.box(px_+7,base-5,2,5,P.oak[1])
+    for k in range(3):self.box(px_+1+k*3,base-8,2,2,P.coral[2]);self.box(px_+1+k*3,base-8,1,1,P.coral[4])
   self.roof(x-2,y-5,w+4)
+  self.box(x+w+2,base-3,4,4,self.S[1])    # the house's short shadow on the paving to the right
   if seed%3==0:   # creeper up the corner: crimson when clean, a few dead strands otherwise
-   self.creeper(x+3,y+12+r.randrange(0,14),base-2,2,r.randrange(8,14),r,1)
+   self.creeper(x+3,y+12+r.randrange(0,14),base-6,2,r.randrange(8,14),r,1)
   if sign:self.sign(x+7,base-49,w-14,sign,10)
   if kind!='brick' and floors>1:
    # Cable + a few irregular garments, hung between real balcony supports.
-   self.line([(x+5,y+23),(x+w-4,y+24)],P.walnut[0])
+   self.line([(x+5,y+23),(x+w-4,y+24)],P.steel[1])
    for j in range(3):
-    xx=x+14+j*17;yy=y+24;col=[P.sage[1],P.clay[2],P.oat[3]][j] if not self.clean else [P.sage[2],P.coral[3],P.linen[3]][j];self.box(xx,yy,7,9,col);self.box(xx-2,yy+1,11,3,col)
+    xx=x+14+j*17;yy=y+24;col=[P.sage[1],P.clay[2],P.oat[3]][j] if not self.clean else [P.sage[2],P.coral[3],P.linen[3]][j];self.box(xx,yy,7,9,col);self.box(xx-2,yy+1,11,3,col);self.box(xx+5,yy+4,2,5,P.oat[1] if not self.clean else P.linen[1])
  def creeper(self,x,y0,y1,w0,w1,r,side=0):
   """A mass of creeper between rows y0..y1, w0 wide at the top and w1 at the bottom (side 0: centred on x, 1: grows right from x)."""
   cols=[P.autumn[0],P.autumn[1],P.autumn[2],P.coral[2],P.autumn[3]] if self.clean else [P.walnut[0],P.walnut[2],P.oak[1],P.oak[0],P.oak[2]]
