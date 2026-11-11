@@ -804,7 +804,7 @@ def backdrop(stage):
  far=layer()
  a=layer();pa=_peaks(5,44,74,.5,[(96,20,.75,1.0),(118,26,1.5,.8),(418,14,.5,1.22),(455,25,1.9,.72),(742,24,.9,.95),(600,40,.25,1.3)])
  _relief(a,pa,(P.sky_soft[3],P.sky_soft[2],P.sky_soft[1]) if clean else (P.oat[3],P.oat[2],P.oat[1]),.9,(P.snow[3],P.snow[2]) if clean else None,38,3)
- _haze(a,hz,20,84,.3,.8);far.im.alpha_composite(a.im)
+ _haze(a,hz,16,80,.45,.88);far.im.alpha_composite(a.im)
  b=layer();pb=_peaks(9,58,90,.55,[(24,40,.6,1.1),(232,34,1.4,.85),(262,43,.7,1.1),(330,52,.4,1.2),(548,37,.85,1.0),(668,50,.3,1.35),(838,44,1.0,.95)])
  _relief(b,pb,(P.sky_soft[2],P.sky_soft[1],P.sky_soft[0]) if clean else (P.oat[2],P.oat[1],P.oat[0]),.7,(P.snow[3],P.snow[2]) if clean else None,46,4)
  # smelter on the far plain (the story's old furnace country)
@@ -815,7 +815,7 @@ def backdrop(stage):
   b.box(sx,sb-sh,5,sh,dk);b.box(sx,sb-sh,1,sh,lt);b.box(sx-1,sb-sh,7,2,lt);b.box(sx,sb-sh+7,5,1,lt)
   if stage<3:
    for j in range(7):b.oval(sx+3+j*5+j*j*.3,sb-sh-4-j*2.2,2+j*.6,2+j*.35,P.oat[2])
- _haze(b,hz,40,100,.08,.72);far.im.alpha_composite(b.im)
+ _haze(b,hz,40,100,.25,.85);far.im.alpha_composite(b.im)
  # ---- mid: three wooded hills, one behind the other, each with its own colouring; crowns smaller on the farther hills,
  # slopes facing the light brighter; conifer stands on the ridges; a cliff with a thread of water
  c=layer()
@@ -895,7 +895,7 @@ def backdrop(stage):
    y=96+j*7;x0=612+j*9;x1=800-j*5;c.box(x0,y,x1-x0,6,P.oat[1] if j%2 else P.oat[0]);c.box(x0,y,x1-x0,1,P.oat[2]);c.box(x0+3,y+5,x1-x0-6,1,P.pave[0])
   c.box(700,90,3,8,P.pave[0]);c.line([(701,90),(716,84)],P.pave[0]);c.line([(716,84),(716,90)],P.pave[0])   # a derrick over the pit
   for x,y in [(120,108),(300,112),(388,118),(430,124),(214,116),(520,120),(90,122)]:c.line([(x,y),(x,y-7)],P.walnut[1]);c.line([(x,y-5),(x+3,y-8)],P.walnut[1]);c.line([(x,y-4),(x-2,y-7)],P.walnut[1])
- _haze(c,hz,74,150,.0,.5)
+ _haze(c,hz,54,118,.3,.78)
  return sky_im,far.im,c.im
 def far_view(c,stage):
  """Flat previews only (review sheet, 'polluted' picture): the three layers at rest."""

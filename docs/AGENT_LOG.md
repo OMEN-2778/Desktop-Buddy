@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 Claude — 中景远景薄雾加浓
+- 主人：中景远景雾气太薄。_haze：远山后排 .45→.88（原 .3→.8），远山前排 .25→.85（原 .08→.72），中景 .3→.78 且从更高处起雾（原 0→.5）。仍是纯平滑渐变。内测页山顶洁净/污染截图无报错。
+
 ## 2026-11-11 Claude — 河面上加芦苇丛
 - 主人：水上也大量种芦苇荡，但不要铺满。autumn_city.py WATER_REEDS 14 处浅滩芦苇丛（中间密、边缘稀、每丛有涟漪圈），之间留开阔水面和船、栈桥的通道；water_reeds()；runtime_water 把这些浅滩加进 land，水纹避开。植物 1092 株，内测页 15.8 MB。截图无报错；小人走不到这些丛（只是景）。
 
