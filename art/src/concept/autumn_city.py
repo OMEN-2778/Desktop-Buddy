@@ -870,10 +870,15 @@ def backdrop(stage):
       if tr.random()<.1:c.box(x+w//2-1,by-h-7-hi,3,6+hi,lt);c.box(x+w//2+1,by-h-7-hi,1,6+hi,sh);c.box(x+w//2-2,by-h-9-hi,5,2,rf[1] if clean else rf[0])
       foot.append((x,w,by))
      x+=w+tr.randrange(0,4)
-    for x,w,by in foot:                                     # crowns along the row's foot, hiding the lowest storey
-     for k in range(-2,w+3,rad+1):
-      R=tr.choice(ramps);rr=rad+(tr.random()<.4);yy=by+tr.randrange(0,2)
-      c.oval(x+k,yy,rr+1,rr,R[0]);c.oval(x+k,yy-1,rr,rr-1,R[1]);c.oval(x+k-1,yy-2,rr-1,max(1,rr-2),R[2]);c.box(x+k-2,yy-3,2,1,R[3])
+    for x,w,by in foot:                                     # the hill's own small crowns packed round the row's foot
+     for row in range(3):
+      for k in range(-3,w+4,rad+1):
+       xx=x+k+tr.randrange(-1,2)+(row%2)*2;yy=by-1+row*2+tr.randrange(0,2)
+       if not 0<=xx<BW:continue
+       xs=min(BW-10,max(10,xx));g=sl[xs+8]-sl[xs-8];t=(1,2,3) if g<-.8 else (0,0,1) if g>1.0 else (0,1,2)
+       R=tr.choice(ramps);rr=rad+(tr.random()<.3)
+       c.oval(xx,yy,rr,rr-1,R[t[0]]);c.oval(xx-1,yy-1,rr-1,max(1,rr-2),R[t[1]])
+       if tr.random()<.6:c.box(xx-2,yy-2,2,1,R[t[2]])
   # crowns growing up round the whole slope below the towns
   # conifer stands along parts of the ridge
   for x in range(4,BW-4,4):
@@ -1058,13 +1063,13 @@ def marsh(c):
    L=math.hypot(x1-x0,y1-y0)
    if not L:continue
    while acc<L:
-    x=x0+(x1-x0)*acc/L;y=y0+(y1-y0)*acc/L;acc+=10;k+=1
-    if k%9>=7:continue                                           # reeds stand in groups with water showing between
+    x=x0+(x1-x0)*acc/L;y=y0+(y1-y0)*acc/L;acc+=6;k+=1
+    if k%14>=12:continue                                           # reeds stand in groups with water showing between
     if abs(x-313)<17 and y<1000 or 596<x<660 and 1008<y<1036 or 404<x<452 and y<996:continue   # jetty landing, footbridge, the view from the bench
     d=math.hypot(x-cx,y-cy) or 1;ux,uy=(x-cx)/d,(y-cy)/d
-    if y>cy+20 and k%3==0:continue                               # thinner along the near shore: the land stays in view
-    if k%2:c.reed(round(x+ux*6),round(y+uy*4)+3,9000+k,1.15)
-    else:c.reed(round(x-ux*2),round(y-uy*2)+1,9000+k,.85)
+    if y>cy+20 and k%4==0:continue                               # thinner along the near shore: the land stays in view
+    c.reed(round(x+ux*6),round(y+uy*4)+3,9000+k,1.15 if k%2 else 1.0)       # in the shallows
+    if k%3:c.reed(round(x-ux*5),round(y-uy*4)+1,19000+k,.85)                # and a lower row on the bank
    acc-=L
 def jetty(c):
  """A plank jetty from the quay to the marsh: piles with lit heads, a shadow on the water, bollards for the boat."""
