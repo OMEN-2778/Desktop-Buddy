@@ -6,6 +6,13 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-11 Claude — 枫叶城生活精度①：侦探事务所家具走主世界动作，她自己的作息，打电话
+- 新 map-test/autumn_home.js（接在 summer_lodge.js 后）：事务所家具（床、衣柜、浴缸、洗手台、马桶、沙发、茶几、电视、水槽、灶台、冰箱；落地灯/窗户只说话）走 season_house.js（主世界 ACTS/EFFECT）；灶台点了开菜单（cook_city），做完端到茶几，她坐沙发吃（这房子没有餐桌）；床上只露头 + zz，浴缸露头 + 泡泡；悬停描边。
+- autumn/game.js 加 opts.home 接口（need/click/arrived/under/over/busy），没有 opts.home 时（/autumn/ 预览）照旧。adapter 传 get home()；城里低需求照料不再管 social（交给电话）。
+- 作息（同茵菲谷）：22:30-6 回事务所睡；19 点后多在屋里（沙发/电视/衣柜）；需求低于标线先去补；白天屋里没事出门；玩家点过 45 分钟内不插手。season_social / season_house PLACES 加 autumn_test（社交低了打电话、远方邀约用「枫叶城」）。
+- tools/check_autumn_game.js 屋内服务段改成新模型；该脚本在改动前就卡在剧情对话「dialog did not end」（旧问题，没修）。
+- 测过：每件家具的动作/姿势、菜单→做饭→茶几吃、正午屋里会出门、饿 50 回去做饭吃、22:40 回去睡到天亮。还没做：枫叶城圆环、机会卡、任务面板、平板、入口上线、新剧本。
+
 ## 2026-11-11 Claude — 如厕满到空改 18 小时（主人定）
 - DECAY.bladder 0.18→0.0926（100/1080 每游戏分钟）。
 

@@ -4,7 +4,7 @@
 // break for the toilet, and so on. The houses (infei_home.js, summer_lodge.js) only walk her to the spot and draw the
 // home's effects at their own furniture. Standard: docs/SEASON_MAP_STANDARD.md.
 const seasonHouse=(function(){
- const PLACES=['spring_test','summer_test'],inSeason=()=>PLACES.includes(sim.place);
+ const PLACES=['spring_test','summer_test','autumn_test'],inSeason=()=>PLACES.includes(sim.place);
  // acts the home has no twin for, built like the home's own (durations take PACE like the rest)
  const own=(id,a,eff)=>{ACTS[id]={spot:'season',...a,dur:a.dur*PACE};EFFECT[id]={...eff};};
  own('season_sofa',{label:'坐着歇会儿',emote:'star',dur:40,log:null},EFFECT.tv);

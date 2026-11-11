@@ -141,3 +141,10 @@ This supersedes all earlier bespoke interior coordinates and recolouring instruc
 Latest story correction: removed all sapling/carrying/watering/planting plot content.
 Quest 5 now asks the player to converse in the plaza; epilogue remains a dialogue, no
 planting menu or planted marker. Old saved tree flags are discarded.
+
+## Life precision ① (owner 2026-11-11)
+The game shell passes `opts.home` (map-test/autumn_home.js): the detective's house furniture runs the home's own acts
+through season_house.js, exactly like 茵菲谷 / 草帽湾 (see docs/SEASON_MAP_STANDARD.md). Spots and act per piece are in
+`autumnHome.SPOTS`; meals are eaten on the sofa at the coffee table (the reused 暖木小复式 has no dining table — ask the
+owner before drawing one). The old `state.service` path stays for the outdoor services (canteen, bath house, WC…) and for
+the standalone `/autumn/` preview. Her own day (bed 22:30, evenings inside, top-ups, leaving the house) is `plan()` there.

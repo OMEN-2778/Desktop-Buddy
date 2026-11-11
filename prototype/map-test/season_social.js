@@ -4,7 +4,7 @@
 //  - 季节地图里不能邀请朋友或爸妈过来，也不能去朋友家、约出门：海岛/山谷太远了。
 // 茵菲谷自己的电话话题在 spring_talk.js（spring_story.js 换话题），这里只补“想宠物”“没电脑”。
 (function(){
- const PLACES=['spring_test','summer_test'],inSeason=()=>PLACES.includes(sim.place),inBay=()=>sim.place==='summer_test';
+ const PLACES=['spring_test','summer_test','autumn_test'],inSeason=()=>PLACES.includes(sim.place),inBay=()=>sim.place==='summer_test';
  const hasPet=()=>typeof petState!=='undefined'&&petState.pets?.some(p=>p.status!=='lost');
  // ---------------------------------------------------------------- 草帽湾的话题 (">" = the other person)
  const BAY_TALK={
@@ -90,7 +90,7 @@
   homeAsked=false;closeRing();if(sim.place==='spring_test')infeiHome.leave();else ringPick('bay:leave');
  }catch(e){console.warn('pet rescue home',e);}},1000);
  // ---------------------------------------------------------------- 社交低了：拿手机找人聊（像主世界一样，不回屋）
- const ctl=()=>sim.place==='summer_test'?seasonMapTest.state.summer:sim.place==='spring_test'?seasonMapTest.state.spring:null;
+ const ctl=()=>sim.place==='summer_test'?seasonMapTest.state.summer:sim.place==='spring_test'?seasonMapTest.state.spring:sim.place==='autumn_test'?seasonMapTest.state.autumn:null;
  const wet=()=>{if(!inBay())return false;const c=ctl(),s=c.state;return !s.inside&&!s.market&&(window.summerFloat?.surfing||window.summerLife?.under?.()||c.deep(s.x));};
  let nextTry=0,lastChat=0;
  // owner 2026-11-10: while 爸妈 are right there in 茵菲谷 they do not phone or video her (and she does not phone them)
@@ -128,9 +128,9 @@
   return oStart.apply(this,arguments);};
  setInterval(()=>{if(!inSeason())return;const c=ctl();if(['phone_feed','phone_game'].includes(sim.act)&&sim.mode==='act'&&c?.state.target){seasonHouse.explore();seasonMapTest.state.autoAt=sim.t;}},300);
  // ---------------------------------------------------------------- nobody comes here, nobody is visited from here
- const far=()=>inBay()?'草帽湾在海岛上，离得太远了':'茵菲谷在山里，离得太远了';
+ const far=()=>inBay()?'草帽湾在海岛上，离得太远了':sim.place==='autumn_test'?'枫叶城太远了，回去再约':'茵菲谷在山里，离得太远了';
  const oInvite=inviteHome;inviteHome=function(id,proactive){if(inSeason()){const c=socialState.contacts.find(c=>c.id===id);
-   if(proactive&&c){const text=inBay()?'我现在在草帽湾呢，回去再约你！':'我在茵菲谷呢，回去再约你！';showSay(text);log(`${contactName(c)}想来家里坐坐，可我还在${inBay()?'草帽湾':'茵菲谷'}，约了回去再见。`);}
+   if(proactive&&c){const where=inBay()?'草帽湾':sim.place==='autumn_test'?'枫叶城':'茵菲谷',text=`我在${where}呢，回去再约你！`;showSay(text);log(`${contactName(c)}想来家里坐坐，可我还在${where}，约了回去再见。`);}
    else visitNotice('暂时不能邀请',far()+'，回去再约吧。');return false;}
   return oInvite.apply(this,arguments);};
  const oVisit=requestFriendVisit;requestFriendVisit=function(id,incoming){if(inSeason()){showHint(far()+'，回去再去做客吧。');return false;}return oVisit.apply(this,arguments);};

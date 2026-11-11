@@ -30,7 +30,7 @@ const seasonalTest=(function(){
  }
  state.spring=makeSeason_spring({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='spring_test'});
  state.summer=makeSeason_summer({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='summer_test'});
- state.autumn=makeSeason_autumn({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='autumn_test',needs:()=>sim.needs,now:()=>sim.t,heroName:()=>nameOf(),hint:showHint,exit:()=>start('home')},AUTUMN_MAP_DATA);
+ state.autumn=makeSeason_autumn({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='autumn_test',needs:()=>sim.needs,now:()=>sim.t,heroName:()=>nameOf(),hint:showHint,exit:()=>start('home'),get home(){return window.autumnHome||null;}},AUTUMN_MAP_DATA);
  for(const c of [state.spring,state.summer,state.autumn])root.append(c.root);
  widget.append(state.summer.wardrobe);
  const oldHolds=cardHolds;cardHolds=()=>oldHolds()||active()&&(!!ctl()?.state.inCabana||!!ctl()?.modalOpen);
@@ -148,7 +148,7 @@ const seasonalTest=(function(){
  const cityStart=startAct;startAct=function(name,quiet){if(inCity()&&name.startsWith('phone_')&&state.autumn.state.quest>=6)return cityStart(name,quiet);if(inCity()&&!(name==='go_home'&&state.exitRequested)){
   const need={cook:'hunger',eat:'hunger',snack:'hunger',sleep:'energy',bath:'hygiene',wash:'hygiene',toilet:'bladder'}[name]||(name==='go_home'?Object.entries(sim.needs).sort((a,b)=>a[1]-b[1])[0][0]:null);
   if(need)state.autumn.care(need);sync();return;}return cityStart(name,quiet);};
- const cityStep=step;step=function(gameDt,realDt){if(inCity()&&!cardHolds()&&!wiping){const c=state.autumn;c.stepNeeds(gameDt);const low=Object.entries(sim.needs).filter(([,v])=>v<30).sort((a,b)=>a[1]-b[1])[0];if(low&&!c.state.door&&!state.exitRequested)c.care(low[0]);}return cityStep(gameDt,realDt);};
+ const cityStep=step;step=function(gameDt,realDt){if(inCity()&&!cardHolds()&&!wiping){const c=state.autumn;c.stepNeeds(gameDt);const low=Object.entries(sim.needs).filter(([k,v])=>v<30&&k!=='social').sort((a,b)=>a[1]-b[1])[0];if(low&&!c.state.door&&!state.exitRequested)c.care(low[0]);}return cityStep(gameDt,realDt);};
  const oldCanCall=canReceiveCall;canReceiveCall=function(){return !(inCity()&&(state.autumn.state.quest<6||['energy','hygiene','bladder'].includes(state.autumn.state.service?.need)))&&oldCanCall();};
  const oldPrivacy=contactPrivacyBreak;contactPrivacyBreak=function(){if(inCity()){const need=state.autumn.state.service?.need;if(need==='hygiene')return '洗澡';if(need==='bladder')return '上厕所';}return oldPrivacy();};
  const oldSocialTick=tickSocial;tickSocial=function(...args){if(inCity()&&state.autumn.state.quest<6)return;return oldSocialTick(...args);};

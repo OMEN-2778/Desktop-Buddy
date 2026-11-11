@@ -351,6 +351,10 @@ function makeSeason_autumn(opts, DATA) {
             };
             return;
         }
+        if (goal.id === "home_use") {
+            opts.home?.arrived(goal.spot);
+            return;
+        }
         if (goal.id === "inside_service") {
             beginService(goal.need, "侦探事务所");
             return;
@@ -421,6 +425,7 @@ function makeSeason_autumn(opts, DATA) {
       {id:"exit",name:"出门",x:172,y:108,rect:[166,72,14,36]}
     ];
     function insideVisit(need) {
+        if (opts.home) return opts.home.need(need);   // the game shell: the home's own acts (map-test/autumn_home.js)
         const p = indoorSpots.find(p => p.need === need);
         return p && goTo(p.x, p.y, {
             id: "inside_service",
@@ -428,7 +433,7 @@ function makeSeason_autumn(opts, DATA) {
         });
     }
     function care(need) {
-        if (state.service || state.goal?.automatic || state.goal?.id === "inside_service") return;
+        if (state.service || state.goal?.automatic || state.goal?.id === "inside_service" || state.goal?.id === "home_use" || opts.home?.busy()) return;
         close();
         if (state.inside) insideVisit(need); else visit("detective_home", need, true);
     }
@@ -639,6 +644,7 @@ function makeSeason_autumn(opts, DATA) {
         ctx.save();
         ctx.translate(-state.camX, -state.camY);
         ctx.drawImage(state.inside ? images.get(DATA.inside) : bg, 0, 0);
+        if (state.inside) opts.home?.under(ctx);
         if (!state.inside) {
             drawRiver();
             drawSigns();
@@ -694,6 +700,7 @@ function makeSeason_autumn(opts, DATA) {
             }, null);
             ctx.restore();
         } else if (!privacy) opts.drawHero(ctx, state.x, state.y, state, null);
+        if (state.inside) opts.home?.over(ctx);
         if (!state.inside) {
             const lx = DATA.lift.x, ly = state.liftY;
             ctx.globalAlpha = state.riding ? .3 : 1;
@@ -755,7 +762,7 @@ function makeSeason_autumn(opts, DATA) {
         }
     }
     function hit(x, y) {
-        if (state.inside) return indoorSpots.find(p => x >= p.rect[0] && y >= p.rect[1] && x < p.rect[0] + p.rect[2] && y < p.rect[1] + p.rect[3]);
+        if (state.inside) return (opts.home?.spots || indoorSpots).find(p => x >= p.rect[0] && y >= p.rect[1] && x < p.rect[0] + p.rect[2] && y < p.rect[1] + p.rect[3]);
         const npc = npcRows().find(n => Math.abs(n.x - x) < 10 && y < n.y && y > n.y - 29);
         if (npc) return {
             ...npc,
@@ -777,7 +784,7 @@ function makeSeason_autumn(opts, DATA) {
         const p = hit(x, y);
         if (p) {
             if (state.inside) {
-                if (p.id === "exit") leave(); else goTo(p.x, p.y, {
+                if (p.id === "exit") leave(); else if (opts.home) opts.home.click(p.id); else goTo(p.x, p.y, {
                     id: "inside_service",
                     need: p.need
                 });
