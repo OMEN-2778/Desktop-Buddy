@@ -106,6 +106,12 @@
  function drawOutside(ctx,info){if(!ready())return;for(const a of Object.values(ag))if(a.w==='out'&&!a.hidden&&a.s===info.region)drawWalker(ctx,a,103);}
  // 爸妈帮忙浇水 (infei_farm.js): the parent who is about walks to the bed and waters it
  function doErrand(id,spot,done){errand[id]={...spot,stay:spot.stay??2.4,done};}
+ // a parent tells her something themselves (the help they gave this morning): when she is up and they are in sight,
+ // or, if she has not run into them within an hour of being up, they call it across the yard anyway
+ const tells=[];function tell(id,text){tells.push({id,text,at:sim.t});}
+ setInterval(()=>{try{if(!tells.length||!inSpring()||!ready()||!speed||asleep()||talkQ.length||storyLocked()||cardHolds()||sim.mode==='down'||farmCny())return;
+  if(typeof remoteSocial!=='undefined'&&remoteSocial)return;const i=tells.findIndex(t=>seen(ag[t.id])&&!ag[t.id].sleep||sim.t-t.at>60);if(i<0)return;
+  const t=tells.splice(i,1)[0];talkQ.push([t.id,t.text],['me',pick(['好，谢谢'+(t.id==='mom'?'妈':'爸')+'！','知道啦','哇，那我省事了','嗯嗯，辛苦啦'])]);talkAt=0;}catch(e){console.warn('parents tell',e);}},700);
  // ---------------------------------------------------------------- clicks: a word with them
  const TALK={
   mom:{morning:['早饭在锅里，自己盛。','今天天好，被子拿出去晒晒。','鸡蛋我捡了，今天下了五个。','头发扎起来，干活方便。'],
@@ -119,8 +125,8 @@
  const say=(who,text)=>{if(who==='me'){speak(text,true);return;}showSay(text,name(who)+'：',contact(who));};
  setInterval(()=>{if(!talkQ.length||!speed||realClock<talkAt||!inSpring())return;const [w,t]=talkQ.shift();say(w,t);talkAt=realClock+2.6;},200);
  function click(x,y,s){if(!ready())return false;
-  const near=Object.values(ag).filter(a=>!a.hidden&&!(a.sleep&&!a.op)&&(s.inside?a.w==='in'&&Math.abs(y-(FLOOR[a.f]-14))<15:a.w==='out'&&a.s===s.scene&&y>103-29&&y<105)).map(a=>({id:a.id,q:{x:a.x}}));
-  for(const {id,q}of near){if(Math.abs(x-q.x)>8)continue;
+  const near=Object.values(ag).filter(a=>!a.hidden&&!(a.sleep&&!a.op)&&(s.inside?a.w==='in'&&y>FLOOR[a.f]-27&&y<FLOOR[a.f]:a.w==='out'&&a.s===s.scene&&y>103-27&&y<103)).map(a=>({id:a.id,q:{x:a.x}}));
+  for(const {id,q}of near){if(Math.abs(x-q.x)>6)continue;
    const fc=farmCny();if(fc&&typeof CNY_TALK!=='undefined'){const m=mins(),pool=CNY_TALK[m<11*60?'morning':m<21*60?'day':'night'].filter(([w])=>w===id);const [,text]=pick(pool.length?pool:CNY_TALK.day);talkQ.unshift([id,text],['me',pick(CNY_REPLY)]);}
    else{if(typeof remoteSocial!=='undefined'&&remoteSocial){showHint('正在打电话，打完再聊');return true;}talkQ.length=0;talkQ.push(...liveTalk(id));}
    talkAt=0;if(sim.needs.social!=null)sim.needs.social=Math.min(100,sim.needs.social+6);return true;}
@@ -246,5 +252,5 @@
   if(p==='spring_test'&&visit?.pending){visit={day:today()};setTimeout(()=>{if(!inSpring())return;if(ready()&&!C().state.inside)X.hooks.pick.indoor();talkQ.push(['mom',pick(['来啦！路上累不累？','哎呀，怎么突然回来了，也不说一声！','正念叨你呢，你就到了。'])],['dad',pick(['我去杀只鸡。','屋里坐，外头风大。','行李给我。'])],['me',pick(['想你们了嘛！','回来看看你们～','饿了！'])]);
    log('飞到茵菲谷，爸妈都在家。');addSocialMemory?.(contact('mom'),'回茵菲谷看爸妈','坐飞机去茵菲谷，爸妈都在家等着。');},1800);}
   return r;};
- window.seasonParents={plan,here,farmCny,goSee,sleeping,doErrand,walkers:ag,get visit(){return visit;}};
+ window.seasonParents={plan,here,farmCny,goSee,sleeping,doErrand,tell,walkers:ag,get visit(){return visit;}};
 })();

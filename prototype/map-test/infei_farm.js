@@ -116,19 +116,33 @@ const infeiFarm=(()=>{
  const inRect=(x,y,[x0,x1,y0,y1])=>x>=x0&&x<=x1&&y>=y0&&y<=y1;
  // ================================================================ 爸妈帮忙浇水
  const parent={on:false,who:'mom',x:380,tx:null,done:null,t:0,n:null,water:0,bed:null};
- function planHelp(d){if(X.seasonAt(d)!==3&&Math.random()<.7)S().help={day:d,at:d*1440+Math.round((9+Math.random()*7)*60),who:Math.random()<.5?'mom':'dad',done:false};}
+ // owner 2026-11-12: the help comes early (before she is up), goes in the diary, and the parent tells her themselves, so
+ // she never walks out to water a bed that is already wet. Summer-ish seasons: up to two dry beds; winter: the animals' hay.
+ function planHelp(d){if(Math.random()<.7)S().help={day:d,at:d*1440+Math.round((6*60+10)+Math.random()*50),who:Math.random()<.5?'mom':'dad',done:false};}
  const pName=w=>w==='mom'?'妈妈':'爸爸';
- function dryBed(day){return X.F.open.find(i=>{const b=X.bedOf(i);return b&&!X.CROP[b.crop]?.dry&&!X.ripe(b)&&b.watered!==day;});}
- function helpOff(d){const h=S().help;if(!h||h.day!==d||h.done)return;h.done=true;const i=dryBed(d);if(i==null)return;X.bedOf(i).watered=d;log(`${pName(h.who)}回来了一趟，帮你给第 ${X.F.open.indexOf(i)+1} 块田浇了水。`);}
- function helpTick(info){const h=S().help;if(!h||h.day!==today()||h.done||sim.t<h.at||parent.on)return;
+ function dryBeds(day){return X.F.open.filter(i=>{const b=X.bedOf(i);return b&&!X.CROP[b.crop]?.dry&&!X.ripe(b)&&b.watered!==day;}).slice(0,2);}
+ const hungry=()=>X.seasonAt(today())===3?S().animals.filter(a=>a.fedDay!==today()):[];
+ function tellHer(who,text){window.seasonParents?.tell?.(who,text);}
+ function wateredNote(who,beds){const n=beds.map(i=>X.F.open.indexOf(i)+1).join('、');
+  log(`早上${pName(who)}帮你给第 ${n} 块地浇了水。`);
+  tellHer(who,pick(who==='mom'?[`早上我给你浇了第 ${n} 块地，今天不用再浇了。`,`第 ${n} 块地我早上顺手浇了，你看看别的。`]:[`你那第 ${n} 块地我早上浇过了。`,`起早给你浇了第 ${n} 块，剩下的你自己来。`]));}
+ function fedNote(who,list){log(`早上${pName(who)}把棚里的${list.length>2?'牲畜':list.map(a=>a.name).join('和')}都喂了草料。`);
+  tellHer(who,pick([`棚里的${list.length>2?'牛羊':list.map(a=>a.name).join('和')}我早上喂过了，你不用管了。`,'草料我早上添过了，今天不用喂了。']));}
+ // not in 茵菲谷 (or the day rolled by): it just happens
+ function helpOff(d){const h=S().help;if(!h||h.day!==d||h.done)return;h.done=true;
+  if(X.seasonAt(d)===3){const list=S().animals.filter(a=>a.fedDay!==d);if(!list.length)return;for(const a of list)a.fedDay=d;log(`${pName(h.who)}帮你把棚里的牲畜喂了。`);return;}
+  const beds=dryBeds(d);if(!beds.length)return;for(const i of beds)X.bedOf(i).watered=d;log(`${pName(h.who)}帮你给第 ${beds.map(i=>X.F.open.indexOf(i)+1).join('、')} 块地浇了水。`);}
+ // in 茵菲谷: the parent walks over (season_parents.js) and does it, bed by bed
+ function helpTick(){const h=S().help;if(!h||h.day!==today()||h.done||sim.t<h.at)return;
+  const sp=window.seasonParents;if(!sp?.doErrand){helpOff(today());return;}
+  if(X.seasonAt(today())===3){const list=hungry();h.done=true;if(!list.length)return;
+   sp.doErrand(h.who,{s:5,x:540,face:-1,fx:'grain',stay:3},()=>{const now=hungry();for(const a of now)a.fedDay=today();if(now.length)fedNote(h.who,now);});return;}
   if(X.rainedSoFar()){h.done=true;return;}
-  const s=C().state,i=dryBed(today());if(i==null){h.done=true;return;}
-  if(s.inside||s.scene!==4){helpOff(today());return;}   // she isn't watching: it just happens
-  const sp=window.seasonParents;   // owner 2026-11-12: the parent walks over from wherever they are, waters, and goes back to their day
-  if(sp?.doErrand){h.done=true;const [bx,,bw]=D.plots[i];sp.doErrand(h.who,{s:4,x:bx+bw+4,face:-1,fx:'water',stay:2.4},()=>{const b=X.bedOf(i);if(b&&b.watered!==today()){b.watered=today();log(`${pName(h.who)}回来了一趟，帮你给第 ${X.F.open.indexOf(i)+1} 块田浇了水。`);showHint(`${pName(h.who)}：顺路给你浇一块`);}});return;}
-  h.done=true;const c=socialState.contacts.find(c=>c.id===h.who),lk=c?.look||doll.PRESETS[h.who==='mom'?'f':'m'];
-  Object.assign(parent,{on:true,who:h.who,x:360,n:{look:lk,ramps:doll.rampsOf(lk),cache:new Map()},bed:i,water:0,t:C().state.time});
-  const [bx,,bw]=D.plots[i];parent.tx=bx+bw+4;parent.done=()=>{parent.water=2.4;showHint(`${pName(h.who)}：顺路给你浇一块`);};}
+  const beds=dryBeds(today());h.done=true;if(!beds.length)return;
+  const done=[],next=k=>{if(k>=beds.length){if(done.length)wateredNote(h.who,done);return;}const i=beds[k],[bx,,bw]=D.plots[i];
+   sp.doErrand(h.who,{s:4,x:bx+bw+4,face:-1,fx:'water',stay:2.4},()=>{const b=X.bedOf(i);if(b&&b.watered!==today()&&!X.ripe(b)){b.watered=today();done.push(i);}next(k+1);});};
+  next(0);}
+ setInterval(()=>{try{if(sim.place==='spring_test'&&X.F.phase==='done'&&speed)helpTick();}catch(e){console.warn('parents help',e);}},500);
  function drawParent(ctx,info){if(!parent.on||info.inside||info.region!==4)return;const t=C().state.time,dt=Math.min(.1,Math.max(0,t-parent.t));parent.t=t;
   if(parent.water>0){parent.water-=dt;const [bx,top,bw,bh]=D.plots[parent.bed];ctx.fillStyle='#9cc8ef';for(let k=0;k<6;k++){const xx=bx+bw-4-((k*7+Math.floor(t*20))%Math.min(30,bw)),yy=top+((k*5+Math.floor(t*30))%(bh+4));ctx.fillRect(xx,yy,1,2);}
    if(parent.water<=0){const b=X.bedOf(parent.bed);if(b&&b.watered!==today()){b.watered=today();log(`${pName(parent.who)}回来了一趟，帮你给第 ${X.F.open.indexOf(parent.bed)+1} 块田浇了水。`);}parent.tx=380;parent.done=()=>parent.on=false;}}
@@ -179,7 +193,7 @@ const infeiFarm=(()=>{
  X.pcState=pcState;
  // ================================================================ hooks into the farm
  X.hooks.day.push(d=>{helpOff(d);treeDay(d);animalDay(d);fundDay(d);planHelp(d+1);});
- X.hooks.draw.push((ctx,info)=>{C().state.noHerd=true;drawTrees(ctx,info);drawAnimals(ctx,info);if(!info.inside&&info.region===4)helpTick(info);drawParent(ctx,info);});
+ X.hooks.draw.push((ctx,info)=>{C().state.noHerd=true;drawTrees(ctx,info);drawAnimals(ctx,info);drawParent(ctx,info);});
  X.hooks.click.push((x,y,s)=>{if(s.inside)return false;
   if(s.scene===5){for(const i of D.pits.keys()){const [px,py]=pit(i);if(Math.abs(x-px)<12&&y>py-34&&y<py+4){openPit(i);return true;}}
    const a=se()!==3&&animalAt(x,y,5);if(a){openAnimal(a);return true;}
