@@ -102,6 +102,9 @@ const springFarm=(()=>{
  const until=f=>new Promise(res=>{const t=setInterval(()=>{if(f()){clearInterval(t);res();}},80);});
  const quiet=()=>T.state.autoAt=sim.t+1e9;   // no wandering off while 妈妈 is showing her round
  async function arrive(){
+  // a game loaded while she is in 茵菲谷: the main restore lands her here before this file has put the saved farm back,
+  // so the landing saw a blank farm and queued the welcome, which then replayed over a finished one (owner 2026-11-12)
+  if(F.phase==='done'||!inSpring()||!F.unlocked)return;
   // landing (owner 2026-11-03): she starts at the brook, the far left; 妈妈 waits at the farmhouse with a "!".
   // The player walks her over and clicks 妈妈: only then the welcome talk (and the farm quest) starts (greet).
   F.phase='meet';quiet();C().go(0,110);Object.assign(mom,{on:true,scene:3,inside:false,x:205,y:103,tx:null,facing:-1});
@@ -155,7 +158,7 @@ const springFarm=(()=>{
   await say('妈妈','种子钱也从那儿出，自己算着花。');
   await say(hero(),'那我先赚它两个币。');
   await say('妈妈','口气不小。我去镇上找你爸，晚上见！');
-  speech.hide();F.phase='done';momTo(400).then(()=>mom.on=false);
+  speech.hide();F.phase='done';F.welcomed=true;momTo(400).then(()=>mom.on=false);
   log('到了茵菲谷爸妈的农庄，妈妈把前头两块地交给了我。');
   T.state.autoAt=sim.t+60;setTimeout(()=>showHint(`点一下${nameOf()}，可以打开丢丢平板电脑看账`),900);
  }
@@ -302,7 +305,7 @@ const springFarm=(()=>{
  // update: the save said 'field' with beds planted, so the beds and her own life in 茵菲谷 never switched on, 2026-11-10)
  if(inSpring()&&!F.unlocked){F.unlocked=true;F.letter=Math.max(1,F.letter||0);}
  const worked=Object.keys(F.beds||{}).length||F.firstHarvest||(F.ledger||[]).length||F.work>0;
- if(F.phase!=='done'&&F.unlocked&&worked)F.phase='done';
+ if(F.phase!=='done'&&F.unlocked&&(worked||F.welcomed))F.phase='done';
  if(['arrive','room','field'].includes(F.phase))F.phase='none';
   speech.hide();mom.on=false;if(inSpring()&&F.unlocked&&F.phase!=='done')arriveAt('spring_test');return r;};
  // ---------------------------------------------------------------- test toolbar

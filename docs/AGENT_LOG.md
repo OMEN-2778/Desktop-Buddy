@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-12 Claude — 修：在茵菲谷存档后重进游戏，妈妈的欢迎剧情每次重播
+- 原因：读档时主 restore 先把她放回茵菲谷并调用 arriveAt，此时 spring_story.js 还没把存档里的农庄状态放回（F 是空白），于是排了 700ms 后的 arrive()；随后 F 换成存档（phase=done），定时器照样把 phase 改回 meet，妈妈又站在门口，且会被存进档。
+- 修：arrive() 开头若已 done / 不在茵菲谷 / 未解锁就不执行；欢迎结束时记 F.welcomed，读档时 welcomed 或种过地都直接算 done（已被改坏的旧档也能恢复）。
+- 已测（Playwright，内测页）：走完欢迎→在茵菲谷存档→重载：phase=done、妈妈不出现；回家存档→重载→再飞：不重播。
+
 ## 2026-11-12 Claude — 枫叶城完整剧本（MAPLE_FULL_SCRIPT）第二次对白重写
 - 主人：剧情对白太人机、不出色、没有人物风格、太 AI。主人选定只改未接入的完整剧本，内测页旧线性剧情（prototype/autumn/story.js）不动。
 - docs/story/MAPLE_FULL_SCRIPT.md 第三部分全部台词重写：去掉人人讲原则的调解腔、段末总结/金句、鞋柜/宠物店式包袱、满屏“！！～”；人物口吻改为具体习惯（阿简只回一半、先看东西；程青夹着工作和数字、刻薄后后悔；程铁山答非所问、只说“是我”；老郑抬杠、提孙子就卡；苏医生开单子式祈使句）。新增小回扣：面馆“还没去”→结尾“今天进去看看”；自行车“偷/借”。
