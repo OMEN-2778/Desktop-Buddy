@@ -84,8 +84,10 @@ const infeiHome=(function(){
  function sleepers(ctx,she){
   if(!covers){covers={};for(const [k,u]of Object.entries(INFEI_COVERS)){const im=new Image();im.src=u;covers[k]=im;}}
   const m=sim.t%1440,night=m>=22*60||m<6*60;
-  if(night&&!springFarm.mom.on&&!window.seasonParents?.farmCny()&&covers.parents?.complete){const [bx,by]=BEDS.parents;dadN??=npcOf('dad','m');
-   ctx.drawImage(lying(npcCanvas(dadN,SLEEPY,'stand')),bx+HEAD[0]+4,by+HEAD[1]-5);ctx.drawImage(lying(npcCanvas(springFarm.momNpc(),SLEEPY,'stand')),bx+HEAD[0],by+HEAD[1]);ctx.drawImage(covers.parents,bx,by);}
+  // 爸妈 lie down when they have walked up to their bed (season_parents.js), not on the stroke of 22:00
+  const sp=window.seasonParents,dz=sp?.sleeping?.('dad'),mz=sp?.sleeping?.('mom');
+  if((dz||mz)&&!springFarm.mom.on&&covers.parents?.complete){const [bx,by]=BEDS.parents;dadN??=npcOf('dad','m');
+   if(dz)ctx.drawImage(lying(npcCanvas(dadN,SLEEPY,'stand')),bx+HEAD[0]+4,by+HEAD[1]-5);if(mz)ctx.drawImage(lying(npcCanvas(springFarm.momNpc(),SLEEPY,'stand')),bx+HEAD[0],by+HEAD[1]);ctx.drawImage(covers.parents,bx,by);}
   if(she&&covers.mine?.complete){const [bx,by]=BEDS.mine;ctx.drawImage(lyingHead(SLEEPY),bx+HEAD[0],by+HEAD[1]);ctx.drawImage(covers.mine,bx,by);}
  }
  const HEAD=[2,8];

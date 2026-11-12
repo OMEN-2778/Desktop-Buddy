@@ -1,4 +1,4 @@
-// 爸妈住在茵菲谷（owner 2026-11-06）：
+// 爸妈住在茵菲谷（owner 2026-11-06）。2026-11-12 起他们像她一样真的走动：进出家门、上下楼、走过一块块地、去镇上再回来（见「真的走动」一节）。
 //  - 平时：早上、傍晚妈妈在灶台、爸爸在饭桌，晚上两人坐长椅，22 点后在自己床上（infei_home.js 画睡觉）；白天下地/去镇上
 //    （infei_farm.js 帮忙浇水，现在七成的日子会来）。点爸妈说一句。她在屋里有爸妈陪着，社交慢慢涨。
 //  - 春节她在茵菲谷：爸妈在农舍过年，主世界春节的每一步都有（贴春联、包饺子、午饭、压岁钱、三连问、年夜饭、春晚、零点、睡觉），
@@ -29,23 +29,83 @@
   if(v&&m>=8*60&&m<17*60+30){o.mom=Math.floor(m/90)%2?'tableL':cook;o.dad=Math.floor(m/120)%2?'tableR':'setteeR';}
   if(infeiHome.svc?.id==='settee'&&o.dad==='setteeR')o.dad='tableR';   // she took the middle of the bench: 爸爸 moves to the table
   return o;}
- // who is in the house right now (and where)
- const pos={};
- // owner 2026-11-10: no popping in and out — they come in through the door and walk to their place, and walk out again
- const DOOR=60;
- function here(all){const p=plan(),out=[];for(const id of ['mom','dad']){const k=p[id];
-  if(!k){const q=pos[id];if(!q)continue;if(!C().state.inside||!speed||Math.abs(q.x-DOOR)<1){delete pos[id];continue;}q.k=null;q.tx=DOOR;q.out=true;if(all)out.push({id,q,pose:'stand',k:null});continue;}
-  const [x,pose]=AT[k];const q=pos[id]||(pos[id]={x:C().state.inside&&speed?DOOR:x,born:realClock});q.out=false;if(q.k!==k){q.k=k;q.tx=x;}out.push({id,q,pose,k});}return out;}
- // ---------------------------------------------------------------- drawing (inside the farmhouse)
- function drawIn(ctx){
-  if(!ready())return;const list=here(true),dt=Math.min(.1,realClock-(drawIn.t||realClock));drawIn.t=realClock;
-  const s=C().state;
-  for(const {id,q,pose}of list){const d=q.tx-q.x,moving=Math.abs(d)>.5;if(moving&&speed)q.x+=Math.sign(d)*Math.min(Math.abs(d),34*dt);
-   const sit=!moving&&pose==='sit',a=Math.min(1,(realClock-q.born)/.6);
-   const f={expr:sit?'happy':'neutral',look:s.inside?Math.sign(s.x-q.x)||1:1,bob:moving?Math.floor(realClock*5)%2:0,sway:moving?Math.floor(realClock*3)%2:0,wave:null};
-   const p=sit?'sit':moving?['walkL','stand','walkR','stand'][Math.floor(realClock*6)%4]:'stand';
-   ctx.save();ctx.globalAlpha=a;ctx.drawImage(npcCanvas(npcOf(id),f,p,false),Math.round(q.x)-10,108-27-(sit?(q.k?.startsWith('settee')?5:3):0));ctx.restore();}
+ // ================================================================ 爸妈像她一样真的走动（owner 2026-11-12：不要闪现）
+ // Each parent is a little walker with a place in the valley (in the farmhouse on a floor, out in a field, or gone to town).
+ // The day's plan names a spot; they walk there the way she does: across the room, up the stairs (x 61), through the door
+ // (inside x 51 / the yard x 182), field to field over the scene edges, off the brook's left edge to town and back.
+ const WIDTH=[342,342,342,342,342,684],FLOOR=[108,50],STAIR=61,DOOR_IN=51,DOOR_OUT=182;
+ const SPOT={stove:{in:1,f:0,x:262},jar:{in:1,f:0,x:300},tableL:{in:1,f:0,x:200,pose:'sit'},tableR:{in:1,f:0,x:216,pose:'sit'},
+  setteeL:{in:1,f:0,x:99,pose:'sit'},setteeR:{in:1,f:0,x:124,pose:'sit'},kitchen:{in:1,f:0,x:240},
+  bedM:{in:1,f:1,x:236,pose:'sleep'},bedD:{in:1,f:1,x:256,pose:'sleep'},
+  coop:{s:3,x:82,face:-1,fx:'grain',roam:[72,104]},yardL:{s:3,x:166,face:1},yardR:{s:3,x:198,face:-1},
+  field:{s:4,x:150,roam:[40,300],fx:'weed'},orchard:{s:5,x:190,roam:[70,300]},pasture:{s:5,x:520,roam:[410,640]},town:{away:1}};
+ const ag={mom:{id:'mom'},dad:{id:'dad'}};let errand={};
+ // the rest of the day: chores outside when the house plan has nothing for them
+ function outdoor(id,m){const d=today(),winter=springFarm.seasonAt(d)===3,f=k=>winter&&k==='field'?'jar':k;
+  if(m>=22*60||m<6*60)return id==='mom'?'bedM':'bedD';
+  if(m>=21*60+30)return id==='mom'?'kitchen':'tableR';
+  if(id==='mom'){if(m<6*60+30)return 'kitchen';if(m<9*60+30)return 'coop';if(m<11*60+30)return d%4===1?'town':f('field');
+   return f(['field','orchard','coop'][Math.floor(m/90)%3]);}
+  if(m<7*60)return 'pasture';if(m<11*60+30)return d%4===3?'town':Math.floor(m/80)%2?'pasture':'orchard';
+  return f(['field','pasture','orchard'][Math.floor(m/100)%3]);}
+ function want(id){const e=errand[id];if(e)return e;const fc=farmCny();
+  if(fc){if(fc.step.id==='couplets')return id==='mom'?'yardL':'yardR';const w=fc.where[id];if(w)return w;}
+  return plan()[id]||outdoor(id,mins());}
+ const spotOf=k=>typeof k==='object'?k:SPOT[k];
+ function snap(a){const k=want(a.id),t=spotOf(k);a.k=k;a.ops=[];a.op=null;a.idle=0;a.wander=null;
+  if(t.away)Object.assign(a,{w:'away'});else if(t.in)Object.assign(a,{w:'in',f:t.f,x:t.x});else Object.assign(a,{w:'out',s:t.s,x:t.x});}
+ function route(a,t){const r=[];let c={w:a.w,s:a.s,f:a.f};
+  const out=()=>{if(c.w==='in'){if(c.f===1)r.push({walk:STAIR},{stairs:0});r.push({walk:DOOR_IN},{door:'out'});c={w:'out',s:3};}
+   else if(c.w==='away'){r.push({enter:1});c={w:'out',s:0};}};
+  const to=s=>{while(c.s<s){r.push({edge:1});c.s++;}while(c.s>s){r.push({edge:-1});c.s--;}};
+  if(t.away){out();to(0);r.push({walk:-8},{leave:1});return r;}
+  if(t.in){if(c.w!=='in'){out();to(3);r.push({walk:DOOR_OUT},{door:'in'});c={w:'in',f:0};}
+   if(c.f!==t.f)r.push({walk:STAIR},{stairs:t.f});r.push({walk:t.x});return r;}
+  out();to(t.s);r.push({walk:t.x});return r;}
+ const seen=a=>inSpring()&&(a.w==='in'?C().state.inside:a.w==='out'&&!C().state.inside&&C().state.scene===a.s);
+ function step(a,dt){
+  const k=want(a.id),same=JSON.stringify(k)===JSON.stringify(a.k);
+  if(!same&&(!a.op||a.op.walk!=null)){a.k=k;a.ops=route(a,spotOf(k));a.op=null;a.wander=null;a.sleep=false;}
+  const v=34*dt*(seen(a)?1:5);a.moving=false;
+  if(!a.op&&a.ops.length){a.op=a.ops.shift();a.t=0;}
+  const o=a.op;
+  if(o){a.t+=dt;
+   if(o.walk!=null||o.edge){const tx=o.walk!=null?o.walk:o.edge<0?-8:WIDTH[a.s]+8,d=tx-a.x;a.moving=Math.abs(d)>.5;if(a.moving)a.face=Math.sign(d);
+    if(Math.abs(d)<=v){a.x=tx;if(o.edge){a.s+=o.edge;a.x=o.edge<0?WIDTH[a.s]+8:-8;}a.op=null;}else a.x+=Math.sign(d)*v;}
+   else if(o.door){a.hidden=true;if(a.t>.65){a.hidden=false;if(o.door==='out')Object.assign(a,{w:'out',s:3,x:DOOR_OUT});else Object.assign(a,{w:'in',f:0,x:DOOR_IN});a.op=null;}}
+   else if(o.stairs!=null){a.moving=true;a.climb=Math.min(1,a.t/1.6);a.face=1;if(a.climb>=1){a.f=o.stairs;a.climb=null;a.op=null;}}
+   else if(o.leave){a.w='away';a.op=null;}else if(o.enter){Object.assign(a,{w:'out',s:0,x:-8});a.op=null;}
+   return;}
+  // arrived: sleep / pottering about a field / the errand
+  const t=spotOf(a.k);a.sleep=t.pose==='sleep';
+  if(t.stay!=null){a.stayed=(a.stayed||0)+dt;if(a.stayed>=t.stay){a.stayed=0;const e=errand[a.id];delete errand[a.id];e?.done?.();}return;}
+  if(t.roam&&!a.wander){a.idle+=dt;if(a.idle>6+Math.random()*10){a.idle=0;a.wander={x:t.roam[0]+Math.random()*(t.roam[1]-t.roam[0])};}}
+  if(a.wander){const d=a.wander.x-a.x;a.moving=Math.abs(d)>.5;if(a.moving){a.face=Math.sign(d);a.x+=Math.sign(d)*Math.min(Math.abs(d),v*.6);}else a.wander=null;}}
+ let lastTick=realClock,wasIn=false;
+ setInterval(()=>{try{const dt=Math.min(.25,Math.max(0,realClock-lastTick));lastTick=realClock;
+  if(!inSpring()||!ready()){wasIn=false;return;}
+  if(!wasIn){wasIn=true;snap(ag.mom);snap(ag.dad);return;}
+  if(!speed)return;for(const a of Object.values(ag))step(a,dt);}catch(e){console.warn('parents walk',e);}},50);
+ // compatibility: who is in the farmhouse (with the old shape {id,q:{x,tx,out},pose,k})
+ function here(){if(!ready()||!inSpring())return [];const up=C().state.y<80?1:0;
+  return Object.values(ag).filter(a=>a.w==='in'&&!a.hidden&&!a.sleep&&a.climb==null).map(a=>({id:a.id,q:{x:a.x,tx:a.op||a.wander?NaN:a.x,out:a.f!==up},pose:spotOf(a.k).pose||'stand',k:a.k}));}
+ const sleeping=id=>inSpring()&&ready()&&ag[id].w==='in'&&ag[id].sleep&&!ag[id].op;
+ // ---------------------------------------------------------------- drawing
+ function drawWalker(ctx,a,feet){const t=spotOf(a.k),arrived=!a.op&&!a.wander,sit=arrived&&t.pose==='sit',s=C().state;
+  const look=a.moving?a.face:arrived&&t.face?t.face:Math.sign(s.x-a.x)||1;
+  const f={expr:sit?'happy':'neutral',look,bob:a.moving?Math.floor(realClock*5)%2:0,sway:a.moving?Math.floor(realClock*3)%2:0,wave:null};
+  const p=sit?'sit':a.moving?['walkL','stand','walkR','stand'][Math.floor(realClock*6)%4]:'stand';
+  ctx.drawImage(npcCanvas(npcOf(a.id),f,p,false),Math.round(a.x)-10,feet-27-(sit?(String(a.k).startsWith('settee')?5:3):0));
+  if(arrived&&t.fx==='grain'){ctx.fillStyle='#e8cf7a';for(let i=0;i<4;i++){const u=(realClock*1.3+i/4)%1;ctx.fillRect(Math.round(a.x-6-u*10-i),Math.round(feet-14+u*13),1,1);}}
+  if(arrived&&t.fx==='water'){ctx.fillStyle='#9cc8ef';for(let k=0;k<6;k++){const u=(realClock*1.6+k/6)%1;ctx.fillRect(Math.round(a.x-8-k*3),Math.round(feet-16+u*16),1,2);}}
+  if(arrived&&t.fx==='weed'&&Math.floor(realClock*1.5+a.x)%4===0){ctx.fillStyle='#7aa35a';ctx.fillRect(Math.round(a.x+a.face*7),feet-4-Math.floor(realClock*6)%3,2,1);}}
+ function drawIn(ctx){if(!ready())return;
+  for(const a of Object.values(ag)){if(a.w!=='in'||a.hidden||(a.sleep&&!a.op))continue;
+   const feet=a.climb!=null?FLOOR[1-a.op.stairs]+(FLOOR[a.op.stairs]-FLOOR[1-a.op.stairs])*a.climb:FLOOR[a.f];if(a.climb!=null)a.x=STAIR;drawWalker(ctx,a,Math.round(feet));}
   if(farmCny())drawCnyInside(ctx);}
+ function drawOutside(ctx,info){if(!ready())return;for(const a of Object.values(ag))if(a.w==='out'&&!a.hidden&&a.s===info.region)drawWalker(ctx,a,103);}
+ // 爸妈帮忙浇水 (infei_farm.js): the parent who is about walks to the bed and waters it
+ function doErrand(id,spot,done){errand[id]={...spot,stay:spot.stay??2.4,done};}
  // ---------------------------------------------------------------- clicks: a word with them
  const TALK={
   mom:{morning:['早饭在锅里，自己盛。','今天天好，被子拿出去晒晒。','鸡蛋我捡了，今天下了五个。','头发扎起来，干活方便。'],
@@ -58,8 +118,9 @@
  let talkQ=[],talkAt=0;
  const say=(who,text)=>{if(who==='me'){speak(text,true);return;}showSay(text,name(who)+'：',contact(who));};
  setInterval(()=>{if(!talkQ.length||!speed||realClock<talkAt||!inSpring())return;const [w,t]=talkQ.shift();say(w,t);talkAt=realClock+2.6;},200);
- function click(x,y,s){if(!s.inside||!ready())return false;
-  for(const {id,q,pose}of here()){if(Math.abs(x-q.x)>8||y<108-28||y>109)continue;
+ function click(x,y,s){if(!ready())return false;
+  const near=Object.values(ag).filter(a=>!a.hidden&&!(a.sleep&&!a.op)&&(s.inside?a.w==='in'&&Math.abs(y-(FLOOR[a.f]-14))<15:a.w==='out'&&a.s===s.scene&&y>103-29&&y<105)).map(a=>({id:a.id,q:{x:a.x}}));
+  for(const {id,q}of near){if(Math.abs(x-q.x)>8)continue;
    const fc=farmCny();if(fc&&typeof CNY_TALK!=='undefined'){const m=mins(),pool=CNY_TALK[m<11*60?'morning':m<21*60?'day':'night'].filter(([w])=>w===id);const [,text]=pick(pool.length?pool:CNY_TALK.day);talkQ.unshift([id,text],['me',pick(CNY_REPLY)]);}
    else{if(typeof remoteSocial!=='undefined'&&remoteSocial){showHint('正在打电话，打完再聊');return true;}talkQ.length=0;talkQ.push(...liveTalk(id));}
    talkAt=0;if(sim.needs.social!=null)sim.needs.social=Math.min(100,sim.needs.social+6);return true;}
@@ -145,9 +206,9 @@
   const due=CNY_STEPS.filter(s=>m>=s.at&&!fc.done.has(s.id));due.forEach((s,i)=>{fc.done.add(s.id);runStep(s,i===due.length-1&&m-s.at<50);});
   if(fc.leaving&&!talkQ.length&&realClock>talkAt+2)fc.gone=true;}catch(e){console.warn('farm cny',e);}},500);
  // the couplets step: they stand at the front door outside
- function drawOut(ctx,info){if(info.region!==HOME)return;
+ function drawOut(ctx,info){drawOutside(ctx,info);if(info.region!==HOME)return;
   if(fc.couplets&&fc.day!=null&&today()-fc.day<=1)drawCouplets(ctx);
-  const f=farmCny();if(f&&f.step.id==='couplets')['mom','dad'].forEach((id,i)=>{const fr={expr:'happy',look:i?-1:1,bob:0,sway:0,wave:null};ctx.drawImage(npcCanvas(npcOf(id),fr,'stand',false),166+i*32-10,103-27);});
+  const f=farmCny();
   if(f&&mins()>=19*60)fireworks(ctx);}
  function drawCouplets(ctx){ctx.fillStyle='#c8312f';ctx.fillRect(169,66,3,30);ctx.fillRect(192,66,3,30);ctx.fillRect(172,62,20,3);
   ctx.fillStyle='#f2b33d';for(let k=0;k<5;k++){ctx.fillRect(170,70+k*5,1,1);ctx.fillRect(193,70+k*5,1,1);}for(let k=0;k<4;k++)ctx.fillRect(175+k*4,63,1,1);
@@ -185,5 +246,5 @@
   if(p==='spring_test'&&visit?.pending){visit={day:today()};setTimeout(()=>{if(!inSpring())return;if(ready()&&!C().state.inside)X.hooks.pick.indoor();talkQ.push(['mom',pick(['来啦！路上累不累？','哎呀，怎么突然回来了，也不说一声！','正念叨你呢，你就到了。'])],['dad',pick(['我去杀只鸡。','屋里坐，外头风大。','行李给我。'])],['me',pick(['想你们了嘛！','回来看看你们～','饿了！'])]);
    log('飞到茵菲谷，爸妈都在家。');addSocialMemory?.(contact('mom'),'回茵菲谷看爸妈','坐飞机去茵菲谷，爸妈都在家等着。');},1800);}
   return r;};
- window.seasonParents={plan,here,farmCny,goSee,get visit(){return visit;}};
+ window.seasonParents={plan,here,farmCny,goSee,sleeping,doErrand,walkers:ag,get visit(){return visit;}};
 })();

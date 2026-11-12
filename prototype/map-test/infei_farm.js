@@ -124,6 +124,8 @@ const infeiFarm=(()=>{
   if(X.rainedSoFar()){h.done=true;return;}
   const s=C().state,i=dryBed(today());if(i==null){h.done=true;return;}
   if(s.inside||s.scene!==4){helpOff(today());return;}   // she isn't watching: it just happens
+  const sp=window.seasonParents;   // owner 2026-11-12: the parent walks over from wherever they are, waters, and goes back to their day
+  if(sp?.doErrand){h.done=true;const [bx,,bw]=D.plots[i];sp.doErrand(h.who,{s:4,x:bx+bw+4,face:-1,fx:'water',stay:2.4},()=>{const b=X.bedOf(i);if(b&&b.watered!==today()){b.watered=today();log(`${pName(h.who)}回来了一趟，帮你给第 ${X.F.open.indexOf(i)+1} 块田浇了水。`);showHint(`${pName(h.who)}：顺路给你浇一块`);}});return;}
   h.done=true;const c=socialState.contacts.find(c=>c.id===h.who),lk=c?.look||doll.PRESETS[h.who==='mom'?'f':'m'];
   Object.assign(parent,{on:true,who:h.who,x:360,n:{look:lk,ramps:doll.rampsOf(lk),cache:new Map()},bed:i,water:0,t:C().state.time});
   const [bx,,bw]=D.plots[i];parent.tx=bx+bw+4;parent.done=()=>{parent.water=2.4;showHint(`${pName(h.who)}：顺路给你浇一块`);};}
