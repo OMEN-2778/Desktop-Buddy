@@ -145,7 +145,13 @@ const summerLife=(function(){
  const say=(who,words)=>new Promise(res=>speech.show(who,words,{special:true,advance:res}));
  const ask=(who,words,opts)=>new Promise(res=>speech.show(who,words,{special:true,choices:opts.map((label,i)=>({label,on:()=>res(i)}))}));
  // walk there, but never hang: the map's own wandering can replace the target (and drop its callback)
- const walk=x=>new Promise(res=>{speech.hide();let done=false;const end=()=>{if(!done){done=true;clearInterval(t);res();}};C().goTo(x,'walk',0,end);const t0=performance.now(),t=setInterval(()=>{const s=C().state;if(Math.abs(s.x-x)<4)end();else if(performance.now()-t0>8000){s.x=x;end();}else if(!s.target)C().goTo(x,'walk',0,end);},200);});
+ const walk0=x=>new Promise(res=>{speech.hide();let done=false;const end=()=>{if(!done){done=true;clearInterval(t);res();}};C().goTo(x,'walk',0,end);const t0=performance.now(),far=8000+Math.abs(C().state.x-x)*30,t=setInterval(()=>{const s=C().state;if(Math.abs(s.x-x)<4)end();else if(performance.now()-t0>far){s.x=x;end();}else if(!s.target)C().goTo(x,'walk',0,end);},200);});
+ // a player 2026-11-12: a festival started from the bar while she was in the lodge, and she walked right through the wall
+ // towards a spot on the beach. Any walk to a beach spot first takes her out through the lodge's door.
+ const walk=async x=>{const c=C();if(c.state.inside){c.leave();const t0=performance.now();
+   await new Promise(r=>{const t=setInterval(()=>{const s=c.state;if(!s.inside&&!s.door||performance.now()-t0>4000){clearInterval(t);r();}else if(s.inside&&!s.door&&!s.target)c.leave();},150);});
+   if(c.state.inside){c.beginDoor('bay');await new Promise(r=>setTimeout(r,900));}}
+  return walk0(x);};
  function speakBay(t){try{speak(t,true);}catch(e){showHint(t);}}
  async function scene(fn){if(busy)return;busy=true;closeRing();try{await fn();}finally{speech.hide();busy=false;}}
  const ML_=(id,name,emo,pts=2)=>{ML['bay_'+id]={name,emo,pts,min:240};return 'bay_'+id;};
