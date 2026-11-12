@@ -576,57 +576,70 @@ class City:
    t=(i+1)/n;cx=x+w*(.5+r.uniform(-.38,.38)*(.4+.6*t));rx=max(4,r.uniform(.2,.33)*w*(.6+.5*t));ry=max(3,rx*r.uniform(.55,.8))
    self.boulder(cx,y+h*t-ry,rx,ry,r.random()<.5)
  def cliff(self,x0,x1,y0,y1,seed):
-  """Natural rock face (darker and warmer than the dressed masonry): fractured blocks, each with a lit top, a shaded
-  right edge and a crack; ragged outline; moss and tufts on the ledges."""
-  r=random.Random(seed);R=self.R;G=(P.leaf if self.clean else P.sage);x=x0
-  while x<x1:
-   w=min(r.randrange(8,17),x1-x);edge=(x==x0 or x+w>=x1);y=y0+r.randrange(0,16)+(r.randrange(8,26) if edge else 0)
-   while y<y1:
-    h=min(r.randrange(10,34),y1-y);dx=r.randrange(-2,3)+((r.randrange(0,7)*(1 if x==x0 else -1)) if edge else 0);ww=w+r.randrange(0,3)
-    col=r.choice([R[1],R[1],R[2],R[1],R[0]]);self.box(x+dx,y,ww,h,col)
-    self.box(x+dx,y,ww,2,R[3]);self.box(x+dx,y,max(2,ww//2),1,R[4] if len(R)>4 else R[3]);self.box(x+dx+ww-2,y+2,2,h-2,R[0]);self.box(x+dx,y+2,1,h-2,R[2])
-    if h>16:self.line([(x+dx+r.randrange(2,ww-2),y+4),(x+dx+r.randrange(2,ww-2),y+h-3)],R[0])
-    k=r.random()
-    if k<.3:
-     for j in range(r.randrange(2,5)):self.box(x+dx+1+j*2+r.randrange(2),y-1-r.randrange(2),2,2,G[2+j%2])
-    elif k<.4:self.box(x+dx+1,y,ww-3,1,G[2]);self.box(x+dx+2,y+1,ww-6,1,G[1])
-    y+=h
-   x+=w
- def fall(self,x,y0,y1,w,seed):
-  """Owner 2026-11-11 ("瀑布太简陋"): a sheet of water dropping from a rounded lip in a dark recess: the sheet widens
-  and frays as it falls, brighter streaks of uneven length, a shaded right edge, spray off both sides, a ledge rock
-  splitting it part-way, and a cloud of mist over the foot. Polluted: a thin murky run."""
-  r=random.Random(seed);clear=self.stage>=2;R=self.R
-  if not clear:x+=w//3;w=max(5,w//2)
-  A,B,C2,Dk,Sh=(P.teal[4],P.snow[3],P.teal[3],P.teal[1],P.teal[2]) if clear else (P.sage[2],P.oat[2],P.sage[1],P.walnut[1],P.sage[1])
-  H=y1-y0;el=r.uniform(0,6);er=r.uniform(0,6)
-  edge=lambda t,ph:round(1.2*math.sin(t*.37+ph)+.8*math.sin(t*.11+ph*2))
-  for y in range(y0-3,y1+2):                                # the recess behind the water: wet dark rock
-   t=y-y0;g=round(4*max(0,t)/H);self.box(x-3-g+edge(t,el),y,w+6+2*g,1,R[0])
+  """Natural rock face (owner 2026-11-12: "瀑布还是太难看"): bedded stone, not pillars. Uneven courses of slabs, each
+  slab its own tone with a lit top edge, a shadow under it and a shaded right end; some set back, some standing proud;
+  the outline ragged on both sides."""
+  r=random.Random(seed);R=self.R;G=(P.leaf if self.clean else P.sage)
+  # the gorge's outline swells and pinches; buttresses stand out at both sides
+  L=lambda y:x0+12+round(9*math.sin(y*.021+seed)+4*math.sin(y*.07)+2*math.sin(y*.19));Rt=lambda y:x1-12+round(9*math.sin(y*.024+seed*2)+4*math.sin(y*.063+1)+2*math.sin(y*.17))
+  mid=(x0+x1)/2
+  self.poly([(L(y),y) for y in range(y0,y1,3)]+[(Rt(y),y) for y in range(y1,y0,-3)],R[1])
+  y=y0+r.randrange(0,5)
+  while y<y1:
+   h=min(r.choice([5,6,7,8,9,10,12,14,17]),y1-y);x=L(y)-r.randrange(0,8);slope=r.uniform(-.05,.05)
+   while x<Rt(y):
+    w=r.choice([8,10,12,14,17,20,24,30,36]);xa=max(x,L(y+h//2));xb=min(x+w,Rt(y+h//2));off=r.randrange(-1,2)+round(slope*(x-mid))
+    if xb-xa>2:
+     k=r.random()+(.18 if abs((xa+xb)/2-mid)>(x1-x0)*.3 else -.12)       # lighter out on the buttresses, darker in the recess the water runs down
+     t=0 if k<.1 else 1 if k<.5 else 2 if k<.85 else 3                    # 0: a slab set back in shadow
+     self.box(xa,y+off,xb-xa,h,R[t])
+     self.box(xa,y+off,xb-xa,1,R[min(4,t+2)]);self.box(xa,y+off+1,max(2,(xb-xa)*2//3),1,R[min(4,t+1)])   # lit top, brighter towards the left
+     self.box(xa,y+off+h-1,xb-xa,1,R[0]);self.box(xb-1,y+off+1,1,h-1,R[max(0,t-1)])
+     if h>9 and r.random()<.4:cxk=xa+r.randrange(2,max(3,xb-xa-2));self.line([(cxk,y+off+3),(cxk+r.randrange(-2,3),y+off+h-2)],R[0])
+     if r.random()<.22:
+      for j in range(r.randrange(2,6)):self.box(xa+1+j*2,y+off-1-(j%2),2,2,G[2+j%2])     # moss on the ledge
+    x+=w
+   y+=h
+ def fall(self,cx,y0,y1,w0,w1,seed):
+  """One leap of the cascade: a veil of water wider at the foot than at the lip. Dark wet rock shows behind it; the
+  middle runs white and bright, the edges thin out into separate threads; it breaks white over a ledge part-way;
+  it lands in a mound of foam under a soft mist. Polluted: half as wide, murky."""
+  r=random.Random(seed);clear=self.stage>=2;R=self.R;H=y1-y0
+  if not clear:w0=max(4,w0//2);w1=max(5,w1//2)
+  A,B,C2,Dk=(P.teal[4],P.snow[3],P.teal[3],P.teal[2]) if clear else (P.sage[2],P.oat[2],P.sage[1],P.walnut[2])
+  wob=lambda t,ph:1.3*math.sin(t*.21+ph)+.7*math.sin(t*.07+ph*3)
+  wd=lambda t:w0+(w1-w0)*(t/H)**.8
+  for y in range(y0-3,y1+3):                                # wet rock behind
+   t=max(0,min(H,y-y0));w=wd(t);self.box(round(cx-w/2-3+wob(t,seed)),y,round(w+6),1,R[0])
+  cols={}                                                   # each thread of water keeps its own brightness all the way down
+  for j in range(-w1,w1+1):k=r.random();cols[j]=B if k<.42 else A if k<.8 else C2
+  breaks=[y0+round(H*f)+r.randrange(-4,5) for f in ((.36,.68) if H>90 else (.5,))]
   for y in range(y0,y1):
-   t=y-y0;g=round(4*t/H);l=x-g//2+edge(t,el)*(t>6);rr=x+w+g-g//2+edge(t,er)*(t>6)
-   self.box(l,y,rr-l,1,A);self.box(rr-2,y,2,1,Sh);self.box(l,y,1,1,C2)
-   if t>8 and r.random()<.18:self.box(l-1-r.randrange(2),y,1,1,B)          # spray off the edges
-   if t>8 and r.random()<.18:self.box(rr+r.randrange(2),y,1,1,B)
-  for k in range(w*2):                                      # streaks: long bright ones, short mid ones
-   xx=x+r.randrange(w);y=y0+r.randrange(4)
-   while y<y1-2:
-    L=r.randrange(6,22);g=round(4*(y-y0)/H);col=B if r.random()<.55 else C2
-    self.box(xx-g//2+round((xx-x)/max(1,w)*g),y,1,min(L,y1-y),col);y+=L+r.randrange(3,12)
-  # the lip: water bulging over a rounded edge, lit on top
-  self.box(x-1,y0-2,w+2,1,C2);self.box(x-1,y0-1,w+2,2,B);self.box(x,y0+1,w,1,C2);self.box(x+w-1,y0-1,1,3,Sh)
-  self.boulder(x-5,y0+1,5,3,True);self.boulder(x+w+5,y0+2,6,4,True)
-  yy=y0+H*r.uniform(.45,.6);xx=x+w*r.uniform(.35,.65)               # a ledge rock splits the sheet
-  self.boulder(xx,yy,4,3,True);self.box(xx-5,yy-4,11,1,B);self.box(xx-4,yy-3,9,1,C2)
-  for s_ in (-1,1):
-   for k in range(10):self.box(xx+s_*(4+k//4),yy+k,1,1,B if k%3 else C2)
-  mist=Image.new('RGBA',self.im.size);md=ImageDraw.Draw(mist)   # mist over the foot: soft, see-through
-  for j in range(9):
-   cx=x+w/2+r.uniform(-w*.9,w*.9);cy=y1-2-r.uniform(0,10);rx=r.uniform(5,10);ry=rx*.55
-   md.ellipse((cx-rx,cy-ry,cx+rx,cy+ry),fill=ImageColor.getrgb(P.snow[3] if clear else P.oat[3])+(46,))
+   t=y-y0;w=wd(t);l=round(cx-w/2+wob(t,seed));rt=round(cx+w/2+wob(t,seed+2))
+   for x in range(l,rt):
+    u=(x-l)/max(1,rt-l-1);j=round((u-.5)*w1);col=cols.get(j,A)
+    edge=min(x-l,rt-1-x)
+    if edge<2 and (x*7+y//3)%5<2 and t>5:continue          # threads at the edges: rock shows between them
+    if edge==0:col=Dk
+    elif edge<3 and col==B:col=A
+    if (y+j*5)%23<3 and col!=Dk:col=C2 if col==B else B     # the fall is not one flat stripe: breaks in every thread
+    self.box(x,y,1,1,col)
+  for bi,by in enumerate(breaks):                           # a rock ledge juts in from one side: the water piles white against it and slides round
+   t=by-y0;w=wd(t);l=round(cx-w/2+wob(t,seed));side=1 if (bi+seed)%2 else -1
+   bx=l+(round(w*.72) if side>0 else round(w*.28));self.boulder(bx,by+1,max(4,w*.2),3,True)
+   for k in range(-int(w*.3),int(w*.3)+1):yy=by-2+abs(k)//3;self.box(bx+k,yy,1,2,B)
+   for k in range(6):self.box(bx-side*(4+k),by+2+k,1,2,B if k%2 else A)
+   for k in range(5):self.box(bx-6+r.randrange(13),by-3-r.randrange(3),1,1,B)
+  self.box(round(cx-w0/2)-1,y0-2,w0+2,1,A);self.box(round(cx-w0/2)-1,y0-1,w0+2,2,B);self.box(round(cx-w0/2),y0+1,w0,1,A)   # the lip
+  self.boulder(cx-w0/2-6,y0+1,6,4,True);self.boulder(cx+w0/2+6,y0+2,7,4,True)
+  mist=Image.new('RGBA',self.im.size);md=ImageDraw.Draw(mist)
+  for j in range(12):
+   mx=cx+r.uniform(-w1,w1);my=y1-3-r.uniform(0,14);rx=r.uniform(6,12);ry=rx*.5
+   md.ellipse((mx-rx,my-ry,mx+rx,my+ry),fill=ImageColor.getrgb(P.snow[3] if clear else P.oat[3])+(40,))
   self.im.alpha_composite(mist);self.d=ImageDraw.Draw(self.im)
-  for j in range(10):                                       # foam where it lands
-   fx=x+w/2+r.uniform(-w*.8,w*.8);fy=y1+r.randrange(-2,3);self.oval(fx,fy,r.randrange(2,5),r.randrange(1,3),B if j%3 else C2)
+  for j in range(9):                                        # the foam mound it lands in
+   fx=cx+r.uniform(-w1*.65,w1*.65);self.oval(fx,y1+r.uniform(-2,2),r.uniform(3,6),r.uniform(2,3.5),B)
+  for j in range(6):fx=cx+r.uniform(-w1*.8,w1*.8);self.oval(fx,y1+3+r.uniform(0,2),r.uniform(2,4),1.5,A)
  def pool(self,x,y,rx,ry,seed=1,land=None):
   """A rock basin of its own shape: a broken rim of boulders, a wet dark ring, deep water in the middle, ripples
   spreading from where the fall lands (land = x of the impact), a spill where it overflows."""
@@ -944,7 +957,9 @@ def river(c):
    x=r.randrange(w);y=r.randrange(y0+8,y1);ww=r.randrange(10,34);c.box(x,y,ww,2,P.walnut[2]);c.box(x+3,y,ww-8,1,P.oak[1])
    if j%3==0:c.box(x+ww//3,y-1,ww//3,1,P.oat[1])
 # World coordinates below (core x + OX, core y + TOP).
-FALLS=[(48,270,374,15),(30,392,524,15),(42,541,698,16)]   # x, top, foot, width (world px); the game animates them
+# The cascade: five leaps down the gorge, each (centre x, top, foot, width at the lip, width at the foot), world px.
+CASCADE=[(54,270,330,12,16),(40,340,420,18,26),(58,436,500,14,19),(36,508,600,22,30),(46,618,696,24,34)]
+FALLS=[(round(cx-(a+b)/4),y0,y1,round((a+b)/2)) for cx,y0,y1,a,b in CASCADE]   # x, top, foot, width: the game animates them
 MARSH=[(168,1004),(214,986),(280,980),(338,988),(392,978),(452,984),(508,976),(566,988),(604,1008),(612,1032),(590,1054),(540,1064),(486,1058),(440,1070),(380,1074),(316,1064),(262,1072),(206,1062),(170,1042),(158,1020)]
 ISLET=[(650,1012),(690,1002),(730,1010),(742,1030),(720,1046),(676,1048),(652,1034)]
 JETTY=(300,326,890,986)
@@ -987,12 +1002,13 @@ def outskirts(c):
   else:
    for j in range(5):c.box(x+j-2,y-abs(j-2)-1,1,abs(2-abs(j-2))+2,G[2+j%2])
    if clean and vr.random()<.6:c.box(x,y-3,1,1,vr.choice(Lf))
+ for i,(x,y,w,h) in enumerate([(2,300,26,26),(74,318,28,24),(0,452,24,30),(78,470,26,22),(4,570,24,24),(2,676,28,30),(72,690,30,26),(40,250,30,14)]):c.crag(x,y,w,h,60+i)
  for fx,fy0,fy1,fw in FALLS:                                   # wet dark streaks beside each fall
   for s_ in (-1,1):
    for j in range(3):
     xx=fx-6-j*2 if s_<0 else fx+fw+6+j*2;yy=fy0+vr.randrange(10,40);c.box(xx,yy,1,vr.randrange(10,40),c.R[0])
- for (fx,fy0,fy1,fw),(px_,py_,prx,pry,land) in zip(FALLS,[(46,384,26,8,55),(40,534,25,8,36),(52,708,29,10,50)]):
-  c.fall(fx,fy0,fy1,fw,fx+fy0);c.pool(px_,py_,prx,pry,fy1,land)
+ for i,(cx,fy0,fy1,w0,w1) in enumerate(CASCADE):c.fall(cx,fy0,fy1,w0,w1,cx+fy0)
+ for px_,py_,prx,pry,land in [(47,334,17,4,54),(46,427,27,8,40),(48,504,18,4,58),(40,608,27,8,36),(50,706,32,10,46)]:c.pool(px_,py_,prx,pry,py_,land)
  c.brook([(53,716),(60,734),(52,756),(46,778),(56,800),(70,824),(66,848),(60,862)],7)
  # 观瀑台: a timber deck on posts beside the last fall
  for px_ in (74,96,116):c.box(px_,628,3,18,P.walnut[0]);c.box(px_,628,1,18,P.wood[1])
