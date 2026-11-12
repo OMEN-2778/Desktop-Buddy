@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-12 Claude — 人脉卡片去掉多出的信息行，好感条上移
+- 主人：好感数值、上次联系、认识天数都不要；好感条往上提。删 .contact-more；全屏人脉卡片改为 头像+名字关系 → 好感条 → 性格标签，行高 96px。浏览器截图确认。
+
 ## 2026-11-12 Claude — 人脉铺满整页；鼠标滚轮滚动减半
 - 主人：人脉页像丢丢平板电脑一样铺满整页、显示更多信息；游戏里所有滚轮滚动都太多，至少减半。
 - social_hud.js placeContactsPanel()：打开时从日记框左上角铺到小屋右下角（手机版 html.m 不动），窗口缩放时重算；卡片多一行：好感数值、上次联系（今天/昨天/N 天前）、认识 N 天。social_hud.css `.contacts-panel.full`：自动列宽 168px、行高 118px、去掉小尾巴。
