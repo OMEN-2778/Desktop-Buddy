@@ -117,21 +117,21 @@ const infeiFarm=(()=>{
  // ================================================================ 爸妈帮忙浇水
  const parent={on:false,who:'mom',x:380,tx:null,done:null,t:0,n:null,water:0,bed:null};
  // owner 2026-11-12: the help comes early (before she is up), goes in the diary, and the parent tells her themselves, so
- // she never walks out to water a bed that is already wet. Summer-ish seasons: up to two dry beds; winter: the animals' hay.
+ // she never walks out to water a bed that is already wet. Summer-ish seasons: every dry bed; winter: the animals' hay.
  function planHelp(d){if(Math.random()<.7)S().help={day:d,at:d*1440+Math.round((6*60+10)+Math.random()*50),who:Math.random()<.5?'mom':'dad',done:false};}
  const pName=w=>w==='mom'?'妈妈':'爸爸';
- function dryBeds(day){return X.F.open.filter(i=>{const b=X.bedOf(i);return b&&!X.CROP[b.crop]?.dry&&!X.ripe(b)&&b.watered!==day;}).slice(0,2);}
+ function dryBeds(day){return X.F.open.filter(i=>{const b=X.bedOf(i);return b&&!X.CROP[b.crop]?.dry&&!X.ripe(b)&&b.watered!==day;});}   // owner 2026-11-12: if they help, they water every dry bed
  const hungry=()=>X.seasonAt(today())===3?S().animals.filter(a=>a.fedDay!==today()):[];
  function tellHer(who,text){window.seasonParents?.tell?.(who,text);}
- function wateredNote(who,beds){const n=beds.map(i=>X.F.open.indexOf(i)+1).join('、');
-  log(`早上${pName(who)}帮你给第 ${n} 块地浇了水。`);
-  tellHer(who,pick(who==='mom'?[`早上我给你浇了第 ${n} 块地，今天不用再浇了。`,`第 ${n} 块地我早上顺手浇了，你看看别的。`]:[`你那第 ${n} 块地我早上浇过了。`,`起早给你浇了第 ${n} 块，剩下的你自己来。`]));}
+ function wateredNote(who,beds){const n=beds.length>3?'所有没浇的':beds.map(i=>X.F.open.indexOf(i)+1).join('、');
+  log(beds.length>3?`早上${pName(who)}把地全浇了一遍。`:`早上${pName(who)}帮你给第 ${n} 块地浇了水。`);
+  tellHer(who,pick(who==='mom'?['地我早上都浇过了，今天不用再浇了。','早上顺手把菜地浇了一遍，你歇着吧。']:['菜地我起早浇完了，今天不用管了。','地都浇过了，你干点别的去。']));}
  function fedNote(who,list){log(`早上${pName(who)}把棚里的${list.length>2?'牲畜':list.map(a=>a.name).join('和')}都喂了草料。`);
   tellHer(who,pick([`棚里的${list.length>2?'牛羊':list.map(a=>a.name).join('和')}我早上喂过了，你不用管了。`,'草料我早上添过了，今天不用喂了。']));}
  // not in 茵菲谷 (or the day rolled by): it just happens
  function helpOff(d){const h=S().help;if(!h||h.day!==d||h.done)return;h.done=true;
   if(X.seasonAt(d)===3){const list=S().animals.filter(a=>a.fedDay!==d);if(!list.length)return;for(const a of list)a.fedDay=d;log(`${pName(h.who)}帮你把棚里的牲畜喂了。`);return;}
-  const beds=dryBeds(d);if(!beds.length)return;for(const i of beds)X.bedOf(i).watered=d;log(`${pName(h.who)}帮你给第 ${beds.map(i=>X.F.open.indexOf(i)+1).join('、')} 块地浇了水。`);}
+  const beds=dryBeds(d);if(!beds.length)return;for(const i of beds)X.bedOf(i).watered=d;log(`${pName(h.who)}帮你把地都浇了一遍。`);}
  // in 茵菲谷: the parent walks over (season_parents.js) and does it, bed by bed
  function helpTick(){const h=S().help;if(!h||h.day!==today()||h.done||sim.t<h.at)return;
   const sp=window.seasonParents;if(!sp?.doErrand){helpOff(today());return;}
