@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-12 Claude — 人脉铺满整页；鼠标滚轮滚动减半
+- 主人：人脉页像丢丢平板电脑一样铺满整页、显示更多信息；游戏里所有滚轮滚动都太多，至少减半。
+- social_hud.js placeContactsPanel()：打开时从日记框左上角铺到小屋右下角（手机版 html.m 不动），窗口缩放时重算；卡片多一行：好感数值、上次联系（今天/昨天/N 天前）、认识 N 天。social_hud.css `.contacts-panel.full`：自动列宽 168px、行高 118px、去掉小尾巴。
+- index.src.html 全局 wheel 监听（顶层，不在 Tauri 专属块里）：找到能继续滚的祖先，preventDefault 后 scrollBy 一半；Ctrl+滚轮仍禁止缩放。
+- 已测：12 位联系人铺满显示、点卡片转盘正常；滚轮 100 → 实际滚 50。手机版未测（主人不做手机）。
+
 ## 2026-11-12 Claude — 修：在茵菲谷存档后重进游戏，妈妈的欢迎剧情每次重播
 - 原因：读档时主 restore 先把她放回茵菲谷并调用 arriveAt，此时 spring_story.js 还没把存档里的农庄状态放回（F 是空白），于是排了 700ms 后的 arrive()；随后 F 换成存档（phase=done），定时器照样把 phase 改回 meet，妈妈又站在门口，且会被存进档。
 - 修：arrive() 开头若已 done / 不在茵菲谷 / 未解锁就不执行；欢迎结束时记 F.welcomed，读档时 welcomed 或种过地都直接算 done（已被改坏的旧档也能恢复）。

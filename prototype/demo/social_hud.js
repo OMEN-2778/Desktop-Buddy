@@ -57,7 +57,7 @@ function drawContactAvatar(canvas,c){
   ctx.fillStyle='#eef3f1';ctx.fillRect(0,0,40,40);ctx.drawImage(body,0,0,DW,17,0,2,40,34);
 }
 function fillContacts(){
-  const contacts=sortedContacts(),sig=JSON.stringify(contacts.map(c=>[c.id,c.name,c.family,c.affinity,c.look,!!c.forgotten,knownPersonalityTraits(c)]));if(sig===contactsSig)return;
+  const contacts=sortedContacts(),sig=JSON.stringify([Math.floor(sim.t/1440),contacts.map(c=>[c.id,c.name,c.family,c.affinity,c.look,!!c.forgotten,knownPersonalityTraits(c),c.lastContact])]);if(sig===contactsSig)return;
   contactsSig=sig;const scrollTop=contactsList.scrollTop;contactsList.replaceChildren();
   for(const c of contacts){
     const card=document.createElement('button');card.type='button';card.className='contact-card';card.dataset.id=c.id;
@@ -69,7 +69,13 @@ function fillContacts(){
     const traits=document.createElement('span');traits.className='contact-traits';
     for(const label of knownPersonalityTraits(c)){const chip=document.createElement('span');chip.textContent=label;traits.append(chip);}
     traits.hidden=!traits.childElementCount;
-    card.append(avatar,copy,traits,meter);contactsList.append(card);
+    const more=document.createElement('span');more.className='contact-more';   // full-page 人脉 (owner 2026-11-12): room for a little more
+    const ago=t=>{const d=Math.floor(sim.t/1440)-Math.floor((t??sim.t)/1440);return d<=0?'今天':d===1?'昨天':d+' 天前';};
+    more.append(Object.assign(document.createElement('span'),{textContent:'好感 '+Math.round(c.affinity)}));
+    if(!c.family){more.append(Object.assign(document.createElement('span'),{textContent:'上次联系 '+ago(c.lastContact??c.metAt)}));
+     if(c.metAt!=null)more.append(Object.assign(document.createElement('span'),{textContent:'认识 '+Math.max(1,Math.floor(sim.t/1440)-Math.floor(c.metAt/1440)+1)+' 天'}));}
+    else if(c.lastContact!=null)more.append(Object.assign(document.createElement('span'),{textContent:'上次联系 '+ago(c.lastContact)}));
+    card.append(avatar,copy,traits,more,meter);contactsList.append(card);
   }
   contactsList.scrollTop=scrollTop;
 }
@@ -78,12 +84,22 @@ function queueNetworkClose(){clearTimeout(networkCloseT);networkCloseT=setTimeou
 function setContactsOpen(open){
   clearTimeout(contactsCloseT);clearTimeout(networkCloseT);
   if(open&&phoneHolds())return;
-  if(open){revealNetwork();setNeedsOpen(false);showMoodTip(false);setDiaryOpen(false);setSettingsOpen(false);fillContacts();}
+  if(open){revealNetwork();setNeedsOpen(false);showMoodTip(false);setDiaryOpen(false);setSettingsOpen(false);placeContactsPanel();fillContacts();}
   else closeContactActions();
   moodrow.classList.toggle('contacts-open',open);contactsPanel.inert=!open;contactsPanel.setAttribute('aria-hidden',String(!open));networkTrigger.setAttribute('aria-expanded',String(open));
   if(open){document.getElementById('settings').inert=true;document.getElementById('diary').inert=true;moodFace.inert=true;moodTalk.inert=true;}
   else{document.getElementById('settings').inert=false;document.getElementById('diary').inert=peerDiaryReserved();moodFace.inert=false;moodTalk.inert=false;queueNetworkClose();}
 }
+// owner 2026-11-12: 人脉 fills the page like the 丢丢平板电脑 — from the diary's top-left corner to the house's bottom-right
+function placeContactsPanel(){
+  if(document.documentElement.classList.contains('m'))return;   // the phone page keeps its own layout
+  const diary=document.getElementById('diary'),par=contactsPanel.offsetParent;if(!diary||!par)return;
+  const dr=diary.getBoundingClientRect(),vr=view.getBoundingClientRect(),pr=par.getBoundingClientRect();if(!dr.width||!vr.width)return;
+  const left=Math.min(dr.left,vr.left)-pr.left,top=dr.top-pr.top;
+  contactsPanel.classList.add('full');
+  Object.assign(contactsPanel.style,{left:left+'px',top:top+'px',right:'auto',bottom:'auto',width:(vr.right-pr.left-left)+'px',height:(vr.bottom-pr.top-top)+'px'});
+}
+addEventListener('resize',()=>{if(moodrow.classList.contains('contacts-open'))placeContactsPanel();});
 function queueContactsClose(){clearTimeout(contactsCloseT);if(!selectedContact)contactsCloseT=setTimeout(()=>setContactsOpen(false),280);}
 moodFace.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')revealNetwork();});
 moodFace.addEventListener('pointerleave',queueNetworkClose);moodFace.addEventListener('focus',revealNetwork);

@@ -4963,6 +4963,18 @@ const store = TAURI ? {
   save: async obj => { if (obj === null) localStorage.removeItem(SAVE_KEY); else localStorage.setItem(SAVE_KEY, JSON.stringify(obj)); },
 };
 let booted = false, saving = false;
+// owner 2026-11-12: every wheel-scrolled list moved too far per notch — half the distance everywhere
+window.addEventListener("wheel", e => {
+  if (e.ctrlKey || e.defaultPrevented) return;
+  const line = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1, dy = e.deltaY * line, dx = e.deltaX * line;
+  for (let el = e.target instanceof Element ? e.target : null; el && el !== document.documentElement; el = el.parentElement) {
+    const cs = getComputedStyle(el), canY = /(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 1, canX = /(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 1;
+    if (!canY && !canX) continue;
+    const moreY = canY && (dy > 0 ? el.scrollTop + el.clientHeight < el.scrollHeight - 1 : dy < 0 && el.scrollTop > 0), moreX = canX && (dx > 0 ? el.scrollLeft + el.clientWidth < el.scrollWidth - 1 : dx < 0 && el.scrollLeft > 0);
+    if (!moreY && !moreX) continue;
+    e.preventDefault(); el.scrollBy({ top: moreY ? dy / 2 : 0, left: moreX ? dx / 2 : 0, behavior: "instant" }); return;
+  }
+}, { passive: false });
 function snapshot() {
   const p = here();
   return {
