@@ -661,12 +661,16 @@ function makeSeason_autumn(opts, DATA) {
     function drawAir() {
         const t = state.time, W = 342 + 24, H = 236 + 24;
         if (state.stage >= 4) {
-            const gust = Math.sin(t * .23) * 14 + Math.sin(t * .071 + 2) * 10;
+            // One wind for the whole town (owner 2026-11-13: "随风吹的感觉"): every leaf is carried by the same slowly
+            // turning wind, now to the left, now to the right, sometimes lifted upwards; each leaf only answers a
+            // little more or less (k) and keeps a small flutter of its own. windX / windY are the wind's displacement
+            // (the integral of its speed), so the picture still depends on the time alone.
+            const windX = -115 * Math.cos(t * .19) - 26 * Math.cos(t * .47 + 1), windY = -22 * Math.sin(t * .31) - 9 * Math.sin(t * .83 + .5);
             for (let i = 0; i < 96; i++) {
-                const near = i % 5 === 0, a = rnd(i), b = rnd(i + 50), c = rnd(i + 99);
-                const vy = (near ? 15 : 8) + a * 6, w = .9 + b * .9, amp = (near ? 13 : 8) + c * 6, ph = t * w + i * 2.4;
-                const x = wrap(a * 977 + t * (5 + b * 4) + gust * (near ? 1.3 : .8) + Math.sin(ph) * amp - state.camX, W) - 12;
-                const y = wrap(b * 733 + t * vy + Math.cos(ph * 2) * 2.5 - state.camY, H) - 12;   // dips at each end of the swing
+                const near = i % 5 === 0, a = rnd(i), b = rnd(i + 50), c = rnd(i + 99), k = (near ? 1.15 : .8) + c * .25;
+                const vy = (near ? 14 : 9) + a * 4, ph = t * (1.1 + b * .8) + i * 2.4;
+                const x = wrap(a * 977 + windX * k + Math.sin(ph) * (2 + c * 2.5) - state.camX, W) - 12;
+                const y = wrap(b * 733 + t * vy + windY * k + Math.cos(ph * 2) * 1.5 - state.camY, H) - 12;
                 // Pixel style (owner 2026-11-13: "这怎么是3d效果…我要的是2d像素风格"): hand-set sprites on whole pixels,
                 // no rotation or scaling; the leaf tumbles by stepping through four drawn frames.
                 const [lit, dark] = LEAF_COL[i % 5], F = (near ? LEAF_BIG : LEAF_SMALL)[Math.floor(wrap(ph * .64 + i, 4))];
