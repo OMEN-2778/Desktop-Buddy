@@ -1,4 +1,4 @@
-# 栗尾坞 · actual game test handoff
+# 栗尾市 · actual game test handoff
 
 2026-11-01: owner authorized the finished map to be entered from the home door in the
 **test webpage**. Current playable implementation is injected only into `/map-test/`.

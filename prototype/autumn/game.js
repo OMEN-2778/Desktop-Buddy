@@ -9,7 +9,7 @@ function makeSeason_autumn(opts, DATA) {
     root.className = "season-controller";
     root.dataset.kind = "autumn";
     root.hidden = true;
-    root.innerHTML = '<div class="controls"><strong>栗尾坞</strong><button data-map>全城地图</button><button data-home>侦探事务所</button><button data-goal>当前线索</button><button data-exit>返回小屋</button></div><p data-status></p>';
+    root.innerHTML = '<div class="controls"><strong>栗尾市</strong><button data-map>全城地图</button><button data-home>侦探事务所</button><button data-goal>当前线索</button><button data-exit>返回小屋</button></div><p data-status></p>';
     const modal = document.createElement("section");
     modal.className = "autumn-panel";
     modal.hidden = true;
@@ -286,7 +286,7 @@ function makeSeason_autumn(opts, DATA) {
             y: landmark(loc).y
         }));
     }
-    const objective = () => [ "先和停机坪的阿简说说话", "去公司、食堂、诊所问问程铁山的下落", "到山上的小屋找程铁山", "再去诊所、食堂和公司看看", "去公司看账本，再到市政厅参加公开讨论", "到中城广场和大家聊聊", "栗尾坞已开放，想逛多久都行" ][state.quest] || "四处逛逛";
+    const objective = () => [ "先和停机坪的阿简说说话", "去公司、食堂、诊所问问程铁山的下落", "到山上的小屋找程铁山", "再去诊所、食堂和公司看看", "去公司看账本，再到市政厅参加公开讨论", "到中城广场和大家聊聊", "栗尾市已开放，想逛多久都行" ][state.quest] || "四处逛逛";
     function converse(id) {
         const q = state.quest, f = state.flags;
         if (q === 1 && [ "qing", "zhou", "doctor" ].every(n => f["heard_" + n])) return talk(AUTUMN_STORY.dust, () => chapter(2, 1, "运输车盖上了篷布，工人街开始洒水。山上的小屋也许有人。"));
@@ -381,9 +381,9 @@ function makeSeason_autumn(opts, DATA) {
         if (id === "mine_office") return state.quest >= 6 ? talk(AUTUMN_STORY.office) : converse("qing");
         if (id === "clinic") return converse("doctor");
         if (id === "townhall" && state.quest === 4 && state.flags.ledger) return talk(AUTUMN_STORY.meeting, () => chapter(5, 4, "公开讨论结束。矿区开始分步转型，烟囱停了；也有人准备离开。去中城广场和大家聊聊吧。"));
-        if (id === "plaza" && state.quest === 5) return talk(AUTUMN_STORY.epilogue, () => chapter(6,4,"与大家聊过近况。栗尾坞从此全年开放；办公室想去就去，不去也没关系。"));
+        if (id === "plaza" && state.quest === 5) return talk(AUTUMN_STORY.epilogue, () => chapter(6,4,"与大家聊过近况。栗尾市从此全年开放；办公室想去就去，不去也没关系。"));
         if (id === "notice") return panel(p.name, state.quest < 4 ? "墙上贴着运输安排，几张纸被灰盖住了。" : state.quest < 5 ? "公开讨论：工资、债务、河水检测。表上有日期，也有空着的项目。" : "新的河水与空气报告按月贴在这里。做完的和没做完的，都留着。", [ [ "记进日记", () => discover("notice", "看了广场的公告，日期和没完成的项目都还在。") ], [ "离开" ] ]);
-        if (id === "airstrip") return panel(p.name, state.quest < 6 ? "雾霾还没散，阿简正在等能起飞的天气。测试时也可以随时返回小屋。" : "天清了，飞机随时可以出发。栗尾坞以后全年都能来。", [ [ "返回小屋", opts.exit ], [ "再逛逛" ] ]);
+        if (id === "airstrip") return panel(p.name, state.quest < 6 ? "雾霾还没散，阿简正在等能起飞的天气。测试时也可以随时返回小屋。" : "天清了，飞机随时可以出发。栗尾市以后全年都能来。", [ [ "返回小屋", opts.exit ], [ "再逛逛" ] ]);
         const services = {
             canteen: [ "吃碗热面", "hunger" ],
             market: [ "买点吃的", "hunger" ],
@@ -391,7 +391,6 @@ function makeSeason_autumn(opts, DATA) {
             bath: [ "进去洗澡", "hygiene" ],
             toilet: [ "使用公厕", "bladder" ],
             lookout: [ "坐下看看远处", "fun" ],
-            falls: [ "看一会儿瀑布", "fun" ],
             pavilion: [ "进亭子里坐坐", "fun" ],
             reeds: [ "在长椅上吹吹风", "fun" ],
             syrup: [ "买块枫糖", "hunger" ],
@@ -410,7 +409,7 @@ function makeSeason_autumn(opts, DATA) {
             mine: "旧矿道墙上留着工人的照片，最下面那排比上面的新。",
             townhall: "市政厅的告示里夹着旧矿区改造的申请，盖章的日期很早。"
         };
-        panel(p.name, discoveries[id] || "这里可以停下来看看。", [ [ "仔细看看", () => discover(id, discoveries[id] || "在栗尾坞走了一段路。") ], [ "离开" ] ]);
+        panel(p.name, discoveries[id] || "这里可以停下来看看。", [ [ "仔细看看", () => discover(id, discoveries[id] || "在栗尾市走了一段路。") ], [ "离开" ] ]);
     }
     function discover(id, text) {
         if (state.found.includes(id)) {
@@ -459,7 +458,7 @@ function makeSeason_autumn(opts, DATA) {
             n[a.need] = Math.min(100, n[a.need] + rate * dt);
             a.elapsed += dt;
             if (n[a.need] >= 97) {
-                opts.record("歇好了，接着在栗尾坞走走。");
+                opts.record("歇好了，接着在栗尾市走走。");
                 state.service = null;
                 state.pose = null;
                 state.autoAt = opts.now() + 35;
@@ -1012,7 +1011,7 @@ function makeSeason_autumn(opts, DATA) {
         draw();
         updateStatus();
     }).catch(e => {
-        opts.hint("栗尾坞加载失败，请刷新");
+        opts.hint("栗尾市加载失败，请刷新");
         console.error(e);
     });
     return {

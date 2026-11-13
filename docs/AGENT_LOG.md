@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-13 Claude — 秋季地图再改名为栗尾市；西侧瀑布换成高楼群
+- 主人：名字改“栗尾市”，为突出城市景观去掉左边瀑布，换成不可进入的高楼（重庆/香港式错落紧密）。全仓库 栗尾坞→栗尾市（旧日志条目除外）。
+- autumn_city.py：新 City.tower()（正面+右侧面+屋顶面，楼板线、多种窗、空调、阳台晾衣、排水管、底商、竖招牌、水箱/楼梯间/天线/屋顶花园/退台顶层）与 towers(c)（六排 24 栋，x 0–112）。删除瀑布、岩壁、溪、观瀑台、路线“观瀑台”、地点 falls（地点 24→23）；FALLS=[]，game.js drawFalls 空转；西侧树、灌木、岩块去掉。
+- 已测：几何检查 PASS；内测页进图无报错，楼群与西侧石阶衔接正常。未测：旧存档若停在观瀑台路线上的位置。
+
 ## 2026-11-13 Claude — 栗尾坞：东坡新增栗林公园；洁净飘枫叶、污染吹风沙
 - 栗林公园（主人圈的东侧坡地，中城街东头走过去）：autumn_city.py 新 park() 及 roaster/swing/flowerbed/pond/stone_lantern/stepping/hedge/leaf_carpet；路线“栗林公园”，地点 swing 秋千(fun)、koi 锦鲤池(fun)、chestnut 糖炒栗子摊(hunger)，game.js services 已接。地点数 21→24，招牌字体已补字。
 - game.js drawAir()：阶段 4 飘 96 片枫叶（主人嫌 38 片太少）（像素小图 4 帧翻转，整像素对齐，不旋转不缩放；主人否了旋转缩放的“3d”版；全城共用一股慢慢转向的风，时左时右、偶尔上扬）；阶段 0–2 横向风沙（沙粒条纹 + 6 条淡沙幕，越早期越密）。阶段 3 两者都没有。只依赖 state.time，不存档。

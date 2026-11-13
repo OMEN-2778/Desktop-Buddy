@@ -214,7 +214,7 @@ validation and remaining gaps. Standalone reviews remain available.
   leaving from the upper floor must route down stairs. Remains `/map-test/` only.
 
 ## 最新上线方向与父母来信（2026-11-02，用户确认）
-用户现在优先上线春季农庄，栗尾坞剧情暂放。经济规则见 DIDI_CURRENCY.md。
+用户现在优先上线春季农庄，栗尾市剧情暂放。经济规则见 DIDI_CURRENCY.md。
 以下为正式入口设计，尚未接入；不代表现有测试适配器已经有了这些机制。
 - 版本更新后，玩家亲历的第一个写信日，由妈妈寄来农庄邀请：爸爸妈妈承包了
   一小片农场，邀请孩子来帮忙。不能更新后直接解锁，也不能检查旧历史节日误触。

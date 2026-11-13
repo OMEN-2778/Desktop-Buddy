@@ -1,4 +1,4 @@
-"""栗尾坞 · compact flat-roof mountain diorama, 640×688 native pixels.
+"""栗尾市 · compact flat-roof mountain diorama, 640×688 native pixels.
 Top-left light; front facades, solid stone flights and terraced mountain bedrock.
 Original code art; project palette only. Routes drive both visible stair openings
 and the test-game navigation graph; never draw a barrier across their junctions.
@@ -45,12 +45,11 @@ ROUTES=[
  # the outskirts (owner 2026-11-11); their ground is drawn by outskirts() / marsh(), not as stone flights
  ('码头栈桥',[(202,646),(202,796)]),
  ('芦苇荡小径',[(80,796),(202,796),(322,796),(488,796),(544,796),(604,796)]),
- ('观瀑台',[(24,388),(-24,388)]),
  ('观云亭',[(608,132),(688,132),(716,132)]),
  ('枫糖广场',[(620,520),(688,520),(728,520)]),
  ('栗林公园',[(608,388),(660,388),(688,388),(722,388),(748,388)]),
 ]
-NO_ART={'货运升降机','码头栈桥','芦苇荡小径','观瀑台','观云亭','枫糖广场','栗林公园'}
+NO_ART={'货运升降机','码头栈桥','芦苇荡小径','观云亭','枫糖广场','栗林公园'}
 LANDMARKS=[
  dict(id='airstrip',name='山顶停机坪',x=456,y=132,need=None,rect=[354,58,236,70]),
  dict(id='nursery',name='枫树苗圃',x=92,y=132,need=None,rect=[45,55,92,72]),
@@ -69,7 +68,6 @@ LANDMARKS=[
  dict(id='toilet',name='公厕',x=476,y=520,need='bladder',rect=[454,452,44,62]),
  dict(id='mine',name='旧矿道',x=552,y=646,need=None,rect=[510,559,79,83]),
  dict(id='pier',name='锈蚀码头',x=144,y=646,need=None,rect=[78,608,125,40]),
- dict(id='falls',name='观瀑台',x=-24,y=388,need='fun',rect=[-48,360,60,50]),
  dict(id='pavilion',name='观云亭',x=688,y=132,need='fun',rect=[654,64,68,66]),
  dict(id='syrup',name='枫糖铺',x=688,y=520,need='hunger',rect=[656,456,64,56]),
  dict(id='swing',name='秋千',x=660,y=388,need='fun',rect=[644,326,34,48]),
@@ -852,6 +850,74 @@ class City:
   for k in range(5):                                                                # cattails at the right-hand end
    bx=x+36+k*2;hh=10+(k*5)%7;self.box(bx,y-4-hh,1,hh+2,P.leaf[2] if clean else P.oak[1])
    if k%2==0:self.box(bx,y-6-hh,1,4,P.walnut[1]);self.box(bx,y-6-hh,1,1,P.walnut[3])
+ def tower(self,x,base,w,h,seed,wall):
+  """A high-rise flat block seen from the front (owner 2026-11-13: 重庆/香港那样错落紧密、精致立体): lit front, a
+  shaded side face on the right, the roof plane with its parapet, slab lines every floor, windows of many states
+  (dark, lit, curtained), air-conditioners, a column of balconies with washing, a drainpipe, a shop floor, and
+  roof clutter (tank, stair head, aerials, a roof garden). Dirty and streaked while polluted."""
+  r=random.Random(seed);clean=self.clean;y=base-h;sw=5+seed%3;d=6
+  hi,mid,lo,dk=(wall[3],wall[2],wall[1],wall[0]) if clean else (wall[2],wall[1],wall[0],wall[0])
+  S=self.S
+  # side face and roof plane
+  self.box(x+w,y-d+3,sw,h+d-3,dk);self.poly([(x+w,y-d+3),(x+w+sw,y-d+3),(x+w+sw,y+1),(x+w,y-2)],lo)
+  for yy in range(y+5,base-10,9):
+   self.box(x+w+1,yy+3,sw-2,3,P.ink[1]);self.box(x+w,yy,sw,1,lo)
+   if r.random()<.06:self.box(x+w+1,yy+3,sw-2,3,P.mustard[2])
+  self.box(x+w+sw-1,y-d+3,1,h+d-3,P.ink[1])
+  self.box(x-1,y-d,w+sw+1,d,S[2]);self.box(x-1,y-d,w+sw+1,1,S[4]);self.box(x,y-d+1,w+sw-1,1,S[3]);self.box(x-1,y-1,w+1,1,S[1])
+  # front wall
+  self.box(x,y,w,h,mid);self.box(x,y,1,h,hi);self.box(x+w-1,y,1,h,lo);self.box(x,y,w,2,lo)
+  bays=max(2,(w-4)//8);gap=(w-4-bays*6)/(bays+1);bal=r.randrange(bays) if w>=26 else -1;pipe=x+w-3
+  for f,yy in enumerate(range(y+5,base-14,9)):
+   self.box(x+1,yy+7,w-2,1,lo);self.box(x+1,yy+8,w-2,1,hi)                        # the floor slab's edge
+   for b in range(bays):
+    wx=round(x+2+gap+b*(6+gap))
+    if b==bal:                                                                    # balcony: dark recess, rail, washing
+     self.box(wx-1,yy,8,6,P.ink[1]);self.box(wx,yy+1,3,4,P.teal[0] if r.random()<.7 else P.mustard[2])
+     self.box(wx-2,yy+4,10,3,hi);self.box(wx-2,yy+4,10,1,S[4] if clean else S[3]);self.box(wx-2,yy+7,10,1,dk)
+     if r.random()<.55:
+      for k in range(3):self.box(wx+k*3,yy+1,2,3,r.choice([P.coral[3],P.oat[4],P.teal[3],P.mustard[3]]) if clean else r.choice([P.oat[2],P.oat[1],P.sage[1]]))
+     elif clean and r.random()<.3:self.box(wx+4,yy+2,3,2,P.leaf[2]);self.box(wx+5,yy+1,1,1,P.coral[3])
+     continue
+    lit=r.random()<.07;g=P.mustard[3] if lit else (P.teal[1] if r.random()<.7 else P.teal[0])
+    self.box(wx,yy,6,5,g);self.box(wx,yy,6,1,P.mustard[1] if lit else P.ink[1]);self.box(wx,yy,1,5,P.mustard[2] if lit else P.teal[0])
+    if lit:self.box(wx+2,yy+2,3,3,P.mustard[4])
+    elif r.random()<.5:self.box(wx+4,yy+1,1,1,P.teal[3]);self.box(wx+3,yy+2,1,1,P.teal[3])
+    if r.random()<.25:self.box(wx,yy+1,2,4,r.choice([P.oat[3],P.coral[2],P.sage[2]]))  # a curtain drawn half across
+    self.box(wx+3,yy,1,5,hi if not lit else P.mustard[1]);self.box(wx-1,yy+5,8,1,hi)   # mullion and sill
+    k=r.random()
+    if k<.3:self.box(wx+1,yy+6,5,3,S[3]);self.box(wx+1,yy+6,5,1,S[4]);self.box(wx+2,yy+7,3,1,S[1]);self.box(wx+1,yy+9,5,1,dk)   # air-conditioner
+    elif k<.4 and not clean:self.box(wx+2,yy+6,1,r.randrange(4,9),lo)             # a stain run from the sill
+  self.box(pipe,y+2,1,h-12,lo);self.box(pipe-1,y+2,1,h-12,hi)
+  for yy in range(y+12,base-14,18):self.box(pipe-1,yy,3,1,dk)
+  # the shop floor: fascia, awning, dark openings
+  A=r.choice([P.clay,P.teal,P.mustard,P.coral]) if clean else r.choice([P.oak,P.slate])
+  self.box(x,base-13,w,13,dk);self.box(x+1,base-13,w-2,3,A[1]);self.box(x+1,base-13,w-2,1,A[3])
+  for xx in range(x+2,x+w-3,4):self.box(xx,base-12,2,1,A[4] if clean else A[2])
+  for xx in range(x+2,x+w-8,11):self.box(xx,base-9,8,9,P.ink[1]);self.box(xx+1,base-8,3,5,P.mustard[2] if r.random()<.5 else P.teal[0]);self.box(xx,base-10,9,1,A[2])
+  # a hanging sign down the side of some
+  if r.random()<.45 and h>90:
+   C=r.choice([P.coral,P.teal,P.mustard,P.clay]) if clean else P.oak;sy=y+r.randrange(18,h-50);sx=x-3 if seed%2 else x+w-1
+   self.box(sx,sy,4,20,C[1]);self.box(sx,sy,1,20,C[3]);self.box(sx+3,sy,1,20,C[0])
+   for k in range(4):self.box(sx+1,sy+2+k*5,2,3,P.oat[4] if clean else P.oat[2])
+   self.box(sx+(4 if seed%2 else -1),sy+2,1,1,P.steel[0]);self.box(sx+(4 if seed%2 else -1),sy+16,1,1,P.steel[0])
+  # roof clutter
+  ry=y-d
+  if r.random()<.75:                                                              # water tank on legs
+   tx=x+2+r.randrange(max(1,w-12));self.box(tx,ry-9,7,7,S[2]);self.box(tx,ry-9,2,7,S[4]);self.box(tx+5,ry-9,2,7,S[1]);self.box(tx-1,ry-10,9,1,S[1]);self.box(tx,ry-11,7,1,S[3]);self.box(tx,ry-2,1,2,P.steel[0]);self.box(tx+6,ry-2,1,2,P.steel[0])
+  if seed%3==0 and w>=24:                                                         # a set-back penthouse storey
+   px_=x+4;pw=w-9;self.box(px_+pw,ry-9,3,9,dk);self.box(px_,ry-10,pw,10,mid);self.box(px_,ry-10,1,10,hi);self.box(px_-1,ry-13,pw+5,3,S[2]);self.box(px_-1,ry-13,pw+5,1,S[4]);self.box(px_-1,ry-11,pw+1,1,S[1])
+   for xx in range(px_+2,px_+pw-5,7):self.box(xx,ry-8,5,5,P.teal[1]);self.box(xx,ry-8,5,1,P.ink[1]);self.box(xx+3,ry-7,1,1,P.teal[3])
+   ry-=13
+  elif r.random()<.7:                                                             # stair head
+   bx=x+w-11-r.randrange(3);self.box(bx,ry-7,9,7,mid);self.box(bx,ry-7,9,1,hi);self.box(bx+8,ry-7,1,7,lo);self.box(bx-1,ry-8,11,1,S[3]);self.box(bx+2,ry-5,3,5,P.ink[1])
+  if r.random()<.6:                                                               # aerial
+   ax=x+3+r.randrange(w-6);hh=r.randrange(8,16);self.box(ax,ry-hh,1,hh,P.steel[0]);self.box(ax-2,ry-hh+2,5,1,P.steel[0]);self.box(ax-1,ry-hh+5,3,1,P.steel[0])
+   if h>130:self.box(ax,ry-hh-1,1,1,P.coral[3])
+  if clean and r.random()<.5:                                                     # a roof garden
+   gx=x+1+r.randrange(max(1,w-10))
+   for k in range(4):self.box(gx+k*2,ry-2-(k%2),2,2+(k%2),P.leaf[2+(k%2)])
+   self.box(gx+2,ry-4,1,1,r.choice([P.autumn[2],P.mustard[3],P.coral[3]]))
  def person(self,x,y,seed):
   # Distant anonymous scale figures only; no additional story cast.
   import doll
@@ -987,7 +1053,7 @@ def backdrop(stage):
     rr=rad+(hr.random()<.3)
     c.oval(x,y,rr,rr-1,R[t[0]]);c.oval(x-1,y-1,rr-1,max(1,rr-2),R[t[1]])
     if y-prof[x]<10 or hr.random()<.5:c.box(x-2,y-2,2,1,R[t[2]])
-  # Towns among the woods (owner 2026-11-11: 栗尾坞的延伸): terraced rows of small flat-roofed houses stepping up the
+  # Towns among the woods (owner 2026-11-11: 栗尾市的延伸): terraced rows of small flat-roofed houses stepping up the
   # slope, each row a little higher and offset, with tree crowns grown in between and over their feet.
   for cx,wid,rows in TOWNS[hi]:
    tr=random.Random(seed*7+cx);walls=[P.wall_cream,P.wall_blush,P.wall_sage,P.wall_butter,P.oat] if clean else [P.pave,P.oat,P.pave]
@@ -1078,7 +1144,7 @@ def river(c):
 # World coordinates below (core x + OX, core y + TOP).
 # The cascade: five leaps down the gorge, each (centre x, top, foot, width at the lip, width at the foot), world px.
 CASCADE=[(54,270,330,12,16),(40,340,420,18,26),(58,436,500,14,19),(36,508,600,22,30),(46,618,696,24,34)]
-FALLS=[(round(cx-(a+b)/4),y0,y1,round((a+b)/2)) for cx,y0,y1,a,b in CASCADE]   # x, top, foot, width: the game animates them
+FALLS=[]   # x, top, foot, width: the game animates them
 MARSH=[(168,1004),(214,986),(280,980),(338,988),(392,978),(452,984),(508,976),(566,988),(604,1008),(612,1032),(590,1054),(540,1064),(486,1058),(440,1070),(380,1074),(316,1064),(262,1072),(206,1062),(170,1042),(158,1020)]
 ISLET=[(650,1012),(690,1002),(730,1010),(742,1030),(720,1046),(676,1048),(652,1034)]
 JETTY=(300,326,890,986)
@@ -1105,37 +1171,8 @@ def outskirts(c):
    if (x-x0)%13==5:
     if (x//13)%3:c.reed(x,y+3,5000+x,1.0)
     else:c.boulder(x,y+1,r.randrange(5,9),r.randrange(3,5),True)
- # ---- west: the waterfall, three leaps down a rock gorge, then a brook to the river
- c.box(52,236,7,36,R0:=c.R[0]);c.box(53,236,5,36,P.teal[2] if clear else P.teal[0]);c.box(54,236,2,36,P.teal[4] if clear else P.sage[2])   # the stream that feeds it
- c.cliff(4,100,256,722,31)
- vr=random.Random(313);G=P.leaf if clean else P.sage;Lf=[P.autumn[2],P.mustard[3],P.autumn[3]] if clean else [P.oak[1],P.oak[2]]
- for i in range(70):                                            # moss, ferns and creepers on the rock face (not on the water)
-  x=vr.randrange(6,98);y=vr.randrange(262,716)
-  if any(fx-6<x<fx+fw+8 and fy0-4<y<fy1+6 for fx,fy0,fy1,fw in FALLS):continue
-  k=vr.random()
-  if k<.4:
-   L=vr.randrange(4,12);c.box(x,y,1,L,G[1])
-   for j in range(0,L,2):c.box(x+(-1 if j%4 else 1),y+j,1,1,G[2] if j%4 else G[3])
-   c.box(x-1,y-1,3,1,G[2])
-  elif k<.75:c.box(x,y,vr.randrange(3,7),1,G[2]);c.box(x+1,y-1,vr.randrange(2,4),1,G[3])
-  else:
-   for j in range(5):c.box(x+j-2,y-abs(j-2)-1,1,abs(2-abs(j-2))+2,G[2+j%2])
-   if clean and vr.random()<.6:c.box(x,y-3,1,1,vr.choice(Lf))
- for i,(x,y,w,h) in enumerate([(2,300,26,26),(74,318,28,24),(0,452,24,30),(78,470,26,22),(4,570,24,24),(2,676,28,30),(72,690,30,26),(40,250,30,14)]):c.crag(x,y,w,h,60+i)
- for fx,fy0,fy1,fw in FALLS:                                   # wet dark streaks beside each fall
-  for s_ in (-1,1):
-   for j in range(3):
-    xx=fx-6-j*2 if s_<0 else fx+fw+6+j*2;yy=fy0+vr.randrange(10,40);c.box(xx,yy,1,vr.randrange(10,40),c.R[0])
- for i,(cx,fy0,fy1,w0,w1) in enumerate(CASCADE):c.fall(cx,fy0,fy1,w0,w1,cx+fy0)
- for px_,py_,prx,pry,land in [(47,334,17,4,54),(46,427,27,8,40),(48,504,18,4,58),(40,608,27,8,36),(50,706,32,10,46)]:c.pool(px_,py_,prx,pry,py_,land)
- c.brook([(53,716),(60,734),(52,756),(46,778),(56,800),(70,824),(66,848),(60,862)],7)
- # 观瀑台: a timber deck on posts beside the last fall
- for px_ in (74,96,116):c.box(px_,628,3,18,P.walnut[0]);c.box(px_,628,1,18,P.wood[1])
- dk=c.rounded([(72,598),(124,596),(124,630),(78,632),(66,622),(64,606)],4);c.poly([(x,y+3) for x,y in dk],P.walnut[0]);c.planks(dk,9);c.line(dk[:1]+dk[-8:],P.wood[4])
- for px_ in range(70,122,13):c.box(px_,585,2,13,P.wood[0]);c.box(px_,585,1,13,P.wood[2])
- c.box(70,587,52,1,P.wood[3]);c.box(70,588,52,1,P.wood[0]);c.box(70,592,52,1,P.wood[1])
- c.box(63,604,2,20,P.wood[0]);c.box(63,604,2,1,P.wood[3]);c.bench(86,616)
- c.sign(74,566,46,'观瀑台',9);c.box(80,583,2,4,P.wood[0]);c.box(112,583,2,4,P.wood[0])
+ # ---- west: 栗尾市's high-rise quarter climbing the hillside (owner 2026-11-13; the waterfall is gone)
+ towers(c)
  # ---- east: 观云亭 on a spur off the top street
  c.terrace([(742,318),(792,313),(834,322),(850,344),(846,364),(822,372),(742,372)],26,81)
  c.pavilion(800,350);c.sign(778,376-96,46,'观云亭',9);c.lamp(760,352)
@@ -1151,19 +1188,36 @@ def outskirts(c):
  for row,y in enumerate(range(116,240,11)):
   k=.5+.3*row/11
   for x in list(range(4+(row%2)*12,112,24))+list(range(760+(row%2)*12,FW+8,24)):
-   if r.random()<.12:continue
+   if r.random()<.12 or (x<116 and y>180):continue
    wood.append((x+r.randrange(-7,8),y+r.randrange(-4,5),min(.95,k*r.uniform(.85,1.2))))
  for y in range(262,800,30):                                   # the seams beside the terraces
-  if not 560<y<665 and r.random()<.75:wood.append((106+r.randrange(-12,12),y+r.randrange(-12,13),r.uniform(.42,.8)))
+  r.random();r.randrange(-12,12);r.randrange(-12,13);r.uniform(.42,.8)
   if not (296<y<680 or 664<y<800):wood.append((760+r.randrange(-6,9),y+r.randrange(-6,7),r.uniform(.5,.72)))
- wood+=[(4,300,.6),(2,420,.7),(6,560,.65),(0,690,.7),(18,760,.6),(92,770,.6),(30,800,.55),(96,812,.6),(800,800,.65),(838,790,.7),(776,826,.55),(852,822,.6)]
+ wood+=[(30,812,.55),(96,816,.6),(800,800,.65),(838,790,.7),(776,826,.55),(852,822,.6)]
  for x,y,z in sorted(wood,key=lambda q:q[1]):c.tree(x,y,z)
  for i in range(46):
   x=r.choice([r.randrange(0,112),r.randrange(756,FW)]);y=r.randrange(250,820)
+  if x<112:continue
   if 8<x<100 and y<720 or (740<x and (300<y<790)):continue
   c.shrub(x,y,700+i)
- for x,y,w,h,seed in [(100,236,22,22,4),(-4,236,20,24,5)]:c.crag(x,y,w,h,seed)
+ for x,y,w,h,seed in []:c.crag(x,y,w,h,seed)
  marsh(c)
+def towers(c):
+ """The high-rise quarter west of the old town (owner 2026-11-13): six ranks of flat blocks step down the hillside to
+ the river, packed tight, heights uneven, later ranks standing in front of earlier ones. Nobody goes in."""
+ clean=c.clean;S=c.S
+ c.box(0,236,OX,566,S[1] if clean else S[0])                    # what shows between them: dark lanes
+ walls=[P.oat,P.wall_cream,P.wall_blush,P.wall_sage,P.wall_sky,P.wall_butter,P.brick,P.wall_cream,P.wall_sage]
+ ranks=[(336,[(-8,30,98),(24,34,122),(62,24,86),(86,20,108)]),
+        (424,[(-12,34,116),(26,24,152),(54,30,108),(86,20,136)]),
+        (512,[(2,28,126),(34,34,98),(70,22,146),(94,12,92)]),
+        (602,[(-10,32,112),(26,28,140),(58,30,96),(90,16,124)]),
+        (694,[(-2,26,104),(28,36,130),(68,26,100),(94,12,112)]),
+        (792,[(-8,34,98),(30,26,120),(60,24,86),(86,20,104)])]
+ for i,(base,row) in enumerate(ranks):
+  for j,(x,w,h) in enumerate(row):
+   c.tower(x,base+(j%2)*5,w,h,i*17+j*5+3,walls[(i*3+j*2)%len(walls)])
+ c.box(0,797,OX,4,S[1]);c.box(0,797,OX,1,S[3])                    # the embankment along the river
 def park(c):
  """栗林公园 (owner 2026-11-13: "精致美丽一点"): a lawn on the east slope reached from the end of 中城街 (y 612). A
  flagged walk with kerbs, stepping stones up to a bench by a koi pond, chrysanthemum borders, a stone lantern, a
@@ -1301,11 +1355,9 @@ def edges(c):
  """Over the core city: outcrops and planting where the terraces' straight ends would show."""
  r=random.Random(515)
  for by in (370,496,626,758):
-  if by!=626:c.crag(98,by-10,30,44,by)
-  else:c.crag(96,650,26,22,by)
   if by not in (370,758):c.crag(734,by-10,32,44,by+1)
- c.crag(104,872,26,26,9);c.crag(736,872,30,26,10)
- for i,(x,y) in enumerate([(112,300),(116,330),(110,430),(118,462),(112,560),(116,690),(110,724),(750,430),(746,462),(118,840),(746,836)]):c.shrub(x,y,940+i)
+ c.crag(736,872,30,26,10)
+ for i,(x,y) in enumerate([(750,430),(746,462),(118,840),(746,836)]):c.shrub(x,y,940+i)
 def city_layers(stage=0,review=False):
  c=City(stage);c.im=Image.new('RGBA',(W,H));c.d=ImageDraw.Draw(c.im);clear=stage>=2   # the hillside itself is painted once, on the full map (no seam)
  # Whole-city masonry platforms are only a few steps apart, each filled with frontage.

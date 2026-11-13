@@ -23,7 +23,7 @@ css = ('body{margin:0;background:#f4f1ea;color:#303b3a;font:17px/1.85 system-ui,
        'p{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0}a{color:#276b85}.n{color:#8a8f88;font-size:15px}.c{color:#a86a00;font-weight:600}'
        'b.me{color:#2a6ebb}nav{position:sticky;top:0;background:#f4f1ea;padding:12px;border-bottom:1px solid #ccd1c9;font-size:15px}')
 out = [f'<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-       f'<title>栗尾坞完整剧情脚本</title><style>{css}</style><main><nav><a href="maple-full-script.docx">下载完整 Word</a> · '
+       f'<title>栗尾市完整剧情脚本</title><style>{css}</style><main><nav><a href="maple-full-script.docx">下载完整 Word</a> · '
        f'<a href="index.html">原版剧情梗概</a></nav>']
 for raw in lines:
     t = raw.strip()

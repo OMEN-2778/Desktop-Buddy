@@ -1,4 +1,4 @@
-# 栗尾坞 · compact diorama art handoff
+# 栗尾市 · compact diorama art handoff
 
 Current world: **640×944 native pixels**. The compact city is kept at its existing
 width; authoring core is now 640×720 (32px more river), with a 224px summit/panorama strip
@@ -150,3 +150,6 @@ rule, for the sky and the distance haze only). Stage backgrounds are transparent
 
 ## 栗林公园与空气效果（2026-11-13）
 东坡（世界坐标 x 744–864, y 400–676）是栗林公园：石板路接中城街东头（y 612），锦鲤池、菊花花境、石灯笼、名牌、矮篱、糖炒栗子车、秋千。互动地点 swing / koi / chestnut。洁净（阶段 4）全城飘枫叶，污染（阶段 0–2）横向风沙，见 game.js `drawAir()`。
+
+## 西侧高楼群（2026-11-13）
+地图现名栗尾市。西侧（世界 x 0–112, y 236–800）不再是瀑布，而是六排高层住宅（`towers()` / `City.tower()`），只作景观，不可进入，没有路线和地点。
