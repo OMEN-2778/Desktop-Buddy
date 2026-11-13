@@ -147,3 +147,6 @@ rule, for the sky and the distance haze only). Stage backgrounds are transparent
   footbridge to an islet; an egret when clean, a rotting skiff when polluted.
 - New routes are listed in `NO_ART` (their ground is drawn by the outskirts, not as stone flights). Routes stay orthogonal.
 - Sign text needs the font subset: `python tools/subset_autumn_font.py SourceHanSansSC-Medium.otf` after adding characters.
+
+## 栗林公园与空气效果（2026-11-13）
+东坡（世界坐标 x 744–864, y 400–676）是栗林公园：石板路接中城街东头（y 612），锦鲤池、菊花花境、石灯笼、名牌、矮篱、糖炒栗子车、秋千。互动地点 swing / koi / chestnut。洁净（阶段 4）全城飘枫叶，污染（阶段 0–2）横向风沙，见 game.js `drawAir()`。

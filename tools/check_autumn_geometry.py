@@ -25,7 +25,7 @@ for name,pts in A.ROUTES:
    else:
     assert not (t<a[1]<bot and max(min(a[0],b[0]),l)<min(max(a[0],b[0]),r)),(name,a,b,'roof')
 assert A.CORE_H<=720 and A.TOP<=224 and A.MAP_W==640+2*A.OX
-assert len(A.LANDMARKS)==21
+assert len(A.LANDMARKS)==24
 for stage in range(5):
  im=Image.open(ROOT/f'art/out/concept/autumn_city_stage_{stage}.png')
  assert im.size==(A.MAP_W,A.MAP_H)

@@ -48,8 +48,9 @@ ROUTES=[
  ('观瀑台',[(24,388),(-24,388)]),
  ('观云亭',[(608,132),(688,132),(716,132)]),
  ('枫糖广场',[(620,520),(688,520),(728,520)]),
+ ('栗林公园',[(608,388),(660,388),(688,388),(722,388),(748,388)]),
 ]
-NO_ART={'货运升降机','码头栈桥','芦苇荡小径','观瀑台','观云亭','枫糖广场'}
+NO_ART={'货运升降机','码头栈桥','芦苇荡小径','观瀑台','观云亭','枫糖广场','栗林公园'}
 LANDMARKS=[
  dict(id='airstrip',name='山顶停机坪',x=456,y=132,need=None,rect=[354,58,236,70]),
  dict(id='nursery',name='枫树苗圃',x=92,y=132,need=None,rect=[45,55,92,72]),
@@ -71,6 +72,9 @@ LANDMARKS=[
  dict(id='falls',name='观瀑台',x=-24,y=388,need='fun',rect=[-48,360,60,50]),
  dict(id='pavilion',name='观云亭',x=688,y=132,need='fun',rect=[654,64,68,66]),
  dict(id='syrup',name='枫糖铺',x=688,y=520,need='hunger',rect=[656,456,64,56]),
+ dict(id='swing',name='秋千',x=660,y=388,need='fun',rect=[644,326,34,48]),
+ dict(id='koi',name='锦鲤池',x=688,y=388,need='fun',rect=[656,270,84,56]),
+ dict(id='chestnut',name='糖炒栗子摊',x=722,y=388,need='hunger',rect=[694,322,58,58]),
  dict(id='reeds',name='芦苇荡',x=322,y=796,need='fun',rect=[304,764,36,24]),
 ]
 LIFT=dict(x=620,top=258,bottom=520)
@@ -733,6 +737,121 @@ class City:
    for xx in range(x-w+2,x+w,5):self.box(xx,yy+1,1,3,R[0] if xx>x else R[1])
   self.box(x-35,y-37,70,2,P.walnut[0]);self.box(x-34,y-37,34,1,R[3]);self.box(x-37,y-39,3,2,R[1]);self.box(x+35,y-39,3,2,R[0])   # eave, upturned tips
   self.box(x-4,y-58,9,1,R[4]);self.box(x-1,y-62,3,4,P.mustard[2]);self.box(x-1,y-62,1,2,P.mustard[4])
+ def roaster(self,x,y):
+  """糖炒栗子 cart (owner 2026-11-13, the park): spoked wheels, a plank body, a black wok of chestnuts over a little
+  stove with a flue, paper bags on the counter, a striped umbrella, a hanging board."""
+  S=self.S;self.box(x-3,y,42,3,S[1]);self.box(x+36,y-8,5,9,S[1])
+  self.box(x,y-20,36,13,P.wood[1]);self.box(x,y-20,36,2,P.wood[4]);self.box(x,y-18,36,1,P.wood[2])
+  for xx in range(x+6,x+34,7):self.box(xx,y-17,1,10,P.wood[0])
+  self.box(x+32,y-18,4,11,P.wood[0]);self.box(x,y-18,2,11,P.wood[2]);self.box(x,y-8,36,1,P.walnut[0])
+  for wx in (x+7,x+27):                                                          # wheels
+   self.oval(wx,y-4,5,5,P.steel[0]);self.oval(wx,y-4,3,3,P.walnut[1]);self.box(wx-3,y-4,7,1,P.steel[1]);self.box(wx,y-7,1,7,P.steel[1]);self.box(wx-1,y-5,2,2,P.steel[3])
+  self.box(x+3,y-27,15,7,P.ink[1]);self.box(x+2,y-28,17,2,P.steel[1]);self.box(x+2,y-28,8,1,P.steel[3])   # wok on its stove
+  self.box(x+4,y-21,13,2,P.coral[1] if self.clean else P.oak[0])                 # embers glowing under it
+  r=random.Random(x)
+  for k in range(12):
+   cx=x+4+r.randrange(13);cy=y-30+r.randrange(3);self.box(cx,cy,2,2,P.oak[1]);self.box(cx,cy,1,1,P.oak[3])
+  self.box(x+4,y-33,1,1,P.walnut[3]);self.line([(x+16,y-30),(x+21,y-36)],P.steel[0])  # the stirring paddle
+  self.box(x+21,y-25,13,1,P.oat[2])                                               # paper bags on the counter
+  for j in range(3):bx=x+21+j*4;self.box(bx,y-29,3,4,P.oat[3]);self.box(bx,y-29,3,1,P.oat[4]);self.box(bx+2,y-28,1,3,P.oat[1])
+  self.box(x+26,y-50,2,30,P.wood[0])                                              # umbrella pole + striped canopy
+  R=P.coral if self.clean else P.oak
+  self.poly([(x+10,y-46),(x+27,y-55),(x+44,y-46)],R[2])
+  for i,k in enumerate(range(-16,17,4)):
+   if i%2:self.poly([(x+27,y-55),(x+27+k,y-46),(x+27+k+4,y-46)],P.oat[4] if self.clean else P.oat[2])
+  self.box(x+10,y-46,35,1,R[0]);self.box(x+26,y-56,3,2,P.wood[2])
+  self.box(x-6,y-40,1,4,P.wood[0]);self.box(x-11,y-37,12,9,P.walnut[0]);self.box(x-10,y-36,10,7,P.oat[3]);self.text(x-10,y-38,'栗',8,P.walnut[0])
+ def swing(self,x,y):
+  """秋千 under the maples: an A-frame of timber, a crossbar, chains and a plank seat (front view)."""
+  S=self.S;self.box(x-17,y,36,3,S[1])
+  for sx in (-1,1):
+   self.line([(x+sx*16,y),(x+sx*13,y-44)],P.wood[0],3);self.line([(x+sx*16-1,y),(x+sx*13-1,y-44)],P.wood[3]);self.line([(x+sx*16,y),(x+sx*10,y-14)],P.wood[1],2)
+  self.box(x-16,y-47,33,4,P.wood[1]);self.box(x-16,y-47,33,1,P.wood[4]);self.box(x-16,y-44,33,1,P.walnut[0])
+  for cx in (x-6,x+6):
+   for yy in range(y-43,y-11,2):self.box(cx,yy,1,1,P.steel[2]);self.box(cx,yy+1,1,1,P.steel[0])
+  self.box(x-9,y-12,19,3,P.wood[2]);self.box(x-9,y-12,19,1,P.wood[4]);self.box(x-9,y-9,19,1,P.walnut[0]);self.box(x-4,y-1,9,2,S[1])
+ def flowerbed(self,x,y,w,seed,rows=3):
+  """A planted border (owner 2026-11-13 "精致美丽一点"): a soil mound edged with pale stones and chrysanthemums massed
+  in rows, tall pink at the back, gold in the middle, white in front, leaves between; dry stalks while polluted."""
+  r=random.Random(seed);clean=self.clean;h=rows*3+2
+  self.box(x+1,y-h+2,w-2,h,P.walnut[1]);self.box(x,y-h+4,w,h-3,P.walnut[1]);self.box(x+1,y-h+2,w-2,1,P.walnut[2]);self.box(x,y+1,w,1,P.walnut[0])
+  for xx in range(x,x+w-2,5):self.box(xx,y,4,2,self.S[3] if (xx//5)%2 else self.S[2]);self.box(xx,y,4,1,self.S[4] if clean else self.S[3]);self.box(xx+4,y+1,1,1,self.S[1])
+  fams=[P.coral,P.mustard,[P.oat[2],P.oat[2],P.oat[3],P.oat[4],P.oat[4]],P.autumn]
+  for row in range(rows):
+   fy=y-h+1+row*3;F=fams[(row+seed)%4 if rows<3 else row]
+   for fx in range(x+2+(row%2)*2,x+w-3,4):
+    fx+=r.randrange(-1,1)
+    if clean:
+     self.box(fx-1,fy+2,3,2,P.leaf[1]);self.box(fx+1,fy+3,2,1,P.leaf[3])
+     self.box(fx-1,fy,3,1,F[3]);self.box(fx,fy-1,1,3,F[3]);self.box(fx,fy,1,1,F[4] if F is not P.mustard else P.autumn[2]);self.box(fx+1,fy+1,1,1,F[1])
+    else:
+     self.box(fx,fy,1,3,P.oak[1])
+     if r.random()<.35:self.box(fx-1,fy,2,1,P.oak[2])
+ def leaf_carpet(self,x,y,rx,ry,seed):
+  """Leaves fallen in a ring under a maple (clean stages): dense at the middle, thinning outwards."""
+  if not self.clean:return
+  r=random.Random(seed)
+  for _ in range(rx*ry):
+   a=r.uniform(0,2*math.pi);k=r.random()**.7;px_=x+math.cos(a)*rx*k;py_=y+math.sin(a)*ry*k
+   c=r.choice([P.autumn[2],P.autumn[3],P.mustard[3],P.autumn[2],P.coral[2]]);self.box(px_,py_,2,1,c)
+   if r.random()<.3:self.box(px_+1,py_-1,1,1,P.mustard[4])
+ def stone_lantern(self,x,y):
+  """石灯笼: foot, shaft, a lit box with a window, a wide cap and a finial; moss at the foot."""
+  S=self.S;self.box(x-4,y,10,2,S[1]);self.box(x-3,y-3,7,3,S[2]);self.box(x-3,y-3,7,1,S[4]);self.box(x-1,y-11,3,8,S[2]);self.box(x-1,y-11,1,8,S[4]);self.box(x+1,y-11,1,8,S[1])
+  self.box(x-3,y-13,7,2,S[3]);self.box(x-3,y-19,7,6,S[2]);self.box(x-2,y-18,5,4,P.mustard[4] if self.clean else P.oat[1]);self.box(x,y-18,1,4,S[1]);self.box(x-2,y-16,5,1,S[1])
+  self.box(x-5,y-21,11,2,S[1]);self.box(x-5,y-21,11,1,S[3]);self.box(x-3,y-23,7,2,S[2]);self.box(x-3,y-23,3,1,S[4]);self.box(x-1,y-25,3,2,S[3]);self.box(x,y-27,1,2,S[2])
+  if self.clean:self.box(x-4,y-1,3,1,P.leaf[3]);self.box(x+2,y-4,2,1,P.leaf[2])
+ def stepping(self,x,y):
+  S=self.S;self.oval(x,y+1,5,2,P.leaf[0] if self.clean else P.walnut[1]);self.oval(x,y,5,2,S[3]);self.box(x-3,y-2,5,1,S[4]);self.box(x+1,y+1,3,1,S[2])
+ def hedge(self,x0,x1,y):
+  """A low clipped hedge: rounded bushes run together, lit along the top left, a shadow on the grass."""
+  G=P.leaf if self.clean else [P.walnut[1],P.oak[0],P.oak[1],P.oak[2],P.oat[2]];r=random.Random(x0+y)
+  self.box(x0-2,y+1,x1-x0+6,2,G[0])
+  for x in range(x0,x1,8):
+   self.oval(x+4,y-4,6,5,G[1]);self.oval(x+3,y-5,4,3,G[2])
+  self.box(x0-2,y-3,x1-x0+6,4,G[1])
+  for x in range(x0-1,x1+3,3):
+   if r.random()<.6:self.box(x,y-8+r.randrange(3),2,1,G[3])
+   if r.random()<.35:self.box(x,y-3+r.randrange(3),1,1,G[0])
+   if self.clean and r.random()<.12:self.box(x,y-6,1,1,P.coral[3])
+ def pond(self,x,y,seed):
+  """A kidney-shaped garden pond: a neat ring of flat stones, deep water with pale streaks of sky and the maples'
+  colours mirrored in it, lily pads with pink lotus, koi; murky and bare while polluted."""
+  clean=self.clean;r=random.Random(seed);S=self.S;lobes=[(x-10,y,30,12),(x+20,y-4,20,9)]
+  def ring(cx,cy,rx,ry,k):return [(cx+math.cos(2*math.pi*i/28)*rx*k,cy+math.sin(2*math.pi*i/28)*ry*k) for i in range(28)]
+  for cx,cy,rx,ry in lobes:self.poly([(a,b+3) for a,b in ring(cx,cy,rx+3,ry+2,1)],P.leaf[0] if clean else P.walnut[1])
+  for cx,cy,rx,ry in lobes:self.poly(ring(cx,cy,rx+3,ry+2,1),S[2])
+  W=(P.teal[1],P.teal[2],P.teal[3],P.teal[4]) if clean else (P.teal[0],P.sage[0],P.sage[1],P.sage[2])
+  for cx,cy,rx,ry in lobes:self.poly(ring(cx,cy+1,rx,ry,1),P.teal[0])
+  for cx,cy,rx,ry in lobes:self.poly(ring(cx,cy,rx,ry,1),W[1])
+  for cx,cy,rx,ry in lobes:self.poly(ring(cx-2,cy+2,rx,ry,.62),W[0])
+  mask=Image.new('1',self.im.size);md=ImageDraw.Draw(mask)
+  for cx,cy,rx,ry in lobes:md.polygon(ring(cx,cy,rx-1,ry-1,1),fill=1)
+  a=np.array(mask)
+  def w(px_,py_,n,c):
+   for xx in range(int(px_),int(px_)+n):
+    if 0<=xx<self.im.width and a[int(py_),xx]:self.box(xx,py_,1,1,c)
+  for j in range(5):w(x-34+j*9+r.randrange(4),y-9+j%2,r.randrange(5,9),W[3])          # the sky along the far bank
+  for j in range(4):w(x-26+j*13+r.randrange(5),y-6+j%2*2,r.randrange(3,6),W[2])
+  if clean:
+   for j in range(7):w(x-30+r.randrange(62),y-7+r.randrange(4),r.randrange(2,5),r.choice([P.autumn[2],P.mustard[3],P.autumn[3]]))   # maples mirrored
+  for j in range(5):w(x-28+r.randrange(56),y+2+r.randrange(7),r.randrange(4,8),W[2])
+  # the rim: flat stones laid end to end
+  for cx,cy,rx,ry in lobes:
+   for i in range(30):
+    t=2*math.pi*i/30;px_=cx+math.cos(t)*(rx+1.5);py_=cy+math.sin(t)*(ry+1)
+    if a[int(py_),int(px_)]:continue
+    self.box(px_-2,py_-1,4,3,S[3] if i%2 else S[2]);self.box(px_-2,py_-1,3,1,S[4]);self.box(px_-1,py_+1,3,1,S[1])
+    if clean and i%7==3:self.box(px_-1,py_-1,2,1,P.leaf[3])
+  if clean:
+   for px_,py_,bloom in [(x-30,y+1,1),(x-22,y+5,0),(x-2,y+7,1),(x+8,y+3,0),(x+26,y-1,1),(x+31,y-6,0),(x-14,y-5,0)]:
+    self.box(px_,py_,6,3,P.leaf[2]);self.box(px_+1,py_-1,4,1,P.leaf[2]);self.box(px_+1,py_,3,1,P.leaf[3]);self.box(px_+3,py_+1,1,2,W[0])
+    if bloom:self.box(px_+1,py_-2,3,2,P.coral[3]);self.box(px_+2,py_-3,1,2,P.oat[4]);self.box(px_+2,py_-1,1,1,P.mustard[3])
+   for px_,py_,d in [(x-14,y+3,1),(x+2,y-2,-1),(x+18,y+1,1)]:                       # koi
+    self.box(px_,py_,4,2,P.autumn[3]);self.box(px_+(3 if d>0 else 0),py_,1,1,P.oat[4]);self.box(px_+1,py_,1,1,P.oat[4]);self.box(px_+(-2 if d>0 else 4),py_,2,1,P.autumn[2]);self.box(px_+(-2 if d>0 else 5),py_+1,1,1,P.autumn[2])
+  for k in range(5):                                                                # cattails at the right-hand end
+   bx=x+36+k*2;hh=10+(k*5)%7;self.box(bx,y-4-hh,1,hh+2,P.leaf[2] if clean else P.oak[1])
+   if k%2==0:self.box(bx,y-6-hh,1,4,P.walnut[1]);self.box(bx,y-6-hh,1,1,P.walnut[3])
  def person(self,x,y,seed):
   # Distant anonymous scale figures only; no additional story cast.
   import doll
@@ -1023,6 +1142,10 @@ def outskirts(c):
  # ---- east: a little plaza off the workers' street with the maple-sugar shop
  c.terrace([(742,690),(800,684),(842,694),(860,720),(856,748),(828,760),(742,760)],26,82)
  c.building(768,736,64,1,'old','枫糖铺',61);c.barrel(836,740);c.crate(846,744,12,10);c.lamp(754,742);c.bench(800,752)
+
+ # ---- east: 栗林公园 on the open slope (owner 2026-11-13): a lawn off the end of 中城街, a gravel path, a pond,
+ # flower beds, a chestnut cart and a swing under the maples; lovely once the town is clean, dusty while polluted
+ park(c)
  # ---- the mountainside woods carry on round both sides
  wood=[]
  for row,y in enumerate(range(116,240,11)):
@@ -1032,17 +1155,61 @@ def outskirts(c):
    wood.append((x+r.randrange(-7,8),y+r.randrange(-4,5),min(.95,k*r.uniform(.85,1.2))))
  for y in range(262,800,30):                                   # the seams beside the terraces
   if not 560<y<665 and r.random()<.75:wood.append((106+r.randrange(-12,12),y+r.randrange(-12,13),r.uniform(.42,.8)))
-  if not (296<y<410 or 664<y<800):wood.append((760+r.randrange(-6,9),y+r.randrange(-6,7),r.uniform(.5,.72)))
- for _ in range(26):                                           # the open east slope
-  x=r.randrange(776,FW+4);y=r.randrange(404,676);wood.append((x,y,r.uniform(.5,.85)))
+  if not (296<y<680 or 664<y<800):wood.append((760+r.randrange(-6,9),y+r.randrange(-6,7),r.uniform(.5,.72)))
  wood+=[(4,300,.6),(2,420,.7),(6,560,.65),(0,690,.7),(18,760,.6),(92,770,.6),(30,800,.55),(96,812,.6),(800,800,.65),(838,790,.7),(776,826,.55),(852,822,.6)]
  for x,y,z in sorted(wood,key=lambda q:q[1]):c.tree(x,y,z)
  for i in range(46):
   x=r.choice([r.randrange(0,112),r.randrange(756,FW)]);y=r.randrange(250,820)
-  if 8<x<100 and y<720 or (740<x and (300<y<400 or 670<y<790)):continue
+  if 8<x<100 and y<720 or (740<x and (300<y<790)):continue
   c.shrub(x,y,700+i)
- for x,y,w,h,seed in [(770,470,34,22,1),(812,560,40,26,2),(782,640,30,20,3),(100,236,22,22,4),(-4,236,20,24,5)]:c.crag(x,y,w,h,seed)
+ for x,y,w,h,seed in [(100,236,22,22,4),(-4,236,20,24,5)]:c.crag(x,y,w,h,seed)
  marsh(c)
+def park(c):
+ """栗林公园 (owner 2026-11-13: "精致美丽一点"): a lawn on the east slope reached from the end of 中城街 (y 612). A
+ flagged walk with kerbs, stepping stones up to a bench by a koi pond, chrysanthemum borders, a stone lantern, a
+ roofed name board, a clipped hedge, a 糖炒栗子 cart and a swing; maples ring it, their leaves lying under them."""
+ clean=c.clean;r=random.Random(913);S=c.S
+ g0,g1,g2,g3=(P.leaf[0],P.leaf[1],P.leaf[2],P.leaf[3]) if clean else (P.walnut[1],P.walnut[2],P.oak[0],P.oat[0])
+ lawn=c.rounded([(748,412),(790,400),(836,404),(866,414),(866,668),(820,676),(770,672),(748,662),(744,560)],10)
+ c.poly([(x,y+4) for x,y in lawn],g0);c.poly(lawn,g1);c.poly([(x*.97+25,y*.96+18) for x,y in lawn],g2)
+ mask=Image.new('1',c.im.size);ImageDraw.Draw(mask).polygon(lawn,fill=1);a=np.array(mask)
+ for _ in range(260):                                           # a few tufts only: the lawn is kept
+  x=r.randrange(748,FW-2);y=r.randrange(408,668)
+  if not(a[y,x] and a[y+3,x] and a[y,x-3]):continue
+  if r.random()<.6:c.box(x,y,1,2,g3);c.box(x+1,y+1,1,1,g3)
+  else:c.box(x,y,2,1,g1)
+ trees=[(764,452,.62),(852,444,.78),(806,432,.55),(784,422,.5),(832,418,.6),(750,428,.48),(868,474,.6),(862,552,.6),(866,640,.52),(756,676,.5),(860,678,.5)]
+ for x,y,z in trees:c.leaf_carpet(x,y+1,int(26*z),int(9*z)+2,x)
+ # the walk on from 中城街: flagstones between two kerbs
+ G=(P.oat[3],P.oat[2],P.oat[1]) if clean else (P.oat[2],P.oat[1],P.walnut[3])
+ c.box(744,603,FW-744,15,G[2]);c.box(744,604,FW-744,12,G[1])
+ for row,yy in enumerate((604,610)):
+  x=744-r.randrange(6)
+  while x<FW:
+   w=r.randrange(8,14);c.box(x+w,yy,1,6,G[2])
+   if r.random()<.3:c.box(x+1,yy+1,w-1,4,G[0])
+   x+=w+1
+ c.box(744,609,FW-744,1,G[2])
+ for x in range(744,FW,6):
+  for yy in (601,616):c.box(x,yy,5,3,S[3] if (x//6)%2 else S[2]);c.box(x,yy,5,1,S[4]);c.box(x,yy+2,5,1,S[1])
+ for x,y in [(796,594),(791,584),(794,574),(801,565),(806,556)]:c.stepping(x,y)
+ c.flowerbed(772,492,66,7)                                       # behind the water
+ c.pond(808,510,5)
+ c.bench(796,546);c.stone_lantern(780,548)
+ c.box(757,598,30,2,P.walnut[2] if clean else P.walnut[1]);c.swing(772,596)   # bare earth worn under the swing
+ c.flowerbed(748,599,10,2,2);c.flowerbed(836,646,26,4)
+ c.roaster(816,602)
+ c.box(840,596,8,6,P.oak[1]);c.box(840,596,8,1,P.oak[3]);c.box(841,594,6,2,P.oak[1])   # a basket of chestnuts by the cart
+ for k in range(3):c.box(842+k*2,593,1,1,P.walnut[0])
+ # the name board under its own little roof
+ for px_ in (774,812):c.box(px_,628,3,30,P.wood[0]);c.box(px_,628,1,30,P.wood[3]);c.box(px_-1,657,5,2,S[1])
+ c.sign(770,634,50,'栗林公园',9)
+ c.poly([(764,632),(772,622),(817,622),(825,632)],P.clay[1]);c.poly([(766,631),(773,623),(795,623),(795,631)],P.clay[2])
+ for x in range(768,824,5):c.box(x,627,1,4,P.clay[0])
+ c.box(764,631,62,2,P.walnut[0]);c.box(772,621,46,1,P.clay[4])
+ c.hedge(770,832,670)
+ for x,y,z in trees:c.tree(x,y,z)
+ for i,(x,y) in enumerate([(748,488),(860,500),(772,468),(842,470),(792,448),(824,452),(764,526),(856,524),(822,550),(862,598),(752,632),(826,634),(858,654),(760,664),(846,670)]):c.shrub(x,y,880+i)
 def marsh(c):
  """芦苇荡 (owner 2026-11-11): low land of an uneven outline below the pier, walkable, reached by the jetty; reeds in
  an ordered fringe round the shore (each clump its own sprite), maples, a path, a bench, a footbridge to an islet."""
@@ -1138,7 +1305,7 @@ def edges(c):
   else:c.crag(96,650,26,22,by)
   if by not in (370,758):c.crag(734,by-10,32,44,by+1)
  c.crag(104,872,26,26,9);c.crag(736,872,30,26,10)
- for i,(x,y) in enumerate([(112,300),(116,330),(110,430),(118,462),(112,560),(116,690),(110,724),(750,430),(746,462),(752,560),(748,592),(118,840),(746,836)]):c.shrub(x,y,940+i)
+ for i,(x,y) in enumerate([(112,300),(116,330),(110,430),(118,462),(112,560),(116,690),(110,724),(750,430),(746,462),(118,840),(746,836)]):c.shrub(x,y,940+i)
 def city_layers(stage=0,review=False):
  c=City(stage);c.im=Image.new('RGBA',(W,H));c.d=ImageDraw.Draw(c.im);clear=stage>=2   # the hillside itself is painted once, on the full map (no seam)
  # Whole-city masonry platforms are only a few steps apart, each filled with frontage.

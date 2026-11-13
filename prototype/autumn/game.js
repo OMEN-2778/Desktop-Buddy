@@ -395,6 +395,9 @@ function makeSeason_autumn(opts, DATA) {
             pavilion: [ "进亭子里坐坐", "fun" ],
             reeds: [ "在长椅上吹吹风", "fun" ],
             syrup: [ "买块枫糖", "hunger" ],
+            chestnut: [ "买一袋糖炒栗子", "hunger" ],
+            swing: [ "荡一会儿秋千", "fun" ],
+            koi: [ "坐在池边喂锦鲤", "fun" ],
             plaza: [ "坐一会儿，聊聊天", "social" ]
         };
         if (services[id]) {
@@ -647,6 +650,49 @@ function makeSeason_autumn(opts, DATA) {
         }
         ctx.globalAlpha = 1;
     }
+    // Owner 2026-11-13: clean town = maple leaves drifting down (smooth, graceful); polluted = sand blown sideways.
+    // Both are functions of state.time only (nothing to save) and are tied to the world, so they slide past when the
+    // camera moves. Positions keep their fractions: the canvas is drawn above 1x, so the motion is not stepped.
+    const LEAF_COL = [ [ "#e88a2f", "#b5542a" ], [ "#d9542b", "#963a2a" ], [ "#efc452", "#c58a2e" ], [ "#e88a2f", "#b5542a" ], [ "#c8452e", "#8a3328" ] ];
+    const rnd = i => { const v = Math.sin(i * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+    const wrap = (v, m) => (v % m + m) % m;
+    function drawAir() {
+        const t = state.time, W = 342 + 24, H = 236 + 24;
+        if (state.stage >= 4) {
+            const gust = Math.sin(t * .23) * 14 + Math.sin(t * .071 + 2) * 10;
+            for (let i = 0; i < 38; i++) {
+                const near = i % 5 === 0, a = rnd(i), b = rnd(i + 50), c = rnd(i + 99);
+                const vy = (near ? 15 : 8) + a * 6, w = .9 + b * .9, amp = (near ? 13 : 8) + c * 6, ph = t * w + i * 2.4;
+                const sway = Math.sin(ph), x = wrap(a * 977 + t * (5 + b * 4) + gust * (near ? 1.3 : .8) + sway * amp - state.camX, W) - 12;
+                const y = wrap(b * 733 + t * vy + Math.cos(ph * 2) * 2.5 - state.camY, H) - 12;   // dips at each end of the swing
+                const [lit, dark] = LEAF_COL[i % 5], turn = Math.cos(ph), k = near ? 1.35 : .95;
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(sway * .9 + i);
+                ctx.scale(k, k * (.35 + .65 * Math.abs(turn)));                        // the leaf turns over as it swings
+                ctx.fillStyle = turn > 0 ? lit : dark;
+                ctx.fillRect(-2.5, -1, 5, 2); ctx.fillRect(-1.5, -2, 3, 4); ctx.fillRect(-.5, -2.5, 1, 1);
+                ctx.fillStyle = turn > 0 ? dark : lit;
+                ctx.fillRect(-2, -.25, 4, .5); ctx.fillRect(2.5, -.25, 1.5, .5);        // midrib and stalk
+                ctx.restore();
+            }
+        } else if (state.stage < 3) {
+            const n = [ 110, 90, 64 ][state.stage], gust = .75 + .25 * Math.sin(t * .37) + .2 * Math.sin(t * 1.1 + 1);
+            for (let i = 0; i < 6; i++) {                                                // thin sheets of dust sweeping across
+                const a = rnd(i + 7), x = wrap(a * 900 + t * (60 + a * 30) - state.camX, W + 240) - 240, y = wrap(a * 500 + i * 61 + Math.sin(t * .3 + i) * 10 - state.camY, H) - 12;
+                const g = ctx.createLinearGradient(x, 0, x + 240, 0);
+                g.addColorStop(0, "rgba(196,172,128,0)"); g.addColorStop(.5, `rgba(206,180,132,${.26 * gust})`); g.addColorStop(1, "rgba(196,172,128,0)");
+                ctx.fillStyle = g; ctx.fillRect(x, y, 240, 14 + a * 18);
+            }
+            for (let i = 0; i < n; i++) {
+                const a = rnd(i + 20), b = rnd(i + 70), c = rnd(i + 130), v = (70 + a * 90) * gust;
+                const x = wrap(b * 991 + t * (70 + a * 90) + Math.sin(t * .37) * 30 - state.camX, W) - 12;
+                const y = wrap(c * 811 + t * (4 + a * 5) + Math.sin(t * (1.5 + b) + i) * 3 - state.camY, H) - 12;
+                ctx.fillStyle = `rgba(${i % 3 ? "238,218,176" : "142,112,78"},${.45 + c * .4})`;
+                ctx.fillRect(x, y, i % 4 ? 5 + v / 12 : 2, i % 7 ? 1 : 1.5);
+            }
+        }
+    }
     function draw() {
         speech.position();
         canvas.height=state.inside?120:236;
@@ -764,13 +810,7 @@ function makeSeason_autumn(opts, DATA) {
                     if (x >= 0 && x < 342 && y >= 0 && y < 236) ctx.fillRect(x, y, 3 + i % 3, 1);
                 }
             }
-            if (state.stage >= 4) {
-                ctx.fillStyle = "#e88a2f";
-                for (let i = 0; i < 12; i++) {
-                    const x = (i * 41 + Math.sin(state.time + i) * 7) % 342, y = (i * 71 + state.time * 6) % 236;
-                    ctx.fillRect(Math.round(x), Math.round(y), 2, 1);
-                }
-            }
+            drawAir();
             fx.weather(ctx, weatherKind, state.time, 342, 236);
         }
         const h = opts.now() % 1440 / 60, night = h < 6 || h >= 20 ? .38 : h < 7 || h >= 18 ? .16 : 0;
