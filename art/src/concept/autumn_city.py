@@ -1,4 +1,4 @@
-"""枫叶城 · compact flat-roof mountain diorama, 640×688 native pixels.
+"""栗尾坞 · compact flat-roof mountain diorama, 640×688 native pixels.
 Top-left light; front facades, solid stone flights and terraced mountain bedrock.
 Original code art; project palette only. Routes drive both visible stair openings
 and the test-game navigation graph; never draw a barrier across their junctions.
@@ -868,7 +868,7 @@ def backdrop(stage):
     rr=rad+(hr.random()<.3)
     c.oval(x,y,rr,rr-1,R[t[0]]);c.oval(x-1,y-1,rr-1,max(1,rr-2),R[t[1]])
     if y-prof[x]<10 or hr.random()<.5:c.box(x-2,y-2,2,1,R[t[2]])
-  # Towns among the woods (owner 2026-11-11: 枫叶城的延伸): terraced rows of small flat-roofed houses stepping up the
+  # Towns among the woods (owner 2026-11-11: 栗尾坞的延伸): terraced rows of small flat-roofed houses stepping up the
   # slope, each row a little higher and offset, with tree crowns grown in between and over their feet.
   for cx,wid,rows in TOWNS[hi]:
    tr=random.Random(seed*7+cx);walls=[P.wall_cream,P.wall_blush,P.wall_sage,P.wall_butter,P.oat] if clean else [P.pave,P.oat,P.pave]

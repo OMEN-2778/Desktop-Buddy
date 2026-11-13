@@ -1,4 +1,4 @@
-// 枫叶城 · 侦探事务所 (阿简's house, the reused 暖木小复式) — owner 2026-11-11: autumn gets the same life precision as
+// 栗尾坞 · 侦探事务所 (阿简's house, the reused 暖木小复式) — owner 2026-11-11: autumn gets the same life precision as
 // 茵菲谷 / 草帽湾. Its furniture runs the home's own acts through season_house.js (durations, needs, face and pose,
 // bubbles, diary, cook → dish on the table → eat, a toilet break), like infei_home.js. The city controller
 // (prototype/autumn/game.js) calls in through opts.home: need(k), click(id), arrived(id), under/over(ctx), busy().

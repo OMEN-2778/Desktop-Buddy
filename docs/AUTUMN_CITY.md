@@ -1,4 +1,4 @@
-# 枫叶城 · compact diorama art handoff
+# 栗尾坞 · compact diorama art handoff
 
 Current world: **640×944 native pixels**. The compact city is kept at its existing
 width; authoring core is now 640×720 (32px more river), with a 224px summit/panorama strip

@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-13 Claude — 秋季地图改名：枫叶城 → 栗尾坞
+- 主人定名“栗尾坞”。游戏文字（autumn/game.js、adapter、season_social、autumn_home、内测入口）、剧本 MAPLE_FULL_SCRIPT / PLOT_V3 及其网页/Word、各文档统一替换。
+- 未改：AGENT_LOG 旧条目、docs/evidence、desktop-win7（已停）。文件名（MAPLE_*、autumn_*）不变。地图招牌里本来没有城名，美术不用动。
+- 已检：重新构建，内测页里无“枫叶城”残留。
+
 ## 2026-11-12 Claude — 修：草帽湾在小木屋里参加节日活动，她穿墙一直往右走
 - 玩家反馈（截图：小木屋内）：穿模，一直往右走。原因：节日栏的活动（goBay → walk）不管她在不在屋里，直接朝沙滩坐标走；8 秒后还会把 x 直接设到目标，人就出了墙。
 - summer_life.js：walk() 先看是否在小木屋里，在就走门出去（leave，4 秒没出去就直接走门转场）再走；原 walk 改名 walk0，超时按距离放宽（8 秒 + 每像素 30ms），远路不再瞬移。

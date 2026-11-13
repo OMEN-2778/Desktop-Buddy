@@ -34,11 +34,11 @@ either can pick up the other's work:
 
 ## ⚠️ Season maps: Buddy never leaves on her own (owner rule, applies to EVERY season map)
 Full must-have checklist for every season-map feature (owner 2026-11-06): `docs/SEASON_MAP_STANDARD.md`.
-While Buddy is in a season map (春 farm, 夏 island + sea, 秋 枫叶城, 冬 later), her autonomous
+While Buddy is in a season map (春 farm, 夏 island + sea, 秋 栗尾坞, 冬 later), her autonomous
 behaviour never chooses to leave the map or "go home". No want, wish, moodlet or need may
 trigger a trip back to the desktop house.
 - Low needs are met **first in the house the map gives her** (spring farmhouse, summer
-  lodge/cabana, the detective's house in 枫叶城), **otherwise at the nearest fitting spot inside
+  lodge/cabana, the detective's house in 栗尾坞), **otherwise at the nearest fitting spot inside
   the map** (canteen, public bath, bench, public toilet…). Each season map must provide a
   spot for every need (饱腹 精力 清洁 如厕 社交 开心) so this always works.
 - Only the player (or a story beat) takes her out of a season map.
@@ -73,7 +73,7 @@ run `node tools/check_save_roundtrip.js`, then `git checkout prototype/demo/inde
   茵菲谷 is reachable (airport), no cheats/test panel, the player's own save keys; copy-web.mjs adds
   `AUDIO_LIBRARY/INFEI`. The 试玩版 and the web preview root are unchanged.
 - **0.3 (owner 2026-11-07): 草帽湾 is in the formal game.** The airport flies there in calendar summer/autumn only
-  (airport.js); a save in 枫叶城 is still sent home (adapter.js, `SEASON_RELEASE`). 枫叶城 stays test-only.
+  (airport.js); a save in 栗尾坞 is still sent home (adapter.js, `SEASON_RELEASE`). 栗尾坞 stays test-only.
 - Owner exception (2026-10-31): `/map-test/` is a separate **game-shell seasonal-map test**
   page (full game UI/needs/transition + test-only adapters). Owner explicitly said **do not
   put these maps into the formal version**. `make_season_game_test.py` injects them only

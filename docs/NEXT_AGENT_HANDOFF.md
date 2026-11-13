@@ -58,4 +58,4 @@
 十二组视觉提案见 [设计稿说明](design/README.md) 和 [完整PNG](design/spring-ui-board.png)。此前只有聊天图片，Cloud看不到，现在已跟踪。它不是已实现UI或可直接使用的精灵图，具体差异见说明。
 
 ## 最新剧情写作交接
-用户重新开启枫叶城写作，现已完成 `docs/story/MAPLE_FULL_SCRIPT.md` 全量对白与机制母稿。配套阅读页 `/story-review/full-script.html`、Word `maple-full-script.docx`。具体支持门槛/七天过渡为新稿设计值；运行游戏仍是旧线性故事。UI以Claude最新规则为准：上方对方行、主角自己的气泡行、浅黄选项，不使用本档较早记载的头顶气泡版。
+用户重新开启栗尾坞写作，现已完成 `docs/story/MAPLE_FULL_SCRIPT.md` 全量对白与机制母稿。配套阅读页 `/story-review/full-script.html`、Word `maple-full-script.docx`。具体支持门槛/七天过渡为新稿设计值；运行游戏仍是旧线性故事。UI以Claude最新规则为准：上方对方行、主角自己的气泡行、浅黄选项，不使用本档较早记载的头顶气泡版。

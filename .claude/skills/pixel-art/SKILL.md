@@ -1073,13 +1073,13 @@ frame. Underwater pixel light openings must vary spacing/width/reach and taper/f
 into depth, not repeat widening cones. Bubble trails are sparse, have multiple plausible
 attachment sites, and disappear at the waterline rather than floating above the sea.
 
-### 枫叶城 depth / whole-map rule (2026-11-01)
+### 栗尾坞 depth / whole-map rule (2026-11-01)
 Owner wants one continuous large autumn hillside city, strong oblique depth and genuine
 vertical traversal via interlocking stairs/switchbacks/stacked streets, like the spatial
 experience of Chongqing/Hongyadong. Do not split into boxed districts or flatten into a
 left/right strip. First review is pollution state only. Art handoff: docs/AUTUMN_CITY.md.
 
-### 枫叶城 follow-up owner corrections (2026-11-01, overrides diagonal review)
+### 栗尾坞 follow-up owner corrections (2026-11-01, overrides diagonal review)
 Use horizontal streets, vertical stair flights and right-angle landings; preserve height
 through stacked floors, not diagonal/curved stairs. Compact excessive empty spacing and
 omit building side faces. Add dry yellow maples/shrubs in sensible edge planters/ledges,
@@ -1087,7 +1087,7 @@ with doors and stairs accessible. Foreground occlusion is allowed: fade only the
 object when it hides Buddy, recover after she leaves. Runtime uses independent foliage
 atlases and street rails, not a whole-scene transparency change. See AUTUMN_GAME.md.
 
-### 枫叶城 mountain repair (2026-11-01, owner decision)
+### 栗尾坞 mountain repair (2026-11-01, owner decision)
 City sits on one mountain body. Use solid stone flights with masonry cheeks, broad
 flush upper/lower thresholds and retaining foundations; no floating ladder/wood-stilt
 look. Stair entrances must remain genuinely open through street rails. Derive rail
@@ -1096,7 +1096,7 @@ roofs. Enrich dry maple canopies, shrubs, exposed rock, drainage and lived-in fr
 root plants in actual courts/planting ledges, not visually on roofs. Keep continuous
 compact map, front facades, orthogonal streets and per-object foreground fading.
 
-### 枫叶城 replacement: compact flat-roof diorama (2026-11-01)
+### 栗尾坞 replacement: compact flat-roof diorama (2026-11-01)
 Owner rejected the repaired large map as still too big/coarse. Latest decision overrides
 that composition: rebuild MUCH smaller, like a dense large diorama; tightly packed
 **flat-roof houses only**, compact carefully dressed rooms, fill gaps with reused /
