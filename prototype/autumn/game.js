@@ -652,8 +652,10 @@ function makeSeason_autumn(opts, DATA) {
     }
     // Owner 2026-11-13: clean town = maple leaves drifting down (smooth, graceful); polluted = sand blown sideways.
     // Both are functions of state.time only (nothing to save) and are tied to the world, so they slide past when the
-    // camera moves. Positions keep their fractions: the canvas is drawn above 1x, so the motion is not stepped.
+    // camera moves.
     const LEAF_COL = [ [ "#e88a2f", "#b5542a" ], [ "#d9542b", "#963a2a" ], [ "#efc452", "#c58a2e" ], [ "#e88a2f", "#b5542a" ], [ "#c8452e", "#8a3328" ] ];
+    const LEAF_BIG = [ [ ".#.#.", "#####", ".##d.", "..d.." ], [ ".##..", "###d.", ".#dd.", "...d." ], [ "..#..", ".##..", ".#d..", "..d.." ], [ "..##.", ".d###", ".dd#.", ".d..." ] ];
+    const LEAF_SMALL = [ [ "###", ".d." ], [ "##.", ".#d" ], [ ".#.", ".#.", ".d." ], [ ".##", "d#." ] ];
     const rnd = i => { const v = Math.sin(i * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
     const wrap = (v, m) => (v % m + m) % m;
     function drawAir() {
@@ -663,18 +665,18 @@ function makeSeason_autumn(opts, DATA) {
             for (let i = 0; i < 96; i++) {
                 const near = i % 5 === 0, a = rnd(i), b = rnd(i + 50), c = rnd(i + 99);
                 const vy = (near ? 15 : 8) + a * 6, w = .9 + b * .9, amp = (near ? 13 : 8) + c * 6, ph = t * w + i * 2.4;
-                const sway = Math.sin(ph), x = wrap(a * 977 + t * (5 + b * 4) + gust * (near ? 1.3 : .8) + sway * amp - state.camX, W) - 12;
+                const x = wrap(a * 977 + t * (5 + b * 4) + gust * (near ? 1.3 : .8) + Math.sin(ph) * amp - state.camX, W) - 12;
                 const y = wrap(b * 733 + t * vy + Math.cos(ph * 2) * 2.5 - state.camY, H) - 12;   // dips at each end of the swing
-                const [lit, dark] = LEAF_COL[i % 5], turn = Math.cos(ph), k = near ? 1.35 : .95;
-                ctx.save();
-                ctx.translate(x, y);
-                ctx.rotate(sway * .9 + i);
-                ctx.scale(k, k * (.35 + .65 * Math.abs(turn)));                        // the leaf turns over as it swings
-                ctx.fillStyle = turn > 0 ? lit : dark;
-                ctx.fillRect(-2.5, -1, 5, 2); ctx.fillRect(-1.5, -2, 3, 4); ctx.fillRect(-.5, -2.5, 1, 1);
-                ctx.fillStyle = turn > 0 ? dark : lit;
-                ctx.fillRect(-2, -.25, 4, .5); ctx.fillRect(2.5, -.25, 1.5, .5);        // midrib and stalk
-                ctx.restore();
+                // Pixel style (owner 2026-11-13: "这怎么是3d效果…我要的是2d像素风格"): hand-set sprites on whole pixels,
+                // no rotation or scaling; the leaf tumbles by stepping through four drawn frames.
+                const [lit, dark] = LEAF_COL[i % 5], F = (near ? LEAF_BIG : LEAF_SMALL)[Math.floor(wrap(ph * .64 + i, 4))];
+                const X = Math.round(x), Y = Math.round(y);
+                for (let r = 0; r < F.length; r++) for (let q = 0; q < F[r].length; q++) {
+                    const ch = F[r][q];
+                    if (ch === ".") continue;
+                    ctx.fillStyle = ch === "#" ? lit : dark;
+                    ctx.fillRect(X + q, Y + r, 1, 1);
+                }
             }
         } else if (state.stage < 3) {
             const n = [ 110, 90, 64 ][state.stage], gust = .75 + .25 * Math.sin(t * .37) + .2 * Math.sin(t * 1.1 + 1);
@@ -689,7 +691,7 @@ function makeSeason_autumn(opts, DATA) {
                 const x = wrap(b * 991 + t * (70 + a * 90) + Math.sin(t * .37) * 30 - state.camX, W) - 12;
                 const y = wrap(c * 811 + t * (4 + a * 5) + Math.sin(t * (1.5 + b) + i) * 3 - state.camY, H) - 12;
                 ctx.fillStyle = `rgba(${i % 3 ? "238,218,176" : "142,112,78"},${.45 + c * .4})`;
-                ctx.fillRect(x, y, i % 4 ? 5 + v / 12 : 2, i % 7 ? 1 : 1.5);
+                ctx.fillRect(Math.round(x), Math.round(y), i % 4 ? Math.round(5 + v / 12) : 2, 1);
             }
         }
     }
