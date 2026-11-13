@@ -660,7 +660,7 @@ function makeSeason_autumn(opts, DATA) {
         const t = state.time, W = 342 + 24, H = 236 + 24;
         if (state.stage >= 4) {
             const gust = Math.sin(t * .23) * 14 + Math.sin(t * .071 + 2) * 10;
-            for (let i = 0; i < 38; i++) {
+            for (let i = 0; i < 96; i++) {
                 const near = i % 5 === 0, a = rnd(i), b = rnd(i + 50), c = rnd(i + 99);
                 const vy = (near ? 15 : 8) + a * 6, w = .9 + b * .9, amp = (near ? 13 : 8) + c * 6, ph = t * w + i * 2.4;
                 const sway = Math.sin(ph), x = wrap(a * 977 + t * (5 + b * 4) + gust * (near ? 1.3 : .8) + sway * amp - state.camX, W) - 12;

@@ -8,7 +8,7 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ## 2026-11-13 Claude — 栗尾坞：东坡新增栗林公园；洁净飘枫叶、污染吹风沙
 - 栗林公园（主人圈的东侧坡地，中城街东头走过去）：autumn_city.py 新 park() 及 roaster/swing/flowerbed/pond/stone_lantern/stepping/hedge/leaf_carpet；路线“栗林公园”，地点 swing 秋千(fun)、koi 锦鲤池(fun)、chestnut 糖炒栗子摊(hunger)，game.js services 已接。地点数 21→24，招牌字体已补字。
-- game.js drawAir()：阶段 4 飘 38 片枫叶（摆动、翻面、阵风，位置带小数不跳格）；阶段 0–2 横向风沙（沙粒条纹 + 6 条淡沙幕，越早期越密）。阶段 3 两者都没有。只依赖 state.time，不存档。
+- game.js drawAir()：阶段 4 飘 96 片枫叶（主人嫌 38 片太少）（摆动、翻面、阵风，位置带小数不跳格）；阶段 0–2 横向风沙（沙粒条纹 + 6 条淡沙幕，越早期越密）。阶段 3 两者都没有。只依赖 state.time，不存档。
 - 已测（Playwright 内测页）：visit('chestnut') 走到摊前弹出“买一袋糖炒栗子”；两种效果截帧可见，无报错。未测：秋千/锦鲤池逐个点、真机帧率。
 
 ## 2026-11-13 Claude — 秋季地图改名：枫叶城 → 栗尾坞
