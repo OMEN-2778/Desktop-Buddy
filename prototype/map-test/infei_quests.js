@@ -250,7 +250,7 @@ const infeiQuests=(function(){
  X.hooks.draw.push((ctx,info)=>{if(info.inside||S().phase!=='done')return;const t=info.time,gs=goals();
   for(const [key,v]of Object.entries(V)){if(!visible(v))continue;const p=where(v);if(p.scene!==info.region)continue;
    const s=C().state;if(!busy&&Math.abs(s.x-p.x)<40)v.dir=s.x<p.x?-1:1;
-   const f={expr:'neutral',look:v.dir,bob:0,sway:0,wave:null};ctx.drawImage(npcCanvas(v,f,'stand'),Math.round(p.x)-10,103-27);
+   const f={expr:idleBreath.blink(p.x*.37)?'blink':'neutral',look:v.dir,bob:idleBreath.bob(p.x*.37),sway:0,wave:null};ctx.drawImage(npcCanvas(v,f,'stand'),Math.round(p.x)-10,103-27);
    const g=gs.find(g=>g.v===v);if(g&&!busy)mark(ctx,p.x,103-30-(v.kid?-4:0)+Math.round(Math.sin(t*3)),g.mark);}
   for(const g of gs)if(g.spot&&SPOTS[g.spot].scene===info.region&&!busy){const sp=SPOTS[g.spot];mark(ctx,sp.x,sp.rect[1]+18+Math.round(Math.sin(t*3)),g.mark||'?');}
   if(rabbit.on&&info.region===4)bunny(ctx,318,103,t);

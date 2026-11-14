@@ -147,7 +147,7 @@ const infeiFarm=(()=>{
   if(parent.water>0){parent.water-=dt;const [bx,top,bw,bh]=D.plots[parent.bed];ctx.fillStyle='#9cc8ef';for(let k=0;k<6;k++){const xx=bx+bw-4-((k*7+Math.floor(t*20))%Math.min(30,bw)),yy=top+((k*5+Math.floor(t*30))%(bh+4));ctx.fillRect(xx,yy,1,2);}
    if(parent.water<=0){const b=X.bedOf(parent.bed);if(b&&b.watered!==today()){b.watered=today();log(`${pName(parent.who)}回来了一趟，帮你给第 ${X.F.open.indexOf(parent.bed)+1} 块田浇了水。`);}parent.tx=380;parent.done=()=>parent.on=false;}}
   else if(parent.tx!=null){const d=parent.tx-parent.x,st=dt*WALK*1.1;if(Math.abs(d)<=st){parent.x=parent.tx;parent.tx=null;const f=parent.done;parent.done=null;f?.();}else{parent.x+=Math.sign(d)*st;parent.facing=Math.sign(d);}}
-  const walking=parent.tx!=null,ph=Math.floor(t*7)%4,f={expr:'happy',look:parent.water>0?-1:parent.facing||-1,bob:walking?ph%2:0,sway:walking?ph%2:0,wave:null};
+  const walking=parent.tx!=null,ph=Math.floor(t*7)%4,f={expr:'happy',look:parent.water>0?-1:parent.facing||-1,bob:walking?ph%2:parent.water>0?0:idleBreath.bob(.8),sway:walking?ph%2:0,wave:null};
   ctx.drawImage(npcCanvas(parent.n,f,walking?(ph===1?'walkL':ph===3?'walkR':'stand'):'stand'),Math.round(parent.x)-10,76);}
  withHeroHooks.push(id=>parent.on&&id===parent.who&&inSpring());
  // ================================================================ 每日操盘

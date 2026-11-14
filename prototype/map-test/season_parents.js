@@ -12,7 +12,7 @@
  const npc={};const npcOf=id=>{const lk=look(id);if(!npc[id]||npc[id].look!==lk)npc[id]={look:lk,ramps:doll.rampsOf(lk),cache:new Map(),kid:false};return npc[id];};
  const name=id=>id==='mom'?'妈妈':'爸爸',contact=id=>socialState.contacts.find(c=>c.id===id);
  // farmhouse ground floor (house px): where they stand or sit
- const AT={stove:[262,'stand'],jar:[300,'stand'],tableL:[200,'sit'],tableR:[216,'sit'],setteeL:[99,'sit'],setteeR:[124,'sit'],door:[60,'stand'],kitchen:[240,'stand']};
+ const AT={stove:[262,'stand'],jar:[300,'stand'],tableL:[200,'sit'],tableR:[216,'sit'],setteeL:[100,'sit'],setteeR:[126,'sit'],door:[60,'stand'],kitchen:[240,'stand']};
  let visit=null;   // {day} — she flew in to see them: both home all day
  // ---------------------------------------------------------------- the day's plan → {mom:spot,dad:spot}
  function plan(){if(!ready())return {};const m=mins(),v=visit&&visit.day===today(),fc=farmCny();
@@ -27,7 +27,10 @@
   if(m>=14*60&&m<16*60&&today()%3===1)o.mom=Math.floor(m/40)%2?'jar':'setteeL';
   if(typeof weather!=='undefined'&&weather.kind==='rain'&&m>=8*60&&m<17*60+30){o.mom=Math.floor(m/50)%3===0?cook:'setteeL';o.dad=Math.floor(m/70)%2?'tableR':'setteeR';}
   if(v&&m>=8*60&&m<17*60+30){o.mom=Math.floor(m/90)%2?'tableL':cook;o.dad=Math.floor(m/120)%2?'tableR':'setteeR';}
-  if(infeiHome.svc?.id==='settee'&&o.dad==='setteeR')o.dad='tableR';   // she took the middle of the bench: 爸爸 moves to the table
+  // owner 2026-11-14: the sofa seats three (she sits in the middle), and on some days they watch television:
+  // after lunch for a while, and now and then in the afternoon
+  if(m>=13*60+30&&m<14*60+30&&today()%3!==1){o.dad='setteeR';if(today()%2)o.mom='setteeL';}
+  if(m>=15*60+30&&m<16*60+40&&today()%4===2){o.mom='setteeL';o.dad='setteeR';}
   return o;}
  // ================================================================ 爸妈像她一样真的走动（owner 2026-11-12：不要闪现）
  // Each parent is a little walker with a place in the valley (in the farmhouse on a floor, out in a field, or gone to town).
@@ -35,7 +38,7 @@
  // (inside x 51 / the yard x 182), field to field over the scene edges, off the brook's left edge to town and back.
  const WIDTH=[342,342,342,342,342,684],FLOOR=[108,50],STAIR=61,DOOR_IN=51,DOOR_OUT=182;
  const SPOT={stove:{in:1,f:0,x:262},jar:{in:1,f:0,x:300},tableL:{in:1,f:0,x:200,pose:'sit'},tableR:{in:1,f:0,x:216,pose:'sit'},
-  setteeL:{in:1,f:0,x:99,pose:'sit'},setteeR:{in:1,f:0,x:124,pose:'sit'},kitchen:{in:1,f:0,x:240},
+  setteeL:{in:1,f:0,x:100,pose:'sit',face:1},setteeR:{in:1,f:0,x:126,pose:'sit',face:1},kitchen:{in:1,f:0,x:240},
   bedM:{in:1,f:1,x:236,pose:'sleep'},bedD:{in:1,f:1,x:256,pose:'sleep'},
   coop:{s:3,x:82,face:-1,fx:'grain',roam:[72,104]},yardL:{s:3,x:166,face:1},yardR:{s:3,x:198,face:-1},
   field:{s:4,x:150,roam:[40,300],fx:'weed'},orchard:{s:5,x:190,roam:[70,300]},pasture:{s:5,x:520,roam:[410,640]},town:{away:1}};
@@ -89,11 +92,14 @@
  // compatibility: who is in the farmhouse (with the old shape {id,q:{x,tx,out},pose,k})
  function here(){if(!ready()||!inSpring())return [];const up=C().state.y<80?1:0;
   return Object.values(ag).filter(a=>a.w==='in'&&!a.hidden&&!a.sleep&&a.climb==null).map(a=>({id:a.id,q:{x:a.x,tx:a.op||a.wander?NaN:a.x,out:a.f!==up},pose:spotOf(a.k).pose||'stand',k:a.k}));}
+ // someone is sitting on the sofa in front of the television (the set is on for them)
+ const watching=()=>inSpring()&&ready()&&Object.values(ag).some(a=>a.w==='in'&&!a.op&&!a.wander&&String(a.k).startsWith('settee'));
  const sleeping=id=>inSpring()&&ready()&&ag[id].w==='in'&&ag[id].sleep&&!ag[id].op;
  // ---------------------------------------------------------------- drawing
  function drawWalker(ctx,a,feet){const t=spotOf(a.k),arrived=!a.op&&!a.wander,sit=arrived&&t.pose==='sit',s=C().state;
   const look=a.moving?a.face:arrived&&t.face?t.face:Math.sign(s.x-a.x)||1;
-  const f={expr:sit?'happy':'neutral',look,bob:a.moving?Math.floor(realClock*5)%2:0,sway:a.moving?Math.floor(realClock*3)%2:0,wave:null};
+  const f={expr:sit?'happy':'neutral',look,bob:a.moving?Math.floor(realClock*5)%2:idleBreath.bob(a.id==='mom'?.6:1.3),sway:a.moving?Math.floor(realClock*3)%2:0,wave:null};
+  if(!a.moving&&idleBreath.blink(a.id==='mom'?1.1:2.7))f.expr='blink';
   const p=sit?'sit':a.moving?['walkL','stand','walkR','stand'][Math.floor(realClock*6)%4]:'stand';
   ctx.drawImage(npcCanvas(npcOf(a.id),f,p,false),Math.round(a.x)-10,feet-27-(sit?(String(a.k).startsWith('settee')?5:3):0));
   if(arrived&&t.fx==='grain'){ctx.fillStyle='#e8cf7a';for(let i=0;i<4;i++){const u=(realClock*1.3+i/4)%1;ctx.fillRect(Math.round(a.x-6-u*10-i),Math.round(feet-14+u*13),1,1);}}
@@ -252,5 +258,5 @@
   if(p==='spring_test'&&visit?.pending){visit={day:today()};setTimeout(()=>{if(!inSpring())return;if(ready()&&!C().state.inside)X.hooks.pick.indoor();talkQ.push(['mom',pick(['来啦！路上累不累？','哎呀，怎么突然回来了，也不说一声！','正念叨你呢，你就到了。'])],['dad',pick(['我去杀只鸡。','屋里坐，外头风大。','行李给我。'])],['me',pick(['想你们了嘛！','回来看看你们～','饿了！'])]);
    log('飞到茵菲谷，爸妈都在家。');addSocialMemory?.(contact('mom'),'回茵菲谷看爸妈','坐飞机去茵菲谷，爸妈都在家等着。');},1800);}
   return r;};
- window.seasonParents={plan,here,farmCny,goSee,sleeping,doErrand,tell,walkers:ag,get visit(){return visit;}};
+ window.seasonParents={plan,here,farmCny,goSee,sleeping,doErrand,tell,walkers:ag,watching,get visit(){return visit;}};
 })();

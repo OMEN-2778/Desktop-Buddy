@@ -28,7 +28,7 @@
   const what=pickW([['stroll',dry.length||ripe.length?12:30],['home',s.inside?8:14],['water',dry.length?45:0],['animals',pet.length||ready.length||hungry.length?16:0],
    ['harvest',ripe.length?35:0],['fruit',trees.length?14:0]]);
   if(what==='stroll'){if(s.inside){c.leave();return true;}const w=s.scene===5?684:342;c.target(Math.max(20,Math.min(w-20,s.x+(Math.random()<.5?-1:1)*(30+Math.random()*70))));return true;}
-  if(what==='home'){infeiHome.use(pick(['settee','wardrobe','table','jar']),true);return true;}
+  if(what==='home'){infeiHome.use(pick(['settee','tv','wardrobe','table','jar']),true);return true;}
   if(what==='water'){const i=pick(dry);toScene(4,()=>X().water(i));return true;}
   if(what==='harvest'){const i=pick(ripe);toScene(4,()=>X().harvest(i));return true;}
   if(what==='fruit'){const i=pick(trees);toScene(5,()=>Fm.pickFruit(i));return true;}
@@ -99,7 +99,7 @@
    if(what==='shore'){if(s.inside){c.leave();return true;}c.goTo(820+Math.random()*200);return true;}
    summerLodge.goUse(pick(['tv','tv','sofa','uke','table','dine'].filter(k=>k!=='dine'||homeMeal())));return true;}
   if(window.infeiQuests?.busy||storyLocked()||springFarm.state.phase!=='done')return false;
-  if(Math.random()<.8){infeiHome.use(pick(['settee','settee','table','jar','wardrobe']),true);return true;}
+  if(Math.random()<.8){infeiHome.use(pick(['settee','tv','tv','table','jar','wardrobe']),true);return true;}
   if(s.inside){c.leave();return true;}return false;}
  // bedtime is checked every second (act() only runs every 20-45 minutes): she heads for bed right at 22:30
  setInterval(()=>{try{if(!['spring_test','summer_test'].includes(sim.place)||!speed||!bedtime()||wiping||cardHolds()||life.talkQ||storyLocked()||sim.mode==='down'||ringOf)return;

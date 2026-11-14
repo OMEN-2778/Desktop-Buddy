@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-14 Claude — 季节地图站着会呼吸；茵菲谷客厅换三人沙发 + 电视，爸妈会看电视
+- 站立不再像雕像：adapter.js `idleBreath`（约 1.9 秒起伏一下、偶尔眨眼，减少动效时关闭），drawHero 站定时用它（三张季节图的主角都生效）；爸妈（season_parents）、帮忙浇水的家长（infei_farm）、迎接剧情的妈妈（spring_story）、村民（infei_quests）错开节奏。
+- 客厅：_farmstead.py 新 sofa_cn()/tv_cabinet()，去掉长椅、茶几、竹子；infei_home SPOTS.settee 改“沙发”，新增 tv（act 'tv'，娱乐需求默认去看电视），坐下抬高 iy -5（drawHero 支持 s.iy）；电视在她或爸妈坐沙发时播家里的节目（TV_AT=[149,83]）。
+- 爸妈：沙发座位 x 100/126，她坐中间不再把爸爸挤去饭桌；午饭后（13:30–14:30，三天里两天）和部分下午（15:30–16:40，四天一次）会坐沙发看电视，晚上原有的坐沙发照旧。seasonParents.watching()。
+- 已测（Playwright 内测页）：19:20 爸妈坐两侧、电视亮；infeiHome.use('tv') 她坐中间，三人并排，无报错；idleBreath 三种状态都出现。未测：午后看电视时段、春节步骤里的沙发站位、草帽湾/栗尾市主角呼吸的截图。
+
 ## 2026-11-13 Claude — 秋季地图再改名为栗尾市；西侧瀑布换成高楼群
 - 主人：名字改“栗尾市”，为突出城市景观去掉左边瀑布，换成不可进入的高楼（重庆/香港式错落紧密）。全仓库 栗尾坞→栗尾市（旧日志条目除外）。
 - autumn_city.py：新 City.tower()（正面+右侧面+屋顶面，楼板线、多种窗、空调、阳台晾衣、排水管、底商、竖招牌、水箱/楼梯间/天线/屋顶花园/退台顶层）与 towers(c)（六排 24 栋，x 0–112）。删除瀑布、岩壁、溪、观瀑台、路线“观瀑台”、地点 falls（地点 24→23）；FALLS=[]，game.js drawFalls 空转；西侧树、灌木、岩块去掉。

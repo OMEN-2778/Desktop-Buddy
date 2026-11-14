@@ -46,7 +46,7 @@ const springFarm=(()=>{
   if(Math.abs(d)<=st){mom.x=mom.tx;mom.tx=null;const f=mom.done;mom.done=null;f?.();}else{mom.x+=Math.sign(d)*st;mom.facing=Math.sign(d);}}
  function drawMom(ctx,info){
   if(!mom.on||(mom.inside?!info.inside:(info.inside||mom.scene!==info.region)))return;
-  const walking=mom.tx!=null,ph=Math.floor(info.time*7)%4,f={expr:'happy',look:mom.facing,bob:walking?ph%2:0,sway:walking?ph%2:0,wave:null};
+  const walking=mom.tx!=null,ph=Math.floor(info.time*7)%4,f={expr:'happy',look:mom.facing,bob:walking?ph%2:idleBreath.bob(.8),sway:walking?ph%2:0,wave:null};
   ctx.drawImage(npcCanvas(momNpc(),f,walking?(ph===1?'walkL':ph===3?'walkR':'stand'):'stand'),Math.round(mom.x)-10,Math.round(mom.y)-27);
   if(F.phase==='meet'){const x=Math.round(mom.x),y=Math.round(mom.y)-30+Math.round(Math.sin(info.time*3));   // her "!" (same as the villagers')
    ctx.fillStyle='#22182a';ctx.fillRect(x-4,y-11,9,11);ctx.fillStyle='#f6d36b';ctx.fillRect(x-3,y-10,7,9);ctx.fillStyle='#22182a';ctx.fillRect(x,y-9,1,5);ctx.fillRect(x,y-3,1,1);}

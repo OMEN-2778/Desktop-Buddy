@@ -11,23 +11,24 @@ const infeiHome=(function(){
   bath:{name:'木浴桶',rect:[171,28,25,23],x:184,y:50,need:'hygiene',act:'bath',label:'泡个澡',hide:true,line:['热水泡一泡，舒服','木桶的味道真好闻']},
   toilet:{name:'卫生间',rect:[196,24,16,27],x:204,y:50,need:'bladder',act:'toilet',label:'上厕所',line:['马上出来']},
   parents:{name:'爸妈的房间',rect:[216,10,92,41],x:240,y:50,look:['这是爸妈的床，我不睡这儿','被子是妈妈新缝的']},
-  settee:{name:'长椅',rect:[90,84,48,25],x:114,y:108,need:'fun',act:'season_sofa',label:'坐着歇会儿',line:['坐一会儿，看看窗外','这椅子坐着真舒服'],max:90},
+  settee:{name:'沙发',rect:[89,86,50,23],x:113,y:108,iy:-5,face:1,need:'fun',act:'season_sofa',label:'坐着歇会儿',line:['坐一会儿，看看窗外','这沙发软乎乎的'],max:90},
+  tv:{name:'电视',rect:[146,80,30,29],x:113,y:108,iy:-5,face:1,need:'fun',act:'tv',label:'看电视',line:['看会儿电视','看看今天演什么']},   // owner 2026-11-14: 客厅放沙发电视 (the home's TV act, watched from the sofa)
   table:{name:'饭桌',rect:[176,80,52,29],x:184,y:108,face:1,need:'hunger',act:'eat',label:'吃饭',line:['开饭咯','真香']},
   stove:{name:'灶台',rect:[226,66,46,43],x:276,y:108,face:-1,need:'hunger',act:'cook',label:'做顿饭',line:['生火、切菜……','自己做的就是香'],rate:3},
   cupboard:{name:'碗柜',rect:[0,0,0,0],x:262,y:108,face:-1,need:'hunger',act:'snack',log:'饿坏了，从碗柜里拿了妈妈留的饭。',label:'拿现成的',line:['先吃点现成的','妈妈留了饭']},   // no art of its own: the corner by the stove (quick meal only)
   jar:{name:'水缸',rect:[272,82,34,27],x:285,y:108,need:'hunger',act:'snack',log:'舀了口井水喝。',label:'喝口水',line:['井水凉丝丝的']}
  };
  const RATE={hunger:2.4,energy:.45,hygiene:3,bladder:8,fun:1.3,social:1.6};
- const NEED_SPOT={energy:'bed',hygiene:'bath',bladder:'toilet',hunger:'stove',fun:'settee'};
+ const NEED_SPOT={energy:'bed',hygiene:'bath',bladder:'toilet',hunger:'stove',fun:'tv'};
  let svc=null,lastT=sim.t,hinted=false,wasInside=false,leaving=false;
  const inRect=(x,y,[rx,ry,w,h])=>x>=rx&&x<rx+w&&y>=ry&&y<ry+h;
- function stop(){if(!svc)return;const s=C().state;s.pose=null;s.hideHero=false;seasonHouse.drop(svc.act);svc=null;T.state.autoAt=sim.t+30;}
+ function stop(){if(!svc)return;const s=C().state;s.pose=null;s.hideHero=false;s.iy=0;seasonHouse.drop(svc.act);svc=null;T.state.autoAt=sim.t+30;}
  function use(id,auto){
   if(id==='table'&&!homeMeal())id='stove';
   if(id==='stove'&&auto&&homeMeal())id='table';   // a cooked meal waits on the table: eat it, don't cook another (owner 2026-11-10)   // nothing on the table: cook first, then eat (as at home)
   if(id==='stove'&&!auto){closeRing();seasonHouse.menu('spring');return;}   // the player clicked the stove (or an empty table): the menu
   const p=SPOTS[id],c=C();if(!p||!p.act)return;stop();closeRing();T.state.autoAt=sim.t+60;
-  const begin=()=>{const s=c.state;s.x=p.x;s.facing=p.face||(p.x>170?1:-1);svc={id,act:p.act,need:p.need,auto};s.pose=null;s.hideHero=!!p.hide;speak(pick(p.line),true);seasonHouse.start(p.act,{auto,log:p.log});};
+  const begin=()=>{const s=c.state;s.x=p.x;s.facing=p.face||(p.x>170?1:-1);svc={id,act:p.act,need:p.need,auto};s.pose=null;s.hideHero=!!p.hide;s.iy=p.iy||0;speak(pick(p.line),true);seasonHouse.start(p.act,{auto,log:p.log});};
   if(!c.state.inside){c.state.target=null;c.state.after=null;c.state.door={to:true,elapsed:0,duration:.65,mid:false};
    const wait=()=>{if(!inSpring())return;if(c.state.door||!c.state.inside)return setTimeout(wait,120);c.target(p.x,p.y,begin);};setTimeout(wait,120);}
   else c.target(p.x,p.y,begin);
@@ -56,10 +57,13 @@ const infeiHome=(function(){
   if(info.inside)sleepers(ctx,!!svc&&svc.id==='bed'&&s.inside&&!s.target);
   if(info.inside&&svc&&svc.id==='bath'&&s.inside&&!s.target){const p=SPOTS.bath,top=TUB_RIM-15,src=dollCanvas({expr:'happy',look:0,bob:0,sway:0,wave:null},'stand');
    ctx.drawImage(src,0,0,src.width,TUB_RIM-top,p.x-10,top,src.width,TUB_RIM-top);}   // in the tub: head and shoulders above the rim
+  // the television plays the home's programmes while she or 爸妈 watch from the sofa
+  if(info.inside&&(seasonHouse.running('tv')&&s.inside||window.seasonParents?.watching?.())){const f=nextTvFrame();if(f)ctx.drawImage(f,TV_AT[0],TV_AT[1]);}
+  else if(typeof tvPlayback!=='undefined'&&inSpring())tvPlayback.playing=false;
   if(info.inside){seasonHouse.cookFx(ctx,COOK_FX[0],COOK_FX[1]);seasonHouse.meal(ctx,MEAL_AT[0],MEAL_AT[1]);}   // the home's pan and dish
   if(svc){
-   if(s.target||!s.inside){s.pose=null;s.hideHero=false;seasonHouse.drop(svc.act);svc=null;return;}
-   if(!seasonHouse.running(svc.act)){s.pose=null;s.hideHero=false;svc=null;return;}   // the home's act is over (its next step is routed below)
+   if(s.target||!s.inside){s.pose=null;s.hideHero=false;s.iy=0;seasonHouse.drop(svc.act);svc=null;return;}
+   if(!seasonHouse.running(svc.act)){s.pose=null;s.hideHero=false;s.iy=0;svc=null;return;}   // the home's act is over (its next step is routed below)
    T.state.autoAt=sim.t+1e6;
    if(info.inside&&svc.id==='bed'&&!reduced())seasonHouse.sleepFx(ctx,BEDS.mine[0]+HEAD[0]+10,BEDS.mine[1]+HEAD[1]-14);
    if(info.inside&&svc.id==='bath')seasonHouse.emote(ctx,SPOTS.bath.x+3,TUB_RIM-29);
@@ -91,7 +95,7 @@ const infeiHome=(function(){
   if(she&&covers.mine?.complete){const [bx,by]=BEDS.mine;ctx.drawImage(lyingHead(SLEEPY),bx+HEAD[0],by+HEAD[1]);ctx.drawImage(covers.mine,bx,by);}
  }
  const HEAD=[2,8];
- const COOK_FX=[246,69],MEAL_AT=[194,80];   // the home's pan steam over the stove, the dish on the dining table (tuned by screenshot)
+ const COOK_FX=[246,69],MEAL_AT=[194,80],TV_AT=[149,83];   // TV_AT: the screen (24×12) of the set on its cabinet   // the home's pan steam over the stove, the dish on the dining table (tuned by screenshot)
  const TUB_RIM=34;   // the bath tub's top edge (house px)   // the rotated head's place on the pillow, in bed-sprite coordinates
  const reduced=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
  // 回家 = the farmhouse; 离开茵菲谷 is the only way out (player only)

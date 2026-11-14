@@ -513,6 +513,41 @@ def settee(w=46):
     return s
 
 
+def sofa_cn(w=50):
+    """A three-seat sofa for the farmhouse living room (owner 2026-11-14: 沙发支持三个人坐), seen from the front: a
+    dark timber frame with a rail along the back, three fat back cushions, three seat cushions, padded arms."""
+    s = Sprite(w, 21)
+    s.rect(1, 0, w - 2, 3, DARK[2]).hline(1, w - 2, 0, DARK[4]).hline(1, w - 2, 2, DARK[1])     # the back's top rail
+    s.rect(2, 3, w - 4, 9, DARK[1])
+    n = (w - 10) // 3
+    for k in range(3):
+        cx = 5 + k * n
+        s.rect(cx, 3, n - 1, 9, P.sage[2]).hline(cx, cx + n - 2, 3, P.sage[3]).hline(cx, cx + n - 2, 11, P.sage[1])
+        s.vline(cx + n - 2, 4, 10, P.sage[1]).set(cx, 3, DARK[1]).set(cx + n - 2, 3, DARK[1])
+        s.rect(cx, 12, n - 1, 4, P.linen[2]).hline(cx, cx + n - 2, 12, P.linen[3]).hline(cx, cx + n - 2, 15, P.linen[1])
+    s.rect(4, 16, w - 8, 2, DARK[2]).hline(4, w - 5, 16, DARK[3])                              # the seat rail
+    for x in (0, w - 5):                                                                         # arms
+        s.rect(x, 6, 5, 12, DARK[2]).hline(x, x + 4, 6, DARK[4]).vline(x + 4 if x == 0 else x, 7, 17, DARK[1])
+        s.rect(x + 1, 5, 3, 2, P.sage[2]).hline(x + 1, x + 3, 5, P.sage[3])
+    for x in (1, w - 4):
+        s.rect(x, 18, 3, 3, DARK[1]).vline(x, 18, 20, DARK[2])
+    s.rect(5, 18, w - 10, 1, DARK[0])
+    return s
+
+
+def tv_cabinet(w=30):
+    """A low timber cabinet for the television: two doors with brass pulls, short legs."""
+    s = Sprite(w, 13)
+    s.rect(0, 0, w, 2, DARK[3]).hline(0, w - 1, 0, DARK[4])
+    s.rect(1, 2, w - 2, 9, DARK[2]).hline(1, w - 2, 10, DARK[1])
+    for x in (3, w // 2 + 1):
+        s.rect(x, 3, w // 2 - 4, 6, DARK[1]).hline(x, x + w // 2 - 5, 3, DARK[3])
+    s.set(w // 2 - 2, 6, P.mustard[3]).set(w // 2 + 2, 6, P.mustard[3])
+    for x in (2, w - 4):
+        s.rect(x, 11, 2, 2, DARK[1])
+    return s
+
+
 def tea_table():
     s = Sprite(26, 8)
     s.rect(0, 0, 26, 2, DARK[2]).hline(0, 25, 0, DARK[4])
@@ -757,16 +792,12 @@ def cn_farmhouse_inside():
     wainscot(x0, x1 - x0, fl)
     HS.place(s, moon_window(10), x0 + 18, top + 9)
     HS.place(s, scroll(12, 26, "fu"), x0 + 54, top + 6)
-    HS.on_floor(s, settee(46), x0 + 14, 0, 2)
-    tt = tea_table()
-    s.blit(tt, x0 + 24, fl + 1 - tt.h + 3)
-    teaset(s, x0 + 30, fl - 3)
-    pot_x = x0 + 68
-    s.rect(pot_x, fl - 7, 8, 8, P.teal[2]).hline(pot_x, pot_x + 7, fl - 7, P.teal[3]).vline(pot_x + 7, fl - 6, fl, P.teal[1])
-    for k in range(4):
-        s.vline(pot_x + 1 + k * 2, fl - 26 + k * 3, fl - 8, P.green[2 + (k % 2)])
-        s.line(pot_x + 1 + k * 2, fl - 20 + k * 3, pot_x + 4 + k * 2, fl - 22 + k * 3, P.green[3])
-        s.set(pot_x + 1 + k * 2, fl - 16 + k * 2, P.green[1])
+    # owner 2026-11-14: a sofa for three and a television in place of the settee, tea table and bamboo
+    HS.on_floor(s, sofa_cn(50), x0 + 13, 0, 2)
+    cab = tv_cabinet(30)
+    s.blit(cab, x0 + 70, fl + 2 - cab.h)
+    s.blit(F.tv(False), x0 + 72, fl + 2 - cab.h - 15)
+    s.rect(x0 + 67, fl - 3, 2, 4, P.teal[2]).set(x0 + 67, fl - 4, P.green[3]).set(x0 + 68, fl - 5, P.green[2])   # a sprig in a jar by the cabinet
     tx = x0 + 112
     HS.place(s, scroll(10, 22, "mountain"), tx + 8, top + 8)
     HS.on_floor(s, stool(), tx + 10, 0, 1)
