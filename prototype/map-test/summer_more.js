@@ -258,15 +258,15 @@
  async function talk(id){const q=Q[id],s=st(id),P_=whoP(id),N=P_.name,me=nameOf();
   if(s.done){await say(N,IDLE[id][today()%2]);return;}
   if(id==='whistle'){if(!s.step){if(await ask(N,'哎，你会潜水吧？我的哨子早上掉海里了，退潮的时候浅滩那边能看见。帮我捞一下？',['我去找找','下次吧'])===0){s.step=1;await say(me,'退潮是早上和傍晚吧，我留意着。');}return;}
-   if(!s.got){await say(N,'退潮的时候（早上 6 到 9 点、傍晚 5 到 7 点）浅滩那边能看见，红绳子的。');return;}
+   if(!s.got){await say(N,'红绳子的，退潮了浅滩那边能看见。早上、傍晚各退一回。');return;}
    await say(N,'就是它！没它我上班都不踏实。');await say(N,'这个你拿着，算我请你喝饮料。');finish(id,'帮救生员阿海从浅滩捞回了哨子。',{coins:2});return;}
   if(id==='surf'){if(!s.step){if(await ask(N,'想学冲浪吗？三节课，包你站起来。第一节先学摔。',['好，学！','我再想想'])===0){s.step=1;s.lessons=0;await say(N,'去架子上拿块板，我就在这儿看着。');}return;}
    if(!ready.surf()){await say(N,`还差 ${3-(s.lessons||0)} 节。摔几次就会了，谁不是喝着海水学会的。`);return;}
-   await say(N,'我就说吧！站起来那一下，是不是整片海都是你的？');await say(me,'是！我还想再来一次！');finish(id,'跟冲浪教练小麦上完三节课，在浪上站起来了。');return;}
-  if(id==='coco'){if(!s.step){if(await ask(N,'糟了，椰子用完了……旅舍后面那棵树每天会掉两个，能帮我捡三个来吗？',['好，我去捡','今天没空'])===0){s.step=1;await say(me,'椰子树下，我记住了。');}return;}
+   await say(N,'我就说吧，第三节准能站起来。');await say(me,'站了三秒也算吧？');await say(N,'算。我头一回才一秒。');finish(id,'跟冲浪教练小麦上完三节课，在浪上站起来了。');return;}
+  if(id==='coco'){if(!s.step){if(await ask(N,'椰子用完了。旅舍后面那棵树每天掉两个，帮我捡三个来行吗？',['好，我去捡','今天没空'])===0){s.step=1;await say(me,'椰子树下，我记住了。');}return;}
    if(!ready.coco()){await say(N,`还差 ${3-(S().inv.coconut||0)} 个，不急哦。`);return;}
-   X.addItem('coconut',-3);need('fun',15);await say(N,'太好了！今天的椰子拿铁有着落了。这杯请你。');finish(id,'帮咖啡店的米娅捡了三个椰子，喝到一杯椰子拿铁。',{coins:3});return;}
-  if(id==='turtle'){if(!s.step){if(await ask(N,'这片海的海龟脾气都好。我在做个记录，你能帮我拍三张海龟的照片吗？',['包在我身上','下次吧'])===0){s.step=1;s.n=0;await say(N,'海龟清洁站那边最多，慢慢靠近，别追。');}return;}
+   X.addItem('coconut',-3);need('fun',15);await say(N,'够了够了。这杯椰子拿铁请你。');finish(id,'帮咖啡店的米娅捡了三个椰子，喝到一杯椰子拿铁。',{coins:3});return;}
+  if(id==='turtle'){if(!s.step){if(await ask(N,'这片海的海龟脾气都好。我在做个记录，你能帮我拍三张海龟的照片吗？',['行，我去拍','下次吧'])===0){s.step=1;s.n=0;await say(N,'海龟清洁站那边最多，慢慢靠近，别追。');}return;}
    if(!ready.turtle()){await say(N,`拍到 ${s.n||0} 张了，再来 ${3-(s.n||0)} 张。`);return;}
    await say(N,'这只左鳍上有道疤，我认识它！叫它“老船长”。');finish(id,'帮潜水教练诺亚拍了三张海龟。',{coins:3});return;}
   if(id==='bucket'){if(!s.step){if(await ask(N,'不好意思……孩子的红桶被浪卷走了，哭了一上午。你会游泳的话，能帮忙看看吗？',['我去找','这个我帮不上'])===0){s.step=1;await say(me,'浪往东边推的，应该在浅水那边。');}return;}
@@ -275,15 +275,15 @@
   if(id==='bottle'){if(!s.step){if(await ask(N,'沉船那边的宝箱你见过吗？我年轻时往里塞过一个瓶子，里面有封信……要是还在，帮我送给旅舍老板。',['我去看看','今天不下海'])===0){s.step=1;await say(N,'别问写的什么。');}return;}
    if(s.step===1){await say(N,'沉船宝箱，在沉船谷那边。');return;}
    if(s.step===2){await say(N,'送到了没？……还没就先别跟我说。');return;}
-   await say(N,'他……他说什么了？');await say(me,'他说，旅舍的招牌上，一直留着你的名字。');await say(N,'……这个老东西。');mood(MOOD.letter);finish(id,'把老渔夫四十年前的信送到了旅舍老板手里。',{coins:2});return;}
+   await say(N,'他说什么了？');await say(me,'他说旅舍还缺个钓鱼的。');await say(N,'……这个老东西。');mood(MOOD.letter);finish(id,'把老渔夫四十年前的信送到了旅舍老板手里。',{coins:2});return;}
   if(id==='paint'){if(!s.step){if(await ask(N,'我想画一条鱼，可我不会潜水。你能拍张珊瑚花园里的照片给我当参考吗？',['好呀','我还不太会拍'])===0){s.step=1;await say(N,'越亮的颜色越好！');}return;}
    if(!s.shot){await say(N,'珊瑚花园那一页里的鱼都可以。');return;}
    await say(N,'就是这个颜色！你等我一下……');await say(N,'送你，画得不像别笑我。');X.addItem('painting',1);finish(id,'画画的姐姐照着照片画了一条鱼，送了一幅给我。');return;}
   if(id==='lamp'){if(s.step===0&&st('bottle').step===2){await say(N,'这是……老周的字。');await say(N,'四十年前我们说好一起开旅舍，他后来去打鱼了。招牌上的“周”字，我一直没摘。');await say(N,'你帮我告诉他吧，就说……旅舍还缺个钓鱼的。');st('bottle').step=3;return;}
    if(!s.step){if(await ask(N,'晚上海里有会发光的水母，你见过没？我年纪大了下不去了，你帮我拍张照片回来给我看看。',['好，晚上去','我怕黑'])===0){s.step=1;await say(N,'晚上八点以后，换上泳衣下水，浅滩那边一亮一亮的就是。');}return;}
    if(st('bottle').step===2){await say(N,'这是……老周的字。');await say(N,'四十年前我们说好一起开旅舍，他后来去打鱼了。招牌上的“周”字，我一直没摘。');await say(N,'你帮我告诉他吧，就说……旅舍还缺个钓鱼的。');st('bottle').step=3;return;}
-   if(!s.shot){await say(N,'晚上八点以后去浅滩，看到一亮一亮的水母，点它给它拍张照片，再回来给我看。');return;}
-   await say(me,'像一盏会游泳的小灯，一碰它就亮。');await say(N,'对对对，跟我年轻时看到的一模一样。');finish(id,'给旅舍老板讲了夜里的发光水母。');return;}
+   if(!s.shot){await say(N,'晚上八点以后去浅滩，一亮一亮的就是。拍一张回来给我看。');return;}
+   await say(me,'拍到了，一碰它就亮一下。');await say(N,'对对对，就是这个。我年轻时候下去看过一回。');finish(id,'给旅舍老板讲了夜里的发光水母。');return;}
   if(id==='castle'){if(!s.step){if(await ask(N,'一起堆沙堡吗！比谁的高！',['来！','下次吧'])===0){s.step=1;await buildCastle(true);s.step=2;s.day=today();await say(N,'明天来看看，它还在不在！');}return;}
    if(!ready.castle()){await say(N,'明天再来看哦！');return;}
    await say(N,'沙堡被海吃掉了！！');await say(me,'涨潮的时候海水把它带走啦。');await say(N,'那……明天堆一个更大的！');finish(id,'和阿乐堆的沙堡被潮水带走了，约好明天再堆一个更大的。');return;}

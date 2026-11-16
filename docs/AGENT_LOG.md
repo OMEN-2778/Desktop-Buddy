@@ -6,6 +6,11 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-16 Claude — 抽查任务对白：茵菲谷没问题，草帽湾改了 8 处
+- 主人让抽查任务对话。茵菲谷（infei_quests.js 四条、infei_side.js 六条）读了大半：口语、人物有区别、主角台词不涉及工作，未改。
+- 草帽湾委托（summer_more.js talk()）改 8 处：冲浪结束语（“整片海都是你的”→ 站了三秒）、水母（“会游泳的小灯”→ 一碰就亮一下）、漂流瓶结尾改成她转述旅舍老板托的那句“旅舍还缺个钓鱼的”（原来说的是老板没让她转的话）、把“点它拍照”“（早上 6 到 9 点…）”这类操作说明从人物嘴里拿掉（时间仍在任务提示里）、三句套话。
+- 没查：栗尾市剧本（等主人定第三版梗概后整体重写）、草帽湾 IDLE 闲聊、bay_friends。已测：内测页启动无报错，未逐条走任务。
+
 ## 2026-11-14 Claude — 季节地图站着会呼吸；茵菲谷客厅换三人沙发 + 电视，爸妈会看电视
 - 站立不再像雕像：adapter.js `idleBreath`（约 1.9 秒起伏一下、偶尔眨眼，减少动效时关闭），drawHero 站定时用它（三张季节图的主角都生效）；爸妈（season_parents）、帮忙浇水的家长（infei_farm）、迎接剧情的妈妈（spring_story）、村民（infei_quests）错开节奏。
 - 客厅：_farmstead.py 新 sofa_cn()/tv_cabinet()，去掉长椅、茶几、竹子；infei_home SPOTS.settee 改“沙发”，新增 tv（act 'tv'，娱乐需求默认去看电视），坐下抬高 iy -5（drawHero 支持 s.iy）；电视在她或爸妈坐沙发时播家里的节目（TV_AT=[149,83]）。
