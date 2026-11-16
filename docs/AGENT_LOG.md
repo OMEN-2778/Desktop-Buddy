@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-16 Claude — 茵菲谷对白整体重写（口语、语气词、北方乡下口气）
+- 主人转述玩家反馈：茵菲谷所有对话 AI 感太强、没语气助词、句式套路、不 local，电话内容也是。按 everyday-dialogue 规范直接改文本数据（标题、ID、`>`、心情奖励、条件都没动）。
+- 已改：电话与路人（spring_talk.js、infei_more.js、infei_more2.js、infei_farm.js 共 101 通电话 + 20 条路人）；迎接剧情和妈妈的信（spring_story.js）；十条支线（infei_quests.js、infei_side.js，含闲聊）；爸妈日常（season_parents.js：LIVE 200 段、CHATS 24 段、早晚招呼、回家迎接、帮忙浇水的告知）。
+- 口气：爸妈和村民用“咋、啥、甭、搁、瞅、自个儿、今儿/明儿”等北方口语，妈妈话多、爸爸话短；城里朋友用“哈哈哈、呗、嘛”；主角是城里年轻人口气。去掉了大部分“每段最后抖个包袱”的收尾和比喻句，顺手改了几处不合场景的（农舍里的冰箱、对男主角叫“姑娘/姐姐”、长椅改沙发）。
+- 没改：机遇卡（叙述 + 一句自语，spring_cards / infei_more 前半 / infei_more2 前半）、春节在茵菲谷的台词（spring_festival.js farm 版）、主世界的电话与聊天（social_dialogue.json 等，量很大，等主人确认是否也要）。已测：各文件 node --check、内测页启动无报错、电话池条数不变（36/28/37/20）；没有逐通播放。
+
 ## 2026-11-16 Claude — 抽查任务对白：茵菲谷没问题，草帽湾改了 8 处
 - 主人让抽查任务对话。茵菲谷（infei_quests.js 四条、infei_side.js 六条）读了大半：口语、人物有区别、主角台词不涉及工作，未改。
 - 草帽湾委托（summer_more.js talk()）改 8 处：冲浪结束语（“整片海都是你的”→ 站了三秒）、水母（“会游泳的小灯”→ 一碰就亮一下）、漂流瓶结尾改成她转述旅舍老板托的那句“旅舍还缺个钓鱼的”（原来说的是老板没让她转的话）、把“点它拍照”“（早上 6 到 9 点…）”这类操作说明从人物嘴里拿掉（时间仍在任务提示里）、三句套话。

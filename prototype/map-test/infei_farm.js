@@ -242,10 +242,10 @@ const infeiFarm=(()=>{
   if(f.sellPlain){const k=f.sellPlain==='crop'?crop():f.sellPlain;if(k&&S().inv[k])sell(k,1);}
   if(f.giveCrop){const k=crop();if(k){S().inv[k]--;if(!S().inv[k])delete S().inv[k];}}};
  // ---------------------------------------------------------------- a few more farm calls
- SPRING_TALK.mom.push({title:'鸡下蛋了没',mood:{name:'妈妈问鸡',emo:'happy',pts:2,min:120},lines:['>鸡这两天下蛋了没？','下了，一篮。','>你摸摸它们，摸熟了蛋大。','真的假的？','>你姥姥说的，我也不知道真假。']},
-  {title:'果树别乱剪',mood:{name:'护树',emo:'focused',pts:2,min:120},lines:['>果树你可别乱剪啊。','我没剪，就看了看。','>看可以。你爸去年剪秃了一棵。','后来呢？','>后来那棵长得最好。']});
- SPRING_TALK.dad.push({title:'牛认人',mood:{name:'牛认人',emo:'playful',pts:2,min:120},lines:['>你那头牛认你了没？','好像认了，看见我就叫。','>那是饿了。','……爸。','>开玩笑，它是想你了。']});
- SPRING_TALK.friend.push({title:'你家羊叫什么',mood:{name:'羊的名字',emo:'happy',pts:2,min:120},lines:['>听说你养羊了？叫什么名字？','棉花。','>好听！我能去摸摸吗？','能，它特别爱让人挠下巴。','>那我下周就去！']});
+ SPRING_TALK.mom.push({title:'鸡下蛋了没',mood:{name:'妈妈问鸡',emo:'happy',pts:2,min:120},lines:['>鸡这两天下蛋了没？','下了，捡了一篮子呢。','>你没事儿多摸摸它们，摸熟了下的蛋大。','真的假的啊？','>你姥姥说的，我哪知道。']},
+  {title:'果树别乱剪',mood:{name:'护树',emo:'focused',pts:2,min:120},lines:['>那果树你可甭乱剪啊。','我没剪，就看了看。','>看行。你爸去年给剪秃了一棵。','啊，那后来呢？','>后来倒是那棵长得最好，你说气人不。']});
+ SPRING_TALK.dad.push({title:'牛认人',mood:{name:'牛认人',emo:'playful',pts:2,min:120},lines:['>你那头牛认得你了没？','好像认得了，见着我就叫。','>那是饿了。','爸……','>哈哈，逗你呢。认得了，认得了。']});
+ SPRING_TALK.friend.push({title:'你家羊叫什么',mood:{name:'羊的名字',emo:'happy',pts:2,min:120},lines:['>听说你养羊了？叫啥名儿啊？','叫棉花。','>好可爱啊！我能去摸摸不？','能啊，它可爱让人挠下巴了。','>那我下周就去！']});
  for(const [key,pool]of Object.entries(SPRING_TALK))if(key!=='people')pool.forEach((t,i)=>{if(t.mood&&!t.id)ML[t.id=`spring_talk_${key}_${i}`]={...t.mood};});
  return {pcState,TREE,ANIMAL,give,sell,buy,parent,fundDay,treeDay,animalDay,planHelp,openPit,openAnimal,pat,feed,collect,pickFruit,AREA,pit,S};
 })();
