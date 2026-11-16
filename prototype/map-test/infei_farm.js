@@ -125,9 +125,9 @@ const infeiFarm=(()=>{
  function tellHer(who,text){window.seasonParents?.tell?.(who,text);}
  function wateredNote(who,beds){const n=beds.length>3?'所有没浇的':beds.map(i=>X.F.open.indexOf(i)+1).join('、');
   log(beds.length>3?`早上${pName(who)}把地全浇了一遍。`:`早上${pName(who)}帮你给第 ${n} 块地浇了水。`);
-  tellHer(who,pick(who==='mom'?['地我早上都浇过了，今天不用再浇了。','早上顺手把菜地浇了一遍，你歇着吧。']:['菜地我起早浇完了，今天不用管了。','地都浇过了，你干点别的去。']));}
+  tellHer(who,pick(who==='mom'?['地我一早都给你浇了啊，今儿甭浇了。','早上顺手把菜地浇了一遍，你歇着吧。']:['菜地我起早浇完了，今儿甭管了。','地都浇过了，你忙别的去吧。']));}
  function fedNote(who,list){log(`早上${pName(who)}把棚里的${list.length>2?'牲畜':list.map(a=>a.name).join('和')}都喂了草料。`);
-  tellHer(who,pick([`棚里的${list.length>2?'牛羊':list.map(a=>a.name).join('和')}我早上喂过了，你不用管了。`,'草料我早上添过了，今天不用喂了。']));}
+  tellHer(who,pick([`棚里的${list.length>2?'牛羊':list.map(a=>a.name).join('和')}我早上喂过了，你甭管了。`,'草料我早上添了，今儿不用喂了。']));}
  // not in 茵菲谷 (or the day rolled by): it just happens
  function helpOff(d){const h=S().help;if(!h||h.day!==d||h.done)return;h.done=true;
   if(X.seasonAt(d)===3){const list=S().animals.filter(a=>a.fedDay!==d);if(!list.length)return;for(const a of list)a.fedDay=d;log(`${pName(h.who)}帮你把棚里的牲畜喂了。`);return;}
