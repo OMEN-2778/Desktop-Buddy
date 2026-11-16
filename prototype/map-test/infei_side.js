@@ -27,78 +27,78 @@
  // ---------------------------------------------------------------- 小吴的包裹 (first: its goal on 林老师 comes before hers)
  reg({id:'parcel',title:'小吴的包裹',kind:'gift',end:'把颜料送到了林老师手里',home:'郁金香田',place:['郁金香田','小溪边'],scenes:['链子掉了','送包裹'],icons:['gift','gift'],
   mood:['帮小吴送包裹','happy'],villagers:{wu:V.wu},
-  idle:{wu:[['小吴','今天信少，下午能早点回去。'],['小吴','这车该换了，一天掉三回链子。']]},
+  idle:{wu:[['小吴','今儿信少，下午能早点儿回了。'],['小吴','这破车真该换了，一天掉三回链子。']]},
   goals:q=>{const st=q.parcel.step;return st===0?[{id:'parcel',v:V.wu,mark:'!'}]:st===1?[{id:'parcel',v:V.lin,mark:'?',hint:'把包裹送去小溪边给林老师'}]:[];},
   run:[async()=>{
-   await say('小吴','哎，你等等！');
-   await say('小吴','链子又掉了，我这一手油。');
-   await say(me(),'要帮忙吗？');
-   await say('小吴','不用不用，我自己弄。就是这个包裹……');
-   await say('小吴','小溪边画画的林老师的，她等好些天了。');
-   if(await ask('小吴','你要是顺路，帮我捎过去？',['行，我送过去','您这车多少年了？'])===1){
-    await say('小吴','跟我差不多大。');await say(me(),'……那我帮您送包裹吧。');}
-   await say('小吴','谢了啊。轻拿轻放，里头可能是瓶子。');
+   await say('小吴','哎哎，你等会儿！');
+   await say('小吴','这破链子又掉了，弄我一手油。');
+   await say(me(),'要搭把手不？');
+   await say('小吴','不用不用，我自个儿弄。就是这包裹吧……');
+   await say('小吴','是小溪边那个画画的林老师的，人家都等好些天了。');
+   if(await ask('小吴','你要是顺道，帮我捎过去呗？',['行，我给送过去','你这车骑多少年了啊？'])===1){
+    await say('小吴','嗐，跟我差不多大吧。');await say(me(),'……那还是我帮你送吧。');}
+   await say('小吴','谢了啊！轻点儿拿，里头好像是瓶子。');
    Q().parcel.step=1;showHint('把包裹送去小溪边给林老师');},
   async()=>{
-   await say(me(),'林老师，小吴让我带的包裹。');
-   await say('林老师','我的颜料！');
-   await say('林老师','城里订的，等了半个月，还以为寄丢了。');
-   await say(me(),'他车链子掉了，走不过来。');
-   await say('林老师','又掉了？上礼拜也是。');
-   await say('林老师','替我谢谢他。');
+   await say(me(),'林老师，小吴让我捎给您的。');
+   await say('林老师','哎呀，我的颜料！');
+   await say('林老师','城里订的，等了半个月了，我还当寄丢了呢。');
+   await say(me(),'他车链子掉了，过不来。');
+   await say('林老师','又掉啦？上礼拜也是。');
+   await say('林老师','那你替我谢谢他啊。');
    finish('parcel','替小吴把包裹送给了林老师，是一盒颜料。');}]});
  // ---------------------------------------------------------------- 林老师的速写
  reg({id:'sketch',title:'林老师的速写',kind:'scroll',end:'林老师把画送给了你',home:'小溪边',place:['小溪边','小溪边'],scenes:['别动','看画'],icons:['scroll','scroll'],
   mood:['被画进了画里','happy'],villagers:{lin:V.lin},
-  idle:{lin:[['林老师','这儿的水，一天一个颜色。'],['林老师','今天光不好，随便画画。']]},
+  idle:{lin:[['林老师','这儿的水啊，一天一个颜色。'],['林老师','今天光不行，随便画两笔。']]},
   goals:q=>{const st=q.sketch.step;return st===0?[{id:'sketch',v:V.lin,mark:'!'}]:st===1?[{id:'sketch',v:V.lin,mark:'?',hint:nextDay('sketch')?'去小溪边看林老师的画':'明天再去小溪边找林老师'}]:[];},
   run:[async()=>{
-   await say('林老师','哎，你先别动。');
+   await say('林老师','哎哎，你先别动！');
    await say(me(),'啊？');
-   await say('林老师','就这么站着。你站的地方，正好是我画里缺的那一块。');
-   if(await ask('林老师','一会儿就好。',['行，站多久？','我是不是挡着您了？'])===0){
-    await say('林老师','十分钟。手别乱放。');await say(me(),'……手该放哪儿？');await say('林老师','就刚才那样。');}
-   else{await say('林老师','没挡，你就是那块要画的。');await say(me(),'哦。');}
+   await say('林老师','就这么站着。我这画正好缺个人，你站那儿刚好。');
+   if(await ask('林老师','一会儿就好啊。',['行吧，得站多久？','我是不是挡着您了？'])===0){
+    await say('林老师','十来分钟吧。手别乱动啊。');await say(me(),'……那我手放哪儿啊？');await say('林老师','就刚才那样就行。');}
+   else{await say('林老师','没挡没挡，我要画的就是你。');await say(me(),'哦。');}
    await say(me(),'……');
-   await say('林老师','好了，样子有了。');
-   await say('林老师','明天上完色给你看。');
+   await say('林老师','好了好了，大样儿有了。');
+   await say('林老师','明天上完色给你看啊。');
    Object.assign(Q().sketch,{step:1,day:today()});},
   async()=>{
-   if(!nextDay('sketch')){await say('林老师','还没画完，水彩干得慢。');return;}
-   await say('林老师','来，看看。');
-   await say(me(),'这个小人是我？');
-   await say('林老师','嗯，就这么大。离得远嘛。');
+   if(!nextDay('sketch')){await say('林老师','还没好呢，水彩干得慢。');return;}
+   await say('林老师','来，你看看。');
+   await say(me(),'这个小人儿……是我啊？');
+   await say('林老师','对啊，就这么大。离得远嘛。');
    note({letter:'林老师的速写',text:'小溪、木桥、两棵柳树。\n桥头站着一个很小的人，手不知道往哪儿放。'});
-   const i=await ask('林老师','送你了。',['谢谢，我挂家里','我脸上就一个点？']);
-   await say('林老师',['挂门口那面墙，光好。','离那么远，画上鼻子就吓人了。'][i]);
+   const i=await ask('林老师','送你了。',['谢谢林老师，我挂家里','我脸就一个点儿啊？']);
+   await say('林老师',['挂门口那面墙吧，那儿亮。','哈哈，离那么远，真画上鼻子眼睛才吓人呢。'][i]);
    finish('sketch','溪边的林老师画了一张速写，桥头那个小人是你。');}]});
  // ---------------------------------------------------------------- 老蔡的蜂
  const swarm={scene:5,rect:[60,14,80,62],x:100};
  reg({id:'bees',title:'老蔡的蜂',kind:'flower',end:'跑掉的蜂落在了你家果园',home:'油菜花田',place:['油菜花田','果园','油菜花田'],scenes:['蜂跑了','果园里','告诉老蔡'],icons:['flower','lens','flower'],
   mood:['尝到了油菜花蜜','happy'],villagers:{cai:V.cai},spots:{swarm},
-  idle:{cai:[['老蔡','花开得好，蜂就不闹。'],['老蔡','别穿黑衣服往蜂箱边上凑。']]},
+  idle:{cai:[['老蔡','花开得好，蜂就不闹腾。'],['老蔡','可别穿黑衣裳往蜂箱跟前凑啊。']]},
   goals:q=>{const st=q.bees.step;return st===0?[{id:'bees',v:V.cai,mark:'!'}]:st===1?[{id:'bees',spot:'swarm',mark:'?',hint:'去果园的树上找找'}]:st===2?[{id:'bees',v:V.cai,mark:'?',hint:'回油菜花田告诉老蔡'}]:[];},
   run:[async()=>{
-   await say('老蔡','你看见我的蜂没？');
-   await say(me(),'蜂？');
-   await say('老蔡','跑了一窝。早上一开箱，呼啦一下全飞了。');
-   await say('老蔡','往东边去的。东边果树多，八成落哪棵树上了。');
-   if(await ask('老蔡','你帮我留个心。',['我回去看看','蜂还会自己跑？'])===1){
-    await say('老蔡','嫌箱子挤，就分家。');await say('老蔡','跟人一样。');}
+   await say('老蔡','哎，你瞅见我的蜂没？');
+   await say(me(),'啊？蜂？');
+   await say('老蔡','跑了一窝！早上一开箱，呼啦一下全飞了。');
+   await say('老蔡','往东去的。东边果树多，八成落哪棵树上了。');
+   if(await ask('老蔡','你帮我留点儿心呗。',['行，我回去看看','蜂还会自己跑啊？'])===1){
+    await say('老蔡','咋不会，嫌箱子挤了就分家。');await say('老蔡','跟人一个样。');}
    Q().bees.step=1;showHint('去果园的树上找找');},
   async()=>{
    await walkTo(swarm.x);C().state.facing=-1;
-   await say(me(),'树杈上挂着一大团……');
-   await say(me(),'嗡嗡的，还在动。');
-   await say(me(),'还是别碰了，回去叫老蔡。');
+   await say(me(),'树杈上挂着一大团啥啊……');
+   await say(me(),'嗡嗡的，还在动！');
+   await say(me(),'别碰别碰，赶紧叫蔡叔去。');
    Q().bees.step=2;showHint('回油菜花田告诉老蔡');},
   async()=>{
-   await say(me(),'蔡叔，蜂在我家果园，挂在树上。');
-   await say('老蔡','果园？那是看上你家果树了。');
-   await say('老蔡','我傍晚拿箱子去收，天一凉它们就不爱动。');
+   await say(me(),'蔡叔，蜂在我家果园呢，挂树上了。');
+   await say('老蔡','果园啊？那是看上你家果树了。');
+   await say('老蔡','我傍黑儿拿箱子去收，天一凉它们就不爱动弹。');
    await say('老蔡','这罐你拿着，去年的油菜花蜜。');
-   const i=await ask('老蔡','冲水喝，别兑太多。',['谢谢蔡叔','它们收回去还会跑吗？']);
-   await say('老蔡',['客气啥。','那得看它们乐不乐意了。'][i]);
+   const i=await ask('老蔡','冲水喝，水别兑太多啊。',['谢谢蔡叔','收回去还会再跑吗？']);
+   await say('老蔡',['嗐，客气啥。','那可说不准，得看它们乐不乐意。'][i]);
    eat(15);
    finish('bees','老蔡跑掉的蜂落在了果园的树上。得了一罐油菜花蜜。');}]});
  // ---------------------------------------------------------------- 门口的小狗
@@ -108,75 +108,75 @@
   goals:q=>{const st=q.dog.step;return st===0&&hours(7,19)&&roll('dog',.4)?[{id:'dog',spot:'dog',mark:'!'}]:st===1?[{id:'dog',v:V.wu,mark:'?',hint:'问问送信的小吴，他认得各家'}]:[];},
   run:[async()=>{
    await walkTo(DOG.x-14);C().state.facing=1;
-   await say(me(),'哪来的小狗？');
-   await say(me(),'脖子上挂了个铃铛，刻着字……“馒头”。');
+   await say(me(),'诶？哪儿来的小狗啊？');
+   await say(me(),'脖子上有个铃铛，还刻着字……“馒头”？');
    const have=crops();
-   await say(me(),'饿了吧？');
+   await say(me(),'你是不是饿了呀？');
    if(have.length&&await ask('小狗','（尾巴摇个不停）',['从仓库拿点菜给它','先摸摸它'])===0){
     const i=await ask('小狗','（盯着你的手）',have.map(k=>X.CROP[k].name));take(have[i]);
-    await say(me(),'……它闻了闻，只吃了一口。');await say(me(),'挑食。');}
-   else{await say(me(),'它把肚子翻过来了。');}
-   await say(me(),'送信的小吴走得远，问问他认不认得。');
+    await say(me(),'……它闻了半天，就吃了一口。');await say(me(),'还挑食呢你。');}
+   else{await say(me(),'哈哈，肚皮都翻过来了。');}
+   await say(me(),'小吴送信跑得远，问问他认不认得吧。');
    Q().dog.step=1;showHint('问问送信的小吴，他认得各家');},
   async()=>{
-   await say(me(),'小吴，你认得一只叫馒头的狗吗？脖子上挂铃铛的。');
-   await say('小吴','馒头？镇上老周饭馆的。');
-   await say('小吴','老跟着我的车跑，跑着跑着就不见了。');
-   await say(me(),'它在我家门口趴着呢。');
-   await say('小吴','我下午顺路给它带回去。');
-   await say('小吴','老周找它一上午了，骂了我两回。');
+   await say(me(),'小吴，你认不认得一只叫馒头的狗啊？脖子上挂铃铛的。');
+   await say('小吴','馒头？那不老周饭馆的嘛。');
+   await say('小吴','老爱跟着我车跑，跑着跑着就没影儿了。');
+   await say(me(),'它这会儿在我家门口趴着呢。');
+   await say('小吴','成，我下午顺道给它捎回去。');
+   await say('小吴','老周找一上午了，还赖我，骂我两回了都。');
    finish('dog','门口的小狗叫馒头，是老周饭馆的。小吴给带回去了。');}]});
  // ---------------------------------------------------------------- 刘婶借菜
  reg({id:'borrow',title:'刘婶借菜',kind:'basket',end:'借出去的菜换回了一盘饺子',home:'菜地',place:['菜地','菜地'],scenes:['借菜','还饺子'],icons:['basket','cake'],
   mood:['刘婶的饺子','happy'],villagers:{liu:V.liu},
-  idle:{liu:[['刘婶','你这地收拾得比我家的齐整。'],['刘婶','你王叔又不知道上哪去了。']]},
+  idle:{liu:[['刘婶','你这地拾掇得比我家的还齐整。'],['刘婶','你王叔又不知道跑哪儿去了。']]},
   goals:q=>{const st=q.borrow.step;return st===0?[{id:'borrow',v:V.liu,mark:'!'}]:st===1?[{id:'borrow',v:V.liu,mark:'?',hint:nextDay('borrow')?'去菜地边找刘婶':'明天刘婶来还'}]:[];},
   run:[async()=>{
-   await say('刘婶','你就是新来那家的吧？我是你王叔家的。');
-   await say('刘婶','家里来客人了，我地里的菜还没长好。');
+   await say('刘婶','哟，你就是新来那家的孩子吧？我是你王叔家的。');
+   await say('刘婶','家里来客了，偏赶上我地里的菜还没长成。');
    const have=crops();
-   if(!have.length){await say('刘婶','你也还没收啊？');await say('刘婶','那我上别家问问。');return;}
-   const i=await ask('刘婶','能借我点不？明天还你。',have.map(k=>X.CROP[k].name).concat('现在不太方便'));
-   if(i===have.length){await say('刘婶','没事没事，我再问问。');return;}
+   if(!have.length){await say('刘婶','哎呀，你这也还没收呢？');await say('刘婶','那我上别家问问去。');return;}
+   const i=await ask('刘婶','能借婶子点儿不？明儿就还你。',have.map(k=>X.CROP[k].name).concat('现在不太方便'));
+   if(i===have.length){await say('刘婶','没事儿没事儿，我再问问别人。');return;}
    take(have[i]);
-   await say('刘婶',`这${X.CROP[have[i]].name}长得真好。`);
-   await say('刘婶','明天我拿点东西过来。');
+   await say('刘婶',`哎哟，这${X.CROP[have[i]].name}长得可真好。`);
+   await say('刘婶','明儿我给你拿点儿东西过来啊。');
    Object.assign(Q().borrow,{step:1,day:today()});},
   async()=>{
-   if(!nextDay('borrow')){await say('刘婶','客人还没走呢，明天啊。');return;}
-   await say('刘婶','来，饺子，还热乎。');
-   await say(me(),'这么多？');
-   await say('刘婶','包多了，客人吃不完。');
-   const i=await ask('刘婶','哎，你晚上听见风车那边有声没？',['好像听见了','没听见']);
-   if(i===0){await say('刘婶','肯定是你王叔又躲那儿吹唢呐。');await say('刘婶','我就说他天天晚上出去干啥。');}
-   else{await say('刘婶','那就好。');await say('刘婶','我还当他又出去吹了。');}
+   if(!nextDay('borrow')){await say('刘婶','客还没走呢，明儿啊，明儿。');return;}
+   await say('刘婶','来来，饺子，还热乎着呢。');
+   await say(me(),'啊，这么多啊？');
+   await say('刘婶','包多了，客人也吃不了。');
+   const i=await ask('刘婶','哎对了，你晚上听没听见风车那边有动静？',['好像听见了','没听见']);
+   if(i===0){await say('刘婶','准是你王叔又躲那儿吹唢呐呢。');await say('刘婶','我就说嘛，天天晚上往外跑。');}
+   else{await say('刘婶','哦，那就好。');await say('刘婶','我还当他又跑出去吹了呢。');}
    eat(25);
    finish('borrow','借了刘婶一筐菜，换回来一盘饺子。');}]});
  // ---------------------------------------------------------------- 阿木的口琴
  const grass={scene:5,rect:[180,82,70,22],x:214};
  reg({id:'harp',title:'阿木的口琴',kind:'note',end:'口琴找回来了，阿木就会吹一首',home:'牧场',place:['牧场','果园','牧场'],scenes:['口琴丢了','草里','还口琴'],icons:['note','lens','note'],
   mood:['听阿木吹口琴','playful'],villagers:{amu:V.amu},spots:{grass},
-  idle:{amu:[['阿木','我数羊呢，你别跟我说话。'],['阿木','那只花脸的最不听话。']]},
+  idle:{amu:[['阿木','我数羊呢，你先别跟我说话。'],['阿木','就那只花脸的最不听话！']]},
   goals:q=>{const st=q.harp.step;return st===0?[{id:'harp',v:V.amu,mark:'!'}]:st===1?[{id:'harp',spot:'grass',mark:'?',hint:'去果园的草里找找口琴'}]:st===2?[{id:'harp',v:V.amu,mark:'?',hint:'把口琴还给牧场的阿木'}]:[];},
   run:[async()=>{
-   await say('阿木','你踩着我口琴没？');
-   await say(me(),'没有吧……你丢哪儿了？');
-   await say('阿木','早上在果园那边躺了一会儿，回来就没了。');
-   if(await ask('阿木','不会让羊吃了吧？',['我帮你去找找','羊不吃口琴'])===1){
-    await say('阿木','你又不是羊。');await say(me(),'……行，我去找找。');}
+   await say('阿木','哎，你踩着我口琴没有？');
+   await say(me(),'没有吧……你丢哪儿了啊？');
+   await say('阿木','早上在果园那边躺了会儿，回来就找不着了。');
+   if(await ask('阿木','不会让羊给吃了吧？',['我帮你找找去','羊不吃口琴吧'])===1){
+    await say('阿木','你又不是羊，你咋知道。');await say(me(),'……行行，我去找找。');}
    Q().harp.step=1;showHint('去果园的草里找找口琴');},
   async()=>{
    await walkTo(grass.x);
-   await say(me(),'草里有个亮亮的东西。');
-   await say(me(),'口琴，上面全是草汁。');
+   await say(me(),'诶，草里有个亮晶晶的。');
+   await say(me(),'是口琴，上头全是草汁。');
    Q().harp.step=2;showHint('把口琴还给牧场的阿木');},
   async()=>{
-   await say('阿木','就是它！');
-   await say('阿木','我吹一个给你听。');
+   await say('阿木','对对对，就是它！');
+   await say('阿木','我给你吹一个啊。');
    await say('口琴','嘟——嘟嘟——嘟——');
-   const i=await ask('阿木','怎么样？',['吹的什么呀？','挺好听的']);
-   if(i===0){await say('阿木','小星星。');await say('阿木','我就会这一首。');}
-   else{await say('阿木','你骗人，我自己都听出来跑调了。');}
+   const i=await ask('阿木','咋样？',['你吹的啥呀？','挺好听的啊']);
+   if(i===0){await say('阿木','小星星啊，听不出来吗？');await say('阿木','我就会这一个。');}
+   else{await say('阿木','骗人，我自己都听出来跑调了。');}
    finish('harp','在果园草里找到了阿木的口琴。他就会吹小星星。');}]});
  // ---------------------------------------------------------------- drawing: the dog, the swarm
  function dog(ctx,x,y,t){const b='#c8925a',d='#8a5a34';ctx.fillStyle=b;ctx.fillRect(x-6,y-6,11,5);ctx.fillRect(x+3,y-10,5,5);ctx.fillRect(x-6,y-1,2,1);ctx.fillRect(x+3,y-1,2,1);
