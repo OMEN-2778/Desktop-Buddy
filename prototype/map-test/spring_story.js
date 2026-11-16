@@ -113,11 +113,11 @@ const springFarm=(()=>{
  async function greet(){
   F.phase='arrive';quiet();
   await walk(170);
-  await say('妈妈','来啦！路上累不累？');
-  await say(hero(),'还行，飞机上睡了一觉。爸呢？');
-  await say('妈妈','去镇上买化肥了，晚饭前回来。');
-  const room=await ask('妈妈','先进屋看看你的房间，还是先去地里转转？',['先看房间','去地里看看']);
-  if(room===0)await showRoom();else await say('妈妈','行，先干活后歇着，像我家孩子。');
+  await say('妈妈','哎哟，可算到了！路上累不累啊？');
+  await say(hero(),'还行，飞机上睡了一路。我爸呢？');
+  await say('妈妈','上镇上买化肥去了，晚饭前就回来。');
+  const room=await ask('妈妈','你是先进屋瞅瞅你那屋，还是先上地里转转？',['先看房间','去地里看看']);
+  if(room===0)await showRoom();else await say('妈妈','行啊，那就先上地里。');
   await toField();
  }
  async function showRoom(){
@@ -126,10 +126,10 @@ const springFarm=(()=>{
   C().enter();await until(()=>C().state.inside&&!C().state.door);
   Object.assign(mom,{inside:true,x:92,y:108,facing:1});
   await walk(122,50);
-  await say('妈妈','楼上左边那间是你的，被子昨天刚晒过。');
-  await say(hero(),'嗯……一股太阳味儿。');
-  await say('妈妈','右边是我跟你爸的屋，中间那间洗澡。');
-  await say('妈妈','饿了灶上有饭，自己热。走，带你去地里。');
+  await say('妈妈','楼上左手那间是你的，被子我昨儿刚晒过。');
+  await say(hero(),'嗯，闻着就是晒过的。');
+  await say('妈妈','右手是我跟你爸那屋，当间儿是洗澡的。');
+  await say('妈妈','饿了灶上有饭，自个儿热热就行。走，带你上地里看看。');
   speech.hide();C().leave();await until(()=>!C().state.inside&&!C().state.door);
   Object.assign(mom,{inside:false,scene:3,x:196,y:103});
  }
@@ -139,31 +139,31 @@ const springFarm=(()=>{
   C().travel(1);
   await until(()=>C().state.scene===4&&!C().state.target);
   await walk(110);mom.facing=-1;
-  await say('妈妈','前面这两块是你的。');
-  await say('妈妈','后头那几块还荒着，以后慢慢收拾。');
-  await say('妈妈','先种胡萝卜吧，浇两天水就能拔。');
-  await say('妈妈','种子我给你带了一包，喏。');
-  await say(hero(),'行，我试试。');
+  await say('妈妈','喏，前头这两块归你。');
+  await say('妈妈','后头那几块还荒着呢，往后慢慢拾掇。');
+  await say('妈妈','先种点胡萝卜吧，好活，浇两天水就能拔了。');
+  await say('妈妈','种子我给你捎了一包，拿着。');
+  await say(hero(),'行，我试试啊。');
   // owner 2026-11-10: seeing the field is the step — no forced sowing / watering before the farm is hers
   await afterWater();
  }
  async function afterSow(){
-  F.phase='water';await say('妈妈','种下了？还得浇水，不浇不长。');speech.hide();showHint('再点一下菜地，选「浇水」');
+  F.phase='water';await say('妈妈','种上啦？那还得浇水啊，不浇它可不长。');speech.hide();showHint('再点一下菜地，选「浇水」');
  }
  async function afterWater(){
   F.phase='talk';
-  await say('妈妈','就这样。每天浇一回，熟了就收，收了就能卖。');
-  await say(hero(),'卖的钱归我？');
-  await say('妈妈','归你，记在你的丢丢币上。');
-  await say('妈妈','种子钱也从那儿出，自己算着花。');
-  await say(hero(),'那我先赚它两个币。');
-  await say('妈妈','口气不小。我去镇上找你爸，晚上见！');
+  await say('妈妈','对，就这么弄。一天浇一回，熟了就收，收了能拿去卖。');
+  await say(hero(),'卖的钱归我不？');
+  await say('妈妈','归你归你，都算你的丢丢币。');
+  await say('妈妈','种子钱可也得你自个儿出啊，算计着花。');
+  await say(hero(),'行吧。那我先挣它两个币再说。');
+  await say('妈妈','哟，口气还不小。那你忙着，我上镇上找你爸去了，晚上见啊！');
   speech.hide();F.phase='done';F.welcomed=true;momTo(400).then(()=>mom.on=false);
   log('到了茵菲谷爸妈的农庄，妈妈把前头两块地交给了我。');
   T.state.autoAt=sim.t+60;setTimeout(()=>showHint(`点一下${nameOf()}，可以打开丢丢平板电脑看账`),900);
  }
  // ---------------------------------------------------------------- letter + flight
- const LETTER=['我和你爸在茵菲谷承包了一小片农庄，地方不大，有菜地、果园，还有几只鸡。','春天正是播种的时候，想请你来帮帮忙。机场有去农庄的航班，票我们买好了。','你的房间收拾好了，被子也晒过了。等你来！'];
+ const LETTER=['我跟你爸在茵菲谷包了一小片地，不大，有菜地有果园，还养了几只鸡。','这阵子正是下种的时候，俩人忙不过来，你要有空就回来搭把手呗。机场有到这边的飞机，票给你买好了。','你那屋我拾掇出来了，被子也晒了。来之前说一声啊！'];
  function sendLetter(){if(F.letter)return false;F.letter=1;const m=mailState();m.box.push({from:'mom',title:'妈妈寄来一封信',lines:[...LETTER],springFarm:true});return true;}
  const oldMail=mailTick;mailTick=function(){if(!F.letter&&festName()==='写信日'&&sim.t%1440>=9*60&&!asleep())sendLetter();return oldMail();};
  const oldRead=readMail;readMail=function(){const l=lifeFlags.mail?.box?.[0],r=oldRead();if(l?.springFarm&&!F.unlocked){F.unlocked=true;setTimeout(()=>showHint('机场的「茵菲谷」航班开通了'),1200);}return r;};
