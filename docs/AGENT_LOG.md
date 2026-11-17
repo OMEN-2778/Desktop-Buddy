@@ -6,6 +6,12 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-17 Claude — 名字库扩充：人 +513、宠物 +320（卡通 / 无厘头）
+- 主人：预设名太少老重复，要大量扩充，不要逼真，要卡通无厘头（AA 福福芙芙、ABB、单姓 + 无厘头名）。
+- shared/doll.js NAME_GROUPS 每个性别加第 5 组：女 +258（甜甜、胖嘟嘟、王芝麻…），男 +255（壮壮、圆滚滚、王大锤…）；总数女 458、男 455。旧四组保留不动（social_life 会把不在名单里的联系人改名，删了会改掉老存档的人名）。
+- demo/pets_text.json petNames +320（毛线球、咸蛋黄、小肉松、掌门、呼噜噜、打嗝、遥控器、霜降…），共 420。
+- 已测：主页面启动无报错，randomName 抽样出新名字。未测：手机版、内测页的捏人骰子逐个点。
+
 ## 2026-11-16 Claude — 茵菲谷对白整体重写（口语、语气词、北方乡下口气）
 - 主人转述玩家反馈：茵菲谷所有对话 AI 感太强、没语气助词、句式套路、不 local，电话内容也是。按 everyday-dialogue 规范直接改文本数据（标题、ID、`>`、心情奖励、条件都没动）。
 - 已改：电话与路人（spring_talk.js、infei_more.js、infei_more2.js、infei_farm.js 共 101 通电话 + 20 条路人）；迎接剧情和妈妈的信（spring_story.js）；十条支线（infei_quests.js、infei_side.js，含闲聊）；爸妈日常（season_parents.js：LIVE 200 段、CHATS 24 段、早晚招呼、回家迎接、帮忙浇水的告知）。
