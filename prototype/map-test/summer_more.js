@@ -292,7 +292,8 @@
    await say(N,'清楚！这张能放进报告封面了。');finish(id,'帮海洋研究员拍到了海沟底的灯笼鱼。',{coins:5});return;}}
  Object.assign(X.ITEMS,{painting:{name:'一幅小鱼画',icon:'shell',price:0,line:'画画的姐姐照着照片画的，颜色比照片还亮。'}});
  // things to fetch in the sea
- const THINGS={whistle:[1112,150,()=>cqOn('whistle')&&!st('whistle').got&&((hour()>=6&&hour()<9)||(hour()>=17&&hour()<19))],bucket:[1236,206,()=>cqOn('bucket')&&!st('bucket').got],
+ // Just beyond the shallow shelf: ground(1140)=141, item at 132 is in water.
+ const THINGS={whistle:[1140,132,()=>cqOn('whistle')&&!st('whistle').got&&((hour()>=6&&hour()<9)||(hour()>=17&&hour()<19))],bucket:[1236,206,()=>cqOn('bucket')&&!st('bucket').got],
   bottle:[1552,343,()=>cqOn('bottle')&&st('bottle').step===1]};
  function drawThings(ctx,t){for(const [id,[x,y,on]]of Object.entries(THINGS)){if(!on())continue;const yy=y+Math.round(Math.sin(t*1.5)*1);
   if(id==='whistle'){ctx.fillStyle='#d23b30';ctx.fillRect(x-4,yy,8,1);ctx.fillStyle='#c0c6cc';ctx.fillRect(x+3,yy-1,4,3);ctx.fillStyle='#8e959c';ctx.fillRect(x+3,yy+1,4,1);}
