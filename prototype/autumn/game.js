@@ -617,12 +617,18 @@ function makeSeason_autumn(opts, DATA) {
             const w=3+i%8;ctx.fillRect(x,y,w,1);if(i%4===0)ctx.fillRect(x+2,y+2,w-3,1);
         }
         const bob=Math.round(Math.sin(t*1.1)*1.5),by=r.boatY+bob;
+        const [shadowX,shadowY,shadowWidth]=r.boatShadow;
         ctx.fillStyle=r.shadow[state.stage>=2?1:0];
-        for(let j=0;j<4;j++)ctx.fillRect(r.boatX+12+j*3,by+36+j*2,66-j*8,1);
+        for(let row=0;row<4;row++)ctx.fillRect(r.boatX+shadowX+row*3,by+shadowY+row*2,shadowWidth-row*8,1);
+        // The shore end stays fixed while the cleat follows the boat's bob.
+        const [moorX,moorY]=r.moor, [cleatX,cleatY]=r.cleat;
+        const endX=r.boatX+cleatX,endY=by+cleatY;
+        ctx.fillStyle=r.rope;
+        for(let i=0;i<=32;i++){
+            const u=i/32;
+            ctx.fillRect(Math.round(moorX+(endX-moorX)*u),Math.round(moorY+(endY-moorY)*u+Math.sin(u*Math.PI)*3),1,1);
+        }
         ctx.drawImage(images.get(DATA.boat),r.boatX,by);
-        // Mooring rope follows the hull but stays attached to the fixed quay bollard.
-        ctx.fillStyle=r.rope;const endX=r.boatX+13,endY=by+21;
-        for(let i=0;i<=28;i++){const u=i/28;ctx.fillRect(Math.round(r.moorX+(endX-r.moorX)*u),Math.round(r.moorY+(endY-r.moorY)*u+Math.sin(u*Math.PI)*3),1,1)}
     }
     function drawSigns() {
         ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#e6dfcf";
@@ -726,7 +732,8 @@ function makeSeason_autumn(opts, DATA) {
             const sc = Math.min(342 / DATA.width, 236 / DATA.height), ox = (342 - DATA.width * sc) / 2;
             if (back) for (const [k] of PARALLAX) { const im = images.get(back[k]); ctx.drawImage(im, ox, 0, im.width * sc, im.height * sc); }
             ctx.drawImage(bg, ox, 0, DATA.width * sc, DATA.height * sc);
-            ctx.drawImage(images.get(DATA.boat),ox+DATA.river.boatX*sc,(DATA.river.boatY+Math.round(Math.sin(state.time*1.1)*1.5))*sc,98*sc,38*sc);
+            const boat=images.get(DATA.boat), river=DATA.river;
+            ctx.drawImage(boat,ox+river.boatX*sc,(river.boatY+Math.round(Math.sin(state.time*1.1)*1.5))*sc,boat.width*sc,boat.height*sc);
             ctx.save();ctx.translate(ox,0);ctx.scale(sc,sc);
             ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#e6dfcf";
             for(const p of DATA.signs){ctx.font=p.size+'px "Buddy Autumn Signs"';ctx.fillText(p.text,p.x+p.w/2,p.y+p.h/2-1,p.w-6)}ctx.restore();

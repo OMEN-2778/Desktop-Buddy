@@ -1082,8 +1082,12 @@ MARSH=[(168,1004),(214,986),(280,980),(338,988),(392,978),(452,984),(508,976),(5
 ISLET=[(650,1012),(690,1002),(730,1010),(742,1030),(720,1046),(676,1048),(652,1034)]
 JETTY=(300,326,862,986)
 JETTY_STAIRS=(882,904)
+BOAT_POS=(154,851)
+BOAT_MOOR=(268,893)
+BOAT_CLEAT=(111,76)
+BOAT_SHADOW=(14,96,104)   # x, y and width relative to the sprite
 # reed beds standing in the water (owner 2026-11-11: plenty on the water, but not covering it): centre, half sizes
-WATER_REEDS=[(58,958,34,13),(150,948,20,8),(96,1012,22,10),(120,1066,32,12),(36,1080,22,9),(420,940,30,8),(566,948,26,8),
+WATER_REEDS=[(58,958,34,13),(128,951,18,8),(96,1012,22,10),(120,1066,32,12),(36,1080,22,9),(420,940,30,8),(566,948,26,8),
  (692,938,34,10),(792,982,40,14),(840,1040,22,10),(806,1078,36,11),(250,1088,30,6),(470,1090,36,6),(660,1082,26,8)]
 def outskirts(c):
  """Owner 2026-11-11: the map's left and right edges must not be ruler-straight: the mountainside carries on, with a
@@ -1411,7 +1415,6 @@ def city_layers(stage=0,review=False):
  c.oval(160,644,7,4,P.oak[1]);c.oval(160,643,6,3,P.oat[2]);c.oval(160,643,3,1,P.oak[0])
  for x in (98,150,202):c.bollard(x,654)
  # River rocks, reed beds and moored craft fill the lower edge, not empty water.
- if review:c.im.alpha_composite(river_boat().to_image(),(84,673));c.d=ImageDraw.Draw(c.im)
  for x,y in [(230,684),(287,680),(394,688),(588,686)]:
   c.oval(x+1,y+3,20,6,P.teal[0] if not clear else P.teal[1])                               # dark water round the rock
   c.boulder(x+9,y+1,9,5);c.boulder(x-3,y-1,12,7,True)
@@ -1501,6 +1504,10 @@ def city_layers(stage=0,review=False):
  foliage=c.foliage+[(im,x,y-TOP,base-TOP) for im,x,y,base in top.foliage]+[(im,x-OX,y-TOP,base-TOP) for im,x,y,base in wide.foliage]
  labels=c.labels+[{**p,'y':p['y']-TOP} for p in top.labels]+[{**p,'x':p['x']-OX,'y':p['y']-TOP} for p in wide.labels]
  if review:
+  bx,by=BOAT_POS;sx,sy,sw=BOAT_SHADOW
+  for row in range(4):wide.box(bx+sx+row*3,by+sy+row*2,sw-row*8,1,P.sage[0])
+  wide.line([BOAT_MOOR,(bx+BOAT_CLEAT[0],by+BOAT_CLEAT[1])],P.wood[2])
+  wide.im.alpha_composite(river_boat().to_image(),BOAT_POS)
   for im,x,y,base in sorted(foliage,key=lambda p:p[3]):wide.im.alpha_composite(im,(x+OX,y+TOP))
   wide.im.alpha_composite(front)
   for x,y,seed in [(276,388,1),(188,132,2),(174,520,3)]:wide.person(x+OX,y+TOP,seed)
@@ -1508,16 +1515,30 @@ def city_layers(stage=0,review=False):
  LAST_FOLIAGE=foliage;LAST_RAILS=c.foreground_rails+[((a[0],a[1]-TOP),(b[0],b[1]-TOP),wood) for a,b,wood in top.foreground_rails];LAST_LABELS=[{**p,'x':p['x']+OX,'y':p['y']+TOP} for p in labels]
  return Sprite(0,0,px=np.array(wide.im)),Sprite(0,0,px=np.array(front))
 
+@lru_cache(None)
 def river_boat():
- c=City();c.im=Image.new('RGBA',(98,38));c.d=ImageDraw.Draw(c.im)
- c.poly([(1,22),(93,22),(85,32),(72,36),(15,36),(7,31)],P.walnut[0]);c.poly([(6,24),(87,24),(79,31),(17,32),(11,29)],P.wood[1])
- for y in (26,29,32):c.line([(14,y),(81-(y-26),y)],P.walnut[0])
- c.line([(4,22),(91,22)],P.oat[2],2);c.box(29,8,39,15,P.oat[0]);c.box(31,9,35,12,P.oat[2]);c.box(26,6,45,4,P.clay[1]);c.box(27,6,43,1,P.clay[3])
- for x in (34,46,58):c.box(x,11,9,7,P.teal[0]);c.box(x+1,12,7,2,P.teal[2])
- c.box(18,13,2,10,P.walnut[1]);c.box(18,13,9,2,P.wood[2]);c.box(75,15,2,8,P.walnut[1]);c.box(75,15,13,2,P.wood[2])
- c.oval(73,24,5,5,P.clay[2]);c.oval(73,24,2,2,P.walnut[0]);c.box(72,19,2,2,P.oat[3]);c.box(72,27,2,2,P.oat[3]);c.box(13,19,10,3,P.wood[3])
- c.box(53,1,3,5,P.steel[0]);c.box(52,0,5,2,P.steel[1]);c.line([(24,19),(30,12)],P.wood[1]);c.box(88,20,5,8,P.steel[0]);c.box(88,20,5,2,P.steel[2])
- return Sprite(0,0,px=np.array(c.im))
+ """Healy's RPG Dock ship (CC0), cropped at native size and recoloured to the city's ramps."""
+ source=Image.open(Path(__file__).with_name('rpg_dock_ship_cc0.png')).convert('RGBA')
+ hull=(P.walnut[0],P.wood[0],P.walnut[1],P.wood[1],P.walnut[2],P.wood[2],P.wood[3],P.wood[4])
+ deck=(P.walnut[0],P.wood[0],P.walnut[1],P.walnut[2],P.wood[2],P.wood[3],P.oak[2],P.oak[3])
+ out=Image.new('RGBA',source.size)
+ for y in range(source.height):
+  for x in range(source.width):
+   r,g,b,a=source.getpixel((x,y))
+   if a<255:continue   # Runtime paints a moving water shadow in place of the baked one.
+   if y<9 and g>r*1.2 and b>r*1.2:
+    color=P.clay[3] if g>110 else P.clay[1]
+   elif g>r and g>b:
+    ramp=deck if y<84 else hull
+    color=ramp[sum(g>=level for level in (12,28,46,59,76,98,120))]
+   elif y>82 and b>g*1.4:
+    color=P.clay[1] if b>80 else P.wood[1]
+   elif max(r,g,b)-min(r,g,b)<12:
+    color=P.oat[2] if r>100 else P.walnut[0]
+   else:
+    color=min(P.walnut,key=lambda c:sum((u-v)**2 for u,v in zip(ImageColor.getrgb(c),(r,g,b))))
+   out.putpixel((x,y),ImageColor.getrgb(color)+(255,))
+ return Sprite(0,0,px=np.array(out))
 
 def polluted_city():return city_layers(0,True)[0]
 def detective_inside():

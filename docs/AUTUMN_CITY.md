@@ -46,7 +46,7 @@ canvas text and loaded before scene-ready. CI just packages tracked assets.
 `autumn_signs_world.json` stores text/plate geometry. Background PNGs have blank plates;
 `autumn_city_review.png` is the labelled downloadable view (4× nearest pixel scene,
 smooth text only). Inspector uses a 4× backing canvas and the full 864×1096 logical size.
-Foliage atlas lint's 54 isolated pixels are intentional leaf tips/fallen leaves; boat's three diagonal pixels belong to its rigging.
+Foliage atlas lint's isolated pixels include intentional leaf tips and fallen leaves.
 
 ## Build / review
 ```
@@ -155,3 +155,8 @@ rule, for the sky and the distance haze only). Stage backgrounds are transparent
 栗尾市西侧原有的六排高楼全部换成树林。林带从山顶沿西侧石阶延伸到河边，岸边树形渐矮。沿用山顶树种、风动和各污染阶段的配色。西坡只作景观，仍走原有石阶。
 
 石阶旁的树冠独立绘制，可以跨过城体图层边界。五个环境阶段各自导出植被位置与图集尺寸。河岸步道的护栏开口接木梯，再下到通往芦苇荡的栈桥。
+
+
+## 河岸木船（2026-11-19）
+
+使用 Healy 的 RPG Dock 木船，裁取原始 139×105 像素区域，以暖木色甲板、深棕船底和砖红旗配色。斜俯视的甲板、船舷和船头保留原素材结构。船停在栈桥西边，缆绳连到岸墙铁环，浮动时船端随船移动。原图裁片放在 `art/src/concept/rpg_dock_ship_cc0.png`，由美术构建输出改色版。授权为 CC0 1.0。[素材页](https://opengameart.org/content/rpg-dock-wip)

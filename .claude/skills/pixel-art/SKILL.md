@@ -1106,6 +1106,8 @@ open mouths, foreground fading and test-only integration. See AUTUMN_CITY.md.
 
 Owner 2026-11-19: 栗尾市西侧全部改成树林，接续山顶林带，顺石阶下到河岸。见 `docs/AUTUMN_CITY.md`。
 
+Owner 2026-11-19: 河岸换用 RPG Dock 的大木船，按栗尾市斜俯视画面搭配暖木色。素材来源和授权见 `docs/AUTUMN_CITY.md`。
+
 ### Autumn signs / richer home and living trees (2026-11-01)
 Owner explicitly requests **non-pixel sign lettering in 思源黑体**. Use embedded Source
 Han Sans SC (OFL subset + license); render text separately at display resolution. This
