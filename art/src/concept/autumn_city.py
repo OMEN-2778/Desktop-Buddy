@@ -850,74 +850,6 @@ class City:
   for k in range(5):                                                                # cattails at the right-hand end
    bx=x+36+k*2;hh=10+(k*5)%7;self.box(bx,y-4-hh,1,hh+2,P.leaf[2] if clean else P.oak[1])
    if k%2==0:self.box(bx,y-6-hh,1,4,P.walnut[1]);self.box(bx,y-6-hh,1,1,P.walnut[3])
- def tower(self,x,base,w,h,seed,wall):
-  """A high-rise flat block seen from the front (owner 2026-11-13: 重庆/香港那样错落紧密、精致立体): lit front, a
-  shaded side face on the right, the roof plane with its parapet, slab lines every floor, windows of many states
-  (dark, lit, curtained), air-conditioners, a column of balconies with washing, a drainpipe, a shop floor, and
-  roof clutter (tank, stair head, aerials, a roof garden). Dirty and streaked while polluted."""
-  r=random.Random(seed);clean=self.clean;y=base-h;sw=5+seed%3;d=6
-  hi,mid,lo,dk=(wall[3],wall[2],wall[1],wall[0]) if clean else (wall[2],wall[1],wall[0],wall[0])
-  S=self.S
-  # side face and roof plane
-  self.box(x+w,y-d+3,sw,h+d-3,dk);self.poly([(x+w,y-d+3),(x+w+sw,y-d+3),(x+w+sw,y+1),(x+w,y-2)],lo)
-  for yy in range(y+5,base-10,9):
-   self.box(x+w+1,yy+3,sw-2,3,P.ink[1]);self.box(x+w,yy,sw,1,lo)
-   if r.random()<.06:self.box(x+w+1,yy+3,sw-2,3,P.mustard[2])
-  self.box(x+w+sw-1,y-d+3,1,h+d-3,P.ink[1])
-  self.box(x-1,y-d,w+sw+1,d,S[2]);self.box(x-1,y-d,w+sw+1,1,S[4]);self.box(x,y-d+1,w+sw-1,1,S[3]);self.box(x-1,y-1,w+1,1,S[1])
-  # front wall
-  self.box(x,y,w,h,mid);self.box(x,y,1,h,hi);self.box(x+w-1,y,1,h,lo);self.box(x,y,w,2,lo)
-  bays=max(2,(w-4)//8);gap=(w-4-bays*6)/(bays+1);bal=r.randrange(bays) if w>=26 else -1;pipe=x+w-3
-  for f,yy in enumerate(range(y+5,base-14,9)):
-   self.box(x+1,yy+7,w-2,1,lo);self.box(x+1,yy+8,w-2,1,hi)                        # the floor slab's edge
-   for b in range(bays):
-    wx=round(x+2+gap+b*(6+gap))
-    if b==bal:                                                                    # balcony: dark recess, rail, washing
-     self.box(wx-1,yy,8,6,P.ink[1]);self.box(wx,yy+1,3,4,P.teal[0] if r.random()<.7 else P.mustard[2])
-     self.box(wx-2,yy+4,10,3,hi);self.box(wx-2,yy+4,10,1,S[4] if clean else S[3]);self.box(wx-2,yy+7,10,1,dk)
-     if r.random()<.55:
-      for k in range(3):self.box(wx+k*3,yy+1,2,3,r.choice([P.coral[3],P.oat[4],P.teal[3],P.mustard[3]]) if clean else r.choice([P.oat[2],P.oat[1],P.sage[1]]))
-     elif clean and r.random()<.3:self.box(wx+4,yy+2,3,2,P.leaf[2]);self.box(wx+5,yy+1,1,1,P.coral[3])
-     continue
-    lit=r.random()<.07;g=P.mustard[3] if lit else (P.teal[1] if r.random()<.7 else P.teal[0])
-    self.box(wx,yy,6,5,g);self.box(wx,yy,6,1,P.mustard[1] if lit else P.ink[1]);self.box(wx,yy,1,5,P.mustard[2] if lit else P.teal[0])
-    if lit:self.box(wx+2,yy+2,3,3,P.mustard[4])
-    elif r.random()<.5:self.box(wx+4,yy+1,1,1,P.teal[3]);self.box(wx+3,yy+2,1,1,P.teal[3])
-    if r.random()<.25:self.box(wx,yy+1,2,4,r.choice([P.oat[3],P.coral[2],P.sage[2]]))  # a curtain drawn half across
-    self.box(wx+3,yy,1,5,hi if not lit else P.mustard[1]);self.box(wx-1,yy+5,8,1,hi)   # mullion and sill
-    k=r.random()
-    if k<.3:self.box(wx+1,yy+6,5,3,S[3]);self.box(wx+1,yy+6,5,1,S[4]);self.box(wx+2,yy+7,3,1,S[1]);self.box(wx+1,yy+9,5,1,dk)   # air-conditioner
-    elif k<.4 and not clean:self.box(wx+2,yy+6,1,r.randrange(4,9),lo)             # a stain run from the sill
-  self.box(pipe,y+2,1,h-12,lo);self.box(pipe-1,y+2,1,h-12,hi)
-  for yy in range(y+12,base-14,18):self.box(pipe-1,yy,3,1,dk)
-  # the shop floor: fascia, awning, dark openings
-  A=r.choice([P.clay,P.teal,P.mustard,P.coral]) if clean else r.choice([P.oak,P.slate])
-  self.box(x,base-13,w,13,dk);self.box(x+1,base-13,w-2,3,A[1]);self.box(x+1,base-13,w-2,1,A[3])
-  for xx in range(x+2,x+w-3,4):self.box(xx,base-12,2,1,A[4] if clean else A[2])
-  for xx in range(x+2,x+w-8,11):self.box(xx,base-9,8,9,P.ink[1]);self.box(xx+1,base-8,3,5,P.mustard[2] if r.random()<.5 else P.teal[0]);self.box(xx,base-10,9,1,A[2])
-  # a hanging sign down the side of some
-  if r.random()<.45 and h>90:
-   C=r.choice([P.coral,P.teal,P.mustard,P.clay]) if clean else P.oak;sy=y+r.randrange(18,h-50);sx=x-3 if seed%2 else x+w-1
-   self.box(sx,sy,4,20,C[1]);self.box(sx,sy,1,20,C[3]);self.box(sx+3,sy,1,20,C[0])
-   for k in range(4):self.box(sx+1,sy+2+k*5,2,3,P.oat[4] if clean else P.oat[2])
-   self.box(sx+(4 if seed%2 else -1),sy+2,1,1,P.steel[0]);self.box(sx+(4 if seed%2 else -1),sy+16,1,1,P.steel[0])
-  # roof clutter
-  ry=y-d
-  if r.random()<.75:                                                              # water tank on legs
-   tx=x+2+r.randrange(max(1,w-12));self.box(tx,ry-9,7,7,S[2]);self.box(tx,ry-9,2,7,S[4]);self.box(tx+5,ry-9,2,7,S[1]);self.box(tx-1,ry-10,9,1,S[1]);self.box(tx,ry-11,7,1,S[3]);self.box(tx,ry-2,1,2,P.steel[0]);self.box(tx+6,ry-2,1,2,P.steel[0])
-  if seed%3==0 and w>=24:                                                         # a set-back penthouse storey
-   px_=x+4;pw=w-9;self.box(px_+pw,ry-9,3,9,dk);self.box(px_,ry-10,pw,10,mid);self.box(px_,ry-10,1,10,hi);self.box(px_-1,ry-13,pw+5,3,S[2]);self.box(px_-1,ry-13,pw+5,1,S[4]);self.box(px_-1,ry-11,pw+1,1,S[1])
-   for xx in range(px_+2,px_+pw-5,7):self.box(xx,ry-8,5,5,P.teal[1]);self.box(xx,ry-8,5,1,P.ink[1]);self.box(xx+3,ry-7,1,1,P.teal[3])
-   ry-=13
-  elif r.random()<.7:                                                             # stair head
-   bx=x+w-11-r.randrange(3);self.box(bx,ry-7,9,7,mid);self.box(bx,ry-7,9,1,hi);self.box(bx+8,ry-7,1,7,lo);self.box(bx-1,ry-8,11,1,S[3]);self.box(bx+2,ry-5,3,5,P.ink[1])
-  if r.random()<.6:                                                               # aerial
-   ax=x+3+r.randrange(w-6);hh=r.randrange(8,16);self.box(ax,ry-hh,1,hh,P.steel[0]);self.box(ax-2,ry-hh+2,5,1,P.steel[0]);self.box(ax-1,ry-hh+5,3,1,P.steel[0])
-   if h>130:self.box(ax,ry-hh-1,1,1,P.coral[3])
-  if clean and r.random()<.5:                                                     # a roof garden
-   gx=x+1+r.randrange(max(1,w-10))
-   for k in range(4):self.box(gx+k*2,ry-2-(k%2),2,2+(k%2),P.leaf[2+(k%2)])
-   self.box(gx+2,ry-4,1,1,r.choice([P.autumn[2],P.mustard[3],P.coral[3]]))
  def person(self,x,y,seed):
   # Distant anonymous scale figures only; no additional story cast.
   import doll
@@ -1153,7 +1085,7 @@ WATER_REEDS=[(58,958,34,13),(150,948,20,8),(96,1012,22,10),(120,1066,32,12),(36,
  (692,938,34,10),(792,982,40,14),(840,1040,22,10),(806,1078,36,11),(250,1088,30,6),(470,1090,36,6),(660,1082,26,8)]
 def outskirts(c):
  """Owner 2026-11-11: the map's left and right edges must not be ruler-straight: the mountainside carries on, with a
- waterfall and a viewing deck in the west, a pavilion on a spur and a small plaza with a shop in the east; below the
+ wooded slope in the west, a pavilion on a spur and a small plaza with a shop in the east; below the
  pier a jetty leads to a reed marsh. Drawn under the core city; edges() then softens the seams."""
  stage=c.stage;clean=c.clean;clear=stage>=2;r=random.Random(4242);S=c.S
  base,lo,hi=(P.leaf[1],P.leaf[0],P.leaf[2]) if clean else (P.oat[0],P.walnut[2],P.oat[1])
@@ -1171,8 +1103,6 @@ def outskirts(c):
    if (x-x0)%13==5:
     if (x//13)%3:c.reed(x,y+3,5000+x,1.0)
     else:c.boulder(x,y+1,r.randrange(5,9),r.randrange(3,5),True)
- # ---- west: 栗尾市's high-rise quarter climbing the hillside (owner 2026-11-13; the waterfall is gone)
- towers(c)
  # ---- east: 观云亭 on a spur off the top street
  c.terrace([(742,318),(792,313),(834,322),(850,344),(846,364),(822,372),(742,372)],26,81)
  c.pavilion(800,350);c.sign(778,376-96,46,'观云亭',9);c.lamp(760,352)
@@ -1200,24 +1130,33 @@ def outskirts(c):
   if x<112:continue
   if 8<x<100 and y<720 or (740<x and (300<y<790)):continue
   c.shrub(x,y,700+i)
- for x,y,w,h,seed in []:c.crag(x,y,w,h,seed)
+ west_woods(c)
  marsh(c)
-def towers(c):
- """The high-rise quarter west of the old town (owner 2026-11-13): six ranks of flat blocks step down the hillside to
- the river, packed tight, heights uneven, later ranks standing in front of earlier ones. Nobody goes in."""
- clean=c.clean;S=c.S
- c.box(0,236,OX,566,S[1] if clean else S[0])                    # what shows between them: dark lanes
- walls=[P.oat,P.wall_cream,P.wall_blush,P.wall_sage,P.wall_sky,P.wall_butter,P.brick,P.wall_cream,P.wall_sage]
- ranks=[(336,[(-8,30,98),(24,34,122),(62,24,86),(86,20,108)]),
-        (424,[(-12,34,116),(26,24,152),(54,30,108),(86,20,136)]),
-        (512,[(2,28,126),(34,34,98),(70,22,146),(94,12,92)]),
-        (602,[(-10,32,112),(26,28,140),(58,30,96),(90,16,124)]),
-        (694,[(-2,26,104),(28,36,130),(68,26,100),(94,12,112)]),
-        (792,[(-8,34,98),(30,26,120),(60,24,86),(86,20,104)])]
- for i,(base,row) in enumerate(ranks):
-  for j,(x,w,h) in enumerate(row):
-   c.tower(x,base+(j%2)*5,w,h,i*17+j*5+3,walls[(i*3+j*2)%len(walls)])
- c.box(0,797,OX,4,S[1]);c.box(0,797,OX,1,S[3])                    # the embankment along the river
+
+def west_woods(c):
+ """Continue the summit woods down to the sloping bank. Roots stay west of the stone stair."""
+ r=random.Random(2719)
+ plantings=[]
+ y=190
+ while y<858:
+  # An uneven forest edge and small openings give the staircase a readable silhouette.
+  edge=round(95+8*math.sin(y/47))
+  x=r.randrange(-8,10)
+  while x<=edge:
+   base=y+r.randrange(-8,9)
+   shore=816+round(74*x/(OX+12))
+   if base<shore-9:
+    scale=r.uniform(.57,.94) if base<shore-38 else r.uniform(.43,.62)
+    plantings.append((x,base,scale))
+   x+=r.randrange(19,34)
+  y+=r.randrange(20,33)
+ for i,(x,base,scale) in enumerate(plantings):
+  if i%4==0:
+   c.leaf_carpet(x,base+1,round(19*scale),4,i+61)
+  if i%5==0:
+   c.shrub(x+6,base+5,1200+i)
+  c.tree(x,base,scale)
+
 def park(c):
  """栗林公园 (owner 2026-11-13: "精致美丽一点"): a lawn on the east slope reached from the end of 中城街 (y 612). A
  flagged walk with kerbs, stepping stones up to a bench by a koi pond, chrysanthemum borders, a stone lantern, a
@@ -1578,7 +1517,7 @@ def detective_inside():
 def build():
  out={'autumn_city_polluted':polluted_city(),'autumn_detective_inside':detective_inside(),'autumn_river_boat':river_boat()}
  # Inspection/download PNG: pixel scenery enlarged nearest-neighbour; only letters smooth.
- review=out['autumn_city_polluted'].to_image().resize((W*4,H*4),Image.Resampling.NEAREST);rd=ImageDraw.Draw(review)
+ review=out['autumn_city_polluted'].to_image().resize((MAP_W*4,MAP_H*4),Image.Resampling.NEAREST);rd=ImageDraw.Draw(review)
  for p in LAST_LABELS:
   f=font(p['size']*4);rd.text(((p['x']+p['w']/2)*4,(p['y']+p['h']/2-1)*4),p['text'],font=f,fill=P.oat[3],anchor='mm')
  target=Path(__file__).resolve().parents[2]/'out/concept/autumn_city_review.png';review.save(target)

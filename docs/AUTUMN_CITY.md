@@ -45,7 +45,7 @@ when adding glyphs. OTF creates the 4× review PNG; WOFF is embedded for crisp l
 canvas text and loaded before scene-ready. CI just packages tracked assets.
 `autumn_signs_world.json` stores text/plate geometry. Background PNGs have blank plates;
 `autumn_city_review.png` is the labelled downloadable view (4× nearest pixel scene,
-smooth text only). Inspector uses a 4× backing canvas but keeps 640×944 logical size.
+smooth text only). Inspector uses a 4× backing canvas and the full 864×1096 logical size.
 Foliage atlas lint's 54 isolated pixels are intentional leaf tips/fallen leaves; boat's three diagonal pixels belong to its rigging.
 
 ## Build / review
@@ -139,7 +139,7 @@ rule, for the sky and the distance haze only). Stage backgrounds are transparent
 ## Outskirts and reed marsh (owner 2026-11-11)
 - World 864×1096 = core 640×944 + `OX`=112 on each side + `BOT`=152 below. Core authoring coordinates are unchanged;
   `map_point` adds `(OX, TOP)`. Outskirts are drawn in world coordinates by `outskirts()` / `marsh()` / `jetty()` / `edges()`.
-- West: a three-leap waterfall in a natural rock gorge (`cliff`, `fall`, `pool`) and 观瀑台. East: 观云亭 on a spur off the
+- West: wooded slope along the stone stairs down to the river. East: 观云亭 on a spur off the
   top street, a small plaza with 枫糖铺 off the workers' street. No ruler-straight map edge: outcrops (`crag`) and
   planting cover the terrace ends; the hillside reaches the river in an uneven bank.
 - 芦苇荡: uneven low land below the pier, reached by the plank jetty; reeds stand in groups round the shore, each
@@ -151,5 +151,5 @@ rule, for the sky and the distance haze only). Stage backgrounds are transparent
 ## 栗林公园与空气效果（2026-11-13）
 东坡（世界坐标 x 744–864, y 400–676）是栗林公园：石板路接中城街东头（y 612），锦鲤池、菊花花境、石灯笼、名牌、矮篱、糖炒栗子车、秋千。互动地点 swing / koi / chestnut。洁净（阶段 4）全城飘枫叶，污染（阶段 0–2）横向风沙，见 game.js `drawAir()`。
 
-## 西侧高楼群（2026-11-13）
-地图现名栗尾市。西侧（世界 x 0–112, y 236–800）不再是瀑布，而是六排高层住宅（`towers()` / `City.tower()`），只作景观，不可进入，没有路线和地点。
+## 西坡树林（2026-11-19）
+栗尾市西侧原有的六排高楼全部换成树林。林带从山顶沿西侧石阶延伸到河边，岸边树形渐矮。沿用山顶树种、风动和各污染阶段的配色。西坡只作景观，仍走原有石阶。
