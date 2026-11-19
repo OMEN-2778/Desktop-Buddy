@@ -1008,10 +1008,37 @@ function BuddyDoll(DATA) {
 };
   // owner 2026-11-17: names repeated too often → a fifth group of cartoon / silly names (AA 福福, ABB 胖嘟嘟,
   // a real surname + a silly given name 王芝麻); keep the old groups, saves and contacts still use those names.
-  const NAMES = {f:NAME_GROUPS.f.flat(),m:NAME_GROUPS.m.flat()};
+  // Short Chinese names: everyday, literary, playful, and familiar nicknames.
+  NAME_GROUPS.f.push(...[
+    "赵宁 吴恬 唐蕊 邹敏 陈禾 朱瑾 蒋晴 杜婧 沈遥 李姝 袁茹 秦悦 韩蓓 姜桐 许妍 江蘅 彭燕 顾笙 孙歆 夏澄 周蔓 苏翎 方榕 梁沁",
+    "任素秋 顾闻莺 陶映雪 林晚晴 江汀兰 叶南枝 周雨歇 白露微 温如许 宋宜年 唐疏影 于静宜 何嘉言 姚舒宁 邓佳慧 马海玲 邱慧珍 尹心怡 梁玉兰 朱佩云 贺向晴 魏素娟 谭春晓 黄美琪",
+    "陈米粒 郑点点 宋小圆 罗铃铛 金果丹 方栗酥 莫卷卷 夏梨涡 池荷包 包月饼 邹软糖 谷藤球",
+    "小荔 小槐 小芹 小椿 小橘灯 小瓦片 小鸢 小苇 小花卷 小鹭 小樱饼 小雀斑 小棠 小萝 小茶籽 小芙 小蕙 小扣子 小薄荷 小布鞋 小麻团 小米穗 小枣泥 小满月",
+    "阿荞 阿妤 阿棉 阿岚 阿瑶 阿莲 阿葵 阿芮 阿谨 阿姝 阿宝珠 阿香兰 阿青梅 阿晚晴 阿秋水 阿枝 阿沅 阿茴 阿珂 阿兰香 阿秀禾 阿茜 阿银杏 阿沐"
+  ].map(row=>row.split(" ")));
+  NAME_GROUPS.m.push(...[
+    "谢骏 吴岳 蔡衡 郑朔 杨帆 范钧 孟潇 张弛 姚铮 罗铎 陈朗 林嵩 胡牧 钱松 曹恺 刘晏 周垣 邱淳 陶冶 马拓 施越 余鸣 萧野 高嵘",
+    "何景行 沈泊川 姜闻溪 范南舟 周听松 陈见山 白砚秋 许知野 温时雨 秦怀朴 唐明澈 顾长汀 汪建平 刘永新 魏国梁 魏志远 陆嘉树 彭向阳 谢荣生 叶立诚 林文彬 丁耀华 韩晓峰 岳春雷",
+    "王板栗 石锅巴 伍豆角 陆半拍 邹算盘 朱墨斗 许三筷 金烧麦 牛花生 何糯团 邹纸鸢 胡弯钩",
+    "小槌 小榛 小芦 小板凳 小木船 小山雀 小川 小墨斗 小榆钱 小豆丁 小石桥 小渔 小雁 小辙 小砚 小稻穗 小北斗 小锣 小麦芽 小船桨 小棕熊 小陶罐 小铜铃 小芥末",
+    "阿钊 阿峻 阿棣 阿恺 阿朔 阿禾生 阿树根 阿榕 阿桥 阿笃 阿森 阿青川 阿泉 阿澈 阿北辰 阿渡 阿晖 阿榛 阿望 阿石头 阿寿安 阿栗 阿砚青 阿团"
+  ].map(row=>row.split(" ")));
+  const NAMES = {f:[...new Set(NAME_GROUPS.f.flat())],m:[...new Set(NAME_GROUPS.m.flat())]};
+  function nameWeight(name) {
+    if (/^.大.$/u.test(name)) return 0.06;
+    if (/^[小阿]/u.test(name)) return 2;
+    return 1;
+  }
+  function drawName(pool, random = Math.random) {
+    let cursor = random() * pool.reduce((total, name) => total + nameWeight(name), 0);
+    for (const name of pool) {
+      cursor -= nameWeight(name);
+      if (cursor < 0) return name;
+    }
+    return pool.at(-1);
+  }
   function randomName(gender, not) {
-    const pool = NAMES[gender === "m" ? "m" : "f"].filter(n => n !== not);
-    return pool[Math.floor(Math.random() * pool.length)];
+    return drawName(NAMES[gender === "m" ? "m" : "f"].filter(n => n !== not));
   }
   const pronoun = look => (look && look.gender === "m" ? "他" : "她");
   function normalize(l) {   // fill gaps / drop unknown values (old saves, hand edits)
@@ -1170,6 +1197,6 @@ function BuddyDoll(DATA) {
     return buf;
   }
 
-  return { W: DW, H: DH, ROLES, PRESETS, NAME_DEFAULT, NAME_MAX, cleanName, randomName, NAMES, NAME_GROUPS, pronoun, rampFrom, rampsOf, normalize, toggleAcc, layerKeys, paintLayer,
+  return { W: DW, H: DH, ROLES, PRESETS, NAME_DEFAULT, NAME_MAX, cleanName, randomName, drawName, NAMES, NAME_GROUPS, pronoun, rampFrom, rampsOf, normalize, toggleAcc, layerKeys, paintLayer,
            pixels, pixelsBack, sitPixels, emotePixels, toCanvas, hexToRgb, cheer };
 }

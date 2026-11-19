@@ -3,7 +3,7 @@ function makeSocialWorld(){
   let seed=2778;const random=()=>((seed=Math.imul(seed,1664525)+1013904223>>>0)/4294967296),take=a=>a[Math.floor(random()*a.length)];
   const names=new Set(LEGACY_CONTACT_SEEDS.map(c=>c.name)),looks=new Set(),world=LEGACY_CONTACT_SEEDS.filter(c=>!c.family).map(c=>({id:c.id,name:c.name,look:doll.normalize(c.look),child:false}));
   for(let i=world.length;i<200;i++){
-    const gender=i%2?'m':'f',pool=doll.NAMES[gender].filter(n=>!names.has(n)),name=take(pool);names.add(name);
+    const gender=i%2?'m':'f',pool=doll.NAMES[gender].filter(n=>!names.has(n)),name=doll.drawName(pool,random);names.add(name);
     let lk,key;do{const colors=D.doll.swatches,options=D.doll.options;
       lk=doll.normalize({...doll.PRESETS[gender],name,gender,style:take(options.style.filter(o=>D.doll.shortStyles.includes(o[0])===(gender==='m')))[0],eyes:take(options.eyes)[0],topStyle:take(options.top)[0],bottomStyle:take(options.bottom)[0],socks:take(options.socks)[0],acc:random()<.35?[take(options.acc)[0]]:[],hair:take(colors.hair)[1],skin:take(colors.skin)[1],top:take(colors.cloth)[1],bottom:take(colors.cloth)[1],eye:take(colors.eye)[1]});
       key=JSON.stringify({...lk,name:undefined});

@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-19 · Codex · 随机中文人名
+- 新增 211 个二、三字中文名（按男女池分别去重），捏人骰子和新世界路人都增加小／阿开头昵称的权重，调低“姓＋大＋字”。原有存档沿用角色姓名。
+
 ## 2026-11-19 · Codex · 栗尾市西南新街审图稿
 - 美术提案：从工人街西阶向左接两层河岸住宅，参考 RPG Dock 的山墙与斜俯视屋顶。预览为 docs/evidence/autumn-west-district.png，生成器为 art/src/concept/_autumn_west_review.py。
 - 已生成并检查接缝局部。待主人确认美术后再扩展游戏地图、寻路与碰撞。
