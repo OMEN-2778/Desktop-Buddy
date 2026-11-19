@@ -1761,14 +1761,26 @@ const COND = {
   bedHair: () => lifeFlags.bedHair && !asleep(),
   stuffy: () => Object.entries(windowState).some(([id, st]) => st === "drawn" && sim.t - (lifeFlags.windowSince[id] ?? sim.t) > 1440),
   lampGlow: () => nightness(hour()) > 0.5 && lamps.bed_lamp && !asleep() && roomAt(here()) === "bedroom",
-  plantWilt: () => Object.values(lifeFlags.watered).some(t => sim.t - t > 4320),
   rainy: () => isRain(weather.kind) && (weather.kind !== "storm" || stormExposed()),
   hot: () => seasonOf(sim.t).i === 1 && weather.kind === "clear" && hour() >= 12 && hour() < 16,
 };
+function syncPlantMood(announce = true) {
+  const watered = Object.values(lifeFlags.watered);
+  const wilted = watered.some(t => sim.t - t > 3 * 1440);
+  const blooming = watered.some(t => t > 0 && sim.t - t < 1440);
+  const active = wilted ? "plantWilt" : blooming ? "plantHappy" : null;
+  for (const id of ["plantHappy", "plantWilt"]) {
+    if (id !== active) moods.delete(id);
+  }
+  if (active && !moods.has(active)) addMood(active, { diary: announce, words: announce && !asleep() });
+  // Older saves gave the positive mood a four-hour timer.
+  if (active) moods.get(active).until = null;
+}
 function updateConds() {
   applyNeedConsequences();
   for (const [id, m] of moods) if (m.until !== null && sim.t >= m.until) moods.delete(id);
   if (sim.mode === "down") return;
+  syncPlantMood();
   for (const [id, test] of Object.entries(COND)) {
     const on = test(sim.needs);
     if (on && !moods.has(id)) addMood(id, { words: !asleep() });
@@ -1904,7 +1916,7 @@ function lifeFinish(act) {
     case "bath": addMood("goodBath"); if (r < 0.15) addMood("bathIdea"); if (n.hygiene > 90) addMood("smellGood", { words: false }); break;
     case "towel": addMood("warmTowel"); break;
     case "wash": lifeFlags.bedHair = false; moods.delete("bedHair"); addMood("mirror"); break;
-    case "water_living": case "water_study": lifeFlags.watered[act] = sim.t; addMood("plantHappy"); break;
+    case "water_living": case "water_study": lifeFlags.watered[act] = sim.t; syncPlantMood(); break;
     case "pc_code": case "pc_video": case "pc_forum": case "phone_video": case "phone_call": case "phone_text": case "phone_feed":
       if (sim.item && sim.item.talk) {                // a conversation (user): its own diary line and mood
         const tk = sim.item.talk;
@@ -5078,6 +5090,7 @@ function restore(sv) {
   for (const [id, until, t] of sv.moods || []) if (ML[id]) moods.set(id, { until, t });
   const savedNpcTopics=sv.flags?.npcChatSeen;
   Object.assign(lifeFlags, sv.flags || {});
+  syncPlantMood(false);
   if((sv.flags?.needRulesVersion||0)<1&&moods.has("accident")){const m=moods.get("accident");m.until=(Number.isFinite(m.t)?m.t:sim.t)+36*60;}
   lifeFlags.needRulesVersion=1;
   lifeFlags.npcChatSeen=savedNpcTopics||{};
