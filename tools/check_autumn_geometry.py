@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'tools'),str(ROOT/'art/src/concept')]
 import autumn_city as A
-from PIL import Image
+from PIL import Image,ImageColor
 rails=json.loads((ROOT/'art/out/concept/autumn_rails_world.json').read_text())
 segments=[(name,a,b) for name,pts in A.runtime_routes() for a,b in zip(pts,pts[1:])]
 # Every horizontal rail crossing a vertical flight must leave the character a clear mouth.
@@ -26,9 +26,24 @@ for name,pts in A.ROUTES:
     assert not (t<a[1]<bot and max(min(a[0],b[0]),l)<min(max(a[0],b[0]),r)),(name,a,b,'roof')
 assert A.CORE_H<=720 and A.TOP<=224 and A.MAP_W==640+2*A.OX
 assert len(A.LANDMARKS)==23
-for stage in range(5):
- im=Image.open(ROOT/f'art/out/concept/autumn_city_stage_{stage}.png')
+foliage=json.loads((ROOT/'art/out/concept/autumn_foliage_world.json').read_text())
+assert len(foliage)==5
+cell_w,cell_h=A.FOLIAGE_CELL
+x0,x1,y0,y1=A.JETTY
+bridge_x,y_from=A.map_point(*dict(A.ROUTES)['码头栈桥'][0])
+assert x0<bridge_x<x1 and y0<=y_from<A.JETTY_STAIRS[0]<A.JETTY_STAIRS[1]<y1
+deck_colors={ImageColor.getcolor(c,'RGBA') for c in (*A.P.wood,*A.P.walnut,A.P.steel[1])}
+for stage,meta in enumerate(foliage):
+ im=Image.open(ROOT/f'art/out/concept/autumn_city_stage_{stage}.png').convert('RGBA')
  assert im.size==(A.MAP_W,A.MAP_H)
- meta=json.loads((ROOT/'art/out/concept/autumn_foliage_world.json').read_text())
+ assert all(im.getpixel((bridge_x,y)) in deck_colors for y in range(y0,y1+1)), ('断开的栈桥',stage)
+ atlas=Image.open(ROOT/f'art/out/concept/autumn_foliage_atlas_{stage}.png').convert('RGBA')
  assert len(meta)>=100
-print(f'PASS autumn geometry: {len(rails)} rail segments leave open stair mouths; facade corridors clear; five matching worlds; {len(meta)} independent plants')
+ for plant in meta:
+  col=plant['frame']%A.FOLIAGE_COLS*cell_w
+  row=plant['frame']//A.FOLIAGE_COLS*cell_h
+  assert atlas.crop((col,row,col+cell_w,row+cell_h)).getbbox()==(0,0,plant['w'],plant['h'])
+ # The trees by the stairs at x=8 in core coordinates have crowns spanning the seam.
+ stair_trees=[p for p in meta if p['base'] in {A.TOP + y for y in (69,217,342,476)} and p['x']<A.OX<p['x']+p['w']]
+ assert len(stair_trees)>=3,(stage,stair_trees)
+print(f'PASS autumn geometry: {len(rails)} rail segments leave open stair mouths; facade corridors clear; jetty deck connected and foliage bounds match all five stages')

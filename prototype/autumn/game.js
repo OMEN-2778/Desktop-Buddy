@@ -571,15 +571,19 @@ function makeSeason_autumn(opts, DATA) {
         const phase = p.frame * 2.399963, rate = .9 + p.frame % 7 * .073;
         return Math.round((Math.sin(time * rate + phase) + .23 * Math.sin(time * .47 + phase * .7)) * (p.kind === "tree" ? 2.3 : .7) * 4) / 4;
     }
+    const [foliageWidth, foliageHeight] = DATA.foliageCell;
+    const foliageCol = p => p.frame % DATA.foliageCols * foliageWidth;
+    const foliageRow = p => Math.floor(p.frame / DATA.foliageCols) * foliageHeight;
     function windSprite(p) {
         const wind = windAmount(p), key = state.stage + ":" + p.frame + ":" + wind;
         if (windCache.has(key)) return windCache.get(key);
-        const c = document.createElement("canvas");c.width = 70;c.height = 96;
+        const c = document.createElement("canvas");c.width = p.w + 6;c.height = p.h;
         const g = c.getContext("2d"), root = Math.max(1,p.base-p.y);
         g.imageSmoothingEnabled = false;
+        const sx = foliageCol(p), sy = foliageRow(p);
         for (let y=0;y<p.h;y++) {
             const height = Math.max(0,1-y/root), dx = Math.round(wind*height*height);
-            g.drawImage(images.get(DATA.foliageSheets[state.stage]),p.frame%128*64,Math.floor(p.frame/128)*96+y,64,1,3+dx,y,64,1);
+            g.drawImage(images.get(DATA.foliageSheets[state.stage]),sx,sy+y,p.w,1,3+dx,y,p.w,1);
         }
         if (windCache.size >= 384) windCache.delete(windCache.keys().next().value);
         windCache.set(key,c);return c;
@@ -631,10 +635,12 @@ function makeSeason_autumn(opts, DATA) {
     }
     // Plants and the split front rails are one depth list, ordered by where they stand (owner 2026-11-11: a tree
     // standing in front of a rail covers it; reeds behind a maple stay behind it).
-    let depthList = null;
+    let depthList = null, depthStage = -1;
     function depthItems() {
-        if (depthList) return depthList;
-        depthList = [ ...DATA.foliage.map(p => ({ p: p, base: p.base, rail: -1 })), ...DATA.foreground.map((p, i) => ({ p: p, base: Math.max(p.a[1], p.b[1]), rail: i })) ];
+        if (depthStage === state.stage) return depthList;
+        depthStage = state.stage;
+        foregroundAlpha.clear();
+        depthList = [ ...DATA.foliage[state.stage].map(p => ({ p: p, base: p.base, rail: -1 })), ...DATA.foreground.map((p, i) => ({ p: p, base: Math.max(p.a[1], p.b[1]), rail: i })) ];
         depthList.sort((u, v) => u.base - v.base);
         return depthList;
     }
@@ -724,7 +730,7 @@ function makeSeason_autumn(opts, DATA) {
             ctx.save();ctx.translate(ox,0);ctx.scale(sc,sc);
             ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#e6dfcf";
             for(const p of DATA.signs){ctx.font=p.size+'px "Buddy Autumn Signs"';ctx.fillText(p.text,p.x+p.w/2,p.y+p.h/2-1,p.w-6)}ctx.restore();
-            for (const p of DATA.foliage) ctx.drawImage(images.get(DATA.foliageSheets[state.stage]), p.frame % 128 * 64, Math.floor(p.frame / 128) * 96, 64, 96, ox + p.x * sc, p.y * sc, 64 * sc, 96 * sc);
+            for (const p of DATA.foliage[state.stage]) ctx.drawImage(images.get(DATA.foliageSheets[state.stage]), foliageCol(p), foliageRow(p), p.w, p.h, ox + p.x * sc, p.y * sc, p.w * sc, p.h * sc);
             ctx.drawImage(images.get(DATA.front), ox, 0, DATA.width * sc, DATA.height * sc);
             ctx.fillStyle = "#efc452";
             ctx.fillRect(ox + state.x * sc - 2, state.y * sc - 2, 4, 4);

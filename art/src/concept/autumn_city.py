@@ -21,6 +21,8 @@ OX,BOT=112,152
 FW,FH=W+2*OX,H+BOT
 MAP_W,MAP_H=FW,FH
 SCALE_X,SCALE_Y=1,1
+FOLIAGE_CELL=(72,96)
+FOLIAGE_COLS=112
 def map_point(x,y):return round(x)+OX,round(y)+TOP
 def runtime_routes():return [(name,[map_point(x,y) for x,y in points]) for name,points in ROUTES]
 def runtime_landmarks():
@@ -80,7 +82,6 @@ SMOKE=(572,170)
 FONT=str(Path(__file__).resolve().parents[2]/'fonts/source-han-sans/BuddyAutumnSigns.otf')
 @lru_cache(None)
 def font(n):return ImageFont.truetype(FONT,n)
-REEDS=set()
 class City:
  def __init__(self,stage=0):
   self.stage=stage;self.rail_segments=[];self.foreground_rails=[];self.foreground_mode=True;self.foliage=[];self.labels=[]
@@ -269,17 +270,17 @@ class City:
   self.box(x+19,y-7,9,7,P.clay[1]);self.box(x+18,y-9,11,2,P.clay[2]);self.box(x+19,y-9,4,1,P.clay[3]);self.box(x+26,y-7,2,7,P.clay[0])   # a potted plant
   for dx,h in ((20,5),(22,8),(24,6),(26,4)):self.box(x+dx,y-9-h,1,h,G[2]);self.box(x+dx+1,y-9-h,1,2,G[3])
   for j in range(4):self.box(x+r.randrange(-3,33),y+r.randrange(1,5),2,1,P.mustard[1])
- def start_foliage(self):
-  previous=self.im;self.im=Image.new('RGBA',previous.size);self.d=ImageDraw.Draw(self.im);return previous
- def finish_foliage(self,previous,base):
+ def start_foliage(self,size=None):
+  previous=self.im;self.im=Image.new('RGBA',size or previous.size);self.d=ImageDraw.Draw(self.im);return previous
+ def finish_foliage(self,previous,base,offset=(0,0)):
   box=self.im.getbbox()
-  if box:self.foliage.append((self.im.crop(box),box[0],box[1],base))
+  if box:self.foliage.append((self.im.crop(box),box[0]+offset[0],box[1]+offset[1],base))
   self.im=previous;self.d=ImageDraw.Draw(self.im)
  def tree(self,x,base,size=1):
   # Owner 2026-11-11: "枫树不好看，太重复" → the game's own tree (front_yard.tree: seeded branch skeleton + leaf
   # clusters toned by the light), in several shapes, heights and colours; polluted stages are dry, some nearly bare.
   import front_yard as FY
-  previous=self.start_foliage();r=random.Random(x*31+base*7);s=min(size,1.1)
+  r=random.Random(x*31+base*7);s=min(size,1.1)
   shape=r.choice(['round','round','tall','wide','small'])
   rx,ry={'round':(25,21),'tall':(19,25),'wide':(29,18),'small':(20,17)}[shape]
   rx=min(26,max(9,round(rx*s*r.uniform(.9,1.08))));ry=min(26,max(8,round(ry*s*r.uniform(.9,1.08))));trunk=round((13 if shape!='tall' else 17)*s*r.uniform(.85,1.2))+3
@@ -297,17 +298,18 @@ class City:
   try:pic=FY.tree(kind,season,0,at=(tx,cy,fb,rx,ry))
   finally:FY.LEAVES[key]=keep
   im=pic.to_image().copy();box=im.getbbox()
-  box=(max(box[0],tx-31),max(box[1],fb-92),min(box[2],tx+31),box[3])   # the runtime atlas cell is 64x96
   if season=='winter':   # the bare skeleton keeps a few last dry leaves
    px=im.load()
    for _ in range(14):
     xx=r.randrange(box[0],box[2]);yy=r.randrange(box[1],max(box[1]+1,cy+ry//2))
     if px[xx,yy][3]:px[xx,yy]=ImageColor.getrgb(P.mustard[1])+(255,);px[min(im.width-1,xx+1),yy]=ImageColor.getrgb(P.oak[1])+(255,)
-  self.im.alpha_composite(im.crop(box),(int(x-(tx-box[0])),int(base-(fb-box[1]))));self.d=ImageDraw.Draw(self.im)
+  # Draw the tree independently of the core map, so crowns can cross the seam with the hillside.
+  previous=self.start_foliage((96,96));root_x,root_y=48,90
+  self.im.alpha_composite(im.crop(box),(root_x-tx+box[0],root_y-fb+box[1]))
   # fallen leaves round the foot (clean) / dry litter (polluted)
   lit=[P.autumn[2],P.autumn[3],P.mustard[3],P.autumn[1]] if self.stage>=4 else [P.oak[1],P.mustard[1],P.oat[0]]
-  for j in range(9 if self.stage>=4 else 5):self.box(x+r.randrange(-rx,rx+1),base+r.randrange(0,5),2 if j%3 else 1,1,r.choice(lit))
-  self.finish_foliage(previous,base)
+  for j in range(9 if self.stage>=4 else 5):self.box(root_x+r.randrange(-rx,rx+1),root_y+r.randrange(0,5),2 if j%3 else 1,1,r.choice(lit))
+  self.finish_foliage(previous,base,(x-root_x,base-root_y))
  def shrub(self,x,base,seed):
   # Leaf-cluster bushes like the game's (front_yard.bush): clipped box, loose red/gold shrubs, mums; dry twigs when polluted.
   previous=self.start_foliage();r=random.Random(seed*13+5);clean=self.stage>=4
@@ -720,7 +722,6 @@ class City:
    else:
     for k in range(1,6):self.box(tx+k,ty+(k*k)//8,1,1,st[4])
   self.finish_foliage(prev,base)
-  if self.foliage:REEDS.add(id(self.foliage[-1][0]))
  def pavilion(self,x,y):
   """观云亭: plinth, four posts, bench rail, a tiled roof with upturned eaves and a finial (front view)."""
   S=self.S;self.box(x-27,y+3,58,3,S[1]);self.box(x-26,y-3,53,6,S[2]);self.box(x-26,y-3,53,1,S[4]);self.box(x-26,y+2,53,1,S[0])
@@ -1079,7 +1080,8 @@ CASCADE=[(54,270,330,12,16),(40,340,420,18,26),(58,436,500,14,19),(36,508,600,22
 FALLS=[]   # x, top, foot, width: the game animates them
 MARSH=[(168,1004),(214,986),(280,980),(338,988),(392,978),(452,984),(508,976),(566,988),(604,1008),(612,1032),(590,1054),(540,1064),(486,1058),(440,1070),(380,1074),(316,1064),(262,1072),(206,1062),(170,1042),(158,1020)]
 ISLET=[(650,1012),(690,1002),(730,1010),(742,1030),(720,1046),(676,1048),(652,1034)]
-JETTY=(300,326,890,986)
+JETTY=(300,326,862,986)
+JETTY_STAIRS=(882,904)
 # reed beds standing in the water (owner 2026-11-11: plenty on the water, but not covering it): centre, half sizes
 WATER_REEDS=[(58,958,34,13),(150,948,20,8),(96,1012,22,10),(120,1066,32,12),(36,1080,22,9),(420,940,30,8),(566,948,26,8),
  (692,938,34,10),(792,982,40,14),(840,1040,22,10),(806,1078,36,11),(250,1088,30,6),(470,1090,36,6),(660,1082,26,8)]
@@ -1240,7 +1242,6 @@ def marsh(c):
   c.line([(ex+3,ey-10),(ex+5,ey-15),(ex+4,ey-18)],P.snow[3]);c.box(ex+3,ey-20,3,2,P.snow[3]);c.box(ex+6,ey-19,3,1,P.mustard[2]);c.box(ex+4,ey-20,1,1,P.ink[0]);c.box(ex-3,ey+1,7,1,P.teal[4])
  else:                                                          # a rotting skiff left in the mud
   c.poly([(566,1066),(600,1064),(596,1072),(572,1073)],P.walnut[0]);c.box(570,1066,26,2,P.oak[1]);c.box(574,1068,18,3,P.walnut[1]);c.box(580,1064,2,8,P.walnut[0])
- jetty(c)
  water_reeds(c)
  for x,y,z in [(232,1014,.8),(290,1044,.6),(372,1006,.9),(474,1040,.75),(548,1012,.85),(726,1015,.6)]:c.tree(x,y,z)
  for i,(x,y) in enumerate([(200,1030),(256,1036),(336,1040),(402,1052),(520,1046),(574,1040),(672,1036)]):c.shrub(x,y,880+i)
@@ -1278,13 +1279,25 @@ def water_reeds(c):
    c.box(x-3,y+1,7,1,P.teal[4] if clear else P.sage[2])                 # a ripple ring round each stand
    c.reed(x,y,31000+x*7+y,1.05-.3*d)
 def jetty(c):
- """A plank jetty from the quay to the marsh: piles with lit heads, a shadow on the water, bollards for the boat."""
- x0,x1,y0,y1=JETTY;clear=c.stage>=2
- c.box(x1,y0+8,4,y1-y0-10,P.teal[1] if clear else P.teal[0])
- for y in range(y0+10,y1-6,21):
-  for px_ in (x0-3,x1):c.box(px_,y+6,3,5,P.teal[1] if clear else P.teal[0]);c.box(px_,y-5,3,12,P.walnut[0]);c.box(px_,y-5,1,12,P.wood[1]);c.box(px_,y-6,3,1,P.wood[3])
- c.planks([(x0,y0),(x1-1,y0),(x1-1,y1),(x0,y1)],7);c.box(x0,y0,1,y1-y0,P.wood[3]);c.box(x1-1,y0,1,y1-y0,P.walnut[0])
- c.bollard(x0+2,y0+16);c.bollard(x0+2,y0+50)
+ """A timber crossing in the quay paving, then steps down the wall to the jetty."""
+ x0,x1,y0,y1=JETTY;top,foot=JETTY_STAIRS;clear=c.stage>=2
+ width=x1-x0
+ c.box(x1,foot,4,y1-foot-2,P.teal[1] if clear else P.teal[0])
+ for y in range(foot+9,y1-6,21):
+  for px_ in (x0-3,x1):
+   c.box(px_,y+6,3,5,P.teal[1] if clear else P.teal[0])
+   c.box(px_,y-5,3,12,P.walnut[0]);c.box(px_,y-5,1,12,P.wood[1]);c.box(px_,y-6,3,1,P.wood[3])
+ c.planks([(x0,y0),(x1-1,y0),(x1-1,y1),(x0,y1)],7)
+ c.box(x0,top,width,foot-top,P.wood[0])
+ for y in range(top,foot,5):
+  tread=min(5,foot-y)
+  c.box(x0+2,y,width-4,tread-1,P.wood[2])
+  c.box(x0+2,y,width-4,1,P.wood[3])
+  c.box(x0+2,y+tread-1,width-4,1,P.walnut[0])
+ c.box(x0,y0,2,y1-y0,P.wood[3]);c.box(x1-2,y0,2,y1-y0,P.walnut[0])
+ for x in (x0-4,x1):
+  c.bollard(x,top-1)
+ c.bollard(x0+2,foot+10);c.bollard(x0+2,foot+44)
 def runtime_water():
  """For the game: land inside the river band (no wavelets there) and the falls (animated streaks), world coordinates."""
  x0,x1,y0,y1=JETTY
@@ -1483,7 +1496,7 @@ def city_layers(stage=0,review=False):
  wide=City(stage);wide.im=Image.new('RGBA',(FW,FH));wide.d=ImageDraw.Draw(wide.im)
  if review:far_view(wide,stage)
  near_hill(wide,stage);river(wide);outskirts(wide)
- wide.im.alpha_composite(top.im,(OX,0));wide.d=ImageDraw.Draw(wide.im);edges(wide)
+ wide.im.alpha_composite(top.im,(OX,0));wide.d=ImageDraw.Draw(wide.im);jetty(wide);edges(wide)
  front=Image.new('RGBA',(FW,FH));front.alpha_composite(merged,(OX,0))
  foliage=c.foliage+[(im,x,y-TOP,base-TOP) for im,x,y,base in top.foliage]+[(im,x-OX,y-TOP,base-TOP) for im,x,y,base in wide.foliage]
  labels=c.labels+[{**p,'y':p['y']-TOP} for p in top.labels]+[{**p,'x':p['x']-OX,'y':p['y']-TOP} for p in wide.labels]
@@ -1525,18 +1538,25 @@ def build():
 
  for name,stage in (('polluted',0),('clear',3),('clean',4)):   # distance layers (the smelter stops smoking at stage 3)
   for part,im in zip(('sky','far','mid'),backdrop(stage)):out[f'autumn_back_{part}_{name}']=Sprite(0,0,px=np.array(im))
+ foliage_by_stage=[]
+ cell_w,cell_h=FOLIAGE_CELL
  for stage in range(5):
   bg,fg=city_layers(stage);out['autumn_city_stage_'+str(stage)]=bg
   if stage==0:
    out['autumn_city_front']=fg
    target=Path(__file__).resolve().parents[2]/'out/concept/autumn_rails_world.json'
    target.write_text(json.dumps([dict(a=map_point(*a),b=map_point(*b)) for a,b,wood in LAST_RAILS],separators=(',',':')))
-  COLS=128;atlas=Image.new('RGBA',(64*min(COLS,len(LAST_FOLIAGE)),96*math.ceil(len(LAST_FOLIAGE)/COLS)));meta=[]   # rows of 128 cells: frame f sits at (f%128*64, f//128*96)
+  cols=FOLIAGE_COLS
+  atlas=Image.new('RGBA',(cell_w*min(cols,len(LAST_FOLIAGE)),cell_h*math.ceil(len(LAST_FOLIAGE)/cols)))
+  meta=[]
   for i,(im,x,y,base) in enumerate(LAST_FOLIAGE):
    im=im.resize((max(1,round(im.width*SCALE_X)),max(1,round(im.height*SCALE_Y))),Image.Resampling.NEAREST)
-   assert im.width<=64 and im.height<=96,(im.size,x,y,base)
-   atlas.alpha_composite(im,(i%COLS*64,i//COLS*96));xx,yy=map_point(x,y);meta.append(dict(x=xx,y=yy,w=im.width,h=im.height,base=round(base*SCALE_Y)+TOP,frame=i,kind='reed' if id(im) in REEDS else 'tree' if im.height>26 else 'shrub'))
+   assert im.width<=cell_w and im.height<=cell_h,(im.size,x,y,base)
+   atlas.alpha_composite(im,(i%cols*cell_w,i//cols*cell_h))
+   xx,yy=map_point(x,y)
+   meta.append(dict(x=xx,y=yy,w=im.width,h=im.height,base=round(base*SCALE_Y)+TOP,frame=i,kind='tree' if im.height>26 else 'shrub'))
   out['autumn_foliage_atlas_'+str(stage)]=Sprite(0,0,px=np.array(atlas))
-  if stage==0:
-   target=Path(__file__).resolve().parents[2]/'out/concept/autumn_foliage_world.json';target.parent.mkdir(parents=True,exist_ok=True);target.write_text(json.dumps(meta,separators=(',',':')))
+  foliage_by_stage.append(meta)
+ target=Path(__file__).resolve().parents[2]/'out/concept/autumn_foliage_world.json'
+ target.write_text(json.dumps(foliage_by_stage,separators=(',',':')))
  return out
