@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-19 · Codex · 栗尾市西南新街审图稿
+- 美术提案：从工人街西阶向左接两层河岸住宅，参考 RPG Dock 的山墙与斜俯视屋顶。预览为 docs/evidence/autumn-west-district.png，生成器为 art/src/concept/_autumn_west_review.py。
+- 已生成并检查接缝局部。待主人确认美术后再扩展游戏地图、寻路与碰撞。
+
 ## 2026-11-19 · Codex · 栗尾市换上暖木色 RPG Dock 大船
 - 船用 Healy 的 CC0 素材，保留斜俯视甲板、船舷和船头。裁取原生 139×105、改成暖木色和砖红旗。栈桥西侧一丛水生芦苇移开，留足泊船空间。
 - 审图与游戏用同一位置，缆绳固定岸墙铁环并随船浮动，水影和小地图采用新船尺寸。几何、审图、实际船体浮动、小地图和完整秋城回归均通过。桌面真机未测。
