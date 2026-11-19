@@ -161,17 +161,33 @@ const infeiFarm=(()=>{
  // ================================================================ 仓库 / 礼物 / 藏品
  const contactOf=id=>socialState.contacts.find(c=>c.id===id);
  function sell(k,n){n=Math.min(n,S().inv[k]||0);if(!n)return;S().inv[k]-=n;if(!S().inv[k])delete S().inv[k];const it=X.ITEMS[k];X.record(it.icon,`卖掉${n>1?n+' 份':''}${it.name}`,r2(it.price*n));}
- function giveTo(k){closeSocialSheet();const cs=sortedContacts().filter(c=>c.family||c.affinity>0).slice(0,12);
-  PICK.sf_give={title:`送礼 · ${X.ITEMS[k].name}送给谁`,groups:()=>[{name:'家人',items:cs.filter(c=>c.family).map(c=>({title:contactName(c),icon:ICON.gift,line:S().gifts[c.id]===today()?'今天已经送过了':'',item:{id:c.id,k}}))},
-   {name:'朋友',items:cs.filter(c=>!c.family).map(c=>({title:contactName(c),info:contactRelation(c),icon:ICON.gift,line:S().gifts[c.id]===today()?'今天已经送过了':'',item:{id:c.id,k}}))}].filter(g=>g.items.length)};
+ function giftItem(k,stall){return stall?summerLife.RECIPES[k]:X.ITEMS[k];}
+ function giveTo(k,stall=false){closeSocialSheet();const cs=sortedContacts().filter(c=>c.family||c.affinity>0);
+  const recipient=c=>({title:contactName(c),contact:c,info:contactRelation(c),disabled:S().gifts[c.id]===today(),
+   line:S().gifts[c.id]===today()?'今天已经送过了':'',item:{id:c.id,k,stall}});
+  PICK.sf_give={title:`送礼 · ${giftItem(k,stall).name}送给谁`,groups:()=>[
+   {name:'家人',items:cs.filter(c=>c.family).map(recipient)},
+   {name:'朋友',items:cs.filter(c=>!c.family).map(recipient)}].filter(g=>g.items.length)};
   openPicker('sf_give',pickFrom('buddy'));}
  const hash=s=>[...s].reduce((a,ch)=>(a*31+ch.charCodeAt(0))>>>0,7);
- function give({id,k}){const c=contactOf(id);if(!c||!S().inv[k])return;if(S().gifts[id]===today())return showHint('今天已经送过了，明天再送');
-  S().inv[k]--;if(!S().inv[k])delete S().inv[k];S().gifts[id]=today();const it=X.ITEMS[k],name=contactName(c),liked=c.family||hash(id+k)%3===0,gain=c.family?3:liked?4:2;
+ function give({id,k,stall=false}){
+  const c=contactOf(id),f=S(),it=giftItem(k,stall);
+  if(!c||!it)return;
+  if(f.gifts[id]===today())return showHint('今天已经送过了，明天再送');
+  if(stall){
+   const stock=f.bay?.stock||[],index=stock.indexOf(k);
+   if(index<0)return showHint('这份已经卖出去了');
+   stock.splice(index,1);
+  }else{
+   if(!f.inv[k])return showHint('仓库里已经没有这份了');
+   if(--f.inv[k]===0)delete f.inv[k];
+  }
+  f.gifts[id]=today();
+  const name=contactName(c),liked=c.family||hash(id+k)%3===0,gain=c.family?3:liked?4:2;
+  const group=c.family||(c.affinity>=60?'close':'friend');
   const before=contactRelation(c);c.affinity=Math.min(100,(c.affinity||0)+gain);c.lastContact=sim.t;contactsSig='';
-  const line=c.family?pick([`${name}说“自己种的就是香”，非让拍张照发给亲戚看。`,`${name}收下了，说下回寄点好吃的来。`]):liked?pick([`${name}说正好想吃这个，开心得不得了。`,`${name}拿着看了半天，说这是今年收到最好的礼物。`]):pick([`${name}收下了，说谢谢。`,`${name}有点意外，笑着收下了。`]);
-  log(`把${it.name}送给了${name}。${line}`);if(typeof addSocialMemory==='function')addSocialMemory(c,'收到茵菲谷的礼物',`收到了${it.name}`);
-  if(contactRelation(c)!==before)log(`和${name}从${before}成为了${contactRelation(c)}。`);speak(liked?'TA 好像很喜欢':'送出去啦',true);}
+  log(`把${it.name}送给了${name}。`);if(typeof addSocialMemory==='function')addSocialMemory(c,'收到茵菲谷的礼物',`收到了${it.name}`);
+  if(contactRelation(c)!==before)log(`和${name}从${before}成为了${contactRelation(c)}。`);queueGiftThanks(id, giftThanksLines(group,it.name,S()));}
  // ================================================================ 丢丢平板电脑
  function pcState(){const f=S(),left=fundLeft(),fund=f.fund;if(!fund.history.length||fund.history.length>=14&&fund.history.every(v=>v===fund.history[0])){let v=10;fund.history=Array.from({length:14},()=>v=Math.round(v*(1+((Math.random()-.5)*8)/100)*100)/100);}   // no flat line before the first real day
   const base=X.pcStateBase(),inv=Object.entries(f.inv).filter(([,n])=>n>0),value=r2(inv.reduce((a,[k,n])=>a+X.ITEMS[k].price*n,0));
@@ -189,6 +205,11 @@ const infeiFarm=(()=>{
   base.gifts={tab:'gift',sel:0,tabs:[['gift','仓库'],['keep','藏品']],empty:'仓库是空的，去地里、果园、牧场收点什么吧。',
    items:inv.map(([k,n])=>{const it=X.ITEMS[k];return {icon:it.icon,name:it.name,n,line:`${it.line} 每份约 ${it.price} 币。`,actions:[{label:'送人',primary:true,on:()=>giveTo(k)},{label:'卖一份',on:()=>{sell(k,1);refresh('gift')();}},...(n>1?[{label:`全卖 ${r2(it.price*n)}`,on:()=>{sell(k,n);refresh('gift')();}}]:[])]};}),
    keep:Object.entries(X.ITEMS).map(([k,it])=>f.seen[k]!=null?{icon:it.icon,name:it.name,line:`第 ${f.seen[k]+1} 天第一次得到。${it.line}`,actions:[]}:{locked:1})};
+  for(const k of new Set(f.bay?.stock||[])){
+   const dish=giftItem(k,true);
+   if(dish&&!dish.keep)base.gifts.items.push({icon:dish.icon,name:dish.name,n:f.bay.stock.filter(key=>key===k).length,
+    line:'放在草帽湾的小摊柜台上。',actions:[{label:'送人',primary:true,on:()=>giveTo(k,true)}]});
+  }
   return base;}
  X.pcState=pcState;
  // ================================================================ hooks into the farm

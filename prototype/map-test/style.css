@@ -217,3 +217,22 @@ body:has(.social-sheet.fu-big-sheet:not([hidden])) #diaryBox{visibility:hidden} 
 .seed-chip.st-autumn{background:#f8dfd3;border-color:#d99a7a;color:#8a3f22}.seed-chip.st-winter{background:#e2ecf6;border-color:#9ab8d6;color:#3a5a7a}
 .seed-card small{font-size:11px;color:#8a6a46}
 .picker.seed-shop .pk-item .fu-why{margin-left:auto;align-self:center;padding:2px 8px;background:#fdeee9;border:2px solid #f1c9c1;color:#a0473a}
+
+.pk-item .pk-avatar { width: 32px; height: 32px; flex: none; image-rendering: pixelated; border-radius: 5px; }
+.social-sheet.fu-pc { container-type: inline-size; }
+.social-sheet.fu-pc .fu-nav { overflow-y: auto; min-height: 0; }
+.social-sheet.fu-pc .fu-gifts { min-height: min-content; }
+@container (max-width: 560px) {
+  .social-sheet.fu-pc .social-sheet-content { gap: 4px; padding: 3px; }
+  .social-sheet.fu-pc.fu-pc .fu-nav { padding: 3px; }
+  .social-sheet.fu-pc.fu-pc .fu-nav button { width: 54px; flex: none; }
+  .social-sheet.fu-pc.fu-pc .fu-main { padding: 6px; }
+  .fu-ledger li { grid-template-columns: auto minmax(0,1fr) auto; gap: 2px 4px; }
+  .fu-ledger li > span { grid-column: 2 / -1; }
+  .fu-ledger li > time { grid-column: 2; }
+  .fu-ledger li > b { white-space: nowrap; }
+  .fu-gifts { flex-direction: column-reverse; flex: none; }
+  .fu-detail { flex: none; }
+  .fu-detail .fu-actions { justify-content: flex-start; }
+  .fu-detail button { white-space: nowrap; }
+}

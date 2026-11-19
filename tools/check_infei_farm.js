@@ -23,7 +23,7 @@ const out=process.argv[2]||'/tmp/infei-farm';fs.mkdirSync(out,{recursive:true});
  // ---- spring seeds, sow strawberry (regrows)
  await ev(()=>seasonMapTest.ctl().go(4,100));await p.waitForTimeout(400);
  await clickAt(40,88);await ring('播种');await shot('春天种子铺');
- const springSeeds=await ev(()=>[...document.querySelectorAll('#picker .pk-item b')].map(b=>b.textContent));assert.deepEqual(springSeeds,['胡萝卜','白菜','草莓','土豆']);
+ const springSeeds=await ev(()=>[...document.querySelectorAll('#picker .pk-item b')].map(b=>b.textContent));assert.deepEqual(springSeeds,['胡萝卜','白菜','草莓','土豆','小蘑菇']);
  await p.locator('#picker .pk-item',{hasText:'草莓'}).click();await walkDone();
  // ---- rain waters the bed by itself
  await ev(()=>{weather.force='rain';});await p.waitForTimeout(300);await clickAt(40,88);await shot('下雨-不用浇水');
@@ -66,11 +66,14 @@ const out=process.argv[2]||'/tmp/infei-farm';fs.mkdirSync(out,{recursive:true});
  const before=await ev(()=>socialState.contacts.find(c=>c.id==='mom').affinity);
  await ev(()=>{const k=Object.keys(springFarm.state.inv)[0];infeiFarm.give({id:'mom',k});});
  const after=await ev(()=>[socialState.contacts.find(c=>c.id==='mom').affinity,JSON.stringify(springFarm.state.inv),JSON.stringify(springFarm.state.gifts)]);console.log('GIFT',before,after);assert(after[0]>before||before>=100);
+ await p.waitForFunction(()=>phoneCall.phase==='ringing'&&phoneCall.contactId==='mom');
+ await p.locator('.call-decline').click();
+ await p.waitForFunction(()=>phoneCall.phase==='idle');
  // ---- autumn: summer crops wither at the change, autumn seeds
  await day(27);await ev(()=>{springFarm.state.beds[10]={crop:'tomato',progress:1,watered:-1,at:sim.t,picks:0};});await day(28);
  f=await S();assert(!f.beds[10]);await ev(()=>{seasonMapTest.ctl().go(4,100);springFarm.state.beds={};});await p.waitForTimeout(400);
  await clickAt(40,88);await ring('播种');const autumnSeeds=await ev(()=>[...document.querySelectorAll('#picker .pk-item b')].map(b=>b.textContent));await shot('秋天种子铺');await p.locator('#picker .x').click();
- assert.deepEqual(autumnSeeds,['白菜','玉米','南瓜','萝卜','茄子']);
+ assert.deepEqual(autumnSeeds,['白菜','玉米','南瓜','萝卜','茄子','小蘑菇']);
  // ---- winter: animals in the barn, hay
  await day(43);await ev(()=>seasonMapTest.ctl().go(5,520));await p.waitForTimeout(600);await shot('冬天牧场-都进棚了');
  await clickAt(500,38);await shot('冬天粮仓菜单');await ring('都喂草料');

@@ -3096,7 +3096,7 @@ function popFrom(el) {
 window.popFrom = popFrom;
 function openPicker(act, from = null) {
   const P_ = PICK[act];
-  if (!P_ || sim.mode === "down" || card) return;
+  if (!P_ || sim.mode === "down" || (card && act !== "sf_give")) return;
   closeRing(); setDiaryOpen(false);
   pickOn = act;
   const [place, ask] = P_.title.split(" · ");                 // a small house shows just the place
@@ -3108,8 +3108,18 @@ function openPicker(act, from = null) {
     const grid = document.createElement("div"); grid.className = "pk-grid";
     for (const it of g.items) {
       const b = document.createElement("button"); b.type = "button"; b.className = "pk-item"; b.title = it.line ? `${it.title}：${it.line}` : it.title;
-      const img = new Image(); img.alt = ""; img.src = it.icon;
-      img.onload = () => { b.style.setProperty("--iw", img.naturalWidth); b.style.setProperty("--ih", img.naturalHeight); };
+      let img;
+      if (it.contact) {
+        img = document.createElement("canvas");
+        img.width = img.height = 40;
+        img.className = "pk-avatar";
+        img.setAttribute("aria-hidden", "true");
+        drawContactAvatar(img, it.contact);
+      } else {
+        img = new Image(); img.alt = ""; img.src = it.icon;
+        img.onload = () => { b.style.setProperty("--iw", img.naturalWidth); b.style.setProperty("--ih", img.naturalHeight); };
+      }
+      b.disabled = !!it.disabled;
       const txt = document.createElement("div");
       txt.append(Object.assign(document.createElement("b"), { textContent: it.title }));
       if (it.info) txt.append(Object.assign(document.createElement("i"), { textContent: it.info }));
@@ -3149,7 +3159,7 @@ function closePicker() {
 }
 pickerEl.querySelector(".x").addEventListener("click", closePicker);
 pickerEl.querySelector(".rand").addEventListener("click", () => {
-  const a = pickOn, items = a.startsWith("fest_") ? PICK[a].groups().flatMap(g => g.items) : null;   // festival pickers need a real choice
+  const a = pickOn, items = (a?.startsWith("fest_") || a === "sf_give") ? PICK[a].groups().flatMap(g => g.items).filter(it => !it.disabled) : null;   // festival pickers need a real choice
   closePicker();
   if (items) { if (items.length) command(a, pick(items).item); }
   else command(a);
