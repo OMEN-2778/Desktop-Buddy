@@ -1547,9 +1547,9 @@ LONG_BOTTOMS = ("trousers", "jeans", "maxi", "wide", "track", "leggings", "long_
 ACCESSORIES += ["crown", "cat_ears", "bunny_ears", "headband", "flower_crown", "halo", "mask", "heart_glasses",
                 "straw_hat", "beret", "bucket_hat", "necktie", "bowtie", "necklace", "backpack"]
 EYEWEAR = (*EYEWEAR, "heart_glasses")
-HATS = (*HATS, "straw_hat", "beret", "bucket_hat")
+HATS = (*HATS, "deerstalker", "straw_hat", "beret", "bucket_hat")
 BODY_ACC = ["backpack", "necklace", "necktie", "bowtie", "scarf"]   # drawn over the top, under the head
-HEAD_ACC_ORDER = ["beanie", "cap", "straw_hat", "beret", "bucket_hat", "headband", "flower_crown", "star", "bow", "ribbon", "bow_small",
+HEAD_ACC_ORDER = ["beanie", "cap", "deerstalker", "straw_hat", "beret", "bucket_hat", "headband", "flower_crown", "star", "bow", "ribbon", "bow_small",
                   "flower_clip", "heart_clip", "barrette", "cat_ears", "bunny_ears", "crown", "halo", "headphones", "mask",
                   "glasses", "sunglasses", "half_glasses", "flat_glasses", "heart_glasses"]
 
@@ -1605,6 +1605,21 @@ def draw_new_accessory(s: Sprite, d: "Doll", name: str, dy: int = 0):
         for x in range(2, 18, 3):
             hat.set(x, 7, m[1])
         s.blit(hat.outline(m[0], grow=True).crop(1, 1, W, H), 0, dy)
+    elif name == "deerstalker":
+        # Tied-up ear flaps, a segmented tweed crown and a short projecting peak.
+        w = P.wood
+        s.blit(_grid("""
+            .......os.oo........
+            ......osHosoo.......
+            .....ooTTTTCCoo.....
+            ....oHHTTCTTCsso....
+            ...oTTTHCTTTCCsso...
+            ...oTCCTCTCCTCsso...
+            ..osTTCCTTTCCssCso..
+            .ossssssCCCCssoCso..
+            ooo...osTTTTCCsooo..
+            ........ooooooo.....
+        """, {"o": w[0], "s": w[1], "C": w[2], "T": w[3], "H": w[4]}), 0, dy)
     elif name == "beret":
         c = d.beret_color or c
         hat = Sprite(W, H)
@@ -1630,7 +1645,7 @@ def draw_new_accessory(s: Sprite, d: "Doll", name: str, dy: int = 0):
             s.vline(x, 16, 20, w[1]).set(x, 16, w[2]).set(x, 18, w[3])
 
 
-NEW_ACC = set(ACCESSORIES[ACCESSORIES.index('crown'):])
+NEW_ACC = set(ACCESSORIES[ACCESSORIES.index('crown'):]) | {'deerstalker'}
 
 
 # ------------------------------------------------------------------ the doll
