@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-20 · 手机旋律手记
+- 试听站 /music/melody.html 支持点格写音、循环试听、本机草稿和 JSON 导入导出。记录含 MIDI 音高、十六分格起点和时值、速度与小节数，可交给编曲者。
+- Chromium 375px 触控模拟已验输入、播放、删除、跨小节、草稿与文件往返；未测 iOS 真机。
+
 ## 2026-11-20 · NPC 对话期间的悬停入口
 - NPC 对话行接替日记后也能悬停展开设置、任务，剧情点按也避开这两个控件。
 - Chromium 在正式版前端验证 25%、50%、100% 下悬停、移出、设置点击、剧情中打开任务及继续对白。

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>旋律手记</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#101c27;color:#f2f4ed;font:15px "DM Sans",system-ui,sans-serif}main{max-width:860px;margin:auto;padding:20px clamp(10px,3vw,32px) 36px}header,nav,.tools,footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}h1{margin:0;font-size:26px;letter-spacing:.08em}button,select,input{font:inherit;color:inherit;background:#243644;border:1px solid #526271;border-radius:8px;padding:8px;min-height:40px}button{cursor:pointer}button:disabled{opacity:.4}#play{background:#a6ead2;color:#122e28;font-weight:bold;min-width:92px}#title{margin:16px 0;width:100%;background:transparent;font-size:18px}label,p,small{color:#bbcccf}nav{margin:14px 0 8px}.tools{justify-content:flex-start}#bpm{width:66px}#roll{position:relative;display:grid;grid-template-columns:34px repeat(16,minmax(0,1fr));border:1px solid #526271;border-radius:8px;overflow:hidden;background:#172632}.key,.beat{display:grid;place-items:center;font:12px monospace;color:#c4d4d8}.beat{grid-column:span 4;height:23px;background:#243644;border-left:1px solid #526271}.cell{position:relative;padding:0;border:0;border-radius:0;min-height:clamp(23px,3.4vh,35px);border-left:1px solid #344353;border-top:1px solid #344353;background:#233747;touch-action:manipulation}.sharp{background:#1d2d3b}.strong{border-left-color:#708187}.on{background:#a6ead2;border-left-color:#a6ead2}.start{box-shadow:inset 3px 0 #37ac90}.now:after{content:"";position:absolute;inset:0;background:#ffd58c44;pointer-events:none}p{font-size:13px}footer{justify-content:flex-start}#status{margin-left:auto}
+</style>
+<main><header><h1>旋律手记</h1><button id="play">▶ 循环试听</button></header>
+<input id="title" aria-label="曲名" maxlength="80" placeholder="给旋律起个名字">
+<div class="tools"><label>速度 <input type="number" id="bpm" min="40" max="240" value="112"> BPM</label>
+<label>音长 <select id="length"><option value="1">1/16</option><option value="2" selected>1/8</option><option value="4">1/4</option><option value="8">1/2</option><option value="16">全音符</option></select></label>
+<label>音区 <select id="oct"><option>3</option><option selected>4</option><option>5</option></select></label></div>
+<nav><div><button id="prev" aria-label="上一小节">‹</button> <span id="page"></span> <button id="next" aria-label="下一小节">›</button></div><button id="add">＋ 小节</button></nav>
+<div id="roll" aria-label="钢琴卷帘"></div><p>从左往右写，每格是十六分音符。点空格落音，再点音符即可删除。</p>
+<footer><button id="save">导出旋律</button><button id="load">导入记录</button><input hidden id="file" type="file" accept=".json,application/json"><small id="status" role="status"></small></footer></main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id), key='melody-notebook-v1';
+const pitches=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+let song={format:'melody-v1',title:'',bpm:112,beatsPerBar:4,stepsPerBeat:4,bars:1,notes:[]};
+let bar=0,ctx,bus,timer,step,origin,playing=false;
+const between=(n,a,b)=>Number.isInteger(n)&&n>=a&&n<=b;
+function validate(s){
+ if(!s||s.format!=='melody-v1'||typeof s.title!=='string'||s.title.length>80||s.beatsPerBar!==4||s.stepsPerBeat!==4||!between(s.bpm,40,240)||!between(s.bars,1,128)||!Array.isArray(s.notes)||s.notes.length>s.bars*16*36) throw Error();
+ const occupied=new Set();
+ for(const n of s.notes){
+  if(!n||!between(n.midi,48,83)||!between(n.start,0,s.bars*16-1)||!between(n.duration,1,s.bars*16-n.start)) throw Error();
+  for(let i=n.start;i<n.start+n.duration;i++){const k=i*128+n.midi;if(occupied.has(k))throw Error();occupied.add(k)}
+ }
+ return s;
+}
+function persist(){try{localStorage.setItem(key,JSON.stringify(song));$('status').textContent='草稿已保存'}catch{$('status').textContent='请导出备份'}}
+try{const draft=localStorage.getItem(key);if(draft)song=validate(JSON.parse(draft))}catch{}
+function fields(){$('title').value=song.title;$('bpm').value=song.bpm}
+function draw(){
+ $('page').textContent=(bar+1)+' / '+song.bars+' 小节';$('prev').disabled=!bar;$('next').disabled=bar+1===song.bars;$('add').disabled=song.bars===128;
+ const roll=$('roll');roll.replaceChildren(document.createElement('span'));
+ for(let b=1;b<=4;b++){const beat=document.createElement('span');beat.className='beat';beat.textContent=b;roll.append(beat)}
+ const visible=song.notes.filter(n=>n.start<(bar+1)*16&&n.start+n.duration>bar*16);
+ for(let p=11;p>=0;p--){
+  const midi=(Number($('oct').value)+1)*12+p,name=pitches[p]+$('oct').value;
+  const label=document.createElement('span');label.className='key';label.textContent=name;roll.append(label);
+  const row=visible.filter(n=>n.midi===midi);
+  for(let col=0;col<16;col++){
+   const t=bar*16+col,n=row.find(n=>n.start<=t&&n.start+n.duration>t),cell=document.createElement('button');
+   cell.className='cell'+(name.includes('♯')?' sharp':'')+(col%4?'':' strong')+(n?' on':'')+(n?.start===t?' start':'');
+   cell.dataset.col=col;cell.setAttribute('aria-label',name+' 第'+(col+1)+'格');cell.setAttribute('aria-pressed',String(!!n));
+   cell.onclick=()=>{stop();if(n)song.notes.splice(song.notes.indexOf(n),1);else{
+    const next=song.notes.filter(v=>v.midi===midi&&v.start>t).reduce((end,v)=>Math.min(end,v.start),song.bars*16);
+    const duration=Math.min(Number($('length').value),next-t);song.notes.push({midi,start:t,duration});soundReady();tone(midi,ctx.currentTime,Math.min(.45,duration*15/song.bpm),ctx.destination)
+   }persist();draw()};roll.append(cell)
+  }
+ }
+}
+function soundReady(){ctx??=new (window.AudioContext||window.webkitAudioContext)();if(ctx.state!=='running')ctx.resume()}
+function tone(midi,time,duration,out){
+ const osc=ctx.createOscillator(),amp=ctx.createGain();osc.type='triangle';osc.frequency.value=440*2**((midi-69)/12);
+ amp.gain.setValueAtTime(.0001,time);amp.gain.exponentialRampToValueAtTime(.14,time+.009);amp.gain.exponentialRampToValueAtTime(.055,time+duration*.8);amp.gain.exponentialRampToValueAtTime(.0001,time+duration);
+ osc.connect(amp);amp.connect(out);osc.start(time);osc.stop(time+duration+.01);osc.onended=()=>{osc.disconnect();amp.disconnect()}
+}
+function stop(){playing=false;clearInterval(timer);if(bus){bus.disconnect();bus=null}$('play').textContent='▶ 循环试听';document.querySelectorAll('.now').forEach(c=>c.classList.remove('now'))}
+function tick(){
+ const unit=15/song.bpm,total=song.bars*16,now=ctx.currentTime;
+ while(origin+step*unit<now+.1){
+  const time=origin+step*unit;if(time>=now-.02)for(const n of song.notes)if(n.start===step%total)tone(n.midi,Math.max(now,time),unit*n.duration,bus);
+  step++
+ }
+ const pos=Math.floor((now-origin)/unit);if(pos<0)return;
+ const current=pos%total,newBar=Math.floor(current/16);if(bar!==newBar){bar=newBar;draw()}
+ if(!$('roll').querySelector('.now[data-col="'+current%16+'"]')){
+  document.querySelectorAll('.now').forEach(c=>c.classList.remove('now'));document.querySelectorAll('[data-col="'+current%16+'"]').forEach(c=>c.classList.add('now'))
+ }
+}
+$('play').onclick=async()=>{if(playing){stop();return}soundReady();await ctx.resume();if(playing)return;playing=true;bus=ctx.createGain();bus.connect(ctx.destination);step=0;origin=ctx.currentTime+.05;bar=0;draw();$('play').textContent='■ 停止';tick();timer=setInterval(tick,25)};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});
+$('prev').onclick=()=>{stop();bar--;draw()};$('next').onclick=()=>{stop();bar++;draw()};$('add').onclick=()=>{stop();bar=song.bars++;persist();draw()};$('oct').onchange=draw;
+$('title').oninput=()=>{song.title=$('title').value;persist()};$('bpm').onchange=()=>{stop();song.bpm=Math.max(40,Math.min(240,Math.round(Number($('bpm').value)||112)));fields();persist()};
+$('save').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(song,null,2)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download=(song.title.trim()||'我的旋律')+'.melody.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)};
+$('load').onclick=()=>$('file').click();$('file').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;try{const imported=validate(JSON.parse(await file.text()));if(song.notes.length&&!confirm('用导入的旋律替换当前草稿？'))return;stop();song=imported;bar=Math.floor((song.notes[0]?.start||0)/16);$('oct').value=Math.floor((song.notes[0]?.midi??60)/12)-1;fields();draw();persist()}catch{$('status').textContent='无法读取这份旋律记录'}};
+fields();draw();
+</script></html>
