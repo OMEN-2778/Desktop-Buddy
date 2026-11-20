@@ -67,7 +67,7 @@ function showPeerSay(text,who,speaker=null){
   }
   if(peerSpeech.phase==='preparing')return;
   const wasLeaving=peerSpeech.phase==='leaving';
-  peerSpeech.phase='preparing';setDiaryOpen(false);diaryEl.classList.add('peer-away');diaryEl.inert=true;diaryHover=false;moodrow.classList.remove('diary-hover');diaryPeekUntil=0;syncDiaryFold();
+  peerSpeech.phase='preparing';setDiaryOpen(false);diaryEl.classList.add('peer-away');diaryEl.inert=true;diaryPeekUntil=0;syncDiaryFold();
   peerHud.hidden=false;peerHud.classList.remove('leaving');
   clearTimeout(peerSpeech.entry);
   peerSpeech.entry=setTimeout(revealPeerLine,reduceMotionUI||wasLeaving?0:240);

@@ -200,14 +200,16 @@ const questBoard=(function(){
  // their quests were gone, the button only showed on hover or for a second when a quest arrived)
  function active(){try{return all().some(q=>!q.done&&!q.offer);}catch(e){return false;}}
  // owner 2026-11-05: like the settings gear, it tucks back once the pointer leaves (a new quest still peeks out)
- setInterval(()=>{if(typeof booted==='undefined'||!booted)return;if(!isOpen&&!trigger.matches(':hover')&&!diary.matches(':hover')&&!bridge.matches(':hover')&&!moodrow.classList.contains('quest-peek'))queueHide();},1000);
+ setInterval(()=>{if(typeof booted==='undefined'||!booted)return;if(!isOpen&&!trigger.matches(':hover')&&!diary.matches(':hover')&&!peerHud.matches(':hover')&&!bridge.matches(':hover')&&!moodrow.classList.contains('quest-peek'))queueHide();},1000);
  function setOpen(on){clearTimeout(closeT);clearTimeout(hideT);if(on===isOpen)return;isOpen=on;
   if(on){if(typeof phoneHolds==='function'&&phoneHolds()){isOpen=false;return;}reveal();try{setContactsOpen(false);setDiaryOpen(false);setNeedsOpen(false);}catch(e){}fill();badge();}
   moodrow.classList.toggle('quests-open',on);panel.classList.toggle('on',on);panel.inert=!on;panel.setAttribute('aria-hidden',String(!on));trigger.setAttribute('aria-expanded',String(on));
   if(!on)queueHide();}
  function queueClose(){clearTimeout(closeT);closeT=setTimeout(()=>setOpen(false),280);}
- diary.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')reveal();});
- diary.addEventListener('pointerleave',queueHide);
+ for(const row of [diary,peerHud]){
+  row.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')reveal();});
+  row.addEventListener('pointerleave',queueHide);
+ }
  bridge.addEventListener('pointerenter',()=>clearTimeout(hideT));bridge.addEventListener('pointerleave',queueHide);
  trigger.addEventListener('pointerenter',e=>{reveal();if(e.pointerType==='mouse')setOpen(true);});
  trigger.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')queueClose();});

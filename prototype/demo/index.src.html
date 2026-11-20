@@ -4760,7 +4760,7 @@ function peekDiary(text) { if (peerDiaryReserved()) { diaryMissed = true; return
   let leave = 0;
   const into = () => { clearTimeout(leave); if (!diaryHover) { diaryHover = true; moodrow.classList.add("diary-hover"); syncDiaryFold(); } };
   const out = () => { clearTimeout(leave); leave = setTimeout(() => { diaryHover = false; moodrow.classList.remove("diary-hover"); syncDiaryFold(); }, 450); };
-  for (const el of [diaryEl, document.getElementById("settings")]) { el.addEventListener("pointerenter", into); el.addEventListener("pointerleave", out); }
+  for (const el of [diaryEl, document.getElementById("peerHud"), document.getElementById("settings")]) { el.addEventListener("pointerenter", into); el.addEventListener("pointerleave", out); }
   diaryBox.addEventListener("focus", into); diaryBox.addEventListener("blur", out);
 }
 diaryBox.addEventListener("click", () => setDiaryOpen(!diaryOn));
