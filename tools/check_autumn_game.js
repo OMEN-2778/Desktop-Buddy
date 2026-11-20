@@ -5,6 +5,9 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  if(process.argv[2])await p.goto(process.argv[2]);else{await p.route('http://season.test/',r=>r.fulfill({contentType:'text/html; charset=utf-8',body:fs.readFileSync('desktop/dist/map-test/index.html')}));await p.goto('http://season.test/');}
  await p.waitForFunction(()=>typeof booted!=='undefined'&&booted&&seasonMapTest.state.autumn.state.loaded);
  await p.evaluate(()=>{closeGuide();prefs.guided=true;prefs.autosave=false;prefs.scale=50;fit();speed=1;sim.t=720;socialState.nextCall=socialState.nextVisit=1e12;cardMoment=rollCard=rollEvents=()=>false;seasonMapTest.cheats.fillHero();});
+ const coat=p.locator('[data-key="topStyle"][data-v="detective_coat"]');
+ await p.evaluate(()=>openWardrobe());assert(await coat.isDisabled());await p.evaluate(()=>closeWardrobe());
+ assert.equal(await p.evaluate(()=>new Set(seasonMapTest.state.autumn.DATA.npcs.map(pair=>pair[0])).size),9);
  // Wind visibly changes crowns but roots stay fixed; plants do not sway in lockstep.
  const detail=await p.evaluate(()=>{const c=seasonMapTest.state.autumn,trees=c.DATA.foliage[c.state.stage].filter(p=>p.kind==='tree'),p=trees[0],old=c.state.time,root=Math.round(p.base-p.y)-2;const frames=[],roots=[];for(const t of [0,1,2,3]){c.state.time=t;const sprite=c.windSprite(p);frames.push(sprite.toDataURL());roots.push(Array.from(sprite.getContext('2d').getImageData(0,root,sprite.width,Math.min(8,sprite.height-root)).data).join(','))}const phases=new Set(trees.slice(0,12).map(p=>c.windAmount(p,1))).size;c.state.paused=true;const before=c.state.time;c.tick(1,1);const frozen=c.state.time===before;c.state.paused=false;c.state.time=old;const cv=document.createElement('canvas');cv.width=120;cv.height=40;const g=cv.getContext('2d');g.font='24px "Buddy Autumn Signs"';g.fillText('工人食堂',0,30);const rgba=g.getImageData(0,0,120,40).data;let smooth=0;for(let i=3;i<rgba.length;i+=4)if(rgba[i]>0&&rgba[i]<255)smooth++;return {trees:trees.length,frames:new Set(frames).size,roots:new Set(roots).size,phases,frozen,font:[...document.fonts].some(f=>f.family.replaceAll('"','')==='Buddy Autumn Signs'&&f.status==='loaded'),smooth}});assert(detail.trees>=60&&detail.frames>1&&detail.roots===1&&detail.phases>2&&detail.frozen&&detail.font&&detail.smooth>20,JSON.stringify(detail));
  // Autumn remains available through the explicitly labelled test toolbar.
@@ -55,6 +58,7 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  await talk('doctor');await talk('zhou');await talk('qing');assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.stage),3);
  await talk('qing');await p.evaluate(()=>seasonMapTest.ctl().interact('townhall'));await drain();assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.stage),4);
  await p.evaluate(()=>seasonMapTest.ctl().interact('plaza'));await drain();assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.quest),6);
+ await p.evaluate(()=>openWardrobe());assert(!(await coat.isDisabled()));await p.evaluate(()=>closeWardrobe());
  // Optional office visit does not grant stats, work penalties or a service.
  await p.evaluate(()=>{const c=seasonMapTest.ctl();c.state.service=null;c.interact('mine_office')});await drain();assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.service),null);
  // All desktop scales: card remains within scenic window; scroll handles long text.

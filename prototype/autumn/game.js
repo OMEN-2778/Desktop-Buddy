@@ -213,7 +213,10 @@ function makeSeason_autumn(opts, DATA) {
             automatic: automatic
         });
     }
-    const speech=createStorySpeech({view:opts.view,onClose:close,anchor:who=>{
+    const cast = new Map(DATA.npcNames.map((name,index)=>[name,{
+        id:'autumn_'+name,name,portrait:()=>images.get(DATA.npcs[index][0])
+    }]));
+    const speech=createStorySpeech({view:opts.view,speakerFor:name=>cast.get(name.replace(/（电话）$/,'')),onClose:close,anchor:who=>{
         if(who===opts.heroName())return {x:state.x-state.camX,y:state.y-state.camY};
         const n=!state.inside&&npcRows().find(n=>n.name===who);
         return n?{x:n.x-state.camX,y:n.y-state.camY}:null;
@@ -272,6 +275,7 @@ function makeSeason_autumn(opts, DATA) {
     }
     function chapter(q, stage, entry) {
         state.quest = q;
+        if(q===6) opts.hint("造型室已解锁「侦探条纹大衣」");
         state.stage = stage;
         opts.record(entry);
         state.autoAt = opts.now() + 25;

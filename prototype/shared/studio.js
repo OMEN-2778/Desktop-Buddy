@@ -9,6 +9,7 @@
 //   studio.setLook(look) · studio.start() · studio.stop() · studio.look
 function BuddyStudio(root, doll, DATA, opts = {}) {
   const O = DATA.options;
+  const options = key => key === "top" && !opts.detectiveCoatUnlocked?.() ? O.top.filter(([id])=>id !== "detective_coat") : O[key];
   let look = doll.normalize(opts.look);
   let tab = "hair", mode = "idle";
   const COVERS_SOCKS = DATA.longBottoms || ["trousers", "jeans", "maxi"];
@@ -28,7 +29,7 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
   // thumbnail crop per option kind: x, y, w, h in doll pixels
   const CROP = { style: [0, 0, 20, 16], eyes: [3, 8, 14, 7], topStyle: [1, 14, 18, 9], bottomStyle: [3, 21, 14, 7],
                  socks: [4, 22, 12, 6], acc: [1, 0, 18, 16], scarf: [1, 6, 18, 16] };
-  const cropOf = (key, v) => CROP[key === "acc" && v === "scarf" ? "scarf" : key];
+  const cropOf = (key, v) => v === "detective_coat" ? [1,14,18,12] : CROP[key === "acc" && v === "scarf" ? "scarf" : key];
   const SWATCH = { hair: DATA.swatches.hair, skin: DATA.swatches.skin, top: DATA.swatches.cloth, bottom: DATA.swatches.cloth,
                    sock: DATA.swatches.cloth, eye: DATA.swatches.eye };
 
@@ -37,7 +38,7 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
     switch (key) {
       case "style": return { ...look, style: v, acc: look.acc.filter(a => !HIDES_HAIR.includes(a)) };
       case "eyes": return { ...look, eyes: v, acc: look.acc.filter(a => !DATA.eyewear.includes(a)) };
-      case "topStyle": return { ...look, topStyle: v, acc: look.acc.filter(a => a !== "scarf") };
+      case "topStyle": return { ...look, ...(v === "detective_coat" && look.topStyle !== v ? {top:"#87573e"} : {}), topStyle: v, acc: look.acc.filter(a => a !== "scarf") };
       case "socks": return { ...look, socks: v, bottomStyle: "shorts" };   // the legs show best in shorts
       case "acc": return { ...look, acc: [v] };
       default: return { ...look, [key]: v };
@@ -148,6 +149,10 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
     $$("[data-gender]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.gender === look.gender)));
     $$(".st-thumb").forEach(b => {
       const k = b.dataset.key, v = b.dataset.v;
+      if (v === "detective_coat") {
+        b.disabled = !opts.detectiveCoatUnlocked?.();
+        b.style.display = b.disabled ? "none" : "";
+      }
       b.setAttribute("aria-pressed", String(k === "acc" ? look.acc.includes(v) : look[k] === v));
     });
     $$(`.st-panel[data-tab="${tab}"] .st-thumb`).forEach(paintThumb);
@@ -271,7 +276,7 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
     if (b.dataset.gender) { if (b.dataset.gender !== look.gender) change(pickPreset(b.dataset.gender)); return; }
     if (b.classList.contains("st-thumb")) {
       const k = b.dataset.key, v = b.dataset.v;
-      change(k === "acc" ? { acc: doll.toggleAcc(look.acc, v) } : { [k]: v });
+      change(k === "acc" ? { acc: doll.toggleAcc(look.acc, v) } : { [k]: v, ...(k === "topStyle" && v === "detective_coat" && look.topStyle !== v ? {top:"#87573e"} : {}) });
       return;
     }
     if (b.classList.contains("st-swatch")) { change({ [b.dataset.color]: b.dataset.v }); return; }
@@ -324,7 +329,7 @@ function BuddyStudio(root, doll, DATA, opts = {}) {
     for (const [a] of O.acc) if (Math.random() < 0.18) acc = doll.toggleAcc(acc, a);
     const skirts = ["pleated", "maxi"];
     return {
-      gender: g, style: pick(styles)[0], eyes: pick(O.eyes)[0], topStyle: pick(O.top)[0],
+      gender: g, style: pick(styles)[0], eyes: pick(O.eyes)[0], topStyle: pick(options("top"))[0],
       bottomStyle: pick(O.bottom.filter(o => g === "f" || !skirts.includes(o[0])))[0], socks: pick(O.socks)[0], acc,
       hair: pick(DATA.swatches.hair)[1].toLowerCase(), skin: pick(DATA.swatches.skin)[1].toLowerCase(),
       top, bottom: pick(cloth.filter(c => c !== top)), sock: pick(cloth), eye: pick(DATA.swatches.eye)[1].toLowerCase(),

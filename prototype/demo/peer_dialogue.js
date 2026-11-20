@@ -16,6 +16,11 @@ function peerSpeaker(who,speaker){
   return contact||{id:'anonymous_'+label,name:label||'对方',anonymous:true};
 }
 function drawPeerAvatar(speaker){
+  const portrait=speaker.portrait?.();
+  if(portrait){
+    const ctx=peerAvatar.getContext('2d');ctx.imageSmoothingEnabled=false;
+    ctx.fillStyle='#eef3f1';ctx.fillRect(0,0,40,40);ctx.drawImage(portrait,0,0,20,17,0,2,40,34);return;
+  }
   if(!speaker.anonymous){drawContactAvatar(peerAvatar,speaker);return;}
   const ctx=peerAvatar.getContext('2d');ctx.clearRect(0,0,40,40);
   ctx.fillStyle='#edf2f3';ctx.fillRect(0,0,40,40);

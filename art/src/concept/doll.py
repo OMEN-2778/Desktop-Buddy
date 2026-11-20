@@ -735,6 +735,8 @@ def draw_eye(s: Sprite, d: "Doll", shape: str, i: int, x: int, y0: int):
     elif shape == "almond":
         s.hline(x, x + 1, y0 + 1, ink).set(out, y0, ink)
         s.set(x, y0 + 2, shine).set(x + 1, y0 + 2, e[2])
+    elif shape == "level":                  # straight upper lid and a recessed iris
+        s.hline(min(out,x), max(out,x+1), y0+1, ink).set(inner,y0+2,e[1])
     elif shape == "sleepy":
         s.hline(x, x + 1, y0 + 1, e[1])
         s.set(x, y0 + 2, e[2]).set(x + 1, y0 + 2, ink)
@@ -1393,6 +1395,20 @@ BACK_ALIAS = {"long_mid": "long", "long_side": "long", "half_up": "long", "bob_m
 BACK_STYLES = {"long", "bob", "buns", "hime", "wave_short", "wave_long", "mullet", "twist", "braid", "low_buns", *BACK_ALIAS}
 
 TOPS.update({
+    # Folded lapels, narrow woven stripes and a split hem below the hips.
+    "detective_coat": rows("""
+.......uW..Wu
+....uTTcWuuWcCCu
+...uTCcTTWWcCCcCu
+...uCcuCcTucTCucu
+...uTcuCTcuCTCucu
+...uccuCTCuCTCucc
+.....uTCTCuCTCCu
+.....uCCccuccCCu
+....ucTCTCuCTCCcu
+....uuccccuucccuu
+"""),
+
     "polo": rows("""
 .......uW..Wu
 ....uTTTWuuWCCcu
@@ -1477,7 +1493,7 @@ TOPS.update({
 """),
 })
 SLEEVES.update({"polo": "short", "raglan": "long", "sailor": "long", "varsity": "long", "turtleneck": "long",
-                "puffer": "long", "hawaiian": "short", "sport_tank": "none", "suit": "long"})
+                "puffer": "long", "hawaiian": "short", "sport_tank": "none", "suit": "long", "detective_coat": "long"})
 
 BOTTOMS.update({
     "wide": rows("""
@@ -1587,8 +1603,9 @@ def draw_new_accessory(s: Sprite, d: "Doll", name: str, dy: int = 0):
             hat.set(x, 7, m[1])
         s.blit(hat.outline(m[0], grow=True).crop(1, 1, W, H), 0, dy)
     elif name == "beret":
+        c = d.beret_color or c
         hat = Sprite(W, H)
-        _shade_dome(hat, 8.5, 4.5, 8, 3.6, range(1, 8), c)
+        _shade_dome(hat, 8.5, 4.5, 7 if d.beret_color else 8, 3.6, range(1, 8), c)
         hat.hline(4, 15, 7, c[1]).set(11, 0, c[1]).set(11, 1, c[0])
         s.blit(hat.outline(c[0], grow=True).crop(1, 1, W, H), 0, dy)
     elif name == "bucket_hat":
@@ -1629,6 +1646,7 @@ class Doll:
     bottom: tuple = tuple(P.blue)
     sock: tuple = tuple(P.linen) + (P.linen[3],)
     eye: tuple = tuple(P.hair_brown)
+    beret_color: tuple = ()
     print_color: str = P.coral[2]
 
     @property
@@ -1749,7 +1767,7 @@ OPTIONS = {
     "eyes": [("round", "圆眼"), ("bean", "豆豆眼"), ("sparkle", "闪亮眼"), ("droopy", "下垂眼"),
              ("cat", "猫眼"), ("smile", "眯眯眼"), ("almond", "杏仁眼"), ("sleepy", "半月眼")],
     "top": [("hoodie", "卫衣"), ("jacket", "夹克"), ("sweater", "翻领毛衣"), ("tee", "T恤"),
-            ("stripe", "条纹衫"), ("shirt", "衬衫"), ("tank", "背心"), ("vest", "衬衫马甲"), ("cardigan", "针织开衫"), ("polo", "Polo衫"), ("raglan", "插肩衫"), ("sailor", "水手服"), ("varsity", "棒球夹克"), ("turtleneck", "高领毛衣"), ("puffer", "羽绒服"), ("hawaiian", "花衬衫"), ("sport_tank", "运动背心"), ("suit", "西装")],
+            ("stripe", "条纹衫"), ("shirt", "衬衫"), ("tank", "背心"), ("vest", "衬衫马甲"), ("cardigan", "针织开衫"), ("polo", "Polo衫"), ("raglan", "插肩衫"), ("sailor", "水手服"), ("varsity", "棒球夹克"), ("turtleneck", "高领毛衣"), ("puffer", "羽绒服"), ("hawaiian", "花衬衫"), ("sport_tank", "运动背心"), ("suit", "西装"), ("detective_coat", "侦探条纹大衣")],
     "bottom": [("jeans", "卷边牛仔裤"), ("trousers", "长裤"), ("shorts", "短裤"), ("overalls", "背带短裤"),
                ("mini", "A字短裙"), ("pleated", "百褶裙"), ("maxi", "长裙"), ("wide", "阔腿裤"), ("track", "运动裤"), ("leggings", "紧身裤"), ("long_overalls", "背带长裤"), ("cargo", "工装短裤"), ("pencil", "包臀裙"), ("tutu", "蓬蓬裙"), ("tiered", "蛋糕裙")],
     "socks": [("none", "不穿"), ("short", "短袜"), ("long", "长袜")],

@@ -17,7 +17,7 @@ function storyWaitsForPhone(){
  if(typeof phoneCall!=='undefined'&&phoneCall.phase==='waiting'){phoneCall.phase='idle';phoneCall.contactId=null;socialState.nextCall=sim.t+120;}   // a call not yet ringing gives way
  return (typeof phoneHolds==='function'&&phoneHolds())||(typeof remoteSocial!=='undefined'&&!!remoteSocial);
 }
-function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}}){
+function createStorySpeech({view,host=view.parentElement,anchor,speakerFor,onClose=()=>{}}){
  const popSpan=popSay.querySelector('span'),peerSpan=peerBubble.querySelector('span');
  const more=document.createElement('i');more.className='story-more';more.setAttribute('aria-hidden','true');
  const choices=document.createElement('div');choices.className='story-choices';choices.hidden=true;document.getElementById('moodTalk').append(choices);
@@ -45,7 +45,7 @@ function createStorySpeech({view,host=view.parentElement,anchor,onClose=()=>{}})
   open=true;hero=speaker===nameOf();advance=opts?null:next;
   peerHud.classList.toggle('quest',!hero&&special);popSay.classList.toggle('quest',hero&&special);
   if(hero){if(peerSpeech.phase!=='idle')hidePeerSay();showSay(words);}
-  else{if(!popSay.hidden)popBubble(popSay,0);showPeerSay(words,speaker+'：');}   // her own row stays quiet while someone else talks
+  else{if(!popSay.hidden)popBubble(popSay,0);showPeerSay(words,speaker+'：',speakerFor?.(speaker));}   // her own row stays quiet while someone else talks
   more.hidden=!!opts;
   choices.replaceChildren(...(opts||[]).map(o=>{const b=document.createElement('button');b.type='button';b.innerHTML='<i class="bg" aria-hidden="true"></i><span></span>';b.lastChild.textContent=o.label;b.onclick=e=>{e.stopPropagation();o.on?.();};return b;}));
   choices.hidden=!opts||hero;choices.classList.toggle('quest',special);

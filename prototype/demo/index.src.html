@@ -5389,7 +5389,7 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
   if (!sv) setLook(shared && typeof shared === "object" ? shared : doll.PRESETS.f);
   else if (shared && typeof shared === "object" && sharedAt > sv.savedAt) setLook({ ...shared, name: shared.name || look.name });
   namedAs = namedAs || nameOf();
-  studio = BuddyStudio(studioEl, doll, D.doll, { look, previewScale: 3, thumbH: 40, onChange: changeLook, onClose: closeWardrobe });
+  studio = BuddyStudio(studioEl, doll, D.doll, { look, detectiveCoatUnlocked: () => window.seasonMapTest?.state.autumn?.state.quest >= 6, previewScale: 3, thumbH: 40, onChange: changeLook, onClose: closeWardrobe });
   installWardrobePersonality();
   fit();
   if (TAURI && !st && !sv) {      // first run of the desktop app: the biggest size that leaves most of the screen free
