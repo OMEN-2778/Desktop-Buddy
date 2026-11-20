@@ -6,7 +6,7 @@ No autumn code is included in formal EXE/trial inputs. `/autumn/` remains an art
 
 ## 固定角色与造型室奖励（2026-11-20）
 
-九名角色的定妆见 [角色图](evidence/autumn-story-cast.png)。地图与剧情头像取自同一套像素原画。头像按人物名字绑定，后续接第三版对白时沿用；主角使用玩家造型。阿简穿条纹侦探大衣、黑长裤和棕贝雷帽。程青采用棕色挽发、上挑眼、深青西装。苏医生为中分短发、扁框眼镜；维修工为铲青短发、发箍；老郑为灰白寸头。孙子背双肩包，工人代表戴领带。终章最后一句结束后，造型室的上装栏自动开放可换色的条纹大衣，读取已完成剧情的存档也会开放。
+九名角色的定妆见 [角色图](evidence/autumn-story-cast.png)。地图与剧情头像取自同一套像素原画。头像按人物名字绑定，后续接第三版对白时沿用；主角使用玩家造型。阿简是豆豆眼，程铁山为白色铲青、清晰的深色瞳仁。阿简穿条纹侦探大衣、黑长裤和棕贝雷帽。程青采用棕色挽发、上挑眼、深青西装。苏医生为中分短发、扁框眼镜；维修工为铲青短发、发箍；老郑为灰白寸头。孙子背双肩包，工人代表戴领带。终章最后一句结束后，造型室的上装栏自动开放可换色的条纹大衣，读取已完成剧情的存档也会开放。
 
 ## Owner decisions now applied
 - One continuous compact map, **640×944 including the requested summit** world pixels, not separate boxed areas.

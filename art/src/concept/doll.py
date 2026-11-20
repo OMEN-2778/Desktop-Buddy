@@ -737,6 +737,9 @@ def draw_eye(s: Sprite, d: "Doll", shape: str, i: int, x: int, y0: int):
         s.set(x, y0 + 2, shine).set(x + 1, y0 + 2, e[2])
     elif shape == "level":                  # straight upper lid and a recessed iris
         s.hline(min(out,x), max(out,x+1), y0+1, ink).set(inner,y0+2,e[1])
+    elif shape == "steady":                # broad lid, visible sclera and a dark pupil
+        s.hline(min(x, out), max(x+1, out), y0, ink)
+        s.set(outer_col, y0+1, shine).set(inner, y0+1, ink).set(inner, y0+2, e[1])
     elif shape == "sleepy":
         s.hline(x, x + 1, y0 + 1, e[1])
         s.set(x, y0 + 2, e[2]).set(x + 1, y0 + 2, ink)

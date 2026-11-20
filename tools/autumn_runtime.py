@@ -12,13 +12,13 @@ import autumn_city as A
 def uri(name):return 'data:image/png;base64,'+base64.b64encode((ROOT/'art/out/concept'/name).read_bytes()).decode()
 def story_cast():
  return {
-  '阿简': replace(doll.BOY,eye_shape='almond',hair_style='slick',hair=tuple(P.hair_black),accessories=('beret',),
+  '阿简': replace(doll.BOY,eye_shape='bean',hair_style='slick',hair=tuple(P.hair_black),accessories=('beret',),
                 beret_color=tuple(P.wood),top_style='detective_coat',top=tuple(P.wood),
                 bottom_style='trousers',bottom=tuple(P.hair_black)),
   '程青': replace(doll.GIRL,eye_shape='cat',hair_style='twist',accessories=(),hair=tuple(P.hair_brown),top_style='suit',top=tuple(P.teal),bottom_style='trousers',bottom=tuple(P.sea_grey)),
   '老郑': replace(doll.BOY,eye_shape='smile',hair_style='buzz',hair=(P.metal[1], *P.porcelain),top=tuple(P.oat)),
   '苏医生': replace(doll.GIRL,eye_shape='round',hair_style='bob_mid',accessories=('flat_glasses',),top_style='shirt',top=tuple(P.porcelain+[P.porcelain[3]])),
-  '程铁山': replace(doll.BOY,eye_shape='sleepy',hair_style='neat',hair=tuple(P.metal[:5]),top=tuple(P.sea_grey)),
+  '程铁山': replace(doll.BOY,eye_shape='steady',hair_style='undercut',hair=(P.metal[1],P.linen[0],P.linen[2],P.metal[5],P.linen[3]),top=tuple(P.sea_grey)),
   '维修工': replace(doll.GIRL,eye_shape='bean',hair_style='undercut',accessories=('headband',),top_style='raglan',bottom_style='long_overalls',top=tuple(P.mustard)),
   '老郑的孙子': replace(doll.BOY,eye_shape='sparkle',hair_style='bowl',accessories=('backpack',),top_style='stripe',top=tuple(P.green),bottom_style='shorts'),
   '工人代表': replace(doll.BOY,eye_shape='level',hair_style='flat_top',accessories=('necktie',),top_style='vest',top=tuple(P.blue)),
