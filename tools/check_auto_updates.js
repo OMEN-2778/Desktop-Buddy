@@ -21,6 +21,8 @@ function harness(auto=true){
  h=harness();h.run('upd.state="ready";applyUpdate()');await h.flush();await h.advance(1200);assert.ok(h.calls.includes('apply_update'));
  h=harness(false);h.c.response={version:'0.1.999'};h.run('startUpdateChecks()');await h.flush();assert.equal(h.run('upd.state'),'offered');assert.ok(!h.calls.includes('download_update'));h.buttons['.up-later'].click();await h.advance(3600000);assert.equal(h.calls.filter(c=>c==='check_update').length,2,'Later only defers the next automatic check, not the whole session');
  h=harness();h.c.response={version:'0.1.999'};h.c.failDownload=true;h.run('startUpdateChecks()');await h.flush();await h.advance(60000+120000+300000);assert.equal(h.calls.filter(c=>c==='download_update').length,3,'Repeated download errors stop retrying until the hourly check');
- const config=JSON.parse(fs.readFileSync('desktop/src-tauri/tauri.conf.json'));assert.equal(config.plugins.updater.endpoints.length,4);assert.ok(config.plugins.updater.pubkey);
+ const config=JSON.parse(fs.readFileSync('desktop/src-tauri/tauri.conf.json'));const [primary,...fallbacks]=config.plugins.updater.endpoints;
+ assert.equal(primary,'https://github.com/OMEN-2778/Desktop-Buddy-Releases/releases/latest/download/latest.json');
+ assert.ok(fallbacks.some(url=>url.endsWith(primary)&&url!==primary),'a public-release mirror must be configured');assert.ok(config.plugins.updater.pubkey);
  console.log('PASS: startup + hourly checks, enable immediately, deferred reminder recovery, concurrency guard, bounded network retry, disable while downloading, save-before-restart and signed updater fallback endpoints');
 })().catch(e=>{console.error(e);process.exitCode=1});

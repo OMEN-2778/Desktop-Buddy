@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-20 · 正式桌面版自动更新
+- 季节地图适配器在正式版覆盖了启动检查，小时定时器也未注册。限定禁用逻辑仅用于地图内测页。
+- 在打包前端模拟桌面桥接，旧包启动检查 0 次，修复后启动及下一小时时各 1 次。已有更新状态机测试通过。未在 Windows 真机安装更新。
+
 ## 2026-11-20 · 栗尾市第三版演出修订
 - docs/story/MAPLE_V3_PERFORMANCE.md 与同名 Word 为可编辑审稿，按地点交互、对白与地图阶段改写细微动作。故事审核稿与当前内测运行脚本分别维护。
 

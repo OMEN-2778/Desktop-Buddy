@@ -13,3 +13,5 @@
 旧版自身的调度逻辑无法被网页修复；旧版需手动检查更新或下载安装新 EXE 一次，此后启用新的启动/每小时调度。
 
 验证：`node tools/check_auto_updates.js` 覆盖启动、小时、开关、提醒延后、并发检查、检查/下载失败重试、下载中关闭自动更新、保存失败阻止重启、正常保存后更新。实际 Windows 编译、签名、发布和 `latest.json` 另由桌面 CI 验证。
+
+正式版也会注入季节地图适配器。只有地图内测页可以在适配器里关闭更新调度。构建正式页并执行 `npm run web --prefix desktop` 后，运行 `node tools/check_release_update_boot.js` 验证打包产物的启动检查和小时检查。可用 CHROMIUM_PATH 指定本机 Chromium。
