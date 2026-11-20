@@ -1,5 +1,12 @@
 # 栗尾市 · actual game test handoff
 
+### 剧情 v4 网页内测
+
+入口 `/map-test/?liwei=4` 使用独立网页存档。点「栗尾市剧情内测」可越过等待秋天，在家门口见到阿简。按正常季节游玩时，他在秋天出现。已开放的航线可跨季往返。
+
+当前内测剧本在 `prototype/autumn/v4/script.json`。对白、选项和演出按场次排列，`director.js` 把它们绑定到地图地点、角色、环境阶段和实际存档。广场选择影响后续送别、两处回访和山顶结局。测试覆盖命令为 `node tools/check_liwei_v4.js`，先构建地图测试页。下文旧剧情记录适用于原地图冒烟测试。
+
+
 2026-11-01: owner authorized the finished map to be entered from the home door in the
 **test webpage**. Current playable implementation is injected only into `/map-test/`.
 No autumn code is included in formal EXE/trial inputs. `/autumn/` remains an art inspector.

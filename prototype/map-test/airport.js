@@ -12,7 +12,7 @@ const airportTravel=(()=>{
  let loaded=false;ready.then(()=>loaded=true);
  const planes=createAirportPlanes(images),sceneCanvas=document.createElement('canvas');sceneCanvas.width=342;sceneCanvas.height=118;const scene=sceneCanvas.getContext('2d');let planeLast=0;   // live plane outside the glass
  function enter(){if(!loaded||wiping)return;throughDoor('airport_test')}
- function flights(){if(wiping||sim.place!=='airport_test')return;openRing('airportFlights');[...ringEl.querySelectorAll('button')].slice(2).forEach(b=>{b.disabled=true;b.setAttribute('aria-label','尚未开放')});}
+ function flights(){if(wiping||sim.place!=='airport_test')return;openRing('airportFlights');[...ringEl.querySelectorAll('button')].slice(2).forEach(b=>{if(window.liweiStory?.unlocked()&&b===ringEl.querySelectorAll('button')[2])return;b.disabled=true;b.setAttribute('aria-label','尚未开放')});}
  root.querySelector('[data-flight]').onclick=flights;root.querySelector('[data-home]').onclick=()=>throughDoor('home');
  const oldRing=ringPick;ringPick=function(id){if(id==='airport:menu'){closeRing();flights();return;}if(id==='airport:home'){goHome();return;}if(id==='airport:spring'){closeRing();throughDoor('spring_test');return;}if(id==='airport:summer'){closeRing();if(![1,2].includes(seasonOf(sim.t).i)){showHint('草帽湾本季暂无航班，夏天和秋天再来');speak('草帽湾的航班要等夏天了。',true);return;}throughDoor('summer_test');return;}if(id.startsWith('airport:locked'))return;return oldRing(id)};
  const oldCenter=ringCenter;ringCenter=function(){return sim.place==='airport_test'?(ringOf==='airportHero'?{x:hero.x,y:76}:{x:171,y:60}):oldCenter()};
@@ -22,7 +22,7 @@ const airportTravel=(()=>{
  const oldHeight=sceneHouseHeight;sceneHouseHeight=()=>sim.place==='airport_test'?118:oldHeight();
  const overlay=document.createElement('canvas');overlay.width=342;overlay.height=118;overlay.className='airport-flight-overlay';overlay.hidden=true;view.parentElement.append(overlay);
  function position(){overlay.style.left=view.offsetLeft+'px';overlay.style.top=view.offsetTop+'px';overlay.style.width=view.style.width;overlay.style.height=(overlay.height*view.clientWidth/342)+'px';}
- const flight=createCabinFlight({canvas:overlay,images,drawHero:(ctx,x,y)=>ctx.drawImage(dollCanvas({expr:'neutral',look:0,bob:0,sway:0,wave:null},'sit'),x,y),onFrame:position,paused:()=>!speed});
+ const flight=createCabinFlight({canvas:overlay,images,drawHero:(ctx,x,y)=>ctx.drawImage(dollCanvas({expr:'neutral',look:0,bob:0,sway:0,wave:null},'sit'),x,y),onFrame:position,holdMs:()=>window.liweiStory?2000:3000,paused:()=>!speed});
  const oldHolds=cardHolds;cardHolds=()=>flight.busy||sim.place==='airport_test'||oldHolds();
  function snapshot(){const s=document.createElement('canvas');s.width=342;s.height=overlay.height;const ctx=s.getContext('2d');ctx.fillStyle='#e7e5e9';ctx.fillRect(0,0,s.width,s.height);ctx.drawImage(view,0,0,342,sceneHouseHeight());return s}
  const oldTrip=trip;trip=function(to,swap){if(to==='airport_test'&&IMG.trip)IMG.trip.airport=images.trip_airport;const outgoing=sim.place==='airport_test'&&['spring_test','summer_test','autumn_test'].includes(to),returning=seasonMapTest.active()&&to==='home';if(!outgoing&&!returning)return oldTrip(to,swap);if(!loaded||flight.busy)return;closeRing();render();overlay.height=sceneHouseHeight();const from=snapshot();wiping=true;overlay.hidden=false;position();flight.start(from,()=>{swap();render();return snapshot()},()=>{overlay.hidden=true;wiping=false;render()})};

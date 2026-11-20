@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-20 · 栗尾市 v4 双结局剧情内测
+- 网页 /map-test/?liwei=4 从家门口开始。包含 S00–S14、R01–R12、过场演出、证据、三项自由调查、两条回访路线及离城和重入状态。
+- 玩家和 NPC 分句表情、角色名配色、任务暂停、双结局环境及专属存档。数据在 prototype/autumn/v4。
+
 ## 2026-11-20 · 阿简改为不戴帽子
 - 栗尾市地图与对话头像改为黑色背头、豆豆眼，取消专用猎鹿帽。更新定妆图。
 

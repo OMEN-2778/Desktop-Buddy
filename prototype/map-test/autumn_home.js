@@ -65,7 +65,7 @@ const autumnHome=(function(){
  const boxes=new Map();function box(w,h){const k=w+'x'+h;if(!boxes.has(k)){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,w,h);boxes.set(k,c);}return boxes.get(k);}
  // hidden in the bed and the tub (the home shows only her head there)
  // each frame: the act over / the player sent her elsewhere → let go; nothing to do inside → back out
- setInterval(()=>{try{if(!inCity())return;const s=S();
+ setInterval(()=>{try{if(!inCity()||window.liweiStory?.locked())return;const s=S();
   s.hideHero=!!(svc&&SPOTS[svc.id]?.hide&&!s.goal);
   if(s.inside&&!wasIn)s.autoAt=Math.max(s.autoAt||0,sim.t+60);wasIn=s.inside;   // just came in: stay a while
   if(svc){if(s.goal||s.target||!s.inside){stop();return;}if(!seasonHouse.running(svc.act)){svc=null;s.pose=null;s.autoAt=sim.t+20;}return;}

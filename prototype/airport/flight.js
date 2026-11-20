@@ -2,7 +2,7 @@
 // Owner 2026-11-02: a finer transition with clouds rushing to the right. In and out, a wall of
 // pixel clouds sweeps left -> right across the picture, its wake (puffs, wind lines) trailing behind; in the
 // cabin, window clouds stream right in three layers (far, near, streaks), the cabin bumps 1px now and then.
-function createCabinFlight({canvas,images,drawHero,onFrame=()=>{},paused=()=>false}){
+function createCabinFlight({canvas,images,drawHero,onFrame=()=>{},paused=()=>false,holdMs=()=>3000}){
  const ctx=canvas.getContext('2d');let run=null,last=0;const history=[];
  const WHITE='#f6f9fd',SHADE='#dfe7f2',DEEP='#c9d6e6',GLINT='#ffffff';
  function puff(x,y,r,c){x=Math.round(x);y=Math.round(y);for(let dy=-r;dy<=r;dy++){const h=Math.floor(Math.sqrt(r*r-dy*dy));ctx.fillStyle=c;ctx.fillRect(x-h,y+dy,h*2+1,1);}}
@@ -35,7 +35,7 @@ function createCabinFlight({canvas,images,drawHero,onFrame=()=>{},paused=()=>fal
  }
  function tick(now){if(!run)return;const dt=last&&!paused()&&!document.hidden?Math.min(100,now-last):0;last=now;run.elapsed+=dt;run.total+=dt;ctx.imageSmoothingEnabled=false;
   if(run.phase==='enter'){ctx.drawImage(run.from,0,0,canvas.width,canvas.height);sweep(()=>cabin(run.total),run.elapsed,700);if(run.elapsed>=700){cabin(run.total);run.phase='hold';run.elapsed=0;history.push({phase:'hold',at:now})}}
-  else if(run.phase==='hold'){cabin(run.total);if(run.elapsed>=3000){run.target=run.arrive();run.phase='exit';run.elapsed=0;history.push({phase:'exit',at:now})}}
+  else if(run.phase==='hold'){cabin(run.total);if(run.elapsed>=holdMs()){run.target=run.arrive();run.phase='exit';run.elapsed=0;history.push({phase:'exit',at:now})}}
   else{cabin(run.total);sweep(run.target,run.elapsed,700);if(run.elapsed>=700){ctx.drawImage(run.target,0,0,canvas.width,canvas.height);const done=run.done;run=null;history.push({phase:'done',at:now});onFrame();done?.();return}}
   onFrame();requestAnimationFrame(tick);
  }

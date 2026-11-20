@@ -16,6 +16,7 @@ const seasonalTest=(function(){
   const swimming=sea&&(sea.under||sea.floating)&&!s.inside,arm=Math.floor(s.time/.28)%2;
   const walking=s.walk,phase=Math.floor(s.time*7)%4,still=!walking&&!swimming&&!s.pose&&sim.mode!=='down'&&!(sea&&s.lying!==null);
   let f={expr:sim.mode==='down'?'sleepy':emotion().key==='happy'?'happy':'neutral',look:s.facing||1,bob:swimming?0:walking?phase%2:still?idleBreath.bob():0,sway:swimming?0:walking?phase%2:still?idleBreath.bob():0,wave:swimming?arm:null};
+  if(window.liweiStory?.heroExpression())f.expr=liweiStory.heroExpression();
   let dc=dollCanvas(f,s.pose|| (sea&&s.lying!==null?'sit':swimming?'stand':walking?(phase===1?'walkL':phase===3?'walkR':'stand'):'stand'));
   if(still&&idleBreath.blink()&&f.expr==='neutral'){f={...f,expr:'blink'};dc=dollCanvas(f,'stand');}
   const hf=(s.inside||['phone_feed','phone_game'].includes(sim.act))&&!walking&&sim.mode!=='down'&&window.seasonHouse?.frame();   // using a season house: the home's own face, pose and bubble for that act
@@ -87,7 +88,7 @@ const seasonalTest=(function(){
   {const wk=weather.force==='blizzard'||weather.kind==='snow'&&weather.heavy?'blizzard':weather.kind;c.setWeather(sim.place==='summer_test'&&(wk==='snow'||wk==='blizzard')?'rain':wk);}/* 草帽湾 is summer all year (owner 2026-11-05): the city's snow falls as rain there */people.sync();c.setResolution(Math.max(1,view.width/W));const run=!!speed&&!cardHolds()&&!wiping&&sim.mode!=='down';
   c.state.paused=!run;c.state.gender=look.gender||'f';
   if(run){
-   if(!life.talkQ&&!c.state.door&&!c.state.inCabana&&!c.state.target&&sim.t>=state.autoAt&&!ringOf&&!(sim.place==='summer_test'&&window.summerFloat?.busy())){state.autoAt=sim.t+8+Math.random()*12;   /* owner 2026-11-10: less standing about (was 20-45 game minutes) */
+   if(!window.liweiStory?.locked()&&!life.talkQ&&!c.state.door&&!c.state.inCabana&&!c.state.target&&sim.t>=state.autoAt&&!ringOf&&!(sim.place==='summer_test'&&window.summerFloat?.busy())){state.autoAt=sim.t+8+Math.random()*12;   /* owner 2026-11-10: less standing about (was 20-45 game minutes) */
     if(window.seasonAuto?.act(c)){}   /* season_auto.js: her own plans (owner 2026-11-06); a plain stroll otherwise */
     else if(sim.place==='spring_test'&&!c.state.inside)c.target(Math.max(20,Math.min((c.state.scene===5?684:342)-20,c.state.x+(Math.random()<.5?-1:1)*(30+Math.random()*70))));
     else if(sim.place==='summer_test'&&!c.state.inside&&c.state.lying===null){const nx=Math.max(50,c.state.x+(Math.random()<.5?-1:1)*45);if(!c.state.market&&c.state.y>132)c.goTo(nx,'dive',c.state.y);else c.goTo(nx);}   /* underwater she drifts at her depth: a plain walk target there left her stuck */

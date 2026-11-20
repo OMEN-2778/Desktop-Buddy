@@ -281,6 +281,7 @@ function makeSeason_autumn(opts, DATA) {
         state.autoAt = opts.now() + 25;
     }
     function npcRows() {
+        if(window.liweiStory) return liweiStory.actors();
         return [ [ "jian", "阿简", state.quest === 0 ? "airstrip" : "plaza", "m", 0 ], [ "qing", "程青", "mine_office", "f", 1 ], [ "zhou", "老郑", "canteen", "m", 2 ], [ "doctor", "苏医生", "clinic", "f", 3 ], ...state.quest >= 2 ? [ [ "father", "程铁山", "hut", "m", 4 ] ] : [] ].map(([id, name, loc, gender, seed]) => ({
             id: id,
             name: name,
@@ -290,8 +291,9 @@ function makeSeason_autumn(opts, DATA) {
             y: landmark(loc).y
         }));
     }
-    const objective = () => [ "先和停机坪的阿简说说话", "去公司、食堂、诊所问问程铁山的下落", "到山上的小屋找程铁山", "再去诊所、食堂和公司看看", "去公司看账本，再到市政厅参加公开讨论", "到中城广场和大家聊聊", "栗尾市已开放，想逛多久都行" ][state.quest] || "四处逛逛";
+    const objective = () => window.liweiStory ? liweiStory.objective() : [ "先和停机坪的阿简说说话", "去公司、食堂、诊所问问程铁山的下落", "到山上的小屋找程铁山", "再去诊所、食堂和公司看看", "去公司看账本，再到市政厅参加公开讨论", "到中城广场和大家聊聊", "栗尾市已开放，想逛多久都行" ][state.quest] || "四处逛逛";
     function converse(id) {
+        if(window.liweiStory) return liweiStory.meet(id);
         const q = state.quest, f = state.flags;
         if (q === 1 && [ "qing", "zhou", "doctor" ].every(n => f["heard_" + n])) return talk(AUTUMN_STORY.dust, () => chapter(2, 1, "运输车盖上了篷布，工人街开始洒水。山上的小屋也许有人。"));
         if (id === "jian" && q === 0) return talk(AUTUMN_STORY.intro, () => chapter(1, 0, "借住阿简的老房子，开始寻找程铁山。"));
@@ -380,6 +382,7 @@ function makeSeason_autumn(opts, DATA) {
     function interact(id) {
         const p = landmark(id);
         if (!p) return;
+        if(window.liweiStory && liweiStory.site(id)) return;
         if (id === "detective_home") return panel(p.name, "阿简留下了钥匙。床铺、厨房和洗漱间都能用。", [ [ "进屋", () => enter() ], [ "先不进去" ] ]);
         if (id === "hut") return state.quest >= 2 ? converse("father") : panel("山上的小屋", "门虚掩着。先把公司的消息和诊所那边的情况问清楚。", [ [ "好" ] ]);
         if (id === "mine_office") return state.quest >= 6 ? talk(AUTUMN_STORY.office) : converse("qing");
@@ -758,8 +761,8 @@ function makeSeason_autumn(opts, DATA) {
             drawFoliage(false);
             for (const n of npcRows()) {
                 if (Math.abs(n.x - state.x) > 240 || Math.abs(n.y - state.y) > 190) continue;
-                ctx.drawImage(images.get(DATA.npcs[n.seed][(state.time + n.seed) % 4.7 < .16 ? 1 : 0]), n.x - 10, n.y - 28);
-                if (state.quest === 0 && n.id === "jian" || state.quest === 2 && n.id === "father") {
+                ctx.drawImage(window.liweiStory?.frameFor(n.name)||images.get(DATA.npcs[n.seed][(state.time + n.seed) % 4.7 < .16 ? 1 : 0]), n.x - 10, n.y - 28);
+                if (window.liweiStory ? n.mark : state.quest === 0 && n.id === "jian" || state.quest === 2 && n.id === "father") {
                     ctx.fillStyle = "#efc452";
                     ctx.fillRect(n.x - 1, n.y - 39, 3, 7);
                     ctx.fillRect(n.x - 1, n.y - 30, 3, 2);
@@ -808,6 +811,7 @@ function makeSeason_autumn(opts, DATA) {
             ctx.restore();
         } else if (!privacy) opts.drawHero(ctx, state.x, state.y, state, null);
         if (state.inside) opts.home?.over(ctx);
+        if(window.liweiStory) liweiStory.draw(ctx, images);
         if (!state.inside) {
             const lx = DATA.lift.x, ly = state.liftY;
             ctx.globalAlpha = state.riding ? .3 : 1;
@@ -915,7 +919,7 @@ function makeSeason_autumn(opts, DATA) {
             state.time += realDt;
             advanceDoor(realDt);
             move(dt);
-            if (!state.target && !state.goal && !state.service && !state.door && !state.mapOpen && modal.hidden && !dialog && !state.inside && !keys.size && opts.now() >= state.autoAt) {
+            if (!window.liweiStory?.locked() && !state.target && !state.goal && !state.service && !state.door && !state.mapOpen && modal.hidden && !dialog && !state.inside && !keys.size && opts.now() >= state.autoAt) {
                 state.autoAt = opts.now() + 35 + Math.random() * 30;
                 const nearby = nodes.filter(n => dist(n, state) > 25 && dist(n, state) < 130);
                 if (nearby.length) {
@@ -1032,6 +1036,7 @@ function makeSeason_autumn(opts, DATA) {
         console.error(e);
     });
     return {
+        panel, enter, clearRoute,
         root: root,
         canvas: canvas,
         renderCanvas: renderCanvas,
