@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-20 · 阿简改为不戴帽子
+- 栗尾市地图与对话头像改为黑色背头、豆豆眼，取消专用猎鹿帽。更新定妆图。
+
 ## 2026-11-20 · 阿简的猎鹿帽
 - 为阿简单独绘制棕色猎鹿帽，地图与对话共用同一人物帧。定妆预览在 /story-review/jian.png。
 
