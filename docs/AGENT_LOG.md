@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-20 · 栗尾市第三版演出修订
+- docs/story/MAPLE_V3_PERFORMANCE.md 与同名 Word 为可编辑审稿，按地点交互、对白与地图阶段改写细微动作。故事审核稿与当前内测运行脚本分别维护。
+
 ## 2026-11-20 · Codex · 程铁山与阿简定妆微调
 - 程铁山从半垂眼和灰刘海改为白色铲青，眼白与深色瞳仁分开绘制。阿简换成豆豆眼。同步九人定妆图、地图角色和对白头像。
 
