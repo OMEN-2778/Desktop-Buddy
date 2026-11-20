@@ -16,12 +16,12 @@ def story_cast():
                 beret_color=tuple(P.wood),top_style='detective_coat',top=tuple(P.wood),
                 bottom_style='trousers',bottom=tuple(P.hair_black)),
   '程青': replace(doll.GIRL,eye_shape='cat',hair_style='twist',accessories=(),hair=tuple(P.hair_brown),top_style='suit',top=tuple(P.teal),bottom_style='trousers',bottom=tuple(P.sea_grey)),
-  '老郑': replace(doll.BOY,eye_shape='smile',hair_style='buzz',hair=tuple(P.metal[:5]),top=tuple(P.oat)),
-  '苏医生': replace(doll.GIRL,eye_shape='round',hair_style='buns',accessories=(),top_style='shirt',top=tuple(P.porcelain+[P.porcelain[3]])),
+  '老郑': replace(doll.BOY,eye_shape='smile',hair_style='buzz',hair=(P.metal[1], *P.porcelain),top=tuple(P.oat)),
+  '苏医生': replace(doll.GIRL,eye_shape='round',hair_style='bob_mid',accessories=('flat_glasses',),top_style='shirt',top=tuple(P.porcelain+[P.porcelain[3]])),
   '程铁山': replace(doll.BOY,eye_shape='sleepy',hair_style='neat',hair=tuple(P.metal[:5]),top=tuple(P.sea_grey)),
-  '维修工': replace(doll.GIRL,eye_shape='bean',hair_style='pony',accessories=(),top_style='raglan',bottom_style='long_overalls',top=tuple(P.mustard)),
-  '老郑的孙子': replace(doll.BOY,eye_shape='sparkle',hair_style='bowl',top_style='stripe',top=tuple(P.green),bottom_style='shorts'),
-  '工人代表': replace(doll.BOY,eye_shape='level',hair_style='flat_top',top_style='vest',top=tuple(P.blue)),
+  '维修工': replace(doll.GIRL,eye_shape='bean',hair_style='undercut',accessories=('headband',),top_style='raglan',bottom_style='long_overalls',top=tuple(P.mustard)),
+  '老郑的孙子': replace(doll.BOY,eye_shape='sparkle',hair_style='bowl',accessories=('backpack',),top_style='stripe',top=tuple(P.green),bottom_style='shorts'),
+  '工人代表': replace(doll.BOY,eye_shape='level',hair_style='flat_top',accessories=('necktie',),top_style='vest',top=tuple(P.blue)),
   '楼上住户': replace(doll.GIRL,eye_shape='droopy',hair_style='updo',accessories=('half_glasses',),hair=tuple(P.metal[:5]),top_style='cardigan',top=tuple(P.sage)),
  }
 
