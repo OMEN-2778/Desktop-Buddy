@@ -377,18 +377,19 @@ function makeSeason_autumn(opts, DATA) {
             beginService(goal.need, landmark(goal.id).name);
             return;
         }
+        if (goal.storyChapter && window.liweiStory?.next().includes(goal.storyChapter)) return liweiStory.begin(goal.storyChapter);
         interact(goal.id);
     }
     function interact(id) {
         const p = landmark(id);
         if (!p) return;
         if(window.liweiStory && liweiStory.site(id)) return;
-        if (id === "detective_home") return panel(p.name, "阿简留下了钥匙。床铺、厨房和洗漱间都能用。", [ [ "进屋", () => enter() ], [ "先不进去" ] ]);
+        if (id === "detective_home") return panel(p.name, "阿简留下了钥匙。床铺、厨房和洗漱间都能用。", [ [ "进屋", () => enter() ], ...(window.liweiStory?.facilityChoices(id) || []), [ "先不进去" ] ]);
         if (id === "hut") return state.quest >= 2 ? converse("father") : panel("山上的小屋", "门虚掩着。先把公司的消息和诊所那边的情况问清楚。", [ [ "好" ] ]);
         if (id === "mine_office") return state.quest >= 6 ? talk(AUTUMN_STORY.office) : converse("qing");
         if (id === "clinic") return converse("doctor");
         if (id === "townhall" && state.quest === 4 && state.flags.ledger) return talk(AUTUMN_STORY.meeting, () => chapter(5, 4, "公开讨论结束。矿区开始分步转型，烟囱停了；也有人准备离开。去中城广场和大家聊聊吧。"));
-        if (id === "plaza" && state.quest === 5) return talk(AUTUMN_STORY.epilogue, () => chapter(6,4,"与大家聊过近况。栗尾市从此全年开放；办公室想去就去，不去也没关系。"));
+        if (!window.liweiStory && id === "plaza" && state.quest === 5) return talk(AUTUMN_STORY.epilogue, () => chapter(6,4,"与大家聊过近况。栗尾市从此全年开放；办公室想去就去，不去也没关系。"));
         if (id === "notice") return panel(p.name, state.quest < 4 ? "墙上贴着运输安排，几张纸被灰盖住了。" : state.quest < 5 ? "公开讨论：工资、债务、河水检测。表上有日期，也有空着的项目。" : "新的河水与空气报告按月贴在这里。做完的和没做完的，都留着。", [ [ "记进日记", () => discover("notice", "看了广场的公告，日期和没完成的项目都还在。") ], [ "离开" ] ]);
         if (id === "airstrip") return panel(p.name, state.quest < 6 ? "雾霾还没散，阿简正在等能起飞的天气。测试时也可以随时返回小屋。" : "天清了，飞机随时可以出发。栗尾市以后全年都能来。", [ [ "返回小屋", opts.exit ], [ "再逛逛" ] ]);
         const services = {
@@ -408,7 +409,7 @@ function makeSeason_autumn(opts, DATA) {
         };
         if (services[id]) {
             const [label, need] = services[id];
-            return panel(p.name, id === "plaza" ? "长椅边有人歇脚，能坐下来聊几句。" : "走到地方了，先歇口气。", [ [ label, () => beginService(need, p.name) ], ...id === "canteen" ? [ [ "和老郑聊聊", () => converse("zhou") ] ] : [], [ "离开" ] ]);
+            return panel(p.name, id === "plaza" ? "长椅边有人歇脚，能坐下来聊几句。" : "走到地方了，先歇口气。", [ [ label, () => beginService(need, p.name) ], ...(window.liweiStory?.facilityChoices(id) || []), ...id === "canteen" ? [ [ "和老郑聊聊", () => converse("zhou") ] ] : [], [ "离开" ] ]);
         }
         const discoveries = {
             nursery: "苗圃的叶片上积着一层灰。",
@@ -885,7 +886,8 @@ function makeSeason_autumn(opts, DATA) {
                     need: p.need
                 });
             } else if (p.npc) goTo(p.x + (state.x < p.x ? -18 : 18), p.y, {
-                id: "npc:" + p.id
+                id: "npc:" + p.id,
+                storyWalk: !!(window.liweiStory && p.mark)
             }); else visit(p.id);
             return;
         }

@@ -84,8 +84,10 @@ const { chromium } = require("playwright"),
             }
           }
           const startT = sim.t;
-          await drain();
+          await wait(120);
           if (sim.t !== startT || canReceiveCall()) throw Error("clock/call");
+          await drain();
+          if (s.locked()) throw Error("chapter break is still paused");
           document.querySelector(".liwei-jian").click();
           await drain();
           for (let i = 0; i < 1800 && sim.place !== "autumn_test"; i++) {
@@ -115,7 +117,14 @@ const { chromium } = require("playwright"),
             if (++passes > 30) throw Error("progress loop");
             console.log("TEST chapter " + s.next());
             const k = s.next()[branch ? s.next().length - 1 : 0];
+            if (k === "S04") {
+              c.interact("canteen");
+              const choices = [...c.modal.querySelectorAll(".autumn-actions button")].map(b => b.textContent);
+              if (!choices.includes("吃碗热面") || !choices.includes("旧相识")) throw Error("canteen menu");
+              c.close();
+            }
             s.guide(k);
+            if (!s.locked()) throw Error("quest walk must pause simulation: " + k);
             for (let i = 0; !s.active && i < 3000; i++) {
               c.state.paused = false;
               c.tick(0.5, 0.1);

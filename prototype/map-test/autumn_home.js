@@ -101,6 +101,6 @@ const autumnHome=(function(){
  // hover: the house's pixel glow on furniture (the city draws it in over())
  const oHover=C().hover;C().hover=function(x,y){const r=oHover.apply(this,arguments);hov=S().inside&&r&&SPOTS[r.id]&&r.id!=='exit'?SPOTS[r.id]:null;return r;};
  const oArrive=arriveAt;arriveAt=function(p){stop();pend=null;return oArrive.apply(this,arguments);};
- return {spots,need,click,arrived,under,over,busy:()=>!!svc||S().goal?.id==='home_use',get svc(){return svc;},SPOTS};
+ return {cancelActivity(){stop();pend=null;S().hideHero=false;},spots,need,click,arrived,under,over,busy:()=>!!svc||S().goal?.id==='home_use',get svc(){return svc;},SPOTS};
 })();
 window.autumnHome=autumnHome;

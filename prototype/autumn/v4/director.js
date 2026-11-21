@@ -102,16 +102,15 @@
     timer = 0,
     preview = false,
     flyNext = false,
+    approaching = false,
     routeTo = null;
   const inCity = () => sim.place === "autumn_test";
   const unlocked = () => p.done.includes("S01");
   const locked = () =>
-    active ||
-    (preview && sim.place === "front" && !p.done.includes("S00")) ||
+    active || !!p.chapter ||
+    approaching ||
     (sim.place === "front" && !city.modal.hidden) ||
-    (p.enrolled &&
-      !p.done.includes("S14") &&
-      (inCity() || (sim.place === "front" && !unlocked())));
+    (inCity() && (!!world.goal?.storyChapter || world.goal?.storyWalk || !!routeTo));
   function next() {
     for (let keys of groups) {
       if (keys[0] === "S12") keys = ["S12" + p.ending];
@@ -171,6 +170,8 @@
   const restored = restore;
   restore = function (s) {
     stop();
+    routeTo = null;
+    approaching = false;
     p = Object.assign(fresh(), s?.liweiV4 || {});
     const result = restored(s);
     preview = !!p.enrolled;
@@ -243,6 +244,7 @@
     if (unlocked()) RINGS.airportFlights[2] = ["airport:liwei", "栗尾市"];
   }
   function approachJian() {
+    approaching = true;
     const feet = buddyFeet();
     sim.route = [
       [feet.x, feet.y],
@@ -261,6 +263,7 @@
         return;
       }
       sim.target = sim.s;
+      approaching = false;
       begin("S00");
     };
     requestAnimationFrame(walk);
@@ -354,6 +357,7 @@
       else throughDoor("front");
       return;
     }
+    window.autumnHome?.cancelActivity();
     const loc = scenes[k].loc;
     if (world.inside) {
       if (loc === "detective_home") return begin(k);
@@ -362,11 +366,17 @@
       return;
     }
     world.mapOpen = false;
-    city.visit(loc);
+    city.close();
+    const spot = where(loc);
+    city.goTo(spot.x, spot.y, { id: loc, storyChapter: k });
   }
   function meet(id) {
     const n = actors().find((v) => v.id === id);
-    if (n && site(n.loc)) return;
+    if (n) {
+      const k = next().find(k => scenes[k].loc === n.loc);
+      if (k) return begin(k);
+      if (!["detective_home", "plaza", "canteen"].includes(n.loc) && site(n.loc)) return;
+    }
     const fallback = {
       jian: next().includes("S09")
         ? "R02"
@@ -400,8 +410,22 @@
     const spot = where(k === "S09" ? "canteen" : "reeds");
     if (Math.hypot(world.x - spot.x, world.y - spot.y) < 8) begin(k);
   }
+  function facilityChoices(id) {
+    const options = [];
+    const k = next().find(k => scenes[k].loc === id || (id === "reeds" && k === "S08A"));
+    if (k) options.push([scenes[k].title, () => begin(k)]);
+    if (id === "canteen" && p.ending === "A" && p.done.includes("A1"))
+      options.push(["查看当月公示", showAccounts]);
+    if (id === "plaza" && p.done.includes("S03") && !p.done.includes("S11"))
+      options.push(["和楼上住户聊聊", () => begin("R11")]);
+    return options;
+  }
+  function showAccounts() {
+    city.panel("工人食堂 · 当月公示","旧炉已封。本月工资已发，除尘支出已列账，居民可向程青核对。",[["收起", null]]);
+  }
   function site(id) {
     if (active) return true;
+    if (["canteen","plaza","detective_home","lookout","reeds"].includes(id)) return false;
     const key = next().find(
       (k) =>
         scenes[k].loc === id ||
@@ -426,25 +450,18 @@
       ]);
       return true;
     }
-    if (id === "detective_home") return false;
     if (
-      (id === "notice" || id === "canteen") &&
+      id === "notice" &&
       p.ending === "A" &&
       p.done.includes("A1")
     ) {
-      city.panel(
-        "工人食堂 · 当月公示",
-        "旧炉已封。本月工资已发，除尘支出已列账，居民可向程青核对。",
-        [["收起", null]],
-      );
+      showAccounts();
       return true;
     }
     const ambient = {
       hut: p.done.includes("S06") ? "R06" : "R08",
       mine_office: "R05",
       clinic: "R07",
-      canteen: "R04",
-      plaza: "R11",
     };
     if (ambient[id]) {
       const gate = {
@@ -493,6 +510,7 @@
   }
   function begin(k, resume = false) {
     if (active || !scenes[k] || wiping || storyWaitsForPhone()) return;
+    if (inCity()) window.autumnHome?.cancelActivity();
     city.close();
     city.clearKeys();
     city.clearRoute();
@@ -886,6 +904,7 @@
       vctx.restore();
     }
     proximity();
+    if (routeTo && (!inCity() || (world.inside && !world.door && world.goal?.id !== "exit_inside"))) routeTo = null;
     if (routeTo && !world.inside && !world.door) {
       const target = routeTo;
       routeTo = null;
@@ -979,6 +998,7 @@
   );
   window.liweiStory = {
     locked,
+    facilityChoices,
     objective,
     unlocked,
     actors,
