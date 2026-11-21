@@ -913,6 +913,12 @@
   };
   const oldRender = renderOutside;
   renderOutside = function () {
+    // A conversation begun before boarding cannot finish while the landing owns the clock.
+    if (inCity() && (firstLanding() || p.returning === "arrived") && remoteSocial) {
+      log("到栗尾市了，先收起手机。", null, remoteSocial.said);
+      remoteSocial = null;
+      hidePeerSay(true);
+    }
     if (firstLanding() && !wiping && world.loaded) {
       const strip = where("airstrip");
       if (world.inside || world.door || world.x !== strip.x || world.y !== strip.y) city.reset();
