@@ -271,7 +271,7 @@ let playerCall=false,keepCallId=null;   // who started a phone talk: the player 
 function startContactTalk(id,kind='text',incoming=false){
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return false;
   if(sim.mode==='down'||asleep()||wiping||cardHolds()||socialBusy())return false;
-  const who=c.family||'friend',item=chatItem(kind,who,kind==='video'?'phone':'call',id);
+  const who=c.family||'friend',item=chatItem(kind,who,kind==='video'?'phone':'call',id,incoming);
   item.how=incoming?'incoming':playerCall?'player':keepCallId===id?'keep':'self';
   if(incoming)item.talk.start=`接听了${contactName(c)}的${kind==='video'?'视频':'电话'}。`;
   // This session accompanies daily life; it owns no route, action or needs lock.

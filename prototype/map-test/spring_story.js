@@ -289,8 +289,8 @@ const springFarm=(()=>{
  }
  const oldNeeds=cardNeeds;cardNeeds=function(){const r=oldNeeds();if(card?.cd.at==='spring_test'&&card.o.farm)applyFarm(card.o.farm,fill(card.cd.title,card.vars));return r;};
  const oldChat=chatItem;chatItem=function(kind,who,via,contactId){
-  const it=oldChat(kind,who,via,contactId);
-  if(!inSpring()||!['call','text','video'].includes(kind)||Math.random()<.3)return it;
+  const it=oldChat.apply(this,arguments);
+  if(it?.talk?.liwei||!inSpring()||!['call','text','video'].includes(kind)||Math.random()<.3)return it;
   const c=contactId&&socialState.contacts.find(x=>x.id===contactId),key=c?.family||(c?'friend':who),pool=SPRING_TALK[key];if(!pool)return it;
   const seen=((lifeFlags.talkSeen||={})['spring_'+key]||=[]),ok=pool.map((t,i)=>i).filter(i=>inSeason(pool[i].title));if(!ok.length)return it;let fresh=ok.filter(i=>!seen.includes(i));if(!fresh.length){seen.length=0;fresh=ok;}
   const i=pick(fresh),t=pool[i];seen.push(i);it.talk.end=it.talk.end.replace(it.talk.title,t.title);Object.assign(it.talk,{title:t.title,lines:t.lines,mood:t.mood,id:t.id});if(c)c.lastTopic=t.title;return it;};

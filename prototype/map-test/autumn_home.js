@@ -39,7 +39,13 @@ const autumnHome=(function(){
   pend=null;c.goTo(p.x,p.y,{id:'home_use',spot:id,auto:!!auto});
  }
  function arrived(id){const p=SPOTS[id],s=S();if(!p)return;
-  if(p.look){speakCity(pick(p.look));return;}
+  if(p.look){
+   if(id==='window'){
+    const lines=['玻璃擦过了。外头那层黄灰还在，连对面屋脊都糊了。','风吹开一点，屋顶刚露出个角。','烟色淡了点，远处还是灰的。','能看见山脊了，天边还蒙着一层灰。','窗外那道山梁，原来一直连到这么远。'];
+    speakCity(lines[s.stage]);
+   }else speakCity(pick(p.look));
+   return;
+  }
   const auto=!!s.lastAuto;s.x=p.x;s.y=p.y;s.facing=p.face||(p.x>222?1:-1);svc={id,act:p.act};s.homeSpot=id;s.iy=({tv:-3,sofa:-3,table:-4,wc:-3})[id]||0;s.hideHero=!!p.hide;
   seasonHouse.start(p.act,{auto,log:p.log});}
  function speakCity(t){showHint(t);}
@@ -166,6 +172,9 @@ const autumnHome=(function(){
   }
   return result;
  };
- return {cancelActivity(){stop();pend=null;S().hideHero=false;},tickResident,spots,need,click,arrived,under,over,busy:()=>!!svc||S().goal?.id==='home_use',get svc(){return svc;},SPOTS};
+ return {cancelActivity(){stop();pend=null;S().hideHero=false;},residentHit(x,y){
+  const g=residentGoal(),r=S().resident;
+  return g&&r&&g.id!=='sleep'&&!liweiStory.locked()&&Math.abs(x-r.x)<9&&y>=r.y-31&&y<r.y-(g.id==='work'?12:3);
+ },tickResident,spots,need,click,arrived,under,over,busy:()=>!!svc||S().goal?.id==='home_use',get svc(){return svc;},SPOTS};
 })();
 window.autumnHome=autumnHome;

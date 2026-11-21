@@ -3,13 +3,38 @@ from pathlib import Path
 import sys,base64,io,json
 from dataclasses import replace
 from pixelkit import P
-from PIL import Image
+from PIL import Image,ImageColor
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'tools'),str(ROOT/'art/src/concept')]
 import doll
 import autumn_city as A
 
 def uri(name):return 'data:image/png;base64,'+base64.b64encode((ROOT/'art/out/concept'/name).read_bytes()).decode()
+def office_window_views():
+ """Replace only visible glass pixels; the sash, curtains and furniture stay in front."""
+ room=Image.open(ROOT/'art/out/concept/autumn_detective_inside.png').convert('RGB')
+ glass={ImageColor.getrgb(c) for c in (*P.sky_soft,P.leaf[3],P.leaf[4])}
+ views=[]
+ skies=[(P.oat[1],P.oat[0],P.walnut[2]),(P.oat[2],P.oat[1],P.oat[0]),
+        (P.wall_cream[2],P.oat[1],P.oat[0]),(P.sky_soft[2],P.oat[2],P.sage[2]),
+        (P.sky_soft[2],P.sky_soft[1],P.sage[2])]
+ for stage,colors in enumerate(skies):
+  for night in (False,True):
+   sky,ridge,roof=map(ImageColor.getrgb, (P.sky_night[1],P.sky_night[0],P.cut[0]) if night else colors)
+   pane=Image.new('RGBA',room.size)
+   for left,top in [(18,14),(90,14),(21,69)]:
+    for y in range(18):
+     for x in range(18):
+      if room.getpixel((left+x,top+y)) not in glass:continue
+      hill=11+abs((left+x)%12-6)//3
+      color=ridge if y>=hill else sky
+      if y>=16 or (9<=x<=10 and y>=9):color=roof
+      if stage<3 and 4<=y<=8 and abs(x-10+(8-y)*2)<=3-stage:color=ridge
+      if night and stage>=3 and (x,y)==(4,3):color=ImageColor.getrgb(P.light[1])
+      pane.putpixel((left+x,top+y),color+(255,))
+   buf=io.BytesIO();pane.save(buf,format='PNG');views.append('data:image/png;base64,'+base64.b64encode(buf.getvalue()).decode())
+ return views
+
 def story_cast():
  return {
   '阿简': replace(doll.BOY,eye_shape='bean',hair_style='slick',hair=tuple(P.hair_black),accessories=(),
@@ -46,7 +71,7 @@ def runtime_data():
   a,b=segment['a'],segment['b']
   x=max(0,min(a[0],b[0])-3);y=max(0,min(a[1],b[1])-17);right=min(A.MAP_W,max(a[0],b[0])+4);bottom=min(A.MAP_H,max(a[1],b[1])+4)
   crop=front.crop((x,y,right,bottom));buf=io.BytesIO();crop.save(buf,format='PNG');foreground.append(dict(x=x,y=y,w=right-x,h=bottom-y,a=a,b=b,img='data:image/png;base64,'+base64.b64encode(buf.getvalue()).decode()))
- return dict(signs=json.loads((ROOT/'art/out/concept/autumn_signs_world.json').read_text()),signFont='data:font/woff;base64,'+base64.b64encode((ROOT/'art/fonts/source-han-sans/BuddyAutumnSigns.woff').read_bytes()).decode(),layoutVersion=4,lift={**A.LIFT,"x":A.LIFT["x"]+A.OX,"top":A.LIFT["top"]+A.TOP,"bottom":A.LIFT["bottom"]+A.TOP},ox=A.OX,water=A.runtime_water(),smoke=A.map_point(*A.SMOKE),summit=dict(triggerY=A.TOP-15,edgeY=A.TOP-92),river=dict(clean=[P.teal[3],P.teal[4]],dirty=[P.teal[1],P.oat[0]],shadow=[P.sage[0],P.teal[1]],rope=P.wood[2],top=A.TOP+666,bottom=A.MAP_H,boatX=A.BOAT_POS[0],boatY=A.BOAT_POS[1],moor=A.BOAT_MOOR,cleat=A.BOAT_CLEAT,boatShadow=A.BOAT_SHADOW,rocks=[[x+A.OX,y+A.TOP] for x,y in [(230,677),(287,672),(394,680),(588,679)]]),boat=uri("autumn_river_boat.png"),foreground=foreground,foliageCell=A.FOLIAGE_CELL,foliageCols=A.FOLIAGE_COLS,foliage=json.loads((ROOT/'art/out/concept/autumn_foliage_world.json').read_text()),foliageSheets=[uri('autumn_foliage_atlas_'+str(i)+'.png') for i in range(5)],npcs=npcs,npcNames=list(cast),width=A.MAP_W,height=A.MAP_H,scale=[A.SCALE_X,A.SCALE_Y],routes=A.runtime_routes(),landmarks=A.runtime_landmarks(),
+ return dict(officeWindows=office_window_views(),signs=json.loads((ROOT/'art/out/concept/autumn_signs_world.json').read_text()),signFont='data:font/woff;base64,'+base64.b64encode((ROOT/'art/fonts/source-han-sans/BuddyAutumnSigns.woff').read_bytes()).decode(),layoutVersion=4,lift={**A.LIFT,"x":A.LIFT["x"]+A.OX,"top":A.LIFT["top"]+A.TOP,"bottom":A.LIFT["bottom"]+A.TOP},ox=A.OX,water=A.runtime_water(),smoke=A.map_point(*A.SMOKE),summit=dict(triggerY=A.TOP-15,edgeY=A.TOP-92),river=dict(clean=[P.teal[3],P.teal[4]],dirty=[P.teal[1],P.oat[0]],shadow=[P.sage[0],P.teal[1]],rope=P.wood[2],top=A.TOP+666,bottom=A.MAP_H,boatX=A.BOAT_POS[0],boatY=A.BOAT_POS[1],moor=A.BOAT_MOOR,cleat=A.BOAT_CLEAT,boatShadow=A.BOAT_SHADOW,rocks=[[x+A.OX,y+A.TOP] for x,y in [(230,677),(287,672),(394,680),(588,679)]]),boat=uri("autumn_river_boat.png"),foreground=foreground,foliageCell=A.FOLIAGE_CELL,foliageCols=A.FOLIAGE_COLS,foliage=json.loads((ROOT/'art/out/concept/autumn_foliage_world.json').read_text()),foliageSheets=[uri('autumn_foliage_atlas_'+str(i)+'.png') for i in range(5)],npcs=npcs,npcNames=list(cast),width=A.MAP_W,height=A.MAP_H,scale=[A.SCALE_X,A.SCALE_Y],routes=A.runtime_routes(),landmarks=A.runtime_landmarks(),
   scenes=[uri('autumn_city_stage_'+str(i)+'.png') for i in range(5)],
   # distance layers behind the map (sky / far range / mid hills), per look; the game moves them at their own speeds
   backdrop={k:{part:uri(f'autumn_back_{part}_{k}.png') for part in ('sky','far','mid')} for k in ('polluted','clear','clean')},front=uri('autumn_city_front.png'),inside=uri('autumn_detective_inside.png'))

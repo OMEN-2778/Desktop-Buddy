@@ -756,7 +756,12 @@ function makeSeason_autumn(opts, DATA) {
         ctx.save();
         ctx.translate(-state.camX, -state.camY);
         ctx.drawImage(state.inside ? images.get(DATA.inside) : bg, 0, 0);
-        if (state.inside) opts.home?.under(ctx);
+        if (state.inside) {
+            const minute=opts.now()%1440,night=minute<360||minute>=1140;
+            const panes=DATA.officeWindows?.[2*state.stage+Number(night)];
+            if(panes)ctx.drawImage(images.get(panes),0,0);
+            opts.home?.under(ctx);
+        }
         if (!state.inside) {
             drawRiver();
             drawSigns();
@@ -860,6 +865,7 @@ function makeSeason_autumn(opts, DATA) {
         }
     }
     function hit(x, y) {
+        if (state.inside && opts.home?.residentHit?.(x,y)) return {id:"jian",name:"阿简",npc:true,x:state.resident.x,y:108};
         if (state.inside) return (opts.home?.spots || indoorSpots).find(p => x >= p.rect[0] && y >= p.rect[1] && x < p.rect[0] + p.rect[2] && y < p.rect[1] + p.rect[3]);
         const npc = npcRows().find(n => Math.abs(n.x - x) < 10 && y < n.y && y > n.y - 29);
         if (npc) return {
@@ -882,7 +888,7 @@ function makeSeason_autumn(opts, DATA) {
         const p = hit(x, y);
         if (p) {
             if (state.inside) {
-                if (p.id === "exit") leave(); else if (opts.home) opts.home.click(p.id); else goTo(p.x, p.y, {
+                if(p.npc)window.liweiStory.meet("jian",true); else if (p.id === "exit") leave(); else if (opts.home) opts.home.click(p.id); else goTo(p.x, p.y, {
                     id: "inside_service",
                     need: p.need
                 });
@@ -1034,7 +1040,7 @@ function makeSeason_autumn(opts, DATA) {
     root.querySelector("[data-exit]").onclick = opts.exit;
     const signFont = new FontFace("Buddy Autumn Signs", 'url("'+DATA.signFont+'")');
     const fontReady = signFont.load().then(face=>document.fonts.add(face));
-    Promise.all([fontReady, ...[ ...DATA.scenes, ...Object.values(DATA.backdrop || {}).flatMap(b => Object.values(b)), DATA.front, DATA.inside, DATA.boat, ...DATA.npcs.flat(), ...DATA.foreground.map(p => p.img), ...DATA.foliageSheets ].map(load)]).then(() => {
+    Promise.all([fontReady, ...[ ...DATA.scenes, ...Object.values(DATA.backdrop || {}).flatMap(b => Object.values(b)), DATA.front, DATA.inside, ...(DATA.officeWindows||[]), DATA.boat, ...DATA.npcs.flat(), ...DATA.foreground.map(p => p.img), ...DATA.foliageSheets ].map(load)]).then(() => {
         state.loaded = true;
         draw();
         updateStatus();
@@ -1043,7 +1049,7 @@ function makeSeason_autumn(opts, DATA) {
         console.error(e);
     });
     return {
-        panel, enter, clearRoute,
+        panel, talk, enter, clearRoute,
         root: root,
         canvas: canvas,
         renderCanvas: renderCanvas,

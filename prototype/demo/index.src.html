@@ -4402,9 +4402,10 @@ const CHAT_ACT = { pc_video: "video", pc_forum: "forum", phone_call: "call", pho
 for (const [kind, groups] of Object.entries(CHATS)) for (const [who, g] of Object.entries(groups))
   g.talks.forEach((t, i) => { if (t.mood) ML[t.id = `chat_${kind === "call" ? "call_" : ""}${who}_${i}`] = { ...t.mood }; });
 // phone calls (user: 50 per person, voice only) are CHATS.call; a video call on the phone is a video chat
-function chatItem(kind, who, via = "pc", contactId = null) {
+function chatItem(kind, who, via = "pc", contactId = null, incoming = false) {
   const contact=contactFor(who,contactId),level=contact&&!contact.family?socialLevel(contact):null;
-  const g=level?{...CHATS[kind][who],talks:socialTalkPool(kind,contact)}:CHATS[kind][who];
+  const authored=window.liweiStory?.phoneExchange(contact,kind,incoming);
+  const g=authored?{...CHATS[kind][who],talks:[authored]}:level?{...CHATS[kind][who],talks:socialTalkPool(kind,contact)}:CHATS[kind][who];
   const eligible=g.talks.map((talk,i)=>({talk,i})).filter(({talk})=>socialTalkFits(talk));
   const seen=((lifeFlags.talkSeen ||= {})[level?`${kind}_${contact.id}_${level}${g.talks[0]?.early?"_early":""}`:kind+'_'+who] ||= []);
   let fresh = eligible.map(({i})=>i).filter(i => !seen.includes(i));

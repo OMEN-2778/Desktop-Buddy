@@ -176,20 +176,21 @@
     return s;
   };
   function syncCastContacts() {
-    if (!p.done.includes("S14")) return;
+    const introduced=["S00","S03","S04","S05","S06","S11","S05","S04","S09"];
+    const complete=p.done.includes("S14");
+    p.metContacts ||= {};
     for (const [i, name] of data.npcNames.entries()) {
-      const id = "autumn_" + ids[i], model = models.get(name);
-      let c = socialState.contacts.find(entry => entry.id === id);
-      if (!c && !p.castContactsAdded) {
-        c = { id, name, family: null, affinity: i === 0 ? 50 : 20, metAt: sim.t, memories: [] };
+      if (!complete && !p.done.includes(introduced[i])) continue;
+      const id="autumn_"+ids[i],model=models.get(name);
+      let c=socialState.contacts.find(entry=>entry.id===id);
+      if (!c&&!p.metContacts[id]&&!p.castContactsAdded) {
+        c={id,name,family:null,affinity:complete&&i===0?50:20,metAt:sim.t,memories:[]};
         socialState.contacts.push(c);
       }
-      if (c) {
-        c.look = model.look;
-        c.child = model.kid;
-      }
+      p.metContacts[id]=true;
+      if(c){c.look=model.look;c.child=model.kid;}
     }
-    p.castContactsAdded = true;
+    if(complete)p.castContactsAdded=true;
     contactsSig = "";
   }
   const restored = restore;
@@ -396,28 +397,50 @@
     const spot = where(loc);
     city.goTo(spot.x, spot.y, { id: loc, storyChapter: k });
   }
-  function meet(id) {
-    const n = actors().find((v) => v.id === id);
-    if (n) {
-      const k = next().find(k => scenes[k].loc === n.loc);
-      if (k) return begin(k);
-      if (!["detective_home", "plaza", "canteen"].includes(n.loc) && site(n.loc)) return;
+  function exchange(id,channel) {
+    const phase=p.done.includes("S14")?"after":"during", bank=LIWEI_CHATS[id][phase];
+    const entries=bank[channel].slice();
+    if(channel==="visit")entries.push(...bank.out);
+    for(const row of bank.milestones||[]){
+      if(row.channel===channel&&p.done.includes(row.done))entries.push(row.lines);
     }
-    const fallback = {
-      jian: next().includes("S09")
-        ? "R02"
-        : next().includes("S11")
-          ? "R03"
-          : next()[0]?.startsWith("S12")
-            ? "R12"
-            : "R01",
-      qing: "R05",
-      zhou: "R04",
-      doctor: "R07",
-      father: "R06",
-      neighbor: "R11",
-    }[id];
-    if (fallback) begin(fallback);
+    if(phase==="after"&&["in","out","meet"].includes(channel))
+      entries.push(...(bank[p.ending+(channel==="in"?"In":"")]||[]));
+    const key=[id,phase,channel].join("/"),history=p.chatHistory||={};
+    let seen=history[key]||[],available=entries.filter(lines=>!seen.includes(lines[0]));
+    if(!available.length){
+      available=entries.filter(lines=>lines[0]!==seen.at(-1));seen=[];
+    }
+    const lines=pick(available);
+    history[key]=[...seen,lines[0]];
+    return lines.map((line,i)=>((i%2===0)===(channel==="in")?">":"")+line);
+  }
+  function phoneExchange(c,kind,incoming){
+    if(!["call","text","video"].includes(kind)||!c?.id.startsWith("autumn_"))return null;
+    const id=c.id.slice(7);
+    if(!LIWEI_CHATS[id])return null;
+    const lines=exchange(id,incoming?"in":kind==="text"?"text":"out");
+    return {title:lines[0].replace(/^>/,""),lines,early:true,liwei:true};
+  }
+  function smallTalk(id){
+    const name=data.npcNames[ids.indexOf(id)];
+    const lines=exchange(id,"meet").map(line=>line.startsWith(">")?[name,line.slice(1)]:["我",line]);
+    city.talk(lines,null,false);
+  }
+  function meet(id,indoors=false) {
+    if(active||!LIWEI_CHATS[id])return;
+    const n=actors().find(v=>v.id===id);
+    const loc=indoors?"detective_home":n?.loc;
+    const quest=next().find(k=>scenes[k].loc===loc);
+    if(quest&&(indoors||n?.mark))return begin(quest);
+    if(!p.done.includes("S14")){
+      const clue={jian:next().includes("S09")?"R02":next().includes("S11")?"R03":next()[0]?.startsWith("S12")?"R12":"R01",
+        qing:"R05",zhou:"R04",doctor:"R07",father:"R06",neighbor:"R11"}[id];
+      const gate={R01:"S07",R05:"S03",R04:"S04",R07:"S08C",R06:"S06",R11:"S03"}[clue];
+      if(clue&&(!gate||p.done.includes(gate))&&!(clue==="R06"&&p.done.includes("S09")||clue==="R11"&&p.done.includes("S11")))return city.panel(data.npcNames[ids.indexOf(id)],"想聊什么？",
+        [["随便聊聊",()=>smallTalk(id)],["问问调查的事",()=>begin(clue)]]);
+    }
+    smallTalk(id);
   }
   function proximity() {
     if (
@@ -753,9 +776,9 @@
       log("栗尾市 · " + scenes[k].title);
       world.stage = environment();
     }
+    syncCastContacts();
     if (k === "S14") {
       world.quest = 6;
-      syncCastContacts();
       const jian = socialState.contacts.find(c => c.id === "autumn_jian");
       if (jian) {
         jian.affinity = Math.max(jian.affinity, 50);
@@ -878,6 +901,10 @@
     ["detective_home", "mine_office", "canteen", "clinic", "hut"].forEach(
       (loc, seed) => actor(seed, loc, 0, false, false),
     );
+    for(const [seed,loc,slot] of [[5,"notice",0],[6,"canteen",1],[7,"mine_office",1],[8,"plaza",0]]){
+      if(!p.metContacts?.["autumn_"+ids[seed]]||(seed===7&&p.ending==="B"&&p.done.includes("B2")))continue;
+      actor(seed,loc,slot,false,false);
+    }
     return result;
   }
   function draw(ctx, images) {
@@ -1037,6 +1064,13 @@
     unlocked,
     actors,
     frameFor,
+    phoneExchange,
+    visitExchange(c){
+      const id=c.id.slice(7);
+      if(!c.id.startsWith("autumn_")||!LIWEI_CHATS[id])return null;
+      const lines=exchange(id,"visit");
+      return {title:lines[0],lines};
+    },
     heroExpression: () =>
       active && speaker === "我" ? expressions[face] : null,
     site,

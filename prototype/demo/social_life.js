@@ -239,7 +239,14 @@ function tickHomeVisit(dt){
   }
   if(realClock<g.next)return;g.usedTalks||=[];g.usedEvents||=[];
   if(Math.random()<.35){const [title,text,say,emo]=nextGuestText(SOCIAL_TEXT.visitEvents.filter(socialTalkFits),g.usedEvents),vars={朋友:contactName(c)};log(fill(text,vars));showSay(say);addMood('home_guest_event_'+SOCIAL_TEXT.visitEvents.findIndex(row=>row[0]===title),{diary:false,words:false});addSocialMemory(c,title,fill(text,vars));g.next=realClock+14;}
-  else {const [title,...lines]=nextGuestText(homeGuestTalkPool(g,c),g.usedTalks);g.talk={title,lines:personalityTalk(lines,c,'visit'),i:0,wait:.4,said:[]};}
+  else {
+    let talk=window.liweiStory?.visitExchange(c);
+    if(!talk){
+      const [title,...lines]=nextGuestText(homeGuestTalkPool(g,c),g.usedTalks);
+      talk={title,lines:personalityTalk(lines,c,'visit')};
+    }
+    g.talk={...talk,i:0,wait:.4,said:[]};
+  }
 }
 // owner 2026-11-11: left idle for days, friendships must not all fade. Wherever she is, when free she
 // phones the friend she hasn't talked to longest (≥2.5 days, before the 4-day decay starts). Such a call

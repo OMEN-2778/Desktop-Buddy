@@ -46,8 +46,8 @@
  const seenOf=key=>((lifeFlags.talkSeen||={})['season_'+key]||=[]);
  function freshFrom(pool,key){const seen=seenOf(key);let ok=pool.map((t,i)=>i).filter(i=>!seen.includes(i));if(!ok.length){seen.length=0;ok=pool.map((t,i)=>i);}const i=pick(ok);seen.push(i);return pool[i];}
  const oldChat=chatItem;chatItem=function(kind,who,via,contactId){
-  const it=oldChat(kind,who,via,contactId);
-  if(!inSeason()||!['call','text','video'].includes(kind)||!it?.talk)return it;
+  const it=oldChat.apply(this,arguments);
+  if(it?.talk?.liwei||!inSeason()||!['call','text','video'].includes(kind)||!it?.talk)return it;
   const c=contactId&&socialState.contacts.find(x=>x.id===contactId),key=c?.family||(c?'friend':who);
   let t=null;
   if(hasPet()&&PET_TALK[key]&&Math.random()<.18)t=freshFrom(PET_TALK[key],'pet_'+key);
