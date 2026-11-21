@@ -25,15 +25,12 @@ def story_cast():
   '楼上住户': replace(doll.GIRL,eye_shape='droopy',hair_style='updo',accessories=('half_glasses',),hair=tuple(P.metal[:5]),top_style='cardigan',top=tuple(P.sage)),
  }
 
-def story_expressions():
- portraits = {}
- for name, actor in story_cast().items():
-  portraits[name] = {}
-  for expression in ('happy','angry','confused','surprised','focused','dazed','embarrassed','sleepy'):
-   buf = io.BytesIO()
-   actor.render(expr=expression).to_image().save(buf, format='PNG')
-   portraits[name][expression] = 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode()
- return portraits
+def story_looks():
+ return {name: dict(name=name, gender=d.gender, style=d.hair_style, eyes=d.eye_shape,
+                    topStyle=d.top_style, bottomStyle=d.bottom_style, socks=d.socks,
+                    acc=list(d.accessories), **{key: getattr(d,key)[2]
+                    for key in ('hair','skin','eye','top','bottom','sock')})
+         for name,d in story_cast().items()}
 
 def runtime_data():
  cast=story_cast()

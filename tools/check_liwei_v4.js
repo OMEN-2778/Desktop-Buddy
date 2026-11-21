@@ -47,6 +47,18 @@ const { chromium } = require("playwright"),
         });
         await p.locator("[data-dest=autumn_test]").click();
         await p.waitForFunction(() => sim.place === "front" && !wiping);
+        await p.evaluate(() => {
+          const now = realClock, frames = new Set();
+          try {
+            for (let i = 0; i < 10; i++) {
+              realClock = now + i * 0.7;
+              const image = liweiStory.frameFor("阿简");
+              if (image.width !== DW || image.height !== DH) throw Error("NPC scale");
+              frames.add(image.toDataURL());
+            }
+          } finally { realClock = now; }
+          if (frames.size < 2) throw Error("missing idle animation");
+        });
         await p.locator(".liwei-jian").click();
         await p.locator(".autumn-actions button").first().click();
         await p.waitForFunction(() => liweiStory.active);
@@ -168,6 +180,10 @@ const { chromium } = require("playwright"),
             )
           )
             throw Error("ending");
+          restore(snapshot());
+          const cast = socialState.contacts.filter(c => c.id.startsWith("autumn_"));
+          if (cast.length !== 9 || !cast.find(c => c.id === "autumn_child")?.child)
+            throw Error("cast missing after reload");
         }, branch);
         assert.deepEqual(err, []);
         console.log("PASS route", branch);

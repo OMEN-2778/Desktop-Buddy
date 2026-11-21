@@ -13,11 +13,6 @@
     data = city.DATA;
   const scenes = LIWEI_SCRIPT,
     where = (id) => data.landmarks.find((p) => p.id === id);
-  const photo = data.npcs.map((pair) => {
-    const img = new Image();
-    img.src = pair[0];
-    return img;
-  });
   const expressions = {
     note: "happy",
     heart: "happy",
@@ -31,18 +26,29 @@
     dots: "sleepy",
     idea: "focused",
   };
-  const portraits = new Map();
-  function frameFor(name) {
-    if (!active || name !== speaker || !expressions[face]) return null;
-    const url = LIWEI_FACES[name]?.[expressions[face]];
-    if (!url) return null;
-    if (!portraits.has(url)) {
-      const img = new Image();
-      img.src = url;
-      portraits.set(url, img);
+  const models = new Map(data.npcNames.map((name, i) => {
+    const look = doll.normalize(LIWEI_LOOKS[name]);
+    return [name, { look, ramps: doll.rampsOf(look), cache: new Map(),
+      kid: name === "老郑的孙子", ph: 791 * (i + 1), dist: 0, dir: 0 }];
+  }));
+  function frameFor(name, actor) {
+    const model = models.get(name);
+    if (!model) return null;
+    if (actor) {
+      const last = model.position;
+      const dx = last ? actor.x - last.x : 0, dy = last ? actor.y - last.y : 0;
+      const distance = Math.hypot(dx, dy);
+      model.v = last?.loc === actor.loc && distance > 0 && distance < 8;
+      if (model.v) {
+        model.dist += distance;
+        if (dx) model.dir = Math.sign(dx);
+        model.walkUntil = realClock + 0.09;
+      } else if (!distance && model.walkUntil > realClock) model.v = true;
+      model.position = actor;
     }
-    const img = portraits.get(url);
-    return img.complete && img.naturalWidth ? img : null;
+    const [frame, pose] = npcFrame(model);
+    if (active && name === speaker && expressions[face]) frame.expr = expressions[face];
+    return npcCanvas(model, frame, pose, false);
   }
   const colors = {
     阿简: "#1c426d",
@@ -134,13 +140,13 @@
   view.parentElement.append(sceneText);
   const frontBtn = document.createElement("button");
   frontBtn.className = "liwei-jian";
-  frontBtn.innerHTML = '<img alt="阿简"><b>!</b>';
-  frontBtn.firstChild.src = data.npcs[0][0];
+  frontBtn.setAttribute("aria-label", "与阿简交谈");
+  frontBtn.innerHTML = "<b>!</b>";
   frontBtn.hidden = true;
   view.parentElement.append(frontBtn);
   const style = document.createElement("style");
   style.textContent = `
- .liwei-controls{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.liwei-controls:empty{display:none}.liwei-jian{position:absolute;z-index:10;left:58%;bottom:12%;width:8%;height:32%;background:transparent!important;border:none!important;box-shadow:none!important;padding:0}.liwei-jian img{height:100%;image-rendering:pixelated}.liwei-jian b{position:absolute;top:-12px;color:#ffe66e;text-shadow:1px 1px #302735}.liwei-caption{position:absolute;inset:0;z-index:16;display:grid;place-content:center;text-align:center;color:white;text-shadow:1px 1px 2px #171322;background:#201d3380;font-weight:bold;animation:liweiFade .3s ease-out}.liwei-caption[hidden],.liwei-jian[hidden]{display:none}.liwei-caption button{font:inherit;padding:.5em 1em}.liwei-caption.dust{background:repeating-linear-gradient(162deg,#936e446b 0 5px,#c1a06f88 6px 11px);background-size:130% 150%;animation:dustBlow .7s linear infinite}@keyframes dustBlow{to{background-position:40px 28px}}@keyframes liweiFade{from{opacity:0}to{opacity:1}}#peerHud.quest .who{color:var(--liwei-who)}
+ .liwei-controls{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.liwei-controls:empty{display:none}.liwei-jian{position:absolute;z-index:10;background:transparent!important;border:none!important;box-shadow:none!important;padding:0}.liwei-jian b{position:absolute;left:50%;transform:translateX(-50%);bottom:100%;color:#ffe66e;text-shadow:1px 1px #302735}.liwei-caption{position:absolute;inset:0;z-index:16;display:grid;place-content:center;text-align:center;color:white;text-shadow:1px 1px 2px #171322;background:#201d3380;font-weight:bold;animation:liweiFade .3s ease-out}.liwei-caption[hidden],.liwei-jian[hidden]{display:none}.liwei-caption button{font:inherit;padding:.5em 1em}.liwei-caption.dust{background:repeating-linear-gradient(162deg,#936e446b 0 5px,#c1a06f88 6px 11px);background-size:130% 150%;animation:dustBlow .7s linear infinite}@keyframes dustBlow{to{background-position:40px 28px}}@keyframes liweiFade{from{opacity:0}to{opacity:1}}#peerHud.quest .who{color:var(--liwei-who)}
  `;
   document.head.append(style);
   function portrait(label) {
@@ -151,7 +157,7 @@
       name: label.includes("头像") ? "程青（电话）" : label,
       anonymous: index < 0 || label.includes("头像"),
       portrait: () =>
-        label.includes("头像") ? null : frameFor(name) || photo[index],
+        label.includes("头像") ? null : frameFor(name),
     };
   }
   const speech = createStorySpeech({
@@ -167,6 +173,23 @@
     s.liweiV4 = JSON.parse(JSON.stringify(p));
     return s;
   };
+  function syncCastContacts() {
+    if (!p.done.includes("S14")) return;
+    for (const [i, name] of data.npcNames.entries()) {
+      const id = "autumn_" + ids[i], model = models.get(name);
+      let c = socialState.contacts.find(entry => entry.id === id);
+      if (!c && !p.castContactsAdded) {
+        c = { id, name, family: null, affinity: i === 0 ? 50 : 20, metAt: sim.t, memories: [] };
+        socialState.contacts.push(c);
+      }
+      if (c) {
+        c.look = model.look;
+        c.child = model.kid;
+      }
+    }
+    p.castContactsAdded = true;
+    contactsSig = "";
+  }
   const restored = restore;
   restore = function (s) {
     stop();
@@ -174,6 +197,7 @@
     approaching = false;
     p = Object.assign(fresh(), s?.liweiV4 || {});
     const result = restored(s);
+    syncCastContacts();
     preview = !!p.enrolled;
     refresh();
     return result;
@@ -598,7 +622,6 @@
       words = row.slice(at + 1);
     speaker = label.split("（")[0];
     face = emotionFor(words);
-    frameFor(speaker);
     peerHud.style.setProperty("--liwei-who", colors[speaker] || "#54465c");
     speech.show(speaker === "我" ? nameOf() : label, words, {
       advance,
@@ -730,30 +753,12 @@
     }
     if (k === "S14") {
       world.quest = 6;
-      let c = socialState.contacts.find((c) => c.id === "autumn_jian");
-      if (!c) {
-        c = {
-          id: "autumn_jian",
-          name: "阿简",
-          family: null,
-          look: doll.normalize({
-            ...doll.PRESETS.m,
-            hairStyle: "slick",
-            eyeShape: "bean",
-            acc: [],
-            topStyle: "detective_coat",
-            top: "#87573e",
-            bottomStyle: "trousers",
-          }),
-          affinity: 50,
-          metAt: sim.t,
-          memories: [],
-        };
-        socialState.contacts.push(c);
+      syncCastContacts();
+      const jian = socialState.contacts.find(c => c.id === "autumn_jian");
+      if (jian) {
+        jian.affinity = Math.max(jian.affinity, 50);
+        addSocialMemory(jian, "漫长的告别", "一起走过了栗尾市。");
       }
-      c.affinity = Math.max(c.affinity, 50);
-      addSocialMemory(c, "漫长的告别", "一起走过了栗尾市。");
-      contactsSig = "";
       showHint("与阿简的好感度达到 50 · 已解锁侦探条纹大衣");
     }
     refresh();
@@ -878,7 +883,7 @@
     if (world.inside && active)
       for (const n of cast)
         ctx.drawImage(
-          frameFor(n.name) || images.get(data.npcs[n.seed][0]),
+          frameFor(n.name, n) || images.get(data.npcs[n.seed][0]),
           n.x - 10,
           n.y - 28,
         );
@@ -888,6 +893,22 @@
       if (target) ctx.drawImage(emoteCanvas(face), target.x + 4, target.y - 43);
     }
   }
+  // Draw on the same pavement layer and pixel grid as other pedestrians.
+  const doorX = 209, doorFeet = 107;
+  const drawStreetNpcs = drawNpcs;
+  drawNpcs = function (ctx, layer) {
+    drawStreetNpcs(ctx, layer);
+    if (sim.place !== "front" || !available() || unlocked() || wiping) return;
+    const lane = heroGround != null && doorFeet > heroGround ? "backAhead" : "back";
+    if (layer !== lane) return;
+    ctx.drawImage(frameFor("阿简"), doorX - DW / 2, doorFeet - DH + 1);
+    const sx = view.clientWidth / W, sy = view.clientHeight / H;
+    Object.assign(frontBtn.style, {
+      left: (view.offsetLeft + (doorX - DW / 2) * sx) + "px",
+      top: (view.offsetTop + (doorFeet - DH + 1) * sy) + "px",
+      width: DW * sx + "px", height: DH * sy + "px",
+    });
+  };
   const oldRender = renderOutside;
   renderOutside = function () {
     oldRender();
@@ -898,8 +919,8 @@
       vctx.scale(scale, scale);
       vctx.drawImage(
         emoteCanvas(face),
-        speaker === "我" ? pt.x + 4 : 210,
-        speaker === "我" ? pt.y - 43 : 60,
+        speaker === "我" ? pt.x + 4 : doorX + 4,
+        speaker === "我" ? pt.y - 43 : doorFeet - 43,
       );
       vctx.restore();
     }
