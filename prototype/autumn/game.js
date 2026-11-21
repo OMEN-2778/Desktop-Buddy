@@ -695,7 +695,7 @@ function makeSeason_autumn(opts, DATA) {
             drawRiver();
             drawSigns();
             drawFoliage(false);
-            opts.drawResidents?.(ctx, state, canvas.height);
+            if (!window.liweiStory?.active) opts.drawResidents?.(ctx, state, canvas.height);
             for (const n of npcRows()) {
                 if (Math.abs(n.x - state.x) > 240 || Math.abs(n.y - state.y) > 190) continue;
                 if (n.sitting) {

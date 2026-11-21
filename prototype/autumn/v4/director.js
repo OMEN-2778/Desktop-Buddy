@@ -103,6 +103,7 @@
   });
   let p = fresh(),
     active = false,
+    entrance = null,
     speaker = "",
     face = "",
     cue = "",
@@ -553,6 +554,8 @@
   };
   function stop() {
     active = false;
+    entrance?.cancel();
+    entrance = null;
     clearTimeout(timer);
     speech.hide();
     sceneText.hidden = true;
@@ -561,6 +564,15 @@
   }
   function begin(k, resume = false) {
     if (active || !scenes[k] || wiping || storyWaitsForPhone()) return;
+    // Cover the scene before changing its occupants. Dialogue and cue timers
+    // start only after the reveal, including when resuming a saved chapter.
+    const reveal = view.animate([
+      {filter:"brightness(0)", offset:0},
+      {filter:"brightness(0)", offset:0.52},
+      {filter:"brightness(1)", offset:1},
+    ], {duration:reduceMotionUI ? 240 : 520, fill:"both"});
+    entrance = reveal;
+    active = true;
     if (inCity()) window.autumnHome?.cancelActivity();
     city.close();
     city.clearKeys();
@@ -573,12 +585,17 @@
       p.cueLoc = null;
       delete p.choices[k];
     }
+    pastActions = completedActions(rows());
     if (inCity() && (k === "note" || k === "S07") && !world.inside)
       relocate("detective_home", true);
-    active = true;
     refresh();
     checkpoint();
-    show();
+    reveal.onfinish = () => {
+      if (entrance !== reveal) return;
+      entrance = null;
+      reveal.cancel();
+      show();
+    };
   }
   function rows() {
     const k = p.chapter,
@@ -616,12 +633,16 @@
     }
     commit();
   }
+  function completedActions(sequence) {
+    return new Set(sequence.slice(0,p.index).filter(row => typeof row === "string" && row.startsWith("!")));
+  }
   function show() {
+    if (entrance) return;
     clearTimeout(timer);
     sceneText.hidden = true;
     cue = "";
     const sequence = rows();
-    pastActions = new Set(sequence.slice(0,p.index).filter(row => typeof row === "string" && row.startsWith("!")));
+    pastActions = completedActions(sequence);
     const row = sequence[p.index];
     if (!row) {
       finish();
@@ -793,6 +814,8 @@
     }
   }
   const casting = {
+    R01: [0], R02: [0], R03: [0], R04: [2], R05: [1], R06: [4],
+    R07: [3], R08: [0], R09: [0], R10: [0], R11: [8], R12: [0],
     S02: [0],
     S03: [0, 1],
     S04: [0, 2, 7],
@@ -820,11 +843,11 @@
       offsets = [-27, 26, -56, 55, -82, 79, -105, 105, -127];
     function actor(seed, loc, slot, mark, staged) {
       if (used.has(seed) || p.departed.includes(data.npcNames[seed])) return;
-      if (
+      if (!staged && (
         (p.done.includes("S12A") && seed === 4) ||
         (p.done.includes("S12B") && seed === 1) ||
         (p.done.includes("S14") && seed === 0)
-      )
+      ))
         return;
       used.add(seed);
       const spot = where(loc);
@@ -844,7 +867,7 @@
           x += side * Math.round(34*(1-progress("居民来到广场",slot%3*90)));
           x += side * Math.round(58*progress("散场",slot%3*75));
         }
-        if (cue === "走上栈桥") x += side*Math.round(20*(1-progress(cue)));
+        if (p.chapter === "S08A") x += side*Math.round(20*(1-progress("走上栈桥")));
         if (p.chapter === "S12B") {
           if (seed === 0) x = world.x - 43;
           if (seed === 1) x += 8 - Math.round(14*progress("程青走近主角")+41*progress("程青走近阿简"));
@@ -870,7 +893,7 @@
     }
     if (active && scenes[p.chapter]) {
       const loc = p.cueLoc || scenes[p.chapter].loc || "plaza",
-        cast = p.chapter === "S09" && loc === "clinic" ? [0,2,6,3,1] : casting[p.chapter] || [0, 1, 2, 3, 4];
+        cast = p.chapter === "S09" && loc === "clinic" ? [0,2,6,3,1] : casting[p.chapter] || [];
       cast.forEach((seed, i) => actor(seed, loc, i, false, true));
       if (p.chapter === "S08A" && p.cueLoc === "pier")
         actor(5, "pier", 2, false, true);
@@ -934,9 +957,18 @@
   }
   // Draw on the same pavement layer and pixel grid as other pedestrians.
   const doorX = 209, doorFeet = 107;
+  const streetPills = placeNpcPills;
+  placeNpcPills = function () {
+    if (active && sim.place === "front") clearNpcPills();
+    else streetPills();
+  };
+  const drawStreetRace = drawMarathon;
+  drawMarathon = function (ctx) {
+    if (!(active && sim.place === "front")) drawStreetRace(ctx);
+  };
   const drawStreetNpcs = drawNpcs;
   drawNpcs = function (ctx, layer) {
-    drawStreetNpcs(ctx, layer);
+    if (!(active && sim.place === "front")) drawStreetNpcs(ctx, layer);
     if (sim.place !== "front" || !available() || unlocked() || wiping) return;
     const lane = heroGround != null && doorFeet > heroGround ? "backAhead" : "back";
     if (layer !== lane) return;

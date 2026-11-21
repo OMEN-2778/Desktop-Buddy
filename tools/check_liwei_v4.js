@@ -62,6 +62,10 @@ const { chromium } = require("playwright"),
         await p.locator(".liwei-jian").click();
         await p.locator(".autumn-actions button").first().click();
         await p.waitForFunction(() => liweiStory.active);
+        await p.evaluate(() => {
+          const entry=view.getAnimations().find(a=>a.effect?.getKeyframes().some(f=>f.filter==="brightness(0)"));
+          if(!entry || storySpeechOpen() || !liweiStory.locked()) throw Error("uncovered chapter entry");
+        });
         await p.evaluate(async (branch) => {
           const s = liweiStory,
             c = seasonMapTest.state.autumn;
