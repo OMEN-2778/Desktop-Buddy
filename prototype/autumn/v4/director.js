@@ -31,7 +31,7 @@
     return [name, { look, ramps: doll.rampsOf(look), cache: new Map(),
       kid: name === "老郑的孙子", ph: 791 * (i + 1), dist: 0, dir: 0 }];
   }));
-  function frameFor(name, actor) {
+  function frameFor(name, actor, restingPose) {
     const model = models.get(name);
     if (!model) return null;
     if (actor) {
@@ -48,7 +48,8 @@
     }
     const [frame, pose] = npcFrame(model);
     if (active && name === speaker && expressions[face]) frame.expr = expressions[face];
-    return npcCanvas(model, frame, pose, false);
+    if (restingPose === "sleep") frame.expr = "sleepy";
+    return npcCanvas(model, frame, restingPose === "sit" ? "sit" : pose, false);
   }
   const colors = {
     阿简: "#1c426d",
@@ -112,7 +113,8 @@
     routeTo = null;
   const inCity = () => sim.place === "autumn_test";
   const unlocked = () => p.done.includes("S01");
-  const locked = () =>
+  const firstLanding = () => inCity() && unlocked() && !p.done.includes("S02") && !p.chapter;
+  const locked = () => firstLanding() || (inCity() && p.returning === "arrived") ||
     active || !!p.chapter ||
     approaching ||
     (sim.place === "front" && !city.modal.hidden) ||
@@ -911,6 +913,11 @@
   };
   const oldRender = renderOutside;
   renderOutside = function () {
+    if (firstLanding() && !wiping && world.loaded) {
+      const strip = where("airstrip");
+      if (world.inside || world.door || world.x !== strip.x || world.y !== strip.y) city.reset();
+      begin("S02");
+    }
     oldRender();
     if (sim.place === "front" && active && face) {
       const scale = view.width / 342,
@@ -932,8 +939,8 @@
       guide(target);
     }
     if (inCity() && p.returning === "arrived" && !wiping && !active) {
-      p.returning = false;
       begin("R10");
+      if (active) p.returning = false;
     }
   };
   const prevThrough = throughDoor;

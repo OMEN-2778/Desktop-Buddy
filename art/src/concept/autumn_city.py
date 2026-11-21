@@ -1543,9 +1543,18 @@ def river_boat():
 def polluted_city():return city_layers(0,True)[0]
 def detective_inside():
  import friend_houses as FH
- plan=next(p for p in FH.PLANS if p[0]=='oak')
- data,bg,front=FH.draw_plan(plan)
- room=Sprite(342,120,P.cut[0]);room.blit(bg.copy().blit(front,0,0),50,0)
+ import _furniture as F
+ plan=('detective','阿简的侦探事务所',342,'双卧室与接待大厅','oak',[
+  [('guest_bed',6,68),('bed',78,82),('stair',164,40),('bath',208,78)],
+  [('reception',6,154),('entry_stair',164,40),('kitchen',208,128)]])
+ _,bg,front=FH.draw_plan(plan)
+ room=Sprite(342,120,P.cut[0]);room.blit(bg,0,0)
+ for sprite,x,bottom in [(F.window(),14,92),(F.sofa(),9,109),(F.media_console(),55,109),
+                         (F.tv(),58,99),(F.bookshelf(),92,109),(F.office_chair(),139,109),
+                         (F.desk(),123,110),(F.monitor(),136,97),(F.desk_lamp(True),123,97),
+                         (F.art_print(18,12,'hills'),128,81),(F.chair('left'),309,111)]:
+  room.blit(sprite,x,bottom-sprite.h)
+ room.blit(front,0,0)
  return room
 
 def build():

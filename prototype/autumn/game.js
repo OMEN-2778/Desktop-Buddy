@@ -93,8 +93,8 @@ function makeSeason_autumn(opts, DATA) {
             });
         }
     }
-    // Existing oak house, native 242×120, centered by +50px; floors 50/108.
-    const indoorNodes = [{x:80,y:108},{x:140,y:108},{x:172,y:108},{x:193,y:108},{x:240,y:108},{x:193,y:50},{x:80,y:50},{x:225,y:50},{x:275,y:50}];
+    // Both floors connect at the central stair landing.
+    const indoorNodes = [{x:18,y:108},{x:140,y:108},{x:172,y:108},{x:193,y:108},{x:326,y:108},{x:193,y:50},{x:18,y:50},{x:225,y:50},{x:275,y:50}];
     const indoorPairs = [[0,1],[1,2],[2,3],[3,4],[3,5],[5,6],[5,7],[7,8]];
     function graph() {
         if (!state.inside) return {
@@ -430,12 +430,12 @@ function makeSeason_autumn(opts, DATA) {
         opts.hint(text);
     }
     const indoorSpots = [
-      {id:"bed",name:"床铺",x:80,y:50,rect:[61,29,45,24],need:"energy"},
+      {id:"bed",name:"客房床铺",x:30,y:50,rect:[11,32,42,20],need:"energy"},
       {id:"bath",name:"浴缸",x:225,y:50,rect:[211,18,31,35],need:"hygiene"},
       {id:"wc",name:"卫生间",x:275,y:50,rect:[268,30,16,24],need:"bladder"},
       {id:"kitchen",name:"厨房",x:240,y:108,rect:[209,69,76,42],need:"hunger"},
-      {id:"sofa",name:"沙发",x:80,y:108,rect:[61,90,42,23],need:"social"},
-      {id:"books",name:"电视",x:140,y:108,rect:[125,81,32,29],need:"fun"},
+      {id:"sofa",name:"沙发",x:28,y:108,rect:[9,90,40,19],need:"social"},
+      {id:"books",name:"电视",x:28,y:108,rect:[55,84,32,25],need:"fun"},
       {id:"exit",name:"出门",x:172,y:108,rect:[166,72,14,36]}
     ];
     function insideVisit(need) {
@@ -447,6 +447,7 @@ function makeSeason_autumn(opts, DATA) {
         });
     }
     function care(need) {
+        if (window.liweiStory?.locked()) return;
         if (state.service || state.goal?.automatic || state.goal?.id === "inside_service" || state.goal?.id === "home_use" || opts.home?.busy()) return;
         close();
         if (state.inside) insideVisit(need); else visit("detective_home", need, true);
@@ -802,7 +803,7 @@ function makeSeason_autumn(opts, DATA) {
             ctx.drawImage(headCanvas, 0, 0, 20, 15, 218, 26, 20, 15);
         } else if (state.inside && state.service?.need === "energy") {
             ctx.save();
-            ctx.translate(96, 42);
+            ctx.translate(42, 44);
             ctx.rotate(-Math.PI / 2);
             opts.drawHero(ctx, 0, 0, {
                 ...state,
@@ -920,6 +921,7 @@ function makeSeason_autumn(opts, DATA) {
         if (!state.paused) {
             state.time += realDt;
             advanceDoor(realDt);
+            if (state.inside) opts.home?.tickResident(dt);
             move(dt);
             if (!window.liweiStory?.locked() && !state.target && !state.goal && !state.service && !state.door && !state.mapOpen && modal.hidden && !dialog && !state.inside && !keys.size && opts.now() >= state.autoAt) {
                 state.autoAt = opts.now() + 35 + Math.random() * 30;

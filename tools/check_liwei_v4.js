@@ -102,6 +102,7 @@ const { chromium } = require("playwright"),
           if (s.locked()) throw Error("chapter break is still paused");
           document.querySelector(".liwei-jian").click();
           await drain();
+          sim.needs.hunger=12;
           for (let i = 0; i < 1800 && sim.place !== "autumn_test"; i++) {
             if (branch && sim.place !== "airport_test" && !wiping)
               throughDoor("airport_test");
@@ -124,6 +125,14 @@ const { chromium } = require("playwright"),
                   s.progress,
                 ]),
             );
+          for(let i=0;i<100&&!s.active;i++)await wait(30);
+          if(!s.active||s.progress.chapter!=="S02"||c.state.inside||c.state.goal?.automatic)
+            throw Error("first landing lost to a need");
+          const landingClock=sim.t;
+          c.care("hunger");await wait(120);
+          if(sim.t!==landingClock||c.state.goal?.automatic)throw Error("arrival hold");
+          sim.needs.hunger=80;
+          await drain();
           let passes = 0;
           while (s.next().length) {
             if (++passes > 30) throw Error("progress loop");
@@ -184,6 +193,25 @@ const { chromium } = require("playwright"),
           const cast = socialState.contacts.filter(c => c.id.startsWith("autumn_"));
           if (cast.length !== 9 || !cast.find(c => c.id === "autumn_child")?.child)
             throw Error("cast missing after reload");
+          c.visit("detective_home");
+          const walk = () => {
+            for (let i=0;i<4000&&(c.state.target||c.state.door);i++) {
+              c.state.paused=false;c.tick(.25,.1);
+            }
+          };
+          walk();
+          [...c.modal.querySelectorAll("button")].find(b=>b.textContent==="进屋").click();
+          walk();
+          sim.t=Math.floor(sim.t/1440)*1440+1360;
+          autumnHome.click("bed");
+          walk();
+          for(let i=0;i<600;i++)autumnHome.tickResident(.1);
+          const verifyBeds=()=>{
+            if(c.state.x!==autumnHome.SPOTS.bed.x||sim.act!=="sleep"||
+                c.state.resident?.x!==102||c.state.resident.y!==50||autumnHome.svc?.id!=="bed")
+              throw Error("double occupancy or sleep restore");
+          };
+          verifyBeds();restore(snapshot());verifyBeds();
         }, branch);
         assert.deepEqual(err, []);
         console.log("PASS route", branch);
