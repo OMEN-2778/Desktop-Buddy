@@ -36,7 +36,7 @@ const seasonalTest=(function(){
  }
  state.spring=makeSeason_spring({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='spring_test'});
  state.summer=makeSeason_summer({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='summer_test'});
- state.autumn=makeSeason_autumn({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='autumn_test',needs:()=>sim.needs,now:()=>sim.t,heroName:()=>nameOf(),hint:showHint,exit:()=>start('home'),get home(){return window.autumnHome||null;}},AUTUMN_MAP_DATA);
+ state.autumn=makeSeason_autumn({view,drawResidents:autumnPedestrians(AUTUMN_MAP_DATA),walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='autumn_test',needs:()=>sim.needs,now:()=>sim.t,heroName:()=>nameOf(),hint:showHint,exit:()=>start('home'),get home(){return window.autumnHome||null;}},AUTUMN_MAP_DATA);
  for(const c of [state.spring,state.summer,state.autumn])root.append(c.root);
  widget.append(state.summer.wardrobe);
  const oldHolds=cardHolds;cardHolds=()=>oldHolds()||active()&&(!!ctl()?.state.inCabana||!!ctl()?.modalOpen);
@@ -44,7 +44,7 @@ const seasonalTest=(function(){
  const people=installSeasonPeople(legacyActive,ctl),cheats=installSeasonCheats();
  state.spring.setPeopleRenderer(people.draw);state.summer.setPeopleRenderer((ctx,info)=>{window.summerLife?.draw(ctx,info);people.draw(ctx,info);});   // 草帽湾 stall, customers, bay people first (summer_life.js)
  const resizeRoot=()=>root.style.width=Math.max(300,view.clientWidth)+'px';window.addEventListener('resize',resizeRoot);resizeRoot();
- for(const [id,label,feet]of [['spring_test','茵菲谷',103],['summer_test','草帽湾',108],['autumn_test','栗尾市',240]]){
+ for(const [id,label,feet]of [['spring_test','茵菲谷',103],['summer_test','草帽湾',108],['autumn_test','栗尾市',108]]){
   OUT[id]={img:{},kind:'walk',doorX:80,feet,walk:[30,310]};AWAY.add(id);TRIP_ICON[id]=id==='spring_test'?'park':'dock';TRIP_COL[id]=id==='spring_test'?'#86c98a':'#4a97c9';TRIP_MOTIF[id]=TRIP_MOTIF[id==='spring_test'?'park':'beach'];
   PLACE_LOG[id]=['来到'+label+'，先四处走走。'];ML[id]={name:'出来走走',emo:'happy',pts:1,min:120};
   RINGS.door.push(['go:'+id,'去'+label]);

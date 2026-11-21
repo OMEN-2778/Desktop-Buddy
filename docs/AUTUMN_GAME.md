@@ -4,6 +4,8 @@
 
 入口 `/map-test/?liwei=4` 使用独立网页存档。点「栗尾市剧情内测」可越过等待秋天，在家门口见到阿简。按正常季节游玩时，他在秋天出现。已开放的航线可跨季往返。
 
+街道、事务所和全城地图均沿用小屋的 342×118 画幅。五条街平时各有六位普通行人，关矿线送别后每街留下两位。口罩按环境阶段和游戏日分配，只影响普通行人。剧情角色偶尔坐在矮凳上，仍走原有的任务和闲聊入口。
+
 当前内测剧本在 `prototype/autumn/v4/script.json`。对白、选项和演出按场次排列，`director.js` 把它们绑定到地图地点、角色、环境阶段和实际存档。广场选择影响后续送别、两处回访和山顶结局。测试覆盖命令为 `node tools/check_liwei_v4.js`，先构建地图测试页。下文旧剧情记录适用于原地图冒烟测试。
 
 
@@ -62,7 +64,7 @@ Current coordinates and owner rules: AUTUMN_CITY.md. Old large-map coordinates a
   vertices/edges, Dijkstra routing with temporary start/target projections. Authoring
   intersections are connected only if an explicit shared/collinear vertex exists;
   no screen-distance shortcut between floors. Side clicks outside a path are rejected.
-- World view 342×236, continuous exponential camera following. Mouse click or four
+- World view 342×118, continuous exponential camera following. Mouse click or four
   direction keys; keyboard stops on release. Whole-city map can be used to plan a walk,
   without teleporting. Lift waits for the cage, then carries the actor vertically.
 - Serializable goal descriptors resume routes after restore; transient dialogs, pointer
@@ -142,7 +144,7 @@ calls removed; indoor sofa and ordinary service stools remain separate furniture
 Owner rejects the custom office interior. Replace it outright with existing friend house
 `oak` / 暖木小复式, from the original 30 plans in `friend_houses.py`. Exact existing
 242×120 layout/art/furnishings, centered at x50 in a 342×120 scene; no stretching.
-Interior window now contracts to 120px logical height on entry, expands to 236 on exit.
+The office and streets share the standard 118px logical viewport.
 Upper/ground walk floors 50/108, stairs x193, entry (172,108). Bed (80,50), bath (225,50),
 WC (275,50), kitchen (240,108), sofa (80,108), TV (140,108). All hit boxes / service
 poses / door positions match the reused furniture; six needs retained. Layout v4 resets

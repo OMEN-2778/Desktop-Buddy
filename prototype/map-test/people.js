@@ -45,3 +45,42 @@ function installSeasonPeople(active,ctl){
  function cancel(){if(approaching)approaching.paused=false;approaching=null;stopNpcTalk();bubble.hidden=true;}
  return {sync,tick,draw,click,cancel,hover:(x,y)=>hover=hit(x,y),cache};
 }
+
+// Walk within each street's paved segment. Stable slots let returning players
+// recognize who stayed after the relocation, and keep masks stable for a day.
+function autumnPedestrians(data) {
+ const streets=data.routes.filter(([name])=>['山顶街','矿业街','中城街','工人街','河岸街'].includes(name));
+ const models=new WeakMap();
+ return function draw(ctx,state,height) {
+  const people=socialState.world;
+  if(!people.length)return;
+  const moved=window.liweiStory?.progress.done.includes('S12B');
+  const day=Math.floor(sim.t/1440);
+  const chance=[.64,.5,.35,.18,.06][state.stage];
+  streets.forEach(([,points],street)=>{
+   const [left,y]=points[0],right=points.at(-1)[0];
+   if(y<state.camY||y-28>state.camY+height)return;
+   const lane=(right-left)/6;
+   for(let slot=0;slot<6;slot++){
+    if(moved&&slot!==1&&slot!==4)continue;
+    const i=street*6+slot, distance=state.streetTime*(5+i%4)+i*31;
+    const range=lane-22, phase=distance%(2*range);
+    const x=Math.round(left+slot*lane+11+Math.min(phase,2*range-phase));
+    if(x<state.camX-12||x>state.camX+354)continue;
+    const person=people[i%people.length],masked=(i*17+day*7)%30 < 30*chance;
+    let variants=models.get(person);
+    if(!variants){variants=new Map();models.set(person,variants);}
+    if(!variants.has(masked)){
+     const acc=person.look.acc.filter(a=>a!=='mask');
+     if(masked)acc.push('mask');
+     const look=doll.normalize({...person.look,acc});
+     variants.set(masked,{look,ramps:doll.rampsOf(look),kid:person.child,cache:new Map(),v:1});
+    }
+    const model=variants.get(masked);
+    model.dist=distance;model.dir=phase<range?1:-1;
+    const [frame,pose]=npcFrame(model);
+    ctx.drawImage(npcCanvas(model,frame,pose,false),x-10,y-29);
+   }
+  });
+ };
+}

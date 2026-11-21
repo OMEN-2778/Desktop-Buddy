@@ -2,7 +2,7 @@
 function makeSeason_autumn(opts, DATA) {
     const canvas = document.createElement("canvas");
     canvas.width = 342;
-    canvas.height = 236;
+    canvas.height = 118;
     const renderCanvas = document.createElement("canvas");
     let resolution = 1, ctx = renderCanvas.getContext("2d");
     const root = document.createElement("section");
@@ -30,9 +30,10 @@ function makeSeason_autumn(opts, DATA) {
         x: DATA.landmarks[0].x,
         y: DATA.landmarks[0].y,
         camX: DATA.landmarks[0].x - 171,
-        camY: DATA.landmarks[0].y - 122,
+        camY: DATA.landmarks[0].y - 75,
         facing: -1,
         time: 0,
+        streetTime: 0,
         paused: false,
         walk: false,
         inside: false,
@@ -547,7 +548,7 @@ function makeSeason_autumn(opts, DATA) {
             state.x = d.to ? 222 : landmark("detective_home").x;
             state.y = d.to ? 108 : landmark("detective_home").y;
             state.camX = d.to ? 0 : state.x - 171;
-            state.camY = d.to ? 0 : state.y - 118;
+            state.camY = d.to ? 0 : state.y - 75;
         }
         if (d.elapsed >= .65) {
             state.door = null;
@@ -561,7 +562,7 @@ function makeSeason_autumn(opts, DATA) {
         }
         const viewProgress = !state.inside && state.x > 80 + (DATA.ox || 0) && state.x < 345 + (DATA.ox || 0) ? clamp((DATA.summit.triggerY-state.y)/65,0,1) : 0;
         const ease=viewProgress*viewProgress*(3-2*viewProgress);
-        const x = clamp(state.x - 171, 0, DATA.width - 342), y = clamp(state.y - 130-ease*76, 0, DATA.height - 236), t = 1 - Math.exp(-dt * 5);
+        const x = clamp(state.x - 171, 0, DATA.width - 342), y = clamp(state.y - 75-ease*30, 0, DATA.height - canvas.height), t = 1 - Math.exp(-dt * 5);
         state.camX += (x - state.camX) * t;
         state.camY += (y - state.camY) * t;
     }
@@ -602,7 +603,7 @@ function makeSeason_autumn(opts, DATA) {
         if (!DATA.water) return;
         const t = state.time, clear = state.stage >= 2;
         for (const [x, y0, y1, w0] of DATA.water.falls) {
-            if (x > state.camX + 342 || x + 20 < state.camX || y1 < state.camY || y0 > state.camY + 236) continue;
+            if (x > state.camX + 342 || x + 20 < state.camX || y1 < state.camY || y0 > state.camY + canvas.height) continue;
             const w = clear ? w0 : Math.max(5, w0 >> 1), fx = clear ? x : x + Math.floor(w0 / 3), h = y1 - y0;
             for (let i = 0; i < w * 3; i++) {
                 const col = i % w, len = 4 + i * 5 % 9, y = y0 + (i * 37 + t * (46 + i % 5 * 9)) % h;
@@ -616,12 +617,12 @@ function makeSeason_autumn(opts, DATA) {
     function drawRiver() {
         const r=DATA.river,t=state.time;
         drawFalls();
-        if(r.bottom<state.camY||r.top>state.camY+236)return;
+        if(r.bottom<state.camY||r.top>state.camY+canvas.height)return;
         // Native pixel wavelets: move on the water only, avoiding baked shoreline rocks.
         const land=DATA.water?DATA.water.land:[],inLand=(x,y)=>land.some(q=>{let on=false;for(let a=0,b=q.length-1;a<q.length;b=a++){const[xa,ya]=q[a],[xb,yb]=q[b];if(ya>y!==yb>y&&x<(xb-xa)*(y-ya)/(yb-ya)+xa)on=!on;}return on;});
         for(let i=0;i<170;i++){
             const x=Math.floor((i*79+t*(2+i%3))%DATA.width),y=r.top+((i*53)%Math.max(1,r.bottom-r.top-2));
-            if(y<state.camY-2||y>state.camY+238||r.rocks.some(([rx,ry])=>Math.abs(x-rx)<24&&Math.abs(y-ry)<11)||inLand(x-8,y)||inLand(x+14,y)||inLand(x+3,y-12)||inLand(x+3,y+10))continue;
+            if(y<state.camY-2||y>state.camY+canvas.height+2||r.rocks.some(([rx,ry])=>Math.abs(x-rx)<24&&Math.abs(y-ry)<11)||inLand(x-8,y)||inLand(x+14,y)||inLand(x+3,y-12)||inLand(x+3,y+10))continue;
             ctx.fillStyle=(state.stage>=2?r.clean:r.dirty)[i%3?0:1];
             const w=3+i%8;ctx.fillRect(x,y,w,1);if(i%4===0)ctx.fillRect(x+2,y+2,w-3,1);
         }
@@ -642,7 +643,7 @@ function makeSeason_autumn(opts, DATA) {
     function drawSigns() {
         ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#e6dfcf";
         for (const p of DATA.signs) {
-            if(p.x+p.w<state.camX||p.x>state.camX+342||p.y+p.h<state.camY||p.y>state.camY+236)continue;
+            if(p.x+p.w<state.camX||p.x>state.camX+342||p.y+p.h<state.camY||p.y>state.camY+canvas.height)continue;
             ctx.font=p.size+'px "Buddy Autumn Signs"';
             ctx.fillText(p.text,p.x+p.w/2,p.y+p.h/2-1,p.w-6);
         }
@@ -662,7 +663,7 @@ function makeSeason_autumn(opts, DATA) {
     function drawFoliage(front) {
         for (const it of depthItems()) {
             const p = it.p;
-            if (it.base >= state.y - 3 !== front || p.x + p.w < state.camX || p.x > state.camX + 342 || p.y + p.h < state.camY || p.y > state.camY + 236) continue;
+            if (it.base >= state.y - 3 !== front || p.x + p.w < state.camX || p.x > state.camX + 342 || p.y + p.h < state.camY || p.y > state.camY + canvas.height) continue;
             const rail = it.rail >= 0, overlap = front && state.x + 12 > p.x && state.x - 12 < p.x + p.w && state.y > p.y && state.y - (rail ? 30 : 29) < p.y + p.h, key = rail ? "rail" + it.rail : "tree" + p.frame, target = overlap ? (rail ? .28 : .3) : 1, prev = foregroundAlpha.get(key) ?? 1, alpha = prev + (target - prev) * (1 - Math.exp(-frameDt * 14));
             foregroundAlpha.set(key, alpha);
             ctx.globalAlpha = alpha;
@@ -679,7 +680,7 @@ function makeSeason_autumn(opts, DATA) {
     const rnd = i => { const v = Math.sin(i * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
     const wrap = (v, m) => (v % m + m) % m;
     function drawAir() {
-        const t = state.time, W = 342 + 24, H = 236 + 24;
+        const t = state.time, W = 342 + 24, H = canvas.height + 24;
         if (state.stage >= 4) {
             // One wind for the whole town (owner 2026-11-13: "随风吹的感觉"): every leaf is carried by the same slowly
             // turning wind, now to the left, now to the right, sometimes lifted upwards; each leaf only answers a
@@ -721,7 +722,6 @@ function makeSeason_autumn(opts, DATA) {
     }
     function draw() {
         speech.position();
-        canvas.height=state.inside?120:236;
         const vh=canvas.height, ratio = resolution;
         if (renderCanvas.width !== 342 * ratio || renderCanvas.height !== vh * ratio) {
             renderCanvas.width = 342 * ratio;
@@ -738,7 +738,7 @@ function makeSeason_autumn(opts, DATA) {
         const back = DATA.backdrop && DATA.backdrop[state.stage >= 4 ? "clean" : state.stage >= 3 ? "clear" : "polluted"];
         const PARALLAX = [ [ "sky", .08, .1 ], [ "far", .22, .3 ], [ "mid", .5, .6 ] ];
         if (state.mapOpen) {
-            const sc = Math.min(342 / DATA.width, 236 / DATA.height), ox = (342 - DATA.width * sc) / 2;
+            const sc = Math.min(342 / DATA.width, canvas.height / DATA.height), ox = (342 - DATA.width * sc) / 2;
             if (back) for (const [k] of PARALLAX) { const im = images.get(back[k]); ctx.drawImage(im, ox, 0, im.width * sc, im.height * sc); }
             ctx.drawImage(bg, ox, 0, DATA.width * sc, DATA.height * sc);
             const boat=images.get(DATA.boat), river=DATA.river;
@@ -766,9 +766,17 @@ function makeSeason_autumn(opts, DATA) {
             drawRiver();
             drawSigns();
             drawFoliage(false);
+            opts.drawResidents?.(ctx, state, canvas.height);
             for (const n of npcRows()) {
                 if (Math.abs(n.x - state.x) > 240 || Math.abs(n.y - state.y) > 190) continue;
-                ctx.drawImage(window.liweiStory?.frameFor(n.name,n)||images.get(DATA.npcs[n.seed][(state.time + n.seed) % 4.7 < .16 ? 1 : 0]), n.x - 10, n.y - 28);
+                if (n.sitting) {
+                    ctx.fillStyle = "#644c40";
+                    ctx.fillRect(n.x-5,n.y-6,2,6);
+                    ctx.fillRect(n.x+4,n.y-6,2,6);
+                    ctx.fillStyle = "#a38362";
+                    ctx.fillRect(n.x-6,n.y-8,13,3);
+                }
+                ctx.drawImage(window.liweiStory?.frameFor(n.name,n,n.sitting ? "sit" : undefined)||images.get(DATA.npcs[n.seed][(state.time + n.seed) % 4.7 < .16 ? 1 : 0]), n.x - 10, n.y - 28);
                 if (window.liweiStory ? n.mark : state.quest === 0 && n.id === "jian" || state.quest === 2 && n.id === "father") {
                     ctx.fillStyle = "#efc452";
                     ctx.fillRect(n.x - 1, n.y - 39, 3, 7);
@@ -840,28 +848,28 @@ function makeSeason_autumn(opts, DATA) {
                 ctx.fillStyle = "#c4c1bc";
                 for (let i = 0; i < 12; i++) {
                     const x = DATA.smoke[0] - state.camX + Math.round((state.time * 5 + i * 7) % 65), y = DATA.smoke[1] - state.camY - (state.time * 2 + i * 5) % 45;
-                    if (x >= 0 && x < 342 && y >= 0 && y < 236) ctx.fillRect(x, y, 3 + i % 3, 1);
+                    if (x >= 0 && x < 342 && y >= 0 && y < canvas.height) ctx.fillRect(x, y, 3 + i % 3, 1);
                 }
             }
             drawAir();
-            fx.weather(ctx, weatherKind, state.time, 342, 236);
+            fx.weather(ctx, weatherKind, state.time, 342, canvas.height);
         }
         const h = opts.now() % 1440 / 60, night = h < 6 || h >= 20 ? .38 : h < 7 || h >= 18 ? .16 : 0;
         if (night) {
             ctx.fillStyle = `rgba(26,22,37,${night})`;
-            ctx.fillRect(0, 0, 342, 236);
+            ctx.fillRect(0, 0, 342, canvas.height);
         }
         if (state.door) {
             const alpha = Math.sin(Math.min(1, state.door.elapsed / .65) * Math.PI);
             ctx.fillStyle = `rgba(38,42,54,${alpha})`;
-            ctx.fillRect(0, 0, 342, 236);
+            ctx.fillRect(0, 0, 342, canvas.height);
         }
         if (state.service) {
             ctx.fillStyle = "#262a36";
-            ctx.fillRect(99, state.inside ? 114 : 215, 144, state.inside ? 5 : 13);
+            ctx.fillRect(99, canvas.height - 6, 144, 5);
             ctx.fillStyle = "#a7cd6b";
             const v = opts.needs()[state.service.need];
-            ctx.fillRect(101, state.inside ? 116 : 217, Math.round(140 * v / 100), state.inside ? 2 : 9);
+            ctx.fillRect(101, canvas.height - 4, Math.round(140 * v / 100), 2);
         }
     }
     function hit(x, y) {
@@ -877,7 +885,7 @@ function makeSeason_autumn(opts, DATA) {
     function pick(x, y) {
         clearKeys();
         if (state.mapOpen) {
-            const sc = 236 / DATA.height, ox = (342 - DATA.width * sc) / 2;
+            const sc = Math.min(342 / DATA.width, canvas.height / DATA.height), ox = (342 - DATA.width * sc) / 2;
             x = (x - ox) / sc;
             y /= sc;
             state.mapOpen = false;
@@ -926,6 +934,7 @@ function makeSeason_autumn(opts, DATA) {
         frameDt = state.paused ? 0 : realDt;
         if (!state.paused) {
             state.time += realDt;
+            if (!state.inside && !state.mapOpen && !state.door && !dialog && modal.hidden && !window.liweiStory?.locked()) state.streetTime += realDt;
             advanceDoor(realDt);
             if (state.inside) opts.home?.tickResident(dt);
             move(dt);
@@ -960,7 +969,7 @@ function makeSeason_autumn(opts, DATA) {
         state.x = landmark("airstrip").x;
         state.y = landmark("airstrip").y;
         state.camX = state.x - 171;
-        state.camY = state.y - 110;
+        state.camY = state.y - 75;
         state.autoAt = opts.now() + 30;
     }
     function restore() {
@@ -990,6 +999,7 @@ function makeSeason_autumn(opts, DATA) {
         const p = nearest(state.x, state.y);
         state.x = p.x;
         state.y = p.y;
+        camera(Infinity);
         if (state.target) {
             const target = state.route.at(-1) || state.target;
             const goal = state.goal;
@@ -1002,7 +1012,7 @@ function makeSeason_autumn(opts, DATA) {
     canvas.getBoundingClientRect = () => opts.view.getBoundingClientRect();
     canvas.addEventListener("pointerdown", e => {
         const b = opts.view.getBoundingClientRect();
-        pick((e.clientX - b.left) * 342 / b.width + state.camX, (e.clientY - b.top) * canvas.height / b.height + state.camY);
+        pick((e.clientX - b.left) * 342 / b.width + (state.mapOpen ? 0 : state.camX), (e.clientY - b.top) * canvas.height / b.height + (state.mapOpen ? 0 : state.camY));
     });
     window.addEventListener("keydown", e => {
         if (opts.active() && e.key === "Escape" && (!modal.hidden || dialog)) {

@@ -710,7 +710,7 @@
       : Math.max(0, Math.min(data.width - 342, world.x - 171));
     world.camY = inside
       ? 0
-      : Math.max(0, Math.min(data.height - 236, world.y - 118));
+      : Math.max(0, Math.min(data.height - city.canvas.height, world.y - 75));
     p.cueLoc = loc;
   }
   function perform(action) {
@@ -862,6 +862,7 @@
         y,
         loc,
         mark,
+        sitting: !staged && (Math.floor(world.streetTime / 26) + seed * 3) % 5 === 1,
       });
     }
     if (active && scenes[p.chapter]) {
