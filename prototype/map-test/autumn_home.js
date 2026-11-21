@@ -10,19 +10,19 @@ const autumnHome=(function(){
  const SPOTS={
   bed:{name:'客房床铺',rect:[11,32,42,20],x:30,y:50,act:'sleep',need:'energy',hide:true},
   jianBed:{name:'阿简的床',rect:[83,32,42,20],x:131,y:50,look:['这是阿简的床。我的床在隔壁。']},
-  wardrobe:{name:'衣柜',rect:[135,17,22,34],x:146,y:50,act:'season_tidy',need:'fun'},
-  bath:{name:'浴缸',rect:[211,24,31,29],x:226,y:50,act:'bath',need:'hygiene',hide:true},
-  sink:{name:'洗手台',rect:[248,30,18,16],x:257,y:50,act:'wash',need:'hygiene'},
-  wc:{name:'卫生间',rect:[267,30,16,24],x:275,y:50,act:'toilet',need:'bladder',face:-1},
+  wardrobe:{name:'衣柜',rect:[185,17,22,34],x:196,y:50,act:'season_tidy',need:'fun'},
+  bath:{name:'浴缸',rect:[261,24,31,29],x:276,y:50,act:'bath',need:'hygiene',hide:true},
+  sink:{name:'洗手台',rect:[298,30,18,16],x:307,y:50,act:'wash',need:'hygiene'},
+  wc:{name:'卫生间',rect:[317,30,16,24],x:325,y:50,act:'toilet',need:'bladder',face:-1},
   sofa:{name:'沙发',rect:[9,90,40,19],x:28,y:108,act:'season_sofa',need:'fun',face:1},
-  table:{name:'餐桌',rect:[283,96,32,17],x:287,y:108,act:'eat',need:'hunger',face:1},
+  table:{name:'餐桌',rect:[283,102,36,13],x:287,y:108,act:'eat',need:'hunger',face:1},
   tv:{name:'电视',rect:[55,84,32,25],x:28,y:108,act:'tv',need:'fun',face:1},
-  desk:{name:'接待前台',rect:[123,82,34,28],x:126,y:108,look:['来访登记簿摊在台灯下面。','桌上的卷宗都按日期排好了。']},
-  counter:{name:'水槽',rect:[210,92,24,17],x:222,y:108,act:'wash',need:'hygiene',face:1},
-  stove:{name:'灶台',rect:[234,92,27,17],x:229,y:108,act:'cook',need:'hunger',face:1},
+  desk:{name:'接待前台',rect:[147,81,52,30],x:149,y:108,look:['来访登记簿摊在台灯下面。','桌上的卷宗都按日期排好了。']},
+  counter:{name:'水槽',rect:[260,87,24,15],x:272,y:108,act:'wash',need:'hygiene',face:1},
+  stove:{name:'灶台',rect:[284,88,27,14],x:289,y:108,act:'cook',need:'hunger',face:1},
   fridge:{name:'冰箱',rect:[320,78,16,31],x:322,y:108,act:'snack',need:'hunger',face:1,log:'从阿简的冰箱里找了点现成的。'},
   window:{name:'窗户',rect:[11,10,32,22],x:26,y:50,look:['外面的烟囱还在冒烟','楼下有人在搬货']},
-  exit:{name:'出门',rect:[166,72,14,36],x:172,y:108}
+  exit:{name:'出门',rect:[216,72,14,36],x:222,y:108}
  };
  const NEED_SPOT={energy:'bed',hygiene:'bath',bladder:'wc',hunger:'stove',fun:'sofa'};
  const spots=Object.entries(SPOTS).map(([id,p])=>({id,...p}));
@@ -40,7 +40,7 @@ const autumnHome=(function(){
  }
  function arrived(id){const p=SPOTS[id],s=S();if(!p)return;
   if(p.look){speakCity(pick(p.look));return;}
-  const auto=!!s.lastAuto;s.x=p.x;s.y=p.y;s.facing=p.face||(p.x>172?1:-1);svc={id,act:p.act};s.homeSpot=id;s.iy=({tv:-3,sofa:-3,table:-4,wc:-3})[id]||0;s.hideHero=!!p.hide;
+  const auto=!!s.lastAuto;s.x=p.x;s.y=p.y;s.facing=p.face||(p.x>222?1:-1);svc={id,act:p.act};s.homeSpot=id;s.iy=({tv:-3,sofa:-3,table:-4,wc:-3})[id]||0;s.hideHero=!!p.hide;
   seasonHouse.start(p.act,{auto,log:p.log});}
  function speakCity(t){showHint(t);}
  // the city's care(need) and the door bring her here
@@ -54,7 +54,7 @@ const autumnHome=(function(){
   use(id,false);}
  // ---------------------------------------------------------------- drawing (house px, inside only)
  const SLEEPY={expr:'sleepy',look:0,bob:0,sway:0,wave:null};
- const MEAL_AT=[300,86],COOK_FX=[240,80],PILLOW=[12,32],TUB_RIM=40;
+ const MEAL_AT=[299,89],COOK_FX=[290,80],PILLOW=[12,32],TUB_RIM=40;
  function under(ctx){drawResident(ctx);seasonHouse.cookFx(ctx,COOK_FX[0],COOK_FX[1]);seasonHouse.meal(ctx,MEAL_AT[0],MEAL_AT[1]);}
  function over(ctx){const s=S();
   if(svc&&!s.goal){
@@ -73,7 +73,7 @@ const autumnHome=(function(){
   if(minute>=720&&minute<780||minute>=1080&&minute<1140)return {id:'meal',x:313,y:108};
   if(minute>=1140)return {id:'rest',x:41,y:108};
   if(!story.progress.done.includes('S03'))return null; // 阿简 left for the mine immediately after the introduction.
-  return {id:'work',x:145,y:108};
+  return {id:'work',x:175,y:108};
  }
  function tickResident(dt){
   const goal=residentGoal(),s=S();
@@ -82,7 +82,7 @@ const autumnHome=(function(){
   let budget=WALK*dt;
   for(let leg=0;leg<3&&budget>0;leg++){
    const changingFloor=r.y!==goal.y;
-   const x=changingFloor?193:goal.x,y=changingFloor&&r.x!==193?r.y:goal.y;
+   const x=changingFloor?243:goal.x,y=changingFloor&&r.x!==243?r.y:goal.y;
    const dx=x-r.x,dy=y-r.y,d=Math.hypot(dx,dy);
    if(!d)break;
    const step=Math.min(d,budget);
@@ -100,14 +100,14 @@ const autumnHome=(function(){
    ctx.drawImage(sprite,0,0,DW,15,0,0,DW,15);ctx.restore();
    seasonHouse.sleepFx(ctx,101,20);
   }else{
-   ctx.drawImage(sprite,x-DW/2,y-DH+(resting?-2:1));
-   if(resting&&goal.id==='meal')ctx.drawImage(frameOf(IMG.fx.meal,4),304,86);
-   if(resting&&goal.id==='work'&&officeImage.naturalWidth)ctx.drawImage(officeFront(),123,97);
+   ctx.drawImage(sprite,x-DW/2,y-DH+(resting?(goal.id==='work'?-7:-2):1));
+   if(resting&&goal.id==='meal')ctx.drawImage(frameOf(IMG.fx.meal,4),304,89);
+   if(resting&&goal.id==='work'&&officeImage.naturalWidth)ctx.drawImage(officeFront(),147,97);
   }
  }
  function officeFront(){
-  if(!officeFront.image){const c=document.createElement('canvas');c.width=34;c.height=13;
-   c.getContext('2d').drawImage(officeImage,123,97,34,13,0,0,34,13);officeFront.image=c;}
+  if(!officeFront.image){const c=document.createElement('canvas');c.width=52;c.height=14;
+   c.getContext('2d').drawImage(officeImage,147,97,52,14,0,0,52,14);officeFront.image=c;}
   return officeFront.image;
  }
  const officeImage=new Image();officeImage.src=C().DATA.inside;
@@ -158,7 +158,11 @@ const autumnHome=(function(){
    if(saved?.mode==='act'&&p?.act===saved.act&&Number.isFinite(saved.actEnd)&&saved.actEnd>sim.t){
     Object.assign(sim,{mode:'act',act:p.act,actEnd:saved.actEnd,nap:!!saved.nap});
     svc={id,act:p.act};s.x=p.x;s.y=p.y;s.hideHero=!!p.hide;
-   }else{s.hideHero=false;s.iy=0;s.homeSpot=null;}
+   }else{
+    s.hideHero=false;s.iy=0;s.homeSpot=null;
+    const goal=s.goal,spot=goal?.id==='exit_inside'?SPOTS.exit:goal?.id==='home_use'?SPOTS[goal.spot]:null;
+    if(spot)C().goTo(spot.x,spot.y,goal);
+   }
   }
   return result;
  };

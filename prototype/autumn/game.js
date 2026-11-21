@@ -94,7 +94,7 @@ function makeSeason_autumn(opts, DATA) {
         }
     }
     // Both floors connect at the central stair landing.
-    const indoorNodes = [{x:18,y:108},{x:140,y:108},{x:172,y:108},{x:193,y:108},{x:326,y:108},{x:193,y:50},{x:18,y:50},{x:225,y:50},{x:275,y:50}];
+    const indoorNodes = [{x:18,y:108},{x:140,y:108},{x:222,y:108},{x:243,y:108},{x:326,y:108},{x:243,y:50},{x:18,y:50},{x:275,y:50},{x:325,y:50}];
     const indoorPairs = [[0,1],[1,2],[2,3],[3,4],[3,5],[5,6],[5,7],[7,8]];
     function graph() {
         if (!state.inside) return {
@@ -342,7 +342,7 @@ function makeSeason_autumn(opts, DATA) {
     }
     function leave() {
         close();
-        goTo(172, 108, {
+        goTo(222, 108, {
             id: "exit_inside"
         });
     }
@@ -431,12 +431,12 @@ function makeSeason_autumn(opts, DATA) {
     }
     const indoorSpots = [
       {id:"bed",name:"客房床铺",x:30,y:50,rect:[11,32,42,20],need:"energy"},
-      {id:"bath",name:"浴缸",x:225,y:50,rect:[211,18,31,35],need:"hygiene"},
-      {id:"wc",name:"卫生间",x:275,y:50,rect:[268,30,16,24],need:"bladder"},
-      {id:"kitchen",name:"厨房",x:240,y:108,rect:[209,69,76,42],need:"hunger"},
+      {id:"bath",name:"浴缸",x:275,y:50,rect:[261,18,31,35],need:"hygiene"},
+      {id:"wc",name:"卫生间",x:325,y:50,rect:[318,30,16,24],need:"bladder"},
+      {id:"kitchen",name:"厨房",x:290,y:108,rect:[259,69,76,42],need:"hunger"},
       {id:"sofa",name:"沙发",x:28,y:108,rect:[9,90,40,19],need:"social"},
       {id:"books",name:"电视",x:28,y:108,rect:[55,84,32,25],need:"fun"},
-      {id:"exit",name:"出门",x:172,y:108,rect:[166,72,14,36]}
+      {id:"exit",name:"出门",x:222,y:108,rect:[216,72,14,36]}
     ];
     function insideVisit(need) {
         if (opts.home) return opts.home.need(need);   // the game shell: the home's own acts (map-test/autumn_home.js)
@@ -544,7 +544,7 @@ function makeSeason_autumn(opts, DATA) {
         if (!d.mid && d.elapsed >= .3) {
             d.mid = true;
             state.inside = d.to;
-            state.x = d.to ? 172 : landmark("detective_home").x;
+            state.x = d.to ? 222 : landmark("detective_home").x;
             state.y = d.to ? 108 : landmark("detective_home").y;
             state.camX = d.to ? 0 : state.x - 171;
             state.camY = d.to ? 0 : state.y - 118;
@@ -800,7 +800,7 @@ function makeSeason_autumn(opts, DATA) {
                 pose: null,
                 walk: false
             }, null);
-            ctx.drawImage(headCanvas, 0, 0, 20, 15, 218, 26, 20, 15);
+            ctx.drawImage(headCanvas, 0, 0, 20, 15, 268, 26, 20, 15);
         } else if (state.inside && state.service?.need === "energy") {
             ctx.save();
             ctx.translate(42, 44);
@@ -978,6 +978,9 @@ function makeSeason_autumn(opts, DATA) {
         }
         state.liftY = clamp(Number(state.liftY) || DATA.lift.bottom, DATA.lift.top, DATA.lift.bottom);
         state.riding = false;
+        // Older office saves may be halfway up the previous stairwell.
+        if (state.inside && state.y > 50 && state.y < 108) state.x = 243;
+        if (state.resident?.y > 50 && state.resident.y < 108) state.resident.x = 243;
         const p = nearest(state.x, state.y);
         state.x = p.x;
         state.y = p.y;

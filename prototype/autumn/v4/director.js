@@ -679,7 +679,7 @@
   function relocate(loc, inside = false) {
     const pos = where(loc);
     world.inside = inside;
-    world.x = inside ? 172 : pos.x;
+    world.x = inside ? 222 : pos.x;
     world.y = inside ? 108 : pos.y;
     city.clearRoute();
     world.camX = inside

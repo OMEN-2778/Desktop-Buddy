@@ -1544,17 +1544,27 @@ def polluted_city():return city_layers(0,True)[0]
 def detective_inside():
  import friend_houses as FH
  import _furniture as F
- plan=('detective','阿简的侦探事务所',342,'双卧室与接待大厅','oak',[
-  [('guest_bed',6,68),('bed',78,82),('stair',164,40),('bath',208,78)],
-  [('reception',6,154),('entry_stair',164,40),('kitchen',208,128)]])
+ plan=('detective','阿简的侦探事务所',342,'双卧室与接待大厅','library',[
+  [('guest_bed',6,68),('bed',78,132),('stair',214,40),('bath',258,78)],
+  [('reception',6,204),('entry_stair',214,40),('kitchen',258,78)]])
  _,bg,front=FH.draw_plan(plan)
  room=Sprite(342,120,P.cut[0]);room.blit(bg,0,0)
+ # A raised walnut counter with two recessed panels and a continuous plinth.
+ desk=Sprite(52,14);wood=P.walnut
+ desk.rect(1,2,50,12,wood[0]).rect(2,3,48,10,wood[2])
+ for x in (4,27):
+  desk.rect(x,4,21,8,wood[1]).rect(x+1,5,19,6,wood[3]).rect(x+2,6,17,4,wood[2])
+ desk.rect(0,0,52,3,wood[1]).hline(1,50,0,wood[4]).hline(2,49,12,wood[1])
  for sprite,x,bottom in [(F.window(),14,92),(F.sofa(),9,109),(F.media_console(),55,109),
-                         (F.tv(),58,99),(F.bookshelf(),92,109),(F.office_chair(),139,109),
-                         (F.desk(),123,110),(F.monitor(),136,97),(F.desk_lamp(True),123,97),
-                         (F.art_print(18,12,'hills'),128,81),(F.chair('left'),309,111)]:
+                         (F.tv(),58,99),(F.bookshelf(),103,109),(F.office_chair(),169,109),
+                         (desk,147,111),(F.monitor(),152,97),(F.desk_lamp(True),185,97),
+                         (F.art_print(18,12,'hills'),162,79),(F.chair(),283,113),
+                         (F.chair('left'),311,113),(F.dining_table(),292,115)]:
   room.blit(sprite,x,bottom-sprite.h)
  room.blit(front,0,0)
+ room.recolor({**dict(zip(P.plaster_bed,[P.walnut[2],P.oat[0],P.oat[1],P.wall_cream[1]])),
+               **dict(zip(P.plaster_bath,P.wall_sage)),**dict(zip(P.oak,P.walnut))})
+
  return room
 
 def build():
