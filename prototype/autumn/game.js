@@ -573,31 +573,9 @@ function makeSeason_autumn(opts, DATA) {
         im.src = src;
         return im.decode();
     }
-    // Pixel-row bending: roots fixed, attached crown, independent phase/rate.
-    // Cache warped native sprites; no per-frame rasterization once a wind shape exists.
-    const windCache = new Map;
-    function windAmount(p, time = state.time) {
-        if (p.kind === "reed") return Math.round((Math.sin(time * 1.5 - p.x * .045) + .3 * Math.sin(time * .6 + p.frame)) * 2.2 * 4) / 4;   // reeds bend together, a wave passing along the shore
-        const phase = p.frame * 2.399963, rate = .9 + p.frame % 7 * .073;
-        return Math.round((Math.sin(time * rate + phase) + .23 * Math.sin(time * .47 + phase * .7)) * (p.kind === "tree" ? 2.3 : .7) * 4) / 4;
-    }
     const [foliageWidth, foliageHeight] = DATA.foliageCell;
     const foliageCol = p => p.frame % DATA.foliageCols * foliageWidth;
     const foliageRow = p => Math.floor(p.frame / DATA.foliageCols) * foliageHeight;
-    function windSprite(p) {
-        const wind = windAmount(p), key = state.stage + ":" + p.frame + ":" + wind;
-        if (windCache.has(key)) return windCache.get(key);
-        const c = document.createElement("canvas");c.width = p.w + 6;c.height = p.h;
-        const g = c.getContext("2d"), root = Math.max(1,p.base-p.y);
-        g.imageSmoothingEnabled = false;
-        const sx = foliageCol(p), sy = foliageRow(p);
-        for (let y=0;y<p.h;y++) {
-            const height = Math.max(0,1-y/root), dx = Math.round(wind*height*height);
-            g.drawImage(images.get(DATA.foliageSheets[state.stage]),sx,sy+y,p.w,1,3+dx,y,p.w,1);
-        }
-        if (windCache.size >= 384) windCache.delete(windCache.keys().next().value);
-        windCache.set(key,c);return c;
-    }
     function drawFalls() {
         // the waterfall's sheet keeps falling: bright streaks slide down each leap, foam flickers at the foot
         if (!DATA.water) return;
@@ -667,58 +645,9 @@ function makeSeason_autumn(opts, DATA) {
             const rail = it.rail >= 0, overlap = front && state.x + 12 > p.x && state.x - 12 < p.x + p.w && state.y > p.y && state.y - (rail ? 30 : 29) < p.y + p.h, key = rail ? "rail" + it.rail : "tree" + p.frame, target = overlap ? (rail ? .28 : .3) : 1, prev = foregroundAlpha.get(key) ?? 1, alpha = prev + (target - prev) * (1 - Math.exp(-frameDt * 14));
             foregroundAlpha.set(key, alpha);
             ctx.globalAlpha = alpha;
-            if (rail) ctx.drawImage(images.get(p.img), p.x, p.y); else ctx.drawImage(windSprite(p), p.x - 3, p.y);
+            if (rail) ctx.drawImage(images.get(p.img), p.x, p.y); else ctx.drawImage(images.get(DATA.foliageSheets[state.stage]), foliageCol(p), foliageRow(p), p.w, p.h, p.x, p.y, p.w, p.h);
         }
         ctx.globalAlpha = 1;
-    }
-    // Owner 2026-11-13: clean town = maple leaves drifting down (smooth, graceful); polluted = sand blown sideways.
-    // Both are functions of state.time only (nothing to save) and are tied to the world, so they slide past when the
-    // camera moves.
-    const LEAF_COL = [ [ "#e88a2f", "#b5542a" ], [ "#d9542b", "#963a2a" ], [ "#efc452", "#c58a2e" ], [ "#e88a2f", "#b5542a" ], [ "#c8452e", "#8a3328" ] ];
-    const LEAF_BIG = [ [ ".#.#.", "#####", ".##d.", "..d.." ], [ ".##..", "###d.", ".#dd.", "...d." ], [ "..#..", ".##..", ".#d..", "..d.." ], [ "..##.", ".d###", ".dd#.", ".d..." ] ];
-    const LEAF_SMALL = [ [ "###", ".d." ], [ "##.", ".#d" ], [ ".#.", ".#.", ".d." ], [ ".##", "d#." ] ];
-    const rnd = i => { const v = Math.sin(i * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
-    const wrap = (v, m) => (v % m + m) % m;
-    function drawAir() {
-        const t = state.time, W = 342 + 24, H = canvas.height + 24;
-        if (state.stage >= 4) {
-            // One wind for the whole town (owner 2026-11-13: "随风吹的感觉"): every leaf is carried by the same slowly
-            // turning wind, now to the left, now to the right, sometimes lifted upwards; each leaf only answers a
-            // little more or less (k) and keeps a small flutter of its own. windX / windY are the wind's displacement
-            // (the integral of its speed), so the picture still depends on the time alone.
-            const windX = -115 * Math.cos(t * .19) - 26 * Math.cos(t * .47 + 1), windY = -22 * Math.sin(t * .31) - 9 * Math.sin(t * .83 + .5);
-            for (let i = 0; i < 96; i++) {
-                const near = i % 5 === 0, a = rnd(i), b = rnd(i + 50), c = rnd(i + 99), k = (near ? 1.15 : .8) + c * .25;
-                const vy = (near ? 14 : 9) + a * 4, ph = t * (1.1 + b * .8) + i * 2.4;
-                const x = wrap(a * 977 + windX * k + Math.sin(ph) * (2 + c * 2.5) - state.camX, W) - 12;
-                const y = wrap(b * 733 + t * vy + windY * k + Math.cos(ph * 2) * 1.5 - state.camY, H) - 12;
-                // Pixel style (owner 2026-11-13: "这怎么是3d效果…我要的是2d像素风格"): hand-set sprites on whole pixels,
-                // no rotation or scaling; the leaf tumbles by stepping through four drawn frames.
-                const [lit, dark] = LEAF_COL[i % 5], F = (near ? LEAF_BIG : LEAF_SMALL)[Math.floor(wrap(ph * .64 + i, 4))];
-                const X = Math.round(x), Y = Math.round(y);
-                for (let r = 0; r < F.length; r++) for (let q = 0; q < F[r].length; q++) {
-                    const ch = F[r][q];
-                    if (ch === ".") continue;
-                    ctx.fillStyle = ch === "#" ? lit : dark;
-                    ctx.fillRect(X + q, Y + r, 1, 1);
-                }
-            }
-        } else if (state.stage < 3) {
-            const n = [ 110, 90, 64 ][state.stage], gust = .75 + .25 * Math.sin(t * .37) + .2 * Math.sin(t * 1.1 + 1);
-            for (let i = 0; i < 6; i++) {                                                // thin sheets of dust sweeping across
-                const a = rnd(i + 7), x = wrap(a * 900 + t * (60 + a * 30) - state.camX, W + 240) - 240, y = wrap(a * 500 + i * 61 + Math.sin(t * .3 + i) * 10 - state.camY, H) - 12;
-                const g = ctx.createLinearGradient(x, 0, x + 240, 0);
-                g.addColorStop(0, "rgba(196,172,128,0)"); g.addColorStop(.5, `rgba(206,180,132,${.26 * gust})`); g.addColorStop(1, "rgba(196,172,128,0)");
-                ctx.fillStyle = g; ctx.fillRect(x, y, 240, 14 + a * 18);
-            }
-            for (let i = 0; i < n; i++) {
-                const a = rnd(i + 20), b = rnd(i + 70), c = rnd(i + 130), v = (70 + a * 90) * gust;
-                const x = wrap(b * 991 + t * (70 + a * 90) + Math.sin(t * .37) * 30 - state.camX, W) - 12;
-                const y = wrap(c * 811 + t * (4 + a * 5) + Math.sin(t * (1.5 + b) + i) * 3 - state.camY, H) - 12;
-                ctx.fillStyle = `rgba(${i % 3 ? "238,218,176" : "142,112,78"},${.45 + c * .4})`;
-                ctx.fillRect(Math.round(x), Math.round(y), i % 4 ? Math.round(5 + v / 12) : 2, 1);
-            }
-        }
     }
     function draw() {
         speech.position();
@@ -851,7 +780,6 @@ function makeSeason_autumn(opts, DATA) {
                     if (x >= 0 && x < 342 && y >= 0 && y < canvas.height) ctx.fillRect(x, y, 3 + i % 3, 1);
                 }
             }
-            drawAir();
             fx.weather(ctx, weatherKind, state.time, 342, canvas.height);
         }
         const h = opts.now() % 1440 / 60, night = h < 6 || h >= 20 ? .38 : h < 7 || h >= 18 ? .16 : 0;
@@ -1068,8 +996,6 @@ function makeSeason_autumn(opts, DATA) {
         speech: speech,
         DATA: DATA,
         foregroundAlpha: foregroundAlpha,
-        windAmount: windAmount,
-        windSprite: windSprite,
         nodes: nodes,
         edges: edges,
         npcRows: npcRows,

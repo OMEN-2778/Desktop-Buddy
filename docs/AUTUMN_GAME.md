@@ -4,6 +4,8 @@
 
 入口 `/map-test/?liwei=4` 使用独立网页存档。点「栗尾市剧情内测」可越过等待秋天，在家门口见到阿简。按正常季节游玩时，他在秋天出现。已开放的航线可跨季往返。
 
+全城取消横扫沙尘、随风落叶和植被风摆。污染靠天空、烟囱、河水与居民口罩体现。广场人群分批入场，停机坪告别后保留走位；救援前后按食堂与诊所分别安排角色。
+
 街道、事务所和全城地图均沿用小屋的 342×118 画幅。五条街平时各有六位普通行人，关矿线送别后每街留下两位。口罩按环境阶段和游戏日分配，只影响普通行人。剧情角色偶尔坐在矮凳上，仍走原有的任务和闲聊入口。
 
 当前内测剧本在 `prototype/autumn/v4/script.json`。对白、选项和演出按场次排列，`director.js` 把它们绑定到地图地点、角色、环境阶段和实际存档。广场选择影响后续送别、两处回访和山顶结局。测试覆盖命令为 `node tools/check_liwei_v4.js`，先构建地图测试页。下文旧剧情记录适用于原地图冒烟测试。
@@ -112,12 +114,9 @@ Other seasonal game-shell checks remain in place. No real-device FPS claim.
 - `DATA.signs` and `DATA.signFont` draw Source Han Sans SC Medium text at actual canvas
   resolution, separately from pixel sign plates. FontFace load participates in scene-ready;
   minified page embeds the renamed WOFF subset. OFL text is published as FONT-LICENSE.txt.
-- `windAmount` / `windSprite`: independent tree phases, fixed roots, pixel-row crown
-  bending and bounded native-sprite cache. Pause freezes time; no extra animation loop.
 - All 164 plants keep independent depth/fade; 31 added trees have supported planters.
 - Larger plane and furnished home reviewed in PNG + actual game. Browser regression
-  checks loaded font / antialiased lettering, changing crowns / unchanged roots,
-  asynchronous phases and pause, in addition to story/needs/migration/four-scale UI.
+  checks loaded font / antialiased lettering, static vegetation and pause, in addition to story/needs/migration/four-scale UI.
 - No new furniture interactions added; original six local services stay functional.
 
 ## Summit / detective office follow-up (2026-11-01)

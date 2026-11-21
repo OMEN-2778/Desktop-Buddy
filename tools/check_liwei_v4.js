@@ -71,6 +71,16 @@ const { chromium } = require("playwright"),
             while (s.active) {
               if (++loops > 1500)
                 throw Error("stuck " + JSON.stringify(s.progress));
+              const {chapter, index} = s.progress;
+              if (chapter === "S09" && index === 6) {
+                const cast = s.actors().map(n => n.name);
+                if (!cast.includes("老郑的孙子") || !cast.includes("苏医生") || cast.includes("楼上住户"))
+                  throw Error("clinic rescue cast");
+              }
+              if (chapter === "S12A" && index === 11) {
+                const cast = s.actors(), father = cast.find(n => n.name === "程铁山"), daughter = cast.find(n => n.name === "程青");
+                if (!daughter || Math.abs(father.x-daughter.x) !== 20) throw Error("farewell positions lost");
+              }
               const options = document.querySelector(
                 ".story-choices:not([hidden])",
               );

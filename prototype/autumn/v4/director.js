@@ -23,7 +23,7 @@
     question: "confused",
     swirl: "dazed",
     focus: "focused",
-    dots: "sleepy",
+    dots: "neutral",
     idea: "focused",
   };
   const models = new Map(data.npcNames.map((name, i) => {
@@ -47,6 +47,7 @@
       model.position = actor;
     }
     const [frame, pose] = npcFrame(model);
+    if (actor?.lookAt && !model.v) frame.look = actor.lookAt;
     if (active && name === speaker && expressions[face]) frame.expr = expressions[face];
     if (restingPose === "sleep") frame.expr = "sleepy";
     return npcCanvas(model, frame, restingPose === "sit" ? "sit" : pose, false);
@@ -106,6 +107,7 @@
     face = "",
     cue = "",
     since = 0,
+    pastActions = new Set(),
     timer = 0,
     preview = false,
     flyNext = false,
@@ -148,7 +150,7 @@
   view.parentElement.append(frontBtn);
   const style = document.createElement("style");
   style.textContent = `
- .liwei-controls{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.liwei-controls:empty{display:none}.liwei-jian{position:absolute;z-index:10;background:transparent!important;border:none!important;box-shadow:none!important;padding:0}.liwei-jian b{position:absolute;left:50%;transform:translateX(-50%);bottom:100%;color:#ffe66e;text-shadow:1px 1px #302735}.liwei-caption{position:absolute;inset:0;z-index:16;display:grid;place-content:center;text-align:center;color:white;text-shadow:1px 1px 2px #171322;background:#201d3380;font-weight:bold;animation:liweiFade .3s ease-out}.liwei-caption[hidden],.liwei-jian[hidden]{display:none}.liwei-caption button{font:inherit;padding:.5em 1em}.liwei-caption.dust{background:repeating-linear-gradient(162deg,#936e446b 0 5px,#c1a06f88 6px 11px);background-size:130% 150%;animation:dustBlow .7s linear infinite}@keyframes dustBlow{to{background-position:40px 28px}}@keyframes liweiFade{from{opacity:0}to{opacity:1}}#peerHud.quest .who{color:var(--liwei-who)}
+ .liwei-controls{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.liwei-controls:empty{display:none}.liwei-jian{position:absolute;z-index:10;background:transparent!important;border:none!important;box-shadow:none!important;padding:0}.liwei-jian b{position:absolute;left:50%;transform:translateX(-50%);bottom:100%;color:#ffe66e;text-shadow:1px 1px #302735}.liwei-caption{position:absolute;top:4%;left:50%;transform:translateX(-50%);max-width:92%;width:max-content;box-sizing:border-box;padding:.2em .7em;border-radius:5px;z-index:16;text-align:center;color:#fff6dd;background:#302d38e8;font-weight:bold;pointer-events:none}.liwei-caption[hidden],.liwei-jian[hidden]{display:none}.liwei-caption button{font:inherit;pointer-events:auto;padding:.4em .7em}#peerHud.quest .who{color:var(--liwei-who)}
  `;
   document.head.append(style);
   function portrait(label) {
@@ -618,13 +620,15 @@
     clearTimeout(timer);
     sceneText.hidden = true;
     cue = "";
-    const row = rows()[p.index];
+    const sequence = rows();
+    pastActions = new Set(sequence.slice(0,p.index).filter(row => typeof row === "string" && row.startsWith("!")));
+    const row = sequence[p.index];
     if (!row) {
       finish();
       return;
     }
     if (row.choices) {
-      face = "";
+      speaker = face = "";
       speech.show("选择", "你怎么说？", {
         choices: row.choices.map((label, i) => ({
           label,
@@ -715,12 +719,12 @@
   }
   function perform(action) {
     speech.hide();
-    face = "";
+    speaker = face = "";
     cue = action;
     since = performance.now();
     sceneText.replaceChildren();
     sceneText.hidden = false;
-    sceneText.classList.toggle("dust", action.includes("黄灰"));
+
     if (action.startsWith("调查栈桥")) {
       button(sceneText, "查看木板下的管口", () => {
         sceneText.textContent = "木板下藏着一根粗管，暗通矿池。";
@@ -729,14 +733,6 @@
       return;
     }
     sceneText.textContent = action;
-    if (["人群安静下来", "广场抉择"].includes(action))
-      view.animate(
-        [
-          { filter: "brightness(.82)", transform: "scale(1.018)" },
-          { filter: "brightness(1)", transform: "scale(1)" },
-        ],
-        { duration: 800 },
-      );
     if (action === "进入事务所") relocate("detective_home", true);
     if (action === "送孩子去诊所") relocate("clinic");
     if (action === "维修队封住了尾矿管") p.cueLoc = "pier";
@@ -758,7 +754,6 @@
         程铁山进屋: "程铁山",
         程铁山登机: "程铁山",
         程青登机: "程青",
-        父女道别: "程青",
       }[action];
       if (leaving) p.departed.push(leaving);
       advance();
@@ -807,7 +802,7 @@
     S08A: [0, 2],
     S08B: [0, 2],
     S08C: [0, 3, 2, 6],
-    S09: [0, 2, 8, 3, 1],
+    S09: [0, 2, 8],
     S10: [0, 4],
     S11: [0, 1, 4, 2, 3, 7, 8, 6, 5],
     S12A: [0, 4, 1],
@@ -836,23 +831,31 @@
       if (!spot) return;
       let x = (staged ? world.x : spot.x) + offsets[slot],
         y = (staged ? world.y : spot.y) + (slot % 3 === 2 ? 2 : 0);
-      const progress = Math.min(1, (performance.now() - since) / 780);
-      if (staged && cue) {
-        if (
-          (cue.includes("离场") && cue.startsWith(data.npcNames[seed])) ||
-          (cue.includes("登机") && cue.startsWith(data.npcNames[seed])) ||
-          cue === "散场"
-        )
-          x += Math.round(progress * 38);
-        if (cue === "走上栈桥" || cue === "居民来到广场")
-          x += Math.round((1 - progress) * (slot % 2 ? 32 : -32));
-        if (cue === "程青走近阿简" && seed === 1)
-          x -= Math.round(progress * 32);
-        if (
-          (cue === "父女道别" && seed === 4) ||
-          (cue === "程青走近主角" && seed === 1)
-        )
-          x -= Math.round(progress * 12);
+      if (staged) {
+        const elapsed = reduceMotionUI ? 1000 : Math.max(0,performance.now()-since);
+        const progress = (action, delay=0) => {
+          if (cue !== action) return pastActions.has("!"+action) ? 1 : 0;
+          const t=Math.max(0,Math.min(1,(elapsed-delay)/650));
+          return t*t*(3-2*t);
+        };
+        const side = Math.sign(offsets[slot]);
+        if (p.chapter === "S11") {
+          if (slot >= 3) y -= slot % 2 ? 5 : 9;
+          x += side * Math.round(34*(1-progress("居民来到广场",slot%3*90)));
+          x += side * Math.round(58*progress("散场",slot%3*75));
+        }
+        if (cue === "走上栈桥") x += side*Math.round(20*(1-progress(cue)));
+        if (p.chapter === "S12B") {
+          if (seed === 0) x = world.x - 43;
+          if (seed === 1) x += 8 - Math.round(14*progress("程青走近主角")+41*progress("程青走近阿简"));
+        }
+        if (p.chapter === "S12A") {
+          if (seed === 4) x = world.x + 54;
+          if (seed === 1) x = world.x + 22 + Math.round(12*progress("父女道别"));
+        }
+        const name=data.npcNames[seed];
+        if (cue === name+"登机" || cue === name+"离场" || cue === name+"进屋")
+          x += Math.round((cue.endsWith("登机") ? 1 : side)*52*progress(cue));
       }
       result.push({
         id: ids[seed],
@@ -867,11 +870,17 @@
     }
     if (active && scenes[p.chapter]) {
       const loc = p.cueLoc || scenes[p.chapter].loc || "plaza",
-        cast = casting[p.chapter] || [0, 1, 2, 3, 4];
+        cast = p.chapter === "S09" && loc === "clinic" ? [0,2,6,3,1] : casting[p.chapter] || [0, 1, 2, 3, 4];
       cast.forEach((seed, i) => actor(seed, loc, i, false, true));
       if (p.chapter === "S08A" && p.cueLoc === "pier")
-        actor(1, "pier", 2, false, true);
-      return result;
+        actor(5, "pier", 2, false, true);
+      const target = speaker === "我" ? world : result.find(n => n.name === speaker);
+      for (const n of result) {
+        if (target) n.lookAt = Math.sign((n === target ? world : target).x - n.x);
+        else if (p.chapter === "S12A" && cue === "父女道别" && [1,4].includes(n.seed))
+          n.lookAt = n.seed === 1 ? 1 : -1;
+      }
+      return result.sort((a,b) => a.y-b.y);
     }
     for (const k of next()) {
       const loc = scenes[k]?.loc;
