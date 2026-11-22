@@ -111,7 +111,7 @@ const seasonalTest=(function(){
  };
  const oldCenter=ringCenter;ringCenter=function(){if(!active())return oldCenter();const c=ctl(),s=c.state;return {x:s.x-(s.camera??s.camX??0),y:s.y-(s.camY??0)-13};};
  view.addEventListener('pointerdown',e=>{
-  if(!active())return;e.stopImmediatePropagation();if(ctl()?.state.door||wiping||phoneHolds()||cardHolds()||wardrobeOpen)return;
+  if(!active())return;e.stopImmediatePropagation();if(sim.place==='autumn_test'&&!state.autumn.modal.hidden&&!window.liweiStory?.locked())state.autumn.close();if(ctl()?.state.door||wiping||phoneHolds()||cardHolds()||wardrobeOpen)return;
   const c=ctl(),s=c.state,r=view.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*c.canvas.height/r.height;
   const sx=s.x-(s.camera??s.camX??0),sy=s.y-(s.camY??0);
   if(sim.mode==='down'){if(Math.abs(x-sx)<22&&y>sy-42&&y<sy+12){   /* her whole figure, also when drawn higher than her feet (a float, a chair) */holding={t0:realClock,pointerId:e.pointerId};view.setPointerCapture(e.pointerId);showHint('按住主角 5 秒即可唤醒');}return;}

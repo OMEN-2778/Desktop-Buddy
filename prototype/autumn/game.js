@@ -253,6 +253,7 @@ function makeSeason_autumn(opts, DATA) {
         const p = document.createElement("p");
         p.textContent = text;
         body.append(p);
+        body.hidden = !text;
         const actions = document.createElement("div");
         actions.className = "autumn-actions";
         for (const [label, fn] of choices) {
@@ -410,7 +411,10 @@ function makeSeason_autumn(opts, DATA) {
         };
         if (services[id]) {
             const [label, need] = services[id];
-            return panel(p.name, id === "plaza" ? "长椅边有人歇脚，能坐下来聊几句。" : "走到地方了，先歇口气。", [ [ label, () => beginService(need, p.name) ], ...(window.liweiStory?.facilityChoices(id) || []), ...id === "canteen" ? [ [ "和老郑聊聊", () => converse("zhou") ] ] : [], [ "离开" ] ]);
+            const choices = window.liweiStory?.facilityChoices(id) || [];
+            if (id === "canteen") choices.push(["和老郑聊聊", () => converse("zhou")]);
+            if (!choices.length) return beginService(need, p.name);
+            return panel(p.name, "", [[label, () => beginService(need, p.name)], ...choices, ["离开"]]);
         }
         const discoveries = {
             nursery: "苗圃的叶片上积着一层灰。",
@@ -418,7 +422,7 @@ function makeSeason_autumn(opts, DATA) {
             mine: "旧矿道墙上留着工人的照片，最下面那排比上面的新。",
             townhall: "市政厅的告示里夹着旧矿区改造的申请，盖章的日期很早。"
         };
-        panel(p.name, discoveries[id] || "这里可以停下来看看。", [ [ "仔细看看", () => discover(id, discoveries[id] || "在栗尾市走了一段路。") ], [ "离开" ] ]);
+        if (discoveries[id]) discover(id, discoveries[id]);
     }
     function discover(id, text) {
         if (state.found.includes(id)) {
@@ -562,7 +566,7 @@ function makeSeason_autumn(opts, DATA) {
         }
         const viewProgress = !state.inside && state.x > 80 + (DATA.ox || 0) && state.x < 345 + (DATA.ox || 0) ? clamp((DATA.summit.triggerY-state.y)/65,0,1) : 0;
         const ease=viewProgress*viewProgress*(3-2*viewProgress);
-        const x = clamp(state.x - 171, 0, DATA.width - 342), y = clamp(state.y - 75-ease*30, 0, DATA.height - canvas.height), t = 1 - Math.exp(-dt * 5);
+        const x = clamp(state.x - 171, 0, DATA.width - 342), y = clamp(state.y - 75+ease*14, 0, DATA.height - canvas.height), t = 1 - Math.exp(-dt * 5);
         state.camX += (x - state.camX) * t;
         state.camY += (y - state.camY) * t;
     }
@@ -833,7 +837,7 @@ function makeSeason_autumn(opts, DATA) {
             ...npc,
             npc: true
         };
-        return DATA.landmarks.find(p => x >= p.rect[0] && y >= p.rect[1] && x < p.rect[0] + p.rect[2] && y < p.rect[1] + p.rect[3]);
+        return DATA.landmarks.find(p => (p.id !== "lookout" || (Math.abs(x-p.x)<18 && y<=p.y && y>=p.y-28)) && x >= p.rect[0] && y >= p.rect[1] && x < p.rect[0] + p.rect[2] && y < p.rect[1] + p.rect[3]);
     }
     function pick(x, y) {
         clearKeys();
