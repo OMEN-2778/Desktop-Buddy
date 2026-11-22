@@ -6,6 +6,9 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-22 · 任务组标题
+- 去掉组名数量，以暖棕箭头、细分隔线和统一缩进对齐组标题与任务卡。
+
 ## 2026-11-22 · 任务面板分组
 - 栗尾市故事与支线任务各自支持折叠，重开面板时保留本次游玩的展开状态。
 

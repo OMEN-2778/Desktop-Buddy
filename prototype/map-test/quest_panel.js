@@ -39,9 +39,15 @@ const questBoard=(function(){
 .qb-head small i{font-style:normal;color:#b5452f;font-weight:700}
 .qb-list{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:8px;padding:2px 6px 4px 2px;scrollbar-width:thin;scrollbar-color:var(--bevel-lo) transparent;overscroll-behavior:contain}
 .qb-group{flex:none;min-width:0}
-.qb-group summary{cursor:pointer;padding:8px 6px;color:var(--ink);font-weight:700;border-bottom:2px solid var(--bevel-lo)}
-.qb-group summary::marker{color:#846744}
-.qb-group-body{display:grid;gap:6px;padding:6px 0 2px 10px}
+.qb-group summary{display:flex;align-items:center;gap:8px;min-height:34px;padding:3px 8px;box-sizing:border-box;cursor:pointer;list-style:none;color:#563e30;font:700 var(--ui-font-label,14px)/1.3 var(--font);border-radius:4px;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.qb-group summary::-webkit-details-marker{display:none}
+.qb-group summary::before{content:"";width:8px;height:8px;flex:none;background:#886743;clip-path:polygon(18% 0,100% 50%,18% 100%)}
+.qb-group[open]>summary::before{transform:rotate(90deg)}
+.qb-group summary::after{content:"";flex:1;height:1px;background:#d4c6b6}
+@media (hover:hover){.qb-group summary:hover{background:#f2eadf}}
+.qb-group summary:active{background:#ece0d0}
+.qb-group summary:focus-visible{outline:2px solid #886743;outline-offset:-2px}
+.qb-group-body{display:grid;gap:6px;padding:2px 8px 4px 24px}
 .qb-card{position:relative;isolation:isolate;display:grid;grid-template-columns:var(--qb-ico,32px) minmax(0,1fr) auto;grid-template-rows:auto auto;align-content:center;align-items:center;gap:1px 10px;height:var(--qb-h,54px);padding:0 calc(var(--qb-h,54px) / 2 - 4px) 0 calc(var(--qb-h,54px) / 2 - 8px);flex:none;
  opacity:0;translate:0 8px;transition:translate .25s var(--hud-settle),filter .2s}
 .qb-card::before,.qb-card::after{content:"";position:absolute;pointer-events:none}
@@ -176,7 +182,7 @@ const questBoard=(function(){
    group.className='qb-group';group.dataset.group=key;
    group.open=expanded.get(key)??members.length>0;
    const heading=document.createElement('summary');
-   heading.textContent=title+'（'+members.length+'）';
+   heading.textContent=title;
    const body=document.createElement('div');body.className='qb-group-body';body.setAttribute('role','list');
    for(const q of members.filter(q=>!q.done))body.append(card(q));
    const finished=members.filter(q=>q.done);
