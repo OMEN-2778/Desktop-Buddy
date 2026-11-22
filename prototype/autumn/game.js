@@ -649,6 +649,30 @@ function makeSeason_autumn(opts, DATA) {
         }
         ctx.globalAlpha = 1;
     }
+    function drawPollution() {
+        const opacity = [.13, .10, .07, .035, 0][state.stage];
+        if (!opacity) return;
+        ctx.save();
+        ctx.fillStyle = "#7c7150";
+        ctx.globalAlpha = opacity;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // One narrow pocket of grit, well apart from the next. Use outdoor
+        // time so pausing or reading dialogue cannot advance the gust.
+        const cycle = Math.floor(state.streetTime / 60);
+        const elapsed = state.streetTime % 60 - (22 + (cycle * 17) % 26);
+        if (state.stage < 3 && weatherKind === "clear" && !reduceMotionUI &&
+            !window.liweiStory?.locked() && elapsed >= 0 && elapsed < 2.4) {
+            const phase = elapsed / 2.4;
+            ctx.globalAlpha = (.32 - state.stage * .06) * Math.sin(Math.PI * phase);
+            const x = -42 + phase * (canvas.width + 70);
+            const y = canvas.height * .72 + (cycle % 4) * 4;
+            for (let i = 0; i < 8; i++) {
+                ctx.fillStyle = i % 3 ? "#cdb98f" : "#978263";
+                ctx.fillRect(Math.round(x + i * 6), Math.round(y + (i * 7) % 11 - phase * 6), i % 3 + 1, 1);
+            }
+        }
+        ctx.restore();
+    }
     function draw() {
         speech.position();
         const vh=canvas.height, ratio = resolution;
@@ -780,6 +804,7 @@ function makeSeason_autumn(opts, DATA) {
                     if (x >= 0 && x < 342 && y >= 0 && y < canvas.height) ctx.fillRect(x, y, 3 + i % 3, 1);
                 }
             }
+            drawPollution();
             fx.weather(ctx, weatherKind, state.time, 342, canvas.height);
         }
         const h = opts.now() % 1440 / 60, night = h < 6 || h >= 20 ? .38 : h < 7 || h >= 18 ? .16 : 0;

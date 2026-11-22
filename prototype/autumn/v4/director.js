@@ -755,7 +755,27 @@
       return;
     }
     sceneText.textContent = action;
-    if (action === "进入事务所") relocate("detective_home", true);
+    if (action === "进入事务所") {
+      sceneText.hidden = true;
+      const fadeOut = view.animate([{filter:"brightness(1)"},{filter:"brightness(0)"}],
+        {duration:reduceMotionUI ? 120 : 420, easing:"ease-in", fill:"forwards"});
+      entrance = fadeOut;
+      fadeOut.onfinish = () => {
+        if (entrance !== fadeOut) return;
+        relocate("detective_home", true);
+        const fadeIn = view.animate([{filter:"brightness(0)"},{filter:"brightness(1)"}],
+          {delay:160, duration:reduceMotionUI ? 160 : 560, easing:"ease-out", fill:"both"});
+        entrance = fadeIn;
+        fadeOut.cancel();
+        fadeIn.onfinish = () => {
+          if (entrance !== fadeIn) return;
+          entrance = null;
+          fadeIn.cancel();
+          advance();
+        };
+      };
+      return;
+    }
     if (action === "送孩子去诊所") relocate("clinic");
     if (action === "维修队封住了尾矿管") p.cueLoc = "pier";
     if (action === "河水渐清") world.stage = 2;
