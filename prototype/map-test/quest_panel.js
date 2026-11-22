@@ -38,6 +38,10 @@ const questBoard=(function(){
 .qb-head small{margin-left:auto;color:var(--muted);font-size:calc(12px * var(--fs,1))}
 .qb-head small i{font-style:normal;color:#b5452f;font-weight:700}
 .qb-list{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:8px;padding:2px 6px 4px 2px;scrollbar-width:thin;scrollbar-color:var(--bevel-lo) transparent;overscroll-behavior:contain}
+.qb-group{flex:none;min-width:0}
+.qb-group summary{cursor:pointer;padding:8px 6px;color:var(--ink);font-weight:700;border-bottom:2px solid var(--bevel-lo)}
+.qb-group summary::marker{color:#846744}
+.qb-group-body{display:grid;gap:6px;padding:6px 0 2px 10px}
 .qb-card{position:relative;isolation:isolate;display:grid;grid-template-columns:var(--qb-ico,32px) minmax(0,1fr) auto;grid-template-rows:auto auto;align-content:center;align-items:center;gap:1px 10px;height:var(--qb-h,54px);padding:0 calc(var(--qb-h,54px) / 2 - 4px) 0 calc(var(--qb-h,54px) / 2 - 8px);flex:none;
  opacity:0;translate:0 8px;transition:translate .25s var(--hud-settle),filter .2s}
 .qb-card::before,.qb-card::after{content:"";position:absolute;pointer-events:none}
@@ -136,7 +140,7 @@ const questBoard=(function(){
  }
  mountTrigger();touchInput.addEventListener('change',mountTrigger);
  const panel=document.createElement('section');panel.className='quest-panel';panel.id='questPanel';panel.setAttribute('aria-label','任务');panel.setAttribute('aria-hidden','true');panel.inert=true;
- panel.innerHTML='<i class="quest-tail" aria-hidden="true"></i><header class="qb-head"><h3>任务</h3><small></small></header><div class="qb-list" role="list"></div><div class="qb-detail" role="region" aria-label="任务回顾"></div>';
+ panel.innerHTML='<i class="quest-tail" aria-hidden="true"></i><header class="qb-head"><h3>任务</h3><small></small></header><div class="qb-list"></div><div class="qb-detail" role="region" aria-label="任务回顾"></div>';
  panel.querySelector('.qb-head').prepend(iconCanvas('scroll'));col.append(panel);
  const list=panel.querySelector('.qb-list'),detailEl=panel.querySelector('.qb-detail'),count=panel.querySelector('.qb-head small');
  function place(){   // trigger: left of the diary circle; panel: right of it, from the diary's top to the house's bottom
@@ -151,7 +155,9 @@ const questBoard=(function(){
  // ---------------------------------------------------------------- content
  const pill=h=>[roundClip(Math.max(1,Math.round(h/4)),2),roundClip(Math.max(1,Math.round((h-4)/4)),2)];   // capsule: radius = half the height, 2px pixel steps
  const all=()=>sources.flatMap(f=>{try{return f()||[];}catch(e){console.error(e);return [];}});
+ const expanded=new Map();
  function fill(){panel.classList.remove('detail');const qs=all(),live=qs.filter(q=>!q.done),done=qs.filter(q=>q.done);
+  for(const group of list.querySelectorAll('details'))expanded.set(group.dataset.group,group.open);
   count.innerHTML=qs.length?`进行中 <i>${live.length}</i> · 已完成 ${done.length}`:'';list.replaceChildren();let i=0;
   const card=q=>{const c=document.createElement('div');c.className='qb-card '+(q.done?'done':'live')+(q.isNew?' new':'');c.setAttribute('role','listitem');c.style.setProperty('--i',i++);
    const ico=document.createElement('span');ico.className='qb-ico';ico.append(iconCanvas(q.kind));
@@ -164,9 +170,23 @@ const questBoard=(function(){
    if(q.go&&!q.done&&q.log?.length){const b=document.createElement('button');b.type='button';b.className='qb-log';b.textContent='记录';b.onclick=e=>{e.stopPropagation();detail(q);};tags.prepend(b);}
    c.tabIndex=0;c.onclick=act;c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act();}};
    c.append(ico,t,tags,p);return c;};
-  live.forEach(q=>list.append(card(q)));
-  if(done.length){const s=document.createElement('div');s.className='qb-sep';s.style.setProperty('--i',i++);s.textContent='已完成';list.append(s);done.forEach(q=>list.append(card(q)));}
-  if(!qs.length)list.innerHTML='<p class="qb-empty">还没有任务。<br>到处走走，和人聊聊，也许有人需要帮忙。</p>';
+  for(const [key,title] of [['liwei','栗尾市故事'],['side','支线任务']]){
+   const members=qs.filter(q=>(q.group||'side')===key);
+   const group=document.createElement('details');
+   group.className='qb-group';group.dataset.group=key;
+   group.open=expanded.get(key)??members.length>0;
+   const heading=document.createElement('summary');
+   heading.textContent=title+'（'+members.length+'）';
+   const body=document.createElement('div');body.className='qb-group-body';body.setAttribute('role','list');
+   for(const q of members.filter(q=>!q.done))body.append(card(q));
+   const finished=members.filter(q=>q.done);
+   if(finished.length){
+    const sep=document.createElement('div');sep.className='qb-sep';sep.style.setProperty('--i',i++);sep.textContent='已完成';body.append(sep);
+    for(const q of finished)body.append(card(q));
+   }
+   if(!members.length){const empty=document.createElement('p');empty.className='qb-empty';empty.textContent='暂无任务';body.append(empty);}
+   group.append(heading,body);list.append(group);
+  }
  }
  let tipEl=null,tipT=0;
  function tip(card,text,ok){tipEl?.remove();clearTimeout(tipT);const t=document.createElement('div');t.className='qb-tip'+(ok?' ok':'');t.textContent=text;panel.append(t);

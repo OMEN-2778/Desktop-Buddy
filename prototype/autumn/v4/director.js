@@ -1083,6 +1083,7 @@
   questBoard.add(() =>
     p.enrolled
       ? next().map((k) => ({
+          group: "liwei",
           title: scenes[k].title,
           step: "前往" + placeName(k),
           place: "栗尾市",
