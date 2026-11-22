@@ -16,6 +16,10 @@ const questBoard=(function(){
 .quest-trigger b{position:absolute;right:-2px;top:-2px;min-width:16px;height:16px;padding:0 3px;font:700 11px/16px var(--font);color:#fff;background:#d9534f;
  clip-path:var(--hud-small-clip);animation:qbPulse 1.6s ease-in-out infinite}
 .quest-trigger b:empty{display:none}
+.house-col>.quest-trigger{position:relative;left:auto!important;top:auto!important;justify-self:start;margin-top:6px;display:inline-flex;align-items:center;gap:6px;width:auto;min-height:44px;height:auto;padding:6px 12px;border:2px solid var(--edge);border-radius:10px;background:#fff4c4;color:var(--ink);font:inherit;transform:none;opacity:1;visibility:visible;pointer-events:auto}
+.house-col>.quest-trigger::before{content:none}
+.house-col>.quest-trigger::after{content:"任务";position:static;inset:auto;z-index:auto;clip-path:none;background:none;box-shadow:none}
+.house-col>.quest-trigger img{width:24px;height:24px}
 .moodrow.quest-peek .quest-trigger img{animation:qb-peek .5s var(--hud-settle,ease-out)}@keyframes qb-peek{0%{scale:.6;rotate:-12deg}60%{scale:1.15;rotate:6deg}100%{scale:1;rotate:0deg}}
 .quest-bridge{position:absolute;z-index:22;width:72px;height:52px;display:none}
 .moodrow.quest-ready .quest-bridge,.moodrow.quests-open .quest-bridge{display:block}
@@ -125,6 +129,12 @@ const questBoard=(function(){
  trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-controls','questPanel');trigger.append(iconCanvas('scroll'),document.createElement('b'));
  const bridge=document.createElement('i');bridge.className='quest-bridge';bridge.setAttribute('aria-hidden','true');
  moodrow.append(bridge,trigger);
+ const touchInput=matchMedia('(any-pointer: coarse), (hover: none)');
+ function mountTrigger(){
+  const host=touchInput.matches&&!document.documentElement.classList.contains('m')?col:moodrow;
+  if(trigger.parentElement!==host)host.append(trigger);
+ }
+ mountTrigger();touchInput.addEventListener('change',mountTrigger);
  const panel=document.createElement('section');panel.className='quest-panel';panel.id='questPanel';panel.setAttribute('aria-label','任务');panel.setAttribute('aria-hidden','true');panel.inert=true;
  panel.innerHTML='<i class="quest-tail" aria-hidden="true"></i><header class="qb-head"><h3>任务</h3><small></small></header><div class="qb-list" role="list"></div><div class="qb-detail" role="region" aria-label="任务回顾"></div>';
  panel.querySelector('.qb-head').prepend(iconCanvas('scroll'));col.append(panel);
@@ -211,8 +221,8 @@ const questBoard=(function(){
   row.addEventListener('pointerleave',queueHide);
  }
  bridge.addEventListener('pointerenter',()=>clearTimeout(hideT));bridge.addEventListener('pointerleave',queueHide);
- trigger.addEventListener('pointerenter',e=>{reveal();if(e.pointerType==='mouse')setOpen(true);});
- trigger.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')queueClose();});
+ trigger.addEventListener('pointerenter',e=>{reveal();if(e.pointerType==='mouse'&&trigger.parentElement===moodrow)setOpen(true);});
+ trigger.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&trigger.parentElement===moodrow)queueClose();});
  trigger.addEventListener('focus',reveal);trigger.addEventListener('click',()=>setOpen(!isOpen));
  panel.addEventListener('pointerenter',()=>{clearTimeout(closeT);clearTimeout(hideT);});
  panel.addEventListener('pointerleave',e=>{if(e.pointerType!=='touch')queueClose();});
