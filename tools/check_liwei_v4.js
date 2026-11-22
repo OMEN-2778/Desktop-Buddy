@@ -36,6 +36,18 @@ const { chromium } = require("playwright"),
             seasonMapTest.state.autumn.state.loaded,
         );
         await p.evaluate(() => {
+          const original = snapshot();
+          const legacy = snapshot();
+          delete legacy.liweiV4;
+          restore(legacy);
+          questBoard.fill();
+          if (questBoard.panel.querySelector('[data-group="liwei"]')) throw Error("unaccepted story group");
+          legacy.liweiV4 = {enrolled:true};
+          restore(legacy);
+          questBoard.fill();
+          if (questBoard.panel.querySelectorAll('[data-group="liwei"] .live').length !== 1)
+            throw Error("accepted opening missing");
+          restore(original);
           closeGuide();
           prefs.guided = true;
           cardMoment = rollCard = rollEvents = () => false;
@@ -179,7 +191,12 @@ const { chromium } = require("playwright"),
               );
             if (k === "S06") {
               const save = snapshot();
+              delete save.liweiV4.enrolled;
               restore(save);
+              questBoard.fill();
+              const group=questBoard.panel.querySelector('[data-group="liwei"]');
+              if (!s.progress.enrolled || !group?.querySelector('.live') || !group.querySelector('.done'))
+                throw Error("in-progress legacy story group");
               s.begin(k, true);
             }
             await drain();
@@ -203,7 +220,13 @@ const { chromium } = require("playwright"),
             )
           )
             throw Error("ending");
-          restore(snapshot());
+          const finishedSave=snapshot();
+          delete finishedSave.liweiV4.enrolled;
+          restore(finishedSave);
+          questBoard.fill();
+          const finishedGroup=questBoard.panel.querySelector('[data-group="liwei"]');
+          if (finishedGroup?.querySelectorAll('.done').length !== s.progress.done.length || finishedGroup.querySelector('.live'))
+            throw Error("completed story group after upgrade");
           const cast = socialState.contacts.filter(c => c.id.startsWith("autumn_"));
           if (cast.length !== 9 || !cast.find(c => c.id === "autumn_child")?.child)
             throw Error("cast missing after reload");

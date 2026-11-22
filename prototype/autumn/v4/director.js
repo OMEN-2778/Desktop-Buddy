@@ -202,6 +202,7 @@
     routeTo = null;
     approaching = false;
     p = Object.assign(fresh(), s?.liweiV4 || {});
+    if (p.chapter || p.done.length) p.enrolled = true;
     const result = restored(s);
     syncCastContacts();
     preview = !!p.enrolled;
@@ -1080,9 +1081,15 @@
     },
     true,
   );
-  questBoard.add(() =>
-    p.enrolled
-      ? next().map((k) => ({
+  questBoard.add(() => {
+    if (!p.enrolled) return [];
+    const completed = p.done.filter(k => scenes[k]).map(k => ({
+      id: "liwei-" + k, group: "liwei", title: scenes[k].title,
+      place: "栗尾市", done: true, end: "已完成",
+    }));
+    const current = p.done.includes("S14") ? [] : next();
+    return current.map((k) => ({
+          id: "liwei-" + k,
           group: "liwei",
           title: scenes[k].title,
           step: "前往" + placeName(k),
@@ -1097,9 +1104,8 @@
             guide(k);
             return true;
           },
-        }))
-      : [],
-  );
+        })).concat(completed);
+  });
   window.liweiStory = {
     locked,
     facilityChoices,

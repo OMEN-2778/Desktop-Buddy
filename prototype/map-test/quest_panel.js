@@ -178,6 +178,7 @@ const questBoard=(function(){
    c.append(ico,t,tags,p);return c;};
   for(const [key,title] of [['liwei','栗尾市故事'],['side','支线任务']]){
    const members=qs.filter(q=>(q.group||'side')===key);
+   if(key==='liwei'&&!members.length)continue;
    const group=document.createElement('details');
    group.className='qb-group';group.dataset.group=key;
    group.open=expanded.get(key)??members.length>0;
