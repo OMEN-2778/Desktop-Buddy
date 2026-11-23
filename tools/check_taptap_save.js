@@ -8,14 +8,15 @@ const { chromium } = require("playwright");
   const html = fs.readFileSync("desktop/taptap-h5/buddy-house/index.html");
   const b = await chromium.launch({ executablePath: "/usr/bin/chromium", args: ["--no-sandbox"] });
   const files = new Map();
-  let archive = null, body, writeCount = 0, failRead = false, failList = false;
+  let archive = null, body, writeCount = 0, failRead = false, failList = false, stallList = false;
   const errors = [];
   const time = () => Math.floor(Date.now() / 1000) - 65;
 
-  async function open({ legacy = null, bridge = true } = {}) {
+  async function open({ legacy = null, bridge = true, promiseCloud = false } = {}) {
     const context = await b.newContext({ viewport: { width: 740, height: 360 }, hasTouch: true, isMobile: true });
     await context.exposeBinding("fakeTap", (_, method, args) => {
       if (method === "getArchiveList") {
+        if (stallList) return { stall: true };
         if (failList) return { error: "list unavailable" };
         return { saves: archive ? [archive] : [] };
       }
@@ -27,7 +28,7 @@ const { chromium } = require("playwright");
         return { filePath: "tapfile://temp/download.json" };
       }
       if (method === "writeFile") {
-        assert(args.filePath.startsWith("tapfile://temp/"));
+        assert(args.filePath.startsWith("tapfile://usr/"));
         files.set(args.filePath, args.data);
         return {};
       }
@@ -41,7 +42,7 @@ const { chromium } = require("playwright");
       archive = { ...args.archiveMetaData, uuid: "player-slot", fileId: "file-" + old, modifiedTime: time() };
       return { uuid: archive.uuid, fileId: archive.fileId };
     });
-    await context.addInitScript(({ legacy, bridge }) => {
+    await context.addInitScript(({ legacy, bridge, promiseCloud }) => {
       if (legacy && !sessionStorage.seeded) {
         localStorage.setItem("buddy-save", JSON.stringify(legacy));
         sessionStorage.seeded = "yes";
@@ -51,19 +52,23 @@ const { chromium } = require("playwright");
       Date.now = () => now() + offset;
       window.jumpSaveClock = () => { offset += 70000; };
       if (!bridge) return;
-      function api(methods) {
+      function api(methods, usePromises) {
         return Object.fromEntries(methods.map(method => [method, args => {
           const { success, fail, ...options } = args;
-          window.fakeTap(method, options).then(result => {
-            if (result?.error) fail?.({ errMsg: result.error }); else success?.(result);
-          }, error => fail?.({ errMsg: error.message }));
+          const request = window.fakeTap(method, options).then(result => {
+            if (result?.stall) return new Promise(() => {});
+            if (result?.error) throw new Error(result.error);
+            return result;
+          });
+          if (usePromises) return request;
+          request.then(success, fail);
         }]));
       }
-      const store = api(["getArchiveList", "getArchiveData", "createArchive", "updateArchive"]);
+      const store = api(["getArchiveList", "getArchiveData", "createArchive", "updateArchive"], promiseCloud);
       const filesystem = api(["writeFile", "readFile", "unlink"]);
-      window.tap = { env: { TEMP_DATA_PATH: "tapfile://temp", USER_DATA_PATH: "tapfile://usr" },
+      window.tap = { env: { USER_DATA_PATH: "tapfile://usr" },
         getCloudSaveManager: () => store, getFileSystemManager: () => filesystem };
-    }, { legacy, bridge });
+    }, { legacy, bridge, promiseCloud });
     const page = await context.newPage();
     page.on("pageerror", error => errors.push(error.message));
     await page.route("https://taptap.test/**", r => r.request().isNavigationRequest()
@@ -85,6 +90,20 @@ const { chromium } = require("playwright");
     assert.equal(saved.sim.t, 5900);
     assert.equal(await first.evaluate(() => localStorage.getItem("buddy-save")), null);
     assert.equal(files.size, 0, "transfer file left after upload");
+    await first.getByRole("button", { name: "查看状态" }).click();
+    assert.equal(await first.locator(".tap-cloud-status").textContent(), "已同步到 TapTap");
+    assert.equal(await first.getByRole("textbox", { name: "存档 UUID" }).inputValue(), archive.uuid);
+    await first.locator(".social-sheet-close").click();
+    await first.evaluate(() => setSettingsOpen(true));
+    const openingURL = first.url();
+    await first.getByRole("button", { name: "导出", exact: true }).click();
+    const backup = first.getByRole("textbox", { name: "存档备份文本" });
+    assert.equal(JSON.parse(await backup.inputValue()).sim.t, 5900);
+    await first.evaluate(() => Object.defineProperty(navigator, "clipboard", { value: null }));
+    await first.getByRole("button", { name: "复制备份" }).click();
+    assert.match(await first.locator(".tap-backup-sheet [role=status]").textContent(), /长按文本/);
+    assert.equal(first.url(), openingURL, "export navigated away from the game");
+    await first.locator(".social-sheet-close").click();
 
     await first.evaluate(async () => {
       const a = store.save({ ...snapshot(), sim: { ...snapshot().sim, t: 6010 } });
@@ -95,7 +114,7 @@ const { chromium } = require("playwright");
     assert.equal(writeCount, 2, "rapid saves were uploaded separately");
     assert.equal(JSON.parse(body).sim.t, 6190);
 
-    const other = await open();
+    const other = await open({promiseCloud:true});
     assert(await other.evaluate(() => sim.t >= 6190 && !tapSave.readError));
     assert.equal(files.size, 0, "transfer file left after download");
     assert(await other.evaluate(async () => { sim.t = 7400; return saveGame(); }));
@@ -116,6 +135,14 @@ const { chromium } = require("playwright");
     assert.equal(await noList.evaluate(() => saveGame()), false);
     assert.equal(writeCount, 3, "list failure created a duplicate");
     failList = false;
+    stallList = true;
+    const start = Date.now();
+    const stalled = await open();
+    assert(Date.now() - start < 14000, "missing cloud callback delayed opening the game");
+    assert.match(await stalled.evaluate(() => tapSave.status), /查询云档失败.*超时/);
+    assert.equal(await stalled.evaluate(() => saveGame()), false);
+    assert.equal(writeCount, 3, "timeout overwrote progress");
+    stallList = false;
 
     const noBridge = await open({ bridge: false });
     await noBridge.evaluate(() => window.dispatchEvent(new Event("pagehide")));
@@ -138,6 +165,6 @@ const { chromium } = require("playwright");
     assert.equal(writeCount, 5);
     assert.equal(files.size, 0);
     assert.deepEqual(errors, []);
-    console.log("PASS TapTap H5 cloud-only write, new-context restore, conflict/read protection, migration and reset");
+    console.log("PASS TapTap H5 launch timeout, cloud backup and UUID, in-game export, cross-context restore and protection");
   } finally { await b.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

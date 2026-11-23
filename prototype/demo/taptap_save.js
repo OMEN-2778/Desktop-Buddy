@@ -1,27 +1,54 @@
 // Injected only by make_taptap_h5.sh. The game state lives in the cloud;
-// TapTap's file APIs only stage the transfer in the runtime's temporary directory.
-function createTapTapSave(validate, readLegacy) {
+// TapTap requires a file for upload. Stage it for the transfer and remove it afterwards.
+window.addEventListener("error", event => {
+  const startup = document.getElementById("tap-startup");
+  if (startup && event.message) startup.textContent = "H5 启动出错　" + event.message.slice(0, 160);
+});
+window.addEventListener("unhandledrejection", event => {
+  const startup = document.getElementById("tap-startup");
+  if (startup) startup.textContent = "H5 启动出错　" + String(event.reason?.message || event.reason).slice(0, 160);
+});
+
+function createTapTapSave(validate, readLegacy, onStatus) {
   const SLOT = "desktop_buddy_autosave";
   const WRITE_INTERVAL = 61000;
-  let cloud, files, tempDir, head, nextWriteAt = 0;
+  let cloud, files, uploadDir, head, nextWriteAt = 0, loadDeadline = 0;
   let ready = false, readError = "", legacy = false;
   let pending = null, writing = false, timer;
+  let status = "正在连接 TapTap";
+  function report(message) {
+    status = message;
+    const startup = document.getElementById("tap-startup");
+    if (startup) startup.textContent = message;
+    onStatus?.();
+  }
 
-  function call(api, method, options = {}) {
+  function failure(error) {
+    return Number.isFinite(error?.code) ? `${error.message}（${error.code}）` : String(error?.message ?? error);
+  }
+
+  function call(api, method, options = {}, limit = 12000, onSettled) {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(Object.assign(new Error("TapTap 存档请求超时"), { timedOut: true }));
-      }, 12000);
-      const finish = (fn, value) => { clearTimeout(timeout); fn(value); };
+      }, loadDeadline ? Math.max(1, Math.min(limit, loadDeadline - Date.now())) : limit);
+      let settled = false;
+      const finish = (fn, value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        fn(value);
+        onSettled?.();
+      };
+      const success = result => finish(resolve, result);
+      const fail = error => finish(reject, Object.assign(
+        new Error(error?.errMsg || error?.message || "TapTap 存档请求失败"),
+        { code: Number(error?.errno ?? error?.errCode) }
+      ));
       try {
-        api[method]({
-          ...options,
-          success: result => finish(resolve, result),
-          fail: error => finish(reject, Object.assign(
-            new Error(error?.errMsg || "TapTap 存档请求失败"), { code: Number(error?.errno) }
-          ))
-        });
-      } catch (error) { finish(reject, error); }
+        const result = api[method]({ ...options, success, fail });
+        if (typeof result?.then === "function") result.then(success, fail);
+      } catch (error) { fail(error); }
     });
   }
 
@@ -43,24 +70,37 @@ function createTapTapSave(validate, readLegacy) {
   function block(message) {
     ready = false;
     readError = message;
+    report(message);
   }
 
   async function load() {
+    let step = "连接";
+    loadDeadline = Date.now() + 8000;
     try {
-      if (typeof tap === "undefined" || !tap.getCloudSaveManager || !tap.getFileSystemManager || !tap.env?.TEMP_DATA_PATH)
-        throw new Error("此客户端暂时无法使用 TapTap 存档");
+      const bridgeDeadline = Date.now() + 1200;
+      while (typeof tap === "undefined" && Date.now() < bridgeDeadline)
+        await new Promise(resolve => setTimeout(resolve, 100));
+      if (typeof tap === "undefined") throw new Error("入口未提供 TapTap 接口");
+      if (typeof tap.getCloudSaveManager !== "function") throw new Error("客户端缺少云存档接口");
+      if (typeof tap.getFileSystemManager !== "function" || !tap.env?.USER_DATA_PATH)
+        throw new Error("客户端缺少存档文件接口");
       cloud = tap.getCloudSaveManager();
       files = tap.getFileSystemManager();
-      tempDir = tap.env.TEMP_DATA_PATH;
+      uploadDir = tap.env.USER_DATA_PATH.replace(/\/+$/, "");
+      step = "查询云档";
+      report("正在查询云存档");
       head = await findArchive();
       let result = null;
       if (head) {
+        step = "下载云档";
+        report("正在下载云存档");
         const { filePath } = await call(cloud, "getArchiveData", {
           archiveUUID: head.uuid,
           archiveFileId: head.fileId
         });
         if (!filePath) throw new Error("TapTap 没有返回存档文件");
         try {
+          step = "读取云档";
           const { data } = await call(files, "readFile", { filePath, encoding: "utf8" });
           // A confirmed reset is stored as a null cloud snapshot, so an old
           // browser save on another device cannot resurrect a reset game.
@@ -72,6 +112,7 @@ function createTapTapSave(validate, readLegacy) {
         } finally { discard(filePath); }
         nextWriteAt = (Number(head.modifiedTime) || 0) * 1000 + WRITE_INTERVAL;
       } else {
+        step = "读取旧档";
         try {
           result = readLegacy();
           legacy = !!result;
@@ -82,14 +123,16 @@ function createTapTapSave(validate, readLegacy) {
         }
       }
       ready = true;
+      report(head ? "已读取云存档" : legacy ? "已读取旧档，等待同步" : "已连接，云端暂无存档");
       return result;
     } catch (error) {
-      block(error.message);
+      block(step + "失败　" + failure(error));
       throw error;
-    }
+    } finally { loadDeadline = 0; }
   }
 
   async function upload(snapshot) {
+    report("正在核对云端版本");
     const current = await findArchive();
     if (current?.uuid !== head?.uuid || current?.fileId !== head?.fileId) {
       block("云端有另一份进度，重进后读取");
@@ -97,40 +140,49 @@ function createTapTapSave(validate, readLegacy) {
     }
     const data = JSON.stringify(snapshot);
     if (new Blob([data]).size > 10000000) throw new Error("云存档超过 10 MB");
-    const filePath = `${tempDir}/buddy-upload-${Date.now()}-${Math.random().toString(36).slice(2)}.json`;
-    let uploadTimedOut = false;
+    const filePath = `${uploadDir}/buddy-upload-${Date.now()}-${Math.random().toString(36).slice(2)}.json`;
+    let uploadSettled = false, writeSettled = false, abandoned = false;
     try {
-      await call(files, "writeFile", { filePath, data, encoding: "utf8" });
+      report("正在准备上传文件");
+      await call(files, "writeFile", { filePath, data, encoding: "utf8" }, 12000, () => {
+        writeSettled = true;
+        if (abandoned) discard(filePath);
+      });
       const archiveMetaData = {
         name: SLOT,
         summary: snapshot ? `第 ${Math.floor(snapshot.sim.t / 1440) + 1} 天` : "已重置"
       };
       nextWriteAt = Date.now() + WRITE_INTERVAL;
-      let result;
-      try {
-        result = await call(cloud, head ? "updateArchive" : "createArchive", {
-          archiveMetaData, archiveFilePath: filePath, ...(head && { archiveUUID: head.uuid })
-        });
-      } catch (error) {
-        uploadTimedOut = !!error.timedOut;
-        throw error;
-      }
+      report(head ? "正在更新云存档" : "正在创建云存档");
+      const result = await call(cloud, head ? "updateArchive" : "createArchive", {
+        archiveMetaData, archiveFilePath: filePath, ...(head && { archiveUUID: head.uuid })
+      }, 12000, () => {
+        uploadSettled = true;
+        if (abandoned) discard(filePath);
+      });
       if (!(result?.uuid || head?.uuid) || !result?.fileId) {
         block("TapTap 未确认存档版本，重进后检查");
         throw new Error(readError);
       }
       head = { uuid: result.uuid || head.uuid, fileId: result.fileId };
       legacy = false;
+      report("已同步到 TapTap");
+    } catch (error) {
+      // Native calls can finish after JS times out. Keep the upload file
+      // until that callback has settled, then delete it.
+      abandoned = !!error.timedOut && (!writeSettled || !uploadSettled);
+      throw error;
     } finally {
-      // After a timeout the client may still be reading the transfer file.
-      if (!uploadTimedOut) discard(filePath);
+      if (!abandoned) discard(filePath);
     }
   }
 
   function schedule() {
     if (writing || !pending) return;
     clearTimeout(timer);
-    timer = setTimeout(flush, ready ? Math.max(0, nextWriteAt - Date.now()) : 0);
+    const delay = ready ? Math.max(0, nextWriteAt - Date.now()) : 0;
+    if (delay) report("等待 TapTap 同步间隔");
+    timer = setTimeout(flush, delay);
   }
 
   async function flush() {
@@ -148,6 +200,7 @@ function createTapTapSave(validate, readLegacy) {
         if (pending) pending.waiters.unshift(...batch.waiters);
         else pending = batch;
       } else {
+        if (ready) report(status.replace(/^正在/, "") + "失败　" + failure(error));
         for (const waiter of batch.waiters) waiter.reject(error);
       }
     } finally {
@@ -166,5 +219,6 @@ function createTapTapSave(validate, readLegacy) {
     });
   }
 
-  return { load, save, block, get readError() { return readError; }, get legacy() { return legacy; } };
+  return { load, save, block, get readError() { return readError; }, get legacy() { return legacy; },
+    get status() { return status; }, get archiveUUID() { return head?.uuid ?? ""; } };
 }
