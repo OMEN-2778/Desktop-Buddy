@@ -30,8 +30,8 @@ function installSeasonPeople(active,ctl){
   const text=n&&(n.sayUntil>realClock||q?.lastOther)&&(q?.lastOther?q.lastText:n.sayText);
   if(text){
    if(bubble.textContent!==text)bubble.textContent=text;
-   const s=c.state,shown=window.seasonMapTest?.state.activeHeight||c.canvas.height;
-   positionNpcPill(bubble,n.x-(s.camera??s.camX??0),n.feet-(s.camY||0)-30+shown-c.canvas.height);
+   const p=seasonMapTest.viewport(c).scene(n.x,n.feet-30);
+   positionNpcPill(bubble,p.x,p.y);
   }else bubble.hidden=true;
  }
  function draw(ctx){sync();const c=ctl(),s=c.state;for(const n of life.npcs){const cx=s.camera??s.camX??0,cy=s.camY||0;if(n.x<cx-60||n.x>cx+400||n.feet<cy-5||n.feet>cy+c.canvas.height+40)continue;const [f,pose]=npcFrame(n),water=n.seasonKind!=='walk';if(water){f.wave=Math.floor(s.time/.28+n.phase)%2;f.bob=0;f.sway=0;}const pic=npcCanvas(n,f,water?'stand':pose,false);
@@ -54,9 +54,10 @@ function installSeasonPeople(active,ctl){
 function autumnPedestrians(data) {
  const streets=data.routes.filter(([name])=>['山顶街','矿业街','中城街','工人街','河岸街'].includes(name));
  const models=new WeakMap();
- return function draw(ctx,state,height) {
+ return function residents(state,height) {
+  const sprites=[];
   const people=socialState.world;
-  if(!people.length)return;
+  if(!people.length)return sprites;
   const moved=window.liweiStory?.progress.done.includes('S12B');
   const day=Math.floor(sim.t/1440);
   const chance=[.64,.5,.35,.18,.06][state.stage];
@@ -82,8 +83,9 @@ function autumnPedestrians(data) {
     const model=variants.get(masked);
     model.dist=distance;model.dir=phase<range?1:-1;
     const [frame,pose]=npcFrame(model);
-    ctx.drawImage(npcCanvas(model,frame,pose,false),x-10,y-29);
+    sprites.push({depth:y,img:npcCanvas(model,frame,pose,false),x:x-10,y:y-29});
    }
   });
+  return sprites;
  };
 }

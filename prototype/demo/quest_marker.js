@@ -1,14 +1,19 @@
 let questMarkers = null;
+let clickableQuestMarkers = [];
+
+function questMarkerAt(x, y) {
+  return sceneTargetAt(clickableQuestMarkers, x, y);
+}
 
 // Record the actor's anchor in scene pixels after the camera transform.
 // Paint the badges together once the scene, foreground, weather and lighting are ready.
-function drawQuestMarker(ctx, x, headY, sign = "!") {
+function drawQuestMarker(ctx, x, headY, sign = "!", activate = null) {
   const image = IMG.questMarker[sign];
   if (!questMarkers || !image) return;
   const transform = ctx.getTransform();
   const resolution = ctx.canvas.width / W;
   questMarkers.push({
-    image,
+    image, activate,
     x: (x * transform.a + headY * transform.c + transform.e) / resolution,
     headY: (x * transform.b + headY * transform.d + transform.f) / resolution,
   });
@@ -29,17 +34,18 @@ function questMarkerArrowAreas(height) {
 }
 
 function paintQuestMarkers() {
+  clickableQuestMarkers = [];
   if (!questMarkers.length || wiping || tripRun || cardHolds() || storyLocked() || pickOn || ringOf || sim.mode === "down") return;
   const scene = window.seasonMapTest?.ctl();
   if (scene?.state.door || scene?.state.mapOpen) return;
   const height = sceneHouseHeight();
-  const offsetY = scene ? height - scene.canvas.height : 0;
+  const offsetY = scene ? window.seasonMapTest.viewport(scene).top : 0;
   const arrows = questMarkerArrowAreas(height);
   const lift = reduceMotionUI ? 0 : Math.round(Math.sin(realClock * 3));
   vctx.save();
   vctx.scale(view.width / W, view.height / height);
   vctx.imageSmoothingEnabled = false;
-  for (const {image, x, headY} of questMarkers) {
+  for (const {image, x, headY, activate} of questMarkers) {
     const anchor = headY + offsetY;
     if (x < 0 || x >= W || anchor >= height) continue;
     const left = Math.max(1, Math.min(W - image.width - 1, Math.round(x) - Math.floor(image.width / 2)));
@@ -50,7 +56,9 @@ function paintQuestMarkers() {
         top = Math.floor(arrow.top) - image.height - 2;
       }
     }
-    if (top >= 1) vctx.drawImage(image, left, top);
+    if (top < 1) continue;
+    vctx.drawImage(image, left, top);
+    clickableQuestMarkers.push({img: image, x:left, y:top, activate});
   }
   vctx.restore();
 }

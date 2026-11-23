@@ -12,7 +12,7 @@
 // Everything lasting lives in F.bay (save rule).
 (function(){
  const L=window.summerLife;if(!L)return;
- const {hooks,say,ask,walk,scene,speakBay,drawPerson,person,pose,ML_,hour,night,today,under,inBay,inMarket,C,S,X,img,fitBig,scrollBar}=L;
+ const {beachModel,beachSprite,drawBeachTarget,hooks,say,ask,walk,scene,speakBay,drawPerson,person,pose,ML_,hour,night,today,under,inBay,inMarket,C,S,X,img,fitBig,scrollBar}=L;
  const el=FarmUI.el,WL=116,SURF=WL+12;
  const rain=()=>typeof weather!=='undefined'&&weather.kind!=='clear';
  const cal=()=>seasonOf(sim.t);
@@ -120,7 +120,7 @@
  // ---- night (the summer map had no night at all): a blue multiply pass over the frame, then a glow layer on top
  //      (bonfire, glowing sea, glow jellies, lanterns) so lights really shine in the dark
  const glowC=document.createElement('canvas');let glowUsed=false;
- function dark(){const h=hour();return h>=20.5||h<4.5?1:h>=18&&h<20.5?(h-18)/2.5:h>=4.5&&h<6.5?1-(h-4.5)/2:0;}
+ function dark(){return outdoorNightness(hour());}
  function G(ctx){if(dark()<.12)return ctx;if(glowC.width!==ctx.canvas.width||glowC.height!==ctx.canvas.height){glowC.width=ctx.canvas.width;glowC.height=ctx.canvas.height;}
   const g=glowC.getContext('2d');if(!glowUsed){g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,glowC.width,glowC.height);glowUsed=true;}g.setTransform(ctx.getTransform());g.imageSmoothingEnabled=false;return g;}
  // 晚霞 (owner 2026-11-06): like the main world's evening sky, always the pink-purple one; clear days, 16:30-20:15
@@ -133,6 +133,7 @@
   if(glowUsed){v.save();v.imageSmoothingEnabled=false;v.drawImage(glowC,0,0,W,H);v.restore();glowUsed=false;}}
  // ================================================================ 2. beach life
  const SHOWER_X=650,FIRE_X=830,RACK_X=1010,CASTLE_X=784;   // castle bucket at 800, clear of the fire
+ const clickCastle=()=>buildCastle(false);
  const fireOn=()=>{const h=hour();return (h>=18.5||h<0.5)&&!rain();};
  let lastT=0,showerUntil=0,surfFx=null,trail=[],castleFx=0;
  hooks.tick.push(dt=>{if(!inBay())return;const s=C().state,b=M(),gm=lastT?Math.max(0,Math.min(30,sim.t-lastT)):0;lastT=sim.t;
@@ -143,23 +144,23 @@
   for(const p of trail)p.a-=dt*.8;trail=trail.filter(p=>p.a>0).slice(-80);});
  function drawBeach(ctx,info){const c=C(),s=c.state,t=s.time||realClock,b=M(),g=x=>c.gr(x);
   // shower: a pole, a head, a little tiled tray
-  {const x=SHOWER_X,y=g(x);ctx.fillStyle='#8f969e';ctx.fillRect(x,y-30,2,30);ctx.fillRect(x,y-31,8,2);ctx.fillStyle='#c7ccd2';ctx.fillRect(x+1,y-30,1,29);ctx.fillStyle='#6b7178';ctx.fillRect(x+6,y-29,4,2);
-   ctx.fillStyle='#d9d3c7';ctx.fillRect(x-3,y-1,16,2);ctx.fillStyle='#b9b2a5';ctx.fillRect(x-3,y,16,1);
+  {const x=SHOWER_X,y=g(x);beachModel(ctx,'shower',x-3,y-31,16,32,ctx=>{ctx.fillStyle='#8f969e';ctx.fillRect(x,y-30,2,30);ctx.fillRect(x,y-31,8,2);ctx.fillStyle='#c7ccd2';ctx.fillRect(x+1,y-30,1,29);ctx.fillStyle='#6b7178';ctx.fillRect(x+6,y-29,4,2);
+   ctx.fillStyle='#d9d3c7';ctx.fillRect(x-3,y-1,16,2);ctx.fillStyle='#b9b2a5';ctx.fillRect(x-3,y,16,1);},useShower);
    if(realClock<showerUntil){ctx.fillStyle='rgba(170,220,255,.85)';for(let k=0;k<12;k++){const yy=(t*60+k*7)%26;ctx.fillRect(x+6+(k%4),y-27+yy,1,2);}}}
   // bonfire, evenings
-  {const x=FIRE_X,y=g(x);ctx.fillStyle='#6e4a2c';ctx.fillRect(x-6,y-2,12,2);ctx.fillStyle='#8c6238';ctx.fillRect(x-5,y-3,4,1);ctx.fillRect(x+1,y-3,4,1);
-   ctx.fillStyle='#7a7266';for(let k=-7;k<=7;k+=3)ctx.fillRect(x+k,y-1,2,2);
+  {const x=FIRE_X,y=g(x);beachModel(ctx,'fire',x-7,y-3,16,4,ctx=>{ctx.fillStyle='#6e4a2c';ctx.fillRect(x-6,y-2,12,2);ctx.fillStyle='#8c6238';ctx.fillRect(x-5,y-3,4,1);ctx.fillRect(x+1,y-3,4,1);
+   ctx.fillStyle='#7a7266';for(let k=-7;k<=7;k+=3)ctx.fillRect(x+k,y-1,2,2);},useFire);
    if(fireOn()){const gl=G(ctx);gl.fillStyle=`rgba(255,170,80,${.1+dark()*.12})`;gl.fillRect(x-30,y-34,60,36);gl.fillStyle='rgba(255,190,90,.14)';gl.fillRect(x-18,y-22,36,24);gl.fillStyle='rgba(255,200,110,.12)';gl.fillRect(x-10,y-14,20,16);
     for(let k=0;k<6;k++){const hgt=6+((Math.sin(t*9+k*2)+1)*3)|0,xx=x-4+k*1.6|0;gl.fillStyle=k%2?'#ffb43a':'#ff7b2e';gl.fillRect(xx,y-2-hgt,2,hgt);gl.fillStyle='#ffe28a';gl.fillRect(xx,y-3-Math.max(1,hgt/3|0),1,Math.max(1,hgt/3|0));}
     for(let k=0;k<4;k++){const p=(t*.7+k*.25)%1;gl.fillStyle=`rgba(255,220,140,${1-p})`;gl.fillRect(x-2+Math.sin(t*3+k)*4|0,y-12-p*26|0,1,1);}
     drawPerson(ctx,BON[0],x-18,g(x-18));drawPerson(ctx,BON[1],x+18,g(x+18));}}
   // surfboards leaning on a rack by the water
-  {const x=RACK_X,y=g(x);ctx.fillStyle='#7a5636';ctx.fillRect(x-1,y-14,1,14);ctx.fillRect(x+9,y-14,1,14);ctx.fillRect(x-1,y-13,11,1);
-   for(const [ox,c1,c2]of [[0,'#f2d36b','#e35b4f'],[4,'#7fc4e8','#ffffff']]){ctx.fillStyle=c1;ctx.fillRect(x+ox,y-22,3,22);ctx.fillStyle=c2;ctx.fillRect(x+ox+1,y-20,1,18);}}
+  {const x=RACK_X,y=g(x);beachModel(ctx,'surfRack',x-1,y-22,11,22,ctx=>{ctx.fillStyle='#7a5636';ctx.fillRect(x-1,y-14,1,14);ctx.fillRect(x+9,y-14,1,14);ctx.fillRect(x-1,y-13,11,1);
+   for(const [ox,c1,c2]of [[0,'#f2d36b','#e35b4f'],[4,'#7fc4e8','#ffffff']]){ctx.fillStyle=c1;ctx.fillRect(x+ox,y-22,3,22);ctx.fillStyle=c2;ctx.fillRect(x+ox+1,y-20,1,18);}},surf);}
   // the sand castle, until the tide takes it
-  if(b.castle&&sim.t<b.castle.wash){const x=b.castle.x,y=g(x),big=b.castle.big?1:0;ctx.fillStyle='#d9b77e';ctx.fillRect(x-7-big*2,y-5,14+big*4,5);ctx.fillRect(x-6-big*2,y-10-big*2,4,6+big*2);ctx.fillRect(x+2+big*2,y-10-big*2,4,6+big*2);ctx.fillRect(x-2,y-13-big*3,4,9+big*3);
-   ctx.fillStyle='#ecd5a0';ctx.fillRect(x-6-big*2,y-10-big*2,1,6);ctx.fillRect(x-2,y-13-big*3,1,9);ctx.fillStyle='#b8925c';ctx.fillRect(x-1,y-3,2,3);ctx.fillStyle='#e35b4f';ctx.fillRect(x,y-18-big*3,1,5);ctx.fillRect(x+1,y-18-big*3,3,2);}
-  {const x=CASTLE_X+16,y=g(x);ctx.fillStyle='#e35b4f';ctx.fillRect(x-2,y-5,5,5);ctx.fillStyle='#b9473d';ctx.fillRect(x-2,y-5,5,1);ctx.fillStyle='#8c6238';ctx.fillRect(x+4,y-8,1,8);ctx.fillStyle='#9aa3ad';ctx.fillRect(x+3,y-9,3,2);}
+  if(b.castle&&sim.t<b.castle.wash){const x=b.castle.x,y=g(x),big=b.castle.big?1:0;beachModel(ctx,'castle:'+big,x-7-big*2,y-18-big*3,14+big*4,18+big*3,ctx=>{ctx.fillStyle='#d9b77e';ctx.fillRect(x-7-big*2,y-5,14+big*4,5);ctx.fillRect(x-6-big*2,y-10-big*2,4,6+big*2);ctx.fillRect(x+2+big*2,y-10-big*2,4,6+big*2);ctx.fillRect(x-2,y-13-big*3,4,9+big*3);
+   ctx.fillStyle='#ecd5a0';ctx.fillRect(x-6-big*2,y-10-big*2,1,6);ctx.fillRect(x-2,y-13-big*3,1,9);ctx.fillStyle='#b8925c';ctx.fillRect(x-1,y-3,2,3);ctx.fillStyle='#e35b4f';ctx.fillRect(x,y-18-big*3,1,5);ctx.fillRect(x+1,y-18-big*3,3,2);},clickCastle);}
+  {const x=CASTLE_X+16,y=g(x);beachModel(ctx,'castleKit',x-2,y-9,8,9,ctx=>{ctx.fillStyle='#e35b4f';ctx.fillRect(x-2,y-5,5,5);ctx.fillStyle='#b9473d';ctx.fillRect(x-2,y-5,5,1);ctx.fillStyle='#8c6238';ctx.fillRect(x+4,y-8,1,8);ctx.fillStyle='#9aa3ad';ctx.fillRect(x+3,y-9,3,2);},clickCastle);}
   if(realClock<castleFx){ctx.fillStyle='#e8cf98';for(let k=0;k<6;k++)ctx.fillRect(CASTLE_X-8+((t*40+k*5)%16|0),g(CASTLE_X)-4-((t*30+k*3)%8|0),1,1);}
   // the surf ride
   // owner 2026-11-06: the swimming pose standing on the board; soles, board and the water surface on one line
@@ -176,15 +177,14 @@
   drawRare(ctx,t);}
  const BON=[person('篝火边的游客','f',1201),person('篝火边的大叔','m',1303)];
  hooks.draw.push(drawBeach);
- const near=(x,X,w=12)=>Math.abs(x-X)<w;
- hooks.click.push((x,y)=>{const c=C(),g=c.gr(x),busy=L.isBusy();if(busy||y>g+6||y<g-40)return false;
-  if(near(x,SHOWER_X+4,10)){scene(async()=>{await walk(SHOWER_X+6);showerUntil=realClock+3.5;need('hygiene',45);speakBay(swim()?'冲掉一身海盐，清清爽爽':'凉水一冲，人都精神了');if(once('shower'))mood(MOOD.shower);await new Promise(r=>setTimeout(r,3200));});return true;}
-  if(near(x,FIRE_X,12)){if(!fireOn()){toast(rain()?'下雨了，今晚不生火。':'太阳落山以后，这里会点起篝火。');return true;}
-   scene(async()=>{await walk(FIRE_X-6);await say(BON[0].name,['晚上好呀！坐过来烤烤火，海风有点凉。','来来，坐。今晚有人要弹琴。','火边的位置给你留着呢。'][today()%3]);
-    await say(nameOf(),['好暖和……','听着海浪声烤火，太舒服了。','来了来了～'][today()%3]);need('social',30);need('fun',12);if(once('fire'))mood(MOOD.fire);});return true;}
-  if(near(x,RACK_X+4,10)){surf();return true;}
-  if(near(x,CASTLE_X+16,8)||(M().castle&&sim.t<M().castle.wash&&near(x,M().castle.x,9))){buildCastle(false);return true;}
-  return false;});
+ function useShower(){
+  scene(async()=>{await walk(SHOWER_X+6);showerUntil=realClock+3.5;need('hygiene',45);speakBay(swim()?'冲掉一身海盐，清清爽爽':'凉水一冲，人都精神了');if(once('shower'))mood(MOOD.shower);await new Promise(r=>setTimeout(r,3200));});
+ }
+ function useFire(){
+  if(!fireOn()){toast(rain()?'下雨了，今晚不生火。':'太阳落山以后，这里会点起篝火。');return;}
+  scene(async()=>{await walk(FIRE_X-6);await say(BON[0].name,['晚上好呀！坐过来烤烤火，海风有点凉。','来来，坐。今晚有人要弹琴。','火边的位置给你留着呢。'][today()%3]);
+   await say(nameOf(),['好暖和……','听着海浪声烤火，太舒服了。','来了来了～'][today()%3]);need('social',30);need('fun',12);if(once('fire'))mood(MOOD.fire);});
+ }
  function surf(){if(!swim()){toast('先去更衣室换上泳装，才能下水冲浪。');return;}
   scene(async()=>{const b=M(),lesson=cqOn('surf')&&present('surf');await walk(RACK_X);C().goTo(1095,'dive',SURF-2);await new Promise(r=>setTimeout(r,2600));
    const sk=b.act.surf||0,ok=sk>=2||(lesson&&b.cq.surf.lessons>=2);surfFx={t0:realClock,dur:3.4,fall:!ok};C().goTo(1036,'dive',SURF-2);await new Promise(r=>setTimeout(r,3400));surfFx=null;
@@ -296,28 +296,43 @@
  const THINGS={whistle:[1140,132,()=>cqOn('whistle')&&!st('whistle').got&&((hour()>=6&&hour()<9)||(hour()>=17&&hour()<19))],bucket:[1236,206,()=>cqOn('bucket')&&!st('bucket').got],
   bottle:[1552,343,()=>cqOn('bottle')&&st('bottle').step===1]};
  function drawThings(ctx,t){for(const [id,[x,y,on]]of Object.entries(THINGS)){if(!on())continue;const yy=y+Math.round(Math.sin(t*1.5)*1);
+  beachModel(ctx,id,x-4,yy-9,12,12,ctx=>{
   if(id==='whistle'){ctx.fillStyle='#d23b30';ctx.fillRect(x-4,yy,8,1);ctx.fillStyle='#c0c6cc';ctx.fillRect(x+3,yy-1,4,3);ctx.fillStyle='#8e959c';ctx.fillRect(x+3,yy+1,4,1);}
   if(id==='bucket'){ctx.fillStyle='#e35b4f';ctx.fillRect(x-3,yy-4,7,6);ctx.fillStyle='#b9473d';ctx.fillRect(x-3,yy-4,7,1);ctx.fillStyle='#f2d36b';ctx.fillRect(x-1,yy-2,3,2);ctx.fillStyle='#6b7178';ctx.fillRect(x-3,yy-6,7,1);}
   if(id==='bottle'){ctx.fillStyle='rgba(150,220,200,.85)';ctx.fillRect(x-2,yy-6,4,7);ctx.fillRect(x-1,yy-8,2,2);ctx.fillStyle='#f6ecd2';ctx.fillRect(x-1,yy-4,2,3);ctx.fillStyle='#8c6238';ctx.fillRect(x-1,yy-9,2,1);}
+  },()=>takeThing(id,x,y));
   if(Math.sin(t*3)>.5){ctx.fillStyle='#fffbe6';ctx.fillRect(x,yy-10,1,3);ctx.fillRect(x-1,yy-9,3,1);}}}
- hooks.click.push((x,y)=>{for(const [id,[tx,ty,on]]of Object.entries(THINGS)){if(!on()||Math.hypot(x-tx,y-ty)>10)continue;
-  if(!swim()){toast('换上泳装才能游过去。');return true;}
-  C().goTo(tx,'dive',ty+6,()=>{const s=st(id);if(id==='bottle'){s.step=2;speakBay('瓶子里有封信，信封上写着「给旅舍老板」。');log('在沉船宝箱里找到一个漂流瓶。');}else{s.got=1;speakBay(id==='whistle'?'找到了！红绳子的哨子。':'找到小红桶了！');}});return true;}return false;});
+ function takeThing(id,tx,ty){
+  if(!swim()){toast('换上泳装才能游过去。');return;}
+  C().goTo(tx,'dive',ty+6,()=>{
+   const s=st(id);
+   if(id==='bottle'){s.step=2;speakBay('瓶子里有封信，信封上写着「给旅舍老板」。');log('在沉船宝箱里找到一个漂流瓶。');}
+   else{s.got=1;speakBay(id==='whistle'?'找到了！红绳子的哨子。':'找到小红桶了！');}
+  });
+ }
  // the people: drawn where they stand, a ! when they have something to ask, a ? when it can be handed in
  const markOf=id=>{const s=st(id);if(s.done)return null;if(!s.step)return '!';return ready[id]()||(id==='bottle'&&s.step===3)?'?':null;};
  function drawPeople(ctx){const c=C(),t=c.state.time||realClock;drawThings(ctx,t);
   for(const [id,q]of Object.entries(Q)){if(q.market||!present(id))continue;const p=NPC[q.who],x=q.x,y=c.gr(x);
-   if(q.kid){const pic=pose(p,realClock*1000);ctx.drawImage(pic,Math.round(x-7),Math.round(y-20),15,21);}else drawPerson(ctx,p,x,y);
+   const activate=()=>meetQuest(id,q);
+   if(q.kid){const pic=beachSprite(pose(p,realClock*1000),15,21);drawBeachTarget(ctx,'quest:'+id,pic,Math.round(x-7),Math.round(y-20),activate);}
+   else drawPerson(ctx,p,x,y,{beachId:'quest:'+id,activate});
    if(id==='paint'){ctx.fillStyle='#8c6238';ctx.fillRect(x+9,y-18,1,18);ctx.fillRect(x+15,y-18,1,18);ctx.fillStyle='#f6ecd2';ctx.fillRect(x+8,y-20,9,8);ctx.fillStyle='#7fc4e8';ctx.fillRect(x+9,y-17,7,3);ctx.fillStyle='#f2a65a';ctx.fillRect(x+11,y-16,3,1);}
    if(id==='whistle'){ctx.fillStyle='#e35b4f';ctx.fillRect(x+10,y-30,10,2);ctx.fillStyle='#f6f2ea';ctx.fillRect(x+12,y-28,1,28);ctx.fillRect(x+18,y-28,1,28);ctx.fillRect(x+12,y-16,7,1);}
-   const m=markOf(id);if(m)drawQuestMarker(ctx,x,y-(q.kid?20:27),m);}
+   const m=markOf(id);if(m)drawQuestMarker(ctx,x,y-(q.kid?20:27),m,activate);}
   if(fest())drawFest(ctx);}
  hooks.draw.push(drawPeople);
- hooks.mdraw.push(ctx=>{for(const [id,q]of Object.entries(Q)){if(!q.market)continue;const m=markOf(id);if(!m)continue;const x=id==='coco'?L.CAFE_X-30:L.FISH_X+4;drawQuestMarker(ctx,x,L.FEET-(id==='coco'?27:36),m);}if(fest())drawFestMarket(ctx);});
- hooks.click.push((x,y)=>{const c=C();for(const [id,q]of Object.entries(Q)){if(q.market||!present(id))continue;const g=c.gr(q.x);if(Math.abs(x-q.x)<9&&y>g-(q.kid?32:40)&&y<g+3){   /* includes the !/? mark above the head */
-  scene(async()=>{await walk(q.x+(c.state.x<q.x?-14:14));await talk(id);goalHint(id);});return true;}}return false;});
- hooks.mclick.push((x,y)=>{for(const [id,q]of Object.entries(Q)){if(!q.market)continue;const px=id==='coco'?L.CAFE_X-30:L.FISH_X+4,m=markOf(id);if(!m)continue;
-  if(Math.abs(x-px)<10&&y>L.FEET-34&&y<L.FEET+3){scene(async()=>{await walk(px+14);await talk(id);goalHint(id);});return true;}}return false;});
+ hooks.mdraw.push(ctx=>{for(const [id,q]of Object.entries(Q)){if(!q.market)continue;const m=markOf(id);if(!m)continue;const x=id==='coco'?L.CAFE_X-30:L.FISH_X+4;drawQuestMarker(ctx,x,L.FEET-(id==='coco'?27:36),m,()=>meetSeller(id,x));}if(fest())drawFestMarket(ctx);});
+ function meetQuest(id,q){
+  scene(async()=>{await walk(q.x+(C().state.x<q.x?-14:14));await talk(id);goalHint(id);});
+ }
+ hooks.mclick.push(seller=>{
+  const id=seller==='cafe'?'coco':seller==='fish'?'bottle':null;
+  if(!id||!markOf(id))return false;
+  const x=id==='coco'?L.CAFE_X-30:L.FISH_X+4;
+  meetSeller(id,x);return true;
+ });
+ function meetSeller(id,x){scene(async()=>{await walk(x+14);await talk(id);goalHint(id);});}
 
  // ================================================================ 4. island festivals
  const FESTS=[{n:'草帽节',se:1,day:4,c:['#d9a441','#f6dc8a'],line:'满天飞着草帽，风越大越热闹',flags:['#e35b4f','#f2d36b','#7fc4e8']},

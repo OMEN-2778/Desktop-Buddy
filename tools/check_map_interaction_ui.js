@@ -54,13 +54,15 @@ assert(!touch || !/\bSEASON_RELEASE\s*=/.test(html.toString()), 'Use the mouse t
     await page.evaluate(() => { const c = seasonMapTest.ctl(); c.state.x = c.current().width - 5; c.tick(.04); });
     await page.waitForFunction(() => seasonMapTest.ctl().state.scene === 1 && !wiping);
 
-    async function clickSpot(x, y) {
+    async function pointerSpot(x, y, click) {
       const box = await page.locator('#view').boundingBox();
-      const height = await page.evaluate(() => seasonMapTest.ctl().canvas.height);
+      const height = await page.evaluate(() => sceneHouseHeight());
       const screenX = box.x + x * box.width / 342, screenY = box.y + y * box.height / height;
-      if (touch) await page.touchscreen.tap(screenX, screenY);
+      if (!click) await page.mouse.move(screenX, screenY);
+      else if (touch) await page.touchscreen.tap(screenX, screenY);
       else await page.mouse.click(screenX, screenY);
     }
+    const clickSpot = (x,y) => pointerSpot(x+.5,y+.5,true);
     async function pickTV(x, y) {
       await clickSpot(x, y);
       await page.waitForFunction(() => pickOn === 'tv');
@@ -81,7 +83,39 @@ assert(!touch || !/\bSEASON_RELEASE\s*=/.test(html.toString()), 'Use the mouse t
     await page.evaluate(() => closeWardrobe());
 
     await enter('summer_test');
-    await page.evaluate(() => { const s=seasonMapTest.ctl().state; Object.assign(s,{inside:true,x:146,y:84}); });
+    await page.evaluate(() => { const s=seasonMapTest.ctl().state; Object.assign(s,{inside:true,x:96,y:84}); });
+    const sofa = await page.evaluate(async () => {
+      const raw = SEASON_FURNITURE.summer.find(([id]) => id === 'sofa');
+      const [{img,x,y}] = sceneTargetsFor([raw]);
+      await img.decode();
+      const mask = outlineShape(img), opaque = [], clear = [];
+      for (let py=0;py<img.height;py++) for (let px=0;px<img.width;px++) {
+        const at = [x+px,y+py], key = px+','+py, id = summerLodge.hit(...at)?.id;
+        if (mask.inside.has(key)&&id==='sofa') opaque.push(at);
+        if (!mask.near.has(key)&&!id) clear.push(at);
+      }
+      return {one:opaque[Math.floor(opaque.length/2)],blank:clear[0]};
+    });
+    assert(sofa.one && sofa.blank,'sofa has an opaque body and an empty corner');
+    if (!touch) {
+      await pointerSpot(sofa.one[0]+.5,sofa.one[1]+.5,false);
+      await page.waitForFunction(() => document.querySelector('#view').style.cursor === 'pointer');
+      await screenshot('sofa-silhouette');
+      await pointerSpot(sofa.blank[0]+.5,sofa.blank[1]+.5,false);
+      await page.waitForFunction(() => document.querySelector('#view').style.cursor === '');
+    }
+    await clickSpot(...sofa.blank);
+    assert.equal(await page.evaluate(() => pickOn),null,'click on transparent corner walks');
+    assert(await page.evaluate(() => !!seasonMapTest.ctl().state.target));
+    await page.evaluate(() => { const s=seasonMapTest.ctl().state; Object.assign(s,{x:96,target:null,after:null}); });
+    if (!touch) {
+      await pointerSpot(sofa.one[0]+.5,sofa.one[1]+.5,false);
+      await page.waitForFunction(() => document.querySelector('#view').style.cursor === 'pointer');
+    }
+    await clickSpot(...sofa.one);
+    await page.waitForFunction(() => ringOf || pickOn || sim.act === 'season_sofa');
+    await page.evaluate(() => { closeRing(); closePicker(); summerLodge.stop(); });
+    await page.evaluate(() => { const s=seasonMapTest.ctl().state; Object.assign(s,{x:148,target:null,after:null}); });
     await pickTV(184, 62);
     await clickSpot(266, 60);
     await page.waitForFunction(() => pickOn === 'cook_bay');
@@ -89,6 +123,35 @@ assert(!touch || !/\bSEASON_RELEASE\s*=/.test(html.toString()), 'Use the mouse t
     await activate(nav.locator('[data-dir="-1"]'));
     assert(await page.evaluate(() => { const s=seasonMapTest.ctl().state; return !s.market&&!s.door&&s.target?.x===44; }));
     await page.waitForFunction(() => seasonMapTest.ctl().state.market && !seasonMapTest.ctl().state.door && !wiping);
+    const coastResult = await page.evaluate(() => {
+      // Inspect the top of a sprite with a non-zero vertical camera and with
+      // the old display height temporarily cropped around its bottom edge.
+      const c=seasonMapTest.ctl(), bounds=view.getBoundingClientRect();
+      const projection=mapViewport({canvas:c.canvas,state:{camX:93,camY:58}},c.canvas.height-20);
+      const mapped=projection.scene(192,106);
+      const restored=projection.point({clientX:bounds.left+mapped.x*bounds.width/W,
+        clientY:bounds.top+mapped.y*bounds.height/projection.height});
+      weather.force='blizzard';
+      const local=weatherAt(sim.t);
+      const inland=sceneWeatherKind('snow','spring_test');
+      weather.force=null;
+      return {x:Math.round(restored.worldX),y:Math.round(restored.worldY),top:projection.top,local,inland};
+    });
+    assert.deepEqual(coastResult,{x:192,y:106,top:-20,local:'rain',inland:'snow'});
+    await page.evaluate(() => { weather.force='blizzard'; updateWeather(0); });
+    await page.waitForFunction(() => seasonMapTest.ctl().getWeather()==='rain' && weatherName()==='小雨');
+    await page.evaluate(() => { weather.force='clear'; sim.t=7.5*60; updateWeather(0); });
+    await page.waitForFunction(() => summerLife.marketHit(summerLife.FISH_X,summerLife.FEET-14)?.id==='fish');
+    assert(await page.evaluate(() => {
+      const L=summerLife;
+      const seller={img:L.pose(L.V.fish,realClock*1000),x:L.FISH_X-6,y:L.FEET-36};
+      for(let y=seller.y;y<seller.y+seller.img.height;y++)for(let x=seller.x;x<seller.x+seller.img.width;x++){
+        if(!scenePixelHit(seller,x,y))continue;
+        const counter=L.marketHit(x,y);
+        if(counter?.id==='fish'&&!counter.seller&&scenePixelHit(counter,x,y)&&summerHover.target(x,y)===counter)return true;
+      }
+      return false;
+    }), 'the solid counter wins over painted pixels of the seller behind it');
     await page.evaluate(() => { springFarm.state.coins=1; summerLife.openCafe(); });
     await screenshot('cafe');
     const items=page.locator('#picker .pk-item');
@@ -115,6 +178,23 @@ assert(!touch || !/\bSEASON_RELEASE\s*=/.test(html.toString()), 'Use the mouse t
     assert.equal(await page.locator('#seasonNpcBubble').isVisible(), false);
     if (await page.evaluate(() => typeof SEASON_RELEASE === 'undefined')) {
       await enter('autumn_test');
+      const stall=await page.evaluate(async () => {
+        const c=seasonMapTest.ctl(),s=c.state;
+        const [raw]=c.DATA.landmarkSprites.filter(([id])=>id==='chestnut');
+        const [{img,x,y}]=sceneTargetsFor([raw]);
+        await img.decode();
+        Object.assign(s,{inside:false,x:760,y:612,camY:510});
+        c.draw();
+        const mask=outlineShape(img);
+        let filled=null,blank=null;
+        for(let py=0;py<img.height;py++)for(let px=0;px<img.width;px++){
+          const id=c.hit(x+px,y+py)?.id,key=px+','+py;
+          if(mask.inside.has(key)&&id==='chestnut')filled=[x+px,y+py];
+          if(!mask.near.has(key)&&id!=='chestnut')blank=[x+px,y+py];
+        }
+        return {filled,blank};
+      });
+      assert(stall.filled && stall.blank,'city chestnut stall follows the cart and not its transparent corners');
       await page.evaluate(() => seasonMapTest.ctl().interact('chestnut'));
       await page.waitForFunction(() => pickOn === 'autumn_stall');
       assert.equal(await page.locator('#picker .rand').isVisible(),false);
@@ -128,6 +208,6 @@ assert(!touch || !/\bSEASON_RELEASE\s*=/.test(html.toString()), 'Use the mouse t
       assert.equal(await page.evaluate(()=>kitchenKey()),'autumn_test');
     }
     assert.deepEqual(errors, []);
-    console.log('PASS ('+(touch?'web touch':'mouse')+'): shared directions, walk before transition, TV selection, wardrobe, kitchen, cafe and NPC bubbles');
+    console.log('PASS ('+(touch?'web touch':'mouse')+'): shared directions, walk before transition, TV selection, wardrobe, kitchen, cafe, NPC bubbles, fine outlines and clipped projection');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

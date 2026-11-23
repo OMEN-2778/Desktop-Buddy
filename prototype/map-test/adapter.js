@@ -50,7 +50,7 @@ const seasonalTest=(function(){
   if(act!=='autumn_stall')return beforeStallCommand.apply(this,arguments);
   if(sim.place==='autumn_test'&&typeof item==='function'){state.autumn.playerInput();item();}
  };
- state.autumn=makeSeason_autumn({view,menu:stallMenu,drawResidents:autumnPedestrians(AUTUMN_MAP_DATA),walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='autumn_test',needs:()=>sim.needs,now:()=>sim.t,heroName:()=>nameOf(),hint:showHint,exit:()=>start('home'),get home(){return window.autumnHome||null;}},AUTUMN_MAP_DATA);
+ state.autumn=makeSeason_autumn({view,menu:stallMenu,residents:autumnPedestrians(AUTUMN_MAP_DATA),light:()=>outdoorNightness(hour()),walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='autumn_test',needs:()=>sim.needs,now:()=>sim.t,heroName:()=>nameOf(),hint:showHint,exit:()=>start('home'),get home(){return window.autumnHome||null;}},AUTUMN_MAP_DATA);
  for(const c of [state.spring,state.summer,state.autumn])root.append(c.root);
  widget.append(state.summer.wardrobe);
  const oldHolds=cardHolds;cardHolds=()=>oldHolds()||active()&&(!!ctl()?.state.inCabana||!!ctl()?.modalOpen);
@@ -110,7 +110,7 @@ const seasonalTest=(function(){
  const originalRender=renderOutside;renderOutside=function(){
   if(!active())return originalRender();const c=ctl();if(!c.state.loaded)return;
   const dt=Math.min(.1,Math.max(0,realClock-state.last));state.last=realClock;
-  {const wk=weather.force==='blizzard'||weather.kind==='snow'&&weather.heavy?'blizzard':weather.kind;c.setWeather(sim.place==='summer_test'&&(wk==='snow'||wk==='blizzard')?'rain':wk);}/* 草帽湾 is summer all year (owner 2026-11-05): the city's snow falls as rain there */people.sync();c.setResolution(Math.max(1,view.width/W));const run=!!speed&&!cardHolds()&&!wiping&&sim.mode!=='down';
+  c.setWeather(sceneWeatherKind(weather.kind==='snow'&&weather.heavy?'blizzard':weather.kind));people.sync();c.setResolution(Math.max(1,view.width/W));const run=!!speed&&!cardHolds()&&!wiping&&sim.mode!=='down';
   c.state.paused=!run;c.state.gender=look.gender||'f';
   if(run){
    if(!window.liweiStory?.locked()&&!life.talkQ&&!c.state.door&&!c.state.inCabana&&!c.state.target&&sim.t>=state.autoAt&&!ringOf&&!(sim.place==='summer_test'&&window.summerFloat?.busy())){state.autoAt=sim.t+8+Math.random()*12;   /* owner 2026-11-10: less standing about (was 20-45 game minutes) */
@@ -129,20 +129,34 @@ const seasonalTest=(function(){
    const h=Math.round(state.shownH);
    if(state.activeHeight!==h){state.activeHeight=h;fit();resizeRoot();
     sceneRoom(h);}}
-  vctx.imageSmoothingEnabled=false;vctx.clearRect(0,0,view.width,view.height);{const R=c.renderCanvas,ch=c.canvas.height,h=state.activeHeight||ch,k=view.height/h,rs=R.height/ch;   /* the bottom h rows (renderCanvas is drawn at rs x); while shrinking, the sky's top row fills the gap */
-   if(h<=ch)vctx.drawImage(R,0,Math.round((ch-h)*rs),R.width,Math.round(h*rs),0,0,view.width,view.height);else{vctx.drawImage(R,0,0,R.width,Math.max(1,Math.round(rs)),0,0,view.width,Math.ceil((h-ch)*k)+1);vctx.drawImage(R,0,0,R.width,R.height,0,Math.round((h-ch)*k),view.width,Math.round(ch*k));}}if(sim.place==='spring_test'||sim.place==='summer_test'&&c.state.inside)window.seasonNight?.draw(vctx,view.width,view.height,c,sim.place==='spring_test'?'spring':'summer');   /* night + room lights (season_night.js) */
-  if(sim.place==='summer_test')window.summerMore?.nightPass?.(vctx,view.width,view.height);if(sim.place==='summer_test')window.summerHover?.draw(vctx,view.width/c.canvas.width,view.height/c.canvas.height);
+  const projection=viewport(c),R=c.renderCanvas,scaleY=view.height/projection.height;
+  vctx.imageSmoothingEnabled=false;vctx.clearRect(0,0,view.width,view.height);
+  if(projection.top>0)vctx.drawImage(R,0,0,R.width,1,0,0,view.width,projection.top*scaleY+1);
+  vctx.drawImage(R,0,projection.top*scaleY,view.width,c.canvas.height*scaleY);
+  if(sim.place==='spring_test'||sim.place==='summer_test'&&c.state.inside)window.seasonNight?.draw(vctx,view.width,view.height,c,sim.place==='spring_test'?'spring':'summer');
+  if(sim.place==='summer_test'){
+   window.summerMore?.nightPass?.(vctx,view.width,view.height);
+   window.summerHover?.draw(vctx,projection);
+  }
 
  };
- const oldCenter=ringCenter;ringCenter=function(){if(!active())return oldCenter();const c=ctl(),s=c.state;return {x:s.x-(s.camera??s.camX??0),y:s.y-(s.camY??0)-13};};
+ const viewport=(c=ctl())=>mapViewport(c,state.activeHeight||c.canvas.height);
+ const oldCenter=ringCenter;ringCenter=function(){if(!active())return oldCenter();const c=ctl(),s=c.state;return viewport(c).scene(s.x,s.y-13);};
  view.addEventListener('pointerdown',e=>{
   if(!active())return;e.stopImmediatePropagation();if(sim.place==='autumn_test'&&!state.autumn.modal.hidden&&!window.liweiStory?.locked())state.autumn.close();if(ctl()?.state.door||wiping||phoneHolds()||cardHolds()||wardrobeOpen)return;
-  const c=ctl(),s=c.state,r=view.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*c.canvas.height/r.height;
-  const sx=s.x-(s.camera??s.camX??0),sy=s.y-(s.camY??0);
+  const c=ctl(),s=c.state,projection=viewport(c),point=projection.point(e);
+  const marker=questMarkerAt(point.x,point.y+projection.top);
+  if(marker?.activate&&!storyLocked()&&sim.mode!=='down'&&!s.mapOpen){
+   closeRing();state.autoAt=sim.t+45;window.seasonAuto?.cancel();marker.activate();sync();return;
+  }
+  if(!projection.onCanvas(point))return;
+  const {x,y,worldX,worldY}=point;
+  const hero=projection.scene(s.x,s.y);
+  const sx=hero.x,sy=hero.y-projection.top;
   if(sim.mode==='down'){if(Math.abs(x-sx)<22&&y>sy-42&&y<sy+12){   /* her whole figure, also when drawn higher than her feet (a float, a chair) */holding={t0:realClock,pointerId:e.pointerId};view.setPointerCapture(e.pointerId);showHint('按住主角 5 秒即可唤醒');}return;}
   if(sim.place==='autumn_test'&&s.mapOpen){c.pick(x,y);sync();return;}
   if(Math.abs(x-sx)<10&&y<sy&&y>sy-28){openRing('away','buddy');return;}
-  closeRing();state.autoAt=sim.t+45;window.seasonAuto?.cancel();s.rush=performance.now();if(sim.place==='autumn_test'){view.focus();ripple(e);c.pick(x+(s.mapOpen?0:s.camX||0),y+(s.mapOpen?0:s.camY||0));sync();return;}if(sim.place==='summer_test'&&window.summerLife?.click(x+(s.camX||0),y+(s.camY||0)))return;if(people.click(x+(s.camera??s.camX??0),y+(s.camY||0)))return;people.cancel();if(e.pointerType==='mouse')seasonPress={x:e.clientX,y:e.clientY};c.canvas.dispatchEvent(new PointerEvent('pointerdown',{clientX:e.clientX,clientY:e.clientY,button:0}));sync();
+  closeRing();state.autoAt=sim.t+45;window.seasonAuto?.cancel();s.rush=performance.now();if(sim.place==='autumn_test'){view.focus();ripple(e);c.pick(worldX,worldY);sync();return;}if(sim.place==='summer_test'&&window.summerLife?.click(worldX,worldY))return;if(people.click(worldX,worldY))return;people.cancel();if(e.pointerType==='mouse')seasonPress={x:e.clientX,y:e.clientY};c.pickScene(x,y);sync();
  },true);
  /* desktop app: pressing empty ground and dragging moves the window, as in the house (owner 2026-11-05);
     the walk the press started is called off */
@@ -166,7 +180,22 @@ const seasonalTest=(function(){
   requestAnimationFrame(()=>{const s=ctl()?.state;if(s&&s.route!==before&&(s.target||s.route?.length))ripple(e);});},true);
  view.addEventListener('click',e=>{if(active())e.stopImmediatePropagation();},true);
  view.addEventListener('pointerup',e=>{if(!active())return;e.stopImmediatePropagation();if(holding&&holding.pointerId===e.pointerId){const done=realClock-holding.t0>=REVIVE_S;cancelRescue();if(done)revive();}},true);
- view.addEventListener('pointermove',e=>{if(active()){e.stopImmediatePropagation();const c=ctl(),s=c.state,r=view.getBoundingClientRect();(sim.place==='autumn_test'?c.hover:people.hover)((e.clientX-r.left)*342/r.width+(s.camera??s.camX??0),(e.clientY-r.top)*c.canvas.height/r.height+(s.camY||0));view.title=sim.place==='autumn_test'?c.canvas.title:'';view.style.cursor='pointer';}},true);
+ view.addEventListener('pointermove',e=>{
+  if(!active())return;
+  e.stopImmediatePropagation();
+  const c=ctl(),projection=viewport(c),p=projection.point(e);
+  const target=sim.place==='autumn_test'?c.hover:people.hover;
+  const sprite=projection.onCanvas(p)?target(p.worldX,p.worldY):target(Infinity,Infinity);
+  const over=questMarkerAt(p.x,p.y+projection.top)?.activate||sprite||
+   sim.place==='spring_test'&&projection.onCanvas(p)&&window.infeiHoverApi?.hit(p.worldX,p.worldY);
+  view.title=sim.place==='autumn_test'?c.canvas.title:'';
+  view.style.cursor=over?'pointer':'';
+ },true);
+ view.addEventListener('pointerleave',()=>{
+  if(!active())return;
+  if(sim.place==='autumn_test')ctl().hover(Infinity,Infinity);else people.hover(Infinity,Infinity);
+  view.removeAttribute('title');view.style.cursor='';
+ });
  const originalSnapshot=snapshot;snapshot=function(){const save=originalSnapshot();save.testAutumn=JSON.parse(JSON.stringify(state.autumn.state));if(active())save.seasonMapTest={place:sim.place,state:JSON.parse(JSON.stringify(ctl().state,(key,value)=>value instanceof Set?[...value]:value))};return save;};
  const originalRestore=restore;restore=function(save){
   if(['spring_test','summer_test','autumn_test'].includes(save?.sim?.place)&&!save.seasonMapTest)save.sim.place='home';
@@ -195,6 +224,6 @@ const seasonalTest=(function(){
   const dur=d.duration;d.duration=1e9;   // the door waits (no dark fade) until the bars are shut
   wipe(()=>{d.duration=dur;d.elapsed=dur/2;c.advanceDoor(0);d.elapsed=dur;});}catch(e){console.warn('season wipe',e);}})();
 
- return {start,active,ctl,state,root,sync,people,cheats};
+ return {start,active,ctl,state,root,sync,people,cheats,viewport};
 })();
 window.seasonMapTest=seasonalTest;

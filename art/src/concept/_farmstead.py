@@ -14,6 +14,7 @@ import random
 import numpy as np
 
 from pixelkit import P, Sprite
+from _scene_masks import SceneMasks
 
 import front_yard as FY
 import house as HS
@@ -345,7 +346,7 @@ def chili_string(s, x, y, n=7, kind="chili"):
             s.rect(x - 1, yy, 3, 2, P.mustard[3]).set(x - 1, yy, P.mustard[4])
 
 
-def cn_farmhouse(s):
+def cn_farmhouse(s, masks=None):
     """A two-storey Chinese farmhouse: grey brick base, white walls with a
     dark timber band, a wooden balcony upstairs, grey tile roofs with curled
     ridge ends, lattice windows, red double doors with couplets, lanterns,
@@ -379,6 +380,8 @@ def cn_farmhouse(s):
     for wx in (x0 + 14, x0 + 40, x1 - 54, x1 - 28):
         lattice(s, wx, up + 8, 13, 10, pattern="grid")
     # door
+    masks = SceneMasks(s, masks)
+    masks.start("door")
     dw = 18
     dx = HOUSE_DOOR - dw // 2
     s.rect(dx - 2, plinth - 22, dw + 4, 22, DARK[1])
@@ -390,6 +393,7 @@ def cn_farmhouse(s):
     s.rect(dx - 1, plinth - 2, dw + 2, 2, ST[2])                   # threshold
     couplets(s, dx, dw, plinth - 21, plinth - 2)
     s.rect(dx + 5, plinth - 30, 8, 4, DARK[0]).rect(dx + 6, plinth - 29, 6, 2, P.mustard[3])   # name plaque
+    masks.finish()
     chili_string(s, x0 + 8, up + 5, 8, "chili")
     chili_string(s, x0 + 11, up + 5, 6, "corn")
     chili_string(s, x1 - 9, up + 5, 8, "chili")
@@ -743,7 +747,7 @@ def washstand():
     return s
 
 
-def cn_farmhouse_inside():
+def cn_farmhouse_inside(masks=None):
     """Hand-dressed Chinese interior. The friend-house planner draws the shell
     (frames, partitions, stairs, door); every room is wiped and furnished:
     upstairs Buddy's room, a small bath, the PARENTS' room (right; Buddy does
@@ -754,6 +758,16 @@ def cn_farmhouse_inside():
         [("entry_stair", 6, 40), ("laundry", 50, 232)]])
     data, bg, front = FH.draw_plan(plan)
     s = bg.copy()
+    traced = SceneMasks(s, masks)
+    for item in data["furniture"]:
+        if item["kind"] == "entry":
+            x, y = item["x"], item["y"]
+            traced.add("exit", bg.crop(x,y,item["w"],item["h"]), x, y)
+
+    def place(id, sprite, x, storey, depth=1):
+        y = HS.on_floor(s, sprite, x, storey, depth)
+        traced.add(id, sprite, x, y)
+
     D = DARK
 
     def room(x, w, top, fl, floor="wood", wall=P.plaster_living):
@@ -773,17 +787,17 @@ def cn_farmhouse_inside():
     room(144, 40, ut, uf, floor="tile", wall=P.plaster_bath)
     room(188, 94, ut, uf, wall=P.plaster_bed)
     # Buddy's room: canopy bed, lattice window, wardrobe, a side table with plum blossom
-    HS.on_floor(s, canopy_bed(46, P.sage), 54, 1, 1)
-    HS.on_floor(s, wardrobe_cn(), 114, 1, 1)
+    place("bed", canopy_bed(46, P.sage), 54, 1)
+    place("wardrobe", wardrobe_cn(), 114, 1)
     HS.on_floor(s, side_table(14), 100, 1, 1)
     # bath: wooden tub, washstand, toilet
-    HS.on_floor(s, bath_tub(), 146, 1, 1)
+    place("bath", bath_tub(), 146, 1)
     import _furniture as F
-    HS.on_floor(s, F.toilet(), 169, 1, 1)
+    place("toilet", F.toilet(), 169, 1)
     HS.place(s, washstand().crop(0, 0, 12, 16), 170, ut + 10)
     # the parents' room: a wider bed with a red-and-gold quilt, dresser, wardrobe, screen
-    HS.on_floor(s, canopy_bed(56, RED, double=True), 192, 1, 1)
-    HS.on_floor(s, dresser_cn(), 254, 1, 1)
+    place("parents", canopy_bed(56, RED, double=True), 192, 1)
+    place("parents", dresser_cn(), 254, 1)
     HS.place(s, scroll(10, 16, "fu"), 270, ut + 8)
     # ---- downstairs (top 63, floor 108)
     x0, x1 = LIVING
@@ -793,23 +807,27 @@ def cn_farmhouse_inside():
     HS.place(s, moon_window(10), x0 + 18, top + 9)
     HS.place(s, scroll(12, 26, "fu"), x0 + 54, top + 6)
     # owner 2026-11-14: a sofa for three and a television in place of the settee, tea table and bamboo
-    HS.on_floor(s, sofa_cn(50), x0 + 13, 0, 2)
+    place("settee", sofa_cn(50), x0 + 13, 0, 2)
+    traced.start("tv")
     cab = tv_cabinet(30)
     s.blit(cab, x0 + 70, fl + 2 - cab.h)
     s.blit(F.tv(False), x0 + 72, fl + 2 - cab.h - 15)
+    traced.start()
     s.rect(x0 + 67, fl - 3, 2, 4, P.teal[2]).set(x0 + 67, fl - 4, P.green[3]).set(x0 + 68, fl - 5, P.green[2])   # a sprig in a jar by the cabinet
     tx = x0 + 112
     HS.place(s, scroll(10, 22, "mountain"), tx + 8, top + 8)
     HS.on_floor(s, stool(), tx + 10, 0, 1)
+    traced.start("table")
     st = square_table()
     s.blit(st, tx, fl + 2 - st.h)
     for sx in (tx - 9, tx + 27):
         s.blit(stool(), sx, fl + 2 - 10)
     s.rect(tx + 5, fl - 16, 5, 2, P.porcelain[3]).rect(tx + 12, fl - 16, 5, 2, P.porcelain[3]).rect(tx + 19, fl - 16, 4, 2, P.porcelain[3])
     s.set(tx + 7, fl - 17, P.coral[3]).set(tx + 14, fl - 17, P.green[3])
+    traced.start()
     kx = x1 - 82
-    HS.on_floor(s, stove(), kx, 0, 1)
-    HS.on_floor(s, water_jar(), kx + 44, 0, 1)
+    place("stove", stove(), kx, 0)
+    place("jar", water_jar(), kx + 44, 0)
     s.rect(kx + 46, top + 14, 30, 3, D[2]).hline(kx + 46, kx + 75, top + 14, D[3])
     for k, C in enumerate((P.porcelain, P.teal, P.clay, P.porcelain)):
         s.rect(kx + 48 + k * 7, top + 8, 5, 6, C[2]).hline(kx + 48 + k * 7, kx + 52 + k * 7, top + 8, C[3])
@@ -818,5 +836,7 @@ def cn_farmhouse_inside():
     s.rect(kx + 60, fl - 22, 18, 3, D[2]).hline(kx + 60, kx + 77, fl - 22, D[3])
     s.vline(kx + 62, fl - 19, fl, D[1]).vline(kx + 75, fl - 19, fl, D[1])
     s.rect(kx + 64, fl - 25, 9, 3, P.oak[3]).set(kx + 70, fl - 26, P.steel[3])
+    traced.add(None, front, 0, 0)
+    traced.finish()
     s.blit(front, 0, 0)
     return s, INSIDE_DATA

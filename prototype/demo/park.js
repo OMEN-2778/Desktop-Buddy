@@ -64,13 +64,7 @@ function parkEating() { return sim.place === 'park' && sim.mode === 'act' && sim
 function parkHit(x, y) {
   if (festStallAt(x, y)) return 'fest_stall';
   if (riddleAt(x, y)) return 'fest_riddle';
-  const L = parkLayout();
-  for (const [id,r] of [['park_bench',L.bench.hit], [L.facility?.kind === 'toilet' ? 'park_wc' : 'park_food',L.facility?.hit]]) {
-    if (!r) continue;
-    const [a,b,w,h] = r;
-    if (x >= a && x < a+w && y >= b && y < b+h) return id;
-  }
-  return null;
+  return sceneObjectId(parkImages().hover, x, y);
 }
 function startParkAct(act) {
   const L = parkLayout(), p = here(), sitting = act === 'bench';

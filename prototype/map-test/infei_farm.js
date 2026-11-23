@@ -37,10 +37,17 @@ const infeiFarm=(()=>{
   if(!ripeTree(t)){if(s!==3||t.kind==='orange'){t.grown++;if(ripeTree(t))t.cycle=CYCLE-1;}}
   else if(TREE[t.kind].seasons.includes(s)&&!t.ready&&++t.cycle>=CYCLE){t.ready=true;t.cycle=0;}
   if(t.ready&&!TREE[t.kind].seasons.includes(s))t.ready=false;}}   // last season's fruit drops
+ const yard=sceneTargetsFor(SEASON_FURNITURE.yard), animalTargets=[], treeTargets=[];
  const treeStage=t=>t.grown<3?0:!ripeTree(t)?1:t.ready?3:2;
  const pit=i=>D.pits[i];
- function drawTrees(ctx,info){if(info.inside||info.region!==5)return;
-  for(const [i,t]of Object.entries(S().trees)){const [px,py]=pit(i),a=D.trees[t.kind][SK[se()]][treeStage(t)];ctx.drawImage(X.imgOf(a.src),px+a.dx,py+a.dy);}}
+ function drawTrees(ctx,info){
+  treeTargets.length=0;
+  if(info.inside||info.region!==5)return;
+  for(const [i,t]of Object.entries(S().trees)){
+   const [px,py]=pit(i),a=D.trees[t.kind][SK[se()]][treeStage(t)],img=X.imgOf(a.src),x=px+a.dx,y=py+a.dy;
+   ctx.drawImage(img,x,y);treeTargets.push({img,x,y,pit:i});
+  }
+ }
  function openPit(i){const t=S().trees[i],[px,py]=pit(i),at={x:px,y:py-22};
   if(!t)return X.ring('空树坑',[{id:'sf:plant:'+i,label:'种果树',icon:'sapling',off:Object.keys(S().trees).length>=TREE_MAX?'今年两棵种满了':''}],at);
   const k=TREE[t.kind],why=t.ready?'':!ripeTree(t)?`还要长 ${MATURE-t.grown} 天`:!k.seasons.includes(se())?fruitSeasons(t.kind):`再过 ${CYCLE-t.cycle} 天`;
@@ -69,20 +76,31 @@ const infeiFarm=(()=>{
  function place(a){const r=AREA[a.kind];if(a.x!=null&&(a.x<r.x[0]-5||a.x>r.x[1]+5))a.x=a.y=null;   // older saves: chickens by the farmhouse
   a.x??=rnd(...r.x);a.y??=Math.round(rnd(...r.y));a.tx=null;a.f=a.f||Math.random()*6;}
  let lastT=0;
- function drawAnimals(ctx,info){if(info.inside||se()===3)return;const t=C().state.time,dt=Math.min(.1,Math.max(0,t-lastT));lastT=t;
+ function drawAnimals(ctx,info){animalTargets.length=0;if(info.inside||se()===3)return;const t=C().state.time,dt=Math.min(.1,Math.max(0,t-lastT));lastT=t;
   const mine=S().animals.filter(a=>AREA[a.kind].scene===info.region);if(!mine.length)return;
   for(const a of mine.sort((p,q)=>p.y-q.y)){place(a);const r=AREA[a.kind];
    if(a.tx==null&&Math.random()<.004)a.tx=Math.max(r.x[0],Math.min(r.x[1],a.x+rnd(-40,40)));
    if(a.tx!=null){const d=a.tx-a.x,st=dt*(a.kind==='chicken'?9:5);if(Math.abs(d)<=st)a.tx=null;else{a.x+=Math.sign(d)*st;a.dir=Math.sign(d);}}
    const kind=baby(a)?'lamb':a.kind,frames=D.animals[kind],moving=a.tx!=null,fi=a.kind==='chicken'?Math.floor(t*3+a.f)%2:moving?[0,3][Math.floor(t*4)%2]:Math.floor(t*1.4+a.f)%3,pic=X.imgOf(frames[fi%frames.length]);
    const w=pic.width||ANIMAL[a.kind].size[0],h=pic.height||ANIMAL[a.kind].size[1],x=Math.round(a.x-w/2),y=a.y-h;
-   ctx.save();if((a.dir||1)<0){ctx.translate(x*2+w,0);ctx.scale(-1,1);}if(window.infeiHover?.animal===a.id)drawObjectHover(ctx,pic,x,y);ctx.drawImage(pic,x,y);ctx.restore();   // hover glow, like the house's furniture
+   if(!pic.naturalWidth)continue;
+   const img=a.dir<0?flippedSceneSprite(pic):pic;
+   ctx.drawImage(img,x,y);
+   animalTargets.push({img,x,y,animal:a});
    if(a.ready)bubble(ctx,Math.round(a.x),y-2,{egg:'#e8c88a',wool:'#d8d2e6',milk:'#9cc8ef'}[ANIMAL[a.kind].product],t);
   }
+  const hover=info.region===5&&window.infeiHoverApi?.hitPointer();
+  if(hover?.animal)drawObjectHover(ctx,hover.img,hover.x,hover.y);
   if(info.region===5){const fr=C().current?.().front;if(fr)ctx.drawImage(X.imgOf(fr),0,0);}   // the fence stands in front of them
  }
  function bubble(ctx,x,y,c,t){y+=Math.round(Math.sin(t*3)*1);ctx.fillStyle='#22182a';ctx.fillRect(x-4,y-9,9,7);ctx.fillRect(x-1,y-2,3,1);ctx.fillStyle='#f7f6fb';ctx.fillRect(x-3,y-8,7,5);ctx.fillRect(x,y-3,1,1);ctx.fillStyle=c;ctx.fillRect(x-1,y-7,3,3);}
- function animalAt(x,y,region){return S().animals.filter(a=>AREA[a.kind].scene===region&&a.x!=null).reverse().find(a=>{const [w,h]=ANIMAL[a.kind].size;return Math.abs(x-a.x)<w/2+2&&y<=a.y+2&&y>=a.y-h-10;});}
+ function yardHit(x,y,scene){
+  if(scene===3)return sceneTargetAt(yard.slice(0,1),x,y);
+  if(scene!==5)return null;
+  const front=C().current().front;
+  if(front&&sceneTargetAt([{img:X.imgOf(front),x:0,y:0}],x,y))return null;
+  return sceneTargetAt([yard[1],...treeTargets,...animalTargets],x,y);
+ }
  function openAnimal(a){const k=ANIMAL[a.kind],at={x:a.x-(C().state.camera||0),y:a.y-ANIMAL[a.kind].size[1]-6};
   X.ring(`${a.name} · ${'♥'.repeat(hearts(a))||'刚认识'}`,[{id:'sf:pat:'+a.id,label:'摸摸',icon:'heart',off:a.petDay===today()?'今天摸过了':''},
    {id:'sf:feed:'+a.id,label:'喂草料',icon:'hay',off:grazing()?'在外面吃草呢':a.fedDay===today()?'吃饱了':''},
@@ -112,8 +130,6 @@ const infeiFarm=(()=>{
   const used=new Set(S().animals.map(a=>a.name)),name=NAMES[it.kind].find(n=>!used.has(n))||k.name;
   const a={id:'a'+Date.now().toString(36),kind:it.kind,name,day:today(),love:0,petDay:-1,fedDay:-1,prod:0,ready:null};S().animals.push(a);place(a);
   X.record('farm',`买了${k.name}「${name}」`,-it.cost);log(`牧场来了一只${k.name}，起名叫「${name}」。`);speak(`你好呀，${name}`,true);}
- const BARN=[342+110,342+290,30,88];
- const inRect=(x,y,[x0,x1,y0,y1])=>x>=x0&&x<=x1&&y>=y0&&y<=y1;
  // ================================================================ 爸妈帮忙浇水
  const parent={on:false,who:'mom',x:380,tx:null,done:null,t:0,n:null,water:0,bed:null};
  // owner 2026-11-12: the help comes early (before she is up), goes in the diary, and the parent tells her themselves, so
@@ -216,9 +232,17 @@ const infeiFarm=(()=>{
  X.hooks.day.push(d=>{helpOff(d);treeDay(d);animalDay(d);fundDay(d);planHelp(d+1);});
  X.hooks.draw.push((ctx,info)=>{C().state.noHerd=true;drawTrees(ctx,info);drawAnimals(ctx,info);drawParent(ctx,info);});
  X.hooks.click.push((x,y,s)=>{if(s.inside)return false;
-  if(s.scene===5){for(const i of D.pits.keys()){const [px,py]=pit(i);if(Math.abs(x-px)<12&&y>py-34&&y<py+4){openPit(i);return true;}}
-   const a=se()!==3&&animalAt(x,y,5);if(a){openAnimal(a);return true;}
-   if(inRect(x,y,BARN)){X.ring('粮仓 · 牲畜',[{id:'sf:ashop:0',label:'牲畜铺',icon:'farm'},{id:'sf:herd:0',label:se()===3?'棚里的牲畜':'看看牲畜',icon:'lens',off:S().animals.length?'':'还没有'},...(se()===3?[{id:'sf:feedall:0',label:'都喂草料',icon:'hay',off:S().animals.some(a=>a.fedDay!==today())?'':'都喂过了'}]:[])],{x:x-(s.camera||0),y:60});return true;}}
+  const target=yardHit(x,y,s.scene);
+  if(s.scene===5){
+   if(target?.animal){openAnimal(target.animal);return true;}
+   if(target?.pit!=null){openPit(target.pit);return true;}
+   if(target?.id==='barn'){X.ring('粮仓 · 牲畜',[{id:'sf:ashop:0',label:'牲畜铺',icon:'farm'},{id:'sf:herd:0',label:se()===3?'棚里的牲畜':'看看牲畜',icon:'lens',off:S().animals.length?'':'还没有'},...(se()===3?[{id:'sf:feedall:0',label:'都喂草料',icon:'hay',off:S().animals.some(a=>a.fedDay!==today())?'':'都喂过了'}]:[])],{x:x-(s.camera||0),y:60});return true;}
+   for(const i of D.pits.keys()){
+    if(S().trees[i])continue;
+    const [px,py]=pit(i);
+    if(Math.abs(x-px)<=9&&y>=py-5&&y<=py+2){openPit(i);return true;}
+   }
+  }
   return false;});
  Object.assign(X.hooks.pick,{plant:i=>treeShop(+i),fruit:i=>pickFruit(+i),treelook:i=>treeLook(+i),ashop:animalShop,herd:herdSheet,
   feedall:()=>{for(const a of S().animals)feed(a);showHint('都喂饱了');},pat:id=>pat(byId(id)),feed:id=>feed(byId(id)),collect:id=>collect(byId(id)),animal:id=>animalSheet(byId(id))});
@@ -268,6 +292,6 @@ const infeiFarm=(()=>{
  SPRING_TALK.dad.push({title:'牛认人',mood:{name:'牛认人',emo:'playful',pts:2,min:120},lines:['>你那头牛认得你了没？','好像认得了，见着我就叫。','>那是饿了。','爸……','>哈哈，逗你呢。认得了，认得了。']});
  SPRING_TALK.friend.push({title:'你家羊叫什么',mood:{name:'羊的名字',emo:'happy',pts:2,min:120},lines:['>听说你养羊了？叫啥名儿啊？','叫棉花。','>好可爱啊！我能去摸摸不？','能啊，它可爱让人挠下巴了。','>那我下周就去！']});
  for(const [key,pool]of Object.entries(SPRING_TALK))if(key!=='people')pool.forEach((t,i)=>{if(t.mood&&!t.id)ML[t.id=`spring_talk_${key}_${i}`]={...t.mood};});
- return {pcState,TREE,ANIMAL,give,sell,buy,parent,fundDay,treeDay,animalDay,planHelp,openPit,openAnimal,pat,feed,collect,pickFruit,AREA,pit,S};
+ return {yardHit,pcState,TREE,ANIMAL,give,sell,buy,parent,fundDay,treeDay,animalDay,planHelp,openPit,openAnimal,pat,feed,collect,pickFruit,AREA,pit,S};
 })();
 window.infeiFarm=infeiFarm;

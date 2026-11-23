@@ -116,6 +116,29 @@ def farm_story_source():
 def spring_data():
     d=SP.runtime_data(bare_farm=True);d['seasons']=infei_seasons(d['scenes']);return d
 
+def furniture_masks():
+    import _farmstead as farmstead
+    import summer_isle
+    import autumn_city
+
+    def collect(render, dx=0, dy=0):
+        entries = []
+        render(entries)
+        return [[key, x+dx, y+dy, SP.uri(sprite)] for key, x,y,sprite in entries]
+
+    from pixelkit import Sprite
+    door = []
+    farmstead.cn_farmhouse(Sprite(342,120), door)
+    barn = Sprite(342,120)
+    farmstead.granary(barn, 150, 84)
+    x, y, right, bottom = barn.to_image().getbbox()
+    yard = [[key, x, y, SP.uri(sprite)] for key,x,y,sprite in door]
+    crop = Sprite(right-x, bottom-y)
+    crop.px[:] = barn.px[y:bottom,x:right]
+    yard.append(['barn',x+342,y,SP.uri(crop)])
+    return dict(yard=yard,spring=collect(farmstead.cn_farmhouse_inside, 27), summer=collect(summer_isle.lodge_inside, 40, 28),
+                autumn=collect(autumn_city.detective_inside))
+
 RELEASE='--release' in sys.argv or '--mobile' in sys.argv
 MOBILE='--mobile' in sys.argv
 RELEASE_CHEATS='function installSeasonCheats(){return {flags:{},fillHero(){},fillPets(){},enforce(){}};}\n'
@@ -131,7 +154,7 @@ def main():
     for key in ([] if RELEASE else ['buddy-save','buddy-settings','buddy-look-v2','buddy-look-at']):
         page=page.replace('"'+key+'"','"season-test-'+key+'"')
     autumn=(ROOT/'prototype/autumn/story.js').read_text()+(ROOT/'prototype/autumn/game.js').read_text()+'\nconst AUTUMN_MAP_DATA='+json.dumps(autumn_data(),ensure_ascii=False,separators=(',',':'))+';\n'
-    source=autumn+(ROOT/'prototype/season/effects.js').read_text()+controller('spring',spring_data())+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(RELEASE_CHEATS if RELEASE else (ROOT/'prototype/map-test/cheats.js').read_text())+(ROOT/'prototype/map-test/adapter.js').read_text()
+    source='const SEASON_FURNITURE = '+json.dumps(furniture_masks(),separators=(',',':'))+';\n'+autumn+(ROOT/'prototype/season/effects.js').read_text()+controller('spring',spring_data())+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(RELEASE_CHEATS if RELEASE else (ROOT/'prototype/map-test/cheats.js').read_text())+(ROOT/'prototype/map-test/adapter.js').read_text()
     import base64
     airport_images={k:'data:image/png;base64,'+base64.b64encode((ROOT/('art/out/concept/'+k+'.png')).read_bytes()).decode() for k in ['airport_terminal','airport_vista','airport_terminal_front','airport_plane','airport_cabin','airport_cabin_front','trip_airport']}
     source+=farm_story_source()

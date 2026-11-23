@@ -257,13 +257,31 @@ def runtime_data():
     bg.px[:B.WL,:,3][same]=0
     structures=B.Sprite(B.GW,B.GH);B.buildings(structures)
     SI.umbrella(structures,B.PRE+206,B.GROUND[B.PRE+206],R=B.P.coral)
-    for cx,C in B.CHAIRS:B.BP.beach_chair(structures,cx,B.GROUND[cx]+1,C)
+    shore_targets = []
+
+    def target(name, part, x=0, y=0):
+        bounds = part.to_image().getbbox()
+        left, top, right, bottom = bounds
+        shore_targets.append([name, x+left, y+top, uri(part.crop(left,top,right-left,bottom-top))])
+
+    cabana = Sprite(B.GW,B.GH)
+    B.BP.cabana3d(cabana,342+SI.CABANA[0],342+SI.CABANA[1],B.GROUND[342+120]+6,{k:342+v for k,v in SI.CABANA_DOORS.items()})
+    target('cabana', cabana)
+    door_x = SI.LODGE_DOOR-8
+    door_y = SI.LANE[0]-8-25+B.DY
+    target('lodge', structures.crop(door_x,door_y,16,25), door_x,door_y)
+    for i,(cx,C) in enumerate(B.CHAIRS):
+        chair = Sprite(40,40)
+        B.BP.beach_chair(chair,20,35,C)
+        y = B.GROUND[cx]+1-35
+        structures.blit(chair,cx-20,y)
+        target('chair:'+str(i), chair, cx-20,y)
     plants=[{'img':uri(im),'x':x,'y':y,'kind':kind} for im,x,y,kind in B.moving_plants()]
     # Individual rooted kelp stalks, heights follow the actual collision floor.
     kelp=[{'x':x,'y':B.GROUND[x]+1,'h':48+(i*17)%53} for i,x in enumerate(range(B.LAND+320,B.STACK[0]-70,113))]
     data = {
         'skinRamp':list(doll.GIRL.skin),'bg':uri(bg),'sky':uri(sky),'far':uri(B.far_layer()),'mid':uri(B.mid_layer()),'structures':uri(structures),'plants':plants,'kelp':kelp,'shore':next(x for x in range(B.PRE,B.JOIN) if B.GROUND[x]>=B.WL), 'W': B.GW, 'H': B.GH, 'WL': B.WL, 'ground': B.GROUND,
-        'lodgeDoor': SI.LODGE_DOOR, 'cabanaBounds':[342+SI.CABANA[0]-8,342+SI.CABANA[1]+20], 'cabana': {('swim' if k == 'bikini' else k): 342 + v for k, v in SI.CABANA_DOORS.items()},
+        'shoreTargets':shore_targets,'lodgeDoor': SI.LODGE_DOOR, 'cabanaBounds':[342+SI.CABANA[0]-8,342+SI.CABANA[1]+20], 'cabana': {('swim' if k == 'bikini' else k): 342 + v for k, v in SI.CABANA_DOORS.items()},
         'zones': [[0, '旅舍'], [342, '更衣室'], [B.PRE, '沙滩'], [B.LAND, '海湾'], [B.LAND + 380, '沉船谷'], [B.LAND + 700, '熔岩拱门'], [B.LAND + B.SPLIT + 20, '海草草甸'], [B.LAND + B.SPLIT + 220, '深蓝海沟'], [B.STACK[0] - 160, '礁墙']],
         'inside': uri(ROOT / 'art/out/concept/summer_lodge_inside.png'),
         'clouds': [uri(BE.cloud(i)) for i in range(3)], 'life': life(),

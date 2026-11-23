@@ -57,6 +57,32 @@ def story_looks():
                     for key in ('hair','skin','eye','top','bottom','sock')})
          for name,d in story_cast().items()}
 
+def landmark_sprites():
+    from PIL import ImageDraw
+
+    def market(city):
+        city.building(370,341,98,1,'old','街角集市',32)
+        city.stall(374,376,P.sage)
+        city.stall(423,376,P.clay)
+
+    out=[]
+    for key,dx,dy,draw in (
+        ('market', A.OX, A.TOP, market),
+        ('swing', 0, 0, lambda c: c.swing(772,596)),
+        ('koi', 0, 0, lambda c: c.pond(808,510,5)),
+        ('chestnut', 0, 0, lambda c: c.roaster(816,602)),
+    ):
+        city=A.City()
+        city.im=Image.new('RGBA',(A.MAP_W,A.MAP_H))
+        city.d=ImageDraw.Draw(city.im)
+        draw(city)
+        box=city.im.getbbox()
+        x,y=box[:2]
+        buf=io.BytesIO()
+        city.im.crop(box).save(buf,format='PNG')
+        out.append([key,x+dx,y+dy,'data:image/png;base64,'+base64.b64encode(buf.getvalue()).decode()])
+    return out
+
 def runtime_data():
  cast=story_cast()
  npcs=[]
@@ -71,7 +97,7 @@ def runtime_data():
   a,b=segment['a'],segment['b']
   x=max(0,min(a[0],b[0])-3);y=max(0,min(a[1],b[1])-17);right=min(A.MAP_W,max(a[0],b[0])+4);bottom=min(A.MAP_H,max(a[1],b[1])+4)
   crop=front.crop((x,y,right,bottom));buf=io.BytesIO();crop.save(buf,format='PNG');foreground.append(dict(x=x,y=y,w=right-x,h=bottom-y,a=a,b=b,img='data:image/png;base64,'+base64.b64encode(buf.getvalue()).decode()))
- return dict(officeWindows=office_window_views(),signs=json.loads((ROOT/'art/out/concept/autumn_signs_world.json').read_text()),signFont='data:font/woff;base64,'+base64.b64encode((ROOT/'art/fonts/source-han-sans/BuddyAutumnSigns.woff').read_bytes()).decode(),layoutVersion=4,lift={**A.LIFT,"x":A.LIFT["x"]+A.OX,"top":A.LIFT["top"]+A.TOP,"bottom":A.LIFT["bottom"]+A.TOP},ox=A.OX,water=A.runtime_water(),smoke=A.map_point(*A.SMOKE),summit=dict(triggerY=A.TOP-15,edgeY=A.TOP-92),river=dict(clean=[P.teal[3],P.teal[4]],dirty=[P.teal[1],P.oat[0]],shadow=[P.sage[0],P.teal[1]],rope=P.wood[2],top=A.TOP+666,bottom=A.MAP_H,boatX=A.BOAT_POS[0],boatY=A.BOAT_POS[1],moor=A.BOAT_MOOR,cleat=A.BOAT_CLEAT,boatShadow=A.BOAT_SHADOW,rocks=[[x+A.OX,y+A.TOP] for x,y in [(230,677),(287,672),(394,680),(588,679)]]),boat=uri("autumn_river_boat.png"),foreground=foreground,foliageCell=A.FOLIAGE_CELL,foliageCols=A.FOLIAGE_COLS,foliage=json.loads((ROOT/'art/out/concept/autumn_foliage_world.json').read_text()),foliageSheets=[uri('autumn_foliage_atlas_'+str(i)+'.png') for i in range(5)],npcs=npcs,npcNames=list(cast),width=A.MAP_W,height=A.MAP_H,scale=[A.SCALE_X,A.SCALE_Y],routes=A.runtime_routes(),landmarks=A.runtime_landmarks(),
+ return dict(landmarkSprites=landmark_sprites(),officeWindows=office_window_views(),signs=json.loads((ROOT/'art/out/concept/autumn_signs_world.json').read_text()),signFont='data:font/woff;base64,'+base64.b64encode((ROOT/'art/fonts/source-han-sans/BuddyAutumnSigns.woff').read_bytes()).decode(),layoutVersion=4,lift={**A.LIFT,"x":A.LIFT["x"]+A.OX,"top":A.LIFT["top"]+A.TOP,"bottom":A.LIFT["bottom"]+A.TOP},ox=A.OX,water=A.runtime_water(),smoke=A.map_point(*A.SMOKE),summit=dict(triggerY=A.TOP-15,edgeY=A.TOP-92),river=dict(clean=[P.teal[3],P.teal[4]],dirty=[P.teal[1],P.oat[0]],shadow=[P.sage[0],P.teal[1]],rope=P.wood[2],top=A.TOP+666,bottom=A.MAP_H,boatX=A.BOAT_POS[0],boatY=A.BOAT_POS[1],moor=A.BOAT_MOOR,cleat=A.BOAT_CLEAT,boatShadow=A.BOAT_SHADOW,rocks=[[x+A.OX,y+A.TOP] for x,y in [(230,677),(287,672),(394,680),(588,679)]]),boat=uri("autumn_river_boat.png"),foreground=foreground,foliageCell=A.FOLIAGE_CELL,foliageCols=A.FOLIAGE_COLS,foliage=json.loads((ROOT/'art/out/concept/autumn_foliage_world.json').read_text()),foliageSheets=[uri('autumn_foliage_atlas_'+str(i)+'.png') for i in range(5)],npcs=npcs,npcNames=list(cast),width=A.MAP_W,height=A.MAP_H,scale=[A.SCALE_X,A.SCALE_Y],routes=A.runtime_routes(),landmarks=A.runtime_landmarks(),
   scenes=[uri('autumn_city_stage_'+str(i)+'.png') for i in range(5)],
   # distance layers behind the map (sky / far range / mid hills), per look; the game moves them at their own speeds
   backdrop={k:{part:uri(f'autumn_back_{part}_{k}.png') for part in ('sky','far','mid')} for k in ('polluted','clear','clean')},front=uri('autumn_city_front.png'),inside=uri('autumn_detective_inside.png'))

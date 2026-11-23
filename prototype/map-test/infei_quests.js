@@ -242,15 +242,19 @@ const infeiQuests=(function(){
   zhou:[['老周','中午忙得脚不沾地，我出来透口气。'],['老周','你那胡萝卜长得可真水灵啊。']],wang:[['王叔','嘘——']]};
  async function chat(key){const [who,line]=pick(IDLE[key]||[[V[key].name,'嗯？']]);await say(who,line);}
  function talk(key){const v=V[key],g=goals().find(g=>g.v===v);scene(async()=>{await approach(v);if(g)await RUN[g.id][Q()[g.id].step]();else await chat(key);},g?.id);}
+ const villagers=[];
+ const villagerAt=(x,y,sc)=>sceneTargetAt(villagers.filter(v=>v.scene===sc),x,y);
  // ---------------------------------------------------------------- drawing: villagers, marks, the rabbit
  const rabbit={on:false};
  function bunny(ctx,x,y,t){ctx.fillStyle='#e9e2d6';ctx.fillRect(x-4,y-5,8,5);ctx.fillRect(x+2,y-8,4,4);ctx.fillRect(x+3,y-12,1,4);ctx.fillRect(x+5,y-12,1,4);ctx.fillStyle='#b9ae9e';ctx.fillRect(x-4,y-1,8,1);ctx.fillStyle='#3a2a2e';ctx.fillRect(x+5,y-7,1,1);if(Math.floor(t*2)%2)ctx.fillRect(x-5,y-4,1,1);}
- X.hooks.draw.push((ctx,info)=>{if(info.inside||S().phase!=='done')return;const t=info.time,gs=goals();
+ X.hooks.draw.push((ctx,info)=>{villagers.length=0;if(info.inside||S().phase!=='done')return;const t=info.time,gs=goals();
   for(const [key,v]of Object.entries(V)){if(!visible(v))continue;const p=where(v);if(p.scene!==info.region)continue;
    const s=C().state;if(!busy&&Math.abs(s.x-p.x)<40)v.dir=s.x<p.x?-1:1;
-   const f={expr:idleBreath.blink(p.x*.37)?'blink':'neutral',look:v.dir,bob:idleBreath.bob(p.x*.37),sway:0,wave:null};ctx.drawImage(npcCanvas(v,f,'stand'),Math.round(p.x)-10,103-27);
-   const g=gs.find(g=>g.v===v);if(g&&!busy)drawQuestMarker(ctx,p.x,v.kid?80:76,g.mark);}
-  for(const g of gs)if(g.spot&&SPOTS[g.spot].scene===info.region&&!busy){const sp=SPOTS[g.spot];drawQuestMarker(ctx,sp.x,sp.rect[1]+21,g.mark||'?');}
+   const f={expr:idleBreath.blink(p.x*.37)?'blink':'neutral',look:v.dir,bob:idleBreath.bob(p.x*.37),sway:0,wave:null};
+   const img=npcCanvas(v,f,'stand'),x=Math.round(p.x)-10,y=103-27;
+   ctx.drawImage(img,x,y);villagers.push({img,x,y,scene:p.scene,villager:key});
+   const g=gs.find(g=>g.v===v);if(g&&!busy)drawQuestMarker(ctx,p.x,v.kid?80:76,g.mark,()=>talk(key));}
+  for(const g of gs)if(g.spot&&SPOTS[g.spot].scene===info.region&&!busy){const sp=SPOTS[g.spot];drawQuestMarker(ctx,sp.x,sp.rect[1]+21,g.mark||'?',()=>run(g.id));}
   if(rabbit.on&&info.region===4)bunny(ctx,318,103,t);
   if(Q().prints.rabbit==='farm'&&info.region===3&&!night())bunny(ctx,104+Math.round(Math.sin(t*.4)*6),103,t);
   autoTick(info);});
@@ -306,6 +310,6 @@ const infeiQuests=(function(){
  function farmGo(){const F=S();if(!inSpring())return '先坐飞机去茵菲谷';if(['sow','water','field'].includes(F.phase)){if(sim.mode==='down')return `先把${ta()}叫醒（长按${ta()}）`;goTo(4,150);return {say:'去菜地'};}
   return '跟着妈妈把开场走完就好';}
  X.hooks.pick.quests=()=>questBoard.open();
- return {V,Q,goals,run,talk,spotAt,hit,register,kit:{say,ask,walkTo,finish,crops,take,note,me,today,hour,night,villager,approach,X,S,C},at:v=>visible(v)?where(v):null,spots:SPOTS,list:()=>questBoard.open(),get busy(){return busy;},rabbit};
+ return {V,Q,goals,run,talk,spotAt,villagerAt,hit,register,kit:{say,ask,walkTo,finish,crops,take,note,me,today,hour,night,villager,approach,X,S,C},at:v=>visible(v)?where(v):null,spots:SPOTS,list:()=>questBoard.open(),get busy(){return busy;},rabbit};
 })();
 window.infeiQuests=infeiQuests;

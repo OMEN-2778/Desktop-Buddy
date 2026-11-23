@@ -149,9 +149,14 @@ const { chromium } = require('playwright');
       assert.deepEqual(await page.evaluate(() => {
         const city = seasonMapTest.state.autumn, actors = liweiStory.actors;
         const {x,y} = city.npcRows()[0];
-        liweiStory.actors = () => [{id:'zhou', x, y}, {id:'doctor', x, y:y+2}];
-        try { return [city.hit(x,y-14)?.id,city.hover(x,y-14)?.id]; }
-        finally { liweiStory.actors=actors; }
+        liweiStory.actors = () => [
+          {id:'zhou',name:'老郑',seed:2,x,y},
+          {id:'doctor',name:'苏医生',seed:3,x,y:y+2}
+        ];
+        try {
+          city.draw();
+          return [city.hit(x,y-14)?.id,city.hover(x,y-14)?.id];
+        } finally { liweiStory.actors=actors;city.draw(); }
       }),['doctor','doctor'],'overlapping actors use the front character for click and hover');
     }
     assert.deepEqual(errors, []);

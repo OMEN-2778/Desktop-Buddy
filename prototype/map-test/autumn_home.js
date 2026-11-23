@@ -25,7 +25,8 @@ const autumnHome=(function(){
   exit:{name:'出门',rect:[216,72,14,36],x:222,y:108}
  };
  const NEED_SPOT={energy:'bed',hygiene:'bath',bladder:'wc',hunger:'stove',fun:'sofa'};
- const spots=Object.entries(SPOTS).map(([id,p])=>({id,...p}));
+ const targets=sceneTargetsFor(SEASON_FURNITURE.autumn).map(t=>({...SPOTS[t.id],...t}));
+ const hit=(x,y)=>sceneTargetAt(targets,x,y);
  let svc=null,pend=null,hov=null,wasIn=false;
  function stop(){if(!svc)return;seasonHouse.drop(svc.act);svc=null;S().homeSpot=null;S().iy=0;S().hideHero=false;S().pose=null;}
  function use(id,auto,item){
@@ -69,7 +70,7 @@ const autumnHome=(function(){
    if(svc.id==='bath'){const src=dollCanvas({expr:'happy',look:0,bob:0,sway:0,wave:null},'stand'),top=TUB_RIM-15;
     ctx.drawImage(src,0,0,src.width,TUB_RIM-top,SPOTS.bath.x-10,top,src.width,TUB_RIM-top);seasonHouse.emote(ctx,SPOTS.bath.x+3,TUB_RIM-29);}
   }
-  if(hov&&!svc){const p=hov;drawObjectHover(ctx,box(p.rect[2],p.rect[3]),p.rect[0],p.rect[1]);}
+  if(hov)drawObjectHover(ctx,hov.img,hov.x,hov.y);
  }
  // Keep the resident on his own seat and berth. Persist his current position with the city.
  function residentGoal(){
@@ -118,7 +119,6 @@ const autumnHome=(function(){
   return officeFront.image;
  }
  const officeImage=new Image();officeImage.src=C().DATA.inside;
- const boxes=new Map();function box(w,h){const k=w+'x'+h;if(!boxes.has(k)){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,w,h);boxes.set(k,c);}return boxes.get(k);}
  // hidden in the bed and the tub (the home shows only her head there)
  // each frame: the act over / the player sent her elsewhere → let go; nothing to do inside → back out
  setInterval(()=>{try{if(!inCity()||window.liweiStory?.locked())return;const s=S();
@@ -152,7 +152,7 @@ const autumnHome=(function(){
    seasonHouse.explore();S().lastAuto=true;use(ACT_SPOT[name],true);return;}
   return oStart.apply(this,arguments);};
  // hover: the house's pixel glow on furniture (the city draws it in over())
- const oHover=C().hover;C().hover=function(x,y){const r=oHover.apply(this,arguments);hov=S().inside&&r&&SPOTS[r.id]&&r.id!=='exit'?SPOTS[r.id]:null;return r;};
+ const oHover=C().hover;C().hover=function(x,y){const r=oHover.apply(this,arguments);hov=S().inside&&r?.img?r:null;return r;};
  const oArrive=arriveAt;arriveAt=function(p){stop();pend=null;return oArrive.apply(this,arguments);};
  const restoreHouse=restore;restore=function(save){
   svc=pend=hov=null;
@@ -173,6 +173,6 @@ const autumnHome=(function(){
  return {cancelActivity(){stop();pend=null;S().hideHero=false;},residentHit(x,y){
   const g=residentGoal(),r=S().resident;
   return g&&r&&g.id!=='sleep'&&!liweiStory.locked()&&Math.abs(x-r.x)<9&&y>=r.y-31&&y<r.y-(g.id==='work'?12:3);
- },use,tickResident,spots,need,click,arrived,under,over,busy:()=>!!svc||S().goal?.id==='home_use',get svc(){return svc;},SPOTS};
+ },use,tickResident,hit,need,click,arrived,under,over,busy:()=>!!svc||S().goal?.id==='home_use',get svc(){return svc;},SPOTS};
 })();
 window.autumnHome=autumnHome;

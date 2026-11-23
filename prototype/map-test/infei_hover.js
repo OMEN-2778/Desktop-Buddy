@@ -1,53 +1,46 @@
-// Hover glow in 茵菲谷 (owner 2026-11-03: "does hovering over things show the outline like the rest of the game?").
-// Game-shell test page only. Everything she can click gets the house's own pixel glow (drawObjectHover): villagers,
-// fruit trees and animals by their sprite; beds, tree pits, the barn, the coop, the farmhouse door, quest spots and the
-// furniture inside the farmhouse by their outline box (they are part of the painted scene, not separate sprites).
+// The seasonal farm shares its object hit masks with the home furniture.
 const infeiHover=(function(){
  const X=springFarm.X,T=seasonMapTest,C=()=>T.state.spring,F=()=>X.F,inSpring=()=>sim.place==='spring_test';
  const boxes=new Map();
  function box(w,h){const k=w+'x'+h;if(!boxes.has(k)){const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));const g=c.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,c.width,c.height);boxes.set(k,c);}return boxes.get(k);}
  const rect=(x,y,w,h)=>({x,y,img:box(w,h)});
- const FARMDOOR=[168,62,28,40],INDOOR=[30,66,20,42];
- let hv=null,region=null;
+ let pointer=null;
  // what is under the pointer, in scene coordinates (mirrors the click handlers)
  function hit(x,y){const s=C().state,f=F();
   if(springFarm.speech.open||window.infeiQuests?.busy||storyLocked()||cardHolds()||wiping||sim.mode==='down'||s.door)return null;
   if(Math.abs(x-s.x)<10&&y<s.y&&y>s.y-28)return null;   // Buddy: her own ring
   if(f.phase==='meet'&&!s.inside&&s.scene===springFarm.mom.scene&&springFarm.momAt(x,y))return {mom:true};   // 妈妈 waiting with her "!"
-  if(s.inside){
-   for(const p of Object.values(window.infeiHome?.SPOTS||{})){const [rx,ry,w,h]=p.rect;if(x>=rx&&x<rx+w&&y>=ry&&y<ry+h)return rect(rx,ry,w,h);}
-   const [dx,dy,dw,dh]=INDOOR;if(x<50&&y>64)return rect(dx,dy,dw,dh);
-   return null;}
+  if(s.inside)return window.infeiHome?.hit(x,y);
   const sc=s.scene;
+  const Q=window.infeiQuests,v=Q?.villagerAt(x,y,sc);
+  if(v&&!Q.busy)return v;
   if(sc===4&&['sow','water','done'].includes(f.phase)){
    const i=X.bedAt(x,y);if(i!=null){const [bx,top,w,h]=X.D.plots[i];return rect(bx-1,top-1,w+2,h+2);}}
-  if(f.phase!=='done')return null;
-  const Q=window.infeiQuests;
-  if(Q)for(const v of Object.values(Q.V)){const p=Q.at(v);if(p&&p.scene===sc&&Math.abs(x-p.x)<10&&y>103-44&&y<104)return {npc:v,x:p.x};}
+  if(f.phase!=='done')return sc===3?infeiFarm.yardHit(x,y,sc):null;
   if(Q){const g=Q.spotAt(sc,x,y);if(g)return rect(...Q.spots[g.spot].rect);}
-  const winter=X.seasonAt(X.today?.()??Math.floor(sim.t/1440))===3,A=infeiFarm.ANIMAL;
-  const animal=sce=>!winter&&[...(f.animals||[])].reverse().find(a=>a.x!=null&&5===sce&&Math.abs(x-a.x)<A[a.kind].size[0]/2+2&&y<=a.y+2&&y>=a.y-A[a.kind].size[1]-10);
+  if(sc===3)return infeiFarm.yardHit(x,y,sc);
   if(sc===5){
-   for(const [i,[px,py]]of X.D.pits.entries()){if(Math.abs(x-px)<12&&y>py-34&&y<py+4){const t=f.trees?.[i];
-     if(t){const SK=['spring','summer','autumn','winter'],st=t.grown<3?0:t.grown<8?1:t.ready?3:2,a=X.D.trees[t.kind]?.[SK[X.seasonAt(Math.floor(sim.t/1440))]]?.[st];if(a)return {x:px+a.dx,y:py+a.dy,img:X.imgOf(a.src)};}
-     return rect(px-9,py-5,18,7);}}
-   const a=animal(5);if(a)return {animal:a.id};
-   if(x>=452&&x<=632&&y>=30&&y<=88)return rect(452,30,181,59);}
-  if(sc===3){
-   const [dx,dy,dw,dh]=FARMDOOR;if(Math.abs(x-182)<14&&y>62&&y<102)return rect(dx,dy,dw,dh);}
-  return null;}
+   const exact=infeiFarm.yardHit(x,y,sc);
+   if(exact)return exact;
+   for(const [i,[px,py]]of X.D.pits.entries())if(!f.trees?.[i]&&Math.abs(x-px)<=9&&y>=py-5&&y<=py+2)return rect(px-9,py-5,19,8);
+  }
+  return null;
+ }
+ function hitPointer(){
+  if(!pointer||!inSpring())return null;
+  const project=T.viewport(C()),p=project.point(pointer);
+  return project.onCanvas(p)?hit(p.worldX,p.worldY):null;
+ }
  view.parentElement.addEventListener('pointermove',e=>{
-  if(e.target!==view||!inSpring()){hv=null;window.infeiHover=null;return;}
-  const c=C(),s=c.state,r=view.getBoundingClientRect(),x=(e.clientX-r.left)*342/r.width+(s.inside?0:(s.camera||0)),y=(e.clientY-r.top)*c.canvas.height/r.height;
-  hv=hit(x,y);region=s.inside?-1:s.scene;window.infeiHover=hv&&hv.animal?{animal:hv.animal}:null;
+  pointer=e.target===view&&inSpring()&&e.pointerType==='mouse'?{clientX:e.clientX,clientY:e.clientY}:null;
  },true);
- view.addEventListener('pointerleave',()=>{hv=null;window.infeiHover=null;});
- X.hooks.draw.push((ctx,info)=>{
-  if(!hv||(info.inside?-1:info.region)!==region)return;
-  if(hv.npc){const v=hv.npc;drawObjectHover(ctx,npcCanvas(v,{expr:'neutral',look:v.dir,bob:0,sway:0,wave:null},'stand'),Math.round(hv.x)-10,103-27);return;}
+ view.addEventListener('pointerleave',()=>{pointer=null;});
+ X.hooks.draw.push(ctx=>{
+  const hv=hitPointer();
+  if(!hv||hv.animal)return;  // animals get their outline underneath the pasture fence
   if(hv.mom){const m=springFarm.mom;drawObjectHover(ctx,npcCanvas(springFarm.momNpc(),{expr:'happy',look:m.facing,bob:0,sway:0,wave:null},'stand'),Math.round(m.x)-10,Math.round(m.y)-27);return;}
   if(hv.img)drawObjectHover(ctx,hv.img,hv.x,hv.y);
  });
- return {get hv(){return hv;},hit};
+ return {get hv(){return hitPointer();},hit,hitPointer};
 })();
 window.infeiHoverApi=infeiHover;

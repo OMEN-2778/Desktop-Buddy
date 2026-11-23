@@ -203,6 +203,8 @@ function makeSeason_autumn(opts, DATA) {
         state.autoAt = opts.now() + 45;
         return true;
     }
+    const landmarksWithSprites=sceneTargetsFor(DATA.landmarkSprites).map(t=>({...DATA.landmarks.find(p=>p.id===t.id),spriteX:t.x,spriteY:t.y,img:t.img}));
+    const landmarkTargets=landmarksWithSprites.map(p=>({x:p.spriteX,y:p.spriteY,img:p.img,landmark:p}));
     const landmark = id => DATA.landmarks.find(p => p.id === id);
     function visit(id, need = null, automatic = false) {
         const p = landmark(id);
@@ -640,7 +642,8 @@ function makeSeason_autumn(opts, DATA) {
             const u=i/32;
             ctx.fillRect(Math.round(moorX+(endX-moorX)*u),Math.round(moorY+(endY-moorY)*u+Math.sin(u*Math.PI)*3),1,1);
         }
-        ctx.drawImage(images.get(DATA.boat),r.boatX,by);
+        const img=images.get(DATA.boat);
+        return {depth:by+img.height,img,x:r.boatX,y:by};
     }
     function drawSigns() {
         ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#e6dfcf";
@@ -658,20 +661,96 @@ function makeSeason_autumn(opts, DATA) {
         if (depthStage === state.stage) return depthList;
         depthStage = state.stage;
         foregroundAlpha.clear();
+        foregroundSprites = new WeakMap();
         depthList = [ ...DATA.foliage[state.stage].map(p => ({ p: p, base: p.base, rail: -1 })), ...DATA.foreground.map((p, i) => ({ p: p, base: Math.max(p.a[1], p.b[1]), rail: i })) ];
         depthList.sort((u, v) => u.base - v.base);
         return depthList;
     }
-    function drawFoliage(front) {
-        for (const it of depthItems()) {
-            const p = it.p;
-            if (it.base >= state.y - 3 !== front || p.x + p.w < state.camX || p.x > state.camX + 342 || p.y + p.h < state.camY || p.y > state.camY + canvas.height) continue;
-            const rail = it.rail >= 0, overlap = front && state.x + 12 > p.x && state.x - 12 < p.x + p.w && state.y > p.y && state.y - (rail ? 30 : 29) < p.y + p.h, key = rail ? "rail" + it.rail : "tree" + p.frame, target = overlap ? (rail ? .28 : .3) : 1, prev = foregroundAlpha.get(key) ?? 1, alpha = prev + (target - prev) * (1 - Math.exp(-frameDt * 14));
-            foregroundAlpha.set(key, alpha);
-            ctx.globalAlpha = alpha;
-            if (rail) ctx.drawImage(images.get(p.img), p.x, p.y); else ctx.drawImage(images.get(DATA.foliageSheets[state.stage]), foliageCol(p), foliageRow(p), p.w, p.h, p.x, p.y, p.w, p.h);
+    let streetLayers = [];
+    let foregroundSprites = new WeakMap();
+    function foliageSprite(item) {
+        const p=item.p;
+        if(item.rail>=0)return images.get(p.img);
+        let sprite=foregroundSprites.get(p);
+        if(!sprite){
+            sprite=document.createElement("canvas");sprite.width=p.w;sprite.height=p.h;
+            sprite.getContext("2d").drawImage(images.get(DATA.foliageSheets[state.stage]),
+                foliageCol(p),foliageRow(p),p.w,p.h,0,0,p.w,p.h);
+            foregroundSprites.set(p,sprite);
         }
-        ctx.globalAlpha = 1;
+        return sprite;
+    }
+    function sceneryLayer(item, watched) {
+        const p=item.p,rail=item.rail>=0;
+        const hides=watched.some(actor=>item.base>=actor.y-3&&actor.x+12>p.x&&actor.x-12<p.x+p.w&&
+            actor.y>p.y&&actor.y-29<p.y+p.h);
+        const key=rail?"rail"+item.rail:"tree"+p.frame;
+        const target=hides?(rail ? .28 : .3):1, previous=foregroundAlpha.get(key)??1;
+        const alpha=previous+(target-previous)*(1-Math.exp(-frameDt*14));
+        foregroundAlpha.set(key,alpha);
+        return {depth:item.base+3,alpha,img:foliageSprite(item),x:p.x,y:p.y};
+    }
+    function drawStreet(boat) {
+        const npcs=npcRows().filter(n=>Math.abs(n.x-state.x)<=240&&Math.abs(n.y-state.y)<=190);
+        const watched=[state,...npcs.filter(n=>n.mark)];
+        const layers=window.liweiStory?.active?[]:opts.residents?.(state,canvas.height)||[];
+        if(boat)layers.push(boat);
+        for(const item of depthItems()){
+            const p=item.p;
+            if(p.x+p.w<state.camX||p.x>state.camX+342||p.y+p.h<state.camY||p.y>state.camY+canvas.height)continue;
+            layers.push(sceneryLayer(item,watched));
+        }
+        for(const n of npcs){
+            const sprite=window.liweiStory?.frameFor(n.name,n,n.sitting?"sit":undefined)||
+                images.get(DATA.npcs[n.seed][(state.time+n.seed)%4.7<.16?1:0]);
+            layers.push({depth:n.y,npc:n,img:sprite,x:n.x-10,y:n.y-28,draw(){
+                if(n.sitting){
+                    ctx.fillStyle="#644c40";ctx.fillRect(n.x-5,n.y-6,2,6);ctx.fillRect(n.x+4,n.y-6,2,6);
+                    ctx.fillStyle="#a38362";ctx.fillRect(n.x-6,n.y-8,13,3);
+                }
+                ctx.drawImage(sprite,n.x-10,n.y-28);
+                if(hover?.npc&&hover.id===n.id)drawObjectHover(ctx,sprite,n.x-10,n.y-28);
+            }});
+        }
+        layers.push({depth:state.liftY,x:DATA.lift.x-15,y:state.liftY-31,draw(){
+            const x=DATA.lift.x,y=state.liftY;
+            ctx.fillStyle="#262434";ctx.fillRect(x-15,y-31,30,33);
+            ctx.fillStyle="#87573e";ctx.fillRect(x-12,y-28,24,27);
+        }});
+        layers.push({depth:state.y,draw:drawStreetHero});
+        layers.push({depth:state.liftY+.1,alpha:state.riding ? .3 : 1,draw(){
+            const x=DATA.lift.x,y=state.liftY;
+            ctx.fillStyle="#8b8899";
+            for(let i=0;i<5;i++)ctx.fillRect(x-12+i*6,y-29,1,27);
+            ctx.fillRect(x-12,y+1,24,2);
+        }});
+        layers.sort((a,b)=>a.depth-b.depth);
+        streetLayers=layers;
+        for(const layer of layers){
+            ctx.globalAlpha=layer.alpha??1;
+            if(layer.draw)layer.draw();
+            else ctx.drawImage(layer.img,layer.x,layer.y);
+        }
+        ctx.globalAlpha=1;
+        for(const n of npcs){
+            const sign=window.liweiStory?n.mark:
+                state.quest===0&&n.id==="jian"?"!":state.quest===2&&n.id==="father"?"?":null;
+            if(sign)drawQuestMarker(ctx,n.x,n.y-(n.sitting?22:28),sign,()=>pickNpc(n));
+        }
+    }
+    function drawStreetHero() {
+        const need=state.service?.need;
+        if(["hunger","social","fun"].includes(need)){
+            ctx.fillStyle="#5d3831";ctx.fillRect(state.x-9,state.y-5,18,3);
+            ctx.fillRect(state.x-7,state.y-2,2,5);ctx.fillRect(state.x+5,state.y-2,2,5);
+            if(need==="hunger"){
+                ctx.fillRect(state.x+10,state.y-10,18,3);ctx.fillRect(state.x+13,state.y-7,2,5);
+                ctx.fillRect(state.x+24,state.y-7,2,5);
+                ctx.fillStyle="#e0ddd8";ctx.fillRect(state.x+15,state.y-13,9,3);
+                ctx.fillStyle="#d29b30";ctx.fillRect(state.x+17,state.y-14,5,1);
+            }
+        }
+        if(need!=="hygiene"&&need!=="bladder")opts.drawHero(ctx,state.x,state.y,state,null);
     }
     function drawPollution() {
         const opacity = [.13, .10, .07, .035, 0][state.stage];
@@ -733,52 +812,24 @@ function makeSeason_autumn(opts, DATA) {
         ctx.save();
         ctx.translate(-state.camX, -state.camY);
         ctx.drawImage(state.inside ? images.get(DATA.inside) : bg, 0, 0);
+        const shade=opts.light();
         if (state.inside) {
-            const minute=opts.now()%1440,night=minute<360||minute>=1140;
-            const panes=DATA.officeWindows?.[2*state.stage+Number(night)];
-            if(panes)ctx.drawImage(images.get(panes),0,0);
+            const panes=DATA.officeWindows?.slice(2*state.stage,2*state.stage+2);
+            if(panes?.length===2){
+                ctx.drawImage(images.get(panes[0]),0,0);
+                if(shade>0){
+                    ctx.globalAlpha=shade;
+                    ctx.drawImage(images.get(panes[1]),0,0);
+                    ctx.globalAlpha=1;
+                }
+            }
             opts.home?.under(ctx);
         }
         if (!state.inside) {
-            drawRiver();
+            const boat=drawRiver();
             drawSigns();
-            drawFoliage(false);
-            if (!window.liweiStory?.active) opts.drawResidents?.(ctx, state, canvas.height);
-            for (const n of npcRows()) {
-                if (Math.abs(n.x - state.x) > 240 || Math.abs(n.y - state.y) > 190) continue;
-                if (n.sitting) {
-                    ctx.fillStyle = "#644c40";
-                    ctx.fillRect(n.x-5,n.y-6,2,6);
-                    ctx.fillRect(n.x+4,n.y-6,2,6);
-                    ctx.fillStyle = "#a38362";
-                    ctx.fillRect(n.x-6,n.y-8,13,3);
-                }
-                ctx.drawImage(window.liweiStory?.frameFor(n.name,n,n.sitting ? "sit" : undefined)||images.get(DATA.npcs[n.seed][(state.time + n.seed) % 4.7 < .16 ? 1 : 0]), n.x - 10, n.y - 28);
-                const questSign = window.liweiStory ? n.mark :
-                    state.quest === 0 && n.id === "jian" ? "!" : state.quest === 2 && n.id === "father" ? "?" : null;
-                if (questSign) drawQuestMarker(ctx, n.x, n.y - (n.sitting ? 22 : 28), questSign);
-            }
-        }
-        if (!state.inside) {
-            const x = DATA.lift.x, y = state.liftY;
-            ctx.fillStyle = "#262434";
-            ctx.fillRect(x - 15, y - 31, 30, 33);
-            ctx.fillStyle = "#87573e";
-            ctx.fillRect(x - 12, y - 28, 24, 27);
-        }
-        if (!state.inside && state.service && [ "hunger", "social", "fun" ].includes(state.service.need)) {
-            ctx.fillStyle = "#5d3831";
-            ctx.fillRect(state.x - 9, state.y - 5, 18, 3);
-            ctx.fillRect(state.x - 7, state.y - 2, 2, 5);
-            ctx.fillRect(state.x + 5, state.y - 2, 2, 5);
-            if (state.service.need === "hunger") {
-                ctx.fillRect(state.x + 10, state.y - 10, 18, 3);
-                ctx.fillRect(state.x + 13, state.y - 7, 2, 10);
-                ctx.fillStyle = "#e0ddd8";
-                ctx.fillRect(state.x + 15, state.y - 13, 9, 3);
-                ctx.fillStyle = "#d29b30";
-                ctx.fillRect(state.x + 17, state.y - 14, 5, 1);
-            }
+            if(hover?.img)drawObjectHover(ctx,hover.img,hover.spriteX,hover.spriteY);
+            drawStreet(boat);
         }
         const privacy = state.service && [ "hygiene", "bladder" ].includes(state.service.need);
         if (state.inside && state.service?.need === "hygiene") {
@@ -799,23 +850,12 @@ function makeSeason_autumn(opts, DATA) {
                 walk: false
             }, null);
             ctx.restore();
-        } else if (!privacy) opts.drawHero(ctx, state.x, state.y, state, null);
+        } else if (state.inside && !privacy) opts.drawHero(ctx, state.x, state.y, state, null);
         if (state.inside) opts.home?.over(ctx);
         if(window.liweiStory) liweiStory.draw(ctx, images);
-        if (!state.inside) {
-            const lx = DATA.lift.x, ly = state.liftY;
-            ctx.globalAlpha = state.riding ? .3 : 1;
-            ctx.fillStyle = "#8b8899";
-            for (let i = 0; i < 5; i++) ctx.fillRect(lx - 12 + i * 6, ly - 29, 1, 27);
-            ctx.fillRect(lx - 16, ly + 1, 32, 3);
-            ctx.globalAlpha = 1;
-            drawFoliage(true);
-
-        }
-        if (hover) {
-            const p = hover;
-            ctx.fillStyle = "#fae59c";
-            for (let i = 0; i < 4; i++) ctx.fillRect(p.x - 3 + i, p.y + 5 + i, 7 - i * 2, 1);
+        if (hover && !state.inside && !hover.npc && !hover.img) {
+            ctx.fillStyle="#fae59c";
+            for(let i=0;i<4;i++)ctx.fillRect(hover.x-3+i,hover.y+5+i,7-i*2,1);
         }
         ctx.restore();
         if (!state.inside) {
@@ -829,7 +869,7 @@ function makeSeason_autumn(opts, DATA) {
             drawPollution();
             fx.weather(ctx, weatherKind, state.time, 342, canvas.height);
         }
-        const h = opts.now() % 1440 / 60, night = h < 6 || h >= 20 ? .38 : h < 7 || h >= 18 ? .16 : 0;
+        const night = shade * .38;
         if (night) {
             ctx.fillStyle = `rgba(26,22,37,${night})`;
             ctx.fillRect(0, 0, 342, canvas.height);
@@ -849,14 +889,27 @@ function makeSeason_autumn(opts, DATA) {
     }
     function hit(x, y) {
         if (state.inside && opts.home?.residentHit?.(x,y)) return {id:"jian",name:"阿简",npc:true,x:state.resident.x,y:108};
-        if (state.inside) return (opts.home?.spots || indoorSpots).find(p => x >= p.rect[0] && y >= p.rect[1] && x < p.rect[0] + p.rect[2] && y < p.rect[1] + p.rect[3]);
-        // The last drawn NPC is in front where two bodies overlap.
-        const npc = npcRows().reverse().find(n => Math.abs(n.x - x) < 10 && y < n.y && y > n.y - 29);
-        if (npc) return {
-            ...npc,
-            npc: true
-        };
-        return DATA.landmarks.find(p => (p.id !== "lookout" || (Math.abs(x-p.x)<18 && y<=p.y && y>=p.y-28)) && x >= p.rect[0] && y >= p.rect[1] && x < p.rect[0] + p.rect[2] && y < p.rect[1] + p.rect[3]);
+        if (state.inside && opts.home) return opts.home.hit(x,y);
+        if (state.inside) return indoorSpots.find(p => x >= p.rect[0] && y >= p.rect[1] && x < p.rect[0] + p.rect[2] && y < p.rect[1] + p.rect[3]);
+        const target=sceneTargetAt(streetLayers.filter(layer=>(layer.alpha??1)>.6),x,y);
+        if(target?.npc)return {...target.npc,npc:true};
+        if(target)return null;
+        const model=sceneTargetAt(landmarkTargets,x,y);
+        if(model)return model.landmark;
+        return DATA.landmarks.find(p => !landmarksWithSprites.some(mark=>mark.id===p.id) && (p.id !== "lookout" || (Math.abs(x-p.x)<18 && y<=p.y && y>=p.y-28)) && x >= p.rect[0] && y >= p.rect[1] && x < p.rect[0] + p.rect[2] && y < p.rect[1] + p.rect[3]);
+    }
+    function pickNpc(n) {
+        if(window.liweiStory?.active)return;
+        playerInput();
+        state.service = state.pose = null;
+        clearKeys();
+        approachNpc(n);
+    }
+    function approachNpc(n) {
+        goTo(n.x + (state.x < n.x ? -18 : 18), n.y, {
+            id: "npc:" + n.id,
+            storyWalk: !!(window.liweiStory && n.mark)
+        });
     }
     function pick(x, y) {
         if (window.liweiStory?.active) return;
@@ -879,10 +932,7 @@ function makeSeason_autumn(opts, DATA) {
                     id: "inside_service",
                     need: p.need
                 });
-            } else if (p.npc) goTo(p.x + (state.x < p.x ? -18 : 18), p.y, {
-                id: "npc:" + p.id,
-                storyWalk: !!(window.liweiStory && p.mark)
-            }); else visit(p.id);
+            } else if (p.npc) approachNpc(p); else visit(p.id);
             return;
         }
         const dest = nearest(x, y);

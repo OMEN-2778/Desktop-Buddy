@@ -232,14 +232,7 @@ function stepBar(dtGame, dtReal) {
 }
 
 function barHit(x, y) {
-  if(x>=314&&x<=335&&y>=28&&y<=97)return 'bar_wc';
-  for (const s of BAR_SEATS) {
-    const [a, b, w, h] = s.hit;
-    if (x >= a && x < a + w && y >= b && y < b + h) return 'bar_seat:' + s.id;
-  }
-  if (x >= 84 && x <= 229 && y >= 43 && y < 85) return 'bar_counter';
-  if (x >= 234 && x <= 312 && y >= 20 && y <= 82) return 'bar_stage';
-  return null;
+  return sceneObjectId(IMG.out.bar.hover, x, y);
 }
 function barClick(id, x, y) {
   if (card || guideOn || wiping) return;

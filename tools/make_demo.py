@@ -552,6 +552,7 @@ def main():
     html = html.replace("/*__PEER_DIALOGUE_JS__*/", (SRC.parent / "peer_dialogue.js").read_text())
     html = html.replace("/*__FRIEND_VISITS_JS__*/", "const FRIEND_VISIT_TEXT = " + (SRC.parent / "friend_visit_text.json").read_text() + ";\n" + (SRC.parent / "friend_visits.js").read_text()+"\n"+(SRC.parent / "friend_home_objects.js").read_text())
     html = html.replace("/*__FRIEND_HOUSES_JS__*/", (SRC.parent / "friend_houses.js").read_text())
+    html = html.replace("/*__SCENE_TARGETS_JS__*/", (SRC.parent / "scene_targets.js").read_text())
     html = html.replace("/*__QUEST_MARKER_JS__*/", (SRC.parent / "quest_marker.js").read_text())
     html = html.replace("/*__TV_PLAYBACK_JS__*/", (SRC.parent / "tv_playback.js").read_text())
     html = html.replace("/*__FRIEND_OUTINGS_JS__*/", "const FRIEND_OUTING_TEXT = " + (SRC.parent / "friend_outing_text.json").read_text() + ";\nCARDS.push(..." + (SRC.parent / "friend_outing_cards.json").read_text() + ");\n" + (SRC.parent / "friend_outings.js").read_text())

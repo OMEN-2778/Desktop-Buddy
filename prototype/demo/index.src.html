@@ -1312,6 +1312,7 @@ function dishPic(src) { if (!dishPics.has(src)) { const i = new Image(); i.src =
 function frameOf(list, fps) { return list[Math.floor(realClock * fps) % list.length]; }
 
 /*__TV_PLAYBACK_JS__*/
+/*__SCENE_TARGETS_JS__*/
 /*__QUEST_MARKER_JS__*/
 
 function render() {
@@ -1463,7 +1464,16 @@ function planDay(d) {
   }
   return weather.plan.get(d);
 }
+const SCENE_WEATHER = {
+  summer_test: {snow:"rain", blizzard:"rain"}
+};
+function sceneWeatherKind(kind, place = sim.place) {
+  return SCENE_WEATHER[place]?.[kind] ?? kind;
+}
 function weatherAt(t) {
+  return sceneWeatherKind(plannedWeatherAt(t));
+}
+function plannedWeatherAt(t) {
   if (weather.force) return weather.force === "blizzard" ? "snow" : weather.force;
   if (festAt(t) === "冬至") return "snow";                 // 冬至: heavy snow all day
   const d = Math.floor(t / 1440);
@@ -1473,7 +1483,7 @@ function weatherAt(t) {
 function updateWeather(dtGame) {
   const se = seasonOf(sim.t).i;
   if (se !== weather.season) { weather.season = se; lifeSeason(se); }
-  const w = weatherAt(sim.t);
+  const planned = plannedWeatherAt(sim.t), w = sceneWeatherKind(planned);
   if (w !== weather.kind) {
     const was = weather.kind;
     weather.kind = w;
@@ -1483,7 +1493,7 @@ function updateWeather(dtGame) {
     else if (w === "clear") log(was === "snow" ? "雪停了。" : "雨停了。");
   }
   // snow settles on the hill while it snows and melts slowly afterwards (fast outside winter)
-  if (w === "snow") weather.snowCover = Math.min(1, weather.snowCover + dtGame / 150);
+  if (planned === "snow") weather.snowCover = Math.min(1, weather.snowCover + dtGame / 150);
   else weather.snowCover = Math.max(0, weather.snowCover - dtGame / (se === 3 ? 2880 : 240));
   heavyWeather(w, dtGame);
 }

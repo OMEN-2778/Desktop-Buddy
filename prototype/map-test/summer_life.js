@@ -121,7 +121,13 @@ const summerLife=(function(){
   for(const p of pops)p.t+=dt;while(pops.length&&pops[0].t>1.6)pops.shift();}
  // ---------------------------------------------------------------- people of the bay
  function seeded(seed,f){const r=Math.random;let s=seed;Math.random=()=>(s=s*16807%2147483647)/2147483647;try{return f();}finally{Math.random=r;}}
- const drawnPeople=[];
+ const marketObjects=[];
+ const marketHit=(x,y)=>sceneTargetAt(marketObjects,x,y);
+ function marketOutline(target){
+  const front=marketObjects.slice(marketObjects.indexOf(target)+1);
+  const shape=outlineCache.get(target.img);
+  return {rings:[shape.rings[0].filter(([dx,dy])=>!front.some(layer=>scenePixelHit(layer,target.x+dx,target.y+dy)))]};
+ }
  function person(name,gender,seed){let lk;for(let k=0;k<60;k++){lk=seeded(seed+k*977,npcLook);if(lk.gender===gender)break;}
   // small seeds always rolled 'f' first (the generator's first draw is tiny), so every man on the island had a woman's
   // body; women keep the look above, men get one from a scrambled seed (owner 2026-11-06)
@@ -212,8 +218,36 @@ const summerLife=(function(){
   await say('蕾拉妮','谢谢你。下次来，婚礼花环我送你一串。');showHint('支线完成：他耳边的花 · 一串花环');});
  // ---------------------------------------------------------------- drawing
  let clock=0;
- function drawPerson(ctx,v,x,y,o={}){const pic=pose(v,realClock*1000,o);ctx.drawImage(pic,Math.round(x-10),Math.round(y-27));drawnPeople.push({pic,x:Math.round(x-10),y:Math.round(y-27)});   /* summer_hover.js outlines the one under the pointer */
-  const sign=mark(v);if(sign)drawQuestMarker(ctx,x,y-27,sign);}
+ const beachObjects=[],beachModels=new Map(),scaledBeachSprites=new WeakMap();
+ const beachHit=(x,y)=>sceneTargetAt(beachObjects,x,y);
+ function drawBeachTarget(ctx,id,img,x,y,activate){
+  ctx.drawImage(img,x,y);
+  beachObjects.push({id,img,x,y,activate});
+ }
+ function beachModel(ctx,id,x,y,w,h,paint,activate){
+  let img=beachModels.get(id);
+  if(!img){
+   img=document.createElement('canvas');img.width=w;img.height=h;
+   const g=img.getContext('2d');g.translate(-x,-y);paint(g);
+   beachModels.set(id,img);
+  }
+  drawBeachTarget(ctx,id,img,x,y,activate);
+ }
+ function beachSprite(img,w,h){
+  let variants=scaledBeachSprites.get(img);
+  if(!variants){variants=new Map();scaledBeachSprites.set(img,variants);}
+  const key=w+','+h;
+  if(!variants.has(key)){
+   const c=document.createElement('canvas');c.width=w;c.height=h;
+   const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(img,0,0,w,h);variants.set(key,c);
+  }
+  return variants.get(key);
+ }
+ function drawPerson(ctx,v,x,y,o={}){const pic=pose(v,realClock*1000,o);const px=Math.round(x-10),py=Math.round(y-27);
+  if(o.beachId)drawBeachTarget(ctx,o.beachId,pic,px,py,o.activate);
+  else ctx.drawImage(pic,px,py);
+  if(o.marketId)marketObjects.push({id:o.marketId,img:pic,x:px,y:py,seller:true});
+  const sign=mark(v);if(sign)drawQuestMarker(ctx,x,y-27,sign,o.activate||(o.marketId?()=>activateMarket(o.marketId,true):null));}
  const hooks={draw:[],mdraw:[],click:[],mclick:[],tick:[]};   // summer_more.js: photos, beach activities, commissions, festivals
  function tick(){const now=realClock,dt=Math.min(.1,now-(clock||now));clock=now;const c=C(),s=c.state,b=B();for(const f of hooks.tick)try{f(dt)}catch(e){console.warn(e)}
   if(busy)return;gather();spawn();tickCusts(dt);tickWalkers(dt);if(!b.met&&!s.target&&!s.market&&!storyLocked()&&!window.__noBayGuide)arrive();   // __noBayGuide: automated checks only
@@ -243,16 +277,20 @@ const summerLife=(function(){
  setInterval(()=>{if(!inMarket()&&pills.size)sayPills([],0);},500);
 
  // ---- the bay (beach and sea): coconuts, shells, seaweed glints, 阿洛, 卡伊诺, the finale on the shore
- function draw(ctx,info){if(!inBay())return;tick();const now=realClock,c=C(),s=c.state,b=B();for(const f of hooks.draw)try{f(ctx,info)}catch(e){console.warn(e)}
+ function draw(ctx,info){beachObjects.length=0;if(!inBay())return;tick();const now=realClock,c=C(),s=c.state,b=B();for(const f of hooks.draw)try{f(ctx,info)}catch(e){console.warn(e)}
   if(b.met&&!b.stallSeen&&s.x<260&&!s.inside)arrow(ctx,24,72,now);   // which way the market is
-  for(let i=0;i<(b.coco||0);i++){const ic=icon('coconut');if(ic?.complete)ctx.drawImage(ic,0,0,16,16,PALM_X+i*7,100,8,8);}
-  for(const sh of shells()){if(sh.got)continue;const ic=icon(sh.glass?'seaglass':'shell');if(ic?.complete)ctx.drawImage(ic,0,0,16,16,sh.x-3,101,7,7);if(Math.sin(now*3+sh.x)>.6){ctx.fillStyle='#fffbe6';ctx.fillRect(sh.x,98,1,3);ctx.fillRect(sh.x-1,99,3,1);}}
+  for(let i=0;i<(b.coco||0);i++){const ic=icon('coconut');if(ic?.naturalWidth)drawBeachTarget(ctx,'coconut',beachSprite(ic,8,8),PALM_X+i*7,100,()=>c.goTo(PALM_X+4,'walk',0,()=>{
+   const n=B().coco||0;if(n){X.addItem('coconut',n);B().coco=0;speakBay(`捡到${n}个椰子`);}
+  }));}
+  for(const sh of shells()){if(sh.got)continue;const ic=icon(sh.glass?'seaglass':'shell');if(ic?.naturalWidth)drawBeachTarget(ctx,sh.glass?'seaglass':'shell',beachSprite(ic,7,7),sh.x-3,101,()=>c.goTo(sh.x,'walk',0,()=>{
+   if(sh.got)return;sh.got=true;X.addItem(sh.glass?'seaglass':'shell');speakBay(sh.glass?'捡到一块海玻璃，像颗糖':'捡到一个贝壳');
+  }));if(Math.sin(now*3+sh.x)>.6){ctx.fillStyle='#fffbe6';ctx.fillRect(sh.x,98,1,3);ctx.fillRect(sh.x-1,99,3,1);}}
   if(under())for(const [i,k]of (c.kelp||[]).entries())if(!b.weed[i]&&Math.sin(now*2.5+i)>.7){ctx.fillStyle='#e9fbe9';ctx.fillRect(k.x,k.y-k.h/2,1,3);ctx.fillRect(k.x-1,k.y-k.h/2+1,3,1);}
   const w=where();
-  if(w.alo)drawPerson(ctx,P.alo,w.alo.x,c.gr(w.alo.x),{wave:true});
+  if(w.alo)drawPerson(ctx,P.alo,w.alo.x,c.gr(w.alo.x),{wave:true,beachId:'alo',activate:arrive});
   if(w.leiShore)drawPerson(ctx,P.lei,w.leiShore.x,c.gr(w.leiShore.x));
   if(w.kai){if(w.kai.dive){const t=s.time,x=w.kai.x+Math.sin(t*.4)*30,y=230+Math.sin(t*.7)*18,head=pose(P.kai,now*1000);c.fx.swimmer(ctx,{head,skinRamp:P.kai.ramps.skin,sheet:c.personSheet(P.kai.look.gender,'wetsuit'),x,y,time:t,facing:Math.cos(t*.4)>0?1:-1,diving:true,moving:true,wetsuit:true,waterline:WL,phase:1});}
-   else{drawPerson(ctx,P.kai,w.kai.x,c.gr(w.kai.x));if(w.kai.song&&Math.floor(now*1.5)%2){ctx.fillStyle='#2b2236';const nx=w.kai.x+8,ny=c.gr(w.kai.x)-34-(now*6%6);ctx.fillRect(nx,ny,1,4);ctx.fillRect(nx+1,ny,2,1);ctx.fillRect(nx-1,ny+3,2,2);}}}}
+   else{drawPerson(ctx,P.kai,w.kai.x,c.gr(w.kai.x),{beachId:'kai',activate:()=>c.goTo(w.kai.x-16,'walk',0,()=>{c.state.facing=1;kaiTalk();})});if(w.kai.song&&Math.floor(now*1.5)%2){ctx.fillStyle='#2b2236';const nx=w.kai.x+8,ny=c.gr(w.kai.x)-34-(now*6%6);ctx.fillRect(nx,ny,1,4);ctx.fillRect(nx+1,ny,2,1);ctx.fillRect(nx-1,ny+3,2,2);}}}}
  // ---- 市集: vendors behind their stalls, 蕾拉妮, her stall, the fountain, the café, strollers and customers
  const V={fruit:person('果果阿姨','f',611),fish:person('老渔夫','m',709),hat:person('草帽爷爷','m',811),cafe:person('咖啡店的米娅','f',919)};
  V.hat.look={...V.hat.look,hair:V.hat.look.hair};
@@ -262,23 +300,28 @@ const summerLife=(function(){
   while(walkers.length>want)walkers.pop();
   for(const n of walkers){n.x+=n.dir*n.v*dt*3;n.dist=(n.dist||0)+n.v*dt*3;if(Math.abs(n.x-n.home)>90||n.x<50||n.x>MW-30)n.dir*=-1;}}
  const sprite=k=>img(ART[k]);
- function put(ctx,k,cx,w,h){const im=sprite(k);if(im?.complete)ctx.drawImage(im,Math.round(cx-im.width/2),FEET+1-im.height);}
- function drawNpc(ctx,n){const [f,p]=npcFrame(n);const pic=npcCanvas(n,f,p,false);ctx.drawImage(pic,Math.round(n.x-10),Math.round(FEET-27));}
- function marketDraw(ctx,info){tick();const now=realClock,c=C(),s=c.state,b=B(),cx=info.camX||0,h=hour(),open=h>=7&&h<20;
+ function marketSprite(ctx,id,img,x,y){
+  if(!img?.complete||!img.naturalWidth)return;
+  ctx.drawImage(img,x,y);
+  marketObjects.push({id,img,x,y});
+ }
+ function put(ctx,id,x){const im=sprite(id);if(im)marketSprite(ctx,id,im,Math.round(x-im.width/2),FEET+1-im.height);}
+ function drawNpc(ctx,n){const [f,p]=npcFrame(n);const pic=npcCanvas(n,f,p,false);const x=Math.round(n.x-10),y=FEET-27;ctx.drawImage(pic,x,y);marketObjects.push({id:null,img:pic,x,y});}
+ function marketDraw(ctx,info){marketObjects.length=0;tick();const now=realClock,c=C(),s=c.state,b=B(),cx=info.camX||0,h=hour(),open=h>=7&&h<20;
   /* layers (owner 2026-11-05): sky still, hazy far town at 0.3, mid town at 0.6, street at 1 */for(const [k,f,veil]of [['msky',0,0],['mfar',.3,.16],['mmid',.6,0],['mbg',1,0]]){if(k==='mbg')sunRays(ctx,cx,now);const im=sprite(k);if(im?.complete)ctx.drawImage(im,-Math.round(cx*f),0);if(veil){ctx.fillStyle=`rgba(236,245,252,${veil})`;ctx.fillRect(0,0,342,118);}}/* a pale blue veil over each distant layer: the further, the lighter (owner) */
   ctx.save();ctx.translate(-Math.round(cx),0);
   // vendors stand behind their counters
-  if(open){for(const [v,x]of [[V.fruit,FRUIT_X],[V.fish,FISH_X],[V.hat,HAT_X]])drawPerson(ctx,v,x+4,FEET-9);drawPerson(ctx,V.cafe,CAFE_X-30,FEET);}
-  if(where().lei)drawPerson(ctx,P.lei,FLOWER_X+3,FEET-9);
+  if(open){for(const [v,x]of [[V.fruit,FRUIT_X],[V.fish,FISH_X],[V.hat,HAT_X]])drawPerson(ctx,v,x+4,FEET-9,{marketId:v===V.fruit?'fruit':v===V.fish?'fish':'hat'});drawPerson(ctx,V.cafe,CAFE_X-30,FEET,{marketId:'cafe'});}
+  if(where().lei)drawPerson(ctx,P.lei,FLOWER_X+3,FEET-9,{marketId:'flower'});
   put(ctx,'fruit',FRUIT_X);put(ctx,'fish',FISH_X);put(ctx,'hat',HAT_X);put(ctx,'cafe',CAFE_X);
-  const fl=sprite('flower');if(fl?.complete)ctx.drawImage(fl,FLOWER_X-25,FEET+1-fl.height);
-  const fo=sprite('fountain');if(fo?.complete){ctx.drawImage(fo,FOUNTAIN_X-35,FEET+1-fo.height);ctx.fillStyle='rgba(205,236,248,.85)';
+  const fl=sprite('flower');if(fl)marketSprite(ctx,where().lei?'flower':null,fl,FLOWER_X-25,FEET+1-fl.height);
+  const fo=sprite('fountain');if(fo?.complete){marketSprite(ctx,'fountain',fo,FOUNTAIN_X-35,FEET+1-fo.height);ctx.fillStyle='rgba(205,236,248,.85)';
    for(let k=0;k<10;k++){const t=(now*1.6+k/10)%1,dx=(k%2?1:-1)*(2+t*9),dy=-34+t*t*24+t*-6;ctx.fillRect(Math.round(FOUNTAIN_X+dx),Math.round(FEET+dy),1,1);}}
-  const st=sprite('stall');if(st?.complete)ctx.drawImage(st,STALL_X-26,FEET+1-st.height);
+  const st=sprite('stall');if(st)marketSprite(ctx,'stall',st,STALL_X-26,FEET+1-st.height);
   [...new Set(b.stock)].slice(0,3).forEach((k,i)=>{const ic=icon(RECIPES[k].icon);if(ic?.complete)ctx.drawImage(ic,0,0,16,16,STALL_X-19+i*13,FEET-17-10,10,10);});
   if(b.met&&!b.stallSeen)arrow(ctx,STALL_X,40,now);
   for(const n of walkers)drawNpc(ctx,n);
-  for(const n of custs){const [f,p]=npcFrame(n);const pic=npcCanvas(n,f,n.shop.state==='buy'?'stand':p,false);ctx.drawImage(pic,Math.round(n.x-10),Math.round(FEET-27));}
+  for(const n of custs){const [f,p]=npcFrame(n);const pic=npcCanvas(n,f,n.shop.state==='buy'?'stand':p,false);const x=Math.round(n.x-10),y=FEET-27;ctx.drawImage(pic,x,y);marketObjects.push({id:null,img:pic,x,y});}
   for(const f of hooks.mdraw)try{f(ctx,info)}catch(e){console.warn(e)}
   info.hero();
   sayPills(custs.filter(n=>n.shop.state==='buy'&&n.say),cx);
@@ -313,22 +356,34 @@ const summerLife=(function(){
  }
  function wish(){if(S().coins<1)return showHint('身上没有丢丢币可以许愿');X.record('coin','往喷泉里扔了一枚丢丢币',-1);
   speakBay(pick(['许了个愿：明天也是晴天','许了个愿：小摊天天卖光','许了个愿……不能说出来','硬币沉下去的时候闪了一下']));addMood(MOOD.wish);}
- function marketPick(x,y){if(busy)return true;for(const f of hooks.mclick)if(f(x,y))return true;const c=C(),hit=(px,w=24)=>Math.abs(x-px)<w&&y>FEET-46&&y<FEET+4;
-  if(where().lei&&hit(FLOWER_X,26)){c.goTo(FLOWER_X-30,'walk',0,()=>{c.state.facing=1;leiTalk();});return true;}
-  if(hit(STALL_X,28)){c.goTo(STALL_X+30,'walk',0,()=>{c.state.facing=-1;openStall();});return true;}
-  for(const [id,px]of [['fruit',FRUIT_X],['fish',FISH_X],['hat',HAT_X]])if(hit(px)){c.goTo(px+30,'walk',0,()=>{c.state.facing=-1;if(hour()>=7&&hour()<20)openShop(id);else showHint('摊子收了，明天早上再来');});return true;}
-  if(Math.abs(x-CAFE_X)<48&&y>FEET-50){c.goTo(CAFE_X-44,'walk',0,()=>{c.state.facing=1;openCafe();});return true;}
-  if(Math.abs(x-FOUNTAIN_X)<34&&y>FEET-44){c.goTo(FOUNTAIN_X-38,'walk',0,()=>{c.state.facing=1;wish();});return true;}
-  return false;}
+ function marketPick(x,y){
+  if(busy)return true;
+  const object=marketHit(x,y);
+  if(!object)return false;
+  if(!object.id)return true;
+  return activateMarket(object.id,object.seller);
+ }
+ function activateMarket(id,seller){
+  const c=C();
+  if(seller&&hooks.mclick.some(fn=>fn(id)))return true;
+  if(id==='flower')c.goTo(FLOWER_X-30,'walk',0,()=>{c.state.facing=1;leiTalk();});
+  else if(id==='stall')c.goTo(STALL_X+30,'walk',0,()=>{c.state.facing=-1;openStall();});
+  else if(id==='cafe')c.goTo(CAFE_X-44,'walk',0,()=>{c.state.facing=1;openCafe();});
+  else if(id==='fountain')c.goTo(FOUNTAIN_X-38,'walk',0,()=>{c.state.facing=1;wish();});
+  else {
+   const px={fruit:FRUIT_X,fish:FISH_X,hat:HAT_X}[id];
+   c.goTo(px+30,'walk',0,()=>{c.state.facing=-1;if(hour()>=7&&hour()<20)openShop(id);else showHint('摊子收了，明天早上再来');});
+  }
+  return true;
+ }
  (function register(){const c=C();if(c?.setMarket){c.setMarket({w:MW,draw:marketDraw,pick:marketPick});return;}setTimeout(register,300);})();
  // ---------------------------------------------------------------- clicks (world coordinates)
- function click(x,y){if(!inBay()||busy||C().state.market)return false;for(const f of hooks.click)if(f(x,y))return true;const c=C(),s=c.state,b=B(),g=c.gr(x),w=where();
-  const hitP=(px,py)=>Math.abs(x-px)<10&&y>py-30&&y<py+3;
-  if(w.alo&&hitP(w.alo.x,c.gr(w.alo.x))){arrive();return true;}
-  if(w.kai&&!w.kai.dive&&hitP(w.kai.x,c.gr(w.kai.x))){c.goTo(w.kai.x-16,'walk',0,()=>{c.state.facing=1;kaiTalk();});return true;}
-  if((b.coco||0)>0&&x>PALM_X-3&&x<PALM_X+16&&y>94&&y<110){c.goTo(PALM_X+4,'walk',0,()=>{const n=B().coco||0;if(n){X.addItem('coconut',n);B().coco=0;speakBay(`捡到${n}个椰子`);}});return true;}
-  for(const sh of shells())if(!sh.got&&Math.abs(x-sh.x)<7&&y>94&&y<110){c.goTo(sh.x,'walk',0,()=>{if(sh.got)return;sh.got=true;X.addItem(sh.glass?'seaglass':'shell');speakBay(sh.glass?'捡到一块海玻璃，像颗糖':'捡到一个贝壳');});return true;}
-  return false;}
+ function click(x,y){
+  if(!inBay()||busy||C().state.market)return false;
+  const target=beachHit(x,y);
+  if(target){target.activate();return true;}
+  return hooks.click.some(fn=>fn(x,y));
+ }
  // ---------------------------------------------------------------- summer chance cards (small coin effects)
  const BAY_CARDS=(()=>{let n=9500;const M=(name,emo,pts=2,min=180)=>({name,emo,pts,min});const o=(text,say,mood,bay)=>({text,say,mood,...(bay?{bay}:{})});
   const c=(title,text,a,b2,extra={})=>({n:++n,at:'summer_test',title,text,a,b:b2,...extra});return [
@@ -348,6 +403,6 @@ const summerLife=(function(){
   if(f.item)for(const [k,v]of Object.entries(f.item))X.addItem(k,v);
   if(f.loseStock&&b.stock.length)b.stock.splice(Math.floor(Math.random()*b.stock.length),1);}}catch(e){console.error(e);}return r;};
  const oldFits=cardFits;cardFits=function(cd,c){if(cd.at==='summer_test'&&!inBay())return false;return oldFits(cd,c);};
- return {drawnPeople,hooks,say,ask,walk,scene,speakBay,drawPerson,person,pose,ML_,MOOD,hour,night,today,under,inBay,inMarket,C,S,X,icon,img,fitBig,scrollBar,bigIcon,isBusy:()=>busy,where,FEET,MW,STALL_X,CAFE_X,FISH_X,FLOWER_X,FOUNTAIN_X,HAT_X,SHORE_X,PALM_X,V,draw,click,openStall,openCafe,make,RECIPES,priceNow,B,P,arrive,leiTalk,kaiTalk,finale,custs,spawn,buy};
+ return {beachHit,beachModel,beachSprite,drawBeachTarget,marketHit,marketOutline,marketPick,hooks,say,ask,walk,scene,speakBay,drawPerson,person,pose,ML_,MOOD,hour,night,today,under,inBay,inMarket,C,S,X,icon,img,fitBig,scrollBar,bigIcon,isBusy:()=>busy,where,FEET,MW,STALL_X,CAFE_X,FISH_X,FLOWER_X,FOUNTAIN_X,HAT_X,SHORE_X,PALM_X,V,draw,click,openStall,openCafe,make,RECIPES,priceNow,B,P,arrive,leiTalk,kaiTalk,finale,custs,spawn,buy};
 })();
 window.summerLife=summerLife;

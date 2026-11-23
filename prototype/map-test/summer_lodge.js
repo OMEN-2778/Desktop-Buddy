@@ -20,9 +20,9 @@ const summerLodge=(function(){
   toilet:{rect:[292,62,14,16],x:299,need:'bladder',act:'toilet',iy:-6,line:['马上出来']}
  };
  const NEED_SPOT={energy:'bed',hygiene:'shower',bladder:'toilet',hunger:'stove',fun:'tv'};
- let svc=null,lastT=sim.t,hv=null,hinted=false;
- const inRect=(x,y,[rx,ry,w,h])=>x>=rx&&x<rx+w&&y>=ry&&y<ry+h;
- const hitSpot=(x,y)=>{for(const [id,p]of Object.entries(SPOTS))if(inRect(x,y,p.rect))return id;return null;};
+ const targets=sceneTargetsFor(SEASON_FURNITURE.summer);
+ const hit=(x,y)=>sceneTargetAt(targets,x,y);
+ let svc=null,lastT=sim.t,hinted=false;
  function stop(){if(!svc)return;const s=C().state;s.pose=null;s.hideHero=false;s.iy=0;seasonHouse.drop(svc.act);svc=null;}
  const ALIAS={bath:'shower',eat:'dine'};   // the home's act → this lodge's furniture
  // from anywhere on the island (the sea, the market): ashore, in through the door, then the furniture
@@ -40,19 +40,13 @@ const g=++goGen,t0=Date.now(),c=C();
   c.goTo(p.x,'walk',0,()=>{const s=c.state;s.facing=p.face||(p.x>170?1:-1);svc={id,act:p.act,need:p.need};s.pose=null;s.hideHero=!!p.hide;s.iy=p.iy||0;speak(pick(p.line),true);seasonHouse.start(p.act,{auto:auto===true,log:p.log,item});});}
  // clicks: the adapter asks summerLife first; inside the lodge that is us
  const oClick=summerLife.click;summerLife.click=function(x,y){
-  const s=C().state;if(inBay()&&s.inside&&!s.door){const id=hitSpot(x,y);if(id){use(id);return true;}stop();return false;}
+  const s=C().state;if(inBay()&&s.inside&&!s.door){const target=hit(x,y);if(target){use(target.id);return true;}stop();return false;}
   return oClick.apply(this,arguments);};
- // hover glow, like the furniture at home
- const boxes=new Map();function box(w,h){const k=w+'x'+h;if(!boxes.has(k)){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,w,h);boxes.set(k,c);}return boxes.get(k);}
- view.parentElement.addEventListener('pointermove',e=>{if(e.target!==view||!inBay()||!C().state.inside){hv=null;return;}
-  const r=view.getBoundingClientRect(),id=hitSpot((e.clientX-r.left)*342/r.width,(e.clientY-r.top)*C().canvas.height/r.height);hv=id&&SPOTS[id].rect;},true);
- view.addEventListener('pointerleave',()=>{hv=null;});
  let coverImg=null;   // art/src/concept/summer_lodge_cover.py: the quilt bulging over her, in lodge-picture coords
  const SLEEPY={expr:'sleepy',look:0,bob:0,sway:0,wave:null};
  // drawn by the summer viewer every frame she is inside (after her)
  function draw(ctx){if(!inBay())return;const c=C(),s=c.state,dt=Math.max(0,Math.min(30,sim.t-lastT));lastT=sim.t;
   if(!hinted&&!storyLocked()){hinted=true;setTimeout(()=>showHint('点家具能睡觉、洗澡、做饭'),700);}
-  if(hv)drawObjectHover(ctx,box(hv[2],hv[3]),hv[0],hv[1]);
   if(s.inside&&seasonHouse.running('tv')){const f=nextTvFrame();if(f)ctx.drawImage(f,TV_AT[0],TV_AT[1]);}else if(typeof tvPlayback!=='undefined'&&inBay())tvPlayback.playing=false;   // the home's programmes on the lodge TV
   if(s.inside){seasonHouse.cookFx(ctx,COOK_FX[0],COOK_FX[1]);seasonHouse.meal(ctx,MEAL_AT[0],MEAL_AT[1]);}   // the home's pan and dish
   if(!svc)return;
@@ -72,6 +66,6 @@ const g=++goGen,t0=Date.now(),c=C();
    ctx.fillStyle=`rgba(255,255,255,${(.85*(1-k)*Math.min(1,k*4)).toFixed(2)})`;const w=2+(i%3);ctx.fillRect(x,y,w,w-1||1);}}
  const COOK_FX=[258,39],MEAL_AT=[227,53],TV_AT=[174,55];   // TV_AT: the screen of the home's TV on its cabinet (24×12)   // the home's pan steam over the burners, the dish on the dining table
  const oArrive=arriveAt;arriveAt=function(pl){stop();hinted=false;return oArrive(pl);};
- return {SPOTS,NEED_SPOT,use,useAct,goUse,stop,draw,get svc(){return svc;}};
+ return {SPOTS,NEED_SPOT,hit,use,useAct,goUse,stop,draw,get svc(){return svc;}};
 })();
 window.summerLodge=summerLodge;

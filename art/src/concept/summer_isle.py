@@ -837,7 +837,7 @@ IN_W, IN_H = 278, 62   # owner 2026-11-06: kitchen 16px wider for a real dining 
 INSIDE_DATA = {"rooms": {"living": (50, 92), "kitchen": (146, 66), "bath": (216, 26), "bedroom": (6, 40)}}
 
 
-def lodge_inside():
+def lodge_inside(masks=None):
     """One storey, compact: bedroom | living room | kitchen | bath. The
     friend-house planner draws the shell; every room is furnished by hand
     (owner: refined): koa wood with grain, rattan weave, hibiscus prints, a
@@ -846,6 +846,8 @@ def lodge_inside():
     plan = ("lodge", "海岛旅舍", IN_W, "", "garden", [[("laundry", 6, 72), ("laundry", 82, 82), ("laundry", 168, 66), ("laundry", 238, 34)]])
     data, bg, front = FH.draw_plan(plan)
     s = bg.copy()
+    from _scene_masks import SceneMasks
+    traced = SceneMasks(s, masks)
     top, fl = 5, 50
     K = P.walnut                    # koa
     R = P.oak                       # rattan
@@ -911,6 +913,7 @@ def lodge_inside():
 
     # ---- bedroom: carved koa bed, Hawaiian quilt, two pillows, nightstand, lamp, art
     louvre(16, top + 8)
+    traced.start("bed")
     bx, bw = 9, 44
     s.rect(bx, fl - 24, 4, 24, K[2]).vline(bx, fl - 24, fl - 1, K[3])         # headboard posts
     s.rect(bx + 1, fl - 26, 2, 2, K[3])
@@ -929,6 +932,7 @@ def lodge_inside():
     for k in range(qx + 3, bx + bw - 5, 7):                                    # breadfruit appliqué
         s.set(k, fl - 13, P.porcelain[3]).set(k - 1, fl - 14, P.porcelain[3]).set(k + 1, fl - 14, P.porcelain[3]).set(k, fl - 12, P.porcelain[3])
     s.vline(bx + bw - 5, fl - 14, fl - 10, P.coral[1])                          # folded edge
+    traced.start("lamp")
     ns = bx + bw + 2                                                           # koa nightstand
     s.rect(ns, fl - 10, 12, 10, K[2]).hline(ns, ns + 11, fl - 10, K[4]).vline(ns + 11, fl - 9, fl - 1, K[0])
     s.hline(ns + 1, ns + 10, fl - 6, K[1]).set(ns + 6, fl - 8, P.mustard[3]).set(ns + 6, fl - 4, P.mustard[3])
@@ -937,12 +941,15 @@ def lodge_inside():
         s.hline(ns + 3 + abs(2 - k) // 2, ns + 9 - abs(2 - k) // 2, fl - 20 + k, R[3] if k % 2 else R[2])
     s.set(ns + 6, fl - 16, P.light[0])
     s.rect(ns + 1, fl - 12, 3, 2, P.porcelain[3]).set(ns + 2, fl - 13, P.blossom[3])   # a shell
+    traced.start("print")
     s.rect(43, top + 9, 13, 10, K[1]).rect(44, top + 10, 11, 8, P.sea[3])     # framed print: a wave
     s.hline(44, 54, top + 15, P.porcelain[3]).hline(46, 52, top + 14, P.sea[4]).rect(44, top + 16, 11, 2, P.sand[3])
 
+    traced.start()
     # ---- living room (owner 2026-11-06: 客厅改成沙发电视): a two-seat rattan sofa with hibiscus cushions and a koa
     #      coffee table on the left, the home's TV on a low koa cabinet on the right, surfboard and ukulele on the walls
     louvre(118, top + 7, 22, 13)
+    traced.start("sofa")
     sx, sw = 90, 31
     weave(sx, fl - 20, sw, 9)                                                  # backrest
     s.hline(sx, sx + sw - 1, fl - 20, R[4]).hline(sx, sx + sw - 1, fl - 21, R[1])
@@ -958,6 +965,7 @@ def lodge_inside():
     s.vline(sx + 15 - 1, fl - 11, fl - 8, P.teal[1])
     for lx in (sx, sx + sw - 2):
         s.rect(lx, fl - 7, 2, 7, R[1])
+    traced.start("table")
     tx = sx + 6                                                                # koa coffee table, glass bowl of limes
     s.rect(tx, fl - 5, 19, 2, K[3]).hline(tx, tx + 18, fl - 5, K[4]).hline(tx, tx + 18, fl - 4, K[1])
     s.vline(tx + 2, fl - 3, fl, K[1]).vline(tx + 16, fl - 3, fl, K[1]).hline(tx + 2, tx + 16, fl - 1, K[0])
@@ -965,6 +973,7 @@ def lodge_inside():
     s.ellipse(tx + 14, fl - 8, 1.8, 2.5, P.mustard[3]).set(tx + 13, fl - 9, P.mustard[4])   # pineapple
     for k in range(3):
         s.set(tx + 13 + k, fl - 11 - (k % 2), P.green[3])
+    traced.start("tv")
     cbx, cbw = 131, 30                                                          # low koa TV cabinet: two doors, rattan panels
     s.rect(cbx, fl - 9, cbw, 9, K[2]).hline(cbx, cbx + cbw - 1, fl - 9, K[4]).hline(cbx, cbx + cbw - 1, fl - 8, K[3])
     for d in range(2):
@@ -974,32 +983,40 @@ def lodge_inside():
     s.hline(cbx, cbx + cbw - 1, fl - 1, K[0]).vline(cbx + 1, fl - 1, fl, K[0]).vline(cbx + cbw - 2, fl - 1, fl, K[0])
     s.blit(F.tv(), cbx + 2, fl - 9 - 15)                                        # the home's TV (lit by the game when on)
     s.ellipse(cbx + cbw - 3, fl - 11, 1.5, 1.5, P.coral[3]).set(cbx + cbw - 3, fl - 13, P.green[3])   # a little potted hibiscus
+    traced.start("board")
     for y in range(top + 5, top + 32):                                         # surfboard on the wall
         t = (y - top - 5) / 27
         hw = int(2.6 * math.sin(math.pi * t) + 0.4)
         s.hline(87 - hw, 87 + hw, y, P.hydrangea[3])
         s.set(87 - hw, y, P.hydrangea[4]).set(87 + hw, y, P.hydrangea[1])
     s.vline(87, top + 7, top + 30, P.porcelain[3])
+    traced.start("uke")
     ux, uy = 151, top + 4                                                       # ukulele, over the TV
     s.ellipse(ux, uy + 10, 3, 3.5, K[3]).ellipse(ux, uy + 6, 2.5, 2.5, K[3]).set(ux, uy + 9, K[0])
     s.vline(ux, uy - 2, uy + 4, K[1]).rect(ux - 1, uy - 4, 3, 2, K[2])
     s.vline(ux - 1, uy + 3, uy + 12, P.oat[3])
 
+    traced.start()
     # ---- kitchen (owner 2026-11-06): the home's dining table and a chair on the left; koa cabinets with a sink and a
     #      two-burner stove with a kettle on the right; louvred window over the table, open shelf with bananas
     louvre(186, top + 6, 14, 9)
+    traced.start("dine")
     HS.on_floor(s, F.chair("right"), 172, 1, 1)
     HS.on_floor(s, F.dining_table(), 181, 1, 1)
+    traced.start()
     kx0, kx1 = 206, 232
     s.rect(kx0, fl - 15, kx1 - kx0, 15, K[2]).hline(kx0, kx1 - 1, fl - 1, K[0])
     for dx in range(kx0 + 1, kx1 - 1, 12):                                     # cabinet doors with brass knobs
         s.rect(dx, fl - 12, 11, 10, K[1]).rect(dx + 1, fl - 11, 9, 8, K[2]).hline(dx + 1, dx + 9, fl - 11, K[3])
         s.set(dx + 9, fl - 7, P.mustard[3])
     s.rect(kx0 - 1, fl - 16, kx1 - kx0 + 2, 2, P.porcelain[3]).hline(kx0 - 1, kx1, fl - 15, P.porcelain[1])   # counter top
+    traced.start("sink")
     s.rect(208, fl - 16, 8, 1, P.steel[2])                                     # sink + tap
     s.vline(212, fl - 21, fl - 17, P.steel[3]).hline(212, 214, fl - 21, P.steel[3])
+    traced.start("stove")
     s.rect(219, fl - 17, 11, 1, P.slate[1]).set(221, fl - 18, P.slate[2]).set(227, fl - 18, P.slate[2])   # burners
     s.ellipse(224, fl - 20, 3, 2.5, P.coral[2]).hline(222, 226, fl - 22, P.coral[3]).set(227, fl - 21, P.coral[1])   # kettle
+    traced.start()
     s.rect(210, top + 6, 20, 2, K[3]).hline(210, 229, top + 7, K[1])        # open shelf
     for k, C in enumerate((P.porcelain, P.teal, P.porcelain, P.coral)):
         s.rect(211 + k * 5, top + 2, 4, 4, C[2]).hline(211 + k * 5, 214 + k * 5, top + 2, C[3])
@@ -1012,16 +1029,22 @@ def lodge_inside():
         s.hline(238, 271, yy, P.porcelain[2])
         for xx in range(238 + (yy // 4) % 2 * 3, 272, 6):
             s.vline(xx, yy, yy + 3, P.porcelain[2])
+    traced.start("shower")
     s.hline(239, 252, top + 4, P.steel[3])                                     # shower rail + curtain
     for x in range(239, 246):
         s.vline(x, top + 5, fl - 3, P.sea[3] if (x % 2) else P.sea[4])
     s.vline(250, top + 6, top + 9, P.steel[2]).rect(248, top + 9, 5, 2, P.steel[3])
+    traced.start("toilet")
     HS.on_floor(s, F.toilet(), 254, 1, 1)
+    traced.start("basin")
     s.rect(260, top + 12, 9, 10, K[2]).rect(261, top + 13, 7, 8, P.glass[2]).set(262, top + 14, P.glass[4])   # mirror
     s.rect(258, top + 26, 12, 3, P.porcelain[3]).hline(258, 269, top + 28, P.porcelain[1])   # basin shelf
     s.vline(264, top + 23, top + 25, P.steel[3])
+    traced.start()
     s.rect(247, top + 18, 3, 9, P.coral[3]).vline(249, top + 18, top + 26, P.coral[1])   # towel
     s.rect(266, top + 23, 3, 3, P.porcelain[3]).set(267, top + 21, P.lilac[3]).set(268, top + 20, P.lilac[2])   # orchid
+    traced.add(None, front, 0, 0)
+    traced.finish()
     s.blit(front, 0, 0)
     return s, INSIDE_DATA
 

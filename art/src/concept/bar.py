@@ -318,10 +318,16 @@ def interaction_sprites():
     """Reuse scene drawing on transparency: no floor, cast shadows or NPCs."""
     out = {}
     for key, draw in [("bar_counter", lambda s: (counter_body(s), counter_taps(s), counter_trim(s))),
-                      ("bar_stage", stage), ("bar_wc",restroom_door), ("bar_seat:booth_l", booth), ("bar_seat:booth_r", booth)]:
+                      ("bar_stage", stage), ("bar_wc",restroom_door)]:
         s = Sprite(W, H)
         draw(s)
         out[key] = s
+    whole_booth = Sprite(W, H)
+    booth(whole_booth)
+    left, right = whole_booth.copy(), whole_booth.copy()
+    left.px[:, 42:, 3] = 0
+    right.px[:, :42, 3] = 0
+    out["bar_seat:booth_l"], out["bar_seat:booth_r"] = left, right
     for i, x in enumerate((105, 145, 185, 216)):
         s = Sprite(W, H)
         stool(s, x)

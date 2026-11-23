@@ -18,10 +18,11 @@ const infeiHome=(function(){
   cupboard:{name:'碗柜',rect:[0,0,0,0],x:262,y:108,face:-1,need:'hunger',act:'snack',log:'饿坏了，从碗柜里拿了妈妈留的饭。',label:'拿现成的',line:['先吃点现成的','妈妈留了饭']},   // no art of its own: the corner by the stove (quick meal only)
   jar:{name:'水缸',rect:[272,82,34,27],x:285,y:108,need:'hunger',act:'snack',log:'舀了口井水喝。',label:'喝口水',line:['井水凉丝丝的']}
  };
+ const targets=sceneTargetsFor(SEASON_FURNITURE.spring);
+ const hit=(x,y)=>sceneTargetAt(targets,x,y);
  const RATE={hunger:2.4,energy:.45,hygiene:3,bladder:8,fun:1.3,social:1.6};
  const NEED_SPOT={energy:'bed',hygiene:'bath',bladder:'toilet',hunger:'stove',fun:'tv'};
  let svc=null,lastT=sim.t,hinted=false,wasInside=false,leaving=false;
- const inRect=(x,y,[rx,ry,w,h])=>x>=rx&&x<rx+w&&y>=ry&&y<ry+h;
  function stop(){if(!svc)return;const s=C().state;s.pose=null;s.hideHero=false;s.iy=0;seasonHouse.drop(svc.act);svc=null;T.state.autoAt=sim.t+30;}
  function use(id,auto,item){
   if(id==='table'&&!homeMeal())id='stove';
@@ -43,7 +44,8 @@ const infeiHome=(function(){
   if(p.look){C().target(p.x,p.y,()=>speak(pick(p.look),true));return;}
   use(id);}
  X.hooks.click.push((x,y,s)=>{if(!s.inside)return false;
-  for(const [id,p]of Object.entries(SPOTS))if(inRect(x,y,p.rect)){openSpot(id);return true;}
+  const target=hit(x,y);
+  if(target){if(target.id==='exit')C().leave();else openSpot(target.id);return true;}
   if(svc)stop();return false;});
  X.hooks.pick.home=id=>use(id);
  X.hooks.pick.homelook=id=>{const p=SPOTS[id];C().target(p.x,p.y,()=>speak(pick(p.look),true));};
@@ -118,6 +120,6 @@ const infeiHome=(function(){
    if(spot&&springFarm.state.phase==='done')use(spot,true);else if(byAct)care(byAct);else if(low[1]<40)care(low[0]);return;}
   return oldStart(name,quiet);};
  const oldArrive=arriveAt;arriveAt=function(place){leaving=false;stop();hinted=false;if(place==='spring_test'){sim.outBack=null;sim.outWhy=null;}return oldArrive(place);};
- return {SPOTS,use,care,stop,get svc(){return svc;},leave:()=>X.hooks.pick.leave()};
+ return {SPOTS,hit,use,care,stop,get svc(){return svc;},leave:()=>X.hooks.pick.leave()};
 })();
 window.infeiHome=infeiHome;

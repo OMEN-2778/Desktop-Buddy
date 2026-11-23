@@ -135,9 +135,8 @@ function mallTickVisit(dtGame,dtReal){
   return true;
 }
 function mallInteriorHit(x,y){
-  if(x>=307&&x<=334&&y>=14&&y<=78)return 'mall_exit';
-  if(mallS.visit.kind==='restaurant'&&x>=141&&x<=201&&y>=72&&y<=111)return 'mall_menu';
-  return null;
+  const st=mallS.visit,room=st.kind==='cinema'?'cinema':st.shop;
+  return sceneObjectId(IMG.out.mall.rooms[room].hover, x, y);
 }
 function mallInteriorClick(id){
   if(wiping||cardHolds()||sim.mode==='down')return;

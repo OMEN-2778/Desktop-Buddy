@@ -1541,14 +1541,29 @@ def river_boat():
  return Sprite(0,0,px=np.array(out))
 
 def polluted_city():return city_layers(0,True)[0]
-def detective_inside():
+def detective_inside(masks=None):
  import friend_houses as FH
  import _furniture as F
  plan=('detective','阿简的侦探事务所',342,'双卧室与接待大厅','library',[
   [('guest_bed',6,68),('bed',78,132),('stair',214,40),('bath',258,78)],
   [('reception',6,204),('entry_stair',214,40),('kitchen',258,78)]])
- _,bg,front=FH.draw_plan(plan)
+ from _scene_masks import SceneMasks
+ sprites={}
+ metadata,bg,front=FH.draw_plan(plan,collect=sprites if masks is not None else None)
  room=Sprite(342,120,P.cut[0]);room.blit(bg,0,0)
+ traced=SceneMasks(room,masks)
+ if masks is not None:
+  for obj in metadata['furniture']:
+   kind,x,y=obj['kind'],obj['x'],obj['y']
+   sprite=sprites.get(obj['id'])
+   if sprite is None:continue
+   names={'tub':'bath','toilet':'wc','basin':'sink','wardrobe':'wardrobe','fridge':'fridge','entry':'exit'}
+   name=('bed' if x<78 else 'jianBed') if kind=='bed' else 'window' if kind=='window' and x<70 else names.get(kind)
+   if kind=='kitchen':
+    # The fixture asset has a sink on the left and two burners on the right.
+    for label,x0,x1 in [('counter',0,24),('stove',24,sprite.w)]:
+     traced.add(label,sprite.crop(x0,0,x1-x0,sprite.h),x+x0,y)
+   else:traced.add(name,sprite,x,y)
  # A raised walnut counter with two recessed panels and a continuous plinth.
  desk=Sprite(52,14);wood=P.walnut
  desk.rect(1,2,50,12,wood[0]).rect(2,3,48,10,wood[2])
@@ -1560,7 +1575,11 @@ def detective_inside():
                          (desk,147,111),(F.monitor(),152,97),(F.desk_lamp(True),185,97),
                          (F.art_print(18,12,'hills'),162,79),(F.chair(),283,113),
                          (F.chair('left'),311,113),(F.dining_table(),292,115)]:
-  room.blit(sprite,x,bottom-sprite.h)
+  y=bottom-sprite.h
+  traced.add({9:'sofa',58:'tv',147:'desk',152:'desk',185:'desk',292:'table'}.get(x),sprite,x,y)
+  room.blit(sprite,x,y)
+ traced.add(None,front,0,0)
+ traced.finish()
  room.blit(front,0,0)
  room.recolor({**dict(zip(P.plaster_bed,[P.walnut[2],P.oat[0],P.oat[1],P.wall_cream[1]])),
                **dict(zip(P.plaster_bath,P.wall_sage)),**dict(zip(P.oak,P.walnut))})
