@@ -37,7 +37,7 @@ function friendVisitSnapshot(){
  if(friendVisit?.phase==='departing')return {id:friendVisit.id,phase:'departing'};
  if(!atFriendHome())return null;
  const p=here(),v=friendVisit;
- return {id:v.id,houseId:v.houseId,phase:'inside',arrived:v.arrived,until:v.until,position:[p.x,p.y],stay:!!v.stay,askedDay:v.askedDay??null,action:sim.mode==='act'?v.action:null,objectId:v.objectId||null,seatId:v.seatId||null,lamps:v.lamps||{},mealItem:v.mealItem||null,bedIndex:v.bedIndex??null,seen:v.seen.slice(-100),familySeen:v.familySeen.slice(-100),present:v.present||[],count:v.count};
+ return {id:v.id,houseId:v.houseId,phase:'inside',arrived:v.arrived,until:v.until,position:[p.x,p.y],stay:!!v.stay,askedDay:v.askedDay??null,action:sim.mode==='act'?v.action:null,objectId:v.objectId||null,seatId:v.seatId||null,lamps:v.lamps||{},tvShow:v.action==='tv'?v.tvShow:null,mealItem:v.mealItem||null,bedIndex:v.bedIndex??null,seen:v.seen.slice(-100),familySeen:v.familySeen.slice(-100),present:v.present||[],count:v.count};
 }
 function restoreFriendVisit(raw){
  if(sim.place!=='friend_home'){
@@ -61,7 +61,9 @@ function restoreFriendVisit(raw){
  initFriendHomeActors();
  friendVisit.lamps=Object.fromEntries(Object.entries(raw.lamps||{}).filter(([id,on])=>h.furniture.some(f=>f.id===id&&['lamp','floor_lamp'].includes(f.kind))&&typeof on==='boolean'));
  if(!savedDown&&typeof raw.action==='string'&&Object.hasOwn(FRIEND_VISIT_ACTS,raw.action)&&!(raw.action==='sleep'&&!friendVisit.stay)){
-  const object=h.furniture.find(f=>f.id===raw.objectId);startFriendHouseAction(raw.action,object,raw.mealItem&&typeof raw.mealItem==='object'?raw.mealItem:null);
+  const object=h.furniture.find(f=>f.id===raw.objectId);
+  const item=raw.action==='tv'&&typeof raw.tvShow==='string'?{vars:{节目:raw.tvShow}}:raw.mealItem;
+  startFriendHouseAction(raw.action,object,item&&typeof item==='object'?item:null);
  }
  if(booted){fit();makeRoom();}
 }
@@ -257,7 +259,7 @@ function stepFriendHome(dtGame,dtReal){
  }
  tickFriendHomeActor(v.host,dtReal);for(const a of v.family)tickFriendHomeActor(a,dtReal);tickFriendHomeTalk(dtReal);checkCollapse();return true;
 }
-function friendVisitDoing(){return `${contactName(visitingFriend())}家 · ${FRIEND_VISIT_ACTS[friendVisit.action]||'做客'}`;}
+function friendVisitDoing(){if(friendVisit.action==='tv'&&friendVisit.tvShow)return '和朋友看《'+friendVisit.tvShow+'》';return `${contactName(visitingFriend())}家 · ${FRIEND_VISIT_ACTS[friendVisit.action]||'做客'}`;}
 function friendVisitHit(x,y){
  if(!atFriendHome()||!IMG.friendHouses?.[friendVisit.houseId]?.objects)return null;const v=friendVisit,h=visitingHouse(),off=(W-h.w)/2;
  const foreground=friendFurnitureAt(x,y,true);if(foreground)return foreground;

@@ -22,13 +22,14 @@ const seasonHouse=(function(){
  // the home's arrive() for this act, minus the walking (the house has walked her there)
  function start(act,o={}){const a=ACTS[act];if(!a)return;
   sim.mode='act';sim.act=act;sim.player=!o.auto;
+  if(o.item)sim.chosen={act,item:o.item};
   if(act==='cook'&&sim.place==='summer_test'&&sim.chosen?.act!=='cook'&&!cookSaved())sim.chosen={act:'cook',item:dishItem(BAY,pick(BAY.dishes))};   // the lodge's kitchen cooks Hawaiian
   if(sim.chosen&&sim.chosen.act!==act)sim.chosen=null;   // lifeArrive takes the dish picked from the menu
   if(act==='sleep'){const h=hour();sim.nap=!(h>=21||h<6);}
   sim.actEnd=sim.t+(act==='sleep'?900:a.dur*(0.8+Math.random()*0.4));
   sim.recent=[act,...sim.recent].slice(0,3);
   const line=o.log!==undefined?o.log:a.log;if(line)log(line);
-  lifeArrive(act);}
+  lifeArrive(act);if(act==='dress'&&sim.player)openWardrobe();}
  // a stop for good (the player sent her elsewhere): the home simply drops what she was doing
  function drop(act){if(running(act))explore();}
  // the home's act ends → its next step (cook → eat, a queued meal after the toilet) is routed by the season wrappers
@@ -63,12 +64,26 @@ const seasonHouse=(function(){
  const menuItems=c=>c.dishes.map(d=>({title:d.name,line:d.blurb||'',info:`饱食 ${d.fill} · ${d.time}分钟`,icon:dishIcon(d),item:dishItem(c,d)}));
  PICK.cook_bay={title:'旅舍厨房 · 做什么菜',groups:()=>[{name:BAY.name,note:'',items:menuItems(BAY)}]};
  PICK.cook_farm={title:'农舍灶台 · 做什么菜',groups:PICK.cook.groups};
- function menu(which){const sv=cookSaved(),it=sv&&cookItemOf(sv);if(it){sim.chosen={act:'cook',item:it};(which==='summer'?window.summerLodge:window.infeiHome)?.use('stove','menu');return;}   // a half-done dish: carry on
-  openPicker(which==='summer'?'cook_bay':'cook_farm');}
+ PICK.cook_city={title:'事务所厨房 · 做什么菜',groups:PICK.cook.groups};
+ function house(){return sim.place==='spring_test'?window.infeiHome:sim.place==='summer_test'?window.summerLodge:window.autumnHome;}
+ const kitchen={spring_test:'cook_farm',summer_test:'cook_bay',autumn_test:'cook_city'};
+ function furnitureMenu(id,rect){
+  const [x,y,w,h]=rect,from={x:x+w/2,y:y+h/2};
+  if(['tv','sofa','settee'].includes(id)){openPicker('tv',from);return true;}
+  if(id!=='stove')return false;
+  const saved=cookSaved(),item=saved&&cookItemOf(saved);
+  if(item)house().use('stove','menu',item);
+  else openPicker(kitchen[sim.place],from);
+  return true;
+ }
  const oCommand=command;command=function(act,item){
-  if(act==='cook_bay'||act==='cook_farm'){
-   if(!item){const all=act==='cook_bay'?menuItems(BAY):PICK.cook.groups().flatMap(g=>g.items);item=pick(all).item;}
-   sim.chosen={act:'cook',item};(act==='cook_bay'?window.summerLodge:window.infeiHome)?.use('stove','menu');return;}
+  if(inSeason()&&window.seasonMapTest?.ctl()?.state.inside){
+   if(act==='tv'){house().use('tv','menu',item);return;}
+   if(act===kitchen[sim.place]){
+    item??=pick(PICK[act].groups().flatMap(g=>g.items)).item;
+    house().use('stove','menu',item);return;
+   }
+  }
   return oCommand.apply(this,arguments);};
  // ---------------------------------------------------------------- 草帽湾 hidden rule (owner 2026-11-06): in the sea
  // (swimming on the surface, surfing or diving) every need runs down at half speed; since 2026-11-09 fun rises (~+30/h)
@@ -81,6 +96,6 @@ const seasonHouse=(function(){
    for(const k of Object.keys(sim.needs))if(!(eff[k]>0))sim.needs[k]=clamp(sim.needs[k]+DECAY[k]*(k==='hygiene'||k==='social'?1:.5)*dt);
    sim.needs.fun=clamp(sim.needs.fun+.4*dt);}
   seaT=t;}catch(e){}},250);
- return {start,drop,running,busy,explore,frame,emote,cookFx,meal,sleepFx,inSeason,menu,BAY};
+ return {start,drop,running,busy,explore,frame,emote,cookFx,meal,sleepFx,inSeason,furnitureMenu,BAY};
 })();
 window.seasonHouse=seasonHouse;

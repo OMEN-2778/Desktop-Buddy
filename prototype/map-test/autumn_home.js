@@ -28,17 +28,17 @@ const autumnHome=(function(){
  const spots=Object.entries(SPOTS).map(([id,p])=>({id,...p}));
  let svc=null,pend=null,hov=null,wasIn=false;
  function stop(){if(!svc)return;seasonHouse.drop(svc.act);svc=null;S().homeSpot=null;S().iy=0;S().hideHero=false;S().pose=null;}
- function use(id,auto){
+ function use(id,auto,item){
   if(window.liweiStory?.locked())return;
   if(id==='table'&&!homeMeal())id='stove';
-  if(id==='stove'&&auto&&homeMeal())id='table';   // a cooked dish waits: eat it, don't cook another
-  if(id==='stove'&&!auto){closeRing();const sv=cookSaved(),it=sv&&cookItemOf(sv);if(it){sim.chosen={act:'cook',item:it};use('stove','menu');}else openPicker('cook_city');return;}
+  if(id==='stove'&&auto===true&&homeMeal())id='table';   // a cooked dish waits: eat it, don't cook another
+  if(!auto&&SPOTS[id]&&seasonHouse.furnitureMenu(id,SPOTS[id].rect))return;
   const p=SPOTS[id];if(!p||!p.act)return;stop();closeRing();
   const c=C(),s=S();s.autoAt=sim.t+60;
-  if(!s.inside){pend={id,auto};if(!s.door)c.care(p.need,!auto);return;}   // walks to the house, through the door, then need() → here
-  pend=null;c.goTo(p.x,p.y,{id:'home_use',spot:id,auto:!!auto});
+  if(!s.inside){pend={id,auto,item};if(!s.door)c.care(p.need,!auto);return;}   // walks to the house, through the door, then need() → here
+  pend=null;c.goTo(p.x,p.y,{id:'home_use',spot:id,auto:auto===true,item});
  }
- function arrived(id){const p=SPOTS[id],s=S();if(!p)return;
+ function arrived(id,goal={}){const p=SPOTS[id],s=S();if(!p)return;
   if(p.look){
    if(id==='window'){
     const lines=['玻璃擦过了。外头那层黄灰还在，连对面屋脊都糊了。','风吹开一点，屋顶刚露出个角。','烟色淡了点，远处还是灰的。','能看见山脊了，天边还蒙着一层灰。','窗外那道山梁，原来一直连到这么远。'];
@@ -46,12 +46,12 @@ const autumnHome=(function(){
    }else speakCity(pick(p.look));
    return;
   }
-  const auto=!!s.lastAuto;s.x=p.x;s.y=p.y;s.facing=p.face||(p.x>222?1:-1);svc={id,act:p.act};s.homeSpot=id;s.iy=({tv:-3,sofa:-3,table:-4,wc:-3})[id]||0;s.hideHero=!!p.hide;
-  seasonHouse.start(p.act,{auto,log:p.log});}
+  const auto=goal.auto??!!s.lastAuto,act=id==='wardrobe'&&!auto?'dress':p.act;s.x=p.x;s.y=p.y;s.facing=p.face||(p.x>222?1:-1);svc={id,act};s.homeSpot=id;s.iy=({tv:-3,sofa:-3,table:-4,wc:-3})[id]||0;s.hideHero=!!p.hide;
+  seasonHouse.start(act,{auto,log:p.log,item:goal.item});}
  function speakCity(t){showHint(t);}
  // the city's care(need) and the door bring her here
  function need(k){const s=S();if(svc||s.goal?.id==='home_use')return;
-  if(pend){const q=pend;pend=null;s.lastAuto=!!q.auto;return use(q.id,q.auto);}
+  if(pend){const q=pend;pend=null;return use(q.id,q.auto,q.item);}
   let id=NEED_SPOT[k];if(!id)return;
   if(k==='hunger'&&sim.needs.hunger<25&&!homeMeal()){sim.quickMeal=true;id='fridge';}   // red: something ready, eaten at the table
   s.lastAuto=true;use(id,true);}
@@ -61,7 +61,8 @@ const autumnHome=(function(){
  // ---------------------------------------------------------------- drawing (house px, inside only)
  const SLEEPY={expr:'sleepy',look:0,bob:0,sway:0,wave:null};
  const MEAL_AT=[299,89],COOK_FX=[290,80],PILLOW=[12,32],TUB_RIM=40;
- function under(ctx){drawResident(ctx);seasonHouse.cookFx(ctx,COOK_FX[0],COOK_FX[1]);seasonHouse.meal(ctx,MEAL_AT[0],MEAL_AT[1]);}
+ function under(ctx){if(seasonHouse.running('tv')){const frame=nextTvFrame();if(frame)ctx.drawImage(frame,59,85,24,12);}
+  drawResident(ctx);seasonHouse.cookFx(ctx,COOK_FX[0],COOK_FX[1]);seasonHouse.meal(ctx,MEAL_AT[0],MEAL_AT[1]);}
  function over(ctx){const s=S();
   if(svc&&!s.goal){
    if(svc.id==='bed'){ctx.drawImage(lyingHead(SLEEPY),PILLOW[0],PILLOW[1]);seasonHouse.sleepFx(ctx,PILLOW[0]+14,PILLOW[1]-12);}
@@ -150,10 +151,6 @@ const autumnHome=(function(){
    if(sim.needs.hunger<50&&(seasonHouse.running('cook')&&name!=='eat'||seasonHouse.running('eat')))return;   // hungry: a meal is never dropped
    seasonHouse.explore();S().lastAuto=true;use(ACT_SPOT[name],true);return;}
   return oStart.apply(this,arguments);};
- PICK.cook_city={title:'事务所厨房 · 做什么菜',groups:PICK.cook.groups};
- const oCommand=command;command=function(act,item){
-  if(act==='cook_city'){if(!item)item=pick(PICK.cook.groups().flatMap(g=>g.items)).item;sim.chosen={act:'cook',item};S().lastAuto=false;use('stove','menu');return;}
-  return oCommand.apply(this,arguments);};
  // hover: the house's pixel glow on furniture (the city draws it in over())
  const oHover=C().hover;C().hover=function(x,y){const r=oHover.apply(this,arguments);hov=S().inside&&r&&SPOTS[r.id]&&r.id!=='exit'?SPOTS[r.id]:null;return r;};
  const oArrive=arriveAt;arriveAt=function(p){stop();pend=null;return oArrive.apply(this,arguments);};
@@ -176,6 +173,6 @@ const autumnHome=(function(){
  return {cancelActivity(){stop();pend=null;S().hideHero=false;},residentHit(x,y){
   const g=residentGoal(),r=S().resident;
   return g&&r&&g.id!=='sleep'&&!liweiStory.locked()&&Math.abs(x-r.x)<9&&y>=r.y-31&&y<r.y-(g.id==='work'?12:3);
- },tickResident,spots,need,click,arrived,under,over,busy:()=>!!svc||S().goal?.id==='home_use',get svc(){return svc;},SPOTS};
+ },use,tickResident,spots,need,click,arrived,under,over,busy:()=>!!svc||S().goal?.id==='home_use',get svc(){return svc;},SPOTS};
 })();
 window.autumnHome=autumnHome;

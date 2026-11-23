@@ -360,7 +360,7 @@ function makeSeason_autumn(opts, DATA) {
             return;
         }
         if (goal.id === "home_use") {
-            opts.home?.arrived(goal.spot);
+            opts.home?.arrived(goal.spot,goal);
             return;
         }
         if (goal.id === "inside_service") {
@@ -406,13 +406,13 @@ function makeSeason_autumn(opts, DATA) {
             plaza: [ "坐一会儿，聊聊天", "social" ]
         };
         const dishes = {
-            market: ["吃个葱油饼", "喝碗豆浆", "吃根烤玉米"],
-            canteen: ["吃碗热面", "吃份盖饭", "喝碗蛋花汤"],
-            syrup: ["尝块原味枫糖", "来杯枫糖牛奶", "吃块枫糖饼"],
-            chestnut: ["剥几颗热栗子", "吃块栗子糕", "喝碗栗子粥"]
+            market: [["吃个葱油饼","pancake"], ["喝碗豆浆","drink"], ["吃根烤玉米","vegetables"]],
+            canteen: [["吃碗热面","noodles"], ["吃份盖饭","rice"], ["喝碗蛋花汤","soup"]],
+            syrup: [["尝块原味枫糖","pudding"], ["来杯枫糖牛奶","drink"], ["吃块枫糖饼","pancake"]],
+            chestnut: [["剥几颗热栗子","vegetables"], ["吃块栗子糕","cake"], ["喝碗栗子粥","porridge"]]
         };
         if (dishes[id]) {
-            const options = dishes[id].map(label => [label, () => beginService("hunger", p.name, label)]);
+            const options = dishes[id].map(([label,look]) => [label, () => beginService("hunger", p.name, label), look]);
             if (id === "canteen") options.push(["找老郑聊聊", () => converse("zhou")]);
             options.push(...(window.liweiStory?.facilityChoices(id) || []));
             opts.menu(p.name, options);

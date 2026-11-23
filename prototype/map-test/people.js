@@ -1,7 +1,7 @@
 // Real native identities, avatar rendering and social dialogue on test-only terrain.
 function installSeasonPeople(active,ctl){
  const cache=new Map();let region='',hover=null,approaching=null;
- const bubble=document.createElement('div');bubble.id='seasonNpcBubble';bubble.className='npcsay';bubble.hidden=true;widget.append(bubble);
+ const bubble=makeNpcPill(widget);bubble.id='seasonNpcBubble';bubble.hidden=true;
  const lines={
  spring_test:[['花田','>你也是顺着花香走来的？','差不多，走着走着就到这儿了','>我绕了两圈，鞋上都沾花粉了'],['风车','>刚才那阵风，把我帽子都吹跑了','追回来了吗？','>追到了，差点比帽子先起飞'],['拍照','>能帮我看看头发乱没？','有一点，风还挺大的','>算了，拍出来就当很有动感'],['散步','>今天这天气，不出来走走亏了','是啊，在家坐着也没什么事','>我本来只想走十分钟……现在都走饿了'],['花粉','>阿嚏！花是好看，鼻子不太同意','要不要往风车那边走？','>行，先给鼻子放个假']],
  summer_test:[['海风','>这海风吹得，头发都不用做造型了','免费的造型师，就是有点随意','>哈哈，回去估计梳不开'],['沙子','>鞋里全是沙，走一步响一下','你这是把沙滩打包带走了','>还没收我行李超重费呢'],['游泳','>看着岸挺近，游起来真不是一回事','慢慢来，别急','>嗯，我先在这儿漂会儿'],['浪花','>刚才一个浪过来，我喝了一口','味道怎么样？','>不推荐，也没得退'],['海底','>那边的鱼一转弯就不见了','我刚也看见了，颜色好亮','>它们这拐弯技术，比我好多了'],['晒太阳','>我带了防晒，结果忘了带毛巾','各有各的忘法，我忘了拖鞋','>咱俩凑一凑，刚好都不齐全'],['漂浮','>我就想安静漂着，什么也不干','这也挺好啊','>对，今天不努力了，努力也游不快'],['潜水','>那边珊瑚缝里有只小家伙','我等会儿绕过去看看','>别追它哈，它胆子可小了']]
@@ -27,8 +27,11 @@ function installSeasonPeople(active,ctl){
   if(sim.place==='summer_test')for(const n of life.npcs)if(n.seasonKind!=='walk'&&Math.abs(n.x-c.state.camX-171)<250&&Math.abs(n.feet-c.state.camY-c.canvas.height/2)<c.canvas.height/2+40)c.fx.waterActor(n.personId,n.x,n.feet,n.dir,!n.paused,n.seasonKind==='dive',dt,116);
   if(life.talkQ)advanceNpcTalk(dt);
   const q=life.talkQ,n=q?.n||life.npcs.find(n=>n.sayUntil>realClock);
-  if(n&&(n.sayUntil>realClock||q?.lastOther)){
-   const text=q?.lastOther?q.lastText:n.sayText;if(text){if(bubble.textContent!==text)bubble.textContent=text;bubble.hidden=false;const s=c.state,x=n.x-(s.camera??s.camX??0),y=n.feet-(s.camY||0)-30;const scale=Number(view.style.width.replace('px',''))/342||view.width/342;const half=bubble.offsetWidth/2+4;bubble.style.left=Math.max(half,Math.min(342*scale-half,x*scale))+'px';bubble.style.top=(y*scale)+'px';}
+  const text=n&&(n.sayUntil>realClock||q?.lastOther)&&(q?.lastOther?q.lastText:n.sayText);
+  if(text){
+   if(bubble.textContent!==text)bubble.textContent=text;
+   const s=c.state,shown=window.seasonMapTest?.state.activeHeight||c.canvas.height;
+   positionNpcPill(bubble,n.x-(s.camera??s.camX??0),n.feet-(s.camY||0)-30+shown-c.canvas.height);
   }else bubble.hidden=true;
  }
  function draw(ctx){sync();const c=ctl(),s=c.state;for(const n of life.npcs){const cx=s.camera??s.camX??0,cy=s.camY||0;if(n.x<cx-60||n.x>cx+400||n.feet<cy-5||n.feet>cy+c.canvas.height+40)continue;const [f,pose]=npcFrame(n),water=n.seasonKind!=='walk';if(water){f.wave=Math.floor(s.time/.28+n.phase)%2;f.bob=0;f.sway=0;}const pic=npcCanvas(n,f,water?'stand':pose,false);

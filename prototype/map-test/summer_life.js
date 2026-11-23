@@ -234,13 +234,14 @@ const summerLife=(function(){
   ctx.restore();}
  /* customers talk in the same DOM pill as every other NPC (.npcsay, people.js / the city), owner 2026-11-05 */
  const pills=new Map();
- function sayPills(list,camX){const scale=Number(view.style.width.replace('px',''))/342||view.width/342;
+ function sayPills(list,camX){
   for(const [n,el]of pills)if(!list.includes(n)||!inMarket()){el.remove();pills.delete(n);}
   if(!inMarket())return;
-  for(const n of list){let el=pills.get(n);if(!el){el=document.createElement('div');el.className='npcsay';widget.append(el);pills.set(n,el);}
-   if(el.textContent!==n.say)el.textContent=n.say;const half=el.offsetWidth/2+4;el.style.left=Math.max(half,Math.min(342*scale-half,(n.x-camX)*scale))+'px';el.style.top=((FEET-30)*scale)+'px';}}
+  for(const n of list){let el=pills.get(n);if(!el){el=makeNpcPill(widget);pills.set(n,el);}
+   if(el.textContent!==n.say)el.textContent=n.say;
+   positionNpcPill(el,n.x-camX,FEET-30);}}
  setInterval(()=>{if(!inMarket()&&pills.size)sayPills([],0);},500);
- function bubble(ctx,x,y,text){ctx.font='7px sans-serif';const tw=Math.min(116,ctx.measureText(text).width+8);const bx=Math.round(x-tw/2);ctx.fillStyle='rgba(247,241,226,.96)';ctx.fillRect(bx,y,tw,11);ctx.fillStyle='#4a3b30';ctx.fillText(text,bx+4,y+8,tw-8);}
+
  // ---- the bay (beach and sea): coconuts, shells, seaweed glints, 阿洛, 卡伊诺, the finale on the shore
  function draw(ctx,info){if(!inBay())return;tick();const now=realClock,c=C(),s=c.state,b=B();for(const f of hooks.draw)try{f(ctx,info)}catch(e){console.warn(e)}
   if(b.met&&!b.stallSeen&&s.x<260&&!s.inside)arrow(ctx,24,72,now);   // which way the market is
@@ -291,14 +292,25 @@ const summerLife=(function(){
   hat:{title:'草帽爷爷的草帽铺',lines:['在草帽湾，没有草帽可不行。','这顶编了三天。'],goods:[['strawhat',8],['shell',1],['seaglass',2]]}};
  X.ITEMS.strawhat={name:'一顶草帽',icon:'hat',price:4,line:'草帽爷爷编的，戴上就是草帽湾的人了。'};
  function openShop(id){const sh=SHOPS[id];speakBay(pick(sh.lines));
-  FarmUI.shop('bay_shop_'+id,sh.title+' · 买点什么',S().coins,[{group:'今天有',note:'丢丢币买',items:sh.goods.map(([k,cost])=>({info:left(k)>0?`今天还剩 ${left(k)} 个`:'今天卖完了',name:X.ITEMS[k]?.name||X.CROP?.[k]?.name||k,icon:k==='strawhat'?'hat':k,pic:FARM_UI_ART.icons[k==='strawhat'?'hat':k],cost,key:k,line:X.ITEMS[k]?.line||''}))}]);}
+  FarmUI.shop('bay_shop_'+id,sh.title+' · 买点什么',S().coins,[{group:'今天有',note:'丢丢币买',items:sh.goods.map(([k,cost])=>({off:left(k)<=0?'今天卖完了':'',info:left(k)>0?`今天还剩 ${left(k)} 个`:'今天卖完了',name:X.ITEMS[k]?.name||X.CROP?.[k]?.name||k,icon:k==='strawhat'?'hat':k,pic:FARM_UI_ART.icons[k==='strawhat'?'hat':k],cost,key:k,line:X.ITEMS[k]?.line||''}))}]);}
  const oldCommand=command;command=function(act,item){
+  if(act==='bay_cafe'){
+   if(!item||!cafeOptions.includes(item))return;
+   if(item.cost>S().coins){showHint('丢丢币不够');return;}
+   if(item.cost)X.record('coin','咖啡座：'+item.name.slice(2),-item.cost);
+   for(const [key,value] of Object.entries(item.needs))sim.needs[key]=Math.min(100,sim.needs[key]+value);
+   speakBay(item.line);return;
+  }
   if(typeof act==='string'&&act.startsWith('bay_shop_')){if(item&&left(item.key)<=0){showHint('今天卖完了，明天再来');return;}if(item&&item.cost<=S().coins){B().bought=B().bought||{};B().bought[item.key]=(B().bought[item.key]||0)+1;X.record('coin','在市集买了'+item.name.replace(/^一(片|条|只|颗|个|块|篮|团|桶|顶)/,''),-item.cost);X.addItem(item.key);speakBay('买到了'+item.name.replace(/^一(片|条|只|颗|个|块|篮|团|桶|顶)/,''));}else if(item)showHint('丢丢币不够');return;}
   return oldCommand(act,item);};
- function openCafe(){const s=FarmUI.sheet('咖啡店的米娅 · 露天座','fu-stall'),c=socialContent(s),el=FarmUI.el;
-  c.append(el('p','fu-sub','米娅：坐下歇歇吧，今天的海风刚刚好。'),FarmUI.coinPill(S().coins));
-  const opts=[['来一杯冰咖啡',2,{fun:18,energy:10},'冰咖啡下肚，整个人都醒了'],['来一份海鲜饭',4,{hunger:45},'海鲜饭的锅巴最香'],['坐着和邻桌聊天',0,{social:30},'邻桌的阿婆讲了一下午她年轻时的事']];
-  c.append(FarmUI.actions(opts.map(([label,cost,fx,line])=>({label:label+(cost?` (${cost} 币)`:''),off:cost>S().coins?'丢丢币不够':'',on:()=>{if(cost)X.record('coin','咖啡座：'+label.slice(2),-cost);for(const [k,v]of Object.entries(fx))sim.needs[k]=Math.min(100,sim.needs[k]+v);closeSocialSheet();speakBay(line);}}))));}
+ const cafeOptions=[
+  {name:'来一杯冰咖啡',icon:'juice',cost:2,needs:{fun:18,energy:10},line:'冰咖啡下肚，整个人都醒了'},
+  {name:'来一份海鲜饭',icon:'fish',cost:4,needs:{hunger:45},line:'海鲜饭的锅巴最香'},
+  {name:'坐着和邻桌聊天',icon:'heart',cost:0,needs:{social:30},line:'邻桌的阿婆讲了一下午她年轻时的事'}
+ ];
+ function openCafe(){
+  FarmUI.shop('bay_cafe','咖啡店的米娅 · 露天座',S().coins,[{group:'今天想来点什么',items:cafeOptions}]);
+ }
  function wish(){if(S().coins<1)return showHint('身上没有丢丢币可以许愿');X.record('coin','往喷泉里扔了一枚丢丢币',-1);
   speakBay(pick(['许了个愿：明天也是晴天','许了个愿：小摊天天卖光','许了个愿……不能说出来','硬币沉下去的时候闪了一下']));addMood(MOOD.wish);}
  function marketPick(x,y){if(busy)return true;for(const f of hooks.mclick)if(f(x,y))return true;const c=C(),hit=(px,w=24)=>Math.abs(x-px)<w&&y>FEET-46&&y<FEET+4;

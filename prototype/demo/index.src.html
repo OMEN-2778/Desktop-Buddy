@@ -1823,7 +1823,7 @@ function pickItem(act) {
 // cooking keeps its progress (owner 2026-11-10): a dish left half-done (she went off to do something else) waits in that
 // kitchen's pot — home, the 茵菲谷 farmhouse, the 草帽湾 lodge — and the next cook there carries on with it.
 // Picking a different dish from the menu starts over; the pot stays on the stove meanwhile.
-const kitchenKey = () => (typeof atFriendHome === "function" && atFriendHome()) ? null : sim.place === "home" ? "home" : ["spring_test", "summer_test"].includes(sim.place) ? sim.place : null;
+const kitchenKey = () => (typeof atFriendHome === "function" && atFriendHome()) ? null : sim.place === "home" ? "home" : ["spring_test", "summer_test", "autumn_test"].includes(sim.place) ? sim.place : null;
 function cookSaved(k = kitchenKey()) { return k && lifeFlags.cookSaved?.[k] || null; }
 function cookItemOf(sv) {
   const all = [...(typeof festCuisines === "function" ? festCuisines() : []), ...T.cuisines, ...(window.seasonHouse?.BAY ? [seasonHouse.BAY] : [])];
@@ -3114,11 +3114,24 @@ function popFrom(el) {
   el.style.setProperty("--from-x", Math.round(lastTap.x - r.left) + "px"); el.style.setProperty("--from-y", Math.round(lastTap.y - r.top) + "px");
 }
 window.popFrom = popFrom;
+// A picker may appear between touch down and click. Only a press begun on the
+// same button selects a row, dismisses the picker or requests a random choice.
+let pressedPickerButton = null;
+pickerEl.addEventListener("pointerdown", e => { pressedPickerButton = e.target.closest("button"); }, true);
+pickerEl.addEventListener("pointercancel", () => { pressedPickerButton = null; });
+pickerEl.addEventListener("click", e => {
+  const button = e.target.closest("button");
+  const startedHere = button === pressedPickerButton;
+  pressedPickerButton = null;
+  if (button && e.detail > 0 && !startedHere) { e.preventDefault(); e.stopImmediatePropagation(); }
+}, true);
 function openPicker(act, from = null) {
   const P_ = PICK[act];
   if (!P_ || sim.mode === "down" || (card && act !== "sf_give")) return;
   closeRing(); setDiaryOpen(false);
+  pressedPickerButton = null;
   pickOn = act;
+  pickerEl.querySelector(".rand").hidden = P_.random === false;
   const [place, ask] = P_.title.split(" · ");                 // a small house shows just the place
   pickerEl.querySelector("h3").innerHTML = `${place}<span class="long"> · ${ask}</span>`;
   pickBody.replaceChildren();
@@ -3853,18 +3866,30 @@ function stepNpcs(dt) {
 // ---- the little pills over their heads
 const npcPillEls = new Map();
 function clearNpcPills() { for (const el of npcPillEls.values()) el.remove(); npcPillEls.clear(); }
+function makeNpcPill(host = ringEl.parentElement) {
+  const el = document.createElement("div");
+  el.className = "npcsay";
+  host.append(el);
+  return el;
+}
+// x and y are house pixels, relative to the visible scene after the camera offset.
+function positionNpcPill(el, x, y) {
+  const width = view.offsetWidth, unit = width / W;
+  const visible = x >= 0 && x <= W && y * unit >= -8 && y * unit <= view.offsetHeight;
+  el.hidden = !visible;
+  if (!visible) return;
+  el.style.maxWidth = Math.min(width, Math.max(120, width * .4)) + "px";
+  const half = el.offsetWidth / 2;
+  el.style.left = view.offsetLeft + Math.max(half, Math.min(width - half, x * unit)) + "px";
+  el.style.top = view.offsetTop + Math.max(el.offsetHeight, y * unit) + "px";
+}
 function placeNpcPills() {
-  const host = ringEl.parentElement;
   for (const [n, el] of npcPillEls) if (!npcHasSpeech(n) || n.gone || !(life.npcs || []).includes(n) || sim.place === "home") { el.remove(); npcPillEls.delete(n); }
   for (const n of life.npcs || []) {
     if (n.gone || sim.place === "home" || !npcHasSpeech(n)) continue;
     let el = npcPillEls.get(n);
-    if (!el) { el = document.createElement("div"); el.className = "npcsay"; el.textContent = n.sayText; host.appendChild(el); npcPillEls.set(n, el); }
-    if (sim.place === "bar") { el.style.maxWidth = Math.max(120, view.offsetWidth * .4) + "px"; el.style.whiteSpace = "normal"; el.style.textAlign = "center"; }
-    const top = npcFeet(n) - (n.kid ? 24 : n.sit ? 25 : 28) - 2;
-    const half = el.offsetWidth / 2, vw = W * scale;               // kept over the house, even for someone at its edge
-    el.style.left = view.offsetLeft + Math.max(half, Math.min(vw - half, npcX(n) * scale)) + "px";
-    el.style.top = view.offsetTop + top * scale + "px";
+    if (!el) { el = makeNpcPill(); el.textContent = n.sayText; npcPillEls.set(n, el); }
+    positionNpcPill(el, npcX(n), npcFeet(n) - (n.kid ? 24 : n.sit ? 25 : 28) - 2);
   }
 }
 function npcSay(n, text) {

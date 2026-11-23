@@ -241,15 +241,15 @@ let mobileFest = null;
 
 // people's words over their heads stay on screen while they are
 {
-  const pp = placeNpcPills;
-  placeNpcPills = function () {
-    pp();
+  const position = positionNpcPill;
+  positionNpcPill = function (el, x, y) {
+    position(el, x, y);
+    if (el.hidden) return;
     const L = deskEl.scrollLeft, R = L + deskEl.clientWidth;
-    for (const [n, el] of npcPillEls) {
-      const x = view.offsetLeft + npcX(n) * scale, half = el.offsetWidth / 2;
-      if (x < L || x > R) continue;
-      el.style.left = Math.max(L + half + 6, Math.min(R - half - 6, parseFloat(el.style.left))) + "px";
-    }
+    const anchor = view.offsetLeft + x * view.offsetWidth / W;
+    if (anchor < L || anchor > R) { el.hidden = true; return; }
+    const half = el.offsetWidth / 2;
+    el.style.left = Math.max(L + half, Math.min(R - half, parseFloat(el.style.left))) + "px";
   };
 }
 {

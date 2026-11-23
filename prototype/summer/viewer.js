@@ -102,7 +102,8 @@ function advanceDoor(dt){const d=state.door;if(!d)return;d.elapsed+=dt;if(!d.mid
  if(!d.mid&&d.elapsed>=d.duration/2){d.mid=true;state.inside=d.to;state.x=d.to?64:DATA.lodgeDoor;state.y=d.to?84:standY(state.x);state.camX=d.to?0:clamp(state.x-VW/2,0,W-VW);state.camY=0;state.camVX=state.camVY=0;updateUI();}if(d.elapsed>=d.duration)state.door=null;}
 function enter(){goTo(DATA.lodgeDoor,'walk',0,()=>beginDoor(true));}
 function leave(){if(state.inside)goTo(48,'walk',0,()=>beginDoor(false));}
-function exitArrow(){ctx.fillStyle='#e9eee2';ctx.fillRect(12,64,22,24);ctx.strokeStyle='#526578';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(27,69);ctx.lineTo(19,76);ctx.lineTo(27,83);ctx.stroke();}
+const gameNavigation=typeof opts!=='undefined'&&!!opts.view;
+function exitArrow(){if(gameNavigation)return;ctx.fillStyle='#e9eee2';ctx.fillRect(12,64,22,24);ctx.strokeStyle='#526578';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(27,69);ctx.lineTo(19,76);ctx.lineTo(27,83);ctx.stroke();}
 
 function sparkle(x,y,t){const a=(Math.sin(t*3+x)+1)/2;if(a<.3)return;ctx.fillStyle=`rgba(255,250,220,${a})`;ctx.fillRect(x,y-2,1,5);ctx.fillRect(x-2,y,5,1);}
 const realNow=()=>performance.now()/1000;
@@ -157,11 +158,24 @@ function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,
  fx.weather(ctx,wetKind,t,VW,vh,{waterline:WL-cy});
  drawTravelArrows();fx.transition(ctx,state.door,VW,vh);
 }
-function drawTravelArrows(){if(state.inside||state.inCabana)return;const y=canvas.height*.56;
+function drawTravelArrows(){if(gameNavigation||state.inside||state.inCabana)return;const y=canvas.height*.56;
  for(const [x,dir]of [[12,-1],[VW-12,1]]){ctx.fillStyle='rgba(247,246,251,.88)';ctx.fillRect(x-8,y-9,16,18);ctx.fillStyle='#5d6176';for(let i=0;i<5;i++){ctx.fillRect(x+dir*(i-2),y-5+i,2,2);ctx.fillRect(x+dir*(i-2),y+3-i,2,2);}}}
-function travel(dir){if(state.inside||state.inCabana)return;
- if(state.market){if(dir>0&&state.x>(market?.w||684)-150)return beginDoor('bay');return goTo(clamp(state.x+dir*170,14,(market?.w||684)-14));}
- if(market&&dir<0&&state.x<150&&!under())return beginDoor('market');const next=DATA.zones.filter(z=>dir>0?z[0]>state.x+24:z[0]<state.x-24);const x=next.length?(dir>0?next[0][0]+35:next[next.length-1][0]+35):state.x+dir*180;goTo(x,under()?'dive':'walk',state.y);}
+function zoneIndex(){let i=0;while(i+1<DATA.zones.length&&DATA.zones[i+1][0]<=state.x)i++;return i;}
+function directionLabel(dir){
+ if(state.inCabana)return null;
+ if(state.inside)return dir<0?'旅舍外':null;
+ if(state.market)return dir>0?'草帽湾海岸':null;
+ const i=zoneIndex()+dir;
+ return i<0&&market&&!under()?'海棠市集':DATA.zones[i]?.[1];
+}
+function travel(dir){
+ if(!directionLabel(dir))return;
+ if(state.inside)return leave();
+ if(state.market)return goTo(market.w-14,'walk',0,()=>beginDoor('bay'));
+ const i=zoneIndex()+dir;
+ if(i<0)return goTo(LEFT,'walk',0,()=>beginDoor('market'));
+ goTo(DATA.zones[i][0]+35,under()?'dive':'walk',state.y);
+}
 const wardrobe=document.createElement('section');wardrobe.className='bay-wardrobe';wardrobe.hidden=true;wardrobe.setAttribute('role','dialog');wardrobe.setAttribute('aria-modal','true');wardrobe.setAttribute('aria-label','更衣室');wardrobe.innerHTML='<h2>换好衣服，再去海里玩</h2><div><button data-suit="swim">穿泳衣</button><button data-suit="wetsuit">穿潜水服</button><button data-suit="clothes">换回便装</button><button data-cancel>先不换</button></div>';
 canvas.parentElement.append(wardrobe);
 function leaveCabana(kind){if(kind){state.suit=kind;toast('换上了'+SUIT_NAME[kind]+'～');}state.inCabana=false;wardrobe.hidden=true;state.x=DATA.cabana.wetsuit;state.y=standY(state.x);goTo(DATA.cabana.wetsuit+16,'walk');canvas.focus();}
@@ -189,7 +203,7 @@ document.getElementById('gender').onclick=e=>{state.gender=state.gender==='f'?'m
 document.getElementById('exit').onclick=leave;
 document.getElementById('pause').onclick=e=>{state.paused=!state.paused;e.target.textContent=state.paused?'继续':'暂停';e.target.setAttribute('aria-pressed',String(state.paused));};
 canvas.addEventListener('pointerdown',e=>{canvas.focus();const r=canvas.getBoundingClientRect(),sx=(e.clientX-r.left)*VW/r.width,sy=(e.clientY-r.top)*canvas.height/r.height;
- if(state.changing>0||state.inCabana||state.door)return;if(!state.inside&&sy>canvas.height*.56-20&&sy<canvas.height*.56+20&&(sx<25||sx>VW-25)){travel(sx<25?-1:1);return;}if(state.inside){if(sx<43&&sy>55)return leave();goTo(clamp(sx,46,312));return;}pick(sx+state.camX,sy+state.camY);});
+ if(state.changing>0||state.inCabana||state.door)return;if(!gameNavigation&&!state.inside&&sy>canvas.height*.56-20&&sy<canvas.height*.56+20&&(sx<25||sx>VW-25)){travel(sx<25?-1:1);return;}if(state.inside){if(sx<43&&sy>55)return leave();goTo(clamp(sx,46,312));return;}pick(sx+state.camX,sy+state.camY);});
 window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','a','d','w','s','A','D','W','S'].includes(e.key)&&!['BUTTON','INPUT'].includes(document.activeElement.tagName)){e.preventDefault();keys.add(e.key);state.lying=null;}});
 window.addEventListener('keyup',e=>keys.delete(e.key));window.addEventListener('blur',()=>keys.clear());
 load(DATA);Promise.all([...images.values()].map(im=>im.decode())).then(()=>{
@@ -199,4 +213,4 @@ load(DATA);Promise.all([...images.values()].map(im=>im.decode())).then(()=>{
  state.y=standY(state.x);state.loaded=true;ctx.imageSmoothingEnabled=false;toast('先去更衣室换上泳装，再去海里玩吧～ 发光的小星星是可以探索的地方。',5);
  let last=performance.now();function frame(now){const dt=document.hidden?0:clamp((now-last)/1000,0,.05);last=now;if(!state.paused)state.time+=dt;advanceDoor(dt);fx.tickWater(state.paused?0:dt);move(dt);camera(dt);draw();updateUI();requestAnimationFrame(frame);}requestAnimationFrame(frame);})
  .catch(e=>{const el=document.getElementById('error');el.hidden=false;el.textContent='地图加载失败，请刷新重试';console.error(e);});
-window.summerPreview={state,seaLife:DATA.life,plants:DATA.plants,kelp:DATA.kelp,goTo,pick,move,camera,draw,gr,deep,isSolid,enterCabana,leaveCabana,travel,wardrobe,enter,leave,advanceDoor,fx,setWeather:kind=>wetKind=weatherOverride||kind,getWeather:()=>wetKind,setPeopleRenderer:fn=>peopleRenderer=fn,setMarket:m=>market=m,beginDoor,setPhoto:f=>photo=f,discover,hotspots:DATA.hotspots,data:DATA,lifeText:DATA.lifeText,toast};
+window.summerPreview={state,seaLife:DATA.life,plants:DATA.plants,kelp:DATA.kelp,goTo,pick,move,camera,draw,gr,deep,isSolid,enterCabana,leaveCabana,directionLabel,travel,wardrobe,enter,leave,advanceDoor,fx,setWeather:kind=>wetKind=weatherOverride||kind,getWeather:()=>wetKind,setPeopleRenderer:fn=>peopleRenderer=fn,setMarket:m=>market=m,beginDoor,setPhoto:f=>photo=f,discover,hotspots:DATA.hotspots,data:DATA,lifeText:DATA.lifeText,toast};

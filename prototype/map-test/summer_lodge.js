@@ -33,11 +33,11 @@ const g=++goGen,t0=Date.now(),c=C();
    if(!s.door&&!s.target&&!s.inCabana&&!summerLife.isBusy()){if(s.market)c.beginDoor('bay');else if(s.y>131)c.goTo(1050,'dive',128);else c.enter();}
    setTimeout(step,400);};step();}
  function useAct(name){if(!inBay()||!C().state.inside)return false;const id=ALIAS[name]||Object.keys(SPOTS).find(k=>SPOTS[k].act===name);if(!id)return false;use(id,true);return true;}
- function use(id,auto){if(id==='dine'&&!homeMeal())id='stove';if(id==='stove'&&auto&&homeMeal())id='dine';   // nothing on the table: cook first, then eat (as at home)
-  if(id==='stove'&&!auto){closeRing();seasonHouse.menu('summer');return;}   // the player clicked the stove (or an empty table): the menu
+ function use(id,auto,item){if(id==='dine'&&!homeMeal())id='stove';if(id==='stove'&&auto===true&&homeMeal())id='dine';   // nothing on the table: cook first, then eat (as at home)
+  if(!auto&&SPOTS[id]&&seasonHouse.furnitureMenu(id,SPOTS[id].rect))return;
   const p=SPOTS[id],c=C();if(!p)return;stop();closeRing();
   if(p.look){c.goTo(p.x,'walk',0,()=>speak(pick(p.look),true));return;}
-  c.goTo(p.x,'walk',0,()=>{const s=c.state;s.facing=p.face||(p.x>170?1:-1);svc={id,act:p.act,need:p.need};s.pose=null;s.hideHero=!!p.hide;s.iy=p.iy||0;speak(pick(p.line),true);seasonHouse.start(p.act,{auto,log:p.log});});}
+  c.goTo(p.x,'walk',0,()=>{const s=c.state;s.facing=p.face||(p.x>170?1:-1);svc={id,act:p.act,need:p.need};s.pose=null;s.hideHero=!!p.hide;s.iy=p.iy||0;speak(pick(p.line),true);seasonHouse.start(p.act,{auto:auto===true,log:p.log,item});});}
  // clicks: the adapter asks summerLife first; inside the lodge that is us
  const oClick=summerLife.click;summerLife.click=function(x,y){
   const s=C().state;if(inBay()&&s.inside&&!s.door){const id=hitSpot(x,y);if(id){use(id);return true;}stop();return false;}

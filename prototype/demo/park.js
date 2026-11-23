@@ -11,16 +11,30 @@ const PARK_SERVICE = { toilet: { zone: 'lakeside', act: 'park_toilet', need: 'bl
 let parkVendor = null;
 let parkNextTalk = 0;
 const parkNavigation=document.createElement('nav');parkNavigation.className='park-navigation';parkNavigation.hidden=true;parkNavigation.setAttribute('aria-label','公园方向');document.getElementById('widget').append(parkNavigation);
+// Each scene supplies its adjacent destinations and walking route. The game owns the controls.
+const sceneDirections = new Map([['park', {
+  name:'公园', available:()=>!parkInsideToilet(),
+  destination:dir=>PARK_ZONES[PARK_ZONES.indexOf(parkLayout())+dir]?.name,
+  walk:parkWalkDirection
+}]]);
+function activeDirections(){
+  const route=sceneDirections.get(sim.place);
+  if(!route||!booted||wiping||cardHolds()||storyLocked()||pickOn||ringOf||wardrobeOpen||phoneHolds()||sim.mode==='down')return null;
+  return route.available()?route:null;
+}
 for(const dir of [-1,1]){
   const button=document.createElement('button');button.type='button';button.className='park-arrow';button.dataset.dir=dir;
   button.innerHTML='<svg viewBox="0 0 9 9" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M3 0h2v2h2v2h2v1H7v2H5v2H3V6H0V3h3z"/></svg>';
-  button.onclick=()=>parkWalkDirection(dir);parkNavigation.append(button);
+  button.onclick=()=>{const route=activeDirections();if(route?.destination(dir))route.walk(dir);};parkNavigation.append(button);
 }
 let parkNavigationSize='';
 function syncParkNavigation(){
-  const on=booted&&sim.place==='park'&&!wiping&&!parkInsideToilet()&&!cardHolds()&&sim.mode!=='down';parkNavigation.hidden=!on;if(!on)return;
-  const index=PARK_ZONES.findIndex(z=>z.id===parkLayout().id);
-  for(const button of parkNavigation.children){const dir=+button.dataset.dir,next=PARK_ZONES[index+dir];button.hidden=!next;if(next){button.title='前往'+next.name;button.setAttribute('aria-label',button.title);}}
+  const route=activeDirections();parkNavigation.hidden=!route;if(!route)return;
+  parkNavigation.setAttribute('aria-label',route.name+'方向');
+  for(const button of parkNavigation.children){
+    const next=route.destination(+button.dataset.dir);button.hidden=!next;
+    if(next&&button.title!=='前往'+next){button.title='前往'+next;button.setAttribute('aria-label',button.title);}
+  }
   const size=[view.offsetWidth,view.offsetHeight,view.offsetLeft,view.offsetTop].join(':');
   if(size!==parkNavigationSize){parkNavigationSize=size;overHouse(parkNavigation);}
 }

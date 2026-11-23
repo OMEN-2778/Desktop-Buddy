@@ -133,7 +133,7 @@ function restoreSocialLife(data){
 
 D.spots.host=[D.spots.sofa[0],D.spots.sofa[1]-6,'sit'];
 ACTS.host={spot:'host',label:'招待朋友',emote:'chat',dur:45,log:null};EFFECT.host={social:.3,fun:.2};D.seatLifts.host=4;
-const guestBubble=document.createElement('div');guestBubble.className='npcsay home-guest-say';guestBubble.hidden=true;document.getElementById('widget').append(guestBubble);
+const guestBubble=makeNpcPill(document.getElementById('widget'));guestBubble.hidden=true;
 function homeVisitActive(){return sim.place==='home'&&socialState.guest?.phase==='visiting';}
 function homeGuestPresent(){const g=socialState.guest;return sim.place==='home'&&((!!g&&['entering','visiting','leaving'].includes(g.phase))||(g?.phase==='scheduled'&&g.at-sim.t<=180)||friendOutingWaiting());}   // a visit booked for tomorrow doesn't keep her in all evening
 function visitNotice(title,text){
@@ -194,7 +194,7 @@ function drawHomeGuest(ctx){
   if(g.petVisit?.started){fr.expr='happy';fr.wave=Math.floor(realClock*2)%2;}
   const pose=g.petVisit?.started?'sit':sit?'sit':moving?['walkL','stand','walkR','stand'][Math.floor(realClock*6)%4]:'stand';
   ctx.drawImage(npcCanvas(n,fr,pose,!!(moving&&p.dy<0)),Math.round(p.x-DW/2),Math.round(p.y-DH+1-(sit?4:0)));
-  if(!guestBubble.hidden){guestBubble.style.left=view.offsetLeft+p.x*scale+'px';guestBubble.style.top=view.offsetTop+(p.y-DH-8)*scale+'px';}
+  if(!guestBubble.hidden)positionNpcPill(guestBubble,p.x,p.y-DH-8);
 }
 function nextGuestText(pool,seen){
   let fresh=pool.filter(row=>!seen.includes(row[0]));

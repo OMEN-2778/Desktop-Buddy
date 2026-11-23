@@ -23,12 +23,13 @@ const infeiHome=(function(){
  let svc=null,lastT=sim.t,hinted=false,wasInside=false,leaving=false;
  const inRect=(x,y,[rx,ry,w,h])=>x>=rx&&x<rx+w&&y>=ry&&y<ry+h;
  function stop(){if(!svc)return;const s=C().state;s.pose=null;s.hideHero=false;s.iy=0;seasonHouse.drop(svc.act);svc=null;T.state.autoAt=sim.t+30;}
- function use(id,auto){
+ function use(id,auto,item){
   if(id==='table'&&!homeMeal())id='stove';
-  if(id==='stove'&&auto&&homeMeal())id='table';   // a cooked meal waits on the table: eat it, don't cook another (owner 2026-11-10)   // nothing on the table: cook first, then eat (as at home)
-  if(id==='stove'&&!auto){closeRing();seasonHouse.menu('spring');return;}   // the player clicked the stove (or an empty table): the menu
+  if(id==='stove'&&auto===true&&homeMeal())id='table';   // a cooked meal waits on the table: eat it, don't cook another (owner 2026-11-10)   // nothing on the table: cook first, then eat (as at home)
+  if(!auto&&SPOTS[id]&&seasonHouse.furnitureMenu(id,SPOTS[id].rect))return;
   const p=SPOTS[id],c=C();if(!p||!p.act)return;stop();closeRing();T.state.autoAt=sim.t+60;
-  const begin=()=>{const s=c.state;s.x=p.x;s.facing=p.face||(p.x>170?1:-1);svc={id,act:p.act,need:p.need,auto};s.pose=null;s.hideHero=!!p.hide;s.iy=p.iy||0;speak(pick(p.line),true);seasonHouse.start(p.act,{auto,log:p.log});};
+  const act=id==='wardrobe'&&!auto?'dress':p.act;
+  const begin=()=>{const s=c.state;s.x=p.x;s.facing=p.face||(p.x>170?1:-1);svc={id,act,need:p.need,auto:auto===true};s.pose=null;s.hideHero=!!p.hide;s.iy=p.iy||0;speak(pick(p.line),true);seasonHouse.start(act,{auto:auto===true,log:p.log,item});};
   if(!c.state.inside){c.state.target=null;c.state.after=null;c.state.door={to:true,elapsed:0,duration:.65,mid:false};
    const wait=()=>{if(!inSpring())return;if(c.state.door||!c.state.inside)return setTimeout(wait,120);c.target(p.x,p.y,begin);};setTimeout(wait,120);}
   else c.target(p.x,p.y,begin);

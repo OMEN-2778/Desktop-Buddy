@@ -269,7 +269,7 @@ body {
 }
 .ring .ring-label { color: #f7f6fb; cursor: default; }
 /* strangers outside talk in small pills over their heads */
-.npcsay { position: absolute; z-index: 6; transform: translate(-50%, -100%); white-space: nowrap; pointer-events: none; isolation: isolate; font-weight: 700; color: var(--ink); padding: 5px 12px; filter: drop-shadow(2px 2px 0 var(--shadow)); animation: npcIn .32s cubic-bezier(.3, 1.6, .5, 1); font-size:var(--ui-font-caption); }
+.npcsay { position: absolute; z-index: 6; transform: translate(-50%, -100%); width:max-content; box-sizing:border-box; white-space:normal; overflow-wrap:anywhere; text-align:center; pointer-events: none; isolation: isolate; font-weight: 700; color: var(--ink); padding: 5px 12px; filter: drop-shadow(2px 2px 0 var(--shadow)); animation: npcIn .32s cubic-bezier(.3, 1.6, .5, 1); font-size:var(--ui-font-caption); }
 .npcsay::before, .npcsay::after { content: ""; position: absolute; z-index: -1; }
 .npcsay::before { inset: 0; background: var(--edge); clip-path: var(--clip-btn); }
 .npcsay::after { inset: 2px; background: var(--panel-2); clip-path: var(--clip-btn-in); }

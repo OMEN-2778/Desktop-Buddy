@@ -59,6 +59,7 @@ function startFriendHouseAction(action,selected=null,item=null){
  const room=friendObjectRoom(object);
  target=seat?friendSeat(seat):{x:off+object.x+object.w/2,y:room.floor};
  friendVisitWalk(target,action,duration,!!seat||action==='toilet');
+ v.tvShow=action==='tv'?(item||pickItem('tv'))?.vars?.节目:null;
  v.objectId=object.id;v.seatId=seat?.id||null;v.mealItem=action==='eat'||action==='cook'?item||v.mealItem||null:null;
  v.sleepFurniture=action==='sleep'?object:null;v.bedIndex=action==='sleep'?h.furniture.indexOf(object):null;
  v.hover=null;return true;
@@ -66,7 +67,7 @@ function startFriendHouseAction(action,selected=null,item=null){
 function onFriendHouseActionStart(){
  const v=friendVisit,c=visitingFriend(),o=friendHouseObject(v.objectId);if(!o)return;
  const food=v.mealItem?.vars?.食物||v.mealItem?.vars?.零食||'朋友准备的小点心';
- const texts={tv:'在朋友家的沙发上坐好，一起看电视。',computer:'借用了一会儿朋友的电脑。',read:'挑了本书，找个位置坐下慢慢看。',eat:'在朋友家吃了'+food+'。',cook:'借用朋友家的厨房，准备'+food+'。',toilet:'借用了朋友家的卫生间。',bath:'在朋友家洗了个澡。',wash:'在洗手台洗了洗手和脸。',towel:'拿干净的小毛巾擦了擦手。',water:'帮朋友照看了一下绿植。',music:'在朋友家试着弹了一小段。',art:'看了看朋友挑选的画和摆设。',laundry:'帮朋友把洗衣机里的衣服转起来。',inspect:o.kind==='wardrobe'?'看了看朋友的衣柜，没有翻动里面的衣服。':'看了看朋友屋里的小物件。'};
+ const texts={tv:v.tvShow?'和朋友坐在沙发上看《'+v.tvShow+'》。':'在朋友家的沙发上坐好，一起看电视。',computer:'借用了一会儿朋友的电脑。',read:'挑了本书，找个位置坐下慢慢看。',eat:'在朋友家吃了'+food+'。',cook:'借用朋友家的厨房，准备'+food+'。',toilet:'借用了朋友家的卫生间。',bath:'在朋友家洗了个澡。',wash:'在洗手台洗了洗手和脸。',towel:'拿干净的小毛巾擦了擦手。',water:'帮朋友照看了一下绿植。',music:'在朋友家试着弹了一小段。',art:'看了看朋友挑选的画和摆设。',laundry:'帮朋友把洗衣机里的衣服转起来。',inspect:o.kind==='wardrobe'?'看了看朋友的衣柜，没有翻动里面的衣服。':'看了看朋友屋里的小物件。'};
  if(texts[v.action])log(texts[v.action]);
  if(v.action==='window'){
   const line=weather.kind==='snow'?'外头的雪还在下，窗边看得特别清楚。':weather.kind==='storm'?'外头雨可真大，先在屋里待着吧。':weather.kind==='rain'?'雨还没停呢，先坐着，别急着走。':duskState().strength?'你看窗外，这会儿的天还挺好看。':'从这儿能看见外面，站窗边透透气也不错。';showSay(line,contactName(c)+'：',c);
@@ -87,7 +88,8 @@ function interactFriendFurniture(f){
   gameAudio.sound('switch',.6);
   v.lamps||={};v.lamps[f.id]=!v.lamps[f.id];showSay(v.lamps[f.id]?'把灯打开了，窗边暖和了点。':'把这盏灯关上了。');return true;
  }
- if(['snack','cook','read'].includes(action)){
+ if(['snack','cook','read','tv'].includes(action)){
+  if(kind==='sofa'&&!friendObjects(['tv'],f).some(tv=>tv.room===f.room))return startFriendHouseAction('sit',f);
   v.pendingFurnitureId=f.id;openPicker(action==='snack'?'friend_snack':action,{x:(W-visitingHouse().w)/2+f.x+f.w/2,y:f.y+f.h/2});return true;
  }
  return startFriendHouseAction(action,f);

@@ -64,7 +64,7 @@ const FarmUI = (() => {
     btns.forEach((b, i) => {
       const it = all[i], why = it.off || (it.cost > balance ? `还差 ${coins(it.cost - balance)} 币` : "");
       b.querySelector("img").classList.add("fu-pic");
-      if (why) { b.classList.add("fu-off"); b.setAttribute("aria-disabled", "true"); b.append(el("em", "fu-why", why)); }
+      if (why) { b.disabled = true; b.classList.add("fu-off"); b.setAttribute("aria-disabled", "true"); b.append(el("em", "fu-why", why)); }
     });
   }
   const oldClosePicker = closePicker;

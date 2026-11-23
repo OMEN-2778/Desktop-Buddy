@@ -36,31 +36,19 @@ const seasonalTest=(function(){
  }
  state.spring=makeSeason_spring({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='spring_test'});
  state.summer=makeSeason_summer({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='summer_test'});
- let stallActions=[], pressedDish=null;
- // When a stall opens under a finger, the opening tap can end on a new menu button.
- ringEl.addEventListener('pointerdown',e=>{
-  if(ringOf==='autumnStall')pressedDish=e.target.closest('button');
- });
- ringEl.addEventListener('click',e=>{
-  if(ringOf!=='autumnStall')return;
-  const startedOnDish=pressedDish===e.target.closest('button');
-  pressedDish=null;
-  if(e.detail>0&&!startedOnDish){e.preventDefault();e.stopPropagation();}
- },true);
- function stallMenu(name, options){
-  stallActions=options;pressedDish=null;
-  RINGS.autumnStall=options.map(([label],i)=>['autumnDish:'+i,label]).concat([['autumnDismiss','离开']]);
-  openRing('autumnStall','buddy');ringEl.setAttribute('aria-label',name);
+ function stallMenu(name,options){
+  PICK.autumn_stall={
+   title:name+' · 选点什么',random:false,
+   groups:()=>[{name,items:options.map(([title,choose,look])=>({
+    title,icon:look?dishIcon({name:title,look}):FARM_UI_ART.icons.heart,item:choose
+   }))}]
+  };
+  openPicker('autumn_stall');
  }
- const priorRingPick=ringPick;
- ringPick=function(id){
-  if(id==='autumnDismiss'||id.startsWith('autumnDish:')){
-   if(ringOf!=='autumnStall')return;
-   const action=stallActions.find((_,i)=>id==='autumnDish:'+i);
-   closeRing();stallActions=[];state.autumn.playerInput();
-   action?.[1]();return;
-  }
-  return priorRingPick(id);
+ const beforeStallCommand=command;
+ command=function(act,item){
+  if(act!=='autumn_stall')return beforeStallCommand.apply(this,arguments);
+  if(sim.place==='autumn_test'&&typeof item==='function'){state.autumn.playerInput();item();}
  };
  state.autumn=makeSeason_autumn({view,menu:stallMenu,drawResidents:autumnPedestrians(AUTUMN_MAP_DATA),walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='autumn_test',needs:()=>sim.needs,now:()=>sim.t,heroName:()=>nameOf(),hint:showHint,exit:()=>start('home'),get home(){return window.autumnHome||null;}},AUTUMN_MAP_DATA);
  for(const c of [state.spring,state.summer,state.autumn])root.append(c.root);
@@ -69,6 +57,17 @@ const seasonalTest=(function(){
  const legacyActive=()=>sim.place==='spring_test'||sim.place==='summer_test';
  const people=installSeasonPeople(legacyActive,ctl),cheats=installSeasonCheats();
  state.spring.setPeopleRenderer(people.draw);state.summer.setPeopleRenderer((ctx,info)=>{window.summerLife?.draw(ctx,info);people.draw(ctx,info);});   // 草帽湾 stall, customers, bay people first (summer_life.js)
+ for(const [place,c,name] of [['spring_test',state.spring,'茵菲谷'],['summer_test',state.summer,'草帽湾']]){
+  sceneDirections.set(place,{
+   name, available:()=>c.state.loaded&&!c.state.door&&!c.state.edge&&!c.state.inCabana&&!(c.state.changing>0)&&(place!=='summer_test'||!window.summerFloat?.busy()),
+   destination:c.directionLabel,
+   walk(dir){
+    window.seasonAuto?.cancel();people.cancel();
+    (place==='spring_test'?window.infeiHome:window.summerLodge)?.stop();
+    state.autoAt=sim.t+45;c.state.rush=performance.now();view.focus();c.travel(dir);
+   }
+  });
+ }
  const resizeRoot=()=>root.style.width=Math.max(300,view.clientWidth)+'px';window.addEventListener('resize',resizeRoot);resizeRoot();
  for(const [id,label,feet]of [['spring_test','茵菲谷',103],['summer_test','草帽湾',108],['autumn_test','栗尾市',108]]){
   OUT[id]={img:{},kind:'walk',doorX:80,feet,walk:[30,310]};AWAY.add(id);TRIP_ICON[id]=id==='spring_test'?'park':'dock';TRIP_COL[id]=id==='spring_test'?'#86c98a':'#4a97c9';TRIP_MOTIF[id]=TRIP_MOTIF[id==='spring_test'?'park':'beach'];

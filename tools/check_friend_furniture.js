@@ -25,7 +25,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=requ
     render();
     if(['toilet','bath'].includes(action)){
      const c=document.createElement('canvas');c.width=W;c.height=h.h;const x=c.getContext('2d');const f={expr:'neutral',look:0,bob:0,sway:0,wave:null};if(!drawFriendFixtureUser(x,f))throw Error('Missing fixture actor');
-     const out=x.getImageData(0,0,W,h.h).data,actor=dollCanvas(f,'stand',14).getContext('2d').getImageData(0,0,DW,14).data,colors=new Set();for(let i=0;i<actor.length;i+=4)if(actor[i+3])colors.add(actor.slice(i,i+3).join(','));let found=0;for(let i=0;i<out.length;i+=4)if(out[i+3]&&colors.has(out.slice(i,i+3).join(',')))found++;if(found<8)throw Error('Invisible head at '+id+'/'+o.kind);fixtures++;
+     const out=x.getImageData(0,0,W,h.h).data,actor=dollCanvas(f,'stand',14).getContext('2d').getImageData(0,0,DW,14).data,colors=new Set();for(let i=0;i<actor.length;i+=4)if(actor[i+3])colors.add(actor.slice(i,i+3).join(','));let found=0;for(let i=0;i<out.length;i+=4)if(out[i+3]&&colors.has(out.slice(i,i+3).join(',')))found++;if(o.kind==='shower'){
+      // Frosted glass intentionally hides normal hair and skin colors. The figure darkens the glass.
+      const of=(W-h.w)/2;let shadow=0;for(let y=o.y+3;y<o.y+o.h-4;y++)for(let col=2;col<o.w-2;col++){
+       const i=4*(y*W+Math.round(of+o.x+col));if(out[i+3]>145&&out[i]>out[i+2])shadow++;
+      }if(shadow<8)throw Error('Invisible shower silhouette at '+id);
+     }else if(found<8)throw Error('Invisible head at '+id+'/'+o.kind);fixtures++;
     }
     checked++;kinds.add(o.kind);
    }
@@ -36,9 +41,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=requ
  const tv=await p.evaluate(()=>{const o=friendObjects(['tv'])[0];return {x:(W-visitingHouse().w)/2+o.x+o.w/2,y:o.y+6,id:o.id};});
  await p.locator('#view').hover({position:await p.evaluate(({x,y})=>({x:x*scale,y:y*scale}),tv)});
  assert.equal(await p.evaluate(()=>friendVisit.hover?.f?.kind),'tv');await p.locator('#view').screenshot({path:'/workspace/artifacts/friend-furniture/tv-outline.png'});
- await p.locator('#view').click({position:await p.evaluate(({x,y})=>({x:x*scale,y:y*scale}),tv)});await p.evaluate(()=>{settleFurniture();render()});assert.equal(await p.evaluate(()=>friendVisit.action),'tv');await p.locator('#view').screenshot({path:'/workspace/artifacts/friend-furniture/watching-tv.png'});
+ await p.locator('#view').click({position:await p.evaluate(({x,y})=>({x:x*scale,y:y*scale}),tv)});await p.waitForFunction(()=>pickOn==='tv');const show=await p.locator('#picker .pk-item b').first().textContent();await p.locator('#picker .pk-item').first().click();await p.evaluate(()=>{settleFurniture();render()});assert.equal(await p.evaluate(()=>friendVisit.tvShow),show);assert.equal(await p.evaluate(()=>friendVisit.action),'tv');await p.locator('#view').screenshot({path:'/workspace/artifacts/friend-furniture/watching-tv.png'});
  // Snapshot while watching restores the selected screen and its matching seat.
- await p.evaluate(()=>{const saved=JSON.parse(JSON.stringify(snapshot()));restore(saved);settleFurniture();render()});assert.equal(await p.evaluate(()=>friendVisit.action),'tv');assert.equal(await p.evaluate(()=>friendVisit.seated),true);
+ await p.evaluate(()=>{const saved=JSON.parse(JSON.stringify(snapshot()));restore(saved);settleFurniture();render()});assert.equal(await p.evaluate(()=>friendVisit.action),'tv');assert.equal(await p.evaluate(()=>friendVisit.seated),true);assert.equal(await p.evaluate(()=>friendVisit.tvShow),show);
  for(const kind of ['tub','toilet','basin','shower']){
   await p.evaluate(kind=>{furnitureEnter(kind==='shower'?'cream':'maple');const o=friendObjects([kind])[0];startFriendHouseAction(kind==='toilet'?'toilet':kind==='basin'?'wash':'bath',o);settleFurniture();render()},kind);await p.locator('#view').screenshot({path:`/workspace/artifacts/friend-furniture/${kind}.png`});
  }

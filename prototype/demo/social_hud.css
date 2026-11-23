@@ -106,7 +106,7 @@
 @media (prefers-reduced-motion:reduce) { .needs-panel,.needs-summary,.need-well,.need img,.need-label,.network-trigger,.contacts-panel,.contact-card,.contact-actions,.contact-actions button,.network-trigger img,.incoming-call button,.need .fill { transition:none !important; } .incoming-call,.caller-avatar canvas,.caller-avatar i { animation:none; } .incoming-call.accepting,.incoming-call.declining { animation:none; opacity:0; } .caller-avatar i { display:none; } }
 /* Shared, scrollable diary surface for memories and personal invitations. */
 .social-sheet { z-index:90; overscroll-behavior:contain; color:var(--ink); box-shadow:inset 2px 2px 0 var(--bevel-hi),inset -2px -2px 0 var(--bevel-lo); animation:social-sheet-in .34s cubic-bezier(.16,1,.3,1); position:absolute; left:var(--pick-left); top:var(--pick-top); width:var(--pick-w); height:var(--pick-h); max-height:none; transform:none; display:flex; flex-direction:column; overflow:hidden; clip-path:none; background:color-mix(in srgb,var(--panel) 86%,transparent); border:2px solid var(--edge); font-size:var(--ui-font-body); gap:var(--ui-gap); padding:var(--ui-padding); }
-.social-sheet[hidden],.home-guest-say[hidden] { display:none; }
+.social-sheet[hidden],.npcsay[hidden] { display:none; }
 .social-sheet.overnight-sheet { background:color-mix(in srgb,var(--panel) 92%,transparent); border-color:#8599bc; justify-content:center; align-items:center; gap:4px; }
 .social-sheet.overnight-sheet h3 { margin:0; width:100%; text-align:center; overflow-wrap:anywhere; flex:0 1 auto; min-height:0; overflow:auto; }
 .overnight-avatar { flex:none; width:clamp(28px,calc(var(--house-w)*.06),56px); height:clamp(28px,calc(var(--house-w)*.06),56px); image-rendering:pixelated; clip-path:var(--hud-avatar-clip); background:var(--panel-2); }
@@ -135,7 +135,7 @@
 .social-memories li { border-top:2px solid var(--bevel-lo); padding:8px 0; }
 .social-memories time { display:block; color:var(--muted); font-size:var(--ui-font-caption); margin-bottom:6px; }
 .social-memories strong { font-size: calc(15px * var(--fs, 1)); }
-.home-guest-say { z-index:18; max-width:min(240px,65vw); white-space:normal; text-align:center; overflow-wrap:anywhere; pointer-events:none; }
+
 /* Compact desktop zoom keeps four CJK characters readable inside the same panel. */
 .contacts-panel.compact .contact-card { grid-template-columns:20px minmax(0,1fr); gap:4px; padding:6px; }
 .contacts-panel.compact .contact-card canvas { width:20px; height:20px; }
