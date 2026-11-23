@@ -1,0 +1,36 @@
+name: TapTap cloud save handoff
+
+on:
+  push:
+    branches: [handoff/taptap-cloudsave-a0c30ae]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build and validate the H5 ZIP
+        run: |
+          python -m pip install Pillow numpy
+          sudo apt-get install -y -qq ffmpeg
+          PYTHONPATH=tools python tools/make_demo.py
+          npm ci --prefix desktop --no-audit --no-fund
+          BUDDY_MOBILE=1 BUDDY_MINIFY=1 npm run web --prefix desktop
+          bash tools/make_taptap_h5.sh
+          unzip -tq desktop/buddy-house-taptap.zip
+      - name: Attach the ZIP to the existing draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(gh release view taptap-h5-cloudsave-a0c30ae --json isDraft --jq .isDraft)" = true
+          cp desktop/buddy-house-taptap.zip /tmp/Desktop-Buddy-TapTap-CloudSave.zip
+          gh release upload taptap-h5-cloudsave-a0c30ae /tmp/Desktop-Buddy-TapTap-CloudSave.zip
