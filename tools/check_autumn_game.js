@@ -37,17 +37,26 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  // Find a real path behind foliage, then verify only that object fades.
  const cover=await p.evaluate(()=>{const c=seasonMapTest.ctl();for(const p of c.DATA.foliage[c.state.stage]){const at=c.nearest(p.x+p.w/2,p.base-10);if(at.d<25&&p.base>=at.y-3&&at.x+12>p.x&&at.x-12<p.x+p.w&&at.y>p.y&&at.y-29<p.y+p.h)return {x:at.x,y:at.y,key:'tree'+p.frame}}});assert(cover,'A walkable foreground overlap should exist');await p.evaluate(p=>seasonMapTest.ctl().goTo(p.x,p.y),cover);await finishRoute();await p.evaluate(()=>{const c=seasonMapTest.ctl();c.state.paused=false;for(let i=0;i<20;i++)c.tick(.02,.02)});assert(await p.evaluate(k=>seasonMapTest.ctl().foregroundAlpha.get(k),cover.key)<.5);await p.evaluate(()=>seasonMapTest.ctl().reset());
  await talk('jian');assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.quest),1);
- await p.evaluate(()=>seasonMapTest.ctl().visit('canteen'));await finishRoute();assert(await p.locator('.autumn-panel').isVisible());await p.getByRole('button',{name:'吃碗热面',exact:true}).click();
+ await p.evaluate(()=>{sim.needs.hunger=25;seasonMapTest.ctl().visit('canteen')});await finishRoute();assert(await p.getByRole('menuitem',{name:'吃碗热面'}).isVisible());await p.getByRole('menuitem',{name:'吃碗热面',exact:true}).click();
  await p.evaluate(()=>{const c=seasonMapTest.ctl();sim.needs.hunger=25;c.state.paused=false;c.stepNeeds(12)});assert(await p.evaluate(()=>sim.needs.hunger)>50);assert.equal(await p.evaluate(()=>sim.place),'autumn_test');fs.mkdirSync('/workspace/artifacts/autumn-game',{recursive:true});await p.locator('#view').screenshot({path:'/workspace/artifacts/autumn-game/polluted.png'});
  // Pause holds both needs and local service progress.
  const paused=await p.evaluate(()=>{speed=0;return seasonMapTest.ctl().state.service.elapsed});await p.waitForTimeout(130);assert.equal(await p.evaluate(()=>seasonMapTest.ctl().state.service.elapsed),paused);await p.evaluate(()=>speed=1);
  await p.evaluate(()=>{const c=seasonMapTest.ctl();c.state.service=null;c.state.pose=null;c.visit('detective_home')});await finishRoute();await p.getByRole('button',{name:'进屋',exact:true}).click();await finishRoute();assert(await p.evaluate(()=>seasonMapTest.ctl().state.inside));assert.equal(await p.evaluate(()=>sceneHouseHeight()),118);
  // owner 2026-11-11: the house runs the home's own acts (map-test/autumn_home.js → season_house.js); social is the phone
- for(const [need,act] of [['hunger','snack'],['energy','sleep'],['hygiene','bath'],['bladder','toilet'],['fun','season_sofa']]){await p.evaluate(need=>{const c=seasonMapTest.ctl();c.state.goal=null;seasonHouse.explore();sim.needs[need]=20;c.care(need)},need);await finishRoute();await p.waitForFunction(act=>sim.act===act&&autumnHome.svc,act,{timeout:5000});await p.evaluate(need=>{seasonHouse.explore();sim.meal=null;sim.needs[need]=95},need);await p.waitForFunction(()=>!autumnHome.svc,null,{timeout:3000})}
+ for(const [need,act] of [['hunger','snack'],['energy','sleep'],['hygiene','bath'],['bladder','toilet'],['fun','season_sofa']]){await p.evaluate(need=>{const c=seasonMapTest.ctl();c.state.goal=null;seasonHouse.explore();sim.needs[need]=20;c.care(need,true)},need);await finishRoute();await p.waitForFunction(act=>sim.act===act&&autumnHome.svc,act,{timeout:5000});await p.evaluate(need=>{seasonHouse.explore();sim.meal=null;sim.needs[need]=95},need);await p.waitForFunction(()=>!autumnHome.svc,null,{timeout:3000})}
  fs.mkdirSync('/workspace/artifacts/autumn-game',{recursive:true});await p.locator('#view').screenshot({path:'/workspace/artifacts/autumn-game/inside.png'});
  await p.evaluate(()=>seasonMapTest.ctl().leave());await finishRoute();assert(!await p.evaluate(()=>seasonMapTest.ctl().state.inside));
  // Automatic hunger care remains local, including at night; multiple low needs do not ping-pong.
- await p.evaluate(()=>{const c=seasonMapTest.ctl();c.state.service=null;c.state.goal=null;sim.needs.hunger=20;sim.needs.energy=21;sim.t=23*60;step(1,.05)});
+ await p.evaluate(()=>{const c=seasonMapTest.ctl();c.state.service=null;c.state.goal=null;sim.needs.hunger=20;sim.needs.energy=21;sim.t=23*60;
+  c.clearRoute();c.playerInput();const now=performance.now.bind(performance);
+  try{
+   c.care('hunger');assertIdle();
+   const spot=c.DATA.landmarks.find(p=>p.id==='market');c.goTo(spot.x,spot.y);
+   performance.now=()=>now()+21000;
+   c.care('hunger');if(c.state.goal||!c.state.target)throw Error('need interrupted manual route');
+   c.clearRoute();step(1,.05);
+  }finally{performance.now=now;}
+  function assertIdle(){if(c.state.target||c.state.goal||c.state.door)throw Error('need interrupted manual grace');}});
  assert(await p.evaluate(()=>seasonMapTest.ctl().state.goal?.id==='detective_home'||seasonMapTest.ctl().state.goal?.id==='home_use'||seasonMapTest.ctl().state.door?.need==='hunger'));await finishRoute();await p.waitForFunction(()=>['fridge','stove','table'].includes(autumnHome.svc?.id),null,{timeout:5000});assert.equal(await p.evaluate(()=>sim.place),'autumn_test');
  await p.evaluate(()=>{const c=seasonMapTest.ctl();c.state.goal=null;seasonHouse.explore();sim.needs=Object.fromEntries(Object.keys(sim.needs).map(k=>[k,95]));sim.t=720});
  // Approved story can be completed explicitly, preserving every chapter effect.

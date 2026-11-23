@@ -317,7 +317,7 @@ function makeSeason_autumn(opts, DATA) {
         });
         return talk(AUTUMN_STORY.ambient[id],null,false);
     }
-    function beginService(need, location) {
+    function beginService(need, location, action) {
         const names = {
             hunger: "吃点热饭",
             energy: "睡一会儿",
@@ -332,7 +332,7 @@ function makeSeason_autumn(opts, DATA) {
             elapsed: 0
         };
         state.pose = [ "energy", "social", "fun" ].includes(need) || need === "hunger" && !state.inside ? "sit" : null;
-        opts.record((state.inside ? "在侦探事务所里" : location) + "，" + names[need] + "。");
+        opts.record((state.inside ? "在侦探事务所里" : location) + "，" + (action || names[need]) + "。");
     }
     function enter(automaticNeed = null) {
         state.door = {
@@ -395,24 +395,32 @@ function makeSeason_autumn(opts, DATA) {
         if (id === "notice") return panel(p.name, state.quest < 4 ? "墙上贴着运输安排，几张纸被灰盖住了。" : state.quest < 5 ? "公开讨论：工资、债务、河水检测。表上有日期，也有空着的项目。" : "新的河水与空气报告按月贴在这里。做完的和没做完的，都留着。", [ [ "记进日记", () => discover("notice", "看了广场的公告，日期和没完成的项目都还在。") ], [ "离开" ] ]);
         if (id === "airstrip") return panel(p.name, state.quest < 6 ? "雾霾还没散，阿简正在等能起飞的天气。测试时也可以随时返回小屋。" : "天清了，飞机随时可以出发。栗尾市以后全年都能来。", [ [ "返回小屋", opts.exit ], [ "再逛逛" ] ]);
         const services = {
-            canteen: [ "吃碗热面", "hunger" ],
-            market: [ "买点吃的", "hunger" ],
             laundry: [ "洗把脸", "hygiene" ],
             bath: [ "进去洗澡", "hygiene" ],
             toilet: [ "使用公厕", "bladder" ],
             lookout: [ "坐下看看远处", "fun" ],
             pavilion: [ "进亭子里坐坐", "fun" ],
             reeds: [ "在长椅上吹吹风", "fun" ],
-            syrup: [ "买块枫糖", "hunger" ],
-            chestnut: [ "买一袋糖炒栗子", "hunger" ],
             swing: [ "荡一会儿秋千", "fun" ],
             koi: [ "坐在池边喂锦鲤", "fun" ],
             plaza: [ "坐一会儿，聊聊天", "social" ]
         };
+        const dishes = {
+            market: ["吃个葱油饼", "喝碗豆浆", "吃根烤玉米"],
+            canteen: ["吃碗热面", "吃份盖饭", "喝碗蛋花汤"],
+            syrup: ["尝块原味枫糖", "来杯枫糖牛奶", "吃块枫糖饼"],
+            chestnut: ["剥几颗热栗子", "吃块栗子糕", "喝碗栗子粥"]
+        };
+        if (dishes[id]) {
+            const options = dishes[id].map(label => [label, () => beginService("hunger", p.name, label)]);
+            if (id === "canteen") options.push(["找老郑聊聊", () => converse("zhou")]);
+            options.push(...(window.liweiStory?.facilityChoices(id) || []));
+            opts.menu(p.name, options);
+            return;
+        }
         if (services[id]) {
             const [label, need] = services[id];
             const choices = window.liweiStory?.facilityChoices(id) || [];
-            if (id === "canteen") choices.push(["和老郑聊聊", () => converse("zhou")]);
             if (!choices.length) return beginService(need, p.name);
             return panel(p.name, "", [[label, () => beginService(need, p.name)], ...choices, ["离开"]]);
         }
@@ -451,8 +459,20 @@ function makeSeason_autumn(opts, DATA) {
             need: need
         });
     }
-    function care(need) {
+    let manualUntil = 0;
+    function playerInput() {
+        manualUntil = performance.now() + 20000;
+        opts.home?.cancelActivity();
+    }
+    function canPlan() {
+        return performance.now() >= manualUntil && !state.target && !state.goal &&
+            !state.door && !keys.size && !state.mapOpen && !dialog && modal.hidden &&
+            !ringOf && !cardHolds() && !storyLocked();
+    }
+    function care(need, manual = false) {
+        if (!manual && !canPlan()) return;
         if (window.liweiStory?.locked()) return;
+        if (manual) state.service = state.pose = null;
         if (state.service || state.goal?.automatic || state.goal?.id === "inside_service" || state.goal?.id === "home_use" || opts.home?.busy()) return;
         close();
         if (state.inside) insideVisit(need); else visit("detective_home", need, true);
@@ -840,6 +860,9 @@ function makeSeason_autumn(opts, DATA) {
         return DATA.landmarks.find(p => (p.id !== "lookout" || (Math.abs(x-p.x)<18 && y<=p.y && y>=p.y-28)) && x >= p.rect[0] && y >= p.rect[1] && x < p.rect[0] + p.rect[2] && y < p.rect[1] + p.rect[3]);
     }
     function pick(x, y) {
+        if (window.liweiStory?.active) return;
+        playerInput();
+        state.service = state.pose = null;
         clearKeys();
         if (state.mapOpen) {
             const sc = Math.min(342 / DATA.width, canvas.height / DATA.height), ox = (342 - DATA.width * sc) / 2;
@@ -895,7 +918,7 @@ function makeSeason_autumn(opts, DATA) {
             advanceDoor(realDt);
             if (state.inside) opts.home?.tickResident(dt);
             move(dt);
-            if (!window.liweiStory?.locked() && !state.target && !state.goal && !state.service && !state.door && !state.mapOpen && modal.hidden && !dialog && !state.inside && !keys.size && opts.now() >= state.autoAt) {
+            if (canPlan() && !state.service && !state.inside && opts.now() >= state.autoAt) {
                 state.autoAt = opts.now() + 35 + Math.random() * 30;
                 const nearby = nodes.filter(n => dist(n, state) > 25 && dist(n, state) < 130);
                 if (nearby.length) {
@@ -980,6 +1003,9 @@ function makeSeason_autumn(opts, DATA) {
         if (!opts.active() || /INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName) || !modal.hidden || dialog) return;
         if ([ "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d" ].includes(e.key)) {
             e.preventDefault();
+            if (window.liweiStory?.active || cardHolds()) return;
+            closeRing();
+            playerInput();
             if (!keys.has(e.key)) {
                 clearRoute();
                 state.service = null;
@@ -1016,7 +1042,7 @@ function makeSeason_autumn(opts, DATA) {
         console.error(e);
     });
     return {
-        panel, talk, enter, clearRoute,
+        panel, talk, enter, clearRoute, canPlan, playerInput,
         root: root,
         canvas: canvas,
         renderCanvas: renderCanvas,

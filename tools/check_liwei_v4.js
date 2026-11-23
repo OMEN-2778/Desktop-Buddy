@@ -166,9 +166,9 @@ const { chromium } = require("playwright"),
             const k = s.next()[branch ? s.next().length - 1 : 0];
             if (k === "S04") {
               c.interact("canteen");
-              const choices = [...c.modal.querySelectorAll(".autumn-actions button")].map(b => b.textContent);
+              const choices = [...ringEl.querySelectorAll("button")].map(b => b.textContent);
               if (!choices.includes("吃碗热面") || !choices.includes("旧相识")) throw Error("canteen menu");
-              c.close();
+              closeRing();
             }
             s.guide(k);
             if (!s.locked()) throw Error("quest walk must pause simulation: " + k);
@@ -197,7 +197,8 @@ const { chromium } = require("playwright"),
               const group=questBoard.panel.querySelector('[data-group="liwei"]');
               if (!s.progress.enrolled || !group?.querySelector('.live') || !group.querySelector('.done'))
                 throw Error("in-progress legacy story group");
-              s.begin(k, true);
+              for(let i=0;i<30&&!s.active;i++)await wait(30);
+              if(!s.active||s.progress.index!==save.liweiV4.index)throw Error("automatic scene resume");
             }
             await drain();
             if (k === "S07" && branch) {

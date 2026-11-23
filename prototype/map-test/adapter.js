@@ -36,7 +36,23 @@ const seasonalTest=(function(){
  }
  state.spring=makeSeason_spring({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='spring_test'});
  state.summer=makeSeason_summer({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='summer_test'});
- state.autumn=makeSeason_autumn({view,drawResidents:autumnPedestrians(AUTUMN_MAP_DATA),walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='autumn_test',needs:()=>sim.needs,now:()=>sim.t,heroName:()=>nameOf(),hint:showHint,exit:()=>start('home'),get home(){return window.autumnHome||null;}},AUTUMN_MAP_DATA);
+ let stallActions=[];
+ function stallMenu(name, options){
+  stallActions=options;
+  RINGS.autumnStall=options.map(([label],i)=>['autumnDish:'+i,label]).concat([['autumnDismiss','离开']]);
+  openRing('autumnStall','buddy');ringEl.setAttribute('aria-label',name);
+ }
+ const priorRingPick=ringPick;
+ ringPick=function(id){
+  if(id==='autumnDismiss'||id.startsWith('autumnDish:')){
+   if(ringOf!=='autumnStall')return;
+   const action=stallActions.find((_,i)=>id==='autumnDish:'+i);
+   closeRing();stallActions=[];state.autumn.playerInput();
+   action?.[1]();return;
+  }
+  return priorRingPick(id);
+ };
+ state.autumn=makeSeason_autumn({view,menu:stallMenu,drawResidents:autumnPedestrians(AUTUMN_MAP_DATA),walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='autumn_test',needs:()=>sim.needs,now:()=>sim.t,heroName:()=>nameOf(),hint:showHint,exit:()=>start('home'),get home(){return window.autumnHome||null;}},AUTUMN_MAP_DATA);
  for(const c of [state.spring,state.summer,state.autumn])root.append(c.root);
  widget.append(state.summer.wardrobe);
  const oldHolds=cardHolds;cardHolds=()=>oldHolds()||active()&&(!!ctl()?.state.inCabana||!!ctl()?.modalOpen);
@@ -148,7 +164,7 @@ const seasonalTest=(function(){
   const out=originalRestore(save);try{if(save?.testAutumn){Object.assign(state.autumn.state,save.testAutumn,{loaded:state.autumn.state.loaded,paused:false,layoutVersion:save.testAutumn.layoutVersion||1});state.autumn.restore();}if(active()&&save.seasonMapTest){const c=ctl(),saved=save.seasonMapTest.state;Object.assign(c.state,saved,{loaded:c.state.loaded,target:null,after:null,inCabana:false,door:null});people.sync();if(sim.place==='autumn_test'){c.state.found=Array.from(saved.found||[]);c.state.layoutVersion=saved.layoutVersion||1;c.restore();}else if(c.state.found)c.state.found=new Set(saved.found||[]);sync();fit();}}catch(e){console.error('season restore failed',e);}return out;
  };
  const inCity=()=>sim.place==='autumn_test';
- const oldCommand=command;command=function(act,item){if(inCity()){state.exitRequested=act==='go_home';state.autumn.close();if(act!=='go_home'){const need={cook:'hunger',eat:'hunger',snack:'hunger',sleep:'energy',bath:'hygiene',wash:'hygiene',toilet:'bladder',phone_text:'social',read:'fun',tv:'fun'}[act];if(need){state.autumn.care(need);sync();return;}}}return oldCommand(act,item);};
+ const oldCommand=command;command=function(act,item){if(inCity()){if(window.liweiStory?.active)return;state.exitRequested=act==='go_home';state.autumn.close();if(act!=='go_home'){const need={cook:'hunger',eat:'hunger',snack:'hunger',sleep:'energy',bath:'hygiene',wash:'hygiene',toilet:'bladder',phone_text:'social',read:'fun',tv:'fun'}[act];if(need){state.autumn.playerInput();state.autumn.clearRoute();state.autumn.care(need,true);sync();return;}}}return oldCommand(act,item);};
  const oldHomeFor=homeFor;homeFor=function(k){if(inCity()){state.autumn.care(k);return;}return oldHomeFor(k);};
  const oldOutsideChoose=chooseOutside;chooseOutside=function(){if(inCity())return 'season_explore';return oldOutsideChoose();};
  const cityStart=startAct;startAct=function(name,quiet){if(inCity()&&name.startsWith('phone_')&&state.autumn.state.quest>=6)return cityStart(name,quiet);if(inCity()&&!(name==='go_home'&&state.exitRequested)){

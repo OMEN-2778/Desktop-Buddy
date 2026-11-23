@@ -270,7 +270,7 @@ function socialBusy(){return friendVisit?.talk||friendOutingState?.talk||socialS
 let playerCall=false,keepCallId=null;   // who started a phone talk: the player (人脉), her keep-in-touch round (social_life.js)
 function startContactTalk(id,kind='text',incoming=false){
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return false;
-  if(sim.mode==='down'||asleep()||wiping||cardHolds()||socialBusy())return false;
+  if(sim.mode==='down'||asleep()||wiping||storyLocked()||cardHolds()||socialBusy())return false;
   const who=c.family||'friend',item=chatItem(kind,who,kind==='video'?'phone':'call',id,incoming);
   item.how=incoming?'incoming':playerCall?'player':keepCallId===id?'keep':'self';
   if(incoming)item.talk.start=`接听了${contactName(c)}的${kind==='video'?'视频':'电话'}。`;

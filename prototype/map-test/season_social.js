@@ -124,7 +124,7 @@
   if(inSeason()&&['phone_call','phone_video','phone_text'].includes(name)){
    if(!remoteSocial){const item=sim.chosen?.act===name?sim.chosen.item:pickItem(name);remoteSocial={item,i:0,wait:.5,said:[]};log(item.talk.start);}
    sim.chosen=null;sim.player=false;return;}
-  if(inSeason()&&['phone_feed','phone_game'].includes(name)){if(wet()){showHint('在水里玩不了手机');return;}const c=ctl();c.state.target=null;seasonHouse.start(name,{auto:!sim.player});seasonMapTest.state.autoAt=sim.t+1e6;return;}
+  if(inSeason()&&['phone_feed','phone_game'].includes(name)){if(sim.place==='autumn_test'&&!sim.player&&!ctl().canPlan())return;if(wet()){showHint('在水里玩不了手机');return;}const c=ctl();c.state.target=null;seasonHouse.start(name,{auto:!sim.player});seasonMapTest.state.autoAt=sim.t+1e6;return;}
   return oStart.apply(this,arguments);};
  setInterval(()=>{if(!inSeason())return;const c=ctl();if(['phone_feed','phone_game'].includes(sim.act)&&sim.mode==='act'&&c?.state.target){seasonHouse.explore();seasonMapTest.state.autoAt=sim.t;}},300);
  // ---------------------------------------------------------------- nobody comes here, nobody is visited from here

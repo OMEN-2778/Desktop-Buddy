@@ -361,6 +361,7 @@
   let lastPlace = "";
   setInterval(() => {
     if (typeof booted === "undefined" || !booted) return;
+    if (p.chapter && !active && !wiping && (inCity() || sim.place === "front")) begin(p.chapter, true);
     if (flyNext && sim.place === "airport_test" && !wiping) {
       flyNext = false;
       throughDoor("autumn_test");
@@ -574,6 +575,7 @@
     ], {duration:reduceMotionUI ? 240 : 520, fill:"both"});
     entrance = reveal;
     active = true;
+    closeRing();
     if (inCity()) window.autumnHome?.cancelActivity();
     city.close();
     city.clearKeys();
@@ -614,6 +616,7 @@
   function advance() {
     if (!active) return;
     p.index++;
+    checkpoint();
     show();
   }
   function choose(row, i) {

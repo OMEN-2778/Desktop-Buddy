@@ -35,7 +35,7 @@ function createStorySpeech({view,host=view.parentElement,anchor,speakerFor,onClo
   keep=requestAnimationFrame(hold);
  }
  let waiting=null,waitT=0;
- let autoT=0,shownAt=0;
+ let shownAt=0;
  function show(speaker,words,o){   // over a call: wait until it is over, then speak
   if(!open&&storyWaitsForPhone()){waiting=[speaker,words,o];if(!waitT)waitT=setInterval(()=>{if(storyWaitsForPhone())return;clearInterval(waitT);waitT=0;const w=waiting;waiting=null;if(w)show0(...w);},250);return;}
   return show0(speaker,words,o);
@@ -58,20 +58,21 @@ function createStorySpeech({view,host=view.parentElement,anchor,speakerFor,onClo
   mark();cancelAnimationFrame(keep);hold();
   (opts&&!hero?choices.querySelector('button'):box).focus({preventScroll:true,focusVisible:false});
 
-  clearTimeout(autoT);shownAt=performance.now();   // owner 2026-11-06: a line waits for a click, it never moves on by itself
+  shownAt=performance.now();   // owner 2026-11-06: a line waits for a click, it never moves on by itself
  }
  const go=e=>{if(!open||!advance)return;e.preventDefault();e.stopPropagation();if(performance.now()-shownAt<300)return;advance();};   // a click right as a line appears does not skip it
  // a click anywhere moves the talk on (owner 2026-11-03), and goes no further (the scene does not get it); choices take their own clicks
  let swallow=false;
- document.addEventListener('pointerdown',e=>{swallow=false;if(!open||!advance||e.button!==0||e.target.closest('#settings,#questTrigger,#questPanel'))return;swallow=true;go(e);},true);
+ document.addEventListener('pointerdown',e=>{swallow=false;if(!open||!advance||e.button!==0||(e.pointerType==='touch'&&!e.isPrimary)||e.target.closest('#settings,#questTrigger,#questPanel'))return;swallow=true;go(e);},true);
  document.addEventListener('click',e=>{if(!swallow)return;swallow=false;e.preventDefault();e.stopPropagation();},true);
  for(const box of [peerBubble,popSay]){
   box.addEventListener('click',e=>{if(open&&box.classList.contains('story-bubble'))go(e);});
-  box.addEventListener('keydown',e=>{if(open&&box.classList.contains('story-bubble')&&(e.key==='Enter'||e.key===' '))go(e);});
+  box.addEventListener('keydown',e=>{if(!e.repeat&&open&&box.classList.contains('story-bubble')&&(e.key==='Enter'||e.key===' '))go(e);});
  }
  document.addEventListener('keydown',e=>{if(open&&e.key==='Escape'){e.preventDefault();e.stopPropagation();onClose();}},true);
  function hide(){
-  if(!open)return;open=false;advance=null;clearTimeout(autoT);cancelAnimationFrame(keep);more.remove();choices.replaceChildren();choices.hidden=true;
+  clearInterval(waitT);waitT=0;waiting=null;
+  if(!open)return;open=false;advance=null;cancelAnimationFrame(keep);more.remove();choices.replaceChildren();choices.hidden=true;
   peerHud.classList.remove('quest');popSay.classList.remove('quest');mark();
   for(const box of [peerBubble,popSay]){box.removeAttribute('tabindex');box.removeAttribute('role');box.removeAttribute('aria-label');}
   hidePeerSay();popBubble(popSay,0);sayBusy=busyWas;

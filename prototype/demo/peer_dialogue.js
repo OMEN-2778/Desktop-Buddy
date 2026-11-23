@@ -83,6 +83,7 @@ function hidePeerSay(immediate=false){
   if(immediate||reduceMotionUI)done();else peerSpeech.exit=setTimeout(done,240);
 }
 function tickPeerSpeech(now){
+  if(peerHud.classList.contains('story-speech'))return;
   if(phoneHolds())return;
   if(peerSpeech.phase==='idle'&&peerSpeech.pending){const line=peerSpeech.pending;showPeerSay(line.text,line.who,line.speaker);return;}
   if(!['visible','preparing'].includes(peerSpeech.phase))return;

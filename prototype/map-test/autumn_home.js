@@ -35,7 +35,7 @@ const autumnHome=(function(){
   if(id==='stove'&&!auto){closeRing();const sv=cookSaved(),it=sv&&cookItemOf(sv);if(it){sim.chosen={act:'cook',item:it};use('stove','menu');}else openPicker('cook_city');return;}
   const p=SPOTS[id];if(!p||!p.act)return;stop();closeRing();
   const c=C(),s=S();s.autoAt=sim.t+60;
-  if(!s.inside){pend={id,auto};if(!s.door)c.care(p.need);return;}   // walks to the house, through the door, then need() → here
+  if(!s.inside){pend={id,auto};if(!s.door)c.care(p.need,!auto);return;}   // walks to the house, through the door, then need() → here
   pend=null;c.goTo(p.x,p.y,{id:'home_use',spot:id,auto:!!auto});
  }
  function arrived(id){const p=SPOTS[id],s=S();if(!p)return;
@@ -131,10 +131,9 @@ const autumnHome=(function(){
  // needs topped up before they run red (the phone for social: season_social.js); daytime she walks the city
  // (the controller's own strolls) and leaves the house when there is nothing to do inside
  const MARK={hunger:60,bladder:40,hygiene:50,energy:40,fun:35};
- let nextPlan=0,playerAt=-1e9;
- const oPick=C().pick;C().pick=function(){playerAt=sim.t;return oPick.apply(this,arguments);};
+ let nextPlan=0;
  function plan(s){const m=sim.t%1440,bed=m>=22*60+30||m<6*60,evening=m>=19*60;
-  if(sim.t-playerAt<45)return;   // the player just sent her somewhere
+  if(!C().canPlan()||s.service)return;   // the player just sent her somewhere
   if(bed){if(!(sim.mode==='act'&&sim.act==='sleep'))use('bed',true);return;}
   if(sim.t<nextPlan)return;nextPlan=sim.t+10+Math.random()*10;
   const low=Object.entries(sim.needs).filter(([k,v])=>MARK[k]&&v<MARK[k]).sort((a,b)=>a[1]-b[1])[0];
@@ -146,6 +145,8 @@ const autumnHome=(function(){
  const ACT_SPOT={sleep:'bed',bath:'bath',wash:'sink',toilet:'wc',cook:'stove',eat:'table',snack:'fridge',tv:'tv'};
  const oStart=startAct;startAct=function(name,quiet){
   if(inCity()&&ACT_SPOT[name]&&!T.state.exitRequested){
+   const serveMeal=name==='eat'&&svc?.act==='cook'&&homeMeal();
+   if(!serveMeal&&(!C().canPlan()||S().service))return;
    if(sim.needs.hunger<50&&(seasonHouse.running('cook')&&name!=='eat'||seasonHouse.running('eat')))return;   // hungry: a meal is never dropped
    seasonHouse.explore();S().lastAuto=true;use(ACT_SPOT[name],true);return;}
   return oStart.apply(this,arguments);};
