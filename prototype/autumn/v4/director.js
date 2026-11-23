@@ -144,14 +144,14 @@
   sceneText.hidden = true;
   view.parentElement.append(sceneText);
   const frontBtn = document.createElement("button");
+  frontBtn.type = "button";
   frontBtn.className = "liwei-jian";
   frontBtn.setAttribute("aria-label", "与阿简交谈");
-  frontBtn.innerHTML = "<b>!</b>";
   frontBtn.hidden = true;
   view.parentElement.append(frontBtn);
   const style = document.createElement("style");
   style.textContent = `
- .liwei-controls{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.liwei-controls:empty{display:none}.liwei-jian{position:absolute;z-index:10;background:transparent!important;border:none!important;box-shadow:none!important;padding:0}.liwei-jian b{position:absolute;left:50%;transform:translateX(-50%);bottom:100%;color:#ffe66e;text-shadow:1px 1px #302735}.liwei-caption{position:absolute;top:4%;left:50%;transform:translateX(-50%);max-width:92%;width:max-content;box-sizing:border-box;padding:.2em .7em;border-radius:5px;z-index:16;text-align:center;color:#fff6dd;background:#302d38e8;font-weight:bold;pointer-events:none}.liwei-caption[hidden],.liwei-jian[hidden]{display:none}.liwei-caption button{font:inherit;pointer-events:auto;padding:.4em .7em}#peerHud.quest .who{color:var(--liwei-who)}
+ .liwei-controls{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.liwei-controls:empty{display:none}.liwei-jian{position:absolute;z-index:10;background:transparent!important;border:none!important;box-shadow:none!important;padding:0}.liwei-caption{position:absolute;top:4%;left:50%;transform:translateX(-50%);max-width:92%;width:max-content;box-sizing:border-box;padding:.2em .7em;border-radius:5px;z-index:16;text-align:center;color:#fff6dd;background:#302d38e8;font-weight:bold;pointer-events:none}.liwei-caption[hidden],.liwei-jian[hidden]{display:none}.liwei-caption button{font:inherit;pointer-events:auto;padding:.4em .7em}#peerHud.quest .who{color:var(--liwei-who)}
  `;
   document.head.append(style);
   function portrait(label) {
@@ -244,7 +244,6 @@
     frontBtn.hidden =
       sim.place !== "front" || !available() || unlocked() || wiping;
     frontBtn.disabled = active;
-    frontBtn.lastChild.hidden = active;
     display.replaceChildren();
     if (active) return;
     if (p.chapter) {
@@ -953,7 +952,7 @@
         B2: 2,
         S14: 0,
       }[k];
-      if (seed != null) actor(seed, loc, 0, true, false);
+      if (seed != null) actor(seed, loc, 0, p.enrolled ? "?" : "!", false);
     }
     ["detective_home", "mine_office", "canteen", "clinic", "hut"].forEach(
       (loc, seed) => actor(seed, loc, 0, false, false),
@@ -996,12 +995,15 @@
     if (sim.place !== "front" || !available() || unlocked() || wiping) return;
     const lane = heroGround != null && doorFeet > heroGround ? "backAhead" : "back";
     if (layer !== lane) return;
-    ctx.drawImage(frameFor("阿简"), doorX - DW / 2, doorFeet - DH + 1);
+    const headY = doorFeet - DH + 1;
+    ctx.drawImage(frameFor("阿简"), doorX - DW / 2, headY);
+    if (!active) drawQuestMarker(ctx, doorX, headY, p.enrolled ? "?" : "!");
     const sx = view.clientWidth / W, sy = view.clientHeight / H;
+    const buttonTop = active ? headY : headY - IMG.questMarker["!"].height - 4;
     Object.assign(frontBtn.style, {
       left: (view.offsetLeft + (doorX - DW / 2) * sx) + "px",
-      top: (view.offsetTop + (doorFeet - DH + 1) * sy) + "px",
-      width: DW * sx + "px", height: DH * sy + "px",
+      top: (view.offsetTop + buttonTop * sy) + "px",
+      width: DW * sx + "px", height: (doorFeet + 1 - buttonTop) * sy + "px",
     });
   };
   const oldRender = renderOutside;

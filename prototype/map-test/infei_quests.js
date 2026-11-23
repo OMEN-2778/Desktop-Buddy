@@ -245,14 +245,12 @@ const infeiQuests=(function(){
  // ---------------------------------------------------------------- drawing: villagers, marks, the rabbit
  const rabbit={on:false};
  function bunny(ctx,x,y,t){ctx.fillStyle='#e9e2d6';ctx.fillRect(x-4,y-5,8,5);ctx.fillRect(x+2,y-8,4,4);ctx.fillRect(x+3,y-12,1,4);ctx.fillRect(x+5,y-12,1,4);ctx.fillStyle='#b9ae9e';ctx.fillRect(x-4,y-1,8,1);ctx.fillStyle='#3a2a2e';ctx.fillRect(x+5,y-7,1,1);if(Math.floor(t*2)%2)ctx.fillRect(x-5,y-4,1,1);}
- function mark(ctx,x,y,ch){ctx.fillStyle='#22182a';ctx.fillRect(x-4,y-11,9,11);ctx.fillStyle='#f6d36b';ctx.fillRect(x-3,y-10,7,9);ctx.fillStyle='#22182a';
-  if(ch==='!'){ctx.fillRect(x,y-9,1,5);ctx.fillRect(x,y-3,1,1);}else{ctx.fillRect(x-1,y-9,3,1);ctx.fillRect(x+1,y-8,1,2);ctx.fillRect(x,y-6,1,1);ctx.fillRect(x,y-3,1,1);}}
  X.hooks.draw.push((ctx,info)=>{if(info.inside||S().phase!=='done')return;const t=info.time,gs=goals();
   for(const [key,v]of Object.entries(V)){if(!visible(v))continue;const p=where(v);if(p.scene!==info.region)continue;
    const s=C().state;if(!busy&&Math.abs(s.x-p.x)<40)v.dir=s.x<p.x?-1:1;
    const f={expr:idleBreath.blink(p.x*.37)?'blink':'neutral',look:v.dir,bob:idleBreath.bob(p.x*.37),sway:0,wave:null};ctx.drawImage(npcCanvas(v,f,'stand'),Math.round(p.x)-10,103-27);
-   const g=gs.find(g=>g.v===v);if(g&&!busy)mark(ctx,p.x,103-30-(v.kid?-4:0)+Math.round(Math.sin(t*3)),g.mark);}
-  for(const g of gs)if(g.spot&&SPOTS[g.spot].scene===info.region&&!busy){const sp=SPOTS[g.spot];mark(ctx,sp.x,sp.rect[1]+18+Math.round(Math.sin(t*3)),g.mark||'?');}
+   const g=gs.find(g=>g.v===v);if(g&&!busy)drawQuestMarker(ctx,p.x,v.kid?80:76,g.mark);}
+  for(const g of gs)if(g.spot&&SPOTS[g.spot].scene===info.region&&!busy){const sp=SPOTS[g.spot];drawQuestMarker(ctx,sp.x,sp.rect[1]+21,g.mark||'?');}
   if(rabbit.on&&info.region===4)bunny(ctx,318,103,t);
   if(Q().prints.rabbit==='farm'&&info.region===3&&!night())bunny(ctx,104+Math.round(Math.sin(t*.4)*6),103,t);
   autoTick(info);});

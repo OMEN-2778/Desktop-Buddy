@@ -28,6 +28,7 @@ import _furniture as F  # noqa: E402
 import house as Hs  # noqa: E402
 import need_icons  # noqa: E402
 import sky_icons  # noqa: E402
+import quest_marker  # noqa: E402
 import dusk as DUSK  # noqa: E402
 import rescue  # noqa: E402
 import trip_icons  # noqa: E402
@@ -466,6 +467,7 @@ def main():
     friend_houses = pack_friend_houses()
     assert (day.w, day.h) == (Hs.W, Hs.H), "Main day background size changed"
     assert (night.w, night.h) == (Hs.W, Hs.H), "Main night background was replaced"
+    quest_badges = quest_marker.build()
     data = {
         "friendHouses":friend_houses,
         "W": Hs.W, "H": Hs.H,
@@ -516,6 +518,7 @@ def main():
         "dusk": {"warm":png(DUSK.sky("warm")),"rose":png(DUSK.sky("rose")),"sun":png(DUSK.sun())},
         "mallPosters": {f["id"]:png(MR.poster(f["art"])) for f in mall_life["films"]},
         "storm": {"bolts":[png(STORM.bolt(i)) for i in range(3)]},
+        "questMarker": {"!": png(quest_badges["quest_marker_offer"]), "?": png(quest_badges["quest_marker_followup"])},
     }
     blob = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     html = mc.inline_shared(SRC.read_text().replace("/*__UI_CSS__*/", (SRC.parent / "ui.css").read_text())).replace("/*__LIFE_TEXT_JS__*/", (SRC.parent / "life_text.js").read_text()).replace("/*__CARDS_JS__*/", (SRC.parent / "cards_text.js").read_text()).replace("/*__CHATS_JS__*/", chats_js()).replace("/*__PLACES_JS__*/", places_js()).replace("/*__PLACE_CARDS_JS__*/", (SRC.parent / "place_cards.js").read_text()).replace("/*__GUIDE_JS__*/", (SRC.parent / "guide_text.js").read_text())
@@ -549,6 +552,7 @@ def main():
     html = html.replace("/*__PEER_DIALOGUE_JS__*/", (SRC.parent / "peer_dialogue.js").read_text())
     html = html.replace("/*__FRIEND_VISITS_JS__*/", "const FRIEND_VISIT_TEXT = " + (SRC.parent / "friend_visit_text.json").read_text() + ";\n" + (SRC.parent / "friend_visits.js").read_text()+"\n"+(SRC.parent / "friend_home_objects.js").read_text())
     html = html.replace("/*__FRIEND_HOUSES_JS__*/", (SRC.parent / "friend_houses.js").read_text())
+    html = html.replace("/*__QUEST_MARKER_JS__*/", (SRC.parent / "quest_marker.js").read_text())
     html = html.replace("/*__TV_PLAYBACK_JS__*/", (SRC.parent / "tv_playback.js").read_text())
     html = html.replace("/*__FRIEND_OUTINGS_JS__*/", "const FRIEND_OUTING_TEXT = " + (SRC.parent / "friend_outing_text.json").read_text() + ";\nCARDS.push(..." + (SRC.parent / "friend_outing_cards.json").read_text() + ");\n" + (SRC.parent / "friend_outings.js").read_text())
     # Audio stays outside the HTML: stream music on demand, keep scene boot small.

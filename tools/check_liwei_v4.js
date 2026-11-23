@@ -166,9 +166,9 @@ const { chromium } = require("playwright"),
             const k = s.next()[branch ? s.next().length - 1 : 0];
             if (k === "S04") {
               c.interact("canteen");
-              const choices = [...ringEl.querySelectorAll("button")].map(b => b.textContent);
-              if (!choices.includes("吃碗热面") || !choices.includes("旧相识")) throw Error("canteen menu");
-              closeRing();
+              const choices = [...pickerEl.querySelectorAll(".pk-item b")].map(b => b.textContent);
+              if (pickOn !== "autumn_stall" || !choices.includes("吃碗热面") || !choices.includes("旧相识")) throw Error("canteen menu");
+              closePicker();
             }
             s.guide(k);
             if (!s.locked()) throw Error("quest walk must pause simulation: " + k);

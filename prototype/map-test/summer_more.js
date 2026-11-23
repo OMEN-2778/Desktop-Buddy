@@ -304,18 +304,16 @@
   if(!swim()){toast('换上泳装才能游过去。');return true;}
   C().goTo(tx,'dive',ty+6,()=>{const s=st(id);if(id==='bottle'){s.step=2;speakBay('瓶子里有封信，信封上写着「给旅舍老板」。');log('在沉船宝箱里找到一个漂流瓶。');}else{s.got=1;speakBay(id==='whistle'?'找到了！红绳子的哨子。':'找到小红桶了！');}});return true;}return false;});
  // the people: drawn where they stand, a ! when they have something to ask, a ? when it can be handed in
- function markAt(ctx,x,y,ch){const by=Math.round(y+Math.sin(realClock*4)*1.5);ctx.fillStyle='#2b2236';ctx.fillRect(x-3,by-1,7,9);ctx.fillStyle=ch==='?'?'#7fd0f0':'#f6c45a';ctx.fillRect(x-2,by,5,7);ctx.fillStyle='#2b2236';
-  if(ch==='!'){ctx.fillRect(x,by+1,1,3);ctx.fillRect(x,by+5,1,1);}else{ctx.fillRect(x-1,by+1,3,1);ctx.fillRect(x+1,by+2,1,1);ctx.fillRect(x,by+3,1,1);ctx.fillRect(x,by+5,1,1);}}
  const markOf=id=>{const s=st(id);if(s.done)return null;if(!s.step)return '!';return ready[id]()||(id==='bottle'&&s.step===3)?'?':null;};
  function drawPeople(ctx){const c=C(),t=c.state.time||realClock;drawThings(ctx,t);
   for(const [id,q]of Object.entries(Q)){if(q.market||!present(id))continue;const p=NPC[q.who],x=q.x,y=c.gr(x);
    if(q.kid){const pic=pose(p,realClock*1000);ctx.drawImage(pic,Math.round(x-7),Math.round(y-20),15,21);}else drawPerson(ctx,p,x,y);
    if(id==='paint'){ctx.fillStyle='#8c6238';ctx.fillRect(x+9,y-18,1,18);ctx.fillRect(x+15,y-18,1,18);ctx.fillStyle='#f6ecd2';ctx.fillRect(x+8,y-20,9,8);ctx.fillStyle='#7fc4e8';ctx.fillRect(x+9,y-17,7,3);ctx.fillStyle='#f2a65a';ctx.fillRect(x+11,y-16,3,1);}
    if(id==='whistle'){ctx.fillStyle='#e35b4f';ctx.fillRect(x+10,y-30,10,2);ctx.fillStyle='#f6f2ea';ctx.fillRect(x+12,y-28,1,28);ctx.fillRect(x+18,y-28,1,28);ctx.fillRect(x+12,y-16,7,1);}
-   const m=markOf(id);if(m)markAt(ctx,x,y-(q.kid?28:36),m);}
+   const m=markOf(id);if(m)drawQuestMarker(ctx,x,y-(q.kid?20:27),m);}
   if(fest())drawFest(ctx);}
  hooks.draw.push(drawPeople);
- hooks.mdraw.push(ctx=>{for(const [id,q]of Object.entries(Q)){if(!q.market)continue;const m=markOf(id);if(!m)continue;const x=id==='coco'?L.CAFE_X-30:L.FISH_X+4;markAt(ctx,x,L.FEET-(id==='coco'?36:45),m);}if(fest())drawFestMarket(ctx);});
+ hooks.mdraw.push(ctx=>{for(const [id,q]of Object.entries(Q)){if(!q.market)continue;const m=markOf(id);if(!m)continue;const x=id==='coco'?L.CAFE_X-30:L.FISH_X+4;drawQuestMarker(ctx,x,L.FEET-(id==='coco'?27:36),m);}if(fest())drawFestMarket(ctx);});
  hooks.click.push((x,y)=>{const c=C();for(const [id,q]of Object.entries(Q)){if(q.market||!present(id))continue;const g=c.gr(q.x);if(Math.abs(x-q.x)<9&&y>g-(q.kid?32:40)&&y<g+3){   /* includes the !/? mark above the head */
   scene(async()=>{await walk(q.x+(c.state.x<q.x?-14:14));await talk(id);goalHint(id);});return true;}}return false;});
  hooks.mclick.push((x,y)=>{for(const [id,q]of Object.entries(Q)){if(!q.market)continue;const px=id==='coco'?L.CAFE_X-30:L.FISH_X+4,m=markOf(id);if(!m)continue;

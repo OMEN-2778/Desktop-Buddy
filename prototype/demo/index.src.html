@@ -293,6 +293,7 @@ async function loadAssets() {
     : Object.fromEntries(await Promise.all(Object.entries(v).map(async ([k, x]) => [k, await deep(x)])));
   for (const [k, v] of Object.entries(D.outside)) IMG.out[k] = await deep(v.img);   // every picture of every place
   IMG.storm = await deep(D.storm);
+  IMG.questMarker = await deep(D.questMarker);
   IMG.dusk = {}; for (const [k,v] of Object.entries(D.dusk)) IMG.dusk[k]=await loadImg(v);
   IMG.win = {};
   for (const [k, v] of Object.entries(D.windows)) {
@@ -1311,6 +1312,7 @@ function dishPic(src) { if (!dishPics.has(src)) { const i = new Image(); i.src =
 function frameOf(list, fps) { return list[Math.floor(realClock * fps) % list.length]; }
 
 /*__TV_PLAYBACK_JS__*/
+/*__QUEST_MARKER_JS__*/
 
 function render() {
   if(renderFriendHome())return;

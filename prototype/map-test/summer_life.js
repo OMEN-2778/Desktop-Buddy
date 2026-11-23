@@ -213,7 +213,7 @@ const summerLife=(function(){
  // ---------------------------------------------------------------- drawing
  let clock=0;
  function drawPerson(ctx,v,x,y,o={}){const pic=pose(v,realClock*1000,o);ctx.drawImage(pic,Math.round(x-10),Math.round(y-27));drawnPeople.push({pic,x:Math.round(x-10),y:Math.round(y-27)});   /* summer_hover.js outlines the one under the pointer */
-  const m=mark(v);if(m){const by=Math.round(y-36+Math.sin(realClock*4)*1.5);ctx.fillStyle='#2b2236';ctx.fillRect(x-3,by-1,7,9);ctx.fillStyle='#f6c45a';ctx.fillRect(x-2,by,5,7);ctx.fillStyle='#2b2236';if(m==='!'){ctx.fillRect(x,by+1,1,3);ctx.fillRect(x,by+5,1,1);}else{ctx.fillRect(x-1,by+1,3,1);ctx.fillRect(x+1,by+2,1,1);ctx.fillRect(x,by+3,1,1);ctx.fillRect(x,by+5,1,1);}}}
+  const sign=o.marker===false?null:mark(v);if(sign)drawQuestMarker(ctx,x,y-27,sign);}
  const hooks={draw:[],mdraw:[],click:[],mclick:[],tick:[]};   // summer_more.js: photos, beach activities, commissions, festivals
  function tick(){const now=realClock,dt=Math.min(.1,now-(clock||now));clock=now;const c=C(),s=c.state,b=B();for(const f of hooks.tick)try{f(dt)}catch(e){console.warn(e)}
   if(busy)return;gather();spawn();tickCusts(dt);tickWalkers(dt);if(!b.met&&!s.target&&!s.market&&!storyLocked()&&!window.__noBayGuide)arrive();   // __noBayGuide: automated checks only
@@ -269,7 +269,8 @@ const summerLife=(function(){
   ctx.save();ctx.translate(-Math.round(cx),0);
   // vendors stand behind their counters
   if(open){for(const [v,x]of [[V.fruit,FRUIT_X],[V.fish,FISH_X],[V.hat,HAT_X]])drawPerson(ctx,v,x+4,FEET-9);drawPerson(ctx,V.cafe,CAFE_X-30,FEET);}
-  if(where().lei)drawPerson(ctx,P.lei,FLOWER_X+3,FEET-9);
+  const lei=where().lei,leiX=FLOWER_X+3,leiY=FEET-9;
+  if(lei)drawPerson(ctx,P.lei,leiX,leiY,{marker:false});
   put(ctx,'fruit',FRUIT_X);put(ctx,'fish',FISH_X);put(ctx,'hat',HAT_X);put(ctx,'cafe',CAFE_X);
   const fl=sprite('flower');if(fl?.complete)ctx.drawImage(fl,FLOWER_X-25,FEET+1-fl.height);
   const fo=sprite('fountain');if(fo?.complete){ctx.drawImage(fo,FOUNTAIN_X-35,FEET+1-fo.height);ctx.fillStyle='rgba(205,236,248,.85)';
@@ -281,6 +282,8 @@ const summerLife=(function(){
   for(const n of custs){const [f,p]=npcFrame(n);const pic=npcCanvas(n,f,n.shop.state==='buy'?'stand':p,false);ctx.drawImage(pic,Math.round(n.x-10),Math.round(FEET-27));}
   for(const f of hooks.mdraw)try{f(ctx,info)}catch(e){console.warn(e)}
   info.hero();
+  // The canopy may cover the vendor, but it must leave the quest marker visible.
+  const leiMark=lei&&mark(P.lei);if(leiMark)drawQuestMarker(ctx,leiX,leiY-27,leiMark);
   sayPills(custs.filter(n=>n.shop.state==='buy'&&n.say),cx);
   pop(ctx);ctx.restore();}
  // shops (buying costs about twice the selling price, so only cooking at the stall turns a profit)

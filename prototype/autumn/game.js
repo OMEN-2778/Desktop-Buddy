@@ -754,11 +754,9 @@ function makeSeason_autumn(opts, DATA) {
                     ctx.fillRect(n.x-6,n.y-8,13,3);
                 }
                 ctx.drawImage(window.liweiStory?.frameFor(n.name,n,n.sitting ? "sit" : undefined)||images.get(DATA.npcs[n.seed][(state.time + n.seed) % 4.7 < .16 ? 1 : 0]), n.x - 10, n.y - 28);
-                if (window.liweiStory ? n.mark : state.quest === 0 && n.id === "jian" || state.quest === 2 && n.id === "father") {
-                    ctx.fillStyle = "#efc452";
-                    ctx.fillRect(n.x - 1, n.y - 39, 3, 7);
-                    ctx.fillRect(n.x - 1, n.y - 30, 3, 2);
-                }
+                const questSign = window.liweiStory ? n.mark :
+                    state.quest === 0 && n.id === "jian" ? "!" : state.quest === 2 && n.id === "father" ? "?" : null;
+                if (questSign) drawQuestMarker(ctx, n.x, n.y - (n.sitting ? 22 : 28), questSign);
             }
         }
         if (!state.inside) {
