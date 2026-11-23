@@ -2646,7 +2646,7 @@ const SETTINGS = [
       pill(prefs.autosave ? "每 5 分钟自动保存" : "不自动保存", { pressed: prefs.autosave,
         title: prefs.autosave ? "每 5 分钟、退出和切到后台时自动保存（再按一下关掉）" : "只在你点「保存」时保存（再按一下打开）",
         onClick: () => { prefs.autosave = !prefs.autosave; saveSettings(); buildSettings(); } }),
-      pill("保存", { onClick: async () => flashLabel("存档", (await saveGame()) ? "已保存" : "没存上") }),
+      pill(tapSave?.readError ? "重试读档" : "保存", { onClick: saveFromSettings }),
       pill("导出", { title: "把存档另存成一个文件", onClick: exportSave }),
       pill("导入", { title: "从存档文件读取", onClick: () => document.getElementById("importSave").click() }),
       pill("重生！", { cls: "danger", title: "清空存档，从第 1 天重新开始（要按两下）", onClick: b => {
@@ -4978,13 +4978,21 @@ document.addEventListener("keydown", e => {
 // 5 minutes, when the page is hidden or closed, and after a look change;
 // off, only 保存 writes it. Game time waits while the game is closed.
 const SAVE_VERSION = 5, SAVE_KEY = "buddy-save";
-const store = TAURI ? {
+const tapSave = !TAURI && typeof createTapTapSave === "function"
+  ? createTapTapSave(migrate, () => {
+    const text = localStorage.getItem(SAVE_KEY);
+    if (text === null) return null;
+    const save = migrate(JSON.parse(text));
+    if (!save) throw new Error("旧版存档格式有误，原档已保留");
+    return save;
+  }) : null;
+const store = tapSave || (TAURI ? {
   load: async () => { const t = await TAURI.core.invoke("load_save"); return t ? JSON.parse(t) : null; },
   save: async obj => TAURI.core.invoke("write_save", { data: JSON.stringify(obj) }),
 } : {
   load: async () => JSON.parse(localStorage.getItem(SAVE_KEY) || "null"),
   save: async obj => { if (obj === null) localStorage.removeItem(SAVE_KEY); else localStorage.setItem(SAVE_KEY, JSON.stringify(obj)); },
-};
+});
 let booted = false, saving = false;
 // owner 2026-11-12: every wheel-scrolled list moved too far per notch — half the distance everywhere
 window.addEventListener("wheel", e => {
@@ -5121,9 +5129,36 @@ function restore(sv) {
 }
 let saveWhy = "";                                   // why the last save failed (the updater shows it)
 function saveWhyNow() { return saveWhy; }
+async function saveFromSettings(button) {
+  if (!tapSave) {
+    flashLabel("存档", (await saveGame()) ? "已保存" : "没存上");
+    return;
+  }
+  if (tapSave.readError) {
+    location.reload();
+    return;
+  }
+  button.disabled = true;
+  button.textContent = "同步中…";
+  const saved = await saveGame();
+  button.disabled = false;
+  button.textContent = tapSave.readError ? "重试读档" : "保存";
+  flashLabel("存档", saved ? "已同步" : "同步失败");
+  if (!saved) showHint(saveWhy || "TapTap 云存档未同步");
+}
 async function saveGame() {
   if (!booted) { saveWhy = "游戏还没开好"; return false; }
   if (visitSleepPreview || friendHousePreview) { saveWhy = "正在预览别人家"; return false; }
+  if (tapSave) {
+    try {
+      await tapSave.save(snapshot());
+      return true;
+    } catch (error) {
+      saveWhy = String(error.message || error);
+      console.warn("TapTap save failed", error);
+      return false;
+    }
+  }
   if (saving && Date.now() - saving < 15000) { saveWhy = "正在保存"; return false; }   // a save that never came back no longer blocks every later one
   saving = Date.now(); saveWhy = "";
   try {
@@ -5140,7 +5175,16 @@ async function saveGame() {
 const autoSave = () => (prefs.autosave ? saveGame() : Promise.resolve(false));
 setInterval(autoSave, 5 * 60 * 1000);
 document.addEventListener("visibilitychange", () => { if (document.hidden) autoSave(); });
-window.addEventListener("pagehide", () => { if (!TAURI && booted && prefs.autosave && !visitSleepPreview) try { localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot())); } catch (e) { /* full */ } });
+window.addEventListener("pagehide", () => {
+  if (tapSave) {
+    if (!document.hidden) autoSave();  // visibilitychange handles the usual mobile exit
+    return;
+  }
+  if (!TAURI && booted && prefs.autosave && !visitSleepPreview) try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot()));
+  } catch (e) { /* full */ }
+});
+if (tapSave) window.addEventListener("online", () => { if (!tapSave.readError) autoSave(); });
 async function exportSave() {
   const d = new Date(), stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
   const filename = `${look.name}-存档-${stamp}.json`, text = JSON.stringify(visitSleepPreview?visitSleepPreview.snapshot:snapshot(), null, 1);
@@ -5165,21 +5209,33 @@ async function exportSave() {
 document.getElementById("importSave").addEventListener("change", async e => {
   const f = e.target.files[0];
   e.target.value = "";
-  if (!f) return;
+  if (!f || !booted) return;
   let sv = null;
   try { sv = migrate(JSON.parse(await f.text())); } catch (err) { sv = null; }
   if (!sv) { flashLabel("存档", "读不出来"); return; }
+  if (!booted) return;
   booted = false;                                   // nothing may save over it before the reload
-  await store.save(sv);
+  try { await store.save(sv); } catch (error) {
+    booted = true;
+    flashLabel("存档", "导入失败");
+    if (tapSave) showHint(tapSave.readError || "TapTap 云存档未更新");
+    return;
+  }
   // Imported audio choices belong to this save; the separate settings file
   // otherwise overrides them at boot. Legacy saves start with both off.
   const current=await settingsStore.load().catch(()=>null);
-  await settingsStore.save({...current,bgm:sv.settings?.bgm===true,sfx:sv.settings?.sfx===true,bgmVolume:sv.settings?.bgmVolume??(sv.settings?.bgm?60:0),sfxVolume:sv.settings?.sfxVolume??(sv.settings?.sfx?60:0)});
+  await settingsStore.save({...current,bgm:sv.settings?.bgm===true,sfx:sv.settings?.sfx===true,bgmVolume:sv.settings?.bgmVolume??(sv.settings?.bgm?60:0),sfxVolume:sv.settings?.sfxVolume??(sv.settings?.sfx?60:0)}).catch(() => {});
   location.reload();
 });
 async function resetSave() {
+  if (!booted) return;
   booted = false;
-  await store.save(null);
+  try { await store.save(null); } catch (error) {
+    booted = true;
+    flashLabel("存档", "重生失败");
+    if (tapSave) showHint(tapSave.readError || "TapTap 云存档未更新");
+    return;
+  }
   if (!TAURI) try { localStorage.removeItem("buddy-look-v2"); localStorage.removeItem("buddy-look-at"); } catch (e) { /* ignore */ }
   location.reload();
 }
@@ -5374,19 +5430,22 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
 /*__TRIAL_JS__*//*__MOBILE_JS__*/
 (async function boot() {
   let sv = null, st = null;
-  try { sv = migrate(await store.load()); } catch (e) { sv = null; }
+  try { sv = migrate(await store.load()); } catch (e) {
+    if (tapSave) console.warn("TapTap save could not be read", e);
+  }
   try { st = await settingsStore.load(); } catch (e) { st = null; }
   // a save the code can't fully read must never stop the game from starting (owner 2026-11-05: the 内测 page came up
   // with no house at all); keep what was restored, keep a copy of the raw save, and go on
   if (sv) try { restore(sv); } catch (e) {
     console.error("restore failed", e);
-    try { if (TAURI) TAURI.core.invoke("log_js", { message: `restore failed: ${e && e.stack || e}` }).catch(() => {}); else localStorage.setItem(SAVE_KEY + "-unreadable", JSON.stringify(sv)); } catch (e2) { /* full */ }
+    if (tapSave) tapSave.block("TapTap 存档无法恢复，请重试读档");
+    else try { if (TAURI) TAURI.core.invoke("log_js", { message: `restore failed: ${e && e.stack || e}` }).catch(() => {}); else localStorage.setItem(SAVE_KEY + "-unreadable", JSON.stringify(sv)); } catch (e2) { /* full */ }
   }
   try { applySettings(st); } catch (e) { console.error("settings failed", e); }
   await refreshSaveDir();
   // her look may have been changed on the 造型室 page since (browser only)
   let shared = null, sharedAt = 0;
-  if (!TAURI) try { shared = JSON.parse(localStorage.getItem("buddy-look-v2") || "null"); sharedAt = +localStorage.getItem("buddy-look-at") || 0; } catch (e) { /* storage unavailable */ }
+  if (!TAURI && !tapSave) try { shared = JSON.parse(localStorage.getItem("buddy-look-v2") || "null"); sharedAt = +localStorage.getItem("buddy-look-at") || 0; } catch (e) { /* storage unavailable */ }
   if (!sv) setLook(shared && typeof shared === "object" ? shared : doll.PRESETS.f);
   else if (shared && typeof shared === "object" && sharedAt > sv.savedAt) setLook({ ...shared, name: shared.name || look.name });
   namedAs = namedAs || nameOf();
@@ -5424,7 +5483,8 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
   requestAnimationFrame(frame);
   if (!st) saveSettings();
   if(houseRequested)openFriendHousePreview(houseLink);
-  if (!sv) autoSave();
+  if (tapSave?.readError) showHint("TapTap 读档失败，去设置重试");
+  else if (tapSave ? tapSave.legacy : !sv) autoSave();
   if (!prefs.guided&&!friendHousePreview) setTimeout(()=>{if(!friendHousePreview&&!prefs.guided&&!guideOn)openGuide();}, 1200);   // first time: the guide opens by itself
 })();
 </script>
