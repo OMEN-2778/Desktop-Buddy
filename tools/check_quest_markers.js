@@ -45,7 +45,7 @@ const { chromium } = require('playwright');
       drawQuestMarker = function(ctx, x, headY, sign = '!') {
         const m = ctx.getTransform();
         const sx = (x*m.a + m.e)/m.a, sy = (headY*m.d + m.f)/m.d;
-        if (sx>=5 && sx<=337 && sy>=14 && sy < ctx.canvas.height/m.d) drawnMarkers.push({sx,sy,sign});
+        if (sx>=0 && sx<342 && sy>=14 && sy < ctx.canvas.height/m.d) drawnMarkers.push({sx,sy,sign});
         draw(ctx, x, headY, sign);
       };
     });
@@ -56,30 +56,36 @@ const { chromium } = require('playwright');
         render();
         const marker = drawnMarkers.filter(m => m.sign === sign).sort((a,b) => Math.abs(a.sx-171)-Math.abs(b.sx-171))[0];
         if (!marker) return null;
-        // Noon and clear weather at the market give an exact pixel check:
-        // the foreground canopy must leave the whole badge visible.
-        if (name === 'summer-market') {
-          const sprite = IMG.questMarker[sign], tile = document.createElement('canvas');
-          tile.width = sprite.width; tile.height = sprite.height;
-          const ctx = tile.getContext('2d');
-          ctx.drawImage(sprite, 0, 0);
-          const expected = ctx.getImageData(0,0,tile.width,tile.height).data;
-          const unit = view.width / 342, left = Math.round(marker.sx)-4, top = Math.round(marker.sy)-14;
-          for (let y=0; y<tile.height; y++) for (let x=0; x<tile.width; x++) {
-            const i=(y*tile.width+x)*4;
-            if (!expected[i+3]) continue;
-            const actual = vctx.getImageData(Math.floor((left+x+.5)*unit),Math.floor((top+y+.5)*unit),1,1).data;
-            if (expected.slice(i,i+4).some((value,index) => actual[index] !== value)) throw Error('Market badge is covered at '+x+','+y);
-          }
-        }
+        // Read the final scene, after it has drawn the canopy, weather and lights.
+        // Full color equality catches any covering pixels or lighting bleed.
+        const sprite = IMG.questMarker[sign], tile = document.createElement('canvas');
+        tile.width = sprite.width; tile.height = sprite.height;
+        const ctx = tile.getContext('2d');
+        ctx.drawImage(sprite, 0, 0);
+        const expected = ctx.getImageData(0,0,tile.width,tile.height).data;
         const r = view.getBoundingClientRect();
+        const unitX = view.width / 342, unitY = view.height / sceneHouseHeight();
+        const left = Math.max(1,Math.min(342-tile.width-1,Math.round(marker.sx)-4));
+        let top = Math.round(marker.sy)-14;
+        if (name === 'spring-edge') {
+          const arrow = document.querySelector('.park-arrow[data-dir="-1"]').getBoundingClientRect();
+          top = Math.floor((arrow.top-r.top)*sceneHouseHeight()/r.height)-tile.height-2;
+          const hit = document.elementFromPoint(r.left+(left+4)*r.width/342,r.top+(top+5)*r.height/sceneHouseHeight());
+          if (hit !== view) throw Error('An overlay covers the badge at the scene edge');
+        }
+        for (let y=0; y<tile.height; y++) for (let x=0; x<tile.width; x++) {
+          const i=(y*tile.width+x)*4;
+          if (!expected[i+3]) continue;
+          const actual = vctx.getImageData(Math.floor((left+x+.5)*unitX),Math.floor((top+y+.5)*unitY),1,1).data;
+          if (expected.slice(i,i+4).some((value,index) => actual[index] !== value)) throw Error(name+' badge is covered at '+x+','+y);
+        }
         const unit = r.width / 342;
-        return {x:r.left+marker.sx*unit,y:r.top+marker.sy*unit,unit};
+        return {x:r.left+marker.sx*unit,y:r.top+marker.sy*unit,unit,sceneLeft:r.left};
       },{name,sign});
       assert(point, name + ' draws the shared ' + sign);
       if (shots) {
         const w=62*point.unit, h=52*point.unit;
-        await page.screenshot({path:path.join(shots,name+'.png'),clip:{x:Math.round(point.x-w/2),y:Math.round(point.y-22*point.unit),width:w,height:h}});
+        await page.screenshot({path:path.join(shots,name+'.png'),clip:{x:Math.round(Math.max(point.sceneLeft,point.x-w/2)),y:Math.round(point.y-22*point.unit),width:w,height:h}});
       }
       return point;
     }
@@ -92,7 +98,25 @@ const { chromium } = require('playwright');
     await expectMarker('spring-mom');
     await page.evaluate(() => { prefs.scale=25; fit(); });
     await expectMarker('spring-mom-25');
-    await page.evaluate(() => { prefs.scale=50; fit(); });
+    await page.evaluate(() => {
+      prefs.scale=50; fit();
+      sim.t=21*60; weather.force='blizzard'; weather.kind='snow'; weather.heavy=true;
+    });
+    const night = await expectMarker('spring-night-snow');
+    assert(await page.evaluate(({x,y}) => {
+      const box = view.getBoundingClientRect(), px = Math.round((x - box.left) * view.width / box.width);
+      const py = Math.round((y - box.top) * view.height / box.height);
+      const pixels = () => Array.from(vctx.getImageData(px-2,py-20,5,10).data).join();
+      const before = pixels();
+      wiping = true;
+      try { render(); return pixels() !== before; }
+      finally { wiping = false; }
+    },night),'transition hides the badge');
+    await page.evaluate(() => {
+      sim.t=2*1440+10*60; weather.force=weather.kind='clear'; weather.heavy=false;
+      springFarm.mom.x=2;
+    });
+    await expectMarker('spring-edge');
 
     await page.evaluate(() => {
       springFarm.state.phase='done'; springFarm.mom.on=false;
@@ -122,8 +146,15 @@ const { chromium } = require('playwright');
         Object.assign(c.state,{inside:false,x:npc.x-45,y:npc.y,camX:npc.x-171,camY:npc.y-104});
       });
       await expectMarker('autumn-city','?');
+      assert.deepEqual(await page.evaluate(() => {
+        const city = seasonMapTest.state.autumn, actors = liweiStory.actors;
+        const {x,y} = city.npcRows()[0];
+        liweiStory.actors = () => [{id:'zhou', x, y}, {id:'doctor', x, y:y+2}];
+        try { return [city.hit(x,y-14)?.id,city.hover(x,y-14)?.id]; }
+        finally { liweiStory.actors=actors; }
+      }),['doctor','doctor'],'overlapping actors use the front character for click and hover');
     }
     assert.deepEqual(errors, []);
-    console.log('PASS shared quest badges, quest states and anchors in the built game');
+    console.log('PASS shared quest badges, scene layers, clipping, transition and NPC hit order');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

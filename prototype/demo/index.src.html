@@ -1319,7 +1319,15 @@ function render() {
   if(renderFriendHousePreview())return;
   syncParkNavigation();
   updateNpcHover();
-  if (sim.place !== "home") { renderOutside(); return; }
+  if (sim.place !== "home") {
+    const previousMarkers = questMarkers, scene = sim.place;
+    questMarkers = [];
+    try {
+      renderOutside();
+      if (sim.place === scene) paintQuestMarkers();
+    } finally { questMarkers = previousMarkers; }
+    return;
+  }
   const h = hour(), f = nightness(h);
   bctx.clearRect(0, 0, W, H);
   bctx.globalAlpha = 1; bctx.drawImage(IMG.day, 0, 0);

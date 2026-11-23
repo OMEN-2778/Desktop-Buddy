@@ -850,7 +850,8 @@ function makeSeason_autumn(opts, DATA) {
     function hit(x, y) {
         if (state.inside && opts.home?.residentHit?.(x,y)) return {id:"jian",name:"阿简",npc:true,x:state.resident.x,y:108};
         if (state.inside) return (opts.home?.spots || indoorSpots).find(p => x >= p.rect[0] && y >= p.rect[1] && x < p.rect[0] + p.rect[2] && y < p.rect[1] + p.rect[3]);
-        const npc = npcRows().find(n => Math.abs(n.x - x) < 10 && y < n.y && y > n.y - 29);
+        // The last drawn NPC is in front where two bodies overlap.
+        const npc = npcRows().reverse().find(n => Math.abs(n.x - x) < 10 && y < n.y && y > n.y - 29);
         if (npc) return {
             ...npc,
             npc: true
