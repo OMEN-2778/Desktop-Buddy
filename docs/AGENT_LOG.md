@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-23 · 季节地图统一接入规范
+- `docs/SEASON_MAP_STANDARD.md` 第 0 节补齐地图数据清单、指令优先级、任务分组、演出与存读档接入和验收；`AGENTS.md` 指向这份规范。
+- 现有行为未改动。栗尾市已有的空闲门槛和演出流程作为首个复用样例，仍需在后续接入时收拢到共用入口。
+
 ## 2026-11-23 · TapTap 存档设置精简
 - TapTap H5 设置中移除导入、导出按钮，改为“存档使用 TapTap 的云存档功能～”；普通网页与桌面版入口保持原样。
 - 主界面与全屏面板共用安全框；H5 宿主不提供安全区时，横屏两侧预留 56px，避开刘海和灵动岛。
