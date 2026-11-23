@@ -7,7 +7,7 @@ const {chromium}=require('playwright');const fs=require('fs');
 const clear=`(async()=>{for(let i=0;i<8;i++){try{if(card&&card.phase==='ask')chooseCard('a',true)}catch(e){}await new Promise(r=>setTimeout(r,900));if(!document.documentElement.classList.contains('sheet'))break}})()`;
 const path=require('path');const ROOT=path.resolve(__dirname,'..');
 const args=process.argv.slice(2);const si=args.indexOf('--shots');const shots=si>=0?args.splice(si,2)[1]:null;
-const page='prototype/demo/mobile.html';const CLICKABLE='button,input,select,textarea,a[href],[role=menuitem],[role=button],.contact-card';const [W='740',H='360',only='']=args;let failed=0;
+const page='prototype/demo/mobile.html';const pageBody=fs.readFileSync(path.join(ROOT,page));const CLICKABLE='button,input,select,textarea,a[href],[role=menuitem],[role=button],.contact-card';const [W='740',H='360',only='']=args;let failed=0;
 const screens={
  main:'0',
  storypeer:"(()=>{asleep=()=>false;window.__sp=createStorySpeech({view});__sp.show('妈妈','你那边下雨了吗？我看天气预报说今天降温，记得多穿点，别又跟上次一样感冒了。',{advance:()=>{}})})()",
@@ -33,11 +33,12 @@ const screens={
  contactact:"(async()=>{document.getElementById('networkTrigger').click();await new Promise(r=>setTimeout(r,500));document.querySelector('.contact-card').click()})()",
  pets:"(()=>{const b=[...document.querySelectorAll('button')].find(b=>/宠物/.test(b.textContent));if(b)b.click()})()",
 };
-(async()=>{const b=await chromium.launch();
+(async()=>{const systemChromium=fs.existsSync('/usr/bin/chromium')?'/usr/bin/chromium':null;const b=await chromium.launch(systemChromium?{executablePath:systemChromium,args:['--no-sandbox']}:{});
 for(const [name,act] of Object.entries(screens)){ if(only&&!only.split(',').includes(name))continue;
 const p=await b.newPage({viewport:{width:+W,height:+H},deviceScaleFactor:1.5,isMobile:true,hasTouch:true});const e=[];p.on('pageerror',x=>e.push(x.message));
 await p.addInitScript(()=>{try{localStorage.setItem('buddy-settings',JSON.stringify({guided:true,speed:1}))}catch(e){}});
-await p.goto('file://'+path.join(ROOT,page));await p.waitForTimeout(3000);
+await p.route('https://mobile.test/**',r=>r.request().isNavigationRequest()?r.fulfill({contentType:'text/html;charset=utf-8',body:pageBody}):r.abort());
+await p.goto('https://mobile.test/index.html');await p.waitForTimeout(3000);
 await p.evaluate(clear);
 await p.evaluate(CLICKABLE=>{for(const el of document.querySelectorAll(CLICKABLE)){const r=el.getBoundingClientRect();if(r.width>1&&r.height>1)el.dataset.pre='1'}},CLICKABLE);
 try{await p.evaluate(act)}catch(x){e.push('act:'+x.message)} await p.waitForTimeout(1200);

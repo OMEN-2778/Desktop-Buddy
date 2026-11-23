@@ -2639,7 +2639,7 @@ const SETTINGS = [
   { label: "置顶游戏", role: "radiogroup", items: () => [[true, "开"], [false, "关"]].map(([v, name]) =>
       pill(name, { pressed: prefs.onTop === v, disabled: !TAURI, title: TAURI ? "" : "桌面版里才能用",
         onClick: b => { setOnTop(v); b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); } })) },
-  { label: "存档", role: "group", spans: () => [8, 4, 4, 4, 4],
+  { label: "存档", role: "group", spans: () => tapSave ? [8, 4, 8, 4] : [8, 4, 4, 4, 4],
     under: () => pill("教程", { title: "重新看一遍新手教程", onClick: () => { setSettingsOpen(false); openGuide(); } }),
     items: () => [
       // 自动保存: one switch, every 5 minutes <-> never
@@ -2647,8 +2647,12 @@ const SETTINGS = [
         title: prefs.autosave ? "每 5 分钟、退出和切到后台时自动保存（再按一下关掉）" : "只在你点「保存」时保存（再按一下打开）",
         onClick: () => { prefs.autosave = !prefs.autosave; saveSettings(); buildSettings(); } }),
       pill(tapSave?.readError ? "重试读档" : "保存", { onClick: saveFromSettings }),
-      pill("导出", { title: "把存档另存成一个文件", onClick: exportSave }),
-      pill("导入", { title: "从存档文件读取", onClick: () => document.getElementById("importSave").click() }),
+      ...(tapSave ? [Object.assign(document.createElement("span"), {
+        className: "tap-save-note", textContent: "存档使用 TapTap 的云存档功能～",
+      })] : [
+        pill("导出", { title: "把存档另存成一个文件", onClick: exportSave }),
+        pill("导入", { title: "从存档文件读取", onClick: () => document.getElementById("importSave").click() }),
+      ]),
       pill("重生！", { cls: "danger", title: "清空存档，从第 1 天重新开始（要按两下）", onClick: b => {
         if (b.dataset.armed) { resetSave(); return; }
         b.dataset.armed = "1"; b.textContent = "真的吗？";
