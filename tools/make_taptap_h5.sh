@@ -18,7 +18,9 @@ mobile, adapter, output = map(Path, sys.argv[1:])
 page = mobile.read_text(encoding="utf-8")
 page = re.sub(r'^.*fonts\.(?:googleapis|gstatic)\.com.*\n', '', page, flags=re.MULTILINE)
 assert page.count("<script>") == 1, "TapTap H5 game script missing"
-output.write_text(page.replace("<script>", "<script>\n" + adapter.read_text(encoding="utf-8") + "\n", 1), encoding="utf-8")
+startup = '<p id="tap-startup" role="status">正在启动 H5 测试版</p>'
+script = "<script>\n" + adapter.read_text(encoding="utf-8") + "\n</script>\n<script>"
+output.write_text(page.replace("<script>", startup + "\n" + script, 1), encoding="utf-8")
 PYTHON
 ( cd "$D/audio" && find BGM -name '*.mp3' ! -path '*/infei/*' ) | while read -r f; do
   mkdir -p "$CACHE/$(dirname "$f")" "$DIR/audio/$(dirname "$f")"

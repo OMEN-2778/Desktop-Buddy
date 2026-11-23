@@ -2655,6 +2655,9 @@ const SETTINGS = [
         setTimeout(() => { delete b.dataset.armed; b.textContent = "重生！"; }, 3000);
       } }),
     ] },
+  { label: "云存档", role: "group", tapOnly: true, items: () => [
+      pill("查看状态", { onClick: openTapSaveStatus }),
+    ] },
   { label: "更新", role: "group", spans: () => [8, 4], items: () => [
       pill(prefs.autoUpdate ? "有新版本自动更新" : "有新版本只提醒", { pressed: prefs.autoUpdate, disabled: !TAURI,
         title: !TAURI ? "桌面版里才能用" : prefs.autoUpdate ? "在后台下载好，趁你没在操作时自动重启换上（再按一下改成只提醒）" : "有新版本时提醒你，点了才更新（再按一下改成自动）",
@@ -2674,6 +2677,7 @@ function buildSettings() {
   if (setGear.getAttribute("aria-expanded") !== "true") return;
   setPop.innerHTML = "";
   for (const st of SETTINGS) {
+    if (st.tapOnly && !tapSave) continue;
     const row = document.createElement("div");
     row.className = "set-row"; row.setAttribute("role", st.role); row.setAttribute("aria-label", st.label);
     const lab = document.createElement("span"); lab.className = "set-label"; lab.textContent = st.label; lab.dataset.label = st.label;
@@ -4985,7 +4989,7 @@ const tapSave = !TAURI && typeof createTapTapSave === "function"
     const save = migrate(JSON.parse(text));
     if (!save) throw new Error("旧版存档格式有误，原档已保留");
     return save;
-  }) : null;
+  }, renderTapSaveStatus) : null;
 const store = tapSave || (TAURI ? {
   load: async () => { const t = await TAURI.core.invoke("load_save"); return t ? JSON.parse(t) : null; },
   save: async obj => TAURI.core.invoke("write_save", { data: JSON.stringify(obj) }),
@@ -5129,6 +5133,59 @@ function restore(sv) {
 }
 let saveWhy = "";                                   // why the last save failed (the updater shows it)
 function saveWhyNow() { return saveWhy; }
+function renderTapSaveStatus() {
+  const line = socialSheet.querySelector(".tap-cloud-status");
+  if (!line) return;
+  line.textContent = tapSave.status;
+  const id = socialSheet.querySelector(".tap-cloud-id");
+  const uuid = tapSave.archiveUUID;
+  id.hidden = !uuid;
+  id.querySelector("input").value = uuid;
+}
+
+async function copyTapText(input, hint) {
+  try {
+    if (!navigator.clipboard?.writeText) throw new Error("剪贴板接口不可用");
+    await navigator.clipboard.writeText(input.value);
+    hint.textContent = "已复制";
+  } catch (error) {
+    input.focus();
+    input.setSelectionRange(0, input.value.length);
+    hint.textContent = "请长按文本，选择「全选」再复制";
+  }
+}
+
+function openTapSaveStatus() {
+  const sheet = openSocialSheet("TapTap 云存档");
+  const content = socialContent(sheet);
+  const details = document.createElement("p");
+  details.className = "tap-cloud-status";
+  details.setAttribute("role", "status");
+  const id = document.createElement("div");
+  id.className = "tap-cloud-id";
+  const input = document.createElement("input");
+  input.readOnly = true;
+  input.setAttribute("aria-label", "存档 UUID");
+  const hint = document.createElement("p");
+  hint.setAttribute("role", "status");
+  id.append(input, pill("复制编号", { onClick: () => copyTapText(input, hint) }), hint);
+  content.append(details, id);
+  renderTapSaveStatus();
+}
+
+function showTapBackup(text) {
+  const sheet = openSocialSheet("导出存档");
+  sheet.classList.add("tap-backup-sheet");
+  const content = socialContent(sheet);
+  const input = document.createElement("textarea");
+  input.readOnly = true;
+  input.setAttribute("aria-label", "存档备份文本");
+  input.value = text;
+  const hint = document.createElement("p");
+  hint.setAttribute("role", "status");
+  const copy = pill("复制备份", { onClick: () => copyTapText(input, hint) });
+  content.append(input, copy, hint);
+}
 async function saveFromSettings(button) {
   if (!tapSave) {
     flashLabel("存档", (await saveGame()) ? "已保存" : "没存上");
@@ -5188,6 +5245,7 @@ if (tapSave) window.addEventListener("online", () => { if (!tapSave.readError) a
 async function exportSave() {
   const d = new Date(), stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
   const filename = `${look.name}-存档-${stamp}.json`, text = JSON.stringify(visitSleepPreview?visitSleepPreview.snapshot:snapshot(), null, 1);
+  if (tapSave) { showTapBackup(text); return; }
   if (TAURI) {                                    // the desktop app: a save dialog, the copy goes where you pick
     const at = await TAURI.core.invoke("export_save", { name: filename, data: text }).catch(() => undefined);
     if (at) flashLabel("存档", "已导出"); else if (at === undefined) flashLabel("存档", "没导出");
@@ -5459,6 +5517,8 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
     fit();
   }
   window.addEventListener("resize", fit);
+  const tapStartup = document.getElementById("tap-startup");
+  if (tapStartup) tapStartup.textContent = "正在加载小屋";
   await loadAssets();
   await loadPets();
   await loadSkyIcons();
@@ -5475,6 +5535,7 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
   const houseLink=!TAURI&&new URLSearchParams(location.search).get('house-preview');
   const houseRequested=houseLink&&Object.hasOwn(D.friendHouses,houseLink);
   booted = true;
+  tapStartup?.remove();
   startUpdateChecks();
   // A direct art-preview link must not roll an ordinary life event first.
   if(houseRequested)showFace();else updateMood();
@@ -5483,7 +5544,7 @@ document.getElementById("testDown").addEventListener("click", () => { if (sim.mo
   requestAnimationFrame(frame);
   if (!st) saveSettings();
   if(houseRequested)openFriendHousePreview(houseLink);
-  if (tapSave?.readError) showHint("TapTap 读档失败，去设置重试");
+  if (tapSave?.readError) showHint("TapTap 读档失败，去设置查看状态");
   else if (tapSave ? tapSave.legacy : !sv) autoSave();
   if (!prefs.guided&&!friendHousePreview) setTimeout(()=>{if(!friendHousePreview&&!prefs.guided&&!guideOn)openGuide();}, 1200);   // first time: the guide opens by itself
 })();
