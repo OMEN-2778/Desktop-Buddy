@@ -389,6 +389,7 @@ body {
    equal pills, or 存档's wide switch + 保存 over three — every row the same width */
 .set-items { display: grid; min-width: 0; grid-template-columns:repeat(12,minmax(0,1fr)); gap:6px; width:100%; align-items:stretch; }
 .set-items > button, .set-items > .set-value { width: 100%; min-width: 0; padding-inline: 4px; text-align: center; }
+.tap-save-note { box-sizing:border-box; display:grid; place-items:center; min-width:0; padding:5px 8px; color:var(--muted); font-size:calc(var(--pill-fs) * .86); line-height:1.35; text-align:center; }
    /* labels all one width, 存档 too */
 /* a pill under a label (教程 under 存档, user: the free spot there), as wide as it */
 .set-labels { display: grid; gap: 8px; }

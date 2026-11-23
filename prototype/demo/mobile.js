@@ -80,15 +80,16 @@ document.head.insertAdjacentHTML("beforeend", `<meta name="theme-color" content=
 function mobileInset(v) { return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(v)) || 0; }
 function mobileGeom() {
   const W = innerWidth, H = innerHeight, pad = 10;
-  // owner 2026-11-05: notches / 灵动岛 cover the left column, and many webviews report no safe area at all:
-  // on a touch phone keep at least 30px clear on both long sides (the notch is on whichever side it was turned to)
-  const notch = matchMedia("(pointer: coarse)").matches ? 30 : 0;
+  // Notches / 灵动岛 cover a long edge in landscape, and some H5 hosts report every env(safe-area-*) as 0.
+  // Keep an iPhone-sized fallback on both long sides; scaling the house is safer than hiding a control.
+  const notch = matchMedia("(pointer: coarse)").matches ? 56 : 0;
   const x0 = Math.max(mobileInset("--sal"), notch) + pad, x1 = W - Math.max(mobileInset("--sar"), notch) - pad;
   const y0 = mobileInset("--sat") + pad, y1 = H - mobileInset("--sab") - pad;
   const col = Math.round(Math.max(112, Math.min(150, (x1 - x0) * 0.16)));   // slimmer (owner 2026-11-05)
   const r1 = 34, r2 = 40, gap = 6;
   const row1 = y0, row2 = row1 + r1 + gap, top = row2 + r2 + 8;
-  const sx0 = mobileInset("--sal") + pad, sx1 = W - mobileInset("--sar") - pad;   // full-screen sheets keep the old edges
+  // Sheets use the same safe frame: settings used to extend back under the notch even when the game itself did not.
+  const sx0 = x0, sx1 = x1;
   return { W, H, x0, x1, sx0, sx1, y0, y1, col, r1, r2, row1, row2, top, fest: 32, hl: x0 + col + 10 };
 }
 let MOBILE_COL = 170;

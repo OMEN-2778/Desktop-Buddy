@@ -85,6 +85,9 @@ const { chromium } = require("playwright");
     await first.getByRole("button", { name: "保存", exact: true }).click();
     await first.waitForFunction(() => document.querySelector('[data-label="存档"]')?.textContent === "已同步");
     assert.equal(await first.getByRole("button", { name: "保存", exact: true }).count(), 1);
+    assert.equal(await first.getByRole("button", { name: "导出", exact: true }).count(), 0);
+    assert.equal(await first.getByRole("button", { name: "导入", exact: true }).count(), 0);
+    assert.equal(await first.locator(".tap-save-note").textContent(), "存档使用 TapTap 的云存档功能～");
     assert.equal(writeCount, 1);
     const saved = JSON.parse(body);
     assert.equal(saved.sim.t, 5900);
@@ -93,16 +96,6 @@ const { chromium } = require("playwright");
     await first.getByRole("button", { name: "查看状态" }).click();
     assert.equal(await first.locator(".tap-cloud-status").textContent(), "已同步到 TapTap");
     assert.equal(await first.getByRole("textbox", { name: "存档 UUID" }).inputValue(), archive.uuid);
-    await first.locator(".social-sheet-close").click();
-    await first.evaluate(() => setSettingsOpen(true));
-    const openingURL = first.url();
-    await first.getByRole("button", { name: "导出", exact: true }).click();
-    const backup = first.getByRole("textbox", { name: "存档备份文本" });
-    assert.equal(JSON.parse(await backup.inputValue()).sim.t, 5900);
-    await first.evaluate(() => Object.defineProperty(navigator, "clipboard", { value: null }));
-    await first.getByRole("button", { name: "复制备份" }).click();
-    assert.match(await first.locator(".tap-backup-sheet [role=status]").textContent(), /长按文本/);
-    assert.equal(first.url(), openingURL, "export navigated away from the game");
     await first.locator(".social-sheet-close").click();
 
     await first.evaluate(async () => {
@@ -165,6 +158,6 @@ const { chromium } = require("playwright");
     assert.equal(writeCount, 5);
     assert.equal(files.size, 0);
     assert.deepEqual(errors, []);
-    console.log("PASS TapTap H5 launch timeout, cloud backup and UUID, in-game export, cross-context restore and protection");
+    console.log("PASS TapTap H5 launch timeout, cloud backup and UUID, cloud-only settings, cross-context restore and protection");
   } finally { await b.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
