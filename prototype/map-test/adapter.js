@@ -36,9 +36,19 @@ const seasonalTest=(function(){
  }
  state.spring=makeSeason_spring({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='spring_test'});
  state.summer=makeSeason_summer({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='summer_test'});
- let stallActions=[];
+ let stallActions=[], pressedDish=null;
+ // When a stall opens under a finger, the opening tap can end on a new menu button.
+ ringEl.addEventListener('pointerdown',e=>{
+  if(ringOf==='autumnStall')pressedDish=e.target.closest('button');
+ });
+ ringEl.addEventListener('click',e=>{
+  if(ringOf!=='autumnStall')return;
+  const startedOnDish=pressedDish===e.target.closest('button');
+  pressedDish=null;
+  if(e.detail>0&&!startedOnDish){e.preventDefault();e.stopPropagation();}
+ },true);
  function stallMenu(name, options){
-  stallActions=options;
+  stallActions=options;pressedDish=null;
   RINGS.autumnStall=options.map(([label],i)=>['autumnDish:'+i,label]).concat([['autumnDismiss','离开']]);
   openRing('autumnStall','buddy');ringEl.setAttribute('aria-label',name);
  }
