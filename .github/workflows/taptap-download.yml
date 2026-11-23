@@ -32,5 +32,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           test "$(gh release view taptap-h5-cloudsave-a0c30ae --json isDraft --jq .isDraft)" = true
-          cp desktop/buddy-house-taptap.zip /tmp/Desktop-Buddy-TapTap-CloudSave-Diagnostic.zip
-          gh release upload taptap-h5-cloudsave-a0c30ae /tmp/Desktop-Buddy-TapTap-CloudSave-Diagnostic.zip
+          cp desktop/buddy-house-taptap.zip /tmp/Desktop-Buddy-TapTap-CloudSave-SafeArea.zip
+          gh release upload taptap-h5-cloudsave-a0c30ae /tmp/Desktop-Buddy-TapTap-CloudSave-SafeArea.zip --clobber
