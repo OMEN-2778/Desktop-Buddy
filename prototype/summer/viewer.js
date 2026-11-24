@@ -12,7 +12,7 @@ const TOTAL=DATA.hotspots.length+new Set(DATA.life.map(c=>c.k)).size;
 const state={x:120,y:0,vy:0,target:null,after:null,facing:1,camX:0,camY:0,viewH:LAND_H,time:0,paused:false,inside:false,walk:false,loaded:false,
  suit:'clothes',gender:'f',moveSpeed:0,camVX:0,camVY:0,diveBlend:0,inCabana:false,lying:null,changing:0,found:new Set(),wasSea:false,warned:0,market:false};
 // 市集 (owner 2026-11-05): an optional district left of the lodge, drawn and clicked by a hook (setMarket).
-let market=null,photo=null;/* photo: the underwater camera (summer_more.js) takes over a creature click */const MARKET_FEET=104;
+let market=null,photo=null,fishPicker=null;/* photo: the underwater camera (summer_more.js) takes over a creature click */const MARKET_FEET=104;
 const fx=makeSeasonEffects(DATA.skinRamp);let wetKind='clear',weatherOverride=null;
 const wxLabel=document.createElement('label');wxLabel.className='season-weather';wxLabel.innerHTML='天气 <select aria-label="地图测试天气"><option value="">跟随游戏</option><option value="clear">晴天</option><option value="rain">小雨</option><option value="storm">大雨</option><option value="snow">小雪</option><option value="blizzard">大雪</option></select>';canvas.parentElement.parentElement.querySelector('.controls').append(wxLabel);wxLabel.querySelector('select').onchange=e=>{weatherOverride=e.target.value||null;wetKind=weatherOverride||'clear';};
 const keys=new Set(),parts=[];let peopleRenderer=null;
@@ -191,9 +191,26 @@ function targetAt(x,y){
  const fish=DATA.life.filter(f=>f.cx&&f.im&&Math.abs(x-f.cx)<f.w/2+3&&Math.abs(y-f.cy)<f.h/2+3)
   .map(f=>({id:'fish',fish:f,img:f.flip?flippedSceneSprite(f.im):f.im,x:f.px,y:f.py}));
  const props=sceneTargetAt([...shoreTargets,...fish],x,y);
+ if(props?.fish){
+  // Keep the same visible hit for hovering. On a shared pixel, allow each
+  // species under the pointer to be photographed.
+  const matches=new Map([[props.fish.k,props.fish]]);
+  for(const candidate of fish){
+   if(scenePixelHit(candidate,x,y)&&!matches.has(candidate.fish.k))matches.set(candidate.fish.k,candidate.fish);
+  }
+  return {...props,fishChoices:[...matches.values()]};
+ }
  if(props)return props;
  const spot=DATA.hotspots.find(h=>!state.found.has(h.id)&&Math.abs(x-h.x)<=3&&Math.abs(y-h.y)<=3);
  return spot?{id:'sparkle',spot}:null;
+}
+function approachFish(c){
+ if(!c.cx)return toast('它游走了……');
+ return goTo(c.cx,'dive',c.cy,()=>{
+  if(c.cx&&Math.hypot(c.cx-state.x,c.cy-state.y+10)<40){
+   if(photo)photo(c);else discover('life:'+c.k,DATA.lifeText[c.k]);
+  }else toast('它游走了……');
+ });
 }
 function pick(x,y){
  if(state.market){if(market?.pick(x,y))return;return goTo(x);}
@@ -206,7 +223,8 @@ function pick(x,y){
  const c=gameNavigation?p?.fish:DATA.life.find(c=>c.cx&&Math.abs(x-c.cx)<c.w/2+5&&Math.abs(y-c.cy)<c.h/2+5);
  if(c){
   if(state.suit==='clothes')return toast('先去更衣室换上泳装，才能游过去看看。');
-  return goTo(c.cx,'dive',c.cy,()=>{if(Math.hypot(c.cx-state.x,c.cy-state.y+10)<40){if(photo)photo(c);else discover('life:'+c.k,DATA.lifeText[c.k]);}else toast('它游走了……');});
+  if(p?.fishChoices.length>1&&fishPicker)return fishPicker(p.fishChoices,{x,y},approachFish);
+  return approachFish(c);
  }
  const h=gameNavigation?p?.spot:DATA.hotspots.find(h=>Math.abs(x-h.x)<14&&Math.abs(y-h.y)<14);
  if(h){
@@ -231,4 +249,4 @@ load(DATA);Promise.all([...images.values()].map(im=>im.decode())).then(()=>{
  state.y=standY(state.x);state.loaded=true;ctx.imageSmoothingEnabled=false;toast('先去更衣室换上泳装，再去海里玩吧～ 发光的小星星是可以探索的地方。',5);
  let last=performance.now();function frame(now){const dt=document.hidden?0:clamp((now-last)/1000,0,.05);last=now;if(!state.paused)state.time+=dt;advanceDoor(dt);fx.tickWater(state.paused?0:dt);move(dt);camera(dt);draw();updateUI();requestAnimationFrame(frame);}requestAnimationFrame(frame);})
  .catch(e=>{const el=document.getElementById('error');el.hidden=false;el.textContent='地图加载失败，请刷新重试';console.error(e);});
-window.summerPreview={state,seaLife:DATA.life,plants:DATA.plants,kelp:DATA.kelp,goTo,pick,targetAt,move,camera,draw,gr,deep,isSolid,enterCabana,leaveCabana,directionLabel,travel,pickScene,wardrobe,enter,leave,advanceDoor,fx,setWeather:kind=>wetKind=weatherOverride||kind,getWeather:()=>wetKind,setPeopleRenderer:fn=>peopleRenderer=fn,setMarket:m=>market=m,beginDoor,setPhoto:f=>photo=f,discover,hotspots:DATA.hotspots,data:DATA,lifeText:DATA.lifeText,toast};
+window.summerPreview={state,seaLife:DATA.life,plants:DATA.plants,kelp:DATA.kelp,goTo,pick,targetAt,move,camera,draw,gr,deep,isSolid,enterCabana,leaveCabana,directionLabel,travel,pickScene,wardrobe,enter,leave,advanceDoor,fx,setWeather:kind=>wetKind=weatherOverride||kind,getWeather:()=>wetKind,setPeopleRenderer:fn=>peopleRenderer=fn,setMarket:m=>market=m,beginDoor,setPhoto:f=>photo=f,setFishPicker:f=>fishPicker=f,discover,hotspots:DATA.hotspots,data:DATA,lifeText:DATA.lifeText,toast};

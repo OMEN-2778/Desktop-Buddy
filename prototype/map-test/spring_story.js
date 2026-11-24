@@ -222,7 +222,12 @@ const springFarm=(()=>{
    e.stopPropagation();e.preventDefault();}
  },true);
  // ---------------------------------------------------------------- actions
- function goBed(i,then){const [x,,w]=D.plots[i];closeRing();T.state.autoAt=sim.t+60;C().target(x+w+4,103,then);}   // she works from the gap after the bed, so the bed stays clickable
+ function goBed(i,then){
+  const c=C(),[x,,w]=D.plots[i];
+  // The eastmost bed ends in the scene exit's 14px trigger strip.
+  const stand=Math.min(x+w+4,c.current().width-15);
+  closeRing();T.state.autoAt=sim.t+60;c.target(stand,103,then);
+ }
  function record(icon,text,v){F.ledger.unshift({icon,text,when:clock(sim.t),v,t:sim.t});F.ledger.length=Math.min(F.ledger.length,30);F.coins=Math.round((F.coins+v)*10)/10;}
  function seedShop(i){
   const story=F.phase==='sow';

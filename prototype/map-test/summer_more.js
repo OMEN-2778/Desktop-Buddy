@@ -65,7 +65,17 @@
   if(first){if(Object.keys(b.dex).length===1)mood(MOOD.snap);log(`在海里拍到了${nameK(k)}，记进了图鉴。`);}
   for(const [i,[name,ks]]of PAGES.entries())if(!b.pages[i]&&ks.every(x=>b.dex[x])){b.pages[i]=1;mood(MOOD.page);coins(3,`图鉴「${name}」集满了`);setTimeout(()=>showHint(`图鉴「${name}」集满了！奖励 3 丢丢币`),1500);}
   for(const f of photoHooks)try{f(k);}catch(e){}}
- (function hook(){const c=C();if(c?.setPhoto){c.setPhoto(o=>{const k=o.k==='manta'&&rain()?'rain_manta':o.k;if(k==='rain_manta'&&!M().dex.manta)M().dex.manta=1;snap(k,o.cx,o.cy);});return;}setTimeout(hook,300);})();
+ let photoChoices=[];
+ (function hook(){
+  const c=C();if(!c?.setPhoto){setTimeout(hook,300);return;}
+  c.setPhoto(o=>{const k=o.k==='manta'&&rain()?'rain_manta':o.k;if(k==='rain_manta'&&!M().dex.manta)M().dex.manta=1;snap(k,o.cx,o.cy);});
+  c.setFishPicker((fish,point,approach)=>{
+   c.state.target=c.state.after=null;
+   photoChoices=fish.map(f=>()=>approach(f));
+   const at=seasonMapTest.viewport(c).scene(point.x,point.y);
+   FarmUI.ring('拍哪一种？',fish.map((f,i)=>({id:'bay:photo:'+i,label:nameK(f.k),icon:'lens'})),at);
+  });
+ })();
  // the rare ones the base sea doesn't have: drawn here, clicked here
  const RARE_AT={glow_jelly:[[1330,172],[1490,192],[1705,160]],glow_shrimp:[[1420,252],[2120,330]],lanternfish:[[2870,722],[2955,758],[3045,736]],deep_octopus:[[2992,792]]};
  const rareOn=k=>k.startsWith('glow')?night():k==='humpback'?cal().i===2||fest()?.n==='鲸歌节':true;
@@ -115,7 +125,12 @@
  const oldOpen=openRing;openRing=function(which,at){
   if(which==='away'&&inBay()){const keep=RINGS.away;RINGS.away=[keep[0],['bay:dex','草帽湾图鉴'],...keep.slice(1)];try{return oldOpen(which,at);}finally{RINGS.away=keep;}}
   return oldOpen(which,at);};
- const oldPick=ringPick;ringPick=function(id){if(id==='bay:dex'){closeRing();openDex();return;}return oldPick(id);};
+ const oldPick=ringPick;ringPick=function(id){if(id==='bay:dex'){closeRing();openDex();return;}if(id.startsWith('bay:photo:')){
+  const choose=photoChoices[Number(id.slice(10))];
+  photoChoices=[];closeRing();
+  if(inBay())choose?.();
+  return;
+ }return oldPick(id);};
 
  // ---- night (the summer map had no night at all): a blue multiply pass over the frame, then a glow layer on top
  //      (bonfire, glowing sea, glow jellies, lanterns) so lights really shine in the dark
