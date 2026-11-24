@@ -67,31 +67,53 @@ function autumnPedestrians(data) {
   const moved=window.liweiStory?.progress.done.includes('S12B');
   const day=Math.floor(sim.t/1440);
   const chance=[.64,.5,.35,.18,.06][state.stage];
+  function resident(i,x,y,distance,direction,moving=true,sitting=false,vendor=null){
+   if(x<state.camX-12||x>state.camX+354||y<state.camY||y-28>state.camY+height)return;
+   const person=people[i%people.length],masked=(i*17+day*7)%30 < 30*chance;
+   let variants=models.get(person);
+   if(!variants){variants=new Map();models.set(person,variants);}
+   if(!variants.has(masked)){
+    const acc=person.look.acc.filter(a=>a!=='mask');
+    if(masked)acc.push('mask');
+    const look=doll.normalize({...person.look,acc});
+    variants.set(masked,{look,ramps:doll.rampsOf(look),kid:person.child,cache:new Map()});
+   }
+   const model=variants.get(masked);
+   Object.assign(model,{dist:distance,dir:direction,v:moving?1:0,ph:i*291});
+   const [frame,pose]=npcFrame(model);
+   sprites.push({depth:y,walker:true,vendor,img:npcCanvas(model,frame,sitting?'sit':pose,false),x:x-10,y:y-29});
+  }
   streets.forEach(([,points],street)=>{
    const [left,y]=points[0],right=points.at(-1)[0];
-   if(y<state.camY||y-28>state.camY+height)return;
    const lane=(right-left)/6;
    for(let slot=0;slot<6;slot++){
     if(moved&&slot!==1&&slot!==4)continue;
-    const i=street*6+slot, distance=state.streetTime*(5+i%4)+i*31;
-    const range=lane-22, phase=distance%(2*range);
+    const i=street*6+slot,distance=state.streetTime*(5+i%4)+i*31;
+    const range=lane-22,phase=distance%(2*range);
     const x=Math.round(left+slot*lane+11+Math.min(phase,2*range-phase));
-    if(x<state.camX-12||x>state.camX+354)continue;
-    const person=people[i%people.length],masked=(i*17+day*7)%30 < 30*chance;
-    let variants=models.get(person);
-    if(!variants){variants=new Map();models.set(person,variants);}
-    if(!variants.has(masked)){
-     const acc=person.look.acc.filter(a=>a!=='mask');
-     if(masked)acc.push('mask');
-     const look=doll.normalize({...person.look,acc});
-     variants.set(masked,{look,ramps:doll.rampsOf(look),kid:person.child,cache:new Map(),v:1});
-    }
-    const model=variants.get(masked);
-    model.dist=distance;model.dir=phase<range?1:-1;
-    const [frame,pose]=npcFrame(model);
-    sprites.push({depth:y,walker:true,img:npcCanvas(model,frame,pose,false),x:x-10,y:y-29});
+    resident(i,x,y,distance,phase<range?1:-1);
    }
   });
+  for(const [i,[x,y,vendor]] of (data.town?.vendors||[]).entries()){
+   resident(32+i,x,y,0,0,false,false,vendor);
+  }
+  const path=data.town?.parkWalk;
+  if(path){
+   const [west,north]=path[0], [east,south]=path[2];
+   const route=[[west,north],[east,north],[east,south],[576,south],[481,south],[west,south],[west,north]];
+   const waits=[0,1.5,0,8,6,0];
+   const speed=13;
+   const durations=route.slice(0,-1).map(([x,y],i)=>Math.hypot(route[i+1][0]-x,route[i+1][1]-y)/speed+waits[i]);
+   const loop=durations.reduce((sum,step)=>sum+step,0);
+   for(let i=0;i<(moved?2:4);i++){
+    let t=(state.streetTime+i*loop/4)%loop,j=0;
+    while(t>=durations[j])t-=durations[j++];
+    const [x,y]=route[j], [toX,toY]=route[j+1];
+    const walking=t<durations[j]-waits[j], fraction=Math.min(1,t/(durations[j]-waits[j]));
+    resident(38+i,Math.round(x+(toX-x)*fraction),Math.round(y+(toY-y)*fraction),
+             state.streetTime*speed,Math.sign(toX-x),walking,!walking&&(j===2||j===3||j===4));
+   }
+  }
   return sprites;
  };
 }

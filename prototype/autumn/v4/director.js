@@ -736,6 +736,7 @@
   function relocate(loc, inside = false) {
     const pos = where(loc);
     world.inside = inside;
+    city.syncHeight();
     world.x = inside ? 222 : pos.x;
     world.y = inside ? 108 : pos.y;
     city.clearRoute();
@@ -744,7 +745,7 @@
       : Math.max(0, Math.min(data.width - 342, world.x - 171));
     world.camY = inside
       ? 0
-      : Math.max(0, Math.min(data.height - city.canvas.height, world.y - 75));
+      : Math.max(0, Math.min(data.height - city.canvas.height, world.y - city.footLine()));
     p.cueLoc = loc;
   }
   function perform(action) {

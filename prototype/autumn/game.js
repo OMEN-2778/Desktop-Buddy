@@ -2,7 +2,7 @@
 function makeSeason_autumn(opts, DATA) {
     const canvas = document.createElement("canvas");
     canvas.width = 342;
-    canvas.height = 118;
+    canvas.height = DATA.town ? 236 : 118;
     const renderCanvas = document.createElement("canvas");
     let resolution = 1, ctx = renderCanvas.getContext("2d");
     const root = document.createElement("section");
@@ -30,7 +30,7 @@ function makeSeason_autumn(opts, DATA) {
         x: DATA.landmarks[0].x,
         y: DATA.landmarks[0].y,
         camX: DATA.landmarks[0].x - 171,
-        camY: DATA.landmarks[0].y - 75,
+        camY: DATA.landmarks[0].y - (canvas.height-43),
         facing: -1,
         time: 0,
         streetTime: 0,
@@ -484,7 +484,20 @@ function makeSeason_autumn(opts, DATA) {
         if (manual) state.service = state.pose = null;
         if (state.service || state.goal?.automatic || state.goal?.id === "inside_service" || state.goal?.id === "home_use" || opts.home?.busy()) return;
         close();
-        if (state.inside) insideVisit(need); else visit("detective_home", need, true);
+        if (state.inside) return insideVisit(need);
+        const local = need === "bladder" ? ["toilet"] :
+            need === "hunger" ? ["market","chestnut","canteen","syrup"] : [];
+        let destination = "detective_home", shortest = Infinity;
+        for (const id of [destination,...local]) {
+            const p=landmark(id);
+            if(!p)continue;
+            const route=plan(p.x,p.y);
+            if(!route.length && dist(state,p)>1)continue;
+            let from=state, length=0;
+            for(const next of route){length+=dist(from,next);from=next;}
+            if(length<shortest){shortest=length;destination=id;}
+        }
+        return visit(destination,need,true);
     }
     function stepNeeds(dt) {
         if (!(dt > 0) || state.paused || !opts.active()) return;
@@ -585,12 +598,17 @@ function makeSeason_autumn(opts, DATA) {
             state.x = d.to ? 222 : landmark("detective_home").x;
             state.y = d.to ? 108 : landmark("detective_home").y;
             state.camX = d.to ? 0 : state.x - 171;
-            state.camY = d.to ? 0 : state.y - 75;
+            syncHeight();
+            state.camY = d.to ? 0 : state.y - footLine();
         }
         if (d.elapsed >= .65) {
             state.door = null;
             if (d.to && d.need) insideVisit(d.need);
         }
+    }
+    const footLine=()=>canvas.height-43;
+    function syncHeight() {
+        canvas.height=town&&!state.inside ? 236 : 118;
     }
     function camera(dt) {
         if (state.inside) {
@@ -599,7 +617,7 @@ function makeSeason_autumn(opts, DATA) {
         }
         const viewProgress = state.x > 80 + (DATA.ox || 0) && state.x < (town ? 620 : 345 + (DATA.ox || 0)) ? clamp(((town ? 310 : DATA.summit.triggerY)-state.y)/65,0,1) : 0;
         const ease=viewProgress*viewProgress*(3-2*viewProgress);
-        const x = clamp(state.x - 171, 0, DATA.width - 342), y = clamp(state.y - 75+ease*(town ? -18 : 14), 0, DATA.height - canvas.height), t = 1 - Math.exp(-dt * 5);
+        const x = clamp(state.x - 171, 0, DATA.width - 342), y = clamp(state.y - footLine()+ease*(town ? -18 : 14), 0, DATA.height - canvas.height), t = 1 - Math.exp(-dt * 5);
         state.camX += (x - state.camX) * t;
         state.camY += (y - state.camY) * t;
     }
@@ -861,6 +879,7 @@ function makeSeason_autumn(opts, DATA) {
         ctx.restore();
     }
     function draw() {
+        if(canvas.height!==(town&&!state.inside?236:118))syncHeight();
         speech.position();
         const vh=canvas.height, ratio = resolution;
         if (renderCanvas.width !== 342 * ratio || renderCanvas.height !== vh * ratio) {
@@ -986,14 +1005,15 @@ function makeSeason_autumn(opts, DATA) {
         if(town) {
             const frame=townFrame();
             if(!frame.atlas)return null;
-            const npc=sceneTargetAt(streetLayers.filter(layer=>layer.npc),x,y);
+            const npc=sceneTargetAt(streetLayers.filter(layer=>layer.npc||layer.vendor),x,y);
+            const personHit=()=>npc.vendor ? landmark(npc.vendor) : {...npc.npc,npc:true};
             const sprite=sceneTargetAt(landmarkTargets,x,y)?.landmark;
             const place=sprite || DATA.landmarks.find(p=>p.layer==null &&
                 !landmarksWithSprites.some(mark=>mark.id===p.id) && x>=p.rect[0] && y>=p.rect[1] &&
                 x<p.rect[0]+p.rect[2] && y<p.rect[1]+p.rect[3]);
             for(let i=townLayers.length-1;i>=0;i--) {
                 const {entry:[l,t,r,b,depth],id}=townLayers[i];
-                if(npc && depth<=npc.depth)return {...npc.npc,npc:true};
+                if(npc && depth<=npc.depth)return personHit();
                 if(x<l||y<t||x>=r||y>=b)continue;
                 if(place && y>=depth)return place;
                 const mask=townMask(frame,id);
@@ -1001,7 +1021,7 @@ function makeSeason_autumn(opts, DATA) {
                 const building=DATA.landmarks.find(p=>p.layer===id);
                 return building ? {...building,img:mask.img,spriteX:mask.x,spriteY:mask.y} : place;
             }
-            if(npc)return {...npc.npc,npc:true};
+            if(npc)return personHit();
             return place||null;
         }
         const target=sceneTargetAt(streetLayers.filter(layer=>(layer.alpha??1)>.6),x,y);
@@ -1112,7 +1132,8 @@ function makeSeason_autumn(opts, DATA) {
         state.x = landmark("airstrip").x;
         state.y = landmark("airstrip").y;
         state.camX = state.x - 171;
-        state.camY = state.y - 75;
+        syncHeight();
+        state.camY = state.y - footLine();
         state.autoAt = opts.now() + 30;
     }
     function restore() {
@@ -1151,6 +1172,7 @@ function makeSeason_autumn(opts, DATA) {
         const p = nearest(state.x, state.y);
         state.x = p.x;
         state.y = p.y;
+        syncHeight();
         camera(Infinity);
         if (state.target) {
             const target = state.route.at(-1) || state.target;
@@ -1230,6 +1252,8 @@ function makeSeason_autumn(opts, DATA) {
         nodes: nodes,
         edges: edges,
         npcRows: npcRows,
+        syncHeight,
+        footLine,
         townVariant: town ? townVariant : null,
         drawnTown: () => town ? drawnTown : null,
         goTo: goTo,

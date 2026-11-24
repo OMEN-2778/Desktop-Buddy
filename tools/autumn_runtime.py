@@ -118,8 +118,8 @@ def town_runtime_data():
   'plaza': [408,1133,146,28],
   'market': [404,1397,158,40],
   'chestnut': [527,1345,42,47],
-  'swing': [403,1219,37,54],
-  'koi': [496,1205,78,29],
+  'swing': [414,1225,40,53],
+  'koi': [490,1228,80,34],
   'notice': [578,1118,43,30],
   'mine': [640,1370,77,75],
   'pier': [369,1951,63,46],
@@ -169,8 +169,8 @@ def town_runtime_data():
  for key,draw in (
   ('market',market),
   ('chestnut',lambda c:c.roaster(528,1390)),
-  ('swing',lambda c:c.swing(417,1268)),
-  ('koi',lambda c:c.pond(531,1221,11)),
+  ('swing',lambda c:c.swing(429,1272)),
+  ('koi',lambda c:c.pond(528,1248,11)),
  ):
   c=A.City(4)
   c.im=Image.new('RGBA',(width,height))
@@ -187,7 +187,9 @@ def town_runtime_data():
            for key in family}
  data=runtime_data()
  data.update(width=width,height=height,layoutVersion=5,routes=[],landmarks=landmarks,residentRoutes=streets,
-             town=dict(variants=variants,streets=layout['streets'],obstacles=layout['obstacles'],layers=layout['facades'],
+             town=dict(variants=variants,parkWalk=[(398,1206),(606,1206),(606,1290),(398,1290)],
+                       vendors=[(422,1428,'market'),(477,1428,'market'),(542,1428,'market'),(550,1391,'chestnut')],
+                       streets=layout['streets'],obstacles=layout['obstacles'],layers=layout['facades'],
                        oldLandmarks=A.runtime_landmarks()),
              landmarkSprites=artwork_sprites,scenes=[],backdrop={},front=None,boat=None,foliage=[],foliageSheets=[],foreground=[],signs=[],
              river={'top':1938},smoke=[586,435])

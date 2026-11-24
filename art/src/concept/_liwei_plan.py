@@ -23,7 +23,7 @@ STREETS = [
     (57,717,365,732),(304,720,323,924),(356,720,370,924),(322,720,357,939),
     (0,902,496,952),(58,944,75,989),(59,977,311,997),(291,984,307,1047),
     (210,983,226,1022),(211,1013,259,1025),
-    (196,602,242,613),(224,607,237,646),(196,635,236,646),
+    (194,602,307,610),(194,603,204,647),(296,603,307,647),(194,641,307,650),
     (146,272,160,326),(150,266,292,278),
 ]
 # Forecourts and accesses at exact facade thresholds.
@@ -44,7 +44,7 @@ BLOCKS = [
 STREETS += [(68,832,122,840),(150,829,181,839),(88,798,158,806),(120,798,131,902),(73,884,174,904)]
 PLACES = {k:(int(x+w/2),y+3) for k,_,x,y,w,*_ in BLOCKS}
 PLACES.update(lookout=(209,132),pavilion=(265,132),airstrip=(235,349),mine=(339,726),
-              nursery=(227,606),koi=(236,610),swing=(215,642),chestnut=(285,723),
+              nursery=(227,606),koi=(265,644),swing=(216,644),chestnut=(285,723),
               plaza=(232,571),notice=(295,575),market=(235,722),pier=(298,1036),reeds=(249,1020))
 # Keep the existing 20×28 doll and 27px door. All facades face the viewer.
 # Planes recede straight up the map, keeping the left/right edges aligned.
@@ -310,7 +310,7 @@ def draw(theme, frame):
     roads=Image.new('L',(W,H));md=ImageDraw.Draw(roads)
     for a,b,e,f in STREETS:md.rectangle((2*a,2*b,2*e,2*f),fill=255)
     forest=Image.new('L',(W,H),255);fd=ImageDraw.Draw(forest)
-    for rect in [(0,0,496,108),(0,901,496,1090),(68,425,350,581),(69,576,303,645),(70,659,178,718),(69,732,176,902),(198,733,301,902),(376,833,493,902),(197,679,352,726),(57,308,392,407),(143,215,305,278)]:
+    for rect in [(0,0,496,108),(0,901,496,1090),(68,425,350,581),(69,576,319,674),(70,659,178,718),(69,732,176,902),(198,733,301,902),(376,833,493,902),(197,679,352,726),(57,308,392,407),(143,215,305,278)]:
         fd.rectangle(tuple(n*2 for n in rect),fill=0)
     # Ground, gravel and a sheltered lakeshore.
     for i in range(52000):
@@ -379,31 +379,53 @@ def draw(theme, frame):
     # Coal and timber yard with a loading gantry, angled belt, corrugated sheds,
     # and stockpiles stacked inside retaining bins alongside the old haul road.
     c.roof_colors=P.sea_grey
-    for x in (406,468,530):c.facade(1527,work_shed,x,1527,51,x)
+    for x in (406,468,530):c.facade(1573,work_shed,x,1573,51,x)
     for x in (412,453,494,535):
-        c.box(x,1590,41,35,P.walnut[1])
-        c.poly([(x,1600),(x+9,1582),(x+19,1575),(x+39,1597)],P.slate[0])
+        c.box(x,1614,41,35,P.walnut[1])
+        c.poly([(x,1600),(x+9,1606),(x+19,1599),(x+39,1621)],P.slate[0])
         for j in range(30):
-            dx=r.randrange(4,35);y=1598-r.randrange(0,max(2,16-abs(dx-19)))
+            dx=r.randrange(4,35);y=1622-r.randrange(0,max(2,16-abs(dx-19)))
             c.box(x+dx,y,3,2,r.choice([P.steel[1],P.slate[1],P.slate[2]]))
-        for j in range(0,39,9):c.box(x+j,1605,2,21,P.wood[3])
-        c.box(x,1607,41,2,P.wood[2])
+        for j in range(0,39,9):c.box(x+j,1629,2,21,P.wood[3])
+        c.box(x,1631,41,2,P.wood[2])
     headframe(c,420,1723);c.roof_colors=P.oat;c.facade(1722,work_shed,506,1722,70,83)
     plants = [(1640,146,10,.54),(1635,339,11,.54),(1572,580,12,.68)]
     plants += [(1794,x,seed,.68) for seed,x in enumerate((756,863,982),20)]
     c.facade(1764,City.bench,148,1764)
     c.facade(1798,City.rail,(147,1798),(212,1798),True)
     c.facade(1798,City.rail,(267,1798),(345,1798),True)
-    # Park / market and notice board.
+    # The park has a continuous stone path around the garden and pond.
     c.facade(1150,City.bunting,410,545,1150)
-    c.facade(1266,City.bench,588,1266)
-    c.pond(531,1221,11);c.facade(1268,City.swing,417,1268);c.facade(1269,City.bench,492,1269)
+    lawn=P.snow[2] if winter else P.oak[1] if polluted else P.sage[2]
+    c.box(410,1222,181,60,lawn)
+    turf=random.Random(865)
+    for _ in range(260):
+        xx,yy=turf.randrange(412,589),turf.randrange(1224,1280)
+        color=turf.choice(P.snow[1:4] if winter else soil[1:])
+        c.box(xx,yy,turf.randrange(1,4),1,color)
+    for yy in (1222,1280):
+        c.box(410,yy,181,2,P.pave[2])
+        for xx in range(412,589,13):c.box(xx,yy,8,1,P.oat[3])
+    for xx in (410,589):
+        c.box(xx,1223,2,57,P.pave[2])
+    c.pond(528,1248,11)
+    c.facade(1272,City.swing,429,1272)
+    for xx in (465,560):
+        c.facade(1278,City.bench,xx,1278)
+    for xx,yy in ((409,1215),(592,1215),(410,1280),(592,1280)):
+        c.facade(yy,City.lamp,xx,yy)
+    for xx,yy,w in ((415,1235,42),(478,1230,39),(546,1230,38),(447,1276,17)):
+        def border_bed(c,x,y,width):
+            if c.snowy:
+                c.box(x,y-6,width,7,P.pave[1])
+                for off in range(0,width,3):
+                    c.box(x+off,y-8-(off*7%4),min(width-off,3),6,P.snow[3])
+            else:
+                c.flowerbed(x,y,width,x+y,2)
+        c.facade(yy,border_bed,xx,yy,w)
     if winter:
-        c.oval(521,1221,28,10,P.snow[1]);c.oval(551,1217,17,7,P.snow[1])
-        c.line([(503,1220),(516,1217),(530,1221),(541,1219)],P.snow[3])
-        c.box(518,1260,53,6,P.snow[1]);c.box(518,1259,53,3,P.snow[3])
-    else:
-        c.flowerbed(518,1267,53,91)
+        c.oval(518,1248,28,10,P.snow[1]);c.oval(548,1244,17,7,P.snow[1])
+        c.line([(500,1247),(513,1244),(527,1248),(538,1246)],P.snow[3])
     c.facade(1390,City.roaster,528,1390)
     def market_sign(c):
         c.box(397,1396,2,27,P.walnut[0])

@@ -13,7 +13,26 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  // Autumn remains available through the explicitly labelled test toolbar.
  await p.evaluate(()=>{seasonMapTest.start('autumn_test');sim.windup=null;startAct('go_out');sim.s=sim.target;arrive()});await p.waitForFunction(()=>sim.place==='autumn_test'&&!wiping);
  let box;
- assert.equal(await p.evaluate(()=>sceneHouseHeight()),118);const originalLook=await p.evaluate(()=>JSON.stringify(look));
+ await p.waitForFunction(()=>sceneHouseHeight()===236);
+ const local=await p.evaluate(()=>{
+  const c=seasonMapTest.ctl(),s=c.state,got={};
+  for(const [id,need] of [['toilet','bladder'],['market','hunger'],['detective_home','energy']]){
+   const spot=c.DATA.landmarks.find(p=>p.id===id);
+   Object.assign(s,c.nearest(spot.x-12,spot.y));
+   c.care(need,true);got[need]=s.goal?.id;c.clearRoute();
+  }
+  c.reset();
+  const renderPeople=autumnPedestrians(c.DATA);
+  const park={...s,camX:355,camY:1178,streetTime:0};
+  const visitors=t=>renderPeople({...park,streetTime:t},236).filter(n=>n.depth>=1206&&n.depth<=1290);
+  const samples=[0,1,2,20,21,22,42].map(visitors);
+  return {got,count:samples[0].length,
+    continuous:samples[0].every((n,i)=>Math.hypot(n.x-samples[1][i].x,n.y-samples[1][i].y)<=14),
+    vendors:renderPeople({...park,camY:1350},236).filter(n=>n.vendor).length};
+ });
+ assert.deepEqual(local.got,{bladder:'toilet',hunger:'market',energy:'detective_home'});
+ assert.equal(local.count,4);assert(local.continuous);assert.equal(local.vendors,4);
+ const originalLook=await p.evaluate(()=>JSON.stringify(look));
  const nav=await p.evaluate(()=>{const c=seasonMapTest.ctl();return c.DATA.landmarks.map(p=>{const path=c.plan(p.x,p.y);let prev=c.state;const valid=path.every(n=>{const ok=Math.abs(n.x-prev.x)<.01||Math.abs(n.y-prev.y)<.01;prev=n;return ok});return {id:p.id,len:path.length,valid,end:path.at(-1),want:{x:p.x,y:p.y}}})});
  for(const n of nav){assert(n.valid,n.id);if(n.end)assert(Math.hypot(n.end.x-n.want.x,n.end.y-n.want.y)<.1,n.id);else assert.equal(n.id,'airstrip')}
  // Walk every landmark through the movement controller on the new road surface.
@@ -38,7 +57,7 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  async function talk(id){await p.evaluate(id=>seasonMapTest.ctl().converse(id),id);await drain();}
  async function drain(){for(let i=0;i<35;i++){if(await p.locator('.story-speech').isVisible())await advanceLine();else if(await p.locator('.autumn-panel').isVisible())await p.locator('.autumn-actions button').first().click();else return;}throw Error('dialog did not end')}
  // The requested left ascent is continuous; arrival reveals the distant mountains smoothly.
- const summit=await p.evaluate(()=>{const c=seasonMapTest.ctl(),spot=c.DATA.landmarks.find(p=>p.id==='lookout');c.state.paused=false;c.goTo(spot.x,spot.y);let maxJump=0;for(let i=0;i<12000&&(c.state.target||i<50);i++){const prev=c.state.camY;c.tick(.05,.05);maxJump=Math.max(maxJump,Math.abs(c.state.camY-prev))}for(let i=0;i<100;i++)c.tick(.016,.016);const out={x:c.state.x,y:c.state.y,want:spot,cam:c.state.camY,maxJump};c.reset();return out});assert.equal(summit.x,summit.want.x);assert.equal(summit.y,summit.want.y);assert(summit.y-summit.cam<=118&&summit.y-summit.cam>=28&&summit.maxJump<30,JSON.stringify(summit));
+ const summit=await p.evaluate(()=>{const c=seasonMapTest.ctl(),spot=c.DATA.landmarks.find(p=>p.id==='lookout');c.state.paused=false;c.goTo(spot.x,spot.y);let maxJump=0;for(let i=0;i<12000&&(c.state.target||i<50);i++){const prev=c.state.camY;c.tick(.05,.05);maxJump=Math.max(maxJump,Math.abs(c.state.camY-prev))}for(let i=0;i<100;i++)c.tick(.016,.016);const out={x:c.state.x,y:c.state.y,want:spot,cam:c.state.camY,maxJump};c.reset();return out});assert.equal(summit.x,summit.want.x);assert.equal(summit.y,summit.want.y);assert(summit.y-summit.cam<=236&&summit.y-summit.cam>=28&&summit.maxJump<30,JSON.stringify(summit));
  // The lake frame changes with time and the water stays outside the walking surface.
  const lake=await p.evaluate(()=>{
   const c=seasonMapTest.ctl(),old={x:c.state.camX,y:c.state.camY,t:c.state.time};
@@ -53,7 +72,7 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
  assert(lake.water && lake.motion);
  // Keyboard stops on release; minimap click starts a route, never teleports.
  await p.locator('#view').focus();const x0=await p.evaluate(()=>seasonMapTest.ctl().state.x);await p.keyboard.down('ArrowLeft');await p.waitForTimeout(220);await p.keyboard.up('ArrowLeft');const x1=await p.evaluate(()=>seasonMapTest.ctl().state.x);assert(x1<x0-1);await p.waitForTimeout(120);assert(Math.abs(await p.evaluate(()=>seasonMapTest.ctl().state.x)-x1)<.2);
- await p.locator('[data-kind=autumn] [data-map]').click();const map=await p.evaluate(()=>{const c=seasonMapTest.ctl(),p=c.DATA.landmarks.find(p=>p.id==='canteen'),sc=c.canvas.height/c.DATA.height;return {x:(342-c.DATA.width*sc)/2+p.x*sc,y:p.y*sc,hero:c.state.x}});box=await p.locator('#view').boundingBox();await p.mouse.click(box.x+map.x*box.width/342,box.y+map.y*box.height/118);assert(!await p.evaluate(()=>seasonMapTest.ctl().state.mapOpen));assert(await p.evaluate(()=>!!seasonMapTest.ctl().state.target));assert(Math.abs(await p.evaluate(()=>seasonMapTest.ctl().state.x)-map.hero)<5);await p.evaluate(()=>seasonMapTest.ctl().reset());
+ await p.locator('[data-kind=autumn] [data-map]').click();const map=await p.evaluate(()=>{const c=seasonMapTest.ctl(),p=c.DATA.landmarks.find(p=>p.id==='canteen'),sc=c.canvas.height/c.DATA.height;return {x:(342-c.DATA.width*sc)/2+p.x*sc,y:p.y*sc,hero:c.state.x}});box=await p.locator('#view').boundingBox();await p.mouse.click(box.x+map.x*box.width/342,box.y+map.y*box.height/236);assert(!await p.evaluate(()=>seasonMapTest.ctl().state.mapOpen));assert(await p.evaluate(()=>!!seasonMapTest.ctl().state.target));assert(Math.abs(await p.evaluate(()=>seasonMapTest.ctl().state.x)-map.hero)<5);await p.evaluate(()=>seasonMapTest.ctl().reset());
  // The office's visible pixels are clickable at its authored position.
  const office=await p.evaluate(()=>{
   const c=seasonMapTest.ctl(),door=c.DATA.landmarks.find(p=>p.id==='detective_home');
@@ -77,7 +96,7 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
           y:bounds.top+(door.y-25-c.state.camY)*bounds.height/c.canvas.height};
  });
  await p.mouse.click(screenDoor.x,screenDoor.y);
- await finishRoute();await p.getByRole('button',{name:'进屋',exact:true}).click();await finishRoute();assert(await p.evaluate(()=>seasonMapTest.ctl().state.inside));assert.equal(await p.evaluate(()=>sceneHouseHeight()),118);
+ await finishRoute();await p.getByRole('button',{name:'进屋',exact:true}).click();await finishRoute();assert(await p.evaluate(()=>seasonMapTest.ctl().state.inside));await p.waitForFunction(()=>sceneHouseHeight()===118);
  // owner 2026-11-11: the house runs the home's own acts (map-test/autumn_home.js → season_house.js); social is the phone
  for(const [need,act] of [['hunger','snack'],['energy','sleep'],['hygiene','bath'],['bladder','toilet'],['fun','season_sofa']]){await p.evaluate(need=>{const c=seasonMapTest.ctl();c.state.goal=null;seasonHouse.explore();sim.needs[need]=20;c.care(need,true)},need);await finishRoute();await p.waitForFunction(act=>sim.act===act&&autumnHome.svc,act,{timeout:5000});await p.evaluate(need=>{seasonHouse.explore();sim.meal=null;sim.needs[need]=95},need);await p.waitForFunction(()=>!autumnHome.svc,null,{timeout:3000})}
  fs.mkdirSync('/workspace/artifacts/autumn-game',{recursive:true});await p.locator('#view').screenshot({path:'/workspace/artifacts/autumn-game/inside.png'});

@@ -55,33 +55,17 @@ const assert=require('node:assert/strict');
  assert.deepEqual(facadeOrder.coveredPixels,facadeOrder.roofPixels);
  assert.notDeepEqual(facadeOrder.frontPixels,facadeOrder.roofPixels);
  assert.equal(facadeOrder.frontPixels[3],255);
- const layerOverlap = await p.evaluate(()=>{
-   const atlasCtx=document.createElement('canvas').getContext('2d');
-   const mapCtx=document.createElement('canvas').getContext('2d');
-   const rear=layout.facades.find(([, , , ,depth])=>depth===1430);
-   const front=layout.facades.find(([left, , , ,depth])=>left===400 && depth===1527);
-   const pixel=(slot,x,y)=>{
-     const [left,top,right,bottom,,tx,ty]=slot;
-     if(x<left || x>=right || y<top || y>=bottom)return [0,0,0,0];
-     atlasCtx.clearRect(0,0,1,1);
-     atlasCtx.drawImage(cover,tx+x-left,ty+y-top,1,1,0,0,1,1);
-     return [...atlasCtx.getImageData(0,0,1,1).data];
-   };
-   let overlap=0, correct=0;
-   for(let y=1425;y<1434;y++){
-     for(let x=401;x<455;x++){
-       const a=pixel(rear,x,y),b=pixel(front,x,y);
-       if(a[3]!==255 || b[3]!==255 || a.join()===b.join())continue;
-       overlap++;
-       mapCtx.drawImage(landscape,x,y,1,1,0,0,1,1);
-       const visible=[...mapCtx.getImageData(0,0,1,1).data];
-       if(b.join()===visible.join())correct++;
-     }
-   }
-   return {overlap,correct,summitHut:at('hut')[1]<275};
+ const marketOpen=await p.evaluate(()=>{
+   const pixel=document.createElement('canvas').getContext('2d');
+   return [420,480,550].every(x=>{
+     pixel.drawImage(landscape,x,1450,1,1,0,0,1,1);
+     const [streetRed,,streetBlue]=pixel.getImageData(0,0,1,1).data;
+     pixel.drawImage(landscape,x,1480,1,1,0,0,1,1);
+     const [roofRed,,roofBlue]=pixel.getImageData(0,0,1,1).data;
+     return streetRed>=streetBlue && roofBlue>roofRed;
+   })&&at('hut')[1]<275;
  });
- assert(layerOverlap.overlap>0 && layerOverlap.overlap===layerOverlap.correct);
- assert(layerOverlap.summitHut);
+ assert(marketOpen,'market path and stalls must be clear of the three shed roofs');
  const horizon=()=>p.evaluate(()=>{
    const probe=document.createElement('canvas').getContext('2d');
    probe.drawImage(landscape,422,9,1,1,0,0,1,1);
