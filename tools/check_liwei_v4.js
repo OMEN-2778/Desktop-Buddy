@@ -101,7 +101,21 @@ const { chromium } = require("playwright"),
           const s = liweiStory,
             c = seasonMapTest.state.autumn;
           const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-          async function drain() {
+          const choiceButtons = () => Array.from(document.querySelectorAll(".story-choices:not([hidden]) button"));
+          const line = () => document.querySelector(".story-words")?.textContent || "";
+          const stepLine = () => {
+            bump();
+            document.querySelector(".story-bubble")?.dispatchEvent(new KeyboardEvent("keydown", {key:"Enter",bubbles:true}));
+          };
+          async function waitForChoice(label, advanceLines = false) {
+            for(let i=0;i<180;i++){
+              if(choiceButtons()[0]?.textContent===label)return choiceButtons();
+              if(advanceLines)stepLine();
+              await wait(20);
+            }
+            throw Error("expected choice " + label + " at " + JSON.stringify(s.progress));
+          }
+          async function drain(stopAt = null) {
             let loops = 0;
             while (s.active) {
               if (++loops > 1500)
@@ -121,7 +135,10 @@ const { chromium } = require("playwright"),
               );
               if (options) {
                 const buttons = options.querySelectorAll("button");
-                buttons[buttons[0].textContent === "确认" ? 0 : branch].click();
+                const confirming = ["是的","确认"].includes(buttons[0].textContent);
+                if(stopAt && buttons[0].textContent===stopAt)return;
+                if(confirming)bump();
+                buttons[confirming ? 0 : branch].click();
               } else if (
                 document.querySelector(".liwei-caption:not([hidden]) button")
               )
@@ -179,7 +196,72 @@ const { chromium } = require("playwright"),
           c.care("hunger");await wait(120);
           if(sim.t!==landingClock||c.state.goal?.automatic)throw Error("arrival hold");
           sim.needs.hunger=80;
+          const heroName=look.name;
+          look.name="阿简"; // A namesake must still see the NPC's choices.
+          const mainChoice="住事务所的客房";
+          const choicesIndex=LIWEI_SCRIPT.S02.rows[0].arrival[s.progress.choices.S01 || 0].length + 2;
+          let buttons=await waitForChoice(mainChoice,true);
+          const originalScale=prefs.scale;
+          prefs.scale=branch ? 25 : 50;
+          fit();
+          for(const pick of [1-branch,branch,1-branch]){
+            buttons=await waitForChoice(mainChoice);
+            buttons[pick].click();
+            buttons=await waitForChoice("是的");
+            if(buttons[1]?.textContent!=="我再想想" || !line().includes("你想好了吗？") ||
+               !line().includes(pick ? "免费客房" : "跟我住"))
+              throw Error("wrong lodging explanation");
+            const words=document.querySelector(".story-words");
+            if(words.scrollWidth>words.clientWidth+1||words.scrollHeight>words.clientHeight+1)
+              throw Error("lodging terms clipped at " + prefs.scale + "%");
+            buttons[0].click(); // The same double-click must not select and commit.
+            if(s.progress.choices.S02!=null||s.progress.index!==choicesIndex||c.state.inside)
+              throw Error("lodging was committed before deliberate confirmation");
+            const clock=sim.t,needs=JSON.stringify(sim.needs);
+            c.care("energy",true);
+            await wait(135);
+            if(!s.locked()||canReceiveCall()||sim.t!==clock||JSON.stringify(sim.needs)!==needs||c.state.goal||c.state.inside)
+              throw Error("simulation not held during confirmation");
+            buttons[1].click();
+            if(s.progress.choices.S02!=null||choiceButtons()[0]?.textContent!==mainChoice)
+              throw Error("reconsideration did not return to the first choices");
+          }
+          choiceButtons()[1-branch].click();
+          buttons=await waitForChoice("是的");
+          bump();
+          const repeat=new KeyboardEvent("keydown",{key:"Enter",repeat:true,bubbles:true,cancelable:true});
+          buttons[0].dispatchEvent(repeat);
+          if(!repeat.defaultPrevented||s.progress.choices.S02!=null)
+            throw Error("holding Enter can confirm the lodging choice");
+          buttons[0].dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true,cancelable:true}));
+          buttons=await waitForChoice(mainChoice);
+          if(s.progress.choices.S02!=null)throw Error("Escape committed the lodging choice");
+          buttons[1-branch].click();
+          await waitForChoice("是的");
+          const undecided=JSON.parse(JSON.stringify(snapshot()));
+          restore(undecided);
+          buttons=await waitForChoice(mainChoice);
+          if(s.progress.choices.S02!=null||s.progress.index!==choicesIndex||c.state.inside)
+            throw Error("an unconfirmed room was restored as booked");
+          buttons[branch].click();
+          buttons=await waitForChoice("是的");
+          prefs.scale=originalScale;
+          fit();
+          bump();
+          buttons[0].click();
+          buttons[0].click();
+          const committed=JSON.parse(JSON.stringify(snapshot()));
+          if(committed.liweiV4.choices.S02!==branch||committed.liweiV4.index!==choicesIndex+1)
+            throw Error("confirmation did not save exactly one decision");
+          restore(committed);
+          for(let i=0;i<100&&!s.active;i++)await wait(20);
+          if(!s.active||s.progress.index!==choicesIndex+1)
+            throw Error("committed lodging restarted or skipped the branch on reload");
           await drain();
+          if(s.progress.done.filter(k=>k==="S02").length!==1)
+            throw Error("lodging chapter finished twice");
+          look.name=heroName;
+          console.log("TEST lodging confirmation " + branch);
           const room = branch ? "hotel" : "detective_home";
           if (s.lodging() !== room || !c.state.inside || c.state.indoorSite !== room)
             throw Error("arrival lodging does not match the player's choice");
@@ -253,6 +335,12 @@ const { chromium } = require("playwright"),
                 throw Error("in-progress legacy story group");
               for(let i=0;i<30&&!s.active;i++)await wait(30);
               if(!s.active||s.progress.index!==save.liweiV4.index)throw Error("automatic scene resume");
+            }
+            if (k === "S11") {
+              await drain("确认");
+              choiceButtons()[1].click();
+              if(s.progress.ending||choiceButtons()[0]?.textContent==="确认")
+                throw Error("ending committed while reconsidering");
             }
             await drain();
             if (k === "S07" && branch) {

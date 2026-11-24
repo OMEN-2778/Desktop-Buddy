@@ -40,9 +40,9 @@ function createStorySpeech({view,host=view.parentElement,anchor,speakerFor,onClo
   if(!open&&storyWaitsForPhone()){waiting=[speaker,words,o];if(!waitT)waitT=setInterval(()=>{if(storyWaitsForPhone())return;clearInterval(waitT);waitT=0;const w=waiting;waiting=null;if(w)show0(...w);},250);return;}
   return show0(speaker,words,o);
  }
- function show0(speaker,words,{special=true,last=false,advance:next,choices:opts=null}={}){
+ function show0(speaker,words,{special=true,last=false,advance:next,choices:opts=null,asNpc=false}={}){
   if(!open)previous=document.activeElement,busyWas=sayBusy;
-  open=true;hero=speaker===nameOf();advance=opts?null:next;
+  open=true;hero=!asNpc&&speaker===nameOf();advance=opts?null:next;
   peerHud.classList.toggle('quest',!hero&&special);popSay.classList.toggle('quest',hero&&special);
   if(hero){if(peerSpeech.phase!=='idle')hidePeerSay();showSay(words);}
   else{if(!popSay.hidden)popBubble(popSay,0);showPeerSay(words,speaker+'：',speakerFor?.(speaker));}   // her own row stays quiet while someone else talks

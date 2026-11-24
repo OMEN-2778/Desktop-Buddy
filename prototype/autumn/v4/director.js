@@ -166,6 +166,7 @@
         label.includes("头像") ? null : frameFor(name),
     };
   }
+  let confirmChoice = null;
   const speech = createStorySpeech({
     view,
     speakerFor: portrait,
@@ -573,6 +574,7 @@
   };
   function stop() {
     active = false;
+    confirmChoice = null;
     entrance?.cancel();
     entrance = null;
     clearTimeout(timer);
@@ -638,28 +640,42 @@
     show();
   }
   function choose(row, i) {
+    if (!active || confirmChoice) return;
+    const chapter = p.chapter;
     const commit = () => {
-      p.choices[p.chapter] = i;
-      if (p.chapter === "S11") p.ending = i ? "B" : "A";
-      checkpoint();
+      p.choices[chapter] = i;
+      if (chapter === "S11") p.ending = i ? "B" : "A";
       advance();
     };
-    if (p.chapter === "S11") {
-      speech.show("广场", "确定" + row.choices[i] + "？", {
-        choices: [
-          { label: "确认", on: commit },
-          { label: "再想想", on: show },
-        ],
-      });
+    if (!row.confirm && chapter !== "S11") {
+      commit();
       return;
     }
-    commit();
+    const speaker = row.speaker || "广场";
+    const shownAt = performance.now();
+    const confirm = () => {
+      // A double-click on the first menu can land on the confirmation button.
+      if (confirmChoice !== confirm || performance.now() - shownAt < 300) return;
+      confirmChoice = null;
+      commit();
+    };
+    confirmChoice = confirm;
+    speech.show(speaker, row.confirm?.[i] || "确定" + row.choices[i] + "？", {
+      asNpc: true,
+      choices: [
+        { label: row.confirm ? "是的" : "确认", on: confirm },
+        { label: row.confirm ? "我再想想" : "再想想", on: () => {
+          if (confirmChoice === confirm) show();
+        }},
+      ],
+    });
   }
   function completedActions(sequence) {
     return new Set(sequence.slice(0,p.index).filter(row => typeof row === "string" && row.startsWith("!")));
   }
   function show() {
     if (entrance) return;
+    confirmChoice = null;
     clearTimeout(timer);
     sceneText.hidden = true;
     cue = "";
@@ -673,7 +689,9 @@
     if (row.choices) {
       speaker = row.speaker || "";
       face = "";
+      peerHud.style.setProperty("--liwei-who", colors[speaker] || "#54465c");
       speech.show(row.speaker || "选择", row.prompt || "你怎么说？", {
+        asNpc: true,
         choices: row.choices.map((label, i) => ({
           label,
           on: () => choose(row, i),
@@ -697,6 +715,7 @@
     face = emotionFor(words);
     peerHud.style.setProperty("--liwei-who", colors[speaker] || "#54465c");
     speech.show(speaker === "我" ? nameOf() : label, words, {
+      asNpc: speaker !== "我",
       advance,
       last: p.index === rows().length - 1,
     });
@@ -1116,6 +1135,11 @@
   document.addEventListener(
     "keydown",
     (e) => {
+      if (confirmChoice && e.repeat && (e.key === "Enter" || e.key === " ")) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        return;
+      }
       if (
         active &&
         [
