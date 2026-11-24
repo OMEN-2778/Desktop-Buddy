@@ -7,6 +7,7 @@
 <main><img id="landscape" src="town.png?v=__ART_VERSION__" width="994" height="2176" style="height:auto" alt="从山顶瞭望台到湖畔芦苇荡的栗尾市像素地图"><img id="wind" alt="" aria-hidden="true" hidden><canvas width="994" height="2176" aria-label="点击道路指定小人的目的地"></canvas></main>
 <script>
 const layout=__LAYOUT__, step=4, cols=Math.ceil(layout.size[0]/step), rows=Math.ceil(layout.size[1]/step);
+layout.facades.sort((a,b)=>a[4]-b[4]);
 const walk=new Uint8Array(cols*rows), canvas=document.querySelector('canvas'), ctx=canvas.getContext('2d');
 const statusLine=document.querySelector('output'), main=document.querySelector('main');
 const index=(x,y)=>Math.floor(y/step)*cols+Math.floor(x/step);
@@ -91,10 +92,34 @@ canvas.onclick=e=>{
   else statusLine.textContent='这里无法落脚，点街道或栈桥试试';
 };
 document.querySelector('button').onclick=e=>{e.target.textContent=main.classList.toggle('fit')?'看细节':'看全图';};
+const flock = [
+  {offset:0,y:37,speed:21}, {offset:14,y:30,speed:21}, {offset:28,y:36,speed:21},
+  {offset:455,y:60,speed:16}, {offset:470,y:53,speed:16},
+];
+function birdsAt(now) {
+  const time=reducedMotion.matches ? 0 : now;
+  const count=theme==='polluted' ? 2 : flock.length;
+  return flock.slice(0,count).map(({offset,y,speed},i)=>({
+    x:Math.floor((time/1000*speed+offset+120)%(canvas.width+40))-20,
+    y:y+Math.round(Math.sin(time/2500+offset)*4),
+    wing:Math.floor(time/140+i)%3-1,
+  }));
+}
+function drawBirds(now) {
+  ctx.fillStyle=theme==='polluted' ? '#6c6259' : '#526983';
+  for(const {x,y,wing} of birdsAt(now)){
+    ctx.fillRect(x-1,y,3,1);
+    ctx.fillRect(x-2,y+wing,1,1);
+    ctx.fillRect(x+2,y+wing,1,1);
+    ctx.fillRect(x-3,y+wing*2,1,1);
+    ctx.fillRect(x+3,y+wing*2,1,1);
+  }
+}
 let last=performance.now();
 function frame(now){
   wind.hidden = reducedMotion.matches || Math.floor(now/960)%2===0;
   const dt=Math.min(.1,(now-last)/1000);last=now;ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawBirds(now);
   if(goal){ctx.strokeStyle='#f7da86';ctx.lineWidth=2;ctx.strokeRect(Math.round(goal[0])-4,Math.round(goal[1])-2,9,5);}
   for(const a of actors){
     let distance=dt*(a===actors[0]?106:38);
@@ -119,13 +144,15 @@ function drawActor(a, now) {
   ctx.fillRect(x-6,y-2,12,3);
   ctx.drawImage(a.sprite,x-10,y-28-bob);
   if (!cover.naturalWidth) return;
-  for (const [left, top, right, bottom, base] of layout.facades) {
+  const frameOffset=wind.hidden ? 0 : cover.naturalWidth/2;
+  for (const [left, top, right, bottom, base, atlasX, atlasY] of layout.facades) {
     if (y >= base) continue;
     const startX = Math.max(left,x-10), startY = Math.max(top,y-28-bob);
     const width = Math.min(right,x+10) - startX;
     const height = Math.min(bottom,y+1) - startY;
     if (width > 0 && height > 0) {
-      ctx.drawImage(cover,startX,startY,width,height,startX,startY,width,height);
+      ctx.drawImage(cover,frameOffset+atlasX+startX-left,atlasY+startY-top,width,height,
+                    startX,startY,width,height);
     }
   }
 }

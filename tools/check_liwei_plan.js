@@ -22,9 +22,16 @@ const assert=require('node:assert/strict');
  console.log(result);assert.deepEqual(result.unreachable,[]);assert.equal(result.roadCells,result.connected);
  await p.waitForFunction(()=>cover.naturalWidth && actors[0].sprite.naturalWidth);
  const facadeOrder = await p.evaluate(()=>{
+   const [left,top,right,bottom,,atlasX,atlasY] = layout.facades.find(([left,,right,,base])=>left<220 && right>220 && base===976);
    const roofProbe = document.createElement('canvas').getContext('2d');
-   roofProbe.drawImage(cover,-200,-820);
-   const roofPixel = (x,y)=>[...roofProbe.getImageData(x-200,y-820,1,1).data];
+   const roofPixel = (x,y)=>[...roofProbe.getImageData(x,y,1,1).data];
+   // Sample the packed atlas rather than the composite map.
+   const pixelAtRoof = (x,y)=>{
+     if(x<left || x>=right || y<top || y>=bottom)return [0,0,0,0];
+     roofProbe.clearRect(0,0,1,1);
+     roofProbe.drawImage(cover,x-left+atlasX,y-top+atlasY,1,1,0,0,1,1);
+     return roofPixel(0,0);
+   };
    const width=20,height=29;
    const actorPixel = (x,y,footY) => {
      const player={...actors[0],x:220,y:footY,route:[],cursor:0};
@@ -35,10 +42,10 @@ const assert=require('node:assert/strict');
    const footBehindRoof=850,footInFrontOfHouse=982;
    return {
      roadBehind: Boolean(walk[index(220,828)] && walk[index(220,footBehindRoof)]),
-     farSideRoofAlpha: roofPixel(220,828)[3],
-     nearSideRoofAlpha: roofPixel(220,848)[3],
+     farSideRoofAlpha: pixelAtRoof(220,828)[3],
+     nearSideRoofAlpha: pixelAtRoof(220,848)[3],
      coveredPixels: actorPixel(220,848,footBehindRoof),
-     roofPixels: roofPixel(220,848),
+     roofPixels: pixelAtRoof(220,848),
      frontPixels: actorPixel(220,960,footInFrontOfHouse),
    };
  });
@@ -48,14 +55,76 @@ const assert=require('node:assert/strict');
  assert.deepEqual(facadeOrder.coveredPixels,facadeOrder.roofPixels);
  assert.notDeepEqual(facadeOrder.frontPixels,facadeOrder.roofPixels);
  assert.equal(facadeOrder.frontPixels[3],255);
+ const layerOverlap = await p.evaluate(()=>{
+   const atlasCtx=document.createElement('canvas').getContext('2d');
+   const mapCtx=document.createElement('canvas').getContext('2d');
+   const rear=layout.facades.find(([, , , ,depth])=>depth===1430);
+   const front=layout.facades.find(([left, , , ,depth])=>left===400 && depth===1527);
+   const pixel=(slot,x,y)=>{
+     const [left,top,right,bottom,,tx,ty]=slot;
+     if(x<left || x>=right || y<top || y>=bottom)return [0,0,0,0];
+     atlasCtx.clearRect(0,0,1,1);
+     atlasCtx.drawImage(cover,tx+x-left,ty+y-top,1,1,0,0,1,1);
+     return [...atlasCtx.getImageData(0,0,1,1).data];
+   };
+   let overlap=0, correct=0;
+   for(let y=1425;y<1434;y++){
+     for(let x=401;x<455;x++){
+       const a=pixel(rear,x,y),b=pixel(front,x,y);
+       if(a[3]!==255 || b[3]!==255 || a.join()===b.join())continue;
+       overlap++;
+       mapCtx.drawImage(landscape,x,y,1,1,0,0,1,1);
+       const visible=[...mapCtx.getImageData(0,0,1,1).data];
+       if(b.join()===visible.join())correct++;
+     }
+   }
+   return {overlap,correct,summitHut:at('hut')[1]<275};
+ });
+ assert(layerOverlap.overlap>0 && layerOverlap.overlap===layerOverlap.correct);
+ assert(layerOverlap.summitHut);
+ const horizon=()=>p.evaluate(()=>{
+   const probe=document.createElement('canvas').getContext('2d');
+   probe.drawImage(landscape,422,9,1,1,0,0,1,1);
+   probe.drawImage(landscape,131,66,1,1,1,0,1,1);
+   return [...probe.getImageData(0,0,2,1).data];
+ });
+ const autumnSky=await horizon();
+ assert(autumnSky[2]-autumnSky[0]>35);
  const selectSeason=p.locator('#season'), cleanToggle=p.locator('#clean');
  for(const season of ['spring','summer','winter']){
    await selectSeason.selectOption(season);
    await p.waitForFunction(expected=>theme===expected && landscape.naturalWidth===994,season);
    assert.equal(await p.locator('#landscape').evaluate(img=>new URL(img.src).pathname),'/'+season+'.png');
+   const sky=await horizon();
+   assert(sky[2]-sky[0]>35);
+   if(season==='winter')assert(sky[4]>235 && sky[4]>autumnSky[4]+8);
+
  }
  await cleanToggle.uncheck();
- await p.waitForFunction(()=>theme==='polluted' && cover.naturalWidth===994);
+ await p.waitForFunction(()=>theme==='polluted' && cover.naturalWidth>0);
+ const smog=await horizon();
+ assert(smog[0]>smog[2]);
+ const clinicAndFlight = await p.evaluate(()=>{
+   const [x,y]=at('clinic');
+   const actor={...actors[0],x,y,route:[],cursor:0};
+   ctx.clearRect(x-10,y-28,20,29);
+   drawActor(actor,0);
+   const actual=ctx.getImageData(x-10,y-28,20,27).data;
+   const reference=document.createElement('canvas').getContext('2d');
+   reference.drawImage(actor.sprite,0,0);
+   const expected=reference.getImageData(0,0,20,27).data;
+   let covered=0;
+   for(let i=0;i<expected.length;i+=4){
+     // Ignore the foot shadow, compare opaque body pixels.
+     if(i>=20*25*4)break;
+     if(expected[i+3]===255 && (actual[i]!==expected[i] || actual[i+1]!==expected[i+1] || actual[i+2]!==expected[i+2]))covered++;
+   }
+   const [,roasterY]=at('chestnut'),[,nurseryY]=at('nursery');
+   return {covered, destinationsOffRunway:roasterY>800 && nurseryY>800,
+           clearRunway:Boolean(walk[index(390,746)] && walk[index(475,770)]),
+           birdsMove:birdsAt(0)[0].x!==birdsAt(1100)[0].x && birdsAt(0)[0].wing!==birdsAt(140)[0].wing};
+ });
+ assert.deepEqual(clinicAndFlight,{covered:0,destinationsOffRunway:true,clearRunway:true,birdsMove:true});
  const dirtyMap=await p.locator('#landscape').getAttribute('src');
  for(const season of ['spring','summer','town','winter']){
    await selectSeason.selectOption(season);
@@ -73,6 +142,6 @@ const assert=require('node:assert/strict');
  await click(505,692);await p.waitForFunction(()=>document.querySelector('output').textContent==='已到达');
  await click(770,2020);assert.match(await p.locator('output').innerText(),/无法落脚/);
  await click(598,2070);await p.waitForFunction(()=>document.querySelector('output').textContent==='已到达',null,{timeout:60000});
- assert.equal(await p.evaluate(()=>actors.slice(1).every(a=>a.stop>0)),true);assert.deepEqual(errors,[]);console.log('seasons, pollution, foliage motion, facade depth, mouse, quay arrival and NPCs ok');
+ assert.equal(await p.evaluate(()=>actors.slice(1).every(a=>a.stop>0)),true);assert.deepEqual(errors,[]);console.log('seasonal skyline, runway, birds, clinic, market depth, foliage motion and all routes pass');
  }finally{await b.close();}
 })().catch(e=>{console.error(e);process.exit(1)});

@@ -4,9 +4,11 @@
 
 玩家提供《栗尾市地图布局》作为空间依据。北面瞭望台、西侧折返登山路、中部停机坪和街区、东侧矿道、南侧沿湖公路与木码头，保留原有 20×28 人物和门高比例。新版房屋全部正对镜头，平屋面沿画面纵深展开，前后女儿墙表现厚度，部分房屋的屋顶略遮后方道路近缘。矿轮、钟面、放大镜、诊所十字和工人食堂遮棚对应不同任务地点。参考图用于煤矿设施和街区气质。
 
-独立审图页在 `/autumn/new-town/`，原图 `town.png`。生成命令为 `PYTHONPATH=tools:art/src/concept python art/src/concept/_liwei_plan.py`，再运行 `PYTHONPATH=tools python tools/make_autumn_preview.py`。画图和审图寻路共用街面矩形；`layout.json` 的地点、街面用半尺寸布局坐标，障碍用原生像素坐标。道路寻路以 4 像素采样，路人也使用相同路径计算。审图页读取建筑落地线和单独的像素遮挡图，让道路后方的角色经过屋檐时被部分遮住。
+独立审图页在 `/autumn/new-town/`，原图 `town.png`。生成命令为 `PYTHONPATH=tools:art/src/concept python art/src/concept/_liwei_plan.py`，再运行 `PYTHONPATH=tools python tools/make_autumn_preview.py`。画图和审图寻路共用街面矩形；`layout.json` 的地点、街面用半尺寸布局坐标，障碍用原生像素坐标。道路寻路以 4 像素采样，路人也使用相同路径计算。建筑、摊位、植被、地物及小人按落地 y 坐标叠放。每个能挡住角色的对象使用独立像素遮挡图，两个风吹帧共用布局。
 
 审图页可以切换季节和洁净状态。洁净前四季共用灰黄色画面，洁净后春绿少粉、夏金黄、秋橙黄、冬白雪。树与灌木复用 `front_yard.py` 的像素轮廓并保持固定落点；各状态对应底图、屋檐遮挡图及摆动像素差分图。地图接入需等主人看图。通过后迁移剧情站位、镜头与任务入口，接入游戏日期与污染阶段，处理旧存档的落点，再用两条结局和居民作息回归。旧地图参数见下。
+
+观景台保持开放，清掉山坡上方的浮石，山上小屋在观景台西侧，原址改为普通民居。苗圃移至公园，炒栗摊移至市场。洁净远景和冬季雪线由 `autumn_city.backdrop` 生成，飞鸟在审图画布上逐帧拍翅。跑道、冬季积雪、矿车、矿洞、湖水、码头与定制店招在 `art/src/concept/_liwei_details.py`。
 
 Current world: **640×944 native pixels**. The compact city is kept at its existing
 width; authoring core is now 640×720 (32px more river), with a 224px summit/panorama strip

@@ -915,11 +915,12 @@ def _relief(c,prof,cols,shear=.8,snow=None,snowline=0,seed=1):
     k=(snowline-prof[x])*.75-edge[xs]*2-(3 if v<-.9 else 0)
     if d<k:col=S1 if v>-.9 else S2
    px[x,y]=col
-def backdrop(stage):
+def backdrop(stage, *, season=None, birds=True):
  """Three separate distance layers, BW x BACK_H each (owner 2026-11-11: sky / far range / mid hills move at different
  speeds with the camera): returns (sky, far, mid) Images. far and mid are transparent above their ridge and carry
  their own haze, thick at the foot and thinning upward. The near hill belongs to the map itself (hill_ground)."""
  clean=stage>=4;r=random.Random(77)
+ winter=clean and season=='winter'
  def layer(fill=None):
   c=City(stage);c.im=Image.new('RGBA',(BW,BACK_H),fill or (0,0,0,0));c.d=ImageDraw.Draw(c.im);return c
  hz=P.sky_day[3] if clean else P.oat[3]
@@ -935,7 +936,8 @@ def backdrop(stage):
   for cx,cy,k in [(70,16,1),(250,10,.7),(395,22,1.1),(560,13,.85),(700,20,.9),(820,9,.75)]:   # flat-bottomed cumulus
    for dx,rr in [(-14,6),(-5,9),(6,11),(17,7),(26,5)]:c.oval(cx+dx*k,cy-rr*k*.55,rr*k,rr*k*.75,P.snow[3])
    c.box(cx-20*k,cy-2,48*k,4,P.snow[3]);c.box(cx-16*k,cy+2,40*k,2,P.snow[2]);c.box(cx-8*k,cy+4,22*k,1,P.snow[1])
-  for bx,by in [(160,30),(171,26),(182,31),(480,36),(492,33),(640,28),(652,31)]:c.line([(bx-3,by-2),(bx,by),(bx+3,by-2)],P.slate[1])
+  if birds:
+   for bx,by in [(160,30),(171,26),(182,31),(480,36),(492,33),(640,28),(652,31)]:c.line([(bx-3,by-2),(bx,by),(bx+3,by-2)],P.slate[1])
  else:
   c.oval(608,24,11,11,P.oat[3]);c.oval(608,24,8,8,P.oat[4])   # the sun behind the smog
   for y,x0,x1 in [(19,570,660),(26,586,700),(31,540,640)]:c.box(x0,y,x1-x0,2,P.oat[2])
@@ -943,10 +945,11 @@ def backdrop(stage):
  # ---- far: two ranges of different mountains (a horn, a long table, twin summits, a leaning tooth ...), relief-shaded
  far=layer()
  a=layer();pa=_peaks(5,44,74,.5,[(96,20,.75,1.0),(118,26,1.5,.8),(418,14,.5,1.22),(455,25,1.9,.72),(742,24,.9,.95),(600,40,.25,1.3)])
- _relief(a,pa,(P.sky_soft[3],P.sky_soft[2],P.sky_soft[1]) if clean else (P.oat[3],P.oat[2],P.oat[1]),.9,(P.snow[3],P.snow[2]) if clean else None,38,3)
- _haze(a,hz,16,80,.45,.88) if clean else _haze(a,hz,10,70,.72,.95,1,11);far.im.alpha_composite(a.im)
+ _relief(a,pa,(P.snow[2],P.snow[2],P.snow[1]) if winter else (P.sky_soft[3],P.sky_soft[2],P.sky_soft[1]) if clean else (P.oat[3],P.oat[2],P.oat[1]),.9,(P.snow[3],P.snow[2]) if clean else None,104 if winter else 38,3)
+ _haze(a,hz,32,120,.12,.60) if winter else _haze(a,hz,16,80,.45,.88) if clean else _haze(a,hz,10,70,.72,.95,1,11)
+ far.im.alpha_composite(a.im)
  b=layer();pb=_peaks(9,58,90,.55,[(24,40,.6,1.1),(232,34,1.4,.85),(262,43,.7,1.1),(330,52,.4,1.2),(548,37,.85,1.0),(668,50,.3,1.35),(838,44,1.0,.95)])
- _relief(b,pb,(P.sky_soft[2],P.sky_soft[1],P.sky_soft[0]) if clean else (P.oat[2],P.oat[1],P.oat[0]),.7,(P.snow[3],P.snow[2]) if clean else None,46,4)
+ _relief(b,pb,(P.snow[2],P.snow[1],P.snow[0]) if winter else (P.sky_soft[2],P.sky_soft[1],P.sky_soft[0]) if clean else (P.oat[2],P.oat[1],P.oat[0]),.7,(P.snow[3],P.snow[2]) if clean else None,115 if winter else 46,4)
  # smelter on the far plain (the story's old furnace country)
  sb=96;dk,lt=(P.wall_sky[0],P.sky_soft[0]) if clean else (P.pave[0],P.pave[1])
  b.box(34,sb-8,64,10,dk);b.box(34,sb-8,64,1,lt);b.box(46,sb-13,22,6,dk);b.box(46,sb-13,22,1,lt)
@@ -955,7 +958,8 @@ def backdrop(stage):
   b.box(sx,sb-sh,5,sh,dk);b.box(sx,sb-sh,1,sh,lt);b.box(sx-1,sb-sh,7,2,lt);b.box(sx,sb-sh+7,5,1,lt)
   if stage<3:
    for j in range(7):b.oval(sx+3+j*5+j*j*.3,sb-sh-4-j*2.2,2+j*.6,2+j*.35,P.oat[2])
- _haze(b,hz,40,100,.25,.85) if clean else _haze(b,hz,30,90,.55,.93,1,12);far.im.alpha_composite(b.im)
+ _haze(b,hz,52,135,.10,.48) if winter else _haze(b,hz,40,100,.25,.85) if clean else _haze(b,hz,30,90,.55,.93,1,12)
+ far.im.alpha_composite(b.im)
  # ---- mid: three wooded hills, one behind the other, each with its own colouring; crowns smaller on the farther hills,
  # slopes facing the light brighter; conifer stands on the ridges; a cliff with a thread of water
  c=layer()
@@ -966,6 +970,13 @@ def backdrop(stage):
  else:
   g1=[P.pave[0],P.pave[1],P.pave[2],P.pave[3]];g2=[P.walnut[2],P.oat[0],P.oat[1],P.oat[2]];g3=[P.sage[0],P.sage[1],P.sage[2],P.oat[1]]
   hills=[(23,2,[g1,g1,g2],P.pave[0]),(41,3,[g2,g1,g3],P.pave[0]),(57,3,[g1,g2,g3,g2],P.walnut[1])]
+ if winter:
+  snow_bank=[P.snow[0],P.snow[1],P.snow[2],P.snow[3]]
+  G=[P.snow[0],P.snow[1],P.snow[2]]
+  hills=[(seed,rad,[snow_bank],P.snow[1]) for seed,rad,_,_ in hills]
+ elif season in ('spring','summer'):
+  colors=[grn,[P.sage[1],P.sage[2],P.leaf[3],P.leaf[4]]] if season=='spring' else [gold,[P.oak[1],P.oak[2],P.mustard[2],P.mustard[4]]]
+  hills=[(seed,rad,colors,colors[0][0]) for seed,rad,_,_ in hills]
  # each hill is a few rounded humps of its own (centre, summit row, half width), with a little roughness on the line
  HUMPS=[[(70,70,150),(250,60,120),(420,78,170),(610,58,140),(790,72,130)],
         [(-20,84,170),(170,92,120),(340,80,160),(540,96,150),(720,82,170),(880,94,90)],
@@ -1001,6 +1012,7 @@ def backdrop(stage):
        for k in range(3):c.box(x-1+k,by-h-1-k,w+2-2*k,1,rf[1] if clean else rf[0])
        c.box(x-1,by-h-1,(w+2)//2,1,rf[3] if clean else rf[1])
       else:c.box(x-1,by-h-2,w+2,2,rf[1] if clean else rf[0]);c.box(x-1,by-h-2,w,1,rf[3] if clean else rf[1])
+      if winter:c.box(x-1,by-h-3,w+2,2,P.snow[3])
       c.box(x,by-h,w,1,sh)                                  # shadow under the eaves
       lit=(not clean) and tr.random()<.5
       for wx in range(x+1+tr.randrange(2),x+w-2,3):
@@ -1024,7 +1036,12 @@ def backdrop(stage):
   for x in range(4,BW-4,4):
    if math.sin(x*.021+seed*1.7)>.45 and hr.random()<.7:
     y=prof[x]+hr.randrange(1,5);h=5+rad+hr.randrange(3)
-    c.poly([(x,y-h),(x-3,y),(x+3,y)],G[0]);c.poly([(x,y-h),(x-3,y),(x,y)],G[1]);c.box(x-1,y-h+2,1,2,G[2])
+    if season is None:
+     c.poly([(x,y-h),(x-3,y),(x+3,y)],G[0]);c.poly([(x,y-h),(x-3,y),(x,y)],G[1]);c.box(x-1,y-h+2,1,2,G[2])
+    else:
+     R=ramps[(x//4)%len(ramps)]
+     c.box(x,y-3,1,4,dark);c.oval(x,y-h//2,3,3,R[0])
+     c.oval(x-1,y-h//2-2,2,2,R[2]);c.box(x-2,y-h//2-3,2,1,R[3])
  if clean:   # a cliff on the nearest hill with a thread of falling water
   for cx0,cy0 in [(176,118),(690,122)]:
    for j in range(6):
@@ -1035,7 +1052,7 @@ def backdrop(stage):
    y=96+j*7;x0=612+j*9;x1=800-j*5;c.box(x0,y,x1-x0,6,P.oat[1] if j%2 else P.oat[0]);c.box(x0,y,x1-x0,1,P.oat[2]);c.box(x0+3,y+5,x1-x0-6,1,P.pave[0])
   c.box(700,90,3,8,P.pave[0]);c.line([(701,90),(716,84)],P.pave[0]);c.line([(716,84),(716,90)],P.pave[0])   # a derrick over the pit
   for x,y in [(120,108),(300,112),(388,118),(430,124),(214,116),(520,120),(90,122)]:c.line([(x,y),(x,y-7)],P.walnut[1]);c.line([(x,y-5),(x+3,y-8)],P.walnut[1]);c.line([(x,y-4),(x-2,y-7)],P.walnut[1])
- _haze(c,hz,54,118,.3,.78) if clean else _haze(c,hz,40,105,.5,.9,1.2,13)
+ _haze(c,hz,64,126,.12,.5) if winter else _haze(c,hz,54,118,.3,.78) if clean else _haze(c,hz,40,105,.5,.9,1.2,13)
  return sky_im,far.im,c.im
 def far_view(c,stage):
  """Flat previews only (review sheet, 'polluted' picture): the three layers at rest."""

@@ -7,7 +7,8 @@ from functools import lru_cache
 import numpy as np
 import front_yard as yard
 from PIL import Image, ImageDraw, ImageFilter, ImageChops
-from autumn_city import City, P
+from autumn_city import City, P, backdrop
+from _liwei_details import lake, mine_portal, ore_cart, painted_sign, powder, public_toilet, railway, strip, waterfront
 import doll
 
 ASSETS = Path(__file__).resolve().parents[2] / 'out/concept'
@@ -17,33 +18,33 @@ W, H = 994, 2176
 # same union for painted roads, mouse destinations and resident paths.
 STREETS = [
     (109,110,311,149),(190,140,235,203),(47,189,220,208),(49,197,66,951),
-    (58,318,391,374),(351,360,369,575),(58,410,360,427),(268,417,284,499),
+    (58,318,391,392),(351,360,369,575),(58,410,360,427),(268,417,284,499),
     (57,489,361,503),(180,491,196,920),(57,567,362,583),(57,639,190,652),
     (57,717,365,732),(304,720,323,924),(356,720,370,924),(322,720,357,939),
     (0,902,496,952),(58,944,75,989),(59,977,311,997),(291,984,307,1047),
     (210,983,226,1022),(211,1013,259,1025),
     (196,602,242,613),(224,607,237,646),(196,635,236,646),
-    (162,368,175,393),(164,383,249,395),(228,363,240,394),
     (146,272,160,326),(150,266,292,278),
 ]
 # Forecourts and accesses at exact facade thresholds.
 BLOCKS = [
+ ('hut','山上小屋',112,124,44,1,'old',''),
  ('mine_office','赤岩矿业',74,488,72,2,'brick','gear'),('townhall','市政厅',153,488,51,2,'old','clock'),
  ('detective_home','侦探事务所',211,488,51,2,'brick','lens'),('clinic','苏医生诊所',290,488,55,2,'civic','cross'),
  ('homes1','',73,566,47,2,'old',''),('homes2','',128,566,47,2,'brick',''),
  ('canteen','工人食堂',201,566,48,1,'brick','awning'),('laundry','洗衣铺',253,566,45,1,'civic','laundry'),
  ('bath','公共浴场',303,566,43,1,'brick','steam'),
  ('homes3','',74,637,46,2,'brick',''),('homes4','',128,637,46,2,'old',''),
- ('hut','山上小屋',74,716,46,1,'old',''),('toilet','公厕',128,716,46,1,'civic',''),
+ ('homes5','',74,716,46,1,'old',''),('toilet','公厕',128,716,46,1,'civic',''),
  ('dorm1','',74,797,46,1,'old',''),('dorm2','',128,797,46,1,'brick',''),
  ('dorm3','',74,885,46,2,'old',''),('dorm4','',128,885,46,2,'old',''),
- ('store','',381,900,48,2,'brick','awning'),('syrup','枫糖铺',438,900,49,1,'old','awning'),
+ ('store','栗尾货铺',381,900,48,2,'brick','awning'),('syrup','枫糖铺',438,900,49,1,'old','awning'),
  ('workshop','机修间',204,900,55,1,'brick','gear'),('shed','',264,900,36,1,'brick',''),
 ]
 STREETS += [(68,832,122,840),(150,829,181,839),(88,798,158,806),(120,798,131,902),(73,884,174,904)]
 PLACES = {k:(int(x+w/2),y+3) for k,_,x,y,w,*_ in BLOCKS}
 PLACES.update(lookout=(209,132),pavilion=(265,132),airstrip=(235,349),mine=(339,726),
-              nursery=(165,389),koi=(236,610),swing=(215,642),chestnut=(247,392),
+              nursery=(227,606),koi=(236,610),swing=(215,642),chestnut=(285,723),
               plaza=(232,571),notice=(295,575),market=(235,722),pier=(298,1036),reeds=(249,1020))
 # Keep the existing 20×28 doll and 27px door. All facades face the viewer.
 # Planes recede straight up the map, keeping the left/right edges aligned.
@@ -99,27 +100,45 @@ class Town(City):
         self.box(tx,ty-8,tw,8,P.steel[2])
         self.box(tx+2,ty-5,tw-4,2,P.steel[1])
 
+    def placed_sprite(self,sprite,x,y,depth):
+        self.scenery.append(((x,y,x+sprite.width,y+sprite.height),sprite,depth))
+
     def facade(self,base,drawing,*args):
-        # Keep the alpha silhouette for depth ordering in the playable review.
+        # Isolate each silhouette and its sign. The base is where an object
+        # meets the ground, including when roofs overlap taller objects.
         world=self.start_foliage()
+        label_start=len(self.labels)
         drawing(self,*args)
+        for label in self.labels[label_start:]:
+            self.text(label['x']+max(4,(label['w']-len(label['text'])*10)//2),
+                      label['y']+1,label['text'],10)
+        del self.labels[label_start:]
         sprite=self.im
         bounds=sprite.getbbox()
         self.im=world
         self.d=ImageDraw.Draw(world)
         if bounds:
-            sprite=sprite.crop(bounds)
-            self.facades.append((bounds,sprite,base))
-            world.alpha_composite(sprite,bounds[:2])
+            self.placed_sprite(sprite.crop(bounds),*bounds[:2],base)
 
 def house(c, index, entry):
     key,name,x,base,w,floors,kind,detail=entry
     x,base,w=x*2,base*2,w*2
+    if key=='toilet':
+        public_toilet(c,x,base,w)
+        return
+    if key=='clinic':
+        # Leave a clear paved apron all the way across the entrance. The
+        # facade has its own depth; the extended steps remain under feet.
+        c.box(x+4,base-9,w-8,17,P.pave[3])
+        c.box(x+w//2-15,base-7,31,13,P.pave[3])
+        for y in (base-5,base-2,base+1):c.box(x+w//2-15,y,31,1,P.oat[2])
+        base-=9
     c.roof_colors=[P.slate,P.steel,P.oat,P.sea_grey][index%4]
     # Deeper buildings and shallower houses follow the same projection. On the
     # upper three blocks the roof covers only the near edge of the street.
-    c.roof_depth={976:40,1132:44 if floors==2 else 68,1274:28,1770:32}.get(base,36)
-    c.building(x,base,w,floors,kind,name or None,20+index)
+    c.roof_depth={967:32,976:40,1132:44 if floors==2 else 68,1274:28,1770:32}.get(base,36)
+    c.building(x,base,w,floors,kind,None,19+index)
+    if name:painted_sign(c,key,x,base-50,w,name)
     dx=x+w//2
     if detail=='awning':
         for j in range(0,w-10,6):
@@ -127,6 +146,10 @@ def house(c, index, entry):
             c.poly([(x+7+j,base-30),(x+13+j,base-30),(x+10+j,base-23),(x+4+j,base-23)],ramp[3])
             c.box(x+4+j,base-22,6,3,ramp[1])
     if detail=='cross':
+        for xx in (x+3,x+w-10):
+            c.box(xx,base-4,7,3,P.teal[1]);c.box(xx+1,base-6,5,2,P.teal[3])
+        c.box(dx-15,base-33,31,2,P.steel[4])
+        c.box(dx-15,base-31,31,1,P.steel[1])
         c.box(x+5,base-39,16,16,P.linen[3]);c.box(x+11,base-37,4,12,P.clay[2]);c.box(x+7,base-33,12,4,P.clay[2])
     if detail in ('clock','gear','lens'):
         cy=base-(77 if floors==2 else 53)
@@ -149,7 +172,19 @@ def house(c, index, entry):
     if key=='mine_office':
         c.pipe([(x+8,base-4),(x+8,base-34),(x+20,base-34)])
         c.crate(x+w-19,base,14,12)
-    if detail=='steam':c.pipe([(x+6,base-5),(x+6,base-28),(x+16,base-28)]);c.chimney(x+w-12,base-71,24)
+    if key=='canteen':
+        c.box(x+8,base-19,21,17,P.walnut[0]);c.box(x+10,base-18,17,12,P.mustard[2])
+        for ax in (x+13,x+20):c.box(ax,base-18,1,12,P.wood[1])
+        c.box(x+7,base-6,23,3,P.wood[3])
+    if detail=='steam':
+        c.pipe([(x+6,base-5),(x+6,base-28),(x+16,base-28)])
+        c.chimney(x+w-12,base-71,24)
+        for yy in (base-12,base-8):
+            c.box(x+16,yy,w-23,1,P.wall_sky[0])
+    if key=='hut':
+        for xx in (x+5,x+w-13):
+            c.box(xx,base-8,7,7,P.wood[1]);c.box(xx,base-8,7,1,P.wood[3])
+
     if detail=='laundry':
         c.line([(x+4,base-22),(dx-9,base-20)],P.wood[0])
         for j,col in enumerate([P.linen,P.sage,P.wall_blush]):c.box(x+6+j*8,base-21,6,9-j,col[3])
@@ -190,9 +225,9 @@ def shrub_sprite(seed, theme, frame):
     bounds = sprite.getbbox()
     return sprite.crop(bounds),bounds[0]-x,bounds[1]-base
 
-def paint_plant(canvas, plant, x, y):
-    picture,dx,dy = plant
-    canvas.alpha_composite(picture,(x+dx,y+dy))
+def place_plant(c,plant,x,y):
+    picture,dx,dy=plant
+    c.placed_sprite(picture,x+dx,y+dy,y)
 
 def draw_trees(c, theme, frame, usable):
     rng = random.Random(881)
@@ -205,7 +240,7 @@ def draw_trees(c, theme, frame, usable):
                 locations.append((y,x,seed))
     for y,x,seed in sorted(locations):
         plant = tree_sprite(seed,theme,frame ^ (seed%3==0),1)
-        paint_plant(c.im,plant,x,y)
+        place_plant(c,plant,x,y)
 
 def warm_haze(image):
     pixels = np.asarray(image).copy()
@@ -234,16 +269,24 @@ def work_shed(c,x,base,w,seed):
     c.roof_depth=36
     c.building(x,base,w,1,'brick',None,seed)
 
-def summit_shelter(c,x,base):
-    # Open-front lookout on the original stone ledge, with a level roof.
-    c.box(x-28,base,61,5,P.pave[2])
-    c.box(x-25,base-39,50,38,P.walnut[1])
-    c.bench(x-15,base-11)
-    for post in (x-25,x+22):
-        c.box(post,base-37,4,37,P.wood[0]);c.box(post,base-37,1,37,P.wood[3])
-    c.roof_colors=P.oat
-    c.roof_depth=32
-    c.roof(x-28,base-45,56)
+def lookout_fittings(c):
+    # Open stone terrace, with benches and a telescope facing the valley.
+    for x in (381,440):
+        c.facade(244,City.bench,x,244)
+    def telescope(c):
+        c.box(533,251,17,2,P.pave[1]);c.box(539,236,5,16,P.steel[1])
+        c.box(540,236,1,16,P.steel[3])
+        c.line([(532,232),(549,224)],P.steel[0],6)
+        c.line([(532,231),(549,223)],P.steel[2],2)
+        c.line([(548,222),(552,228)],P.teal[3],3)
+    c.facade(253,telescope)
+
+@lru_cache(maxsize=5)
+def distant_view(theme):
+    sky,far,hills=backdrop(0 if theme=='polluted' else 4,season=theme,birds=False)
+    sky.alpha_composite(far)
+    sky.alpha_composite(hills)
+    return sky.resize((W,275),Image.Resampling.NEAREST)
 
 def draw(theme, frame):
     r=random.Random(724)
@@ -257,35 +300,19 @@ def draw(theme, frame):
         'winter': (P.snow[2], P.snow[1], P.snow[3], P.snow[2], P.porcelain[3]),
         'polluted': (P.oak[1], P.oat[0], P.oat[1], P.oak[0], P.oat[2]),
     }[theme]
-    c.facades=[]
+    c.scenery=[]
     c.snowy=winter
     c.im=Image.new('RGBA',(W,H),soil[0]);c.d=ImageDraw.Draw(c.im)
-    suffix='polluted' if polluted else 'clean' if theme in ('spring','winter') else 'clear'
-    sky=Image.open(ASSETS/f'autumn_back_sky_{suffix}.png').convert('RGBA')
-    for layer in ('far','mid'):
-        ridge=Image.open(ASSETS/f'autumn_back_{layer}_{suffix}.png').convert('RGBA')
-        if winter:
-            snow=Image.new('RGBA',ridge.size,P.snow[2]);snow.putalpha(ridge.getchannel('A'))
-            ridge=Image.blend(ridge,snow,.67)
-        sky.alpha_composite(ridge)
-    c.im.paste(sky.resize((W,275),Image.Resampling.NEAREST))
+    c.im.paste(distant_view(theme),(0,0))
     roads=Image.new('L',(W,H));md=ImageDraw.Draw(roads)
     for a,b,e,f in STREETS:md.rectangle((2*a,2*b,2*e,2*f),fill=255)
     forest=Image.new('L',(W,H),255);fd=ImageDraw.Draw(forest)
-    for rect in [(0,0,496,108),(0,901,496,1090),(68,425,350,581),(69,576,303,645),(70,659,178,718),(69,732,176,902),(198,733,301,902),(376,833,493,902),(197,679,352,726),(155,374,255,396),(143,215,305,278)]:
+    for rect in [(0,0,496,108),(0,901,496,1090),(68,425,350,581),(69,576,303,645),(70,659,178,718),(69,732,176,902),(198,733,301,902),(376,833,493,902),(197,679,352,726),(57,308,392,407),(143,215,305,278)]:
         fd.rectangle(tuple(n*2 for n in rect),fill=0)
     # Ground, gravel and a sheltered lakeshore.
     for i in range(52000):
         x=r.randrange(W);y=r.randrange(266,1960);c.box(x,y,r.randint(1,6),1,r.choice(soil[1:]))
-    def boundary(x):
-        return 1936+int(11*math.sin(x*.015)+8*math.cos(x*.037))
-    shore = (P.snow[3],P.snow[2],P.snow[1],P.sea_grey[1]) if winter else (P.oat[2],soil[2],P.teal[2],P.teal[1])
-    for yy in range(1900,H):
-        for x in range(0,W,4):
-            dy=yy-boundary(x)
-            if dy>=0:c.box(x,yy,4,1,shore[0 if dy<3 else 1 if dy<8 else 2 if dy<18 else 3])
-    for i in range(1900):
-        x=r.randrange(W);y=r.randrange(1965,H);c.box(x,y,r.randint(2,12),1,r.choice(P.sea_grey[:3] if winter else [P.teal[2],P.teal[0],P.sea_grey[2]]))
+    lake(c,theme,frame)
     # Compacted yards and stone plinths separate shopfronts from planted ground.
     for _,_,bx,by,bw,floors,*_ in BLOCKS:
         x,y,w=bx*2,by*2,bw*2
@@ -294,24 +321,32 @@ def draw(theme, frame):
             gx=r.randrange(x-5,x+w+5);gy=r.randrange(y-72,y+6)
             c.box(gx,gy,2,1,P.snow[3] if winter else P.oak[2])
     # Streets are clipped to their union, with continuous paving across junctions.
-    paving=Image.new('RGB',(W,H),P.snow[1] if winter else '#938e89');pd=ImageDraw.Draw(paving)
+    paving=Image.new('RGB',(W,H),'#938e89');pd=ImageDraw.Draw(paving)
+    stone=['#9d9792','#a19b94','#a09a94','#a49d95','#a8a298']
     for y in range(0,H,7):
         for x in range(-20+(y//7%2)*9,W,19):
-            tone=r.choice([P.snow[2],P.snow[2],P.snow[3],P.snow[1]] if winter else ['#9d9792','#a19b94','#a09a94','#a49d95','#a8a298'])
+            tone=r.choice(stone)
             pd.rectangle((x,y,x+17,y+5),fill=tone)
-    c.im.paste(P.pave[0],(0,0,W,H),roads.filter(ImageFilter.MaxFilter(5)));c.im.paste(paving,(0,0),roads)
-    for a,b,e,f,vertical in [(95,326,390,368,False),(322,721,355,935,True),(0,919,497,942,False)]:
+    c.im.paste(P.pave[0],(0,0,W,H),roads.filter(ImageFilter.MaxFilter(5)))
+    c.im.paste(paving,(0,0),roads)
+    if winter:
+        powder(c,roads)
+    for a,b,e,f,vertical in [(322,721,355,935,True),(0,919,497,942,False)]:
         c.box(a*2,b*2,(e-a)*2,(f-b)*2,P.slate[2] if winter else P.slate[1])
         if winter:
-            for offset in range(0,((f-b) if vertical else (e-a))*2,6):
-                thickness=2+(offset*17%7)
+            for offset in range(0,((f-b) if vertical else (e-a))*2,3):
+                t=offset*.06
+                width=round(5+2*math.sin(t)+2*math.sin(t*2.23)+math.cos(t*4))
                 if vertical:
-                    c.box(a*2,b*2+offset,thickness,6,P.snow[2]);c.box(e*2-thickness,b*2+offset,thickness,6,P.snow[2])
+                    c.box(a*2,b*2+offset,width,3,P.snow[2])
+                    c.box(e*2-width,b*2+offset,width,3,P.snow[2])
                 else:
-                    c.box(a*2+offset,b*2,6,thickness,P.snow[2]);c.box(a*2+offset,f*2-thickness,6,thickness,P.snow[2])
+                    c.box(a*2+offset,b*2,3,width,P.snow[2])
+                    c.box(a*2+offset,f*2-width,3,width,P.snow[2])
         for n in range((b if vertical else a)*2+12,(f if vertical else e)*2-12,45):
             if vertical:c.box(a+e,n,3,22,P.mustard[3])
             else:c.box(n,b+f,21,3,P.mustard[3])
+    strip(c,160,648,614,95)
     for x in (58,310,366):
         for y in range(1840,1883,7):c.box(2*x-13,y,27,3,P.linen[3])
     for x,y in [(143,988),(700,1139),(361,1292),(125,1443),(747,1818),(195,1900)]:
@@ -321,23 +356,23 @@ def draw(theme, frame):
     usable=ImageChops.subtract(forest,roads.filter(ImageFilter.MaxFilter(29)))
     draw_trees(c,theme,frame,usable)
     # Mountaintop rail, viewing pavilion and paved switchback.
-    c.rail((224,228),(612,228),True);c.facade(253,summit_shelter,540,253);c.bench(381,244);c.bench(440,244)
+    c.facade(228,City.rail,(224,228),(612,228),True)
+    lookout_fittings(c)
     for y in range(303,376,7):c.box(383,y,84,2,P.pave[1]);c.box(383,y,84,1,P.linen[2])
     # Colliery above the landing strip. A timber headframe, loading bin and coal tubs.
     c.cliff(320,646,414,472,44);headframe(c,342,533)
     c.roof_colors=P.slate;c.facade(530,work_shed,460,530,112,88);c.chimney(586,529,94)
-    for x in range(388,526,9):c.box(x,540,4,9,P.wood[1])
-    for y in (540,547):c.box(382,y,152,2,P.steel[2])
-    for x in (406,437):
-        c.poly([(x,524),(x+22,524),(x+18,537),(x+3,537)],P.steel[1])
-        for k in range(8):c.oval(x+3+k*2,523-k%3,3,2,P.slate[k%2])
-        for k in (4,17):c.oval(x+k,538,3,3,P.ink[1])
-    # Airport windsock and white threshold keys.
-    for x in (204,750):
-        for y in range(661,728,11):c.box(x,y,14,4,P.linen[3])
-    c.box(733,608,2,40,P.steel[1])
-    for i in range(6):c.box(735+i*5,609+i//2,5,10-i,P.clay[3] if i%2==0 else P.linen[3])
-    for i,entry in enumerate(BLOCKS):c.facade(entry[3]*2,house,i,entry)
+    railway(c,375,572,542)
+    for x,seed in ((400,9),(449,19),(507,31)):
+        ore_cart(c,x,544,seed)
+    # Windsock stays outside the runway lighting and obstacle-free area.
+    c.box(151,610,2,29,P.steel[1]);c.box(148,639,8,2,P.pave[0])
+    for i in range(6):
+        c.box(153+i*4,611+i//2,4,8-i,P.clay[3] if i%2==0 else P.linen[3])
+    c.box(220,217,95,36,P.pave[3]);c.box(220,251,95,2,P.pave[1])
+    for i,entry in enumerate(BLOCKS):
+        depth=entry[3]*2-(9 if entry[0]=='clinic' else 0)
+        c.facade(depth,house,i,entry)
     # Coal and timber yard with a loading gantry, angled belt, corrugated sheds,
     # and stockpiles stacked inside retaining bins alongside the old haul road.
     c.roof_colors=P.sea_grey
@@ -353,24 +388,34 @@ def draw(theme, frame):
     headframe(c,420,1723);c.roof_colors=P.oat;c.facade(1722,work_shed,506,1722,70,83)
     plants = [(1640,146,10,.54),(1635,339,11,.54),(1572,580,12,.68)]
     plants += [(1794,x,seed,.68) for seed,x in enumerate((756,863,982),20)]
-    c.bench(148,1764);c.rail((147,1798),(212,1798),True);c.rail((267,1798),(345,1798),True)
+    c.facade(1764,City.bench,148,1764)
+    c.facade(1798,City.rail,(147,1798),(212,1798),True)
+    c.facade(1798,City.rail,(267,1798),(345,1798),True)
     # Park / market and notice board.
-    c.bunting(410,545,1150);c.bench(588,1266)
-    c.pond(531,1221,11);c.swing(417,1268);c.bench(492,1269)
+    c.facade(1150,City.bunting,410,545,1150)
+    c.facade(1266,City.bench,588,1266)
+    c.pond(531,1221,11);c.facade(1268,City.swing,417,1268);c.facade(1269,City.bench,492,1269)
     if winter:
         c.oval(521,1221,28,10,P.snow[1]);c.oval(551,1217,17,7,P.snow[1])
         c.line([(503,1220),(516,1217),(530,1221),(541,1219)],P.snow[3])
         c.box(518,1260,53,6,P.snow[1]);c.box(518,1259,53,3,P.snow[3])
     else:
         c.flowerbed(518,1267,53,91)
-    c.stall(408,1430,P.teal);c.stall(466,1430,P.clay);c.stall(526,1430,P.mustard)
-    c.roaster(495,776)
-    for x in (338,365,393):
-        c.planter(x,763);plants.append((761,x,x%37,.54))
+    c.facade(1390,City.roaster,528,1390)
+    def market_sign(c):
+        c.box(397,1396,2,27,P.walnut[0])
+        c.box(380,1394,40,14,P.wood[1])
+        c.box(380,1394,40,1,P.wood[3])
+        c.text(383,1394,'街角集市',8,P.oat[4])
+    c.facade(1423,market_sign)
+    for x,ramp in ((408,P.teal),(466,P.clay),(526,P.mustard)):
+        c.facade(1430,City.stall,x,1430,ramp)
+    # Nursery and saplings moved from the runway verge to the park.
+    for x in (407,432,457):
+        c.facade(1204,City.planter,x,1178);plants.append((1182,x,x%37,.52))
     for y,x,seed,size in sorted(plants):
-        paint_plant(c.im,tree_sprite(seed,theme,frame,size),x,y)
+        place_plant(c,tree_sprite(seed,theme,frame,size),x,y)
     shrubs = [
-        (151,767),(282,767),(329,780),(536,814),(575,808),(614,809),
         (82,1117),(731,1113),(396,1256),(575,1196),(616,1243),
         (51,1338),(758,1360),(417,1386),(465,1386),(595,1391),
         (406,1565),(550,1559),(193,1634),(285,1635),(790,1652),
@@ -380,35 +425,30 @@ def draw(theme, frame):
     for seed,(x,y) in enumerate(shrubs):
         if shrub_ground.getpixel((x,y)):
             continue
-        if any(left<x+23 and right>x-23 and top<y+1 and bottom>y-17
-               for (left,top,right,bottom),_,_ in c.facades):
-            continue
-        paint_plant(c.im,shrub_sprite(seed,theme,frame ^ (seed%3==1)),x,y)
-    c.box(580,1120,39,19,P.wood[0]);c.box(582,1122,35,15,P.oat[2])
-    for j in range(3):c.box(585+9*j,1124+j%2,7,9,P.linen[3])
-    for x in (583,614):c.box(x,1139,3,8,P.wood[0])
+        place_plant(c,shrub_sprite(seed,theme,frame ^ (seed%3==1)),x,y)
+    def noticeboard(c):
+        c.box(580,1120,39,19,P.wood[0]);c.box(582,1122,35,15,P.oat[2])
+        for j in range(3):c.box(585+9*j,1124+j%2,7,9,P.linen[3])
+        for x in (583,614):c.box(x,1139,3,8,P.wood[0])
+    c.facade(1147,noticeboard)
     # The abandoned adit opens directly onto the north–south haul road.
-    mx,my=678,1438;c.cliff(mx-85,mx+87,my-104,my-3,10)
-    c.oval(mx,my-30,37,40,P.slate[1]);c.box(mx-37,my-31,75,33,P.slate[1])
-    c.oval(mx,my-28,27,33,P.ink[0]);c.box(mx-27,my-30,55,32,P.ink[0])
-    for dx in (-30,25):
-        c.box(mx+dx,my-49,6,51,P.walnut[1]);c.box(mx+dx,my-49,2,51,P.wood[2])
-    c.box(mx-35,my-53,70,8,P.wood[1]);c.box(mx-35,my-53,70,2,P.wood[3])
-    for dx in (-12,12):c.line([(mx+dx//2,my-16),(mx+dx,my+7)],P.steel[3],2)
-    c.lamp(mx-44,my);c.crate(mx+42,my,16,12)
-    for x,y in [(138,977),(563,975),(353,1134),(398,1284),(136,1435),(747,1803),(139,1801),(597,1802),(138,837),(701,829)]:c.lamp(x,y)
-    # Waterside decking follows the same extents as the walking surface.
-    for a,b,e,f in STREETS:
-        if b<944:continue
-        c.planks([(2*a,2*b),(2*e,2*b),(2*e,2*f),(2*a,2*f)],a+b)
-        if winter:
-            for x in range(2*a,2*e,4):
-                width=min(4,2*e-x)
-                c.box(x,2*b,width,2+x*11%7,P.snow[2])
-                c.box(x,2*f-3,width,2+x*7%4,P.snow[3])
-    for x in range(128,575,52):c.bollard(x,1996)
-    c.crate(147,1976,19,14);c.barrel(169,1976)
-    ship=Image.open(ASSETS/'autumn_river_boat.png').convert('RGBA');c.im.alpha_composite(ship,(618,1977))
+    mx,my=678,1438
+    def adit(c):
+        c.cliff(mx-88,mx+91,my-108,my-3,10)
+        mine_portal(c,mx,my)
+        c.crate(mx+43,my-11,16,12)
+    c.facade(my,adit)
+    for x,y in [(138,977),(563,975),(353,1134),(398,1284),(136,1435),(747,1803),(139,1801),(597,1802),(138,837),(701,829)]:
+        c.facade(y,City.lamp,x,y)
+    waterfront(c,[(2*a,2*b,2*e,2*f) for a,b,e,f in STREETS if b>=944])
+    ship=Image.open(ASSETS/'autumn_river_boat.png').convert('RGBA')
+    # A broken, low-opacity reflection follows the hull.
+    reflection=ship.transpose(Image.Transpose.FLIP_TOP_BOTTOM).resize((ship.width,26),Image.Resampling.NEAREST)
+    tint=Image.new('RGBA',reflection.size,P.teal[1] if not winter else P.sea_grey[1])
+    tint.putalpha(reflection.getchannel('A').point(lambda a:a//4))
+    for y in range(tint.height):
+        if y%3!=1:c.im.alpha_composite(tint.crop((0,y,tint.width,y+1)),(618+(y+frame)%3,2074+y))
+    c.placed_sprite(ship,618,1977,2078)
     c.foliage.clear()
     for cx in [35,270,372,514,814,930]:
         for j in range(26):
@@ -419,9 +459,11 @@ def draw(theme, frame):
             # Frost on the reeds below the white banks.
             white=Image.new('RGBA',im.size,P.snow[2]);white.putalpha(im.getchannel('A'))
             im=Image.blend(im,white,.72)
-        c.im.alpha_composite(im,(x,y))
-    for x,y in [(870,1956),(830,1961),(322,1958),(360,1951),(118,188),(152,187)]:
-        c.boulder(x,y,12,6,True)
+        c.placed_sprite(im,x,y,y+im.height-1)
+    for x,y in [(870,1956),(830,1961),(320,1930),(365,1938)]:
+        c.facade(y,City.boulder,x,y,12,6,not winter)
+    for (left,top,_,_),sprite,_ in sorted(c.scenery,key=lambda item:item[2]):
+        c.im.alpha_composite(sprite,(left,top))
     for label in c.labels:c.text(label['x']+max(4,(label['w']-len(label['text'])*10)//2),label['y']+1,label['text'],10)
     if polluted:
         c.im=warm_haze(c.im)
@@ -429,39 +471,57 @@ def draw(theme, frame):
 
 def build_review():
     OUT.mkdir(exist_ok=True)
-    facade_bounds=[]
+    maps={}
     for theme in TREE_RAMPS:
         town=draw(theme,0)
         gust=draw(theme,1)
         name='town' if theme=='autumn' else theme
+        maps[name]=(town,gust)
         town.im.convert('RGB').save(OUT/f'{name}.png',optimize=True)
         diff=ImageChops.difference(town.im.convert('RGB'),gust.im.convert('RGB'))
         red,green,blue=diff.split()
         changed=ImageChops.lighter(ImageChops.lighter(red,green),blue).point(lambda value: 255 if value else 0)
         wind=Image.composite(gust.im,Image.new('RGBA',(W,H)),changed)
         wind.save(OUT/f'{name}-wind.png',optimize=True)
-        save_cover(town,name)
-        facade_bounds.append([(*bounds,base) for bounds,_,base in town.facades])
-    # Seasonal details can extend a silhouette, such as soot over the bath.
+
     facades=[]
-    for variants in zip(*facade_bounds):
-        left,top,right,bottom,base=zip(*variants)
-        facades.append((min(left),min(top),max(right),max(bottom),base[0]))
+    selected=[]
+    atlas_width=1024
+    x=y=row_height=0
+    views=[view for pair in maps.values() for view in pair]
+    all_bounds=([(*bounds,base) for bounds,_,base in view.scenery] for view in views)
+    for index,variants in enumerate(zip(*all_bounds,strict=True)):
+        ls,ts,rs,bs,bases=zip(*variants)
+        left,top,right,bottom=min(ls),min(ts),max(rs),max(bs)
+        depth=bases[0]
+        if not any(left<2*r+10 and right>2*l-10 and top<2*b and bottom>2*t-28 and depth>2*t
+                   for l,t,r,b in STREETS):
+            continue
+        width,height=right-left,bottom-top
+        if x+width>atlas_width:
+            x=0
+            y+=row_height
+            row_height=0
+        facades.append((left,top,right,bottom,depth,x,y))
+        selected.append(index)
+        x+=width
+        row_height=max(row_height,height)
+    for name,pair in maps.items():
+        atlas=Image.new('RGBA',(atlas_width*2,y+row_height))
+        for frame,view in enumerate(pair):
+            for index,slot in zip(selected,facades,strict=True):
+                (left,top,_,_),sprite,_=view.scenery[index]
+                ox,oy,*_,tx,ty=slot
+                if name=='polluted':sprite=warm_haze(sprite)
+                atlas.alpha_composite(sprite,(tx+left-ox+frame*atlas_width,ty+top-oy))
+        atlas.save(OUT/('building-cover.png' if name=='town' else f'{name}-cover.png'),optimize=True)
+
     for i,who in enumerate([doll.GIRL,doll.BOY]):
         who.render(expr='neutral').to_image().save(OUT/f'walker{i}.png')
     (OUT/'layout.json').write_text(json.dumps(dict(
-        size=[W,H],streets=STREETS,places=PLACES,
-        facades=facades,
-        obstacles=[(502,243,574,257),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]
+        size=[W,H],streets=STREETS,places=PLACES,facades=facades,
+        obstacles=[(531,241,550,255),(225,220,311,246),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]
     ),separators=(',',':')))
-
-def save_cover(c,name):
-    cover=Image.new('RGBA',(W,H))
-    for bounds,sprite,_ in c.facades:
-        visible=c.im.crop(bounds)
-        visible.putalpha(sprite.getchannel('A'))
-        cover.alpha_composite(visible,bounds[:2])
-    cover.save(OUT/('building-cover.png' if name=='town' else f'{name}-cover.png'),optimize=True)
 
 if __name__=='__main__':
     build_review()
