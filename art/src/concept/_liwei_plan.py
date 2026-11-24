@@ -3,6 +3,9 @@ import json
 import math
 import random
 from pathlib import Path
+from functools import lru_cache
+import numpy as np
+import front_yard as yard
 from PIL import Image, ImageDraw, ImageFilter, ImageChops
 from autumn_city import City, P
 import doll
@@ -56,6 +59,8 @@ class Town(City):
         back = front-depth
         left,right = x-2,x+w+1
         dark,shade,deck,stone,lit = self.roof_colors[:5]
+        if self.snowy:
+            deck,shade,stone,lit=P.snow[2],P.snow[1],P.snow[2],P.snow[3]
         self.box(left,back,right-left+1,depth+1,deck)
         self.line([(left,back+2),(right-1,back+2)],shade,4)
         self.line([(right-2,back+3),(right-2,front-2)],shade,3)
@@ -149,22 +154,68 @@ def house(c, index, entry):
         c.line([(x+4,base-22),(dx-9,base-20)],P.wood[0])
         for j,col in enumerate([P.linen,P.sage,P.wall_blush]):c.box(x+6+j*8,base-21,6,9-j,col[3])
 
-def pine(seed):
-    r=random.Random(seed);im=Image.new('RGBA',(55,84));d=ImageDraw.Draw(im)
-    x,y=26,80;h=r.randint(48,72);w=r.randint(14,22)
-    ramp=[P.teal[0],P.leaf[0],P.leaf[1],P.sage[2],P.sage[3]] if seed%4 else [P.wood[0],P.sage[0],P.sage[1],P.mustard[2],P.mustard[3]]
-    d.rectangle((x-2,y-17,x+2,y),fill=P.walnut[0]);d.line((x-1,y-13,x-1,y-1),fill=P.wood[2])
-    for level in reversed(range(6)):
-        tip=y-h+level*(h-18)//7;span=4+level*w//6;low=tip+12+level*2
-        edge=[(x-span+i,low-abs(i-span)//4+r.randint(-3,1)) for i in range(0,2*span+1,3)]
-        d.polygon([(x+1,tip)]+edge,fill=ramp[0])
-        d.polygon([(x,tip)]+[(a,b-3) for a,b in edge[:-1]],fill=ramp[1])
-        for j in range(span*2):
-            off=r.randint(-span+2,span-2); yy=r.randint(tip+3,low-3)
-            if abs(off)<span*(yy-tip)/(low-tip):
-                d.line((x+off,yy,x+off-2,yy+2),fill=ramp[2+(off<0 and r.random()<.52)])
-        d.line((x-1,tip+1,x-3,tip+5),fill=ramp[3])
-    return im
+TREE_RAMPS = {
+    'spring': (P.leaf_spring, P.leaf, P.leaf_spring, P.green),
+    'summer': (P.mustard, [P.wood[0], P.oak[1], P.mustard[2], P.mustard[3], P.mustard[4]]),
+    'autumn': (P.autumn, P.mustard, P.autumn),
+    'winter': ([P.snow[0], P.snow[1], P.snow[2], P.snow[3], P.snow[3]],),
+    'polluted': ([P.oat[0], P.oak[0], P.oak[1], P.oat[2], P.oak[3]],
+                 [P.oat[0], P.oat[1], P.oak[1], P.oat[2], P.oat[3]]),
+}
+
+@lru_cache(maxsize=128)
+def tree_sprite(seed, theme, frame, size):
+    rng = random.Random(seed)
+    kind = rng.choice(('maple','linden','maple'))
+    tone = TREE_RAMPS[theme][seed % len(TREE_RAMPS[theme])]
+    pink = theme == 'spring' and seed % 11 == 0
+    if pink:
+        kind = 'cherry'
+        tone = P.blossom
+    width = round(rng.randrange(17,27)*size)
+    height = round(rng.randrange(15,23)*size)
+    x,base = 55+seed*7,104
+    season = 'spring' if pink else 'summer'
+    sprite = yard.tree(kind,season,frame,
+                       at=(x,base-height-round(13*size),base,width,height),ramps=[tone]).to_image()
+    bounds = sprite.getbbox()
+    return sprite.crop(bounds),bounds[0]-x,bounds[1]-base
+
+@lru_cache(maxsize=128)
+def shrub_sprite(seed, theme, frame):
+    x,base = 60+(seed%22)*11,78
+    tone = TREE_RAMPS[theme][seed % len(TREE_RAMPS[theme])]
+    sprite = yard.bush('box',x,12+seed%9,9+seed%6,'summer',base,
+                       leaf=tone,frame=frame).to_image()
+    bounds = sprite.getbbox()
+    return sprite.crop(bounds),bounds[0]-x,bounds[1]-base
+
+def paint_plant(canvas, plant, x, y):
+    picture,dx,dy = plant
+    canvas.alpha_composite(picture,(x+dx,y+dy))
+
+def draw_trees(c, theme, frame, usable):
+    rng = random.Random(881)
+    locations = []
+    for yy in range(226,1822,25):
+        for xx in range(12,W-8,30):
+            x,y = xx+rng.randrange(-10,11), yy+rng.randrange(-9,10)
+            seed = rng.randrange(37)
+            if usable.getpixel((min(W-1,max(0,x)),y)):
+                locations.append((y,x,seed))
+    for y,x,seed in sorted(locations):
+        plant = tree_sprite(seed,theme,frame ^ (seed%3==0),1)
+        paint_plant(c.im,plant,x,y)
+
+def warm_haze(image):
+    pixels = np.asarray(image).copy()
+    colors = pixels[:,:,:3].astype(np.float32)
+    value = colors @ np.array([.2126,.7152,.0722],dtype=np.float32)
+    colors = colors*.54 + value[:,:,None]*.46
+    # Ochre haze over all four dates in the pre-cleanup city.
+    colors = colors*.85 + np.array([187,168,128],dtype=np.float32)*.15
+    pixels[:,:,:3] = colors.round().astype(np.uint8)
+    return Image.fromarray(pixels)
 
 def headframe(c,x,y):
     for dx in (0,45):
@@ -194,12 +245,29 @@ def summit_shelter(c,x,base):
     c.roof_depth=32
     c.roof(x-28,base-45,56)
 
-def draw():
-    OUT.mkdir(exist_ok=True);r=random.Random(724);c=Town(4)
+def draw(theme, frame):
+    r=random.Random(724)
+    winter=theme=='winter'
+    polluted=theme=='polluted'
+    c=Town(0 if polluted else 4)
+    soil = {
+        'spring': (P.leaf[2], P.sage[1], P.grass[2], P.sage[3], P.oak[1]),
+        'summer': (P.oak[2], P.oak[1], P.mustard[2], P.oat[2], P.sage[2]),
+        'autumn': (P.sage[2], P.oak[0], P.oak[1], P.oak[2], P.autumn[1]),
+        'winter': (P.snow[2], P.snow[1], P.snow[3], P.snow[2], P.porcelain[3]),
+        'polluted': (P.oak[1], P.oat[0], P.oat[1], P.oak[0], P.oat[2]),
+    }[theme]
     c.facades=[]
-    c.im=Image.new('RGBA',(W,H),P.sage[1]);c.d=ImageDraw.Draw(c.im)
-    sky=Image.open(ASSETS/'autumn_back_sky_clear.png').convert('RGBA')
-    for layer in ('far','mid'):sky.alpha_composite(Image.open(ASSETS/f'autumn_back_{layer}_clear.png').convert('RGBA'))
+    c.snowy=winter
+    c.im=Image.new('RGBA',(W,H),soil[0]);c.d=ImageDraw.Draw(c.im)
+    suffix='polluted' if polluted else 'clean' if theme in ('spring','winter') else 'clear'
+    sky=Image.open(ASSETS/f'autumn_back_sky_{suffix}.png').convert('RGBA')
+    for layer in ('far','mid'):
+        ridge=Image.open(ASSETS/f'autumn_back_{layer}_{suffix}.png').convert('RGBA')
+        if winter:
+            snow=Image.new('RGBA',ridge.size,P.snow[2]);snow.putalpha(ridge.getchannel('A'))
+            ridge=Image.blend(ridge,snow,.67)
+        sky.alpha_composite(ridge)
     c.im.paste(sky.resize((W,275),Image.Resampling.NEAREST))
     roads=Image.new('L',(W,H));md=ImageDraw.Draw(roads)
     for a,b,e,f in STREETS:md.rectangle((2*a,2*b,2*e,2*f),fill=255)
@@ -208,30 +276,39 @@ def draw():
         fd.rectangle(tuple(n*2 for n in rect),fill=0)
     # Ground, gravel and a sheltered lakeshore.
     for i in range(52000):
-        x=r.randrange(W);y=r.randrange(266,1960);c.box(x,y,r.randint(1,6),1,r.choice([P.sage[0],P.sage[2],P.leaf[1],P.oak[1]]))
+        x=r.randrange(W);y=r.randrange(266,1960);c.box(x,y,r.randint(1,6),1,r.choice(soil[1:]))
+    def boundary(x):
+        return 1936+int(11*math.sin(x*.015)+8*math.cos(x*.037))
+    shore = (P.snow[3],P.snow[2],P.snow[1],P.sea_grey[1]) if winter else (P.oat[2],soil[2],P.teal[2],P.teal[1])
     for yy in range(1900,H):
-        boundary=lambda x:1936+int(11*math.sin(x*.015)+8*math.cos(x*.037))
         for x in range(0,W,4):
             dy=yy-boundary(x)
-            if dy>=0:c.box(x,yy,4,1,P.oat[2] if dy<3 else P.sage[2] if dy<8 else P.teal[2] if dy<18 else P.teal[1])
+            if dy>=0:c.box(x,yy,4,1,shore[0 if dy<3 else 1 if dy<8 else 2 if dy<18 else 3])
     for i in range(1900):
-        x=r.randrange(W);y=r.randrange(1965,H);c.box(x,y,r.randint(2,12),1,r.choice([P.teal[2],P.teal[0],P.sea_grey[2]]))
+        x=r.randrange(W);y=r.randrange(1965,H);c.box(x,y,r.randint(2,12),1,r.choice(P.sea_grey[:3] if winter else [P.teal[2],P.teal[0],P.sea_grey[2]]))
     # Compacted yards and stone plinths separate shopfronts from planted ground.
     for _,_,bx,by,bw,floors,*_ in BLOCKS:
         x,y,w=bx*2,by*2,bw*2
-        c.box(x-5,y-75,w+10,83,P.oat[1]);c.box(x-5,y+6,w+10,2,P.pave[1])
+        c.box(x-5,y-75,w+10,83,P.snow[2] if winter else P.oat[1]);c.box(x-5,y+6,w+10,2,P.pave[1])
         for k in range(w):
             gx=r.randrange(x-5,x+w+5);gy=r.randrange(y-72,y+6)
-            c.box(gx,gy,2,1,P.oak[2])
+            c.box(gx,gy,2,1,P.snow[3] if winter else P.oak[2])
     # Streets are clipped to their union, with continuous paving across junctions.
-    paving=Image.new('RGB',(W,H),'#938e89');pd=ImageDraw.Draw(paving)
+    paving=Image.new('RGB',(W,H),P.snow[1] if winter else '#938e89');pd=ImageDraw.Draw(paving)
     for y in range(0,H,7):
         for x in range(-20+(y//7%2)*9,W,19):
-            tone=r.choice(['#9d9792','#a19b94','#a09a94','#a49d95','#a8a298'])
+            tone=r.choice([P.snow[2],P.snow[2],P.snow[3],P.snow[1]] if winter else ['#9d9792','#a19b94','#a09a94','#a49d95','#a8a298'])
             pd.rectangle((x,y,x+17,y+5),fill=tone)
     c.im.paste(P.pave[0],(0,0,W,H),roads.filter(ImageFilter.MaxFilter(5)));c.im.paste(paving,(0,0),roads)
     for a,b,e,f,vertical in [(95,326,390,368,False),(322,721,355,935,True),(0,919,497,942,False)]:
-        c.box(a*2,b*2,(e-a)*2,(f-b)*2,P.slate[1])
+        c.box(a*2,b*2,(e-a)*2,(f-b)*2,P.slate[2] if winter else P.slate[1])
+        if winter:
+            for offset in range(0,((f-b) if vertical else (e-a))*2,6):
+                thickness=2+(offset*17%7)
+                if vertical:
+                    c.box(a*2,b*2+offset,thickness,6,P.snow[2]);c.box(e*2-thickness,b*2+offset,thickness,6,P.snow[2])
+                else:
+                    c.box(a*2+offset,b*2,6,thickness,P.snow[2]);c.box(a*2+offset,f*2-thickness,6,thickness,P.snow[2])
         for n in range((b if vertical else a)*2+12,(f if vertical else e)*2-12,45):
             if vertical:c.box(a+e,n,3,22,P.mustard[3])
             else:c.box(n,b+f,21,3,P.mustard[3])
@@ -242,17 +319,7 @@ def draw():
         for k in range(1,13,3):c.box(x+k,y+1,1,3,P.steel[0])
     # Preserve clear silhouettes at the edge of each planting area.
     usable=ImageChops.subtract(forest,roads.filter(ImageFilter.MaxFilter(29)))
-    pines=[pine(i) for i in range(28)]
-    broadleaf=City(4)
-    for k in range(14):broadleaf.tree(91+k*4,76+k,.7+.035*(k%7))
-    broadleaf=[entry[0] for entry in broadleaf.foliage]
-    for yy in range(230,1820,17):
-        for xx in range(-15,W+12,22):
-            x=xx+r.randrange(-9,10);y=yy+r.randrange(-8,9)
-            if not usable.getpixel((min(W-1,max(0,x)),y)):continue
-            if r.random()<.12+.10*math.sin(x*.012+y*.015):
-                crown=r.choice(broadleaf);c.im.alpha_composite(crown,(x-crown.width//2,y-crown.height))
-            else:c.im.alpha_composite(r.choice(pines),(x-26,y-80))
+    draw_trees(c,theme,frame,usable)
     # Mountaintop rail, viewing pavilion and paved switchback.
     c.rail((224,228),(612,228),True);c.facade(253,summit_shelter,540,253);c.bench(381,244);c.bench(440,244)
     for y in range(303,376,7):c.box(383,y,84,2,P.pave[1]);c.box(383,y,84,1,P.linen[2])
@@ -284,18 +351,39 @@ def draw():
         for j in range(0,39,9):c.box(x+j,1605,2,21,P.wood[3])
         c.box(x,1607,41,2,P.wood[2])
     headframe(c,420,1723);c.roof_colors=P.oat;c.facade(1722,work_shed,506,1722,70,83)
-    for x in (150,195,283,327):
-        c.hedge(x,x+15,1517);c.flowerbed(x,1666,20,x,2)
-    for x in (158,316,580,756,863,982):c.tree(x,1794 if x>710 else 1572,.68)
+    plants = [(1640,146,10,.54),(1635,339,11,.54),(1572,580,12,.68)]
+    plants += [(1794,x,seed,.68) for seed,x in enumerate((756,863,982),20)]
     c.bench(148,1764);c.rail((147,1798),(212,1798),True);c.rail((267,1798),(345,1798),True)
     # Park / market and notice board.
     c.bunting(410,545,1150);c.bench(588,1266)
-    c.pond(531,1221,11);c.swing(417,1268);c.bench(492,1269);c.flowerbed(518,1267,53,91)
+    c.pond(531,1221,11);c.swing(417,1268);c.bench(492,1269)
+    if winter:
+        c.oval(521,1221,28,10,P.snow[1]);c.oval(551,1217,17,7,P.snow[1])
+        c.line([(503,1220),(516,1217),(530,1221),(541,1219)],P.snow[3])
+        c.box(518,1260,53,6,P.snow[1]);c.box(518,1259,53,3,P.snow[3])
+    else:
+        c.flowerbed(518,1267,53,91)
     c.stall(408,1430,P.teal);c.stall(466,1430,P.clay);c.stall(526,1430,P.mustard)
     c.roaster(495,776)
     for x in (338,365,393):
-        c.planter(x,763);c.tree(x,761,.5)
-    for im,x,y,_ in sorted(c.foliage,key=lambda item:item[3]):c.im.alpha_composite(im,(x,y))
+        c.planter(x,763);plants.append((761,x,x%37,.54))
+    for y,x,seed,size in sorted(plants):
+        paint_plant(c.im,tree_sprite(seed,theme,frame,size),x,y)
+    shrubs = [
+        (151,767),(282,767),(329,780),(536,814),(575,808),(614,809),
+        (82,1117),(731,1113),(396,1256),(575,1196),(616,1243),
+        (51,1338),(758,1360),(417,1386),(465,1386),(595,1391),
+        (406,1565),(550,1559),(193,1634),(285,1635),(790,1652),
+        (920,1670),(953,1686),(55,1710),(538,1934),(397,1934),
+    ]
+    shrub_ground=roads.filter(ImageFilter.MaxFilter(33))
+    for seed,(x,y) in enumerate(shrubs):
+        if shrub_ground.getpixel((x,y)):
+            continue
+        if any(left<x+23 and right>x-23 and top<y+1 and bottom>y-17
+               for (left,top,right,bottom),_,_ in c.facades):
+            continue
+        paint_plant(c.im,shrub_sprite(seed,theme,frame ^ (seed%3==1)),x,y)
     c.box(580,1120,39,19,P.wood[0]);c.box(582,1122,35,15,P.oat[2])
     for j in range(3):c.box(585+9*j,1124+j%2,7,9,P.linen[3])
     for x in (583,614):c.box(x,1139,3,8,P.wood[0])
@@ -313,6 +401,11 @@ def draw():
     for a,b,e,f in STREETS:
         if b<944:continue
         c.planks([(2*a,2*b),(2*e,2*b),(2*e,2*f),(2*a,2*f)],a+b)
+        if winter:
+            for x in range(2*a,2*e,4):
+                width=min(4,2*e-x)
+                c.box(x,2*b,width,2+x*11%7,P.snow[2])
+                c.box(x,2*f-3,width,2+x*7%4,P.snow[3])
     for x in range(128,575,52):c.bollard(x,1996)
     c.crate(147,1976,19,14);c.barrel(169,1976)
     ship=Image.open(ASSETS/'autumn_river_boat.png').convert('RGBA');c.im.alpha_composite(ship,(618,1977))
@@ -321,17 +414,54 @@ def draw():
         for j in range(26):
             x=cx+r.randrange(-30,31);y=1964+int(12*math.sin(x*.02))+r.randrange(-15,18)
             if 0<x<W and not roads.getpixel((x,y)):c.reed(x,y,r.randrange(10000),r.uniform(.65,1.1))
-    for im,x,y,_ in sorted(c.foliage,key=lambda item:item[3]):c.im.alpha_composite(im,(x,y))
+    for im,x,y,_ in sorted(c.foliage,key=lambda item:item[3]):
+        if winter:
+            # Frost on the reeds below the white banks.
+            white=Image.new('RGBA',im.size,P.snow[2]);white.putalpha(im.getchannel('A'))
+            im=Image.blend(im,white,.72)
+        c.im.alpha_composite(im,(x,y))
     for x,y in [(870,1956),(830,1961),(322,1958),(360,1951),(118,188),(152,187)]:
         c.boulder(x,y,12,6,True)
     for label in c.labels:c.text(label['x']+max(4,(label['w']-len(label['text'])*10)//2),label['y']+1,label['text'],10)
-    c.im.convert('RGB').save(OUT/'town.png',optimize=True)
+    if polluted:
+        c.im=warm_haze(c.im)
+    return c
+
+def build_review():
+    OUT.mkdir(exist_ok=True)
+    facade_bounds=[]
+    for theme in TREE_RAMPS:
+        town=draw(theme,0)
+        gust=draw(theme,1)
+        name='town' if theme=='autumn' else theme
+        town.im.convert('RGB').save(OUT/f'{name}.png',optimize=True)
+        diff=ImageChops.difference(town.im.convert('RGB'),gust.im.convert('RGB'))
+        red,green,blue=diff.split()
+        changed=ImageChops.lighter(ImageChops.lighter(red,green),blue).point(lambda value: 255 if value else 0)
+        wind=Image.composite(gust.im,Image.new('RGBA',(W,H)),changed)
+        wind.save(OUT/f'{name}-wind.png',optimize=True)
+        save_cover(town,name)
+        facade_bounds.append([(*bounds,base) for bounds,_,base in town.facades])
+    # Seasonal details can extend a silhouette, such as soot over the bath.
+    facades=[]
+    for variants in zip(*facade_bounds):
+        left,top,right,bottom,base=zip(*variants)
+        facades.append((min(left),min(top),max(right),max(bottom),base[0]))
+    for i,who in enumerate([doll.GIRL,doll.BOY]):
+        who.render(expr='neutral').to_image().save(OUT/f'walker{i}.png')
+    (OUT/'layout.json').write_text(json.dumps(dict(
+        size=[W,H],streets=STREETS,places=PLACES,
+        facades=facades,
+        obstacles=[(502,243,574,257),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]
+    ),separators=(',',':')))
+
+def save_cover(c,name):
     cover=Image.new('RGBA',(W,H))
     for bounds,sprite,_ in c.facades:
         visible=c.im.crop(bounds)
         visible.putalpha(sprite.getchannel('A'))
         cover.alpha_composite(visible,bounds[:2])
-    cover.save(OUT/'building-cover.png',optimize=True)
-    for i,who in enumerate([doll.GIRL,doll.BOY]):who.render(expr='neutral').to_image().save(OUT/f'walker{i}.png')
-    (OUT/'layout.json').write_text(json.dumps(dict(size=[W,H],streets=STREETS,places=PLACES,facades=[(*bounds,base) for bounds,_,base in c.facades],obstacles=[(502,243,574,257),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]),separators=(',',':')))
-if __name__=='__main__':draw()
+    cover.save(OUT/('building-cover.png' if name=='town' else f'{name}-cover.png'),optimize=True)
+
+if __name__=='__main__':
+    build_review()

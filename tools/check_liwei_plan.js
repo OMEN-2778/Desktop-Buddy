@@ -48,11 +48,31 @@ const assert=require('node:assert/strict');
  assert.deepEqual(facadeOrder.coveredPixels,facadeOrder.roofPixels);
  assert.notDeepEqual(facadeOrder.frontPixels,facadeOrder.roofPixels);
  assert.equal(facadeOrder.frontPixels[3],255);
+ const selectSeason=p.locator('#season'), cleanToggle=p.locator('#clean');
+ for(const season of ['spring','summer','winter']){
+   await selectSeason.selectOption(season);
+   await p.waitForFunction(expected=>theme===expected && landscape.naturalWidth===994,season);
+   assert.equal(await p.locator('#landscape').evaluate(img=>new URL(img.src).pathname),'/'+season+'.png');
+ }
+ await cleanToggle.uncheck();
+ await p.waitForFunction(()=>theme==='polluted' && cover.naturalWidth===994);
+ const dirtyMap=await p.locator('#landscape').getAttribute('src');
+ for(const season of ['spring','summer','town','winter']){
+   await selectSeason.selectOption(season);
+   assert.equal(await p.locator('#landscape').getAttribute('src'),dirtyMap);
+ }
+ await cleanToggle.check();
+ await p.waitForFunction(()=>theme==='winter');
+ await p.waitForFunction(()=>!wind.hidden && wind.naturalWidth===994);
+ assert.equal(await p.locator('#wind').evaluate(img=>new URL(img.src).pathname),'/winter-wind.png');
+ await p.waitForFunction(()=>wind.hidden);
+ await selectSeason.selectOption('town');
+ await p.waitForFunction(()=>theme==='town');
  await p.locator('button').click();const box=await p.locator('canvas').boundingBox();
  const click=async(x,y)=>p.mouse.click(box.x+x/994*box.width,box.y+y/2176*box.height);
  await click(505,692);await p.waitForFunction(()=>document.querySelector('output').textContent==='已到达');
  await click(770,2020);assert.match(await p.locator('output').innerText(),/无法落脚/);
  await click(598,2070);await p.waitForFunction(()=>document.querySelector('output').textContent==='已到达',null,{timeout:60000});
- assert.equal(await p.evaluate(()=>actors.slice(1).every(a=>a.stop>0)),true);assert.deepEqual(errors,[]);console.log('facade depth, mouse, lake rejection, quay arrival, NPCs ok');
+ assert.equal(await p.evaluate(()=>actors.slice(1).every(a=>a.stop>0)),true);assert.deepEqual(errors,[]);console.log('seasons, pollution, foliage motion, facade depth, mouse, quay arrival and NPCs ok');
  }finally{await b.close();}
 })().catch(e=>{console.error(e);process.exit(1)});

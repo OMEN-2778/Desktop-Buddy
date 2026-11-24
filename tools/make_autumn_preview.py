@@ -19,11 +19,12 @@ def main():
  # Separate design review. Live autumn content keeps its current geometry until approval.
  plan=out/'new-town';plan.mkdir(exist_ok=True)
  source=ROOT/'art/out/concept/liwei-plan'
- for filename in ('town.png','building-cover.png','walker0.png','walker1.png'):
-  shutil.copyfile(source/filename,plan/filename)
+ version=sha256()
+ for image in sorted(source.glob('*.png')):
+  shutil.copyfile(image,plan/image.name)
+  version.update(image.read_bytes())
  review=(ROOT/'prototype/autumn/plan-review.src.html').read_text().replace('__LAYOUT__',(source/'layout.json').read_text())
- version=sha256((source/'town.png').read_bytes()+(source/'building-cover.png').read_bytes()).hexdigest()[:12]
- review=review.replace('__ART_VERSION__',version)
+ review=review.replace('__ART_VERSION__',version.hexdigest()[:12])
  before,script=review.split('<script>',1);script,after=script.split('</script>',1)
  compressed=subprocess.run(['node',str(ROOT/'desktop/node_modules/terser/bin/terser'),'--compress','--mangle'],input=script,text=True,capture_output=True,check=True).stdout
  (plan/'index.html').write_text(before+'<script>'+compressed+'</script>'+after)

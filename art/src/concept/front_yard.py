@@ -465,7 +465,7 @@ def draw_branch(s, x0, y0, x1, y1, th, R):
             s.set(math.floor(x - th / 2 + k + 0.5) if th % 2 else int(round(x - th / 2 + k)), int(round(y)), c)   # (odd widths: no banker's rounding gaps)
 
 
-def tree(kind, season, frame, at=None):
+def tree(kind, season, frame, at=None, *, ramps=None):
     s = Sprite(W, H)
     if at:
         tx, cy, base, rx, ry = at
@@ -497,7 +497,7 @@ def tree(kind, season, frame, at=None):
                 break
         pts.append((tx + u * rx, cy + v * ry, rnd.uniform(2.6, 4.6) * sc, rnd.random(), u, v))
     pts.sort(key=lambda p: -(p[4] * 0.6 + p[5]))                      # back (lower right) first
-    ramps = LEAVES[(kind, season)]
+    ramps = LEAVES[(kind, season)] if ramps is None else ramps
     sway = lambda v: (1 if frame and v < 0.2 else 0) + (1 if frame and v < -0.5 else 0)   # the top moves most
     crown = Sprite(W, H)
     for x, y, r, pick, u, v in pts:
@@ -524,7 +524,7 @@ def tree(kind, season, frame, at=None):
 
 # ---------------------------------------------------------------- shrubs
 
-def bush(kind, cx, hw, ht, season, base=None):
+def bush(kind, cx, hw, ht, season, base=None, *, leaf=None, frame=0):
     s = Sprite(W, H)
     rnd = random.Random(cx)
     base = SIDE - 1 if base is None else base
@@ -535,13 +535,14 @@ def bush(kind, cx, hw, ht, season, base=None):
             s.line(x, base, x + rnd.choice([-2, -1, 1, 2]), top, WAL[2])
             s.set(x + rnd.choice([-1, 1]), top + 2, WAL[1])
         return s
-    leaf = (P.leaf_spring if season == "spring" else P.autumn if (kind == "hydrangea" and season == "autumn") else P.green)
+    leaf = leaf or (P.leaf_spring if season == "spring" else P.autumn if (kind == "hydrangea" and season == "autumn") else P.green)
     b = Sprite(W, H)
     pts = []
     for _ in range(int(hw * 2.2)):
         u = rnd.uniform(-1, 1)
         v = rnd.uniform(0, 1) * math.sqrt(max(0, 1 - u * u))
-        pts.append((cx + u * (hw - 2), base - v * (ht - 2), rnd.uniform(2.2, 3.4), u, v))
+        sway = frame if v > 0.4 and v*(ht-2) > 5.5 else 0
+        pts.append((cx + u * (hw - 2) + sway, base - v * (ht - 2), rnd.uniform(2.2, 3.4), u, v))
     pts.sort(key=lambda p: (p[4], -p[3]))
     for x, y, r, u, v in pts:
         light = -u * 0.5 + v * 0.9

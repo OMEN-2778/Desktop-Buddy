@@ -6,7 +6,7 @@
 
 独立审图页在 `/autumn/new-town/`，原图 `town.png`。生成命令为 `PYTHONPATH=tools:art/src/concept python art/src/concept/_liwei_plan.py`，再运行 `PYTHONPATH=tools python tools/make_autumn_preview.py`。画图和审图寻路共用街面矩形；`layout.json` 的地点、街面用半尺寸布局坐标，障碍用原生像素坐标。道路寻路以 4 像素采样，路人也使用相同路径计算。审图页读取建筑落地线和单独的像素遮挡图，让道路后方的角色经过屋檐时被部分遮住。
 
-此版是单阶段审图，地图接入需等主人看图。通过后优先迁移所有剧情站位、镜头与任务入口，按新结构拆分角色前后遮挡，生成污染阶段，处理旧存档的落点，再用两条结局和居民作息回归。旧地图参数见下。
+审图页可以切换季节和洁净状态。洁净前四季共用灰黄色画面，洁净后春绿少粉、夏金黄、秋橙黄、冬白雪。树与灌木复用 `front_yard.py` 的像素轮廓并保持固定落点；各状态对应底图、屋檐遮挡图及摆动像素差分图。地图接入需等主人看图。通过后迁移剧情站位、镜头与任务入口，接入游戏日期与污染阶段，处理旧存档的落点，再用两条结局和居民作息回归。旧地图参数见下。
 
 Current world: **640×944 native pixels**. The compact city is kept at its existing
 width; authoring core is now 640×720 (32px more river), with a 224px summit/panorama strip
