@@ -42,27 +42,78 @@ PLACES = {k:(int(x+w/2),y+3) for k,_,x,y,w,*_ in BLOCKS}
 PLACES.update(lookout=(209,132),pavilion=(265,132),airstrip=(235,349),mine=(339,726),
               nursery=(165,389),koi=(236,610),swing=(215,642),chestnut=(247,392),
               plaza=(232,571),notice=(295,575),market=(235,722),pier=(298,1036),reeds=(249,1020))
-# Decorate the small shared facades at the same 20×28 doll / 27px door scale as live art.
+# Keep the existing 20×28 doll and 27px door. All facades face the viewer.
+# Planes recede straight up the map, keeping the left/right edges aligned.
 class Town(City):
-    def roof(self,x,y,w,depth=17,pitch=12):
-        r = random.Random(x+y)
-        dark, seam, metal, light, glint = self.roof_colors[:5]
-        self.poly([(x-3,y+4),(x+7,y-13),(x+w-7,y-13),(x+w+3,y+4)],metal)
-        self.poly([(x+w-7,y-13),(x+w-13,y+4),(x+w+3,y+4)],seam)
-        for dx in range(9,w-9,7):
-            self.line([(x+dx,y-12),(x+dx-8,y+3)],seam)
-            self.line([(x+dx+1,y-12),(x+dx-7,y+3)],light)
-            if r.random()<.32:self.box(x+dx-3,y-2,3,2,P.clay[1])
-        self.box(x+7,y-14,w-13,2,light)
-        self.box(x-4,y+4,w+8,3,dark)
-        self.box(x-4,y+4,w+8,1,glint)
-        self.box(x+8,y-23,7,14,P.brick[1])
-        self.box(x+7,y-24,10,3,P.brick[3])
+    roof_depth = 40
+    roof_colors = P.slate
+
+    def roof(self,x,y,w):
+        # City.building calls this after putting down the facade. y+5 is the
+        # top of that wall. Extend the roof directly back along the map.
+        front = y+5
+        depth = self.roof_depth
+        back = front-depth
+        left,right = x-2,x+w+1
+        dark,shade,deck,stone,lit = self.roof_colors[:5]
+        self.box(left,back,right-left+1,depth+1,deck)
+        self.line([(left,back+2),(right-1,back+2)],shade,4)
+        self.line([(right-2,back+3),(right-2,front-2)],shade,3)
+        self.line([(left+5,back+4),(left+5,front-5)],stone)
+        r=random.Random(x*29+front)
+        for _ in range(w//3):
+            offset=r.randrange(9,depth-5)
+            self.box(left+r.randrange(7,w-9),front-offset,
+                     r.randrange(1,4),1,r.choice([shade,shade,stone]))
+        # Membrane seams stay sparse so the rim and rooftop objects read first.
+        for offset in range(18,depth-6,20):
+            self.box(left+5,front-offset,w-5,1,shade)
+        # The vertical inner face of the rear parapet makes the deck read
+        # as horizontal. The outer faces use the same masonry as the coping.
+        self.box(left,back-5,right-left+1,8,shade)
+        self.box(left,back-5,right-left+1,3,stone)
+        self.box(left,back-5,right-left+1,1,lit)
+        for seam in range(left+13,right-5,13):
+            self.box(seam,back-2,1,4,dark)
+        self.line([(left+2,front-3),(left+2,back-3)],shade,4)
+        self.line([(left,front-5),(left,back-5)],stone,4)
+        self.line([(left,front-5),(left,back-5)],lit)
+        self.line([(right,front-5),(right,back-5)],stone,3)
+        self.box(left,front-5,right-left+1,9,stone)
+        self.box(left,front-5,right-left+1,2,lit)
+        self.box(left,front+3,right-left+1,2,shade)
+        for seam in range(left+13,right-5,13):
+            self.box(seam,front-2,1,5,shade)
+        # Rooftop utility housing. Its top and dark return follow the same axes.
+        tx,ty = left+w//(3+x%2),front-depth//2+5
+        tw = 12 if w>=90 else 8
+        if w<65 or x%5==0:return
+        self.box(tx+2,ty-2,tw+3,4,shade)
+        self.box(tx,ty-18,tw,10,P.steel[4])
+        self.box(tx,ty-18,tw,1,P.steel[5])
+        self.box(tx,ty-8,tw,8,P.steel[2])
+        self.box(tx+2,ty-5,tw-4,2,P.steel[1])
+
+    def facade(self,base,drawing,*args):
+        # Keep the alpha silhouette for depth ordering in the playable review.
+        world=self.start_foliage()
+        drawing(self,*args)
+        sprite=self.im
+        bounds=sprite.getbbox()
+        self.im=world
+        self.d=ImageDraw.Draw(world)
+        if bounds:
+            sprite=sprite.crop(bounds)
+            self.facades.append((bounds,sprite,base))
+            world.alpha_composite(sprite,bounds[:2])
 
 def house(c, index, entry):
     key,name,x,base,w,floors,kind,detail=entry
     x,base,w=x*2,base*2,w*2
-    c.roof_colors=[P.slate,P.steel,P.clay,P.sea_grey][index%4]
+    c.roof_colors=[P.slate,P.steel,P.oat,P.sea_grey][index%4]
+    # Deeper buildings and shallower houses follow the same projection. On the
+    # upper three blocks the roof covers only the near edge of the street.
+    c.roof_depth={976:40,1132:44 if floors==2 else 68,1274:28,1770:32}.get(base,36)
     c.building(x,base,w,floors,kind,name or None,20+index)
     dx=x+w//2
     if detail=='awning':
@@ -73,7 +124,7 @@ def house(c, index, entry):
     if detail=='cross':
         c.box(x+5,base-39,16,16,P.linen[3]);c.box(x+11,base-37,4,12,P.clay[2]);c.box(x+7,base-33,12,4,P.clay[2])
     if detail in ('clock','gear','lens'):
-        cy=base-(90 if floors==2 else 64)
+        cy=base-(77 if floors==2 else 53)
         c.oval(dx,cy,12,12,P.wood[0]);c.oval(dx,cy,10,10,P.mustard[2]);c.oval(dx,cy,8,8,P.linen[3] if detail=='clock' else P.teal[1])
         if detail=='clock':c.line([(dx-4,cy-3),(dx,cy),(dx+1,cy-6)],P.wood[0],2)
         if detail=='gear':
@@ -128,8 +179,24 @@ def headframe(c,x,y):
         a=i*math.pi/4;c.line([(x+23,y-96),(x+23+int(9*math.cos(a)),y-96+int(9*math.sin(a)))],P.wood[3])
     c.line([(x+27,y-108),(x+105,y-39)],P.steel[0]);c.line([(x+30,y-106),(x+108,y-37)],P.steel[1])
 
+def work_shed(c,x,base,w,seed):
+    c.roof_depth=36
+    c.building(x,base,w,1,'brick',None,seed)
+
+def summit_shelter(c,x,base):
+    # Open-front lookout on the original stone ledge, with a level roof.
+    c.box(x-28,base,61,5,P.pave[2])
+    c.box(x-25,base-39,50,38,P.walnut[1])
+    c.bench(x-15,base-11)
+    for post in (x-25,x+22):
+        c.box(post,base-37,4,37,P.wood[0]);c.box(post,base-37,1,37,P.wood[3])
+    c.roof_colors=P.oat
+    c.roof_depth=32
+    c.roof(x-28,base-45,56)
+
 def draw():
     OUT.mkdir(exist_ok=True);r=random.Random(724);c=Town(4)
+    c.facades=[]
     c.im=Image.new('RGBA',(W,H),P.sage[1]);c.d=ImageDraw.Draw(c.im)
     sky=Image.open(ASSETS/'autumn_back_sky_clear.png').convert('RGBA')
     for layer in ('far','mid'):sky.alpha_composite(Image.open(ASSETS/f'autumn_back_{layer}_clear.png').convert('RGBA'))
@@ -187,11 +254,11 @@ def draw():
                 crown=r.choice(broadleaf);c.im.alpha_composite(crown,(x-crown.width//2,y-crown.height))
             else:c.im.alpha_composite(r.choice(pines),(x-26,y-80))
     # Mountaintop rail, viewing pavilion and paved switchback.
-    c.rail((224,228),(612,228),True);c.pavilion(540,253);c.bench(381,244);c.bench(440,244)
+    c.rail((224,228),(612,228),True);c.facade(253,summit_shelter,540,253);c.bench(381,244);c.bench(440,244)
     for y in range(303,376,7):c.box(383,y,84,2,P.pave[1]);c.box(383,y,84,1,P.linen[2])
     # Colliery above the landing strip. A timber headframe, loading bin and coal tubs.
     c.cliff(320,646,414,472,44);headframe(c,342,533)
-    c.roof_colors=P.slate;c.building(460,530,112,1,'brick',None,88);c.chimney(586,529,94)
+    c.roof_colors=P.slate;c.facade(530,work_shed,460,530,112,88);c.chimney(586,529,94)
     for x in range(388,526,9):c.box(x,540,4,9,P.wood[1])
     for y in (540,547):c.box(382,y,152,2,P.steel[2])
     for x in (406,437):
@@ -203,11 +270,11 @@ def draw():
         for y in range(661,728,11):c.box(x,y,14,4,P.linen[3])
     c.box(733,608,2,40,P.steel[1])
     for i in range(6):c.box(735+i*5,609+i//2,5,10-i,P.clay[3] if i%2==0 else P.linen[3])
-    for i,entry in enumerate(BLOCKS):house(c,i,entry)
+    for i,entry in enumerate(BLOCKS):c.facade(entry[3]*2,house,i,entry)
     # Coal and timber yard with a loading gantry, angled belt, corrugated sheds,
     # and stockpiles stacked inside retaining bins alongside the old haul road.
     c.roof_colors=P.sea_grey
-    for x in (406,468,530):c.building(x,1527,51,1,'brick',None,x)
+    for x in (406,468,530):c.facade(1527,work_shed,x,1527,51,x)
     for x in (412,453,494,535):
         c.box(x,1590,41,35,P.walnut[1])
         c.poly([(x,1600),(x+9,1582),(x+19,1575),(x+39,1597)],P.slate[0])
@@ -216,7 +283,7 @@ def draw():
             c.box(x+dx,y,3,2,r.choice([P.steel[1],P.slate[1],P.slate[2]]))
         for j in range(0,39,9):c.box(x+j,1605,2,21,P.wood[3])
         c.box(x,1607,41,2,P.wood[2])
-    headframe(c,420,1723);c.roof_colors=P.clay;c.building(506,1722,70,1,'brick',None,83)
+    headframe(c,420,1723);c.roof_colors=P.oat;c.facade(1722,work_shed,506,1722,70,83)
     for x in (150,195,283,327):
         c.hedge(x,x+15,1517);c.flowerbed(x,1666,20,x,2)
     for x in (158,316,580,756,863,982):c.tree(x,1794 if x>710 else 1572,.68)
@@ -259,6 +326,12 @@ def draw():
         c.boulder(x,y,12,6,True)
     for label in c.labels:c.text(label['x']+max(4,(label['w']-len(label['text'])*10)//2),label['y']+1,label['text'],10)
     c.im.convert('RGB').save(OUT/'town.png',optimize=True)
+    cover=Image.new('RGBA',(W,H))
+    for bounds,sprite,_ in c.facades:
+        visible=c.im.crop(bounds)
+        visible.putalpha(sprite.getchannel('A'))
+        cover.alpha_composite(visible,bounds[:2])
+    cover.save(OUT/'building-cover.png',optimize=True)
     for i,who in enumerate([doll.GIRL,doll.BOY]):who.render(expr='neutral').to_image().save(OUT/f'walker{i}.png')
-    (OUT/'layout.json').write_text(json.dumps(dict(size=[W,H],streets=STREETS,places=PLACES,obstacles=[(502,243,574,257),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]),separators=(',',':')))
+    (OUT/'layout.json').write_text(json.dumps(dict(size=[W,H],streets=STREETS,places=PLACES,facades=[(*bounds,base) for bounds,_,base in c.facades],obstacles=[(502,243,574,257),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]),separators=(',',':')))
 if __name__=='__main__':draw()

@@ -4,7 +4,7 @@
 *{box-sizing:border-box}body{margin:0;background:#292e2c;color:#f0e9d9;font:15px system-ui,sans-serif}header{position:sticky;top:0;z-index:2;background:#303b35;box-shadow:0 2px #1c2420;display:flex;align-items:center;gap:14px;padding:9px max(12px,calc((100% - 994px)/2));white-space:nowrap}h1{font-size:17px;margin:0}button{background:#e5d5af;color:#32382d;border:1px solid #ae9d79;border-radius:4px;padding:6px 11px;font:inherit}output{font-size:13px;color:#d1d3bf;white-space:normal}main{position:relative;width:min(994px,100%);margin:auto}img,canvas{display:block;width:100%;image-rendering:pixelated}canvas{position:absolute;inset:0;height:100%}main.fit{width:min(994px,100%,calc((100dvh - 53px)*994/2176))}@media(max-width:460px){header{gap:8px}output{font-size:12px}}
 </style>
 <header><h1>栗尾市</h1><button id="zoom">看全图</button><output id="status" aria-live="polite">点灰色道路行走</output></header>
-<main><img src="town.png" width="994" height="2176" style="height:auto" alt="从山顶瞭望台到湖畔芦苇荡的栗尾市像素地图"><canvas width="994" height="2176" aria-label="点击道路指定小人的目的地"></canvas></main>
+<main><img src="town.png?v=__ART_VERSION__" width="994" height="2176" style="height:auto" alt="从山顶瞭望台到湖畔芦苇荡的栗尾市像素地图"><canvas width="994" height="2176" aria-label="点击道路指定小人的目的地"></canvas></main>
 <script>
 const layout=__LAYOUT__, step=4, cols=Math.ceil(layout.size[0]/step), rows=Math.ceil(layout.size[1]/step);
 const walk=new Uint8Array(cols*rows), canvas=document.querySelector('canvas'), ctx=canvas.getContext('2d');
@@ -41,6 +41,8 @@ function actor(name,style,stops=[]){
   return {x,y,sprite,stops,route:[],cursor:0,stop:0,rest:1};
 }
 const actors=[actor('airstrip',0),actor('market',1,['canteen','market']),actor('pier',1,['reeds','pier']),actor('townhall',0,['clinic','townhall'])];
+const cover = new Image();
+cover.src = 'building-cover.png?v=__ART_VERSION__';
 let goal=null;
 function send(a,x,y){
   const route=path(index(a.x,a.y),index(x,y));
@@ -69,13 +71,26 @@ function frame(now){
       if(a.stops.length&&(a.rest-=dt)<=0){send(a,...at(a.stops[a.stop++%a.stops.length]));a.rest=2;}
     }
   }
-  for(const a of [...actors].sort((l,r)=>l.y-r.y)){
-    if(!a.sprite.naturalWidth)continue;
-    const x=Math.round(a.x),y=Math.round(a.y);
-    ctx.fillStyle='rgba(40,32,29,.28)';ctx.fillRect(x-6,y-2,12,3);
-    ctx.drawImage(a.sprite,x-10,y-28-(a.cursor<a.route.length?Math.floor(now/170)%2:0));
-  }
+  for(const a of [...actors].sort((l,r)=>l.y-r.y))drawActor(a,now);
   requestAnimationFrame(frame);
+}
+function drawActor(a, now) {
+  if (!a.sprite.naturalWidth) return;
+  const x = Math.round(a.x), y = Math.round(a.y);
+  const bob = a.cursor < a.route.length ? Math.floor(now/170)%2 : 0;
+  ctx.fillStyle = 'rgba(40,32,29,.28)';
+  ctx.fillRect(x-6,y-2,12,3);
+  ctx.drawImage(a.sprite,x-10,y-28-bob);
+  if (!cover.naturalWidth) return;
+  for (const [left, top, right, bottom, base] of layout.facades) {
+    if (y >= base) continue;
+    const startX = Math.max(left,x-10), startY = Math.max(top,y-28-bob);
+    const width = Math.min(right,x+10) - startX;
+    const height = Math.min(bottom,y+1) - startY;
+    if (width > 0 && height > 0) {
+      ctx.drawImage(cover,startX,startY,width,height,startX,startY,width,height);
+    }
+  }
 }
 requestAnimationFrame(frame);
 </script></html>

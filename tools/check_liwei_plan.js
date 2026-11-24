@@ -20,11 +20,39 @@ const assert=require('node:assert/strict');
    return {unreachable,roadCells,connected:visited.size,places:Object.keys(layout.places).length};
  });
  console.log(result);assert.deepEqual(result.unreachable,[]);assert.equal(result.roadCells,result.connected);
+ await p.waitForFunction(()=>cover.naturalWidth && actors[0].sprite.naturalWidth);
+ const facadeOrder = await p.evaluate(()=>{
+   const roofProbe = document.createElement('canvas').getContext('2d');
+   roofProbe.drawImage(cover,-200,-820);
+   const roofPixel = (x,y)=>[...roofProbe.getImageData(x-200,y-820,1,1).data];
+   const width=20,height=29;
+   const actorPixel = (x,y,footY) => {
+     const player={...actors[0],x:220,y:footY,route:[],cursor:0};
+     ctx.clearRect(210,footY-28,width,height);
+     drawActor(player,0);
+     return [...ctx.getImageData(x,y,1,1).data];
+   };
+   const footBehindRoof=850,footInFrontOfHouse=982;
+   return {
+     roadBehind: Boolean(walk[index(220,828)] && walk[index(220,footBehindRoof)]),
+     farSideRoofAlpha: roofPixel(220,828)[3],
+     nearSideRoofAlpha: roofPixel(220,848)[3],
+     coveredPixels: actorPixel(220,848,footBehindRoof),
+     roofPixels: roofPixel(220,848),
+     frontPixels: actorPixel(220,960,footInFrontOfHouse),
+   };
+ });
+ assert(facadeOrder.roadBehind);
+ assert.equal(facadeOrder.farSideRoofAlpha,0);
+ assert.equal(facadeOrder.nearSideRoofAlpha,255);
+ assert.deepEqual(facadeOrder.coveredPixels,facadeOrder.roofPixels);
+ assert.notDeepEqual(facadeOrder.frontPixels,facadeOrder.roofPixels);
+ assert.equal(facadeOrder.frontPixels[3],255);
  await p.locator('button').click();const box=await p.locator('canvas').boundingBox();
  const click=async(x,y)=>p.mouse.click(box.x+x/994*box.width,box.y+y/2176*box.height);
  await click(505,692);await p.waitForFunction(()=>document.querySelector('output').textContent==='已到达');
  await click(770,2020);assert.match(await p.locator('output').innerText(),/无法落脚/);
  await click(598,2070);await p.waitForFunction(()=>document.querySelector('output').textContent==='已到达',null,{timeout:60000});
- assert.equal(await p.evaluate(()=>actors.slice(1).every(a=>a.stop>0)),true);assert.deepEqual(errors,[]);console.log('mouse, lake rejection, quay arrival, NPCs ok');
+ assert.equal(await p.evaluate(()=>actors.slice(1).every(a=>a.stop>0)),true);assert.deepEqual(errors,[]);console.log('facade depth, mouse, lake rejection, quay arrival, NPCs ok');
  }finally{await b.close();}
 })().catch(e=>{console.error(e);process.exit(1)});
