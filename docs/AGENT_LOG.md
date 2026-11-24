@@ -8,7 +8,7 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ## 2026-11-24 · Codex · 栗尾市新地图审图
 - 按主人 PDF 重绘 994×2176 单阶段原生像素全图，独立审阅入口 `/autumn/new-town/`。建筑、矿区、路网与南岸码头源文件在 `art/src/concept/_liwei_plan.py`。
-- 审图页可实际点击走路，三位居民共用道路。检查所有路格连通、34 个定位点可达，以及从停机坪走至码头、水面拒绝点击和原秋图预览回归。
+- 审图页可实际点击走路，三位居民共用道路。公园长椅移离浴场到达点；专项测试 `node tools/check_liwei_plan.js`。检查所有路格连通、34 个定位点可达，以及从停机坪走至码头、水面拒绝点击和原秋图预览回归。
 - 待主人定稿后再接游戏、污染阶段、剧情站位、前景遮挡和旧存档迁移；正式游戏与现有剧情内测继续用原图。详见 AUTUMN_CITY.md。
 
 ## 2026-11-24 · Codex · 排查其他地图入口

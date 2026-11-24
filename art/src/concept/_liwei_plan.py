@@ -222,7 +222,7 @@ def draw():
     for x in (158,316,580,756,863,982):c.tree(x,1794 if x>710 else 1572,.68)
     c.bench(148,1764);c.rail((147,1798),(212,1798),True);c.rail((267,1798),(345,1798),True)
     # Park / market and notice board.
-    c.bunting(410,545,1150);c.bench(651,1141)
+    c.bunting(410,545,1150);c.bench(588,1266)
     c.pond(531,1221,11);c.swing(417,1268);c.bench(492,1269);c.flowerbed(518,1267,53,91)
     c.stall(408,1430,P.teal);c.stall(466,1430,P.clay);c.stall(526,1430,P.mustard)
     c.roaster(495,776)
@@ -260,5 +260,5 @@ def draw():
     for label in c.labels:c.text(label['x']+max(4,(label['w']-len(label['text'])*10)//2),label['y']+1,label['text'],10)
     c.im.convert('RGB').save(OUT/'town.png',optimize=True)
     for i,who in enumerate([doll.GIRL,doll.BOY]):who.render(expr='neutral').to_image().save(OUT/f'walker{i}.png')
-    (OUT/'layout.json').write_text(json.dumps(dict(size=[W,H],streets=STREETS,places=PLACES,obstacles=[(502,243,574,257),(373,239,408,245),(433,239,466,245),(142,1964,171,1978),(650,1133,675,1142)]),separators=(',',':')))
+    (OUT/'layout.json').write_text(json.dumps(dict(size=[W,H],streets=STREETS,places=PLACES,obstacles=[(502,243,574,257),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]),separators=(',',':')))
 if __name__=='__main__':draw()
