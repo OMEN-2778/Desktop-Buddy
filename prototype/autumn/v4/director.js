@@ -774,12 +774,7 @@
     world.x = inside ? 222 : pos.x;
     world.y = inside ? 108 : pos.y;
     city.clearRoute();
-    world.camX = inside
-      ? 0
-      : Math.max(0, Math.min(data.width - 342, world.x - 171));
-    world.camY = inside
-      ? 0
-      : Math.max(0, Math.min(data.height - city.canvas.height, world.y - city.footLine()));
+    city.snapCamera();
     p.cueLoc = loc;
   }
   function perform(action) {
@@ -946,7 +941,7 @@
       }
       if (data.town && !world.inside) {
         const footing=city.nearest(x,y);
-        if (footing && Math.abs(footing.y-y)>2) {
+        if (footing && (staged ? Math.abs(footing.y-y)>2 : footing.d>2)) {
           x=footing.x;
           y=footing.y;
         }

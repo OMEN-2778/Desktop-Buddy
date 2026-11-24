@@ -25,12 +25,14 @@ function makeSeason_autumn(opts, DATA) {
     const keys = new Set, images = new Map, fx = makeSeasonEffects();
     let weatherKind = "clear";
     let hover = null, dialog = null, lastFocus = null;
+    const town = DATA.town;
+    const footLine = () => town ? canvas.height / 2 + 14 : canvas.height - 43;
     const state = {
         loaded: false,
         x: DATA.landmarks[0].x,
         y: DATA.landmarks[0].y,
         camX: DATA.landmarks[0].x - 171,
-        camY: DATA.landmarks[0].y - (canvas.height-43),
+        camY: DATA.landmarks[0].y - footLine(),
         facing: -1,
         time: 0,
         streetTime: 0,
@@ -55,7 +57,6 @@ function makeSeason_autumn(opts, DATA) {
         keyboard: false
     };
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-    const town = DATA.town;
     const navigation = town && autumnTownNavigation(DATA,town);
     const nodes = [], edges = [], nodeMap = new Map;
     function node(x, y) {
@@ -391,6 +392,7 @@ function makeSeason_autumn(opts, DATA) {
             return;
         }
         if (goal.need) {
+            if (goal.need === "hygiene") return care("hygiene", true);
             beginService(goal.need, landmark(goal.id).name);
             return;
         }
@@ -414,9 +416,11 @@ function makeSeason_autumn(opts, DATA) {
         if (!window.liweiStory && id === "plaza" && state.quest === 5) return talk(AUTUMN_STORY.epilogue, () => chapter(6,4,"与大家聊过近况。栗尾市从此全年开放；办公室想去就去，不去也没关系。"));
         if (id === "notice") return panel(p.name, state.quest < 4 ? "墙上贴着运输安排，几张纸被灰盖住了。" : state.quest < 5 ? "公开讨论：工资、债务、河水检测。表上有日期，也有空着的项目。" : "新的河水与空气报告按月贴在这里。做完的和没做完的，都留着。", [ [ "记进日记", () => discover("notice", "看了广场的公告，日期和没完成的项目都还在。") ], [ "离开" ] ]);
         if (id === "airstrip") return panel(p.name, state.quest < 6 ? "雾霾还没散，阿简正在等能起飞的天气。测试时也可以随时返回小屋。" : "天清了，飞机随时可以出发。栗尾市以后全年都能来。", [ [ "返回小屋", opts.exit ], [ "再逛逛" ] ]);
+        if (id === "laundry") return panel(p.name, "这里是洗衣服的。", [["离开"]]);
+        if (id === "bath") return panel(p.name, "想洗澡的话，可以回住处用浴缸。", [
+            ["回住处洗澡", () => care("hygiene", true)], ["离开"]
+        ]);
         const services = {
-            laundry: [ "洗把脸", "hygiene" ],
-            bath: [ "进去洗澡", "hygiene" ],
             toilet: [ "使用公厕", "bladder" ],
             lookout: [ "坐下看看远处", "fun" ],
             pavilion: [ town ? "用望远镜看看" : "进亭子里坐坐", "fun" ],
@@ -496,7 +500,7 @@ function makeSeason_autumn(opts, DATA) {
         if (state.service || state.goal?.automatic || state.goal?.id === "inside_service" || state.goal?.id === "home_use" || opts.home?.busy()) return;
         close();
         if (state.inside) {
-            if (!manual && state.indoorSite !== lodging()) return leave(lodging(), need);
+            if (state.indoorSite !== lodging() && (!manual || need === "hygiene")) return leave(lodging(), need);
             return insideVisit(need);
         }
         const local = need === "bladder" ? ["toilet"] :
@@ -613,9 +617,8 @@ function makeSeason_autumn(opts, DATA) {
             const outside = indoors();
             state.x = d.to ? 222 : outside.x;
             state.y = d.to ? 108 : outside.y;
-            state.camX = d.to ? 0 : state.x - 171;
             syncHeight();
-            state.camY = d.to ? 0 : state.y - footLine();
+            snapCamera();
         }
         if (d.elapsed >= .65) {
             state.door = null;
@@ -623,7 +626,6 @@ function makeSeason_autumn(opts, DATA) {
             if (!d.to && d.destination) visit(d.destination, d.need, !!d.need);
         }
     }
-    const footLine=()=>canvas.height-43;
     function syncHeight() {
         canvas.height=town&&!state.inside ? 236 : 118;
     }
@@ -632,12 +634,16 @@ function makeSeason_autumn(opts, DATA) {
             state.camX = state.camY = 0;
             return;
         }
-        const viewProgress = state.x > 80 + (DATA.ox || 0) && state.x < (town ? 620 : 345 + (DATA.ox || 0)) ? clamp(((town ? 310 : DATA.summit.triggerY)-state.y)/65,0,1) : 0;
-        const ease=viewProgress*viewProgress*(3-2*viewProgress);
-        const x = clamp(state.x - 171, 0, DATA.width - 342), y = clamp(state.y - footLine()+ease*(town ? -18 : 14), 0, DATA.height - canvas.height), t = 1 - Math.exp(-dt * 5);
+        const legacySummit = !town && state.x > 80 + (DATA.ox || 0) && state.x < 345 + (DATA.ox || 0);
+        const progress = legacySummit ? clamp((DATA.summit.triggerY-state.y)/65,0,1) : 0;
+        const summitOffset = 14 * progress * progress * (3 - 2 * progress);
+        const x = clamp(state.x - 171, 0, DATA.width - 342);
+        const y = clamp(state.y - footLine() + summitOffset, 0, DATA.height - canvas.height);
+        const t = town ? 1 : 1 - Math.exp(-dt * 5);
         state.camX += (x - state.camX) * t;
         state.camY += (y - state.camY) * t;
     }
+    const snapCamera = () => camera(Infinity);
     function load(src) {
         if (images.has(src)) return;
         const im = new Image;
@@ -1056,10 +1062,22 @@ function makeSeason_autumn(opts, DATA) {
         approachNpc(n);
     }
     function approachNpc(n) {
-        goTo(n.x + (state.x < n.x ? -18 : 18), n.y, {
-            id: "npc:" + n.id,
-            storyWalk: !!(window.liweiStory && n.mark)
-        });
+        const goal = {id: "npc:" + n.id, storyWalk: !!(window.liweiStory && n.mark)};
+        if (goal.storyWalk && navigation) {
+            const route = plan(n.x, n.y);
+            let previous = state, length = 0;
+            for (const step of route) {
+                length += dist(previous, step);
+                previous = step;
+            }
+            if (dist(previous, n) <= 3 && length <= 24) {
+                clearRoute();
+                converse(n.id);
+                return;
+            }
+        }
+        if (!goTo(n.x + (state.x < n.x ? -18 : 18), n.y, goal) && goal.storyWalk)
+            goTo(n.x, n.y, goal);
     }
     function pick(x, y) {
         if (window.liweiStory?.active) return;
@@ -1151,9 +1169,8 @@ function makeSeason_autumn(opts, DATA) {
         state.mapOpen = false;
         state.x = landmark("airstrip").x;
         state.y = landmark("airstrip").y;
-        state.camX = state.x - 171;
         syncHeight();
-        state.camY = state.y - footLine();
+        snapCamera();
         state.autoAt = opts.now() + 30;
     }
     function restore() {
@@ -1194,7 +1211,12 @@ function makeSeason_autumn(opts, DATA) {
         state.x = p.x;
         state.y = p.y;
         syncHeight();
-        camera(Infinity);
+        snapCamera();
+        if (!state.inside && state.service?.need === "hygiene") state.service = state.pose = null;
+        if (!state.inside && state.goal?.need === "hygiene" && state.goal.id !== lodging()) {
+            clearRoute();
+            if (!window.liweiStory?.locked()) care("hygiene", true);
+        }
         if (state.target) {
             const target = state.route.at(-1) || state.target;
             const goal = state.goal;
@@ -1279,7 +1301,7 @@ function makeSeason_autumn(opts, DATA) {
         edges: edges,
         npcRows: npcRows,
         syncHeight,
-        footLine,
+        snapCamera,
         townVariant: town ? townVariant : null,
         drawnTown: () => town ? drawnTown : null,
         goTo: goTo,

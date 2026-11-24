@@ -38,7 +38,7 @@ const autumnHome=(function(){
   if(!auto&&SPOTS[id]&&seasonHouse.furnitureMenu(id,SPOTS[id].rect))return;
   const p=SPOTS[id];if(!p||!p.act)return;stop();closeRing();
   const c=C(),s=S();s.autoAt=sim.t+60;
-  if(!s.inside||auto===true&&s.indoorSite!==c.lodging()){
+  if(!s.inside||(auto===true||id==='bath')&&s.indoorSite!==c.lodging()){
    if(s.door)return;
    pend={id,auto,item};
    const moving=s.inside?c.leave(c.lodging(),p.need):c.visit(c.lodging(),p.need,true);

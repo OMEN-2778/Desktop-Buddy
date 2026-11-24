@@ -111,7 +111,9 @@ const seasonalTest=(function(){
  const originalRender=renderOutside;renderOutside=function(){
   if(!active())return originalRender();const c=ctl();if(!c.state.loaded)return;
   const dt=Math.min(.1,Math.max(0,realClock-state.last));state.last=realClock;
-  c.setWeather(sceneWeatherKind(weather.kind==='snow'&&weather.heavy?'blizzard':weather.kind));people.sync();c.setResolution(Math.max(1,view.width/W));const run=!!speed&&!cardHolds()&&!wiping&&sim.mode!=='down';
+  c.setWeather(sceneWeatherKind(weather.kind==='snow'&&weather.heavy?'blizzard':weather.kind));people.sync();c.setResolution(Math.max(1,view.width/W));const storyTravel=sim.place==='autumn_test'&&(c.state.goal?.storyWalk||c.state.goal?.storyChapter||
+    window.liweiStory?.locked()&&(c.state.goal?.id==='exit_inside'||c.state.door));
+  const run=(!!speed||storyTravel)&&!cardHolds()&&!wiping&&sim.mode!=='down';
   c.state.paused=!run;c.state.gender=look.gender||'f';
   if(run){
    if(!window.liweiStory?.locked()&&!life.talkQ&&!c.state.door&&!c.state.inCabana&&!c.state.target&&sim.t>=state.autoAt&&!ringOf&&!(sim.place==='summer_test'&&window.summerFloat?.busy())){state.autoAt=sim.t+8+Math.random()*12;   /* owner 2026-11-10: less standing about (was 20-45 game minutes) */
@@ -119,7 +121,7 @@ const seasonalTest=(function(){
     else if(sim.place==='spring_test'&&!c.state.inside)c.target(Math.max(20,Math.min((c.state.scene===5?684:342)-20,c.state.x+(Math.random()<.5?-1:1)*(30+Math.random()*70))));
     else if(sim.place==='summer_test'&&!c.state.inside&&c.state.lying===null){const nx=Math.max(50,c.state.x+(Math.random()<.5?-1:1)*45);if(!c.state.market&&c.state.y>132)c.goTo(nx,'dive',c.state.y);else c.goTo(nx);}   /* underwater she drifts at her depth: a plain walk target there left her stuck */
    }
-   people.tick(dt);c.tick(life.talkQ?0:dt*Math.min(speed,4),dt);if(active()&&sim.act==='season_explore')sync();
+   people.tick(dt);c.tick(life.talkQ&&!storyTravel?0:dt*Math.min(speed||(storyTravel?1:0),4),dt);if(active()&&sim.act==='season_explore')sync();
   }else{c.clearKeys();c.tick(0);}
   // diving (owner, many times): the scene opens UPWARD, smoothly. The shown height follows the scene's height over
   // ~0.4 s, cropped from the bottom, so the top edge rises (or sinks) while the ground / sea floor stays put; on the
@@ -156,7 +158,9 @@ const seasonalTest=(function(){
   const sx=hero.x,sy=hero.y-projection.top;
   if(sim.mode==='down'){if(Math.abs(x-sx)<22&&y>sy-42&&y<sy+12){   /* her whole figure, also when drawn higher than her feet (a float, a chair) */holding={t0:realClock,pointerId:e.pointerId};view.setPointerCapture(e.pointerId);showHint('按住主角 5 秒即可唤醒');}return;}
   if(sim.place==='autumn_test'&&s.mapOpen){c.pick(x,y);sync();return;}
-  if(Math.abs(x-sx)<10&&y<sy&&y>sy-28){openRing('away','buddy');return;}
+  const nearHero=Math.abs(x-sx)<10&&y<sy&&y>sy-28;
+  const taskNpc=nearHero&&sim.place==='autumn_test'&&c.hit(worldX,worldY);
+  if(nearHero&&!(taskNpc?.npc&&taskNpc.mark)){openRing('away','buddy');return;}
   closeRing();state.autoAt=sim.t+45;window.seasonAuto?.cancel();s.rush=performance.now();if(sim.place==='autumn_test'){view.focus();ripple(e);c.pick(worldX,worldY);sync();return;}if(sim.place==='summer_test'&&window.summerLife?.click(worldX,worldY))return;if(people.click(worldX,worldY))return;people.cancel();if(e.pointerType==='mouse')seasonPress={x:e.clientX,y:e.clientY};c.pickScene(x,y);sync();
  },true);
  /* desktop app: pressing empty ground and dragging moves the window, as in the house (owner 2026-11-05);

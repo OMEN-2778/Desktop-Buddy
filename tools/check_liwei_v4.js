@@ -289,6 +289,33 @@ const { chromium } = require("playwright"),
               throw Error("resident or his bed leaked into the hotel");
             autumnHome.cancelActivity();
           }
+          function finishWalk() {
+            c.state.paused=false;
+            for(let i=0;i<1400&&(c.state.target||c.state.door);i++)c.tick(.25,.1);
+          }
+          c.leave();
+          finishWalk();
+          const laundry=c.DATA.landmarks.find(p=>p.id==="laundry");
+          c.goTo(laundry.x,laundry.y);
+          finishWalk();
+          c.interact("laundry");
+          if(c.state.service?.need==="hygiene"||!c.modalOpen)
+            throw Error("laundry still bathes the player");
+          c.close();
+          // Verify a previously saved trip to the laundry resumes toward the chosen home.
+          const oldBathSave=JSON.parse(JSON.stringify(snapshot()));
+          for(const state of [oldBathSave.testAutumn,oldBathSave.seasonMapTest.state]){
+            state.goal={id:"laundry",need:"hygiene",automatic:true};
+            state.target={x:laundry.x,y:laundry.y};
+          }
+          restore(oldBathSave);
+          if(c.state.goal?.id!==room)
+            throw Error("legacy wash not routed to " + room);
+          finishWalk();
+          if(!c.state.inside||c.state.indoorSite!==room||autumnHome.svc?.act!=="bath")
+            throw Error("the bath did not start at the selected lodging");
+          autumnHome.cancelActivity();
+          sim.needs.hygiene=99;
           let passes = 0;
           while (s.next().length) {
             if (++passes > 30) throw Error("progress loop");
@@ -300,7 +327,40 @@ const { chromium } = require("playwright"),
               if (pickOn !== "autumn_stall" || !choices.includes("吃碗热面") || !choices.includes("旧相识")) throw Error("canteen menu");
               closePicker();
             }
-            s.guide(k);
+            if(k==="S03"){
+              c.leave();
+              finishWalk();
+              const tapWorld=(x,y)=>{
+                const point=mapViewport(c,c.canvas.height).scene(x,y);
+                const rect=view.getBoundingClientRect();
+                view.dispatchEvent(new PointerEvent("pointerdown", {bubbles:true,pointerType:"touch",isPrimary:true,
+                  clientX:rect.left+point.x*rect.width/342, clientY:rect.top+point.y*rect.height/c.canvas.height}));
+              };
+              const street=c.nearest(378,1042);
+              c.goTo(street.x,street.y);
+              finishWalk();
+              await wait(75);
+              const below=c.nearest(street.x,street.y+64);
+              tapWorld(below.x,below.y);
+              finishWalk();
+              if(c.state.y!==below.y||c.state.x!==below.x)
+                throw Error("cannot direct the player to the road beneath the centered camera");
+              const qing=c.npcRows().find(n=>n.id==="qing");
+              const approach=c.nearest(qing.x + (branch ? 75 : 8),qing.y);
+              c.goTo(approach.x,approach.y);
+              finishWalk();
+              c.snapCamera();
+              c.draw();
+              if(Math.abs(c.state.y-c.state.camY-14-c.canvas.height/2)>1)
+                throw Error("hero sprite not centered in the outdoor camera");
+              speed=0; // Quest-directed approaches must still run with the clock paused.
+              await wait(75);
+              tapWorld(qing.x,qing.y-14);
+              for(let i=0;i<220&&!s.active;i++)await wait(20);
+              speed=1;
+              if(!s.active||s.progress.chapter!=="S03"||ringOf)
+                throw Error("clicking visible 程青 did not open 赤岩矿业");
+            }else s.guide(k);
             if (!s.locked()) throw Error("quest walk must pause simulation: " + k);
             for (let i = 0; !s.active && i < 3000; i++) {
               c.state.paused = false;
