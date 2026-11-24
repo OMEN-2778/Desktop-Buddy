@@ -1,6 +1,6 @@
 """Build art-only /autumn/ review. Only minified code and rendered artwork go public."""
 from pathlib import Path
-import sys, json, base64, subprocess
+import sys, json, base64, subprocess, shutil
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'tools'),str(ROOT/'art/src/concept')]
 import autumn_city as A
@@ -15,5 +15,14 @@ def main():
  start=page.index('<script>')+8;end=page.index('</script>',start)
  script=subprocess.run(['node',str(ROOT/'desktop/node_modules/terser/bin/terser'),'--compress','--mangle'],input=page[start:end],text=True,capture_output=True,check=True).stdout
  page=page[:start]+script+page[end:];(out/'index.html').write_text(page)
+ # Separate design review. Live autumn content keeps its current geometry until approval.
+ plan=out/'new-town';plan.mkdir(exist_ok=True)
+ source=ROOT/'art/out/concept/liwei-plan'
+ for filename in ('town.png','walker0.png','walker1.png'):
+  shutil.copyfile(source/filename,plan/filename)
+ review=(ROOT/'prototype/autumn/plan-review.src.html').read_text().replace('__LAYOUT__',(source/'layout.json').read_text())
+ before,script=review.split('<script>',1);script,after=script.split('</script>',1)
+ compressed=subprocess.run(['node',str(ROOT/'desktop/node_modules/terser/bin/terser'),'--compress','--mangle'],input=script,text=True,capture_output=True,check=True).stdout
+ (plan/'index.html').write_text(before+'<script>'+compressed+'</script>'+after)
  print(out/'index.html',len(page)//1024,'KiB')
 if __name__=='__main__':main()

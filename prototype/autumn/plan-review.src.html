@@ -1,0 +1,81 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>栗尾市 · 新城图审阅</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#292e2c;color:#f0e9d9;font:15px system-ui,sans-serif}header{position:sticky;top:0;z-index:2;background:#303b35;box-shadow:0 2px #1c2420;display:flex;align-items:center;gap:14px;padding:9px max(12px,calc((100% - 994px)/2));white-space:nowrap}h1{font-size:17px;margin:0}button{background:#e5d5af;color:#32382d;border:1px solid #ae9d79;border-radius:4px;padding:6px 11px;font:inherit}output{font-size:13px;color:#d1d3bf;white-space:normal}main{position:relative;width:min(994px,100%);margin:auto}img,canvas{display:block;width:100%;image-rendering:pixelated}canvas{position:absolute;inset:0;height:100%}main.fit{width:min(994px,100%,calc((100dvh - 53px)*994/2176))}@media(max-width:460px){header{gap:8px}output{font-size:12px}}
+</style>
+<header><h1>栗尾市</h1><button id="zoom">看全图</button><output id="status" aria-live="polite">点灰色道路行走</output></header>
+<main><img src="town.png" width="994" height="2176" style="height:auto" alt="从山顶瞭望台到湖畔芦苇荡的栗尾市像素地图"><canvas width="994" height="2176" aria-label="点击道路指定小人的目的地"></canvas></main>
+<script>
+const layout=__LAYOUT__, step=4, cols=Math.ceil(layout.size[0]/step), rows=Math.ceil(layout.size[1]/step);
+const walk=new Uint8Array(cols*rows), canvas=document.querySelector('canvas'), ctx=canvas.getContext('2d');
+const statusLine=document.querySelector('output'), main=document.querySelector('main');
+const index=(x,y)=>Math.floor(y/step)*cols+Math.floor(x/step);
+for(const [x,y,right,bottom] of layout.streets){
+  for(let j=Math.ceil((y*2-2)/step);j*step+2<=bottom*2;j++){
+    for(let i=Math.ceil((x*2-2)/step);i*step+2<=right*2;i++)walk[j*cols+i]=1;
+  }
+}
+for(const [x,y,right,bottom] of layout.obstacles){
+  for(let j=Math.floor(y/step);j<=Math.floor(bottom/step);j++)
+    for(let i=Math.floor(x/step);i<=Math.floor(right/step);i++)walk[j*cols+i]=0;
+}
+function path(from,to){
+  if(!walk[from]||!walk[to])return null;
+  const previous=new Int32Array(walk.length).fill(-1), queue=new Int32Array(walk.length);
+  previous[from]=from;queue[0]=from;
+  for(let a=0,b=1;a<b;a++){
+    const here=queue[a];if(here===to)break;
+    for(const next of [here-cols,here+cols,here%cols?here-1:-1,here%cols<cols-1?here+1:-1]){
+      if(!walk[next]||previous[next]!==-1)continue;
+      previous[next]=here;queue[b++]=next;
+    }
+  }
+  if(previous[to]<0)return null;
+  const points=[];
+  for(let n=to;n!==from;n=previous[n])points.push([n%cols*step+2,Math.floor(n/cols)*step+2]);
+  return points.reverse();
+}
+const at=name=>layout.places[name].map(n=>n*2);
+function actor(name,style,stops=[]){
+  const [x,y]=at(name),sprite=new Image();sprite.src='walker'+style+'.png';
+  return {x,y,sprite,stops,route:[],cursor:0,stop:0,rest:1};
+}
+const actors=[actor('airstrip',0),actor('market',1,['canteen','market']),actor('pier',1,['reeds','pier']),actor('townhall',0,['clinic','townhall'])];
+let goal=null;
+function send(a,x,y){
+  const route=path(index(a.x,a.y),index(x,y));
+  if(route===null)return false;
+  a.route=route;a.cursor=0;return true;
+}
+canvas.onclick=e=>{
+  const bounds=canvas.getBoundingClientRect(),x=(e.clientX-bounds.left)*canvas.width/bounds.width,y=(e.clientY-bounds.top)*canvas.height/bounds.height;
+  if(send(actors[0],x,y)){goal=[x,y];statusLine.textContent='正在前往点击位置';}
+  else statusLine.textContent='这里无法落脚，点街道或栈桥试试';
+};
+document.querySelector('button').onclick=e=>{e.target.textContent=main.classList.toggle('fit')?'看细节':'看全图';};
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.1,(now-last)/1000);last=now;ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(goal){ctx.strokeStyle='#f7da86';ctx.lineWidth=2;ctx.strokeRect(Math.round(goal[0])-4,Math.round(goal[1])-2,9,5);}
+  for(const a of actors){
+    let distance=dt*(a===actors[0]?106:38);
+    while(distance>0&&a.cursor<a.route.length){
+      const [x,y]=a.route[a.cursor],dx=x-a.x,dy=y-a.y,len=Math.hypot(dx,dy);
+      if(len<=distance){a.x=x;a.y=y;a.cursor++;distance-=len;}
+      else{a.x+=dx*distance/len;a.y+=dy*distance/len;break;}
+    }
+    if(a.cursor===a.route.length){
+      if(a===actors[0]&&goal){statusLine.textContent='已到达';goal=null;}
+      if(a.stops.length&&(a.rest-=dt)<=0){send(a,...at(a.stops[a.stop++%a.stops.length]));a.rest=2;}
+    }
+  }
+  for(const a of [...actors].sort((l,r)=>l.y-r.y)){
+    if(!a.sprite.naturalWidth)continue;
+    const x=Math.round(a.x),y=Math.round(a.y);
+    ctx.fillStyle='rgba(40,32,29,.28)';ctx.fillRect(x-6,y-2,12,3);
+    ctx.drawImage(a.sprite,x-10,y-28-(a.cursor<a.route.length?Math.floor(now/170)%2:0));
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script></html>
