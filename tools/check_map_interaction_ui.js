@@ -104,7 +104,34 @@ assert(!touch || !/\bSEASON_RELEASE\s*=/.test(html.toString()), 'Use the mouse t
     await page.evaluate(() => closeWardrobe());
 
     await enter('summer_test');
-    await page.evaluate(() => { const s=seasonMapTest.ctl().state; Object.assign(s,{inside:true,x:96,y:84}); });
+    await page.evaluate(() => {
+      const c=seasonMapTest.ctl(),s=c.state;
+      summerLife.B().met=true;
+      Object.assign(s,{x:120,y:c.gr(120),camX:0,camY:0});
+      const n=life.npcs.find(n=>n.seasonKind==='walk');
+      n.x=c.data.lodgeDoor+8;n.feet=c.gr(n.x);n.paused=true;
+    });
+    await page.waitForFunction(() => seasonMapTest.ctl().targetAt(164,84)?.id==='lodge');
+    const doorway=await page.evaluate(() => {
+      const c=seasonMapTest.ctl();
+      const n=life.npcs.find(n=>n.seasonKind==='walk'), [f,pose]=npcFrame(n);
+      const walker={img:npcCanvas(n,f,pose,false),x:Math.round(n.x-10),y:n.feet-27};
+      // Exposed door pixel inside the pedestrian's old rectangular hit area.
+      for(let y=n.feet-27;y<n.feet-18;y++)for(let x=n.x-11;x<n.x-6;x++){
+        if(c.targetAt(x,y)?.id==='lodge'&&!scenePixelHit(walker,x,y,'near'))return [x,y];
+      }
+      throw Error('The lodge fixture needs an exposed door pixel beside the walker');
+    });
+    await clickSpot(...doorway);
+    assert(await page.evaluate(() => {
+      const c=seasonMapTest.ctl();
+      return c.state.target?.x===c.data.lodgeDoor && typeof c.state.after==='function';
+    }), 'clicking the exposed lodge door should enter even beside a walker');
+    await page.waitForFunction(() => {
+      const s=seasonMapTest.ctl().state;
+      return s.inside&&!s.door;
+    });
+    await page.evaluate(() => { seasonMapTest.ctl().state.x=96; });
     const sofa = await page.evaluate(async () => {
       const raw = SEASON_FURNITURE.summer.find(([id]) => id === 'sofa');
       const [{img,x,y}] = sceneTargetsFor([raw]);
@@ -229,6 +256,6 @@ assert(!touch || !/\bSEASON_RELEASE\s*=/.test(html.toString()), 'Use the mouse t
       assert.equal(await page.evaluate(()=>kitchenKey()),'autumn_test');
     }
     assert.deepEqual(errors, []);
-    console.log('PASS ('+(touch?'web touch':'mouse')+'): shared directions, farmhouse door at 25% and 50%, TV selection, wardrobe, kitchen, cafe, NPC bubbles, fine outlines and clipped projection');
+    console.log('PASS ('+(touch?'web touch':'mouse')+'): shared directions, farmhouse and lodge doors, TV selection, wardrobe, kitchen, cafe, NPC bubbles, fine outlines and clipped projection');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

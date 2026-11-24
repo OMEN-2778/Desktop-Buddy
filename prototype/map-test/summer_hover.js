@@ -8,7 +8,10 @@ const summerHover=(()=>{
   if(Math.abs(x-s.x)<10&&y<s.y&&y>s.y-28)return null;
   if(s.inside)return window.summerLodge?.hit(x,y);
   if(s.market){const p=summerLife.marketHit(x,y);return p?.id?p:null;}
-  return summerLife.beachHit(x,y)||c.targetAt(x,y);
+  const beach=summerLife.beachHit(x,y);
+  if(beach)return beach;
+  if(seasonMapTest.people.hit(x,y))return {npc:true};
+  return c.targetAt(x,y);
  }
  view.parentElement.addEventListener('pointermove',e=>{
   pointer=e.target===view&&sim.place==='summer_test'&&e.pointerType==='mouse'?{clientX:e.clientX,clientY:e.clientY}:null;

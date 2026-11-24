@@ -1,6 +1,6 @@
 // Real native identities, avatar rendering and social dialogue on test-only terrain.
 function installSeasonPeople(active,ctl){
- const cache=new Map();let region='',hover=null,approaching=null;
+ const cache=new Map(),walkers=[];let region='',hover=null,approaching=null;
  const bubble=makeNpcPill(widget);bubble.id='seasonNpcBubble';bubble.hidden=true;
  const lines={
  spring_test:[['花田','>你也是顺着花香走来的？','差不多，走着走着就到这儿了','>我绕了两圈，鞋上都沾花粉了'],['风车','>刚才那阵风，把我帽子都吹跑了','追回来了吗？','>追到了，差点比帽子先起飞'],['拍照','>能帮我看看头发乱没？','有一点，风还挺大的','>算了，拍出来就当很有动感'],['散步','>今天这天气，不出来走走亏了','是啊，在家坐着也没什么事','>我本来只想走十分钟……现在都走饿了'],['花粉','>阿嚏！花是好看，鼻子不太同意','要不要往风车那边走？','>行，先给鼻子放个假']],
@@ -11,8 +11,8 @@ function installSeasonPeople(active,ctl){
  function make(x,kind,range=38){const n=makeNpc('adult',{x,feet:103,seasonKind:kind,origin:x,range,v:6,dir:Math.random()<.5?-1:1});n.phase=Math.random()*6;return n;}
  function sync(force=false){
   if(force)region='';
-  if(!active()){if(region){stopNpcTalk();life.npcs=[];region='';}bubble.hidden=true;return;}
-  const k=key();if(region===k)return;stopNpcTalk();approaching=null;hover=null;region=k;
+  if(!active()){if(region){stopNpcTalk();life.npcs=[];walkers.length=0;region='';}bubble.hidden=true;return;}
+  const k=key();if(region===k)return;stopNpcTalk();approaching=null;hover=null;walkers.length=0;region=k;
   if(!cache.has(k)){
    const c=ctl(),s=c.state;let rows=[];
    if(!s.inside&&sim.place==='spring_test'&&s.scene<3)rows=[make(112,'walk'),make(245,'walk',45)];
@@ -34,11 +34,17 @@ function installSeasonPeople(active,ctl){
    positionNpcPill(bubble,p.x,p.y);
   }else bubble.hidden=true;
  }
- function draw(ctx){sync();const c=ctl(),s=c.state;for(const n of life.npcs){const cx=s.camera??s.camX??0,cy=s.camY||0;if(n.x<cx-60||n.x>cx+400||n.feet<cy-5||n.feet>cy+c.canvas.height+40)continue;const [f,pose]=npcFrame(n),water=n.seasonKind!=='walk';if(water){f.wave=Math.floor(s.time/.28+n.phase)%2;f.bob=0;f.sway=0;}const pic=npcCanvas(n,f,water?'stand':pose,false);
+ function draw(ctx){sync();walkers.length=0;const c=ctl(),s=c.state;for(const n of life.npcs){const cx=s.camera??s.camX??0,cy=s.camY||0;if(n.x<cx-60||n.x>cx+400||n.feet<cy-5||n.feet>cy+c.canvas.height+40)continue;const [f,pose]=npcFrame(n),water=n.seasonKind!=='walk';if(water){f.wave=Math.floor(s.time/.28+n.phase)%2;f.bob=0;f.sway=0;}const pic=npcCanvas(n,f,water?'stand':pose,false);
   if(n.seasonKind!=='walk'){const diving=n.seasonKind==='dive';c.fx.swimmer(ctx,{head:pic,skinRamp:n.ramps.skin,sheet:c.personSheet(n.look.gender,diving?'wetsuit':'swim'),x:n.x,y:n.feet,time:s.time,facing:n.dir,diving,moving:!n.paused,wetsuit:diving,waterline:116,phase:n.phase});}
-  else{if(hover===n)drawObjectHover(ctx,pic,n.x-10,n.feet-27);ctx.drawImage(pic,n.x-10,n.feet-27);}
+  else{
+   const x=Math.round(n.x-10),y=Math.round(n.feet-27);
+   if(hover===n)drawObjectHover(ctx,pic,x,y);
+   ctx.drawImage(pic,x,y);walkers.push({img:pic,x,y,npc:n});
+  }
  }}
- function hit(x,y){return [...life.npcs].reverse().find(n=>Math.abs(n.x-x)<(n.seasonKind==='dive'?17:12)&&Math.abs(n.feet-y-14)<18);}
+ function hit(x,y){
+  return sceneTargetAt(walkers,x,y)?.npc||life.npcs.findLast(n=>n.seasonKind!=='walk'&&Math.abs(n.x-x)<(n.seasonKind==='dive'?17:12)&&Math.abs(n.feet-y-14)<18);
+ }
  function click(x,y){const n=hit(x,y);if(!n)return false;if(!canClickNpc(n)||npcRefusesDirty(n,true))return true;
   const c=ctl(),s=c.state;if(n.seasonKind!=='walk'&&s.suit==='clothes'){showHint('先换上泳装再游过去吧');return true;}
   stopNpcTalk();if(approaching)approaching.paused=false;approaching=n;n.paused=true;
@@ -46,7 +52,7 @@ function installSeasonPeople(active,ctl){
   if(sim.place==='spring_test')c.target(tx,103,done);else c.goTo(tx,n.seasonKind==='dive'?'dive':'walk',n.feet,done);return true;
  }
  function cancel(){if(approaching)approaching.paused=false;approaching=null;stopNpcTalk();bubble.hidden=true;}
- return {sync,tick,draw,click,cancel,hover:(x,y)=>hover=hit(x,y),cache};
+ return {sync,tick,draw,hit,click,cancel,hover:(x,y)=>hover=hit(x,y),cache};
 }
 
 // Walk within each street's paved segment. Stable slots let returning players
