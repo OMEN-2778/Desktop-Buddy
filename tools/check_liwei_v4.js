@@ -154,6 +154,8 @@ const { chromium } = require("playwright"),
           for(let i=0;i<100&&!s.active;i++)await wait(30);
           if(!s.active||s.progress.chapter!=="S02"||c.state.inside||c.state.goal?.automatic)
             throw Error("first landing lost to a need");
+          if(c.DATA.layoutVersion!==5 || c.DATA.width!==994 || c.DATA.height!==2176 || c.townVariant()!=='polluted')
+            throw Error("new town not active at landing");
           const landingClock=sim.t;
           c.care("hunger");await wait(120);
           if(sim.t!==landingClock||c.state.goal?.automatic)throw Error("arrival hold");
@@ -192,7 +194,13 @@ const { chromium } = require("playwright"),
             if (k === "S06") {
               const save = snapshot();
               delete save.liweiV4.enrolled;
+              const oldHut=c.DATA.town.oldLandmarks.find(p=>p.id==='hut');
+              for(const row of [save.testAutumn,save.seasonMapTest.state])
+                Object.assign(row,{layoutVersion:4,x:oldHut.x,y:oldHut.y});
               restore(save);
+              const hut=c.DATA.landmarks.find(p=>p.id==='hut');
+              if(c.state.layoutVersion!==5 || c.state.x!==hut.x || c.state.y!==hut.y)
+                throw Error("legacy hut coordinates not migrated");
               questBoard.fill();
               const group=questBoard.panel.querySelector('[data-group="liwei"]');
               if (!s.progress.enrolled || !group?.querySelector('.live') || !group.querySelector('.done'))
@@ -221,6 +229,16 @@ const { chromium } = require("playwright"),
             )
           )
             throw Error("ending");
+          const cycle = SEASON_DAYS * 1440;
+          for (let i=0;i<4;i++) {
+            sim.t=cycle*i+720;
+            const expected=branch ? ['spring','summer','town','winter'][i] : 'closed';
+            for (let tries=0;c.drawnTown()!==expected&&tries<65;tries++) {
+              c.draw();
+              await wait(30);
+            }
+            if(c.drawnTown()!==expected)throw Error("finished city season "+expected);
+          }
           const finishedSave=snapshot();
           delete finishedSave.liweiV4.enrolled;
           restore(finishedSave);

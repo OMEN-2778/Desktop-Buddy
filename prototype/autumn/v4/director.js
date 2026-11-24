@@ -204,6 +204,11 @@
     p = Object.assign(fresh(), s?.liweiV4 || {});
     if (p.chapter || p.done.length) p.enrolled = true;
     const result = restored(s);
+    const savedCity = s?.seasonMapTest?.place === "autumn_test" ? s.seasonMapTest.state : s?.testAutumn;
+    if (data.town && savedCity?.layoutVersion !== data.layoutVersion && inCity() && p.chapter && !world.inside) {
+      const loc = p.cueLoc || scenes[p.chapter]?.loc;
+      if (where(loc)) relocate(loc);
+    }
     syncCastContacts();
     preview = !!p.enrolled;
     refresh();
@@ -902,6 +907,13 @@
         const name=data.npcNames[seed];
         if (cue === name+"登机" || cue === name+"离场" || cue === name+"进屋")
           x += Math.round((cue.endsWith("登机") ? 1 : side)*52*progress(cue));
+      }
+      if (data.town && !world.inside) {
+        const footing=city.nearest(x,y);
+        if (footing && Math.abs(footing.y-y)>2) {
+          x=footing.x;
+          y=footing.y;
+        }
       }
       result.push({
         id: ids[seed],

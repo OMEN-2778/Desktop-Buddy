@@ -283,7 +283,8 @@ def lookout_fittings(c):
 
 @lru_cache(maxsize=5)
 def distant_view(theme):
-    sky,far,hills=backdrop(0 if theme=='polluted' else 4,season=theme,birds=False)
+    stage={'polluted':0,'repair':2,'closed':3}.get(theme,4)
+    sky,far,hills=backdrop(stage,season=theme,birds=False)
     sky.alpha_composite(far)
     sky.alpha_composite(hills)
     return sky.resize((W,275),Image.Resampling.NEAREST)
@@ -291,15 +292,17 @@ def distant_view(theme):
 def draw(theme, frame):
     r=random.Random(724)
     winter=theme=='winter'
-    polluted=theme=='polluted'
-    c=Town(0 if polluted else 4)
+    stage={'polluted':0,'repair':2,'closed':3}.get(theme,4)
+    polluted=stage<4
+    plant_theme='polluted' if polluted else theme
+    c=Town(stage)
     soil = {
         'spring': (P.leaf[2], P.sage[1], P.grass[2], P.sage[3], P.oak[1]),
         'summer': (P.oak[2], P.oak[1], P.mustard[2], P.oat[2], P.sage[2]),
         'autumn': (P.sage[2], P.oak[0], P.oak[1], P.oak[2], P.autumn[1]),
         'winter': (P.snow[2], P.snow[1], P.snow[3], P.snow[2], P.porcelain[3]),
         'polluted': (P.oak[1], P.oat[0], P.oat[1], P.oak[0], P.oat[2]),
-    }[theme]
+    }[plant_theme]
     c.scenery=[]
     c.snowy=winter
     c.im=Image.new('RGBA',(W,H),soil[0]);c.d=ImageDraw.Draw(c.im)
@@ -354,7 +357,7 @@ def draw(theme, frame):
         for k in range(1,13,3):c.box(x+k,y+1,1,3,P.steel[0])
     # Preserve clear silhouettes at the edge of each planting area.
     usable=ImageChops.subtract(forest,roads.filter(ImageFilter.MaxFilter(29)))
-    draw_trees(c,theme,frame,usable)
+    draw_trees(c,plant_theme,frame,usable)
     # Mountaintop rail, viewing pavilion and paved switchback.
     c.facade(228,City.rail,(224,228),(612,228),True)
     lookout_fittings(c)
@@ -414,7 +417,7 @@ def draw(theme, frame):
     for x in (407,432,457):
         c.facade(1204,City.planter,x,1178);plants.append((1182,x,x%37,.52))
     for y,x,seed,size in sorted(plants):
-        place_plant(c,tree_sprite(seed,theme,frame,size),x,y)
+        place_plant(c,tree_sprite(seed,plant_theme,frame,size),x,y)
     shrubs = [
         (82,1117),(731,1113),(396,1256),(575,1196),(616,1243),
         (51,1338),(758,1360),(417,1386),(465,1386),(595,1391),
@@ -425,7 +428,7 @@ def draw(theme, frame):
     for seed,(x,y) in enumerate(shrubs):
         if shrub_ground.getpixel((x,y)):
             continue
-        place_plant(c,shrub_sprite(seed,theme,frame ^ (seed%3==1)),x,y)
+        place_plant(c,shrub_sprite(seed,plant_theme,frame ^ (seed%3==1)),x,y)
     def noticeboard(c):
         c.box(580,1120,39,19,P.wood[0]);c.box(582,1122,35,15,P.oat[2])
         for j in range(3):c.box(585+9*j,1124+j%2,7,9,P.linen[3])
@@ -472,7 +475,7 @@ def draw(theme, frame):
 def build_review():
     OUT.mkdir(exist_ok=True)
     maps={}
-    for theme in TREE_RAMPS:
+    for theme in (*TREE_RAMPS,"repair","closed"):
         town=draw(theme,0)
         gust=draw(theme,1)
         name='town' if theme=='autumn' else theme
@@ -512,7 +515,7 @@ def build_review():
             for index,slot in zip(selected,facades,strict=True):
                 (left,top,_,_),sprite,_=view.scenery[index]
                 ox,oy,*_,tx,ty=slot
-                if name=='polluted':sprite=warm_haze(sprite)
+                if name in ('polluted','repair','closed'):sprite=warm_haze(sprite)
                 atlas.alpha_composite(sprite,(tx+left-ox+frame*atlas_width,ty+top-oy))
         atlas.save(OUT/('building-cover.png' if name=='town' else f'{name}-cover.png'),optimize=True)
 

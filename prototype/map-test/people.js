@@ -58,7 +58,7 @@ function installSeasonPeople(active,ctl){
 // Walk within each street's paved segment. Stable slots let returning players
 // recognize who stayed after the relocation, and keep masks stable for a day.
 function autumnPedestrians(data) {
- const streets=data.routes.filter(([name])=>['山顶街','矿业街','中城街','工人街','河岸街'].includes(name));
+ const streets=data.residentRoutes||data.routes.filter(([name])=>['山顶街','矿业街','中城街','工人街','河岸街'].includes(name));
  const models=new WeakMap();
  return function residents(state,height) {
   const sprites=[];
@@ -89,7 +89,7 @@ function autumnPedestrians(data) {
     const model=variants.get(masked);
     model.dist=distance;model.dir=phase<range?1:-1;
     const [frame,pose]=npcFrame(model);
-    sprites.push({depth:y,img:npcCanvas(model,frame,pose,false),x:x-10,y:y-29});
+    sprites.push({depth:y,walker:true,img:npcCanvas(model,frame,pose,false),x:x-10,y:y-29});
    }
   });
   return sprites;

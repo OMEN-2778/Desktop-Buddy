@@ -10,7 +10,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tools'))
 import make_spring_preview as SP
 import make_summer_preview as SU
-from autumn_runtime import runtime_data as autumn_data, story_looks
+from autumn_runtime import runtime_data as autumn_data, story_looks, town_runtime_data
 
 def controller(name,data):
     template=(ROOT/f'prototype/{name}/index.src.html').read_text()
@@ -153,7 +153,7 @@ def main():
     page=page.replace("if(place==='park')","if(place==='summer_test'){if(typeof seasonMapTest!=='undefined'&&seasonMapTest.state.summer?.state.inside)return 'BGM/seasons/indoor-all-seasons.mp3';return season==='autumn'?'BGM/seasons/autumn-day.mp3':'BGM/seasons/summer-day.mp3';}if(place==='autumn_test')return 'BGM/park/festival-streetlights.mp3';if(place==='spring_test')return 'BGM/infei/infei-'+(night?'night':season)+'.mp3';if(place==='airport_test')return 'BGM/infei/infei-airport.mp3';if(place==='park')")
     for key in ([] if RELEASE else ['buddy-save','buddy-settings','buddy-look-v2','buddy-look-at']):
         page=page.replace('"'+key+'"','"season-test-'+key+'"')
-    autumn=(ROOT/'prototype/autumn/story.js').read_text()+(ROOT/'prototype/autumn/game.js').read_text()+'\nconst AUTUMN_MAP_DATA='+json.dumps(autumn_data(),ensure_ascii=False,separators=(',',':'))+';\n'
+    autumn=(ROOT/'prototype/autumn/navigation.js').read_text()+'\n'+(ROOT/'prototype/autumn/story.js').read_text()+(ROOT/'prototype/autumn/game.js').read_text()+'\nconst AUTUMN_MAP_DATA='+json.dumps(autumn_data() if RELEASE else town_runtime_data(),ensure_ascii=False,separators=(',',':'))+';\n'
     source='const SEASON_FURNITURE = '+json.dumps(furniture_masks(),separators=(',',':'))+';\n'+autumn+(ROOT/'prototype/season/effects.js').read_text()+controller('spring',spring_data())+controller('summer',SU.runtime_data())+(ROOT/'prototype/map-test/people.js').read_text()+(RELEASE_CHEATS if RELEASE else (ROOT/'prototype/map-test/cheats.js').read_text())+(ROOT/'prototype/map-test/adapter.js').read_text()
     import base64
     airport_images={k:'data:image/png;base64,'+base64.b64encode((ROOT/('art/out/concept/'+k+'.png')).read_bytes()).decode() for k in ['airport_terminal','airport_vista','airport_terminal_front','airport_plane','airport_cabin','airport_cabin_front','trip_airport']}

@@ -179,6 +179,8 @@ def lake(c,theme,frame):
     shades={
         'winter': (P.snow[1],P.snow[2],P.sky_soft[1],P.sea_grey[2],P.sea_grey[0]),
         'polluted': (P.oak[0],P.oat[1],P.sage[2],P.teal[1],P.teal[0]),
+        'repair': (P.oak[1],P.oat[2],P.sage[3],P.teal[2],P.teal[0]),
+        'closed': (P.oak[1],P.oat[2],P.sage[3],P.teal[2],P.teal[0]),
     }.get(theme,(P.oat[2],P.sage[3],P.teal[3],P.teal[2],P.teal[0]))
     bank,wet,shallow,mid,deep=shades
     shore=np.asarray(coast)[None,:]-top

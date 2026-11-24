@@ -54,6 +54,8 @@ function makeSeason_autumn(opts, DATA) {
         keyboard: false
     };
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const town = DATA.town;
+    const navigation = town && autumnTownNavigation(DATA,town);
     const nodes = [], edges = [], nodeMap = new Map;
     function node(x, y) {
         const k = x + "," + y;
@@ -112,6 +114,7 @@ function makeSeason_autumn(opts, DATA) {
         };
     }
     function nearest(x, y, g = graph()) {
+        if (navigation && !state.inside) return navigation.nearest(x,y);
         let best = null;
         for (let i = 0; i < g.edges.length; i++) {
             const e = g.edges[i], a = g.nodes[e.a], b = g.nodes[e.b], dx = b.x - a.x, dy = b.y - a.y, t = clamp(((x - a.x) * dx + (y - a.y) * dy) / (dx * dx + dy * dy), 0, 1), p = {
@@ -128,6 +131,7 @@ function makeSeason_autumn(opts, DATA) {
         return best;
     }
     function plan(x, y) {
+        if (navigation && !state.inside) return navigation.route(state,x,y);
         const g = graph(), a = nearest(state.x, state.y, g), b = nearest(x, y, g), ns = [ ...g.nodes.map(n => ({
             x: n.x,
             y: n.y
@@ -190,7 +194,8 @@ function makeSeason_autumn(opts, DATA) {
         const path = plan(x, y);
         if (!path.length) {
             clearRoute();
-            if (Math.hypot(x - state.x, y - state.y) < 1) {
+            const end=navigation&&!state.inside ? navigation.nearest(x,y) : {x,y};
+            if (end && dist(end,state)<1) {
                 state.goal = goal;
                 arrive();
                 return true;
@@ -401,7 +406,7 @@ function makeSeason_autumn(opts, DATA) {
             bath: [ "进去洗澡", "hygiene" ],
             toilet: [ "使用公厕", "bladder" ],
             lookout: [ "坐下看看远处", "fun" ],
-            pavilion: [ "进亭子里坐坐", "fun" ],
+            pavilion: [ town ? "用望远镜看看" : "进亭子里坐坐", "fun" ],
             reeds: [ "在长椅上吹吹风", "fun" ],
             swing: [ "荡一会儿秋千", "fun" ],
             koi: [ "坐在池边喂锦鲤", "fun" ],
@@ -507,23 +512,27 @@ function makeSeason_autumn(opts, DATA) {
         if (!state.target && keys.size) {
             const dx = (keys.has("ArrowRight") || keys.has("d") ? 1 : 0) - (keys.has("ArrowLeft") || keys.has("a") ? 1 : 0), dy = (keys.has("ArrowDown") || keys.has("s") ? 1 : 0) - (keys.has("ArrowUp") || keys.has("w") ? 1 : 0), g = graph(), near = nearest(state.x, state.y, g);
             let best = null;
-            for (const index of [ near.e.a, near.e.b ]) {
-                const a = g.nodes[index], vx = a.x - state.x, vy = a.y - state.y, score = (vx * dx + vy * dy) / Math.max(.1, Math.hypot(vx, vy));
-                if (Math.hypot(vx, vy) > .5 && score > .4 && (!best || score > best.score)) best = {
-                    ...a,
-                    score: score
-                };
-            }
-            if (!best) {
-                const k = g.nodes.findIndex(n => dist(n, state) < .5);
-                if (k >= 0) for (const e of g.edges) {
-                    const to = e.a === k ? e.b : e.b === k ? e.a : null;
-                    if (to === null) continue;
-                    const a = g.nodes[to], score = ((a.x - state.x) * dx + (a.y - state.y) * dy) / Math.max(.1, dist(a, state));
-                    if (score > .4 && (!best || score > best.score)) best = {
+            if (navigation && !state.inside) {
+                best=navigation.step(state,dx,dy);
+            } else {
+                for (const index of [ near.e.a, near.e.b ]) {
+                    const a = g.nodes[index], vx = a.x - state.x, vy = a.y - state.y, score = (vx * dx + vy * dy) / Math.max(.1, Math.hypot(vx, vy));
+                    if (Math.hypot(vx, vy) > .5 && score > .4 && (!best || score > best.score)) best = {
                         ...a,
                         score: score
                     };
+                }
+                if (!best) {
+                    const k = g.nodes.findIndex(n => dist(n, state) < .5);
+                    if (k >= 0) for (const e of g.edges) {
+                        const to = e.a === k ? e.b : e.b === k ? e.a : null;
+                        if (to === null) continue;
+                        const a = g.nodes[to], score = ((a.x - state.x) * dx + (a.y - state.y) * dy) / Math.max(.1, dist(a, state));
+                        if (score > .4 && (!best || score > best.score)) best = {
+                            ...a,
+                            score: score
+                        };
+                    }
                 }
             }
             if (best) goTo(best.x, best.y);
@@ -586,9 +595,9 @@ function makeSeason_autumn(opts, DATA) {
             state.camX = state.camY = 0;
             return;
         }
-        const viewProgress = !state.inside && state.x > 80 + (DATA.ox || 0) && state.x < 345 + (DATA.ox || 0) ? clamp((DATA.summit.triggerY-state.y)/65,0,1) : 0;
+        const viewProgress = state.x > 80 + (DATA.ox || 0) && state.x < (town ? 620 : 345 + (DATA.ox || 0)) ? clamp(((town ? 310 : DATA.summit.triggerY)-state.y)/65,0,1) : 0;
         const ease=viewProgress*viewProgress*(3-2*viewProgress);
-        const x = clamp(state.x - 171, 0, DATA.width - 342), y = clamp(state.y - 75+ease*14, 0, DATA.height - canvas.height), t = 1 - Math.exp(-dt * 5);
+        const x = clamp(state.x - 171, 0, DATA.width - 342), y = clamp(state.y - 75+ease*(town ? -18 : 14), 0, DATA.height - canvas.height), t = 1 - Math.exp(-dt * 5);
         state.camX += (x - state.camX) * t;
         state.camY += (y - state.camY) * t;
     }
@@ -657,6 +666,78 @@ function makeSeason_autumn(opts, DATA) {
     // Plants and the split front rails are one depth list, ordered by where they stand (owner 2026-11-11: a tree
     // standing in front of a rail covers it; reeds behind a maple stay behind it).
     let depthList = null, depthStage = -1;
+    const townLayers=town?.layers.map((entry,id)=>({entry,id})).sort((a,b)=>a.entry[4]-b.entry[4])||[];
+    const seasonKey=()=>opts.season()==="autumn"?"town":opts.season();
+    function townVariant() {
+        return state.stage>=4 ? seasonKey() : state.stage>=3 ? "closed" : state.stage>=2 ? "repair" : "polluted";
+    }
+    const townArt=new Map();
+    let drawnTown="polluted";
+    function loadTown(key) {
+        if (townArt.has(key)) return townArt.get(key);
+        const textures=town.variants[key].map(src=>{
+            const image=new Image();
+            image.src=src;
+            return image;
+        });
+        const entry={textures,ready:false};
+        entry.pending=Promise.all(textures.map(image=>image.decode())).then(()=>{
+            entry.ready=true;
+        });
+        entry.pending.catch(error=>console.error('栗尾市场景加载失败',error));
+        townArt.set(key,entry);
+        return entry;
+    }
+    function townFrame() {
+        const key=townVariant();
+        const next=loadTown(key);
+        if(next.ready && key!==drawnTown) {
+            for(const [other,entry] of townArt) {
+                if(other!==key && other!=="polluted" && entry.ready)townArt.delete(other);
+            }
+            townMasks.clear();
+            drawnTown=key;
+        }
+        const [base,wind,atlas]=townArt.get(drawnTown).textures;
+        const sway=!reduceMotionUI && Math.floor(state.time/.72)%2;
+        return {base,wind:sway?wind:null,atlas,sway,key:drawnTown};
+    }
+    function coverTownActor(frame,x,y) {
+        if (!frame.atlas) return;
+        const offset=frame.sway?frame.atlas.width/2:0;
+        for (const {entry:[l,t,r,b,depth,ax,ay]} of townLayers) {
+            if (depth<=y) continue;
+            const left=Math.max(l,Math.floor(x)-13),top=Math.max(t,Math.floor(y)-31);
+            const right=Math.min(r,Math.ceil(x)+13),bottom=Math.min(b,Math.ceil(y)+2);
+            if (left>=right||top>=bottom) continue;
+            ctx.drawImage(frame.atlas,ax+offset+left-l,ay+top-t,right-left,bottom-top,
+                          left,top,right-left,bottom-top);
+        }
+    }
+    const townMasks=new Map;
+    function townMask(frame,id) {
+        const key=frame.key+"/"+frame.sway+"/"+id;
+        if (!townMasks.has(key)) {
+            const [l,t,r,b,,ax,ay]=town.layers[id];
+            const img=document.createElement("canvas");
+            img.width=r-l;img.height=b-t;
+            img.getContext("2d").drawImage(frame.atlas,ax+(frame.sway?frame.atlas.width/2:0),ay,img.width,img.height,0,0,img.width,img.height);
+            townMasks.set(key,{img,x:l,y:t});
+        }
+        return townMasks.get(key);
+    }
+    function townBirds() {
+        if (state.camY>221) return;
+        ctx.fillStyle=state.stage<4?"#766959":"#526983";
+        for (let i=0;i<(state.stage<3?2:5);i++) {
+            const time=reduceMotionUI?0:state.time;
+            const x=319+Math.floor((i*68+time*(16+i))%290);
+            const y=174+i*9+Math.round(Math.sin(time+i)*4), wing=Math.floor(time*7+i)%3-1;
+            ctx.fillRect(x-1,y,3,1);
+            ctx.fillRect(x-2,y+wing,1,1);ctx.fillRect(x+2,y+wing,1,1);
+            ctx.fillRect(x-3,y+wing*2,1,1);ctx.fillRect(x+3,y+wing*2,1,1);
+        }
+    }
     function depthItems() {
         if (depthStage === state.stage) return depthList;
         depthStage = state.stage;
@@ -690,12 +771,12 @@ function makeSeason_autumn(opts, DATA) {
         foregroundAlpha.set(key,alpha);
         return {depth:item.base+3,alpha,img:foliageSprite(item),x:p.x,y:p.y};
     }
-    function drawStreet(boat) {
+    function drawStreet(boat, freshTown=null) {
         const npcs=npcRows().filter(n=>Math.abs(n.x-state.x)<=240&&Math.abs(n.y-state.y)<=190);
         const watched=[state,...npcs.filter(n=>n.mark)];
         const layers=window.liweiStory?.active?[]:opts.residents?.(state,canvas.height)||[];
         if(boat)layers.push(boat);
-        for(const item of depthItems()){
+        for(const item of freshTown ? [] : depthItems()){
             const p=item.p;
             if(p.x+p.w<state.camX||p.x>state.camX+342||p.y+p.h<state.camY||p.y>state.camY+canvas.height)continue;
             layers.push(sceneryLayer(item,watched));
@@ -703,7 +784,7 @@ function makeSeason_autumn(opts, DATA) {
         for(const n of npcs){
             const sprite=window.liweiStory?.frameFor(n.name,n,n.sitting?"sit":undefined)||
                 images.get(DATA.npcs[n.seed][(state.time+n.seed)%4.7<.16?1:0]);
-            layers.push({depth:n.y,npc:n,img:sprite,x:n.x-10,y:n.y-28,draw(){
+            layers.push({depth:n.y,walker:true,npc:n,img:sprite,x:n.x-10,y:n.y-28,draw(){
                 if(n.sitting){
                     ctx.fillStyle="#644c40";ctx.fillRect(n.x-5,n.y-6,2,6);ctx.fillRect(n.x+4,n.y-6,2,6);
                     ctx.fillStyle="#a38362";ctx.fillRect(n.x-6,n.y-8,13,3);
@@ -712,13 +793,13 @@ function makeSeason_autumn(opts, DATA) {
                 if(hover?.npc&&hover.id===n.id)drawObjectHover(ctx,sprite,n.x-10,n.y-28);
             }});
         }
-        layers.push({depth:state.liftY,x:DATA.lift.x-15,y:state.liftY-31,draw(){
+        if(!freshTown)layers.push({depth:state.liftY,x:DATA.lift.x-15,y:state.liftY-31,draw(){
             const x=DATA.lift.x,y=state.liftY;
             ctx.fillStyle="#262434";ctx.fillRect(x-15,y-31,30,33);
             ctx.fillStyle="#87573e";ctx.fillRect(x-12,y-28,24,27);
         }});
-        layers.push({depth:state.y,draw:drawStreetHero});
-        layers.push({depth:state.liftY+.1,alpha:state.riding ? .3 : 1,draw(){
+        layers.push({depth:state.y,x:state.x-10,walker:true,draw:drawStreetHero});
+        if(!freshTown)layers.push({depth:state.liftY+.1,alpha:state.riding ? .3 : 1,draw(){
             const x=DATA.lift.x,y=state.liftY;
             ctx.fillStyle="#8b8899";
             for(let i=0;i<5;i++)ctx.fillRect(x-12+i*6,y-29,1,27);
@@ -730,6 +811,7 @@ function makeSeason_autumn(opts, DATA) {
             ctx.globalAlpha=layer.alpha??1;
             if(layer.draw)layer.draw();
             else ctx.drawImage(layer.img,layer.x,layer.y);
+            if(freshTown && layer.walker)coverTownActor(freshTown,layer.x+10,layer.depth);
         }
         ctx.globalAlpha=1;
         for(const n of npcs){
@@ -788,7 +870,8 @@ function makeSeason_autumn(opts, DATA) {
         ctx.imageSmoothingEnabled = false;
         ctx.clearRect(0, 0, 342, vh);
         if (!state.loaded) return;
-        const bg = images.get(DATA.scenes[state.stage]);
+        const freshTown = town && townFrame();
+        const bg = freshTown ? freshTown.base : images.get(DATA.scenes[state.stage]);
         // Distance layers (owner 2026-11-11): sky, far range and mid hills are separate pictures behind the map and
         // follow the camera at their own speeds (x, y factors); at the top-left rest position they sit as painted.
         const back = DATA.backdrop && DATA.backdrop[state.stage >= 4 ? "clean" : state.stage >= 3 ? "clear" : "polluted"];
@@ -797,6 +880,11 @@ function makeSeason_autumn(opts, DATA) {
             const sc = Math.min(342 / DATA.width, canvas.height / DATA.height), ox = (342 - DATA.width * sc) / 2;
             if (back) for (const [k] of PARALLAX) { const im = images.get(back[k]); ctx.drawImage(im, ox, 0, im.width * sc, im.height * sc); }
             ctx.drawImage(bg, ox, 0, DATA.width * sc, DATA.height * sc);
+            if(freshTown){
+                ctx.fillStyle = "#efc452";
+                ctx.fillRect(ox+state.x*sc-2,state.y*sc-2,4,4);
+                return;
+            }
             const boat=images.get(DATA.boat), river=DATA.river;
             ctx.drawImage(boat,ox+river.boatX*sc,(river.boatY+Math.round(Math.sin(state.time*1.1)*1.5))*sc,boat.width*sc,boat.height*sc);
             ctx.save();ctx.translate(ox,0);ctx.scale(sc,sc);
@@ -826,10 +914,12 @@ function makeSeason_autumn(opts, DATA) {
             opts.home?.under(ctx);
         }
         if (!state.inside) {
-            const boat=drawRiver();
-            drawSigns();
+            if(freshTown?.wind)ctx.drawImage(freshTown.wind,0,0);
+            if(freshTown)townBirds();
+            const boat=freshTown?null:drawRiver();
+            if(!freshTown)drawSigns();
             if(hover?.img)drawObjectHover(ctx,hover.img,hover.spriteX,hover.spriteY);
-            drawStreet(boat);
+            drawStreet(boat,freshTown);
         }
         const privacy = state.service && [ "hygiene", "bladder" ].includes(state.service.need);
         if (state.inside && state.service?.need === "hygiene") {
@@ -891,6 +981,27 @@ function makeSeason_autumn(opts, DATA) {
         if (state.inside && opts.home?.residentHit?.(x,y)) return {id:"jian",name:"阿简",npc:true,x:state.resident.x,y:108};
         if (state.inside && opts.home) return opts.home.hit(x,y);
         if (state.inside) return indoorSpots.find(p => x >= p.rect[0] && y >= p.rect[1] && x < p.rect[0] + p.rect[2] && y < p.rect[1] + p.rect[3]);
+        if(town) {
+            const frame=townFrame();
+            if(!frame.atlas)return null;
+            const npc=sceneTargetAt(streetLayers.filter(layer=>layer.npc),x,y);
+            const sprite=sceneTargetAt(landmarkTargets,x,y)?.landmark;
+            const place=sprite || DATA.landmarks.find(p=>p.layer==null &&
+                !landmarksWithSprites.some(mark=>mark.id===p.id) && x>=p.rect[0] && y>=p.rect[1] &&
+                x<p.rect[0]+p.rect[2] && y<p.rect[1]+p.rect[3]);
+            for(let i=townLayers.length-1;i>=0;i--) {
+                const {entry:[l,t,r,b,depth],id}=townLayers[i];
+                if(npc && depth<=npc.depth)return {...npc.npc,npc:true};
+                if(x<l||y<t||x>=r||y>=b)continue;
+                if(place && y>=depth)return place;
+                const mask=townMask(frame,id);
+                if(!sceneTargetAt([mask],x,y))continue;
+                const building=DATA.landmarks.find(p=>p.layer===id);
+                return building ? {...building,img:mask.img,spriteX:mask.x,spriteY:mask.y} : place;
+            }
+            if(npc)return {...npc.npc,npc:true};
+            return place||null;
+        }
         const target=sceneTargetAt(streetLayers.filter(layer=>(layer.alpha??1)>.6),x,y);
         if(target?.npc)return {...target.npc,npc:true};
         if(target)return null;
@@ -922,6 +1033,7 @@ function makeSeason_autumn(opts, DATA) {
             y /= sc;
             state.mapOpen = false;
             const p = nearest(x, y);
+            if(town && p.d>13){opts.hint("点地图上的灰色街道或栈桥");return;}
             goTo(p.x, p.y);
             return;
         }
@@ -936,8 +1048,8 @@ function makeSeason_autumn(opts, DATA) {
             return;
         }
         const dest = nearest(x, y);
-        if (dest.d > 36) {
-            opts.hint("沿石阶或街道走吧，楼梯口可以上下换层");
+        if (dest.d > (navigation&&!state.inside ? 13 : 36)) {
+            opts.hint(town&&!state.inside ? "点街道或栈桥就能走过去" : "沿石阶或街道走吧，楼梯口可以上下换层");
             return;
         }
         close();
@@ -969,7 +1081,7 @@ function makeSeason_autumn(opts, DATA) {
             move(dt);
             if (canPlan() && !state.service && !state.inside && opts.now() >= state.autoAt) {
                 state.autoAt = opts.now() + 35 + Math.random() * 30;
-                const nearby = nodes.filter(n => dist(n, state) > 25 && dist(n, state) < 130);
+                const nearby = navigation ? navigation.nearby(state) : nodes.filter(n => dist(n, state) > 25 && dist(n, state) < 130);
                 if (nearby.length) {
                     const p = nearby[Math.floor(Math.random() * nearby.length)];
                     goTo(p.x, p.y);
@@ -1012,12 +1124,21 @@ function makeSeason_autumn(opts, DATA) {
         delete state.flags.tree;
         state.found = Array.from(state.found || []);
         if (state.layoutVersion !== DATA.layoutVersion) {
-            // Preserve story/needs, discard travel coordinates from the retired large map.
-            state.x = landmark("airstrip").x;
-            state.y = landmark("airstrip").y;
-            state.route = [];
-            state.target = state.goal = state.service = state.pose = null;
-            state.inside = false;
+            const target = state.goal?.id && landmark(state.goal.id);
+            const migrateTravel=town && !state.inside && state.target && target;
+            if (!town || !state.inside) {
+                const spot=town && state.layoutVersion===4
+                    ? town.oldLandmarks.find(p=>p.id===state.goal?.id) ||
+                        town.oldLandmarks.filter(p=>landmark(p.id)).sort((a,b)=>dist(a,state)-dist(b,state))[0]
+                    : null;
+                const arrival=landmark(spot?.id)||landmark("airstrip");
+                state.x=arrival.x;state.y=arrival.y;
+                state.inside=false;
+            }
+            state.route=[];
+            state.target=migrateTravel ? {x:target.x,y:target.y} : null;
+            if (!migrateTravel) state.goal=null;
+            if (!state.inside) state.service=state.pose=null;
             state.layoutVersion = DATA.layoutVersion;
         }
         state.liftY = clamp(Number(state.liftY) || DATA.lift.bottom, DATA.lift.top, DATA.lift.bottom);
@@ -1082,7 +1203,11 @@ function makeSeason_autumn(opts, DATA) {
     root.querySelector("[data-exit]").onclick = opts.exit;
     const signFont = new FontFace("Buddy Autumn Signs", 'url("'+DATA.signFont+'")');
     const fontReady = signFont.load().then(face=>document.fonts.add(face));
-    Promise.all([fontReady, ...[ ...DATA.scenes, ...Object.values(DATA.backdrop || {}).flatMap(b => Object.values(b)), DATA.front, DATA.inside, ...(DATA.officeWindows||[]), DATA.boat, ...DATA.npcs.flat(), ...DATA.foreground.map(p => p.img), ...DATA.foliageSheets ].map(load)]).then(() => {
+    const assets = town ? [DATA.inside,...DATA.officeWindows,...DATA.npcs.flat()]
+        : [...DATA.scenes,...Object.values(DATA.backdrop||{}).flatMap(b=>Object.values(b)),DATA.front,DATA.inside,
+           ...(DATA.officeWindows||[]),DATA.boat,...DATA.npcs.flat(),...DATA.foreground.map(p=>p.img),...DATA.foliageSheets];
+    Promise.all([fontReady,town&&loadTown('polluted').pending,...assets.map(load),
+                 ...landmarkTargets.map(({img})=>img.decode())]).then(() => {
         state.loaded = true;
         draw();
         updateStatus();
@@ -1103,6 +1228,8 @@ function makeSeason_autumn(opts, DATA) {
         nodes: nodes,
         edges: edges,
         npcRows: npcRows,
+        townVariant: town ? townVariant : null,
+        drawnTown: () => town ? drawnTown : null,
         goTo: goTo,
         visit: visit,
         interact: interact,

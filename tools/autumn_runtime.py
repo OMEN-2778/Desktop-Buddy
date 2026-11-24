@@ -3,7 +3,7 @@ from pathlib import Path
 import sys,base64,io,json
 from dataclasses import replace
 from pixelkit import P
-from PIL import Image,ImageColor
+from PIL import Image,ImageColor,ImageDraw
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'tools'),str(ROOT/'art/src/concept')]
 import doll
@@ -101,3 +101,94 @@ def runtime_data():
   scenes=[uri('autumn_city_stage_'+str(i)+'.png') for i in range(5)],
   # distance layers behind the map (sky / far range / mid hills), per look; the game moves them at their own speeds
   backdrop={k:{part:uri(f'autumn_back_{part}_{k}.png') for part in ('sky','far','mid')} for k in ('polluted','clear','clean')},front=uri('autumn_city_front.png'),inside=uri('autumn_detective_inside.png'))
+
+
+def town_runtime_data():
+ """Use the reviewed new-town sprites and the identical walking surface."""
+ from _liwei_plan import BLOCKS
+ layout=json.loads((ROOT/'art/out/concept/liwei-plan/layout.json').read_text())
+ width,height=layout['size']
+ # Stages and positions share masks, hit regions and walk rectangles.
+ zones={p['id']:(p['name'],p['need']) for p in A.runtime_landmarks()}
+ explicit={
+  'airstrip': [444,671,55,58],
+  'lookout': [397,224,38,42],
+  'pavilion': [526,218,35,43],
+  'nursery': [391,1153,81,58],
+  'plaza': [408,1133,146,28],
+  'market': [404,1397,158,40],
+  'chestnut': [527,1345,42,47],
+  'swing': [403,1219,37,54],
+  'koi': [496,1205,78,29],
+  'notice': [578,1118,43,30],
+  'mine': [640,1370,77,75],
+  'pier': [369,1951,63,46],
+  'reeds': [478,2010,47,46],
+ }
+ artwork={}
+ for key,name,x,y,w,floors,*_ in BLOCKS:
+  if key not in zones and not name:
+   continue
+  depth=y*2-(9 if key=='clinic' else 0)
+  artwork[key]=next((i for i,(left,top,right,bottom,base,*_) in enumerate(layout['facades'])
+                     if depth==base and left<=2*x<=left+10 and right>=2*(x+w)-4),None)
+  zones.setdefault(key,(name,None))
+  top=depth-(136 if floors==2 else 104)
+  explicit[key]=[2*x-4,top,2*w+8,depth-top+6]
+ # The tale gathers on the wide span of the dock and in the middle of the
+ # square, with room on both sides of the protagonist for the cast.
+ positions={**layout['places'],'pier':(203,986),'plaza':(239,577)}
+ public_ids=['airstrip',*sorted(set(explicit)-{'airstrip'})]
+ def free(x,y):
+  return any(l*2<=x<=r*2 and t*2<=y<=b*2 for l,t,r,b in layout['streets']) and not any(
+    l//4<=x//4<=r//4 and t//4<=y//4<=b//4 for l,t,r,b in layout['obstacles'])
+ def stand(x,y):
+  x,y=4*(x//4)+2,4*(y//4)+2
+  candidates=[(dx*dx+dy*dy,x+dx,y+dy) for dx in range(-24,25,4) for dy in range(-24,25,4)
+              if free(x+dx,y+dy)]
+  if not candidates:
+   raise ValueError(f'New town has no pavement near {(x,y)}')
+  _,xx,yy=min(candidates)
+  return xx,yy
+ landmarks=[]
+ for key in public_ids:
+  x,y=stand(*(n*2 for n in positions[key]))
+  name,need=zones[key]
+  if key=='pavilion':name='山顶望远镜'
+  landmarks.append(dict(id=key,name=name,need=need,x=x,y=y,rect=explicit[key],layer=artwork.get(key)))
+ streets=[]
+ for i,(left,right,y) in enumerate(((81,349,421),(82,350,495),(82,350,579),
+                                     (82,347,726),(80,484,908))):
+  l,yy=stand(left*2,y*2)
+  r,_=stand(right*2,y*2)
+  streets.append((f'居民街道{i}',[(l,yy),(r,yy)]))
+ artwork_sprites=[]
+ def market(city):
+  for x,ramp in ((408,P.teal),(466,P.clay),(526,P.mustard)):
+   city.stall(x,1430,ramp)
+ for key,draw in (
+  ('market',market),
+  ('chestnut',lambda c:c.roaster(528,1390)),
+  ('swing',lambda c:c.swing(417,1268)),
+  ('koi',lambda c:c.pond(531,1221,11)),
+ ):
+  c=A.City(4)
+  c.im=Image.new('RGBA',(width,height))
+  c.d=ImageDraw.Draw(c.im)
+  draw(c)
+  bounds=c.im.getbbox()
+  buf=io.BytesIO()
+  c.im.crop(bounds).save(buf,format='PNG')
+  artwork_sprites.append([key,bounds[0],bounds[1],
+          'data:image/png;base64,'+base64.b64encode(buf.getvalue()).decode()])
+ family=('polluted','repair','closed','spring','summer','town','winter')
+ variants={key:[uri(f'liwei-plan/{key}.png'),uri(f'liwei-plan/{key}-wind.png'),
+                uri('liwei-plan/'+('building-cover.png' if key=='town' else f'{key}-cover.png'))]
+           for key in family}
+ data=runtime_data()
+ data.update(width=width,height=height,layoutVersion=5,routes=[],landmarks=landmarks,residentRoutes=streets,
+             town=dict(variants=variants,streets=layout['streets'],obstacles=layout['obstacles'],layers=layout['facades'],
+                       oldLandmarks=A.runtime_landmarks()),
+             landmarkSprites=artwork_sprites,scenes=[],backdrop={},front=None,boat=None,foliage=[],foliageSheets=[],foreground=[],signs=[],
+             river={'top':1938},smoke=[586,435])
+ return data
