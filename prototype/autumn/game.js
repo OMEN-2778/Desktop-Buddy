@@ -1233,7 +1233,7 @@ function makeSeason_autumn(opts, DATA) {
     Promise.all([fontReady,town&&loadTown('polluted').pending,...assets.map(load),
                  ...landmarkTargets.map(({img})=>img.decode())]).then(() => {
         state.loaded = true;
-        draw();
+        if (opts.active()) draw();
         updateStatus();
     }).catch(e => {
         opts.hint("栗尾市加载失败，请刷新");
