@@ -72,6 +72,25 @@ const { chromium } = require("playwright"),
           if (frames.size < 2) throw Error("missing idle animation");
         });
         await p.locator(".liwei-jian").click();
+        const confirmation = p.locator(".autumn-panel[data-scene-confirm]");
+        assert.equal(await confirmation.locator("p").textContent(), "这会是一个比较长的故事，确定继续吗？");
+        for (const scale of [25,50,100]) {
+          await p.evaluate(scale=>{prefs.scale=scale;fit();},scale);
+          const bounds = await confirmation.boundingBox(), screen = await p.locator("#view").boundingBox();
+          assert(Math.abs(bounds.y+bounds.height/2-screen.y-screen.height/2)<3);
+        }
+        await p.evaluate(()=>{
+          const speech=createStorySpeech({view});
+          speech.show(nameOf(),"（掏出手机）");
+          const colors={
+            rim:getComputedStyle(popSay.querySelector(".bg")).backgroundColor,
+            tail:getComputedStyle(popSay.querySelector(".dot")).backgroundColor,
+            shadow:getComputedStyle(popSay).filter,
+          };
+          speech.hide();
+          if(colors.rim!=="rgb(111, 143, 168)" || colors.tail!==colors.rim ||
+            !colors.shadow.includes("rgb(146, 170, 189)"))throw Error(JSON.stringify(colors));
+        });
         await p.locator(".autumn-actions button").first().click();
         await p.waitForFunction(() => liweiStory.active);
         await p.evaluate(() => {

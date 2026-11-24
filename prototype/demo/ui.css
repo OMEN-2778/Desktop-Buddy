@@ -174,15 +174,15 @@ body {
   --pe: var(--edge);
   position: relative; max-width: 100%; display: flex; align-items: baseline; gap: 8px;
   font-size: var(--say-fs, 32px); line-height: 1.35; padding: 8px 20px; color: var(--ink);
-  isolation: isolate; filter: drop-shadow(3px 3px 0 var(--shadow));
+  isolation: isolate; filter: drop-shadow(3px 3px 0 var(--pop-shadow, var(--shadow)));
   transform-origin: left center;
   animation: popin .42s cubic-bezier(.3, 1.6, .5, 1) both;
   transition: translate .3s cubic-bezier(.3, 1.4, .5, 1), filter .3s;
 }
 .pop span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* (the pop-in animation pins opacity/transform, so fades use translate + filter) */
-.pop.out { translate: 0 -4px; filter: drop-shadow(3px 3px 0 var(--shadow)) opacity(0); }
-.mood-talk.listing .pop { translate: 16px 0; filter: drop-shadow(3px 3px 0 var(--shadow)) opacity(0); pointer-events: none; }
+.pop.out { translate: 0 -4px; filter: drop-shadow(3px 3px 0 var(--pop-shadow, var(--shadow))) opacity(0); }
+.mood-talk.listing .pop { translate: 16px 0; filter: drop-shadow(3px 3px 0 var(--pop-shadow, var(--shadow))) opacity(0); pointer-events: none; }
 .pop[hidden] { display: none; }
 /* the bubble is ONE pixel shape (sayClip, made in fit): a 2px outline layer
    and a fill layer, both ends full half-circles like the diary box above it
@@ -847,7 +847,14 @@ button.fb-pill:focus-visible { outline: 2px dashed var(--fb-deep); outline-offse
 .peer-hud.quest { --pe: #6f8fa8; }
 .peer-hud.quest .peer-bubble { color: #2f4558; }
 .peer-hud.quest .peer-bubble .who { color: #4f7896; }
-.pop.say.quest .bg::after { background: linear-gradient(155deg, #fff 0%, #edf7ff 48%, #d6ebfa 100%); }
+.pop.say.quest {
+  --pe: #6f8fa8; --pf: #e4f1fc; color: #2f4558;
+  --pop-shadow: #92aabd;
+}
+.pop.say.quest .bg::after, .pop.say.quest .dot::after {
+  background: linear-gradient(155deg, #fff 0%, #edf7ff 48%, #d6ebfa 100%);
+}
+.pop.say.quest:focus-visible { filter: drop-shadow(3px 3px 0 #3c6e91); }
 .story-bubble:focus-visible { filter: drop-shadow(3px 3px 0 #3c6e91); }
 /* a pixel ▼ (4 rows, 2px steps) at the bubble's right end: there is more */
 .story-more { position: absolute; right: 16px; bottom: 7px; width: 8px; height: 6px; background: currentColor; opacity: .55; pointer-events: none;

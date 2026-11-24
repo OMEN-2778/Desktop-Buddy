@@ -247,12 +247,14 @@ function makeSeason_autumn(opts, DATA) {
         speech.hide();
         dialog = null;
         modal.hidden = true;
+        modal.removeAttribute("data-scene-confirm");
         modal.replaceChildren();
         if (lastFocus?.isConnected) lastFocus.focus();
         lastFocus = null;
     }
-    function panel(title, text, choices) {
+    function panel(title, text, choices, {sceneConfirm = false} = {}) {
         pauseModal();
+        modal.toggleAttribute("data-scene-confirm",sceneConfirm);
         const h = document.createElement("h2");
         h.textContent = title;
         const body = document.createElement("div");

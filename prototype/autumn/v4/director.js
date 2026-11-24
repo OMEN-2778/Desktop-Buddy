@@ -308,7 +308,7 @@
     if (!p.done.includes("S00") && !p.enrolled) {
       city.panel(
         "秋季长篇任务",
-        "开始后可以随时回家，换季后也能回来继续。现在开始吗？",
+        "这会是一个比较长的故事，确定继续吗？",
         [
           [
             "开始",
@@ -325,6 +325,7 @@
             },
           ],
         ],
+        {sceneConfirm:true},
       );
     } else begin(next()[0], !!p.chapter);
   }
