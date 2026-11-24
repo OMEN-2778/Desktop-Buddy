@@ -34,7 +34,8 @@ const seasonalTest=(function(){
   if(hf?.emote)ctx.drawImage(emoteCanvas(hf.emote),Math.round(x)+3,Math.round(y)-DH-14);
   else if(!hf&&remoteSocial&&!swimming&&sim.mode!=='down'&&Math.floor(s.time/2.4)%2===0)ctx.drawImage(emoteCanvas('friend'),Math.round(x)+3,Math.round(y)-DH-14);   // on the phone: the home's chat bubble
  }
- state.spring=makeSeason_spring({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='spring_test'});
+ state.spring=makeSeason_spring({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='spring_test',
+  farmhouseDoorAt:(x,y)=>window.infeiFarm?.yardHit(x,y,state.spring.state.scene)?.id==='door'});
  state.summer=makeSeason_summer({view,walkSpeed:WALK,drawHero,record:text=>log(text),active:()=>sim.place==='summer_test'});
  function stallMenu(name,options){
   PICK.autumn_stall={

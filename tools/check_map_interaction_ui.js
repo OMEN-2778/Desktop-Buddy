@@ -73,8 +73,29 @@ assert(!touch || !/\bSEASON_RELEASE\s*=/.test(html.toString()), 'Use the mouse t
       assert.deepEqual(await page.evaluate(() => sim.item.vars), program);
       assert(await page.evaluate(() => !!seasonHouse.frame() && !!nextTvFrame()));
     }
+    for (const scale of [25, 50]) {
+      await page.evaluate(scale => {
+        prefs.scale = scale; fit();
+        seasonMapTest.ctl().go(3, 128);
+      }, scale);
+      await clickSpot(156, 75);
+      assert(await page.evaluate(() => {
+        const s = seasonMapTest.ctl().state;
+        return !s.inside && !s.door && Math.abs(s.target?.x - 156.5) < 1;
+      }), 'clicking the wall keeps Buddy outside');
+      await clickSpot(178, 73);
+      assert(await page.evaluate(() => {
+        const s = seasonMapTest.ctl().state;
+        return !s.inside && s.target?.x === 182 && typeof s.after === 'function';
+      }), 'clicking the front door starts a walk with an entry action');
+      await page.waitForFunction(() => {
+        const s = seasonMapTest.ctl().state;
+        return s.inside && !s.door;
+      });
+    }
     await page.evaluate(() => {
-      const c = seasonMapTest.ctl(); c.go(3); Object.assign(c.state, { inside: true, x: 113, y: 108 });
+      prefs.scale = 25; fit();
+      seasonMapTest.ctl().state.x = 113;
     });
     await pickTV(159, 89);
     await page.evaluate(() => { infeiHome.stop(); const s=seasonMapTest.ctl().state; s.x=146; s.y=50; });
@@ -208,6 +229,6 @@ assert(!touch || !/\bSEASON_RELEASE\s*=/.test(html.toString()), 'Use the mouse t
       assert.equal(await page.evaluate(()=>kitchenKey()),'autumn_test');
     }
     assert.deepEqual(errors, []);
-    console.log('PASS ('+(touch?'web touch':'mouse')+'): shared directions, walk before transition, TV selection, wardrobe, kitchen, cafe, NPC bubbles, fine outlines and clipped projection');
+    console.log('PASS ('+(touch?'web touch':'mouse')+'): shared directions, farmhouse door at 25% and 50%, TV selection, wardrobe, kitchen, cafe, NPC bubbles, fine outlines and clipped projection');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
