@@ -37,6 +37,7 @@ function makeSeason_autumn(opts, DATA) {
         paused: false,
         walk: false,
         inside: false,
+        indoorSite: "detective_home",
         target: null,
         route: [],
         goal: null,
@@ -211,6 +212,8 @@ function makeSeason_autumn(opts, DATA) {
     const landmarksWithSprites=sceneTargetsFor(DATA.landmarkSprites).map(t=>({...DATA.landmarks.find(p=>p.id===t.id),spriteX:t.x,spriteY:t.y,img:t.img}));
     const landmarkTargets=landmarksWithSprites.map(p=>({x:p.spriteX,y:p.spriteY,img:p.img,landmark:p}));
     const landmark = id => DATA.landmarks.find(p => p.id === id);
+    const lodging = () => window.liweiStory?.lodging() || "detective_home";
+    const indoors = () => landmark(state.indoorSite) || landmark("detective_home");
     function visit(id, need = null, automatic = false) {
         const p = landmark(id);
         if (!p) return false;
@@ -341,20 +344,21 @@ function makeSeason_autumn(opts, DATA) {
             elapsed: 0
         };
         state.pose = [ "energy", "social", "fun" ].includes(need) || need === "hunger" && !state.inside ? "sit" : null;
-        opts.record((state.inside ? "在侦探事务所里" : location) + "，" + (action || names[need]) + "。");
+        opts.record((state.inside ? "在" + indoors().name + "里" : location) + "，" + (action || names[need]) + "。");
     }
-    function enter(automaticNeed = null) {
+    function enter(automaticNeed = null, site = "detective_home") {
         state.door = {
             elapsed: 0,
             to: true,
+            site,
             need: automaticNeed
         };
         clearRoute();
     }
-    function leave() {
+    function leave(destination = null, need = null) {
         close();
-        goTo(222, 108, {
-            id: "exit_inside"
+        return goTo(222, 108, {
+            id: "exit_inside", destination, need
         });
     }
     function arrive() {
@@ -364,7 +368,9 @@ function makeSeason_autumn(opts, DATA) {
         if (goal.id === "exit_inside") {
             state.door = {
                 elapsed: 0,
-                to: false
+                to: false,
+                destination: goal.destination,
+                need: goal.need
             };
             return;
         }
@@ -373,11 +379,11 @@ function makeSeason_autumn(opts, DATA) {
             return;
         }
         if (goal.id === "inside_service") {
-            beginService(goal.need, "侦探事务所");
+            beginService(goal.need, indoors().name);
             return;
         }
-        if (goal.id === "detective_home" && goal.automatic) {
-            enter(goal.need);
+        if ((goal.id === "detective_home" || goal.id === "hotel") && goal.automatic) {
+            enter(goal.need, goal.id);
             return;
         }
         if (goal.id.startsWith("npc:")) {
@@ -395,7 +401,12 @@ function makeSeason_autumn(opts, DATA) {
         const p = landmark(id);
         if (!p) return;
         if(window.liweiStory && liweiStory.site(id)) return;
-        if (id === "detective_home") return panel(p.name, "阿简留下了钥匙。床铺、厨房和洗漱间都能用。", [ [ "进屋", () => enter() ], ...(window.liweiStory?.facilityChoices(id) || []), [ "先不进去" ] ]);
+        if (id === "hotel") {
+            const reserved = lodging() === "hotel";
+            return panel(p.name, reserved ? "前台给你留了钥匙。你的客房在楼上。" : "前台没有你的订房登记。",
+                reserved ? [["回客房", () => enter(null, id)], ["离开"]] : [["离开"]]);
+        }
+        if (id === "detective_home") return panel(p.name, lodging() === "hotel" ? "阿简在这里接待来访的人。" : "阿简留下了钥匙。床铺、厨房和洗漱间都能用。", [ [ "进屋", () => enter() ], ...(window.liweiStory?.facilityChoices(id) || []), [ "先不进去" ] ]);
         if (id === "hut") return state.quest >= 2 ? converse("father") : panel("山上的小屋", "门虚掩着。先把公司的消息和诊所那边的情况问清楚。", [ [ "好" ] ]);
         if (id === "mine_office") return state.quest >= 6 ? talk(AUTUMN_STORY.office) : converse("qing");
         if (id === "clinic") return converse("doctor");
@@ -484,10 +495,13 @@ function makeSeason_autumn(opts, DATA) {
         if (manual) state.service = state.pose = null;
         if (state.service || state.goal?.automatic || state.goal?.id === "inside_service" || state.goal?.id === "home_use" || opts.home?.busy()) return;
         close();
-        if (state.inside) return insideVisit(need);
+        if (state.inside) {
+            if (!manual && state.indoorSite !== lodging()) return leave(lodging(), need);
+            return insideVisit(need);
+        }
         const local = need === "bladder" ? ["toilet"] :
             need === "hunger" ? ["market","chestnut","canteen","syrup"] : [];
-        let destination = "detective_home", shortest = Infinity;
+        let destination = lodging(), shortest = Infinity;
         for (const id of [destination,...local]) {
             const p=landmark(id);
             if(!p)continue;
@@ -595,8 +609,10 @@ function makeSeason_autumn(opts, DATA) {
         if (!d.mid && d.elapsed >= .3) {
             d.mid = true;
             state.inside = d.to;
-            state.x = d.to ? 222 : landmark("detective_home").x;
-            state.y = d.to ? 108 : landmark("detective_home").y;
+            if (d.to) state.indoorSite = d.site;
+            const outside = indoors();
+            state.x = d.to ? 222 : outside.x;
+            state.y = d.to ? 108 : outside.y;
             state.camX = d.to ? 0 : state.x - 171;
             syncHeight();
             state.camY = d.to ? 0 : state.y - footLine();
@@ -604,6 +620,7 @@ function makeSeason_autumn(opts, DATA) {
         if (d.elapsed >= .65) {
             state.door = null;
             if (d.to && d.need) insideVisit(d.need);
+            if (!d.to && d.destination) visit(d.destination, d.need, !!d.need);
         }
     }
     const footLine=()=>canvas.height-43;
@@ -920,7 +937,7 @@ function makeSeason_autumn(opts, DATA) {
         if (back && !state.inside) for (const [k, fx, fy] of PARALLAX) ctx.drawImage(images.get(back[k]), -state.camX * fx, -state.camY * fy);
         ctx.save();
         ctx.translate(-state.camX, -state.camY);
-        ctx.drawImage(state.inside ? images.get(DATA.inside) : bg, 0, 0);
+        ctx.drawImage(state.inside ? images.get(state.indoorSite === "hotel" ? DATA.hotelInside : DATA.inside) : bg, 0, 0);
         const shade=opts.light();
         if (state.inside) {
             const panes=DATA.officeWindows?.slice(2*state.stage,2*state.stage+2);
@@ -1083,6 +1100,8 @@ function makeSeason_autumn(opts, DATA) {
         return hover;
     }
     function updateStatus() {
+        const homeLabel = lodging() === "hotel" ? "回山城旅馆" : "侦探事务所";
+        if (homeButton.textContent !== homeLabel) homeButton.textContent = homeLabel;
         root.querySelector("[data-status]").textContent = state.service ? {
             hunger: "正在吃饭",
             energy: "正在睡觉",
@@ -1090,7 +1109,7 @@ function makeSeason_autumn(opts, DATA) {
             bladder: "正在使用卫生间",
             social: "正在聊聊天",
             fun: "正在休息"
-        }[state.service.need] + " · " + Math.round(opts.needs()[state.service.need]) + "%" : state.inside ? "侦探事务所 · 点击床铺、浴缸、厨房或书架使用" : objective();
+        }[state.service.need] + " · " + Math.round(opts.needs()[state.service.need]) + "%" : state.inside ? indoors().name + " · 点击家具使用" : objective();
     }
     function tick(dt, realDt = dt) {
         if (!state.loaded) return;
@@ -1125,6 +1144,7 @@ function makeSeason_autumn(opts, DATA) {
         close();
         clearRoute();
         state.inside = false;
+        state.indoorSite = "detective_home";
         state.door = null;
         state.service = null;
         state.pose = null;
@@ -1141,6 +1161,7 @@ function makeSeason_autumn(opts, DATA) {
         state.keyboard = false;
         state.door = null;
         state.mapOpen = false;
+        if (!landmark(state.indoorSite) || state.indoorSite !== lodging()) state.indoorSite = "detective_home";
         state.quest = clamp(Math.floor(state.quest) || 0, 0, 6);
         state.stage = clamp(Math.floor(state.stage) || 0, 0, 4);
         state.flags ||= {};
@@ -1222,12 +1243,17 @@ function makeSeason_autumn(opts, DATA) {
         state.mapOpen = !state.mapOpen;
         clearRoute();
     };
-    root.querySelector("[data-home]").onclick = () => visit("detective_home");
+    const homeButton = root.querySelector("[data-home]");
+    homeButton.onclick = () => {
+        const site = lodging();
+        if (!state.inside) visit(site);
+        else if (state.indoorSite !== site) leave(site);
+    };
     root.querySelector("[data-goal]").onclick = () => panel("当前线索", objective(), [ [ "知道了" ] ]);
     root.querySelector("[data-exit]").onclick = opts.exit;
     const signFont = new FontFace("Buddy Autumn Signs", 'url("'+DATA.signFont+'")');
     const fontReady = signFont.load().then(face=>document.fonts.add(face));
-    const assets = town ? [DATA.inside,...DATA.officeWindows,...DATA.npcs.flat()]
+    const assets = town ? [DATA.inside,DATA.hotelInside,...DATA.officeWindows,...DATA.npcs.flat()]
         : [...DATA.scenes,...Object.values(DATA.backdrop||{}).flatMap(b=>Object.values(b)),DATA.front,DATA.inside,
            ...(DATA.officeWindows||[]),DATA.boat,...DATA.npcs.flat(),...DATA.foreground.map(p=>p.img),...DATA.foliageSheets];
     Promise.all([fontReady,town&&loadTown('polluted').pending,...assets.map(load),
@@ -1261,6 +1287,7 @@ function makeSeason_autumn(opts, DATA) {
         interact: interact,
         converse: converse,
         care: care,
+        lodging,
         stepNeeds: stepNeeds,
         close: close,
         talk: talk,

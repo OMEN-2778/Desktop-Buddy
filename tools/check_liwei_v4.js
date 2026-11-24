@@ -180,6 +180,33 @@ const { chromium } = require("playwright"),
           if(sim.t!==landingClock||c.state.goal?.automatic)throw Error("arrival hold");
           sim.needs.hunger=80;
           await drain();
+          const room = branch ? "hotel" : "detective_home";
+          if (s.lodging() !== room || !c.state.inside || c.state.indoorSite !== room)
+            throw Error("arrival lodging does not match the player's choice");
+          const lodgingSave=JSON.parse(JSON.stringify(snapshot()));
+          restore(lodgingSave);
+          if (s.lodging() !== room || !c.state.inside || c.state.indoorSite !== room)
+            throw Error("arrival lodging lost on reload");
+          if(branch){
+            c.state.paused=false;
+            c.leave();
+            function travel(){
+              for(let i=0;i<1000&&(c.state.target||c.state.door);i++)c.tick(.3,.1);
+            }
+            travel();
+            const hotel=c.DATA.landmarks.find(p=>p.id==="hotel");
+            if(c.state.inside||c.state.x!==hotel.x||c.state.y!==hotel.y)
+              throw Error("hotel exit goes to the wrong building");
+            c.care("energy",true);
+            if(c.state.door?.site!=="hotel"&&c.state.goal?.id!=="hotel")
+              throw Error("automatic rest was not directed to the hotel");
+            travel();
+            if(!c.state.inside||c.state.indoorSite!=="hotel")
+              throw Error("could not return to the hotel");
+            if(autumnHome.hit(102,41)?.id==="jianBed"||autumnHome.residentHit(175,100))
+              throw Error("resident or his bed leaked into the hotel");
+            autumnHome.cancelActivity();
+          }
           let passes = 0;
           while (s.next().length) {
             if (++passes > 30) throw Error("progress loop");

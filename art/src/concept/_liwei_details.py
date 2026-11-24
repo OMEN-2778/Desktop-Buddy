@@ -239,6 +239,7 @@ def painted_sign(c,key,x,y,w,name):
         'hut': (P.wood,P.oat,'wood'),
         'store': (P.clay,P.oat,'tab'),
         'syrup': (P.walnut,P.mustard,'wood'),
+        'hotel': (P.teal,P.porcelain,'tab'),
         'workshop': (P.mustard,P.steel,'metal'),
     }
     body,ink,form=styles[key]
@@ -271,6 +272,12 @@ def painted_sign(c,key,x,y,w,name):
     if form in ('metal','enamel','brass'):
         for px in (x+3,x+width-5):
             c.box(px,y+5,2,1,body[-1]);c.box(px,y+6,2,1,body[0])
+    if key=='hotel':
+        # A small bed emblem next to the two-character house name.
+        c.text(x+7,y-1,'山城',9,color)
+        c.box(x+28,y+4,1,7,color);c.box(x+29,y+7,10,3,color)
+        c.box(x+30,y+5,3,2,color);c.box(x+38,y+9,1,2,color)
+        return
     c.text(x+(width-len(name)*9)//2,y-1 if h==14 else y+1,name,9,color)
 
 

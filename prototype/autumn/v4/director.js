@@ -116,6 +116,7 @@
     routeTo = null;
   const inCity = () => sim.place === "autumn_test";
   const unlocked = () => p.done.includes("S01");
+  const lodging = () => where("hotel") && p.choices.S02 === 1 ? "hotel" : "detective_home";
   const firstLanding = () => inCity() && unlocked() && !p.done.includes("S02") && !p.chapter;
   const locked = () => firstLanding() || (inCity() && p.returning === "arrived") ||
     active || !!p.chapter ||
@@ -204,6 +205,17 @@
     p = Object.assign(fresh(), s?.liweiV4 || {});
     if (p.chapter || p.done.length) p.enrolled = true;
     const result = restored(s);
+    // S02 originally brought every player into the office without a choice.
+    if (p.chapter === "S02" && !p.lodgingPrompt) {
+      const promptIndex = scenes.S02.rows[0].arrival[p.choices.S01 || 0].length + 2;
+      if (p.index >= promptIndex && world.inside) {
+        p.choices = {...p.choices, S02: 0};
+        p.index = promptIndex + (p.index > promptIndex + 3 ? 3 : 2);
+      } else if (p.index > promptIndex) {
+        p.index = promptIndex;
+      }
+      p.lodgingPrompt = true;
+    }
     const savedCity = s?.seasonMapTest?.place === "autumn_test" ? s.seasonMapTest.state : s?.testAutumn;
     if (data.town && savedCity?.layoutVersion !== data.layoutVersion && inCity() && p.chapter && !world.inside) {
       const loc = p.cueLoc || scenes[p.chapter]?.loc;
@@ -397,7 +409,7 @@
     window.autumnHome?.cancelActivity();
     const loc = scenes[k].loc;
     if (world.inside) {
-      if (loc === "detective_home") return begin(k);
+      if (loc === world.indoorSite) return begin(k);
       routeTo = k;
       city.leave();
       return;
@@ -592,9 +604,10 @@
       p.departed = [];
       p.cueLoc = null;
       delete p.choices[k];
+      if (k === "S02") p.lodgingPrompt = true;
     }
     pastActions = completedActions(rows());
-    if (inCity() && (k === "note" || k === "S07") && !world.inside)
+    if (inCity() && (k === "note" || k === "S07") && (!world.inside || world.indoorSite !== "detective_home"))
       relocate("detective_home", true);
     refresh();
     checkpoint();
@@ -658,8 +671,9 @@
       return;
     }
     if (row.choices) {
-      speaker = face = "";
-      speech.show("选择", "你怎么说？", {
+      speaker = row.speaker || "";
+      face = "";
+      speech.show(row.speaker || "选择", row.prompt || "你怎么说？", {
         choices: row.choices.map((label, i) => ({
           label,
           on: () => choose(row, i),
@@ -736,6 +750,7 @@
   function relocate(loc, inside = false) {
     const pos = where(loc);
     world.inside = inside;
+    if (inside) world.indoorSite = loc;
     city.syncHeight();
     world.x = inside ? 222 : pos.x;
     world.y = inside ? 108 : pos.y;
@@ -764,14 +779,14 @@
       return;
     }
     sceneText.textContent = action;
-    if (action === "进入事务所") {
+    if (action === "进入事务所" || action === "进入旅馆") {
       sceneText.hidden = true;
       const fadeOut = view.animate([{filter:"brightness(1)"},{filter:"brightness(0)"}],
         {duration:reduceMotionUI ? 120 : 420, easing:"ease-in", fill:"forwards"});
       entrance = fadeOut;
       fadeOut.onfinish = () => {
         if (entrance !== fadeOut) return;
-        relocate("detective_home", true);
+        relocate(action === "进入旅馆" ? "hotel" : "detective_home", true);
         const fadeIn = view.animate([{filter:"brightness(0)"},{filter:"brightness(1)"}],
           {delay:160, duration:reduceMotionUI ? 160 : 560, easing:"ease-out", fill:"both"});
         entrance = fadeIn;
@@ -1148,6 +1163,7 @@
   window.liweiStory = {
     locked,
     facilityChoices,
+    lodging,
     objective,
     unlocked,
     actors,

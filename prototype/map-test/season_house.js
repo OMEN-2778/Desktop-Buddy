@@ -64,7 +64,7 @@ const seasonHouse=(function(){
  const menuItems=c=>c.dishes.map(d=>({title:d.name,line:d.blurb||'',info:`饱食 ${d.fill} · ${d.time}分钟`,icon:dishIcon(d),item:dishItem(c,d)}));
  PICK.cook_bay={title:'旅舍厨房 · 做什么菜',groups:()=>[{name:BAY.name,note:'',items:menuItems(BAY)}]};
  PICK.cook_farm={title:'农舍灶台 · 做什么菜',groups:PICK.cook.groups};
- PICK.cook_city={title:'事务所厨房 · 做什么菜',groups:PICK.cook.groups};
+ PICK.cook_city={title:'厨房 · 做什么菜',groups:PICK.cook.groups};
  function house(){return sim.place==='spring_test'?window.infeiHome:sim.place==='summer_test'?window.summerLodge:window.autumnHome;}
  const kitchen={spring_test:'cook_farm',summer_test:'cook_bay',autumn_test:'cook_city'};
  function furnitureMenu(id,rect){

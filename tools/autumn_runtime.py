@@ -35,6 +35,27 @@ def office_window_views():
    buf=io.BytesIO();pane.save(buf,format='PNG');views.append('data:image/png;base64,'+base64.b64encode(buf.getvalue()).decode())
  return views
 
+def hotel_room():
+ """Keep the furniture footprint shared with the detective's house."""
+ room=Image.open(ROOT/'art/out/concept/autumn_detective_inside.png').convert('RGB')
+ # Replace the second bedroom's berth with a bench and luggage rack.
+ room.paste(room.crop((130,33,131,53)).resize((43,20),Image.Resampling.NEAREST),(84,33))
+ draw=ImageDraw.Draw(room)
+ def box(x,y,w,h,color):draw.rectangle((x,y,x+w-1,y+h-1),fill=color)
+ box(90,42,31,7,P.walnut[0]);box(91,41,29,5,P.teal[1]);box(92,41,27,1,P.teal[3])
+ box(95,35,12,8,P.walnut[0]);box(96,36,10,6,P.oat[1]);box(99,34,4,2,P.wood[1])
+ box(110,37,8,5,P.teal[0]);box(111,38,6,3,P.teal[2])
+ # A green quilt and a brass desk bell identify the private guest room.
+ box(26,40,24,6,P.teal[1]);box(26,40,24,1,P.teal[3])
+ for x in range(28,50,4):box(x,42,2,1,P.teal[3])
+ box(26,46,24,2,P.teal[0])
+ box(153,83,15,13,P.wall_cream[2]);box(153,94,18,3,P.walnut[1])
+ box(157,89,7,4,P.mustard[2]);box(159,88,3,1,P.mustard[3]);box(156,93,9,1,P.walnut[0])
+ box(151,101,18,5,P.teal[1]);box(176,101,18,5,P.teal[1])
+ buf=io.BytesIO();room.save(buf,format='PNG')
+ return 'data:image/png;base64,'+base64.b64encode(buf.getvalue()).decode()
+
+
 def story_cast():
  return {
   '阿简': replace(doll.BOY,eye_shape='bean',hair_style='slick',hair=tuple(P.hair_black),accessories=(),
@@ -186,7 +207,7 @@ def town_runtime_data():
                 uri('liwei-plan/'+('building-cover.png' if key=='town' else f'{key}-cover.png'))]
            for key in family}
  data=runtime_data()
- data.update(width=width,height=height,layoutVersion=5,routes=[],landmarks=landmarks,residentRoutes=streets,
+ data.update(hotelInside=hotel_room(),width=width,height=height,layoutVersion=5,routes=[],landmarks=landmarks,residentRoutes=streets,
              town=dict(variants=variants,parkWalk=[(398,1206),(606,1206),(606,1290),(398,1290)],
                        vendors=[(422,1428,'market'),(477,1428,'market'),(542,1428,'market'),(550,1391,'chestnut')],
                        streets=layout['streets'],obstacles=layout['obstacles'],layers=layout['facades'],

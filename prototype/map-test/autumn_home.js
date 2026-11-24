@@ -26,7 +26,9 @@ const autumnHome=(function(){
  };
  const NEED_SPOT={energy:'bed',hygiene:'bath',bladder:'wc',hunger:'stove',fun:'sofa'};
  const targets=sceneTargetsFor(SEASON_FURNITURE.autumn).map(t=>({...SPOTS[t.id],...t}));
- const hit=(x,y)=>sceneTargetAt(targets,x,y);
+ const hotel=()=>S().indoorSite==='hotel';
+ const hotelTargets=targets.filter(t=>t.id!=='jianBed'&&t.id!=='desk');
+ const hit=(x,y)=>sceneTargetAt(hotel()?hotelTargets:targets,x,y);
  let svc=null,pend=null,hov=null,wasIn=false;
  function stop(){if(!svc)return;seasonHouse.drop(svc.act);svc=null;S().homeSpot=null;S().iy=0;S().hideHero=false;S().pose=null;}
  function use(id,auto,item){
@@ -36,7 +38,13 @@ const autumnHome=(function(){
   if(!auto&&SPOTS[id]&&seasonHouse.furnitureMenu(id,SPOTS[id].rect))return;
   const p=SPOTS[id];if(!p||!p.act)return;stop();closeRing();
   const c=C(),s=S();s.autoAt=sim.t+60;
-  if(!s.inside){pend={id,auto,item};if(!s.door)c.care(p.need,!auto);return;}   // walks to the house, through the door, then need() → here
+  if(!s.inside||auto===true&&s.indoorSite!==c.lodging()){
+   if(s.door)return;
+   pend={id,auto,item};
+   const moving=s.inside?c.leave(c.lodging(),p.need):c.visit(c.lodging(),p.need,true);
+   if(!moving)pend=null;
+   return;
+  }
   pend=null;c.goTo(p.x,p.y,{id:'home_use',spot:id,auto:auto===true,item});
  }
  function arrived(id,goal={}){const p=SPOTS[id],s=S();if(!p)return;
@@ -48,7 +56,7 @@ const autumnHome=(function(){
    return;
   }
   const auto=goal.auto??!!s.lastAuto,act=id==='wardrobe'&&!auto?'dress':p.act;s.x=p.x;s.y=p.y;s.facing=p.face||(p.x>222?1:-1);svc={id,act};s.homeSpot=id;s.iy=({tv:-3,sofa:-3,table:-4,wc:-3})[id]||0;s.hideHero=!!p.hide;
-  seasonHouse.start(act,{auto,log:p.log,item:goal.item});}
+  seasonHouse.start(act,{auto,log:hotel()&&id==='fridge'?'从客房冰箱里找了点现成的。':p.log,item:goal.item});}
  function speakCity(t){showHint(t);}
  // the city's care(need) and the door bring her here
  function need(k){const s=S();if(svc||s.goal?.id==='home_use')return;
@@ -75,7 +83,7 @@ const autumnHome=(function(){
  // Keep the resident on his own seat and berth. Persist his current position with the city.
  function residentGoal(){
   const story=window.liweiStory;
-  if(!story?.progress.done.includes('S02')||story.active)return null;
+  if(hotel()||!story?.progress.done.includes('S02')||story.active)return null;
   const minute=sim.t%1440;
   if(minute>=1350||minute<360)return {id:'sleep',x:102,y:50};
   if(minute>=720&&minute<780||minute>=1080&&minute<1140)return {id:'meal',x:313,y:108};
@@ -138,7 +146,7 @@ const autumnHome=(function(){
   if(bed){if(!(sim.mode==='act'&&sim.act==='sleep'))use('bed',true);return;}
   if(sim.t<nextPlan)return;nextPlan=sim.t+10+Math.random()*10;
   const low=Object.entries(sim.needs).filter(([k,v])=>MARK[k]&&v<MARK[k]).sort((a,b)=>a[1]-b[1])[0];
-  if(low&&Math.random()<.8){s.lastAuto=true;need(low[0]);return;}
+  if(low&&Math.random()<.8){s.lastAuto=true;C().care(low[0]);return;}
   if(evening){if(Math.random()<.7)use(pick(['sofa','tv','tv','wardrobe']),true);return;}
   if(s.inside&&sim.t>=(s.autoAt||0)){s.autoAt=sim.t+40;C().leave();}
  }

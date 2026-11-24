@@ -46,7 +46,7 @@ const assert=require('node:assert/strict'),fs=require('fs'),{chromium}=require('
   c.reset();
   return {count:c.DATA.landmarks.length};
  });
- assert.equal(walked.count,25,JSON.stringify(walked));
+ assert.equal(walked.count,26,JSON.stringify(walked));
  // Simulation acceleration below moves along real graph segments, never teleports a route.
  async function finishRoute(){await p.evaluate(()=>{const c=seasonMapTest.ctl();c.state.paused=false;for(let i=0;i<10000&&(c.state.target||c.state.door);i++)c.tick(.1,.01)});}
  // The dialogue ignores clicks in the first 300 ms after each new line appears.

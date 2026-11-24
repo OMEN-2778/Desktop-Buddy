@@ -34,7 +34,7 @@ BLOCKS = [
  ('homes1','',73,566,47,2,'old',''),('homes2','',128,566,47,2,'brick',''),
  ('canteen','工人食堂',201,566,48,1,'brick','awning'),('laundry','洗衣铺',253,566,45,1,'civic','laundry'),
  ('bath','公共浴场',303,566,43,1,'brick','steam'),
- ('homes3','',74,637,46,2,'brick',''),('homes4','',128,637,46,2,'old',''),
+ ('hotel','山城旅馆',74,637,46,2,'brick','awning'),('homes4','',128,637,46,2,'old',''),
  ('homes5','',74,716,46,1,'old',''),('toilet','公厕',128,716,46,1,'civic',''),
  ('dorm1','',74,797,46,1,'old',''),('dorm2','',128,797,46,1,'brick',''),
  ('dorm3','',74,885,46,2,'old',''),('dorm4','',128,885,46,2,'old',''),
@@ -136,6 +136,7 @@ def house(c, index, entry):
     c.roof_colors=[P.slate,P.steel,P.oat,P.sea_grey][index%4]
     # Deeper buildings and shallower houses follow the same projection. On the
     # upper three blocks the roof covers only the near edge of the street.
+    if key=='hotel':c.roof_colors=P.teal
     c.roof_depth={967:32,976:40,1132:44 if floors==2 else 68,1274:28,1770:32}.get(base,36)
     c.building(x,base,w,floors,kind,None,19+index)
     if name:painted_sign(c,key,x,base-50,w,name)
