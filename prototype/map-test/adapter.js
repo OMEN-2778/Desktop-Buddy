@@ -216,7 +216,7 @@ const seasonalTest=(function(){
  const cityStep=step;step=function(gameDt,realDt){if(inCity()&&!cardHolds()&&!wiping){const c=state.autumn;c.stepNeeds(gameDt);const low=Object.entries(sim.needs).filter(([,v])=>v<30).sort((a,b)=>a[1]-b[1])[0];if(low&&!c.state.door&&!state.exitRequested)c.care(low[0]);}return cityStep(gameDt,realDt);};
  const oldCanCall=canReceiveCall;canReceiveCall=function(){return !(inCity()&&(state.autumn.state.quest<6||['energy','hygiene','bladder'].includes(state.autumn.state.service?.need)))&&oldCanCall();};
  const oldPrivacy=contactPrivacyBreak;contactPrivacyBreak=function(){if(inCity()){const need=state.autumn.state.service?.need;if(need==='hygiene')return '洗澡';if(need==='bladder')return '上厕所';}return oldPrivacy();};
- const oldSocialTick=tickSocial;tickSocial=function(...args){if(inCity()&&state.autumn.state.quest<6)return;return oldSocialTick(...args);};
+ const oldSocialTick=tickSocial;tickSocial=function(...args){if(inCity()&&state.autumn.state.quest<6&&!remoteSocial)return;return oldSocialTick(...args);};
  // Only the map test disables desktop updates. The release uses the same adapter.
  if(typeof SEASON_RELEASE==='undefined') startUpdateChecks=()=>{};
  // the formal game has only 茵菲谷: a save made on the 内测 page (or by an older build) must never leave her on the island

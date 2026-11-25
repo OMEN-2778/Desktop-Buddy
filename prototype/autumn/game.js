@@ -222,7 +222,8 @@ function makeSeason_autumn(opts, DATA) {
         return goTo(p.x, p.y, {
             id: id,
             need: need,
-            automatic: automatic
+            automatic: automatic,
+            storyChapter: !automatic && !need ? window.liweiStory?.siteChapter(id) : null
         });
     }
     const cast = new Map(DATA.npcNames.map((name,index)=>[name,{

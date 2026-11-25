@@ -333,7 +333,7 @@ const { chromium } = require("playwright"),
               const tapWorld=(x,y)=>{
                 const point=mapViewport(c,c.canvas.height).scene(x,y);
                 const rect=view.getBoundingClientRect();
-                view.dispatchEvent(new PointerEvent("pointerdown", {bubbles:true,pointerType:"touch",isPrimary:true,
+                view.dispatchEvent(new PointerEvent("pointerdown", {bubbles:true,pointerType:"mouse",isPrimary:true,
                   clientX:rect.left+point.x*rect.width/342, clientY:rect.top+point.y*rect.height/c.canvas.height}));
               };
               const street=c.nearest(378,1042);
@@ -355,11 +355,18 @@ const { chromium } = require("playwright"),
                 throw Error("hero sprite not centered in the outdoor camera");
               speed=0; // Quest-directed approaches must still run with the clock paused.
               await wait(75);
-              tapWorld(qing.x,qing.y-14);
+              remoteSocial={said:[["爸爸：","到那边了吗？"]],wait:5,item:{
+                contactId:"dad",how:"phone_text",vars:{},talk:{kind:"text",name:"爸爸",lines:[]}
+              }};
+              const office=c.DATA.landmarks.find(p=>p.id==="mine_office");
+              if(branch)tapWorld(office.x,office.y-22);
+              else tapWorld(qing.x,qing.y-14);
               for(let i=0;i<220&&!s.active;i++)await wait(20);
               speed=1;
-              if(!s.active||s.progress.chapter!=="S03"||ringOf)
-                throw Error("clicking visible 程青 did not open 赤岩矿业");
+              if(!s.active||s.progress.chapter!=="S03"||ringOf||remoteSocial)
+                throw Error("mouse click did not open 赤岩矿业 via " + (branch ? "the building" : "程青"));
+              if(!Array.from(logEl.children).some(row=>row._talk?.some(([,text])=>text==="到那边了吗？")))
+                throw Error("the conversation was not kept in the diary");
             }else s.guide(k);
             if (!s.locked()) throw Error("quest walk must pause simulation: " + k);
             for (let i = 0; !s.active && i < 3000; i++) {

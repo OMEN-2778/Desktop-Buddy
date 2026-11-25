@@ -495,19 +495,18 @@
   function showAccounts() {
     city.panel("工人食堂 · 当月公示","旧炉已封。本月工资已发，除尘支出已列账，居民可向程青核对。",[["收起", null]]);
   }
+  function siteChapter(id) {
+    if (["canteen","plaza","detective_home","lookout","reeds"].includes(id)) return null;
+    return next().find(k => scenes[k].loc === id || (k === "S11" && id === "mine_office"));
+  }
   function site(id) {
     if (active) return true;
-    if (["canteen","plaza","detective_home","lookout","reeds"].includes(id)) return false;
-    const key = next().find(
-      (k) =>
-        scenes[k].loc === id ||
-        (k === "S08A" && id === "reeds") ||
-        (k === "S11" && id === "mine_office"),
-    );
+    const key = siteChapter(id);
     if (key) {
       begin(key);
       return true;
     }
+    if (["canteen","plaza","detective_home","lookout","reeds"].includes(id)) return false;
     if (id === "airstrip" && p.done.includes("S14")) {
       city.panel("山顶停机坪", "航班已开放。", [
         ["返回小屋", () => throughDoor("home")],
@@ -583,8 +582,16 @@
     sceneText.replaceChildren();
     face = speaker = cue = "";
   }
+  function putPhoneAway(message) {
+    if (!remoteSocial) return;
+    log(message, null, remoteSocial.said);
+    remoteSocial = null;
+    hidePeerSay(true);
+  }
   function begin(k, resume = false) {
-    if (active || !scenes[k] || wiping || storyWaitsForPhone()) return;
+    if (active || !scenes[k] || wiping || phoneHolds()) return;
+    if (inCity()) putPhoneAway("先收起手机，等办完事再聊。");
+    if (storyWaitsForPhone()) return;
     // Cover the scene before changing its occupants. Dialogue and cue timers
     // start only after the reveal, including when resuming a saved chapter.
     const reveal = view.animate([
@@ -1052,11 +1059,8 @@
   const oldRender = renderOutside;
   renderOutside = function () {
     // A conversation begun before boarding cannot finish while the landing owns the clock.
-    if (inCity() && (firstLanding() || p.returning === "arrived") && remoteSocial) {
-      log("到栗尾市了，先收起手机。", null, remoteSocial.said);
-      remoteSocial = null;
-      hidePeerSay(true);
-    }
+    if (inCity() && (firstLanding() || p.returning === "arrived"))
+      putPhoneAway("到栗尾市了，先收起手机。");
     if (firstLanding() && !wiping && world.loaded) {
       const strip = where("airstrip");
       if (world.inside || world.door || world.x !== strip.x || world.y !== strip.y) city.reset();
@@ -1197,6 +1201,7 @@
     heroExpression: () =>
       active && speaker === "我" ? expressions[face] : null,
     site,
+    siteChapter,
     meet,
     draw,
     guide,
