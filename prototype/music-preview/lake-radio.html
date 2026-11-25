@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>过湖的电波 · 曲谱编辑</title>
+<link rel="stylesheet" href="./lake-radio/editor.css">
+<script type="module" src="./lake-radio/editor.js"></script>
+</head>
+<body>
+<main>
+  <header class="heading">
+    <div>
+      <a class="back" href="./#liwei">← 返回 BGM 试听</a>
+      <h1>过湖的电波</h1>
+      <p>拖动音符可以改高低和位置，拉右边缘可以改长度。点空白格加音符。</p>
+    </div>
+    <div class="files">
+      <label class="button file">导入修改稿<input id="import" type="file" accept=".json,application/json"></label>
+      <button class="primary" id="export">导出修改稿</button>
+    </div>
+  </header>
+
+  <section class="studio" aria-label="主旋律编辑器">
+    <div class="toolbar">
+      <div class="segmented" role="group" aria-label="曲目版本">
+        <button type="button" data-version="polluted" aria-pressed="false">污染时</button>
+        <button type="button" data-version="clean" aria-pressed="true">洁净时</button>
+      </div>
+      <div class="transport" role="group" aria-label="试听控制">
+        <button id="play" class="primary">▶ 播放</button>
+        <output id="time" aria-label="播放时间">0:00 / 1:32</output>
+        <label><input type="checkbox" id="backing" checked> 伴奏</label>
+        <label><input type="checkbox" id="loop" checked> 循环这页</label>
+      </div>
+    </div>
+
+    <div class="navigation">
+      <div class="pager">
+        <button id="prev" aria-label="前四小节">‹</button>
+        <label class="sr-only" for="page">跳到小节</label>
+        <select id="page"></select>
+        <button id="next" aria-label="后四小节">›</button>
+      </div>
+      <div class="layout-buttons">
+        <button id="higher">显示高音 ↑</button>
+        <button id="lower">显示低音 ↓</button>
+      </div>
+    </div>
+
+    <div class="scroll" id="scroll">
+      <div id="sheet">
+        <div class="measure-line">
+          <div class="corner">小节</div>
+          <div id="ruler" aria-label="点小节从那里试听"></div>
+        </div>
+        <div class="note-line">
+          <div id="keys" aria-label="音高试听"></div>
+          <div id="roll" tabindex="0" aria-label="音符格，空白处添加音符">
+            <div id="notes"></div>
+            <div id="cursor"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="editbar">
+      <p id="selection" aria-live="polite">点一块音符就能听到它。</p>
+      <div class="actions" role="group" aria-label="修改所选音符">
+        <button id="pitchUp" data-edit>升高</button><button id="pitchDown" data-edit>降低</button>
+        <button id="earlier" data-edit>往前</button><button id="later" data-edit>往后</button>
+        <button id="shorter" data-edit>缩短</button><button id="longer" data-edit>拉长</button>
+        <button id="remove" data-edit class="danger">删除</button>
+      </div>
+      <div class="history" role="group" aria-label="编辑历史">
+        <button id="undo">撤销</button><button id="redo">重做</button><button id="reset">恢复这版原谱</button>
+      </div>
+    </div>
+  </section>
+  <footer>
+    <p id="status" role="status">正在载入曲谱…</p>
+    <p>导出的 JSON 含两版主旋律。把文件发回来，就能用原伴奏和音色重做全曲。</p>
+  </footer>
+</main>
+</body>
+</html>

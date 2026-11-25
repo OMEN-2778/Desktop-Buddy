@@ -261,7 +261,7 @@ class Instruments:
         return sample
 
 
-def render(notes,theme,index,clean,soundfont):
+def render(notes,theme,index,clean,soundfont, *, master=True):
     frames=round(BARS*4*theme.beat*SR)
     direct=np.zeros((frames,2),np.float32)
     send=np.zeros_like(direct)
@@ -294,6 +294,8 @@ def render(notes,theme,index,clean,soundfont):
     for delay,gain in ((.5,.42),(.75,.35),(1.5,.20),(2.25,.1)):
         direct+=np.roll(wet[:,::-1],round(delay*theme.beat*SR),axis=0)*gain
     mix=sosfilt(butter(2,31,fs=SR,btype='highpass',output='sos'),direct,axis=0)
+    if not master:
+        return mix
     rms=np.sqrt(np.mean(mix**2))
     mix=np.tanh(mix*(10**(-16.8/20)/rms))
     mix*=min(1.0,.86/np.max(abs(mix)))

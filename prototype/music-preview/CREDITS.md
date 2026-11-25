@@ -181,3 +181,5 @@ compose_rhythm_reference.py 原创旋律与和声；借鉴用户提供谱面的�
 《最后一班灯》《过湖的电波》《山路的霓虹》《天空慢慢变蓝》为四组原创器乐主题。每组两版共享主题的音级和主要节奏，另行编写和声、配器和城市状态之间的音区变化。第二版保留原 MIDI 与编排，更换为 S. Christian Collins 的 GeneralUser GS 2.0.3 采样音色。各首分别选用 Tine/FM 电钢琴、模拟合成器主音与铺底、合成或指弹贝斯，以及 808/909、Electronic、Dance 或 Room 鼓组。试听页提供渲染好的 MP3 与原 MIDI。音源作者许可将渲染音乐用于个人及商业用途，并在许可证中说明了其部分原始采样的溯源情况。[GeneralUser GS](https://github.com/mrbumpy409/GeneralUser-GS) · [音源许可](https://github.com/mrbumpy409/GeneralUser-GS/blob/684543d5e5efaef08d02be50dcda8d552478fa60/documentation/LICENSE.txt)
 
 重渲染需要 Python 的 NumPy、SciPy、pyFluidSynth，以及系统的 FluidSynth 和 FFmpeg。下载上述仓库在提交 `684543d5e5efaef08d02be50dcda8d552478fa60` 的 `GeneralUser-GS.sf2`，运行 `python AUDIO_LIBRARY/tools/compose_liwei_pop.py --soundfont /path/to/GeneralUser-GS.sf2`。
+
+《过湖的电波》曲谱页的试听伴奏和音符样本来自同一套音源。导出的修改稿保留两种城市状态的主旋律。重渲染命令见项目内 `AUDIO_LIBRARY/tools/lake_radio_score.py`。

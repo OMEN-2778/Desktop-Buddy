@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-25 · Codex · 《过湖的电波》曲谱编辑器
+- 独立试听页可编辑两版主旋律、带伴奏试听、在本机保存并导入导出修改稿。
+- `AUDIO_LIBRARY/tools/lake_radio_score.py --soundfont /path/to/GeneralUser-GS.sf2 --edit draft.json --out /path/to/mixes` 读取修改稿，按原编曲渲染整首 MP3 和 MIDI。
+
 ## 2026-11-25 · Codex · 栗尾市夜间路灯和采样乐器试听
 - 14 盏路灯和场景底图共用坐标。夜色进度驱动暖色辉光和地面光池，场景后再画任务头标。
 - 四组 BGM 的八个版本使用 GeneralUser GS 2.0.3 重渲染，原 MIDI 逐文件一致。试听页记录音源与复现命令。
