@@ -6,6 +6,10 @@ owner decisions made, what was not tested. Keep older entries; trim beyond ~40 e
 
 ---
 
+## 2026-11-25 · Codex · 栗尾市两首慢速曲与分轨编辑
+- 《封井之后》82 BPM，D 小调与下行低音。《湖面回信》76 BPM，A 大调、同主音借用和弦和 C♯ 小调段。各 32 小节，旋律、回答和和弦逐小节谱写。
+- BGM 试听增加两首的采样混音、MIDI 与七轨编辑器。编辑器标注和弦，内置同音源采样，支持逐轨试听和 JSON 往返。用 `compose_liwei_scores.py --edit` 重渲染。
+
 ## 2026-11-25 · Codex · 《过湖的电波》曲谱编辑器
 - 独立试听页可编辑两版主旋律、带伴奏试听、在本机保存并导入导出修改稿。
 - `AUDIO_LIBRARY/tools/lake_radio_score.py --soundfont /path/to/GeneralUser-GS.sf2 --edit draft.json --out /path/to/mixes` 读取修改稿，按原编曲渲染整首 MP3 和 MIDI。

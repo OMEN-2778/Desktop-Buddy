@@ -65,6 +65,7 @@ input[type=checkbox] { accent-color: var(--accent); width: 1rem; height: 1rem; v
 .corner { position: sticky; left: 0; z-index: 1; display: grid; place-items: center; color: var(--muted); background: #213345; }
 #ruler { display: grid; grid-template-columns: repeat(4, 1fr); }
 #ruler button { text-align: left; border-radius: 0; border-width: 0 0 1px 1px; color: var(--muted); font-size: 13px; }
+#ruler .chord { margin-inline-start: 7px; color: #d2e5ed; font-size: 12px; }
 #ruler button[aria-current=true] { color: var(--accent); background: #293f4e; }
 #keys { display: flex; flex-direction: column; position: sticky; left: 0; z-index: 2; background: #162634; }
 #keys button {

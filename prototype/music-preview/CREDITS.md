@@ -183,3 +183,9 @@ compose_rhythm_reference.py 原创旋律与和声；借鉴用户提供谱面的�
 重渲染需要 Python 的 NumPy、SciPy、pyFluidSynth，以及系统的 FluidSynth 和 FFmpeg。下载上述仓库在提交 `684543d5e5efaef08d02be50dcda8d552478fa60` 的 `GeneralUser-GS.sf2`，运行 `python AUDIO_LIBRARY/tools/compose_liwei_pop.py --soundfont /path/to/GeneralUser-GS.sf2`。
 
 《过湖的电波》曲谱页的试听伴奏和音符样本来自同一套音源。导出的修改稿保留两种城市状态的主旋律。重渲染命令见项目内 `AUDIO_LIBRARY/tools/lake_radio_score.py`。
+
+### 栗尾市慢速新曲
+
+《封井之后》和《湖面回信》为原创曲目，主旋律、回答声部和逐小节和弦记录在 `AUDIO_LIBRARY/tools/liwei_score_material.py`。参照对象提供织体、动机发展与和声推进的创作思路。两首均以 GeneralUser GS 2.0.3 渲染，编辑器内置同一音源生成的逐轨采样。
+
+生成试听、MIDI 和独立编辑器使用 `python AUDIO_LIBRARY/tools/compose_liwei_scores.py --soundfont /path/to/GeneralUser-GS.sf2`。另传入 `--edit draft.json --out /path/to/mixes` 可读取编辑器导出的修改稿并重新渲染。

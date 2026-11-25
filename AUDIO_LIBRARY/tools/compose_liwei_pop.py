@@ -224,15 +224,16 @@ BALANCE = {'lead': 1.13, 'pad': .81, 'bass': 1.10, 'keys': .91, 'arp': .65, 'rep
 
 
 class Instruments:
-    def __init__(self, path, index, clean):
+    def __init__(self, path, index, clean, *, patches=None):
         self.synth = fluidsynth.Synth(gain=0.7, samplerate=float(SR),
                                       **{'synth.reverb.active': False, 'synth.chorus.active': False})
         font = self.synth.sfload(str(path))
         if font < 0:
             raise ValueError(f'Unable to load SoundFont: {path}')
         self.channels = {}
-        for channel, (role, variants) in enumerate(PRESETS.items()):
-            bank, program = variants[int(clean)][index]
+        if patches is None:
+            patches = {role: variants[int(clean)][index] for role, variants in PRESETS.items()}
+        for channel, (role, (bank, program)) in enumerate(patches.items()):
             if self.synth.program_select(channel, font, bank, program) != 0:
                 raise ValueError(f'Missing SoundFont preset {bank}:{program} for {role}')
             self.channels[role] = channel

@@ -1,27 +1,30 @@
 const byId = id => document.getElementById(id);
 const roll = byId('roll');
 const versionButtons = [...document.querySelectorAll('[data-version]')];
-const versions = ['polluted', 'clean'];
-const labels = {polluted: '污染时', clean: '洁净时'};
-const draftKey = 'buddy-lake-radio-score-v1';
+const embedded = byId('imported-score');
+const imported = embedded && JSON.parse(embedded.textContent);
+const versions = imported ? Object.keys(imported.tracks) : ['polluted', 'clean'];
+const labels = imported?.labels ?? {polluted: '污染时', clean: '洁净时'};
+const draftKey = imported ? `buddy-score-${imported.score}` : 'buddy-lake-radio-score-v1';
 const pitches = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
 const rowCount = 21;
 const barsPerPage = 4;
-const maxNotes = 600;
+const maxNotes = imported ? 2500 : 600;
 const history = Object.fromEntries(versions.map(key => [key, {past: [], future: []}]));
 const audioCache = new Map();
 let score, tracks, pageTicks, endTick, secondsPerTick, gridStep;
-let version = new URLSearchParams(location.search).get('version') === 'polluted' ? 'polluted' : 'clean';
-let page = 1, topPitch, head, selected = null, drag = null;
+let version = imported?.defaultTrack ?? (new URLSearchParams(location.search).get('version') === 'polluted' ? 'polluted' : 'clean');
+let page = imported ? 0 : 1, topPitch, head, selected = null, drag = null;
 let audio, master, playback, loading = false, playRequest = 0, audition;
 const noteName = pitch => pitches[pitch % 12] + (Math.floor(pitch / 12) - 1);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const timeText = seconds => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 const pageStart = () => page * pageTicks;
-const pageCount = () => score.bars / barsPerPage;
+const pageCount = () => Math.ceil(score.bars / barsPerPage);
 const activeNotes = () => tracks[version];
 const selectedNote = () => activeNotes().find(note => note.id === selected);
 const message = text => { byId('status').textContent = text; };
+const defaultGain = key => imported ? .11 : key === 'clean' ? .145 : .175;
 
 function project() {
   return {
@@ -34,7 +37,7 @@ function project() {
 function readProject(value) {
   if (value?.score !== score.score || value.bpm !== score.bpm || value.ticksPerBeat !== score.ticksPerBeat
       || Object.keys(value.tracks || {}).length !== versions.length) {
-    throw Error('请选择《过湖的电波》编辑器导出的修改稿。');
+    throw Error('请选择这首曲子导出的修改稿。');
   }
   return Object.fromEntries(versions.map(key => {
     const entries = value.tracks[key];
@@ -47,7 +50,7 @@ function readProject(value) {
           || ![pitch,start,length].every(Number.isInteger) || pitch < score.pitchMin || pitch > score.pitchMax
           || length < 1 || start < 0 || start + length > endTick) throw Error('曲谱中有无效或重复的音符。');
       ids.add(id);
-      return {id, pitch, start, length, gain: originals.get(id) ?? (key === 'clean' ? .145 : .175)};
+      return {id, pitch, start, length, gain: originals.get(id) ?? defaultGain(key)};
     })];
   }));
 }
@@ -90,6 +93,7 @@ function centerRange() {
   const from = pageStart(), to = from + pageTicks;
   const notes = activeNotes().filter(note => note.start < to && note.start + note.length > from);
   const notesToFit = notes.length ? notes : score.tracks[version];
+  if (!notesToFit.length) { setRange(76); return; }
   const high = Math.max(...notesToFit.map(note => note.pitch));
   const low = Math.min(...notesToFit.map(note => note.pitch));
   setRange(Math.max(high + 2, Math.round((high + low + rowCount - 1) / 2)));
@@ -122,15 +126,28 @@ function render() {
   const from = pageStart(), to = from + pageTicks;
   versionButtons.forEach(el => el.setAttribute('aria-pressed', el.dataset.version === version));
   byId('page').value = page;
+  if (imported) {
+    byId('track').value = version;
+    roll.style.setProperty('--note', imported.colors[version]);
+  }
   byId('prev').disabled = page === 0;
   byId('next').disabled = page === pageCount() - 1;
   byId('higher').disabled = topPitch === score.pitchMax;
   byId('lower').disabled = topPitch - rowCount + 1 === score.pitchMin;
 
-  const bars = Array.from({length: barsPerPage}, (_, i) => chip(`${bar + i + 1}`, {
-    'data-bar': bar + i,
-    'aria-label': `从第 ${bar + i + 1} 小节试听`,
-  }));
+  const bars = Array.from({length: Math.min(barsPerPage, score.bars - bar)}, (_, i) => {
+    const number = bar + i + 1;
+    const chord = imported?.chords?.[bar + i];
+    const el = chip(String(number), {'data-bar': bar + i,
+      'aria-label': `从第 ${number} 小节试听${chord ? '，' + chord : ''}`});
+    if (chord) {
+      const name = document.createElement('span');
+      name.className = 'chord';
+      name.textContent = chord;
+      el.append(name);
+    }
+    return el;
+  });
   byId('ruler').replaceChildren(...bars);
 
   const keys = Array.from({length: rowCount}, (_, i) => {
@@ -194,7 +211,7 @@ function switchVersion(key) {
   selected = null;
   centerRange();
   render();
-  message(`正在编辑${labels[version]}版`);
+  message(`正在编辑${labels[version]}${imported ? '' : '版'}`);
 }
 
 function replaceNote(note, next, focus = false) {
@@ -244,8 +261,9 @@ function addNote(event) {
     return;
   }
   const {start, pitch} = gridPoint(event);
+  if (start >= endTick) return;
   const next = {id: 'edit-' + crypto.getRandomValues(new Uint32Array(3)).join('-'), pitch, start,
-    length: Math.min(2 * gridStep, endTick - start), gain: version === 'clean' ? .145 : .175};
+    length: Math.min(2 * gridStep, endTick - start), gain: defaultGain(version)};
   selected = next.id;
   commit([...activeNotes(), next], '已添加音符');
   roll.focus({preventScroll: true});
@@ -335,9 +353,10 @@ async function wakeAudio() {
 }
 
 function loadAudio(type, key) {
-  const file = `${type}-${key}`;
+  const file = imported ? 'score-samples' : `${type}-${key}`;
+  const url = imported?.sampleUrl ?? `./lake-radio/${file}.mp3`;
   if (!audioCache.has(file)) {
-    const data = fetch(`./lake-radio/${file}.mp3`).then(response => {
+    const data = fetch(url).then(response => {
       if (!response.ok) throw Error('音频载入失败');
       return response.arrayBuffer();
     }).then(buffer => audio.decodeAudioData(buffer)).catch(error => {
@@ -350,24 +369,33 @@ function loadAudio(type, key) {
 }
 
 function playNote(buffer, note, when, duration, elapsed, bus, key) {
-  const choices = score.samplePitches;
-  const index = clamp(Math.round((note.pitch - choices[0]) / (choices[1] - choices[0])), 0, choices.length - 1);
-  const speed = 2 ** ((note.pitch - choices[index]) / 12);
-  const clipStart = index * score.sampleSeconds;
+  const region = imported?.sampleRegions?.[key];
+  const choices = region?.pitches ?? score.samplePitches;
+  const index = choices.reduce((nearest, pitch, i) =>
+    Math.abs(note.pitch - pitch) < Math.abs(note.pitch - choices[nearest]) ? i : nearest, 0);
+  const drum = imported?.parts[key] === 'drum';
+  const speed = drum ? 1 : 2 ** ((note.pitch - choices[index]) / 12);
+  const clipStart = region?.offsets[index] ?? index * score.sampleSeconds;
   const clipLength = Math.min(score.sampleSeconds, buffer.duration - clipStart);
   if (clipLength <= 0) return null;
   const used = elapsed * speed;
-  const life = duration + .17;
+  const life = drum ? Math.min(clipLength - used, duration + .29) : duration + .17;
+  if (life <= 0) return null;
   const voice = audio.createBufferSource(), gain = audio.createGain();
-  const volume = note.gain * score.mixGain[key] / .6;
+  const volume = imported ? note.gain / .69 : note.gain * score.mixGain[key] / .6;
   voice.buffer = buffer;
   voice.playbackRate.value = speed;
   gain.gain.setValueAtTime(0, when);
   gain.gain.linearRampToValueAtTime(volume, when + Math.min(.012, life / 4));
   gain.gain.setValueAtTime(volume, when + Math.min(duration, life * .8));
   gain.gain.linearRampToValueAtTime(0, when + life);
-  voice.connect(gain).connect(bus);
-  if (used + life * speed <= clipLength) {
+  voice.connect(gain);
+  if (region && audio.createStereoPanner) {
+    const panner = audio.createStereoPanner();
+    panner.pan.value = imported.pans?.[key] ?? 0;
+    gain.connect(panner).connect(bus);
+  } else gain.connect(bus);
+  if (drum || used + life * speed <= clipLength) {
     voice.start(when, clipStart + used, life * speed);
   } else {
     // Sustain longer edits within this sample slot, without reading the next pitch.
@@ -386,17 +414,66 @@ async function listen(note) {
   const key = version;
   try {
     await wakeAudio();
-    const buffer = await loadAudio('lead', key);
+    const buffer = imported && !imported.sampleUrl ? null : await loadAudio('lead', key);
     if (key !== version || playback) return;
     audition?.stop();
-    audition = playNote(buffer, note, audio.currentTime + .005,
-      clamp(note.length * secondsPerTick, .16, .66), 0, master, key);
+    const length = clamp(note.length * secondsPerTick, .16, .66);
+    audition = buffer ? playNote(buffer, note, audio.currentTime + .005, length, 0, master, key)
+      : synthTone(note, audio.currentTime + .005, length, master, key);
   } catch {
     message('暂时无法试听。你可以继续编辑或导出，稍后再试播放。');
   }
 }
 
+function synthTone(note, when, duration, bus, key) {
+  const oscillator = audio.createOscillator(), envelope = audio.createGain();
+  const role = imported.parts[key];
+  oscillator.type = role === 'bass' ? 'sine' : role === 'harmony' ? 'triangle' : 'sine';
+  oscillator.frequency.value = 440 * 2 ** ((note.pitch - 69) / 12);
+  const level = note.gain * (role === 'bass' ? .72 : role === 'harmony' ? .42 : .85);
+  envelope.gain.setValueAtTime(0, when);
+  envelope.gain.linearRampToValueAtTime(level, when + Math.min(.011, duration / 2));
+  envelope.gain.setTargetAtTime(level * .35, when + Math.min(.022, duration * .7), .055);
+  envelope.gain.setTargetAtTime(0, when + duration, .023);
+  oscillator.connect(envelope).connect(bus);
+  oscillator.start(when);
+  oscillator.stop(when + duration + .13);
+  return oscillator;
+}
+
+function queueScore(song) {
+  const span = song.span;
+  if (!span || span.cursor >= span.until) return;
+  const remaining = Math.max(0, audio.currentTime + .38 - span.at);
+  const edge = Math.min(span.until, span.from + remaining / secondsPerTick);
+  if (edge <= span.cursor) return;
+  for (const part of song.parts) {
+    for (const note of part.notes) {
+      const begin = Math.max(note.start, span.from);
+      const end = Math.min(note.start + note.length, span.until);
+      if (begin < span.cursor || begin >= edge || end <= begin) continue;
+      const at = span.at + (begin - span.from) * secondsPerTick;
+      const duration = (end - begin) * secondsPerTick;
+      const bus = part.key === song.version ? song.bus : song.backingBus;
+      const start = Math.max(audio.currentTime, at);
+      const node = song.lead ? playNote(song.lead, note, start, duration,
+        (begin - note.start) * secondsPerTick, bus, part.key) : synthTone(note, start, duration, bus, part.key);
+      if (node) {
+        song.sources.add(node);
+        node.onended = () => song.sources.delete(node);
+      }
+    }
+  }
+  span.cursor = edge;
+}
+
 function scheduleSpan(song, from, until, at) {
+  if (imported) {
+    song.span = {from, until, at, cursor: from};
+    song.scheduledUntil = at + (until - from) * secondsPerTick;
+    queueScore(song);
+    return;
+  }
   const seconds = (until - from) * secondsPerTick;
   const backing = audio.createBufferSource();
   backing.buffer = song.backing;
@@ -428,6 +505,7 @@ function position(song) {
 
 function pump(song) {
   if (song !== playback) return;
+  if (imported) queueScore(song);
   if (song.loop && song.scheduledUntil < audio.currentTime + .24) {
     scheduleSpan(song, song.loopStart, song.until, Math.max(song.scheduledUntil, audio.currentTime + .012));
   }
@@ -474,11 +552,13 @@ async function play() {
   message('正在载入试听音色…');
   try {
     await wakeAudio();
-    const [lead, backing] = await Promise.all([loadAudio('lead', key), loadAudio('backing', key)]);
+    const [lead, backing] = imported
+      ? (imported.sampleUrl ? [await loadAudio('lead', key)] : [])
+      : await Promise.all([loadAudio('lead', key), loadAudio('backing', key)]);
     if (request !== playRequest) return;
     const loop = byId('loop').checked;
     const loopStart = pageStart();
-    const until = loop ? loopStart + pageTicks : endTick;
+    const until = loop ? Math.min(endTick, loopStart + pageTicks) : endTick;
     const from = head >= loopStart && head < until ? head : loopStart;
     const bus = audio.createGain();
     const backingBus = audio.createGain();
@@ -488,6 +568,7 @@ async function play() {
     const at = audio.currentTime + .045;
     const song = {from, until, loop, loopStart, at, bus, backingBus, lead, backing,
       notes: activeNotes(), version, sources: new Set()};
+    if (imported) song.parts = versions.map(key => ({key, notes: tracks[key]}));
     scheduleSpan(song, from, until, at);
     playback = song;
     song.timer = setInterval(() => pump(song), 35);
@@ -506,7 +587,7 @@ function download() {
   const url = URL.createObjectURL(new Blob([JSON.stringify(project(), null, 2)], {type:'application/json'}));
   const link = document.createElement('a');
   link.href = url;
-  link.download = '过湖的电波-主旋律修改稿.json';
+  link.download = imported?.download ?? '过湖的电波-主旋律修改稿.json';
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   message('已导出修改稿');
@@ -517,7 +598,7 @@ async function importFile(event) {
   const file = input.files[0];
   if (!file) return;
   try {
-    if (file.size > 300000) throw Error('该文件太大，请选择编辑器导出的 JSON。');
+    if (file.size > (imported ? 4000000 : 300000)) throw Error('该文件太大，请选择编辑器导出的 JSON。');
     const next = readProject(JSON.parse(await file.text()));
     pause();
     for (const key of versions) {
@@ -536,9 +617,15 @@ async function importFile(event) {
 
 async function start() {
   try {
-    const response = await fetch('./lake-radio/score.json');
-    if (!response.ok) throw Error(response.status);
-    score = await response.json();
+    if (imported) {
+      score = imported;
+      for (const key of versions) byId('track').add(new Option(labels[key], key));
+      byId('track').onchange = event => switchVersion(event.target.value);
+    } else {
+      const response = await fetch('./lake-radio/score.json');
+      if (!response.ok) throw Error(response.status);
+      score = await response.json();
+    }
     pageTicks = score.ticksPerBeat * 4 * barsPerPage;
     endTick = score.bars * 4 * score.ticksPerBeat;
     secondsPerTick = 60 / (score.bpm * score.ticksPerBeat);
@@ -553,10 +640,12 @@ async function start() {
     centerRange();
     const sections = {0:'前奏',1:'主题',2:'主题',3:'展开',4:'展开',5:'过渡',6:'主题回归',7:'主题回归',8:'尾声'};
     for (let i = 0; i < pageCount(); i++) {
-      byId('page').add(new Option(`${i * barsPerPage + 1}–${(i + 1) * barsPerPage} · ${sections[i]}`, i));
+      const name = imported ? imported.sections[i] : sections[i];
+      const last = Math.min(score.bars, (i + 1) * barsPerPage);
+      byId('page').add(new Option(`${i * barsPerPage + 1}–${last}${name ? ' · ' + name : ''}`, i));
     }
     render();
-    message(restored ? '已恢复上次修改' : '已载入原版主旋律');
+    message(restored ? '已恢复上次修改' : imported ? '已载入分轨曲谱' : '已载入原版主旋律');
   } catch {
     message('曲谱载入失败，请刷新页面后重试。');
     document.querySelectorAll('button, input, select').forEach(el => { el.disabled = true; });
@@ -592,7 +681,7 @@ async function start() {
   byId('redo').onclick = () => readHistory(false);
   byId('reset').onclick = () => {
     selected = null;
-    commit(structuredClone(score.tracks[version]), '已恢复这版原谱，可撤销');
+    commit(structuredClone(score.tracks[version]), imported ? '已恢复这轨原谱，可撤销' : '已恢复这版原谱，可撤销');
   };
   byId('export').onclick = download;
   byId('import').onchange = importFile;
