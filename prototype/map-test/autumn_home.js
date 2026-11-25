@@ -30,7 +30,8 @@ const autumnHome=(function(){
  const hotelTargets=targets.filter(t=>t.id!=='jianBed'&&t.id!=='desk');
  const hit=(x,y)=>sceneTargetAt(hotel()?hotelTargets:targets,x,y);
  let svc=null,pend=null,hov=null,wasIn=false;
- function stop(){if(!svc)return;seasonHouse.drop(svc.act);svc=null;S().homeSpot=null;S().iy=0;S().hideHero=false;S().pose=null;}
+ function toiletDuration(){return Math.max(AUTUMN_WC.minimum,AUTUMN_WC.settle+(99-sim.needs.bladder)/AUTUMN_WC.rate);}
+ function stop(){if(!svc)return;S().toiletReadyAt=null;seasonHouse.drop(svc.act);svc=null;S().homeSpot=null;S().iy=0;S().hideHero=false;S().pose=null;}
  function use(id,auto,item){
   if(window.liweiStory?.locked())return;
   if(id==='table'&&!homeMeal())id='stove';
@@ -56,7 +57,8 @@ const autumnHome=(function(){
    return;
   }
   const auto=goal.auto??!!s.lastAuto,act=id==='wardrobe'&&!auto?'dress':p.act;s.x=p.x;s.y=p.y;s.facing=p.face||(p.x>222?1:-1);svc={id,act};s.homeSpot=id;s.iy=({tv:-3,sofa:-3,table:-4,wc:-3})[id]||0;s.hideHero=!!p.hide;
-  seasonHouse.start(act,{auto,log:hotel()&&id==='fridge'?'从客房冰箱里找了点现成的。':p.log,item:goal.item});}
+  if(id==='wc')s.toiletReadyAt=sim.t+AUTUMN_WC.settle;
+  seasonHouse.start(act,{auto,duration:id==='wc'?toiletDuration():undefined,log:hotel()&&id==='fridge'?'从客房冰箱里找了点现成的。':p.log,item:goal.item});}
  function speakCity(t){showHint(t);}
  // the city's care(need) and the door bring her here
  function need(k){const s=S();if(svc||s.goal?.id==='home_use')return;
@@ -149,10 +151,10 @@ const autumnHome=(function(){
  let nextPlan=0;
  function plan(s){const m=sim.t%1440,bed=m>=22*60+30||m<6*60,evening=m>=19*60;
   if(!C().canPlan()||s.service)return;   // the player just sent her somewhere
+  const low=Object.entries(sim.needs).filter(([k,v])=>MARK[k]&&v<MARK[k]&&(!bed||v<28)).sort((a,b)=>a[1]-b[1])[0];
+  if(low){s.lastAuto=true;C().care(low[0]);return;}
   if(bed){if(!(sim.mode==='act'&&sim.act==='sleep'))use('bed',true);return;}
   if(sim.t<nextPlan)return;nextPlan=sim.t+10+Math.random()*10;
-  const low=Object.entries(sim.needs).filter(([k,v])=>MARK[k]&&v<MARK[k]).sort((a,b)=>a[1]-b[1])[0];
-  if(low&&Math.random()<.8){s.lastAuto=true;C().care(low[0]);return;}
   if(evening){if(Math.random()<.7)use(pick(['sofa','tv','tv','wardrobe']),true);return;}
   if(s.inside&&sim.t>=(s.autoAt||0)){s.autoAt=sim.t+40;C().leave();}
  }
@@ -175,6 +177,7 @@ const autumnHome=(function(){
    const saved=save?.sim,id=s.homeSpot||ACT_SPOT[saved?.act],p=SPOTS[id];
    if(saved?.mode==='act'&&p?.act===saved.act&&Number.isFinite(saved.actEnd)&&saved.actEnd>sim.t){
     Object.assign(sim,{mode:'act',act:p.act,actEnd:saved.actEnd,nap:!!saved.nap});
+    if(id==='wc'&&!Number.isFinite(s.toiletReadyAt)){s.toiletReadyAt=sim.t+AUTUMN_WC.settle;sim.actEnd=sim.t+toiletDuration();}
     svc={id,act:p.act};s.x=p.x;s.y=p.y;s.hideHero=!!p.hide;
    }else{
     s.hideHero=false;s.iy=0;s.homeSpot=null;
@@ -187,6 +190,9 @@ const autumnHome=(function(){
  return {cancelActivity(){stop();pend=null;S().hideHero=false;},residentHit(x,y){
   const g=residentGoal(),r=S().resident;
   return g&&r&&g.id!=='sleep'&&!liweiStory.locked()&&Math.abs(x-r.x)<9&&y>=r.y-31&&y<r.y-(g.id==='work'?12:3);
+ },toiletEffects(dt){
+  const active=Math.max(0,Math.min(dt,sim.t-(S().toiletReadyAt??sim.t)));
+  return {bladder:dt>0?AUTUMN_WC.rate*active/dt:0};
  },use,tickResident,hit,need,click,arrived,under,over,busy:()=>!!svc||S().goal?.id==='home_use',get svc(){return svc;},SPOTS};
 })();
 window.autumnHome=autumnHome;

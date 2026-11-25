@@ -1,3 +1,4 @@
+const AUTUMN_WC = {settle:2, minimum:8, rate:6};
 // Full-game TEST controller, no independent RAF. One continuous orthogonal route graph.
 function makeSeason_autumn(opts, DATA) {
     const canvas = document.createElement("canvas");
@@ -229,7 +230,9 @@ function makeSeason_autumn(opts, DATA) {
     const cast = new Map(DATA.npcNames.map((name,index)=>[name,{
         id:'autumn_'+name,name,portrait:()=>images.get(DATA.npcs[index][0])
     }]));
-    const speech=createStorySpeech({view:opts.view,speakerFor:name=>cast.get(name.replace(/（电话）$/,'')),onClose:close,anchor:who=>{
+    const speech=createStorySpeech({view:opts.view,speakerFor:name=>dialog?.person?.name===name
+        ? {id:dialog.person.id,name,portrait:()=>dialog.portrait}
+        : cast.get(name.replace(/（电话）$/,'')),onClose:close,anchor:who=>{
         if(who===opts.heroName())return {x:state.x-state.camX,y:state.y-state.camY};
         const n=!state.inside&&npcRows().find(n=>n.name===who);
         return n?{x:n.x-state.camX,y:n.y-state.camY}:null;
@@ -282,12 +285,30 @@ function makeSeason_autumn(opts, DATA) {
         modal.append(h, body, actions);
         actions.querySelector("button")?.focus();
     }
-    function talk(lines, done, special=true) {
-        close();clearKeys();let i=0;dialog={lines,done};
-        const show=()=>{const [who,text]=lines[i];speech.show(who==='我'?opts.heroName():who,text,{special,last:i===lines.length-1,advance:()=>{
+    function talk(lines, done, special=true, person=null) {
+        close();clearKeys();let i=0;
+        const portrait = person && streetLayers.find(layer=>layer.npc?.id===person.id)?.img;
+        dialog={lines,done,person,portrait};
+        const show=()=>{const [who,text]=lines[i];speech.show(who==='我'?opts.heroName():who,text,{asNpc:who!=='我',special,last:i===lines.length-1,advance:()=>{
             opts.record((who==='我'?opts.heroName():who)+'：'+text);
             if(++i>=lines.length){close();done?.();updateStatus();}else show();
         }});};show();
+    }
+    const residentLines = [
+        ["上头风大，站一会儿耳朵就凉了。","沿这条路下去，转过弯就没那么吹了。","我早上走这段，台阶还带着露水。","远处那个山头，天好才看得清。"],
+        ["我来看看今儿排班贴出来没。","门口这条近一点。不过石板松了，脚下留神。","我以前总在这边等人下班。","这条街上午最忙，过了饭点才安静。"],
+        ["食堂的面一出锅，我在街对面都闻得到。","晒了一上午的被单，回去该收了。","这天气我就想喝口热的。","刚才想买盐，出门又忘了带零钱。"],
+        ["有空去公园坐坐呗，那边有两张椅子。","小摊那口锅又响了。得，今天晚饭有着落了。","我等会儿绕到集市去，帮家里带点菜。","别急着走，这阵风就一小会儿。"],
+        ["这几天有人帮着把栈桥边的旧绳子理了。","我喜欢傍晚走这边，水上挺安静的。","湖边石头滑，走木板稳当些。","我小时候放学，总在这儿绕一截才回家。"],
+        ["我走两圈就回去，饭还没做呢。","瞧，池子边那条鱼又冒头了。","今天这张长椅倒是没沾水。","你坐吧，我活动活动腿。"]
+    ];
+    function talkResident(person) {
+        const rows=residentLines[person.local>=44?5:Math.floor(person.local/8)];
+        const line=rows[(person.local+Math.floor(state.streetTime/45))%rows.length];
+        talk([[person.name,line],["我","嗯，回头我也走走这边。"]],()=>{
+            const needs=opts.needs();
+            needs.social=Math.min(100,needs.social+10);
+        },false,person);
     }
     function chapter(q, stage, entry) {
         state.quest = q;
@@ -389,7 +410,8 @@ function makeSeason_autumn(opts, DATA) {
             return;
         }
         if (goal.id.startsWith("npc:")) {
-            converse(goal.id.slice(4));
+            if (goal.person) talkResident(goal.person);
+            else converse(goal.id.slice(4));
             return;
         }
         if (goal.need) {
@@ -500,6 +522,10 @@ function makeSeason_autumn(opts, DATA) {
         if (manual) state.service = state.pose = null;
         if (state.service || state.goal?.automatic || state.goal?.id === "inside_service" || state.goal?.id === "home_use" || opts.home?.busy()) return;
         close();
+        if (need === "social" && town) {
+            if (remoteSocial && !manual) return;
+            return state.inside ? leave("plaza", need) : visit("plaza", need, true);
+        }
         if (state.inside) {
             if (state.indoorSite !== lodging() && (!manual || need === "hygiene")) return leave(lodging(), need);
             return insideVisit(need);
@@ -526,14 +552,16 @@ function makeSeason_autumn(opts, DATA) {
                 hunger: 2.4,
                 energy: .4,
                 hygiene: 3,
-                bladder: 8,
+                bladder: AUTUMN_WC.rate,
                 social: 1.6,
                 fun: 1.3
             }[a.need];
-            n[a.need] = Math.min(100, n[a.need] + rate * dt);
+            const toilet = a.need === "bladder";
+            const effective = toilet ? Math.max(0, dt - Math.max(0,AUTUMN_WC.settle-a.elapsed)) : dt;
+            n[a.need] = Math.min(100, n[a.need] + rate * effective);
             a.elapsed += dt;
-            if (n[a.need] >= 97) {
-                opts.record("歇好了，接着在栗尾市走走。");
+            if (n[a.need] >= 97 && (!toilet || a.elapsed >= AUTUMN_WC.minimum)) {
+                opts.record(toilet ? "洗过手，走出卫生间。" : "歇好了，接着在栗尾市走走。");
                 state.service = null;
                 state.pose = null;
                 state.autoAt = opts.now() + 35;
@@ -797,6 +825,36 @@ function makeSeason_autumn(opts, DATA) {
         }
         return townMasks.get(key);
     }
+    function drawRunwayPlane() {
+        const sprite = images.get(town.runway.plane);
+        const phase = state.streetTime % 94 - 19;
+        const landing = 8, parked = 5, takeoff = 9;
+        if (!sprite || reduceMotionUI || phase < 0 || phase >= landing + parked + takeoff) return;
+        const [left,north,right,south] = town.runway.bounds;
+        const stop = left + (right-left)*.39, ground = (north+south)/2 + 9;
+        let x = stop, height = 0;
+        if (phase < landing) {
+            const p = phase / landing, start = left-230;
+            x = start + (stop-start)*(1-(1-p)**3);
+            height = 56*Math.max(0,1-p/.55)**2;
+        } else if (phase >= landing + parked) {
+            const p = (phase-landing-parked)/takeoff;
+            x = stop + (right+260-stop)*p**3;
+            height = 65*Math.max(0,(p-.58)/.42)**2;
+        }
+        if (x+sprite.width < state.camX || x > state.camX+342) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(left+4,north+4,right-left-8,south-north-8);
+        ctx.clip();
+        ctx.fillStyle = "#292836";
+        ctx.globalAlpha = .24*(1-height/75);
+        ctx.beginPath();
+        ctx.ellipse(x+40,ground+2,32,4,0,0,Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+        ctx.drawImage(sprite,Math.round(x),Math.round(ground-29-height));
+    }
     function townBirds() {
         if (state.camY>221) return;
         ctx.fillStyle=state.stage<4?"#766959":"#526983";
@@ -845,7 +903,7 @@ function makeSeason_autumn(opts, DATA) {
     function drawStreet(boat, freshTown=null) {
         const npcs=npcRows().filter(n=>Math.abs(n.x-state.x)<=240&&Math.abs(n.y-state.y)<=190);
         const watched=[state,...npcs.filter(n=>n.mark)];
-        const layers=window.liweiStory?.active?[]:opts.residents?.(state,canvas.height)||[];
+        const layers=window.liweiStory?.active?[]:opts.residents?.(state,canvas.height,npcs)||[];
         if(boat)layers.push(boat);
         for(const item of freshTown ? [] : depthItems()){
             const p=item.p;
@@ -881,7 +939,10 @@ function makeSeason_autumn(opts, DATA) {
         for(const layer of layers){
             ctx.globalAlpha=layer.alpha??1;
             if(layer.draw)layer.draw();
-            else ctx.drawImage(layer.img,layer.x,layer.y);
+            else {
+                ctx.drawImage(layer.img,layer.x,layer.y);
+                if(layer.npc&&hover?.id===layer.npc.id)drawObjectHover(ctx,layer.img,layer.x,layer.y);
+            }
             if(freshTown && layer.walker)coverTownActor(freshTown,layer.x+10,layer.depth);
         }
         ctx.globalAlpha=1;
@@ -993,7 +1054,7 @@ function makeSeason_autumn(opts, DATA) {
         }
         if (!state.inside) {
             if(freshTown?.wind)drawTownGround(freshTown.wind);
-            if(freshTown)townBirds();
+            if(freshTown){townBirds();drawRunwayPlane();}
             const boat=freshTown?null:drawRiver();
             if(!freshTown)drawSigns();
             if(hover?.img)drawObjectHover(ctx,hover.img,hover.spriteX,hover.spriteY);
@@ -1096,7 +1157,7 @@ function makeSeason_autumn(opts, DATA) {
         approachNpc(n);
     }
     function approachNpc(n) {
-        const goal = {id: "npc:" + n.id, storyWalk: !!(window.liweiStory && n.mark)};
+        const goal = {id: "npc:" + n.id, person:n.local!=null?n:null, storyWalk: !!(window.liweiStory && n.mark)};
         if (goal.storyWalk && navigation) {
             const route = plan(n.x, n.y);
             let previous = state, length = 0;
@@ -1168,7 +1229,7 @@ function makeSeason_autumn(opts, DATA) {
         frameDt = state.paused ? 0 : realDt;
         if (!state.paused) {
             state.time += realDt;
-            if (!state.inside && !state.mapOpen && !state.door && !dialog && modal.hidden && !window.liweiStory?.locked()) state.streetTime += realDt;
+            if (!state.inside && !state.mapOpen && !state.door && !dialog && modal.hidden && !state.goal?.person && !window.liweiStory?.locked()) state.streetTime += realDt;
             advanceDoor(realDt);
             if (state.inside) opts.home?.tickResident(dt);
             move(dt);
@@ -1218,10 +1279,15 @@ function makeSeason_autumn(opts, DATA) {
         state.flags ||= {};
         delete state.flags.tree;
         state.found = Array.from(state.found || []);
-        if (town && state.layoutVersion === 5 && DATA.layoutVersion === 6) {
-            if (!state.inside && state.target && ["hut","npc:father"].includes(state.goal?.id)) {
-                state.route = [];
-                state.target = landmark("hut");
+        if (town && [5,6].includes(state.layoutVersion) && DATA.layoutVersion === 7) {
+            if (!state.inside && state.target) {
+                const id = state.goal?.id;
+                const moved = id === "airstrip" ? id :
+                    state.layoutVersion === 5 && ["hut","npc:father"].includes(id) ? "hut" : null;
+                if (moved) {
+                    state.route = [];
+                    state.target = landmark(moved);
+                }
             }
             state.layoutVersion = DATA.layoutVersion;
         }
@@ -1316,7 +1382,7 @@ function makeSeason_autumn(opts, DATA) {
     root.querySelector("[data-exit]").onclick = opts.exit;
     const signFont = new FontFace("Buddy Autumn Signs", 'url("'+DATA.signFont+'")');
     const fontReady = signFont.load().then(face=>document.fonts.add(face));
-    const assets = town ? [DATA.inside,DATA.hotelInside,...DATA.officeWindows,...DATA.npcs.flat()]
+    const assets = town ? [DATA.inside,DATA.hotelInside,town.runway.plane,...DATA.officeWindows,...DATA.npcs.flat()]
         : [...DATA.scenes,...Object.values(DATA.backdrop||{}).flatMap(b=>Object.values(b)),DATA.front,DATA.inside,
            ...(DATA.officeWindows||[]),DATA.boat,...DATA.npcs.flat(),...DATA.foreground.map(p=>p.img),...DATA.foliageSheets];
     Promise.all([fontReady,town&&loadTown('polluted').pending,...assets.map(load), ...townClouds.map(image=>image.decode()),

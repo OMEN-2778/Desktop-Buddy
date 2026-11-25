@@ -166,9 +166,9 @@ def waterfront(c,rectangles):
     c.crate(147,1976,19,14);c.barrel(169,1976)
     for x in range(128,575,52):
         c.bollard(x,1990)
-    # Rope coil near the ship's mooring cleat, with a taut line above water.
+    # Rope coil near the ship's mooring cleat.
     c.oval(599,2020,8,4,P.walnut[0]);c.oval(599,2019,7,3,P.oak[3])
-    c.oval(599,2019,4,1,P.wood[1]);c.line([(605,2019),(620,2024),(640,2027)],P.oak[2])
+    c.oval(599,2019,4,1,P.wood[1])
 
 
 def lake(c,theme,frame):

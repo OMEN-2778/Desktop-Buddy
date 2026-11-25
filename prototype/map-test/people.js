@@ -60,18 +60,20 @@ function installSeasonPeople(active,ctl){
 function autumnPedestrians(data) {
  const streets=data.residentRoutes||data.routes.filter(([name])=>['山顶街','矿业街','中城街','工人街','河岸街'].includes(name));
  const models=new WeakMap();
- return function residents(state,height) {
+ return function residents(state,height,reserved=[]) {
   const sprites=[];
-  const people=socialState.world;
+  const locals=data.town?.residents;
+  const people=locals||socialState.world;
   if(!people.length)return sprites;
   const moved=window.liweiStory?.progress.done.includes('S12B');
   const day=Math.floor(sim.t/1440);
   const chance=[.64,.5,.35,.18,.06][state.stage];
   function resident(i,x,y,distance,direction,moving=true,sitting=false,vendor=null){
    if(x<state.camX-12||x>state.camX+354||y<state.camY||y-28>state.camY+height)return;
-   const person=people[i%people.length],masked=(i*17+day*7)%30 < 30*chance;
-   let variants=models.get(person);
-   if(!variants){variants=new Map();models.set(person,variants);}
+   const identity=people[i%people.length];
+   const person=locals?{look:identity}:identity,masked=(i*17+day*7)%30 < 30*chance;
+   let variants=models.get(identity);
+   if(!variants){variants=new Map();models.set(identity,variants);}
    if(!variants.has(masked)){
     const acc=person.look.acc.filter(a=>a!=='mask');
     if(masked)acc.push('mask');
@@ -79,23 +81,34 @@ function autumnPedestrians(data) {
     variants.set(masked,{look,ramps:doll.rampsOf(look),kid:person.child,cache:new Map()});
    }
    const model=variants.get(masked);
-   Object.assign(model,{dist:distance,dir:direction,v:moving?1:0,ph:i*291});
+   const npc=locals&&!vendor?{id:'liwei-local:'+i,name:identity.name,x,y,local:i}:null;
+   const waiting=npc&&state.goal?.id==='npc:'+npc.id;
+   Object.assign(model,{dist:distance,dir:direction,v:moving&&!waiting?1:0,ph:i*291});
    const [frame,pose]=npcFrame(model);
-   sprites.push({depth:y,walker:true,vendor,img:npcCanvas(model,frame,sitting?'sit':pose,false),x:x-10,y:y-29});
+   sprites.push({depth:y,walker:true,vendor,npc,img:npcCanvas(model,frame,sitting?'sit':pose,false),x:x-10,y:y-29});
   }
   streets.forEach(([,points],street)=>{
    const [left,y]=points[0],right=points.at(-1)[0];
-   const lane=(right-left)/6;
-   for(let slot=0;slot<6;slot++){
+   const population=locals?8:6,lane=(right-left)/population;
+   for(let slot=0;slot<population;slot++){
     if(moved&&slot!==1&&slot!==4)continue;
-    const i=street*6+slot,distance=state.streetTime*(5+i%4)+i*31;
-    const range=lane-22,phase=distance%(2*range);
-    const x=Math.round(left+slot*lane+11+Math.min(phase,2*range-phase));
+    const i=street*population+slot,distance=state.streetTime*(5+i%4)+i*31;
+    let from=left+slot*lane+11,to=from+lane-22;
+    // Keep enough room to see and click fixed story actors on the same street.
+    for(const actor of reserved){
+     if(Math.abs(actor.y-y)>=24||actor.x+18<=from||actor.x-18>=to)continue;
+     if(actor.x-18-from>=to-actor.x-18)to=actor.x-18;
+     else from=actor.x+18;
+    }
+    const range=to-from;
+    if(range<3)continue;
+    const phase=distance%(2*range);
+    const x=Math.round(from+Math.min(phase,2*range-phase));
     resident(i,x,y,distance,phase<range?1:-1);
    }
   });
   for(const [i,[x,y,vendor]] of (data.town?.vendors||[]).entries()){
-   resident(32+i,x,y,0,0,false,false,vendor);
+   resident((locals?40:32)+i,x,y,0,0,false,false,vendor);
   }
   const path=data.town?.parkWalk;
   if(path){
@@ -110,7 +123,7 @@ function autumnPedestrians(data) {
     while(t>=durations[j])t-=durations[j++];
     const [x,y]=route[j], [toX,toY]=route[j+1];
     const walking=t<durations[j]-waits[j], fraction=Math.min(1,t/(durations[j]-waits[j]));
-    resident(38+i,Math.round(x+(toX-x)*fraction),Math.round(y+(toY-y)*fraction),
+    resident((locals?44:38)+i,Math.round(x+(toX-x)*fraction),Math.round(y+(toY-y)*fraction),
              state.streetTime*speed,Math.sign(toX-x),walking,!walking&&(j===2||j===3||j===4));
    }
   }

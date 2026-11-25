@@ -56,12 +56,33 @@ def story_cast():
   '楼上住户': replace(doll.GIRL,eye_shape='droopy',hair_style='updo',accessories=('half_glasses',),hair=tuple(P.metal[:5]),top_style='cardigan',top=tuple(P.sage)),
  }
 
+def doll_look(name,d):
+ return dict(name=name, gender=d.gender, style=d.hair_style, eyes=d.eye_shape,
+             topStyle=d.top_style, bottomStyle=d.bottom_style, socks=d.socks, acc=list(d.accessories),
+             **{key: getattr(d,key)[2] for key in ('hair','skin','eye','top','bottom','sock')})
+
+
 def story_looks():
- return {name: dict(name=name, gender=d.gender, style=d.hair_style, eyes=d.eye_shape,
-                    topStyle=d.top_style, bottomStyle=d.bottom_style, socks=d.socks,
-                    acc=list(d.accessories), **{key: getattr(d,key)[2]
-                    for key in ('hair','skin','eye','top','bottom','sock')})
-         for name,d in story_cast().items()}
+ return {name:doll_look(name,d) for name,d in story_cast().items()}
+
+
+def liwei_residents():
+ names='梁阿姨 周庆生 林小满 何顺 宁阿芹 贺长松 罗晓秋 温小河 秦晚禾 伍守明 卢红梅 许力 邱冬晴 韩成安 石玉霞 方一帆 秦月梅 吴小川 田招娣 江新桥 叶桂香 白永春 梁小荻 莫远青 何秋兰 林小松 姚月琴 魏成 武晓梅 姜平 苏玉珍 罗明泉 孙素芹 宋向河 伍阿枝 唐万年 陈春苗 冯雨生 赵青禾 夏有福 宋阿婆 梅小城 伍秀芬 杨立桥 林小杏 李一鸣 覃小荷 韩启亮'.split()
+ styles=(('twist','bob_mid','updo','bowl','undercut','flat_top'),('buzz','slick','flat_top','bowl','undercut','twist'))
+ eyes=('round','bean','smile','level','droopy','steady')
+ shirts=(P.teal,P.mustard,P.clay,P.sea_grey,P.sage,P.oat,P.walnut)
+ hair=(P.hair_black,P.hair_brown,P.metal)
+ colors=[]
+ for i,name in enumerate(names):
+  gender=i%2
+  base=doll.BOY if gender else doll.GIRL
+  d=replace(base,hair_style=styles[gender][(i//2+i//12)%6],eye_shape=eyes[(i*5+i//6)%6],
+            top=tuple(shirts[(i*5)%len(shirts)]),hair=tuple(hair[(i//5)%3]),
+            top_style=('shirt','cardigan','raglan','vest')[i//3%4],
+            accessories=('flat_glasses',) if i%11==3 else ('headband',) if i%9==2 else ())
+  colors.append(doll_look(name,d))
+ return colors
+
 
 def landmark_sprites():
     from PIL import ImageDraw
@@ -116,10 +137,11 @@ def town_runtime_data():
  from beach import cloud
  layout=json.loads((ROOT/'art/out/concept/liwei-plan/layout.json').read_text())
  width,height=layout['size']
+ gate_x,gate_y=layout['airportGate']
  # Stages and positions share masks, hit regions and walk rectangles.
  zones={p['id']:(p['name'],p['need']) for p in A.runtime_landmarks()}
  explicit={
-  'airstrip': [444,671,55,58],
+  'airstrip': [gate_x-22,gate_y-23,45,26],
   'lookout': [397,224,38,42],
   'pavilion': [526,218,35,43],
   'nursery': [391,1153,81,58],
@@ -197,8 +219,9 @@ def town_runtime_data():
  office,hotel=interiors()
  data=runtime_data()
  data.update(inside=image_uri(office),hotelInside=image_uri(hotel),sleepCovers=list(map(image_uri,sleep_overlays())),
-             width=width,height=height,layoutVersion=6,routes=[],landmarks=landmarks,residentRoutes=streets,
-             town=dict(variants=variants,horizon=horizon,ridgeY=layout['ridgeY'],summitSlice=layout['summitSlice'],
+             width=width,height=height,layoutVersion=7,routes=[],landmarks=landmarks,residentRoutes=streets,
+             town=dict(variants=variants,residents=liwei_residents(),horizon=horizon,ridgeY=layout['ridgeY'],summitSlice=layout['summitSlice'],
+                       runway=dict(bounds=layout['runwayFence'],plane=uri('airport_plane.png')),
                        clouds=[image_uri(cloud(i).to_image()) for i in range(3)],parkWalk=[(398,1206),(606,1206),(606,1290),(398,1290)],
                        vendors=[(422,1428,'market'),(477,1428,'market'),(542,1428,'market'),(550,1391,'chestnut')],
                        streets=layout['streets'],obstacles=layout['obstacles'],layers=layout['facades'],

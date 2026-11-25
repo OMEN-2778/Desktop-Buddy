@@ -16,11 +16,13 @@ OUT = ASSETS / 'liwei-plan'
 W, H = 994, 2176
 SUMMIT_SLICE = 266
 RIDGE_Y = (137, 151)
+RUNWAY_FENCE = (154, 630, 786, 752)
+AIRPORT_GATE = (470, 752)
 # All rectangles use layout coordinates from the owner's plan. The reviewer uses this
 # same union for painted roads, mouse destinations and resident paths.
 STREETS = [
     (109,110,311,149),(190,140,235,203),(47,189,220,208),(49,197,66,951),
-    (58,318,391,392),(351,360,369,575),(58,410,360,427),(268,417,284,499),
+    (58,310,405,392),(351,360,369,575),(58,410,360,427),(268,417,284,499),
     (57,489,361,503),(180,491,196,920),(57,567,362,583),(57,639,190,652),
     (57,717,365,732),(304,720,323,924),(356,720,370,924),(322,720,357,939),
     (0,902,496,952),(58,944,75,989),(59,977,311,997),(291,984,307,1047),
@@ -45,7 +47,7 @@ BLOCKS = [
 ]
 STREETS += [(68,832,122,840),(150,829,181,839),(88,798,158,806),(120,798,131,902),(73,884,174,904)]
 PLACES = {k:(int(x+w/2),y+3) for k,_,x,y,w,*_ in BLOCKS}
-PLACES.update(lookout=(209,132),pavilion=(265,132),airstrip=(235,349),mine=(339,726),
+PLACES.update(lookout=(209,132),pavilion=(265,132),airstrip=(AIRPORT_GATE[0]//2,387),mine=(339,726),
               nursery=(227,606),koi=(265,644),swing=(216,644),chestnut=(285,723),
               plaza=(232,571),notice=(295,575),market=(235,722),pier=(298,1036),reeds=(249,1020))
 # Keep the existing 20×28 doll and 27px door. All facades face the viewer.
@@ -284,6 +286,37 @@ def lookout_fittings(c):
         c.line([(548,222),(552,228)],P.teal[3],3)
     c.facade(253,telescope)
 
+def airport_fence(c):
+    left,north,right,south=RUNWAY_FENCE
+    gate,_=AIRPORT_GATE
+
+    def section(c,x0,y0,x1,y1):
+        City.rail(c,(x0,y0),(x1,y1))
+        if y0==y1:
+            for x in range(x0+1,x1-4,6):
+                c.line([(x,y0-10),(x+4,y0-6),(x+1,y0-3)],P.steel[2])
+
+    c.facade(north,section,left,north,right,north)
+    for x in (left,right):
+        for y in range(north,south,18):
+            end=min(south,y+18)
+            c.facade(end,section,x,y,x,end)
+    c.facade(south,section,left,south,gate-17,south)
+    c.facade(south,section,gate+17,south,right,south)
+
+    def checkpoint(c):
+        c.box(gate-17,south-17,34,17,P.steel[0])
+        c.box(gate-15,south-16,30,14,P.steel[2])
+        for x in range(gate-13,gate+15,4):
+            c.box(x,south-15,1,10,P.steel[0])
+        c.box(gate-15,south-6,30,2,P.steel[3])
+        for x in (gate-19,gate+16):
+            c.box(x,south-20,4,21,P.steel[0]);c.box(x,south-21,4,3,P.mustard[3])
+        c.box(gate-4,south-10,9,6,P.slate[0]);c.box(gate-3,south-8,7,2,P.mustard[3])
+        c.box(gate-1,south-9,2,4,P.mustard[3])
+    c.facade(south,checkpoint)
+
+
 @lru_cache(maxsize=7)
 def distant_layers(theme):
     stage={'polluted':0,'repair':2,'closed':3}.get(theme,4)
@@ -369,6 +402,7 @@ def draw(theme, frame):
             if vertical:c.box(a+e,n,3,22,P.mustard[3])
             else:c.box(n,b+f,21,3,P.mustard[3])
     strip(c,160,648,614,95)
+    airport_fence(c)
     for x in (58,310,366):
         for y in range(1840,1883,7):c.box(2*x-13,y,27,3,P.linen[3])
     for x,y in [(143,988),(700,1139),(361,1292),(125,1443),(747,1818),(195,1900)]:
@@ -377,6 +411,9 @@ def draw(theme, frame):
     # Preserve clear silhouettes at the edge of each planting area.
     usable=ImageChops.subtract(forest,roads.filter(ImageFilter.MaxFilter(29)))
     draw_trees(c,plant_theme,frame,usable)
+    # Set these trunks behind the cabin roof, out of the downhill path.
+    for x,y,seed in ((92,274,5),(120,290,12),(149,276,21),(176,286,32),(201,269,6)):
+        place_plant(c,tree_sprite(seed,plant_theme,frame,1),x,y)
     # Mountaintop rail, viewing pavilion and paved switchback.
     c.facade(228,City.rail,(224,228),(612,228),True)
     lookout_fittings(c)
@@ -487,13 +524,22 @@ def draw(theme, frame):
         c.facade(y,City.lamp,x,y)
     waterfront(c,[(2*a,2*b,2*e,2*f) for a,b,e,f in STREETS if b>=944])
     ship=Image.open(ASSETS/'autumn_river_boat.png').convert('RGBA')
-    # A broken, low-opacity reflection follows the hull.
-    reflection=ship.transpose(Image.Transpose.FLIP_TOP_BOTTOM).resize((ship.width,26),Image.Resampling.NEAREST)
+    # The dock is 32 pixels wide and the doll is 28 tall. The moored boat is
+    # about nine doll-heights long, with its near side clear of the pier.
+    ratio=1.75
+    ship=ship.resize((round(ship.width*ratio),round(ship.height*ratio)),Image.Resampling.NEAREST)
+    x,y=618,1943
+    cleat=(x+round(12*ratio),y+round(64*ratio))
+    c.line([(605,2019),(619,2030),cleat],P.walnut[1],2)
+    c.line([(605,2018),(619,2029),(cleat[0],cleat[1]-1)],P.oak[2])
+    # Keep the reflection on the surface directly below the enlarged hull.
+    waterline=y+ship.getbbox()[3]-3
+    reflection=ship.transpose(Image.Transpose.FLIP_TOP_BOTTOM).resize((ship.width,30),Image.Resampling.NEAREST)
     tint=Image.new('RGBA',reflection.size,P.teal[1] if not winter else P.sea_grey[1])
     tint.putalpha(reflection.getchannel('A').point(lambda a:a//4))
-    for y in range(tint.height):
-        if y%3!=1:c.im.alpha_composite(tint.crop((0,y,tint.width,y+1)),(618+(y+frame)%3,2074+y))
-    c.placed_sprite(ship,618,1977,2078)
+    for row in range(tint.height):
+        if row%3!=1:c.im.alpha_composite(tint.crop((0,row,tint.width,row+1)),(x+(row+frame)%3,waterline+row))
+    c.placed_sprite(ship,x,y,waterline)
     c.foliage.clear()
     for cx in [35,270,372,514,814,930]:
         for j in range(26):
@@ -575,8 +621,8 @@ def build_review():
         who.render(expr='neutral').to_image().save(OUT/f'walker{i}.png')
     (OUT/'layout.json').write_text(json.dumps(dict(
         size=[W,H],streets=STREETS,places=PLACES,facades=facades,
-        summitSlice=SUMMIT_SLICE,ridgeY=RIDGE_Y,
-        obstacles=[(531,241,550,255),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]
+        summitSlice=SUMMIT_SLICE,ridgeY=RIDGE_Y,runwayFence=RUNWAY_FENCE,airportGate=AIRPORT_GATE,
+        obstacles=[RUNWAY_FENCE,(531,241,550,255),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]
     ),separators=(',',':')))
 
 if __name__=='__main__':

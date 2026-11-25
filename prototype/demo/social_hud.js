@@ -122,7 +122,7 @@ function openContactActions(id){
     }
     if(['text','video'].includes(action)&&contactWithHero(id)){
       b.setAttribute('aria-disabled','true');b.title='就在身边，当面说吧';b.setAttribute('aria-label',`${label}：${b.title}`);
-    }else if(['text','video'].includes(action)&&(asleep()||sim.mode==='down'||wiping||cardHolds()||socialBusy())){
+    }else if(['text','video'].includes(action)&&contactTalkUnavailable(true)){
       b.setAttribute('aria-disabled','true');b.title=asleep()?'等主角醒来再联系':sim.mode==='down'?'先唤醒晕倒的主角':'正在忙，稍后再联系';b.setAttribute('aria-label',`${label}：${b.title}`);
     }
     contactActions.append(b);
@@ -266,11 +266,25 @@ CHATS.text={};CHAT_ACT.phone_text='text';
 for(const who of ['dad','mom','friend'])CHATS.text[who]={name:who==='dad'?'爸爸':who==='mom'?'妈妈':'{朋友}',talks:TEXT_TALKS.map(([title,lines],i)=>{
  const id=`contact_text_${who}_${i}`;ML[id]={name:'互相惦记',emo:'happy',pts:1,min:90};return {title,lines,id};
 })};
-function socialBusy(){return friendVisit?.talk||friendOutingState?.talk||socialState.guest?.talk||socialState.guest?.bedTalk||npcInteraction||life.talkQ||(sim.place==='bar'&&barScene?.chat)||remoteSocial||sim.talk||sim.chosen?.item?.talk||sim.windup&&CHAT_ACT[sim.windup.act];}
+function socialBusy(replaceAutoChat=false){
+  const ongoing=remoteSocial && (!replaceAutoChat || ![undefined,'self','keep'].includes(remoteSocial.item?.how));
+  const queued=!replaceAutoChat&&(sim.chosen?.item?.talk||sim.windup&&CHAT_ACT[sim.windup.act]);
+  return friendVisit?.talk||friendOutingState?.talk||socialState.guest?.talk||socialState.guest?.bedTalk||
+    npcInteraction||life.talkQ||(sim.place==='bar'&&barScene?.chat)||ongoing||sim.talk||queued;
+}
+function contactTalkUnavailable(manual=false){
+  const inTown=manual&&sim.place==='autumn_test';
+  return sim.mode==='down'||asleep()||wiping||storyLocked()||cardHolds()||
+    inTown&&!!contactPrivacyBreak()||socialBusy(inTown);
+}
 let playerCall=false,keepCallId=null;   // who started a phone talk: the player (人脉), her keep-in-touch round (social_life.js)
 function startContactTalk(id,kind='text',incoming=false){
   const c=socialState.contacts.find(c=>c.id===id);if(!c)return false;
-  if(sim.mode==='down'||asleep()||wiping||storyLocked()||cardHolds()||socialBusy())return false;
+  if(contactTalkUnavailable(playerCall&&!incoming))return false;
+  if(playerCall&&!incoming&&sim.place==='autumn_test'&&remoteSocial){
+    log('先收起刚才的聊天。',null,remoteSocial.said);
+    hidePeerSay(true);
+  }
   const who=c.family||'friend',item=chatItem(kind,who,kind==='video'?'phone':'call',id,incoming);
   item.how=incoming?'incoming':playerCall?'player':keepCallId===id?'keep':'self';
   if(incoming)item.talk.start=`接听了${contactName(c)}的${kind==='video'?'视频':'电话'}。`;

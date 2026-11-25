@@ -698,6 +698,8 @@ function step(dtGame, dtReal) {
   // needs
   const n = sim.needs;
   let eff = sim.mode === "act" ? (EFFECT[sim.act] || {}) : {};
+  if (sim.place === "autumn_test" && sim.mode === "act" && sim.act === "toilet" && window.autumnHome)
+    eff = autumnHome.toiletEffects(dtGame);
   if (sim.mode === "act" && sim.act === "eat") {
     eff = homeMealEffect(dtGame);
   }

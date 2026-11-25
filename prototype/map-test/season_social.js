@@ -109,6 +109,7 @@
   return startContactTalk(c.id,kind);}
  setInterval(()=>{try{
   if(!inSeason()||!speed||sim.t<nextTry)return;
+  if(sim.place==='autumn_test'&&(!ctl().canPlan()||ctl().state.service||window.autumnHome?.busy()))return;
   // owner 2026-11-10: she should reach for the phone by herself here, not only when social is red
   if(sim.needs.social<45){nextTry=sim.t+20;if(phoneSomeone())nextTry=sim.t+90;}
   else if(sim.needs.social<75&&sim.t-lastChat>200&&Math.random()<.5){nextTry=sim.t+30;if(phoneSomeone()){lastChat=sim.t;nextTry=sim.t+90;}}

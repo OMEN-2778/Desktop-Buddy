@@ -26,7 +26,7 @@ const seasonHouse=(function(){
   if(act==='cook'&&sim.place==='summer_test'&&sim.chosen?.act!=='cook'&&!cookSaved())sim.chosen={act:'cook',item:dishItem(BAY,pick(BAY.dishes))};   // the lodge's kitchen cooks Hawaiian
   if(sim.chosen&&sim.chosen.act!==act)sim.chosen=null;   // lifeArrive takes the dish picked from the menu
   if(act==='sleep'){const h=hour();sim.nap=!(h>=21||h<6);}
-  sim.actEnd=sim.t+(act==='sleep'?900:a.dur*(0.8+Math.random()*0.4));
+  sim.actEnd=sim.t+(o.duration??(act==='sleep'?900:a.dur*(0.8+Math.random()*0.4)));
   sim.recent=[act,...sim.recent].slice(0,3);
   const line=o.log!==undefined?o.log:a.log;if(line)log(line);
   lifeArrive(act);if(act==='dress'&&sim.player)openWardrobe();}

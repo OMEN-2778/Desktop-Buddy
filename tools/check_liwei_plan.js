@@ -105,10 +105,10 @@ const assert=require('node:assert/strict');
    }
    const [,roasterY]=at('chestnut'),[,nurseryY]=at('nursery');
    return {covered, destinationsOffRunway:roasterY>800 && nurseryY>800,
-           clearRunway:Boolean(walk[index(390,746)] && walk[index(475,770)]),
+           runwayFenced:!walk[index(390,697)] && !walk[index(475,742)] && Boolean(walk[index(475,770)]),
            birdsMove:birdsAt(0)[0].x!==birdsAt(1100)[0].x && birdsAt(0)[0].wing!==birdsAt(140)[0].wing};
  });
- assert.deepEqual(clinicAndFlight,{covered:0,destinationsOffRunway:true,clearRunway:true,birdsMove:true});
+ assert.deepEqual(clinicAndFlight,{covered:0,destinationsOffRunway:true,runwayFenced:true,birdsMove:true});
  const dirtyMap=await p.locator('#landscape').getAttribute('src');
  for(const season of ['spring','summer','town','winter']){
    await selectSeason.selectOption(season);
