@@ -190,7 +190,7 @@ const { chromium } = require("playwright"),
           for(let i=0;i<100&&!s.active;i++)await wait(30);
           if(!s.active||s.progress.chapter!=="S02"||c.state.inside||c.state.goal?.automatic)
             throw Error("first landing lost to a need");
-          if(c.DATA.layoutVersion!==5 || c.DATA.width!==994 || c.DATA.height!==2176 || c.townVariant()!=='polluted')
+          if(c.DATA.layoutVersion!==6 || c.DATA.width!==994 || c.DATA.height!==2176 || c.townVariant()!=='polluted')
             throw Error("new town not active at landing");
           const landingClock=sim.t;
           c.care("hunger");await wait(120);
@@ -394,7 +394,7 @@ const { chromium } = require("playwright"),
                 Object.assign(row,{layoutVersion:4,x:oldHut.x,y:oldHut.y});
               restore(save);
               const hut=c.DATA.landmarks.find(p=>p.id==='hut');
-              if(c.state.layoutVersion!==5 || c.state.x!==hut.x || c.state.y!==hut.y)
+              if(c.state.layoutVersion!==6 || c.state.x!==hut.x || c.state.y!==hut.y)
                 throw Error("legacy hut coordinates not migrated");
               questBoard.fill();
               const group=questBoard.panel.querySelector('[data-group="liwei"]');

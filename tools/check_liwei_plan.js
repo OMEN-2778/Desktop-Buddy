@@ -63,13 +63,13 @@ const assert=require('node:assert/strict');
      pixel.drawImage(landscape,x,1480,1,1,0,0,1,1);
      const [roofRed,,roofBlue]=pixel.getImageData(0,0,1,1).data;
      return streetRed>=streetBlue && roofBlue>roofRed;
-   })&&at('hut')[1]<275;
+   })&&at('hut')[1]>=378 && at('hut')[1]<=416;
  });
  assert(marketOpen,'market path and stalls must be clear of the three shed roofs');
  const horizon=()=>p.evaluate(()=>{
    const probe=document.createElement('canvas').getContext('2d');
    probe.drawImage(landscape,422,9,1,1,0,0,1,1);
-   probe.drawImage(landscape,131,66,1,1,1,0,1,1);
+   probe.drawImage(landscape,131,195,1,1,1,0,1,1);
    return [...probe.getImageData(0,0,2,1).data];
  });
  const autumnSky=await horizon();

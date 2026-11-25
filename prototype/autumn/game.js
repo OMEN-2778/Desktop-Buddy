@@ -719,7 +719,7 @@ function makeSeason_autumn(opts, DATA) {
     let drawnTown="polluted";
     function loadTown(key) {
         if (townArt.has(key)) return townArt.get(key);
-        const textures=town.variants[key].map(src=>{
+        const textures=[...town.variants[key],...town.horizon[key]].map(src=>{
             const image=new Image();
             image.src=src;
             return image;
@@ -742,9 +742,36 @@ function makeSeason_autumn(opts, DATA) {
             townMasks.clear();
             drawnTown=key;
         }
-        const [base,wind,atlas]=townArt.get(drawnTown).textures;
+        const [base,wind,atlas,sky,far,mid,summit,windSummit]=townArt.get(drawnTown).textures;
         const sway=!reduceMotionUI && Math.floor(state.time/.72)%2;
-        return {base,wind:sway?wind:null,atlas,sway,key:drawnTown};
+        return {base,wind:sway?wind:null,atlas,sky,far,mid,summit:sway?windSummit:summit,sway,key:drawnTown};
+    }
+    const townClouds = (town?.clouds || []).map(src => {
+        const image = new Image();
+        image.src = src;
+        return image;
+    });
+    function drawTownHorizon(frame) {
+        // The ridge and clouds have independent camera ratios. The little
+        // lookout normally sits around this camera height.
+        const anchor = 120, dy = state.camY - anchor;
+        ctx.drawImage(frame.sky,0,0);
+        ctx.globalAlpha = state.stage < 3 ? .62 : .9;
+        for (let i = 0; i < 10; i++) {
+            const cloud = townClouds[i % townClouds.length];
+            if (!cloud?.naturalWidth) continue;
+            const drift = reduceMotionUI ? 0 : state.time * (1.6 + i % 3 * .6);
+            const x = (50 + i * 113 + drift) % (DATA.width + 90) - 45 - state.camX * .10;
+            const y = 11 + i * 13 % 19 - dy * .16;
+            ctx.drawImage(cloud,Math.round(x),Math.round(y));
+        }
+        ctx.globalAlpha = 1;
+        ctx.drawImage(frame.far,Math.round(-state.camX*.24),Math.round(town.ridgeY[0]-anchor-dy*.30));
+        ctx.drawImage(frame.mid,Math.round(-state.camX*.52),Math.round(town.ridgeY[1]-anchor-dy*.58));
+    }
+    function drawTownGround(image) {
+        const top = town.summitSlice, height = DATA.height - top;
+        ctx.drawImage(image,0,top,DATA.width,height,0,top,DATA.width,height);
     }
     function coverTownActor(frame,x,y) {
         if (!frame.atlas) return;
@@ -942,9 +969,15 @@ function makeSeason_autumn(opts, DATA) {
             return;
         }
         if (back && !state.inside) for (const [k, fx, fy] of PARALLAX) ctx.drawImage(images.get(back[k]), -state.camX * fx, -state.camY * fy);
+        const visibleHorizon = freshTown && !state.inside && state.camY < town.summitSlice;
+        if (visibleHorizon) drawTownHorizon(freshTown);
         ctx.save();
         ctx.translate(-state.camX, -state.camY);
-        ctx.drawImage(state.inside ? images.get(state.indoorSite === "hotel" ? DATA.hotelInside : DATA.inside) : bg, 0, 0);
+        if (state.inside) ctx.drawImage(images.get(state.indoorSite === "hotel" ? DATA.hotelInside : DATA.inside),0,0);
+        else if (visibleHorizon) {
+            ctx.drawImage(freshTown.summit,0,0);
+            drawTownGround(bg);
+        } else ctx.drawImage(bg,0,0);
         const shade=opts.light();
         if (state.inside) {
             const panes=DATA.officeWindows?.slice(2*state.stage,2*state.stage+2);
@@ -959,7 +992,7 @@ function makeSeason_autumn(opts, DATA) {
             opts.home?.under(ctx);
         }
         if (!state.inside) {
-            if(freshTown?.wind)ctx.drawImage(freshTown.wind,0,0);
+            if(freshTown?.wind)drawTownGround(freshTown.wind);
             if(freshTown)townBirds();
             const boat=freshTown?null:drawRiver();
             if(!freshTown)drawSigns();
@@ -1185,6 +1218,13 @@ function makeSeason_autumn(opts, DATA) {
         state.flags ||= {};
         delete state.flags.tree;
         state.found = Array.from(state.found || []);
+        if (town && state.layoutVersion === 5 && DATA.layoutVersion === 6) {
+            if (!state.inside && state.target && ["hut","npc:father"].includes(state.goal?.id)) {
+                state.route = [];
+                state.target = landmark("hut");
+            }
+            state.layoutVersion = DATA.layoutVersion;
+        }
         if (state.layoutVersion !== DATA.layoutVersion) {
             const target = state.goal?.id && landmark(state.goal.id);
             const migrateTravel=town && !state.inside && state.target && target;
@@ -1279,7 +1319,7 @@ function makeSeason_autumn(opts, DATA) {
     const assets = town ? [DATA.inside,DATA.hotelInside,...DATA.officeWindows,...DATA.npcs.flat()]
         : [...DATA.scenes,...Object.values(DATA.backdrop||{}).flatMap(b=>Object.values(b)),DATA.front,DATA.inside,
            ...(DATA.officeWindows||[]),DATA.boat,...DATA.npcs.flat(),...DATA.foreground.map(p=>p.img),...DATA.foliageSheets];
-    Promise.all([fontReady,town&&loadTown('polluted').pending,...assets.map(load),
+    Promise.all([fontReady,town&&loadTown('polluted').pending,...assets.map(load), ...townClouds.map(image=>image.decode()),
                  ...landmarkTargets.map(({img})=>img.decode())]).then(() => {
         state.loaded = true;
         if (opts.active()) draw();

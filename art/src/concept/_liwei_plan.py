@@ -14,6 +14,8 @@ import doll
 ASSETS = Path(__file__).resolve().parents[2] / 'out/concept'
 OUT = ASSETS / 'liwei-plan'
 W, H = 994, 2176
+SUMMIT_SLICE = 266
+RIDGE_Y = (137, 151)
 # All rectangles use layout coordinates from the owner's plan. The reviewer uses this
 # same union for painted roads, mouse destinations and resident paths.
 STREETS = [
@@ -28,7 +30,7 @@ STREETS = [
 ]
 # Forecourts and accesses at exact facade thresholds.
 BLOCKS = [
- ('hut','山上小屋',112,124,44,1,'old',''),
+ ('hut','',46,188,44,1,'old',''),
  ('mine_office','赤岩矿业',74,488,72,2,'brick','gear'),('townhall','市政厅',153,488,51,2,'old','clock'),
  ('detective_home','侦探事务所',211,488,51,2,'brick','lens'),('clinic','苏医生诊所',290,488,55,2,'civic','cross'),
  ('homes1','',73,566,47,2,'old',''),('homes2','',128,566,47,2,'brick',''),
@@ -137,7 +139,7 @@ def house(c, index, entry):
     # Deeper buildings and shallower houses follow the same projection. On the
     # upper three blocks the roof covers only the near edge of the street.
     if key=='hotel':c.roof_colors=P.teal
-    c.roof_depth={967:32,976:40,1132:44 if floors==2 else 68,1274:28,1770:32}.get(base,36)
+    c.roof_depth={967:32,976:40,1132:44 if floors==2 else 68,1274:28,1770:32,376:28}.get(base,36)
     c.building(x,base,w,floors,kind,None,19+index)
     if name:painted_sign(c,key,x,base-50,w,name)
     dx=x+w//2
@@ -282,13 +284,25 @@ def lookout_fittings(c):
         c.line([(548,222),(552,228)],P.teal[3],3)
     c.facade(253,telescope)
 
-@lru_cache(maxsize=5)
-def distant_view(theme):
+@lru_cache(maxsize=7)
+def distant_layers(theme):
     stage={'polluted':0,'repair':2,'closed':3}.get(theme,4)
-    sky,far,hills=backdrop(stage,season=theme,birds=False)
-    sky.alpha_composite(far)
-    sky.alpha_composite(hills)
-    return sky.resize((W,275),Image.Resampling.NEAREST)
+    sky,far,hills=backdrop(stage,season=theme,birds=False,clouds=False)
+    sky=sky.crop((0,0,sky.width,55)).resize((W,SUMMIT_SLICE),Image.Resampling.NEAREST)
+    ridges=[im.resize((W,198),Image.Resampling.NEAREST) for im in (far,hills)]
+    if stage<4:
+        sky,*ridges=[warm_haze(im) for im in (sky,*ridges)]
+    return sky,*ridges
+
+
+def summit_view(theme, terrain):
+    sky,far,mid=distant_layers(theme)
+    result=sky.copy()
+    for layer,y in zip((far,mid),RIDGE_Y):
+        result.alpha_composite(layer,(0,y))
+    result.alpha_composite(terrain)
+    return result
+
 
 def draw(theme, frame):
     r=random.Random(724)
@@ -307,11 +321,15 @@ def draw(theme, frame):
     c.scenery=[]
     c.snowy=winter
     c.im=Image.new('RGBA',(W,H),soil[0]);c.d=ImageDraw.Draw(c.im)
-    c.im.paste(distant_view(theme),(0,0))
+    # Open sky above the lookout rail. Woodland extends onto both shoulders of
+    # the ridge, with small steps along the ledge rather than a straight crop.
+    c.box(0,0,W,SUMMIT_SLICE,(0,0,0,0))
+    c.poly([(0,217),(66,218),(112,222),(184,226),(215,228),(630,228),
+            (693,224),(760,220),(845,217),(W,219),(W,SUMMIT_SLICE),(0,SUMMIT_SLICE)],soil[0])
     roads=Image.new('L',(W,H));md=ImageDraw.Draw(roads)
     for a,b,e,f in STREETS:md.rectangle((2*a,2*b,2*e,2*f),fill=255)
     forest=Image.new('L',(W,H),255);fd=ImageDraw.Draw(forest)
-    for rect in [(0,0,496,108),(0,901,496,1090),(68,425,350,581),(69,576,319,674),(70,659,178,718),(69,732,176,902),(198,733,301,902),(376,833,493,902),(197,679,352,726),(57,308,392,407),(143,215,305,278)]:
+    for rect in [(0,0,496,108),(0,901,496,1090),(68,425,350,581),(69,576,319,674),(70,659,178,718),(69,732,176,902),(198,733,301,902),(376,833,493,902),(197,679,352,726),(57,308,392,407),(143,215,305,278),(36,126,99,189)]:
         fd.rectangle(tuple(n*2 for n in rect),fill=0)
     # Ground, gravel and a sheltered lakeshore.
     for i in range(52000):
@@ -373,7 +391,8 @@ def draw(theme, frame):
     c.box(151,610,2,29,P.steel[1]);c.box(148,639,8,2,P.pave[0])
     for i in range(6):
         c.box(153+i*4,611+i//2,4,8-i,P.clay[3] if i%2==0 else P.linen[3])
-    c.box(220,217,95,36,P.pave[3]);c.box(220,251,95,2,P.pave[1])
+    # A short stone doorstep meets the switchback below the cabin.
+    c.box(129,375,15,5,P.pave[1]);c.box(130,375,13,2,P.pave[3])
     for i,entry in enumerate(BLOCKS):
         depth=entry[3]*2-(9 if entry[0]=='clinic' else 0)
         c.facade(depth,house,i,entry)
@@ -503,10 +522,20 @@ def build_review():
         gust=draw(theme,1)
         name='town' if theme=='autumn' else theme
         maps[name]=(town,gust)
-        town.im.convert('RGB').save(OUT/f'{name}.png',optimize=True)
-        diff=ImageChops.difference(town.im.convert('RGB'),gust.im.convert('RGB'))
-        red,green,blue=diff.split()
-        changed=ImageChops.lighter(ImageChops.lighter(red,green),blue).point(lambda value: 255 if value else 0)
+        for part,img in zip(('sky','far','mid'),distant_layers(theme)):
+            img.save(OUT/f'{name}-{part}.png',optimize=True)
+        band=(0,0,W,SUMMIT_SLICE)
+        summit=town.im.crop(band)
+        summit.save(OUT/f'{name}-summit.png',optimize=True)
+        gust.im.crop(band).save(OUT/f'{name}-summit-wind.png',optimize=True)
+        composite=town.im.copy()
+        composite.paste(summit_view(theme,summit),(0,0))
+        composite.convert('RGB').save(OUT/f'{name}.png',optimize=True)
+        diff=ImageChops.difference(town.im,gust.im)
+        changed=Image.new('L',(W,H))
+        for channel in diff.split():
+            changed=ImageChops.lighter(changed,channel)
+        changed=changed.point(lambda value: 255 if value else 0)
         wind=Image.composite(gust.im,Image.new('RGBA',(W,H)),changed)
         wind.save(OUT/f'{name}-wind.png',optimize=True)
 
@@ -546,7 +575,8 @@ def build_review():
         who.render(expr='neutral').to_image().save(OUT/f'walker{i}.png')
     (OUT/'layout.json').write_text(json.dumps(dict(
         size=[W,H],streets=STREETS,places=PLACES,facades=facades,
-        obstacles=[(531,241,550,255),(225,220,311,246),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]
+        summitSlice=SUMMIT_SLICE,ridgeY=RIDGE_Y,
+        obstacles=[(531,241,550,255),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]
     ),separators=(',',':')))
 
 if __name__=='__main__':

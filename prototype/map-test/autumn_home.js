@@ -68,13 +68,18 @@ const autumnHome=(function(){
   if(p.look){stop();C().goTo(p.x,p.y,{id:'home_use',spot:id});return;}
   use(id,false);}
  // ---------------------------------------------------------------- drawing (house px, inside only)
+ const covers=(C().DATA.sleepCovers||[]).map(src=>{const im=new Image();im.src=src;return im;});
+ function sleepCover(ctx,id,x){
+  const image=covers[id];
+  if(image?.naturalWidth)ctx.drawImage(image,x,22);
+ }
  const SLEEPY={expr:'sleepy',look:0,bob:0,sway:0,wave:null};
  const MEAL_AT=[299,89],COOK_FX=[290,80],PILLOW=[12,32],TUB_RIM=40;
  function under(ctx){if(seasonHouse.running('tv')){const frame=nextTvFrame();if(frame)ctx.drawImage(frame,59,85,24,12);}
   drawResident(ctx);seasonHouse.cookFx(ctx,COOK_FX[0],COOK_FX[1]);seasonHouse.meal(ctx,MEAL_AT[0],MEAL_AT[1]);}
  function over(ctx){const s=S();
   if(svc&&!s.goal){
-   if(svc.id==='bed'){ctx.drawImage(lyingHead(SLEEPY),PILLOW[0],PILLOW[1]);seasonHouse.sleepFx(ctx,PILLOW[0]+14,PILLOW[1]-12);}
+   if(svc.id==='bed'){ctx.drawImage(lyingHead(SLEEPY),PILLOW[0],PILLOW[1]);sleepCover(ctx,hotel()?2:0,10);seasonHouse.sleepFx(ctx,PILLOW[0]+14,PILLOW[1]-12);}
    if(svc.id==='bath'){const src=dollCanvas({expr:'happy',look:0,bob:0,sway:0,wave:null},'stand'),top=TUB_RIM-15;
     ctx.drawImage(src,0,0,src.width,TUB_RIM-top,SPOTS.bath.x-10,top,src.width,TUB_RIM-top);seasonHouse.emote(ctx,SPOTS.bath.x+3,TUB_RIM-29);}
   }
@@ -114,6 +119,7 @@ const autumnHome=(function(){
   if(resting&&goal.id==='sleep'){
    ctx.save();ctx.translate(84,52);ctx.rotate(-Math.PI/2);
    ctx.drawImage(sprite,0,0,DW,15,0,0,DW,15);ctx.restore();
+   sleepCover(ctx,1,82);
    seasonHouse.sleepFx(ctx,101,20);
   }else{
    ctx.drawImage(sprite,x-DW/2,y-DH+(resting?(goal.id==='work'?-7:-2):1));

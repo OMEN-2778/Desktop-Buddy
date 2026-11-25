@@ -915,7 +915,7 @@ def _relief(c,prof,cols,shear=.8,snow=None,snowline=0,seed=1):
     k=(snowline-prof[x])*.75-edge[xs]*2-(3 if v<-.9 else 0)
     if d<k:col=S1 if v>-.9 else S2
    px[x,y]=col
-def backdrop(stage, *, season=None, birds=True):
+def backdrop(stage, *, season=None, birds=True, clouds=True):
  """Three separate distance layers, BW x BACK_H each (owner 2026-11-11: sky / far range / mid hills move at different
  speeds with the camera): returns (sky, far, mid) Images. far and mid are transparent above their ridge and carry
  their own haze, thick at the foot and thinning upward. The near hill belongs to the map itself (hill_ground)."""
@@ -933,9 +933,10 @@ def backdrop(stage, *, season=None, birds=True):
    if y0<=y<y1:
     t=(y-y0)/(y1-y0);a0=ImageColor.getrgb(c0);a1=ImageColor.getrgb(c1);c.box(0,y,BW,1,tuple(round(a0[k]+(a1[k]-a0[k])*t) for k in range(3)));break
  if clean:
-  for cx,cy,k in [(70,16,1),(250,10,.7),(395,22,1.1),(560,13,.85),(700,20,.9),(820,9,.75)]:   # flat-bottomed cumulus
-   for dx,rr in [(-14,6),(-5,9),(6,11),(17,7),(26,5)]:c.oval(cx+dx*k,cy-rr*k*.55,rr*k,rr*k*.75,P.snow[3])
-   c.box(cx-20*k,cy-2,48*k,4,P.snow[3]);c.box(cx-16*k,cy+2,40*k,2,P.snow[2]);c.box(cx-8*k,cy+4,22*k,1,P.snow[1])
+  if clouds:
+   for cx,cy,k in [(70,16,1),(250,10,.7),(395,22,1.1),(560,13,.85),(700,20,.9),(820,9,.75)]:   # flat-bottomed cumulus
+    for dx,rr in [(-14,6),(-5,9),(6,11),(17,7),(26,5)]:c.oval(cx+dx*k,cy-rr*k*.55,rr*k,rr*k*.75,P.snow[3])
+    c.box(cx-20*k,cy-2,48*k,4,P.snow[3]);c.box(cx-16*k,cy+2,40*k,2,P.snow[2]);c.box(cx-8*k,cy+4,22*k,1,P.snow[1])
   if birds:
    for bx,by in [(160,30),(171,26),(182,31),(480,36),(492,33),(640,28),(652,31)]:c.line([(bx-3,by-2),(bx,by),(bx+3,by-2)],P.slate[1])
  else:
