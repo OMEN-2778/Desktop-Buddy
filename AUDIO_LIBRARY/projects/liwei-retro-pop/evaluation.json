@@ -1,0 +1,126 @@
+{
+  "artifact": "栗尾市四组复古流行配乐",
+  "workflowState": "draft",
+  "decisionState": "open",
+  "evidence": [
+    "原始音符事件与编曲参数",
+    "MP3 完整解码与测量",
+    "MIDI 文件头和浏览器试听验证"
+  ],
+  "preservation": [
+    {
+      "theme": "last-shift",
+      "matchedAttacksAndPitchClasses": 92,
+      "pollutedMedianMidi": 72.0,
+      "cleanMedianMidi": 81.0
+    },
+    {
+      "theme": "lake-radio",
+      "matchedAttacksAndPitchClasses": 67,
+      "pollutedMedianMidi": 72.0,
+      "cleanMedianMidi": 81.0
+    },
+    {
+      "theme": "neon-switchback",
+      "matchedAttacksAndPitchClasses": 113,
+      "pollutedMedianMidi": 67.0,
+      "cleanMedianMidi": 76.0
+    },
+    {
+      "theme": "blue-sky",
+      "matchedAttacksAndPitchClasses": 78,
+      "pollutedMedianMidi": 71.0,
+      "cleanMedianMidi": 78.0
+    }
+  ],
+  "technical": [
+    {
+      "id": "liwei-last-shift-polluted",
+      "durationSeconds": 80.039184,
+      "channels": 2,
+      "sampleRate": 44100,
+      "truePeakDbTP": -3.5,
+      "integratedLufs": -15.7,
+      "status": "pass"
+    },
+    {
+      "id": "liwei-last-shift-clean",
+      "durationSeconds": 80.039184,
+      "channels": 2,
+      "sampleRate": 44100,
+      "truePeakDbTP": -1.8,
+      "integratedLufs": -15.2,
+      "status": "pass"
+    },
+    {
+      "id": "liwei-lake-radio-polluted",
+      "durationSeconds": 91.95102,
+      "channels": 2,
+      "sampleRate": 44100,
+      "truePeakDbTP": -2.6,
+      "integratedLufs": -15.7,
+      "status": "pass"
+    },
+    {
+      "id": "liwei-lake-radio-clean",
+      "durationSeconds": 91.95102,
+      "channels": 2,
+      "sampleRate": 44100,
+      "truePeakDbTP": -2.6,
+      "integratedLufs": -15.4,
+      "status": "pass"
+    },
+    {
+      "id": "liwei-neon-switchback-polluted",
+      "durationSeconds": 73.247347,
+      "channels": 2,
+      "sampleRate": 44100,
+      "truePeakDbTP": -2.6,
+      "integratedLufs": -16.1,
+      "status": "pass"
+    },
+    {
+      "id": "liwei-neon-switchback-clean",
+      "durationSeconds": 73.247347,
+      "channels": 2,
+      "sampleRate": 44100,
+      "truePeakDbTP": -1.2,
+      "integratedLufs": -15.7,
+      "status": "pass"
+    },
+    {
+      "id": "liwei-blue-sky-polluted",
+      "durationSeconds": 84.741224,
+      "channels": 2,
+      "sampleRate": 44100,
+      "truePeakDbTP": -3.6,
+      "integratedLufs": -15.8,
+      "status": "pass"
+    },
+    {
+      "id": "liwei-blue-sky-clean",
+      "durationSeconds": 84.741224,
+      "channels": 2,
+      "sampleRate": 44100,
+      "truePeakDbTP": -3.2,
+      "integratedLufs": -15.3,
+      "status": "pass"
+    }
+  ],
+  "findings": [
+    {
+      "stage": "composition",
+      "severity": "info",
+      "finding": "四首主题独立。每组两版旋律攻击点和音级一致，洁净版的主旋律平均音区更高、持续时间更长。"
+    },
+    {
+      "stage": "arrangement",
+      "severity": "info",
+      "finding": "两版速度和长度配对，可按同一时间位置比较。污染版低声部更集中，洁净版和弦声部与高频回声更多。"
+    }
+  ],
+  "recommendation": "通过作为候选试听，等用户选曲后再决定游戏部署与最终混音。",
+  "notRun": [
+    "游戏实装后的跨地图音量与 MP3 循环点试听。"
+  ]
+}

@@ -174,3 +174,8 @@ compose_rhythm_reference.py 原创旋律与和声；借鉴用户提供谱面的�
 
 ## 你的动机01（2026-11-11）
 核心音符动机由用户提供；回应、发展、和声与编配依据截图解读创作。使用 music-compose/music-evaluate 流程和 Spectro Maestro 合成渲染，非 GeneralUser 音源。Spectro Maestro AGPL工具输出豁免见外部技能LICENSE/输出许可说明。完整工程在 AUDIO_LIBRARY/projects/user-motif-01。
+
+
+## 栗尾市污染与洁净 BGM 试听（2026-11-25）
+
+《最后一班灯》《过湖的电波》《山路的霓虹》《天空慢慢变蓝》为四组原创器乐主题。每组两版共享主题的音级和主要节奏，另行编写和声、配器和城市状态之间的音区变化。合成器、电钢琴和鼓组由本地程序生成，未采样商业录音。MP3 为试听混音，MIDI 可用于换乐器或继续编曲。源工程为 `AUDIO_LIBRARY/tools/compose_liwei_pop.py`。
