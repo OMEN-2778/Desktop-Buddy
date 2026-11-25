@@ -132,7 +132,7 @@ def runtime_data():
 
 def town_runtime_data():
  """Use the reviewed new-town sprites and the identical walking surface."""
- from _liwei_plan import BLOCKS
+ from _liwei_plan import BLOCKS, PARK_LAMPS, STREET_LAMPS
  from _liwei_rooms import interiors, sleep_overlays
  from beach import cloud
  layout=json.loads((ROOT/'art/out/concept/liwei-plan/layout.json').read_text())
@@ -221,6 +221,7 @@ def town_runtime_data():
  data.update(inside=image_uri(office),hotelInside=image_uri(hotel),sleepCovers=list(map(image_uri,sleep_overlays())),
              width=width,height=height,layoutVersion=7,routes=[],landmarks=landmarks,residentRoutes=streets,
              town=dict(variants=variants,residents=liwei_residents(),horizon=horizon,ridgeY=layout['ridgeY'],summitSlice=layout['summitSlice'],
+                       lamps=PARK_LAMPS+STREET_LAMPS,
                        runway=dict(bounds=layout['runwayFence'],plane=uri('airport_plane.png')),
                        clouds=[image_uri(cloud(i).to_image()) for i in range(3)],parkWalk=[(398,1206),(606,1206),(606,1290),(398,1290)],
                        vendors=[(422,1428,'market'),(477,1428,'market'),(542,1428,'market'),(550,1391,'chestnut')],

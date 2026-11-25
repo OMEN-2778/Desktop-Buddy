@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Render four original Liwei motifs in paired polluted/clean arrangements."""
+import argparse
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -9,6 +10,7 @@ import re
 import subprocess
 import tempfile
 
+import fluidsynth
 import numpy as np
 from scipy.io import wavfile
 from scipy.signal import butter, sosfilt
@@ -200,96 +202,93 @@ def write_score(path, notes, theme):
                    key={0:0,4:4,5:255,7:1}[theme.shift])
 
 
-def secs(length):
-    return np.arange(round(length*SR), dtype=np.float32)/SR
+# GeneralUser GS 2.0.3 presets, listed as (bank, program), zero based.
+# The MIDI exports keep their original GM mappings so they remain portable.
+PRESETS = {
+    'lead': (((8,81),(0,82),(0,81),(1,80)), ((0,81),(0,82),(8,81),(0,85))),
+    'pad': (((0,89),(0,97),(0,95),(0,89)), ((0,90),(0,94),(8,50),(0,94))),
+    'bass': (((8,39),(1,38),(0,38),(0,39)), ((0,38),(0,33),(1,38),(0,38))),
+    'keys': (((0,4),(0,5),(0,4),(0,5)), ((8,4),(8,4),(8,5),(8,4))),
+    'arp': (((1,80),(1,98),(0,80),(1,98)), ((1,98),(0,98),(0,80),(0,98))),
+    'reply': (((0,85),)*4, ((0,85),(0,91),(0,85),(0,91))),
+    'drum': (((128,25),(128,24),(128,25),(128,24)), ((128,26),(128,8),(128,26),(128,25))),
+}
+RELEASE = {'lead': .48, 'pad': .9, 'bass': .2, 'keys': .55,
+           'arp': .33, 'reply': .7, 'drum': .48}
+TIMBRE = {
+    'lead': (5300, 9600), 'pad': (3200, 7200), 'bass': (2100,3300),
+    'keys': (5100, 10500), 'arp': (6200, 12000), 'reply': (4900, 8400),
+}
+DRUM_LEVEL = {36: 1.05, 38: .90, 42: .75, 46: .67, 48: .84}
+BALANCE = {'lead': 1.13, 'pad': .81, 'bass': 1.10, 'keys': .91, 'arp': .65, 'reply': .73}
 
 
-def envelope(t, attack, gate, release):
-    return np.minimum(t/attack,1) * np.maximum(0,1-np.maximum(t-gate,0)/release)**2
+class Instruments:
+    def __init__(self, path, index, clean):
+        self.synth = fluidsynth.Synth(gain=0.7, samplerate=float(SR),
+                                      **{'synth.reverb.active': False, 'synth.chorus.active': False})
+        font = self.synth.sfload(str(path))
+        if font < 0:
+            raise ValueError(f'Unable to load SoundFont: {path}')
+        self.channels = {}
+        for channel, (role, variants) in enumerate(PRESETS.items()):
+            bank, program = variants[int(clean)][index]
+            if self.synth.program_select(channel, font, bank, program) != 0:
+                raise ValueError(f'Missing SoundFont preset {bank}:{program} for {role}')
+            self.channels[role] = channel
+        self.filters = {role: butter(2, cutoff[int(clean)], fs=SR, output='sos')
+                        for role, cutoff in TIMBRE.items()}
+
+    @lru_cache(maxsize=512)
+    def note(self, role, pitch, frames, velocity):
+        channel = self.channels[role]
+        self.synth.all_sounds_off(channel)
+        tail = round(RELEASE[role] * SR)
+        self.synth.noteon(channel, pitch, velocity)
+        attack = self.synth.get_samples(frames)
+        self.synth.noteoff(channel, pitch)
+        release = self.synth.get_samples(tail)
+        sample = np.concatenate((attack, release)).reshape(-1, 2).astype(np.float32)
+        if role in self.filters:
+            sample = sosfilt(self.filters[role], sample, axis=0).astype(np.float32)
+        level = DRUM_LEVEL[pitch] if role == 'drum' else BALANCE[role]
+        peak = np.max(np.abs(sample))
+        if peak < 32:
+            raise ValueError(f'SoundFont returned no usable signal for {role} note {pitch}')
+        sample *= level / peak
+        # Release tails are bounded so the sound bank can be cached per arrangement.
+        sample[-1024:] *= np.linspace(1, 0, 1024, dtype=np.float32)[:, None]
+        return sample
 
 
-@lru_cache(maxsize=1000)
-def voice(role, pitch, frames, clean, index):
-    gate=frames/SR
-    attack, release={'lead':(.024,.19),'bass':(.008,.086),'pad':(.19,.45),'keys':(.008,.26),
-                     'arp':(.005,.10),'reply':(.055,.29)}[role]
-    t=secs(gate+release)
-    hz=440*2**((pitch-69)/12)
-    phase=2*np.pi*hz*t
-    if role=='keys':
-        wave=np.sin(phase+(.87 if index==1 else 1.17)*np.exp(-t*5)*np.sin(2*phase))
-        wave=.78*wave+.22*np.sin(phase*2.002)*np.exp(-t*3.8)
-        wave*=.46+.54*np.exp(-t*1.9)
-    elif role=='bass':
-        wave=.68*np.sin(phase)+.27*np.sin(2*phase)+.11*np.sin(3*phase)*np.exp(-t*6)
-        wave*=.76+.24*np.exp(-t*7)
-    else:
-        spread={'pad':.0038,'lead':.0021,'arp':.0011,'reply':.003}[role]
-        vibrato=(.13 if clean else .06)*np.sin(2*np.pi*t*5.1)*np.minimum(t/.21,1)
-        wave=np.zeros_like(t)
-        cutoff=(5.6 if clean else 2.6)+(1.6 if role=='arp' else 0)
-        if role=='pad':cutoff*=.8
-        for h in range(1,min(13,int(17000/hz))+1):
-            if index==1 and role=='lead' and h%2==0:
-                continue
-            a=np.exp(-(h-1)/cutoff)/h
-            wave+=a*(.53*np.sin(h*(phase+vibrato))+.47*np.sin(h*(phase*(1+spread)-vibrato)+h*.34))
-        if role=='lead':
-            wave=.78*wave+.22*np.sin(phase*.5)
-        if role=='arp':
-            wave*=.38+.62*np.exp(-t*12)
-    return (wave*envelope(t,attack,gate,release)).astype(np.float32)
-
-
-def samples(index, clean):
-    rng=np.random.default_rng(11325+index)
-    def noise(t,lo,hi):
-        return sosfilt(butter(2,[lo,hi],btype='bandpass',fs=SR,output='sos'),rng.normal(0,1,len(t)))
-    t=secs(.29)
-    freq=(49+index*2)+100*np.exp(-t*44)
-    kick=.9*np.sin(2*np.pi*np.cumsum(freq)/SR)*np.exp(-t*15)*np.minimum(t/.0015,1)
-    kick+=.16*noise(t,2600,7800)*np.exp(-t*130)
-    t=secs(.31)
-    snare=.31*np.sin(2*np.pi*(176+index*13)*t)*np.exp(-t*24)
-    bursts=sum(np.where(t>=d,np.exp(-np.maximum(0,t-d)*72),0) for d in (0,.009,.019))
-    snare+=noise(t,1000,9000 if clean else 6300)*(.58*bursts+.43*np.exp(-t*26))
-    snare+=noise(t,490,4300)*np.exp(-t*9)*np.maximum(0,np.minimum(1,(.25-t)/.045))*.18
-    t=secs(.20)
-    freq=119+122*np.exp(-t*31)
-    tom=np.sin(2*np.pi*np.cumsum(freq)/SR)*np.exp(-t*16)*np.minimum(1,t/.002)
-    drums={36:kick,38:snare,48:tom}
-    for number,length,decay in ((42,.071,66),(46,.232,19)):
-        t=secs(length)
-        drums[number]=noise(t,6500 if clean else 4800,15000)*np.exp(-t*decay)
-    return drums
-
-
-def render(notes,theme,index,clean):
+def render(notes,theme,index,clean,soundfont):
     frames=round(BARS*4*theme.beat*SR)
     direct=np.zeros((frames,2),np.float32)
     send=np.zeros_like(direct)
-    drums=samples(index,clean)
-    def add(bank, wave, start, left, right):
-        n=min(len(wave),frames-start)
-        left,right=map(float,(left,right))
-        bank[start:start+n,0]+=wave[:n]*left
-        bank[start:start+n,1]+=wave[:n]*right
-        tail=wave[n:]
-        bank[:len(tail),0]+=tail*left
-        bank[:len(tail),1]+=tail*right
+    instruments = Instruments(soundfont,index,clean)
 
-    for role,pitch,when,duration,gain,pan in notes:
-        start=round(when*theme.beat*SR)
-        if role=='drum':
-            wave=drums[pitch]
-            fx=.12 if pitch in (38,48) else .025
-        else:
-            wave=voice(role,pitch,round(duration*theme.beat*SR),clean,index)
-            fx={'lead':.24,'pad':.32,'keys':.22,'arp':.18,'bass':.02,'reply':.35}[role]
-            fx*=1.24 if clean else .82
-        left,right=gain*math.sqrt((1-pan)/2),gain*math.sqrt((1+pan)/2)
-        add(direct,wave,start,left,right)
-        add(send,wave,start,left*fx,right*fx)
+    def add(bank, wave, start, volume):
+        n = min(len(wave), frames-start)
+        bank[start:start+n] += wave[:n] * volume
+        bank[:len(wave)-n] += wave[n:] * volume
+
+    try:
+        for role,pitch,when,duration,gain,pan in notes:
+            start = round(when * theme.beat * SR)
+            length = round(duration * theme.beat * SR)
+            velocity = min(112, 48 + 8 * round(gain * 25))
+            wave = instruments.note(role,pitch,length,velocity)
+            if role == 'drum':
+                fx = .16 if pitch in (38,48) else .035
+            else:
+                fx = {'lead':.25,'pad':.35,'keys':.22,'arp':.26,'bass':.015,'reply':.36}[role]
+                fx *= 1.18 if clean else .87
+            width = np.array((math.sqrt(1-pan),math.sqrt(1+pan)), dtype=np.float32)
+            add(direct,wave,start,width * gain)
+            add(send,wave,start,width * (gain * fx))
+    finally:
+        instruments.note.cache_clear()
+        instruments.synth.delete()
 
     wet=sosfilt(butter(2,[180,6200 if clean else 3500],fs=SR,btype='bandpass',output='sos'),send,axis=0)
     for delay,gain in ((.5,.42),(.75,.35),(1.5,.20),(2.25,.1)):
@@ -303,6 +302,9 @@ def render(notes,theme,index,clean):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--soundfont', type=Path, required=True, help='GeneralUser GS 2.0.3 SF2 file')
+    args = parser.parse_args()
     metadata=[]
     with tempfile.TemporaryDirectory(prefix='liwei-music-') as scratch:
         wav=Path(scratch)/'version.wav'
@@ -314,7 +316,7 @@ def main():
                 target=PREVIEW/'audio'/slug
                 notes=arrange(theme,index,clean)
                 write_score(target.with_suffix('.mid'),notes,theme)
-                mix=render(notes,theme,index,clean)
+                mix=render(notes,theme,index,clean,args.soundfont)
                 wavfile.write(wav,SR,np.round(mix*32767).astype(np.int16))
                 subprocess.run(['ffmpeg','-v','error','-y','-i',str(wav),'-codec:a','libmp3lame','-b:a','192k',
                                 '-metadata',f'title={theme.title} · {tag}',str(target.with_suffix('.mp3'))],check=True)
@@ -325,7 +327,6 @@ def main():
                     medianLeadMidi=float(np.median(lead)),peak=round(float(np.max(np.abs(mix))),4),
                     rmsDb=round(float(20*np.log10(np.sqrt(np.mean(mix**2)))),2)))
                 print(slug,len(mix)/SR,flush=True)
-                voice.cache_clear()
     (PREVIEW/'liwei-pairs.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2)+'\n')
 
 

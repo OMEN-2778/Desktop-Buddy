@@ -30,6 +30,10 @@ STREETS = [
     (194,602,307,610),(194,603,204,647),(296,603,307,647),(194,641,307,650),
     (146,272,160,326),(150,266,292,278),
 ]
+PARK_LAMPS = ((409,1215),(592,1215),(410,1280),(592,1280))
+STREET_LAMPS = ((138,977),(563,975),(353,1134),(398,1284),(136,1435),
+                (747,1803),(139,1801),(597,1802),(138,837),(701,829))
+
 # Forecourts and accesses at exact facade thresholds.
 BLOCKS = [
  ('hut','',46,188,44,1,'old',''),
@@ -469,7 +473,7 @@ def draw(theme, frame):
     c.facade(1272,City.swing,429,1272)
     for xx in (465,560):
         c.facade(1278,City.bench,xx,1278)
-    for xx,yy in ((409,1215),(592,1215),(410,1280),(592,1280)):
+    for xx,yy in PARK_LAMPS:
         c.facade(yy,City.lamp,xx,yy)
     for xx,yy,w in ((415,1235,42),(478,1230,39),(546,1230,38),(447,1276,17)):
         def border_bed(c,x,y,width):
@@ -520,7 +524,7 @@ def draw(theme, frame):
         mine_portal(c,mx,my)
         c.crate(mx+43,my-11,16,12)
     c.facade(my,adit)
-    for x,y in [(138,977),(563,975),(353,1134),(398,1284),(136,1435),(747,1803),(139,1801),(597,1802),(138,837),(701,829)]:
+    for x,y in STREET_LAMPS:
         c.facade(y,City.lamp,x,y)
     waterfront(c,[(2*a,2*b,2*e,2*f) for a,b,e,f in STREETS if b>=944])
     ship=Image.open(ASSETS/'autumn_river_boat.png').convert('RGBA')

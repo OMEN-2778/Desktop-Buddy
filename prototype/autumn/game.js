@@ -801,6 +801,43 @@ function makeSeason_autumn(opts, DATA) {
         const top = town.summitSlice, height = DATA.height - top;
         ctx.drawImage(image,0,top,DATA.width,height,0,top,DATA.width,height);
     }
+    function lampLight(radiusX, radiusY, stops) {
+        const sprite = document.createElement("canvas");
+        sprite.width = radiusX * 2;
+        sprite.height = radiusY * 2;
+        const light = sprite.getContext("2d");
+        light.setTransform(radiusX, 0, 0, radiusY, radiusX, radiusY);
+        const gradient = light.createRadialGradient(0, 0, 0, 0, 0, 1);
+        for (const [at,color] of stops) gradient.addColorStop(at,color);
+        light.fillStyle = gradient;
+        light.fillRect(-1, -1, 2, 2);
+        return sprite;
+    }
+    let lampHalo, lampPool;
+    function drawTownLamps(shade) {
+        if (shade <= .22 || !town.lamps?.length) return;
+        const progress = Math.min(1, (shade - .22) / .68);
+        lampHalo ??= lampLight(18, 18, [
+            [0,"rgba(255,232,172,.9)"], [.21,"rgba(255,211,128,.62)"],
+            [.49,"rgba(252,175,81,.24)"], [1,"rgba(247,156,71,0)"],
+        ]);
+        lampPool ??= lampLight(35, 13, [
+            [0,"rgba(255,203,121,.36)"], [.46,"rgba(250,188,105,.20)"],
+            [1,"rgba(244,164,81,0)"],
+        ]);
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.globalAlpha = progress * progress * (3 - 2 * progress);
+        for (const [baseX,baseY] of town.lamps) {
+            // Match the lantern glass in City.lamp. Its pool falls in front of the post.
+            const x = Math.round(baseX + 12 - state.camX);
+            const y = Math.round(baseY - state.camY);
+            if (x < -35 || x > canvas.width + 35 || y < -20 || y > canvas.height + 59) continue;
+            ctx.drawImage(lampPool, x - 35, y - 8);
+            ctx.drawImage(lampHalo, x - 18, y - 58);
+        }
+        ctx.restore();
+    }
     function coverTownActor(frame,x,y) {
         if (!frame.atlas) return;
         const offset=frame.sway?frame.atlas.width/2:0;
@@ -1103,6 +1140,7 @@ function makeSeason_autumn(opts, DATA) {
             ctx.fillStyle = `rgba(26,22,37,${night})`;
             ctx.fillRect(0, 0, 342, canvas.height);
         }
+        if (freshTown && !state.inside) drawTownLamps(shade);
         if (state.door) {
             const alpha = Math.sin(Math.min(1, state.door.elapsed / .65) * Math.PI);
             ctx.fillStyle = `rgba(38,42,54,${alpha})`;

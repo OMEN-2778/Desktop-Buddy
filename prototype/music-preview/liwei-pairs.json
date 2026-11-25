@@ -11,8 +11,8 @@
     "style": "冷暖对照的合成器流行",
     "key": "D 小调 / F 大调色彩",
     "medianLeadMidi": 72.0,
-    "peak": 0.6566,
-    "rmsDb": -17.01
+    "peak": 0.7225,
+    "rmsDb": -17.06
   },
   {
     "id": "liwei-last-shift-clean",
@@ -26,8 +26,8 @@
     "style": "冷暖对照的合成器流行",
     "key": "D 小调 / F 大调色彩",
     "medianLeadMidi": 81.0,
-    "peak": 0.7747,
-    "rmsDb": -17.01
+    "peak": 0.7505,
+    "rmsDb": -17.06
   },
   {
     "id": "liwei-lake-radio-polluted",
@@ -41,8 +41,8 @@
     "style": "半拍复古 R&B 与电钢琴",
     "key": "E 小调 / G 大调色彩",
     "medianLeadMidi": 72.0,
-    "peak": 0.7333,
-    "rmsDb": -17.0
+    "peak": 0.6954,
+    "rmsDb": -17.02
   },
   {
     "id": "liwei-lake-radio-clean",
@@ -56,8 +56,8 @@
     "style": "半拍复古 R&B 与电钢琴",
     "key": "E 小调 / G 大调色彩",
     "medianLeadMidi": 81.0,
-    "peak": 0.7644,
-    "rmsDb": -17.0
+    "peak": 0.7141,
+    "rmsDb": -17.02
   },
   {
     "id": "liwei-neon-switchback-polluted",
@@ -71,8 +71,8 @@
     "style": "八分音符推进的复古合成器快板",
     "key": "A 小调 / C 大调色彩",
     "medianLeadMidi": 67.0,
-    "peak": 0.7622,
-    "rmsDb": -17.01
+    "peak": 0.7113,
+    "rmsDb": -17.05
   },
   {
     "id": "liwei-neon-switchback-clean",
@@ -86,8 +86,8 @@
     "style": "八分音符推进的复古合成器快板",
     "key": "A 小调 / C 大调色彩",
     "medianLeadMidi": 76.0,
-    "peak": 0.8229,
-    "rmsDb": -17.02
+    "peak": 0.7747,
+    "rmsDb": -17.06
   },
   {
     "id": "liwei-blue-sky-polluted",
@@ -101,8 +101,8 @@
     "style": "带轻摇摆的复古慢舞",
     "key": "C♯ 小调 / E 大调色彩",
     "medianLeadMidi": 71.0,
-    "peak": 0.6688,
-    "rmsDb": -17.0
+    "peak": 0.6382,
+    "rmsDb": -16.99
   },
   {
     "id": "liwei-blue-sky-clean",
@@ -116,7 +116,7 @@
     "style": "带轻摇摆的复古慢舞",
     "key": "C♯ 小调 / E 大调色彩",
     "medianLeadMidi": 78.0,
-    "peak": 0.6952,
-    "rmsDb": -17.0
+    "peak": 0.699,
+    "rmsDb": -17.05
   }
 ]
