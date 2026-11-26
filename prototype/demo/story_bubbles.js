@@ -21,7 +21,7 @@ function createStorySpeech({view,host=view.parentElement,anchor,speakerFor,onClo
  const popSpan=popSay.querySelector('span'),peerSpan=peerBubble.querySelector('span');
  const more=document.createElement('i');more.className='story-more';more.setAttribute('aria-hidden','true');
  const choices=document.createElement('div');choices.className='story-choices';choices.hidden=true;document.getElementById('moodTalk').append(choices);
- let open=false,advance=null,hero=false,previous=null,keep=0,busyWas=0;
+ let open=false,advance=null,hero=false,previous=null,keep=0,busyWas=0,previousNpc=null;
  function mark(){   // exactly one row carries the story classes (tests and styles find it)
   for(const [box,span,on] of [[peerHud,peerSpan,!hero],[popSay,popSpan,hero]]){
    box.classList.toggle('story-speech',open&&on);(box===peerHud?peerBubble:popSay).classList.toggle('story-bubble',open&&on);span.classList.toggle('story-words',open&&on);
@@ -43,9 +43,12 @@ function createStorySpeech({view,host=view.parentElement,anchor,speakerFor,onClo
  function show0(speaker,words,{special=true,last=false,advance:next,choices:opts=null,asNpc=false}={}){
   if(!open)previous=document.activeElement,busyWas=sayBusy;
   open=true;hero=!asNpc&&speaker===nameOf();advance=opts?null:next;
+  const npc=hero||opts?null:speaker.split('（')[0];
+  const swapPortrait=!!(npc&&previousNpc&&npc!==previousNpc);
+  previousNpc=npc;
   peerHud.classList.toggle('quest',!hero&&special);popSay.classList.toggle('quest',hero&&special);
   if(hero){if(peerSpeech.phase!=='idle')hidePeerSay();showSay(words);}
-  else{if(!popSay.hidden)popBubble(popSay,0);showPeerSay(words,speaker+'：',speakerFor?.(speaker));}   // her own row stays quiet while someone else talks
+  else{if(!popSay.hidden)popBubble(popSay,0);showPeerSay(words,speaker+'：',speakerFor?.(speaker),{swapPortrait});}   // her own row stays quiet while someone else talks
   more.hidden=!!opts;
   choices.replaceChildren(...(opts||[]).map(o=>{const b=document.createElement('button');b.type='button';b.innerHTML='<i class="bg" aria-hidden="true"></i><span></span>';b.lastChild.textContent=o.label;b.onclick=e=>{e.stopPropagation();o.on?.();};return b;}));
   choices.hidden=!opts||hero;choices.classList.toggle('quest',special);
@@ -72,7 +75,7 @@ function createStorySpeech({view,host=view.parentElement,anchor,speakerFor,onClo
  document.addEventListener('keydown',e=>{if(open&&e.key==='Escape'){e.preventDefault();e.stopPropagation();onClose();}},true);
  function hide(){
   clearInterval(waitT);waitT=0;waiting=null;
-  if(!open)return;open=false;advance=null;cancelAnimationFrame(keep);more.remove();choices.replaceChildren();choices.hidden=true;
+  if(!open)return;open=false;advance=null;previousNpc=null;cancelAnimationFrame(keep);more.remove();choices.replaceChildren();choices.hidden=true;
   peerHud.classList.remove('quest');popSay.classList.remove('quest');mark();
   for(const box of [peerBubble,popSay]){box.removeAttribute('tabindex');box.removeAttribute('role');box.removeAttribute('aria-label');}
   hidePeerSay();popBubble(popSay,0);sayBusy=busyWas;

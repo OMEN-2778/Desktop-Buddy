@@ -1,6 +1,7 @@
 // The diary yields its row before another speaker enters; Buddy keeps her own row.
 const peerHud=document.getElementById('peerHud'),peerBubble=document.getElementById('peerBubble'),peerText=peerBubble.querySelector('span'),peerAvatar=peerHud.querySelector('canvas');
-const peerSpeech={phase:'idle',entry:0,exit:0,pending:null,until:0,speakerId:null,lineTimer:0,currentText:null};
+const peerBadge=peerAvatar.parentElement;
+const peerSpeech={phase:'idle',entry:0,exit:0,pending:null,until:0,speakerId:null,lineTimer:0,currentText:null,portraitMotion:null};
 function showFriendshipGain(c,gain){
   if(!(gain>0)||peerSpeech.speakerId!==c.id||peerHud.hidden)return;
   peerSpeech.until=Math.max(peerSpeech.until,performance.now()+1600);
@@ -51,7 +52,30 @@ function revealPeerLine(){
   renderPeerLine(peerSpeech.pending);peerSpeech.phase='visible';peerHud.classList.add('on');peerHud.setAttribute('aria-hidden','false');
   sayShownAt=performance.now();
 }
-function showPeerSay(text,who,speaker=null){
+function cancelPeerPortraitMotion(){
+  peerSpeech.portraitMotion?.cancel();
+  peerSpeech.portraitMotion=null;
+}
+function swapPeerPortrait(line){
+  peerText.classList.add('line-out');
+  const shrink=peerBadge.animate([{scale:'1'},{scale:'.04'}],{
+    duration:130,easing:'cubic-bezier(.55,.08,.8,.35)',fill:'forwards',
+  });
+  peerSpeech.portraitMotion=shrink;
+  shrink.onfinish=()=>{
+    if(peerSpeech.portraitMotion!==shrink||peerSpeech.pending!==line||peerSpeech.phase!=='visible')return;
+    shrink.cancel();
+    renderPeerLine(line);
+    sayShownAt=performance.now();
+    const grow=peerBadge.animate([
+      {scale:'.04',easing:'cubic-bezier(.16,.75,.32,1)'},
+      {scale:'1.08',offset:.68,easing:'ease-out'},{scale:'1'},
+    ],{duration:170,fill:'backwards'});
+    peerSpeech.portraitMotion=grow;
+    grow.onfinish=()=>{if(peerSpeech.portraitMotion===grow)peerSpeech.portraitMotion=null;};
+  };
+}
+function showPeerSay(text,who,speaker=null,{swapPortrait=false}={}){
   if(!text)return;
   text=spokenText(text);
   const line={text,who,speaker:peerSpeaker(who,speaker)};peerSpeech.pending=line;
@@ -59,7 +83,10 @@ function showPeerSay(text,who,speaker=null){
   clearTimeout(peerSpeech.exit);peerSpeech.exit=0;
   if(peerSpeech.phase==='visible'){
     sayShownAt=performance.now();peerSpeech.until=sayShownAt+5200;
-    clearTimeout(peerSpeech.lineTimer);
+    clearTimeout(peerSpeech.lineTimer);peerSpeech.lineTimer=0;cancelPeerPortraitMotion();
+    if(swapPortrait&&!reduceMotionUI&&peerSpeech.speakerId!==line.speaker.id&&typeof peerBadge.animate==='function'){
+      swapPeerPortrait(line);return;
+    }
     if(reduceMotionUI||peerSpeech.currentText===line.text){renderPeerLine(line);sayShownAt=performance.now();return;}
     peerText.classList.add('line-out');
     peerSpeech.lineTimer=setTimeout(()=>{peerSpeech.lineTimer=0;if(peerSpeech.phase!=='visible'||!peerSpeech.pending)return;renderPeerLine(peerSpeech.pending);sayShownAt=performance.now();},130);
@@ -73,6 +100,7 @@ function showPeerSay(text,who,speaker=null){
   peerSpeech.entry=setTimeout(revealPeerLine,reduceMotionUI||wasLeaving?0:240);
 }
 function hidePeerSay(immediate=false){
+  cancelPeerPortraitMotion();
   clearTimeout(peerSpeech.lineTimer);peerSpeech.lineTimer=0;peerSpeech.currentText=null;peerText.classList.remove('line-out');
   clearTimeout(peerSpeech.entry);clearTimeout(peerSpeech.exit);peerSpeech.entry=peerSpeech.exit=0;peerSpeech.pending=null;
   if(peerSpeech.phase==='idle'){peerHud.hidden=true;return;}
