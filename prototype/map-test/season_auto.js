@@ -55,7 +55,8 @@
  function swimSomewhere(c){const x=SEA[0]+Math.random()*(SEA[1]-SEA[0]),g=c.gr(x),down=Math.random()<.5&&g>SURF_Y+40;
   c.goTo(x,'dive',down?SURF_Y+20+Math.random()*Math.min(120,g-SURF_Y-30):SURF_Y);}
  function bay(c){const L=summerLife;if(window.summerLodge?.svc||L.isBusy()||summerFloat.busy()||c.state.inCabana||c.state.lying!==null||storyLocked())return false;
-  const s=c.state,swim=s.suit&&s.suit!=='clothes',wet=c.deep(s.x),free=summerFloat.FLOATS.map((f,i)=>i).filter(i=>!summerFloat.sitter(i));
+  const s=c.state;if(s.inside)return c.leave();
+  const swim=s.suit&&s.suit!=='clothes',wet=c.deep(s.x),free=summerFloat.FLOATS.map((f,i)=>i).filter(i=>!summerFloat.sitter(i));
   if(s.market){const what=pickW([['stroll',60],['back',40]]);
    if(what==='back'){c.beginDoor('bay');return true;}c.goTo(40+Math.random()*(L.MW-80));return true;}
   const what=pickW([['stroll',wet?10:28],['swim',30],['float',swim&&free.length?12:0],['market',wet?0:14],['shore',wet?18:0],['dive',14]]);
@@ -95,7 +96,7 @@
   if(bay){if(summerLife.isBusy()||summerFloat.busy()||s.inCabana||s.lying!==null||storyLocked())return true;
    const swim=s.suit&&s.suit!=='clothes',wet=c.deep(s.x);
    const what=pickW([['home',72],['dive',12],['shore',wet?0:16]]);
-   if(what==='dive'){const go=()=>{const x=SEA[0]+Math.random()*(SEA[1]-SEA[0]),g=c.gr(x);c.goTo(x,'dive',g>SURF_Y+40?SURF_Y+30+Math.random()*Math.min(110,g-SURF_Y-40):SURF_Y);};if(!swim)change(c,go);else go();return true;}
+   if(what==='dive'){if(s.inside)return c.leave();const go=()=>{const x=SEA[0]+Math.random()*(SEA[1]-SEA[0]),g=c.gr(x);c.goTo(x,'dive',g>SURF_Y+40?SURF_Y+30+Math.random()*Math.min(110,g-SURF_Y-40):SURF_Y);};if(!swim)change(c,go);else go();return true;}
    if(what==='shore'){if(s.inside){c.leave();return true;}c.goTo(820+Math.random()*200);return true;}
    summerLodge.goUse(pick(['tv','tv','sofa','uke','table','dine'].filter(k=>k!=='dine'||homeMeal())));return true;}
   if(window.infeiQuests?.busy||storyLocked()||springFarm.state.phase!=='done')return false;

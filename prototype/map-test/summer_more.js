@@ -363,26 +363,26 @@
  function announce(f){log(`今天是草帽湾的${f.n}。${f.line}。`);speak(pick(FEST_SAY[f.n]||['过节啦']));mood(MOOD.fest);}
  const oldFT2=festivalToday;festivalToday=function(){if(sim.place==='summer_test'){const f=fest();if(f)return f.n;const d=Math.floor(sim.t/1440)+1;return d===30?'生日':d===14||d===56?'纪念日':null;}return oldFT2();};
  const festDone=k=>{const b=M();return b.fest[k+'@'+today()];},festMark=k=>{const b=M();b.fest[k+'@'+today()]=1;for(const o of Object.keys(b.fest))if(+o.split('@')[1]<today()-30)delete b.fest[o];};
- const goBay=async x=>{if(C().state.market){C().beginDoor('bay');await new Promise(r=>setTimeout(r,1400));}await walk(x);};
+ const goBay=async x=>await L.reachBay(true)&&await walk(x);
  const A={
-  hat:()=>scene(async()=>{await goBay(C().state.x<700?C().state.x:880);hatFx.push({x:C().state.x,y:C().gr(C().state.x)-24,t0:realClock,me:1});speakBay('飞吧——！');
+  hat:()=>scene(async()=>{if(!await goBay(C().state.x<700?C().state.x:880))return;hatFx.push({x:C().state.x,y:C().gr(C().state.x)-24,t0:realClock,me:1});speakBay('飞吧——！');
    if(!festDone('hat')){festMark('hat');mood(MOOD.fest);log('草帽节：把草帽抛向风里，看它飞过了整片海湾。');}}),
   freehat:()=>{if(festDone('freehat'))return showHint('今天已经领过草帽了');festMark('freehat');X.addItem('strawhat',1);showHint('草帽爷爷送了一顶草帽，放进仓库了');},
-  lantern:()=>{if(hour()<18&&hour()>=5)return showHint('椰灯要等太阳落山以后才放');scene(async()=>{await goBay(1012);myLantern={t0:sim.t};speakBay('希望明天也是好天气……');
+  lantern:()=>{if(hour()<18&&hour()>=5)return showHint('椰灯要等太阳落山以后才放');scene(async()=>{if(!await goBay(1012))return;myLantern={t0:sim.t};speakBay('希望明天也是好天气……');
    if(!festDone('lantern')){festMark('lantern');mood(MOOD.lantern);log('椰灯夜：把一盏椰壳小灯放进海里，看它漂远了。');}});},
-  hula:()=>scene(async()=>{await goBay(860);await say(L.P.lei.name,'手像海浪一样，左边——右边——');await say(nameOf(),'左边……右边……哈哈，我同手同脚了！');need('fun',20);need('social',15);
+  hula:()=>scene(async()=>{if(!await goBay(860))return;await say(L.P.lei.name,'手像海浪一样，左边——右边——');await say(nameOf(),'左边……右边……哈哈，我同手同脚了！');need('fun',20);need('social',15);
    if(!festDone('hula')){festMark('hula');mood(MOOD.fest);log('花环节：戴着花环跟蕾拉妮学了草裙舞。');}}),
   lei:()=>{if(festDone('lei'))return showHint('花环已经戴上啦');festMark('lei');need('fun',8);showHint('戴上了一串鸡蛋花花环');log('花环节：戴上了一串鸡蛋花花环，香了一整天。');},
-  whale:()=>scene(async()=>{await goBay(1012);await say(nameOf(),'嘘……');await say('海里传来的声音','呜——————嗯——————');await say(nameOf(),'它们在聊天吗？');need('fun',15);
+  whale:()=>scene(async()=>{if(!await goBay(1012))return;await say(nameOf(),'嘘……');await say('海里传来的声音','呜——————嗯——————');await say(nameOf(),'它们在聊天吗？');need('fun',15);
    if(!festDone('whale')){festMark('whale');mood(MOOD.whale);log('鲸歌节：坐在岸边听了很久的鲸歌。');}}),
   // owner 2026-11-06 (玩法要充足): 椰灯夜 has something for the daytime, 鲸歌节 a second thing to do
-  make:()=>{if(festDone('make'))return showHint('今天的椰灯已经做好了');scene(async()=>{await goBay(Math.max(640,Math.min(760,C().state.x)));
+  make:()=>{if(festDone('make'))return showHint('今天的椰灯已经做好了');scene(async()=>{if(!await goBay(Math.max(640,Math.min(760,C().state.x))))return;
    await say(L.P.alo.name,'椰子要挑圆的，挖空了，壳上钻几个小孔。');await say(nameOf(),'像这样？……啊，钻歪了。');await say(L.P.alo.name,'歪的也好看，晚上光漏出来是星星的形状。');
    festMark('make');need('fun',12);need('social',10);mood(MOOD.fest);log('椰灯夜：白天跟阿洛学做椰壳灯，钻歪了一个孔，晚上要亲手把它放进海里。');});},
   whaledive:()=>{if(!(C().state.suit&&C().state.suit!=='clothes'))return showHint('先去更衣室换上泳装，才能下海找鲸鱼');
-   scene(async()=>{const x=Math.max(1250,Math.min(3800,whalePos(realClock)[0]+40));speakBay('鲸鱼在哪儿……');await new Promise(r=>C().goTo(x,'dive',SURF,r));
+   scene(async()=>{if(!await L.reachBay(true))return;const x=Math.max(1250,Math.min(3800,whalePos(realClock)[0]+40));speakBay('鲸鱼在哪儿……');await new Promise(r=>C().goTo(x,'dive',SURF,r));
     await say(nameOf(),'好大……它在看我吗？');need('fun',15);if(!festDone('whaledive')){festMark('whaledive');mood(MOOD.whale);log('鲸歌节：游到了座头鲸身边，它慢慢地从旁边游了过去。');}showHint('座头鲸就在附近，点它可以拍照');});},
-  watch:()=>scene(async()=>{await goBay(960);await say('解说员','第三号选手上浪了！——完美的转身！');await say(nameOf(),'好厉害！！');need('fun',20);if(!festDone('watch')){festMark('watch');mood(MOOD.wave);}}),
+  watch:()=>scene(async()=>{if(!await goBay(960))return;await say('解说员','第三号选手上浪了！——完美的转身！');await say(nameOf(),'好厉害！！');need('fun',20);if(!festDone('watch')){festMark('watch');mood(MOOD.wave);}}),
   contest:()=>{if((M().act.surf||0)<3)return showHint('先多冲几次浪，能站起来了再来报名');if(festDone('contest'))return showHint('今天已经比过了');
    scene(async()=>{festMark('contest');await say('解说员','下一位选手——来自草帽湾的新人！');surf();await new Promise(r=>setTimeout(r,9500));await say('解说员','漂亮！新人奖！');coins(5,'冲浪日新人奖');mood(MOOD.wave);log('冲浪日：参加冲浪比赛，拿了新人奖。');});}};
  if(typeof FB_MOTIFS!=='undefined')Object.assign(FB_MOTIFS,{草帽节:['star','flower','heart'],椰灯夜:['lantern','moon','star'],花环节:['flower','heart','note'],鲸歌节:['wave','note','star'],冲浪日:['wave','star','ball']});   // the festival bar's own drifting motifs

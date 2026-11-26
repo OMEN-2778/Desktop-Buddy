@@ -30,12 +30,21 @@ const inSea=()=>state.y>WL+2;
 const under=()=>state.y>SURF_Y+3;
 const floating=()=>inSea()&&!under()&&gr(state.x)>=WL+8;
 const LEFT=44,RIGHT=DATA.seaEnd;
+const LODGE_LEFT=48,LODGE_RIGHT=304,LODGE_ENTRY=64,LODGE_FEET=84;
+function constrainLodge(){if(!state.inside)return;state.market=false;state.x=clamp(Number.isFinite(state.x)?state.x:LODGE_ENTRY,LODGE_LEFT,LODGE_RIGHT);state.y=LODGE_FEET;}
 let sayTimer=0;
 function toast(text,sec=3.2){say.textContent=text;say.hidden=false;sayTimer=sec;}
 function zoneName(){if(state.inside)return '旅舍里';if(state.market)return '市集';let n=DATA.zones[0][1];for(const [x,name]of DATA.zones)if(state.x>=x)n=name;return n+(under()?' · 潜水中':inSea()?' · 水里':'');}
 function updateUI(){const label=`${zoneName()} · ${SUIT_NAME[state.suit]} · 发现 ${state.found.size}/${TOTAL}`;if(status.textContent!==label)status.textContent=label;document.getElementById('exit').hidden=!state.inside;
  [...maps.children].forEach((b,i)=>{const z=DATA.zones[i],nx=DATA.zones[i+1];const value=String(!state.inside&&state.x>=z[0]&&(!nx||state.x<nx[0]));if(b.getAttribute('aria-current')!==value)b.setAttribute('aria-current',value);});}
-function goTo(x,kind='walk',y=0,after=null){state.lying=null;state.target={x:clamp(x,LEFT,RIGHT),y,kind};state.after=after;}
+function goTo(x,kind='walk',y=0,after=null){
+ if(state.inside||state.door)return false;
+ state.lying=null;state.target={x:clamp(x,LEFT,RIGHT),y,kind};state.after=after;return true;
+}
+function goInside(x,after=null){
+ if(!state.inside||state.door)return false;
+ state.lying=null;state.target={x:clamp(x,LODGE_LEFT,LODGE_RIGHT),kind:'lodge'};state.after=after;return true;
+}
 function discover(id,text){const first=!state.found.has(id);state.found.add(id);toast((first?'✦ 新发现：':'')+text,4.2);}
 function splash(x,y,n=10){for(let i=0;i<n;i++)parts.push({x:x+(Math.random()-.5)*8,y,vx:(Math.random()-.5)*30,vy:-20-Math.random()*30,life:.7,c:'#f4fbff',g:80});}
 // ------------------------------------------------------------- movement
@@ -48,12 +57,12 @@ function swimTo(tx,ty,dt){                               // free swimming with r
  const free=(a,b)=>!isSolid(a,b)&&!isSolid(a,b-10)&&b>=SURF_Y&&a<=RIGHT;
  if(free(nx,ny)){x=nx;y=ny;}else if(free(nx,state.y)){x=nx;}else if(free(state.x,ny)){y=ny;}else return true;
  state.vy=(y-state.y)/Math.max(dt,1e-3);state.x=x;state.y=y;return ok;}
-function move(dt){state.walk=false;if(state.paused||!state.loaded)return;if(state.target)state.rushWalk=1;else if(state.rushWalk||state.rush&&performance.now()-state.rush>3000){state.rush=0;state.rushWalk=0;}/* player-sent walks go 2x (owner 2026-11-05) */
+function move(dt){state.walk=false;constrainLodge();if(state.paused||!state.loaded)return;if(state.target)state.rushWalk=1;else if(state.rushWalk||state.rush&&performance.now()-state.rush>3000){state.rush=0;state.rushWalk=0;}/* player-sent walks go 2x (owner 2026-11-05) */
  state.warned-=dt;if(sayTimer>0&&(sayTimer-=dt)<=0)say.hidden=true;
  if(state.door)return;
  if(state.changing>0){state.changing-=dt;return;}
  if(state.market){if(state.target){const [x,,done]=step(state.x,0,clamp(state.target.x,14,(market?.w||684)-14),0,dt*42*(state.rush?2:1));state.walk=!done;if(Math.abs(state.target.x-state.x)>.1)state.facing=Math.sign(state.target.x-state.x);state.x=x;state.y=MARKET_FEET;if(done){state.target=null;if(state.after){const f=state.after;state.after=null;f();}}}return;}
- if(state.inside){if(state.target){const [x,,done]=step(state.x,0,state.target.x,0,dt*42*(state.rush?2:1));state.walk=!done;if(Math.abs(state.target.x-state.x)>.1)state.facing=Math.sign(state.target.x-state.x);state.x=x;if(done){state.target=null;if(state.after){const f=state.after;state.after=null;f();}}}return;}
+ if(state.inside){if(state.target&&state.target.kind!=='lodge'){state.target=null;state.after=null;}if(state.target){const [x,,done]=step(state.x,0,state.target.x,0,dt*42*(state.rush?2:1));state.walk=!done;if(Math.abs(state.target.x-state.x)>.1)state.facing=Math.sign(state.target.x-state.x);state.x=x;if(done){state.target=null;if(state.after){const f=state.after;state.after=null;f();}}}return;}
  const dir=(keys.has('ArrowRight')||keys.has('d')||keys.has('D')?1:0)-(keys.has('ArrowLeft')||keys.has('a')||keys.has('A')?1:0);
  const vdir=(keys.has('ArrowDown')||keys.has('s')||keys.has('S')?1:0)-(keys.has('ArrowUp')||keys.has('w')||keys.has('W')?1:0);
  if(dir||vdir){state.after=null;if(state.suit!=='clothes'&&(under()||(vdir>0&&deep(state.x))))goTo(state.x+dir*30,'dive',state.y+vdir*30);else if(dir)goTo(state.x+dir*40);}
@@ -99,9 +108,9 @@ function hero(x,y){if(state.inCabana||state.changing>0)return;const sheet=img(DA
 const headCache=new Map();function headImage(sheet){if(!headCache.has(sheet)){const c=document.createElement('canvas');c.width=20;c.height=28;c.getContext('2d').drawImage(sheet,4,0,20,15,0,0,20,15);headCache.set(sheet,c);}return headCache.get(sheet);}
 function beginDoor(to){if(state.door)return;keys.clear();state.target=null;state.after=null;state.door={to,elapsed:0,duration:.65,mid:false};}
 function advanceDoor(dt){const d=state.door;if(!d)return;d.elapsed+=dt;if(!d.mid&&d.elapsed>=d.duration/2&&(d.to==='market'||d.to==='bay')){d.mid=true;state.inside=false;state.market=d.to==='market';state.x=d.to==='market'?(market?.w||684)-40:58;state.y=d.to==='market'?MARKET_FEET:standY(58);state.camX=d.to==='market'?clamp(state.x-VW/2,0,(market?.w||684)-VW):0;state.camY=0;state.camVX=state.camVY=0;state.facing=-1;updateUI();}
- if(!d.mid&&d.elapsed>=d.duration/2){d.mid=true;state.inside=d.to;state.x=d.to?64:DATA.lodgeDoor;state.y=d.to?84:standY(state.x);state.camX=d.to?0:clamp(state.x-VW/2,0,W-VW);state.camY=0;state.camVX=state.camVY=0;updateUI();}if(d.elapsed>=d.duration)state.door=null;}
+ if(!d.mid&&d.elapsed>=d.duration/2){d.mid=true;state.inside=d.to;state.x=d.to?LODGE_ENTRY:DATA.lodgeDoor;state.y=d.to?LODGE_FEET:standY(state.x);state.camX=d.to?0:clamp(state.x-VW/2,0,W-VW);state.camY=0;state.camVX=state.camVY=0;updateUI();}if(d.elapsed>=d.duration)state.door=null;}
 function enter(){goTo(DATA.lodgeDoor,'walk',0,()=>beginDoor(true));}
-function leave(){if(state.inside)goTo(48,'walk',0,()=>beginDoor(false));}
+function leave(){return goInside(LODGE_LEFT,()=>beginDoor(false));}
 const gameNavigation=typeof opts!=='undefined'&&!!opts.view;
 function exitArrow(){if(gameNavigation)return;ctx.fillStyle='#e9eee2';ctx.fillRect(12,64,22,24);ctx.strokeStyle='#526578';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(27,69);ctx.lineTo(19,76);ctx.lineTo(27,83);ctx.stroke();}
 
@@ -110,7 +119,7 @@ const realNow=()=>performance.now()/1000;
 function draw(){const vh=canvas.height;ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,VW,vh);if(!state.loaded)return;
  const t=reduced?0:state.time;
  if(state.market&&market){market.draw(ctx,{time:t,camX:state.camX,hero:()=>hero(state.x,MARKET_FEET)});fx.weather(ctx,wetKind,t,VW,vh);drawTravelArrows();fx.transition(ctx,state.door,VW,vh);return;}
- if(state.inside){ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,VW,vh);ctx.drawImage(img(DATA.inside),40,28);if(!state.hideHero)hero(state.x,84+(state.iy||0));globalThis.summerLodge?.draw(ctx);exitArrow();fx.transition(ctx,state.door,VW,vh);return;}
+ if(state.inside){ctx.fillStyle='#eee8dd';ctx.fillRect(0,0,VW,vh);ctx.drawImage(img(DATA.inside),40,28);if(!state.hideHero)hero(state.x,LODGE_FEET+(state.iy||0));globalThis.summerLodge?.draw(ctx);exitArrow();fx.transition(ctx,state.door,VW,vh);return;}
  const cx=state.camX,cy=state.camY;
  ctx.drawImage(img(DATA.sky),cx,cy,VW,vh,0,0,VW,vh);
  globalThis.bayDusk?.sky(ctx,cx,cy,VW,vh,WL);   // the game shell's evening sky (pink-purple, owner 2026-11-06)
@@ -238,7 +247,7 @@ document.getElementById('gender').onclick=e=>{state.gender=state.gender==='f'?'m
 document.getElementById('exit').onclick=leave;
 document.getElementById('pause').onclick=e=>{state.paused=!state.paused;e.target.textContent=state.paused?'继续':'暂停';e.target.setAttribute('aria-pressed',String(state.paused));};
 function pickScene(sx,sy){canvas.focus();
- if(state.changing>0||state.inCabana||state.door)return;if(!gameNavigation&&!state.inside&&sy>canvas.height*.56-20&&sy<canvas.height*.56+20&&(sx<25||sx>VW-25)){travel(sx<25?-1:1);return;}if(state.inside){if(sx<43&&sy>55)return leave();goTo(clamp(sx,46,312));return;}pick(sx+(state.market?Math.round(state.camX):state.camX),sy+state.camY);}
+ if(state.changing>0||state.inCabana||state.door)return;if(!gameNavigation&&!state.inside&&sy>canvas.height*.56-20&&sy<canvas.height*.56+20&&(sx<25||sx>VW-25)){travel(sx<25?-1:1);return;}if(state.inside){if(sx<43&&sy>55)return leave();goInside(sx);return;}pick(sx+(state.market?Math.round(state.camX):state.camX),sy+state.camY);}
 canvas.addEventListener('pointerdown',e=>{ const r=canvas.getBoundingClientRect();pickScene((e.clientX-r.left)*VW/r.width,(e.clientY-r.top)*canvas.height/r.height);});
 window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','a','d','w','s','A','D','W','S'].includes(e.key)&&!['BUTTON','INPUT'].includes(document.activeElement.tagName)){e.preventDefault();keys.add(e.key);state.lying=null;}});
 window.addEventListener('keyup',e=>keys.delete(e.key));window.addEventListener('blur',()=>keys.clear());
@@ -249,4 +258,4 @@ load(DATA);Promise.all([...images.values()].map(im=>im.decode())).then(()=>{
  state.y=standY(state.x);state.loaded=true;ctx.imageSmoothingEnabled=false;toast('先去更衣室换上泳装，再去海里玩吧～ 发光的小星星是可以探索的地方。',5);
  let last=performance.now();function frame(now){const dt=document.hidden?0:clamp((now-last)/1000,0,.05);last=now;if(!state.paused)state.time+=dt;advanceDoor(dt);fx.tickWater(state.paused?0:dt);move(dt);camera(dt);draw();updateUI();requestAnimationFrame(frame);}requestAnimationFrame(frame);})
  .catch(e=>{const el=document.getElementById('error');el.hidden=false;el.textContent='地图加载失败，请刷新重试';console.error(e);});
-window.summerPreview={state,seaLife:DATA.life,plants:DATA.plants,kelp:DATA.kelp,goTo,pick,targetAt,move,camera,draw,gr,deep,isSolid,enterCabana,leaveCabana,directionLabel,travel,pickScene,wardrobe,enter,leave,advanceDoor,fx,setWeather:kind=>wetKind=weatherOverride||kind,getWeather:()=>wetKind,setPeopleRenderer:fn=>peopleRenderer=fn,setMarket:m=>market=m,beginDoor,setPhoto:f=>photo=f,setFishPicker:f=>fishPicker=f,discover,hotspots:DATA.hotspots,data:DATA,lifeText:DATA.lifeText,toast};
+window.summerPreview={state,seaLife:DATA.life,plants:DATA.plants,kelp:DATA.kelp,goTo,goInside,constrainLodge,pick,targetAt,move,camera,draw,gr,deep,isSolid,enterCabana,leaveCabana,directionLabel,travel,pickScene,wardrobe,enter,leave,advanceDoor,fx,setWeather:kind=>wetKind=weatherOverride||kind,getWeather:()=>wetKind,setPeopleRenderer:fn=>peopleRenderer=fn,setMarket:m=>market=m,beginDoor,setPhoto:f=>photo=f,setFishPicker:f=>fishPicker=f,discover,hotspots:DATA.hotspots,data:DATA,lifeText:DATA.lifeText,toast};

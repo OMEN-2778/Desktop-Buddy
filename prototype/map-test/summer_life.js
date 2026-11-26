@@ -147,17 +147,41 @@ const summerLife=(function(){
   if(v===P.kai){if(q.kai.step===0&&B().met)return '!';if(q.kai.step===1&&have(['pearl']))return '?';if(q.kai.step===2&&h>=16&&h<20)return '?';if(q.kai.step===4)return '?';return null;}
   return null;}
  // ---------------------------------------------------------------- scenes (the game's own talk rows)
- const speech=springFarm.speech;let busy=false;STORY_HOLDS.push(()=>busy&&inBay());
+ const speech=springFarm.speech;let busy=false;STORY_HOLDS.push(()=>busy&&sim.place==='summer_test');
  const say=(who,words)=>new Promise(res=>speech.show(who,words,{special:true,advance:res}));
  const ask=(who,words,opts)=>new Promise(res=>speech.show(who,words,{special:true,choices:opts.map((label,i)=>({label,on:()=>res(i)}))}));
- // walk there, but never hang: the map's own wandering can replace the target (and drop its callback)
- const walk0=x=>new Promise(res=>{speech.hide();let done=false;const end=()=>{if(!done){done=true;clearInterval(t);res();}};C().goTo(x,'walk',0,end);const t0=performance.now(),far=8000+Math.abs(C().state.x-x)*30,t=setInterval(()=>{const s=C().state;if(Math.abs(s.x-x)<4)end();else if(performance.now()-t0>far){s.x=x;end();}else if(!s.target)C().goTo(x,'walk',0,end);},200);});
- // a player 2026-11-12: a festival started from the bar while she was in the lodge, and she walked right through the wall
- // towards a spot on the beach. Any walk to a beach spot first takes her out through the lodge's door.
- const walk=async x=>{const c=C();if(c.state.inside){c.leave();const t0=performance.now();
-   await new Promise(r=>{const t=setInterval(()=>{const s=c.state;if(!s.inside&&!s.door||performance.now()-t0>4000){clearInterval(t);r();}else if(s.inside&&!s.door&&!s.target)c.leave();},150);});
-   if(c.state.inside){c.beginDoor('bay');await new Promise(r=>setTimeout(r,900));}}
-  return walk0(x);};
+ // Keep the current area's coordinates until its door transition has completed.
+ function reachBay(exitMarket=false){
+  const c=C(),s=c.state;
+  const step=()=>{
+   if(sim.place!=='summer_test')return false;
+   if(s.door)return;
+   if(s.inside){if(!s.target)c.leave();return;}
+   if(exitMarket&&s.market){c.beginDoor('bay');return;}
+   return true;
+  };
+  const ready=step();
+  if(ready!==undefined)return Promise.resolve(ready);
+  return new Promise(resolve=>{const timer=setInterval(()=>{
+   const ready=step();
+   if(ready!==undefined){clearInterval(timer);resolve(ready);}
+  },100);});
+ }
+ const walk=async x=>{
+  speech.hide();
+  if(!await reachBay())return false;
+  const c=C(),s=c.state,market=s.market,t0=performance.now(),far=8000+Math.abs(s.x-x)*30;
+  return new Promise(resolve=>{
+   const end=(arrived=true)=>{clearInterval(timer);resolve(arrived);};
+   const timer=setInterval(()=>{
+    if(sim.place!=='summer_test'||s.inside||s.door||s.market!==market)end(false);
+    else if(Math.abs(s.x-x)<4)end();
+    else if(performance.now()-t0>far){s.x=x;end();}
+    else if(!s.target)c.goTo(x,'walk',0,end);
+   },200);
+   c.goTo(x,'walk',0,end);
+  });
+ };
  function speakBay(t){try{speak(t,true);}catch(e){showHint(t);}}
  async function scene(fn){if(busy)return;busy=true;closeRing();try{await fn();}finally{speech.hide();busy=false;}}
  const ML_=(id,name,emo,pts=2)=>{ML['bay_'+id]={name,emo,pts,min:240};return 'bay_'+id;};
@@ -403,6 +427,6 @@ const summerLife=(function(){
   if(f.item)for(const [k,v]of Object.entries(f.item))X.addItem(k,v);
   if(f.loseStock&&b.stock.length)b.stock.splice(Math.floor(Math.random()*b.stock.length),1);}}catch(e){console.error(e);}return r;};
  const oldFits=cardFits;cardFits=function(cd,c){if(cd.at==='summer_test'&&!inBay())return false;return oldFits(cd,c);};
- return {beachHit,beachModel,beachSprite,drawBeachTarget,marketHit,marketOutline,marketPick,hooks,say,ask,walk,scene,speakBay,drawPerson,person,pose,ML_,MOOD,hour,night,today,under,inBay,inMarket,C,S,X,icon,img,fitBig,scrollBar,bigIcon,isBusy:()=>busy,where,FEET,MW,STALL_X,CAFE_X,FISH_X,FLOWER_X,FOUNTAIN_X,HAT_X,SHORE_X,PALM_X,V,draw,click,openStall,openCafe,make,RECIPES,priceNow,B,P,arrive,leiTalk,kaiTalk,finale,custs,spawn,buy};
+ return {beachHit,beachModel,beachSprite,drawBeachTarget,marketHit,marketOutline,marketPick,hooks,say,ask,walk,reachBay,scene,speakBay,drawPerson,person,pose,ML_,MOOD,hour,night,today,under,inBay,inMarket,C,S,X,icon,img,fitBig,scrollBar,bigIcon,isBusy:()=>busy,where,FEET,MW,STALL_X,CAFE_X,FISH_X,FLOWER_X,FOUNTAIN_X,HAT_X,SHORE_X,PALM_X,V,draw,click,openStall,openCafe,make,RECIPES,priceNow,B,P,arrive,leiTalk,kaiTalk,finale,custs,spawn,buy};
 })();
 window.summerLife=summerLife;

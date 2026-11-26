@@ -36,8 +36,8 @@ const g=++goGen,t0=Date.now(),c=C();
  function use(id,auto,item){if(id==='dine'&&!homeMeal())id='stove';if(id==='stove'&&auto===true&&homeMeal())id='dine';   // nothing on the table: cook first, then eat (as at home)
   if(!auto&&SPOTS[id]&&seasonHouse.furnitureMenu(id,SPOTS[id].rect))return;
   const p=SPOTS[id],c=C();if(!p)return;stop();closeRing();
-  if(p.look){c.goTo(p.x,'walk',0,()=>speak(pick(p.look),true));return;}
-  c.goTo(p.x,'walk',0,()=>{const s=c.state;s.facing=p.face||(p.x>170?1:-1);svc={id,act:p.act,need:p.need};s.pose=null;s.hideHero=!!p.hide;s.iy=p.iy||0;speak(pick(p.line),true);seasonHouse.start(p.act,{auto:auto===true,log:p.log,item});});}
+  if(p.look){c.goInside(p.x,()=>speak(pick(p.look),true));return;}
+  c.goInside(p.x,()=>{const s=c.state;s.facing=p.face||(p.x>170?1:-1);svc={id,act:p.act,need:p.need};s.pose=null;s.hideHero=!!p.hide;s.iy=p.iy||0;speak(pick(p.line),true);seasonHouse.start(p.act,{auto:auto===true,log:p.log,item});});}
  // clicks: the adapter asks summerLife first; inside the lodge that is us
  const oClick=summerLife.click;summerLife.click=function(x,y){
   const s=C().state;if(inBay()&&s.inside&&!s.door){const target=hit(x,y);if(target){use(target.id);return true;}stop();return false;}
