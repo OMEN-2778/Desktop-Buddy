@@ -66,6 +66,6 @@ const g=++goGen,t0=Date.now(),c=C();
    ctx.fillStyle=`rgba(255,255,255,${(.85*(1-k)*Math.min(1,k*4)).toFixed(2)})`;const w=2+(i%3);ctx.fillRect(x,y,w,w-1||1);}}
  const COOK_FX=[258,39],MEAL_AT=[227,53],TV_AT=[174,55];   // TV_AT: the screen of the home's TV on its cabinet (24×12)   // the home's pan steam over the burners, the dish on the dining table
  const oArrive=arriveAt;arriveAt=function(pl){stop();hinted=false;return oArrive(pl);};
- return {SPOTS,NEED_SPOT,hit,use,useAct,goUse,stop,draw,get svc(){return svc;}};
+ return {SPOTS,NEED_SPOT,hit,use,useAct,goUse,stop,cancelWalk:()=>{goGen++;},draw,get svc(){return svc;}};
 })();
 window.summerLodge=summerLodge;

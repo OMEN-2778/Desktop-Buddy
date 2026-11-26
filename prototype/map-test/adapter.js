@@ -60,11 +60,14 @@ const seasonalTest=(function(){
  state.spring.setPeopleRenderer(people.draw);state.summer.setPeopleRenderer((ctx,info)=>{window.summerLife?.draw(ctx,info);people.draw(ctx,info);});   // 草帽湾 stall, customers, bay people first (summer_life.js)
  for(const [place,c,name] of [['spring_test',state.spring,'茵菲谷'],['summer_test',state.summer,'草帽湾']]){
   sceneDirections.set(place,{
-   name, available:()=>c.state.loaded&&!c.state.door&&!c.state.edge&&!c.state.inCabana&&!(c.state.changing>0)&&(place!=='summer_test'||!window.summerFloat?.busy()),
+   name, available:()=>c.state.loaded&&!c.state.door&&!c.state.edge&&!c.state.inCabana&&!(c.state.changing>0),
    destination:c.directionLabel,
    walk(dir){
     window.seasonAuto?.cancel();people.cancel();
     (place==='spring_test'?window.infeiHome:window.summerLodge)?.stop();
+    if(place==='summer_test'){
+     window.summerFloat?.endSurf();window.summerFloat?.stand();
+    }
     state.autoAt=sim.t+45;c.state.rush=performance.now();view.focus();c.travel(dir);
    }
   });
@@ -116,7 +119,7 @@ const seasonalTest=(function(){
   const run=(!!speed||storyTravel)&&!cardHolds()&&!wiping&&sim.mode!=='down';
   c.state.paused=!run;c.state.gender=look.gender||'f';
   if(run){
-   if(!window.liweiStory?.locked()&&!life.talkQ&&!c.state.door&&!c.state.inCabana&&!c.state.target&&sim.t>=state.autoAt&&!ringOf&&!(sim.place==='summer_test'&&window.summerFloat?.busy())){state.autoAt=sim.t+8+Math.random()*12;   /* owner 2026-11-10: less standing about (was 20-45 game minutes) */
+   if(!window.liweiStory?.locked()&&!life.talkQ&&!c.state.door&&!c.state.inCabana&&!c.state.target&&sim.t>=state.autoAt&&!ringOf&&!(sim.place==='summer_test'&&(window.summerFloat?.busy()||window.seasonAuto?.bayPlayerRecent()))){state.autoAt=sim.t+8+Math.random()*12;   /* owner 2026-11-10: less standing about (was 20-45 game minutes) */
     if(window.seasonAuto?.act(c)){}   /* season_auto.js: her own plans (owner 2026-11-06); a plain stroll otherwise */
     else if(sim.place==='spring_test'&&!c.state.inside)c.target(Math.max(20,Math.min((c.state.scene===5?684:342)-20,c.state.x+(Math.random()<.5?-1:1)*(30+Math.random()*70))));
     else if(sim.place==='summer_test'&&!c.state.inside&&c.state.lying===null){const nx=Math.max(50,c.state.x+(Math.random()<.5?-1:1)*45);if(!c.state.market&&c.state.y>132)c.goTo(nx,'dive',c.state.y);else c.goTo(nx);}   /* underwater she drifts at her depth: a plain walk target there left her stuck */

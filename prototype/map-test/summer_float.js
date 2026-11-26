@@ -13,9 +13,13 @@
  let surf=null,sit=null,leaving=false,last=0;
  const s=()=>C().state,swim=()=>s().suit&&s().suit!=='clothes';
  const atSurface=()=>inBay()&&!s().market&&!s().inside&&swim()&&C().deep(s().x)&&!L.under();
- const hash=k=>{let h=2166136261;for(const ch of String(k))h=Math.imul(h^ch.charCodeAt(0),16777619);return (h>>>0)/4294967296;};
- // a tourist in float i for this hour block (9-18h, about one float in three)
- function sitter(i){const h=L.hour();if(h<9||h>=18)return null;if(sit?.i===i)return null;const k=L.today()+':'+Math.floor(h/2)+':'+i;return hash(k)<.33?TOURISTS[Math.floor(hash(k+'w')*3)]:null;}
+ // Tourists share a single reservation each daytime block, leaving rings available.
+ function sitter(i){
+  const h=L.hour();if(h<9||h>=18||sit?.i===i)return null;
+  const key=Math.imul(L.today()+1,0x9e3779b1)^Math.imul(Math.floor(h/2),0x85ebca6b);
+  const block=Math.imul(key^(key>>>16),0x21f0aaad)>>>0;
+  return block%5===4||block%FLOATS.length!==i?null:TOURISTS[(block>>>8)%TOURISTS.length];
+ }
  // ---------------------------------------------------------------- drawing
  function px(ctx,c,x,y,w=1,h=1){ctx.fillStyle=c;ctx.fillRect(x,y,w,h);}
  function back(ctx,f,x,y){   // the float, under whoever sits in it; y = the water line
@@ -33,16 +37,18 @@
   px(ctx,rim[0],x-9,y-3,18,2);px(ctx,rim[1],x-9,y-1,18,1);}
  const bob=(i,t)=>Math.round(Math.sin(t*1.6+i*1.7));
  L.hooks.draw.push((ctx)=>{if(!inBay()||s().market||s().inside)return;const t=realClock;
-  FLOATS.forEach((f,i)=>{const y=WL+bob(i,t),who=sitter(i);back(ctx,f,f.x,y);
+  FLOATS.forEach((f,i)=>{const y=WL+bob(i,t),who=sitter(i);
+   L.beachModel(ctx,'float:'+i,f.x-15,y-17,31,19,
+    model=>back(model,f,f.x,y),()=>{if(surf)surf.dir=f.x<s().x?-1:1;else if(sit?.i!==i)goFloat(i);});
    if(who){const pic=npcCanvas(who,{expr:'neutral',look:0,bob:0,sway:0,wave:null},'sit',false);ctx.drawImage(pic,0,0,20,20,f.x-10,y-23,20,20);front(ctx,f,f.x,y);}
    else if(sit?.i===i&&window.__surfHero?.args){ctx.drawImage(window.__surfHero.args.dc,0,0,20,20,f.x-10,y-23,20,20);front(ctx,f,f.x,y);}});
   tick(ctx,t);});
  // ---------------------------------------------------------------- her state each frame
  function tick(ctx,t){const dt=Math.min(.1,Math.max(0,t-last));last=t;const st=s();
-  if(sit){const f=FLOATS[sit.i];if(!inBay()||st.market||st.inside||sitter(sit.i))return stand();
+  if(sit){const f=FLOATS[sit.i];if(!inBay()||st.market||st.inside||st.door||!swim())return stand();
    if(sit.on){st.x=f.x;st.y=SURF_Y;st.target=null;}
-   else if(!st.target&&Math.abs(st.x-f.x)<14){sit.on=true;window.__surfHero={by:'float',pose:'sit'};addMood('bay_float');}
-   else if(!st.target)return stand();}
+   else if(!st.target&&Math.abs(st.x-f.x)<3&&Math.abs(st.y-SURF_Y)<2){sit.on=true;window.__surfHero={by:'float',pose:'sit'};addMood('bay_float');}
+   else if(st.target!==sit.target)return stand();}
   if(surf){if(!atSurfaceish()||performance.now()>surf.until)return endSurf(performance.now()>surf.until);
    const run=!st.paused;st.target=null;st.y=SURF_Y;st.facing=surf.dir;st.walk=run;
    if(run){let nx=st.x+surf.dir*SPEED*dt;if(nx<X0||nx>X1||!C().deep(nx)){surf.dir*=-1;nx=st.x;}st.x=nx;}
@@ -54,9 +60,14 @@
  }
  const atSurfaceish=()=>inBay()&&!s().market&&!s().inside&&swim();
  // ---------------------------------------------------------------- floats
- function floatAt(x,y){return FLOATS.findIndex(f=>Math.abs(x-f.x)<12&&y>WL-18&&y<WL+5);}
- function goFloat(i,auto){const f=FLOATS[i];if(!swim()){C().toast('先去更衣室换上泳装，才能下水。');return;}
-  endSurf();sit={i,on:false,auto:auto?performance.now()+40000+Math.random()*30000:0};C().goTo(f.x,'dive',SURF_Y);}
+ function floatAt(x,y){const id=L.beachHit(x,y)?.id;return id?.startsWith('float:')?Number(id.slice(6)):-1;}
+ function goFloat(i,auto){
+  const f=FLOATS[i],c=C();if(!f||!inBay()||s().market||s().door)return;
+  if(!swim()){c.toast('先去更衣室换上泳装，才能下水。');return;}
+  if(sitter(i)){c.toast('这个泳圈有人，试试旁边空着的。');return;}
+  endSurf();stand();
+  if(c.goTo(f.x,'dive',SURF_Y))sit={i,on:false,target:s().target,auto:auto?performance.now()+40000+Math.random()*30000:0};
+ }
  function stand(){if(!sit)return;sit=null;if(window.__surfHero?.by==='float')window.__surfHero=null;}
  // ---------------------------------------------------------------- surfing
  function startSurf(){if(!atSurface())return;stand();surf={dir:s().facing>=0?1:-1,until:performance.now()+SURF_MS};window.__surfHero={by:'free'};
@@ -68,7 +79,6 @@
  // clicks: while surfing every click only turns her; on a float, a click elsewhere gets her up
  L.hooks.click.unshift((x,y)=>{
   if(surf){surf.dir=x<s().x?-1:1;return true;}
-  const i=floatAt(x,y);if(i>=0){if(sitter(i))return true;if(sit?.i===i&&sit.on)return true;goFloat(i);return true;}
   if(sit)stand();return false;});
  // ---------------------------------------------------------------- her ring
  const oldOpen=openRing;openRing=function(which,at){

@@ -53,6 +53,8 @@ function walkTo(tx,dt){const sp=dt*(inSea()?30:42)*(state.rush?2:1);let [x,,ok]=
  if(gr(x)>wadeLimit()){if(state.warned<=0){toast('穿着便装只能在浅水边踩踩水，先去更衣室换上泳装吧～');state.warned=6;}return true;}
  state.x=x;state.y+=(standY(state.x)-state.y)*Math.min(1,dt*10);return ok&&Math.abs(state.y-standY(state.x))<1;}
 function swimTo(tx,ty,dt){                               // free swimming with rock collision (slides along walls)
+ // Approaching from shore eases toward the surface and can leave y a fraction above it.
+ state.y=Math.max(SURF_Y,state.y);
  const distance=Math.hypot(tx-state.x,ty-state.y),limit=state.target?.kind==='up'?18:12;state.moveSpeed+=(Math.min(limit,Math.sqrt(distance*28))-state.moveSpeed)*(1-Math.exp(-9*dt));const [nx,ny,ok]=step(state.x,state.y,tx,ty,dt*state.moveSpeed*(state.rush?2:1));let x=state.x,y=state.y;
  const free=(a,b)=>!isSolid(a,b)&&!isSolid(a,b-10)&&b>=SURF_Y&&a<=RIGHT;
  if(free(nx,ny)){x=nx;y=ny;}else if(free(nx,state.y)){x=nx;}else if(free(state.x,ny)){y=ny;}else return true;
@@ -70,7 +72,7 @@ function move(dt){state.walk=false;constrainLodge();if(state.paused||!state.load
  if(t){if(Math.abs(t.x-state.x)>.5)state.facing=Math.sign(t.x-state.x);let done=false;
   if(t.kind==='up'){done=swimTo(state.x,SURF_Y,dt);}
   else if(t.kind==='dive'&&state.suit!=='clothes'){
-   if(!under()&&!deep(state.x))walkTo(t.x,dt);                // head out along the surface first
+   if(!under()&&!deep(state.x))done=walkTo(t.x,dt);                // head out along the surface first
    else done=swimTo(t.x,clamp(t.y,SURF_Y,gr(t.x)-4),dt);
   }else if(under()){const tx=gr(t.x)<WL+8?Math.max(state.x-40,Math.min(state.x+40,t.x)):t.x;swimTo(tx,SURF_Y,dt);}
   else done=walkTo(t.x,dt);
@@ -223,6 +225,7 @@ function approachFish(c){
 }
 function pick(x,y){
  if(state.market){if(market?.pick(x,y))return;return goTo(x);}
+ if(market&&x<LEFT+8&&!under())return travel(-1);
  if(state.lying!==null){state.lying=null;toast('站起来活动活动～',1.5);}
  const g=gr(x),p=targetAt(x,y);
  if(p?.id==='lodge'||!gameNavigation&&Math.abs(x-DATA.lodgeDoor)<16&&y>g-42&&y<g+5)return enter();

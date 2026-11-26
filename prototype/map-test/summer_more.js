@@ -52,15 +52,23 @@
   if(w==='dawn')return h>=5&&h<8;if(w==='dusk')return h>=17&&h<20;
   if(w==='rare')return roll(k,.25);if(w==='vrare')return roll(k,.06)&&(h<6||h>=16);return true;};
  const photoHooks=[];
- function crop(cx,cy){try{const c=C(),v=document.getElementById('view'),k=v.width/342,ky=v.height/c.canvas.height,s=c.state,cv=document.createElement('canvas');cv.width=60;cv.height=42;   // what is on screen right now
-  const g=cv.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(v,(cx-(s.camX||0)-30)*k,(cy-(s.camY||0)-21)*ky,60*k,42*ky,0,0,60,42);return cv.toDataURL('image/png');}catch(e){return '';}}
+ function crop(cx,cy,zoom=1){
+  try{
+   const v=document.getElementById('view'),projection=seasonMapTest.viewport(C()),point=projection.scene(cx,cy);
+   const w=60*zoom,h=42*zoom,k=v.width/342,ky=v.height/projection.height;
+   const x=Math.max(0,Math.min(342-w,point.x-w/2)),y=Math.max(0,Math.min(projection.height-h,point.y-h/2));
+   const cv=document.createElement('canvas');cv.width=60;cv.height=42;
+   const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+   g.drawImage(v,x*k,y*ky,w*k,h*ky,0,0,60,42);return cv.toDataURL('image/png');
+  }catch(e){return '';}
+ }
  function flash(){const v=document.getElementById('view');const f=el('div','bay-flash');f.style.cssText=`left:${v.offsetLeft}px;top:${v.offsetTop}px;width:${v.offsetWidth}px;height:${v.offsetHeight}px`;v.parentElement.append(f);setTimeout(()=>f.remove(),500);}
  let cardT=0;
  function card(k,shot,first,n){document.querySelector('.bay-photo')?.remove();const v=document.getElementById('view'),c=el('button','bay-photo');c.type='button';
   const im=new Image();im.src=shot;c.append(im,el('b',null,(first?'新发现 · ':'')+nameK(k)),el('small',null,first?lineK(k):`拍了第 ${n} 张`));c.onclick=()=>{c.remove();openDex(pageOf(k));};
   c.style.left=(v.offsetLeft+v.offsetWidth-196)+'px';c.style.top=(v.offsetTop+v.offsetHeight-118)+'px';v.parentElement.append(c);clearTimeout(cardT);cardT=setTimeout(()=>c.remove(),4200);}
  const pageOf=k=>Math.max(0,PAGES.findIndex(p=>p[1].includes(k)));
- function snap(k,cx,cy){const b=M();flash();const shot=crop(cx,cy),first=!b.dex[k];b.dex[k]=(b.dex[k]||0)+1;if(first||!b.album[k])b.album[k]=shot;
+ function snap(k,cx,cy){const b=M();flash();const shot=crop(cx,cy,k==='humpback'?2.5:1),first=!b.dex[k];b.dex[k]=(b.dex[k]||0)+1;if(first||!b.album[k]||k==='humpback')b.album[k]=shot;
   card(k,shot,first,b.dex[k]);
   if(first){if(Object.keys(b.dex).length===1)mood(MOOD.snap);log(`在海里拍到了${nameK(k)}，记进了图鉴。`);}
   for(const [i,[name,ks]]of PAGES.entries())if(!b.pages[i]&&ks.every(x=>b.dex[x])){b.pages[i]=1;mood(MOOD.page);coins(3,`图鉴「${name}」集满了`);setTimeout(()=>showHint(`图鉴「${name}」集满了！奖励 3 丢丢币`),1500);}
@@ -80,7 +88,11 @@
  const RARE_AT={glow_jelly:[[1330,172],[1490,192],[1705,160]],glow_shrimp:[[1420,252],[2120,330]],lanternfish:[[2870,722],[2955,758],[3045,736]],deep_octopus:[[2992,792]]};
  const rareOn=k=>k.startsWith('glow')?night():k==='humpback'?cal().i===2||fest()?.n==='鲸歌节':true;
  function rarePos(k,i,t){const [x,y]=RARE_AT[k][i];return k==='lanternfish'?[x+Math.sin(t*.5+i)*14,y+Math.sin(t*.8+i*2)*5]:k==='glow_jelly'?[x+Math.sin(t*.3+i)*6,y+Math.sin(t*.9+i)*7]:[x,y];}
- function whalePos(t){const p=(t/90)%2,u=p<1?p:2-p;return [1300+u*2600,WL+1,p<1?1:-1,Math.min(1,Math.min(u,1-u)/.05)];}   // to and fro; at each end it dives (fades) and comes up again
+ const whaleArt=img(SUMMER_LIFE_ART.humpback);
+ function whalePos(t){
+  const p=((t+40)/160)%2,u=p<1?p:2-p,progress=(1-Math.cos(u*Math.PI))/2;
+  return [1280+progress*780,WL+Math.round(Math.sin(t*.61)*2),p<1?1:-1,Math.min(1,Math.min(u,1-u)/.045)];
+ }
  let hbA=null,hbT=0;const hbFade=t=>{const want=rareOn('humpback')?1:0,dt=Math.min(.2,Math.max(0,t-hbT));hbT=t;hbA??=want;hbA=Math.max(0,Math.min(1,hbA+(want?1:-1)*dt/1.5));return hbA;};
  // a round, soft glow (owner 2026-11-06: the jellyfish's light was a square)
  function halo(g,x,y,r,c){const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,c);gr.addColorStop(1,c.replace(/[\d.]+\)$/,'0)'));g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fill();}
@@ -93,18 +105,35 @@
    ctx.fillStyle='#3a2a52';ctx.fillRect(x+2*d,y-3,1,2);gl.fillStyle=`rgba(255,230,120,${.6+.4*Math.sin(t*3+i)})`;gl.fillRect(x+3*d,y-4,2,2);halo(gl,x+3*d+1,y-3,5,'rgba(255,230,120,.3)');}
   {const [x,y]=RARE_AT.deep_octopus[0];ctx.fillStyle='#8a2f2f';ctx.fillRect(x-4,y-6,8,5);ctx.fillStyle='#b4483a';ctx.fillRect(x-3,y-7,6,2);ctx.fillStyle='#fff';ctx.fillRect(x-2,y-4,1,1);ctx.fillRect(x+1,y-4,1,1);
    ctx.fillStyle='#8a2f2f';for(let k=0;k<4;k++)ctx.fillRect(x-4+k*2+Math.round(Math.sin(t*1.5+k)),y-1,1,3);}
-  {const hf=hbFade(t),[x,y,dir,ef]=whalePos(t),wa=hf*ef;if(wa>0){ctx.save();ctx.globalAlpha=wa;ctx.translate(x,0);ctx.scale(dir,1);ctx.translate(-x,0);const ph=(t%12)/12;ctx.fillStyle='#3c4a63';ctx.fillRect(x-14,y-2,28,3);ctx.fillRect(x-10,y-3,18,1);ctx.fillStyle='#53627e';ctx.fillRect(x-12,y-2,20,1);
-   if(ph<.25){ctx.fillStyle='rgba(235,248,255,.9)';const hgt=Math.round(10*Math.sin(ph/.25*Math.PI));ctx.fillRect(x+6,y-3-hgt,1,hgt);ctx.fillRect(x+4,y-3-hgt,5,1);}
-   if(ph>.6&&ph<.8){ctx.fillStyle='#3c4a63';ctx.fillRect(x-20,y-7,2,5);ctx.fillRect(x-24,y-8,10,2);}ctx.restore();}}}
+  drawWhale(ctx,t);
+ }
+ function drawWhale(ctx,t){
+  const [x,y,dir,visibility]=whalePos(t),opacity=hbFade(t)*visibility;
+  if(opacity<=0||!whaleArt.naturalWidth)return;
+  const sprite=dir>0?whaleArt:flippedSceneSprite(whaleArt);
+  const left=Math.round(x-sprite.width/2),top=y-17;
+  ctx.save();ctx.globalAlpha=opacity;
+  if(opacity>=.55)drawBeachTarget(ctx,'humpback',sprite,left,top,()=>snap('humpback',x,y+4));
+  else ctx.drawImage(sprite,left,top);
+  const phase=t%17;
+  if(phase<2.4){
+   ctx.fillStyle='#dde8ee';
+   for(let i=0;i<12;i++){
+    const u=phase-i*.07;if(u<=0)continue;
+    const rise=Math.round(Math.sin(u/2.4*Math.PI)*21),drift=Math.round((i%5-2)*u*2);
+    ctx.globalAlpha=opacity*Math.max(0,1-u/2.4);
+    ctx.fillRect(Math.round(x)+dir*42+drift,y-7-rise,1+i%2,2);
+   }
+  }
+  ctx.restore();
+ }
  function rareHit(x,y,t){
   if(dark()>.6)for(let i=0;i<3;i++){const [rx,ry]=rarePos('glow_jelly',i,t);if(Math.hypot(x-rx,y-ry)<9)return ['glow_jelly',rx,ry];}
   if(dark()>.6)for(let i=0;i<2;i++){const [rx,ry]=RARE_AT.glow_shrimp[i];if(Math.hypot(x-rx,y-ry)<9)return ['glow_shrimp',rx,ry];}
   for(let i=0;i<3;i++){const [rx,ry]=rarePos('lanternfish',i,t);if(Math.hypot(x-rx,y-ry)<8)return ['lanternfish',rx,ry];}
   {const [rx,ry]=RARE_AT.deep_octopus[0];if(Math.hypot(x-rx,y-ry+3)<9)return ['deep_octopus',rx,ry-3];}
-  if(rareOn('humpback')&&(hbA??1)>.6){const [rx,ry,,ef]=whalePos(t);if(ef>.6&&Math.abs(x-rx)<20&&Math.abs(y-ry)<10)return ['humpback',rx,ry];}
   return null;}
  hooks.click.push((x,y)=>{const t=C().state.time||realClock,h=rareHit(x,y,t);if(!h)return false;const [k]=h;
-  if(k==='humpback'){walk(Math.min(1015,C().state.x+200)).then(()=>{const [wx,wy]=whalePos(C().state.time||realClock);snap(k,wx,wy);});return true;}
   if(!swim()){toast('那是'+nameK(k)+'，换上泳装才能游过去拍。');return true;}
   C().goTo(h[1],'dive',h[2]+8,()=>{const [k2,rx,ry]=rareHit(C().state.x,C().state.y-8,C().state.time||realClock)||h;snap(k2,rx,ry);});return true;});
 
@@ -364,6 +393,24 @@
  const oldFT2=festivalToday;festivalToday=function(){if(sim.place==='summer_test'){const f=fest();if(f)return f.n;const d=Math.floor(sim.t/1440)+1;return d===30?'生日':d===14||d===56?'纪念日':null;}return oldFT2();};
  const festDone=k=>{const b=M();return b.fest[k+'@'+today()];},festMark=k=>{const b=M();b.fest[k+'@'+today()]=1;for(const o of Object.keys(b.fest))if(+o.split('@')[1]<today()-30)delete b.fest[o];};
  const goBay=async x=>await L.reachBay(true)&&await walk(x);
+ function swimToWhale(){
+  const c=C(),s=c.state;
+  const routeX=()=>whalePos(s.time)[0]-52;
+  window.summerFloat?.endSurf();window.summerFloat?.stand();
+  s.rush=performance.now();
+  if(!c.goTo(routeX(),'dive',SURF))return Promise.resolve(false);
+  const target=s.target;
+  return new Promise(resolve=>{
+   const timer=setInterval(()=>{
+    const close=Math.abs(s.x-routeX())<24&&Math.abs(s.y-SURF)<4;
+    if(sim.place!=='summer_test'||s.inside||s.market||s.door||s.target!==target||close){
+     clearInterval(timer);
+     if(s.target===target)s.target=null;
+     resolve(close&&inBay()&&!s.market&&!s.door);
+    }else target.x=routeX();
+   },120);
+  });
+ }
  const A={
   hat:()=>scene(async()=>{if(!await goBay(C().state.x<700?C().state.x:880))return;hatFx.push({x:C().state.x,y:C().gr(C().state.x)-24,t0:realClock,me:1});speakBay('飞吧——！');
    if(!festDone('hat')){festMark('hat');mood(MOOD.fest);log('草帽节：把草帽抛向风里，看它飞过了整片海湾。');}}),
@@ -380,7 +427,7 @@
    await say(L.P.alo.name,'椰子要挑圆的，挖空了，壳上钻几个小孔。');await say(nameOf(),'像这样？……啊，钻歪了。');await say(L.P.alo.name,'歪的也好看，晚上光漏出来是星星的形状。');
    festMark('make');need('fun',12);need('social',10);mood(MOOD.fest);log('椰灯夜：白天跟阿洛学做椰壳灯，钻歪了一个孔，晚上要亲手把它放进海里。');});},
   whaledive:()=>{if(!(C().state.suit&&C().state.suit!=='clothes'))return showHint('先去更衣室换上泳装，才能下海找鲸鱼');
-   scene(async()=>{if(!await L.reachBay(true))return;const x=Math.max(1250,Math.min(3800,whalePos(realClock)[0]+40));speakBay('鲸鱼在哪儿……');await new Promise(r=>C().goTo(x,'dive',SURF,r));
+   scene(async()=>{if(!await L.reachBay(true))return;speakBay('鲸鱼在哪儿……');if(!await swimToWhale())return;
     await say(nameOf(),'好大……它在看我吗？');need('fun',15);if(!festDone('whaledive')){festMark('whaledive');mood(MOOD.whale);log('鲸歌节：游到了座头鲸身边，它慢慢地从旁边游了过去。');}showHint('座头鲸就在附近，点它可以拍照');});},
   watch:()=>scene(async()=>{if(!await goBay(960))return;await say('解说员','第三号选手上浪了！——完美的转身！');await say(nameOf(),'好厉害！！');need('fun',20);if(!festDone('watch')){festMark('watch');mood(MOOD.wave);}}),
   contest:()=>{if((M().act.surf||0)<3)return showHint('先多冲几次浪，能站起来了再来报名');if(festDone('contest'))return showHint('今天已经比过了');
@@ -421,7 +468,7 @@
  // 阿洛's lodge, where she rests until the lowest need is back up. Only the player's own 回家 flies her home.
  let leavingBay=false,care=null;
  const oCmd=command;command=function(act,item){if(sim.place==='summer_test'&&act==='go_home')leavingBay=true;return oCmd(act,item);};
- function lodgeCare(){if(care||window.summerLodge?.svc)return;const low=Object.entries(sim.needs).filter(([k])=>k!=='social').sort((a,b)=>a[1]-b[1])[0];care={need:low[0]};
+ function lodgeCare(){if(care||window.summerLodge?.svc||window.seasonAuto?.bayPlayerRecent())return;const low=Object.entries(sim.needs).filter(([k])=>k!=='social').sort((a,b)=>a[1]-b[1])[0];care={need:low[0]};
   speakBay(pick({hunger:['回旅舍吃点东西','肚子饿了，回旅舍'],energy:['回旅舍睡一会儿','好困，回旅舍歇歇'],hygiene:['回旅舍洗个澡','一身沙子，回旅舍冲冲'],bladder:['去旅舍上个厕所'],social:['回旅舍和阿洛聊聊天'],fun:['回旅舍歇一会儿']}[care.need]||['回旅舍歇一会儿']));
   sim.mode='act';sim.act='season_explore';sim.actEnd=Infinity;const c=C();
   c.state.target=null;}   /* the timer below walks her there, swimming ashore first */
@@ -434,7 +481,14 @@
  setInterval(()=>{if(sim.place==='summer_test'&&!leavingBay&&sim.outBack!=null){sim.outBack=null;sim.outWhy=null;}},1000);
  const afterCare=()=>{const m=sim.t%1440;if(m>=19*60||m<6*60)return;speakBay('歇好了，出去玩～');setTimeout(()=>{try{C().leave();}catch(e){}},900);};   // evenings she stays in (season_auto.js)
  let careT=0,careStuck=0;setInterval(()=>{if(!care||sim.place!=='summer_test'||wiping)return;   // a timer: the bay's draw hooks stop while she is inside
-  const s=C().state;if(!s.inside){if(!s.target&&!s.door&&!L.isBusy()&&!storyLocked()){if(s.market)C().beginDoor('bay');else if(s.y>SURF+3)C().goTo(1050,'dive',SURF);else C().enter();careStuck=Date.now();}else if(s.target&&Date.now()-careStuck>15000){s.target=null;careStuck=Date.now();}return;}   /* from the sea she swims ashore first */
+  const s=C().state;if(!s.inside){
+   if(window.seasonAuto?.bayPlayerRecent()||s.market&&sim.needs[care.need]>=25)return;
+   if(!s.target&&!s.door&&!L.isBusy()&&!storyLocked()){
+    if(s.market)C().beginDoor('bay');else if(s.y>SURF+3)C().goTo(1050,'dive',SURF);else C().enter();
+    care.route=s.target;careStuck=Date.now();
+   }else if(s.target&&s.target===care.route&&Date.now()-careStuck>15000){s.target=null;s.after=null;}
+   return;
+  }   /* from the sea she swims ashore first */
   {const sl=summerLodge,id=sl.NEED_SPOT[care.need];if(id){careT=0;if(sl.svc||s.target||seasonHouse.busy())return;
    if(!care.used){care.used=true;sl.use(id,true);return;}
    care=null;afterCare();return;}}   /* the lodge's furniture runs the home's own act; once it is over she heads out again */   /* the lodge's own furniture: bed, shower, stove... */
