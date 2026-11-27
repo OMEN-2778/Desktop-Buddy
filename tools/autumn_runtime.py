@@ -44,7 +44,7 @@ def image_uri(image):
 
 def story_cast():
  return {
-  '阿简': replace(doll.BOY,eye_shape='bean',hair_style='part37',hair=tuple(ramp_from(dict(SWATCHES['hair'])['栗色'])),accessories=(),
+  '阿简': replace(doll.BOY,eye_shape='bean',hair_style='quiff',hair=tuple(ramp_from(dict(SWATCHES['hair'])['奶茶'])),accessories=(),
                 top_style='detective_coat',top=tuple(P.wood),
                 bottom_style='trousers',bottom=tuple(P.hair_black)),
   '程青': replace(doll.GIRL,eye_shape='cat',hair_style='twist',accessories=(),hair=tuple(P.hair_brown),top_style='suit',top=tuple(P.teal),bottom_style='trousers',bottom=tuple(P.sea_grey)),
