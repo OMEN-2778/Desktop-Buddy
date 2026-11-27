@@ -1327,9 +1327,6 @@ function render() {
     questMarkers = [];
     try {
       renderOutside();
-      if (sim.mode==="down" && holding && !window.seasonMapTest?.active()) {
-        vctx.save();vctx.scale(view.width/W,view.height/H);drawRevive(vctx);vctx.restore();
-      }
       if (sim.place === scene) paintQuestMarkers();
     } finally { questMarkers = previousMarkers; }
     return;
