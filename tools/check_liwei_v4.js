@@ -429,6 +429,9 @@ const { chromium } = require("playwright"),
                 throw Error("ending committed while reconsidering");
             }
             await drain();
+            if(k==="note" && (s.jianAtOffice() ||
+                !s.actors().some(n=>n.name==="阿简"&&n.loc==="lookout")))
+              throw Error("Jian should wait only at the summit after the note");
             if (k === "S07" && branch) {
               while (wiping) await wait(30);
               if (sim.place !== "home") throw Error("return " + sim.place);
@@ -477,6 +480,9 @@ const { chromium } = require("playwright"),
           const cast = socialState.contacts.filter(c => c.id.startsWith("autumn_"));
           if (cast.length !== 9 || !cast.find(c => c.id === "autumn_child")?.child)
             throw Error("cast missing after reload");
+          if(c.nearest(418,225).y<237 || c.DATA.landmarks.some(p=>p.id==="pavilion"))
+            throw Error("summit fence or telescope still permits movement");
+          if(c.DATA.town.egrets.length!==4)throw Error("missing egret animation frames");
           c.visit("detective_home");
           const walk = () => {
             for (let i=0;i<4000&&(c.state.target||c.state.door);i++) {

@@ -1476,10 +1476,13 @@ function makeSeason_autumn(opts, DATA) {
         }
         if (state.target) {
             const target = state.route.at(-1) || state.target;
-            const goal = state.goal;
-            state.route = plan(target.x, target.y);
-            state.target = state.route.shift() || null;
-            state.goal = goal;
+            if (privateOffice(target.x,target.y)) clearRoute();
+            else {
+                const goal = state.goal;
+                state.route = plan(target.x, target.y);
+                state.target = state.route.shift() || null;
+                state.goal = goal;
+            }
         }
         updateStatus();
     }

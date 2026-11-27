@@ -411,18 +411,9 @@ def draw(theme, frame):
     for i,entry in enumerate(BLOCKS):
         depth=entry[3]*2-(9 if entry[0]=='clinic' else 0)
         c.facade(depth,house,i,entry)
-    # Coal and timber yard with a loading gantry, angled belt, corrugated sheds,
-    # and stockpiles stacked inside retaining bins alongside the old haul road.
+    # The small sheds sit along the old haul road.
     c.roof_colors=P.sea_grey
     for x in (406,468,530):c.facade(1573,work_shed,x,1573,51,x)
-    for x in (412,453,494,535):
-        c.box(x,1614,41,35,P.walnut[1])
-        c.poly([(x,1600),(x+9,1606),(x+19,1599),(x+39,1621)],P.slate[0])
-        for j in range(30):
-            dx=r.randrange(4,35);y=1622-r.randrange(0,max(2,16-abs(dx-19)))
-            c.box(x+dx,y,3,2,r.choice([P.steel[1],P.slate[1],P.slate[2]]))
-        for j in range(0,39,9):c.box(x+j,1629,2,21,P.wood[3])
-        c.box(x,1631,41,2,P.wood[2])
     c.roof_colors=P.oat;c.facade(1722,work_shed,506,1722,70,83)
     plants = [(1640,146,10,.54),(1635,339,11,.54),(1572,580,12,.68)]
     plants += [(1794,x,seed,.68) for seed,x in enumerate((756,863,982),20)]
@@ -600,7 +591,7 @@ def build_review():
     (OUT/'layout.json').write_text(json.dumps(dict(
         size=[W,H],streets=STREETS,places=PLACES,facades=facades,
         summitSlice=SUMMIT_SLICE,ridgeY=RIDGE_Y,runwayFence=RUNWAY_FENCE,airportGate=AIRPORT_GATE,
-        obstacles=[RUNWAY_FENCE,(224,200,612,236),(531,241,550,255),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]
+        obstacles=[RUNWAY_FENCE,(214,200,628,236),(531,241,550,255),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]
     ),separators=(',',':')))
 
 if __name__=='__main__':
