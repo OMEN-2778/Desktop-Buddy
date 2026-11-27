@@ -31,6 +31,27 @@
     return [name, { look, ramps: doll.rampsOf(look), cache: new Map(),
       kid: name === "老郑的孙子", ph: 791 * (i + 1), dist: 0, dir: 0 }];
   }));
+  const glassesCue = "我：你银行的还是法院的？你别往里迈！";
+  const glassesStep = scenes.S00.rows.indexOf(glassesCue);
+  const ajianWardrobe = new Map(
+    ["sunglasses", "flat_glasses", "scarf"].map(accessory => {
+      const look = doll.normalize({ ...models.get("阿简").look, acc: [accessory] });
+      return [accessory, { look, ramps: doll.rampsOf(look), cache: new Map() }];
+    })
+  );
+  let glassesGestureAt = -Infinity;
+
+  function ajianAccessory() {
+    if (sim.place === "front" && !p.done.includes("S00")) {
+      const step = p.chapter === "S00" ? p.index : 0;
+      if (step < glassesStep || step === glassesStep && performance.now() - glassesGestureAt < 180)
+        return "sunglasses";
+    }
+    if (p.chapter === "S03") return "flat_glasses";
+    if (p.chapter === "S14") return "scarf";
+    return null;
+  }
+
   function frameFor(name, actor, restingPose) {
     const model = models.get(name);
     if (!model) return null;
@@ -50,7 +71,10 @@
     if (actor?.lookAt && !model.v) frame.look = actor.lookAt;
     if (active && name === speaker && expressions[face]) frame.expr = expressions[face];
     if (restingPose === "sleep") frame.expr = "sleepy";
-    return npcCanvas(model, frame, restingPose === "sit" ? "sit" : pose, false);
+    const accessory = name === "阿简" ? ajianAccessory() : null;
+    if (name === "阿简" && active && p.chapter === "S00" && p.index === glassesStep &&
+      performance.now() - glassesGestureAt < 360 && !reduceMotionUI) frame.wave = 1;
+    return npcCanvas(ajianWardrobe.get(accessory) || model, frame, restingPose === "sit" ? "sit" : pose, false);
   }
   const colors = {
     阿简: "#1c426d",
@@ -689,6 +713,8 @@
     const sequence = rows();
     pastActions = completedActions(sequence);
     const row = sequence[p.index];
+    if (p.chapter === "S00" && row === glassesCue)
+      glassesGestureAt = reduceMotionUI ? -Infinity : performance.now();
     if (!row) {
       finish();
       return;
