@@ -144,7 +144,6 @@ def town_runtime_data():
  explicit={
   'airstrip': [gate_x-22,gate_y-23,45,26],
   'lookout': [397,224,38,42],
-  'pavilion': [526,218,35,43],
   'nursery': [391,1153,81,58],
   'plaza': [408,1133,146,28],
   'market': [404,1397,158,40],
@@ -185,7 +184,6 @@ def town_runtime_data():
  for key in public_ids:
   x,y=stand(*(n*2 for n in positions[key]))
   name,need=zones[key]
-  if key=='pavilion':name='山顶望远镜'
   landmarks.append(dict(id=key,name=name,need=need,x=x,y=y,rect=explicit[key],layer=artwork.get(key)))
  streets=[]
  for i,(left,right,y) in enumerate(((81,349,421),(82,350,495),(82,350,579),
@@ -225,9 +223,10 @@ def town_runtime_data():
                        lamps=PARK_LAMPS+STREET_LAMPS,
                        runway=dict(bounds=layout['runwayFence'],plane=uri('airport_plane.png')),
                        clouds=[image_uri(cloud(i).to_image()) for i in range(3)],parkWalk=[(398,1206),(606,1206),(606,1290),(398,1290)],
+                       egrets=[uri(f"liwei_egret_{pose}.png") for pose in ("stand","feed","wing_up","wing_down")],
                        bathSteam=[680,1032],swingSeat=[429,1268],
                        vendors=[(*stand(x,y),shop) for x,y,shop in
-                                [(425,1446,'market'),(483,1446,'market'),(544,1446,'market'),(569,1446,'chestnut')]],
+                                [(425,1446,'market'),(483,1446,'market'),(544,1446,'market'),(567,1436,'chestnut')]],
                        streets=layout['streets'],obstacles=layout['obstacles'],layers=layout['facades'],
                        oldLandmarks=A.runtime_landmarks()),
              landmarkSprites=artwork_sprites,scenes=[],backdrop={},front=None,boat=None,foliage=[],foliageSheets=[],foreground=[],signs=[],

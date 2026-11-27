@@ -139,6 +139,10 @@ const seasonalTest=(function(){
   vctx.imageSmoothingEnabled=false;vctx.clearRect(0,0,view.width,view.height);
   if(projection.top>0)vctx.drawImage(R,0,0,R.width,1,0,0,view.width,projection.top*scaleY+1);
   vctx.drawImage(R,0,projection.top*scaleY,view.width,c.canvas.height*scaleY);
+  if(sim.mode==="down"&&holding){
+   const point=projection.scene(c.state.x,c.state.y);
+   vctx.save();vctx.scale(view.width/W,scaleY);drawRevive(vctx,point);vctx.restore();
+  }
   if(sim.place==='spring_test'||sim.place==='summer_test'&&c.state.inside)window.seasonNight?.draw(vctx,view.width,view.height,c,sim.place==='spring_test'?'spring':'summer');
   if(sim.place==='summer_test'){
    window.summerMore?.nightPass?.(vctx,view.width,view.height);

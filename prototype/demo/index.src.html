@@ -1260,8 +1260,8 @@ function drawRescue(ctx, p, elapsed) {
   ctx.fillStyle = '#f7f6fb'; ctx.fillRect(cx - 18, meterY + 1, Math.round(37 * k), 3);
   ctx.restore();
 }
-function drawRevive(ctx) {
-  const p = here(), cx = Math.round(p.x), cy = Math.round(p.y) - 8;
+function drawRevive(ctx,p=here()) {
+  const cx = Math.round(p.x), cy = Math.round(p.y) - 8;
   const elapsed = holding ? realClock - holding.t0 : 0;
   const k = Math.min(1, elapsed / REVIVE_S);
   if (holding) drawRescue(ctx, p, elapsed);
@@ -1327,6 +1327,9 @@ function render() {
     questMarkers = [];
     try {
       renderOutside();
+      if (sim.mode==="down" && holding && !window.seasonMapTest?.active()) {
+        vctx.save();vctx.scale(view.width/W,view.height/H);drawRevive(vctx);vctx.restore();
+      }
       if (sim.place === scene) paintQuestMarkers();
     } finally { questMarkers = previousMarkers; }
     return;
@@ -1751,8 +1754,15 @@ function addMood(id, { vars = {}, diary = true, words = true } = {}) {
   const had = moods.has(id);
   moods.set(id, { until: m.min ? sim.t + (m.fixedDuration?m.min:personalityMoodDuration(m)) : null, t: sim.t, vars: had ? moods.get(id).vars : vars });
   if (had) return;                 // refreshed quietly
-  if (diary && m.diary) log(fill(one(m.diary), vars));
-  if (words && m.say) speak(fill(pick(m.say), vars));
+  const cityOutside=sim.place==="autumn_test"&&!window.seasonMapTest?.state.autumn.state.inside;
+  const outdoorWeather=cityOutside&&{
+    rainy:["雨落在石板路和屋檐上，路面一点点湿了。","雨打在街上……"],
+    rainbow:["雨停了，栗尾市的屋顶上方挂起一道彩虹。","快看彩虹！"],
+    thunder:["雷声从山那边滚过来，街上的人加快了脚步。","打雷了。"],
+    firstSnow:["雪花落在街沿上，石板路一点点变白。","下雪了。"]
+  }[id];
+  if (diary && m.diary) log(outdoorWeather?.[0] || fill(one(m.diary), vars));
+  if (words && m.say) speak(outdoorWeather?.[1] || fill(pick(m.say), vars));
 }
 function emotion(forCollapse=false) {
   const sum = {}, last = {};

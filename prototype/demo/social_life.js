@@ -141,6 +141,7 @@ function visitNotice(title,text){
 }
 function inviteHome(id,proactive=false){
   const c=socialState.contacts.find(c=>c.id===id);if(!c){visitNotice('暂时不能邀请','这位朋友已经不在联系人名单里了。');return false;}
+  if(declineJianVisit(c))return false;
   if(friendVisit&&!atFriendHome()){visitNotice("正在做客","先安排好这次行程，再邀请朋友吧。");return false;}
   if(friendOutingState){visitNotice('已经约好出门','先结束同行，再邀请朋友来家里吧。');return false;}
   let reason='';
@@ -270,7 +271,7 @@ function tickSocialLife(dt){
   if(!Number.isFinite(socialState.nextVisit))socialState.nextVisit=sim.t+1440;
   if(friendVisit||friendOutingState||sim.t<socialState.nextVisit||socialState.guest||!canReceiveCall()||sim.place!=='home'||hour()<10||hour()>=20)return;
   socialState.nextVisit=sim.t+720+Math.random()*720;
-  const eligible=sortedContacts().filter(c=>(c.family?familyMayOfferVisit(c):c.affinity>=20)&&sim.t-(c.lastVisitOffer??-Infinity)>2*1440*personalityCallFactor(c));
+  const eligible=sortedContacts().filter(c=>c.id!=="autumn_jian"&&(c.family?familyMayOfferVisit(c):c.affinity>=20)&&sim.t-(c.lastVisitOffer??-Infinity)>2*1440*personalityCallFactor(c));
   if(eligible.length&&Math.random()<.4){const c=pick(eligible);c.lastVisitOffer=sim.t;requestIncomingCall(c.id,'visit');}
 }
 function resolveVisitOffer(action,automatic=false){
@@ -288,6 +289,7 @@ function resolveVisitOffer(action,automatic=false){
   }
 }
 function showVisitOffer(c,reason=null){
+  if(declineJianVisit(c))return;
   // Most visits are simply about company, with a smaller variety of funny excuses.
   if(c.family&&!reason)reason=['想坐车来看看你','这阵子能挪出半天，想坐车去看看你。你今天在家吗？','好呀，我在家等你','这次有点不巧，咱们另约一天'];
   reason||=Math.random()<.45?personalityVisitReason(c):Math.random()<.72?SOCIAL_TEXT.visitReasons[0]:pick(SOCIAL_TEXT.visitReasons.slice(1));

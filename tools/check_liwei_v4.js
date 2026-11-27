@@ -486,16 +486,26 @@ const { chromium } = require("playwright"),
           walk();
           [...c.modal.querySelectorAll("button")].find(b=>b.textContent==="进屋").click();
           walk();
-          sim.t=Math.floor(sim.t/1440)*1440+1360;
+          if(s.jianAtOffice() || autumnHome.residentHit(175,91))
+            throw Error("post-finale Jian should not resume office simulation");
+          if(branch){
+            if(c.goTo(241,50)||c.goTo(289,108))throw Error("hotel guest entered private office");
+            c.pick(120,45);
+            await wait(350);
+            if(!peerHud.classList.contains("story-event") || !line().includes("个人生活区域"))
+              throw Error("missing office privacy notice");
+            stepLine();await wait(350);
+            c.leave("hotel","energy");walk();
+          }
           autumnHome.click("bed");
           walk();
-          for(let i=0;i<600;i++)autumnHome.tickResident(.1);
-          const verifyBeds=()=>{
-            if(c.state.x!==autumnHome.SPOTS.bed.x||sim.act!=="sleep"||
-                c.state.resident?.x!==102||c.state.resident.y!==50||autumnHome.svc?.id!=="bed")
-              throw Error("double occupancy or sleep restore");
+          const verifyBed=()=>{
+            if(c.state.x!==autumnHome.SPOTS.bed.x||sim.act!=="sleep"||autumnHome.svc?.id!=="bed")
+              throw Error("sleep restore at chosen lodging");
           };
-          verifyBeds();restore(snapshot());verifyBeds();
+          verifyBed();restore(snapshot());verifyBed();
+          if(requestFriendVisit("autumn_jian")||inviteHome("autumn_jian")||canOfferFriendVisit(cast.find(c=>c.id==="autumn_jian")))
+            throw Error("Jian may not use a randomized home visit");
         }, branch);
         assert.deepEqual(err, []);
         console.log("PASS route", branch);

@@ -511,6 +511,14 @@
     const spot = where(k === "S09" ? "canteen" : "reeds");
     if (Math.hypot(world.x - spot.x, world.y - spot.y) < 8) begin(k);
   }
+  function jianAtOffice() {
+    return p.done.includes("S02") && p.done.includes("S03") && !p.done.includes("note") &&
+      !next().some(k=>k==="S11"||k==="S12A"||k==="S12B"||k==="note");
+  }
+  function eventNotice(words) {
+    if(active)return;
+    speech.show("事件",words,{asNpc:true,variant:"event",last:true,advance:()=>speech.hide()});
+  }
   function facilityChoices(id) {
     const options = [];
     const k = next().find(k => scenes[k].loc === id || (id === "reeds" && k === "S08A"));
@@ -887,12 +895,16 @@
     }
     if (action === "栗尾市主线剧情完结") {
       sceneText.classList.add("liwei-finale");
+      sceneText.innerHTML='<i class="liwei-roll left" aria-hidden="true"></i><i class="liwei-roll right" aria-hidden="true"></i><span></span>';
+      sceneText.querySelector("span").textContent=action;
       if (!reduceMotionUI) sceneText.animate([
-        {opacity:0, transform:"translate(-50%,-50%) scale(.82)", letterSpacing:".01em"},
-        {opacity:1, transform:"translate(-50%,-50%) scale(1.06)", letterSpacing:".16em", offset:.28},
-        {opacity:1, transform:"translate(-50%,-50%) scale(1)", letterSpacing:".12em", offset:.78},
-        {opacity:0, transform:"translate(-50%,-50%) scale(1)", letterSpacing:".12em"},
-      ], {duration:3000,fill:"both"});
+        {"--unroll":".02",opacity:0},
+        {"--unroll":".28",opacity:1,offset:.13,easing:"cubic-bezier(.3,.07,.3,1)"},
+        {"--unroll":"1.04",opacity:1,offset:.41},
+        {"--unroll":"1",opacity:1,offset:.49},
+        {"--unroll":"1",opacity:1,offset:.86},
+        {"--unroll":"1",opacity:0}
+      ], {duration:4400,fill:"both"});
     }
     if (action === "维修队封住了尾矿管") p.cueLoc = "pier";
     if (action === "旧炉停运") world.stage = 3;
@@ -901,7 +913,7 @@
     }
     if (action !== "栗尾市主线剧情完结") showEvent(action);
     const duration = action.includes("主线剧情完结")
-      ? 3000
+      ? 4400
       : action.startsWith("取得")
         ? 1600
         : movementCues.test(action) ? 1850 : 1450;
@@ -1126,7 +1138,7 @@
       if (seed != null) actor(seed, loc, 0, p.enrolled ? "?" : "!", false);
     }
     ["detective_home", "mine_office", "canteen", "clinic", "hut"].forEach(
-      (loc, seed) => actor(seed, loc, 0, false, false),
+      (loc, seed) => {if(seed!==0 || jianAtOffice())actor(seed, loc, 0, false, false);},
     );
     for(const [seed,loc,slot] of [[5,"notice",0],[6,"canteen",1],[7,"mine_office",1],[8,"plaza",0]]){
       if(!p.metContacts?.["autumn_"+ids[seed]]||(seed===7&&p.ending==="B"&&p.done.includes("B2")))continue;
@@ -1333,6 +1345,8 @@
   window.liweiStory = {
     locked,
     facilityChoices,
+    eventNotice,
+    jianAtOffice,
     lodging,
     objective,
     unlocked,

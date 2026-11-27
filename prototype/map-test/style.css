@@ -239,3 +239,24 @@ body:has(.social-sheet.fu-big-sheet:not([hidden])) #diaryBox{visibility:hidden} 
   .fu-detail .fu-actions { justify-content: flex-start; }
   .fu-detail button { white-space: nowrap; }
 }
+
+@property --unroll { syntax: "<number>"; inherits: true; initial-value: 1; }
+.liwei-caption.liwei-finale {
+ --unroll:1; z-index:24; min-width: min(270px,78%); background:none!important;
+ border:0!important; box-shadow:none!important; color:#503426!important;
+ text-shadow:1px 1px #f6db96!important; isolation:isolate; padding:15px 10px!important;
+}
+.liwei-finale::before {
+ content:""; position:absolute; inset:3px 3px; z-index:-1; transform:scaleX(var(--unroll));
+ background:repeating-linear-gradient(0deg,#e8ca89 0 2px,#ecd294 2px 5px);
+ box-shadow: inset 0 0 0 2px #9c6c44,inset 0 0 0 5px #f1d898,2px 3px #35263988;
+ clip-path:polygon(0 7%,4% 7%,4% 0,96% 0,96% 7%,100% 7%,100% 93%,96% 93%,96% 100%,4% 100%,4% 93%,0 93%);
+}
+.liwei-roll {position:absolute;top:0;bottom:0;width:8px;z-index:2;
+ background:linear-gradient(90deg,#513023 0 2px,#a26d41 2px 4px,#e3ad65 4px 6px,#603b2b 6px);
+ clip-path:polygon(2px 0,100% 0,100% calc(100% - 2px),calc(100% - 2px) 100%,0 100%,0 2px,2px 2px)}
+.liwei-roll.left {right:calc(50% + (50% - 7px)*var(--unroll));}
+.liwei-roll.right {left:calc(50% + (50% - 7px)*var(--unroll));}
+.liwei-finale span {display:inline-block;font-size:clamp(12px,3vw,22px);letter-spacing:.1em;animation:liwei-ink 4.4s both;}
+@keyframes liwei-ink {0%,38%{opacity:0;clip-path:inset(0 100% 0 0)}60%,100%{opacity:1;clip-path:inset(0)}}
+@media(prefers-reduced-motion:reduce){.liwei-finale span{animation:none}}

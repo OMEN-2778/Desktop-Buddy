@@ -261,34 +261,9 @@ def warm_haze(image):
     pixels[:,:,:3] = colors.round().astype(np.uint8)
     return Image.fromarray(pixels)
 
-def headframe(c,x,y):
-    for dx in (0,45):
-        c.line([(x+dx,y),(x+9+dx//2,y-83)],P.walnut[0],6)
-        c.line([(x+dx-1,y),(x+8+dx//2,y-83)],P.wood[2],2)
-    for yy in range(0,69,18):
-        a=x+yy//9;b=x+44-yy//6
-        c.line([(a,y-yy),(b,y-yy-17),(a+1,y-yy-17),(b,y-yy)],P.wood[1],3)
-    c.box(x+2,y-83,40,6,P.walnut[0]);c.box(x+2,y-84,40,2,P.wood[3])
-    c.oval(x+23,y-96,14,14,P.wood[0]);c.oval(x+23,y-96,11,11,P.mustard[2]);c.oval(x+23,y-96,9,9,P.slate[0])
-    for i in range(8):
-        a=i*math.pi/4;c.line([(x+23,y-96),(x+23+int(9*math.cos(a)),y-96+int(9*math.sin(a)))],P.wood[3])
-    c.line([(x+27,y-108),(x+105,y-39)],P.steel[0]);c.line([(x+30,y-106),(x+108,y-37)],P.steel[1])
-
 def work_shed(c,x,base,w,seed):
     c.roof_depth=36
     c.building(x,base,w,1,'brick',None,seed)
-
-def lookout_fittings(c):
-    # Open stone terrace, with benches and a telescope facing the valley.
-    for x in (381,440):
-        c.facade(244,City.bench,x,244)
-    def telescope(c):
-        c.box(533,251,17,2,P.pave[1]);c.box(539,236,5,16,P.steel[1])
-        c.box(540,236,1,16,P.steel[3])
-        c.line([(532,232),(549,224)],P.steel[0],6)
-        c.line([(532,231),(549,223)],P.steel[2],2)
-        c.line([(548,222),(552,228)],P.teal[3],3)
-    c.facade(253,telescope)
 
 def airport_fence(c):
     left,north,right,south=RUNWAY_FENCE
@@ -420,10 +395,9 @@ def draw(theme, frame):
         place_plant(c,tree_sprite(seed,plant_theme,frame,1),x,y)
     # Mountaintop rail, viewing pavilion and paved switchback.
     c.facade(228,City.rail,(224,228),(612,228),True)
-    lookout_fittings(c)
     for y in range(303,376,7):c.box(383,y,84,2,P.pave[1]);c.box(383,y,84,1,P.linen[2])
     # Colliery above the landing strip. A timber headframe, loading bin and coal tubs.
-    c.cliff(320,646,414,472,44);headframe(c,342,533)
+    c.cliff(320,646,414,472,44)
     c.roof_colors=P.slate;c.facade(530,work_shed,460,530,112,88);c.chimney(586,529,94)
     railway(c,375,572,542)
     for x,seed in ((400,9),(449,19),(507,31)):
@@ -449,7 +423,7 @@ def draw(theme, frame):
             c.box(x+dx,y,3,2,r.choice([P.steel[1],P.slate[1],P.slate[2]]))
         for j in range(0,39,9):c.box(x+j,1629,2,21,P.wood[3])
         c.box(x,1631,41,2,P.wood[2])
-    headframe(c,420,1723);c.roof_colors=P.oat;c.facade(1722,work_shed,506,1722,70,83)
+    c.roof_colors=P.oat;c.facade(1722,work_shed,506,1722,70,83)
     plants = [(1640,146,10,.54),(1635,339,11,.54),(1572,580,12,.68)]
     plants += [(1794,x,seed,.68) for seed,x in enumerate((756,863,982),20)]
     c.facade(1764,City.bench,148,1764)
@@ -626,7 +600,7 @@ def build_review():
     (OUT/'layout.json').write_text(json.dumps(dict(
         size=[W,H],streets=STREETS,places=PLACES,facades=facades,
         summitSlice=SUMMIT_SLICE,ridgeY=RIDGE_Y,runwayFence=RUNWAY_FENCE,airportGate=AIRPORT_GATE,
-        obstacles=[RUNWAY_FENCE,(531,241,550,255),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]
+        obstacles=[RUNWAY_FENCE,(224,200,612,236),(531,241,550,255),(373,239,408,245),(433,239,466,245),(142,1964,171,1978)]
     ),separators=(',',':')))
 
 if __name__=='__main__':

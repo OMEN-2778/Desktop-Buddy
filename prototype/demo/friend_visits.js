@@ -47,7 +47,7 @@ function restoreFriendVisit(raw){
   }
   return;
  }
- const c=socialState.contacts.find(c=>c.id===raw?.id),home=c&&friendHomeFor(c);
+ const c=socialState.contacts.find(c=>c.id===raw?.id),home=c&&c.id!=="autumn_jian"&&friendHomeFor(c);
  if(!c||!home||raw?.phase!=='inside'){
   friendVisit=null;sim.place='home';sim.route=[[D.spots.front_door[1],FLOOR_Y[0]]];sim.s=sim.target=0;sim.mode='idle';sim.act=null;return;
  }
@@ -103,8 +103,14 @@ function friendVisitRestReply(c){
   :['我还没起呢……等我睡醒再来吧','这么早呀？我还裹着被子呢，晚点再约嘛','还没洗漱，家里也没收拾好，等白天再来呗'];
  showSay(pick(lines),contactName(c)+'：',c);log(`想去${contactName(c)}家坐坐，对方正在休息，约好晚点再联系。`);return true;
 }
+function declineJianVisit(c) {
+ if(c?.id!=="autumn_jian")return false;
+ showPeerSay("事务所这阵子堆满了卷宗，我也走不开。咱们先电话聊，改天在栗尾市碰头。",contactName(c)+"：",c);
+ return true;
+}
 function requestFriendVisit(id,incoming=false){
  const c=socialState.contacts.find(c=>c.id===id);if(!c)return false;
+ if(declineJianVisit(c))return false;
  if(c.family){showHint('老家离这里太远了。');return false;}
  if(friendVisit&&(!atFriendHome()||c.id===friendVisit.id)){showHint(atFriendHome()?'已经在这位朋友家啦。':'正在去朋友家的路上，稍等一下吧。');return false;}
  let reason=friendHousePreview?'先退出房屋预览，再出发吧。':socialState.guest?'家里还有客人，先陪完客人再出门吧。':friendOutingState?'已经约好一起出门，先结束同行吧。':asleep()||sim.mode==='down'||wiping||cardHolds()?'先忙完眼前的事情，再去做客吧。':c.child?'小朋友还不能自己安排接待，先和家里人说好吧。':null;
@@ -311,7 +317,7 @@ function renderFriendHome(){
  if(sim.mode==='down'&&holding){const elapsed=realClock-holding.t0;drawRescue(vctx,p,elapsed);if(elapsed>=REVIVE_S)revive();}
  vctx.restore();return true;
 }
-function canOfferFriendVisit(c){return !!c&&!c.child&&!c.family&&c.affinity>=20&&!friendVisit&&!socialState.guest&&!friendOutingState&&hour()>=9&&hour()<20;}
+function canOfferFriendVisit(c){return !!c&&c.id!=="autumn_jian"&&!c.child&&!c.family&&c.affinity>=20&&!friendVisit&&!socialState.guest&&!friendOutingState&&hour()>=9&&hour()<20;}
 function finishFriendVisitInvitation(c){
  if(!c||c.family)return;log(`${contactName(c)}打电话邀请我去家里坐坐。`);if(!requestFriendVisit(c.id,true))showSay('没事，那下次方便了再过来吧。',contactName(c)+'：',c);
 }

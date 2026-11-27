@@ -90,7 +90,7 @@ const autumnHome=(function(){
  // Keep the resident on his own seat and berth. Persist his current position with the city.
  function residentGoal(){
   const story=window.liweiStory;
-  if(hotel()||!story?.progress.done.includes('S02')||story.active)return null;
+  if(hotel()||!story?.jianAtOffice()||!story.progress.done.includes('S02')||story.active)return null;
   const minute=sim.t%1440;
   if(minute>=1350||minute<360)return {id:'sleep',x:102,y:50};
   if(minute>=720&&minute<780||minute>=1080&&minute<1140)return {id:'meal',x:313,y:108};
@@ -147,13 +147,13 @@ const autumnHome=(function(){
  // her own day here, as in 茵菲谷 (season_auto.js): in bed 22:30-6:00; from 19:00 mostly indoors (sofa, TV);
  // needs topped up before they run red (the phone for social: season_social.js); daytime she walks the city
  // (the controller's own strolls) and leaves the house when there is nothing to do inside
- const MARK={hunger:60,bladder:40,hygiene:50,energy:40,fun:35};
+ const MARK={hunger:60,bladder:40,hygiene:50,energy:40,fun:35,social:39};
  let nextPlan=0;
  function plan(s){const m=sim.t%1440,bed=m>=22*60+30||m<6*60,evening=m>=19*60;
   if(!C().canPlan()||s.service)return;   // the player just sent her somewhere
-  const low=Object.entries(sim.needs).filter(([k,v])=>MARK[k]&&v<MARK[k]&&(!bed||v<28)).sort((a,b)=>a[1]-b[1])[0];
+  const low=Object.entries(sim.needs).filter(([k,v])=>MARK[k]&&v<MARK[k]&&(!bed||v<30)).sort((a,b)=>a[1]-b[1])[0];
   if(low){s.lastAuto=true;C().care(low[0]);return;}
-  if(bed){if(!(sim.mode==='act'&&sim.act==='sleep'))use('bed',true);return;}
+  if(bed){if(!(sim.mode==='act'&&sim.act==='sleep'))C().care('energy');return;}
   if(sim.t<nextPlan)return;nextPlan=sim.t+10+Math.random()*10;
   if(evening){if(Math.random()<.7)use(pick(['sofa','tv','tv','wardrobe']),true);return;}
   if(s.inside&&sim.t>=(s.autoAt||0)){s.autoAt=sim.t+40;C().leave();}

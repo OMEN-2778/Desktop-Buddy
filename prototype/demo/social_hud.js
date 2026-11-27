@@ -326,6 +326,7 @@ function ringGiftThanks(){
   return phoneCall.phase==='ringing';
 }
 function requestIncomingCall(id,kind='call'){
+  if(id==='autumn_jian'&&['visit','friend_home'].includes(kind))return false;
   if(contactWithHero(id))return false;
   if(phoneCall.phase!=='idle'||!socialState.contacts.some(c=>c.id===id)||!canReceiveCall())return false;
   phoneCall.phase='waiting';phoneCall.contactId=id;phoneCall.kind=kind;return true;

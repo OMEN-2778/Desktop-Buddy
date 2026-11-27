@@ -189,7 +189,12 @@ function makeSeason_autumn(opts, DATA) {
         state.goal = null;
         state.walk = false;
     }
+    function privateOffice(x,y) {
+        return state.inside && state.indoorSite==="detective_home" && lodging()==="hotel" &&
+            (y<86 || x>=250);
+    }
     function goTo(x, y, goal = null) {
+        if(privateOffice(x,y)) return false;
         if (state.door) return false;
         state.service = null;
         state.pose = null;
@@ -417,6 +422,10 @@ function makeSeason_autumn(opts, DATA) {
             else converse(goal.id.slice(4));
             return;
         }
+        if (goal.automatic && !goal.need) {
+            care(["market","canteen","syrup","chestnut"].includes(goal.id) ? "hunger" : "fun");
+            return;
+        }
         if (goal.need) {
             if (goal.need === "hygiene") return care("hygiene", true);
             beginService(goal.need, landmark(goal.id).name);
@@ -517,9 +526,10 @@ function makeSeason_autumn(opts, DATA) {
     function canPlan() {
         return performance.now() >= manualUntil && !state.target && !state.goal &&
             !state.door && !keys.size && !state.mapOpen && !dialog && modal.hidden &&
-            !ringOf && !cardHolds() && !storyLocked();
+            !ringOf && !pickOn && !cardHolds() && !storyLocked();
     }
     function care(need, manual = false) {
+        if (!need || sim.mode==="down") return;
         if (!manual && !canPlan()) return;
         if (window.liweiStory?.locked()) return;
         if (manual) state.service = state.pose = null;
@@ -533,7 +543,7 @@ function makeSeason_autumn(opts, DATA) {
             if (state.indoorSite !== lodging() && (!manual || need === "hygiene")) return leave(lodging(), need);
             return insideVisit(need);
         }
-        const local = need === "bladder" ? ["toilet"] :
+        const local = need === "fun" ? ["swing","koi"] : need === "bladder" ? ["toilet"] :
             need === "hunger" ? ["market","chestnut","canteen","syrup"] : [];
         let destination = lodging(), shortest = Infinity;
         for (const id of [destination,...local]) {
@@ -550,6 +560,7 @@ function makeSeason_autumn(opts, DATA) {
     function stepNeeds(dt) {
         if (!(dt > 0) || state.paused || !opts.active()) return;
         const n = opts.needs();
+        if (pickOn==="autumn_stall" && n.hunger<30 && performance.now()>=manualUntil) closePicker();
         if (state.service) {
             const a = state.service, rate = {
                 hunger: 2.4,
@@ -799,6 +810,71 @@ function makeSeason_autumn(opts, DATA) {
         ctx.globalAlpha = 1;
         ctx.drawImage(frame.far,Math.round(-state.camX*.24),Math.round(town.ridgeY[0]-anchor-dy*.30));
         ctx.drawImage(frame.mid,Math.round(-state.camX*.52),Math.round(town.ridgeY[1]-anchor-dy*.58));
+    }
+    const townEgrets=(town?.egrets||[]).map(src=>{
+        const im=new Image();im.src=src;return im;
+    });
+    function townWater() {
+        if(state.camY+canvas.height<1940)return;
+        const t=reduceMotionUI?10:realClock, clean=state.stage>=4;
+        const areas=[[1974,75,337],[1987,873,982],[2055,30,365],[2130,45,919]];
+        ctx.save();
+        for(const [y,left,right] of areas){
+            if (y+30<state.camY || y>state.camY+canvas.height)continue;
+            for(let i=0;i<16;i++){
+                const phase=(t*.17+i*.218+y)%1;
+                const x=left+(i*91+Math.floor(t*3))%(right-left-20);
+                if(x<state.camX-20||x>state.camX+342)continue;
+                const yy=y+(i*11)%25, span=3+Math.floor(14*phase);
+                ctx.globalAlpha=Math.sin(phase*Math.PI)*(clean?.33:.17);
+                ctx.fillStyle=clean?"#bcdfdd":"#7fb7ad";
+                ctx.fillRect(x,yy,span,1);
+                if(i%3===0)ctx.fillRect(x+Math.floor(span/2),yy+2,span-2,1);
+            }
+        }
+        ctx.restore();
+    }
+    function townShoreBirds() {
+        if(state.stage<4||state.camY+canvas.height<1930||townEgrets.length<4)return;
+        const t=reduceMotionUI?1:realClock;
+        const sites=[[303,1947],[361,1948],[884,1967]];
+        for(const [i,[baseX,baseY]] of sites.entries()){
+            const clock=(t+9*i)%58, flight=clock>48;
+            const x=baseX+(flight?(clock-48)*15:Math.sin(clock*.48+i)*5);
+            const y=baseY-(flight?Math.min(72,(clock-48)**1.3*7):0);
+            if(x<state.camX-36||x>state.camX+378||y<state.camY-28)continue;
+            const image=townEgrets[flight?2+(Math.floor(t*5)%2):Number((clock+i)%6>4)];
+            if(!image.complete||!image.naturalWidth)continue;
+            ctx.save();
+            ctx.globalAlpha=flight?Math.min(1,(58-clock)*.8):Math.min(1,clock*2);
+            if(!flight){
+                const a=ctx.globalAlpha;ctx.globalAlpha=a*.19;
+                ctx.translate(Math.round(x)-14,Math.round(y)+1);
+                ctx.scale(1,-.25);ctx.drawImage(image,0,-24,29,24);
+                ctx.restore();ctx.save();ctx.globalAlpha=a;
+            }
+            ctx.drawImage(image,Math.round(x)-14,Math.round(y)-22,29,24);
+            ctx.restore();
+        }
+    }
+    function townAutumnLeaves() {
+        if(state.stage<4||seasonKey()!=="town"||reduceMotionUI)return;
+        const t=realClock, colors=["#b95b36","#de8a45","#edba67","#a54835"];
+        ctx.save();
+        for(let i=0;i<220;i++){
+            const phase=(t*(.06+i%5*.008)+i*.287)%1;
+            const x=(i*193.73+phase*82+Math.sin(t*2+i)*12)%DATA.width;
+            const y=(i*193.31+phase*56)%DATA.height;
+            if(x<state.camX||x>state.camX+342||y<state.camY||y>state.camY+canvas.height)continue;
+            const size=1+i%2, xx=Math.round(x), yy=Math.round(y);
+            ctx.globalAlpha=Math.sin(phase*Math.PI)*.89;
+            ctx.fillStyle=colors[i%colors.length];
+            ctx.fillRect(xx,yy,size*2+1,size);
+            ctx.fillRect(xx+size,yy-1,size+1,size+2);
+            ctx.fillStyle="#733d2d";
+            ctx.fillRect(xx-1,yy+size,2,1);
+        }
+        ctx.restore();
     }
     function drawTownGround(image) {
         const top = town.summitSlice, height = DATA.height - top;
@@ -1117,11 +1193,12 @@ function makeSeason_autumn(opts, DATA) {
         }
         if (!state.inside) {
             if(freshTown?.wind)drawTownGround(freshTown.wind);
-            if(freshTown){townBirds();drawRunwayPlane();}
+            if(freshTown){townWater();townShoreBirds();townBirds();drawRunwayPlane();}
             const boat=freshTown?null:drawRiver();
             if(!freshTown)drawSigns();
             if(hover?.img)drawObjectHover(ctx,hover.img,hover.spriteX,hover.spriteY);
             drawStreet(boat,freshTown);
+            if(freshTown)townAutumnLeaves();
         }
         const privacy = state.service && [ "hygiene", "bladder" ].includes(state.service.need);
         if (state.inside && state.service?.need === "hygiene") {
@@ -1254,6 +1331,10 @@ function makeSeason_autumn(opts, DATA) {
             goTo(p.x, p.y);
             return;
         }
+        if(privateOffice(x,y)) {
+            window.liweiStory?.eventNotice("这是阿简的个人生活区域，不能进去哦");
+            return;
+        }
         const p = hit(x, y);
         if (p) {
             if (state.inside) {
@@ -1334,6 +1415,10 @@ function makeSeason_autumn(opts, DATA) {
         state.autoAt = opts.now() + 30;
     }
     function restore() {
+        if(privateOffice(state.x,state.y)){
+            state.x=222;state.y=108;state.service=state.pose=null;state.homeSpot=null;
+            clearRoute();
+        }
         close();
         state.keyboard = false;
         state.door = null;
