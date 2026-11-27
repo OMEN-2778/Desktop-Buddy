@@ -225,7 +225,9 @@ def town_runtime_data():
                        lamps=PARK_LAMPS+STREET_LAMPS,
                        runway=dict(bounds=layout['runwayFence'],plane=uri('airport_plane.png')),
                        clouds=[image_uri(cloud(i).to_image()) for i in range(3)],parkWalk=[(398,1206),(606,1206),(606,1290),(398,1290)],
-                       vendors=[(422,1428,'market'),(477,1428,'market'),(542,1428,'market'),(550,1391,'chestnut')],
+                       bathSteam=[680,1032],swingSeat=[429,1268],
+                       vendors=[(*stand(x,y),shop) for x,y,shop in
+                                [(425,1446,'market'),(483,1446,'market'),(544,1446,'market'),(569,1446,'chestnut')]],
                        streets=layout['streets'],obstacles=layout['obstacles'],layers=layout['facades'],
                        oldLandmarks=A.runtime_landmarks()),
              landmarkSprites=artwork_sprites,scenes=[],backdrop={},front=None,boat=None,foliage=[],foliageSheets=[],foreground=[],signs=[],

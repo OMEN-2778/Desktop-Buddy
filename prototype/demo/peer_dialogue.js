@@ -17,6 +17,26 @@ function peerSpeaker(who,speaker){
   return contact||{id:'anonymous_'+label,name:label||'对方',anonymous:true};
 }
 function drawPeerAvatar(speaker){
+  if(speaker.icon){
+    const ctx=peerAvatar.getContext('2d');
+    const warning=[
+      '..........','....oo....','...oyyo...','...oyyo...','..oyooyo..',
+      '..oyyoyo..','.oyyyyyyo.','.oyyyoyyo.','oyyyyyyyyo','oooooooooo'
+    ];
+    ctx.fillStyle=speaker.icon==='branch'?'#eef4fb':'#4d4c54';
+    ctx.fillRect(0,0,40,40);
+    const branch=[
+      '.......o..','......oyo.','...ooooyyo','..oyyyoyyo','.oyo..ooo.','..........',
+      '.oyo..ooo.','..oyyyoyyo','...ooooyyo','......oyo.','.......o..'
+    ];
+    const grid=speaker.icon==='branch'?branch:warning;
+    grid.forEach((row,y)=>[...row].forEach((pixel,x)=>{
+      if(pixel==='.')return;
+      ctx.fillStyle=pixel==='o'?(speaker.icon==='branch'?'#3e5371':'#292932'):'#f4d994';
+      ctx.fillRect(5+x*3,(40-grid.length*3)/2+y*3,3,3);
+    }));
+    return;
+  }
   const portrait=speaker.portrait?.();
   if(portrait){
     const ctx=peerAvatar.getContext('2d');ctx.imageSmoothingEnabled=false;
@@ -38,9 +58,13 @@ function fitPeerSpeech(){
 }
 function renderPeerLine(line){
   const cueNow=performance.now(),sinceCue=cueNow-(peerSpeech.cueAt??-Infinity);
-  if(sinceCue>30000||peerSpeech.cueSpeaker!==line.speaker.id&&sinceCue>3000){gameAudio.sound("ui-message",.20,{gap:3});peerSpeech.cueAt=cueNow;peerSpeech.cueSpeaker=line.speaker.id;}
+  if(line.story)gameAudio.sound('ui-story-note',.31,{tag:'story-note',gap:.10});
+  else if(sinceCue>30000||peerSpeech.cueSpeaker!==line.speaker.id&&sinceCue>3000){gameAudio.sound("ui-message",.20,{gap:3});peerSpeech.cueAt=cueNow;peerSpeech.cueSpeaker=line.speaker.id;}
   peerSpeech.currentText=line.text;peerText.classList.remove('line-out');
   const speaker=line.speaker,name=speaker.anonymous?speaker.name:contactName(speaker);
+  peerHud.classList.toggle('story-event',line.icon==='event');
+  peerHud.classList.toggle('story-themed',!!speaker.color&&!line.icon);
+  if(speaker.color)peerHud.style.setProperty('--story-color',speaker.color);
   peerText.replaceChildren(Object.assign(document.createElement('em'),{className:'who',textContent:name+'：'}),document.createTextNode(spaced(line.text)));
   peerHud.setAttribute('aria-label',name+'的对话');peerAvatar.setAttribute('aria-label',name+'的头像');peerAvatar.title=name;
   if(peerSpeech.speakerId!==speaker.id){drawPeerAvatar(speaker);peerSpeech.speakerId=speaker.id;}
@@ -75,10 +99,11 @@ function swapPeerPortrait(line){
     grow.onfinish=()=>{if(peerSpeech.portraitMotion===grow)peerSpeech.portraitMotion=null;};
   };
 }
-function showPeerSay(text,who,speaker=null,{swapPortrait=false}={}){
+function showPeerSay(text,who,speaker=null,{swapPortrait=false,story=false,icon=null}={}){
   if(!text)return;
   text=spokenText(text);
-  const line={text,who,speaker:peerSpeaker(who,speaker)};peerSpeech.pending=line;
+  const base=peerSpeaker(who,speaker);
+  const line={text,who,story,icon,speaker:icon?{...base,id:'story-icon-'+icon,icon,anonymous:true}:base};peerSpeech.pending=line;
   if(phoneHolds())return; // Keep identity while an incoming call owns the speech area.
   clearTimeout(peerSpeech.exit);peerSpeech.exit=0;
   if(peerSpeech.phase==='visible'){
@@ -101,7 +126,7 @@ function showPeerSay(text,who,speaker=null,{swapPortrait=false}={}){
 }
 function hidePeerSay(immediate=false){
   cancelPeerPortraitMotion();
-  clearTimeout(peerSpeech.lineTimer);peerSpeech.lineTimer=0;peerSpeech.currentText=null;peerText.classList.remove('line-out');
+  clearTimeout(peerSpeech.lineTimer);peerSpeech.lineTimer=0;peerSpeech.currentText=null;peerHud.classList.remove('story-event','story-themed');peerText.classList.remove('line-out');
   clearTimeout(peerSpeech.entry);clearTimeout(peerSpeech.exit);peerSpeech.entry=peerSpeech.exit=0;peerSpeech.pending=null;
   if(peerSpeech.phase==='idle'){peerHud.hidden=true;return;}
   peerSpeech.phase='leaving';peerHud.classList.remove('on');peerHud.classList.add('leaving');peerHud.setAttribute('aria-hidden','true');

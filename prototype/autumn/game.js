@@ -252,6 +252,7 @@ function makeSeason_autumn(opts, DATA) {
         clearKeys();
     }
     function close() {
+        if(!modal.hidden)gameAudio.sound("ui-close",.35,{tag:"autumn-panel"});
         speech.hide();
         dialog = null;
         modal.hidden = true;
@@ -262,6 +263,7 @@ function makeSeason_autumn(opts, DATA) {
     }
     function panel(title, text, choices, {sceneConfirm = false} = {}) {
         pauseModal();
+        gameAudio.sound("ui-open",.43,{tag:"autumn-panel"});
         modal.toggleAttribute("data-scene-confirm",sceneConfirm);
         const h = document.createElement("h2");
         h.textContent = title;
@@ -364,7 +366,8 @@ function makeSeason_autumn(opts, DATA) {
         state.service = {
             need: need,
             location: location,
-            elapsed: 0
+            elapsed: 0,
+            seat: town?.swingSeat && location === landmark("swing")?.name ? "swing" : null
         };
         state.pose = [ "energy", "social", "fun" ].includes(need) || need === "hunger" && !state.inside ? "sit" : null;
         opts.record((state.inside ? "在" + indoors().name + "里" : location) + "，" + (action || names[need]) + "。");
@@ -468,8 +471,8 @@ function makeSeason_autumn(opts, DATA) {
         if (services[id]) {
             const [label, need] = services[id];
             const choices = window.liweiStory?.facilityChoices(id) || [];
-            if (!choices.length) return beginService(need, p.name);
-            return panel(p.name, "", [[label, () => beginService(need, p.name)], ...choices, ["离开"]]);
+            if (!choices.length) return beginService(need, p.name, label);
+            return panel(p.name, "", [[label, () => beginService(need, p.name, label)], ...choices, ["离开"]]);
         }
         const discoveries = {
             nursery: "苗圃的叶片上积着一层灰。",
@@ -862,6 +865,24 @@ function makeSeason_autumn(opts, DATA) {
         }
         return townMasks.get(key);
     }
+    function drawBathSteam() {
+        const [originX,originY]=town.bathSteam;
+        const time=reduceMotionUI ? 1.6 : realClock;
+        ctx.save();
+        for(let i=6;i>=0;i--){
+            const t=(time*.33+i/7)%1, radius=Math.round(3+t*9);
+            const x=Math.round(originX-state.camX+32*t*t+Math.sin(t*8+i)*2*t);
+            const y=Math.round(originY-state.camY-32*t);
+            ctx.globalAlpha=Math.min(1,t*12)*Math.pow(1-t,1.5)*.72;
+            ctx.fillStyle="#e8edf2";
+            ctx.fillRect(x-radius,y-2,2*radius+1,5);
+            ctx.fillRect(x-radius+2,y-4,2*radius-3,9);
+            ctx.fillStyle="#fffdfa";
+            ctx.fillRect(x-radius+2,y-3,2*radius-4,5);
+            ctx.fillRect(x-radius+4,y-6,Math.max(2,radius),3);
+        }
+        ctx.restore();
+    }
     function drawRunwayPlane() {
         const sprite = images.get(town.runway.plane);
         const phase = state.streetTime % 94 - 19;
@@ -964,7 +985,8 @@ function makeSeason_autumn(opts, DATA) {
             ctx.fillStyle="#262434";ctx.fillRect(x-15,y-31,30,33);
             ctx.fillStyle="#87573e";ctx.fillRect(x-12,y-28,24,27);
         }});
-        layers.push({depth:state.y,x:state.x-10,walker:true,draw:drawStreetHero});
+        const [heroX,heroY]=state.service?.seat==="swing" && town ? town.swingSeat : [state.x,state.y];
+        layers.push({depth:heroY,x:heroX-10,walker:true,draw:()=>drawStreetHero(heroX,heroY)});
         if(!freshTown)layers.push({depth:state.liftY+.1,alpha:state.riding ? .3 : 1,draw(){
             const x=DATA.lift.x,y=state.liftY;
             ctx.fillStyle="#8b8899";
@@ -989,7 +1011,11 @@ function makeSeason_autumn(opts, DATA) {
             if(sign)drawQuestMarker(ctx,n.x,n.y-(n.sitting?22:28),sign,()=>pickNpc(n));
         }
     }
-    function drawStreetHero() {
+    function drawStreetHero(heroX=state.x,heroY=state.y) {
+        if(state.service?.seat==="swing" && town){
+            opts.drawHero(ctx,heroX,heroY,state,null);
+            return;
+        }
         const need=state.service?.need;
         if(["hunger","social","fun"].includes(need)){
             ctx.fillStyle="#5d3831";ctx.fillRect(state.x-9,state.y-5,18,3);
@@ -1125,6 +1151,7 @@ function makeSeason_autumn(opts, DATA) {
         }
         ctx.restore();
         if (!state.inside) {
+            if (town?.bathSteam) drawBathSteam();
             if (state.stage < 3) {
                 ctx.fillStyle = "#c4c1bc";
                 for (let i = 0; i < 12; i++) {

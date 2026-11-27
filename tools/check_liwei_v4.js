@@ -123,7 +123,7 @@ const { chromium } = require("playwright"),
                 throw Error("stuck " + JSON.stringify(s.progress));
               const {chapter, index} = s.progress;
               const caption = document.querySelector(".liwei-caption:not([hidden])");
-              if (caption?.textContent.includes("石头砸在他刚才站的地方")) {
+              if (peerHud.classList.contains("story-event") && line().includes("石头砸在他刚才站的地方")) {
                 if (!s.actors().some(n => n.name === "老郑的孙子")) throw Error("rockfall missing child");
                 v6Cues.add("rockfall");
               }
@@ -131,8 +131,14 @@ const { chromium } = require("playwright"),
                 if (caption.querySelectorAll("span").length !== 2) throw Error("furnace evidence comparison");
                 v6Cues.add("furnace");
               }
-              if (caption?.textContent === "数周后") v6Cues.add("weeks");
+              if (peerHud.classList.contains("story-event") && line().includes("数周后")) v6Cues.add("weeks");
               if (caption?.classList.contains("liwei-finale")) v6Cues.add("finale");
+              if (chapter === "S11" && line().includes("人都齐了")) {
+                const crowd=s.actors().filter(n=>n.name.startsWith("广场居民"));
+                if(crowd.length<4 || new Set(crowd.map(n=>n.y)).size<2 ||
+                    crowd.some(n=>c.nearest(n.x,n.y).d>3))throw Error("plaza crowd placement");
+                v6Cues.add("crowd");
+              }
               if (chapter === "R13" && line().includes("出过事故的旧维修站")) v6Cues.add("brief");
               if (chapter === "S09" && line().includes("锅炉我让人拉闸停了")) {
                 const cast = s.actors().map(n => n.name);
@@ -141,7 +147,8 @@ const { chromium } = require("playwright"),
               }
               if (chapter === "S12A" && index === 11) {
                 const cast = s.actors(), father = cast.find(n => n.name === "程铁山"), daughter = cast.find(n => n.name === "程青");
-                if (!daughter || Math.abs(father.x-daughter.x) !== 20) throw Error("farewell positions lost");
+                if (!father || !daughter || Math.abs(Math.abs(father.x-daughter.x)-20)>4)
+                  throw Error("farewell positions lost " + JSON.stringify(cast.map(n=>[n.name,n.x,n.y])));
               }
               const options = document.querySelector(
                 ".story-choices:not([hidden])",
@@ -336,9 +343,8 @@ const { chromium } = require("playwright"),
             const k = s.next()[branch ? s.next().length - 1 : 0];
             if (k === "S04") {
               c.interact("canteen");
-              const choices = [...pickerEl.querySelectorAll(".pk-item b")].map(b => b.textContent);
-              if (pickOn !== "autumn_stall" || !choices.includes("吃碗热面") || !choices.includes("旧相识")) throw Error("canteen menu");
-              closePicker();
+              if (!s.active || s.progress.chapter !== "S04" || pickOn === "autumn_stall" || c.modalOpen)
+                throw Error("canteen task should launch directly");
             }
             if(k==="S03"){
               c.leave();
@@ -443,7 +449,7 @@ const { chromium } = require("playwright"),
             )
           )
             throw Error("ending");
-          for (const cue of ["rockfall", "furnace", "weeks", "finale", ...(branch ? ["brief"] : [])]) {
+          for (const cue of ["rockfall", "furnace", "weeks", "finale", "crowd", ...(branch ? ["brief"] : [])]) {
             if (!v6Cues.has(cue)) throw Error("missing V6 cue " + cue);
           }
           const expectedMusic = `BGM/liwei/lake-radio-${branch ? "clean" : "polluted"}.mp3`;

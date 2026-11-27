@@ -150,7 +150,7 @@ const gameAudio = (() => {
     ramp(musicBus,prefs.bgm&&!muted?prefs.bgmVolume/100*.53:0,.08);if(prefs.sfx&&!muted)ramp(effectsBus,prefs.sfxVolume/100,.05);
     if(!prefs.bgm||muted)stopMusic();if(!prefs.sfx||muted)stopEffects();
     if(ready()){
-      if(prefs.sfx)for(const id of ['ui-click','ui-open','ui-close','ui-card','ui-result','ui-message','phone-ring','phone-answer','phone-decline'])buffer(sfx(id));
+      if(prefs.sfx)for(const id of ['ui-click','ui-open','ui-close','ui-card','ui-result','ui-message','ui-story-note','phone-ring','phone-answer','phone-decline'])buffer(sfx(id));
       if(prefs.sfx){for(const id of new Set(Object.values(RECORDED_FOLEY)))buffer(sfx(id));for(const key of Object.keys(MOOD))buffer(sfx('emotion-'+key));}
       updateMusic();tick(true);
     }
@@ -227,7 +227,7 @@ const gameAudio = (() => {
     const hiddenIds=['picker','card','cardRes','ring','diaryPop','moodTip','skyTip','studio','guide','update','petPanel','petMini','petHud'];
     const roots=hiddenIds.map(id=>({el:document.getElementById(id),active:el=>!el.hidden}));
     for(const id of ['needs','setGear','networkTrigger'])roots.push({el:document.getElementById(id),active:el=>el.getAttribute('aria-expanded')==='true'});
-    for(const id of ['contactsPanel','contactActions'])roots.push({el:document.getElementById(id),active:el=>el.getAttribute('aria-hidden')==='false'});
+    for(const id of ['contactsPanel','contactActions','questPanel'])roots.push({el:document.getElementById(id),active:el=>el.getAttribute('aria-hidden')==='false'});
     roots.push({el:socialSheet,active:el=>!el.hidden},{el:moodrow,active:el=>el.classList.contains('network-ready')});
     for(const entry of roots){if(!entry.el)continue;entry.was=entry.active(entry.el);}
     const observer=new MutationObserver(records=>{

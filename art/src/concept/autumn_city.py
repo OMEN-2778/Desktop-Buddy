@@ -530,7 +530,7 @@ class City:
   for j,F in enumerate([P.autumn,P.sage,P.mustard,P.coral]):                               # baskets on the counter
    bx=x+2+j*9;self.box(bx,y-16,8,4,P.oak[1]);self.box(bx,y-16,8,1,P.oak[3]);self.box(bx+7,y-15,1,3,P.oak[0])
    for k in range(3):self.box(bx+1+k*2,y-18-(k==1),2,2,F[2]);self.box(bx+1+k*2,y-18-(k==1),1,1,F[3])
- def chimney(self,x,base,height):
+ def chimney(self,x,base,height,*,smoke=True):
   # A round brick stack: lit from the left, core shadow to the right, staggered courses, iron hoops, stone plinth, open rim.
   top=base-height;cols=[P.clay[0],P.clay[2],P.clay[2],P.clay[3],P.clay[4],P.clay[3],P.clay[2],P.clay[2],P.clay[2],P.clay[2],P.clay[1],P.clay[1],P.clay[1],P.clay[1],P.clay[0],P.clay[0],P.clay[0],P.clay[0],P.brick[0],P.brick[0],P.walnut[0]]
   for i,col in enumerate(cols):self.box(x-10+i,top,1,height,col)
@@ -545,7 +545,7 @@ class City:
   self.box(x-13,top-5,27,7,P.steel[0]);self.box(x-12,top-4,9,5,P.steel[3]);self.box(x-3,top-4,9,5,P.steel[2]);self.box(x+6,top-4,7,5,P.steel[1])
   self.oval(x,top-5,11,3,P.steel[1]);self.oval(x,top-5,9,2,P.ink[0]);self.box(x-9,top-6,7,1,P.steel[4])                        # rim and the dark mouth
   # Hard-edged, shaded pixel clusters; haze remains in a separate logical layer.
-  if self.stage>=3:return
+  if not smoke or self.stage>=3:return
   rnd=random.Random(x)
   for j in range(30):
    xx=x+j*3+round(7*math.sin(j*.6));yy=base-height-9-j*2;r=8+j//3

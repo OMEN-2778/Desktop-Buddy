@@ -187,7 +187,7 @@ def house(c, index, entry):
         c.box(x+7,base-6,23,3,P.wood[3])
     if detail=='steam':
         c.pipe([(x+6,base-5),(x+6,base-28),(x+16,base-28)])
-        c.chimney(x+w-12,base-71,24)
+        c.chimney(x+w-12,base-71,24,smoke=False)
         for yy in (base-12,base-8):
             c.box(x+16,yy,w-23,1,P.wall_sky[0])
     if key=='hut':

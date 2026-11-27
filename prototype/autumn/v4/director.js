@@ -177,13 +177,14 @@
   view.parentElement.append(frontBtn);
   const style = document.createElement("style");
   style.textContent = `
- .liwei-controls{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.liwei-controls:empty{display:none}.liwei-jian{position:absolute;z-index:10;background:transparent!important;border:none!important;box-shadow:none!important;padding:0}.liwei-caption{position:absolute;top:4%;left:50%;transform:translateX(-50%);max-width:92%;width:max-content;box-sizing:border-box;padding:.2em .7em;border-radius:5px;z-index:16;text-align:center;color:#fff6dd;background:#302d38e8;font-weight:bold;pointer-events:none}.liwei-caption[hidden],.liwei-jian[hidden]{display:none}.liwei-caption.liwei-finale{top:50%;transform:translate(-50%,-50%);padding:.6em .85em;letter-spacing:.12em;background:linear-gradient(110deg,#271d35,#55415f,#302239);border:2px solid #ffe0a2;text-shadow:0 1px #43233b;box-shadow:0 0 14px #ffdc9a8a;color:#fff2cf}.liwei-caption.liwei-evidence{display:flex;gap:5px;background:#433638}.liwei-caption.liwei-evidence[hidden]{display:none}.liwei-evidence span{max-width:12em;padding:.35em;background:#f5ead1;color:#403b37;border:1px solid #b2976c}.liwei-caption button{font:inherit;pointer-events:auto;padding:.4em .7em}#peerHud.quest .who{color:var(--liwei-who)}
+ .liwei-controls{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.liwei-controls:empty{display:none}.liwei-jian{position:absolute;z-index:10;background:transparent!important;border:none!important;box-shadow:none!important;padding:0}.liwei-caption{position:absolute;top:4%;left:50%;transform:translateX(-50%);max-width:92%;width:max-content;box-sizing:border-box;padding:.2em .7em;border-radius:5px;z-index:16;text-align:center;color:#fff6dd;background:#302d38e8;font-weight:bold;pointer-events:none}.liwei-caption[hidden],.liwei-jian[hidden]{display:none}.liwei-caption.liwei-finale{top:50%;transform:translate(-50%,-50%);padding:.6em .85em;letter-spacing:.12em;background:linear-gradient(110deg,#271d35,#55415f,#302239);border:2px solid #ffe0a2;text-shadow:0 1px #43233b;box-shadow:0 0 14px #ffdc9a8a;color:#fff2cf}.liwei-caption.liwei-evidence{display:flex;gap:5px;background:#433638}.liwei-caption.liwei-evidence[hidden]{display:none}.liwei-evidence span{max-width:12em;padding:.35em;background:#f5ead1;color:#403b37;border:1px solid #b2976c}.liwei-caption button{font:inherit;pointer-events:auto;padding:.4em .7em}
  `;
   document.head.append(style);
   function portrait(label) {
     const name = label.split("（")[0],
       index = data.npcNames.indexOf(name);
     return {
+      color: colors[name],
       id: "liwei-" + label + "-" + face,
       name: label.includes("头像") ? "程青（电话）" : label,
       anonymous: index < 0 || label.includes("头像"),
@@ -489,8 +490,7 @@
       const clue={jian:next().includes("S09")?"R02":next().includes("S11")?"R03":next()[0]?.startsWith("S12")?"R12":"R01",
         qing:"R05",zhou:"R04",doctor:"R07",father:"R06",neighbor:"R11"}[id];
       const gate={R01:"S07",R05:"S03",R04:"S04",R07:"S08C",R06:"S06",R11:"S03"}[clue];
-      if(clue&&(!gate||p.done.includes(gate))&&!(clue==="R06"&&p.done.includes("S09")||clue==="R11"&&p.done.includes("S11")))return city.panel(data.npcNames[ids.indexOf(id)],"想聊什么？",
-        [["随便聊聊",()=>smallTalk(id)],["问问调查的事",()=>begin(clue)]]);
+      if(clue&&(!gate||p.done.includes(gate))&&!(clue==="R06"&&p.done.includes("S09")||clue==="R11"&&p.done.includes("S11")))return begin(clue);
     }
     smallTalk(id);
   }
@@ -517,16 +517,15 @@
     if (k) options.push([scenes[k].title, () => begin(k)]);
     if (id === "canteen" && p.ending === "A" && p.done.includes("A1"))
       options.push(["查看当月公示", showAccounts]);
-    if (id === "plaza" && p.done.includes("S03") && !p.done.includes("S11"))
-      options.push(["和楼上住户聊聊", () => begin("R11")]);
     return options;
   }
   function showAccounts() {
     city.panel("工人食堂 · 当月公示","旧炉已封。本月工资已发，除尘支出已列账，居民可向程青核对。",[["收起", null]]);
   }
   function siteChapter(id) {
-    if (["canteen","plaza","detective_home","lookout","reeds"].includes(id)) return null;
-    return next().find(k => scenes[k].loc === id || (k === "S11" && id === "mine_office"));
+    return next().find(k => scenes[k].loc === id ||
+      k === "S11" && id === "mine_office" ||
+      k === "S08A" && id === "reeds");
   }
   function site(id) {
     if (active) return true;
@@ -630,6 +629,10 @@
     ], {duration:reduceMotionUI ? 240 : 520, fill:"both"});
     entrance = reveal;
     active = true;
+    sayQueue.length = 0;
+    clearTimeout(popSay._t);
+    clearTimeout(popSay._t2);
+    popSay.hidden = true;
     closeRing();
     if (inCity()) window.autumnHome?.cancelActivity();
     city.close();
@@ -728,7 +731,6 @@
     if (row.choices) {
       speaker = row.speaker || "";
       face = "";
-      peerHud.style.setProperty("--liwei-who", colors[speaker] || "#54465c");
       speech.show(row.speaker || "选择", row.prompt || "你怎么说？", {
         asNpc: true,
         choices: row.choices.map((label, i) => ({
@@ -752,7 +754,6 @@
       words = row.slice(at + 1).replace(/「玩家名字」|【玩家名字】/g, () => nameOf());
     speaker = label.split("（")[0];
     face = emotionFor(words);
-    peerHud.style.setProperty("--liwei-who", colors[speaker] || "#54465c");
     speech.show(speaker === "我" ? nameOf() : label, words, {
       asNpc: speaker !== "我",
       advance,
@@ -816,6 +817,11 @@
     city.snapCamera();
     p.cueLoc = loc;
   }
+  const movementCues = /离场|进屋|登机|散场|走近|道别|栈桥|来到广场|跑进矿道/;
+  function showEvent(words) {
+    sceneText.hidden = true;
+    speech.show("事件", words, {asNpc:true, variant:"event"});
+  }
   function perform(action) {
     speech.hide();
     speaker = face = "";
@@ -826,8 +832,8 @@
 
     if (action.startsWith("调查栈桥")) {
       button(sceneText, "查看木板下的管口", () => {
-        sceneText.textContent = "木板下藏着一根粗管，暗通矿池。";
-        timer = setTimeout(advance, 1000);
+        showEvent("木板下藏着一根粗管，暗通矿池。");
+        timer = setTimeout(advance, 1600);
       });
       return;
     }
@@ -851,8 +857,7 @@
           entrance = null;
           fadeIn.cancel();
           if (falls) {
-            sceneText.textContent = "把孩子扑开，石头砸在他刚才站的地方。";
-            sceneText.hidden = false;
+            showEvent("把孩子扑开，石头砸在他刚才站的地方。");
             timer = setTimeout(advance, 1750);
           } else advance();
         };
@@ -861,6 +866,7 @@
     }
     if (action === "数周后") {
       if (p.visitTimePassed) { advance(); return; }
+      showEvent(action);
       timer = setTimeout(() => {
         p.visitTimePassed = true;
         world.stage = environment();
@@ -893,11 +899,12 @@
     if (action.startsWith("取得") || action.includes("已归档")) {
       if (!p.evidence.includes(action)) p.evidence.push(action);
     }
+    if (action !== "栗尾市主线剧情完结") showEvent(action);
     const duration = action.includes("主线剧情完结")
       ? 3000
       : action.startsWith("取得")
-        ? 1200
-        : 850;
+        ? 1600
+        : movementCues.test(action) ? 1850 : 1450;
     timer = setTimeout(() => {
       const leaving = {
         工人代表离场: "工人代表",
@@ -921,7 +928,8 @@
     p.cueLoc = null;
     if (!k.startsWith("R") && !p.done.includes(k)) {
       p.done.push(k);
-      log("栗尾市 · " + scenes[k].title);
+      log("任务完成 · " + scenes[k].title);
+      gameAudio.sound("ui-result",.4,{tag:"liwei-complete"});
       world.stage = environment();
     }
     if (k === "R10" || k === "R13") p.returning = false;
@@ -936,6 +944,9 @@
       }
       showHint("与阿简的好感度达到 50 · 已解锁侦探条纹大衣");
     }
+    sayQueue.length = 0;
+    sayBusy = Math.max(sayBusy, realClock + 3);
+    nextSay = Math.max(nextSay, realClock + 5);
     refresh();
     checkpoint();
     if (k === "S01" && !p.choices.S01) {
@@ -972,6 +983,28 @@
     note: [],
     S14: [0],
   };
+  const plazaCrowd = (data.town?.residents || []).slice(0,10).map((look,i)=>{
+    const name = "广场居民"+i;
+    const normalized = doll.normalize(look);
+    models.set(name,{look:normalized,ramps:doll.rampsOf(normalized),cache:new Map(),ph:i*791,dist:0,dir:0});
+    return name;
+  });
+  function addPlazaCrowd(result,loc) {
+    const occupied=[world,...result];
+    const spots=[];
+    for(const dy of [-18,14,-10,8,34])for(const dx of [-145,-112,-85,-59,-32,1,35,61,87,114,145]){
+      const x=world.x+dx,y=world.y+dy,ground=city.nearest(x,y);
+      if(!ground||ground.d>4 || occupied.some(a=>Math.abs(a.x-ground.x)<23&&Math.abs(a.y-ground.y)<22))continue;
+      spots.push(ground);occupied.push(ground);
+    }
+    const started = cue==="居民来到广场" || pastActions.has("!居民来到广场");
+    if(!started)return;
+    const elapsed=performance.now()-since;
+    for(const [i,point] of spots.slice(0,plazaCrowd.length).entries()){
+      if(!reduceMotionUI&&cue==="居民来到广场"&&elapsed<130+i*95)continue;
+      result.push({id:plazaCrowd[i],name:plazaCrowd[i],loc,x:point.x,y:point.y,lookAt:Math.sign(world.x-point.x)});
+    }
+  }
   function actors() {
     const result = [],
       used = new Set(),
@@ -990,10 +1023,10 @@
       let x = (staged ? world.x : spot.x) + offsets[slot],
         y = (staged ? world.y : spot.y) + (slot % 3 === 2 ? 2 : 0);
       if (staged) {
-        const elapsed = reduceMotionUI ? 1000 : Math.max(0,performance.now()-since);
+        const elapsed = reduceMotionUI ? 2000 : Math.max(0,performance.now()-since);
         const progress = (action, delay=0) => {
           if (cue !== action) return pastActions.has("!"+action) ? 1 : 0;
-          const t=Math.max(0,Math.min(1,(elapsed-delay)/650));
+          const t=Math.max(0,Math.min(1,(elapsed-delay)/1460));
           return t*t*(3-2*t);
         };
         const side = Math.sign(offsets[slot]);
@@ -1017,12 +1050,23 @@
           if (seed === 1) x = world.x + 22 + Math.round(12*progress("父女道别"));
         }
         const name=data.npcNames[seed];
-        if (cue === name+"登机" || cue === name+"离场" || cue === name+"进屋")
-          x += Math.round((cue.endsWith("登机") ? 1 : side)*52*progress(cue));
+        if (cue === name+"登机" || cue === name+"离场" || cue === name+"进屋") {
+          const direction = cue.endsWith("登机") ? 1 : side;
+          const destination = cue === "程铁山进屋" ? where("hut").x : x+direction*42;
+          const stride = x+(destination-x)*progress(cue);
+          const end = Math.max(world.camX+12,Math.min(world.camX+330,stride));
+          if (world.inside) x = end;
+          else while(Math.abs(end-x)>.1){
+            const candidate=x+Math.sign(end-x)*Math.min(4,Math.abs(end-x));
+            if(city.nearest(candidate,y)?.d>3) break;
+            x=candidate;
+          }
+        }
       }
+      if (staged && !world.inside) x = Math.max(world.camX+12,Math.min(world.camX+330,x));
       if (data.town && !world.inside) {
         const footing=city.nearest(x,y);
-        if (footing && (staged ? Math.abs(footing.y-y)>2 : footing.d>2)) {
+        if (footing && footing.d>2) {
           x=footing.x;
           y=footing.y;
         }
@@ -1046,6 +1090,7 @@
         actor(5, "pier", 2, false, true);
         actor(1, "pier", 3, false, true);
       }
+      if (p.chapter === "S11") addPlazaCrowd(result,loc);
       const target = speaker === "我" ? world : result.find(n => n.name === speaker);
       for (const n of result) {
         if (target) n.lookAt = Math.sign((n === target ? world : target).x - n.x);

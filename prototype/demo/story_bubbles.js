@@ -40,16 +40,18 @@ function createStorySpeech({view,host=view.parentElement,anchor,speakerFor,onClo
   if(!open&&storyWaitsForPhone()){waiting=[speaker,words,o];if(!waitT)waitT=setInterval(()=>{if(storyWaitsForPhone())return;clearInterval(waitT);waitT=0;const w=waiting;waiting=null;if(w)show0(...w);},250);return;}
   return show0(speaker,words,o);
  }
- function show0(speaker,words,{special=true,last=false,advance:next,choices:opts=null,asNpc=false}={}){
+ function show0(speaker,words,{special=true,last=false,advance:next,choices:opts=null,asNpc=false,variant=null}={}){
   if(!open)previous=document.activeElement,busyWas=sayBusy;
   open=true;hero=!asNpc&&speaker===nameOf();advance=opts?null:next;
-  const npc=hero||opts?null:speaker.split('（')[0];
+  const icon=variant==='event'?'event':opts?'branch':null;
+  const npc=hero?null:icon||speaker.split('（')[0];
   const swapPortrait=!!(npc&&previousNpc&&npc!==previousNpc);
   previousNpc=npc;
   peerHud.classList.toggle('quest',!hero&&special);popSay.classList.toggle('quest',hero&&special);
   if(hero){if(peerSpeech.phase!=='idle')hidePeerSay();showSay(words);}
-  else{if(!popSay.hidden)popBubble(popSay,0);showPeerSay(words,speaker+'：',speakerFor?.(speaker),{swapPortrait});}   // her own row stays quiet while someone else talks
-  more.hidden=!!opts;
+  else{if(!popSay.hidden)popBubble(popSay,0);showPeerSay(words,speaker+'：',speakerFor?.(speaker),{swapPortrait,story:special,icon});}   // her own row stays quiet while someone else talks
+  if(hero&&special)gameAudio.sound('ui-story-note',.31,{tag:'story-note',gap:.10});
+  more.hidden=!!opts||!next;
   choices.replaceChildren(...(opts||[]).map(o=>{const b=document.createElement('button');b.type='button';b.innerHTML='<i class="bg" aria-hidden="true"></i><span></span>';b.lastChild.textContent=o.label;b.onclick=e=>{e.stopPropagation();o.on?.();};return b;}));
   choices.hidden=!opts||hero;choices.classList.toggle('quest',special);
   choices.classList.remove('wrap');if(!choices.hidden&&[...choices.querySelectorAll('span')].some(s=>s.scrollWidth>s.clientWidth+1))choices.classList.add('wrap');   // too many to fit: the rest go on a second row
