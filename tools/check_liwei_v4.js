@@ -115,13 +115,26 @@ const { chromium } = require("playwright"),
             }
             throw Error("expected choice " + label + " at " + JSON.stringify(s.progress));
           }
+          const v6Cues = new Set();
           async function drain(stopAt = null) {
             let loops = 0;
             while (s.active) {
               if (++loops > 1500)
                 throw Error("stuck " + JSON.stringify(s.progress));
               const {chapter, index} = s.progress;
-              if (chapter === "S09" && index === 6) {
+              const caption = document.querySelector(".liwei-caption:not([hidden])");
+              if (caption?.textContent.includes("石头砸在他刚才站的地方")) {
+                if (!s.actors().some(n => n.name === "老郑的孙子")) throw Error("rockfall missing child");
+                v6Cues.add("rockfall");
+              }
+              if (caption?.classList.contains("liwei-evidence")) {
+                if (caption.querySelectorAll("span").length !== 2) throw Error("furnace evidence comparison");
+                v6Cues.add("furnace");
+              }
+              if (caption?.textContent === "数周后") v6Cues.add("weeks");
+              if (caption?.classList.contains("liwei-finale")) v6Cues.add("finale");
+              if (chapter === "R13" && line().includes("出过事故的旧维修站")) v6Cues.add("brief");
+              if (chapter === "S09" && line().includes("锅炉我让人拉闸停了")) {
                 const cast = s.actors().map(n => n.name);
                 if (!cast.includes("老郑的孙子") || !cast.includes("苏医生") || cast.includes("楼上住户"))
                   throw Error("clinic rescue cast");
@@ -430,6 +443,12 @@ const { chromium } = require("playwright"),
             )
           )
             throw Error("ending");
+          for (const cue of ["rockfall", "furnace", "weeks", "finale", ...(branch ? ["brief"] : [])]) {
+            if (!v6Cues.has(cue)) throw Error("missing V6 cue " + cue);
+          }
+          const expectedMusic = `BGM/liwei/lake-radio-${branch ? "clean" : "polluted"}.mp3`;
+          if (gameAudio.chooseMusic() !== expectedMusic || !GAME_AUDIO_FILES.includes(expectedMusic))
+            throw Error("incorrect city music " + gameAudio.chooseMusic());
           const cycle = SEASON_DAYS * 1440;
           speed=0; // Inspect each season without aging contacts during simulated calendar jumps.
           for (let i=0;i<4;i++) {

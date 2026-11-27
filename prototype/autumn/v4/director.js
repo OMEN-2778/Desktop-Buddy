@@ -3,8 +3,8 @@
   const toolbar = seasonMapTest.root.querySelector("header");
   if (!new URLSearchParams(location.search).has("liwei")) {
     const link = document.createElement("a");
-    link.href = "?liwei=4";
-    link.textContent = "栗尾市剧情内测";
+    link.href = "?liwei=6";
+    link.textContent = "栗尾市剧情内测 V6";
     toolbar.append(link);
     return;
   }
@@ -116,6 +116,7 @@
     ["S14"],
   ];
   const fresh = () => ({
+    scriptRevision: 6,
     done: [],
     choices: {},
     ending: "",
@@ -176,7 +177,7 @@
   view.parentElement.append(frontBtn);
   const style = document.createElement("style");
   style.textContent = `
- .liwei-controls{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.liwei-controls:empty{display:none}.liwei-jian{position:absolute;z-index:10;background:transparent!important;border:none!important;box-shadow:none!important;padding:0}.liwei-caption{position:absolute;top:4%;left:50%;transform:translateX(-50%);max-width:92%;width:max-content;box-sizing:border-box;padding:.2em .7em;border-radius:5px;z-index:16;text-align:center;color:#fff6dd;background:#302d38e8;font-weight:bold;pointer-events:none}.liwei-caption[hidden],.liwei-jian[hidden]{display:none}.liwei-caption button{font:inherit;pointer-events:auto;padding:.4em .7em}#peerHud.quest .who{color:var(--liwei-who)}
+ .liwei-controls{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.liwei-controls:empty{display:none}.liwei-jian{position:absolute;z-index:10;background:transparent!important;border:none!important;box-shadow:none!important;padding:0}.liwei-caption{position:absolute;top:4%;left:50%;transform:translateX(-50%);max-width:92%;width:max-content;box-sizing:border-box;padding:.2em .7em;border-radius:5px;z-index:16;text-align:center;color:#fff6dd;background:#302d38e8;font-weight:bold;pointer-events:none}.liwei-caption[hidden],.liwei-jian[hidden]{display:none}.liwei-caption.liwei-finale{top:50%;transform:translate(-50%,-50%);padding:.6em .85em;letter-spacing:.12em;background:linear-gradient(110deg,#271d35,#55415f,#302239);border:2px solid #ffe0a2;text-shadow:0 1px #43233b;box-shadow:0 0 14px #ffdc9a8a;color:#fff2cf}.liwei-caption.liwei-evidence{display:flex;gap:5px;background:#433638}.liwei-caption.liwei-evidence[hidden]{display:none}.liwei-evidence span{max-width:12em;padding:.35em;background:#f5ead1;color:#403b37;border:1px solid #b2976c}.liwei-caption button{font:inherit;pointer-events:auto;padding:.4em .7em}#peerHud.quest .who{color:var(--liwei-who)}
  `;
   document.head.append(style);
   function portrait(label) {
@@ -230,16 +231,21 @@
     p = Object.assign(fresh(), s?.liweiV4 || {});
     if (p.chapter || p.done.length) p.enrolled = true;
     const result = restored(s);
-    // S02 originally brought every player into the office without a choice.
-    if (p.chapter === "S02" && !p.lodgingPrompt) {
-      const promptIndex = scenes.S02.rows[0].arrival[p.choices.S01 || 0].length + 2;
-      if (p.index >= promptIndex && world.inside) {
-        p.choices = {...p.choices, S02: 0};
-        p.index = promptIndex + (p.index > promptIndex + 3 ? 3 : 2);
-      } else if (p.index > promptIndex) {
-        p.index = promptIndex;
+    if (s?.liweiV4 && s.liweiV4.scriptRevision !== 6 && scenes[p.chapter]) {
+      const k = p.chapter;
+      p.index = 0;
+      p.departed = [];
+      p.cueLoc = null;
+      if (k === "S02" && world.inside && ["hotel", "detective_home"].includes(world.indoorSite)) {
+        p.choices = {...p.choices, S02: world.indoorSite === "hotel" ? 1 : 0};
+        p.index = rows().findIndex(row => row === "!进入事务所" || row === "!进入旅馆") + 1;
+      } else if (k === "S11" && p.ending && p.choices.S11 != null) {
+        p.index = rows().findIndex(row => row?.choices) + 1;
+      } else {
+        delete p.choices[k];
+        if (k === "S09" && inCity()) relocate(scenes[k].loc);
       }
-      p.lodgingPrompt = true;
+      if (k === "S02") p.lodgingPrompt = true;
     }
     const savedCity = s?.seasonMapTest?.place === "autumn_test" ? s.seasonMapTest.state : s?.testAutumn;
     if (data.town && savedCity?.layoutVersion !== data.layoutVersion && inCity() && p.chapter && !world.inside) {
@@ -415,9 +421,8 @@
     }
   }, 180);
   function environment() {
-    if (p.done.includes("S11")) return p.ending === "B" ? 4 : 3;
+    if (p.done.includes("S11")) return p.ending === "B" && (p.visitTimePassed || p.done.includes("B1") || p.done.includes("B2")) ? 4 : 3;
     if (p.done.includes("S09")) return 3;
-    if (p.done.includes("S08A")) return 2;
     return p.done.includes("S03") ? 1 : 0;
   }
   function guide(k) {
@@ -709,6 +714,7 @@
     confirmChoice = null;
     clearTimeout(timer);
     sceneText.hidden = true;
+    sceneText.classList.remove("liwei-finale", "liwei-evidence");
     cue = "";
     const sequence = rows();
     pastActions = completedActions(sequence);
@@ -743,7 +749,7 @@
           : 0,
       ),
       label = row.slice(0, at),
-      words = row.slice(at + 1);
+      words = row.slice(at + 1).replace(/「玩家名字」|【玩家名字】/g, () => nameOf());
     speaker = label.split("（")[0];
     face = emotionFor(words);
     peerHud.style.setProperty("--liwei-who", colors[speaker] || "#54465c");
@@ -826,30 +832,63 @@
       return;
     }
     sceneText.textContent = action;
-    if (action === "进入事务所" || action === "进入旅馆") {
+    if (["进入事务所", "进入旅馆", "送孩子去诊所", "矿道落石"].includes(action)) {
       sceneText.hidden = true;
       const fadeOut = view.animate([{filter:"brightness(1)"},{filter:"brightness(0)"}],
         {duration:reduceMotionUI ? 120 : 420, easing:"ease-in", fill:"forwards"});
       entrance = fadeOut;
       fadeOut.onfinish = () => {
         if (entrance !== fadeOut) return;
-        relocate(action === "进入旅馆" ? "hotel" : "detective_home", true);
+        if (action === "送孩子去诊所") relocate("clinic");
+        else if (action !== "矿道落石") relocate(action === "进入旅馆" ? "hotel" : "detective_home", true);
+        const falls = action === "矿道落石";
         const fadeIn = view.animate([{filter:"brightness(0)"},{filter:"brightness(1)"}],
-          {delay:160, duration:reduceMotionUI ? 160 : 560, easing:"ease-out", fill:"both"});
+          {delay:falls ? 390 : 160, duration:reduceMotionUI ? 160 : 560, easing:"ease-out", fill:"both"});
         entrance = fadeIn;
         fadeOut.cancel();
         fadeIn.onfinish = () => {
           if (entrance !== fadeIn) return;
           entrance = null;
           fadeIn.cancel();
-          advance();
+          if (falls) {
+            sceneText.textContent = "把孩子扑开，石头砸在他刚才站的地方。";
+            sceneText.hidden = false;
+            timer = setTimeout(advance, 1750);
+          } else advance();
         };
       };
       return;
     }
-    if (action === "送孩子去诊所") relocate("clinic");
+    if (action === "数周后") {
+      if (p.visitTimePassed) { advance(); return; }
+      timer = setTimeout(() => {
+        p.visitTimePassed = true;
+        world.stage = environment();
+        advance();
+      }, 1550);
+      return;
+    }
+    if (action === "核对锅炉批号") {
+      sceneText.classList.add("liwei-evidence");
+      for (const label of ["旧领料单", "现役旧炉设备登记照片"]) {
+        const paper = document.createElement("span");
+        paper.textContent = label + " · 炉体批号一致";
+        sceneText.append(paper);
+      }
+      sceneText.firstChild.remove();
+      timer = setTimeout(advance, 2000);
+      return;
+    }
+    if (action === "栗尾市主线剧情完结") {
+      sceneText.classList.add("liwei-finale");
+      if (!reduceMotionUI) sceneText.animate([
+        {opacity:0, transform:"translate(-50%,-50%) scale(.82)", letterSpacing:".01em"},
+        {opacity:1, transform:"translate(-50%,-50%) scale(1.06)", letterSpacing:".16em", offset:.28},
+        {opacity:1, transform:"translate(-50%,-50%) scale(1)", letterSpacing:".12em", offset:.78},
+        {opacity:0, transform:"translate(-50%,-50%) scale(1)", letterSpacing:".12em"},
+      ], {duration:3000,fill:"both"});
+    }
     if (action === "维修队封住了尾矿管") p.cueLoc = "pier";
-    if (action === "河水渐清") world.stage = 2;
     if (action === "旧炉停运") world.stage = 3;
     if (action.startsWith("取得") || action.includes("已归档")) {
       if (!p.evidence.includes(action)) p.evidence.push(action);
@@ -869,6 +908,7 @@
         程青登机: "程青",
       }[action];
       if (leaving) p.departed.push(leaving);
+      if (action === "诊所交接材料") p.departed.push("老郑", "老郑的孙子");
       advance();
     }, duration);
   }
@@ -884,6 +924,8 @@
       log("栗尾市 · " + scenes[k].title);
       world.stage = environment();
     }
+    if (k === "R10" || k === "R13") p.returning = false;
+    if (k === "R13") p.needsInvestigationBrief = false;
     syncCastContacts();
     if (k === "S14") {
       world.quest = 6;
@@ -900,6 +942,7 @@
       flyNext = true;
       throughDoor("airport_test");
     }
+    if (k === "S07" && p.choices.S07 === 1) p.needsInvestigationBrief = true;
     if (k === "R09" || (k === "S07" && p.choices.S07 === 1)) {
       p.returning = !p.done.includes("S14");
       throughDoor("home");
@@ -907,7 +950,7 @@
   }
   const casting = {
     R01: [0], R02: [0], R03: [0], R04: [2], R05: [1], R06: [4],
-    R07: [3], R08: [0], R09: [0], R10: [0], R11: [8], R12: [0],
+    R07: [3], R08: [0], R09: [0], R10: [0], R11: [8], R12: [0], R13: [0],
     S02: [0],
     S03: [0, 1],
     S04: [0, 2, 7],
@@ -915,7 +958,7 @@
     S06: [0, 4],
     S07: [0],
     S08A: [0, 2],
-    S08B: [0, 2],
+    S08B: [0, 2, 6],
     S08C: [0, 3, 2, 6],
     S09: [0, 2, 8],
     S10: [0, 4],
@@ -959,6 +1002,11 @@
           x += side * Math.round(34*(1-progress("居民来到广场",slot%3*90)));
           x += side * Math.round(58*progress("散场",slot%3*75));
         }
+        if (p.chapter === "S08B" && seed === 6) {
+          if (cue !== "孙子跑进矿道" && !pastActions.has("!孙子跑进矿道")) return;
+          x += 48 * (1-progress("孙子跑进矿道"));
+          if (cue === "矿道落石" || pastActions.has("!矿道落石")) x -= 18;
+        }
         if (p.chapter === "S08A") x += side*Math.round(20*(1-progress("走上栈桥")));
         if (p.chapter === "S12B") {
           if (seed === 0) x = world.x - 43;
@@ -994,8 +1042,10 @@
       const loc = p.cueLoc || scenes[p.chapter].loc || "plaza",
         cast = p.chapter === "S09" && loc === "clinic" ? [0,2,6,3,1] : casting[p.chapter] || [];
       cast.forEach((seed, i) => actor(seed, loc, i, false, true));
-      if (p.chapter === "S08A" && p.cueLoc === "pier")
+      if (p.chapter === "S08A" && p.cueLoc === "pier") {
         actor(5, "pier", 2, false, true);
+        actor(1, "pier", 3, false, true);
+      }
       const target = speaker === "我" ? world : result.find(n => n.name === speaker);
       for (const n of result) {
         if (target) n.lookAt = Math.sign((n === target ? world : target).x - n.x);
@@ -1082,6 +1132,31 @@
       width: DW * sx + "px", height: (doorFeet + 1 - buttonTop) * sy + "px",
     });
   };
+  function drawSceneWeather(ctx) {
+    if (!active || world.inside) return;
+    const dust = p.chapter === "S09" && p.cueLoc !== "clinic" &&
+      (cue === "旧炉喷出大量黄灰！" || pastActions.has("!旧炉喷出大量黄灰！"));
+    const wind = p.chapter === "S14";
+    if (!dust && !wind) return;
+    const t = performance.now() / 1000, w = view.width, h = view.height;
+    ctx.save();
+    if (dust) {
+      const alpha = cue === "旧炉喷出大量黄灰！" && !reduceMotionUI ?
+        Math.min(1, (performance.now()-since)/600) : 1;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = "#b4924e70";
+      ctx.fillRect(0, 0, w, h);
+    }
+    if (!reduceMotionUI) {
+      ctx.fillStyle = dust ? "#e4bc7078" : "#e9dfbb8c";
+      for (let i = 0; i < (dust ? 40 : 13); i++) {
+        const x = (i * .618 + t * (dust ? .43 : .32)) % 1;
+        const y = (i * .381 + .012 * Math.sin(t * 2 + i)) % 1;
+        ctx.fillRect(Math.floor(x*w), Math.floor(y*h), Math.max(2,w/110)*(1+i%3), Math.max(1,h/145));
+      }
+    }
+    ctx.restore();
+  }
   const oldRender = renderOutside;
   renderOutside = function () {
     // A conversation begun before boarding cannot finish while the landing owns the clock.
@@ -1093,6 +1168,7 @@
       begin("S02");
     }
     oldRender();
+    if (inCity()) drawSceneWeather(vctx);
     if (sim.place === "front" && active && face) {
       const scale = view.width / 342,
         pt = buddyFeet();
@@ -1113,7 +1189,7 @@
       guide(target);
     }
     if (inCity() && p.returning === "arrived" && !wiping && !active) {
-      begin("R10");
+      begin(p.needsInvestigationBrief ? "R13" : "R10");
       if (active) p.returning = false;
     }
   };

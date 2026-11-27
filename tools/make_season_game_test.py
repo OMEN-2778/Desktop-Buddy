@@ -163,6 +163,12 @@ def main():
     source+='\nconst AIRPORT_IMAGES='+json.dumps(airport_images)+';\n'+(ROOT/'prototype/airport/flight.js').read_text()+(ROOT/'prototype/airport/planes.js').read_text()+'\n'+(ROOT/'prototype/map-test/airport.js').read_text()+'\n'+(ROOT/'prototype/map-test/spring_cards.js').read_text()+(ROOT/'prototype/map-test/spring_talk.js').read_text()+(ROOT/'prototype/map-test/spring_story.js').read_text()+(ROOT/'prototype/map-test/gift_thanks.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_farm.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_more.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_more2.js').read_text()+'\n'+(ROOT/'prototype/map-test/season_night.js').read_text()+'\n'+(ROOT/'prototype/map-test/season_house.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_home.js').read_text()+'\nconst QUEST_ICONS='+json.dumps(quest_icons())+';\nconst INFEI_COVERS='+json.dumps({k:SP.uri(ROOT/f'art/out/concept/infei_cover_{k}.png') for k in ('mine','parents')})+';\n'+'\n'+(ROOT/'prototype/map-test/quest_panel.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_quests.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_side.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_audio.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_hover.js').read_text()+'\nconst SUMMER_LIFE_ART='+json.dumps({'humpback':SP.uri(ROOT/'art/out/concept/summer_humpback.png'),'stall':SP.uri(ROOT/'art/out/concept/summer_hero_stall.png'),'cover':SP.uri(ROOT/'art/out/concept/summer_lodge_cover.png'),'flower':SP.uri(ROOT/'art/out/concept/summer_flower_stall.png'),**{k:SP.uri(ROOT/f'art/out/concept/summer_market_{v}.png') for k,v in (('mbg','bg'),('msky','sky'),('mfar','far'),('mmid','mid'),('fruit','fruit'),('fish','fish'),('hat','hat'),('fountain','fountain'),('cafe','cafe'))}})+';\n'+(ROOT/'prototype/map-test/summer_life.js').read_text()+'\n'+(ROOT/'prototype/map-test/summer_more.js').read_text()+'\n'+(ROOT/'prototype/map-test/bay_friends.js').read_text()+'\n'+(ROOT/'prototype/map-test/summer_cards.js').read_text()+'\n'+(ROOT/'prototype/map-test/summer_float.js').read_text()+'\n'+(ROOT/'prototype/map-test/season_auto.js').read_text()+'\n'+(ROOT/'prototype/map-test/summer_lodge.js').read_text()+'\n'+(ROOT/'prototype/map-test/autumn_home.js').read_text()+'\n'+(ROOT/'prototype/map-test/season_social.js').read_text()+'\n'+(ROOT/'prototype/map-test/season_parents.js').read_text()+'\n'+(ROOT/'prototype/map-test/season_motion.js').read_text()+'\n'+(ROOT/'prototype/map-test/summer_hover.js').read_text()+'\n'+(ROOT/'prototype/map-test/infei_ui.js').read_text()
     if not RELEASE:
         v4 = ROOT / 'prototype/autumn/v4'
+        page = page.replace("if(place==='autumn_test')return 'BGM/park/festival-streetlights.mp3';",
+            "if(place==='autumn_test')return 'BGM/liwei/lake-radio-'+(seasonMapTest.state.autumn.state.stage>=4?'clean':'polluted')+'.mp3';")
+        liwei_audio=[f'BGM/liwei/{f.name}' for f in sorted((ROOT/'AUDIO_LIBRARY/LIWEI').glob('*.mp3'))]
+        k=page.index('const GAME_AUDIO_FILES = [')+len('const GAME_AUDIO_FILES = [')
+        page=page[:k]+','.join(map(json.dumps,liwei_audio))+','+page[k:]
+
         source += '\nconst LIWEI_LOOKS=' + json.dumps(story_looks(),ensure_ascii=False) + ';'
         page = page.replace('run = cardHolds() || wiping', 'run = window.liweiStory?.locked() || cardHolds() || wiping')
         source += '\nconst LIWEI_CHATS=' + (v4/'chats.json').read_text() + ';'
@@ -194,6 +200,10 @@ def main():
     import shutil
     for group in ['BGM','SFX/game','SFX/processed']:shutil.copytree(ROOT/'AUDIO_LIBRARY'/group,out.parent/'audio'/group,dirs_exist_ok=True)
     shutil.copytree(ROOT/'AUDIO_LIBRARY/INFEI/BGM',out.parent/'audio/BGM/infei',dirs_exist_ok=True)
+    liwei_dir=out.parent/'audio/BGM/liwei'
+    liwei_dir.mkdir(exist_ok=True)
+    for name in ('lake-radio-polluted.mp3','lake-radio-clean.mp3'):
+        shutil.copy2(ROOT/'AUDIO_LIBRARY/LIWEI'/name,liwei_dir/name)
     shutil.copy2(ROOT/'prototype/map-test/bgm.html',out.parent/'bgm.html')   # 茵菲谷 music listening page (/map-test/bgm.html)
     for f in (ROOT/'AUDIO_LIBRARY/INFEI/SFX').glob('*.mp3'):shutil.copy2(f,out.parent/'audio/SFX/game'/f.name)
     print(out,round(len(page)/1024),'KiB')

@@ -232,9 +232,9 @@ def mp3(wave,path,wav,bitrate):
     subprocess.run(['ffmpeg','-v','error','-y','-i',str(wav),'-b:a',bitrate,str(path)],check=True)
 
 
-def render(song,tracks,instruments,path,wav):
-    seconds = 60 / (song['bpm'] * PPQ)
-    frames = round(END * seconds * SR)
+def render(song,tracks,instruments,path,wav,*,ppq=PPQ,end=END):
+    seconds = 60 / (song['bpm'] * ppq)
+    frames = round(end * seconds * SR)
     direct = np.zeros((frames,2),np.float32)
     send = np.zeros_like(direct)
     for role,notes in tracks.items():
