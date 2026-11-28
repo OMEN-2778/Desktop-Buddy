@@ -1260,8 +1260,8 @@ function drawRescue(ctx, p, elapsed) {
   ctx.fillStyle = '#f7f6fb'; ctx.fillRect(cx - 18, meterY + 1, Math.round(37 * k), 3);
   ctx.restore();
 }
-function drawRevive(ctx) {
-  const p = here(), cx = Math.round(p.x), cy = Math.round(p.y) - 8;
+function drawRevive(ctx, p = here()) {
+  const cx = Math.round(p.x), cy = Math.round(p.y) - 8;
   const elapsed = holding ? realClock - holding.t0 : 0;
   const k = Math.min(1, elapsed / REVIVE_S);
   if (holding) drawRescue(ctx, p, elapsed);

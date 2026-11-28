@@ -144,22 +144,41 @@ const seasonalTest=(function(){
    window.summerMore?.nightPass?.(vctx,view.width,view.height);
    window.summerHover?.draw(vctx,projection);
   }
-
+  if(sim.mode==='down'&&holding){
+   const point=projection.scene(c.state.x,c.state.y+(c.state.iy||0));
+   vctx.save();
+   vctx.scale(view.width/W,scaleY);
+   drawRevive(vctx,point);
+   vctx.restore();
+  }
  };
  const viewport=(c=ctl())=>mapViewport(c,state.activeHeight||c.canvas.height);
  const oldCenter=ringCenter;ringCenter=function(){if(!active())return oldCenter();const c=ctl(),s=c.state;return viewport(c).scene(s.x,s.y-13);};
  view.addEventListener('pointerdown',e=>{
-  if(!active())return;e.stopImmediatePropagation();if(sim.place==='autumn_test'&&!state.autumn.modal.hidden&&!window.liweiStory?.locked())state.autumn.close();if(ctl()?.state.door||wiping||phoneHolds()||cardHolds()||wardrobeOpen)return;
+  if(!active())return;
+  e.stopImmediatePropagation();
+  if(realClock<rescueClickUntil||wiping)return;
   const c=ctl(),s=c.state,projection=viewport(c),point=projection.point(e);
+  const hero=projection.scene(s.x,s.y);
+  if(sim.mode==='down'){
+   // Interaction pauses can remain active while she is down. They must not block rescue on the canvas.
+   const bodyY=hero.y-projection.top+(s.iy||0);
+   if(e.isPrimary&&e.button===0&&projection.onCanvas(point)&&Math.abs(point.x-hero.x)<22&&point.y>bodyY-42&&point.y<bodyY+12){
+    holding={t0:realClock,pointerId:e.pointerId};
+    view.setPointerCapture(e.pointerId);
+    e.preventDefault();
+   }
+   return;
+  }
+  if(sim.place==='autumn_test'&&!state.autumn.modal.hidden&&!window.liweiStory?.locked())state.autumn.close();
+  if(s.door||phoneHolds()||cardHolds()||wardrobeOpen)return;
   const marker=questMarkerAt(point.x,point.y+projection.top);
-  if(marker?.activate&&!storyLocked()&&sim.mode!=='down'&&!s.mapOpen){
+  if(marker?.activate&&!storyLocked()&&!s.mapOpen){
    closeRing();state.autoAt=sim.t+45;window.seasonAuto?.cancel();marker.activate();sync();return;
   }
   if(!projection.onCanvas(point))return;
   const {x,y,worldX,worldY}=point;
-  const hero=projection.scene(s.x,s.y);
   const sx=hero.x,sy=hero.y-projection.top;
-  if(sim.mode==='down'){if(Math.abs(x-sx)<22&&y>sy-42&&y<sy+12){   /* her whole figure, also when drawn higher than her feet (a float, a chair) */holding={t0:realClock,pointerId:e.pointerId};view.setPointerCapture(e.pointerId);showHint('按住主角 5 秒即可唤醒');}return;}
   if(sim.place==='autumn_test'&&s.mapOpen){c.pick(x,y);sync();return;}
   const nearHero=Math.abs(x-sx)<10&&y<sy&&y>sy-28;
   const taskNpc=nearHero&&sim.place==='autumn_test'&&c.hit(worldX,worldY);
@@ -207,7 +226,10 @@ const seasonalTest=(function(){
  const originalSnapshot=snapshot;snapshot=function(){const save=originalSnapshot();save.testAutumn=JSON.parse(JSON.stringify(state.autumn.state));if(active())save.seasonMapTest={place:sim.place,state:JSON.parse(JSON.stringify(ctl().state,(key,value)=>value instanceof Set?[...value]:value))};return save;};
  const originalRestore=restore;restore=function(save){
   if(['spring_test','summer_test','autumn_test'].includes(save?.sim?.place)&&!save.seasonMapTest)save.sim.place='home';
-  const out=originalRestore(save);try{if(save?.testAutumn){Object.assign(state.autumn.state,save.testAutumn,{loaded:state.autumn.state.loaded,paused:false,layoutVersion:save.testAutumn.layoutVersion||1});state.autumn.restore();}if(active()&&save.seasonMapTest){const c=ctl(),saved=save.seasonMapTest.state;Object.assign(c.state,saved,{loaded:c.state.loaded,after:null,inCabana:false,door:null});if(sim.place!=='autumn_test')c.state.target=null;if(sim.place==='summer_test')c.constrainLodge();people.sync();if(sim.place==='autumn_test'){c.state.found=Array.from(saved.found||[]);c.state.layoutVersion=saved.layoutVersion||1;c.restore();}else if(c.state.found)c.state.found=new Set(saved.found||[]);sync();fit();}}catch(e){console.error('season restore failed',e);}return out;
+  const out=originalRestore(save);try{if(save?.testAutumn){Object.assign(state.autumn.state,save.testAutumn,{loaded:state.autumn.state.loaded,paused:false,layoutVersion:save.testAutumn.layoutVersion||1});state.autumn.restore();}if(active()&&save.seasonMapTest){const c=ctl(),saved=save.seasonMapTest.state;Object.assign(c.state,saved,{loaded:c.state.loaded,after:null,inCabana:false,door:null});if(sim.place!=='autumn_test')c.state.target=null;if(sim.place==='summer_test'){
+   c.constrainLodge();
+   if(c.state.inside&&sim.mode==='down')Object.assign(c.state,{hideHero:false,pose:null,iy:0});
+  }people.sync();if(sim.place==='autumn_test'){c.state.found=Array.from(saved.found||[]);c.state.layoutVersion=saved.layoutVersion||1;c.restore();}else if(c.state.found)c.state.found=new Set(saved.found||[]);sync();fit();}}catch(e){console.error('season restore failed',e);}return out;
  };
  const inCity=()=>sim.place==='autumn_test';
  const oldCommand=command;command=function(act,item){if(inCity()){if(window.liweiStory?.active)return;state.exitRequested=act==='go_home';state.autumn.close();if(act!=='go_home'){const need={cook:'hunger',eat:'hunger',snack:'hunger',sleep:'energy',bath:'hygiene',wash:'hygiene',toilet:'bladder',phone_text:'social',read:'fun',tv:'fun'}[act];if(need){state.autumn.playerInput();state.autumn.clearRoute();state.autumn.care(need,true);sync();return;}}}return oldCommand(act,item);};
