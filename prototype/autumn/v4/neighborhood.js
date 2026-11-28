@@ -11,7 +11,7 @@
   const travelers = {bay_market:"summer_test",farm_yard:"spring_test"};
   const products = {pumpkin:"南瓜",carrot:"胡萝卜"};
   const equipment = [
-    ["coil","回收线圈",4,"自动扫频多一个起手回收线圈"],
+    ["coil","回收线圈",4,"分路塔防开局多 2 格电"],
     ["display","修理铺的灯牌",3,"柜台点亮一盏店灯"],
     ["record","刻纹唱片",4,"把维修铺的音乐收进收藏"],
   ];
@@ -250,10 +250,13 @@
     const rng=liweiRepairRandom(randomSeed((practice?"practice":"walk-in")+"-"+seq,current));
     const candidates=LIWEI_REPAIR_ORDERS.filter(row=>story.progress.ending!=="B"||row[1]!=="工人代表");
     const lastType=practice ? service.lastType : counter.lastType;
-    const pool=candidates.filter(row=>row[0]!==lastType);
-    const [type,client,title,detail]=pool[rng(pool.length)];
+    const pool=candidates.filter(row=>liweiRepairMode(row[0])!==liweiRepairMode(lastType));
+    const firstPractice=practice && !service.lastType;
+    const [type,client,title,detail]=firstPractice
+      ? ["radio","许师傅","柜下的试机收音机","先摆好线圈，再接通电源，听听还有没有杂讯。"]
+      : pool[rng(pool.length)];
     const coin=practice||state.paidDay===current ? 0 : title==="广场的旧广播" ? 3 : current%4===0 ? 2 : 1;
-    const order={id:(practice?"practice-":"walk-in-")+current+"-"+seq,day:current,type,client,title,detail,seed:rng(0x7fffffff),coin};
+    const order={id:(practice?"practice-":"walk-in-")+current+"-"+seq,day:current,type,client,title,detail,seed:firstPractice?912:rng(0x7fffffff),coin};
     if (!practice) {
       state.orders[order.id]=order;
       counter.pending=order.id;
@@ -409,8 +412,9 @@
     else if (arrived) {
       fault.classList.add("rw-fault");
       card.append(element("h3","",order.title),fault);
-      fault.append(element("small","rw-order-mode",LIWEI_REPAIR_TYPES[order.type==="clock"?"defense":order.type]));
-      card.append(button(order.completed?"交给客人":"接过来修",()=>play(order,practice)));
+      const mode=liweiRepairMode(order.type);
+      fault.append(element("small","rw-order-mode",LIWEI_REPAIR_TYPES[mode]));
+      card.append(button(order.completed?"交给客人":practice&&mode==="defense"?"开始塔防":"接过来修",()=>play(order,practice)));
     } else {
       const steps=element("div","rw-customer-walk");
       steps.setAttribute("aria-hidden","true");

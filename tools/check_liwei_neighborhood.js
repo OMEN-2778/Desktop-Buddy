@@ -178,16 +178,11 @@ const { chromium } = require("playwright");
       if(!GAME_AUDIO_FILES.includes("SFX/game/liwei-repair-success.mp3"))throw Error("repair cues missing");
     });
     const repair = page.locator(".liwei-repair");
-    for(let round=1;round<=4;round++){
-      if(round>1){
-        await repair.getByText("先点要加强的线路").waitFor();
-        const upgrade=repair.locator(".rw-actions .rw-btn").filter({hasText:/扩音模块|铜线探针|蓄电盒|侧向风扇/}).first();
-        await upgrade.click();
-      }
-      await repair.getByRole("button",{name:"开始测试",exact:true}).click();
-    }
+    const tiles=repair.locator(".rw-board-defense button");
+    for(const i of [0,6,12]) await tiles.nth(i).click();
+    await repair.getByRole("button",{name:"接通电源",exact:true}).click();
     try {
-      await repair.getByRole("button",{name:"交还收音机",exact:true}).click({timeout:10000});
+      await repair.getByRole("button",{name:"交还收音机",exact:true}).click({timeout:30000});
     } catch (error) {
       throw Error("tutorial did not pass: "+await repair.innerText(),{cause:error});
     }
@@ -312,12 +307,16 @@ const { chromium } = require("playwright");
       const saved=snapshot();
       saved.liweiNeighborhood.playDay=springFarm.X.today();
       saved.liweiNeighborhood.plays=19;
-      saved.liweiNeighborhood.counter.pending=null;
-      saved.liweiNeighborhood.orders={};
+      saved.liweiNeighborhood.counter.pending="saved-radio";
+      saved.liweiNeighborhood.orders={"saved-radio":{
+        id:"saved-radio",type:"radio",title:"柜下的试机收音机",client:"许师傅",seed:912,coin:0,
+        day:springFarm.X.today(),detail:"读档后继续修。"
+      }};
       restore(saved);
       t.go("repair_stall");
     });
     await repair.getByRole("button",{name:"接过来修",exact:true}).click();
+    await repair.getByRole("button",{name:"接通电源",exact:true}).waitFor();
     assert.equal(await page.evaluate(()=>snapshot().liweiNeighborhood.plays),20);
     await page.evaluate(()=>{
       const saved=snapshot();
@@ -329,6 +328,11 @@ const { chromium } = require("playwright");
     await page.evaluate(()=>{sim.t+=1440;});
     await repair.getByRole("button",{name:"接过来修",exact:true}).click();
     assert.equal(await page.evaluate(()=>snapshot().liweiNeighborhood.plays),1);
+    await page.goto("http://repair.test/?liwei=6&repair-test=1");
+    await page.waitForFunction(()=>booted&&window.liweiNeighborhood&&seasonMapTest.state.autumn.state.loaded);
+    await page.getByRole("button",{name:"直接测试维修台",exact:true}).click();
+    await repair.getByRole("button",{name:"开始塔防",exact:true}).click();
+    await repair.getByRole("button",{name:"接通电源",exact:true}).waitFor();
     assert.deepEqual(errors,[]);
     console.log("PASS 西侧小屋、开摊、单客接待、新小游戏、每日20局存档与跨天、普通支线、跨城交接、钱包、合伙与读档");
   } finally {

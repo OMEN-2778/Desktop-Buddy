@@ -1,6 +1,11 @@
 const LIWEI_REPAIR_TYPES = {
-  radio: "自动扫频", bike: "修车试跑", defense: "分路塔防", mines: "线路扫雷", gomoku: "五子棋", pipes: "洗衣铺止漏", tape: "磁带抢救",
+  bike: "修车试跑", defense: "分路塔防", mines: "线路扫雷", gomoku: "五子棋", pipes: "洗衣铺止漏", tape: "磁带抢救",
 };
+
+// Older orders keep their item type for delivery dialogue and rewards.
+function liweiRepairMode(type) {
+  return type==="clock" || type==="radio" ? "defense" : type;
+}
 
 function liweiRepairRandom(seed) {
   let value = seed >>> 0;
@@ -12,7 +17,6 @@ function liweiRepairRandom(seed) {
 
 function runLiweiRepair(order, ui, complete) {
   const {element, button, setBody, sound, alive} = ui;
-  const random = liweiRepairRandom(order.seed);
   let timer = 0;
   const later = (fn, ms) => { timer = setTimeout(() => { if (alive()) fn(); }, ms); };
   const note = text => element("p", "rw-note", text);
@@ -31,103 +35,6 @@ function runLiweiRepair(order, ui, complete) {
   function fail(words, icon = "fault") {
     sound("fault");
     setBody(row("rw-result", [liweiRepairIcon(icon), title("测试中断"), note(words), button("重新试一次", () => { if (!ui.retry || ui.retry()) restart(); })]));
-  }
-  function radio() {
-    const draw = liweiRepairRandom(order.seed);
-    const lanes = Array.from({length:3}, () => []);
-    const upgrades = [
-      ["铜线探针","选中线路扫频 +1", l => l.power++],
-      ["侧向风扇","扫掉杂波时，旁边线路也能扫到", l => l.chain++],
-      ["蓄电盒","每隔三拍额外清理当前线路", l => l.reserve++],
-      ["回收线圈","漏过的杂波会给本线路充电", l => l.recycle++],
-      ["扩音模块","选中线路扫频 +2", l => l.power+=2],
-      ["散热夹","还可承受 3 团漏过的杂波", () => allowance+=3],
-    ];
-    const profile = draw(3);
-    const tutorial=order.id==="tutorial";
-    const rigs = Array.from({length:3}, () => ({power:tutorial?2:1,chain:0,reserve:0,recycle:0,charge:0}));
-    let wave = 1, tick = 0, leaking = 0, allowance = tutorial?16:12, score = 0, selected = draw(3);
-    let phase = "ready", picks = [], pulse = [];
-    rigs[selected].power++;
-    if (order.shopTool === "coil") rigs[selected].recycle++;
-    const waveLength = 10;
-    function offer() {
-      const pool = [...upgrades];
-      picks = Array.from({length:3}, () => pool.splice(draw(pool.length),1)[0]);
-    }
-    function step() {
-      if (document.hidden) { later(step, 360); return; }
-      tick++;
-      let idx = draw(3);
-      for (let count = 0; count < wave + 1; count++) {
-        if (profile === 0 || count % 2 === 0) idx = draw(3);
-        if (profile === 2 && tick % 3 === 0) idx = 2;
-        lanes[idx].push(0);
-      }
-      const hit = rigs.map(l => l.power + (tick % 3 === 0 ? l.reserve*3 : 0) + l.charge);
-      for (let i = 0; i < 3; i++) {
-        if (!lanes[i].length) continue;
-        if (i > 0) hit[i-1] += rigs[i].chain;
-        if (i < 2) hit[i+1] += rigs[i].chain;
-      }
-      pulse = hit;
-      for (let i = 0; i < 3; i++) {
-        const clear = Math.min(hit[i],lanes[i].length);
-        score += clear;
-        lanes[i].splice(0,clear);
-        for (let j=0; j<lanes[i].length; j++) lanes[i][j]++;
-        const escaped = lanes[i].filter(n => n >= 4).length;
-        if (escaped) lanes[i].splice(0,escaped);
-        leaking += escaped;
-        rigs[i].charge = escaped*rigs[i].recycle;
-      }
-      sound("tick");
-      if (leaking >= allowance) { fail("线路过载了。可以把升级留给容易堆杂波的线路。"); return; }
-      if (tick === waveLength) {
-        if (wave === 4) { win(); return; }
-        phase = "upgrade";
-        offer();
-        sound("select");
-      }
-      render();
-      if (phase === "test") later(step,550);
-    }
-    function start() {
-      tick = 0;
-      phase = "test";
-      sound("switch");
-      render();
-      later(step,380);
-    }
-    function render() {
-      const tracks = lanes.map((line,i) => {
-        const rig = rigs[i];
-        const rail = row("rw-rail", Array.from({length:4}, (_,pos) => {
-          const cell = element("i","rw-slot");
-          for (let j=0;j<Math.min(5,line.filter(n=>n===pos).length);j++) cell.append(element("b","rw-signal"));
-          return cell;
-        }));
-        const device = button(["左路","中路","右路"][i] + " · " + rig.power, () => { selected=i; sound("select"); render(); }, {disabled:phase==="test"});
-        device.classList.toggle("rw-picked",i===selected);
-        const track = row("rw-track",[device,rail]);
-        track.classList.toggle("rw-pulse",phase==="test"&&pulse[i]>0);
-        return track;
-      });
-      let actions = [button("开始测试",start)];
-      if (phase === "test") actions = [note("装置正在自动扫频"), element("progress","rw-meter")];
-      if (phase === "upgrade") actions = picks.map(([name,info,apply]) => button(name,() => {
-        apply(rigs[selected]); wave++; phase="ready"; sound("switch"); render();
-      },{info}));
-      const footer = row("rw-actions",actions);
-      const progress = footer.querySelector("progress");
-      if (progress) {progress.max=waveLength; progress.value=tick;}
-      setBody(row("rw-game",[
-        note("第 " + wave + " / 4 轮　已扫除 " + score + "　漏过 " + leaking + " / " + allowance),
-        note(["宽频杂波 · 三路随机","脉冲杂波 · 同路连发","低频杂波 · 右路周期增强"][profile]),
-        ...tracks, phase==="upgrade"?note("先点要加强的线路，再装一个工具。"):note("线路从左边进杂波。每轮结束可以选升级。"), footer
-      ]));
-    }
-    render();
   }
   function bike() {
     const draw = liweiRepairRandom(order.seed);
@@ -253,7 +160,7 @@ function runLiweiRepair(order, ui, complete) {
     render();
   }
   const boards=liweiRepairBoardGames({order,button,row,note,setBody,sound,later,win,fail});
-  restart = {radio,bike,pipes,tape,...boards}[order.type==="clock"?"defense":order.type];
+  restart = {bike,pipes,tape,...boards}[liweiRepairMode(order.type)];
   restart();
   return () => clearTimeout(timer);
 }

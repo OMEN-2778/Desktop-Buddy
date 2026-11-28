@@ -47,14 +47,11 @@
 .rw-order h3{color:#ffe6a7;font-size:.98em}
 .rw-order p{font-size:.83em;color:#ecd1b1}
 .rw-order .rw-quote{color:#e2c5cc}
-.rw-track{display:grid;grid-template-columns:5em minmax(0,1fr);gap:5px;align-items:center}
-.rw-rail,.rw-bike{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;padding:3px;background:#252d3b;border:2px solid #251e2e;box-shadow:inset 0 1px #5c6a66}
-.rw-bike{grid-template-columns:repeat(12,minmax(0,1fr))}
+.rw-bike{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:2px;padding:3px;background:#252d3b;border:2px solid #251e2e;box-shadow:inset 0 1px #5c6a66}
 .rw-slot{display:flex;gap:2px;align-items:center;justify-content:center;min-height:19px;background:#374252;border:1px solid #515b66;font-style:normal}
 .rw-slot:nth-child(even){background:#404d5c}
 .rw-align{background:#527a64!important}
 .rw-signal{display:block;width:6px;height:6px;background:#ffd175;box-shadow:2px 0 #cf6a6e,-2px 0 #cf6a6e;animation:rw-impulse .22s steps(3) both}
-.rw-pulse .rw-rail{border-color:#69ae8f;box-shadow:inset 0 1px #b6e2b1}
 @keyframes rw-impulse{from{translate:-5px 0;opacity:.38}to{translate:none;opacity:1}}
 .rw-grid,.rw-parts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:min(100%,26rem);gap:4px}
 .rw-parts{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -62,7 +59,6 @@
 .rw-picked,.rw-grid .rw-picked{background:#94ccaa;color:#233c3c;box-shadow:inset 0 2px #cdf0b3,inset 0 -2px #5b9f86}
 .rw-grid .rw-stream{background:#8fc7d2;color:#263b47;animation:rw-water .55s steps(4) infinite alternate}
 @keyframes rw-water{to{box-shadow:inset 0 -4px #5094a4,inset 0 3px #c8e8dc}}
-.rw-meter{width:min(12em,60%);height:10px;accent-color:#e1ab62}
 .rw-result{position:relative;margin:auto;padding:1.2em .9em;max-width:26em;border:2px solid #b18b62;background:#51384a;text-align:center;animation:rw-celebrate .4s steps(9) both}
 .rw-result h3{color:#ffe49b}
 .rw-result-glint{height:11px;width:11px;margin:auto;background:#ffe294;clip-path:polygon(40% 0,60% 0,60% 35%,100% 35%,100% 65%,60% 65%,60% 100%,40% 100%,40% 65%,0 65%,0 35%,40% 35%);animation:rw-heat 1.5s steps(5) infinite}
@@ -80,8 +76,6 @@
 .rw-bench-art{position:relative;margin:0;isolation:isolate}
 .rw-bench-art img{width:100%;height:auto;display:block;image-rendering:pixelated}
 .rw-bench-light{position:absolute;left:71%;top:29%;width:5%;height:3%;background:#ffe9a94f;box-shadow:0 0 6px 3px #ffdf9c41;animation:rw-heat 2.2s steps(5) infinite}
-.rw-console .rw-track{grid-template-columns:5.8em minmax(0,1fr)}
-.rw-console .rw-track .rw-btn{white-space:nowrap}
 .rw-console .rw-slot{min-height:24px}
 .rw-console .rw-game .rw-actions:last-child{padding-top:3px}
 @container (max-width:520px){.rw-console{grid-template-columns:1fr;padding:0;gap:5px}.rw-bench-art{display:none}.rw-console .rw-game{padding:.45em}}

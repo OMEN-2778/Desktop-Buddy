@@ -28,7 +28,8 @@ function liweiRepairBoardGames({order, button, row, note, setBody, sound, later,
     const heavy = order.seed%3!==0;
     if (heavy) for (let i=0;i<4;i++) schedule.push([25+i*2,draw(height),14+draw(5)]);
     const lastArrival=schedule.at(-1)[0];
-    let charge = 9, frame = 0, leaks = 0, cleared = 0, running = false, tool = 0;
+    let charge = order.shopTool==="coil" ? 11 : 9;
+    let frame = 0, leaks = 0, cleared = 0, running = false, tool = 0;
     const enemies = [];
     const tools = [["coil","线圈",3],["guard","挡片",2]];
     function advance() {
