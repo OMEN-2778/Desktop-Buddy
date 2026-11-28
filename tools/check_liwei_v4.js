@@ -123,6 +123,11 @@ const { chromium } = require("playwright"),
                 throw Error("stuck " + JSON.stringify(s.progress));
               const {chapter, index} = s.progress;
               const caption = document.querySelector(".liwei-caption:not([hidden])");
+              if (peerHud.classList.contains("story-event")) {
+                if (peerText.querySelector(".who") || peerBubble.getAttribute("aria-label").startsWith("：") || /事件[：:]|离场/.test(line()))
+                  throw Error("unexpected prefix or wording in stage cue: " + line());
+                if (line().replace(/\s/g, "").includes("老郑离开")) v6Cues.add("departures");
+              }
               if (peerHud.classList.contains("story-event") && line().includes("石头砸在他刚才站的地方")) {
                 if (!s.actors().some(n => n.name === "老郑的孙子")) throw Error("rockfall missing child");
                 v6Cues.add("rockfall");
@@ -452,7 +457,7 @@ const { chromium } = require("playwright"),
             )
           )
             throw Error("ending");
-          for (const cue of ["rockfall", "furnace", "weeks", "finale", "crowd", ...(branch ? ["brief"] : [])]) {
+          for (const cue of ["rockfall", "furnace", "weeks", "finale", "crowd", "departures", ...(branch ? ["brief"] : [])]) {
             if (!v6Cues.has(cue)) throw Error("missing V6 cue " + cue);
           }
           const expectedMusic = `BGM/liwei/lake-radio-${branch ? "clean" : "polluted"}.mp3`;

@@ -517,7 +517,7 @@
   }
   function eventNotice(words) {
     if(active)return;
-    speech.show("事件",words,{asNpc:true,variant:"event",last:true,advance:()=>speech.hide()});
+    speech.show("",words,{asNpc:true,variant:"event",last:true,advance:()=>speech.hide()});
   }
   function facilityChoices(id) {
     const options = [];
@@ -825,10 +825,10 @@
     city.snapCamera();
     p.cueLoc = loc;
   }
-  const movementCues = /离场|进屋|登机|散场|走近|道别|栈桥|来到广场|跑进矿道/;
+  const movementCues = /离开|进屋|登机|散场|走近|道别|栈桥|来到广场|跑进矿道/;
   function showEvent(words) {
     sceneText.hidden = true;
-    speech.show("事件", words, {asNpc:true, variant:"event"});
+    speech.show("", words, {asNpc:true, variant:"event"});
   }
   function perform(action) {
     speech.hide();
@@ -919,9 +919,9 @@
         : movementCues.test(action) ? 1850 : 1450;
     timer = setTimeout(() => {
       const leaving = {
-        工人代表离场: "工人代表",
-        老郑离场: "老郑",
-        阿简离场: "阿简",
+        工人代表离开: "工人代表",
+        老郑离开: "老郑",
+        阿简离开: "阿简",
         程铁山进屋: "程铁山",
         程铁山登机: "程铁山",
         程青登机: "程青",
@@ -1062,7 +1062,7 @@
           if (seed === 1) x = world.x + 22 + Math.round(12*progress("父女道别"));
         }
         const name=data.npcNames[seed];
-        if (cue === name+"登机" || cue === name+"离场" || cue === name+"进屋") {
+        if (cue === name+"登机" || cue === name+"离开" || cue === name+"进屋") {
           const direction = cue.endsWith("登机") ? 1 : side;
           const destination = cue === "程铁山进屋" ? where("hut").x : x+direction*42;
           const stride = x+(destination-x)*progress(cue);

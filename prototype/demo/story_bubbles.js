@@ -49,7 +49,7 @@ function createStorySpeech({view,host=view.parentElement,anchor,speakerFor,onClo
   previousNpc=npc;
   peerHud.classList.toggle('quest',!hero&&special);popSay.classList.toggle('quest',hero&&special);
   if(hero){if(peerSpeech.phase!=='idle')hidePeerSay();showSay(words);}
-  else{if(!popSay.hidden)popBubble(popSay,0);showPeerSay(words,speaker+'：',speakerFor?.(speaker),{swapPortrait,story:special,icon});}   // her own row stays quiet while someone else talks
+  else{if(!popSay.hidden)popBubble(popSay,0);showPeerSay(words,speaker?speaker+'：':'',speaker?speakerFor?.(speaker):null,{swapPortrait,story:special,icon});}   // her own row stays quiet while someone else talks
   if(hero&&special)gameAudio.sound('ui-story-note',.31,{tag:'story-note',gap:.10});
   more.hidden=!!opts||!next;
   choices.replaceChildren(...(opts||[]).map(o=>{const b=document.createElement('button');b.type='button';b.innerHTML='<i class="bg" aria-hidden="true"></i><span></span>';b.lastChild.textContent=o.label;b.onclick=e=>{e.stopPropagation();o.on?.();};return b;}));
@@ -59,7 +59,7 @@ function createStorySpeech({view,host=view.parentElement,anchor,speakerFor,onClo
    choices.style.setProperty('--choice-clip',outer);choices.style.setProperty('--choice-in',inner);popBubble(popSay,0);popSay.hidden=true;}
   requestAnimationFrame(()=>{if(typeof liftDiary==='function')liftDiary();});
   const box=hero?popSay:peerBubble;box.tabIndex=0;box.setAttribute('role','button');
-  box.setAttribute('aria-label',`${speaker}：${spokenText(words)}${opts?'':last?'（点一下结束）':'（点一下继续）'}`);
+  box.setAttribute('aria-label',`${speaker?speaker+'：':''}${spokenText(words)}${opts?'':last?'（点一下结束）':'（点一下继续）'}`);
   mark();cancelAnimationFrame(keep);hold();
   (opts&&!hero?choices.querySelector('button'):box).focus({preventScroll:true,focusVisible:false});
 

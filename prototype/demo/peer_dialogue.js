@@ -62,11 +62,14 @@ function renderPeerLine(line){
   else if(sinceCue>30000||peerSpeech.cueSpeaker!==line.speaker.id&&sinceCue>3000){gameAudio.sound("ui-message",.20,{gap:3});peerSpeech.cueAt=cueNow;peerSpeech.cueSpeaker=line.speaker.id;}
   peerSpeech.currentText=line.text;peerText.classList.remove('line-out');
   const speaker=line.speaker,name=speaker.anonymous?speaker.name:contactName(speaker);
-  peerHud.classList.toggle('story-event',line.icon==='event');
+  const stageCue=line.icon==='event';
+  peerHud.classList.toggle('story-event',stageCue);
   peerHud.classList.toggle('story-themed',!!speaker.color&&!line.icon);
   if(speaker.color)peerHud.style.setProperty('--story-color',speaker.color);
-  peerText.replaceChildren(Object.assign(document.createElement('em'),{className:'who',textContent:name+'：'}),document.createTextNode(spaced(line.text)));
-  peerHud.setAttribute('aria-label',name+'的对话');peerAvatar.setAttribute('aria-label',name+'的头像');peerAvatar.title=name;
+  peerText.replaceChildren(document.createTextNode(spaced(line.text)));
+  if(!stageCue)peerText.prepend(Object.assign(document.createElement('em'),{className:'who',textContent:name+'：'}));
+  peerHud.setAttribute('aria-label',stageCue?line.text:name+'的对话');
+  peerAvatar.setAttribute('aria-label',stageCue?'提示图标':name+'的头像');peerAvatar.title=stageCue?'':name;
   if(peerSpeech.speakerId!==speaker.id){drawPeerAvatar(speaker);peerSpeech.speakerId=speaker.id;}
   fitPeerSpeech();peerSpeech.until=performance.now()+5200;
 }
