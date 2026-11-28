@@ -5,6 +5,7 @@
   const X = springFarm.X;
   const shopTitle = "栗尾维修记";
   const stallId = "repair_stall";
+  const dailyLimit = 20, closedMessage = "今天好像没有顾客了";
   const special = {id:"shop",title:shopTitle,kind:"repair",day:0,steps:LIWEI_SHOP_STORY};
   const placeLabels = {bay_market:"草帽湾 · 海棠集市",farm_yard:"茵菲谷 · 农舍"};
   const travelers = {bay_market:"summer_test",farm_yard:"spring_test"};
@@ -14,7 +15,7 @@
     ["display","修理铺的灯牌",3,"柜台点亮一盏店灯"],
     ["record","刻纹唱片",4,"把维修铺的音乐收进收藏"],
   ];
-  const blank = () => ({since:null,jobs:{},shopOpen:false,orders:{},counter:{sequence:0,pending:null,lastType:null},paidDay:-1,owned:[],effects:[],investment:null,investDay:-1,partners:[]});
+  const blank = () => ({since:null,jobs:{},shopOpen:false,orders:{},counter:{sequence:0,pending:null,lastType:null},playDay:null,plays:0,paidDay:-1,owned:[],effects:[],investment:null,investDay:-1,partners:[]});
   let state = blank(), run = null, cancelGame = null, taskWalk = null, talking = false, broadcastNear = false;
   let service = null, departing = null, practiceIndex = 0;
   const stallArt = new Image();
@@ -22,6 +23,14 @@
   const inTown = () => sim.place === "autumn_test";
   const enabled = () => story.progress.done.includes("S14");
   const day = () => X.today();
+  const playsToday = () => state.playDay===day() ? state.plays : 0;
+  function countPlay() {
+    if (playsToday()>=dailyLimit) {showHint(closedMessage);return false;}
+    state.plays=playsToday()+1;
+    state.playDay=day();
+    persist();
+    return true;
+  }
   const randomSeed = (id, number) => hashOf(id + ":" + number + ":" + nameOf()) >>> 0;
   const sound = (id, gain=.38) => gameAudio.sound("liwei-repair-"+id,gain,{gap:.12});
   const persist = () => { if (typeof booted !== "undefined" && booted) autoSave(); };
@@ -73,7 +82,9 @@
   icon.alt="";
   icon.draggable=false;
   icon.src=QUEST_ICONS.repair;
-  head.append(icon,element("i","rw-indicator"),headText,closeButton);
+  const spark=liweiRepairIcon("spark");
+  spark.classList.add("rw-spark");
+  head.append(icon,element("i","rw-indicator"),headText,spark,closeButton);
   overlay.append(head,body);
   view.parentElement.append(overlay);
   const benchArt=element("figure","rw-bench-art");
@@ -86,6 +97,11 @@
   const workbench=element("div","rw-console");
   workbench.append(benchArt);
   function setBody(el) {
+    const board=el.classList.contains("rw-board-game");
+    if (board!==overlay.classList.contains("rw-board-active")) {
+      overlay.classList.toggle("rw-board-active",board);
+      position();
+    }
     if (!el.classList.contains("rw-game")) {body.replaceChildren(el);return;}
     if (workbench.firstElementChild===benchArt) workbench.prepend(el);
     else workbench.firstElementChild.replaceWith(el);
@@ -99,10 +115,13 @@
     const counter=overlay.classList.contains("rw-counter");
     const padding=Math.min(14,rect.width*.035);
     const width=counter ? Math.min(520,rect.width-padding*2) : Math.min(780,rect.width-padding*2);
-    const height=counter ? Math.min(208,rect.height*.58) : Math.min(550,rect.height-padding*2);
+    const tall=overlay.classList.contains("rw-board-active") && rect.width<400 && !counter;
+    const maxHeight=tall ? rect.height+Math.max(0,Math.min(140,rect.top-12)) : rect.height-padding*2;
+    const height=counter ? Math.min(208,rect.height*.58) : Math.min(550,maxHeight);
+    const top=tall ? rect.height-height : counter ? rect.height-padding : (rect.height-height)/2;
     Object.assign(overlay.style,{
       left:rect.left-host.left+(rect.width-width)/2+"px",
-      top:rect.top-host.top+(counter ? rect.height-padding : (rect.height-height)/2)+"px",
+      top:rect.top-host.top+top+"px",
       width:width+"px",height:counter?"auto":height+"px",maxHeight:height+"px",
     });
     // On a narrow screen, keep the customer and table above the order card.
@@ -244,11 +263,19 @@
     return order;
   }
   function queueCustomer(receipt = "") {
-    const s=service, order=nextOrder(s.practice);
+    const s=service;
+    s.receipt=receipt;
+    if (playsToday()>=dailyLimit) {
+      s.order=null;
+      s.closedDay=day();
+      board();
+      return;
+    }
+    const order=nextOrder(s.practice);
+    s.closedDay=null;
     const now=performance.now();
     s.order=order;
     s.lastType=order.type;
-    s.receipt=receipt;
     s.walkAt=now+(departing?1550:220);
     s.arriveAt=s.walkAt+(reduceMotionUI?250:1650);
     board();
@@ -277,6 +304,7 @@
   function play(order, practice = false) {
     if (order.delivered) return;
     if (order.completed) return deliver(order);
+    if (!countPlay()) {if(service)queueCustomer();return;}
     if (!practice && order.id!=="tutorial") {
       state.orders[order.id]=order;
       persist();
@@ -284,7 +312,12 @@
     openRoom(order.title);
     run=order.id;
     cancelGame=runLiweiRepair({...order,shopTool:state.owned.includes("coil")?"coil":null},{
-      element,button,setBody,sound,alive:()=>run===order.id&&!overlay.hidden
+      element,button,setBody,sound,alive:()=>run===order.id&&!overlay.hidden,
+      retry:()=>{
+        if (countPlay()) return true;
+        if (service) queueCustomer();
+        return false;
+      }
     },()=>{
       run=null;
       if (practice) {
@@ -312,7 +345,9 @@
   const customerLines = {
     radio:["接上了！刚才那句报的是晚上吃什么？","听着像豆腐。我拧回去再听一遍。"],
     bike:["这圈终于安静了。以前我骑到半街，人家光听声就知道是我。","那下次就记得摁铃。"],
-    clock:["它上回走得这么正，还是我搬来那天。","行，明早可以用它准点起床了。"],
+    defense:["哎，真安静了。它半夜多响一下，我还以为有人敲门！","您先听一晚。它要是又乱报点，明早再给我送来。"],
+    mines:["亮了亮了！手别挪，让我看看是不是这几格在捣鬼。","我把烧坏的线换下来啦。先少开几分钟，摸摸外壳烫不烫。"],
+    gomoku:["好嘛，桌子稳了，我这盘倒下歪了。","我看见您手里还攥着一颗呢。就搁这儿吧，下回接着下。"],
     pipes:["桶底干着呢！我先把地上的旧毛巾收了。","那条别急着扔，擦工作台挺好。"],
     tape:["录着呢，后头还真有声。我以为那截早磨没了。","找个安静地方再听一遍吧。"],
   };
@@ -325,10 +360,11 @@
     if (!order.completed || order.delivered) return;
     if (order.coin && state.paidDay===day()) return showHint("今天已经结过一张付费单，这张明天还能交。");
     hideRoom();
-    const [clientLine, reply]=customerLines[order.type];
+    const [clientLine, reply]=customerLines[order.type==="clock"?"defense":order.type];
     const archive=specialTapes[order.title];
+    const after=LIWEI_REPAIR_COMMENTS[order.title];
     const rows=archive?[[order.client,"先放一下后半截，听听还能不能接上。"],["录音",archive[0]],[order.client,archive[1]]]:
-      [[order.client,clientLine],["我",reply]];
+      [[order.client,clientLine],["我",reply],...(after?[[order.client,after[0]],["我",after[1]]]:[])];
     tell(rows,()=>{
       if (order.delivered) return;
       order.delivered=true;
@@ -359,17 +395,21 @@
   function paintCounter() {
     if (!service) return;
     const {order,receipt,practice,arriveAt}=service;
-    const arrived=performance.now()>=arriveAt;
-    overlay.dataset.customer=arrived?"ready":"waiting";
+    const arrived=!!order && performance.now()>=arriveAt;
+    overlay.dataset.customer=!order?"closed":arrived?"ready":"waiting";
     const card=element("article","rw-customer");
-    const name=element("div","rw-customer-name",arrived?order.client:"等下一位客人");
-    const stamp=element("span","rw-customer-stamp",arrived?(order.coin?order.coin+" 丢丢币":"人情单"):"营业中");
+    const name=element("div","rw-customer-name",!order?closedMessage:arrived?order.client:"等下一位客人");
+    name.prepend(liweiRepairIcon(!order?"seal":arrived?"bolt":"spark"));
+    const stamp=element("span","rw-customer-stamp",arrived?(order.coin?order.coin+" 丢丢币":"人情单"):order?"营业中":"收工");
+    stamp.prepend(liweiRepairIcon("seal"));
     name.append(stamp);
     card.append(name);
     const fault=element("p","rw-note",arrived?order.detail:"桌子支好了。街坊正往这边来。");
-    if (arrived) {
+    if (!order) card.append(element("p","rw-note","今天的 20 局都玩完了，明天再来开摊吧。"));
+    else if (arrived) {
       fault.classList.add("rw-fault");
       card.append(element("h3","",order.title),fault);
+      fault.append(element("small","rw-order-mode",LIWEI_REPAIR_TYPES[order.type==="clock"?"defense":order.type]));
       card.append(button(order.completed?"交给客人":"接过来修",()=>play(order,practice)));
     } else {
       const steps=element("div","rw-customer-walk");
@@ -379,6 +419,7 @@
     }
     const footer=element("nav","rw-counter-tools");
     footer.append(element("small","rw-counter-balance",receipt||(practice?"练习摊位":"余额 "+X.F.coins+" 丢丢币")));
+    footer.append(element("small","rw-counter-tally","今日 "+playsToday()+" / "+dailyLimit+" 局"));
     if (!practice) footer.append(tab("街坊合伙",partners),tab("工具和摆件",supplies));
     const wrap=element("div","rw-counter-content");
     wrap.append(card,footer);
@@ -565,6 +606,8 @@
     if(state.since==null){state.since=day();persist();}
     trackTravel();
     if (departing && customerPosition(departing,performance.now()).alpha<=0) departing=null;
+    if (service?.closedDay!=null && service.closedDay!==day() && !overlay.hidden &&
+        overlay.classList.contains("rw-counter")) queueCustomer();
     if (service && !overlay.hidden && overlay.classList.contains("rw-counter") &&
         overlay.dataset.customer==="waiting" && performance.now()>=service.arriveAt) {
       sound("select");
@@ -603,7 +646,7 @@
       const x=store.x-16,y=store.y-38;
       ctx.fillStyle="#342331";ctx.fillRect(x,y,32,10);
       ctx.fillStyle=state.owned.includes("display")?"#f7b85e":"#a76542";ctx.fillRect(x+1,y+1,30,8);
-      ctx.font="7px sans-serif";ctx.textAlign="center";ctx.fillStyle="#fff1c5";ctx.fillText(service?"营业中":"维修摊",x+16,y+7);
+      ctx.font="7px sans-serif";ctx.textAlign="center";ctx.fillStyle="#fff1c5";ctx.fillText(service?.order?"营业中":"维修摊",x+16,y+7);
     }
     for(const id of new Set(offers().map(q=>current(q)?.[0]).filter(id=>id&&!travelers[id]))){
       const loc=landmark(id);
@@ -737,7 +780,7 @@
       })).filter(v=>v.alpha>0);
     },
     stallScenery(){
-      if (!service || !stallArt.complete || !stallArt.naturalWidth) return null;
+      if (!service?.order || !stallArt.complete || !stallArt.naturalWidth) return null;
       const plot=landmark(stallId), y=plot.y+4;
       return {img:stallArt,x:plot.x-26,y:y-stallArt.height+3,depth:y};
     },

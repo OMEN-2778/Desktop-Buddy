@@ -1479,8 +1479,13 @@ function makeSeason_autumn(opts, DATA) {
             clearRoute();
             if (!window.liweiStory?.locked()) care("hygiene", true);
         }
+        const toilet = town && !state.inside ? landmark("toilet") : null;
+        if (toilet && state.service?.need === "bladder" && state.service.location === toilet.name && dist(state,toilet)>20) {
+            state.service=state.pose=null;
+            goTo(toilet.x,toilet.y,{id:"toilet",need:"bladder",automatic:true});
+        }
         if (state.target) {
-            const target = state.route.at(-1) || state.target;
+            const target = toilet && state.goal?.id === "toilet" ? toilet : state.route.at(-1) || state.target;
             if (privateOffice(target.x,target.y)) clearRoute();
             else {
                 const goal = state.goal;

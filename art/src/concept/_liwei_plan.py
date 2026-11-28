@@ -43,8 +43,8 @@ BLOCKS = [
  ('canteen','工人食堂',201,566,48,1,'brick','awning'),('laundry','洗衣铺',253,566,45,1,'civic','laundry'),
  ('bath','公共浴场',303,566,43,1,'brick','steam'),
  ('hotel','山城旅馆',74,637,46,2,'brick','awning'),('homes4','',128,637,46,2,'old',''),
- ('homes5','',74,716,46,1,'old',''),('toilet','公厕',128,716,46,1,'civic',''),
- ('dorm1','',74,797,46,1,'old',''),('dorm2','',128,797,46,1,'brick',''),
+ ('homes5','',74,716,46,1,'old',''),('dorm2','',128,716,46,1,'brick',''),
+ ('dorm1','',74,797,46,1,'old',''),('toilet','公厕',128,797,46,1,'civic',''),
  ('dorm3','',74,885,46,2,'old',''),('dorm4','',128,885,46,2,'old',''),
  ('store','栗尾货铺',381,900,48,2,'brick','awning'),('syrup','枫糖铺',438,900,49,1,'old','awning'),
  ('workshop','机修间',204,900,55,1,'brick','gear'),('shed','',264,900,36,1,'brick',''),
@@ -393,6 +393,13 @@ def draw(theme, frame):
     # Set these trunks behind the cabin roof, out of the downhill path.
     for x,y,seed in ((92,274,5),(120,290,12),(149,276,21),(176,286,32),(201,269,6)):
         place_plant(c,tree_sprite(seed,plant_theme,frame,1),x,y)
+    # A layered garden behind the repair house, entirely off the paved street.
+    for x,y,seed,size in ((158,1330,5,.85),(180,1323,12,1),(204,1331,21,1.05),
+                          (224,1326,4,.87),(241,1340,32,.82),(153,1366,3,.78)):
+        place_plant(c,tree_sprite(seed,plant_theme,frame,size),x,y)
+    for seed,(x,y) in enumerate(((149,1342),(161,1354),(178,1340),(194,1346),
+                                 (209,1351),(223,1343),(240,1360),(149,1389)),10):
+        place_plant(c,shrub_sprite(seed,plant_theme,frame),x,y)
     # Mountaintop rail, viewing pavilion and paved switchback.
     c.facade(228,City.rail,(224,228),(612,228),True)
     for y in range(303,376,7):c.box(383,y,84,2,P.pave[1]);c.box(383,y,84,1,P.linen[2])

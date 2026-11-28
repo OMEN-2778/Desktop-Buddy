@@ -21,18 +21,11 @@ const { chromium } = require("playwright");
       const click=selector=>host.querySelector(selector)?.click();
       const press=name=>[...host.querySelectorAll("button")].find(b=>b.textContent===name)?.click();
       const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-      for(const type of ["clock","pipes","tape","bike"]){
+      for(const type of ["pipes","tape","bike"]){
         const seed=4251;
         let won=false;
         const stop=runLiweiRepair({type,seed},{element:make,button,setBody:el=>host.replaceChildren(el),sound:()=>{},alive:()=>!won},()=>{won=true;});
         try {
-          if(type==="clock"){
-            const draw=liweiRepairRandom(seed),pool=[0,1,2,3];
-            const right=Array.from({length:3},()=>pool.splice(draw(pool.length),1)[0]);
-            for(const [i,part] of right.entries())
-              for(let t=i;t%4!==part;t++)host.querySelectorAll(".rw-actions:first-of-type button")[i].click();
-            press("拨到整点试敲");
-          }
           if(type==="pipes"){
             const board=()=>[...host.querySelectorAll(".rw-grid button")];
             const end=board().findIndex(b=>b.disabled);
@@ -68,6 +61,44 @@ const { chromium } = require("playwright");
           if(!won)throw Error("could not finish "+type);
         }finally{stop();}
       }
+      function exercise(type, run) {
+        let next, won=false, failed=false;
+        const note=text=>make("p","",text);
+        const row=(cls,items)=>{const el=make("div",cls);el.append(...items);return el;};
+        const labeled=(text,action,opts={})=>{const b=button(text,action,opts);b.setAttribute("aria-label",opts.label||text);return b;};
+        const start=liweiRepairBoardGames({order:{seed:4251},button:labeled,row,note,
+          setBody:el=>host.replaceChildren(el),sound:()=>{},later:fn=>{next=fn;},
+          win:()=>{won=true;},fail:()=>{failed=true;}});
+        start[type]();
+        const cells=()=>[...host.querySelectorAll(".rw-board button")];
+        const tick=()=>{const step=next;next=null;step?.();};
+        run({cells,tick,press,won:()=>won,failed:()=>failed});
+      }
+      exercise("defense",({cells,tick,press,won})=>{
+        for(const i of [0,6,12])cells()[i].click();
+        press("接通电源");
+        for(let i=0;i<32&&!won();i++)tick();
+        if(!won())throw Error("three-lane first-round defense should win");
+      });
+      exercise("mines",({cells,press,won,failed})=>{
+        press("改用插旗");cells()[1].click();
+        if(!cells()[1].getAttribute("aria-label").includes("已标记"))throw Error("flag missing");
+        cells()[1].click();press("插旗中");
+        cells()[0].click();
+        if(failed() || !cells()[0].disabled)throw Error("first tap should be safe");
+        const draw=liweiRepairRandom(4251), pool=Array.from({length:36},(_,i)=>i).filter(i=>![0,1,6,7].includes(i));
+        const faults=new Set(Array.from({length:6},()=>pool.splice(draw(pool.length),1)[0]));
+        for(let i=0;i<36&&!won();i++)if(!faults.has(i))cells()[i].click();
+        if(!won())throw Error("clearing safe cells should win");
+      });
+      exercise("gomoku",({cells,tick})=>{
+        cells()[40].click();
+        if(!cells()[40].getAttribute("aria-label").includes("白子")||!cells().every(b=>b.disabled))
+          throw Error("gomoku should wait for the opponent");
+        if(!cells().some(b=>b.getAttribute("aria-label").includes("深色棋子")))tick();
+        if(cells().filter(b=>b.getAttribute("aria-label").includes("深色棋子")).length!==1)
+          throw Error("opponent should play exactly one move");
+      });
     });
     await page.evaluate(()=>{
       closeGuide();
@@ -80,6 +111,16 @@ const { chromium } = require("playwright");
       const c=seasonMapTest.state.autumn;
       sim.place="autumn_test";
       arriveAt("autumn_test");
+      const toilet=c.DATA.landmarks.find(mark=>mark.id==="toilet");
+      const stall=c.DATA.landmarks.find(mark=>mark.id==="repair_stall");
+      if(toilet.y-stall.y<130||c.nearest(toilet.x,toilet.y).d>3)throw Error("the relocated toilet must be on the southern street");
+      Object.assign(c.state,{x:stall.x,y:stall.y,goal:{id:"toilet",need:"bladder",automatic:true},
+        target:{x:302,y:stall.y},route:[]});
+      c.restore();
+      const destination=c.state.route.at(-1)||c.state.target;
+      if(!destination||Math.hypot(destination.x-toilet.x,destination.y-toilet.y)>3)
+        throw Error("saved toilet route kept its old destination");
+      c.clearRoute();
       window.__workCheck={
         wait:ms=>new Promise(resolve=>setTimeout(resolve,ms)),
         go(id) {
@@ -266,8 +307,30 @@ const { chromium } = require("playwright");
       restore(done);
       if(snapshot().liweiNeighborhood.partners.length!==1)throw Error("investment result lost on load");
     });
+    await page.evaluate(()=>{
+      const t=__workCheck;
+      const saved=snapshot();
+      saved.liweiNeighborhood.playDay=springFarm.X.today();
+      saved.liweiNeighborhood.plays=19;
+      saved.liweiNeighborhood.counter.pending=null;
+      saved.liweiNeighborhood.orders={};
+      restore(saved);
+      t.go("repair_stall");
+    });
+    await repair.getByRole("button",{name:"接过来修",exact:true}).click();
+    assert.equal(await page.evaluate(()=>snapshot().liweiNeighborhood.plays),20);
+    await page.evaluate(()=>{
+      const saved=snapshot();
+      restore(saved);
+      __workCheck.go("repair_stall");
+    });
+    await repair.getByText("今天好像没有顾客了").waitFor();
+    assert.equal(await repair.getByRole("button",{name:"接过来修",exact:true}).count(),0);
+    await page.evaluate(()=>{sim.t+=1440;});
+    await repair.getByRole("button",{name:"接过来修",exact:true}).click();
+    assert.equal(await page.evaluate(()=>snapshot().liweiNeighborhood.plays),1);
     assert.deepEqual(errors,[]);
-    console.log("PASS 西侧小屋、开摊、单客接待、普通支线、跨城交接、钱包、合伙与读档");
+    console.log("PASS 西侧小屋、开摊、单客接待、新小游戏、每日20局存档与跨天、普通支线、跨城交接、钱包、合伙与读档");
   } finally {
     await browser.close();
   }

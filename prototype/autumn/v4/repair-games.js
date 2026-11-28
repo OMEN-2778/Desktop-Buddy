@@ -1,5 +1,5 @@
 const LIWEI_REPAIR_TYPES = {
-  radio: "自动扫频", bike: "修车试跑", clock: "挂钟排故", pipes: "洗衣铺止漏", tape: "磁带抢救",
+  radio: "自动扫频", bike: "修车试跑", defense: "分路塔防", mines: "线路扫雷", gomoku: "五子棋", pipes: "洗衣铺止漏", tape: "磁带抢救",
 };
 
 function liweiRepairRandom(seed) {
@@ -28,9 +28,9 @@ function runLiweiRepair(order, ui, complete) {
     complete();
   }
   let restart;
-  function fail(words) {
+  function fail(words, icon = "fault") {
     sound("fault");
-    setBody(row("rw-result", [title("测试中断"), note(words), button("重新试一次", () => restart())]));
+    setBody(row("rw-result", [liweiRepairIcon(icon), title("测试中断"), note(words), button("重新试一次", () => { if (!ui.retry || ui.retry()) restart(); })]));
   }
   function radio() {
     const draw = liweiRepairRandom(order.seed);
@@ -177,37 +177,6 @@ function runLiweiRepair(order, ui, complete) {
     }
     render();
   }
-  function clock() {
-    const draw=liweiRepairRandom(order.seed);
-    const patterns=["长齿铜轮","短齿铜轮","长齿铁轮","短齿铁轮"];
-    const pool=patterns.map((_,i)=>i);
-    const target=Array.from({length:3},()=>pool.splice(draw(pool.length),1)[0]);
-    let fitted=[0,1,2], history=[], hint="";
-    function test() {
-      const exact=fitted.filter((id,i)=>id===target[i]).length;
-      if (exact===3) { win(); return; }
-      const loose=new Set(fitted.filter(id=>target.includes(id))).size-exact;
-      history.unshift(fitted.map(id=>patterns[id]).join(" / ")+"　响对 "+exact+" · 装错槽 "+loose);
-      history=history.slice(0,4);
-      sound(exact?"select":"fault");
-      render();
-    }
-    function render() {
-      setBody(row("rw-game",[
-        note("点槽位换齿轮，三个轮子各有一个位置。每次试敲都会留下提示。"),
-        row("rw-actions",fitted.map((part,i)=>button(["时针","半点","报时"][i]+" · "+patterns[part],()=>{
-          fitted[i]=(part+1)%patterns.length;sound("tick");render();
-        }))),
-        row("rw-actions",[
-          button("拨到整点试敲",test),
-          button("听一遍低音齿",()=>{hint=target[0]<2?"时针齿轮敲起来清脆，是铜片。":"时针齿轮声音低，是铁片。";sound("tick");render();})
-        ]),
-        note(hint || "「响对」是轮子和槽位都对，「装错槽」是轮子对但位置不对。"),
-        ...history.map(note)
-      ]));
-    }
-    render();
-  }
   function pipes() {
     const draw=liweiRepairRandom(order.seed);
     const path=[];
@@ -283,7 +252,8 @@ function runLiweiRepair(order, ui, complete) {
     }
     render();
   }
-  restart = {radio,bike,clock,pipes,tape}[order.type];
+  const boards=liweiRepairBoardGames({order,button,row,note,setBody,sound,later,win,fail});
+  restart = {radio,bike,pipes,tape,...boards}[order.type==="clock"?"defense":order.type];
   restart();
   return () => clearTimeout(timer);
 }

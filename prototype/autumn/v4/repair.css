@@ -109,3 +109,34 @@
 @keyframes rw-step{to{opacity:.22;translate:0 3px}}
 .liwei-repair:not(.rw-counter) .rw-body{background:linear-gradient(#ffffff04,#0000),
  repeating-linear-gradient(0deg,transparent 0 11px,#d6b8860b 11px 12px)}
+
+.rw-pixel-icon{width:20px;height:20px;image-rendering:pixelated;flex:none;vertical-align:middle}
+.rw-head .rw-pixel-icon{width:18px;height:18px}
+.rw-head .rw-spark{animation:rw-solder 2.6s steps(6) infinite}
+@keyframes rw-solder{0%,60%,100%{opacity:.45;scale:.8}74%{opacity:1;scale:1.25}84%{opacity:.8;scale:1}}
+.rw-board-status{display:flex;align-items:center;gap:6px;padding:4px 7px;border:2px solid #332935;
+  background:#294745;box-shadow:inset 0 1px #6c9b87;color:#f1e1ac}
+.rw-board-status .rw-note{color:#e0ebca}
+.rw-board{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;width:min(100%,25em);
+  box-sizing:border-box;padding:5px;border:2px solid #241d2a;background:#312935;box-shadow:inset 0 2px #876364}
+.rw-board .rw-btn{display:flex;justify-content:center;align-items:center;gap:1px;padding:0;min-width:0;min-height:24px;
+  aspect-ratio:1;max-height:42px;font-size:.82em;box-shadow:inset 0 2px #a09d81,inset 0 -2px #3b5c5c}
+.rw-board .rw-btn:disabled{opacity:1;filter:none}
+.rw-board .rw-btn .rw-pixel-icon{width:clamp(12px,2.4vw,25px);height:auto}
+.rw-board-defense .rw-btn{background:#5e7d70;color:#fff1c5}
+.rw-board-defense .rw-btn:nth-child(n+7):nth-child(-n+12){background:#49645d}
+.rw-board-defense .rw-btn.rw-entry{background:#394453}
+.rw-board-defense .rw-btn.rw-enemy{background:#865448;animation:rw-interference .42s steps(4) both}
+@keyframes rw-interference{from{translate:5px 0;filter:brightness(1.6)}to{translate:0 0;filter:none}}
+.rw-board-mines .rw-btn{background:#68808e;color:#fff0bc}
+.rw-board-mines .rw-btn.rw-revealed{background:#3c4a58;box-shadow:inset 0 2px #303642;color:#ffe294}
+.rw-board-gomoku{grid-template-columns:repeat(9,minmax(0,1fr));gap:0;width:min(100%,20em);background:#e0af75}
+.rw-board-gomoku .rw-btn{min-height:19px;border:1px solid #775447;background:#c99462;box-shadow:none}
+.rw-board-gomoku .rw-btn .rw-pixel-icon{width:84%;max-width:29px}
+.rw-board-tools .rw-btn{display:flex;align-items:center;gap:4px}
+.rw-board-tools .rw-picked{background:#a2cfa8}
+.rw-customer-name .rw-pixel-icon{width:16px;height:16px}
+.rw-customer-stamp{display:flex;align-items:center;gap:2px}
+.rw-counter-tools .rw-counter-tally{color:#a9cbbb;margin-right:auto}
+.rw-order-mode{display:block;margin-top:3px;color:#b9d0ab;font-size:.89em}
+@container (max-width:400px){.rw-board-gomoku{width:min(100%,13rem)}}
