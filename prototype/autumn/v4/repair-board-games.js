@@ -20,7 +20,7 @@ function liweiRepairBoardGames({order, button, row, note, setBody, sound, later,
   const defense=()=>liweiRepairDefense({order,button,cell,row,note,setBody,sound,later,win,fail,position});
 
   function mines() {
-    const draw=liweiRepairRandom(order.seed), width=6, count=6;
+    const draw=liweiRepairRandom(order.seed), width=6, count=[4,6,9][(order.difficulty ?? 2)-1];
     const slots=Array.from({length:width*width},(_,i)=>i);
     const neighbors=slots.map(i=>slots.filter(j=>i!==j &&
       Math.abs(i%width-j%width)<=1 && Math.abs(Math.floor(i/width)-Math.floor(j/width))<=1));
@@ -57,15 +57,14 @@ function liweiRepairBoardGames({order, button, row, note, setBody, sound, later,
       setBody(row("rw-game rw-board-game",[
         status("flag","标记 "+flags.size+" / "+count+"　安全格 "+opened.size+" / "+(slots.length-count)),
         note("点格子找出所有安全线路。数字是周围八格的短路数，第一下可以放心点。"),
-        grid("mines",slots.map(i=>{
+        row("rw-mines-layout",[grid("mines",slots.map(i=>{
           const revealed=opened.has(i);
           const number=neighbors[i].filter(j=>faults.has(j)).length;
           const b=cell(position(i,width)+(revealed?" 已探明 "+number:flags.has(i)?" 已标记":" 未探明"),
             ()=>probe(i),flags.has(i)?"flag":null,revealed&&number?String(number):"",revealed);
           if (revealed) b.classList.add("rw-revealed");
           return b;
-        })),
-        row("rw-actions rw-board-tools",[flag,note(flagging?"再点一次已插旗的格子可拔掉。":"怀疑短路的格子，可以切换成插旗。")]),
+        })),flag]),
       ]));
     }
     render();
@@ -108,7 +107,9 @@ function liweiRepairBoardGames({order, button, row, note, setBody, sound, later,
       let at=-1, best=-1;
       slots.forEach((stone,i)=>{
         if (stone) return;
-        const value=score(i,2)*1.2+score(i,1)+draw(6);
+        const difficulty=order.difficulty ?? 2;
+        const attack=score(i,2), block=score(i,1);
+        const value=attack*(difficulty===1?1.6:1.2)+block*(difficulty===3?1.18:.8)+draw(difficulty===1?27:6);
         if (value>best) {at=i;best=value;}
       });
       thinking=false;

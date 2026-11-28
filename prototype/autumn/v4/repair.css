@@ -172,3 +172,11 @@
 .rw-defense-controls{display:flex;align-items:center;gap:6px;min-height:24px}
 .rw-defense-controls p{flex:1}
 .rw-defense-start[hidden]{display:none}
+
+.rw-mines-layout{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:6px}
+.rw-mines-layout>.rw-btn{position:sticky;top:0;display:flex;align-items:center;gap:3px;padding:4px;white-space:nowrap}
+.rw-mines-layout .rw-pixel-icon{width:16px;height:16px}
+.rw-difficulty{width:fit-content;margin:8px auto;display:grid;justify-items:center;gap:5px;padding:12px 22px;
+  background:#47384a;border:2px solid #ac876a;color:#ffe5a2;animation:rw-celebrate .26s steps(6) both}
+.rw-difficulty h3{margin:0;font-size:1em}
+.rw-difficulty-stars{letter-spacing:.15em;font-size:1.5em}

@@ -14,18 +14,19 @@ function liweiRepairDefense({order, button, cell, row, note, setBody, sound, lat
   };
   const draw=liweiRepairRandom(order.seed);
   const intro=order.id==="tutorial";
+  const difficulty=order.difficulty ?? 2;
   const pattern=intro || order.seed%3===0 ? ["fault","runner","armored"] :
     order.seed%3===1 ? ["runner","fault","armored"] : ["fault","armored","runner"];
   const waveCount=intro?2:3;
   const arrivals=[];
   for (let wave=0;wave<waveCount;wave++) {
     const shift=draw(lanes);
-    const count=intro?5+wave:5+wave*2;
+    const count=intro?5+wave:3+difficulty+wave*2;
     for (let j=0;j<count;j++) {
       const kind=wave===0 || intro ? j<3?"fault":"runner" :
         j%3===0?"fault":pattern[wave];
       const lane=j<3?(shift+j)%lanes:draw(lanes);
-      arrivals.push({tick:12+wave*214+j*(wave===2?17:23), wave:wave+1, lane, kind});
+      arrivals.push({tick:12+wave*214+j*((wave===2?17:23)+(2-difficulty)*3), wave:wave+1, lane, kind});
     }
   }
   const field=Array(width*lanes).fill(null);
@@ -99,7 +100,7 @@ function liweiRepairDefense({order, button, cell, row, note, setBody, sound, lat
     const node=row("rw-defense-unit",[icon,life]);
     node.classList.add("rw-defense-"+kind);
     effects.append(node);
-    enemies.push({...opponents[kind],max:opponents[kind].hp,x:5.94,lane,node,life,slowUntil:0});
+    enemies.push({...opponents[kind],hp:opponents[kind].hp+(intro?0:difficulty-2),max:opponents[kind].hp+(intro?0:difficulty-2),x:5.94,lane,node,life,slowUntil:0});
   }
   function burst(x,lane,kind) {
     const node=row("rw-defense-burst rw-defense-"+kind,[]);

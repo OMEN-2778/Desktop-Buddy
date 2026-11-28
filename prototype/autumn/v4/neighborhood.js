@@ -242,7 +242,7 @@
     const current=day();
     const counter=state.counter;
     if (!practice) {
-      const eligible=order=>order&&!order.delivered&&(!order.coin||state.paidDay!==current);
+      const eligible=order=>order&&!order.delivered&&!order.skipped&&(!order.coin||state.paidDay!==current);
       const held=state.orders[counter.pending];
       if (eligible(held)) return held;
       // Repair orders accepted before the move are still collected at the new stall.
@@ -262,7 +262,7 @@
       ? ["radio","许师傅","柜下的试机收音机","先摆好线圈，再接通电源，听听还有没有杂讯。"]
       : pool[rng(pool.length)];
     const coin=practice||state.paidDay===current ? 0 : title==="广场的旧广播" ? 3 : current%4===0 ? 2 : 1;
-    const order={id:(practice?"practice-":"walk-in-")+current+"-"+seq,day:current,type,client,title,detail,seed:firstPractice?912:rng(0x7fffffff),coin};
+    const order={id:(practice?"practice-":"walk-in-")+current+"-"+seq,day:current,type,client,title,detail,seed:rng(0x7fffffff),coin};
     if (!practice) {
       state.orders[order.id]=order;
       counter.pending=order.id;
@@ -311,7 +311,7 @@
     state.counter.pending=null;
   }
   function play(order, practice = false) {
-    if (order.delivered) return;
+    if (order.delivered||order.skipped) return;
     if (order.completed) return deliver(order);
     if (!countPlay()) {if(service)queueCustomer();return;}
     if (!practice && order.id!=="tutorial") {
@@ -320,8 +320,17 @@
     }
     openRoom(order.title);
     run=order.id;
-    cancelGame=runLiweiRepair({...order,shopTool:state.owned.includes("coil")?"coil":null},{
-      element,button,setBody,sound,alive:()=>run===order.id&&!overlay.hidden,
+    cancelGame=runLiweiRepair({...order,difficulty:liweiRepairDifficulty(order),shopTool:state.owned.includes("coil")?"coil":null},{
+      element,button,setBody,sound,alive:()=>run===order.id&&!overlay.hidden,reveal:true,
+      skip:()=>{
+        if (!service) {closeRoom();return;}
+        if (!practice) {
+          order.skipped=true;
+          releaseCustomer();
+          persist();
+        } else departing={...service,leaveAt:performance.now()};
+        queueCustomer();
+      },
       retry:()=>{
         if (countPlay()) return true;
         if (service) queueCustomer();

@@ -15,7 +15,12 @@ function liweiRepairRandom(seed) {
   };
 }
 
+function liweiRepairDifficulty(order) {
+  return order.id==="tutorial" ? 1 : 1+liweiRepairRandom(order.seed ^ 0x729b31)(3);
+}
+
 function runLiweiRepair(order, ui, complete) {
+  const difficulty=order.difficulty ?? 2;
   const {element, button, setBody, sound, alive} = ui;
   let timer = 0;
   const later = (fn, ms) => { timer = setTimeout(() => { if (alive()) fn(); }, ms); };
@@ -34,7 +39,7 @@ function runLiweiRepair(order, ui, complete) {
   let restart;
   function fail(words, icon = "fault") {
     sound("fault");
-    setBody(row("rw-result", [liweiRepairIcon(icon), title("测试中断"), note(words), button("重新试一次", () => { if (!ui.retry || ui.retry()) restart(); })]));
+    setBody(row("rw-result", [liweiRepairIcon(icon), title("测试中断"), note(words), button("重新试一次", () => { if (!ui.retry || ui.retry()) begin(); }), ...(ui.skip?[button("我修不了这个",ui.skip)]:[])]));
   }
   function bike() {
     const draw = liweiRepairRandom(order.seed);
@@ -43,20 +48,20 @@ function runLiweiRepair(order, ui, complete) {
     const wobble = 1+draw(2);
     let phase = "idle", position = 0, fixed = 0, picked = -1, attempts = 0, slots=[];
     function tick() {
-      if (document.hidden) { later(tick,105); return; }
+      if (document.hidden) { later(tick,[135,105,80][difficulty-1]); return; }
       position = (position+1)%12;
       if (position === 3 && picked === problem) sound("fault");
-      if (position === 0 && ++attempts === 6) { phase="idle"; render(); return; }
+      if (position === 0 && ++attempts === 8-difficulty) { fail("试转超时。"); return; }
       slots.forEach((slot,i)=>{
         if(i===position)slot.append(element("b","rw-signal"));
         else slot.replaceChildren();
       });
-      later(tick,105);
+      later(tick,[135,105,80][difficulty-1]);
     }
     function align() {
       if (picked !== problem) { sound("fault"); return; }
       const target = (fixed*3+wobble+2)%12;
-      if (Math.abs(target-position)>1) { sound("fault"); return; }
+      if (Math.abs(target-position)>[2,1,0][difficulty-1]) { sound("fault"); return; }
       sound("switch");
       if (++fixed === 3) win();
       else render();
@@ -89,7 +94,7 @@ function runLiweiRepair(order, ui, complete) {
     const path=[];
     const width=5, height=4, board=Array.from({length:width*height},()=>draw(4));
     const arrows=["→","↓","←","↑"];
-    const turn=draw(3)+1, endRow=draw(2)+2;
+    const turn=draw(3)+1, endRow=difficulty===2?draw(2)+2:difficulty===1?1:3;
     for(let x=0;x<turn;x++) path.push(x);
     for(let y=0;y<endRow;y++) path.push(y*width+turn);
     for(let x=turn;x<width;x++) path.push(endRow*width+x);
@@ -119,7 +124,8 @@ function runLiweiRepair(order, ui, complete) {
       }));
       setBody(row("rw-game",[note(text),boardNode,row("rw-actions",[
         button("开水试流",test),
-        button("看看中段",()=>{hint=path[Math.floor(path.length/2)];sound("select");render();},{disabled:successes===0})
+        button("看看中段",()=>{hint=path[Math.floor(path.length/2)];sound("select");render();},{disabled:successes===0||difficulty===3}),
+        ...(successes&&ui.skip?[button("我修不了这个",ui.skip)]:[])
       ])]));
     }
     render();
@@ -128,8 +134,9 @@ function runLiweiRepair(order, ui, complete) {
     const draw=liweiRepairRandom(order.seed);
     const route = draw(2) ? [0,1,2,3,4,9,14,13,12,11,10,15,20,21,22,23,24]
       : [0,5,6,7,8,9,14,13,12,11,10,15,20,21,22,23,24];
-    const obstacles=new Set(Array.from({length:24},(_,i)=>i).filter(i=>!route.includes(i)&&draw(3)===0));
-    const reels=[route[1+draw(3)],9,20+draw(4)];
+    const obstacles=new Set(Array.from({length:24},(_,i)=>i).filter(i=>!route.includes(i)&&draw(5-difficulty)===0));
+    const first=route[1+draw(3)], last=20+draw(4);
+    const reels=difficulty===1?[first,last]:difficulty===2?[first,9,last]:[first,9,15,last];
     reels.forEach(i=>obstacles.delete(i));
     let walked=[0], next=0, hint="依次经过号码导轮，最后绕到右下角。空格只绕一次。";
     function move(i) {
@@ -142,7 +149,7 @@ function runLiweiRepair(order, ui, complete) {
       if (reels.includes(i) && i!==reels[next]) { hint="先绕到编号 " + (next+1) + " 的导轮。";sound("fault");render();return; }
       if (i===24 && next===reels.length) { win(); return; }
       walked.push(i);
-      if (i===reels[next]) { next++; hint=["滋啦……","声音接上了。","放回收带盘就好了。"][next-1];sound("select"); }
+      if (i===reels[next]) { next++; hint=next===reels.length?"放回收带盘就好了。":"接上第 "+next+" 道导轮。";sound("select"); }
       else sound("tick");
       render();
     }
@@ -154,13 +161,20 @@ function runLiweiRepair(order, ui, complete) {
           if (walked.includes(i)) b.classList.add("rw-stream");
           if (i===walked.at(-1)) b.classList.add("rw-picked");
           return b;
-        })),button("从头绕",()=>{walked=[0];next=0;hint="依次经过三个导轮。";render();})
+        })),button("从头绕",()=>{walked=[0];next=0;hint="依次经过号码导轮。";render();})
       ]));
     }
     render();
   }
   const boards=liweiRepairBoardGames({order,button,row,note,setBody,sound,later,win,fail});
   restart = {bike,pipes,tape,...boards}[liweiRepairMode(order.type)];
-  restart();
+  function begin() {
+    if (!ui.reveal) {restart();return;}
+    const stars=element("div","rw-difficulty-stars","★".repeat(difficulty)+"☆".repeat(3-difficulty));
+    stars.setAttribute("aria-label",difficulty+" 星");
+    setBody(row("rw-difficulty",[title("难度"),stars]));
+    later(restart,950);
+  }
+  begin();
   return () => clearTimeout(timer);
 }
