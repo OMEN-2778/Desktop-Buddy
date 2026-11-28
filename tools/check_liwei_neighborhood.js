@@ -61,12 +61,12 @@ const { chromium } = require("playwright");
           if(!won)throw Error("could not finish "+type);
         }finally{stop();}
       }
-      function exercise(type, run) {
+      function exercise(type, run, order={seed:4251}) {
         let next, won=false, failed=false;
         const note=text=>make("p","",text);
         const row=(cls,items)=>{const el=make("div",cls);el.append(...items);return el;};
         const labeled=(text,action,opts={})=>{const b=button(text,action,opts);b.setAttribute("aria-label",opts.label||text);return b;};
-        const start=liweiRepairBoardGames({order:{seed:4251},button:labeled,row,note,
+        const start=liweiRepairBoardGames({order,button:labeled,row,note,
           setBody:el=>host.replaceChildren(el),sound:()=>{},later:fn=>{next=fn;},
           win:()=>{won=true;},fail:()=>{failed=true;}});
         start[type]();
@@ -77,8 +77,43 @@ const { chromium } = require("playwright");
       exercise("defense",({cells,tick,press,won})=>{
         for(const i of [0,6,12])cells()[i].click();
         press("接通电源");
-        for(let i=0;i<32&&!won();i++)tick();
-        if(!won())throw Error("three-lane first-round defense should win");
+        for(let i=0;i<12;i++)tick();
+        const shot=host.querySelector(".rw-defense-shot"), from=shot?.style.left;
+        if(!shot||!host.querySelector(".rw-defense-muzzle"))throw Error("tower did not launch a visible projectile");
+        tick();
+        if(!host.contains(shot)||shot.style.left===from)throw Error("projectile did not travel");
+        let hit=false;
+        for(let i=0;i<550&&!won();i++){
+          tick();
+          if(host.querySelector(".rw-defense-burst.rw-defense-coil"))hit=true;
+        }
+        if(!won()||!hit)throw Error("intro defense or impact animation failed");
+      },{seed:912,id:"tutorial"});
+      exercise("defense",({tick,press,failed})=>{
+        press("接通电源");
+        for(let i=0;i<500&&!failed();i++)tick();
+        if(!failed())throw Error("empty defense should lose");
+      });
+      exercise("defense",({cells,tick,press,won})=>{
+        press("蓄电盒 3");cells()[2].click();
+        press("穿甲管 5");cells()[6].click();
+        if(!cells()[2].getAttribute("aria-label").includes("蓄电盒")||
+           !cells()[6].getAttribute("aria-label").includes("穿甲管"))throw Error("new tower types are not placeable");
+        press("接通电源");
+        let heavy=false, produced=false;
+        for(let i=0;i<900&&!won();i++){
+          if(i===75||i===180){
+            press("线圈 3");cells()[i===75?0:12].click();
+          }
+          if(i===260){press("冷凝器 4");cells()[13].click();}
+          if(i===340){press("挡片 2");cells()[4].click();}
+          if(i===410){press("穿甲管 5");cells()[1].click();}
+          if(i===460){press("穿甲管 5");cells()[14].click();}
+          tick();
+          heavy ||= !!host.querySelector(".rw-defense-unit.rw-defense-armored");
+          produced ||= !!host.querySelector(".rw-defense-burst.rw-defense-power");
+        }
+        if(!heavy||!produced||!won())throw Error("full defense did not support mixed towers through the armored wave");
       });
       exercise("mines",({cells,press,won,failed})=>{
         press("改用插旗");cells()[1].click();
@@ -182,7 +217,7 @@ const { chromium } = require("playwright");
     for(const i of [0,6,12]) await tiles.nth(i).click();
     await repair.getByRole("button",{name:"接通电源",exact:true}).click();
     try {
-      await repair.getByRole("button",{name:"交还收音机",exact:true}).click({timeout:30000});
+      await repair.getByRole("button",{name:"交还收音机",exact:true}).click({timeout:35000});
     } catch (error) {
       throw Error("tutorial did not pass: "+await repair.innerText(),{cause:error});
     }
@@ -266,7 +301,7 @@ const { chromium } = require("playwright");
     const beforeRepair=await page.evaluate(()=>springFarm.X.F.coins);
     await repair.getByRole("button",{name:"交给客人",exact:true}).click();
     await page.evaluate(()=>__workCheck.speak());
-    await repair.getByText("刚交货 · 收到 1 枚丢丢币",{exact:true}).waitFor();
+    await repair.getByText("收到 1 丢丢币",{exact:true}).waitFor();
     await page.evaluate(()=>{
       const s=snapshot().liweiNeighborhood;
       if(!s.orders["check-one"].delivered || s.orders["check-two"].delivered ||
@@ -315,6 +350,7 @@ const { chromium } = require("playwright");
       restore(saved);
       t.go("repair_stall");
     });
+    await repair.getByText("旋钮一松手就掉。拿着呢，给。",{exact:true}).waitFor();
     await repair.getByRole("button",{name:"接过来修",exact:true}).click();
     await repair.getByRole("button",{name:"接通电源",exact:true}).waitFor();
     assert.equal(await page.evaluate(()=>snapshot().liweiNeighborhood.plays),20);

@@ -14,10 +14,15 @@ DRAWINGS = {
     "spark": ("............", "............", ".....oo.....", ".....ho.....", "....hmdo....", "..ohhhmdoo..", "...oddmdo...", "....odoo....", ".....oo.....", "............", "............", "............"),
     "bolt": ("............", ".....ooo....", "....ohho....", "...ohmo.....", "..ohmo......", "..ommdoooo..", "...oodmdo...", ".....odo....", "....odo.....", "...odo......", "...oo.......", "............"),
     "seal": ("............", "....oooo....", "...ohhhdo...", "..ohmmmddo..", "..ohmhmddo..", "..ommhdddo..", "...oddddo...", "...oddddo...", "..odoododo..", "..oo..oooo..", "............", "............"),
+    "chill": ("............","....oooo....","...ohhddo...","..ohhhmddo..",".ohhmmhdddo.",".ohhmmmhddo.",".ommhhmmddo.",".ommmhmdddo.","..oddddddo..","...oooooo...","...omddo....","...ooooo...."),
+    "piercer": ("............","............","..oooo......",".ohhdoooooo.",".ohhmmmmhhdo",".ommmddddddo","..oddoooooo.","...odo......","..ommdo.....","..odddo.....",".ooooooo....","............"),
+    "battery": ("............","...oooooo...","...ohhddo...",".ooohhddooo.",".ohhhhhmddo.",".ohmmhmdddo.",".ohmmhmdddo.",".ommhhmdddo.",".ommmdddddo.",".oddddddddo.","..oooooooo..","............"),
+    "runner": ("............","....oooo....","...ohhddo...",".oohhmmddo..",".ohmommddoo.",".ommomdddodo","..ohmdddodoo","...oddddooo.","..oooodoo...","..ohhodo....","...oooo.....","............"),
+    "armored": ("............","..oooooooo..",".ohhhhhhddo.",".ohmhhmdddo.",".ohmomomddo.",".ommommdddo.",".ommmmmdddo.",".ommmmddddo.",".oddddddddo.","..oooooooo..","..ooo..ooo..","............"),
 }
 
 def build():
-    ramps = [P.teal, P.steel, P.clay, P.clay, P.slate, P.linen, P.walnut, P.mustard, P.mustard, P.oak]
+    ramps = [P.teal, P.steel, P.clay, P.clay, P.slate, P.linen, P.walnut, P.mustard, P.mustard, P.oak, P.sea_grey, P.mustard, P.sage, P.clay, P.slate]
     return {
         f"liwei_repair_icon_{key}": Sprite.from_grid("\n".join(grid), dict(zip("odmh", (ramp[i] for i in (0,1,2,-1)))))
         for (key, grid), ramp in zip(DRAWINGS.items(), ramps, strict=True)

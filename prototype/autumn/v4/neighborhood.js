@@ -37,6 +37,7 @@
   const pay = (text,amount) => X.record("coin",text,amount);
   const landmark = id => city.DATA.landmarks.find(item=>item.id===id);
   const all = [special,...LIWEI_SIDE_STORIES];
+  const orderReports = new Map(LIWEI_REPAIR_ORDERS.map(([, ,title,detail])=>[title,detail]));
   const status = q => state.jobs[q.id];
   const current = q => q.steps[status(q)?.step || 0];
   const taskDay = q => q.steps[status(q)?.step || 0]?.[5] ? (status(q)?.day ?? day())+q.steps[status(q).step][5] : -1;
@@ -98,13 +99,16 @@
   workbench.append(benchArt);
   function setBody(el) {
     const board=el.classList.contains("rw-board-game");
-    if (board!==overlay.classList.contains("rw-board-active")) {
+    const defense=el.classList.contains("rw-defense");
+    if (board!==overlay.classList.contains("rw-board-active")||defense!==overlay.classList.contains("rw-defense-active")) {
       overlay.classList.toggle("rw-board-active",board);
+      overlay.classList.toggle("rw-defense-active",defense);
       position();
     }
     if (!el.classList.contains("rw-game")) {body.replaceChildren(el);return;}
     if (workbench.firstElementChild===benchArt) workbench.prepend(el);
     else workbench.firstElementChild.replaceWith(el);
+    workbench.classList.toggle("rw-console-defense",defense);
     if (workbench.parentElement!==body) body.replaceChildren(workbench);
   }
   let priorFocus=null;
@@ -113,16 +117,18 @@
     const rect=view.getBoundingClientRect();
     const host=view.parentElement.getBoundingClientRect();
     const counter=overlay.classList.contains("rw-counter");
+    const defense=!counter&&overlay.classList.contains("rw-defense-active");
     const padding=Math.min(14,rect.width*.035);
     const width=counter ? Math.min(520,rect.width-padding*2) : Math.min(780,rect.width-padding*2);
     const tall=overlay.classList.contains("rw-board-active") && rect.width<400 && !counter;
     const maxHeight=tall ? rect.height+Math.max(0,Math.min(140,rect.top-12)) : rect.height-padding*2;
     const height=counter ? Math.min(208,rect.height*.58) : Math.min(550,maxHeight);
-    const top=tall ? rect.height-height : counter ? rect.height-padding : (rect.height-height)/2;
+    const center=tall ? rect.height-height/2 : rect.height/2;
+    const top=counter ? rect.height-padding : defense ? center : center-height/2;
     Object.assign(overlay.style,{
       left:rect.left-host.left+(rect.width-width)/2+"px",
       top:rect.top-host.top+top+"px",
-      width:width+"px",height:counter?"auto":height+"px",maxHeight:height+"px",
+      width:width+"px",height:counter||defense?"auto":height+"px",maxHeight:height+"px",
     });
     // On a narrow screen, keep the customer and table above the order card.
     const lift=counter && rect.width<400 ? 65 : 0;
@@ -324,7 +330,7 @@
     },()=>{
       run=null;
       if (practice) {
-        setBody(result("修好了",order.client+"在摊前等着取件。",()=>{
+        setBody(result("修好了","",()=>{
           departing={...service,leaveAt:performance.now()};
           queueCustomer("刚刚交给"+order.client);
         },"交给客人"));
@@ -332,42 +338,44 @@
       }
       if (order.id==="tutorial") {
         completeStep(special,LIWEI_SHOP_STORY[4][2],4);
-        setBody(result("收音机响了", "把它拿回给许师傅。",()=>{closeRoom();doStep(special);}, "交还收音机"));
+        setBody(result("收音机响了","",()=>{closeRoom();doStep(special);},"交还收音机"));
         return;
       }
       order.completed=true;
       persist();
-      setBody(result("测试通过",order.client+"还等着拿东西。",()=>deliver(order),"交货"));
+      setBody(result("修好了","",()=>deliver(order),"交货"));
     });
   }
   function result(title,text,action,label) {
     const node=element("div","rw-result");
-    node.append(element("i","rw-result-glint"),element("h3","",title),element("p","rw-note",text),button(label,action));
+    node.append(element("i","rw-result-glint"),element("h3","",title));
+    if (text) node.append(element("p","rw-note",text));
+    node.append(button(label,action));
     return node;
   }
   const customerLines = {
-    radio:["接上了！刚才那句报的是晚上吃什么？","听着像豆腐。我拧回去再听一遍。"],
-    bike:["这圈终于安静了。以前我骑到半街，人家光听声就知道是我。","那下次就记得摁铃。"],
-    defense:["哎，真安静了。它半夜多响一下，我还以为有人敲门！","您先听一晚。它要是又乱报点，明早再给我送来。"],
-    mines:["亮了亮了！手别挪，让我看看是不是这几格在捣鬼。","我把烧坏的线换下来啦。先少开几分钟，摸摸外壳烫不烫。"],
-    gomoku:["好嘛，桌子稳了，我这盘倒下歪了。","我看见您手里还攥着一颗呢。就搁这儿吧，下回接着下。"],
-    pipes:["桶底干着呢！我先把地上的旧毛巾收了。","那条别急着扔，擦工作台挺好。"],
-    tape:["录着呢，后头还真有声。我以为那截早磨没了。","找个安静地方再听一遍吧。"],
+    radio:["哎，有声了。"],
+    bike:["我推一圈啊。"],
+    defense:["听，是这个点。"],
+    mines:["好了，我带回去试试。"],
+    gomoku:["再下半盘？"],
+    pipes:["干的。再开大点水。"],
+    tape:["真给接上了啊。"],
   };
   const specialTapes = {
-    "夜班开饭的录音":["老郑，你先别把门锁了！后头还有人下班。","记起来了。那天我多留了一把面，糊锅里了。还以为他们没听见我喊。"],
-    "店门口的旧录音":["门铃响两下，许师傅在屋里说，今天风挺大。","我当时录它干嘛呢？还好录了。留这里吧，回头你开门也响两下。"],
-    "换班留声带":["你先出去，我把灯关了。明儿还是这点见。","后来就散了，谁也没想到那天是最后一回。你给我留这半段就行。"],
+    "夜班开饭的录音":["老郑，你先别锁门！后头还有人。","嗯。我那晚还多煮了把面。"],
+    "店门口的旧录音":["风挺大。门掩上吧，有人来再开。","是我呀。你再放一遍。"],
+    "换班留声带":["你先出去，我把灯关了。明儿还是这点见。","就留这半段吧。"],
   };
   function deliver(order) {
     if (!order.completed || order.delivered) return;
     if (order.coin && state.paidDay===day()) return showHint("今天已经结过一张付费单，这张明天还能交。");
     hideRoom();
-    const [clientLine, reply]=customerLines[order.type==="clock"?"defense":order.type];
     const archive=specialTapes[order.title];
-    const after=LIWEI_REPAIR_COMMENTS[order.title];
-    const rows=archive?[[order.client,"先放一下后半截，听听还能不能接上。"],["录音",archive[0]],[order.client,archive[1]]]:
-      [[order.client,clientLine],["我",reply],...(after?[[order.client,after[0]],["我",after[1]]]:[])];
+    const lines=LIWEI_REPAIR_COMMENTS[order.title]||customerLines[order.type==="clock"?"defense":order.type];
+    const rows=archive
+      ? [["录音",archive[0]],[order.client,archive[1]]]
+      : lines.map((line,i)=>[i?"我":order.client,line]);
     tell(rows,()=>{
       if (order.delivered) return;
       order.delivered=true;
@@ -379,7 +387,7 @@
       persist();
       sound("success",.5);
       releaseCustomer();
-      queueCustomer(reward?"刚交货 · 收到 "+reward+" 枚丢丢币":"刚交货 · "+order.client+"把东西带走了");
+      queueCustomer(reward?"收到 "+reward+" 丢丢币":"");
     });
   }
   function tab(text,fn) {return button(text,()=>{sound("select");fn();});}
@@ -402,28 +410,27 @@
     overlay.dataset.customer=!order?"closed":arrived?"ready":"waiting";
     const card=element("article","rw-customer");
     const name=element("div","rw-customer-name",!order?closedMessage:arrived?order.client:"等下一位客人");
-    name.prepend(liweiRepairIcon(!order?"seal":arrived?"bolt":"spark"));
-    const stamp=element("span","rw-customer-stamp",arrived?(order.coin?order.coin+" 丢丢币":"人情单"):order?"营业中":"收工");
-    stamp.prepend(liweiRepairIcon("seal"));
-    name.append(stamp);
-    card.append(name);
-    const fault=element("p","rw-note",arrived?order.detail:"桌子支好了。街坊正往这边来。");
-    if (!order) card.append(element("p","rw-note","今天的 20 局都玩完了，明天再来开摊吧。"));
-    else if (arrived) {
-      fault.classList.add("rw-fault");
-      card.append(element("h3","",order.title),fault);
-      const mode=liweiRepairMode(order.type);
-      fault.append(element("small","rw-order-mode",LIWEI_REPAIR_TYPES[mode]));
-      card.append(button(order.completed?"交给客人":practice&&mode==="defense"?"开始塔防":"接过来修",()=>play(order,practice)));
+    if (!order || !arrived) {
+      card.classList.add("rw-ticket-empty");
+      card.append(name);
     } else {
-      const steps=element("div","rw-customer-walk");
-      steps.setAttribute("aria-hidden","true");
-      steps.append(element("i"),element("i"),element("i"));
-      card.append(fault,steps);
+      const mode=liweiRepairMode(order.type);
+      const stamp=element("span","rw-customer-stamp",order.coin?order.coin+" 丢丢币":"人情单");
+      name.append(stamp);
+      const report=element("p","rw-fault",orderReports.get(order.title)||order.detail);
+      const isPracticeDefense=practice&&mode==="defense";
+      const action=button(order.completed?"交给客人":isPracticeDefense?"开始塔防":"接过来修",()=>play(order,practice));
+      const ticket=element("div","rw-ticket-order");
+      ticket.append(element("h3","",order.title),report);
+      const controls=element("div","rw-ticket-action");
+      controls.append(action);
+      if (!isPracticeDefense) controls.append(element("small","rw-order-mode",LIWEI_REPAIR_TYPES[mode]));
+      card.append(name,ticket,controls);
     }
     const footer=element("nav","rw-counter-tools");
-    footer.append(element("small","rw-counter-balance",receipt||(practice?"练习摊位":"余额 "+X.F.coins+" 丢丢币")));
-    footer.append(element("small","rw-counter-tally","今日 "+playsToday()+" / "+dailyLimit+" 局"));
+    const tally=element("small","rw-counter-tally",playsToday()+" / "+dailyLimit+" 局");
+    if (receipt) footer.append(element("small","rw-counter-receipt",receipt));
+    footer.append(tally);
     if (!practice) footer.append(tab("街坊合伙",partners),tab("工具和摆件",supplies));
     const wrap=element("div","rw-counter-content");
     wrap.append(card,footer);
