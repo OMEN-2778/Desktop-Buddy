@@ -202,6 +202,7 @@
   function completeStep(q, rows, step) {
     const job=state.jobs[q.id] ||= {step:0, day:day(),log:[]};
     if (job.step!==step) return;
+    if (q===special) job.caseVersion=1;
     job.log.push({day:day(),title:q.steps[step][1],lines:rows.map(([who,text])=>[who==="我"?nameOf():who,text])});
     job.day=day();
     job.step++;
@@ -236,7 +237,7 @@
     tell(rows,()=>completeStep(q,rows,step));
   }
   function tutorial() {
-    return {id:"tutorial",type:"radio",title:"许师傅的旧收音机",client:"许师傅",detail:"让它重新收到晚间广播。",seed:912,coin:0};
+    return {id:"tutorial",type:"radio",title:"阿简进水的收音机",client:"阿简",detail:"试试能不能重新收到广播。",seed:912,coin:0};
   }
   function nextOrder(practice) {
     const current=day();
@@ -709,6 +710,10 @@
     broadcastNear=false;
     const out=previousRestore(save);
     state=Object.assign(blank(),save?.liweiNeighborhood);
+    if (!state.shopOpen && state.jobs.shop && !state.jobs.shop.caseVersion) {
+      const {shop, ...otherJobs}=state.jobs;
+      state.jobs=otherJobs;
+    }
     return out;
   };
   const control=element("button","liwei-repair-entry","栗尾维修铺");

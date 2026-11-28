@@ -202,6 +202,16 @@ const { chromium } = require("playwright");
       t.go("detective_home");
       if(caughtRepairInvite()||storySpeechOpen())throw Error("fixture: repair quest still starts at the office");
       function caughtRepairInvite(){return [...document.querySelectorAll(".autumn-actions button")].some(b=>b.textContent==="栗尾维修记");}
+      const older=snapshot();
+      older.liweiNeighborhood.jobs.shop={step:3,log:[]};
+      restore(older);
+      if(snapshot().liweiNeighborhood.jobs.shop)throw Error("old unfinished story did not restart");
+      older.liweiNeighborhood.shopOpen=true;
+      older.liweiNeighborhood.jobs.shop={step:6,log:[]};
+      restore(older);
+      if(snapshot().liweiNeighborhood.jobs.shop?.step!==6 || !snapshot().liweiNeighborhood.shopOpen)
+        throw Error("previous business was lost");
+      restore({...older,liweiNeighborhood:{...older.liweiNeighborhood,shopOpen:false}});
       for (const [index,id] of ["repair_stall","repair_stall","canteen","laundry","repair_stall"].entries()){
         t.go(id);
         if(!storySpeechOpen())t.pick("栗尾维修记");
@@ -223,6 +233,11 @@ const { chromium } = require("playwright");
     }
     await page.evaluate(()=>__workCheck.speak());
     assert(await page.evaluate(()=>snapshot().liweiNeighborhood.shopOpen));
+    assert(await page.evaluate(()=>{
+      const job=snapshot().liweiNeighborhood.jobs.shop;
+      return job.caseVersion===1 && job.log[0].lines[0][0]==="阿简" &&
+        job.log.at(-1).lines.some(([who,line])=>who==="洗衣铺老板"&&line.includes("钥匙"));
+    }));
     await page.evaluate(async()=>{
       const t=__workCheck;
       const before=springFarm.X.F.coins;
