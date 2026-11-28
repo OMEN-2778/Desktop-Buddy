@@ -310,7 +310,6 @@ function makeSeason_autumn(opts, DATA) {
         ["我走两圈就回去，饭还没做呢。","瞧，池子边那条鱼又冒头了。","今天这张长椅倒是没沾水。","你坐吧，我活动活动腿。"]
     ];
     function talkResident(person) {
-        if (person.shopVisitor && window.liweiNeighborhood?.talkCustomer(person)) return;
         const rows=residentLines[person.local>=44?5:Math.floor(person.local/8)];
         const line=rows[(person.local+Math.floor(state.streetTime/45))%rows.length];
         talk([[person.name,line],["我","嗯，回头我也走走这边。"]],()=>{
@@ -445,6 +444,7 @@ function makeSeason_autumn(opts, DATA) {
             return panel(p.name, reserved ? "前台给你留了钥匙。你的客房在楼上。" : "前台没有你的订房登记。",
                 reserved ? [["回客房", () => enter(null, id)], ["离开"]] : [["离开"]]);
         }
+        if (id === "repair_stall") return panel(p.name,"门口放着两个收拾好的纸箱。",[["离开"]]);
         if (id === "detective_home") return panel(p.name, lodging() === "hotel" ? "阿简在这里接待来访的人。" : "阿简留下了钥匙。床铺、厨房和洗漱间都能用。", [ [ "进屋", () => enter() ], ...(window.liweiStory?.facilityChoices(id) || []), ...(window.liweiNeighborhood?.choices(id) || []), [ "先不进去" ] ]);
         if (id === "hut") return state.quest >= 2 ? converse("father") : panel("山上的小屋", "门虚掩着。先把公司的消息和诊所那边的情况问清楚。", [ [ "好" ] ]);
         if (id === "mine_office") return state.quest >= 6 ? talk(AUTUMN_STORY.office) : converse("qing");
@@ -1041,6 +1041,8 @@ function makeSeason_autumn(opts, DATA) {
         const watched=[state,...npcs.filter(n=>n.mark)];
         const layers=window.liweiStory?.active?[]:opts.residents?.(state,canvas.height,npcs)||[];
         if(boat)layers.push(boat);
+        const stall=window.liweiNeighborhood?.stallScenery();
+        if(stall)layers.push(stall);
         for(const item of freshTown ? [] : depthItems()){
             const p=item.p;
             if(p.x+p.w<state.camX||p.x>state.camX+342||p.y+p.h<state.camY||p.y>state.camY+canvas.height)continue;

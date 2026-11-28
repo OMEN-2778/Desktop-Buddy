@@ -175,7 +175,8 @@ def main():
         source += '\nconst LIWEI_CHATS=' + (v4/'chats.json').read_text() + ';'
         source += '\nconst LIWEI_HERO_MOODS=' + (v4/'hero-moods.json').read_text() + ';'
         source += '\nconst LIWEI_SCRIPT=' + (v4/'script.json').read_text() + ';\n' + (v4/'director.js').read_text()
-        source += '\nconst LIWEI_REPAIR_BENCH=' + json.dumps(SP.uri(ROOT/'art/out/concept/liwei_repair_bench.png')) + ';'
+        for image in ('bench', 'stall'):
+            source += f'\nconst LIWEI_REPAIR_{image.upper()}=' + json.dumps(SP.uri(ROOT/f'art/out/concept/liwei_repair_{image}.png')) + ';'
         source += '\n' + '\n'.join((v4/name).read_text() for name in ('neighborhood-data.js','repair-games.js','neighborhood.js'))
         page = page.replace('</style>', (v4/'repair.css').read_text() + '\n</style>', 1)
         testing = 'new URLSearchParams(location.search).get("repair-test")==="1"'

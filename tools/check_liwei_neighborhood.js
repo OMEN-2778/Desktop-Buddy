@@ -1,4 +1,4 @@
-// Build the map-test page, then run this through its task board and workbench.
+// Build the map-test page, then run this through the street stall and workbench.
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const { chromium } = require("playwright");
@@ -71,7 +71,7 @@ const { chromium } = require("playwright");
     });
     await page.evaluate(()=>{
       closeGuide();
-      prefs.guided=false;
+      prefs.guided=true;
       cardMoment=rollCard=rollEvents=()=>false;
       prefs.autosave=false;
       window.__noBayGuide=true;
@@ -123,7 +123,10 @@ const { chromium } = require("playwright");
       if(!card?.textContent.includes("栗尾维修记")||card.querySelectorAll(".rw-card-fx i").length!==7)
         throw Error("festival-style card missing");
       if(document.querySelector(".qb-list").textContent.includes("南边那家修理摊"))throw Error("quests should stagger");
-      for (const [index,id] of ["detective_home","store","canteen","laundry","store"].entries()){
+      t.go("detective_home");
+      if(caughtRepairInvite()||storySpeechOpen())throw Error("fixture: repair quest still starts at the office");
+      function caughtRepairInvite(){return [...document.querySelectorAll(".autumn-actions button")].some(b=>b.textContent==="栗尾维修记");}
+      for (const [index,id] of ["repair_stall","repair_stall","canteen","laundry","repair_stall"].entries()){
         t.go(id);
         if(!storySpeechOpen())t.pick("栗尾维修记");
         if(!storySpeechOpen())await t.wait(250);
@@ -192,17 +195,55 @@ const { chromium } = require("playwright");
         "check-two":{id:"check-two",day:orderDay,type:"bike",title:"收款检查二",client:"老郑",coin:2,seed:2,completed:true},
       };
       restore(ordersSave);
-      t.go("store");t.pick("打开委托板");
-      const orderCard=title=>[...document.querySelectorAll(".rw-order")].find(el=>el.textContent.includes(title));
-      const beforeRepair=springFarm.X.F.coins;
-      orderCard("收款检查一").querySelector("button").click();
-      await t.speak();
-      t.pick("回委托板");
-      if(!orderCard("收款检查二").querySelector("button").disabled || springFarm.X.F.coins!==beforeRepair+1)
-        throw Error("daily payment limit failed");
-      document.querySelector(".rw-head button").click();
-      t.go("store");
-      t.pick("打开委托板");
+      // Click the actual facade with the canvas pointer handler, at a pixel
+      // which hits the idle house rather than Buddy or the pavement.
+      window.__stallClick=()=>{
+        const c=seasonMapTest.state.autumn,s=c.state;
+        const plot=c.DATA.landmarks.find(mark=>mark.id==="repair_stall");
+        c.close();c.clearRoute();
+        Object.assign(s,{x:plot.x,y:plot.y,inside:false});
+        c.snapCamera();
+        const [x,y,w,h]=plot.rect;
+        let pos=null;
+        for(let oy=y+h-24;oy<y+h-10&&!pos;oy+=3)for(let ox=x+w/2+12;ox<x+w-4;ox+=3){
+          if(c.hit(ox,oy)?.id===plot.id){pos=[ox,oy];break;}
+        }
+        if(!pos)throw Error("stall visual hit region");
+        const viewport=seasonMapTest.viewport(c);
+        const point=viewport.scene(...pos);
+        const box=view.getBoundingClientRect();
+        return [box.left+point.x*box.width/342,box.top+point.y*box.height/viewport.height];
+      };
+    });
+    const point=await page.evaluate(()=>__stallClick());
+    await page.mouse.click(...point);
+    await repair.waitFor();
+    assert(await page.evaluate(()=>!!window.liweiNeighborhood.stallScenery()));
+    await repair.getByText("收款检查一",{exact:true}).waitFor();
+    assert.equal(await repair.locator(".rw-customer").count(),1);
+    assert(!await repair.getByText("收款检查二",{exact:true}).count());
+    assert(await page.evaluate(()=>{
+      const c=seasonMapTest.state.autumn;
+      const [guest]=window.liweiNeighborhood.visitors();
+      return guest?.name==="老郑"&&c.nearest(guest.x,guest.y).d<3;
+    }));
+    const beforeRepair=await page.evaluate(()=>springFarm.X.F.coins);
+    await repair.getByRole("button",{name:"交给客人",exact:true}).click();
+    await page.evaluate(()=>__workCheck.speak());
+    await repair.getByText("刚交货 · 收到 1 枚丢丢币",{exact:true}).waitFor();
+    await page.evaluate(()=>{
+      const s=snapshot().liweiNeighborhood;
+      if(!s.orders["check-one"].delivered || s.orders["check-two"].delivered ||
+         s.orders[s.counter.pending].coin)throw Error("daily payment limit failed");
+    });
+    assert.equal(await page.evaluate(()=>springFarm.X.F.coins),beforeRepair+1);
+    const incoming=await page.evaluate(()=>snapshot().liweiNeighborhood.counter.pending);
+    await repair.getByRole("button",{name:"收摊",exact:true}).click();
+    await page.mouse.click(...await page.evaluate(()=>__stallClick()));
+    await repair.getByText("街坊合伙",{exact:true}).waitFor();
+    assert.equal(await page.evaluate(()=>snapshot().liweiNeighborhood.counter.pending),incoming);
+    await page.evaluate(async()=>{
+      const t=__workCheck;
       t.pick("街坊合伙");
       const cash=springFarm.X.F.coins;
       t.pick("考虑出");
@@ -212,12 +253,12 @@ const { chromium } = require("playwright");
       const project=LIWEI_PARTNERS.find(item=>item.id===stake.id);
       if(springFarm.X.F.coins!==cash-project.cost)throw Error("investment did not use existing wallet");
       restore(investSave);
-      t.go("store");t.pick("打开委托板");t.pick("街坊合伙");
+      t.go("repair_stall");t.pick("街坊合伙");
       const getResult=()=>[...document.querySelectorAll(".liwei-repair button")].find(b=>b.textContent==="听听做得怎样");
       if(!getResult().disabled)throw Error("investment paid early");
       document.querySelector(".rw-head button").click();
       sim.t+=5*1440;
-      t.go("store");t.pick("打开委托板");t.pick("街坊合伙");t.pick("听听做得怎样");
+      t.go("repair_stall");t.pick("街坊合伙");t.pick("听听做得怎样");
       await t.speak();
       const done=snapshot();
       if(done.liweiNeighborhood.investment||done.liweiNeighborhood.partners.length!==1||springFarm.X.F.coins>cash+1)
@@ -226,7 +267,7 @@ const { chromium } = require("playwright");
       if(snapshot().liweiNeighborhood.partners.length!==1)throw Error("investment result lost on load");
     });
     assert.deepEqual(errors,[]);
-    console.log("PASS 栗尾维修记、开店、普通支线、跨城交接、钱包、合伙与读档");
+    console.log("PASS 西侧小屋、开摊、单客接待、普通支线、跨城交接、钱包、合伙与读档");
   } finally {
     await browser.close();
   }

@@ -157,6 +157,7 @@ def town_runtime_data():
  }
  artwork={}
  for key,name,x,y,w,floors,*_ in BLOCKS:
+  if key=='homes5':key,name='repair_stall','工人街西侧小屋'
   if key not in zones and not name:
    continue
   depth=y*2-(9 if key=='clinic' else 0)
@@ -167,7 +168,7 @@ def town_runtime_data():
   explicit[key]=[2*x-4,top,2*w+8,depth-top+6]
  # The tale gathers on the wide span of the dock and in the middle of the
  # square, with room on both sides of the protagonist for the cast.
- positions={**layout['places'],'pier':(203,986),'plaza':(239,577)}
+ positions={**layout['places'],'pier':(203,986),'plaza':(239,577),'repair_stall':layout['places']['homes5']}
  public_ids=['airstrip',*sorted(set(explicit)-{'airstrip'})]
  def free(x,y):
   return any(l*2<=x<=r*2 and t*2<=y<=b*2 for l,t,r,b in layout['streets']) and not any(
