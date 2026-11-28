@@ -135,6 +135,7 @@ const seasonalTest=(function(){
    const h=Math.round(state.shownH);
    if(state.activeHeight!==h){state.activeHeight=h;fit();resizeRoot();
     sceneRoom(h);}}
+  window.liweiNeighborhood?.drawAway(c);
   const projection=viewport(c),R=c.renderCanvas,scaleY=view.height/projection.height;
   vctx.imageSmoothingEnabled=false;vctx.clearRect(0,0,view.width,view.height);
   if(projection.top>0)vctx.drawImage(R,0,0,R.width,1,0,0,view.width,projection.top*scaleY+1);

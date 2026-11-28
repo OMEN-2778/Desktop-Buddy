@@ -164,8 +164,9 @@ def main():
     if not RELEASE:
         v4 = ROOT / 'prototype/autumn/v4'
         page = page.replace("if(place==='autumn_test')return 'BGM/park/festival-streetlights.mp3';",
-            "if(place==='autumn_test')return 'BGM/liwei/lake-radio-'+(seasonMapTest.state.autumn.state.stage>=4?'clean':'polluted')+'.mp3';")
-        liwei_audio=[f'BGM/liwei/{f.name}' for f in sorted((ROOT/'AUDIO_LIBRARY/LIWEI').glob('*.mp3'))]
+            "if(place==='autumn_test')return window.liweiNeighborhood?.music() || 'BGM/liwei/lake-radio-'+(seasonMapTest.state.autumn.state.stage>=4?'clean':'polluted')+'.mp3';")
+        liwei_audio=[f'BGM/liwei/{f.name}' for f in sorted((ROOT/'AUDIO_LIBRARY/LIWEI').glob('*.mp3')) if not f.name.startswith('liwei-repair-')]
+        liwei_audio += [f'SFX/game/{f.name}' for f in sorted((ROOT/'AUDIO_LIBRARY/LIWEI').glob('liwei-repair-*.mp3'))]
         k=page.index('const GAME_AUDIO_FILES = [')+len('const GAME_AUDIO_FILES = [')
         page=page[:k]+','.join(map(json.dumps,liwei_audio))+','+page[k:]
 
@@ -174,6 +175,9 @@ def main():
         source += '\nconst LIWEI_CHATS=' + (v4/'chats.json').read_text() + ';'
         source += '\nconst LIWEI_HERO_MOODS=' + (v4/'hero-moods.json').read_text() + ';'
         source += '\nconst LIWEI_SCRIPT=' + (v4/'script.json').read_text() + ';\n' + (v4/'director.js').read_text()
+        source += '\nconst LIWEI_REPAIR_BENCH=' + json.dumps(SP.uri(ROOT/'art/out/concept/liwei_repair_bench.png')) + ';'
+        source += '\n' + '\n'.join((v4/name).read_text() for name in ('neighborhood-data.js','repair-games.js','neighborhood.js'))
+        page = page.replace('</style>', (v4/'repair.css').read_text() + '\n</style>', 1)
         page = page.replace('"season-test-buddy-save"', '(new URLSearchParams(location.search).has("liwei")?"liwei-v4-buddy-save":"season-test-buddy-save")')
     # 茵菲谷 audio (AUDIO_LIBRARY/INFEI, never in the release): served from /map-test/audio/ like the game's own files
     infei=[f'BGM/infei/{f.name}' for f in sorted((ROOT/'AUDIO_LIBRARY/INFEI/BGM').glob('*.mp3'))]+[f'SFX/game/{f.name}' for f in sorted((ROOT/'AUDIO_LIBRARY/INFEI/SFX').glob('*.mp3'))]
@@ -203,8 +207,10 @@ def main():
     shutil.copytree(ROOT/'AUDIO_LIBRARY/INFEI/BGM',out.parent/'audio/BGM/infei',dirs_exist_ok=True)
     liwei_dir=out.parent/'audio/BGM/liwei'
     liwei_dir.mkdir(exist_ok=True)
-    for name in ('lake-radio-polluted.mp3','lake-radio-clean.mp3'):
+    for name in ('lake-radio-polluted.mp3','lake-radio-clean.mp3','repair-after-hours.mp3'):
         shutil.copy2(ROOT/'AUDIO_LIBRARY/LIWEI'/name,liwei_dir/name)
+    for f in (ROOT/'AUDIO_LIBRARY/LIWEI').glob('liwei-repair-*.mp3'):
+        shutil.copy2(f,out.parent/'audio/SFX/game'/f.name)
     shutil.copy2(ROOT/'prototype/map-test/bgm.html',out.parent/'bgm.html')   # 茵菲谷 music listening page (/map-test/bgm.html)
     for f in (ROOT/'AUDIO_LIBRARY/INFEI/SFX').glob('*.mp3'):shutil.copy2(f,out.parent/'audio/SFX/game'/f.name)
     print(out,round(len(page)/1024),'KiB')

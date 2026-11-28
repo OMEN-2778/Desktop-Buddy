@@ -68,7 +68,7 @@ function autumnPedestrians(data) {
   const moved=window.liweiStory?.progress.done.includes('S12B');
   const day=Math.floor(sim.t/1440);
   const chance=[.64,.5,.35,.18,.06][state.stage];
-  function resident(i,x,y,distance,direction,moving=true,sitting=false,vendor=null){
+  function resident(i,x,y,distance,direction,moving=true,sitting=false,vendor=null,shopVisitor=false){
    if(x<state.camX-12||x>state.camX+354||y<state.camY||y-28>state.camY+height)return;
    const identity=people[i%people.length];
    const person=locals?{look:identity}:identity,masked=(i*17+day*7)%30 < 30*chance;
@@ -81,7 +81,7 @@ function autumnPedestrians(data) {
     variants.set(masked,{look,ramps:doll.rampsOf(look),kid:person.child,cache:new Map()});
    }
    const model=variants.get(masked);
-   const npc=locals&&!vendor?{id:'liwei-local:'+i,name:identity.name,x,y,local:i}:null;
+   const npc=locals&&!vendor?{id:'liwei-local:'+i,name:identity.name,x,y,local:i,shopVisitor}:null;
    const waiting=npc&&state.goal?.id==='npc:'+npc.id;
    Object.assign(model,{dist:distance,dir:direction,v:moving&&!waiting?1:0,ph:i*291});
    const [frame,pose]=npcFrame(model);
@@ -109,6 +109,17 @@ function autumnPedestrians(data) {
   });
   for(const [i,[x,y,vendor]] of (data.town?.vendors||[]).entries()){
    resident((locals?40:32)+i,x,y,0,0,false,false,vendor);
+  }
+  const store=window.liweiNeighborhood?.shopOpen()&&data.landmarks.find(mark=>mark.id==="store");
+  if(store&&hour()>=8&&hour()<20){
+   for(let i=0;i<3;i++){
+    const east=i%2===0,side=east?1:-1,span=82+i*10;
+    const walkingTime=span/12,wait=3+i*2;
+    const phase=(state.streetTime+i*7)%(walkingTime*2+wait);
+    const offset=phase<walkingTime?span-phase*12:phase<walkingTime+wait?0:(phase-walkingTime-wait)*12;
+    resident(people.length+i,Math.round(store.x+side*(14+offset)),store.y+12+i*8,
+      state.streetTime*12,phase<walkingTime?-side:side,offset>0,false,null,true);
+   }
   }
   const path=data.town?.parkWalk;
   if(path){

@@ -175,10 +175,20 @@ const questBoard=(function(){
    const act=q.go&&!q.done?()=>go(q,c):()=>detail(q);
    if(q.go&&!q.done&&q.log?.length){const b=document.createElement('button');b.type='button';b.className='qb-log';b.textContent='记录';b.onclick=e=>{e.stopPropagation();detail(q);};tags.prepend(b);}
    c.tabIndex=0;c.onclick=act;c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act();}};
-   c.append(ico,t,tags,p);return c;};
-  for(const [key,title] of [['liwei','栗尾市故事'],['side','支线任务']]){
+   c.append(ico,t,tags,p);
+   if(q.theme==='liwei-repair'){
+    c.dataset.theme=q.theme;
+    const fx=document.createElement('span');fx.className='rw-card-fx';fx.setAttribute('aria-hidden','true');
+    for(const [i,x,y] of [[0,18,70],[1,32,20],[2,47,78],[3,62,14],[4,75,65],[5,88,23],[6,94,63]]){
+     const dot=document.createElement('i');dot.style.setProperty('--x',x+'%');dot.style.setProperty('--y',y+'%');
+     dot.style.setProperty('--delay',-(i*.53)+'s');fx.append(dot);
+    }
+    c.append(fx);
+   }
+   return c;};
+  for(const [key,title] of [['liwei-special','特殊任务'],['liwei','栗尾市故事'],['side','支线任务']]){
    const members=qs.filter(q=>(q.group||'side')===key);
-   if(key==='liwei'&&!members.length)continue;
+   if(key!=='side'&&!members.length)continue;
    const group=document.createElement('details');
    group.className='qb-group';group.dataset.group=key;
    group.open=expanded.get(key)??members.length>0;

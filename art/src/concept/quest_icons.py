@@ -18,6 +18,12 @@ L = P.sand                    # paper: scroll, letter, map, book pages
 _ = "................"
 
 ICONS = {
+ "repair": ([
+    _, ".....oooooo.....", "....oYYYYYYo....", "....oYooooYo....",
+    "..oooYooooYooo..", ".oWRRRRRRRRRRDo.", "oWRRRRRRRRRRRDDo", "oRRRRRYYRRRRRDDo",
+    "oooooooooooooooo", "oRRRRRoYooRRRRDo", "oRRRRRoYooRRRRDo", "oRRRRRoooRRRRRDo",
+    "oRRRRRRRRRRRRRDo", ".oooooooooooooo.", "..oo........oo..", _,
+ ], {"o": O[0], "W": R[4], "R": R[2], "D": R[1], "Y": Y[3]}),
  "scroll": ([_, ".oooooooooooooo.", "ossWWWWWWWWWWsso", ".oooooooooooooo.",
              "..oWpppppppppo..", "..opllllllpppo..", "..oppppppppppo..", "..opllllllllpo..",
              "..oppppppppppo..", "..oplllllprrro..", "..opppppprRRro..", "..oppppppprrro..",
