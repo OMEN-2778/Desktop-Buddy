@@ -172,6 +172,7 @@ def main():
         source += '\nconst LIWEI_LOOKS=' + json.dumps(story_looks(),ensure_ascii=False) + ';'
         page = page.replace('run = cardHolds() || wiping', 'run = window.liweiStory?.locked() || cardHolds() || wiping')
         source += '\nconst LIWEI_CHATS=' + (v4/'chats.json').read_text() + ';'
+        source += '\nconst LIWEI_HERO_MOODS=' + (v4/'hero-moods.json').read_text() + ';'
         source += '\nconst LIWEI_SCRIPT=' + (v4/'script.json').read_text() + ';\n' + (v4/'director.js').read_text()
         page = page.replace('"season-test-buddy-save"', '(new URLSearchParams(location.search).has("liwei")?"liwei-v4-buddy-save":"season-test-buddy-save")')
     # 茵菲谷 audio (AUDIO_LIBRARY/INFEI, never in the release): served from /map-test/audio/ like the game's own files

@@ -2,6 +2,30 @@
 const { chromium } = require("playwright"),
   fs = require("fs"),
   assert = require("node:assert/strict");
+const scripts = require("../prototype/autumn/v4/script.json");
+const heroMoods = require("../prototype/autumn/v4/hero-moods.json");
+function checkReactionRows(rows, cues, chapter) {
+  const keys = new Set();
+  for (const row of rows) {
+    if (typeof row === "string") {
+      keys.add(row);
+      if (row.startsWith("我：")) assert(Object.hasOwn(cues, row), chapter + " missing hero reaction for " + row);
+      continue;
+    }
+    if (row.choices) keys.add(row.choices[0]);
+    for (const path of row.paths || row.ending || row.arrival) {
+      for (const key of checkReactionRows(path, cues, chapter)) keys.add(key);
+    }
+  }
+  return keys;
+}
+for (const [chapter, scene] of Object.entries(scripts)) {
+  const { opening, cues } = heroMoods[chapter];
+  assert(opening, chapter + " missing opening mood");
+  const keys = checkReactionRows(scene.rows, cues, chapter);
+  for (const key of Object.keys(cues)) assert(keys.has(key), chapter + " has a stale reaction cue: " + key);
+}
+
 (async () => {
   let browser = await chromium.launch({
     executablePath: "/usr/bin/chromium",
@@ -116,6 +140,18 @@ const { chromium } = require("playwright"),
             throw Error("expected choice " + label + " at " + JSON.stringify(s.progress));
           }
           const v6Cues = new Set();
+          const moodBeats = [
+            ["S08B", "确实有点松", "警觉", "tense"],
+            ["S08B", "石头砸在他刚才站的地方", "惊恐", "scared"],
+            ["S08B", "没有，爷爷", "松了一口气", "happy"],
+            ["S08B", "姓简", "震惊", "dazed"],
+            ["S14", "节哀", "难过", "sad"],
+          ];
+          const seenMoods = new Set();
+          function expectMood(label, icon) {
+            if (!moodState.scripted || moodState.key !== icon || moodFace.getAttribute("aria-label") !== "情绪：" + label)
+              throw Error("expected " + label + " at " + line() + ", got " + JSON.stringify(moodState));
+          }
           async function drain(stopAt = null) {
             let loops = 0;
             while (s.active) {
@@ -123,6 +159,11 @@ const { chromium } = require("playwright"),
                 throw Error("stuck " + JSON.stringify(s.progress));
               const {chapter, index} = s.progress;
               const caption = document.querySelector(".liwei-caption:not([hidden])");
+              for (const [scene, words, label, icon] of moodBeats) {
+                if (scene !== chapter || !line().includes(words)) continue;
+                expectMood(label, icon);
+                seenMoods.add(words);
+              }
               if (peerHud.classList.contains("story-event")) {
                 if (peerText.querySelector(".who") || peerBubble.getAttribute("aria-label").startsWith("：") || /事件[：:]|离场/.test(line()))
                   throw Error("unexpected prefix or wording in stage cue: " + line());
@@ -429,11 +470,15 @@ const { chromium } = require("playwright"),
             }
             if (k === "S11") {
               await drain("确认");
+              expectMood("专注", "focused");
               choiceButtons()[1].click();
+              expectMood("专注", "focused");
               if(s.progress.ending||choiceButtons()[0]?.textContent==="确认")
                 throw Error("ending committed while reconsidering");
             }
             await drain();
+            if (moodState.scripted || s.heroMood() || moodState.key !== (asleep() && !listOpen ? "asleep" : emotion().key))
+              throw Error("daily mood not restored after " + k);
             if(k==="note" && (s.jianAtOffice() ||
                 !s.actors().some(n=>n.name==="阿简"&&n.loc==="lookout")))
               throw Error("Jian should wait only at the summit after the note");
@@ -460,6 +505,7 @@ const { chromium } = require("playwright"),
           for (const cue of ["rockfall", "furnace", "weeks", "finale", "crowd", "departures", ...(branch ? ["brief"] : [])]) {
             if (!v6Cues.has(cue)) throw Error("missing V6 cue " + cue);
           }
+          for (const [, words] of moodBeats) if (!seenMoods.has(words)) throw Error("missing mood check " + words);
           const expectedMusic = `BGM/liwei/lake-radio-${branch ? "clean" : "polluted"}.mp3`;
           if (gameAudio.chooseMusic() !== expectedMusic || !GAME_AUDIO_FILES.includes(expectedMusic))
             throw Error("incorrect city music " + gameAudio.chooseMusic());

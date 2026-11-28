@@ -2212,7 +2212,7 @@ async function loadMoodIcons() {
 const MOOD_D = 26;                                      // 24-unit frame + a 1-unit glow all round
 const moodCanvas = document.getElementById("mood"), mctx = moodCanvas.getContext("2d");
 const moodFace = document.getElementById("moodFace"), moodTip = document.getElementById("moodTip");
-const moodState = { key: null, level: 1, from: null, t0: -9 };
+const moodState = { key: null, level: 1, label: "", scripted: false, from: null, t0: -9 };
 const frameCache = new Map();
 function moodFrame(color) {                              // white ring + emotion tint, at one pixel per unit
   if (frameCache.has(color)) return frameCache.get(color);
@@ -2261,7 +2261,7 @@ function renderMood() {
   }
   const bouncy = ["happy", "energized", "playful", "inspired"].includes(key);
   const bob = !reduceMotionUI && bouncy && Math.floor(realClock * 2.2) % 2 ? -b : 0;
-  const p = reduceMotionUI ? 1 : (realClock - moodState.t0) / 0.7;
+  const p = reduceMotionUI ? 1 : (realClock - moodState.t0) / (moodState.scripted ? .34 : .7);
   if (p < 1 && moodState.from) {
     const out = Math.min(1, p / 0.45), q = Math.max(0, (p - 0.3) / 0.7), c1 = 1.9;
     drawFace(moodState.from, (1 - out) * (1 - out), 0);
@@ -2272,17 +2272,24 @@ function renderMood() {
 }
 // a dark grey sleeping face the whole time she sleeps (user); pointing at it
 // (or opening the list) shows how she really feels (user)
-function showFace() {
+function showFace(quiet = false) {
+  const reaction = window.liweiStory?.heroMood?.();
+  if (reaction) { setMood(reaction[0], 2, { label: reaction[1], scripted: true }); return; }
   const e = emotion();
-  if (asleep() && !listOpen) setMood("asleep", 1);
-  else setMood(e.key, e.level);
+  if (asleep() && !listOpen) setMood("asleep", 1, { quiet });
+  else setMood(e.key, e.level, { quiet });
 }
-function setMood(key, level) {
-  if (key === moodState.key && level === moodState.level) return;
+function setMood(key, level, { label = emoWord(key, level), scripted = false, quiet = false } = {}) {
   const changed = key !== moodState.key;
-  moodState.from = moodState.key; moodState.key = key; moodState.level = level; moodState.t0 = realClock;
-  moodFace.setAttribute("aria-label", `情绪：${emoWord(key, level)}`);
-  if (changed && moodState.from && sim.mode !== "down" && !asleep() && key !== "asleep" && realClock >= quietUntil) speak(fill(pick(T.thoughts[key])));
+  if (!changed && level === moodState.level && label === moodState.label && scripted === moodState.scripted) return;
+  if (changed || (!scripted && !moodState.scripted && level !== moodState.level)) {
+    moodState.from = moodState.key;
+    moodState.t0 = realClock;
+  }
+  Object.assign(moodState, { key, level, label, scripted });
+  moodFace.setAttribute("aria-label", `情绪：${label}`);
+  if (!scripted && !quiet && changed && moodState.from && sim.mode !== "down" && !asleep() && key !== "asleep" && realClock >= quietUntil)
+    speak(fill(pick(T.thoughts[key])));
 }
 function leftText(m, d) {
   if (m.until === null) return d.until || "";
@@ -2299,8 +2306,10 @@ function inkOn(hex) {
   return (L + 0.05) / 0.0722 > 1.05 / (L + 0.05);        // vs #2b2033 (L 0.0222) and white
 }
 function moodPills() {           // -> [{ cls, c, html, title, left }]
-  const k = moodState.key, e = emotion();
-  const out = [{ cls: "head" + (inkOn(MOOD[k].color) ? "" : " on-dark"), c: MOOD[k].color, html: `${emoWord(k, moodState.level)}${e.pts ? `<b>${e.pts} 分</b>` : ""}`, title: `现在的情绪：${emoWord(k, moodState.level)}` }];
+  const { key: k, label, scripted } = moodState;
+  const points = scripted ? 0 : emotion().pts;
+  const out = [{ cls: "head" + (inkOn(MOOD[k].color) ? "" : " on-dark"), c: MOOD[k].color, html: `${label}${points ? `<b>${points} 分</b>` : ""}`, title: `现在的情绪：${label}` }];
+  if (scripted) return out;
   if (sim.mode === "down") { out.push({ c: "#8b8899", html: `晕倒了：长按${ta()} 5 秒叫醒${ta()}`, title: "" }); return out; }
   const list = [...moods].map(([id, m]) => [id, ML[id], m]).sort((a, b) => b[1].pts - a[1].pts || b[2].t - a[2].t);
   if (!list.length) out.push({ c: MOOD.fine.color, html: "没有什么特别的心情", title: "" });

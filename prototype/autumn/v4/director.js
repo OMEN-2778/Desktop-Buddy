@@ -76,6 +76,45 @@
       performance.now() - glassesGestureAt < 360 && !reduceMotionUI) frame.wave = 1;
     return npcCanvas(ajianWardrobe.get(accessory) || model, frame, restingPose === "sit" ? "sit" : pose, false);
   }
+  const heroReactions = {
+    calm: ["fine", "平静"],
+    curious: ["focused", "好奇"],
+    eager: ["energized", "期待"],
+    focused: ["focused", "专注"],
+    determined: ["confident", "下定决心"],
+    firm: ["focused", "态度坚定"],
+    pensive: ["focused", "若有所思"],
+    fascinated: ["focused", "惊讶地细看"],
+    realized: ["inspired", "恍然大悟"],
+    puzzled: ["dazed", "困惑"],
+    surprised: ["dazed", "意外"],
+    shocked: ["dazed", "震惊"],
+    worried: ["tense", "担心"],
+    wary: ["tense", "戒备"],
+    alert: ["tense", "警觉"],
+    tense: ["tense", "紧张"],
+    concerned: ["tense", "担忧"],
+    torn: ["tense", "犹豫"],
+    uncertain: ["dazed", "没把握"],
+    alarmed: ["scared", "惊慌"],
+    scared: ["scared", "惊恐"],
+    impatient: ["angry", "不耐烦"],
+    frustrated: ["angry", "烦躁"],
+    angry: ["angry", "生气"],
+    wry: ["playful", "打趣"],
+    playful: ["playful", "调侃"],
+    unwell: ["uncomfortable", "不舒服"],
+    weary: ["uncomfortable", "疲惫"],
+    awkward: ["embarrassed", "有些难为情"],
+    sad: ["sad", "难过"],
+    disappointed: ["sad", "失落"],
+    wistful: ["sad", "不舍"],
+    hopeful: ["inspired", "抱有希望"],
+    joyful: ["happy", "高兴"],
+    relieved: ["happy", "松了一口气"],
+    comforted: ["happy", "感到宽慰"],
+    touched: ["happy", "被触动"],
+  };
   const colors = {
     阿简: "#1c426d",
     程青: "#08746e",
@@ -131,6 +170,7 @@
     entrance = null,
     speaker = "",
     face = "",
+    heroMood = null,
     cue = "",
     since = 0,
     pastActions = new Set(),
@@ -607,8 +647,13 @@
   city.root.querySelector("[data-exit]").onclick = () => {
     if (!active) begin("R09");
   };
+  function applyHeroMood(reaction) {
+    heroMood = reaction ? heroReactions[reaction] : null;
+    showFace(true);
+  }
   function stop() {
     active = false;
+    if (heroMood) applyHeroMood(null);
     confirmChoice = null;
     entrance?.cancel();
     entrance = null;
@@ -656,6 +701,7 @@
       if (k === "S02") p.lodgingPrompt = true;
     }
     pastActions = completedActions(rows());
+    applyHeroMood(LIWEI_HERO_MOODS[k].opening);
     if (inCity() && (k === "note" || k === "S07") && (!world.inside || world.indoorSite !== "detective_home"))
       relocate("detective_home", true);
     refresh();
@@ -707,6 +753,7 @@
       commit();
     };
     confirmChoice = confirm;
+    applyHeroMood("focused");
     speech.show(speaker, row.confirm?.[i] || "确定" + row.choices[i] + "？", {
       asNpc: true,
       choices: [
@@ -736,6 +783,18 @@
       finish();
       return;
     }
+    // Rebuild from the selected path, so returning to a choice or reloading a
+    // chapter lands on the same reaction even in a run of NPC dialogue.
+    const {opening, cues} = LIWEI_HERO_MOODS[p.chapter];
+    let reaction = opening;
+    for (let i = p.index; i >= 0; i--) {
+      const beat = sequence[i];
+      const key = typeof beat === "string" ? beat : beat.choices[0];
+      if (!Object.hasOwn(cues, key)) continue;
+      reaction = cues[key];
+      break;
+    }
+    applyHeroMood(reaction);
     if (row.choices) {
       speaker = row.speaker || "";
       face = "";
@@ -1359,6 +1418,7 @@
       const lines=exchange(id,"visit");
       return {title:lines[0],lines};
     },
+    heroMood: () => active ? heroMood : null,
     heroExpression: () =>
       active && speaker === "我" ? expressions[face] : null,
     site,
