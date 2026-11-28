@@ -92,6 +92,7 @@
     if (workbench.parentElement!==body) body.replaceChildren(workbench);
   }
   let priorFocus=null;
+  let counterLift=0;
   function position() {
     const rect=view.getBoundingClientRect();
     const host=view.parentElement.getBoundingClientRect();
@@ -104,6 +105,9 @@
       top:rect.top-host.top+(counter ? rect.height-padding : (rect.height-height)/2)+"px",
       width:width+"px",height:counter?"auto":height+"px",maxHeight:height+"px",
     });
+    // On a narrow screen, keep the customer and table above the order card.
+    const lift=counter && rect.width<400 ? 65 : 0;
+    if (lift!==counterLift) city.snapCamera(counterLift=lift);
   }
   function openRoom(title, counter = false) {
     cancelGame?.();
@@ -132,6 +136,7 @@
   function hideRoom() {
     if (overlay.hidden) return;
     overlay.hidden=true;
+    if (counterLift) city.snapCamera(counterLift=0);
     cancelGame?.();
     cancelGame=null;
     run=null;

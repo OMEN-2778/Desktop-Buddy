@@ -674,7 +674,7 @@ function makeSeason_autumn(opts, DATA) {
     function syncHeight() {
         canvas.height=town&&!state.inside ? 236 : 118;
     }
-    function camera(dt) {
+    function camera(dt, lift = 0) {
         if (state.inside) {
             state.camX = state.camY = 0;
             return;
@@ -683,12 +683,12 @@ function makeSeason_autumn(opts, DATA) {
         const progress = legacySummit ? clamp((DATA.summit.triggerY-state.y)/65,0,1) : 0;
         const summitOffset = 14 * progress * progress * (3 - 2 * progress);
         const x = clamp(state.x - 171, 0, DATA.width - 342);
-        const y = clamp(state.y - footLine() + summitOffset, 0, DATA.height - canvas.height);
+        const y = clamp(state.y - footLine() + summitOffset + lift, 0, DATA.height - canvas.height);
         const t = town ? 1 : 1 - Math.exp(-dt * 5);
         state.camX += (x - state.camX) * t;
         state.camY += (y - state.camY) * t;
     }
-    const snapCamera = () => camera(Infinity);
+    const snapCamera = lift => camera(Infinity, lift);
     function load(src) {
         if (images.has(src)) return;
         const im = new Image;
