@@ -68,7 +68,7 @@ function createStorySpeech({view,host=view.parentElement,anchor,speakerFor,onClo
  const go=e=>{if(!open||!advance)return;e.preventDefault();e.stopPropagation();if(performance.now()-shownAt<300)return;advance();};   // a click right as a line appears does not skip it
  // a click anywhere moves the talk on (owner 2026-11-03), and goes no further (the scene does not get it); choices take their own clicks
  let swallow=false;
- document.addEventListener('pointerdown',e=>{swallow=false;if(!open||!advance||e.button!==0||(e.pointerType==='touch'&&!e.isPrimary)||e.target.closest('#settings,#questTrigger,#questPanel'))return;swallow=true;go(e);},true);
+ document.addEventListener('pointerdown',e=>{swallow=false;if(!open||!advance||e.button!==0||(e.pointerType==='touch'&&!e.isPrimary)||e.target.closest('#settings,#questTrigger,#questPanel,#liweiRepairTest'))return;swallow=true;go(e);},true);
  document.addEventListener('click',e=>{if(!swallow)return;swallow=false;e.preventDefault();e.stopPropagation();},true);
  for(const box of [peerBubble,popSay]){
   box.addEventListener('click',e=>{if(open&&box.classList.contains('story-bubble'))go(e);});

@@ -216,10 +216,10 @@
   function orderInfo(order) {
     return LIWEI_REPAIR_TYPES[order.type]+" · "+(order.coin?order.coin+" 丢丢币":"人情单");
   }
-  function play(order) {
+  function play(order, practice = false) {
     if (order.delivered) return;
     if (order.completed) return deliver(order);
-    if (order.id!=="tutorial") {
+    if (!practice && order.id!=="tutorial") {
       state.orders[order.id]=order;
       persist();
     }
@@ -229,6 +229,10 @@
       element,button,setBody,sound,alive:()=>run===order.id&&!overlay.hidden
     },()=>{
       run=null;
+      if (practice) {
+        setBody(result("测试通过","可以换一个玩法，或者用同一张样单再试。",practiceMenu,"回维修测试"));
+        return;
+      }
       if (order.id==="tutorial") {
         completeStep(special,LIWEI_SHOP_STORY[4][2],4);
         setBody(result("收音机响了", "把它拿回给许师傅。",()=>{closeRoom();doStep(special);}, "交还收音机"));
@@ -564,6 +568,87 @@
   const shopAccess={id:"shopAccess",steps:[["store","回栗尾维修铺"]]};
   seasonMapTest.root.querySelector("header").append(control);
   setInterval(()=>{control.hidden=!(inTown()&&state.shopOpen);},350);
+  function practiceMenu() {
+    openRoom("直接测试维修台");
+    const samples=Object.entries(LIWEI_REPAIR_TYPES).map(([type,label])=>{
+      const [,client,title,detail]=LIWEI_REPAIR_ORDERS.find(order=>order[0]===type);
+      return button(label,()=>play({
+        id:"practice-"+type,type,client,title,detail,seed:randomSeed("practice-"+type,day()),coin:0,
+      },true),{info:title});
+    });
+    setBody(makeList("选择一个玩法。练习样单不结算工钱。",[],samples));
+  }
+
+  const testUrl=new URL(location.href);
+  const repairTest=testUrl.searchParams.get("repair-test")==="1";
+  if (repairTest) {
+    const controls=element("span","");
+    controls.id="liweiRepairTest";
+    const stepLabel=element("span","");
+    const skip=button("完成当前阶段",()=>startTest(()=>{
+      const index=status(special)?.step||0;
+      const part=current(special);
+      if (!part) {board();return;}
+      completeStep(special,part[2],index);
+      updateTest();
+      if (state.shopOpen) board();
+      else {
+        placeAt(current(special)[0]);
+        showHint("已完成第 "+(index+1)+" 段 · "+current(special)[1]);
+      }
+    }));
+    const direct=button("直接测试维修台",()=>startTest(practiceMenu));
+    controls.append(stepLabel,skip,direct);
+    seasonMapTest.root.querySelector("header").append(controls);
+    function placeAt(id) {
+      const spot=landmark(id);
+      city.clearRoute();
+      Object.assign(city.state,{inside:false,door:null,mapOpen:false,x:spot.x,y:spot.y});
+      city.syncHeight();
+      city.snapCamera();
+      seasonMapTest.sync();
+    }
+    function updateTest() {
+      const part=current(special);
+      stepLabel.textContent=part?"独立测试档 · 第 "+((status(special)?.step||0)+1)+" / "+special.steps.length+" 阶段":"独立测试档 · 修理铺已开张";
+      skip.disabled=!part;
+    }
+    function startTest(action) {
+      if (!booted || !city.state.loaded) {showHint("栗尾市正在载入");return;}
+      if (wiping || story.active || phoneHolds()) {showHint("等这段转场或对白结束");return;}
+      closeGuide();
+      closeRoom();
+      if (talking) {talking=false;speech.hide();}
+      if (!inTown()) {
+        sim.place="autumn_test";
+        sim.dest=null;
+        sim.mode="idle";
+        sim.act=null;
+        arriveAt("autumn_test");
+      }
+      if (!enabled()) {
+        Object.assign(story.progress,{
+          done:Object.keys(LIWEI_SCRIPT).filter(id=>!id.startsWith("R")&&!["S12A","A1","A2"].includes(id)),
+          ending:"B",enrolled:true,visitTimePassed:true,
+        });
+        Object.assign(story.progress.choices,{S02:0,S11:1});
+        city.state.stage=4;
+        city.state.quest=6;
+      }
+      state.since ??= day();
+      placeAt(current(special)?.[0]||"store");
+      action();
+      updateTest();
+    }
+    setInterval(updateTest,500);
+    updateTest();
+  } else {
+    testUrl.searchParams.set("repair-test","1");
+    const testLink=element("a","","维修测试（独立存档）");
+    testLink.href=testUrl.href;
+    seasonMapTest.root.querySelector("header").append(testLink);
+  }
+
   window.liweiNeighborhood={
     shopOpen:()=>enabled()&&state.shopOpen,
     talkCustomer(person){

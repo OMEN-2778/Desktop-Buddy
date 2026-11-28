@@ -85,3 +85,4 @@
 .rw-console .rw-slot{min-height:24px}
 .rw-console .rw-game .rw-actions:last-child{padding-top:3px}
 @container (max-width:520px){.rw-console{grid-template-columns:1fr;padding:0;gap:5px}.rw-bench-art{display:none}.rw-console .rw-game{padding:.45em}}
+#liweiRepairTest{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap}

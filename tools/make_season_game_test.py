@@ -178,7 +178,11 @@ def main():
         source += '\nconst LIWEI_REPAIR_BENCH=' + json.dumps(SP.uri(ROOT/'art/out/concept/liwei_repair_bench.png')) + ';'
         source += '\n' + '\n'.join((v4/name).read_text() for name in ('neighborhood-data.js','repair-games.js','neighborhood.js'))
         page = page.replace('</style>', (v4/'repair.css').read_text() + '\n</style>', 1)
-        page = page.replace('"season-test-buddy-save"', '(new URLSearchParams(location.search).has("liwei")?"liwei-v4-buddy-save":"season-test-buddy-save")')
+        testing = 'new URLSearchParams(location.search).get("repair-test")==="1"'
+        page = page.replace('"season-test-buddy-save"',
+            f'({testing}?"liwei-repair-buddy-save":new URLSearchParams(location.search).has("liwei")?"liwei-v4-buddy-save":"season-test-buddy-save")')
+        for key in ('settings','look-v2','look-at'):
+            page = page.replace(f'"season-test-buddy-{key}"', f'({testing}?"liwei-repair-buddy-{key}":"season-test-buddy-{key}")')
     # 茵菲谷 audio (AUDIO_LIBRARY/INFEI, never in the release): served from /map-test/audio/ like the game's own files
     infei=[f'BGM/infei/{f.name}' for f in sorted((ROOT/'AUDIO_LIBRARY/INFEI/BGM').glob('*.mp3'))]+[f'SFX/game/{f.name}' for f in sorted((ROOT/'AUDIO_LIBRARY/INFEI/SFX').glob('*.mp3'))]
     k=page.index('const GAME_AUDIO_FILES = [')+len('const GAME_AUDIO_FILES = [')
